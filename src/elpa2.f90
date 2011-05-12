@@ -1163,7 +1163,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
    deallocate(block_limits)
    deallocate(global_id)
 
-end subroutine
+ end subroutine tridiag_band_real
 
 ! --------------------------------------------------------------------------------------------------
 

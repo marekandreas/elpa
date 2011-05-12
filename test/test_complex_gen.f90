@@ -91,11 +91,19 @@ program test_complex_gen
    call BLACS_Gridinit( my_blacs_ctxt, 'C', np_rows, np_cols )
    call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
 
+   if (myid==0) then
+     print '(a)','| Past BLACS_Gridinfo.'
+   end if
+
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in get_elpa_row_col_comms.
 
    call get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
                                mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| Past split communicator setup for rows and columns.'
+   end if
 
    ! Determine the necessary size of the distributed matrices,
    ! we use the Scalapack tools routine NUMROC for that.
@@ -109,6 +117,10 @@ program test_complex_gen
    ! - first row and column of the distributed matrix must be on row/col 0/0 (args 6+7)
 
    call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
+
+   if (myid==0) then
+     print '(a)','| Past scalapack descriptor setup.'
+   end if
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up test matrices for the eigenvalue problem
@@ -141,7 +153,16 @@ program test_complex_gen
    deallocate(xr)
 
    a(:,:) = z(:,:)
+
+   if (myid==0) then
+     print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
+   end if
+
    call pztranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
+
+   if (myid==0) then
+     print '(a)','| Random matrix has been Hermite-icized.'
+   end if
 
    ! The matrix B in the generalized eigenvalue problem must be symmetric
    ! and positive definite - we use a simple diagonally dominant matrix
@@ -149,6 +170,10 @@ program test_complex_gen
    xc = (0.7,0.4)/na ! some random value with abs(xc) < 1/na
    call pzlaset('U', na, na, xc, CONE, b, 1, 1, sc_desc ) ! Upper part
    call pzlaset('L', na, na, conjg(xc), CONE, b, 1, 1, sc_desc ) ! Lower part
+
+   if (myid==0) then
+     print '(a)','| Complex Hermitian diagonally dominant overlap matrix has been initialized.'
+   end if
 
    ! Save original matrices A and B for later accuracy checks
 
@@ -161,12 +186,21 @@ program test_complex_gen
    ! 1. Calculate Cholesky factorization of Matrix B = U**T * U
    !    and invert triangular matrix U
    !
-   ! Please note: cholesky_real/invert_trm_real are not trimmed for speed.
+   ! Please note: cholesky_complex/invert_trm_complex are not trimmed for speed.
    ! The only reason having them is that the Scalapack counterpart
    ! PDPOTRF very often fails on higher processor numbers for unknown reasons!
 
    call cholesky_complex(na, b, na_rows, nblk, mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| Cholesky factorization complete.'
+   end if
+
    call invert_trm_complex(na, b, na_rows, nblk, mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| Cholesky factor inverted.'
+   end if
 
    ttt0 = MPI_Wtime()
 
@@ -183,12 +217,21 @@ program test_complex_gen
    call mult_ah_b_complex('U', 'U', na, na, b, na_rows, tmp2, na_rows, &
                           nblk, mpi_comm_rows, mpi_comm_cols, a, na_rows)
    ttt1 = MPI_Wtime()
+
+   if (myid==0) then
+     print '(a)','| Matrix A transformed from generalized to orthogonal form using Cholesky factors.'
+   end if
+
    if(myid == 0) print *,'Time U**-T*A*U**-1   :',ttt1-ttt0
 
    ! A is only set in the upper half, solve_evp_real needs a full matrix
    ! Set lower half from upper half
 
    call pztranc(na,na,CONE,a,1,1,sc_desc,CZERO,tmp1,1,1,sc_desc)
+
+   if (myid==0) then
+     print '(a)','| Lower half of A set by pztranc.'
+   end if
 
    do i=1,na_cols
       ! Get global column corresponding to i and number of local rows up to
@@ -201,8 +244,18 @@ program test_complex_gen
    ! 3. Calculate eigenvalues/eigenvectors of U**-T * A * U**-1
    !    Eigenvectors go to tmp1
 
+   if (myid==0) then
+     print '(a)','| Entering one-step ELPA solver ... '
+     print *
+   end if
+
    call solve_evp_complex(na, nev, a, na_rows, ev, tmp1, na_rows, nblk, &
                           mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| One-step ELPA solver complete.'
+     print *
+   end if
 
    if(myid == 0) print *,'Time tridiag_complex :',time_evp_fwd
    if(myid == 0) print *,'Time solve_tridi     :',time_evp_solve
@@ -217,6 +270,9 @@ program test_complex_gen
    call mult_ah_b_complex('L', 'N', na, nev, tmp2, na_rows, tmp1, na_rows, &
                           nblk, mpi_comm_rows, mpi_comm_cols, z, na_rows)
    ttt1 = MPI_Wtime()
+   if (myid==0) then
+     print '(a)','| Backtransform of eigenvectors to generalized form complete.'
+   end if
    if(myid == 0) print *,'Time Back U**-1*Z    :',ttt1-ttt0
 
    !-------------------------------------------------------------------------------

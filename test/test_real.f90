@@ -85,11 +85,19 @@ program test_real
    call BLACS_Gridinit( my_blacs_ctxt, 'C', np_rows, np_cols )
    call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
 
+   if (myid==0) then
+     print '(a)','| Past BLACS_Gridinfo.'
+   end if
+
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in get_elpa_row_col_comms.
 
    call get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
                                mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| Past split communicator setup for rows and columns.'
+   end if
 
    ! Determine the necessary size of the distributed matrices,
    ! we use the Scalapack tools routine NUMROC for that.
@@ -103,6 +111,10 @@ program test_real
    ! - first row and column of the distributed matrix must be on row/col 0/0 (args 6+7)
 
    call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
+
+   if (myid==0) then
+     print '(a)','| Past scalapack descriptor setup.'
+   end if
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
@@ -125,7 +137,16 @@ program test_real
    call RANDOM_NUMBER(z)
 
    a(:,:) = z(:,:)
+
+   if (myid==0) then
+     print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
+   end if
+
    call pdtran(na, na,  1.d0, z, 1, 1, sc_desc, 1.d0, a, 1, 1, sc_desc) ! A = A + Z**T
+
+   if (myid==0) then
+     print '(a)','| Random matrix has been symmetrized.'
+   end if
 
    ! Save original matrix A for later accuracy checks
 
@@ -134,9 +155,19 @@ program test_real
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
+   if (myid==0) then
+     print '(a)','| Entering one-step ELPA solver ... '
+     print *
+   end if
+
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    call solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                        mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| One-step ELPA solver complete.'
+     print *
+   end if
 
    if(myid == 0) print *,'Time tridiag_real :',time_evp_fwd
    if(myid == 0) print *,'Time solve_tridi  :',time_evp_solve

@@ -87,11 +87,19 @@ program test_real_gen
    call BLACS_Gridinit( my_blacs_ctxt, 'C', np_rows, np_cols )
    call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
 
+   if (myid==0) then
+     print '(a)','| Past BLACS_Gridinfo.'
+   end if
+
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in get_elpa_row_col_comms.
 
    call get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
                                mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| Past split communicator setup for rows and columns.'
+   end if
 
    ! Determine the necessary size of the distributed matrices,
    ! we use the Scalapack tools routine NUMROC for that.
@@ -105,6 +113,10 @@ program test_real_gen
    ! - first row and column of the distributed matrix must be on row/col 0/0 (args 6+7)
 
    call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
+
+   if (myid==0) then
+     print '(a)','| Past scalapack descriptor setup.'
+   end if
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up test matrices for the eigenvalue problem
@@ -132,12 +144,25 @@ program test_real_gen
    call RANDOM_NUMBER(z)
 
    a(:,:) = z(:,:)
+
+   if (myid==0) then
+     print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
+   end if
+
    call pdtran(na, na, 1.d0, z, 1, 1, sc_desc, 1.d0, a, 1, 1, sc_desc) ! A = A + Z**T
+
+   if (myid==0) then
+     print '(a)','| Random matrix has been symmetrized.'
+   end if
 
    ! The matrix B in the generalized eigenvalue problem must be symmetric
    ! and positive definite - we use a simple diagonally dominant matrix
 
    call pdlaset('Full', na, na, 1.d0/na, 1.1d0, b, 1, 1, sc_desc )
+
+   if (myid==0) then
+     print '(a)','| Simple diagonally dominant overlap matrix has been initialized.'
+   end if
 
    ! Save original matrices A and B for later accuracy checks
 
@@ -155,7 +180,16 @@ program test_real_gen
    ! PDPOTRF very often fails on higher processor numbers for unknown reasons!
 
    call cholesky_real(na, b, na_rows, nblk, mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| Cholesky factorization complete.'
+   end if
+
    call invert_trm_real(na, b, na_rows, nblk, mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| Cholesky factor inverted.'
+   end if
 
    ttt0 = MPI_Wtime()
 
@@ -172,12 +206,21 @@ program test_real_gen
    call mult_at_b_real('U', 'U', na, na, b, na_rows, tmp2, na_rows, &
                        nblk, mpi_comm_rows, mpi_comm_cols, a, na_rows)
    ttt1 = MPI_Wtime()
+
+   if (myid==0) then
+     print '(a)','| Matrix A transformed from generalized to orthogonal form using Cholesky factors.'
+   end if
+
    if(myid == 0) print *,'Time U**-T*A*U**-1:',ttt1-ttt0
 
    ! A is only set in the upper half, solve_evp_real needs a full matrix
    ! Set lower half from upper half
 
    call pdtran(na,na,1.d0,a,1,1,sc_desc,0.d0,tmp1,1,1,sc_desc)
+
+   if (myid==0) then
+     print '(a)','| Lower half of A set by pdtran.'
+   end if
 
    do i=1,na_cols
       ! Get global column corresponding to i and number of local rows up to
@@ -190,8 +233,18 @@ program test_real_gen
    ! 3. Calculate eigenvalues/eigenvectors of U**-T * A * U**-1
    !    Eigenvectors go to tmp1
 
+   if (myid==0) then
+     print '(a)','| Entering one-step ELPA solver ... '
+     print *
+   end if
+
    call solve_evp_real(na, nev, a, na_rows, ev, tmp1, na_rows, nblk, &
                        mpi_comm_rows, mpi_comm_cols)
+
+   if (myid==0) then
+     print '(a)','| One-step ELPA solver complete.'
+     print *
+   end if
 
    if(myid == 0) print *,'Time tridiag_real :',time_evp_fwd
    if(myid == 0) print *,'Time solve_tridi  :',time_evp_solve
@@ -206,6 +259,9 @@ program test_real_gen
    call mult_at_b_real('L', 'N', na, nev, tmp2, na_rows, tmp1, na_rows, &
                        nblk, mpi_comm_rows, mpi_comm_cols, z, na_rows)
    ttt1 = MPI_Wtime()
+   if (myid==0) then
+     print '(a)','| Backtransform of eigenvectors to generalized form complete.'
+   end if
    if(myid == 0) print *,'Time Back U**-1*Z :',ttt1-ttt0
 
 
