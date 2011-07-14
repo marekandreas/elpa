@@ -141,3 +141,31 @@ other piece of code.
   test_real2        Real eigenvalue problem, 2 stage solver
   test_complex2     Complex eigenvalue problem, 2 stage solver
 
+- There are two programs which read matrices from a file, solve the
+  eigenvalue problem, print the eigenvalues and check the correctnes
+  of the result (all using elpa1 only)
+
+  read_real         for the real eigenvalue problem
+  read_real_gen     for the real generalized eigenvalue problem
+                    A*x - B*x*lambda = 0
+
+  read_real has to be called with 1 commandline argument (the file
+  containing the matrix), read_real_gen has to be called with 2
+  commandline argument (the files containing matrices A and B)
+
+  The file format for matrices is as follows (all is plain ASCII data):
+
+  - 1st line containing matrix size
+  - then following the upper half of the matrix in column-major
+    (i.e. Fortran) order, one number per line:
+    a(1,1)
+    a(1,2)
+    a(2,2)
+    ...
+    a(1,i)
+    ...
+    a(i,i)
+    ...
+    a(1,n)
+    ...
+    a(n,n)
