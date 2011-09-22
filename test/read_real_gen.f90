@@ -22,7 +22,7 @@ program read_real_gen
    !-------------------------------------------------------------------------------
    !  Local Variables
 
-   integer na, nev
+   integer na, nb, nev
 
    integer np_rows, np_cols, na_rows, na_cols
 
@@ -35,7 +35,7 @@ program read_real_gen
    real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
    real*8, allocatable :: b(:,:), bs(:,:)
 
-   character*256 filename
+   character(256) :: filename, fmttype
    real*8 ttt0, ttt1
 
    !-------------------------------------------------------------------------------
@@ -52,28 +52,63 @@ program read_real_gen
    ! get_command_argument is a FORTRAN 2003 intrinsic which may not be implemented
    ! for every Fortran compiler!!!
 
-   if(myid==0) then
-      call get_command_argument(1,filename,lenarg,info)
-      if(info/=0) then
-         print *,'Usage: test_real_gen matrix_file_1 matrix_file_2'
+   if (myid == 0) then
+
+
+      ! 1. Get the format of the matrices.
+
+      call get_command_argument( 1, fmttype, lenarg, info )
+
+      if (  info /= 0  .or.                                              &
+            (  trim(fmttype) /= 'bin'  .and.  trim(fmttype) /= 'asc'  )  &
+         ) then
+         print *, 'Usage:  read_real_gen  format  matrix_file_1  matrix_file_2'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
-      open(10,file=filename,action='READ',status='OLD',iostat=info)
-      if(info/=0) then
-         print *,'Error: Unable to open ',trim(filename)
-         call mpi_abort(mpi_comm_world,0,mpierr)
+
+      if ( trim(fmttype) == 'bin' ) then
+        fmttype = 'unformatted'
+      else  ! 'asc'
+        fmttype = 'formatted'
       endif
+
+
+      ! 2. Get the file name of the first matrix.
+
       call get_command_argument(2,filename,lenarg,info)
+
       if(info/=0) then
-         print *,'Usage: test_real_gen matrix_file_1 matrix_file_2'
+         print *, 'Usage:  read_real_gen  format  matrix_file_1  matrix_file_2'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
-      open(20,file=filename,action='READ',status='OLD',iostat=info)
+
+      open( 10, file=filename, action='READ', status='OLD', form=trim(fmttype), iostat=info )
+
       if(info/=0) then
          print *,'Error: Unable to open ',trim(filename)
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
-   endif
+
+
+      ! 3. Get the file name of the second matrix.
+
+      call get_command_argument(3,filename,lenarg,info)
+
+      if(info/=0) then
+         print *, 'Usage:  read_real_gen  format  matrix_file_1  matrix_file_2'
+         call mpi_abort(mpi_comm_world,0,mpierr)
+      endif
+
+      open( 20, file=filename, action='READ', status='OLD', form=trim(fmttype), iostat=info )
+
+      if(info/=0) then
+         print *,'Error: Unable to open ',trim(filename)
+         call mpi_abort(mpi_comm_world,0,mpierr)
+      endif
+
+   endif  ! (myid == 0)
+
+
    call mpi_barrier(mpi_comm_world, mpierr) ! Just for safety
 
 
@@ -120,13 +155,22 @@ program read_real_gen
 
    ! Read matrix size
    if(myid==0) then
-      read(10,*) na
-      read(20,*) info
-      if(na/=info) then
-         print *,'Error: Matrix sizes in input different: ',na, info
+
+      if ( trim(fmttype) == 'unformatted' ) then
+        read (10  ) na
+        read (20  ) nb
+      else
+        read (10,*) na
+        read (20,*) nb
+      endif
+
+      if ( na /= nb ) then
+         print *, 'Error: Matrix sizes in input differ: ', na, nb
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
+
    endif
+
    call mpi_bcast(na, 1, mpi_integer, 0, mpi_comm_world, mpierr)
 
    ! Quick check for plausibility
@@ -167,8 +211,8 @@ program read_real_gen
    !-------------------------------------------------------------------------------
    ! Read matrices
 
-   call read_matrix(10, na, a, ubound(a,1), nblk, my_prow, my_pcol, np_rows, np_cols)
-   call read_matrix(20, na, b, ubound(b,1), nblk, my_prow, my_pcol, np_rows, np_cols)
+   call read_matrix(10, fmttype, na, a, ubound(a,1), nblk, my_prow, my_pcol, np_rows, np_cols)
+   call read_matrix(20, fmttype, na, b, ubound(b,1), nblk, my_prow, my_pcol, np_rows, np_cols)
    if(myid==0) close(10)
    if(myid==0) close(20)
 
@@ -308,15 +352,31 @@ program read_real_gen
    if(myid==0) print *,'Error Orthogonality:',errmax
 
    call mpi_finalize(mpierr)
-end
+
+
+end program read_real_gen
+
+
+
+
+
+
 
 !-------------------------------------------------------------------------------
-subroutine read_matrix(iunit, na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols)
+
+
+
+
+
+
+
+subroutine read_matrix(iunit, fmttype, na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols)
 
    implicit none
    include 'mpif.h'
 
    integer, intent(in) :: iunit, na, lda, nblk, my_prow, my_pcol, np_rows, np_cols
+   character(256), intent(in) :: fmttype
    real*8, intent(out) :: a(lda, *)
 
    integer i, j, lr, lc, myid, mpierr
@@ -356,21 +416,35 @@ subroutine read_matrix(iunit, na, a, lda, nblk, my_prow, my_pcol, np_rows, np_co
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    allocate(col(na))
 
+
    do i=1,na
-      if(myid==0) read(iunit,*) col(1:i)
+
+      if (myid==0) then
+        if ( trim(fmttype) == 'unformatted' ) then
+          read (iunit  ) col(1:i)
+        else
+          read (iunit,*) col(1:i)
+        endif
+      endif
+
       call mpi_bcast(col,i,MPI_REAL8,0,MPI_COMM_WORLD,mpierr)
+
       if(l_col(i) > 0) then
          do j=1,i
             if(l_row(j)>0) a(l_row(j),l_col(i)) = col(j)
          enddo
       endif
+
       if(l_row(i) > 0) then
          do j=1,i-1
             if(l_col(j)>0) a(l_row(i),l_col(j)) = col(j)
          enddo
       endif
+
    enddo
 
+
    deallocate(l_row, l_col, col)
+
 
 end subroutine read_matrix

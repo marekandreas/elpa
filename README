@@ -142,18 +142,24 @@ other piece of code.
   test_complex2     Complex eigenvalue problem, 2 stage solver
 
 - There are two programs which read matrices from a file, solve the
-  eigenvalue problem, print the eigenvalues and check the correctnes
+  eigenvalue problem, print the eigenvalues and check the correctness
   of the result (all using elpa1 only)
 
   read_real         for the real eigenvalue problem
   read_real_gen     for the real generalized eigenvalue problem
                     A*x - B*x*lambda = 0
 
-  read_real has to be called with 1 commandline argument (the file
-  containing the matrix), read_real_gen has to be called with 2
-  commandline argument (the files containing matrices A and B)
+  read_real has to be called with 1 command line argument (the file
+  containing the matrix). The file must be in ASCII (formatted) form.
 
-  The file format for matrices is as follows (all is plain ASCII data):
+  read_real_gen has to be called with 3 command line arguments. The
+  first argument is either 'asc' or 'bin' (without quotes) and
+  determines the format of the following files. 'asc' refers to ASCII
+  (formatted) and 'bin' to binary (unformatted). Command line
+  arguments 2 and 3 are the names of the files which contain matrices
+  A and B.
+
+  The record structure of the files containing matrices is as follows:
 
   - 1st line containing matrix size
   - then following the upper half of the matrix in column-major
