@@ -159,19 +159,39 @@ other piece of code.
   arguments 2 and 3 are the names of the files which contain matrices
   A and B.
 
-  The record structure of the files containing matrices is as follows:
+  The structure of the matrix files for read_real and read_real_gen
+  depends on the format of the files:
 
-  - 1st line containing matrix size
-  - then following the upper half of the matrix in column-major
-    (i.e. Fortran) order, one number per line:
-    a(1,1)
-    a(1,2)
-    a(2,2)
-    ...
-    a(1,i)
-    ...
-    a(i,i)
-    ...
-    a(1,n)
-    ...
-    a(n,n)
+  * ASCII format (both read_real and read_real_gen):
+
+    The files must contain the following lines:
+
+      - 1st line containing the matrix size
+      - then following the upper half of the matrix in column-major
+        (i.e. Fortran) order, one number per line:
+        a(1,1)
+        a(1,2)
+        a(2,2)
+        ...
+        a(1,i)
+        ...
+        a(i,i)
+        ...
+        a(1,n)
+        ...
+        a(n,n)
+
+
+  * Binary format (read_real_gen only):
+
+    The files must contain the following records:
+
+      - 1st record:  matrix size  (type integer)
+      - 2nd record:  a(1,1)
+      - 3rd record:  a(1,2)  a(2,2)
+      - ...
+      - ...          a(1,i)   ...   a(i,i)
+      - ...
+      - ...          a(1,n)      ...         a(n,n)
+
+    The type of the matrix elements a(i,j) is real*8.
