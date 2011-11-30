@@ -25,7 +25,7 @@ LIBS = -L/opt/intel/Compiler/11.0/069/mkl/lib/em64t -lmkl_lapack -lmkl -lguide -
 #LIBS = -L/usr/local/lib -lscalapack -llapack-essl -lessl -lblacsF77init -lblacs -lblacsF77init -lblacs -lc
 #
 # ------------------------------------------------------------------------------
-# Settings for IBM AIX BlueGene
+# Settings for IBM BlueGene/P
 #
 #F90 = mpixlf95_r -O3 -g -qarch=auto -qtune=auto
 #F90OPT = mpixlf95_r -O4 -g -qarch=auto -qtune=auto

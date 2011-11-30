@@ -23,8 +23,8 @@ well.
   L. Kr\"amer, B. Lang, H. Lederer, and P. R. Willems, 
   "Parallel solution of partial symmetric eigenvalue problems from
   electronic structure calculations", 
-  Parallel Computing [volume], [page], (2011).
-  Currently: doi:10.1016/j.parco.2011.05.002. 
+  Parallel Computing 37, 783-794 (2011).
+  doi:10.1016/j.parco.2011.05.002. 
 
   Please cite this paper when using ELPA. We also intend to publish an
   overview description of the ELPA library as such, and ask you to

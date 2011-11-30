@@ -1,0 +1,36 @@
+Welcome to the ELPA library git repository.
+
+
+This central repository houses all versions of the ELPA library. At
+the time of this writing (11/30/2011), the ELPA developers provide two
+separate versions, each as a separate subdirectory available here:
+
+- ELPA_2011.12
+
+  This is a stable version of the entire ELPA library including all
+  necessary files to build it. When using ELPA for production, we
+  recommend using this version, as it has seen a lot of testing and
+  production use. 
+
+  This version should only ever see any updates if there are clear and
+  unambiguous bug-fixes to be made. Each bugfix must be documented in
+  the README file. (At the time of this writing, no known bugs exist.)
+
+
+- ELPA_development_version
+
+  This is the development version of the ELPA library. Any useful new
+  changes should be made here, and a number of changes will be made in
+  the near future. If you want the version presently "branded" as
+  stable, please refer to ELPA_2011.12 at this time. 
+
+
+ELPA Version numbering scheme:
+
+We have decided to use the format "ELPA_year.month" to designate
+specific stable point releases of the ELPA library. Point releases
+will be made at irregular intervals, solely determined by when we
+consider the development version absolutely stable. At the time of the
+"branching", the new stable version should be an exact copy of the
+development one.
+
