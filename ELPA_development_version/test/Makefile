@@ -54,11 +54,11 @@ read_real_gen: read_real_gen.o elpa1.o
 test_complex_gen: test_complex_gen.o elpa1.o
 	$(F90) -o $@ test_complex_gen.o elpa1.o $(LIBS)
 
-test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels.o
-	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels.o $(LIBS)
+test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o
+	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o $(LIBS)
 
-test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_kernels.o
-	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_kernels.o $(LIBS)
+test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o
+	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o $(LIBS)
 
 test_real.o: test_real.f90 elpa1.o
 	$(F90) -c $<
@@ -87,7 +87,10 @@ test_complex2.o: test_complex2.f90 elpa1.o elpa2.o
 elpa1.o: ../src/elpa1.f90
 	$(F90) -c $<
 
-elpa2.o: ../src/elpa2.f90 elpa1.o
+blockedQR.o: ../src/blockedQR.f90
+	$(F90) -c $<
+
+elpa2.o: ../src/elpa2.f90 elpa1.o blockedQR.o
 	$(F90) -c ../src/elpa2.f90
 
 elpa2_kernels.o: ../src/elpa2_kernels.f90

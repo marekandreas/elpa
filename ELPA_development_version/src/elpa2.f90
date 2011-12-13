@@ -10,6 +10,7 @@ module ELPA2
 ! Version 1.1.2, 2011-02-21
 
   USE ELPA1
+  USE blockedQR
 
   implicit none
 
@@ -32,6 +33,12 @@ module ELPA2
   
   public :: band_band_real
   public :: divide_band
+  
+!-------------------------------------------------------------------------------  
+
+  integer, public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
+                                                    ! 0 for unblocked
+                                                    ! 1 for rank-2
 
 !-------------------------------------------------------------------------------
 
@@ -357,10 +364,14 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
    integer i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
    integer istep, ncol, lch, lcx, nlc
    integer tile_size, l_rows_tile, l_cols_tile
+   
+   real*8 eps
 
    real*8 vnorm2, xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
    real*8, allocatable:: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
+   real*8, allocatable:: work(:) ! needed for blocked QR
+
 
    integer pcol, prow
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
@@ -389,6 +400,18 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
 
    l_rows_tile = tile_size/np_rows ! local rows of a tile
    l_cols_tile = tile_size/np_cols ! local cols of a tile
+ 
+   if (which_qr_decomposition == 1) then
+          l_rows = local_index(na, my_prow, np_rows, nblk, -1)
+          work_size = max(4*np_rows,2*nbw)
+          work_size = max(l_rows+1,work_size)
+          work_size = max(16, work_size)
+          work_size = max(2*(l_rows+1),work_size)
+          work_size = max(2+4*(nbw+1),work_size)
+          allocate(work(work_size))
+          work = 0
+          eps = 1.0d0
+   endif
 
    do istep = (na-1)/nbw, 1, -1
 
@@ -410,6 +433,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
       tmat(:,:,istep) = 0
 
       ! Reduce current block to lower triangular form
+      if (which_qr_decomposition == 1) then
+          call qr_rank2_real(a, lda, vmr, max(l_rows,1), tmat, nbw, istep, n_cols, nblk, mpi_comm_rows, mpi_comm_cols, work, eps)
+      else
 
       do lc = n_cols, 1, -1
 
@@ -501,7 +527,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
 
       enddo
 
-      ! Calculate scalar products of stored Householder vectors.
+      endif
+
+       ! Calculate scalar products of stored Householder vectors.
       ! This can be done in different ways, we use dsyrk
 
       vav = 0
@@ -603,6 +631,10 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
       deallocate(vmr, umc, vr)
 
    enddo
+ 
+   if (which_qr_decomposition == 1) then
+          deallocate(work)
+   endif
 
 end subroutine bandred_real
 
