@@ -364,6 +364,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
    integer i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
    integer istep, ncol, lch, lcx, nlc
    integer tile_size, l_rows_tile, l_cols_tile
+   integer work_size
    
    real*8 eps
 
