@@ -841,237 +841,410 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 !              MPI-Communicator for the total processor set
 !-------------------------------------------------------------------------------
 
-   implicit none
+    implicit none
 
-   integer, intent(in) ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
-   real*8, intent(in)  :: a(lda,*)
-   real*8, intent(out) :: d(na), e(na) ! set only on PE 0
-
-
-   real*8 vnorm2, hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
-   real*8 hd(nb), hs(nb)
-
-   integer i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
-   integer my_pe, n_pes, mpierr
-   integer my_prow, np_rows, my_pcol, np_cols
-   integer ireq_ab, ireq_hv
-   integer na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
-   integer, allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
-   integer, allocatable :: limits(:), snd_limits(:,:)
-   integer, allocatable :: block_limits(:)
-   real*8, allocatable :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
-   ! dummies for calling redist_band
-   complex*16 :: c_a(1,1), c_ab(1,1)
+    integer, intent(in) ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
+    real*8, intent(in)  :: a(lda,*)
+    real*8, intent(out) :: d(na), e(na) ! set only on PE 0
 
 
-   call mpi_comm_rank(mpi_comm,my_pe,mpierr)
-   call mpi_comm_size(mpi_comm,n_pes,mpierr)
+    real*8 vnorm2, hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
+    real*8 hd(nb), hs(nb)
+    real*8, allocatable :: hv_t(:,:), tau_t(:)
 
-   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-   call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-   call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+    integer i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
+    integer my_pe, n_pes, mpierr
+    integer my_prow, np_rows, my_pcol, np_cols
+    integer ireq_ab, ireq_hv
+    integer na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
+    integer max_threads, my_thread, my_block_s, my_block_e, iter
+    integer mpi_status(MPI_STATUS_SIZE)
+    integer, allocatable :: mpi_statuses(:,:)
+    integer, allocatable :: omp_block_limits(:)
+    integer, allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), global_id_tmp(:,:), hh_cnt(:), hh_dst(:)
+    integer, allocatable :: limits(:), snd_limits(:,:)
+    integer, allocatable :: block_limits(:)
+    real*8, allocatable :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
+    ! dummies for calling redist_band
+    complex*16 :: c_a(1,1), c_ab(1,1)
 
-   ! Get global_id mapping 2D procssor coordinates to global id
-
-   allocate(global_id(0:np_rows-1,0:np_cols-1))
-   global_id(:,:) = 0
-   global_id(my_prow, my_pcol) = my_pe
-
-   call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
+!$  integer :: omp_get_max_threads
 
 
-   ! Total number of blocks in the band:
+    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
+    call mpi_comm_size(mpi_comm,n_pes,mpierr)
 
-   nblocks_total = (na-1)/nb + 1
+    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
-   ! Set work distribution
+    ! Get global_id mapping 2D procssor coordinates to global id
 
-   allocate(block_limits(0:n_pes))
-   call divide_band(nblocks_total, n_pes, block_limits)
+    allocate(global_id(0:np_rows-1,0:np_cols-1))
+    allocate(global_id_tmp(0:np_rows-1,0:np_cols-1))
+    global_id(:,:) = 0
+    global_id(my_prow, my_pcol) = my_pe
 
-   ! nblocks: the number of blocks for my task
-   nblocks = block_limits(my_pe+1) - block_limits(my_pe)
+    global_id_tmp(:,:) = global_id(:,:)
+    call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
+    deallocate(global_id_tmp)
 
-   ! allocate the part of the band matrix which is needed by this PE
-   ! The size is 1 block larger than needed to avoid extensive shifts
-   allocate(ab(2*nb,(nblocks+1)*nb))
-   ab = 0 ! needed for lower half, the extra block should also be set to 0 for safety
 
-   ! n_off: Offset of ab within band
-   n_off = block_limits(my_pe)*nb
+    ! Total number of blocks in the band:
 
-   ! Redistribute band in a to ab
-   call redist_band(.true., a, c_a, lda, na, nblk, nb, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab, c_ab)
+    nblocks_total = (na-1)/nb + 1
 
-   ! Calculate the workload for each sweep in the back transformation
-   ! and the space requirements to hold the HH vectors
+    ! Set work distribution
 
-   allocate(limits(0:np_rows))
-   call determine_workload(na, nb, np_rows, limits)
-   max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
+    allocate(block_limits(0:n_pes))
+    call divide_band(nblocks_total, n_pes, block_limits)
 
-   num_hh_vecs = 0
-   num_chunks  = 0
-   nx = na
-   do n = 1, nblocks_total
+    ! nblocks: the number of blocks for my task
+    nblocks = block_limits(my_pe+1) - block_limits(my_pe)
+
+    ! allocate the part of the band matrix which is needed by this PE
+    ! The size is 1 block larger than needed to avoid extensive shifts
+    allocate(ab(2*nb,(nblocks+1)*nb))
+    ab = 0 ! needed for lower half, the extra block should also be set to 0 for safety
+
+    ! n_off: Offset of ab within band
+    n_off = block_limits(my_pe)*nb
+
+    ! Redistribute band in a to ab
+    call redist_band(.true., a, c_a, lda, na, nblk, nb, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab, c_ab)
+
+    ! Calculate the workload for each sweep in the back transformation
+    ! and the space requirements to hold the HH vectors
+
+    allocate(limits(0:np_rows))
+    call determine_workload(na, nb, np_rows, limits)
+    max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
+
+    num_hh_vecs = 0
+    num_chunks  = 0
+    nx = na
+    do n = 1, nblocks_total
       call determine_workload(nx, nb, np_rows, limits)
       local_size = limits(my_prow+1) - limits(my_prow)
       ! add to number of householder vectors
       ! please note: for nx==1 the one and only HH vector is 0 and is neither calculated nor send below!
       if(mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
-         num_hh_vecs = num_hh_vecs + local_size
-         num_chunks  = num_chunks+1
+        num_hh_vecs = num_hh_vecs + local_size
+        num_chunks  = num_chunks+1
       endif
       nx = nx - nb
-   enddo
+    enddo
 
-   ! Allocate space for HH vectors
+    ! Allocate space for HH vectors
 
-   allocate(hh_trans_real(nb,num_hh_vecs))
+    allocate(hh_trans_real(nb,num_hh_vecs))
 
-   ! Allocate and init MPI requests
+    ! Allocate and init MPI requests
 
-   allocate(ireq_hhr(num_chunks)) ! Recv requests
-   allocate(ireq_hhs(nblocks))    ! Send requests
+    allocate(ireq_hhr(num_chunks)) ! Recv requests
+    allocate(ireq_hhs(nblocks))    ! Send requests
 
-   num_hh_vecs = 0
-   num_chunks  = 0
-   nx = na
-   nt = 0
-   do n = 1, nblocks_total
+    num_hh_vecs = 0
+    num_chunks  = 0
+    nx = na
+    nt = 0
+    do n = 1, nblocks_total
       call determine_workload(nx, nb, np_rows, limits)
       local_size = limits(my_prow+1) - limits(my_prow)
       if(mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
-         num_chunks  = num_chunks+1
-         call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, mpi_real8, nt, &
-                        10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
-         num_hh_vecs = num_hh_vecs + local_size
+        num_chunks  = num_chunks+1
+        call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, mpi_real8, nt, &
+                       10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
+        num_hh_vecs = num_hh_vecs + local_size
       endif
       nx = nx - nb
       if(n == block_limits(nt+1)) then
-         nt = nt + 1
+        nt = nt + 1
       endif
-   enddo
+    enddo
 
-   ireq_hhs(:) = MPI_REQUEST_NULL
+    ireq_hhs(:) = MPI_REQUEST_NULL
 
-   ! Buffers for gathering/sending the HH vectors
+    ! Buffers for gathering/sending the HH vectors
 
-   allocate(hh_gath(nb,max_blk_size,nblocks)) ! gathers HH vectors
-   allocate(hh_send(nb,max_blk_size,nblocks)) ! send buffer for HH vectors
-   hh_gath(:,:,:) = 0
-   hh_send(:,:,:) = 0
+    allocate(hh_gath(nb,max_blk_size,nblocks)) ! gathers HH vectors
+    allocate(hh_send(nb,max_blk_size,nblocks)) ! send buffer for HH vectors
+    hh_gath(:,:,:) = 0
+    hh_send(:,:,:) = 0
 
-   ! Some counters
+    ! Some counters
 
-   allocate(hh_cnt(nblocks))
-   allocate(hh_dst(nblocks))
+    allocate(hh_cnt(nblocks))
+    allocate(hh_dst(nblocks))
 
-   hh_cnt(:) = 1 ! The first transfomation vector is always 0 and not calculated at all
-   hh_dst(:) = 0 ! PE number for receive
+    hh_cnt(:) = 1 ! The first transfomation vector is always 0 and not calculated at all
+    hh_dst(:) = 0 ! PE number for receive
 
-   ireq_ab = MPI_REQUEST_NULL
-   ireq_hv = MPI_REQUEST_NULL
+    ireq_ab = MPI_REQUEST_NULL
+    ireq_hv = MPI_REQUEST_NULL
 
-   ! Limits for sending
+    ! Limits for sending
 
-   allocate(snd_limits(0:np_rows,nblocks))
+    allocate(snd_limits(0:np_rows,nblocks))
 
-   do iblk=1,nblocks
+    do iblk=1,nblocks
       call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
-   enddo
+    enddo
 
-   ! ---------------------------------------------------------------------------
-   ! Start of calculations
+    ! OpenMP work distribution:
 
-   na_s = block_limits(my_pe)*nb + 1
+    max_threads = 1
+!$ max_threads = omp_get_max_threads()
 
-   if(my_pe>0 .and. na_s<=na) then
+    ! For OpenMP we need at least 2 blocks for every thread
+    max_threads = MIN(max_threads, nblocks/2)
+    if(max_threads==0) max_threads = 1
+
+    allocate(omp_block_limits(0:max_threads))
+
+    ! Get the OpenMP block limits
+    call divide_band(nblocks, max_threads, omp_block_limits)
+
+    allocate(hv_t(nb,max_threads), tau_t(max_threads))
+    hv_t = 0
+    tau_t = 0
+
+    ! ---------------------------------------------------------------------------
+    ! Start of calculations
+
+    na_s = block_limits(my_pe)*nb + 1
+
+    if(my_pe>0 .and. na_s<=na) then
       ! send first column to previous PE
       ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
       ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
       call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
-   endif
+    endif
 
-   do istep=1,na-1
+    do istep=1,na-1-block_limits(my_pe)*nb
 
       if(my_pe==0) then
-         n = MIN(na-na_s,nb) ! number of rows to be reduced
-         hv(:) = 0
-         tau = 0
-         ! The last step (istep=na-1) is only needed for sending the last HH vectors.
-         ! We don't want the sign of the last element flipped (analogous to the other sweeps)
-         if(istep < na-1) then
-            ! Transform first column of remaining matrix
-            vnorm2 = sum(ab(3:n+1,na_s-n_off)**2)
-            call hh_transform_real(ab(2,na_s-n_off),vnorm2,hf,tau)
-            hv(1) = 1
-            hv(2:n) = ab(3:n+1,na_s-n_off)*hf
-         endif
-         d(istep) = ab(1,na_s-n_off)
-         e(istep) = ab(2,na_s-n_off)
-         if(istep == na-1) then
-            d(na) = ab(1,na_s+1-n_off)
-            e(na) = 0
-         endif
+        n = MIN(na-na_s,nb) ! number of rows to be reduced
+        hv(:) = 0
+        tau = 0
+        ! The last step (istep=na-1) is only needed for sending the last HH vectors.
+        ! We don't want the sign of the last element flipped (analogous to the other sweeps)
+        if(istep < na-1) then
+          ! Transform first column of remaining matrix
+          vnorm2 = sum(ab(3:n+1,na_s-n_off)**2)
+          call hh_transform_real(ab(2,na_s-n_off),vnorm2,hf,tau)
+          hv(1) = 1
+          hv(2:n) = ab(3:n+1,na_s-n_off)*hf
+        endif
+        d(istep) = ab(1,na_s-n_off)
+        e(istep) = ab(2,na_s-n_off)
+        if(istep == na-1) then
+          d(na) = ab(1,na_s+1-n_off)
+          e(na) = 0
+        endif
       else
-         if(na>na_s) then
-            ! Receive Householder vector from previous task, from PE owning subdiagonal
-            call mpi_recv(hv,nb,mpi_real8,my_pe-1,2,mpi_comm,MPI_STATUS_IGNORE,mpierr)
-            tau = hv(1)
-            hv(1) = 1.
-         endif
+        if(na>na_s) then
+          ! Receive Householder vector from previous task, from PE owning subdiagonal
+          call mpi_recv(hv,nb,mpi_real8,my_pe-1,2,mpi_comm,mpi_status,mpierr)
+          tau = hv(1)
+          hv(1) = 1.
+        endif
       endif
 
       na_s = na_s+1
       if(na_s-n_off > nb) then
-         ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-         ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
-         n_off = n_off + nb
+        ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
+        ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
+        n_off = n_off + nb
       endif
 
-      do iblk=1,nblocks
+      if(max_threads > 1) then
 
-         ns = na_s + (iblk-1)*nb - n_off ! first column in block
-         ne = ns+nb-1                    ! last column in block
+        ! Codepath for OpenMP
 
-         if(ns+n_off>na) exit
+        ! Please note that in this case it is absolutely necessary to have at least 2 blocks per thread!
+        ! Every thread is one reduction cycle behind its predecessor and thus starts one step later.
+        ! This simulates the behaviour of the MPI tasks which also work after each other.
+        ! The code would be considerably easier, if the MPI communication would be made within
+        ! the parallel region - this is avoided here since this would require 
+        ! MPI_Init_thread(MPI_THREAD_MULTIPLE) at the start of the program.
 
-         ! Store Householder vector for back transformation
+        hv_t(:,1) = hv
+        tau_t(1) = tau
 
-         hh_cnt(iblk) = hh_cnt(iblk) + 1
+        do iter = 1, 2
 
-         hh_gath(1   ,hh_cnt(iblk),iblk) = tau
-         hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+          ! iter=1 : work on first block
+          ! iter=2 : work on remaining blocks
+          ! This is done in 2 iterations so that we have a barrier in between:
+          ! After the first iteration, it is guaranteed that the last row of the last block
+          ! is completed by the next thread.
+          ! After the first iteration it is also the place to exchange the last row
+          ! with MPI calls
 
-         if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-            ! Wait for last transfer to finish
-            call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
-            ! Copy vectors into send buffer
-            hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-            ! Send to destination
-            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
-                           global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                           10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
-            ! Reset counter and increase destination row
-            hh_cnt(iblk) = 0
-            hh_dst(iblk) = hh_dst(iblk)+1
-         endif
+!$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
+!$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
+          do my_thread = 1, max_threads
 
-         ! The following code is structured in a way to keep waiting times for
-         ! other PEs at a minimum, especially if there is only one block.
-         ! For this reason, it requests the last column as late as possible
-         ! and sends the Householder vector and the first column as early
-         ! as possible.
+            if(iter == 1) then
+              my_block_s = omp_block_limits(my_thread-1) + 1
+              my_block_e = my_block_s
+            else
+              my_block_s = omp_block_limits(my_thread-1) + 2
+              my_block_e = omp_block_limits(my_thread)
+            endif
 
-         nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
-         nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
-                                       ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
+            do iblk = my_block_s, my_block_e
 
-         ! Multiply diagonal block and subdiagonal block with Householder vector
+              ns = na_s + (iblk-1)*nb - n_off - my_thread + 1 ! first column in block
+              ne = ns+nb-1                    ! last column in block
 
-         if(iblk==nblocks .and. nc==nb) then
+              if(istep<my_thread .or. ns+n_off>na) exit
+
+              hv = hv_t(:,my_thread)
+              tau = tau_t(my_thread)
+
+              ! Store Householder vector for back transformation
+
+              hh_cnt(iblk) = hh_cnt(iblk) + 1
+
+              hh_gath(1   ,hh_cnt(iblk),iblk) = tau
+              hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+
+              nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
+              nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
+                                            ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
+
+              ! Transform diagonal block
+
+              call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
+
+              x = dot_product(hv(1:nc),hd(1:nc))*tau
+              hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
+
+              call DSYR2('L',nc,-1.d0,hd,1,hv,1,ab(1,ns),2*nb-1)
+
+              hv_t(:,my_thread) = 0
+              tau_t(my_thread)  = 0
+
+              if(nr<=0) cycle ! No subdiagonal block present any more
+
+              ! Transform subdiagonal block
+
+              call DGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
+
+              if(nr>1) then
+
+                ! complete (old) Householder transformation for first column
+
+                ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
+
+                ! calculate new Householder transformation for first column
+                ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
+
+                vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
+                call hh_transform_real(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
+                hv_t(1   ,my_thread) = 1.
+                hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
+                ab(nb+2:,ns) = 0
+
+                ! update subdiagonal block for old and new Householder transformation
+                ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
+
+                call DGEMV('T',nr,nb-1,tau_t(my_thread),ab(nb,ns+1),2*nb-1,hv_t(1,my_thread),1,0.d0,h(2),1)
+                x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
+                h(2:nb) = h(2:nb) - x*hv(2:nb)
+                ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
+                do i=2,nb
+                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_t(1:nr,my_thread)*h(i) - hs(1:nr)*hv(i)
+                enddo
+
+              else
+
+                ! No new Householder transformation for nr=1, just complete the old one
+                ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
+                do i=2,nb
+                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
+                enddo
+                ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
+                hv_t(1,my_thread) = 1.
+
+              endif
+
+            enddo
+
+          enddo ! my_thread
+!$omp end parallel do
+
+          if (iter==1) then
+            ! We are at the end of the first block
+
+            ! Send our first column to previous PE
+            if(my_pe>0 .and. na_s <= na) then
+              call mpi_wait(ireq_ab,mpi_status,mpierr)
+              ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+              call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+            endif
+
+            ! Request last column from next PE
+            ne = na_s + nblocks*nb - (max_threads-1) - 1
+            if(istep>=max_threads .and. ne <= na) then
+              call mpi_recv(ab(1,ne-n_off),nb+1,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+            endif
+
+          else
+            ! We are at the end of all blocks
+
+            ! Send last HH vector and TAU to next PE if it has been calculated above
+            ne = na_s + nblocks*nb - (max_threads-1) - 1
+            if(istep>=max_threads .and. ne < na) then
+              call mpi_wait(ireq_hv,mpi_status,mpierr)
+              hv_s(1) = tau_t(max_threads)
+              hv_s(2:) = hv_t(2:,max_threads)
+              call mpi_isend(hv_s,nb,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
+            endif
+
+            ! "Send" HH vector and TAU to next OpenMP thread
+            do my_thread = max_threads, 2, -1
+              hv_t(:,my_thread) = hv_t(:,my_thread-1)
+              tau_t(my_thread)  = tau_t(my_thread-1)
+            enddo
+
+          endif
+        enddo ! iter
+
+      else
+
+        ! Codepath for 1 thread without OpenMP
+
+        ! The following code is structured in a way to keep waiting times for
+        ! other PEs at a minimum, especially if there is only one block.
+        ! For this reason, it requests the last column as late as possible
+        ! and sends the Householder vector and the first column as early
+        ! as possible.
+
+        do iblk=1,nblocks
+
+          ns = na_s + (iblk-1)*nb - n_off ! first column in block
+          ne = ns+nb-1                    ! last column in block
+
+          if(ns+n_off>na) exit
+
+          ! Store Householder vector for back transformation
+
+          hh_cnt(iblk) = hh_cnt(iblk) + 1
+
+          hh_gath(1   ,hh_cnt(iblk),iblk) = tau
+          hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+
+          nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
+          nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
+                                        ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
+
+          ! Multiply diagonal block and subdiagonal block with Householder vector
+
+          if(iblk==nblocks .and. nc==nb) then
 
             ! We need the last column from the next PE.
             ! First do the matrix multiplications without last column ...
@@ -1084,27 +1257,27 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
             if(nr>0) call DGEMV('N',nr,nb-1,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
 
             ! ... then request last column ...
-            call mpi_recv(ab(1,ne),nb+1,mpi_real8,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
+            call mpi_recv(ab(1,ne),nb+1,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
 
             ! ... and complete the result
             hs(1:nr) = hs(1:nr) + ab(2:nr+1,ne)*tau*hv(nb)
             hd(nb) = hd(nb) + ab(1,ne)*hv(nb)*tau
 
-         else
+          else
 
             ! Normal matrix multiply
             call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
             if(nr>0) call DGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
 
-         endif
+          endif
 
-         ! Calculate first column of subdiagonal block and calculate new
-         ! Householder transformation for this column
+          ! Calculate first column of subdiagonal block and calculate new
+          ! Householder transformation for this column
 
-         hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
-         tau_new = 0
+          hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
+          tau_new = 0
 
-         if(nr>0) then
+          if(nr>0) then
 
             ! complete (old) Householder transformation for first column
 
@@ -1112,30 +1285,30 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
             ! calculate new Householder transformation ...
             if(nr>1) then
-               vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
-               call hh_transform_real(ab(nb+1,ns),vnorm2,hf,tau_new)
-               hv_new(1) = 1.
-               hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
-               ab(nb+2:,ns) = 0
+              vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
+              call hh_transform_real(ab(nb+1,ns),vnorm2,hf,tau_new)
+              hv_new(1) = 1.
+              hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
+              ab(nb+2:,ns) = 0
             endif
 
             ! ... and send it away immediatly if this is the last block
 
             if(iblk==nblocks) then
-               call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
-               hv_s(1) = tau_new
-               hv_s(2:) = hv_new(2:)
-               call mpi_isend(hv_s,nb,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
+              call mpi_wait(ireq_hv,mpi_status,mpierr)
+              hv_s(1) = tau_new
+              hv_s(2:) = hv_new(2:)
+              call mpi_isend(hv_s,nb,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
             endif
 
-         endif
+          endif
 
 
-         ! Transform diagonal block
-         x = dot_product(hv(1:nc),hd(1:nc))*tau
-         hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
+          ! Transform diagonal block
+          x = dot_product(hv(1:nc),hd(1:nc))*tau
+          hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
 
-         if(my_pe>0 .and. iblk==1) then
+          if(my_pe>0 .and. iblk==1) then
 
             ! The first column of the diagonal block has to be send to the previous PE
             ! Calculate first column only ...
@@ -1144,62 +1317,87 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
             ! ... send it away ...
 
-            call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+            call mpi_wait(ireq_ab,mpi_status,mpierr)
             ab_s(1:nb+1) = ab(1:nb+1,ns)
             call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
 
             ! ... and calculate remaining columns with rank-2 update
             if(nc>1) call DSYR2('L',nc-1,-1.d0,hd(2),1,hv(2),1,ab(1,ns+1),2*nb-1)
-         else
+          else
             ! No need to  send, just a rank-2 update
             call DSYR2('L',nc,-1.d0,hd,1,hv,1,ab(1,ns),2*nb-1)
-         endif
+          endif
 
-         ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
+          ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
-         if(nr>0) then
+          if(nr>0) then
             if(nr>1) then
-               call DGEMV('T',nr,nb-1,tau_new,ab(nb,ns+1),2*nb-1,hv_new,1,0.d0,h(2),1)
-               x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
-               h(2:nb) = h(2:nb) - x*hv(2:nb)
-               ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
-               do i=2,nb
-                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*h(i) - hs(1:nr)*hv(i)
-               enddo
+              call DGEMV('T',nr,nb-1,tau_new,ab(nb,ns+1),2*nb-1,hv_new,1,0.d0,h(2),1)
+              x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
+              h(2:nb) = h(2:nb) - x*hv(2:nb)
+              ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
+              do i=2,nb
+                ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*h(i) - hs(1:nr)*hv(i)
+              enddo
             else
-               ! No double Householder transformation for nr=1, just complete the row
-               do i=2,nb
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
-               enddo
+              ! No double Householder transformation for nr=1, just complete the row
+              do i=2,nb
+                ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
+              enddo
             endif
-         endif
+          endif
 
-         ! Use new HH vector for the next block
-         hv(:) = hv_new(:)
-         tau = tau_new
+          ! Use new HH vector for the next block
+          hv(:) = hv_new(:)
+          tau = tau_new
+
+        enddo
+
+      endif
+
+      do iblk = 1, nblocks
+
+        if(hh_dst(iblk) >= np_rows) exit
+        if(snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
+
+        if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+          ! Wait for last transfer to finish
+          call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+          ! Copy vectors into send buffer
+          hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+          ! Send to destination
+          call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
+                         global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
+                         10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
+          ! Reset counter and increase destination row
+          hh_cnt(iblk) = 0
+          hh_dst(iblk) = hh_dst(iblk)+1
+        endif
 
       enddo
 
-   enddo
+    enddo
 
-   ! Finish the last outstanding requests
-   call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-   call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+    ! Finish the last outstanding requests
+    call mpi_wait(ireq_ab,mpi_status,mpierr)
+    call mpi_wait(ireq_hv,mpi_status,mpierr)
 
-   call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
-   call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+    allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)))
+    call mpi_waitall(nblocks, ireq_hhs, mpi_statuses, mpierr)
+    call mpi_waitall(num_chunks, ireq_hhr, mpi_statuses, mpierr)
+    deallocate(mpi_statuses)
 
-   call mpi_barrier(mpi_comm,mpierr)
+    call mpi_barrier(mpi_comm,mpierr)
 
-   deallocate(ab)
-   deallocate(ireq_hhr, ireq_hhs)
-   deallocate(hh_cnt, hh_dst)
-   deallocate(hh_gath, hh_send)
-   deallocate(limits, snd_limits)
-   deallocate(block_limits)
-   deallocate(global_id)
+    deallocate(ab)
+    deallocate(ireq_hhr, ireq_hhs)
+    deallocate(hh_cnt, hh_dst)
+    deallocate(hh_gath, hh_send)
+    deallocate(limits, snd_limits)
+    deallocate(block_limits)
+    deallocate(global_id)
 
- end subroutine tridiag_band_real
+end subroutine tridiag_band_real
 
 ! --------------------------------------------------------------------------------------------------
 
@@ -1246,6 +1444,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
     integer num_result_blocks, num_result_buffers, num_bufs_recvd
     integer a_off, current_tv_off, max_blk_size, b_off, b_len
     integer mpierr, src, src_offset, dst, offset, nfact, num_blk
+    integer mpi_status(MPI_STATUS_SIZE)
     logical flag
 
     real*8, allocatable :: a(:,:,:,:), row(:)
@@ -1258,6 +1457,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
     integer, allocatable :: result_send_request(:), result_recv_request(:), limits(:)
     integer, allocatable :: top_send_request(:), bottom_send_request(:)
     integer, allocatable :: top_recv_request(:), bottom_recv_request(:)
+    integer, allocatable :: mpi_statuses(:,:)
 
     ! MPI send/recv tags, arbitrary
 
@@ -1351,7 +1551,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
             do i=limits(ip)+1,limits(ip+1)
                 src = mod((i-1)/nblk, np_rows)
                 if(src < my_prow) then
-                    call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, mpi_status, mpierr)
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(ip),my_thread)
@@ -1391,7 +1591,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
             do i=limits(my_prow)+1,limits(my_prow+1)
                 src = mod((i-1)/nblk, np_rows)
                 if(src == ip) then
-                    call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, mpi_status, mpierr)
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(my_prow),my_thread)
@@ -1523,7 +1723,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
             !wait_b
             if(current_n_end < current_n) then
-                call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(bottom_recv_request(i), mpi_status, mpierr)
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     n_off = current_local_n+a_off
@@ -1543,7 +1743,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
                 !wait_t
                 if(top_msg_length>0) then
-                    call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
                 endif
 
                 !compute
@@ -1559,7 +1759,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                 enddo
 
                 !send_b
-                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
                 if(bottom_msg_length>0) then
                     n_off = current_local_n+nbw-bottom_msg_length+a_off
                     b_len = csw*bottom_msg_length*max_threads
@@ -1578,7 +1778,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                 enddo
 
                 !send_b
-                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
                 if(bottom_msg_length > 0) then
                     n_off = current_local_n+nbw-bottom_msg_length+a_off
                     b_len = csw*bottom_msg_length*max_threads
@@ -1596,7 +1796,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
                 !wait_t
                 if(top_msg_length>0) then
-                    call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
                 endif
 
                 !compute
@@ -1621,7 +1821,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
             !send_t
             if(my_prow > 0) then
-                call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(top_send_request(i), mpi_status, mpierr)
                 b_len = csw*nbw*max_threads
                 top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
                 call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_REAL8, &
@@ -1632,9 +1832,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
             ! Care that there are not too many outstanding top_recv_request's
             if(stripe_count > 1) then
                 if(i>1) then
-                    call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(top_recv_request(i-1), mpi_status, mpierr)
                 else
-                    call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(top_recv_request(stripe_count), mpi_status, mpierr)
                 endif
             endif
 
@@ -1645,7 +1845,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
         else
             ! wait for last top_send_request
           do i = 1, stripe_count
-            call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+            call MPI_Wait(top_send_request(i), mpi_status, mpierr)
           enddo
         endif
 
@@ -1662,7 +1862,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
                 nbuf = mod(num_blk, num_result_buffers) + 1 ! buffer number to get this block
 
-                call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(result_send_request(nbuf), mpi_status, mpierr)
 
                 dst = mod(num_blk, np_rows)
 
@@ -1693,10 +1893,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                 ! outstanding requests
 
                 if(next_local_n > 0) then
-                    call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Test(result_recv_request(nbuf), flag, mpi_status, mpierr)
                     if(.not.flag) exit
                 else
-                    call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(result_recv_request(nbuf), mpi_status, mpierr)
                 endif
 
                 ! Fill result buffer into q
@@ -1744,7 +1944,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
     if(ANY(bottom_recv_request /= MPI_REQUEST_NULL)) print *,'*** ERROR bottom_recv_request ***',my_prow,my_pcol
 
     if(my_prow == 0) then
-        call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
+        allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers))
+        call MPI_Waitall(num_result_buffers, result_send_request, mpi_statuses, mpierr)
+        deallocate(mpi_statuses)
     endif
 
     if(ANY(result_send_request /= MPI_REQUEST_NULL)) print *,'*** ERROR result_send_request ***',my_prow,my_pcol
@@ -2367,7 +2569,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
 !-------------------------------------------------------------------------------
 ! tridiag_band_complex:
-! Reduces a real symmetric band matrix to tridiagonal form
+! Reduces a complex hermitian band matrix to tridiagonal form
 !
 !  na          Order of matrix a
 !
@@ -2390,239 +2592,412 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 !              MPI-Communicator for the total processor set
 !-------------------------------------------------------------------------------
 
-   implicit none
+    implicit none
 
-   integer, intent(in) ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
-   complex*16, intent(in) :: a(lda,*)
-   real*8, intent(out) :: d(na), e(na) ! set only on PE 0
-
-
-   real*8 vnorm2
-   complex*16 hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
-   complex*16 hd(nb), hs(nb)
-
-   integer i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
-   integer my_pe, n_pes, mpierr
-   integer my_prow, np_rows, my_pcol, np_cols
-   integer ireq_ab, ireq_hv
-   integer na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
-   integer, allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
-   integer, allocatable :: limits(:), snd_limits(:,:)
-   integer, allocatable :: block_limits(:)
-   complex*16, allocatable :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
-   ! dummies for calling redist_band
-   real*8 :: r_a(1,1), r_ab(1,1)
+    integer, intent(in) ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
+    complex*16, intent(in)  :: a(lda,*)
+    real*8, intent(out) :: d(na), e(na) ! set only on PE 0
 
 
-   call mpi_comm_rank(mpi_comm,my_pe,mpierr)
-   call mpi_comm_size(mpi_comm,n_pes,mpierr)
+    real*8 vnorm2
+    complex*16 hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
+    complex*16 hd(nb), hs(nb)
+    complex*16, allocatable :: hv_t(:,:), tau_t(:)
 
-   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-   call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-   call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+    integer i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
+    integer my_pe, n_pes, mpierr
+    integer my_prow, np_rows, my_pcol, np_cols
+    integer ireq_ab, ireq_hv
+    integer na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
+    integer max_threads, my_thread, my_block_s, my_block_e, iter
+    integer mpi_status(MPI_STATUS_SIZE)
+    integer, allocatable :: mpi_statuses(:,:)
+    integer, allocatable :: omp_block_limits(:)
+    integer, allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), global_id_tmp(:,:), hh_cnt(:), hh_dst(:)
+    integer, allocatable :: limits(:), snd_limits(:,:)
+    integer, allocatable :: block_limits(:)
+    complex*16, allocatable :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
+    ! dummies for calling redist_band
+    real*8 :: r_a(1,1), r_ab(1,1)
 
-   ! Get global_id mapping 2D procssor coordinates to global id
-
-   allocate(global_id(0:np_rows-1,0:np_cols-1))
-   global_id(:,:) = 0
-   global_id(my_prow, my_pcol) = my_pe
-
-   call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
+!$  integer :: omp_get_max_threads
 
 
-   ! Total number of blocks in the band:
+    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
+    call mpi_comm_size(mpi_comm,n_pes,mpierr)
 
-   nblocks_total = (na-1)/nb + 1
+    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
-   ! Set work distribution
+    ! Get global_id mapping 2D procssor coordinates to global id
 
-   allocate(block_limits(0:n_pes))
-   call divide_band(nblocks_total, n_pes, block_limits)
+    allocate(global_id(0:np_rows-1,0:np_cols-1))
+    allocate(global_id_tmp(0:np_rows-1,0:np_cols-1))
+    global_id(:,:) = 0
+    global_id(my_prow, my_pcol) = my_pe
 
-   ! nblocks: the number of blocks for my task
-   nblocks = block_limits(my_pe+1) - block_limits(my_pe)
+    global_id_tmp(:,:) = global_id(:,:)
+    call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
+    deallocate(global_id_tmp)
 
-   ! allocate the part of the band matrix which is needed by this PE
-   ! The size is 1 block larger than needed to avoid extensive shifts
-   allocate(ab(2*nb,(nblocks+1)*nb))
-   ab = 0 ! needed for lower half, the extra block should also be set to 0 for safety
 
-   ! n_off: Offset of ab within band
-   n_off = block_limits(my_pe)*nb
+    ! Total number of blocks in the band:
 
-   ! Redistribute band in a to ab
-   call redist_band(.false., r_a, a, lda, na, nblk, nb, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab, ab)
+    nblocks_total = (na-1)/nb + 1
 
-   ! Calculate the workload for each sweep in the back transformation
-   ! and the space requirements to hold the HH vectors
+    ! Set work distribution
 
-   allocate(limits(0:np_rows))
-   call determine_workload(na, nb, np_rows, limits)
-   max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
+    allocate(block_limits(0:n_pes))
+    call divide_band(nblocks_total, n_pes, block_limits)
 
-   num_hh_vecs = 0
-   num_chunks  = 0
-   nx = na
-   do n = 1, nblocks_total
+    ! nblocks: the number of blocks for my task
+    nblocks = block_limits(my_pe+1) - block_limits(my_pe)
+
+    ! allocate the part of the band matrix which is needed by this PE
+    ! The size is 1 block larger than needed to avoid extensive shifts
+    allocate(ab(2*nb,(nblocks+1)*nb))
+    ab = 0 ! needed for lower half, the extra block should also be set to 0 for safety
+
+    ! n_off: Offset of ab within band
+    n_off = block_limits(my_pe)*nb
+
+    ! Redistribute band in a to ab
+    call redist_band(.false., r_a, a, lda, na, nblk, nb, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab, ab)
+
+    ! Calculate the workload for each sweep in the back transformation
+    ! and the space requirements to hold the HH vectors
+
+    allocate(limits(0:np_rows))
+    call determine_workload(na, nb, np_rows, limits)
+    max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
+
+    num_hh_vecs = 0
+    num_chunks  = 0
+    nx = na
+    do n = 1, nblocks_total
       call determine_workload(nx, nb, np_rows, limits)
       local_size = limits(my_prow+1) - limits(my_prow)
       ! add to number of householder vectors
       ! please note: for nx==1 the one and only HH vector is 0 and is neither calculated nor send below!
       if(mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
-         num_hh_vecs = num_hh_vecs + local_size
-         num_chunks  = num_chunks+1
+        num_hh_vecs = num_hh_vecs + local_size
+        num_chunks  = num_chunks+1
       endif
       nx = nx - nb
-   enddo
+    enddo
 
-   ! Allocate space for HH vectors
+    ! Allocate space for HH vectors
 
-   allocate(hh_trans_complex(nb,num_hh_vecs))
+    allocate(hh_trans_complex(nb,num_hh_vecs))
 
-   ! Allocate and init MPI requests
+    ! Allocate and init MPI requests
 
-   allocate(ireq_hhr(num_chunks)) ! Recv requests
-   allocate(ireq_hhs(nblocks))    ! Send requests
+    allocate(ireq_hhr(num_chunks)) ! Recv requests
+    allocate(ireq_hhs(nblocks))    ! Send requests
 
-   num_hh_vecs = 0
-   num_chunks  = 0
-   nx = na
-   nt = 0
-   do n = 1, nblocks_total
+    num_hh_vecs = 0
+    num_chunks  = 0
+    nx = na
+    nt = 0
+    do n = 1, nblocks_total
       call determine_workload(nx, nb, np_rows, limits)
       local_size = limits(my_prow+1) - limits(my_prow)
       if(mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
-         num_chunks  = num_chunks+1
-         call mpi_irecv(hh_trans_complex(1,num_hh_vecs+1), nb*local_size, MPI_COMPLEX16, nt, &
-                        10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
-         num_hh_vecs = num_hh_vecs + local_size
+        num_chunks  = num_chunks+1
+        call mpi_irecv(hh_trans_complex(1,num_hh_vecs+1), nb*local_size, MPI_COMPLEX16, nt, &
+                       10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
+        num_hh_vecs = num_hh_vecs + local_size
       endif
       nx = nx - nb
       if(n == block_limits(nt+1)) then
-         nt = nt + 1
+        nt = nt + 1
       endif
-   enddo
+    enddo
 
-   ireq_hhs(:) = MPI_REQUEST_NULL
+    ireq_hhs(:) = MPI_REQUEST_NULL
 
-   ! Buffers for gathering/sending the HH vectors
+    ! Buffers for gathering/sending the HH vectors
 
-   allocate(hh_gath(nb,max_blk_size,nblocks)) ! gathers HH vectors
-   allocate(hh_send(nb,max_blk_size,nblocks)) ! send buffer for HH vectors
-   hh_gath(:,:,:) = 0
-   hh_send(:,:,:) = 0
+    allocate(hh_gath(nb,max_blk_size,nblocks)) ! gathers HH vectors
+    allocate(hh_send(nb,max_blk_size,nblocks)) ! send buffer for HH vectors
+    hh_gath(:,:,:) = 0
+    hh_send(:,:,:) = 0
 
-   ! Some counters
+    ! Some counters
 
-   allocate(hh_cnt(nblocks))
-   allocate(hh_dst(nblocks))
+    allocate(hh_cnt(nblocks))
+    allocate(hh_dst(nblocks))
 
-   hh_cnt(:) = 1 ! The first transfomation vector is always 0 and not calculated at all
-   hh_dst(:) = 0 ! PE number for receive
+    hh_cnt(:) = 1 ! The first transfomation vector is always 0 and not calculated at all
+    hh_dst(:) = 0 ! PE number for receive
 
-   ireq_ab = MPI_REQUEST_NULL
-   ireq_hv = MPI_REQUEST_NULL
+    ireq_ab = MPI_REQUEST_NULL
+    ireq_hv = MPI_REQUEST_NULL
 
-   ! Limits for sending
+    ! Limits for sending
 
-   allocate(snd_limits(0:np_rows,nblocks))
+    allocate(snd_limits(0:np_rows,nblocks))
 
-   do iblk=1,nblocks
+    do iblk=1,nblocks
       call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
-   enddo
+    enddo
 
-   ! ---------------------------------------------------------------------------
-   ! Start of calculations
+    ! OpenMP work distribution:
 
-   na_s = block_limits(my_pe)*nb + 1
+    max_threads = 1
+!$ max_threads = omp_get_max_threads()
 
-   if(my_pe>0 .and. na_s<=na) then
+    ! For OpenMP we need at least 2 blocks for every thread
+    max_threads = MIN(max_threads, nblocks/2)
+    if(max_threads==0) max_threads = 1
+
+    allocate(omp_block_limits(0:max_threads))
+
+    ! Get the OpenMP block limits
+    call divide_band(nblocks, max_threads, omp_block_limits)
+
+    allocate(hv_t(nb,max_threads), tau_t(max_threads))
+    hv_t = 0
+    tau_t = 0
+
+    ! ---------------------------------------------------------------------------
+    ! Start of calculations
+
+    na_s = block_limits(my_pe)*nb + 1
+
+    if(my_pe>0 .and. na_s<=na) then
       ! send first column to previous PE
       ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
       ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
       call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
-   endif
+    endif
 
-   do istep=1,na-1
+    do istep=1,na-1-block_limits(my_pe)*nb
 
       if(my_pe==0) then
-         n = MIN(na-na_s,nb) ! number of rows to be reduced
-         hv(:) = 0
-         tau = 0
-         ! Transform first column of remaining matrix
-         ! Opposed to the real case, the last step (istep=na-1) is needed here for making
-         ! the last subdiagonal element a real number
-         vnorm2 = sum(dble(ab(3:n+1,na_s-n_off))**2+dimag(ab(3:n+1,na_s-n_off))**2)
-         if(n<2) vnorm2 = 0. ! Safety only
-         call hh_transform_complex(ab(2,na_s-n_off),vnorm2,hf,tau)
+        n = MIN(na-na_s,nb) ! number of rows to be reduced
+        hv(:) = 0
+        tau = 0
+        ! Transform first column of remaining matrix
+        ! Opposed to the real case, the last step (istep=na-1) is needed here for making
+        ! the last subdiagonal element a real number
+        vnorm2 = sum(dble(ab(3:n+1,na_s-n_off))**2+dimag(ab(3:n+1,na_s-n_off))**2)
+        if(n<2) vnorm2 = 0. ! Safety only
+        call hh_transform_complex(ab(2,na_s-n_off),vnorm2,hf,tau)
 
-         hv(1) = 1
-         hv(2:n) = ab(3:n+1,na_s-n_off)*hf
+        hv(1) = 1
+        hv(2:n) = ab(3:n+1,na_s-n_off)*hf
 
-         d(istep) = ab(1,na_s-n_off)
-         e(istep) = ab(2,na_s-n_off)
-         if(istep == na-1) then
-            d(na) = ab(1,na_s+1-n_off)
-            e(na) = 0
-         endif
+        d(istep) = ab(1,na_s-n_off)
+        e(istep) = ab(2,na_s-n_off)
+        if(istep == na-1) then
+          d(na) = ab(1,na_s+1-n_off)
+          e(na) = 0
+        endif
       else
-         if(na>na_s) then
-            ! Receive Householder vector from previous task, from PE owning subdiagonal
-            call mpi_recv(hv,nb,MPI_COMPLEX16,my_pe-1,2,mpi_comm,MPI_STATUS_IGNORE,mpierr)
-            tau = hv(1)
-            hv(1) = 1.
-         endif
+        if(na>na_s) then
+          ! Receive Householder vector from previous task, from PE owning subdiagonal
+          call mpi_recv(hv,nb,MPI_COMPLEX16,my_pe-1,2,mpi_comm,mpi_status,mpierr)
+          tau = hv(1)
+          hv(1) = 1.
+        endif
       endif
 
       na_s = na_s+1
       if(na_s-n_off > nb) then
-         ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-         ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
-         n_off = n_off + nb
+        ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
+        ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
+        n_off = n_off + nb
       endif
 
-      do iblk=1,nblocks
+      if(max_threads > 1) then
 
-         ns = na_s + (iblk-1)*nb - n_off ! first column in block
-         ne = ns+nb-1                    ! last column in block
+        ! Codepath for OpenMP
 
-         if(ns+n_off>na) exit
+        ! Please note that in this case it is absolutely necessary to have at least 2 blocks per thread!
+        ! Every thread is one reduction cycle behind its predecessor and thus starts one step later.
+        ! This simulates the behaviour of the MPI tasks which also work after each other.
+        ! The code would be considerably easier, if the MPI communication would be made within
+        ! the parallel region - this is avoided here since this would require 
+        ! MPI_Init_thread(MPI_THREAD_MULTIPLE) at the start of the program.
 
-         ! Store Householder vector for back transformation
+        hv_t(:,1) = hv
+        tau_t(1) = tau
 
-         hh_cnt(iblk) = hh_cnt(iblk) + 1
+        do iter = 1, 2
 
-         hh_gath(1   ,hh_cnt(iblk),iblk) = tau
-         hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+          ! iter=1 : work on first block
+          ! iter=2 : work on remaining blocks
+          ! This is done in 2 iterations so that we have a barrier in between:
+          ! After the first iteration, it is guaranteed that the last row of the last block
+          ! is completed by the next thread.
+          ! After the first iteration it is also the place to exchange the last row
+          ! with MPI calls
 
-         if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-            ! Wait for last transfer to finish
-            call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
-            ! Copy vectors into send buffer
-            hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-            ! Send to destination
-            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_COMPLEX16, &
-                           global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                           10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
-            ! Reset counter and increase destination row
-            hh_cnt(iblk) = 0
-            hh_dst(iblk) = hh_dst(iblk)+1
-         endif
+!$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
+!$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
+          do my_thread = 1, max_threads
 
-         ! The following code is structured in a way to keep waiting times for
-         ! other PEs at a minimum, especially if there is only one block.
-         ! For this reason, it requests the last column as late as possible
-         ! and sends the Householder vector and the first column as early
-         ! as possible.
+            if(iter == 1) then
+              my_block_s = omp_block_limits(my_thread-1) + 1
+              my_block_e = my_block_s
+            else
+              my_block_s = omp_block_limits(my_thread-1) + 2
+              my_block_e = omp_block_limits(my_thread)
+            endif
 
-         nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
-         nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
-                                       ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
+            do iblk = my_block_s, my_block_e
 
-         ! Multiply diagonal block and subdiagonal block with Householder vector
+              ns = na_s + (iblk-1)*nb - n_off - my_thread + 1 ! first column in block
+              ne = ns+nb-1                    ! last column in block
 
-         if(iblk==nblocks .and. nc==nb) then
+              if(istep<my_thread .or. ns+n_off>na) exit
+
+              hv = hv_t(:,my_thread)
+              tau = tau_t(my_thread)
+
+              ! Store Householder vector for back transformation
+
+              hh_cnt(iblk) = hh_cnt(iblk) + 1
+
+              hh_gath(1   ,hh_cnt(iblk),iblk) = tau
+              hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+
+              nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
+              nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
+                                            ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
+
+              ! Transform diagonal block
+
+              call ZHEMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,(0.d0,0.d0),hd,1)
+
+              x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
+              hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
+
+              call ZHER2('L',nc,(-1.d0,0.d0),hd,1,hv,1,ab(1,ns),2*nb-1)
+
+              hv_t(:,my_thread) = 0
+              tau_t(my_thread)  = 0
+
+              if(nr<=0) cycle ! No subdiagonal block present any more
+
+              ! Transform subdiagonal block
+
+              call ZGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
+
+              if(nr>1) then
+
+                ! complete (old) Householder transformation for first column
+
+                ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
+
+                ! calculate new Householder transformation for first column
+                ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
+
+                vnorm2 = sum(dble(ab(nb+2:nb+nr,ns))**2+dimag(ab(nb+2:nb+nr,ns))**2)
+                call hh_transform_complex(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
+                hv_t(1   ,my_thread) = 1.
+                hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
+                ab(nb+2:,ns) = 0
+
+                ! update subdiagonal block for old and new Householder transformation
+                ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
+
+                call ZGEMV('C',nr,nb-1,tau_t(my_thread),ab(nb,ns+1),2*nb-1,hv_t(1,my_thread),1,(0.d0,0.d0),h(2),1)
+                x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
+                h(2:nb) = h(2:nb) - x*hv(2:nb)
+                ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
+                do i=2,nb
+                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_t(1:nr,my_thread)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
+                enddo
+
+              else
+
+                ! No new Householder transformation for nr=1, just complete the old one
+                ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
+                do i=2,nb
+                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
+                enddo
+                ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
+                hv_t(1,my_thread) = 1.
+
+              endif
+
+            enddo
+
+          enddo ! my_thread
+!$omp end parallel do
+
+          if (iter==1) then
+            ! We are at the end of the first block
+
+            ! Send our first column to previous PE
+            if(my_pe>0 .and. na_s <= na) then
+              call mpi_wait(ireq_ab,mpi_status,mpierr)
+              ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+              call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+            endif
+
+            ! Request last column from next PE
+            ne = na_s + nblocks*nb - (max_threads-1) - 1
+            if(istep>=max_threads .and. ne <= na) then
+              call mpi_recv(ab(1,ne-n_off),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+            endif
+
+          else
+            ! We are at the end of all blocks
+
+            ! Send last HH vector and TAU to next PE if it has been calculated above
+            ne = na_s + nblocks*nb - (max_threads-1) - 1
+            if(istep>=max_threads .and. ne < na) then
+              call mpi_wait(ireq_hv,mpi_status,mpierr)
+              hv_s(1) = tau_t(max_threads)
+              hv_s(2:) = hv_t(2:,max_threads)
+              call mpi_isend(hv_s,nb,MPI_COMPLEX16,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
+            endif
+
+            ! "Send" HH vector and TAU to next OpenMP thread
+            do my_thread = max_threads, 2, -1
+              hv_t(:,my_thread) = hv_t(:,my_thread-1)
+              tau_t(my_thread)  = tau_t(my_thread-1)
+            enddo
+
+          endif
+        enddo ! iter
+
+      else
+
+        ! Codepath for 1 thread without OpenMP
+
+        ! The following code is structured in a way to keep waiting times for
+        ! other PEs at a minimum, especially if there is only one block.
+        ! For this reason, it requests the last column as late as possible
+        ! and sends the Householder vector and the first column as early
+        ! as possible.
+
+        do iblk=1,nblocks
+
+          ns = na_s + (iblk-1)*nb - n_off ! first column in block
+          ne = ns+nb-1                    ! last column in block
+
+          if(ns+n_off>na) exit
+
+          ! Store Householder vector for back transformation
+
+          hh_cnt(iblk) = hh_cnt(iblk) + 1
+
+          hh_gath(1   ,hh_cnt(iblk),iblk) = tau
+          hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+
+          nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
+          nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
+                                        ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
+
+          ! Multiply diagonal block and subdiagonal block with Householder vector
+
+          if(iblk==nblocks .and. nc==nb) then
 
             ! We need the last column from the next PE.
             ! First do the matrix multiplications without last column ...
@@ -2635,27 +3010,27 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
             if(nr>0) call ZGEMV('N',nr,nb-1,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
 
             ! ... then request last column ...
-            call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
+            call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
 
             ! ... and complete the result
             hs(1:nr) = hs(1:nr) + ab(2:nr+1,ne)*tau*hv(nb)
             hd(nb) = hd(nb) + ab(1,ne)*hv(nb)*tau
 
-         else
+          else
 
             ! Normal matrix multiply
             call ZHEMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,(0.d0,0.d0),hd,1)
             if(nr>0) call ZGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
 
-         endif
+          endif
 
-         ! Calculate first column of subdiagonal block and calculate new
-         ! Householder transformation for this column
+          ! Calculate first column of subdiagonal block and calculate new
+          ! Householder transformation for this column
 
-         hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
-         tau_new = 0
+          hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
+          tau_new = 0
 
-         if(nr>0) then
+          if(nr>0) then
 
             ! complete (old) Householder transformation for first column
 
@@ -2663,30 +3038,30 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
             ! calculate new Householder transformation ...
             if(nr>1) then
-               vnorm2 = sum(dble(ab(nb+2:nb+nr,ns))**2+dimag(ab(nb+2:nb+nr,ns))**2)
-               call hh_transform_complex(ab(nb+1,ns),vnorm2,hf,tau_new)
-               hv_new(1) = 1.
-               hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
-               ab(nb+2:,ns) = 0
+              vnorm2 = sum(dble(ab(nb+2:nb+nr,ns))**2+dimag(ab(nb+2:nb+nr,ns))**2)
+              call hh_transform_complex(ab(nb+1,ns),vnorm2,hf,tau_new)
+              hv_new(1) = 1.
+              hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
+              ab(nb+2:,ns) = 0
             endif
 
             ! ... and send it away immediatly if this is the last block
 
             if(iblk==nblocks) then
-               call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
-               hv_s(1) = tau_new
-               hv_s(2:) = hv_new(2:)
-               call mpi_isend(hv_s,nb,MPI_COMPLEX16,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
+              call mpi_wait(ireq_hv,mpi_status,mpierr)
+              hv_s(1) = tau_new
+              hv_s(2:) = hv_new(2:)
+              call mpi_isend(hv_s,nb,MPI_COMPLEX16,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
             endif
 
-         endif
+          endif
 
 
-         ! Transform diagonal block
-         x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
-         hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
+          ! Transform diagonal block
+          x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
+          hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
 
-         if(my_pe>0 .and. iblk==1) then
+          if(my_pe>0 .and. iblk==1) then
 
             ! The first column of the diagonal block has to be send to the previous PE
             ! Calculate first column only ...
@@ -2695,62 +3070,87 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
             ! ... send it away ...
 
-            call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+            call mpi_wait(ireq_ab,mpi_status,mpierr)
             ab_s(1:nb+1) = ab(1:nb+1,ns)
             call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
 
             ! ... and calculate remaining columns with rank-2 update
             if(nc>1) call ZHER2('L',nc-1,(-1.d0,0.d0),hd(2),1,hv(2),1,ab(1,ns+1),2*nb-1)
-         else
+          else
             ! No need to  send, just a rank-2 update
             call ZHER2('L',nc,(-1.d0,0.d0),hd,1,hv,1,ab(1,ns),2*nb-1)
-         endif
+          endif
 
-         ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
+          ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
-         if(nr>0) then
+          if(nr>0) then
             if(nr>1) then
-               call ZGEMV('C',nr,nb-1,tau_new,ab(nb,ns+1),2*nb-1,hv_new,1,(0.d0,0.d0),h(2),1)
-               x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
-               h(2:nb) = h(2:nb) - x*hv(2:nb)
-               ! Unfortunately the is no BLAS routine like DGER2 for a nonsymmetric rank 2 update
-               do i=2,nb
-                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
-               enddo
+              call ZGEMV('C',nr,nb-1,tau_new,ab(nb,ns+1),2*nb-1,hv_new,1,(0.d0,0.d0),h(2),1)
+              x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
+              h(2:nb) = h(2:nb) - x*hv(2:nb)
+              ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
+              do i=2,nb
+                ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
+              enddo
             else
-               ! No double Householder transformation for nr=1, just complete the row
-               do i=2,nb
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
-               enddo
+              ! No double Householder transformation for nr=1, just complete the row
+              do i=2,nb
+                ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
+              enddo
             endif
-         endif
+          endif
 
-         ! Use new HH vector for the next block
-         hv(:) = hv_new(:)
-         tau = tau_new
+          ! Use new HH vector for the next block
+          hv(:) = hv_new(:)
+          tau = tau_new
+
+        enddo
+
+      endif
+
+      do iblk = 1, nblocks
+
+        if(hh_dst(iblk) >= np_rows) exit
+        if(snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
+
+        if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+          ! Wait for last transfer to finish
+          call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+          ! Copy vectors into send buffer
+          hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+          ! Send to destination
+          call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_COMPLEX16, &
+                         global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
+                         10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
+          ! Reset counter and increase destination row
+          hh_cnt(iblk) = 0
+          hh_dst(iblk) = hh_dst(iblk)+1
+        endif
 
       enddo
 
-   enddo
+    enddo
 
-   ! Finish the last outstanding requests
-   call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-   call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+    ! Finish the last outstanding requests
+    call mpi_wait(ireq_ab,mpi_status,mpierr)
+    call mpi_wait(ireq_hv,mpi_status,mpierr)
 
-   call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
-   call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+    allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)))
+    call mpi_waitall(nblocks, ireq_hhs, mpi_statuses, mpierr)
+    call mpi_waitall(num_chunks, ireq_hhr, mpi_statuses, mpierr)
+    deallocate(mpi_statuses)
 
-   call mpi_barrier(mpi_comm,mpierr)
+    call mpi_barrier(mpi_comm,mpierr)
 
-   deallocate(ab)
-   deallocate(ireq_hhr, ireq_hhs)
-   deallocate(hh_cnt, hh_dst)
-   deallocate(hh_gath, hh_send)
-   deallocate(limits, snd_limits)
-   deallocate(block_limits)
-   deallocate(global_id)
+    deallocate(ab)
+    deallocate(ireq_hhr, ireq_hhs)
+    deallocate(hh_cnt, hh_dst)
+    deallocate(hh_gath, hh_send)
+    deallocate(limits, snd_limits)
+    deallocate(block_limits)
+    deallocate(global_id)
 
-end subroutine
+end subroutine tridiag_band_complex
 
 !---------------------------------------------------------------------------------------------------
 
@@ -2797,6 +3197,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     integer num_result_blocks, num_result_buffers, num_bufs_recvd
     integer a_off, current_tv_off, max_blk_size, b_off, b_len
     integer mpierr, src, src_offset, dst, offset, nfact, num_blk
+    integer mpi_status(MPI_STATUS_SIZE)
     logical flag
 
     complex*16, allocatable :: a(:,:,:,:), row(:)
@@ -2809,6 +3210,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     integer, allocatable :: result_send_request(:), result_recv_request(:), limits(:)
     integer, allocatable :: top_send_request(:), bottom_send_request(:)
     integer, allocatable :: top_recv_request(:), bottom_recv_request(:)
+    integer, allocatable :: mpi_statuses(:,:)
 
     ! MPI send/recv tags, arbitrary
 
@@ -2901,7 +3303,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
             do i=limits(ip)+1,limits(ip+1)
                 src = mod((i-1)/nblk, np_rows)
                 if(src < my_prow) then
-                    call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(ip),my_thread)
@@ -2941,7 +3343,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
             do i=limits(my_prow)+1,limits(my_prow+1)
                 src = mod((i-1)/nblk, np_rows)
                 if(src == ip) then
-                    call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(my_prow),my_thread)
@@ -3073,7 +3475,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
             !wait_b
             if(current_n_end < current_n) then
-                call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(bottom_recv_request(i), mpi_status, mpierr)
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     n_off = current_local_n+a_off
@@ -3093,7 +3495,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
                 !wait_t
                 if(top_msg_length>0) then
-                    call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
                 endif
 
                 !compute
@@ -3109,7 +3511,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
                 enddo
 
                 !send_b
-                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
                 if(bottom_msg_length>0) then
                     n_off = current_local_n+nbw-bottom_msg_length+a_off
                     b_len = csw*bottom_msg_length*max_threads
@@ -3128,7 +3530,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
                 enddo
 
                 !send_b
-                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
                 if(bottom_msg_length > 0) then
                     n_off = current_local_n+nbw-bottom_msg_length+a_off
                     b_len = csw*bottom_msg_length*max_threads
@@ -3146,7 +3548,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
                 !wait_t
                 if(top_msg_length>0) then
-                    call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
                 endif
 
                 !compute
@@ -3171,7 +3573,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
             !send_t
             if(my_prow > 0) then
-                call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(top_send_request(i), mpi_status, mpierr)
                 b_len = csw*nbw*max_threads
                 top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
                 call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_COMPLEX16, &
@@ -3182,9 +3584,9 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
             ! Care that there are not too many outstanding top_recv_request's
             if(stripe_count > 1) then
                 if(i>1) then
-                    call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(top_recv_request(i-1), mpi_status, mpierr)
                 else
-                    call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(top_recv_request(stripe_count), mpi_status, mpierr)
                 endif
             endif
 
@@ -3195,7 +3597,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
         else
             ! wait for last top_send_request
           do i = 1, stripe_count
-            call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+            call MPI_Wait(top_send_request(i), mpi_status, mpierr)
           enddo
         endif
 
@@ -3212,7 +3614,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
                 nbuf = mod(num_blk, num_result_buffers) + 1 ! buffer number to get this block
 
-                call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+                call MPI_Wait(result_send_request(nbuf), mpi_status, mpierr)
 
                 dst = mod(num_blk, np_rows)
 
@@ -3243,10 +3645,10 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
                 ! outstanding requests
 
                 if(next_local_n > 0) then
-                    call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Test(result_recv_request(nbuf), flag, mpi_status, mpierr)
                     if(.not.flag) exit
                 else
-                    call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+                    call MPI_Wait(result_recv_request(nbuf), mpi_status, mpierr)
                 endif
 
                 ! Fill result buffer into q
@@ -3294,7 +3696,9 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     if(ANY(bottom_recv_request /= MPI_REQUEST_NULL)) print *,'*** ERROR bottom_recv_request ***',my_prow,my_pcol
 
     if(my_prow == 0) then
-        call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
+        allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers))
+        call MPI_Waitall(num_result_buffers, result_send_request, mpi_statuses, mpierr)
+        deallocate(mpi_statuses)
     endif
 
     if(ANY(result_send_request /= MPI_REQUEST_NULL)) print *,'*** ERROR result_send_request ***',my_prow,my_pcol
@@ -3393,7 +3797,7 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
    real*8, intent(out)     :: r_ab(:,:)
    complex*16, intent(out) :: c_ab(:,:)
 
-   integer, allocatable :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), global_id(:,:), block_limits(:)
+   integer, allocatable :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), global_id(:,:), global_id_tmp(:,:), block_limits(:)
    real*8, allocatable :: r_sbuf(:,:,:), r_rbuf(:,:,:), r_buf(:,:)
    complex*16, allocatable :: c_sbuf(:,:,:), c_rbuf(:,:,:), c_buf(:,:)
 
@@ -3411,10 +3815,13 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
    ! Get global_id mapping 2D procssor coordinates to global id
 
    allocate(global_id(0:np_rows-1,0:np_cols-1))
+   allocate(global_id_tmp(0:np_rows-1,0:np_cols-1))
    global_id(:,:) = 0
    global_id(my_prow, my_pcol) = my_pe
 
-   call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
+   global_id_tmp(:,:) = global_id(:,:)
+   call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
+   deallocate(global_id_tmp)
 
 
    ! Set work distribution
@@ -3673,6 +4080,8 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
    integer nblocks_total, nblocks
    integer nblocks_total2, nblocks2
    integer ireq_ab, ireq_hv
+   integer mpi_status(MPI_STATUS_SIZE)
+   integer, allocatable :: mpi_statuses(:,:)
    integer, allocatable :: block_limits(:), block_limits2(:), ireq_ab2(:)
    
 !----------------
@@ -3768,7 +4177,7 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
       else
          if(na>na_s+nb2-1) then
             ! Receive Householder vectors from previous task, from PE owning subdiagonal
-            call mpi_recv(hv,nb*nb2,mpi_real8,my_pe-1,2,mpi_comm,MPI_STATUS_IGNORE,mpierr)
+            call mpi_recv(hv,nb*nb2,mpi_real8,my_pe-1,2,mpi_comm,mpi_status,mpierr)
             do i=1,nb2
 	       	tau(i) = hv(i,i)
 	       	hv(i,i) = 1.
@@ -3797,7 +4206,7 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
 
          if(iblk==nblocks .and. nc==nb) then
              !request last nb2 columns
-             call mpi_recv(ab_r,(nb+1)*nb2,mpi_real8,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
+             call mpi_recv(ab_r,(nb+1)*nb2,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
              do i=1,nb2
 	         ab(1:nb+1,ne+i-1) = ab_r(:,i)
              enddo
@@ -3819,7 +4228,7 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
 	     
 	     !send hh-vector
 	     if(iblk==nblocks) then
-	         call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+	         call mpi_wait(ireq_hv,mpi_status,mpierr)
 	         hv_s = hv_new
 	         do i=1,nb2
 		     hv_s(i,i) = tau_new(i)
@@ -3833,7 +4242,7 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
          
          if(my_pe>0 .and. iblk==1) then
 	     !send first nb2 columns to previous PE
-	     call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+	     call mpi_wait(ireq_ab,mpi_status,mpierr)
 	     do i=1,nb2
 	         ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
 	     enddo
@@ -3854,9 +4263,11 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
    enddo
 
    ! Finish the last outstanding requests
-   call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-   call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
-   call mpi_waitall(nblocks2,ireq_ab2,MPI_STATUSES_IGNORE,mpierr)
+   call mpi_wait(ireq_ab,mpi_status,mpierr)
+   call mpi_wait(ireq_hv,mpi_status,mpierr)
+   allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2))
+   call mpi_waitall(nblocks2,ireq_ab2,mpi_statuses,mpierr)
+   deallocate(mpi_statuses)
 
    call mpi_barrier(mpi_comm,mpierr)
 
