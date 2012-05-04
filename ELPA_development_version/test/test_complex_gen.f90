@@ -25,7 +25,7 @@ program test_complex_gen
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   integer, parameter :: na = 4000, nev = 1500, nblk = 16
+   integer :: na = 4000, nev = 1500, nblk = 16
 
    !-------------------------------------------------------------------------------
    !  Local Variables
@@ -54,6 +54,14 @@ program test_complex_gen
    call mpi_init(mpierr)
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
+
+   !-------------------------------------------------------------------------------
+   !  Reading of test parameters (matrix size, number of requested eigenvalue/eigenvector
+   !  pairs, block size) from a file 'test_parameters.in', if that file exists. 
+   !  We only read on mpi task number myid = 0 to avoid any possible confusion. 
+   !  The parameters of interest are subsequently broadcast to all other mpi tasks.
+
+   call read_test_parameters (na,nev,nblk,myid,mpi_comm_world)
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns

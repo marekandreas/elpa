@@ -130,6 +130,32 @@ other piece of code.
 - All files starting with test_... are for demonstrating the use
   of the elpa library (but not needed for using it).
 
+- The test_* programs build their own random matrices, solve the eigenvalue
+  problem and write timings.
+
+  There are three parameters that control the test_* programs:
+  - na   = matrix dimension
+  - nev  = number of eigenvalue / eigenvector pairs that is actually needed
+  - nblk = algorithmic block size, usually 16, 32 or 64 
+    (important - do not set to unreasonable values)
+
+  These input parameters are set to default values na=4000, nev=1500, nblk=16
+  in the header of each source file test*.f90 .
+
+  Optionally, they can be controlled at runtime by supplying an input file 
+  called 'test_parameters.in'.
+
+  This file can contain any or no lines at all (input values not specified in
+  'test_parameters.in' will be set to default values).
+
+  The format of test_parameters.in is simple, for instance:
+
+  na   8000
+  nev  6000
+  nblk 32
+
+  to change all values. Order of lines does not matter.
+
 - All test programs solve a eigenvalue problem and check the correctnes
   of the result by evaluating || A*x - x*lamba || and checking the
   orthogonality of the eigenvectors

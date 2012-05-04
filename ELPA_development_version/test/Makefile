@@ -36,29 +36,29 @@ LIBS = -L/opt/intel/Compiler/11.0/069/mkl/lib/em64t -lmkl_lapack -lmkl -lguide -
 
 all: test_real read_real test_complex test_real_gen read_real_gen test_complex_gen test_real2 test_complex2
 
-test_real: test_real.o elpa1.o
-	$(F90) -o $@ test_real.o elpa1.o $(LIBS)
+test_real: test_real.o read_test_parameters.o elpa1.o
+	$(F90) -o $@ test_real.o read_test_parameters.o elpa1.o $(LIBS)
 
 read_real: read_real.o elpa1.o
 	$(F90) -o $@ read_real.o elpa1.o $(LIBS)
 
-test_complex: test_complex.o elpa1.o
-	$(F90) -o $@ test_complex.o elpa1.o $(LIBS)
+test_complex: test_complex.o read_test_parameters.o elpa1.o
+	$(F90) -o $@ test_complex.o read_test_parameters.o elpa1.o $(LIBS)
 
-test_real_gen: test_real_gen.o elpa1.o
-	$(F90) -o $@ test_real_gen.o elpa1.o $(LIBS)
+test_real_gen: test_real_gen.o read_test_parameters.o elpa1.o
+	$(F90) -o $@ test_real_gen.o read_test_parameters.o elpa1.o $(LIBS)
 
 read_real_gen: read_real_gen.o elpa1.o
 	$(F90) -o $@ read_real_gen.o elpa1.o $(LIBS)
 
-test_complex_gen: test_complex_gen.o elpa1.o
-	$(F90) -o $@ test_complex_gen.o elpa1.o $(LIBS)
+test_complex_gen: test_complex_gen.o read_test_parameters.o elpa1.o
+	$(F90) -o $@ test_complex_gen.o read_test_parameters.o elpa1.o $(LIBS)
 
-test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o
-	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o $(LIBS)
+test_real2: test_real2.o elpa1.o elpa2.o read_test_parameters.o elpa2_kernels.o blockedQR.o
+	$(F90) -o $@ test_real2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o $(LIBS)
 
-test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o
-	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o $(LIBS)
+test_complex2: test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o
+	$(F90) -o $@ test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o $(LIBS)
 
 test_real.o: test_real.f90 elpa1.o
 	$(F90) -c $<
@@ -84,6 +84,9 @@ test_real2.o: test_real2.f90 elpa1.o elpa2.o
 test_complex2.o: test_complex2.f90 elpa1.o elpa2.o
 	$(F90) -c $<
 
+read_test_parameters.o: read_test_parameters.f90
+	$(F90) -c $<
+
 elpa1.o: ../src/elpa1.f90
 	$(F90) -c $<
 
@@ -97,4 +100,4 @@ elpa2_kernels.o: ../src/elpa2_kernels.f90
 	$(F90OPT) -c ../src/elpa2_kernels.f90
 
 clean:
-	rm -f *.o *.mod test_real test_complex test_real_gen test_complex_gen test_real2 test_complex2 read_real read_real_gen
+	rm -f *.o *.mod test_real test_complex test_real_gen test_complex_gen test_real2 test_complex2 read_real read_real_gen read_test_parameters.o
