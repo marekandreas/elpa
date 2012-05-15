@@ -10,7 +10,6 @@ module ELPA2
 ! Version 1.1.2, 2011-02-21
 
   USE ELPA1
-  USE blockedQR
 
   implicit none
 
@@ -38,7 +37,7 @@ module ELPA2
 
   integer, public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
                                                     ! 0 for unblocked
-                                                    ! 1 for rank-2
+                                                    ! 1 for blocked (maxrank: nblk)
 
 !-------------------------------------------------------------------------------
 
@@ -364,14 +363,16 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
    integer i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
    integer istep, ncol, lch, lcx, nlc
    integer tile_size, l_rows_tile, l_cols_tile
-   integer work_size
    
-   real*8 eps
-
    real*8 vnorm2, xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
    real*8, allocatable:: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
-   real*8, allocatable:: work(:) ! needed for blocked QR
+   
+   
+   ! needed for blocked QR decomposition
+   integer PQRPARAM(11), work_size
+   real*8 dwork_size(1)
+   real*8, allocatable:: work_blocked(:), tauvector(:), blockheuristic(:)
 
 
    integer pcol, prow
@@ -403,15 +404,16 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
    l_cols_tile = tile_size/np_cols ! local cols of a tile
  
    if (which_qr_decomposition == 1) then
-          l_rows = local_index(na, my_prow, np_rows, nblk, -1)
-          work_size = max(4*np_rows,2*nbw)
-          work_size = max(l_rows+1,work_size)
-          work_size = max(16, work_size)
-          work_size = max(2*(l_rows+1),work_size)
-          work_size = max(2+4*(nbw+1),work_size)
-          allocate(work(work_size))
-          work = 0
-          eps = 1.0d0
+      call tum_pqrparam_init(pqrparam,    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
+      
+      allocate(tauvector(na))
+      allocate(blockheuristic(nblk))
+      l_rows = local_index(na, my_prow, np_rows, nblk, -1)
+      call tum_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,1), nbw, dwork_size(1), -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols, blockheuristic)
+      work_size = dwork_size(1)
+      allocate(work_blocked(work_size))
+      
+      work_blocked = 0.0d0
    endif
 
    do istep = (na-1)/nbw, 1, -1
@@ -435,7 +437,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
 
       ! Reduce current block to lower triangular form
       if (which_qr_decomposition == 1) then
-          call qr_rank2_real(a, lda, vmr, max(l_rows,1), tmat, nbw, istep, n_cols, nblk, mpi_comm_rows, mpi_comm_cols, work, eps)
+         call tum_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,istep), nbw, work_blocked, work_size, na, n_cols, nblk, nblk, istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1, 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols, blockheuristic)
       else
 
       do lc = n_cols, 1, -1
@@ -528,8 +530,6 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
 
       enddo
 
-      endif
-
       ! Calculate scalar products of stored Householder vectors.
       ! This can be done in different ways, we use dsyrk
 
@@ -547,6 +547,8 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
             tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
          endif
       enddo
+      
+      endif      
 
       ! Transpose vmr -> vmc (stored in umc, second half)
 
@@ -634,7 +636,8 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
    enddo
  
    if (which_qr_decomposition == 1) then
-          deallocate(work)
+      deallocate(work_blocked)
+      deallocate(tauvector)
    endif
 
 end subroutine bandred_real
