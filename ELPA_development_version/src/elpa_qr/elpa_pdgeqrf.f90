@@ -1,11 +1,24 @@
-! after the decomposition: v contains all vectors from the process
-! (including the ones calculated by other process columns)
+module elpa_pdgeqrf
 
-! TODO: cleanup huge number of variables
+    use elpa1
+    use elpa_pdlarfb
+    use tum_utils
+ 
+    implicit none
+
+    PRIVATE
+
+    public :: tum_pdgeqrf_2dcomm
+    public :: tum_pqrparam_init
+    public :: tum_pdlarfg2_1dcomm_check
+    
+    include 'mpif.h'
+
+contains
+
 subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,colidx,rev,trans,PQRPARAM,mpicomm_rows,mpicomm_cols,blockheuristic)
     use ELPA1
     use tum_utils
-    use mpi
   
     implicit none
  
@@ -47,19 +60,8 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
     updatemode = PQRPARAM(2)
     tmerge = PQRPARAM(3)
 
-    ! filter values
-    !if (rev .eq. 1) then
-    !    n = min(rowidx,colidx)
-    !else
-    !    n = min(m-rowidx+1,n-colidx+1)
-    !end if
-
     ! copy value before we are going to filter it
     total_cols = n
-
-    !print *,'going to decompose:',rowidx,colidx,n
-
-    ! derive needed input variables from PQRPARAM
 
     call mpi_comm_rank(mpicomm_cols,mpirank_cols,mpierr)
     call mpi_comm_rank(mpicomm_rows,mpirank_rows,mpierr)
@@ -69,7 +71,6 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
     call tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans,PQRPARAM(4),mpicomm_rows,blockheuristic)
     call tum_pdgeqrf_pack_unpack(v,ldv,dbroadcast_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,0,mpicomm_rows)
     call tum_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,dtmat_bcast_size(1),-1,total_cols,0)
-    !call tum_pdlarft_1dcomm(m,mb,total_cols,v,ldv,tau,t,ldt,rowidx,rowidx,rev,mpicomm_rows,pdlarft_size(1),-1)
     pdlarft_size(1) = 0.0d0
     call tum_pdlarfb_1dcomm(m,mb,total_cols,total_cols,a,lda,v,ldv,tau,t,ldt,rowidx,rowidx,rev,mpicomm_rows,pdlarfb_size(1),-1)
     call tum_tmerge_pdlarfb_1dcomm(m,mb,total_cols,total_cols,total_cols,v,ldv,work,t,ldt,a,lda,rowidx,rowidx,rev,updatemode,mpicomm_rows,tmerge_pdlarfb_size(1),-1)
@@ -81,30 +82,13 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
     broadcast_size = dbroadcast_size(1) + dtmat_bcast_size(1)
     work_offset = broadcast_offset + broadcast_size
 
-    !call MPI_Barrier(mpicomm_cols,mpierr)
-    !if (mpirank_cols .eq. 0) then
-    !    print *,'work sizes', temptau_size, broadcast_size, pdgeqrf_size
-    !end if
-    !call MPI_Barrier(mpicomm_cols,mpierr)
-    !if (mpirank_cols .eq. 1) then
-    !    print *,'work sizes', temptau_size, broadcast_size, pdgeqrf_size
-    !end if
-    !call MPI_Barrier(mpicomm_cols,mpierr)
-
     if (lwork .eq. -1) then
-        !print *,'broadcast_size',broadcast_size,tmerge_pdlarfb_size(1)
         work(1) = (DBLE(temptau_size) + DBLE(broadcast_size) + max(pdgeqrf_size(1),pdlarft_size(1),pdlarfb_size(1),tmerge_pdlarfb_size(1)))
         return
     end if
 
-    !if (rev .eq. 1) then
-        lastcol = colidx-total_cols+1
-        !lastcol = total_cols-colidx+1
-        voffset = total_cols
-    !else
-    !    lastcol = total_cols+colidx-1
-    !    voffset = 1
-    !end if
+    lastcol = colidx-total_cols+1
+    voffset = total_cols
   
     incremental_update_size = 0
  
@@ -116,21 +100,10 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
  
     icol = colidx
 
-    ! TODO: find a valid filter rule, this one prevents multiprocess mode
-    ! however a filter rule is needed for rowidx != 1
-    !remaining_cols = min(m-rowidx+1,total_cols)
     remaining_cols = total_cols
 
     !print *,'start decomposition',m,rowidx,colidx
  
-    !print *,'start matrix'
-    !print *,a(1,1),a(1,2),a(1,3)
-    !print *,a(2,1),a(2,2),a(2,3)
-    !print *,a(3,1),a(3,2),a(3,3)
-    !print *,a(4,1),a(4,2),a(4,3)
-    !print *,a(5,1),a(5,2),a(5,3)
-
-
     do while (remaining_cols .gt. 0)
 
         ! determine rank of process column with next qr block
@@ -142,29 +115,18 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
         ! however, we might not start at the first local column.
         ! therefore assume a matrix of size (1xlcols) starting at (1,icol)
         ! determine the real amount of local columns
-        !if (rev .eq. 1) then
-            lcols_temp = min(nb,(icol-lastcol+1))
+        lcols_temp = min(nb,(icol-lastcol+1))
 
-            ! blocking parameter
-            lcols_temp = max(min(lcols_temp,size2d),1)
+        ! blocking parameter
+        lcols_temp = max(min(lcols_temp,size2d),1)
 
-            ! determine size from last decomposition column
-            !  to first decomposition column
-            call local_size_offset_1d(icol,nb,icol-lcols_temp+1,icol-lcols_temp+1,0, &
+        ! determine size from last decomposition column
+        !  to first decomposition column
+        call local_size_offset_1d(icol,nb,icol-lcols_temp+1,icol-lcols_temp+1,0, &
                                       mpirank_cols_qr,mpiprocs_cols, &
                                       lcols,baseoffset,offset)
  
-            voffset = remaining_cols - lcols + 1
-        !else
-        !    lcols_temp = min(nb,(lastcol-icol+1))
- 
-        !    ! blocking parameter
-        !    lcols_temp = max(min(lcols_temp,size2d),1)
-
-        !    call local_size_offset_1d(icol+lcols_temp-1,nb,icol,icol,0, &
-        !                              mpirank_cols_qr,mpiprocs_cols, &
-        !                              lcols,baseoffset,offset)
-        !end if
+        voffset = remaining_cols - lcols + 1
 
         idx = rowidx - colidx + icol
 
@@ -209,10 +171,7 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
             tmat_bcast_size = dtmat_bcast_size(1)
 
             !print *,'broadcast_size (nonqr)',broadcast_size
-            !if (mpirank_rows .eq. 0) then
-            !    ! we also have the tmatrix in our broadcast buffer
-                 broadcast_size = dbroadcast_size(1) + dtmat_bcast_size(1)
-            !end if
+            broadcast_size = dbroadcast_size(1) + dtmat_bcast_size(1)
  
             ! initiate broadcast (recv part)
             call MPI_Bcast(work(broadcast_offset),broadcast_size,mpi_real8, &
@@ -228,257 +187,76 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
             broadcast_size = dbroadcast_size(1)
             tmat_bcast_size = dtmat_bcast_size(1)
 
-            !call MPI_Bcast(work(broadcast_offset+broadcast_size),tmat_bcast_size,mpi_real8, &
-            !                    0,mpicomm_rows,mpierr)
-
             ! t matrix should now be available on all processes => unpack
             call tum_pdgeqrf_pack_unpack_tmatrix(work(temptau_offset+voffset-1),t(voffset,voffset),ldt,work(broadcast_offset+broadcast_size),lwork,lcols,1)
         end if
 
-        ! merge small T matrix to final T matrix
-        ! obsolete: we already generated the smaller T matrix part during the column decomposition
-        ! generate t matrix
-        !call tum_pdlarft_1dcomm(m,mb,n-voffset+1,v(1,voffset),ldv,work(temptau_offset+voffset-1),t(voffset,voffset),ldt,rowidx,idx,rev,mpicomm_rows,work(work_offset),lwork)
-        !do ivector=1,lcols
-        !    !print *,'writing tau(qr)', voffset, ivector, work(temptau_offset+voffset-1+ivector-1)
-        !    t(voffset+ivector-1,voffset+ivector-1) =  work(temptau_offset+voffset-1+ivector-1)
-        !end do
-
         remaining_cols = remaining_cols - lcols
  
         ! apply householder vectors to whole trailing matrix parts (if any)
-        ! TODO: toggle behavior using parameters (full/incremental update)
 
         update_voffset = voffset
         update_tauoffset = icol
         update_lcols = lcols
         incremental_update_size = incremental_update_size + lcols
  
-        ! TODO: determine size of nextrank
-
-        !if (rev .eq. 1) then
-            icol = icol - lcols
-            ! count colums from first column of global block to current index
-            call local_size_offset_1d(icol,nb,colidx-n+1,colidx-n+1,0, &
+        icol = icol - lcols
+        ! count colums from first column of global block to current index
+        call local_size_offset_1d(icol,nb,colidx-n+1,colidx-n+1,0, &
                                       mpirank_cols,mpiprocs_cols, &
                                       lcols,baseoffset,offset)
-        !else
-        !    icol = icol + lcols
-        !    voffset = voffset + lcols
-        !    call local_size_offset_1d(lastcol,nb,icol,icol,0, &
-        !                              mpirank_cols,mpiprocs_cols, &
-        !                              lcols,baseoffset,offset)
-        !end if
 
         if (lcols .gt. 0) then
+
             !print *,'updating trailing matrix'
-            !if (rev .eq. 1) then
-                if (updatemode .eq. ichar('I')) then
-                    print *,'pdgeqrf_2dcomm: incremental update not yet implemented! rev=1'
-                else if (updatemode .eq. ichar('F')) then
-                    ! full update no merging
-                    call tum_pdlarfb_1dcomm(m,mb,lcols,update_lcols,a(1,offset),lda,v(1,update_voffset),ldv, &
-                                            work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
-                                            rowidx,idx,1,mpicomm_rows,work(work_offset),lwork)
-                else 
-                    ! full update + merging default
-                    call tum_tmerge_pdlarfb_1dcomm(m,mb,lcols,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
-                                                   work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
-                                                   a(1,offset),lda,rowidx,idx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
-                end if
-            !else  ! rev .ne. 1
-            !    if (updatemode .eq. ichar('I')) then
-            !        print *,'pdgeqrf_2dcomm: incremental update not yet implemented! rev=0'
-            !    else if (updatemode .eq. ichar('F')) then
-            !        ! full update - no merging
-            !        call tum_pdlarfb_1dcomm(m,mb,lcols,update_lcols,a(1,offset),lda,v(1,update_voffset),ldv,&
-            !                                work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
-            !                                rowidx,idx,rev,mpicomm_rows,work(work_offset),lwork)
-            !    else
-            !        ! full update + merging
-            !        call tum_tmerge_pdlarfb_1dcomm(m,mb,lcols,update_voffset-1,update_lcols,v,ldv,tau,t,ldt, & 
-            !                                      a(1,offset),lda,rowidx,idx,0,updatemode,mpicomm_rows,work(work_offset),lwork)
-            !    end if
-            !end if
-            !print *,'updating trailing matrix done'
+
+			if (updatemode .eq. ichar('I')) then
+				print *,'pdgeqrf_2dcomm: incremental update not yet implemented! rev=1'
+			else if (updatemode .eq. ichar('F')) then
+				! full update no merging
+				call tum_pdlarfb_1dcomm(m,mb,lcols,update_lcols,a(1,offset),lda,v(1,update_voffset),ldv, &
+							work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
+							rowidx,idx,1,mpicomm_rows,work(work_offset),lwork)
+			else 
+				! full update + merging default
+				call tum_tmerge_pdlarfb_1dcomm(m,mb,lcols,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
+							   work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
+							   a(1,offset),lda,rowidx,idx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
+			end if
         else
-            !if (rev .eq. 1) then
-                if (updatemode .eq. ichar('I')) then
-                    print *,'sole merging of (incremental) T matrix', mpirank_cols, n-(update_voffset+incremental_update_size-1)
-                    call tum_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+incremental_update_size-1),incremental_update_size,v(1,update_voffset),ldv, &
-                                                   work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
-                                                   a,lda,rowidx,idx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
+			if (updatemode .eq. ichar('I')) then
+				print *,'sole merging of (incremental) T matrix', mpirank_cols, n-(update_voffset+incremental_update_size-1)
+				call tum_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+incremental_update_size-1),incremental_update_size,v(1,update_voffset),ldv, &
+											   work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
+											   a,lda,rowidx,idx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
 
-                    ! reset for upcoming incremental updates
-                    incremental_update_size = 0
-                else if (updatemode .eq. ichar('M')) then
-                    ! final merge
-                    call tum_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
-                                                   work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
-                                                   a,lda,rowidx,idx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
-                else 
-                    ! full updatemode - nothing to update
-                end if
+				! reset for upcoming incremental updates
+				incremental_update_size = 0
+			else if (updatemode .eq. ichar('M')) then
+				! final merge
+				call tum_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
+											   work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
+											   a,lda,rowidx,idx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
+			else 
+				! full updatemode - nothing to update
+			end if
 
-                ! reset for upcoming incremental updates
-                incremental_update_size = 0
-            !else 
-            !    if (updatemode .eq. ichar('I')) then
-            !        print *,'pdgeqrf_2dcomm: incremental update not yet implemented! rev=0'
-            !    else if (updatemode .eq. ichar('M')) then
-            !        ! final merging
-            !        call tum_tmerge_pdlarfb_1dcomm(m,mb,0,update_voffset-1,update_lcols,v,ldv,tau,t,ldt, & 
-            !                                       a,lda,rowidx,idx,0,updatemode,mpicomm_rows,work(work_offset),lwork)
-            !    end if
-            !end if
+			! reset for upcoming incremental updates
+			incremental_update_size = 0
         end if
     end do
  
     if ((tmerge .gt. 0) .and. (updatemode .eq. ichar('F'))) then
         ! finally merge all small T parts
-        ! TODO: due to distribution specific properties, some 1d properties do
-        ! not hold (e.g. smallest parts may come at the beginning instead of the end) => find largest subsets and merge them.
-        !call tum_pdlarft_set_merge_1dcomm(m,mb,n,size2d,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm_rows,work,lwork)
         call tum_pdlarft_tree_merge_1dcomm(m,mb,n,size2d,tmerge,v,ldv,tau,t,ldt,rowidx,rowidx,rev,mpicomm_rows,work,lwork)
     end if
+
     !print *,'stop decomposition',rowidx,colidx
  
-    !print *,'final matrix'
-    !print *,a(1,1),a(1,2),a(1,3)
-    !print *,a(2,1),a(2,2),a(2,3)
-    !print *,a(3,1),a(3,2),a(3,3)
-    !print *,a(4,1),a(4,2),a(4,3)
-    !print *,a(5,1),a(5,2),a(5,3)
-
-
-end subroutine
-! after the decomposition: v contains all vectors from the process
-! (including the ones calculated by other process columns)
-
-! TODO: cleanup huge number of variables
-! TODO: emphasize use of remaining_cols
-subroutine tum_pdgeqrf_replica_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,colidx,rev,trans,PQRPARAM,mpicomm_rows,mpicomm_cols,blockheuristic)
-    use ELPA1
-    use tum_utils
-    use mpi
-  
-    implicit none
- 
-    ! parameter setup
-    INTEGER     gmode_,rank_,eps_
-    PARAMETER   (gmode_ = 1,rank_ = 2,eps_=3)
-
-    ! input variables (local)
-    integer lda,lwork,ldv,ldt
-    double precision a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
-
-    ! input variables (global)
-    integer m,n,mb,nb,rowidx,colidx,rev,trans,mpicomm_cols,mpicomm_rows
-    integer PQRPARAM(*)
- 
-    ! output variables (global)
-    double precision blockheuristic(*)
-
-    ! input variables derived from PQRPARAM
-    integer updatemode,tmerge,size2d
-
-    ! local scalars
-    integer mpierr,mpirank_cols,broadcast_size,mpirank_rows
-    integer mpirank_cols_qr,mpiprocs_cols
-    integer lcols_temp,lcols,icol,lastcol
-    integer baseoffset,offset,idx,voffset
-    integer update_voffset,update_tauoffset
-    integer update_lcols,ivector
-    integer work_offset,ldb
-
-    double precision dbroadcast_size(1),dtmat_bcast_size(1)
-    double precision pdgeqrf_size(1),pdlarft_size(1),pdlarfb_size(1),tmerge_pdlarfb_size(1),replicate_size(1)
-    integer temptau_offset,temptau_size
-    integer gatherrecv_offset,gatherrecv_size
-    integer remaining_cols,total_cols
-
-    size2d = PQRPARAM(1)
-    updatemode = PQRPARAM(2)
-    tmerge = PQRPARAM(3)
-
-    ! copy value before we are going to filter it
-    total_cols = n
-
-    call mpi_comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
-
-    if (n .gt. mpiprocs_cols*nb) then
-        ! replication is not possible in this case
-        call tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,colidx,rev,trans,PQRPARAM,mpicomm_rows,mpicomm_cols,blockheuristic)
-        return
-    end if
-  
-    call mpi_comm_rank(mpicomm_cols,mpirank_cols,mpierr)
-    call mpi_comm_rank(mpicomm_rows,mpirank_rows,mpierr)
-   
-    call tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans,PQRPARAM(4),mpicomm_rows,blockheuristic)
-    call tum_replicate_submatrix_2dcomm(m,n,mb,nb,rowidx,colidx,a,lda,replicate_size(1),-1,mpicomm_rows,mpicomm_cols,rev,work,ldb)
-
-    temptau_offset = 1
-    temptau_size = total_cols
-    gatherrecv_offset = temptau_offset + temptau_size 
-    gatherrecv_size = total_cols * lda
-    work_offset = gatherrecv_offset + gatherrecv_size
-
-    if (lwork .eq. -1) then
-        work(1) = DBLE(temptau_size + gatherrecv_size) + max(pdgeqrf_size(1),replicate_size(1))
-        return
-    end if
-
-    v(1:ldv,1:total_cols) = 0.0d0
- 
-    ! replicate submatrix
-    call tum_replicate_submatrix_2dcomm(m,n,mb,nb,rowidx,colidx,a,lda,work(work_offset),lwork,mpicomm_rows,mpicomm_cols,rev,work(gatherrecv_offset),ldb)
-
-    !print *,'original matrix'
-    !print *,a(1,1),a(1,2),a(1,3)
-    !print *,a(2,1),a(2,2),a(2,3)
-    !print *,a(3,1),a(3,2),a(3,3)
-    !print *,a(4,1),a(4,2),a(4,3)
-    !print *,a(5,1),a(5,2),a(5,3)
-
-    !print *,'replicated matrix'
-    !print *,work(gatherrecv_offset),work(gatherrecv_offset+ldb),work(gatherrecv_offset+2*ldb)
-    !print *,work(gatherrecv_offset+1),work(gatherrecv_offset+ldb+1),work(gatherrecv_offset+2*ldb+1)
-    !print *,work(gatherrecv_offset+2),work(gatherrecv_offset+ldb+2),work(gatherrecv_offset+2*ldb+2)
-    !print *,work(gatherrecv_offset+3),work(gatherrecv_offset+ldb+3),work(gatherrecv_offset+2*ldb+3)
-    !print *,work(gatherrecv_offset+4),work(gatherrecv_offset+ldb+4),work(gatherrecv_offset+2*ldb+4)
-
-    ! run 1d qr decomposition on replicated matrix
-
-    if (ldb .eq. 0) then
-        ldb = lda  ! may become zero due to replication => workaround to avoid dger error messages
-    end if
-
-    call tum_pdgeqrf_1dcomm(work(gatherrecv_offset),ldb,v,ldv,work(temptau_offset),t,ldt,work(work_offset),lwork,m,total_cols,mb,rowidx,rowidx,rev,trans,PQRPARAM(4),mpicomm_rows,blockheuristic)
- 
-    !print *,'final matrix'
-    !print *,work(gatherrecv_offset),work(gatherrecv_offset+ldb),work(gatherrecv_offset+2*ldb)
-    !print *,work(gatherrecv_offset+1),work(gatherrecv_offset+ldb+1),work(gatherrecv_offset+2*ldb+1)
-    !print *,work(gatherrecv_offset+2),work(gatherrecv_offset+ldb+2),work(gatherrecv_offset+2*ldb+2)
-    !print *,work(gatherrecv_offset+3),work(gatherrecv_offset+ldb+3),work(gatherrecv_offset+2*ldb+3)
-    !print *,work(gatherrecv_offset+4),work(gatherrecv_offset+ldb+4),work(gatherrecv_offset+2*ldb+4)
-
-    ! extract modified replicated parts and new tau values on original process columns
-    call tum_merge_submatrix_2dcomm(m,n,mb,nb,rowidx,colidx,work(gatherrecv_offset),ldb,a,lda,mpicomm_rows,mpicomm_cols,rev)
-    call tum_merge_subvector_1dcomm(total_cols,nb,colidx,work(temptau_offset),tau,mpicomm_cols,rev)
-
-    !print *,'merged matrix'
-    !print *,a(1,1),a(1,2),a(1,3)
-    !print *,a(2,1),a(2,2),a(2,3)
-    !print *,a(3,1),a(3,2),a(3,3)
-    !print *,a(4,1),a(4,2),a(4,3)
-    !print *,a(5,1),a(5,2),a(5,3)
-
-end subroutine
+end subroutine tum_pdgeqrf_2dcomm
 
 subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
     use ELPA1
-    use mpi
   
     implicit none
  
@@ -513,9 +291,6 @@ subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
     if (lwork .eq. -1) then
         call tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, & 
                                 m,size1d,mb,baseidx,baseidx,rev,trans,PQRPARAM(4),mpicomm,blockheuristic)
-
-        !call tum_tmerge_pdlarfb_1dcomm(m,mb,n,n,size1d,v,ldv,tau,t,ldt, &
-        !                               a,lda,baseidx,idx,rev,updatemode,mpicomm,pdlarfb_size,-1)
 
         ! reserve more space for incremental mode
         call tum_tmerge_pdlarfb_1dcomm(m,mb,n,n,n,v,ldv,tau,t,ldt, &
@@ -563,10 +338,6 @@ subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
                                         tau(aoffset),t(aoffset,aoffset),ldt,baseidx,idx,1,mpicomm,work,lwork)
             end if
 
-            !call tum_tmerge_pdlarfb_1dcomm(m,mb,0,current_block*size1d,size1d, & 
-            !                               v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt, &
-            !                               a,lda,baseidx,idx,1,'F',mpicomm,work,lwork)
-
             ! move on to next block
             current_block = current_block+1
         end do
@@ -587,18 +358,17 @@ subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
  
     if ((tmerge .gt. 0) .and. (updatemode .eq. ichar('F'))) then
         ! finally merge all small T parts
-        !call tum_pdlarft_set_merge_1dcomm(m,mb,n,size1d,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
         call tum_pdlarft_tree_merge_1dcomm(m,mb,n,size1d,tmerge,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
     end if
 
-end subroutine
+end subroutine tum_pdgeqrf_1dcomm
+
 ! local a and tau are assumed to be positioned at the right column from a local
 ! perspective
 ! TODO: if local amount of data turns to zero the algorithm might produce wrong
 ! results (probably due to old buffer contents)
 subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
     use ELPA1
-    use mpi
   
     implicit none
  
@@ -649,10 +419,8 @@ subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
         call tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,n,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
         call tum_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m,n,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
         call tum_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,pdlarfl2_size(1),-1,m,n,rowidx,mb,rev,mpicomm)
-        !call tum_pdlarft_1dcomm(m,mb,n,v,ldv,tau,t,ldt,baseidx,rowidx,1,mpicomm,pdlarft_size(1),-1)
         pdlarft_size(1) = 0.0d0
         call tum_pdlarfb_1dcomm(m,mb,n,n,a,lda,v,ldv,tau,t,ldt,baseidx,rowidx,1,mpicomm,pdlarfb_size(1),-1)
-        !call tum_pdlarft_pdlarfb_1dcomm(m,mb,n,0,n,v,ldv,tau,t,ldt,a,lda,baseidx,idx,rev,mpicomm,pdlarft_pdlarfb_size(1),-1)
         pdlarft_pdlarfb_size(1) = 0.0d0
         call tum_tmerge_pdlarfb_1dcomm(m,mb,n,n,n,v,ldv,work,t,ldt,a,lda,rowidx,idx,rev,updatemode,mpicomm,tmerge_pdlarfb_size(1),-1)
 
@@ -677,7 +445,7 @@ subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
             current_column = n-icol+1-rank+1
 
             if (rank .eq. 1) then
-                !print *,'rank 1 called',n-icol+1
+
                 call tum_pdlarfg_1dcomm(a(1,current_column),incx, &
                                         tau(current_column),work,lwork, &
                                         m,idx,mb,hgmode,1,mpicomm)
@@ -691,31 +459,17 @@ subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
                 t(current_column,current_column) = tau(current_column)
 
                 actualrank = 1
-                !print *,'actualrank 1'
+
             else if (rank .eq. 2) then 
                 call tum_pdlarfg2_1dcomm_ref(a(1,current_column),lda,tau(current_column), &
                                              t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                             baseidx,work,lwork,m,rank,idx,mb,PQRPARAM,1,mpicomm,actualrank)
             
-                 !print '(a,4f)','calc.   t',t(n-icol,n-icol),t(n-icol,n-icol+1),t(n-icol+1,n-icol),t(n-icol+1,n-icol+1)
-                !print *,'rank 2:',actualrank,rank
             else 
                 call tum_pdlarfgk_1dcomm(a(1,current_column),lda,tau(current_column), &
                                          t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                          baseidx,work,lwork,m,rank,idx,mb,PQRPARAM,1,mpicomm,actualrank)
  
-                !print *,'calc.   t',actualrank,rank
-                !print '(3f)',t(1,1:3)
-                !print '(3f)',t(2,1:3)
-                !print '(3f)',t(3,1:3)
-
-                !call tum_pdlarft_1dcomm(m,mb,actualrank,v(1,current_column+(rank-actualrank)),ldv,tau(current_column+(rank-actualrank)), & 
-                !                        t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt,baseidx,idx,1,mpicomm,work,lwork)
- 
-                !print *,'working t',actualrank,rank
-                !print '(3f)',t(1,1:3)
-                !print '(3f)',t(2,1:3)
-                !print '(3f)',t(3,1:3)
             end if
   
             blockheuristic(actualrank) = blockheuristic(actualrank) + 1
@@ -743,21 +497,19 @@ subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
                                                    a(1,1),lda,baseidx,idx,rev,updatemode,mpicomm,work,lwork)
                 end if
             else
-                ! TODO: build a merge only version
                 call tum_tmerge_pdlarfb_1dcomm(m,mb,0,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv,tau(current_column+(rank-actualrank)), &
                                                t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
                                                a,lda,baseidx,idx,rev,updatemode,mpicomm,work,lwork)
             end if
 
         end do
-end subroutine
+end subroutine tum_pdgeqr2_1dcomm
+
 ! incx == 1: column major
 ! incx != 1: row major
-
 subroutine tum_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm)
     use ELPA1
     use tum_utils
-    use mpi
     
     implicit none
  
@@ -789,18 +541,10 @@ subroutine tum_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm
     ! intrinsic
     intrinsic sign
 
-    !if (rev .eq. 1) then
-        if (idx .le. 1) then
-            tau = 0.0d0
-            !print *,'hg 1: no more data'
-            return
-        end if
-    !else
-    !    if (idx .ge. n) then
-    !        tau = 0.0d0
-    !        return
-    !    end if
-    !end if
+	if (idx .le. 1) then
+		tau = 0.0d0
+		return
+	end if
 
     call MPI_Comm_rank(mpi_comm, mpirank, mpierr)
     call MPI_Comm_size(mpi_comm, mpiprocs, mpierr)
@@ -836,13 +580,8 @@ subroutine tum_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm
         top = 1+(topidx-1)*incx
     end if
  
-    !if (rev .eq. 1) then
-        call local_size_offset_1d(n,nb,idx,idx-1,rev,mpirank,mpiprocs, &
-                                  local_size,baseoffset,local_offset)
-    !else
-    !    call local_size_offset_1d(n,nb,idx,idx+1,rev,mpirank,mpiprocs, &
-    !                              local_size,baseoffset,local_offset)
-    !end if
+	call local_size_offset_1d(n,nb,idx,idx-1,rev,mpirank,mpiprocs, &
+							  local_size,baseoffset,local_offset)
 
     local_offset = local_offset * incx
 
@@ -857,8 +596,6 @@ subroutine tum_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm
         dot = ddot(local_size, &
                    x(local_offset), incx, &
                    x(local_offset), incx)
-
-        !dot =  dot_product(x(local_offset:local_offset+local_size-1), x(local_offset:local_offset+local_size-1))
 
         work(1) = alpha
         work(2) = dot
@@ -947,13 +684,6 @@ subroutine tum_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm
     else
         ! General case
 
-        !beta = sign(dlapy2(alpha, xnorm), alpha)
-        !tau = (beta+alpha) / beta
-        !xf = 1.0d0/(beta+alpha)
-        !if (mpirank .eq. mpirank_top) then
-        !    x(top) = -beta
-        !end if
-
         call hh_transform_real(alpha,xnorm**2,xf,tau)
         if (mpirank .eq. mpirank_top) then
             x(top) = alpha
@@ -971,9 +701,8 @@ subroutine tum_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm
     !print *,'hg:mpirank,idx,beta,alpha:',mpirank,idx,beta,alpha,1.0d0/(beta+alpha),tau
     !print *,x(1:n)
 
-end subroutine
-! TODO: incx parameter missing
-! TODO: make use of k parameter
+end subroutine tum_pdlarfg_1dcomm
+
 subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,mb,PQRPARAM,rev,mpicomm,actualk)
     implicit none
  
@@ -1002,12 +731,6 @@ subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,
     integer seedwork_offset,seed_offset
     logical accurate
 
-    ! external functions
-    logical tum_pdlarfg2_1dcomm_check
-    external tum_pdlarfg2_1dcomm_check
- 
-    ! TODO: add fallback routines to work buffer size calculation
-
     call tum_pdlarfg2_1dcomm_seed(a,lda,dseedwork_size(1),-1,work,m,mb,idx,rev,mpicomm)
     seedwork_size = dseedwork_size(1)
     seed_size = seedwork_size
@@ -1022,22 +745,12 @@ subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,
 
     eps = PQRPARAM(3)
 
-    !print *,'hg2:',m,k,baseidx,idx
-
     ! check for border cases (only a 2x2 matrix left)
-    !if (rev .eq. 1) then
-        if (idx .le. 1) then
-            tau(1:2) = 0.0d0
-            t(1:2,1:2) = 0.0d0
-            return
-        end if
-    !else
-    !    if (idx .ge. m) then
-    !        tau(1:2) = 0.0d0
-    !        t(1:2,1:2) = 0.0d0
-    !        return
-    !    end if
-    !end if
+	if (idx .le. 1) then
+		tau(1:2) = 0.0d0
+		t(1:2,1:2) = 0.0d0
+		return
+	end if
 
     call tum_pdlarfg2_1dcomm_seed(a,lda,work(seedwork_offset),lwork,work(seed_offset),m,mb,idx,rev,mpicomm)
 
@@ -1047,21 +760,12 @@ subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,
             accurate = .true.
         end if
 
-        !print *,'accurate:',accurate
-
-        !call tum_pdlarfg_1dcomm(a(1,1),1, &
-        !                        tau(1),work,lwork, &
-        !                        m,idx,mb,PQRPARAM,0,mpicomm)
-
         call tum_pdlarfg2_1dcomm_vector(a(1,2),1,tau(2),work(seed_offset), &
                                         m,mb,idx,0,1,mpicomm)
 
         call tum_pdlarfg_copy_1dcomm(a(1,2),1, &
                                      v(1,2),1, &
                                      m,baseidx,idx,mb,1,mpicomm)
-
-        !call tum_pdlarfl_1dcomm(v(1,1),1,baseidx,a(1,2),lda,tau(1), &
-        !                        work,lwork,m,1,idx,mb,0,mpicomm)
 
         call tum_pdlarfg2_1dcomm_update(v(1,2),1,baseidx,a(1,1),lda,work(seed_offset),m,idx,mb,rev,mpicomm)
 
@@ -1094,7 +798,6 @@ subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,
 
             ! no more vectors to create
 
-            ! TODO: clear space of second vector in v?
             tau(1) = 0.0d0
 
             actualk = 2
@@ -1102,13 +805,11 @@ subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,
             !print *,'rank2: no more data'
         end if
 
-end subroutine
+end subroutine tum_pdlarfg2_1dcomm_ref
 
-! TODO: incx parameter missing
 subroutine tum_pdlarfg2_1dcomm_seed(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
 
     implicit none
 
@@ -1189,7 +890,7 @@ subroutine tum_pdlarfg2_1dcomm_seed(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
     ! exchange partial results
     call mpi_allreduce(work, seed, 8, mpi_real8, mpi_sum, &
                        mpicomm, mpierr)
-end subroutine
+end subroutine tum_pdlarfg2_1dcomm_seed
 
 logical function tum_pdlarfg2_1dcomm_check(seed,eps)
     implicit none
@@ -1229,14 +930,13 @@ logical function tum_pdlarfg2_1dcomm_check(seed,eps)
     accurate = (estimate .LE. (epsd/(1.0d0+epsd)))
   
     tum_pdlarfg2_1dcomm_check = accurate
-end function
+end function tum_pdlarfg2_1dcomm_check
 
 ! id=0: first vector
 ! id=1: second vector
 subroutine tum_pdlarfg2_1dcomm_vector(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
  
     implicit none
 
@@ -1261,13 +961,8 @@ subroutine tum_pdlarfg2_1dcomm_vector(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
 
-    !if (rev .eq. 1) then
-        call local_size_offset_1d(n,nb,idx,idx-1,rev,mpirank,mpiprocs, &
+    call local_size_offset_1d(n,nb,idx,idx-1,rev,mpirank,mpiprocs, &
                                   local_size,baseoffset,local_offset)
-    !else
-    !    call local_size_offset_1d(n,nb,idx,idx+1,rev,mpirank,mpiprocs, &
-    !                              local_size,baseoffset,local_offset)
-    !end if
 
     local_offset = local_offset * incx
 
@@ -1295,7 +990,6 @@ subroutine tum_pdlarfg2_1dcomm_vector(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
 
         !print *,'hg2',tau,xnorm,alpha
         
-        !call tum_pdscal_1dcomm(1.0d0/(beta+alpha))
         call dscal(local_size, 1.0d0/(beta+alpha), &
                    x(local_offset), incx)
  
@@ -1308,12 +1002,11 @@ subroutine tum_pdlarfg2_1dcomm_vector(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
 
         seed(8) = beta
     end if
-end subroutine
+end subroutine tum_pdlarfg2_1dcomm_vector
 
 subroutine tum_pdlarfg2_1dcomm_update(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
  
     implicit none
 
@@ -1389,7 +1082,7 @@ subroutine tum_pdlarfg2_1dcomm_update(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpi
     ! prepare dot matrix for fuse element of T matrix
     ! replace top11 value with -beta1
     seed(1) = beta
-end subroutine
+end subroutine tum_pdlarfg2_1dcomm_update
 
 ! run this function after second vector
 subroutine tum_pdlarfg2_1dcomm_finalize_tmatrix(seed,tau,t,ldt)
@@ -1413,8 +1106,8 @@ subroutine tum_pdlarfg2_1dcomm_finalize_tmatrix(seed,tau,t,ldt)
     t(1,1) = tau(1)
     t(1,2) = dot12
     t(2,2) = tau(2)
-end subroutine
-! TODO: implement incx parameter
+end subroutine tum_pdlarfg2_1dcomm_finalize_tmatrix
+
 subroutine tum_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,mb,PQRPARAM,rev,mpicomm,actualk)
 
     implicit none
@@ -1483,12 +1176,11 @@ subroutine tum_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,
         ! generate final T matrix and convert preliminary tau values into real ones
         call tum_pdlarfgk_1dcomm_generateT(work(seedC_offset),work(seedD_offset),k,actualk,tau,t,ldt,1)
 
-end subroutine
+end subroutine tum_pdlarfgk_1dcomm
 
 subroutine tum_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,PQRPARAM,rev,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
 
     implicit none
  
@@ -1534,17 +1226,11 @@ subroutine tum_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,
 
     ! collect C part
     do icol=1,k
-        !irow = 1
-        !lidx = baseidx
 
         remaining_rank = k
         do while (remaining_rank .gt. 0)
             irow = k - remaining_rank + 1
-            !if (rev .eq. 1) then
-                lidx = baseidx - remaining_rank + 1
-            !else
-            !    lidx = baseidx + irow - 1
-            !end if
+            lidx = baseidx - remaining_rank + 1
 
             ! determine chunk where the current top element is located
             mpirank_top = MOD((lidx-1)/mb,mpiprocs) 
@@ -1573,15 +1259,9 @@ subroutine tum_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,
     end do
 
     ! collect D part
-    !if (rev .eq. 1) then
-        call local_size_offset_1d(m,mb,baseidx-k,baseidx-k,rev, &
-                                  mpirank,mpiprocs, &
-                                  localsize,baseoffset,localoffset)
-    !else
-    !    call local_size_offset_1d(m,mb,baseidx+k,baseidx+k,rev, &
-    !                              mpirank,mpiprocs, &
-    !                              localsize,baseoffset,localoffset)
-    !end if
+	call local_size_offset_1d(m,mb,baseidx-k,baseidx-k,rev, &
+							  mpirank,mpiprocs, &
+							  localsize,baseoffset,localoffset)
  
     !print *,'localsize',localsize,localoffset
     if (localsize > 0) then
@@ -1595,25 +1275,20 @@ subroutine tum_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,
     ! TODO: store symmetric part more efficiently
 
     ! allreduce operation on results
-    !print *,'sendrecv_size', sendrecv_size
     call mpi_allreduce(work(sendoffset),work(recvoffset),sendrecv_size, &
                        mpi_real8,mpi_sum,mpicomm,mpierr)
 
     ! unpack result from buffer into seedC and seedD
-    !print *,'seedC',k
     seedC(1:k,1:k) = 0.0d0
     do icol=1,k
         seedC(1:k,icol) = work(recvoffset+(icol-1)*k:recvoffset+icol*k)
-        !print *,seedC(1:k,icol)
     end do
  
     seedD(1:k,1:k) = 0.0d0
-    !print *,'seedD',k
     do icol=1,k
         seedD(1:k,icol) = work(recvoffset+C_size+(icol-1)*k:recvoffset+C_size+icol*k)
-        !print *,seedD(1:k,icol)
     end do
-end subroutine
+end subroutine tum_pdlarfgk_1dcomm_seed
 
 subroutine tum_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank,rev)
     use tum_utils
@@ -1641,8 +1316,7 @@ subroutine tum_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possibler
     double precision dreverse_matrix_work(1)
 
     if (lwork .eq. -1) then
-        !if (rev .eq. 1) &
-            call reverse_matrix_local(1,k,k,work,k,dreverse_matrix_work,-1)
+        call reverse_matrix_local(1,k,k,work,k,dreverse_matrix_work,-1)
         work(1,1) = DBLE(k*k) + dreverse_matrix_work(1)
         return
     end if
@@ -1665,23 +1339,16 @@ subroutine tum_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possibler
                1.0d0, seedC(1,1), k, &
                1.0d0, work, k)
 
-    !if (rev .eq. 1) then
-        ! TODO: optimize this part!
-        call reverse_matrix_local(0,k,k,work(1,1),k,work(1,k+1),lwork-2*k)
-        call reverse_matrix_local(1,k,k,work(1,1),k,work(1,k+1),lwork-2*k)
-        
-        ! transpose matrix
-        do icol=1,k
-            do isqr=icol+1,k
-                work(icol,isqr) = work(isqr,icol)
-            end do
-        end do
-    !end if
- 
-    !print *,'work buffer'
-    !do icol=1,k
-    !    print *,work(icol,1:k)
-    !end do
+	! TODO: optimize this part!
+	call reverse_matrix_local(0,k,k,work(1,1),k,work(1,k+1),lwork-2*k)
+	call reverse_matrix_local(1,k,k,work(1,1),k,work(1,k+1),lwork-2*k)
+
+	! transpose matrix
+	do icol=1,k
+		do isqr=icol+1,k
+			work(icol,isqr) = work(isqr,icol)
+		end do
+	end do
 
     ! work contains now the full inner product of the global (sub-)matrix
     do icol=1,k
@@ -1729,7 +1396,7 @@ subroutine tum_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possibler
 
     ! if we get to this point, the accuracy condition holds for the whole block
     possiblerank = k
-end subroutine
+end subroutine tum_pdlarfgk_1dcomm_check
 
 !sidx: seed idx
 !k: max rank used during seed phase
@@ -1737,7 +1404,6 @@ end subroutine
 subroutine tum_pdlarfgk_1dcomm_vector(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
  
     implicit none
 
@@ -1764,15 +1430,9 @@ subroutine tum_pdlarfgk_1dcomm_vector(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
 
-    !if (rev .eq. 1) then
-        lidx = baseidx-sidx+1
-        call local_size_offset_1d(n,nb,baseidx,lidx-1,rev,mpirank,mpiprocs, &
-                                  local_size,baseoffset,local_offset)
-    !else
-    !    lidx = baseidx+sidx-1
-    !    call local_size_offset_1d(n,nb,baseidx,lidx+1,rev,mpirank,mpiprocs, &
-    !                              local_size,baseoffset,local_offset)
-    !end if
+	lidx = baseidx-sidx+1
+	call local_size_offset_1d(n,nb,baseidx,lidx-1,rev,mpirank,mpiprocs, &
+							  local_size,baseoffset,local_offset)
  
     local_offset = local_offset * incx
 
@@ -1783,36 +1443,17 @@ subroutine tum_pdlarfgk_1dcomm_vector(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb
         top = 1+(topidx-1)*incx
     end if
 
-    !if (rev .eq. 1) then
-        alpha = seedC(k-sidx+1,k-sidx+1)
-        dot = seedD(k-sidx+1,k-sidx+1)
-        ! assemble actual norm from both seed parts
-        xnorm = dlapy2(sqrt(dot), dnrm2(k-sidx,seedC(1,k-sidx+1),1))
-    !else
-    !    alpha = seedC(sidx,sidx)
-    !    dot = seedD(sidx,sidx)
-    !    ! assemble actual norm from both seed parts
-    !    xnorm = dlapy2(sqrt(dot), dnrm2(k-sidx,seedC(sidx+1,sidx),1))
-    !end if
+	alpha = seedC(k-sidx+1,k-sidx+1)
+	dot = seedD(k-sidx+1,k-sidx+1)
+	! assemble actual norm from both seed parts
+	xnorm = dlapy2(sqrt(dot), dnrm2(k-sidx,seedC(1,k-sidx+1),1))
     
-    !print *,'k hg:', sidx, xnorm, alpha
-
     if (xnorm .eq. 0.0d0) then
-        ! H = I
-
-        ! as indicator that there are no more elements
-        ! TODO: is there a better check? or prevent this case in general?
-        !if (rev .eq. 1) then
-        !    seedC(k-sidx+1,k-sidx+1) = 0.0d0
-        !else
-        !    seedC(sidx,sidx) = 0.0d0
-        !end if
         tau = 0.0d0
     else
         ! General case
 
         beta = sign(dlapy2(alpha, xnorm), alpha)
-        !tau = (beta+alpha) / beta
         ! store a preliminary version of beta in tau
         tau = beta
         
@@ -1831,11 +1472,7 @@ subroutine tum_pdlarfgk_1dcomm_vector(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb
         end if
     end if
   
-    !print *,'k hg:', sidx, alpha, beta
-
-    !print *,'orig C',sidx,local_offset
-    !print *,x(local_offset-1:local_offset+(k-sidx)-1)
-end subroutine
+end subroutine tum_pdlarfgk_1dcomm_vector
 
 !k: original max rank used during seed function
 !rank: possible rank as from check function
@@ -1845,7 +1482,6 @@ end subroutine
 subroutine tum_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
 
     implicit none
 
@@ -1885,14 +1521,8 @@ subroutine tum_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,ran
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
 
-    ! TODO: verify the cancelation criterions
-    !if (rev .eq. 1) then
-        lidx = baseidx-sidx
-        if (lidx .lt. 1) return
-    !else
-    !    lidx = baseidx+sidx
-    !    if (lidx .gt. n) return
-    !end if
+	lidx = baseidx-sidx
+	if (lidx .lt. 1) return
 
     call local_size_offset_1d(n,nb,baseidx,lidx,rev,mpirank,mpiprocs, &
                               localsize,baseoffset,localoffset)
@@ -1903,22 +1533,11 @@ subroutine tum_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,ran
     voffset = yoffset + k
     buffersize = k - sidx
 
-    !print *,'rank k update:',baseidx,sidx
-
     ! finalize tau values
-    !if (rev .eq. 1) then
-        alpha = seedC(k-sidx+1,k-sidx+1)
-        beta = tau(k-sidx+1)
+	alpha = seedC(k-sidx+1,k-sidx+1)
+	beta = tau(k-sidx+1)
 
-        tau(k-sidx+1) = (beta+alpha) / beta
-    !else
-    !    alpha = seedC(sidx,sidx)
-    !    beta = tau(sidx)
-    !
-    !    tau(sidx) = (beta+alpha) / beta
-    !end if
-
-    !print *,'k update', beta, alpha, localsize
+	tau(k-sidx+1) = (beta+alpha) / beta
 
     ! ---------------------------------------
         ! calculate c vector (extra vector or encode in seedC/seedD?
@@ -1935,31 +1554,19 @@ subroutine tum_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,ran
         call daxpy(buffersize, -1.0d0, work(zoffset),1,seedC(k-sidx+1,1),k)
         call dscal(buffersize, 1.0d0/(alpha+beta), seedC(1,k-sidx+1),1)
         call dger(buffersize, buffersize, -1.0d0, seedC(1,k-sidx+1),1, work(zoffset), 1, seedC(1,1), k)
-        !print *,'k hl: upper c',seedC(k-sidx+1,1:buffersize+1)
  
-           ! update A global (householder vector already generated by pdlarfgk)
-        ! TODO: check the top process id
+        ! update A global (householder vector already generated by pdlarfgk)
         mpirank_top = MOD(lidx/nb,mpiprocs)
         if (mpirank .eq. mpirank_top) then
             ! handle first row seperately
             topidx = local_index(lidx+1,mpirank_top,mpiprocs,nb,0)
             call daxpy(buffersize,-1.0d0,work(zoffset),1,a(topidx,1),lda)
-            !print *,'k hl: upper a',a(topidx,1:buffersize)
         end if
 
         call dger(localsize, buffersize,-1.0d0, &
               a(localoffset,k-sidx+1),1,work(zoffset),1, &
               a(localoffset,1),lda)
         
-        !print *,'k hl: dger', localsize, buffersize
-        !print *,'k hl: dger 1',a(localoffset:localoffset+localsize-1,k-sidx+1)
-        !print *,'k hl: dger 2',a(localoffset:localoffset+localsize-1,k-sidx)
-        !print *,'k hl: dger 1',a(localsize,1:buffersize)
-        !print *,'k hl: dger 2',a(localoffset,1:buffersize)
- 
-    !print *,'k hl: coffset', work(coffset:coffset+buffersize-1)
-    !print *,'k hl: zoffset', work(zoffset:zoffset+buffersize-1)
- 
         ! update D (symmetric) => two buffer vectors of size rank
         ! generate y vector
         work(yoffset:yoffset+buffersize-1) = 0.d0
@@ -1977,23 +1584,11 @@ subroutine tum_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,ran
     ! prepare T matrix inner products
     ! D_k(1:k,k+1:n) = D_(k-1)(1:k,k+1:n) - D_(k-1)(1:k,k) * y'
     ! store coefficient 1.0d0/(alpha+beta) in C diagonal elements
-        call dger(k-sidx,sidx,-1.0d0,work(yoffset),1,seedD(k-sidx+1,k-sidx+1),k,seedD(1,k-sidx+1),k)
-        seedC(k,k-sidx+1) = 1.0d0/(alpha+beta)
+	call dger(k-sidx,sidx,-1.0d0,work(yoffset),1,seedD(k-sidx+1,k-sidx+1),k,seedD(1,k-sidx+1),k)
+	seedC(k,k-sidx+1) = 1.0d0/(alpha+beta)
 
-    !print *,'k hl: yoffset',work(yoffset:yoffset+buffersize-1)
-    !print *,'k hl: voffset',work(voffset:voffset+buffersize-1)
+end subroutine tum_pdlarfgk_1dcomm_update
 
-    !print *,'seedD'
-    !print *,seedD(1,1:3)
-    !print *,seedD(2,1:3)
-    !print *,seedD(3,1:3)
-
-    !print *,'seedC'
-    !print *,seedC(1,1:3)
-    !print *,seedC(2,1:3)
-    !print *,seedC(3,1:3)
-
-end subroutine
 
 subroutine tum_pdlarfgk_1dcomm_generateT(seedC,seedD,k,actualk,tau,t,ldt,rev)
     implicit none
@@ -2015,134 +1610,19 @@ subroutine tum_pdlarfgk_1dcomm_generateT(seedC,seedD,k,actualk,tau,t,ldt,rev)
             ! add scaled D parts to current column of C (will become later T rows)
             column_coefficient = seedC(k,k-icol+1)
             do irow=k-actualk+1,k-1
-                !seedC(irow,k-icol+1) = ( seedC(irow,k-icol+1)*(-tau(irow)) ) +  ( seedD(irow,k-icol+1) * column_coefficient * seedC(k,irow)*(-tau(irow)) )
                 seedC(irow,k-icol+1) = ( seedC(irow,k-icol+1) ) +  ( seedD(irow,k-icol+1) * column_coefficient * seedC(k,irow) )
             end do
         end do
  
         call tum_dlarft_kernel(actualk,tau(k-actualk+1),seedC(k-actualk+1,k-actualk+2),k,t(k-actualk+1,k-actualk+1),ldt,rev)
 
-end subroutine
-! IMPORTANT: first column offset is identical to original matrix, this should be
-! enough to efficiently perform an allgather operation for the requested columns
-subroutine tum_replicate_submatrix_2dcomm(m,n,mb,nb,rowidx,colidx,a,lda,work,lwork,mpicomm_rows,mpicomm_cols,rev,b,ldb)
-    use mpi
-    use tum_utils
+end subroutine tum_pdlarfgk_1dcomm_generateT
 
-    implicit none
-
-    ! input variables (global)
-    integer m,n,mb,nb,rowidx,colidx,lda,lwork,mpicomm_rows,mpicomm_cols,rev
-  
-    ! input variables (local)
-    double precision a(lda,*), work(ldb,*)
-
-    ! output variables (global)
-    integer ldb
-    double precision b(ldb,*)
-
-    ! local scalars
-    integer mpierr,mpirank_cols_block
-    integer mpirank_cols,mpiprocs_cols
-    integer mpirank_rows,mpiprocs_rows
-
-    integer localsize_rows,baseoffset_rows,offset_rows
-    integer localsize_cols,baseoffset_cols,offset_cols
-
-    integer start_column,blocksize,current_column,idx,blocksize_temp
-    integer icol,startcolumn,sendsize
-
-    integer, allocatable :: recvsizes(:),recvdisplacements(:)
- 
-    call mpi_comm_rank(mpicomm_rows,mpirank_rows,mpierr)
-    call mpi_comm_size(mpicomm_rows,mpiprocs_rows,mpierr)
-  
-    call mpi_comm_rank(mpicomm_cols,mpirank_cols,mpierr)
-    call mpi_comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
-
-    call local_size_offset_1d(m,mb,rowidx,rowidx,rev,mpirank_rows,mpiprocs_rows, &
-                              localsize_rows,baseoffset_rows,offset_rows)
-    ldb = localsize_rows
-
-    if (lwork .eq. -1) then
-        work(1,1) = DBLE(nb * localsize_rows) ! approximate upper boundary for sendsize
-        return
-    end if
-
-    if (localsize_rows .eq. 0) return ! no data available for communication in current process row
-
-    allocate(recvsizes(mpiprocs_cols))
-    allocate(recvdisplacements(mpiprocs_cols))
- 
-    !if (rev .eq. 1) then
-        startcolumn = colidx-n+1
-    !else
-    !    startcolumn = colidx
-    !end if
-
-    sendsize = 0
-    recvsizes = 0
-    recvdisplacements = 0
-
-    ! iterate over all (part)nb blocks
-    current_column = 1
-    do while (current_column .le. n)
-        idx = startcolumn+current_column-1
-
-        ! determine rank of process column and size of next block
-        mpirank_cols_block = MOD((idx-1)/nb,mpiprocs_cols)
-        blocksize_temp = min(nb,n-current_column+1) ! due to blockcyclic distribution there is a maximum of nb columns per block
-        call local_size_offset_1d(idx+blocksize_temp-1,nb,startcolumn,idx,0, &
-                                  mpirank_cols_block,mpiprocs_cols, &
-                                  blocksize,baseoffset_cols,offset_cols)
- 
-        if (mpirank_cols_block .eq. mpirank_cols) then
-            ! this block belongs to me => pack data into sendbuffer
-            do icol=1,blocksize
-                work(1:localsize_rows,baseoffset_cols+icol-1) = a(offset_rows:offset_rows+localsize_rows-1,offset_cols+icol-1)
-            end do
-
-            ! adjust sendsize counter
-            sendsize = sendsize + blocksize*ldb
-        end if
-
-        recvsizes(mpirank_cols_block+1) = blocksize*ldb
-        recvdisplacements(mpirank_cols_block+1) = (current_column-1)*ldb
-
-        current_column = current_column + blocksize
-
-        !print *,'blocksize',mpirank_cols,mpirank_cols_block,offset_cols,baseoffset_cols
-    end do
-
-    !print *,'work matrix'
-    !do icol=1,localsize_rows
-    !    print *,work(icol,1:n)
-    !end do
-
-    !do icol=1,n
-    !    b(offset_rows:offset_rows+localsize_rows-1,icol) = 0.0d0
-    !end do
-
-    !print *,'allgatherv step', sendsize, recvsizes(1), recvdisplacements(1),recvsizes(2),recvdisplacements(2)
-
-    call MPI_Allgatherv(work(1,1), sendsize, mpi_real8, &
-                        b(offset_rows,1), recvsizes, recvdisplacements, mpi_real8,  &
-                        mpicomm_cols, mpierr)
-  
-    !print *,'replicated matrix'
-    !do icol=1,localsize_rows
-    !    print *,b(offset_rows+icol-1,1:n)
-    !end do
-
-    deallocate(recvsizes,recvdisplacements)
-
-end subroutine
 !direction=0: pack into work buffer
 !direction=1: unpack from work buffer
 subroutine tum_pdgeqrf_pack_unpack(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
   
     implicit none
 
@@ -2191,77 +1671,13 @@ subroutine tum_pdgeqrf_pack_unpack(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,di
 
     return
 
-    ! obsolete part
+end subroutine tum_pdgeqrf_pack_unpack
 
-    !buffersize = 0
-    !do icol=1,n
-    !    if (rev .eq. 1) then
-    !        idx = rowidx-icol+1
-    !        vcol=n-icol+1
-    !    else
-    !        idx = rowidx+icol-1
-    !        vcol=icol
-    !    end if
-        
-    !    call local_size_offset_1d(m,mb,baseidx,idx,rev,mpirank,mpiprocs, &
-    !                              local_size,baseoffset,offset)
- 
-    !    !if (lwork .ne. -1) then
-    !        if (direction .eq. 0) then
-    !            ! pack v column into work buffer
-    !            do irow=1,local_size
-    !                work(buffersize+irow) = v(irow+baseoffset-1,vcol)
-    !            end do
-    !            buffersize = buffersize + local_size
-    !     
-    !            ! pack T matrix into work buffer
-    !            work(buffersize+1:buffersize+icol) = t(1:icol,icol)  
-    !            buffersize = buffersize + icol
-    !
-    !            ! obsolete part
-    !            ! pack tau value into work buffer
-    !            !work(buffersize+1) = tau(vcol) 
-    !            !buffersize = buffersize + 1
-    !        else
-    !            ! unpack v column from work buffer
-    !            v(1:ldv,vcol) = 0.0d0
-    !            do irow=1,local_size
-    !               v(irow+baseoffset-1,vcol) = work(buffersize+irow)
-    !            end do
-    !            buffersize = buffersize + local_size
-    !
-    !            ! unpack T matrix from work buffer
-    !            t(1:icol,icol) = work(buffersize+1:buffersize+icol)
-    !            buffersize = buffersize + icol
-    !
-    !            ! restore tau values for compatibility reasons
-    !            tau(vcol) = t(icol,icol)
-    !
-    !            ! obsolete part
-    !            ! unpack tau value from work buffer
-    !            !tau(vcol) = work(buffersize+1)
-    !            !buffersize = buffersize + 1
-    !        end if
-    !    !else
-    !    !    ! space for vectors and t matrix
-    !    !    buffersize = buffersize + local_size + icol
-    !    !
-    !    !    ! obsolete part
-    !    !    ! space for vectors and tau values
-    !    !    ! buffersize = buffersize + local_size + 1
-    !    !end if
-    !end do
- 
-    !if (lwork .eq. -1) then
-    !    work(1) = DBLE(buffersize)
-    !end if
-end subroutine
 !direction=0: pack into work buffer
 !direction=1: unpack from work buffer
 subroutine tum_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,work,lwork,n,direction)
     use ELPA1
     use tum_utils
-    use mpi
   
     implicit none
 
@@ -2297,124 +1713,9 @@ subroutine tum_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,work,lwork,n,direction)
         end do
     end if
 
-end subroutine
-!merge b into a, b has same offset as a
-subroutine tum_merge_submatrix_2dcomm(m,n,mb,nb,rowidx,colidx,b,ldb,a,lda,mpicomm_rows,mpicomm_cols,rev)
-    use mpi
-    use tum_utils
+end subroutine tum_pdgeqrf_pack_unpack_tmatrix
 
-    implicit none
 
-    ! input variables (global)
-    integer m,n,mb,nb,rowidx,colidx,lda,ldb,mpicomm_rows,mpicomm_cols,rev
-  
-    ! input variables (local)
-    double precision a(lda,*), b(ldb,*)
-
-    ! output variables (global)
-
-    ! local scalars
-    integer mpierr,mpirank_cols_block
-    integer mpirank_cols,mpiprocs_cols
-    integer mpirank_rows,mpiprocs_rows
-
-    integer localsize_rows,baseoffset_rows,offset_rows
-    integer localsize_cols,baseoffset_cols,offset_cols
-
-    integer blocksize,current_column,idx,blocksize_temp
-    integer icol,startcolumn
-
-    call mpi_comm_rank(mpicomm_rows,mpirank_rows,mpierr)
-    call mpi_comm_size(mpicomm_rows,mpiprocs_rows,mpierr)
-  
-    call mpi_comm_rank(mpicomm_cols,mpirank_cols,mpierr)
-    call mpi_comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
-
-    call local_size_offset_1d(m,mb,rowidx,rowidx,rev,mpirank_rows,mpiprocs_rows, &
-                              localsize_rows,baseoffset_rows,offset_rows)
-    !if (rev .eq. 1) then
-        startcolumn = colidx-n+1
-    !else
-    !    startcolumn = colidx
-    !end if
-
-    ! iterate over all (part)nb blocks
-    current_column = 1
-    do while (current_column .le. n)
-        idx = startcolumn+current_column-1
-
-        ! determine rank of process column and size of next block
-        mpirank_cols_block = MOD((idx-1)/nb,mpiprocs_cols)
-        blocksize_temp = min(nb,n-current_column+1) ! due to blockcyclic distribution there is a maximum of nb columns per block
-        call local_size_offset_1d(idx+blocksize_temp-1,nb,startcolumn,idx,0, &
-                                  mpirank_cols_block,mpiprocs_cols, &
-                                  blocksize,baseoffset_cols,offset_cols)
- 
-        if (mpirank_cols_block .eq. mpirank_cols) then
-            ! this block belongs to me => pack data into sendbuffer
-            do icol=1,blocksize
-                a(offset_rows:offset_rows+localsize_rows-1,offset_cols+icol-1) = b(offset_rows:offset_rows+localsize_rows-1,current_column+icol-1)
-            end do
-        end if
-
-        current_column = current_column + blocksize
-
-        !print *,'blocksize',blocksize,offset_cols,baseoffset_cols,lda,ldb
-    end do
-
-end subroutine
-! m is size of subvector
-subroutine tum_merge_subvector_1dcomm(m,mb,baseidx,b,a,mpicomm,rev)
-    use mpi
-    use tum_utils
-
-    implicit none
-
-    ! input variables (global)
-    integer m,mb,baseidx,mpicomm,rev
-  
-    ! input variables (local)
-    double precision a(*), b(*)
-
-    ! output variables (global)
-
-    ! local scalars
-    integer mpierr,mpirank_block,mpirank,mpiprocs
-
-    integer localsize,baseoffset,offset
-    integer icol,startentry,current_entry,idx
-    integer blocksize,blocksize_temp
-
-    call mpi_comm_rank(mpicomm,mpirank,mpierr)
-    call mpi_comm_size(mpicomm,mpiprocs,mpierr)
-
-    !if (rev .eq. 1) then
-        startentry = baseidx-m+1
-    !else
-    !    startentry = baseidx
-    !end if
-
-    ! iterate over all (part)nb blocks
-    current_entry = 1
-    do while (current_entry .le. m)
-        idx = startentry+current_entry-1
-
-        ! determine rank of process column and size of next block
-        mpirank_block = MOD((idx-1)/mb,mpiprocs)
-        blocksize_temp = min(mb,m-current_entry+1) ! due to blockcyclic distribution there is a maximum of nb columns per block
-        call local_size_offset_1d(idx+blocksize_temp-1,mb,startentry,idx,0, &
-                                  mpirank_block,mpiprocs, &
-                                  blocksize,baseoffset,offset)
- 
-        if (mpirank_block .eq. mpirank) then
-            ! this block belongs to me => pack data into sendbuffer
-            a(offset:offset+blocksize-1) = b(current_entry:current_entry+blocksize-1)
-        end if
-
-        current_entry = current_entry + blocksize
-    end do
-
-end subroutine
 ! TODO: encode following functionality
 !   - Direction? BOTTOM UP or TOP DOWN ("Up", "Down")
 !        => influences all related kernels (including DLARFT / DLARFB)
@@ -2483,22 +1784,12 @@ subroutine tum_pqrparam_init(pqrparam,size2d,update2d,tmerge2d,size1d,update1d,t
     PQRPARAM(9) = eps
     PQRPARAM(10) = ichar(hgmode)
 
-end subroutine
+end subroutine tum_pqrparam_init
 
 
-subroutine tum_pqrparam_print(pqrparam)
-    integer PQRPARAM(*)
-
-    print  '(i,a,i,i,a,i,i,a,i,a)', &
-        pqrparam(1),char(pqrparam(2)),pqrparam(3), &
-        pqrparam(4),char(pqrparam(5)),pqrparam(6), &
-        pqrparam(7),char(pqrparam(8)),pqrparam(9),char(pqrparam(10))
-
-end subroutine
 subroutine tum_pdlarfg_copy_1dcomm(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
 
     implicit none
  
@@ -2536,11 +1827,9 @@ subroutine tum_pdlarfg_copy_1dcomm(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
     ! replace top element to build an unitary vector
     mpirank_top = MOD((idx-1)/nb,mpiprocs)
     if (mpirank .eq. mpirank_top) then
-        !if (rev .eq. 1) then
-            v(local_size*incv) = 1.0d0
-        !else
-        !    v(v_offset) = 1.0d0
-        !end if
+        v(local_size*incv) = 1.0d0
     end if
 
-end subroutine
+end subroutine tum_pdlarfg_copy_1dcomm
+
+end module elpa_pdgeqrf

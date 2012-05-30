@@ -1,5 +1,26 @@
+module elpa_pdlarfb
+
+    use elpa1
+    use tum_utils
+ 
+    implicit none
+
+    PRIVATE
+
+    public :: tum_pdlarfb_1dcomm
+    public :: tum_pdlarft_pdlarfb_1dcomm
+    public :: tum_pdlarft_set_merge_1dcomm
+    public :: tum_pdlarft_tree_merge_1dcomm
+    public :: tum_pdlarfl_1dcomm
+    public :: tum_pdlarfl2_tmatrix_1dcomm
+    public :: tum_tmerge_pdlarfb_1dcomm
+    
+    include 'mpif.h'
+
+contains
+
 subroutine tum_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
-    use mpi
+    
     use tum_utils
 
     implicit none
@@ -59,11 +80,11 @@ subroutine tum_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpi
     call mpi_allreduce(work(1,1),work(1,n+1),k*n,mpi_real8,mpi_sum,mpicomm,mpierr)
     
     call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t,ldt,work(1,n+1),k,rev)
-end subroutine 
+end subroutine tum_pdlarfb_1dcomm 
+
 ! generalized pdlarfl2 version
 ! TODO: include T merge here (seperate by "old" and "new" index)
 subroutine tum_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx,idx,rev,mpicomm,work,lwork)
-    use mpi
     use tum_utils
 
     implicit none
@@ -140,9 +161,9 @@ subroutine tum_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseid
         ! A = A - Y * V'
         call dgemm("Notrans","Notrans",localsize,n,k,-1.0d0,v(baseoffset,1),ldv,work(1,recvoffset+k),k,1.0d0,a(offset,1),lda)
 
-end subroutine
+end subroutine tum_pdlarft_pdlarfb_1dcomm
+
 subroutine tum_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
-    use mpi
     use tum_utils
 
     implicit none
@@ -187,9 +208,9 @@ subroutine tum_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,tau,t,ldt,baseidx
         if (offset .eq. 0) offset=blocksize
         call tum_tmerge_set_kernel(n,blocksize,t,ldt,work(1,n+1+offset),n,1)
 
-end subroutine
+end subroutine tum_pdlarft_set_merge_1dcomm
+
 subroutine tum_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
-    use mpi
     use tum_utils
 
     implicit none
@@ -236,14 +257,14 @@ subroutine tum_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,tau,t,
         if (offset .eq. 0) offset=blocksize
         call tum_tmerge_tree_kernel(n,blocksize,treeorder,t,ldt,work(1,n+1+offset),n,1)
 
-end subroutine
+end subroutine tum_pdlarft_tree_merge_1dcomm
+
 ! apply householder vector to the left 
 ! - assume unitary matrix
 ! - assume right positions for v
 subroutine tum_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
 
     implicit none
  
@@ -290,11 +311,8 @@ subroutine tum_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev
     v_local_offset = v_local_offset * incv
 
     if (local_size > 0) then
-        !call dgemv("Trans",local_size,n,1.0d0,a(local_offset,1),lda,v(v_local_offset),incv,0.0d0,work(1),1)
         
         do icol=1,n
-            !work(icol) = ddot(local_size, a(local_offset,icol), 1, &
-            !                              v(v_local_offset), 1)
             work(icol) = dot_product(v(v_local_offset:v_local_offset+local_size-1),a(local_offset:local_offset+local_size-1,icol))
 
         end do
@@ -305,7 +323,6 @@ subroutine tum_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev
     call mpi_allreduce(work, work(sendsize+1), sendsize, mpi_real8, mpi_sum, mpicomm, mpierr)
 
     if (local_size > 0) then
-         !call dger(local_size,n,-tau,v(v_local_offset),incv,work(sendsize+1),1,a(local_offset,1),lda)
 
          do icol=1,n
                a(local_offset:local_offset+local_size-1,icol) = a(local_offset:local_offset+local_size-1,icol) &
@@ -313,15 +330,11 @@ subroutine tum_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev
          enddo
     end if
 
+end subroutine tum_pdlarfl_1dcomm
 
-    !print *,'ref hl', work(sendsize+1:sendsize+recvsize)
-
-end subroutine
-! test reverse version
 subroutine tum_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,idx,mb,rev,mpicomm)
     use ELPA1
     use tum_utils
-    use mpi
 
     implicit none
  
@@ -393,10 +406,6 @@ subroutine tum_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,
         ! update second vector
         call daxpy(n,t(1,2),work(sendsize+dgemv1_offset),1,work(sendsize+dgemv2_offset),1)
 
-        ! reference implementation
-        !call dger(local_size1,n,-1.0d0,v(v1_local_offset,v1col),1,work(sendsize+dgemv1_offset),1,a(local_offset1,1),lda)
-        !call dger(local_size2,n,-1.0d0,v(v2_local_offset,v2col),1,work(sendsize+dgemv2_offset),1,a(local_offset2,1),lda)
- 
         call local_size_offset_1d(m,mb,baseidx,idx-2,rev,mpirank,mpiprocs, &
                                   local_size_dger,v_local_offset_dger,local_offset_dger)
 
@@ -432,11 +441,11 @@ subroutine tum_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,
         end do
     end do
 
-end subroutine
+end subroutine tum_pdlarfl2_tmatrix_1dcomm
+
 ! generalized pdlarfl2 version
 ! TODO: include T merge here (seperate by "old" and "new" index)
 subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx,idx,rev,updatemode,mpicomm,work,lwork)
-    use mpi
     use tum_utils
 
     implicit none
@@ -473,8 +482,8 @@ subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
         mergelda = k
         mergesize = mergelda*oldk
 
-        tgenlda = 0 ! TODO
-        tgensize = 0 ! TODO
+        tgenlda = 0
+        tgensize = 0
 
         sendsize = updatesize + mergesize + tgensize
 
@@ -490,8 +499,6 @@ subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
     ! during the calculation, especially in the reversed case
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
                                 localsize,baseoffset,offset)
-
-    !print '(a,6i)','indices: ',baseidx,idx,localsize,baseoffset,offset
 
     sendoffset = 1
 
@@ -516,20 +523,9 @@ subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
                     call dgemm("Trans","Notrans",k,n,localsize,1.0d0,v(baseoffset,1),ldv,a(offset,1),lda,0.0d0,work(sendoffset+updateoffset),updatelda)
                 end if
 
-                !print *,'v content'
-                !print '(5f)',v(baseoffset,1:5)
-                !print '(5f)',v(baseoffset+1,1:5)
-                !print '(5f)',v(baseoffset+2,1:5)
-                !print '(5f)',v(baseoffset+3,1:5)
-                !print '(5f)',v(baseoffset+4,1:5)
-
                 ! calculate parts needed for T merge
                 call dgemm("Trans","Notrans",k,oldk,localsize,1.0d0,v(baseoffset,1),ldv,v(baseoffset,k+1),ldv,0.0d0,work(sendoffset+mergeoffset),mergelda)
 
-  
-                ! calculate inner product of householdervectors
-                ! TODO: future TGEN parameter
-                !call dsyrk("Upper","Trans",k,localsize,1.0d0,v(baseoffset,oldk+1),ldv,0.0d0,work(oldk+1,1),ldw)
             else
                 ! cleanup buffer
                 work(sendoffset:sendoffset+sendsize-1) = 0.0d0
@@ -548,9 +544,6 @@ subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
                 ! Z' = (Y1)' * A
                 call dgemm("Trans","Notrans",k,n,localsize,1.0d0,v(baseoffset,1),ldv,a(offset,1),lda,0.0d0,work(sendoffset+updateoffset),updatelda)
 
-                ! calculate inner product of householdervectors
-                ! TODO: future TGEN parameter
-                !call dsyrk("Upper","Trans",k,localsize,1.0d0,v(baseoffset,oldk+1),ldv,0.0d0,work(oldk+1,1),ldw)
             else
                 ! cleanup buffer
                 work(sendoffset:sendoffset+sendsize-1) = 0.0d0
@@ -589,4 +582,6 @@ subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
             end if
         end if
 
-end subroutine
+end subroutine tum_tmerge_pdlarfb_1dcomm
+
+end module elpa_pdlarfb

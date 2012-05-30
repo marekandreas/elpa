@@ -54,11 +54,11 @@ read_real_gen: read_real_gen.o elpa1.o
 test_complex_gen: test_complex_gen.o read_test_parameters.o elpa1.o
 	$(F90) -o $@ test_complex_gen.o read_test_parameters.o elpa1.o $(LIBS)
 
-test_real2: test_real2.o elpa1.o elpa2.o read_test_parameters.o elpa2_kernels.o blockedQR.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o
-	$(F90) -o $@ test_real2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o $(LIBS)
+test_real2: test_real2.o elpa1.o elpa2.o read_test_parameters.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o
+	$(F90) -o $@ test_real2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o $(LIBS)
 
-test_complex2: test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o
-	$(F90) -o $@ test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o blockedQR.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o $(LIBS)
+test_complex2: test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o
+	$(F90) -o $@ test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o $(LIBS)
 
 test_real.o: test_real.f90 elpa1.o
 	$(F90) -c $<
@@ -90,19 +90,16 @@ read_test_parameters.o: read_test_parameters.f90
 elpa1.o: ../src/elpa1.f90
 	$(F90) -c $<
 
-blockedQR.o: ../src/blockedQR.f90
-	$(F90) -c $<
-
 tum_utils.o: ../src/elpa_qr/tum_utils.f90
 	$(F90) -c $<
 
 elpa_qrkernels.o: ../src/elpa_qr/elpa_qrkernels.f90
 	$(F90) -c $<
 
-elpa_pdlarfb.o: ../src/elpa_qr/elpa_pdlarfb.f90 tum_utils.o
+elpa_pdlarfb.o: ../src/elpa_qr/elpa_pdlarfb.f90 tum_utils.o elpa_qrkernels.o
 	$(F90) -c $<
 
-elpa_pdgeqrf.o: ../src/elpa_qr/elpa_pdgeqrf.f90 elpa1.o tum_utils.o
+elpa_pdgeqrf.o: ../src/elpa_qr/elpa_pdgeqrf.f90 elpa1.o tum_utils.o elpa_pdlarfb.o elpa_qrkernels.o
 	$(F90) -c $<
 
 elpa2.o: ../src/elpa2.f90 elpa1.o elpa_pdgeqrf.o

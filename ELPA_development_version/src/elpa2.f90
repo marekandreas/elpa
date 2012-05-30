@@ -10,6 +10,7 @@ module ELPA2
 ! Version 1.1.2, 2011-02-21
 
   USE ELPA1
+  use elpa_pdgeqrf
 
   implicit none
 
