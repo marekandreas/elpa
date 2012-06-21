@@ -121,6 +121,13 @@ other piece of code.
   architecture. Use instead of the standard elpa2_kernels.f90
   file. elpa2_kernels_bg.f90 contains assembler instructions for the
   BlueGene/P processor which IBM's xlf Fortran compiler can handle.
+  
+- elpa_qr directory (development version only)
+  This directory contains routines for an alternative implementation
+  of the QR-decomposition of "tall and skinny" matrices, which is
+  needed for the reduction to banded form. The usage of this 
+  alternative implementation can be switched on and off by setting
+  the variable "which_qr_decomposition" in elpa2.f90 (default = on).
 
 * test directory
 
