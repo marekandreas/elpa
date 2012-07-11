@@ -1,7 +1,36 @@
 # ------------------------------------------------------------------------------
 # Please set the variables below according to your system!
 # ------------------------------------------------------------------------------
-# Settings for Intel Fortran (Linux):
+# Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with AVX for Sandy Bridge:
+#
+#F90=mpiifort -O3 -traceback -g -fpe0
+#CC=mpiicc -O3
+#F90OPT=$(F90) -mavx
+#CCOPT=$(CC) -mavx
+#MKL_HOME=/opt/intel/mkl/lib/intel64
+#LIBS = -mkl -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+#
+# ------------------------------------------------------------------------------
+# Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with SSE3:
+#
+F90=mpiifort -O3 -traceback -g -fpe0
+CC=mpiicc -O3
+F90OPT=$(F90) -msse3
+CCOPT=$(CC) -msse3
+MKL_HOME=/opt/intel/mkl/lib/intel64
+LIBS = -mkl -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+#
+# ------------------------------------------------------------------------------
+# Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) and GCC 4.6 with FMA4 for AMD Bulldozer:
+#
+#F90=mpiifort -O3 -traceback -g -fpe0
+#CC=gcc -O3
+#F90OPT=$(F90) -msse3
+#CCOPT=$(CC) -mfma4 -mxop -march=bdver1 -D__USE_AVX128__
+#LIBS = -L/opt/acml5.0.0/gfortran64_fma4/lib/ -lacml -lgfortran libscalapack.a
+#
+# ------------------------------------------------------------------------------
+# Settings for Intel Fortran (Linux) old 11.x Toolchain, do not use:
 #
 #F90=mpif90 -O3 -traceback -g -fpe0
 #F90OPT=$(F90) -xSSE4.2
@@ -25,7 +54,7 @@
 #LIBS = -L/usr/local/lib -lscalapack -llapack-essl -lessl -lblacsF77init -lblacs -lblacsF77init -lblacs -lc
 #
 # ------------------------------------------------------------------------------
-# Settings for IBM BlueGene/P
+# Settings for IBM AIX BlueGene
 #
 F90 = mpixlf95_r -O3 -g -qarch=auto -qtune=auto
 F90OPT = mpixlf95_r -O4 -g -qarch=auto -qtune=auto
@@ -54,8 +83,14 @@ read_real_gen: read_real_gen.o elpa1.o
 test_complex_gen: test_complex_gen.o read_test_parameters.o elpa1.o
 	$(F90) -o $@ test_complex_gen.o read_test_parameters.o elpa1.o $(LIBS)
 
+#test_real2: test_real2.o elpa1.o elpa2.o read_test_parameters.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o elpa2_tum_kernels_sse-avx_2hv.o elpa2_tum_kernels_sse-avx_4hv.o elpa2_tum_kernels_sse-avx_6hv.o
+#	$(F90) -o $@ test_real2.o elpa1.o elpa2.o read_test_parameters.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o elpa2_tum_kernels_sse-avx_2hv.o elpa2_tum_kernels_sse-avx_4hv.o elpa2_tum_kernels_sse-avx_6hv.o $(LIBS)
+
+#test_complex2: test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o elpa2_tum_kernels_sse-avx_2hv.o elpa2_tum_kernels_sse-avx_4hv.o elpa2_tum_kernels_sse-avx_6hv.o
+#	$(F90) -o $@ test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o elpa2_tum_kernels_sse-avx_2hv.o elpa2_tum_kernels_sse-avx_4hv.o elpa2_tum_kernels_sse-avx_6hv.o $(LIBS)
+
 test_real2: test_real2.o elpa1.o elpa2.o read_test_parameters.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o
-	$(F90) -o $@ test_real2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o $(LIBS)
+	$(F90) -o $@ test_real2.o elpa1.o elpa2.o read_test_parameters.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o $(LIBS)
 
 test_complex2: test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o
 	$(F90) -o $@ test_complex2.o read_test_parameters.o elpa1.o elpa2.o elpa2_kernels.o elpa_pdgeqrf.o elpa_pdlarfb.o elpa_qrkernels.o tum_utils.o $(LIBS)
@@ -107,6 +142,15 @@ elpa2.o: ../src/elpa2.f90 elpa1.o elpa_pdgeqrf.o
 
 elpa2_kernels.o: ../src/elpa2_kernels.f90
 	$(F90OPT) -c ../src/elpa2_kernels.f90
+	
+elpa2_tum_kernels_sse-avx_2hv.o: ../src/elpa2_tum_kernels_sse-avx_2hv.c
+	$(CCOPT) -c ../src/elpa2_tum_kernels_sse-avx_2hv.c
+	
+elpa2_tum_kernels_sse-avx_4hv.o: ../src/elpa2_tum_kernels_sse-avx_4hv.c
+	$(CCOPT) -c ../src/elpa2_tum_kernels_sse-avx_4hv.c
+	
+elpa2_tum_kernels_sse-avx_6hv.o: ../src/elpa2_tum_kernels_sse-avx_6hv.c
+	$(CCOPT) -c ../src/elpa2_tum_kernels_sse-avx_6hv.c
 
 clean:
-	rm -f *.o *.mod test_real test_complex test_real_gen test_complex_gen test_real2 test_complex2 read_real read_real_gen read_test_parameters.o
+	rm -f *.o *.mod test_real test_complex test_real_gen test_complex_gen test_real2 test_complex2 read_real read_real_gen read_test_parameters.o 
