@@ -13,12 +13,12 @@
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with SSE3:
 #
-F90=mpiifort -O3 -traceback -g -fpe0
-CC=mpiicc -O3
-F90OPT=$(F90) -msse3
-CCOPT=$(CC) -msse3
-MKL_HOME=/opt/intel/mkl/lib/intel64
-LIBS = -mkl -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+#F90=mpiifort -O3 -traceback -g -fpe0
+#CC=mpiicc -O3
+#F90OPT=$(F90) -msse3
+#CCOPT=$(CC) -msse3
+#MKL_HOME=/opt/intel/mkl/lib/intel64
+#LIBS = -mkl -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
 #
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) and GCC 4.6 with FMA4 for AMD Bulldozer:
