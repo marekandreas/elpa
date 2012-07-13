@@ -15,23 +15,27 @@
 
 #include <x86intrin.h>
 
+#define __forceinline __attribute__((always_inline))
+
 #ifdef __USE_AVX128__
 #undef __AVX__
 #endif
 
 //Forward declaration
 #ifdef __AVX__
-inline void hh_trafo_kernel_4_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
-inline void hh_trafo_kernel_8_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
-inline void hh_trafo_kernel_12_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
+__forceinline void hh_trafo_kernel_4_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
+__forceinline void hh_trafo_kernel_8_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
+__forceinline void hh_trafo_kernel_12_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
 #else
-inline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
-inline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
-inline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
+__forceinline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
+__forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
+__forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
 #endif
 
 void double_hh_trafo_4hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+#if 0
 void double_hh_trafo_4hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+#endif
 
 void double_hh_trafo_4hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
@@ -128,6 +132,7 @@ void double_hh_trafo_4hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, 
 #endif
 }
 
+#if 0
 void double_hh_trafo_4hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
@@ -185,6 +190,7 @@ void double_hh_trafo_4hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* p
 	}
 #endif
 }
+#endif
 
 #ifdef __AVX__
 /**
@@ -193,7 +199,7 @@ void double_hh_trafo_4hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* p
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_12_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
+__forceinline void hh_trafo_kernel_12_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [12 x nb+3] * hh
@@ -721,7 +727,7 @@ inline void hh_trafo_kernel_12_AVX_4hv(double* q, double* hh, int nb, int ldq, i
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_8_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
+__forceinline void hh_trafo_kernel_8_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
@@ -1053,7 +1059,7 @@ inline void hh_trafo_kernel_8_AVX_4hv(double* q, double* hh, int nb, int ldq, in
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_4_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
+__forceinline void hh_trafo_kernel_4_AVX_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
@@ -1285,7 +1291,7 @@ inline void hh_trafo_kernel_4_AVX_4hv(double* q, double* hh, int nb, int ldq, in
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
+__forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [6 x nb+3] * hh
@@ -1811,7 +1817,7 @@ inline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int ldq, in
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
+__forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
@@ -2143,7 +2149,7 @@ inline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int ldq, in
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
+__forceinline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [2 x nb+3] * hh

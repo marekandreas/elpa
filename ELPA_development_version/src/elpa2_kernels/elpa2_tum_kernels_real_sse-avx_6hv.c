@@ -15,6 +15,8 @@
 
 #include <x86intrin.h>
 
+#define __forceinline __attribute__((always_inline))
+
 #ifdef __USE_AVX128__
 #undef __AVX__
 #endif
@@ -29,7 +31,9 @@ void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, 
 #endif
 
 void double_hh_trafo_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+#if 0
 void double_hh_trafo_6hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+#endif
 
 void double_hh_trafo_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
@@ -200,6 +204,7 @@ void double_hh_trafo_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, 
 #endif
 }
 
+#if 0
 void double_hh_trafo_6hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
@@ -352,6 +357,7 @@ void double_hh_trafo_6hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* p
 	}
 #endif
 }
+#endif
 
 #ifdef __AVX__
 /**
@@ -360,7 +366,7 @@ void double_hh_trafo_6hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* p
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_8_AVX_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
+__forceinline void hh_trafo_kernel_8_AVX_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [8 x nb+3] * hh
@@ -1133,7 +1139,7 @@ inline void hh_trafo_kernel_8_AVX_6hv(double* q, double* hh, int nb, int ldq, in
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_4_AVX_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
+__forceinline void hh_trafo_kernel_4_AVX_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [8 x nb+3] * hh
@@ -1701,7 +1707,7 @@ inline void hh_trafo_kernel_4_AVX_6hv(double* q, double* hh, int nb, int ldq, in
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
+__forceinline void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
@@ -2473,7 +2479,7 @@ inline void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, in
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-inline void hh_trafo_kernel_2_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
+__forceinline void hh_trafo_kernel_2_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [2 x nb+3] * hh

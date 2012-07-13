@@ -28,18 +28,18 @@ Currently we offer the following alternatives for the ELPA2 kernels:
 * elpa2_kernels_bg.f90       - Fortran code enhanced with assembler calls
                                for the IBM BlueGene/P
 
-* elpa2_kernels_asm_x86_64.s - Optimized assembler code for x86_64
+* elpa2_tum_kernels_*.c      - Optimized intrinisic code for x86_64
                                systems (i.e. Intel/AMD architecture)
                                using SSE2/SSE3 operations.
-                               (Use GNU assembler for assembling!)
+                               (Use gcc for compiling as Intel compiler generates slower code!)
 
 
 So which version should be used?
 ================================
 
 * On x86_64 systems (i.e. almost all Intel/AMD systems) or on the IBM BlueGene/P
-  you should get the optimal performance using the optimized assembler versions
-  in elpa2_kernels_asm_x86_64.s or elpa2_kernels_bg.f90 respectively.
+  you should get the optimal performance using the optimized intrinsics/assembler versions
+  in elpa2_tum_kernels_*.c or elpa2_kernels_bg.f90 respectively.
 
 * If you don't compile for one of these systems or you don't like to use assembler
   for any reason, it is likely that you are best off using elpa2_kernels.f90.
