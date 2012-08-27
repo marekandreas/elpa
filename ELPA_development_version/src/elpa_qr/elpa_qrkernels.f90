@@ -2,7 +2,7 @@
 ! calculates A = A - Y*T*Z (rev=1)
 ! T upper triangle matrix
 ! assuming zero entries in matrix in upper kxk block
-subroutine tum_pdlarfb_kernel_local(m,n,k,a,lda,v,ldv,t,ldt,z,ldz,rev)
+subroutine tum_pdlarfb_kernel_local(m,n,k,a,lda,v,ldv,t,ldt,z,ldz)
     implicit none
  
     ! input variables (local)
@@ -10,7 +10,7 @@ subroutine tum_pdlarfb_kernel_local(m,n,k,a,lda,v,ldv,t,ldt,z,ldz,rev)
     double precision a(lda,*),v(ldv,*),t(ldt,*),z(ldz,*)
 
     ! input variables (global)
-    integer m,n,k,rev
+    integer m,n,k
 
     ! local variables
     double precision t11
@@ -136,15 +136,15 @@ subroutine tum_pdlarfb_kernel_local(m,n,k,a,lda,v,ldv,t,ldt,z,ldz,rev)
     end if
 
 end subroutine
-subroutine tum_pdlarft_merge_kernel_local(oldk,k,t,ldt,yty,ldy,rev)
+subroutine tum_pdlarft_merge_kernel_local(oldk,k,t,ldt,yty,ldy)
     implicit none
 
     ! input variables (local)
-    integer ldt,lda,ldy
+    integer ldt,ldy
     double precision t(ldt,*),yty(ldy,*)
 
     ! input variables (global)
-    integer k,oldk,rev
+    integer k,oldk
  
     ! output variables (global)
 
@@ -476,20 +476,20 @@ end subroutine
 !    0     Y2'*Y3  Y2'*Y4 ...
 !    0        0    Y3'*Y4 ...
 !    0        0       0   ...
-subroutine tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy,rev)
+subroutine tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
     implicit none
  
     ! input variables (local)
-    integer ldt,lda,ldy
+    integer ldt,ldy
     double precision t(ldt,*),yty(ldy,*)
 
     ! input variables (global)
-    integer k,blocksize,treeorder,rev
+    integer k,blocksize
  
     ! output variables (global)
 
     ! local scalars
-    integer temp_blocksize,nr_blocks,current_block
+    integer nr_blocks,current_block
     integer remainder,oldk
     integer yty_column,toffset
   
@@ -504,19 +504,19 @@ subroutine tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy,rev)
         yty_column = 1
  
         if (remainder .gt. 0) then
-            call tum_pdlarft_merge_kernel_local(blocksize,remainder,t(toffset,toffset),ldt,yty(1,yty_column),ldy,rev)
+            call tum_pdlarft_merge_kernel_local(blocksize,remainder,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
             current_block = 1
             oldk = remainder+blocksize
             yty_column =  yty_column + blocksize
         else
-            call tum_pdlarft_merge_kernel_local(blocksize,blocksize,t(toffset,toffset),ldt,yty(1,yty_column),ldy,rev)
+            call tum_pdlarft_merge_kernel_local(blocksize,blocksize,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
             current_block = 2
             oldk = 2*blocksize
             yty_column = yty_column + blocksize
         end if
  
         do while (current_block .lt. nr_blocks)
-            call tum_pdlarft_merge_kernel_local(blocksize,oldk,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy,rev)
+            call tum_pdlarft_merge_kernel_local(blocksize,oldk,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
 
             current_block = current_block + 1
             oldk = oldk + blocksize
@@ -530,15 +530,15 @@ end subroutine
 !    0        0    Y3'*Y4 ...
 !    0        0       0   ...
 
-subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy,rev)
+subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
     implicit none
  
     ! input variables (local)
-    integer ldt,lda,ldy
+    integer ldt,ldy
     double precision t(ldt,*),yty(ldy,*)
 
     ! input variables (global)
-    integer k,blocksize,treeorder,rev
+    integer k,blocksize,treeorder
  
     ! output variables (global)
 
@@ -552,7 +552,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy,rev)
     if (treeorder .eq. 0) return ! no merging
 
     if (treeorder .eq. 1) then
-        call tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy,rev)
+        call tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
         return
     end if
   
@@ -560,7 +560,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy,rev)
     max_treeorder = min(nr_blocks,treeorder)
 
     if (max_treeorder .eq. 1) then
-        call tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy,rev)
+        call tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
         return
     end if
  
@@ -620,7 +620,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy,rev)
                 if (yty_remainder .gt. 0) then
                     yty_column = yty_remainder
                     !print *,'final merging with remainder',temp_blocksize,k,remaining_size,yty_column
-                    call tum_tmerge_set_kernel(k,temp_blocksize,t,ldt,yty(1,yty_column),ldy,1)
+                    call tum_tmerge_set_kernel(k,temp_blocksize,t,ldt,yty(1,yty_column),ldy)
                 else
                     !print *,'no remainder - no merging needed',temp_blocksize,k,remaining_size
                 endif
@@ -640,13 +640,13 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy,rev)
                     yty_column = yty_column_start
  
                     !print *,'set merging', toffset, yty_column,remainder
-                    call tum_tmerge_set_kernel(remainder,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy,1)
+                    call tum_tmerge_set_kernel(remainder,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
 
                     if (total_remainder .gt. 0) then
                         ! merge with existing global remainder part
                         !print *,'single+set merging',yty_remainder,total_remainder,remainder
 
-                        call tum_pdlarft_merge_kernel_local(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy,1)
+                        call tum_pdlarft_merge_kernel_local(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
       
                         yty_remainder = yty_remainder + remainder
                         toffset_start = toffset_start + remainder
@@ -668,7 +668,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy,rev)
                         ! merge with existing global remainder part
                         !print *,'single merging',yty_remainder,total_remainder,remainder
 
-                        call tum_pdlarft_merge_kernel_local(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy,1)
+                        call tum_pdlarft_merge_kernel_local(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
       
                         yty_remainder = yty_remainder + remainder
                         toffset_start = toffset_start + remainder
@@ -697,7 +697,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy,rev)
 
                 !print *,'recursive merging', toffset, yty_column,setsize
 
-                call tum_tmerge_set_kernel(setsize,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy,1)
+                call tum_tmerge_set_kernel(setsize,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
                 
                 current_set = current_set +  1
             end do
@@ -708,11 +708,11 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy,rev)
         end do
 end subroutine
 ! yty should not contain the inner products vi'*vi
-subroutine tum_dlarft_kernel(n,tau,yty,ldy,t,ldt,rev)
+subroutine tum_dlarft_kernel(n,tau,yty,ldy,t,ldt)
     implicit none
 
     ! input variables
-    integer n,ldy,ldt,rev
+    integer n,ldy,ldt
     double precision tau(*),yty(ldy,*)
     
     ! output variables

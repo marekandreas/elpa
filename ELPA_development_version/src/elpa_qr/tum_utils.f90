@@ -92,8 +92,7 @@ subroutine reverse_matrix_local(trans,m,n,a,lda,work,lwork)
     double precision a(lda,*),work(*)
 
     ! local scalars
-    double precision temp,dworksize(1)
-    integer srcoffset,destoffset,ientry
+    double precision dworksize(1)
     integer incx
     integer dimsize
     integer i
@@ -177,7 +176,6 @@ subroutine reverse_matrix_1dcomm(trans,m,n,b,a,lda,work,lwork,mpicomm)
     ! local scalars
     integer mpirank,mpiprocs,mpierr,mpistatus(MPI_STATUS_SIZE)
     integer nr_blocks,dest_process,src_process,step
-    integer src_block,dest_block
     integer lsize,baseoffset,offset
     integer current_index,destblk,srcblk,icol,next_index
     integer sendcount,recvcount

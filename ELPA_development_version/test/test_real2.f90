@@ -36,6 +36,7 @@ program test_real2
 
    integer myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer ib, ir, im, jb, jr, jm, ii, jj, j !for frank matrices
 
    integer, external :: numroc
 
@@ -46,11 +47,12 @@ program test_real2
 
    !-------------------------------------------------------------------------------
    !  Pharse command line argumnents, if given
+   INTEGER*4 :: iargc
    character*16 arg1
    character*16 arg2
 
-   na = 12059
-   nev = 3401
+   na = 1000
+   nev = 1000
 
    if (iargc() == 2) then
       call getarg(1, arg1)
@@ -148,21 +150,49 @@ program test_real2
    ! We want different random numbers on every process
    ! (otherways A might get rank deficient):
 
-   iseed(:) = myid
-   call RANDOM_SEED(put=iseed)
-
-   call RANDOM_NUMBER(z)
-
-   a(:,:) = z(:,:)
-
-   if (myid==0) then
-     print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
-   end if
-
-   call pdtran(na, na,  1.d0, z, 1, 1, sc_desc, 1.d0, a, 1, 1, sc_desc) ! A = A + Z**T
-
-   if (myid==0) then
-     print '(a)','| Random matrix has been symmetrized.'
+   if ( .TRUE. ) then
+      iseed(:) = myid
+      call RANDOM_SEED(put=iseed)
+   
+      call RANDOM_NUMBER(z)
+   
+      a(:,:) = z(:,:)
+   
+      if (myid==0) then
+        print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
+      end if
+   
+      call pdtran(na, na,  1.d0, z, 1, 1, sc_desc, 1.d0, a, 1, 1, sc_desc) ! A = A + Z**T
+   
+      if (myid==0) then
+        print '(a)','| Random matrix has been symmetrized.'
+      end if
+   
+   !generation of frank matrices
+   else
+   
+      z(:,:) = 0D0
+      do i=1,na; ib = (i-1)/nblk+1
+      if ( MOD(ib-1, np_cols) == my_pcol ) then
+         do j=1,na; jb = (j-1)/nblk+1
+         if ( MOD(jb-1, np_rows) == my_prow ) then
+   
+            ir = (ib-1)/np_cols+1; im = i-(ib-1)*nblk; ii = im+(ir-1)*nblk
+            jr = (jb-1)/np_rows+1; jm = j-(jb-1)*nblk; jj = jm+(jr-1)*nblk
+   
+   ! each case returns the same eigenpairs, however,
+   ! first case is numerically instable in the Householder transformation
+   !
+            z(jj,ii) = (na+1-MAX(na+1-i, na+1-j))*1D0
+   !
+   !         z(jj,ii) = MIN(i, j)*1D0
+   
+         end if
+         end do
+      end if
+      end do
+      a(:,:) = z(:,:)
+   
    end if
 
    ! Save original matrix A for later accuracy checks

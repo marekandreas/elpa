@@ -79,12 +79,12 @@ subroutine tum_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpi
     ! data exchange
     call mpi_allreduce(work(1,1),work(1,n+1),k*n,mpi_real8,mpi_sum,mpicomm,mpierr)
     
-    call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t,ldt,work(1,n+1),k,rev)
+    call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t,ldt,work(1,n+1),k)
 end subroutine tum_pdlarfb_1dcomm 
 
 ! generalized pdlarfl2 version
 ! TODO: include T merge here (seperate by "old" and "new" index)
-subroutine tum_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx,idx,rev,mpicomm,work,lwork)
+subroutine tum_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx,rev,mpicomm,work,lwork)
     use tum_utils
 
     implicit none
@@ -94,7 +94,7 @@ subroutine tum_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseid
     double precision v(ldv,*),tau(*),t(ldt,*),work(k,*),a(lda,*)
 
     ! input variables (global)
-    integer m,mb,n,k,oldk,baseidx,idx,rev,mpicomm
+    integer m,mb,n,k,oldk,baseidx,rev,mpicomm
  
     ! output variables (global)
 
@@ -163,17 +163,17 @@ subroutine tum_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseid
 
 end subroutine tum_pdlarft_pdlarfb_1dcomm
 
-subroutine tum_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
+subroutine tum_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
     use tum_utils
 
     implicit none
  
     ! input variables (local)
     integer ldv,ldt,lwork
-    double precision v(ldv,*),tau(*),t(ldt,*),work(n,*)
+    double precision v(ldv,*),t(ldt,*),work(n,*)
 
     ! input variables (global)
-    integer m,mb,n,blocksize,baseidx,idx,rev,mpicomm
+    integer m,mb,n,blocksize,baseidx,rev,mpicomm
  
     ! output variables (global)
 
@@ -182,7 +182,6 @@ subroutine tum_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,tau,t,ldt,baseidx
     ! local scalars
     integer localsize,offset,baseoffset
     integer mpirank,mpiprocs,mpierr
-    integer icol
 
     if (lwork .eq. -1) then
         work(1,1) = DBLE(2*n*n)
@@ -206,21 +205,21 @@ subroutine tum_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,tau,t,ldt,baseidx
         ! skip Y4'*Y4 part
         offset = mod(n,blocksize)
         if (offset .eq. 0) offset=blocksize
-        call tum_tmerge_set_kernel(n,blocksize,t,ldt,work(1,n+1+offset),n,1)
+        call tum_tmerge_set_kernel(n,blocksize,t,ldt,work(1,n+1+offset),n)
 
 end subroutine tum_pdlarft_set_merge_1dcomm
 
-subroutine tum_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
+subroutine tum_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
     use tum_utils
 
     implicit none
  
     ! input variables (local)
     integer ldv,ldt,lwork
-    double precision v(ldv,*),tau(*),t(ldt,*),work(n,*)
+    double precision v(ldv,*),t(ldt,*),work(n,*)
 
     ! input variables (global)
-    integer m,mb,n,blocksize,treeorder,baseidx,idx,rev,mpicomm
+    integer m,mb,n,blocksize,treeorder,baseidx,rev,mpicomm
  
     ! output variables (global)
 
@@ -229,7 +228,6 @@ subroutine tum_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,tau,t,
     ! local scalars
     integer localsize,offset,baseoffset
     integer mpirank,mpiprocs,mpierr
-    integer icol
 
     if (lwork .eq. -1) then
         work(1,1) = DBLE(2*n*n)
@@ -255,7 +253,7 @@ subroutine tum_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,tau,t,
         ! skip Y4'*Y4 part
         offset = mod(n,blocksize)
         if (offset .eq. 0) offset=blocksize
-        call tum_tmerge_tree_kernel(n,blocksize,treeorder,t,ldt,work(1,n+1+offset),n,1)
+        call tum_tmerge_tree_kernel(n,blocksize,treeorder,t,ldt,work(1,n+1+offset),n)
 
 end subroutine tum_pdlarft_tree_merge_1dcomm
 
@@ -282,7 +280,7 @@ subroutine tum_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev
     integer mpierr,mpirank,mpiprocs
     integer sendsize,recvsize,icol
     integer local_size,local_offset
-    integer v_offset,v_local_offset
+    integer v_local_offset
 
     ! external functions
     double precision ddot
@@ -445,17 +443,17 @@ end subroutine tum_pdlarfl2_tmatrix_1dcomm
 
 ! generalized pdlarfl2 version
 ! TODO: include T merge here (seperate by "old" and "new" index)
-subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx,idx,rev,updatemode,mpicomm,work,lwork)
+subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev,updatemode,mpicomm,work,lwork)
     use tum_utils
 
     implicit none
 
     ! input variables (local)
     integer ldv,ldt,lda,lwork
-    double precision v(ldv,*),tau(*),t(ldt,*),work(*),a(lda,*)
+    double precision v(ldv,*),t(ldt,*),work(*),a(lda,*)
 
     ! input variables (global)
-    integer m,mb,n,k,oldk,baseidx,idx,rev,updatemode,mpicomm
+    integer m,mb,n,k,oldk,baseidx,rev,updatemode,mpicomm
  
     ! output variables (global)
 
@@ -464,7 +462,6 @@ subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
     ! local scalars
     integer localsize,offset,baseoffset
     integer mpirank,mpiprocs,mpierr
-    integer icol,irow,ldw
 
     integer sendoffset,recvoffset,sendsize
     integer updateoffset,updatelda,updatesize
@@ -563,22 +560,22 @@ subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
     tgenoffset = recvoffset+tgenoffset
 
         if (oldk .gt. 0) then
-            call tum_pdlarft_merge_kernel_local(oldk,k,t,ldt,work(mergeoffset),mergelda,rev)
+            call tum_pdlarft_merge_kernel_local(oldk,k,t,ldt,work(mergeoffset),mergelda)
 
             if (localsize .gt. 0) then
                 if (updatemode .eq. ichar('I')) then
 
                     ! update matrix (pdlarfb) with complete T
-                    call tum_pdlarfb_kernel_local(localsize,n,k+oldk,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda,rev)
+                    call tum_pdlarfb_kernel_local(localsize,n,k+oldk,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
                 else
                     ! update matrix (pdlarfb) with small T (same as update with no old T TODO)
-                    call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda,rev)
+                    call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
                 end if
             end if
         else
             if (localsize .gt. 0) then
                 ! update matrix (pdlarfb) with small T
-                call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda,rev)
+                call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
             end if
         end if
 
