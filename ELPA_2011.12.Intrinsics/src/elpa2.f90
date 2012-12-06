@@ -1693,16 +1693,58 @@ contains
     subroutine compute_hh_trafo(off, ncols, istripe)
 
         integer off, ncols, istripe, j, nl, jj
-        real*8 w(nbw,2), ttt
+        real*8 w(nbw,6), ttt
 
         ttt = mpi_wtime()
         nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
+ 
+        !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
         do j = ncols, 2, -2
             w(:,1) = bcast_buffer(1:nbw,j+off)
             w(:,2) = bcast_buffer(1:nbw,j+off-1)
-            call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+            call double_hh_trafo_2hv(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
         enddo
         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+                
+        ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
+        !do j = ncols, 4, -4
+        !    w(:,1) = bcast_buffer(1:nbw,j+off)
+        !    w(:,2) = bcast_buffer(1:nbw,j+off-1)
+        !    w(:,3) = bcast_buffer(1:nbw,j+off-2)
+        !    w(:,4) = bcast_buffer(1:nbw,j+off-3)
+        !    call double_hh_trafo_4hv(a(1,j+off+a_off-3,istripe), w, nbw, nl, stripe_width, nbw)
+        !enddo
+        !do jj = j, 2, -2
+        !    w(:,1) = bcast_buffer(1:nbw,jj+off)
+        !    w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+        !    call double_hh_trafo_2hv(a(1,jj+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+        !enddo
+        !if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+
+        ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
+        !do j = ncols, 6, -6
+        !    w(:,1) = bcast_buffer(1:nbw,j+off)
+        !    w(:,2) = bcast_buffer(1:nbw,j+off-1)
+        !    w(:,3) = bcast_buffer(1:nbw,j+off-2)
+        !    w(:,4) = bcast_buffer(1:nbw,j+off-3)
+        !    w(:,5) = bcast_buffer(1:nbw,j+off-4)
+        !    w(:,6) = bcast_buffer(1:nbw,j+off-5)
+        !    call double_hh_trafo_6hv(a(1,j+off+a_off-5,istripe), w, nbw, nl, stripe_width, nbw)
+        !enddo
+        !do jj = j, 4, -4
+        !    w(:,1) = bcast_buffer(1:nbw,jj+off)
+        !    w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+        !    w(:,3) = bcast_buffer(1:nbw,jj+off-2)
+        !    w(:,4) = bcast_buffer(1:nbw,jj+off-3)
+        !    call double_hh_trafo_4hv(a(1,jj+off+a_off-3,istripe), w, nbw, nl, stripe_width, nbw)
+        !enddo
+        !do jjj = jj, 2, -2
+        !    w(:,1) = bcast_buffer(1:nbw,jjj+off)
+        !    w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
+        !    call double_hh_trafo_2hv(a(1,jjj+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+        !enddo
+        !if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+        
         kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
         kernel_time = kernel_time + mpi_wtime()-ttt
 
