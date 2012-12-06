@@ -1282,6 +1282,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
     a_dim2 = max_blk_size + nbw
 
+!DEC$ ATTRIBUTES ALIGN: 64:: a
     allocate(a(stripe_width,a_dim2,stripe_count))
     a(:,:,:) = 0
 
