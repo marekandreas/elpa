@@ -26,7 +26,8 @@ program test_real2
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   integer, parameter :: na = 4000, nev = 1500, nblk = 16
+   integer, parameter :: nblk = 16
+   integer na, nev
 
    !-------------------------------------------------------------------------------
    !  Local Variables
@@ -42,6 +43,21 @@ program test_real2
    real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
+
+   !-------------------------------------------------------------------------------
+   !  Pharse command line argumnents, if given
+   character*16 arg1
+   character*16 arg2
+
+   na = 4000
+   nev = 1500
+
+   if (iargc() == 2) then
+      call getarg(1, arg1)
+      call getarg(2, arg2)
+      read(arg1, *) na
+      read(arg2, *) nev
+   endif
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
