@@ -4,7 +4,7 @@
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with AVX for Sandy Bridge:
 #
 X86=1
-F90=mpiifort -O3 -traceback -fpe0 -g
+F90=mpiifort -O3 -traceback -fpe0
 F90OPT=$(F90) -mavx
 #CC=mpiicc -O3
 #CCOPT=$(CC) -mavx
@@ -95,6 +95,12 @@ test_complex_gen: test_complex_gen.o elpa1.o
 	$(F90) -o $@ test_complex_gen.o elpa1.o $(LIBS)
 
 ifeq ($(X86),1)
+#test_real2: test_real2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+#	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+#
+#test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+#	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+
 test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
 	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
 
@@ -147,13 +153,22 @@ elpa2_tum_kernels_real_sse-avx_4hv.o: ../src/elpa2_kernels/elpa2_tum_kernels_rea
 	
 elpa2_tum_kernels_real_sse-avx_6hv.o: ../src/elpa2_kernels/elpa2_tum_kernels_real_sse-avx_6hv.c
 	$(CCOPT) -c ../src/elpa2_kernels/elpa2_tum_kernels_real_sse-avx_6hv.c
+	
+elpa2_tum_kernels_complex_sse-avx_1hv.o: ../src/elpa2_kernels/elpa2_tum_kernels_complex_sse-avx_1hv.cpp
+	$(CCOPT) -c ../src/elpa2_kernels/elpa2_tum_kernels_complex_sse-avx_1hv.cpp
+	
+elpa2_tum_kernels_complex_sse-avx_2hv.o: ../src/elpa2_kernels/elpa2_tum_kernels_complex_sse-avx_2hv.cpp
+	$(CCOPT) -c ../src/elpa2_kernels/elpa2_tum_kernels_complex_sse-avx_2hv.cpp
+	
+elpa2_kernels_complex.o: ../src/elpa2_kernels/elpa2_kernels_complex.f90
+	$(F90OPT) -c ../src/elpa2_kernels/elpa2_kernels_complex.f90
 else
 elpa2_kernels_real.o: ../src/elpa2_kernels/elpa2_kernels_real.f90
 	$(F90OPT) -c ../src/elpa2_kernels/elpa2_kernels_real.f90
-endif
-
+	
 elpa2_kernels_complex.o: ../src/elpa2_kernels/elpa2_kernels_complex.f90
 	$(F90OPT) -c ../src/elpa2_kernels/elpa2_kernels_complex.f90
+endif
 
 clean:
 	rm -f *.o *.mod test_real test_complex test_real_gen test_complex_gen test_real2 test_complex2 read_real read_real_gen 
