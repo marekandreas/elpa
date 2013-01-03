@@ -11,7 +11,7 @@ F90OPT=$(F90) -mavx
 CC=gcc -O3
 CCOPT=$(CC) -mavx -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize
 MKL_HOME=/opt/intel/mkl/lib/intel64
-LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lstdc++
 #
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with SSE3:
@@ -95,17 +95,17 @@ test_complex_gen: test_complex_gen.o elpa1.o
 	$(F90) -o $@ test_complex_gen.o elpa1.o $(LIBS)
 
 ifeq ($(X86),1)
-#test_real2: test_real2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
-#	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+test_real2: test_real2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+
+test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+
+#test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+#	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
 #
-#test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
-#	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
-
-test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
-	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
-
-test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
-	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+#test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+#	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
 else
 test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels_real.o elpa2_kernels_complex.o
 	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels_real.o elpa2_kernels_complex.o $(LIBS)

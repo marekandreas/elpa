@@ -11,6 +11,7 @@
 // with their original authors, but shall adhere to the licensing terms
 // distributed along with the original code in the file "COPYING".
 //
+// Author: Alexander Heinecke (alexander.heinecke@mytum.de)
 // --------------------------------------------------------------------------------------------------
 
 #include <x86intrin.h>
