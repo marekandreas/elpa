@@ -25,32 +25,16 @@
 
 //Forward declaration
 #ifdef __AVX__
+extern "C" __forceinline void hh_trafo_complex_kernel_12_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
+extern "C" __forceinline void hh_trafo_complex_kernel_8_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
 extern "C" __forceinline void hh_trafo_complex_kernel_4_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
 #else
+extern "C" __forceinline void hh_trafo_complex_kernel_6_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
 extern "C" __forceinline void hh_trafo_complex_kernel_4_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
+extern "C" __forceinline void hh_trafo_complex_kernel_2_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
 #endif
 
-extern "C" void single_hh_trafo_complex_(std::complex<double>* q, std::complex<double>* hh, int* pnb, int* pnq, int* pldq)
-{
-	int i;
-	int nb = *pnb;
-	int nq = *pldq;
-	int ldq = *pldq;
-	//int ldh = *pldh;
-
-#ifdef __AVX__
-	for (i = 0; i < nq; i+=4)
-	{
-		hh_trafo_complex_kernel_4_AVX_1hv(&q[i], hh, nb, ldq);
-	}
-#else
-	for (i = 0; i < nq; i+=4)
-	{
-		hh_trafo_complex_kernel_4_SSE_1hv(&q[i], hh, nb, ldq);
-	}
-#endif
-}
-
+#if 0
 extern "C" __forceinline void hh_trafo_complex_kernel_4_C_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
 	std::complex<double> x0;
@@ -98,15 +82,613 @@ extern "C" __forceinline void hh_trafo_complex_kernel_4_C_1hv(std::complex<doubl
 		q[(i*ldq)+3] += (x3*h0);
 	}
 }
+#endif
+
+extern "C" void single_hh_trafo_complex_(std::complex<double>* q, std::complex<double>* hh, int* pnb, int* pnq, int* pldq)
+{
+	int i;
+	int nb = *pnb;
+	int nq = *pldq;
+	int ldq = *pldq;
+	//int ldh = *pldh;
 
 #ifdef __AVX__
+	for (i = 0; i < nq-8; i+=12)
+	{
+		hh_trafo_complex_kernel_12_AVX_1hv(&q[i], hh, nb, ldq);
+	}
+	if (nq-i > 4)
+	{
+		hh_trafo_complex_kernel_8_AVX_1hv(&q[i], hh, nb, ldq);
+	}
+	else if (nq-i > 0)
+	{
+		hh_trafo_complex_kernel_4_AVX_1hv(&q[i], hh, nb, ldq);
+	}
+#else
+	for (i = 0; i < nq-4; i+=6)
+	{
+		hh_trafo_complex_kernel_6_SSE_1hv(&q[i], hh, nb, ldq);
+	}
+	if (nq-i > 2)
+	{
+		hh_trafo_complex_kernel_4_SSE_1hv(&q[i], hh, nb, ldq);
+	}
+	else if (nq-i > 0)
+	{
+		hh_trafo_complex_kernel_2_SSE_1hv(&q[i], hh, nb, ldq);
+	}
+#endif
+}
+
+#ifdef __AVX__
+extern "C" __forceinline void hh_trafo_complex_kernel_12_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+{
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+
+	__m256d x1, x2, x3, x4, x5, x6;
+	__m256d q1, q2, q3, q4, q5, q6;
+	__m256d h1_real, h1_imag;
+	__m256d tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
+	int i=0;
+
+	__m256d sign = (__m256d)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+
+	x1 = _mm256_load_pd(&q_dbl[0]);
+	x2 = _mm256_load_pd(&q_dbl[4]);
+	x3 = _mm256_load_pd(&q_dbl[8]);
+	x4 = _mm256_load_pd(&q_dbl[12]);
+	x5 = _mm256_load_pd(&q_dbl[16]);
+	x6 = _mm256_load_pd(&q_dbl[20]);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm256_broadcast_sd(&hh_dbl[i*2]);
+		h1_imag = _mm256_broadcast_sd(&hh_dbl[(i*2)+1]);
+		// conjugate
+		h1_imag = _mm256_xor_pd(h1_imag, sign);
+
+		q1 = _mm256_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm256_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q3 = _mm256_load_pd(&q_dbl[(2*i*ldq)+8]);
+		q4 = _mm256_load_pd(&q_dbl[(2*i*ldq)+12]);
+		q5 = _mm256_load_pd(&q_dbl[(2*i*ldq)+16]);
+		q6 = _mm256_load_pd(&q_dbl[(2*i*ldq)+20]);
+
+		tmp1 = _mm256_mul_pd(h1_imag, q1);
+		x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+		tmp2 = _mm256_mul_pd(h1_imag, q2);
+		x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+		tmp3 = _mm256_mul_pd(h1_imag, q3);
+		x3 = _mm256_add_pd(x3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+		tmp4 = _mm256_mul_pd(h1_imag, q4);
+		x4 = _mm256_add_pd(x4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+		tmp5 = _mm256_mul_pd(h1_imag, q5);
+		x5 = _mm256_add_pd(x5, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q5), _mm256_shuffle_pd(tmp5, tmp5, 0x5)));
+		tmp6 = _mm256_mul_pd(h1_imag, q6);
+		x6 = _mm256_add_pd(x6, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q6), _mm256_shuffle_pd(tmp6, tmp6, 0x5)));
+	}
+
+	h1_real = _mm256_broadcast_sd(&hh_dbl[0]);
+	h1_imag = _mm256_broadcast_sd(&hh_dbl[1]);
+	h1_real = _mm256_xor_pd(h1_real, sign);
+	h1_imag = _mm256_xor_pd(h1_imag, sign);
+
+	tmp1 = _mm256_mul_pd(h1_imag, x1);
+	x1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+	tmp2 = _mm256_mul_pd(h1_imag, x2);
+	x2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
+	tmp3 = _mm256_mul_pd(h1_imag, x3);
+	x3 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5));
+	tmp4 = _mm256_mul_pd(h1_imag, x4);
+	x4 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5));
+	tmp5 = _mm256_mul_pd(h1_imag, x5);
+	x5 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x5), _mm256_shuffle_pd(tmp5, tmp5, 0x5));
+	tmp6 = _mm256_mul_pd(h1_imag, x6);
+	x6 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x6), _mm256_shuffle_pd(tmp6, tmp6, 0x5));
+
+	q1 = _mm256_load_pd(&q_dbl[0]);
+	q2 = _mm256_load_pd(&q_dbl[4]);
+	q3 = _mm256_load_pd(&q_dbl[8]);
+	q4 = _mm256_load_pd(&q_dbl[12]);
+	q5 = _mm256_load_pd(&q_dbl[16]);
+	q6 = _mm256_load_pd(&q_dbl[20]);
+
+	q1 = _mm256_add_pd(q1, x1);
+	q2 = _mm256_add_pd(q2, x2);
+	q3 = _mm256_add_pd(q3, x3);
+	q4 = _mm256_add_pd(q4, x4);
+	q5 = _mm256_add_pd(q5, x5);
+	q6 = _mm256_add_pd(q6, x6);
+
+	_mm256_store_pd(&q_dbl[0], q1);
+	_mm256_store_pd(&q_dbl[4], q2);
+	_mm256_store_pd(&q_dbl[8], q3);
+	_mm256_store_pd(&q_dbl[12], q4);
+	_mm256_store_pd(&q_dbl[16], q5);
+	_mm256_store_pd(&q_dbl[20], q6);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm256_broadcast_sd(&hh_dbl[i*2]);
+		h1_imag = _mm256_broadcast_sd(&hh_dbl[(i*2)+1]);
+
+		q1 = _mm256_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm256_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q3 = _mm256_load_pd(&q_dbl[(2*i*ldq)+8]);
+		q4 = _mm256_load_pd(&q_dbl[(2*i*ldq)+12]);
+		q5 = _mm256_load_pd(&q_dbl[(2*i*ldq)+16]);
+		q6 = _mm256_load_pd(&q_dbl[(2*i*ldq)+20]);
+
+		tmp1 = _mm256_mul_pd(h1_imag, x1);
+		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+		tmp2 = _mm256_mul_pd(h1_imag, x2);
+		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+		tmp3 = _mm256_mul_pd(h1_imag, x3);
+		q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+		tmp4 = _mm256_mul_pd(h1_imag, x4);
+		q4 = _mm256_add_pd(q4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+		tmp5 = _mm256_mul_pd(h1_imag, x5);
+		q5 = _mm256_add_pd(q5, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x5), _mm256_shuffle_pd(tmp5, tmp5, 0x5)));
+		tmp6 = _mm256_mul_pd(h1_imag, x6);
+		q6 = _mm256_add_pd(q6, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x6), _mm256_shuffle_pd(tmp6, tmp6, 0x5)));
+
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+0], q1);
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+4], q2);
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+8], q3);
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+12], q4);
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+16], q5);
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+20], q6);
+	}
+}
+
+extern "C" __forceinline void hh_trafo_complex_kernel_8_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+{
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+
+	__m256d x1, x2, x3, x4;
+	__m256d q1, q2, q3, q4;
+	__m256d h1_real, h1_imag;
+	__m256d tmp1, tmp2, tmp3, tmp4;
+	int i=0;
+
+	__m256d sign = (__m256d)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+
+	x1 = _mm256_load_pd(&q_dbl[0]);
+	x2 = _mm256_load_pd(&q_dbl[4]);
+	x3 = _mm256_load_pd(&q_dbl[8]);
+	x4 = _mm256_load_pd(&q_dbl[12]);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm256_broadcast_sd(&hh_dbl[i*2]);
+		h1_imag = _mm256_broadcast_sd(&hh_dbl[(i*2)+1]);
+		// conjugate
+		h1_imag = _mm256_xor_pd(h1_imag, sign);
+
+		q1 = _mm256_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm256_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q3 = _mm256_load_pd(&q_dbl[(2*i*ldq)+8]);
+		q4 = _mm256_load_pd(&q_dbl[(2*i*ldq)+12]);
+
+		tmp1 = _mm256_mul_pd(h1_imag, q1);
+		x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+		tmp2 = _mm256_mul_pd(h1_imag, q2);
+		x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+		tmp3 = _mm256_mul_pd(h1_imag, q3);
+		x3 = _mm256_add_pd(x3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+		tmp4 = _mm256_mul_pd(h1_imag, q4);
+		x4 = _mm256_add_pd(x4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+	}
+
+	h1_real = _mm256_broadcast_sd(&hh_dbl[0]);
+	h1_imag = _mm256_broadcast_sd(&hh_dbl[1]);
+	h1_real = _mm256_xor_pd(h1_real, sign);
+	h1_imag = _mm256_xor_pd(h1_imag, sign);
+
+	tmp1 = _mm256_mul_pd(h1_imag, x1);
+	x1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+	tmp2 = _mm256_mul_pd(h1_imag, x2);
+	x2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
+	tmp3 = _mm256_mul_pd(h1_imag, x3);
+	x3 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5));
+	tmp4 = _mm256_mul_pd(h1_imag, x4);
+	x4 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5));
+
+	q1 = _mm256_load_pd(&q_dbl[0]);
+	q2 = _mm256_load_pd(&q_dbl[4]);
+	q3 = _mm256_load_pd(&q_dbl[8]);
+	q4 = _mm256_load_pd(&q_dbl[12]);
+
+	q1 = _mm256_add_pd(q1, x1);
+	q2 = _mm256_add_pd(q2, x2);
+	q3 = _mm256_add_pd(q3, x3);
+	q4 = _mm256_add_pd(q4, x4);
+
+	_mm256_store_pd(&q_dbl[0], q1);
+	_mm256_store_pd(&q_dbl[4], q2);
+	_mm256_store_pd(&q_dbl[8], q3);
+	_mm256_store_pd(&q_dbl[12], q4);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm256_broadcast_sd(&hh_dbl[i*2]);
+		h1_imag = _mm256_broadcast_sd(&hh_dbl[(i*2)+1]);
+
+		q1 = _mm256_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm256_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q3 = _mm256_load_pd(&q_dbl[(2*i*ldq)+8]);
+		q4 = _mm256_load_pd(&q_dbl[(2*i*ldq)+12]);
+
+		tmp1 = _mm256_mul_pd(h1_imag, x1);
+		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+		tmp2 = _mm256_mul_pd(h1_imag, x2);
+		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+		tmp3 = _mm256_mul_pd(h1_imag, x3);
+		q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+		tmp4 = _mm256_mul_pd(h1_imag, x4);
+		q4 = _mm256_add_pd(q4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+0], q1);
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+4], q2);
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+8], q3);
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+12], q4);
+	}
+}
+
 extern "C" __forceinline void hh_trafo_complex_kernel_4_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
-	hh_trafo_complex_kernel_4_C_1hv(q, hh, nb, ldq);
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+
+	__m256d x1, x2;
+	__m256d q1, q2;
+	__m256d h1_real, h1_imag;
+	__m256d tmp1, tmp2;
+	int i=0;
+
+	__m256d sign = (__m256d)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+
+	x1 = _mm256_load_pd(&q_dbl[0]);
+	x2 = _mm256_load_pd(&q_dbl[4]);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm256_broadcast_sd(&hh_dbl[i*2]);
+		h1_imag = _mm256_broadcast_sd(&hh_dbl[(i*2)+1]);
+		// conjugate
+		h1_imag = _mm256_xor_pd(h1_imag, sign);
+
+		q1 = _mm256_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm256_load_pd(&q_dbl[(2*i*ldq)+4]);
+
+		tmp1 = _mm256_mul_pd(h1_imag, q1);
+		x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+		tmp2 = _mm256_mul_pd(h1_imag, q2);
+		x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+	}
+
+	h1_real = _mm256_broadcast_sd(&hh_dbl[0]);
+	h1_imag = _mm256_broadcast_sd(&hh_dbl[1]);
+	h1_real = _mm256_xor_pd(h1_real, sign);
+	h1_imag = _mm256_xor_pd(h1_imag, sign);
+
+	tmp1 = _mm256_mul_pd(h1_imag, x1);
+	x1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+	tmp2 = _mm256_mul_pd(h1_imag, x2);
+	x2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
+
+	q1 = _mm256_load_pd(&q_dbl[0]);
+	q2 = _mm256_load_pd(&q_dbl[4]);
+
+	q1 = _mm256_add_pd(q1, x1);
+	q2 = _mm256_add_pd(q2, x2);
+
+	_mm256_store_pd(&q_dbl[0], q1);
+	_mm256_store_pd(&q_dbl[4], q2);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm256_broadcast_sd(&hh_dbl[i*2]);
+		h1_imag = _mm256_broadcast_sd(&hh_dbl[(i*2)+1]);
+
+		q1 = _mm256_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm256_load_pd(&q_dbl[(2*i*ldq)+4]);
+
+		tmp1 = _mm256_mul_pd(h1_imag, x1);
+		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+		tmp2 = _mm256_mul_pd(h1_imag, x2);
+		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+0], q1);
+		_mm256_store_pd(&q_dbl[(2*i*ldq)+4], q2);
+	}
 }
 #else
+extern "C" __forceinline void hh_trafo_complex_kernel_6_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+{
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+
+	__m128d x1, x2, x3, x4, x5, x6;
+	__m128d q1, q2, q3, q4, q5, q6;
+	__m128d h1_real, h1_imag;
+	__m128d tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
+	int i=0;
+
+	__m128d sign = (__m128d)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+
+	x1 = _mm_load_pd(&q_dbl[0]);
+	x2 = _mm_load_pd(&q_dbl[2]);
+	x3 = _mm_load_pd(&q_dbl[4]);
+	x4 = _mm_load_pd(&q_dbl[6]);
+	x5 = _mm_load_pd(&q_dbl[8]);
+	x6 = _mm_load_pd(&q_dbl[10]);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm_loaddup_pd(&hh_dbl[i*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[(i*2)+1]);
+		// conjugate
+		h1_imag = _mm_xor_pd(h1_imag, sign);
+
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+		q3 = _mm_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q4 = _mm_load_pd(&q_dbl[(2*i*ldq)+6]);
+		q5 = _mm_load_pd(&q_dbl[(2*i*ldq)+8]);
+		q6 = _mm_load_pd(&q_dbl[(2*i*ldq)+10]);
+
+		tmp1 = _mm_mul_pd(h1_imag, q1);
+		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+		tmp2 = _mm_mul_pd(h1_imag, q2);
+		x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+		tmp3 = _mm_mul_pd(h1_imag, q3);
+		x3 = _mm_add_pd(x3, _mm_addsub_pd( _mm_mul_pd(h1_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+		tmp4 = _mm_mul_pd(h1_imag, q4);
+		x4 = _mm_add_pd(x4, _mm_addsub_pd( _mm_mul_pd(h1_real, q4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
+		tmp5 = _mm_mul_pd(h1_imag, q5);
+		x5 = _mm_add_pd(x5, _mm_addsub_pd( _mm_mul_pd(h1_real, q5), _mm_shuffle_pd(tmp5, tmp5, _MM_SHUFFLE2(0,1))));
+		tmp6 = _mm_mul_pd(h1_imag, q6);
+		x6 = _mm_add_pd(x6, _mm_addsub_pd( _mm_mul_pd(h1_real, q6), _mm_shuffle_pd(tmp6, tmp6, _MM_SHUFFLE2(0,1))));
+	}
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+	h1_real = _mm_xor_pd(h1_real, sign);
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+
+	tmp1 = _mm_mul_pd(h1_imag, x1);
+	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+	tmp2 = _mm_mul_pd(h1_imag, x2);
+	x2 = _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+	tmp3 = _mm_mul_pd(h1_imag, x3);
+	x3 = _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
+	tmp4 = _mm_mul_pd(h1_imag, x4);
+	x4 = _mm_addsub_pd( _mm_mul_pd(h1_real, x4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1)));
+	tmp5 = _mm_mul_pd(h1_imag, x5);
+	x5 = _mm_addsub_pd( _mm_mul_pd(h1_real, x5), _mm_shuffle_pd(tmp5, tmp5, _MM_SHUFFLE2(0,1)));
+	tmp6 = _mm_mul_pd(h1_imag, x6);
+	x6 = _mm_addsub_pd( _mm_mul_pd(h1_real, x6), _mm_shuffle_pd(tmp6, tmp6, _MM_SHUFFLE2(0,1)));
+
+	q1 = _mm_load_pd(&q_dbl[0]);
+	q2 = _mm_load_pd(&q_dbl[2]);
+	q3 = _mm_load_pd(&q_dbl[4]);
+	q4 = _mm_load_pd(&q_dbl[6]);
+	q5 = _mm_load_pd(&q_dbl[8]);
+	q6 = _mm_load_pd(&q_dbl[10]);
+
+	q1 = _mm_add_pd(q1, x1);
+	q2 = _mm_add_pd(q2, x2);
+	q3 = _mm_add_pd(q3, x3);
+	q4 = _mm_add_pd(q4, x4);
+	q5 = _mm_add_pd(q5, x5);
+	q6 = _mm_add_pd(q6, x6);
+
+	_mm_store_pd(&q_dbl[0], q1);
+	_mm_store_pd(&q_dbl[2], q2);
+	_mm_store_pd(&q_dbl[4], q3);
+	_mm_store_pd(&q_dbl[6], q4);
+	_mm_store_pd(&q_dbl[8], q5);
+	_mm_store_pd(&q_dbl[10], q6);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm_loaddup_pd(&hh_dbl[i*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[(i*2)+1]);
+
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+		q3 = _mm_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q4 = _mm_load_pd(&q_dbl[(2*i*ldq)+6]);
+		q5 = _mm_load_pd(&q_dbl[(2*i*ldq)+8]);
+		q6 = _mm_load_pd(&q_dbl[(2*i*ldq)+10]);
+
+		tmp1 = _mm_mul_pd(h1_imag, x1);
+		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+		tmp2 = _mm_mul_pd(h1_imag, x2);
+		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+		tmp3 = _mm_mul_pd(h1_imag, x3);
+		q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+		tmp4 = _mm_mul_pd(h1_imag, x4);
+		q4 = _mm_add_pd(q4, _mm_addsub_pd( _mm_mul_pd(h1_real, x4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
+		tmp5 = _mm_mul_pd(h1_imag, x5);
+		q5 = _mm_add_pd(q5, _mm_addsub_pd( _mm_mul_pd(h1_real, x5), _mm_shuffle_pd(tmp5, tmp5, _MM_SHUFFLE2(0,1))));
+		tmp6 = _mm_mul_pd(h1_imag, x6);
+		q6 = _mm_add_pd(q6, _mm_addsub_pd( _mm_mul_pd(h1_real, x6), _mm_shuffle_pd(tmp6, tmp6, _MM_SHUFFLE2(0,1))));
+
+		_mm_store_pd(&q_dbl[(2*i*ldq)+0], q1);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+2], q2);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+4], q3);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+6], q4);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+8], q5);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+10], q6);
+	}
+}
+
 extern "C" __forceinline void hh_trafo_complex_kernel_4_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
-	hh_trafo_complex_kernel_4_C_1hv(q, hh, nb, ldq);
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+
+	__m128d x1, x2, x3, x4;
+	__m128d q1, q2, q3, q4;
+	__m128d h1_real, h1_imag;
+	__m128d tmp1, tmp2, tmp3, tmp4;
+	int i=0;
+
+	__m128d sign = (__m128d)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+
+	x1 = _mm_load_pd(&q_dbl[0]);
+	x2 = _mm_load_pd(&q_dbl[2]);
+	x3 = _mm_load_pd(&q_dbl[4]);
+	x4 = _mm_load_pd(&q_dbl[6]);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm_loaddup_pd(&hh_dbl[i*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[(i*2)+1]);
+		// conjugate
+		h1_imag = _mm_xor_pd(h1_imag, sign);
+
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+		q3 = _mm_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q4 = _mm_load_pd(&q_dbl[(2*i*ldq)+6]);
+
+		tmp1 = _mm_mul_pd(h1_imag, q1);
+		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+		tmp2 = _mm_mul_pd(h1_imag, q2);
+		x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+		tmp3 = _mm_mul_pd(h1_imag, q3);
+		x3 = _mm_add_pd(x3, _mm_addsub_pd( _mm_mul_pd(h1_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+		tmp4 = _mm_mul_pd(h1_imag, q4);
+		x4 = _mm_add_pd(x4, _mm_addsub_pd( _mm_mul_pd(h1_real, q4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
+	}
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+	h1_real = _mm_xor_pd(h1_real, sign);
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+
+	tmp1 = _mm_mul_pd(h1_imag, x1);
+	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+	tmp2 = _mm_mul_pd(h1_imag, x2);
+	x2 = _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+	tmp3 = _mm_mul_pd(h1_imag, x3);
+	x3 = _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
+	tmp4 = _mm_mul_pd(h1_imag, x4);
+	x4 = _mm_addsub_pd( _mm_mul_pd(h1_real, x4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1)));
+
+	q1 = _mm_load_pd(&q_dbl[0]);
+	q2 = _mm_load_pd(&q_dbl[2]);
+	q3 = _mm_load_pd(&q_dbl[4]);
+	q4 = _mm_load_pd(&q_dbl[6]);
+
+	q1 = _mm_add_pd(q1, x1);
+	q2 = _mm_add_pd(q2, x2);
+	q3 = _mm_add_pd(q3, x3);
+	q4 = _mm_add_pd(q4, x4);
+
+	_mm_store_pd(&q_dbl[0], q1);
+	_mm_store_pd(&q_dbl[2], q2);
+	_mm_store_pd(&q_dbl[4], q3);
+	_mm_store_pd(&q_dbl[6], q4);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm_loaddup_pd(&hh_dbl[i*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[(i*2)+1]);
+
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+		q3 = _mm_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q4 = _mm_load_pd(&q_dbl[(2*i*ldq)+6]);
+
+		tmp1 = _mm_mul_pd(h1_imag, x1);
+		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+		tmp2 = _mm_mul_pd(h1_imag, x2);
+		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+		tmp3 = _mm_mul_pd(h1_imag, x3);
+		q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+		tmp4 = _mm_mul_pd(h1_imag, x4);
+		q4 = _mm_add_pd(q4, _mm_addsub_pd( _mm_mul_pd(h1_real, x4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
+
+		_mm_store_pd(&q_dbl[(2*i*ldq)+0], q1);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+2], q2);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+4], q3);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+6], q4);
+	}
+}
+
+extern "C" __forceinline void hh_trafo_complex_kernel_2_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+{
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+
+	__m128d x1, x2;
+	__m128d q1, q2;
+	__m128d h1_real, h1_imag;
+	__m128d tmp1, tmp2;
+	int i=0;
+
+	__m128d sign = (__m128d)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+
+	x1 = _mm_load_pd(&q_dbl[0]);
+	x2 = _mm_load_pd(&q_dbl[2]);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm_loaddup_pd(&hh_dbl[i*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[(i*2)+1]);
+		// conjugate
+		h1_imag = _mm_xor_pd(h1_imag, sign);
+
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+
+		tmp1 = _mm_mul_pd(h1_imag, q1);
+		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+		tmp2 = _mm_mul_pd(h1_imag, q2);
+		x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+	}
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+	h1_real = _mm_xor_pd(h1_real, sign);
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+
+	tmp1 = _mm_mul_pd(h1_imag, x1);
+	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+	tmp2 = _mm_mul_pd(h1_imag, x2);
+	x2 = _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+
+	q1 = _mm_load_pd(&q_dbl[0]);
+	q2 = _mm_load_pd(&q_dbl[2]);
+
+	q1 = _mm_add_pd(q1, x1);
+	q2 = _mm_add_pd(q2, x2);
+
+	_mm_store_pd(&q_dbl[0], q1);
+	_mm_store_pd(&q_dbl[2], q2);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _mm_loaddup_pd(&hh_dbl[i*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[(i*2)+1]);
+
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+
+		tmp1 = _mm_mul_pd(h1_imag, x1);
+		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+		tmp2 = _mm_mul_pd(h1_imag, x2);
+		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+
+		_mm_store_pd(&q_dbl[(2*i*ldq)+0], q1);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+2], q2);
+	}
 }
 #endif

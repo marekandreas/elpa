@@ -3198,29 +3198,33 @@ contains
 
     subroutine compute_hh_trafo(off, ncols, istripe)
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        Currently (on Sandy Bridge), single is faster than double
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        integer off, ncols, istripe, j, nl, jj
+!        real*8 ttt
+!        complex*16 w(nbw,2)
+!
+!        ttt = mpi_wtime()
+!        nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
+!        do j = ncols, 2, -2
+!            w(:,1) = bcast_buffer(1:nbw,j+off)
+!            w(:,2) = bcast_buffer(1:nbw,j+off-1)
+!            call double_hh_trafo_complex(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+!        enddo
+!        if(j==1) call single_hh_trafo_complex(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        Currently (on Sandy Bridge), single is faster than double
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         integer off, ncols, istripe, j, nl, jj
-        complex*16 w(nbw,2)
         real*8 ttt
 
         ttt = mpi_wtime()
         nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
-
-        !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
-        do j = ncols, 2, -2
-            w(:,1) = bcast_buffer(1:nbw,j+off)
-            w(:,2) = bcast_buffer(1:nbw,j+off-1)
-            call double_hh_trafo_complex(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+        do j = ncols, 1, -1
+           call single_hh_trafo_complex(a(1,j+off+a_off,istripe),bcast_buffer(1,j+off),nbw,nl,stripe_width)
         enddo
-        if(j==1) call single_hh_trafo_complex(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
-
-!        integer off, ncols, istripe, j, nl, jj
-!        real*8 ttt
-!
-!        ttt = mpi_wtime()
-!        nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
-!        do j = ncols, 1, -1
-!           call single_hh_trafo_complex(a(1,j+off+a_off,istripe),bcast_buffer(1,j+off),nbw,nl,stripe_width)
-!        enddo
 
         kernel_flops = kernel_flops + 4*4*int(nl,8)*int(ncols,8)*int(nbw,8)
         kernel_time = kernel_time + mpi_wtime()-ttt

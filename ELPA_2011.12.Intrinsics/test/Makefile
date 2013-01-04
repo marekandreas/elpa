@@ -4,9 +4,9 @@
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with AVX for Sandy Bridge:
 #
 X86=1
-F90=mpiifort -O3 -traceback -fpe0
-F90OPT=$(F90) -mavx
-#CC=mpiicc -O3
+F90=mpiifort -O3 -traceback -fpe0 -g -mavx
+F90OPT=$(F90)
+#CC=icc -O3
 #CCOPT=$(CC) -mavx
 CC=gcc -O3
 CCOPT=$(CC) -mavx -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize
@@ -17,7 +17,7 @@ LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_l
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with SSE3:
 #
 #X86=1
-#F90=mpiifort -O3 -traceback -fpe0 -g
+#F90=mpiifort -O3 -traceback -fpe0 -g -msse3
 #F90OPT=$(F90) -msse3
 #CC=gcc -O3
 #CCOPT=$(CC) -msse3 -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize
@@ -30,7 +30,7 @@ LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_l
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) and GCC 4.6 with FMA4 for AMD Bulldozer:
 #
 #X86=1
-#F90=mpiifort -O3 -traceback -fpe0 -g
+#F90=mpiifort -O3 -traceback -fpe0 -g -msse3
 #CC=gcc -O3
 #F90OPT=$(F90) -msse3
 #CCOPT=$(CC) -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize -mfma4 -mxop -march=bdver1 -D__USE_AVX128__
