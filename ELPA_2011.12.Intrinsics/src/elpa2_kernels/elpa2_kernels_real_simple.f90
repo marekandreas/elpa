@@ -14,7 +14,7 @@
 !
 ! --------------------------------------------------------------------------------------------------
 
-subroutine double_hh_trafo_2hv(q, hh, nb, nq, ldq, ldh)
+subroutine double_hh_trafo(q, hh, nb, nq, ldq, ldh)
 
    implicit none
 

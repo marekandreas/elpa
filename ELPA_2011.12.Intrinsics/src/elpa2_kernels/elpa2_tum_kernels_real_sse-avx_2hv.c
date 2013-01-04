@@ -34,12 +34,12 @@ void hh_trafo_kernel_8_SSE_2hv(double* q, double* hh, int nb, int ldq, int ldh, 
 void hh_trafo_kernel_12_SSE_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s);
 #endif
 
-void double_hh_trafo_2hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void double_hh_trafo_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #if 0
-void double_hh_trafo_2hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #endif
 
-void double_hh_trafo_2hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void double_hh_trafo_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -115,7 +115,7 @@ void double_hh_trafo_2hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, 
 }
 
 #if 0
-void double_hh_trafo_2hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
