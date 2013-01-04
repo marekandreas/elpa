@@ -1880,4 +1880,823 @@ extern "C" __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<dou
 	_mm_store_pd(&q_dbl[(2*nb*ldq)+4], q3);
 	_mm_store_pd(&q_dbl[(2*nb*ldq)+6], q4);
 }
+
+extern "C" __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s)
+{
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+	double* s_dbl = (double*)(&s);
+
+	__m128d x1, x2, x3;
+	__m128d y1, y2, y3;
+	__m128d q1, q2, q3;
+	__m128d h1_real, h1_imag, h2_real, h2_imag;
+	__m128d tmp1, tmp2, tmp3;
+	int i=0;
+
+	__m128d sign = (__m128d)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+
+	x1 = _mm_load_pd(&q_dbl[(2*ldq)+0]);
+	x2 = _mm_load_pd(&q_dbl[(2*ldq)+2]);
+	x3 = _mm_load_pd(&q_dbl[(2*ldq)+4]);
+
+	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#ifndef __FMA4__
+	// conjugate
+	h2_imag = _mm_xor_pd(h2_imag, sign);
+#endif
+
+	y1 = _mm_load_pd(&q_dbl[0]);
+	y2 = _mm_load_pd(&q_dbl[2]);
+	y3 = _mm_load_pd(&q_dbl[4]);
+
+	tmp1 = _mm_mul_pd(h2_imag, x1);
+#ifdef __FMA4__
+	y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h2_imag, x2);
+#ifdef __FMA4__
+	y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp3 = _mm_mul_pd(h2_imag, x3);
+#ifdef __FMA4__
+	y3 = _mm_add_pd(y3, _mm_msubadd_pd(h2_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#else
+	y3 = _mm_add_pd(y3, _mm_addsub_pd( _mm_mul_pd(h2_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#endif
+
+	for (i = 2; i < nb; i++)
+	{
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+		q3 = _mm_load_pd(&q_dbl[(2*i*ldq)+4]);
+
+		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+#ifndef __FMA4__
+		// conjugate
+		h1_imag = _mm_xor_pd(h1_imag, sign);
+#endif
+
+		tmp1 = _mm_mul_pd(h1_imag, q1);
+#ifdef __FMA4__
+		x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp2 = _mm_mul_pd(h1_imag, q2);
+#ifdef __FMA4__
+		x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+		x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp3 = _mm_mul_pd(h1_imag, q3);
+#ifdef __FMA4__
+		x3 = _mm_add_pd(x3, _mm_msubadd_pd(h1_real, q3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#else
+		x3 = _mm_add_pd(x3, _mm_addsub_pd( _mm_mul_pd(h1_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#endif
+
+		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#ifndef __FMA4__
+		// conjugate
+		h2_imag = _mm_xor_pd(h2_imag, sign);
+#endif
+
+		tmp1 = _mm_mul_pd(h2_imag, q1);
+#ifdef __FMA4__
+		y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp2 = _mm_mul_pd(h2_imag, q2);
+#ifdef __FMA4__
+		y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+		y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp3 = _mm_mul_pd(h2_imag, q3);
+#ifdef __FMA4__
+		y3 = _mm_add_pd(y3, _mm_msubadd_pd(h2_real, q3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#else
+		y3 = _mm_add_pd(y3, _mm_addsub_pd( _mm_mul_pd(h2_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#endif
+	}
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#ifndef __FMA4__
+	// conjugate
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+#endif
+
+	q1 = _mm_load_pd(&q_dbl[(2*nb*ldq)+0]);
+	q2 = _mm_load_pd(&q_dbl[(2*nb*ldq)+2]);
+	q3 = _mm_load_pd(&q_dbl[(2*nb*ldq)+4]);
+
+	tmp1 = _mm_mul_pd(h1_imag, q1);
+#ifdef __FMA4__
+	x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h1_imag, q2);
+#ifdef __FMA4__
+	x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp3 = _mm_mul_pd(h1_imag, q3);
+#ifdef __FMA4__
+	x3 = _mm_add_pd(x3, _mm_msubadd_pd(h1_real, q3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#else
+	x3 = _mm_add_pd(x3, _mm_addsub_pd( _mm_mul_pd(h1_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#endif
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+	h1_real = _mm_xor_pd(h1_real, sign);
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+
+	tmp1 = _mm_mul_pd(h1_imag, x1);
+#ifdef __FMA4__
+	x1 = _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#else
+	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#endif
+	tmp2 = _mm_mul_pd(h1_imag, x2);
+#ifdef __FMA4__
+	x2 = _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+#else
+	x2 = _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+#endif
+	tmp3 = _mm_mul_pd(h1_imag, x3);
+#ifdef __FMA4__
+	x3 = _mm_maddsub_pd(h1_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
+#else
+	x3 = _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
+#endif
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+	h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+	h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+
+	h1_real = _mm_xor_pd(h1_real, sign);
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+	h2_real = _mm_xor_pd(h2_real, sign);
+	h2_imag = _mm_xor_pd(h2_imag, sign);
+
+	tmp2 = _mm_loadu_pd(s_dbl);
+	tmp1 = _mm_mul_pd(h2_imag, tmp2);
+#ifdef __FMA4__
+	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#else
+	tmp2 = _mm_addsub_pd( _mm_mul_pd(h2_real, tmp2), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#endif
+	_mm_storeu_pd(s_dbl, tmp2);
+	h2_real = _mm_loaddup_pd(&s_dbl[0]);
+	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+
+	tmp1 = _mm_mul_pd(h1_imag, y1);
+#ifdef __FMA4__
+	y1 = _mm_maddsub_pd(h1_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#else
+	y1 = _mm_addsub_pd( _mm_mul_pd(h1_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#endif
+	tmp2 = _mm_mul_pd(h1_imag, y2);
+#ifdef __FMA4__
+	y2 = _mm_maddsub_pd(h1_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+#else
+	y2 = _mm_addsub_pd( _mm_mul_pd(h1_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+#endif
+	tmp3 = _mm_mul_pd(h1_imag, y3);
+#ifdef __FMA4__
+	y3 = _mm_maddsub_pd(h1_real, y3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
+#else
+	y3 = _mm_addsub_pd( _mm_mul_pd(h1_real, y3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
+#endif
+
+	tmp1 = _mm_mul_pd(h2_imag, x1);
+#ifdef __FMA4__
+	y1 = _mm_add_pd(y1, _mm_maddsub_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h2_imag, x2);
+#ifdef __FMA4__
+	y2 = _mm_add_pd(y2, _mm_maddsub_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp3 = _mm_mul_pd(h2_imag, x3);
+#ifdef __FMA4__
+	y3 = _mm_add_pd(y3, _mm_maddsub_pd(h2_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#else
+	y3 = _mm_add_pd(y3, _mm_addsub_pd( _mm_mul_pd(h2_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#endif
+
+	q1 = _mm_load_pd(&q_dbl[0]);
+	q2 = _mm_load_pd(&q_dbl[2]);
+	q3 = _mm_load_pd(&q_dbl[4]);
+
+	q1 = _mm_add_pd(q1, y1);
+	q2 = _mm_add_pd(q2, y2);
+	q3 = _mm_add_pd(q3, y3);
+
+	_mm_store_pd(&q_dbl[0], q1);
+	_mm_store_pd(&q_dbl[2], q2);
+	_mm_store_pd(&q_dbl[4], q3);
+
+	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+
+	q1 = _mm_load_pd(&q_dbl[(ldq*2)+0]);
+	q2 = _mm_load_pd(&q_dbl[(ldq*2)+2]);
+	q3 = _mm_load_pd(&q_dbl[(ldq*2)+4]);
+
+	q1 = _mm_add_pd(q1, x1);
+	q2 = _mm_add_pd(q2, x2);
+	q3 = _mm_add_pd(q3, x3);
+
+	tmp1 = _mm_mul_pd(h2_imag, y1);
+#ifdef __FMA4__
+	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h2_imag, y2);
+#ifdef __FMA4__
+	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp3 = _mm_mul_pd(h2_imag, y3);
+#ifdef __FMA4__
+	q3 = _mm_add_pd(q3, _mm_maddsub_pd(h2_real, y3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#else
+	q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h2_real, y3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#endif
+
+	_mm_store_pd(&q_dbl[(ldq*2)+0], q1);
+	_mm_store_pd(&q_dbl[(ldq*2)+2], q2);
+	_mm_store_pd(&q_dbl[(ldq*2)+4], q3);
+
+	for (i = 2; i < nb; i++)
+	{
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+		q3 = _mm_load_pd(&q_dbl[(2*i*ldq)+4]);
+
+		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+
+		tmp1 = _mm_mul_pd(h1_imag, x1);
+#ifdef __FMA4__
+		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp2 = _mm_mul_pd(h1_imag, x2);
+#ifdef __FMA4__
+		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp3 = _mm_mul_pd(h1_imag, x3);
+#ifdef __FMA4__
+		q3 = _mm_add_pd(q3, _mm_maddsub_pd(h1_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#else
+		q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#endif
+
+		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+
+		tmp1 = _mm_mul_pd(h2_imag, y1);
+#ifdef __FMA4__
+		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp2 = _mm_mul_pd(h2_imag, y2);
+#ifdef __FMA4__
+		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp3 = _mm_mul_pd(h2_imag, y3);
+#ifdef __FMA4__
+		q3 = _mm_add_pd(q3, _mm_maddsub_pd(h2_real, y3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#else
+		q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h2_real, y3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#endif
+
+		_mm_store_pd(&q_dbl[(2*i*ldq)+0], q1);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+2], q2);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+4], q3);
+	}
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+
+	q1 = _mm_load_pd(&q_dbl[(2*nb*ldq)+0]);
+	q2 = _mm_load_pd(&q_dbl[(2*nb*ldq)+2]);
+	q3 = _mm_load_pd(&q_dbl[(2*nb*ldq)+4]);
+
+	tmp1 = _mm_mul_pd(h1_imag, x1);
+#ifdef __FMA4__
+	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h1_imag, x2);
+#ifdef __FMA4__
+	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp3 = _mm_mul_pd(h1_imag, x3);
+#ifdef __FMA4__
+	q3 = _mm_add_pd(q3, _mm_maddsub_pd(h1_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#else
+	q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
+#endif
+
+	_mm_store_pd(&q_dbl[(2*nb*ldq)+0], q1);
+	_mm_store_pd(&q_dbl[(2*nb*ldq)+2], q2);
+	_mm_store_pd(&q_dbl[(2*nb*ldq)+4], q3);
+}
+
+extern "C" __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s)
+{
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+	double* s_dbl = (double*)(&s);
+
+	__m128d x1, x2;
+	__m128d y1, y2;
+	__m128d q1, q2;
+	__m128d h1_real, h1_imag, h2_real, h2_imag;
+	__m128d tmp1, tmp2;
+	int i=0;
+
+	__m128d sign = (__m128d)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+
+	x1 = _mm_load_pd(&q_dbl[(2*ldq)+0]);
+	x2 = _mm_load_pd(&q_dbl[(2*ldq)+2]);
+
+	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#ifndef __FMA4__
+	// conjugate
+	h2_imag = _mm_xor_pd(h2_imag, sign);
+#endif
+
+	y1 = _mm_load_pd(&q_dbl[0]);
+	y2 = _mm_load_pd(&q_dbl[2]);
+
+	tmp1 = _mm_mul_pd(h2_imag, x1);
+#ifdef __FMA4__
+	y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h2_imag, x2);
+#ifdef __FMA4__
+	y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+
+	for (i = 2; i < nb; i++)
+	{
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+
+		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+#ifndef __FMA4__
+		// conjugate
+		h1_imag = _mm_xor_pd(h1_imag, sign);
+#endif
+
+		tmp1 = _mm_mul_pd(h1_imag, q1);
+#ifdef __FMA4__
+		x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp2 = _mm_mul_pd(h1_imag, q2);
+#ifdef __FMA4__
+		x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+		x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+
+		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#ifndef __FMA4__
+		// conjugate
+		h2_imag = _mm_xor_pd(h2_imag, sign);
+#endif
+
+		tmp1 = _mm_mul_pd(h2_imag, q1);
+#ifdef __FMA4__
+		y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp2 = _mm_mul_pd(h2_imag, q2);
+#ifdef __FMA4__
+		y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+		y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+	}
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#ifndef __FMA4__
+	// conjugate
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+#endif
+
+	q1 = _mm_load_pd(&q_dbl[(2*nb*ldq)+0]);
+	q2 = _mm_load_pd(&q_dbl[(2*nb*ldq)+2]);
+
+	tmp1 = _mm_mul_pd(h1_imag, q1);
+#ifdef __FMA4__
+	x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h1_imag, q2);
+#ifdef __FMA4__
+	x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+	h1_real = _mm_xor_pd(h1_real, sign);
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+
+	tmp1 = _mm_mul_pd(h1_imag, x1);
+#ifdef __FMA4__
+	x1 = _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#else
+	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#endif
+	tmp2 = _mm_mul_pd(h1_imag, x2);
+#ifdef __FMA4__
+	x2 = _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+#else
+	x2 = _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+#endif
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+	h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+	h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+
+	h1_real = _mm_xor_pd(h1_real, sign);
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+	h2_real = _mm_xor_pd(h2_real, sign);
+	h2_imag = _mm_xor_pd(h2_imag, sign);
+
+	tmp2 = _mm_loadu_pd(s_dbl);
+	tmp1 = _mm_mul_pd(h2_imag, tmp2);
+#ifdef __FMA4__
+	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#else
+	tmp2 = _mm_addsub_pd( _mm_mul_pd(h2_real, tmp2), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#endif
+	_mm_storeu_pd(s_dbl, tmp2);
+	h2_real = _mm_loaddup_pd(&s_dbl[0]);
+	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+
+	tmp1 = _mm_mul_pd(h1_imag, y1);
+#ifdef __FMA4__
+	y1 = _mm_maddsub_pd(h1_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#else
+	y1 = _mm_addsub_pd( _mm_mul_pd(h1_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#endif
+	tmp2 = _mm_mul_pd(h1_imag, y2);
+#ifdef __FMA4__
+	y2 = _mm_maddsub_pd(h1_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+#else
+	y2 = _mm_addsub_pd( _mm_mul_pd(h1_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
+#endif
+
+	tmp1 = _mm_mul_pd(h2_imag, x1);
+#ifdef __FMA4__
+	y1 = _mm_add_pd(y1, _mm_maddsub_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h2_imag, x2);
+#ifdef __FMA4__
+	y2 = _mm_add_pd(y2, _mm_maddsub_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+
+	q1 = _mm_load_pd(&q_dbl[0]);
+	q2 = _mm_load_pd(&q_dbl[2]);
+
+	q1 = _mm_add_pd(q1, y1);
+	q2 = _mm_add_pd(q2, y2);
+
+	_mm_store_pd(&q_dbl[0], q1);
+	_mm_store_pd(&q_dbl[2], q2);
+
+	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+
+	q1 = _mm_load_pd(&q_dbl[(ldq*2)+0]);
+	q2 = _mm_load_pd(&q_dbl[(ldq*2)+2]);
+
+	q1 = _mm_add_pd(q1, x1);
+	q2 = _mm_add_pd(q2, x2);
+
+	tmp1 = _mm_mul_pd(h2_imag, y1);
+#ifdef __FMA4__
+	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h2_imag, y2);
+#ifdef __FMA4__
+	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+
+	_mm_store_pd(&q_dbl[(ldq*2)+0], q1);
+	_mm_store_pd(&q_dbl[(ldq*2)+2], q2);
+
+	for (i = 2; i < nb; i++)
+	{
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm_load_pd(&q_dbl[(2*i*ldq)+2]);
+
+		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+
+		tmp1 = _mm_mul_pd(h1_imag, x1);
+#ifdef __FMA4__
+		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp2 = _mm_mul_pd(h1_imag, x2);
+#ifdef __FMA4__
+		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+
+		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+
+		tmp1 = _mm_mul_pd(h2_imag, y1);
+#ifdef __FMA4__
+		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+		tmp2 = _mm_mul_pd(h2_imag, y2);
+#ifdef __FMA4__
+		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+
+		_mm_store_pd(&q_dbl[(2*i*ldq)+0], q1);
+		_mm_store_pd(&q_dbl[(2*i*ldq)+2], q2);
+	}
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+
+	q1 = _mm_load_pd(&q_dbl[(2*nb*ldq)+0]);
+	q2 = _mm_load_pd(&q_dbl[(2*nb*ldq)+2]);
+
+	tmp1 = _mm_mul_pd(h1_imag, x1);
+#ifdef __FMA4__
+	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	tmp2 = _mm_mul_pd(h1_imag, x2);
+#ifdef __FMA4__
+	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#else
+	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
+#endif
+
+	_mm_store_pd(&q_dbl[(2*nb*ldq)+0], q1);
+	_mm_store_pd(&q_dbl[(2*nb*ldq)+2], q2);
+}
+
+extern "C" __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s)
+{
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+	double* s_dbl = (double*)(&s);
+
+	__m128d x1;
+	__m128d y1;
+	__m128d q1;
+	__m128d h1_real, h1_imag, h2_real, h2_imag;
+	__m128d tmp1;
+	int i=0;
+
+	__m128d sign = (__m128d)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+
+	x1 = _mm_load_pd(&q_dbl[(2*ldq)+0]);
+
+	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#ifndef __FMA4__
+	// conjugate
+	h2_imag = _mm_xor_pd(h2_imag, sign);
+#endif
+
+	y1 = _mm_load_pd(&q_dbl[0]);
+
+	tmp1 = _mm_mul_pd(h2_imag, x1);
+#ifdef __FMA4__
+	y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+
+	for (i = 2; i < nb; i++)
+	{
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+
+		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+#ifndef __FMA4__
+		// conjugate
+		h1_imag = _mm_xor_pd(h1_imag, sign);
+#endif
+
+		tmp1 = _mm_mul_pd(h1_imag, q1);
+#ifdef __FMA4__
+		x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+
+		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#ifndef __FMA4__
+		// conjugate
+		h2_imag = _mm_xor_pd(h2_imag, sign);
+#endif
+
+		tmp1 = _mm_mul_pd(h2_imag, q1);
+#ifdef __FMA4__
+		y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+	}
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#ifndef __FMA4__
+	// conjugate
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+#endif
+
+	q1 = _mm_load_pd(&q_dbl[(2*nb*ldq)+0]);
+
+	tmp1 = _mm_mul_pd(h1_imag, q1);
+#ifdef __FMA4__
+	x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+	h1_real = _mm_xor_pd(h1_real, sign);
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+
+	tmp1 = _mm_mul_pd(h1_imag, x1);
+#ifdef __FMA4__
+	x1 = _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#else
+	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#endif
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+	h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+	h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+
+	h1_real = _mm_xor_pd(h1_real, sign);
+	h1_imag = _mm_xor_pd(h1_imag, sign);
+	h2_real = _mm_xor_pd(h2_real, sign);
+	h2_imag = _mm_xor_pd(h2_imag, sign);
+
+	__m128d tmp2 = _mm_loadu_pd(s_dbl);
+	tmp1 = _mm_mul_pd(h2_imag, tmp2);
+#ifdef __FMA4__
+	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#else
+	tmp2 = _mm_addsub_pd( _mm_mul_pd(h2_real, tmp2), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#endif
+	_mm_storeu_pd(s_dbl, tmp2);
+	h2_real = _mm_loaddup_pd(&s_dbl[0]);
+	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+
+	tmp1 = _mm_mul_pd(h1_imag, y1);
+#ifdef __FMA4__
+	y1 = _mm_maddsub_pd(h1_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#else
+	y1 = _mm_addsub_pd( _mm_mul_pd(h1_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
+#endif
+
+	tmp1 = _mm_mul_pd(h2_imag, x1);
+#ifdef __FMA4__
+	y1 = _mm_add_pd(y1, _mm_maddsub_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+
+	q1 = _mm_load_pd(&q_dbl[0]);
+
+	q1 = _mm_add_pd(q1, y1);
+
+	_mm_store_pd(&q_dbl[0], q1);
+
+	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+
+	q1 = _mm_load_pd(&q_dbl[(ldq*2)+0]);
+
+	q1 = _mm_add_pd(q1, x1);
+
+	tmp1 = _mm_mul_pd(h2_imag, y1);
+#ifdef __FMA4__
+	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+
+	_mm_store_pd(&q_dbl[(ldq*2)+0], q1);
+
+	for (i = 2; i < nb; i++)
+	{
+		q1 = _mm_load_pd(&q_dbl[(2*i*ldq)+0]);
+
+		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+
+		tmp1 = _mm_mul_pd(h1_imag, x1);
+#ifdef __FMA4__
+		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+
+		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+
+		tmp1 = _mm_mul_pd(h2_imag, y1);
+#ifdef __FMA4__
+		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+
+		_mm_store_pd(&q_dbl[(2*i*ldq)+0], q1);
+	}
+
+	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+
+	q1 = _mm_load_pd(&q_dbl[(2*nb*ldq)+0]);
+
+	tmp1 = _mm_mul_pd(h1_imag, x1);
+#ifdef __FMA4__
+	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#else
+	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
+#endif
+
+	_mm_store_pd(&q_dbl[(2*nb*ldq)+0], q1);
+}
 #endif
