@@ -3341,6 +3341,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
     a_dim2 = max_blk_size + nbw
 
+!DEC$ ATTRIBUTES ALIGN: 64:: a
     allocate(a(stripe_width,a_dim2,stripe_count,max_threads))
     ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
 
@@ -3830,6 +3831,13 @@ contains
         integer, intent(in) :: off, ncols, istripe, my_thread
         integer j, nl, noff
         real*8 ttt
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        Currently (on Sandy Bridge), single is faster than double
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!       complex*16 w(nbw,2)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        Currently (on Sandy Bridge), single is faster than double
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         ttt = mpi_wtime()
         if(istripe<stripe_count) then
@@ -3839,6 +3847,18 @@ contains
           nl = min(my_thread*thread_width-noff, l_nev-noff)
           if(nl<=0) return
         endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        Currently (on Sandy Bridge), single is faster than double
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        do j = ncols, 2, -2
+!            w(:,1) = bcast_buffer(1:nbw,j+off)
+!            w(:,2) = bcast_buffer(1:nbw,j+off-1)
+!            call double_hh_trafo_complex(a(1,j+off+a_off-1,istripe, my_thread), w, nbw, nl, stripe_width, nbw)
+!        enddo
+!        if(j==1) call single_hh_trafo_complex(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        Currently (on Sandy Bridge), single is faster than double
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         do j = ncols, 1, -1
           call single_hh_trafo_complex(a(1,j+off+a_off,istripe,my_thread),bcast_buffer(1,j+off),nbw,nl,stripe_width)
         enddo

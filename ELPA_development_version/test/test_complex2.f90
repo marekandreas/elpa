@@ -25,7 +25,8 @@ program test_complex2
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   integer :: na = 4000, nev = 1500, nblk = 16
+   integer, parameter :: nblk = 16
+   integer na, nev
 
    !-------------------------------------------------------------------------------
    !  Local Variables
@@ -47,6 +48,21 @@ program test_complex2
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    !-------------------------------------------------------------------------------
+   !  Pharse command line argumnents, if given
+   character*16 arg1
+   character*16 arg2
+
+   na = 4000
+   nev = 1500
+
+   if (iargc() == 2) then
+      call getarg(1, arg1)
+      call getarg(2, arg2)
+      read(arg1, *) na
+      read(arg2, *) nev
+   endif
+
+   !-------------------------------------------------------------------------------
    !  MPI Initialization
 
    call mpi_init(mpierr)
@@ -59,7 +75,7 @@ program test_complex2
    !  We only read on mpi task number myid = 0 to avoid any possible confusion. 
    !  The parameters of interest are subsequently broadcast to all other mpi tasks.
 
-   call read_test_parameters (na,nev,nblk,myid,mpi_comm_world)
+   !call read_test_parameters (na,nev,nblk,myid,mpi_comm_world)
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
