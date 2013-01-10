@@ -11,6 +11,7 @@
 // with their original authors, but shall adhere to the licensing terms
 // distributed along with the original code in the file "COPYING".
 //
+// Author: Alexander Heinecke (alexander.heinecke@mytum.de)
 // --------------------------------------------------------------------------------------------------
 
 #include <x86intrin.h>
@@ -30,12 +31,12 @@ void hh_trafo_kernel_2_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, 
 void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 #endif
 
-void double_hh_trafo_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void hexa_hh_trafo_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #if 0
-void double_hh_trafo_6hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #endif
 
-void double_hh_trafo_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void hexa_hh_trafo_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -205,7 +206,7 @@ void double_hh_trafo_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, 
 }
 
 #if 0
-void double_hh_trafo_6hv_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;

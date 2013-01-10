@@ -4,37 +4,39 @@
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with AVX for Sandy Bridge:
 #
 X86=1
-F90=mpiifort -O3 -traceback -fpe0 -g
-F90OPT=$(F90) -mavx
-#CC=mpiicc -O3
+F90=mpiifort -O3 -traceback -fpe0 -g -mavx
+F90OPT=$(F90)
+#CC=icc -O3
 #CCOPT=$(CC) -mavx
 CC=gcc -O3
 CCOPT=$(CC) -mavx -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize
 MKL_HOME=/opt/intel/mkl/lib/intel64
-LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lstdc++
 #
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with SSE3:
 #
 #X86=1
-#F90=mpiifort -O3 -traceback -fpe0 -g
+#F90=mpiifort -O3 -traceback -fpe0 -g -msse3
 #F90OPT=$(F90) -msse3
 #CC=gcc -O3
 #CCOPT=$(CC) -msse3 -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize
-#CC=icc -O3
-#CCOPT=$(CC) -msse3
+##CC=icc -O3
+##CCOPT=$(CC) -msse3
 #MKL_HOME=/opt/intel/mkl/lib/intel64
-#LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+#LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lstdc++
 #
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) and GCC 4.6 with FMA4 for AMD Bulldozer:
 #
 #X86=1
-#F90=mpiifort -O3 -traceback -fpe0 -g
+#F90=mpiifort -O3 -traceback -fpe0 -g -msse3
 #CC=gcc -O3
 #F90OPT=$(F90) -msse3
 #CCOPT=$(CC) -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize -mfma4 -mxop -march=bdver1 -D__USE_AVX128__
-#LIBS = -L/opt/acml5.0.0/gfortran64_fma4/lib/ -lacml -lgfortran libscalapack.a
+##CCOPT=$(CC) -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize -mfma4 -mxop -march=bdver1
+##LIBS = -L/opt/acml5.0.0/gfortran64_fma4/lib/ -lacml -lgfortran libscalapack.a
+#LIBS = -L/lrz/sys/libraries/acml/5.2.0/ifort64_fma4_mp/lib -lacml_mp -lgfortran libscalapack.a -lsdtc++
 #
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux) old 11.x Toolchain, !!!!!!! do not use !!!!!!:
@@ -95,11 +97,17 @@ test_complex_gen: test_complex_gen.o elpa1.o
 	$(F90) -o $@ test_complex_gen.o elpa1.o $(LIBS)
 
 ifeq ($(X86),1)
-test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
-	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+test_real2: test_real2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
 
-test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
-	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_tum_kernels_complex_sse-avx_1hv.o elpa2_tum_kernels_complex_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+
+#test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+#	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
+#
+#test_complex2: test_complex2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o
+#	$(F90) -o $@ test_complex2.o elpa1.o elpa2.o elpa2_kernels_complex.o elpa2_tum_kernels_real_sse-avx_2hv.o elpa2_tum_kernels_real_sse-avx_4hv.o elpa2_tum_kernels_real_sse-avx_6hv.o $(LIBS)
 else
 test_real2: test_real2.o elpa1.o elpa2.o elpa2_kernels_real.o elpa2_kernels_complex.o
 	$(F90) -o $@ test_real2.o elpa1.o elpa2.o elpa2_kernels_real.o elpa2_kernels_complex.o $(LIBS)
@@ -147,13 +155,22 @@ elpa2_tum_kernels_real_sse-avx_4hv.o: ../src/elpa2_kernels/elpa2_tum_kernels_rea
 	
 elpa2_tum_kernels_real_sse-avx_6hv.o: ../src/elpa2_kernels/elpa2_tum_kernels_real_sse-avx_6hv.c
 	$(CCOPT) -c ../src/elpa2_kernels/elpa2_tum_kernels_real_sse-avx_6hv.c
+	
+elpa2_tum_kernels_complex_sse-avx_1hv.o: ../src/elpa2_kernels/elpa2_tum_kernels_complex_sse-avx_1hv.cpp
+	$(CCOPT) -c ../src/elpa2_kernels/elpa2_tum_kernels_complex_sse-avx_1hv.cpp
+	
+elpa2_tum_kernels_complex_sse-avx_2hv.o: ../src/elpa2_kernels/elpa2_tum_kernels_complex_sse-avx_2hv.cpp
+	$(CCOPT) -c ../src/elpa2_kernels/elpa2_tum_kernels_complex_sse-avx_2hv.cpp
+	
+elpa2_kernels_complex.o: ../src/elpa2_kernels/elpa2_kernels_complex.f90
+	$(F90OPT) -c ../src/elpa2_kernels/elpa2_kernels_complex.f90
 else
 elpa2_kernels_real.o: ../src/elpa2_kernels/elpa2_kernels_real.f90
 	$(F90OPT) -c ../src/elpa2_kernels/elpa2_kernels_real.f90
-endif
-
+	
 elpa2_kernels_complex.o: ../src/elpa2_kernels/elpa2_kernels_complex.f90
 	$(F90OPT) -c ../src/elpa2_kernels/elpa2_kernels_complex.f90
+endif
 
 clean:
 	rm -f *.o *.mod test_real test_complex test_real_gen test_complex_gen test_real2 test_complex2 read_real read_real_gen 
