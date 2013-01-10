@@ -724,7 +724,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
    integer l_cols, l_rows, l_colh, n_cols
    integer istep, lc, ncol, nrow, nb, ns
 
-   real*8, allocatable:: tmp1(:), tmp2(:), hvb(:), hvm(:,:), tmat_complete(:,:), t_tmp(:,:)
+   real*8, allocatable:: tmp1(:), tmp2(:), hvb(:), hvm(:,:), tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
 
    integer pcol, prow, i, cwy_blocking, t_blocking, t_cols, t_rows
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
@@ -752,6 +752,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
    allocate(hvm(max_local_rows,cwy_blocking))
    allocate(tmat_complete(cwy_blocking,cwy_blocking))
    allocate(t_tmp(cwy_blocking,nbw))
+   allocate(t_tmp2(cwy_blocking,nbw))
 
    hvm = 0   ! Must be set to 0 !!!
    hvb = 0   ! Safety only
@@ -808,10 +809,10 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
          tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
          if(i > 1) then
             call dgemm('T', 'N', t_rows, t_cols, l_rows, 1.d0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), max_local_rows, 0.d0, t_tmp, cwy_blocking)
-            call mpi_allreduce(MPI_IN_PLACE,t_tmp,cwy_blocking*nbw,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-            call dtrmm('L','U','N','N',t_rows,t_cols,1.0d0,tmat_complete,cwy_blocking,t_tmp,cwy_blocking)
-            call dtrmm('R','U','N','N',t_rows,t_cols,-1.0d0,tmat_complete(t_rows+1,t_rows+1),cwy_blocking,t_tmp,cwy_blocking)
-            tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
+            call mpi_allreduce(t_tmp,t_tmp2,cwy_blocking*nbw,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+            call dtrmm('L','U','N','N',t_rows,t_cols,1.0d0,tmat_complete,cwy_blocking,t_tmp2,cwy_blocking)
+            call dtrmm('R','U','N','N',t_rows,t_cols,-1.0d0,tmat_complete(t_rows+1,t_rows+1),cwy_blocking,t_tmp2,cwy_blocking)
+            tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
          endif
       enddo
 
