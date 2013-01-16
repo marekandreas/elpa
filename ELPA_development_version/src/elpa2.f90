@@ -831,7 +831,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 
    enddo
 
-   deallocate(tmp1, tmp2, hvb, hvm)
+   deallocate(tmp1, tmp2, hvb, hvm, tmat_complete, t_tmp, t_tmp2)
 
 
 end subroutine trans_ev_band_to_full_real
