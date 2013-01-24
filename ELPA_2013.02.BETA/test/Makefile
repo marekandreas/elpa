@@ -24,7 +24,7 @@ LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_l
 ##CC=icc -O3
 ##CCOPT=$(CC) -msse3
 #MKL_HOME=/opt/intel/mkl/lib/intel64
-#LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lstdc++
+#LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
 #
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) and GCC 4.6 with FMA4 for AMD Bulldozer:
@@ -34,9 +34,9 @@ LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_l
 #CC=gcc -O3
 #F90OPT=$(F90) -msse3
 #CCOPT=$(CC) -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize -mfma4 -mxop -march=bdver1 -D__USE_AVX128__
-##CCOPT=$(CC) -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize -mfma4 -mxop -march=bdver1
-##LIBS = -L/opt/acml5.0.0/gfortran64_fma4/lib/ -lacml -lgfortran libscalapack.a
-#LIBS = -L/lrz/sys/libraries/acml/5.2.0/ifort64_fma4_mp/lib -lacml_mp -lgfortran libscalapack.a -lsdtc++
+#CCOPT=$(CC) -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize -mfma4 -mxop -march=bdver1
+#LIBS = -L/opt/acml5.0.0/gfortran64_fma4/lib/ -lacml -lgfortran libscalapack.a
+#LIBS = -L/lrz/sys/libraries/acml/5.2.0/ifort64_fma4_mp/lib -lacml_mp -lgfortran libscalapack.a
 #
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux) old 11.x Toolchain, !!!!!!! do not use !!!!!!:
