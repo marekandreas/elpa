@@ -2,7 +2,7 @@
 # Please set the variables below according to your system!
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with AVX for Sandy Bridge:
-#
+##
 X86=1
 F90=mpiifort -O3 -traceback -fpe0 -g -mavx
 F90OPT=$(F90)
@@ -10,8 +10,7 @@ F90OPT=$(F90)
 #CCOPT=$(CC) -mavx
 CC=gcc -O3
 CCOPT=$(CC) -mavx -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize
-MKL_HOME=/opt/intel/mkl/lib/intel64
-LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lstdc++
+LIBS = -mkl=sequential -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lstdc++
 #
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) with SSE3:
@@ -23,8 +22,7 @@ LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_l
 #CCOPT=$(CC) -msse3 -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize
 ##CC=icc -O3
 ##CCOPT=$(CC) -msse3
-#MKL_HOME=/opt/intel/mkl/lib/intel64
-#LIBS = -mkl=sequential -L$(MKL_HOME) -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+#LIBS = -mkl=sequential -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
 #
 # ------------------------------------------------------------------------------
 # Settings for Intel Fortran (Linux), Intel Composer XE 2011 (ifort 12.1) and GCC 4.6 with FMA4 for AMD Bulldozer:
