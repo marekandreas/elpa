@@ -2,7 +2,7 @@ Welcome to the ELPA library git repository.
 
 
 This central repository houses all versions of the ELPA library. At
-the time of this writing (11/30/2011), the ELPA developers provide two
+the time of this writing (01/31/2013), the ELPA developers provide three
 separate versions, each as a separate subdirectory available here:
 
 - ELPA_2011.12
@@ -16,6 +16,16 @@ separate versions, each as a separate subdirectory available here:
   unambiguous bug-fixes to be made. Each bugfix must be documented in
   the README file. (At the time of this writing, no known bugs exist.)
 
+- ELPA_2013.02.BETA
+
+  This is a quasi stable version of the enire ELPA library including all
+  necessary files to build it.
+
+  It enhances ELPA_2011.12 by intrinsic kernels for Intel Westmere, 
+  Intel Sandy Bridge, Intel Haswell (through complier -fma flag),
+  AMD Interlagos.
+
+  This version passed serveral extensive tests.  
 
 - ELPA_development_version
 
