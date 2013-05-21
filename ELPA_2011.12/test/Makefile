@@ -1,3 +1,75 @@
+#    This file is part of ELPA.
+#
+#    The ELPA library was originally created by the ELPA consortium, 
+#    consisting of the following organizations:
+#
+#    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), 
+#    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+#      Informatik,
+#    - Technische Universität München, Lehrstuhl für Informatik mit
+#      Schwerpunkt Wissenschaftliches Rechnen , 
+#    - Fritz-Haber-Institut, Berlin, Abt. Theorie, 
+#    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn, 
+#      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition, 
+#      and  
+#    - IBM Deutschland GmbH
+#
+#
+#    More information can be found here:
+#    http://elpa.rzg.mpg.de/
+#
+#    ELPA is free software: you can redistribute it and/or modify
+#    it under the terms of the version 3 of the license of the 
+#    GNU Lesser General Public License as published by the Free 
+#    Software Foundation.
+#
+#    ELPA is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public License
+#    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+#
+#    ELPA reflects a substantial effort on the part of the original
+#    ELPA consortium, and we ask you to respect the spirit of the
+#    license that we chose: i.e., please contribute any changes you
+#    may have back to the original ELPA library distribution, and keep
+#    any derivatives of ELPA under the same license that we chose for
+#    the original distribution, the GNU Lesser General Public License.
+#
+#
+#    This file is part of ELPA.
+#
+#    ELPA is free software: you can redistribute it and/or modify
+#    it under the terms of the license defined by the ELPA consortium.
+#    This licence is _ALMOST_ identical to the GNU Lesser General Public 
+#    License as published by the Free Software Foundation version 3 of the 
+#    License.
+#
+#    IN ADDITION to the Lesser General Public License version 3, our own 
+#    license prescribes two important modifications / clarifications to 
+#    the original Lesser General Public License:
+#
+#  - In point 2., clause b) - stating that that you may redistribute
+#    under the terms of the plain GNU GPL - shall NOT apply. In other
+#    words, if you redistribute, you MUST keep the additional permissions
+#    of the Lesser General Public License version 3 in place.
+#
+#  - If you redistribute, you must redistribute under the terms of the
+#    Lesser General Public License version specified here. Using later or
+#    earlier version published by anyone except the ELPA copyright holders is
+#    not allowed. 
+#
+#    ELPA is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public License
+#    along with ELPA.  If not, see <http://www.gnu.org/licenses/>.
+
+
 # ------------------------------------------------------------------------------
 # Please set the variables below according to your system!
 # ------------------------------------------------------------------------------
