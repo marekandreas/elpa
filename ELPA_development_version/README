@@ -35,22 +35,12 @@ well.
 
 Copyright of the original code rests with the authors inside the ELPA
 consortium. The code is distributed under the terms of the GNU Lesser General 
-Public License version 3 (LGPL), with two important changes compared
-to the original version: 
-
-- In point 2., clause b) - stating that that you may redistribute
-  under the terms of the plain GNU GPL - shall not apply. In other
-  words, if you redistribute, you must keep the additional permissions
-  of the LGPL v3 in place.
-
-- If you redistribute, you must redistribute under the terms of the
-  LGPL v3. Using later or earlier versions published by anyone except
-  the original and future ELPA authors is not allowed.
+Public License version 3 (LGPL).
 
 Please also note the express "NO WARRANTY" disclaimers in the GPL.
 
-Please see the file "COPYING" for details, which specifies these
-restrictions. 
+Please see the file "COPYING" for details, and the files "gpl.txt" and
+"lgpl.txt" for further information.
 
 
 *** Using ELPA: 
