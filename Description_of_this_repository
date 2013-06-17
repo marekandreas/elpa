@@ -44,3 +44,8 @@ consider the development version absolutely stable. At the time of the
 "branching", the new stable version should be an exact copy of the
 development one.
 
+in addition to the directories with the sources for the aforementioned
+versions of ELPA there exist a directory "tar-archives", which contains
+tar-balls with current snapshots of the different versions
+
+
