@@ -11,6 +11,9 @@ AC_MSG_RESULT([$_fdep_gnu_make_command])
 if test x$_fdep_gnu_make_command = x ; then
 	AC_MSG_ERROR([Need GNU Make])
 fi
-AC_SUBST([FORTRAN_MAKEFILE], ["include ${srcdir}/fdep/fortran_dependencies.mk"])
-AM_SUBST_NOTMAKE([FORTRAN_MAKEFILE])
+AC_SUBST([FORTRAN_MODULE_DEPS], ["
+CLEANFILES +=
+include ${srcdir}/fdep/fortran_dependencies.mk
+"])
+AM_SUBST_NOTMAKE([FORTRAN_MODULE_DEPS])
 ])

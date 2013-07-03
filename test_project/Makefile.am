@@ -17,5 +17,4 @@ test_baz_SOURCES = src2/baz.F90 src/bar.F90
 test_baz_CPPFLAGS = -DPROGRAM_test_baz
 test_baz_FCFLAGS = $(FC_MODOUT)$(_f90_moddir)/test_baz $(FC_MODINC)$(_f90_moddir)/test_baz
 
-CLEANFILES=
-@FORTRAN_MAKEFILE@
+@FORTRAN_MODULE_DEPS@
