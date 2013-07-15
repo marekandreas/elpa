@@ -87,6 +87,7 @@ program test_complex2
 
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
+   integer :: STATUS
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
@@ -94,6 +95,7 @@ program test_complex2
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
+   STATUS = 0
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible
@@ -235,6 +237,10 @@ program test_complex2
    if(myid==0) print *
    if(myid==0) print *,'Error Residual     :',errmax
 
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
+
    ! 2. Eigenvector orthogonality
 
    ! tmp1 = Z**T * Z
@@ -253,13 +259,17 @@ program test_complex2
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
 
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
+
    deallocate(z)
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
 
    call mpi_finalize(mpierr)
-
+   call EXIT(STATUS)
 end
 
 !-------------------------------------------------------------------------------

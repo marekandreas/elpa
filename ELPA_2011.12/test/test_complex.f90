@@ -85,6 +85,7 @@ program test_complex
    complex*16, parameter :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
+   integer :: STATUS
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
@@ -98,6 +99,8 @@ program test_complex
    ! We try to set up the grid square-like, i.e. start the search for possible
    ! divisors of nprocs with a number next to the square root of nprocs
    ! and decrement it until a divisor is found.
+
+   STATUS = 0
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
@@ -261,6 +264,11 @@ program test_complex
    if(myid==0) print *
    if(myid==0) print *,'Error Residual     :',errmax
 
+
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
+
    ! 2. Eigenvector orthogonality
 
    ! tmp1 = Z**T * Z
@@ -278,14 +286,17 @@ program test_complex
    err = maxval(abs(tmp1))
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
-
+   
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
    deallocate(z)
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
 
    call mpi_finalize(mpierr)
-
+   call EXIT(STATUS)
 end
 
 !-------------------------------------------------------------------------------

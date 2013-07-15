@@ -84,12 +84,16 @@ program test_real2
 
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
+   integer :: STATUS
+
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
    call mpi_init(mpierr)
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
+
+   STATUS = 0
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -250,11 +254,17 @@ program test_real2
       errmax = max(errmax, err)
    enddo
 
+
    ! Get maximum error norm over all processors
    err = errmax
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *
    if(myid==0) print *,'Error Residual     :',errmax
+
+
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
 
    ! 2. Eigenvector orthogonality
 
@@ -273,6 +283,10 @@ program test_real2
    err = maxval(abs(tmp1))
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
+   
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
 
    deallocate(z)
    deallocate(tmp1)
@@ -280,7 +294,7 @@ program test_real2
    deallocate(ev)
 
    call mpi_finalize(mpierr)
-
+   call EXIT(STATUS)
 end
 
 !-------------------------------------------------------------------------------
