@@ -3,6 +3,6 @@ At the moment these tar-balls are only available via the ELPA git repository,
 but this might change in the future. Since the tar-balls represent a snapshot
 of the ELPA git repository the naming is the following:
 
-ELPA_VERSION_day_month_year_of_tarball_creation.tar.gz
+ELPA_VERSION_year_month_day_of_tarball_creation.tar.gz
 
 
