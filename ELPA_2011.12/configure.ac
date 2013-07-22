@@ -36,7 +36,7 @@ AC_FC_MODULE_OUTPUT_FLAG
 dnl check different elpa
 AC_MSG_CHECKING([whether the BG/P kernel was specified])
   AC_ARG_WITH([BGP-kernel],
-   [AS_HELP_STRING([--with-BGP-kernek],
+   [AS_HELP_STRING([--with-BGP-kernel],
      [use kernel tuned for Bluegene/P])],
     [with_bgp_kernel=yes],[with_bgp_kernel=no])
 AM_CONDITIONAL([WITH_BGP],[test x"$with_bgp_kernel" = x"yes"])
