@@ -1,0 +1,18 @@
+module load cuda/5.0/toolkit 
+module load intel/mkl/13.0compiler 
+module load pgi/12.10 
+#module load mpi/pgi/12.10/mvapich2/1.9b-cuda5.0
+
+export MPI_HOME=/home-2/atrandafir/local/mvapich2-1.9rc1-pgi-cuda-5.0
+export VT_HOME=/home-2/atrandafir/local/vampir-trace-5.14.3-pgi-12.10-cuda-5.0
+export LD_LIBRARY_PATH=$MPI_HOME/lib:$CUDA_PATH/extras/CUPTI/lib64:$VT_HOME/lib:$LD_LIBRARY_PATH
+export PATH=$PATH:$MPI_HOME/bin:$VT_HOME/bin
+export VT_GPUTRACE=cupti,kernel,concurrent,memcpy,driver,idle,memusage
+export VT_PFORM_GDIR=./traces
+
+export CUDA_PROFILE=0
+export CUDA_PROFILE_CSV=1
+export CUDA_PROFILE_CONFIG=profile.cfg
+export CUDA_PROFILE_LOG="csvprofiling/cuda_profile_%p.csv"
+
+

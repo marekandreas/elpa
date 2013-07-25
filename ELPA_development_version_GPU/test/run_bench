@@ -1,0 +1,13 @@
+
+echo "running failures only"
+#echo "Single node run"
+#aprun -n 1 -N 1 ./test_real2
+#aprun -n 2 -N 1 ./test_real2
+#aprun -n 4 -N 1 ./test_real2
+#aprun -n 8 -N 1 ./test_real2
+
+#aprun -n 1 -N 1 ./test_real2
+#aprun -n 2 -N 2 ./test_real2
+aprun -n 4 -N 4 ./test_real2
+aprun -n 8 -N 8 ./test_real2
+
