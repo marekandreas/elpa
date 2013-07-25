@@ -5,7 +5,7 @@ ELPA is shipped with a typical "configure" and "make" procedure. It is
 recommended to use this way to install ELPA. If you do not want to install
 ELPA as library, but to include it in your source code, you can find a 
 "Makefile.example" in ./test, to see how this is done. Please distibute then 
-all nfiles of ELPA with your code.
+all files of ELPA with your code.
 
 
 The configure installation is best done in four steps
