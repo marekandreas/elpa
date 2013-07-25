@@ -53,11 +53,12 @@
 // distributed along with the original code in the file "COPYING".
 //
 // Author: Alexander Heinecke (alexander.heinecke@mytum.de)
+// Adapted for building a shared-library by Andreas Marek, RZG (andreas.marek@rzg.mpg.de)
 // --------------------------------------------------------------------------------------------------
 
 #include <x86intrin.h>
 
-#define __forceinline __attribute__((always_inline))
+#define __forceinline __attribute__((always_inline)) static
 
 #ifdef __USE_AVX128__
 #undef __AVX__
@@ -65,11 +66,11 @@
 
 //Forward declaration
 #ifdef __AVX__
-void hh_trafo_kernel_4_AVX_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
-void hh_trafo_kernel_8_AVX_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
+static void hh_trafo_kernel_4_AVX_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
+static void hh_trafo_kernel_8_AVX_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 #else
-void hh_trafo_kernel_2_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
-void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
+static void hh_trafo_kernel_2_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
+static void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 #endif
 
 void hexa_hh_trafo_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);

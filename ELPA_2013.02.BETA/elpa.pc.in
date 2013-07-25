@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: @PACKAGE_NAME@
+Description: ELPA is a Fortran-based high-performance computational library for the (massively) parallel solution of symmetric or Hermitian, standard or generalized eigenvalue problems.
+Version: @PACKAGE_VERSION@
+URL: @PACKAGE_URL@
+Libs: -L${libdir} -lelpa-@ELPA_LIB_VERSION@
+Cflags: -I${includedir}/elpa-@ELPA_LIB_VERSION@
+fcflags= -I${includedir}/elpa-@ELPA_LIB_VERSION@/modules

@@ -53,11 +53,12 @@
 // distributed along with the original code in the file "COPYING".
 //
 // Author: Alexander Heinecke (alexander.heinecke@mytum.de)
+// Adapted for building a shared-library by Andreas Marek, RZG (andreas.marek@rzg.mpg.de)
 // --------------------------------------------------------------------------------------------------
 
 #include <x86intrin.h>
 
-#define __forceinline __attribute__((always_inline))
+#define __forceinline __attribute__((always_inline)) static
 
 #ifdef __USE_AVX128__
 #undef __AVX__

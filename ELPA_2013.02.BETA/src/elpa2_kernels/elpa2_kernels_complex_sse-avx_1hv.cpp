@@ -53,6 +53,7 @@
 // distributed along with the original code in the file "COPYING".
 //
 // Author: Alexander Heinecke (alexander.heinecke@mytum.de)
+// Adapted for building a shared-library by Andreas Marek, RZG (andreas.marek@rzg.mpg.de)
 // --------------------------------------------------------------------------------------------------
 
 #include <complex>
@@ -64,19 +65,23 @@
 #undef __AVX__
 #endif
 
+
+extern "C" {
+
 //Forward declaration
 #ifdef __AVX__
-extern "C" __forceinline void hh_trafo_complex_kernel_12_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
-extern "C" __forceinline void hh_trafo_complex_kernel_8_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
-extern "C" __forceinline void hh_trafo_complex_kernel_4_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_12_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_8_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_4_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
+
 #else
-extern "C" __forceinline void hh_trafo_complex_kernel_6_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
-extern "C" __forceinline void hh_trafo_complex_kernel_4_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
-extern "C" __forceinline void hh_trafo_complex_kernel_2_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_6_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_4_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_2_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
 #endif
 
 #if 0
-extern "C" __forceinline void hh_trafo_complex_kernel_4_C_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_4_C_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
 	std::complex<double> x0;
 	std::complex<double> x1;
@@ -123,9 +128,9 @@ extern "C" __forceinline void hh_trafo_complex_kernel_4_C_1hv(std::complex<doubl
 		q[(i*ldq)+3] += (x3*h0);
 	}
 }
-#endif
+#endif // if 0
 
-extern "C" void single_hh_trafo_complex_(std::complex<double>* q, std::complex<double>* hh, int* pnb, int* pnq, int* pldq)
+void single_hh_trafo_complex_(std::complex<double>* q, std::complex<double>* hh, int* pnb, int* pnq, int* pldq)
 {
 	int i;
 	int nb = *pnb;
@@ -163,7 +168,7 @@ extern "C" void single_hh_trafo_complex_(std::complex<double>* q, std::complex<d
 }
 
 #ifdef __AVX__
-extern "C" __forceinline void hh_trafo_complex_kernel_12_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+ static __forceinline void hh_trafo_complex_kernel_12_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -358,7 +363,7 @@ extern "C" __forceinline void hh_trafo_complex_kernel_12_AVX_1hv(std::complex<do
 	}
 }
 
-extern "C" __forceinline void hh_trafo_complex_kernel_8_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_8_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -503,7 +508,7 @@ extern "C" __forceinline void hh_trafo_complex_kernel_8_AVX_1hv(std::complex<dou
 	}
 }
 
-extern "C" __forceinline void hh_trafo_complex_kernel_4_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_4_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -597,8 +602,9 @@ extern "C" __forceinline void hh_trafo_complex_kernel_4_AVX_1hv(std::complex<dou
 		_mm256_store_pd(&q_dbl[(2*i*ldq)+4], q2);
 	}
 }
+
 #else
-extern "C" __forceinline void hh_trafo_complex_kernel_6_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_6_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -793,7 +799,7 @@ extern "C" __forceinline void hh_trafo_complex_kernel_6_SSE_1hv(std::complex<dou
 	}
 }
 
-extern "C" __forceinline void hh_trafo_complex_kernel_4_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_4_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -938,7 +944,7 @@ extern "C" __forceinline void hh_trafo_complex_kernel_4_SSE_1hv(std::complex<dou
 	}
 }
 
-extern "C" __forceinline void hh_trafo_complex_kernel_2_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_2_SSE_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -1033,3 +1039,4 @@ extern "C" __forceinline void hh_trafo_complex_kernel_2_SSE_1hv(std::complex<dou
 	}
 }
 #endif
+} // extern C

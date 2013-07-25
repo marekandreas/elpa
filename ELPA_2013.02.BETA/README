@@ -69,9 +69,11 @@ with OpenMPI 1.4.3 for example). Intel MPI seems to be a very well
 performing option on Intel platforms.
 
 Examples of how to use ELPA are included in the accompanying
-test_*.f90 subroutines in the "test" directory. A Makefile in also
-included as a minimal example of how to build and link ELPA to any
-other piece of code. 
+test_*.f90 subroutines in the "test" directory. An example makefile 
+"Makefile.example" is also included as a minimal example of how to 
+build and link ELPA to any other piece of code. In general, however,
+we suggest to use the build environment in order to install ELPA
+as library to your system. 
 
 
 *** Structure of this repository:
