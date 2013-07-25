@@ -18,7 +18,7 @@ The configure installation is best done in four steps
    Intel's MKL
 
    Please set the optimisation that you would like with the
-   variable "OPT_FCFLGS", e.g. OPT_FCFLAGS="-O3 -xAVX"
+   variable "OPT_FCFLAGS", e.g. OPT_FCFLAGS="-O3 -xAVX"
 
    Check the available options with "configure --help". 
    If available you can e.g. choose especially optimized elpa kernels
