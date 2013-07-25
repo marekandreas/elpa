@@ -67,7 +67,7 @@ program test_real2
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   integer, parameter :: nblk = 16
+   integer :: nblk
    integer na, nev
 
    !-------------------------------------------------------------------------------
@@ -84,20 +84,25 @@ program test_real2
    real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
+   integer :: STATUS
 
    !-------------------------------------------------------------------------------
-   !  Pharse command line argumnents, if given
+   !  Parse command line argumnents, if given
    character*16 arg1
    character*16 arg2
+   character*16 arg3
 
+   nblk = 16
    na = 4000
    nev = 1500
 
-   if (iargc() == 2) then
+   if (iargc() == 3) then
       call getarg(1, arg1)
       call getarg(2, arg2)
+      call getarg(3, arg3)
       read(arg1, *) na
       read(arg2, *) nev
+      read(arg3, *) nblk
    endif
 
    !-------------------------------------------------------------------------------
@@ -107,6 +112,7 @@ program test_real2
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
+   STATUS = 0
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible
@@ -272,6 +278,10 @@ program test_real2
    if(myid==0) print *
    if(myid==0) print *,'Error Residual     :',errmax
 
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
+
    ! 2. Eigenvector orthogonality
 
    ! tmp1 = Z**T * Z
@@ -289,6 +299,10 @@ program test_real2
    err = maxval(abs(tmp1))
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
+   
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
 
    deallocate(z)
    deallocate(tmp1)
@@ -296,7 +310,7 @@ program test_real2
    deallocate(ev)
 
    call mpi_finalize(mpierr)
-
+   call EXIT(STATUS)
 end
 
 !-------------------------------------------------------------------------------

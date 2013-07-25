@@ -65,8 +65,9 @@ program test_real
    ! nev:  Number of eigenvectors to be calculated
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
-
-   integer, parameter :: na = 4000, nev = 1500, nblk = 16
+   integer :: nblk
+   integer na, nev
+  
 
    !-------------------------------------------------------------------------------
    !  Local Variables
@@ -83,6 +84,27 @@ program test_real
 
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
+
+   integer :: STATUS
+   !-------------------------------------------------------------------------------
+   !  Parse command line argumnents, if given
+   character*16 arg1
+   character*16 arg2
+   character*16 arg3
+
+   nblk = 16
+   na = 4000
+   nev = 1500
+
+   if (iargc() == 3) then
+      call getarg(1, arg1)
+      call getarg(2, arg2)
+      call getarg(3, arg3)
+      read(arg1, *) na
+      read(arg2, *) nev
+      read(arg3, *) nblk
+   endif
+
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
@@ -95,6 +117,9 @@ program test_real
    ! We try to set up the grid square-like, i.e. start the search for possible
    ! divisors of nprocs with a number next to the square root of nprocs
    ! and decrement it until a divisor is found.
+
+
+   STATUS = 0
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
@@ -252,6 +277,12 @@ program test_real
    if(myid==0) print *
    if(myid==0) print *,'Error Residual     :',errmax
 
+
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
+
+
    ! 2. Eigenvector orthogonality
 
    ! tmp1 = Z**T * Z
@@ -270,12 +301,19 @@ program test_real
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
    
+   if (errmax .gt. 5e-12) then
+      status = 1
+   endif
+
    deallocate(z)
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
 
    call mpi_finalize(mpierr)
+
+   call EXIT(STATUS)
+
 
 end
 
