@@ -35,6 +35,18 @@ separate versions, each as a separate subdirectory available here:
   stable, please refer to ELPA_2011.12 at this time. 
 
 
+- ELPA_development_version_GPU
+
+  This is the development version of the ELPA library with GPU support. 
+  Any useful new changes should be made here, and a number of changes will 
+  be made in the near future. If you want the version presently "branded" as
+  stable, please refer to ELPA_2011.12 at this time. 
+
+- tar-archives
+
+  Snappshots of the various versions from above in a tar-ball.
+
+
 ELPA Version numbering scheme:
 
 We have decided to use the format "ELPA_year.month" to designate
