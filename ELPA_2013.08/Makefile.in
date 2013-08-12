@@ -86,8 +86,9 @@ subdir = .
 DIST_COMMON = README $(am__configure_deps) \
 	$(nobase_elpa_include_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(srcdir)/elpa.pc.in $(top_srcdir)/configure ar-lib compile \
-	config.guess config.sub depcomp install-sh ltmain.sh missing
+	$(srcdir)/elpa.pc.in $(top_srcdir)/configure INSTALL ar-lib \
+	compile config.guess config.sub depcomp install-sh ltmain.sh \
+	missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -99,7 +100,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = elpa-${ELPA_LIB_VERSION}.pc
+CONFIG_CLEAN_FILES = elpa.pc
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -132,9 +133,8 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(noinst_bindir)" \
 	"$(DESTDIR)$(filesdir)" "$(DESTDIR)$(pkgconfigdir)" \
 	"$(DESTDIR)$(elpa_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libelpa_@ELPA_LIB_VERSION@_la_LIBADD =
-am__libelpa_@ELPA_LIB_VERSION@_la_SOURCES_DIST = src/elpa1.f90 \
-	src/elpa2.F90 \
+libelpa_la_LIBADD =
+am__libelpa_la_SOURCES_DIST = src/elpa1.f90 src/elpa2.F90 \
 	src/elpa2_kernels/elpa2_kernels_complex_simple.f90 \
 	src/elpa2_kernels/elpa2_kernels_real_simple.f90 \
 	src/elpa2_kernels/elpa2_kernels_complex.f90 \
@@ -171,30 +171,28 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @WITH_AVX_REAL_BLOCK2_TRUE@am__objects_10 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
 @WITH_AVX_REAL_BLOCK4_TRUE@am__objects_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo
 @WITH_AVX_REAL_BLOCK6_TRUE@am__objects_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo
-am_libelpa_@ELPA_LIB_VERSION@_la_OBJECTS = src/elpa1.lo src/elpa2.lo \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
-	$(am__objects_10) $(am__objects_11) $(am__objects_12)
-libelpa_@ELPA_LIB_VERSION@_la_OBJECTS =  \
-	$(am_libelpa_@ELPA_LIB_VERSION@_la_OBJECTS)
-libelpa_@ELPA_LIB_VERSION@_la_LINK = $(LIBTOOL) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(libelpa_@ELPA_LIB_VERSION@_la_LDFLAGS) $(LDFLAGS) -o $@
+am_libelpa_la_OBJECTS = src/elpa1.lo src/elpa2.lo $(am__objects_1) \
+	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
+	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
+	$(am__objects_11) $(am__objects_12)
+libelpa_la_OBJECTS = $(am_libelpa_la_OBJECTS)
+libelpa_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libelpa_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(noinst_bin_PROGRAMS)
 am_test_complex_OBJECTS = test/test_complex.$(OBJEXT)
 test_complex_OBJECTS = $(am_test_complex_OBJECTS)
-test_complex_DEPENDENCIES = libelpa-@ELPA_LIB_VERSION@.la
+test_complex_DEPENDENCIES = libelpa.la
 am_test_complex2_OBJECTS = test/test_complex2.$(OBJEXT)
 test_complex2_OBJECTS = $(am_test_complex2_OBJECTS)
-test_complex2_DEPENDENCIES = libelpa-@ELPA_LIB_VERSION@.la
+test_complex2_DEPENDENCIES = libelpa.la
 am_test_real_OBJECTS = test/test_real.$(OBJEXT)
 test_real_OBJECTS = $(am_test_real_OBJECTS)
-test_real_DEPENDENCIES = libelpa-@ELPA_LIB_VERSION@.la
+test_real_DEPENDENCIES = libelpa.la
 am_test_real2_OBJECTS = test/test_real2.$(OBJEXT)
 test_real2_OBJECTS = $(am_test_real2_OBJECTS)
-test_real2_DEPENDENCIES = libelpa-@ELPA_LIB_VERSION@.la
+test_real2_DEPENDENCIES = libelpa.la
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -232,12 +230,12 @@ LTFCCOMPILE = $(LIBTOOL) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 CCASCOMPILE = $(CCAS) $(AM_CCASFLAGS) $(CCASFLAGS)
 LTCCASCOMPILE = $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=compile $(CCAS) $(AM_CCASFLAGS) $(CCASFLAGS)
-SOURCES = $(libelpa_@ELPA_LIB_VERSION@_la_SOURCES) \
-	$(test_complex_SOURCES) $(test_complex2_SOURCES) \
-	$(test_real_SOURCES) $(test_real2_SOURCES)
-DIST_SOURCES = $(am__libelpa_@ELPA_LIB_VERSION@_la_SOURCES_DIST) \
-	$(test_complex_SOURCES) $(test_complex2_SOURCES) \
-	$(test_real_SOURCES) $(test_real2_SOURCES)
+SOURCES = $(libelpa_la_SOURCES) $(test_complex_SOURCES) \
+	$(test_complex2_SOURCES) $(test_real_SOURCES) \
+	$(test_real2_SOURCES)
+DIST_SOURCES = $(am__libelpa_la_SOURCES_DIST) $(test_complex_SOURCES) \
+	$(test_complex2_SOURCES) $(test_real_SOURCES) \
+	$(test_real2_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -409,19 +407,19 @@ with_amd_bulldozer_kernel = @with_amd_bulldozer_kernel@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 # libelpa
-lib_LTLIBRARIES = libelpa-@ELPA_LIB_VERSION@.la
+lib_LTLIBRARIES = libelpa.la
 
 #config_f90.h: ./config.h
 #	grep "^#define" ./config.h > $@
-libelpa_@ELPA_LIB_VERSION@_la_SOURCES = src/elpa1.f90 src/elpa2.F90 \
-	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9) \
-	$(am__append_10) $(am__append_11) $(am__append_12)
-libelpa_@ELPA_LIB_VERSION@_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
+libelpa_la_SOURCES = src/elpa1.f90 src/elpa2.F90 $(am__append_1) \
+	$(am__append_2) $(am__append_3) $(am__append_4) \
+	$(am__append_5) $(am__append_6) $(am__append_7) \
+	$(am__append_8) $(am__append_9) $(am__append_10) \
+	$(am__append_11) $(am__append_12)
+libelpa_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
 
 # install any .mod files in the include/ dir
-elpa_includedir = $(includedir)/elpa-$(ELPA_LIB_VERSION)
+elpa_includedir = $(includedir)/elpa
 nobase_elpa_include_HEADERS = $(wildcard modules/*)
 
 # other files to distribute
@@ -439,18 +437,18 @@ files_DATA = \
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = elpa-$(ELPA_LIB_VERSION).pc
+pkgconfig_DATA = elpa.pc
 
 # test programs
 noinst_bindir = $(abs_top_builddir)
 test_real_SOURCES = test/test_real.f90
-test_real_LDADD = libelpa-@ELPA_LIB_VERSION@.la 
+test_real_LDADD = libelpa.la 
 test_real2_SOURCES = test/test_real2.f90
-test_real2_LDADD = libelpa-@ELPA_LIB_VERSION@.la 
+test_real2_LDADD = libelpa.la 
 test_complex_SOURCES = test/test_complex.f90
-test_complex_LDADD = libelpa-@ELPA_LIB_VERSION@.la
+test_complex_LDADD = libelpa.la
 test_complex2_SOURCES = test/test_complex2.f90
-test_complex2_LDADD = libelpa-@ELPA_LIB_VERSION@.la
+test_complex2_LDADD = libelpa.la
 check_SCRIPTS = test_real.sh test_real2.sh test_complex.sh test_complex2.sh   
 TESTS = $(check_SCRIPTS)
 CLEANFILES = test_real.sh test_real2.sh test_complex.sh test_complex2.sh
@@ -508,7 +506,7 @@ $(srcdir)/config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-elpa-${ELPA_LIB_VERSION}.pc: $(top_builddir)/config.status $(srcdir)/elpa.pc.in
+elpa.pc: $(top_builddir)/config.status $(srcdir)/elpa.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
@@ -594,8 +592,8 @@ src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo:  \
 src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo:  \
 	src/elpa2_kernels/$(am__dirstamp) \
 	src/elpa2_kernels/$(DEPDIR)/$(am__dirstamp)
-libelpa-@ELPA_LIB_VERSION@.la: $(libelpa_@ELPA_LIB_VERSION@_la_OBJECTS) $(libelpa_@ELPA_LIB_VERSION@_la_DEPENDENCIES) $(EXTRA_libelpa_@ELPA_LIB_VERSION@_la_DEPENDENCIES) 
-	$(libelpa_@ELPA_LIB_VERSION@_la_LINK) -rpath $(libdir) $(libelpa_@ELPA_LIB_VERSION@_la_OBJECTS) $(libelpa_@ELPA_LIB_VERSION@_la_LIBADD) $(LIBS)
+libelpa.la: $(libelpa_la_OBJECTS) $(libelpa_la_DEPENDENCIES) $(EXTRA_libelpa_la_DEPENDENCIES) 
+	$(libelpa_la_LINK) -rpath $(libdir) $(libelpa_la_OBJECTS) $(libelpa_la_LIBADD) $(LIBS)
 install-noinst_binPROGRAMS: $(noinst_bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(noinst_bin_PROGRAMS)'; test -n "$(noinst_bindir)" || list=; \

@@ -74,7 +74,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = elpa-${ELPA_LIB_VERSION}.pc
+CONFIG_CLEAN_FILES = elpa.pc
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -107,33 +107,31 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(noinst_bindir)" \
 	"$(DESTDIR)$(filesdir)" "$(DESTDIR)$(pkgconfigdir)" \
 	"$(DESTDIR)$(elpa_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libelpa_@ELPA_LIB_VERSION@_la_LIBADD =
-am__libelpa_@ELPA_LIB_VERSION@_la_SOURCES_DIST = src/elpa1.f90 \
-	src/elpa2.f90 src/elpa2_kernels_bg.f90 src/elpa2_kernels.f90
+libelpa_la_LIBADD =
+am__libelpa_la_SOURCES_DIST = src/elpa1.f90 src/elpa2.f90 \
+	src/elpa2_kernels_bg.f90 src/elpa2_kernels.f90
 am__dirstamp = $(am__leading_dot)dirstamp
 @WITH_BGP_TRUE@am__objects_1 = src/elpa2_kernels_bg.lo
 @WITH_BGP_FALSE@am__objects_2 = src/elpa2_kernels.lo
-am_libelpa_@ELPA_LIB_VERSION@_la_OBJECTS = src/elpa1.lo src/elpa2.lo \
-	$(am__objects_1) $(am__objects_2)
-libelpa_@ELPA_LIB_VERSION@_la_OBJECTS =  \
-	$(am_libelpa_@ELPA_LIB_VERSION@_la_OBJECTS)
-libelpa_@ELPA_LIB_VERSION@_la_LINK = $(LIBTOOL) --tag=FC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(FCLD) \
-	$(AM_FCFLAGS) $(FCFLAGS) \
-	$(libelpa_@ELPA_LIB_VERSION@_la_LDFLAGS) $(LDFLAGS) -o $@
+am_libelpa_la_OBJECTS = src/elpa1.lo src/elpa2.lo $(am__objects_1) \
+	$(am__objects_2)
+libelpa_la_OBJECTS = $(am_libelpa_la_OBJECTS)
+libelpa_la_LINK = $(LIBTOOL) --tag=FC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
+	$(libelpa_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(noinst_bin_PROGRAMS)
 am_test_complex_OBJECTS = test/test_complex.$(OBJEXT)
 test_complex_OBJECTS = $(am_test_complex_OBJECTS)
-test_complex_DEPENDENCIES = libelpa-@ELPA_LIB_VERSION@.la
+test_complex_DEPENDENCIES = libelpa.la
 am_test_complex2_OBJECTS = test/test_complex2.$(OBJEXT)
 test_complex2_OBJECTS = $(am_test_complex2_OBJECTS)
-test_complex2_DEPENDENCIES = libelpa-@ELPA_LIB_VERSION@.la
+test_complex2_DEPENDENCIES = libelpa.la
 am_test_real_OBJECTS = test/test_real.$(OBJEXT)
 test_real_OBJECTS = $(am_test_real_OBJECTS)
-test_real_DEPENDENCIES = libelpa-@ELPA_LIB_VERSION@.la
+test_real_DEPENDENCIES = libelpa.la
 am_test_real2_OBJECTS = test/test_real2.$(OBJEXT)
 test_real2_OBJECTS = $(am_test_real2_OBJECTS)
-test_real2_DEPENDENCIES = libelpa-@ELPA_LIB_VERSION@.la
+test_real2_DEPENDENCIES = libelpa.la
 DEFAULT_INCLUDES = -I.@am__isrc@
 FCCOMPILE = $(FC) $(AM_FCFLAGS) $(FCFLAGS)
 LTFCCOMPILE = $(LIBTOOL) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -142,12 +140,12 @@ FCLD = $(FC)
 FCLINK = $(LIBTOOL) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libelpa_@ELPA_LIB_VERSION@_la_SOURCES) \
-	$(test_complex_SOURCES) $(test_complex2_SOURCES) \
-	$(test_real_SOURCES) $(test_real2_SOURCES)
-DIST_SOURCES = $(am__libelpa_@ELPA_LIB_VERSION@_la_SOURCES_DIST) \
-	$(test_complex_SOURCES) $(test_complex2_SOURCES) \
-	$(test_real_SOURCES) $(test_real2_SOURCES)
+SOURCES = $(libelpa_la_SOURCES) $(test_complex_SOURCES) \
+	$(test_complex2_SOURCES) $(test_real_SOURCES) \
+	$(test_real2_SOURCES)
+DIST_SOURCES = $(am__libelpa_la_SOURCES_DIST) $(test_complex_SOURCES) \
+	$(test_complex2_SOURCES) $(test_real_SOURCES) \
+	$(test_real2_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -311,13 +309,13 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 # libelpa
-lib_LTLIBRARIES = libelpa-@ELPA_LIB_VERSION@.la
-libelpa_@ELPA_LIB_VERSION@_la_SOURCES = src/elpa1.f90 src/elpa2.f90 \
-	$(am__append_1) $(am__append_2)
-libelpa_@ELPA_LIB_VERSION@_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
+lib_LTLIBRARIES = libelpa.la
+libelpa_la_SOURCES = src/elpa1.f90 src/elpa2.f90 $(am__append_1) \
+	$(am__append_2)
+libelpa_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
 
 # install any .mod files in the include/ dir
-elpa_includedir = $(includedir)/elpa-$(ELPA_LIB_VERSION)
+elpa_includedir = $(includedir)/elpa
 nobase_elpa_include_HEADERS = $(wildcard modules/*)
 
 # other files to distribute
@@ -335,18 +333,18 @@ files_DATA = \
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = elpa-$(ELPA_LIB_VERSION).pc
+pkgconfig_DATA = elpa.pc
 
 # test programs
 noinst_bindir = $(abs_top_builddir)
 test_real_SOURCES = test/test_real.f90
-test_real_LDADD = libelpa-@ELPA_LIB_VERSION@.la 
+test_real_LDADD = libelpa.la 
 test_real2_SOURCES = test/test_real2.f90
-test_real2_LDADD = libelpa-@ELPA_LIB_VERSION@.la 
+test_real2_LDADD = libelpa.la 
 test_complex_SOURCES = test/test_complex.f90
-test_complex_LDADD = libelpa-@ELPA_LIB_VERSION@.la
+test_complex_LDADD = libelpa.la
 test_complex2_SOURCES = test/test_complex2.f90
-test_complex2_LDADD = libelpa-@ELPA_LIB_VERSION@.la
+test_complex2_LDADD = libelpa.la
 check_SCRIPTS = test_real.sh test_real2.sh test_complex.sh test_complex2.sh   
 TESTS = $(check_SCRIPTS)
 CLEANFILES = test_real.sh test_real2.sh test_complex.sh test_complex2.sh
@@ -404,7 +402,7 @@ $(srcdir)/config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-elpa-${ELPA_LIB_VERSION}.pc: $(top_builddir)/config.status $(srcdir)/elpa.pc.in
+elpa.pc: $(top_builddir)/config.status $(srcdir)/elpa.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
@@ -452,8 +450,8 @@ src/elpa2_kernels_bg.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/elpa2_kernels.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-libelpa-@ELPA_LIB_VERSION@.la: $(libelpa_@ELPA_LIB_VERSION@_la_OBJECTS) $(libelpa_@ELPA_LIB_VERSION@_la_DEPENDENCIES) $(EXTRA_libelpa_@ELPA_LIB_VERSION@_la_DEPENDENCIES) 
-	$(libelpa_@ELPA_LIB_VERSION@_la_LINK) -rpath $(libdir) $(libelpa_@ELPA_LIB_VERSION@_la_OBJECTS) $(libelpa_@ELPA_LIB_VERSION@_la_LIBADD) $(LIBS)
+libelpa.la: $(libelpa_la_OBJECTS) $(libelpa_la_DEPENDENCIES) $(EXTRA_libelpa_la_DEPENDENCIES) 
+	$(libelpa_la_LINK) -rpath $(libdir) $(libelpa_la_OBJECTS) $(libelpa_la_LIBADD) $(LIBS)
 install-noinst_binPROGRAMS: $(noinst_bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(noinst_bin_PROGRAMS)'; test -n "$(noinst_bindir)" || list=; \

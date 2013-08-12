@@ -7,76 +7,76 @@ AM_LDFLAGS = @AM_LDFLAGS@ @BLACS_LDFLAGS@
 BLACS_LDFLAGS = @BLACS_LDFLAGS@
 
 # libelpa
-lib_LTLIBRARIES = libelpa-@ELPA_LIB_VERSION@.la
+lib_LTLIBRARIES = libelpa.la
 
 ##rule to produce fortran config file:
 #config_f90.h: ./config.h
 #	grep "^#define" ./config.h > $@
 
 
-libelpa_@ELPA_LIB_VERSION@_la_SOURCES = src/elpa1.f90 src/elpa2.F90
+libelpa_la_SOURCES = src/elpa1.f90 src/elpa2.F90
 
 
 if WITH_GENERIC_SIMPLE
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90 \
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90 \
                                            src/elpa2_kernels/elpa2_kernels_real_simple.f90
 endif
 
 if WITH_GENERIC
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex.f90 \
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex.f90 \
                                            src/elpa2_kernels/elpa2_kernels_real.f90
 endif
 
 if WITH_BGP
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90 \
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90 \
                                            src/elpa2_kernels/elpa2_kernels_complex.f90 
 endif
 
 if WITH_BGQ
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90 \
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90 \
                                            src/elpa2_kernels/elpa2_kernels_complex.f90 
 endif
 
 if WITH_SSE_AS
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 endif
 
 if WITH_AVX_SANDYBRIDGE
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
                                            src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 endif
 
 if WITH_AMD_BULLDOZER
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
                                            src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
                                            src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 endif
 if WITH_AVX_COMPLEX_BLOCK1
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 endif
 
 if WITH_AVX_COMPLEX_BLOCK2
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp \
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp \
                                            src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 endif
 
 if WITH_AVX_REAL_BLOCK2
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
 endif
 
 if WITH_AVX_REAL_BLOCK4
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
 endif
 
 if WITH_AVX_REAL_BLOCK6
-  libelpa_@ELPA_LIB_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
 endif
 
 
-libelpa_@ELPA_LIB_VERSION@_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
+libelpa_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
 
 # install any .mod files in the include/ dir
-elpa_includedir = $(includedir)/elpa-$(ELPA_LIB_VERSION)
+elpa_includedir = $(includedir)/elpa
 nobase_elpa_include_HEADERS = $(wildcard modules/*)
 
 # other files to distribute
@@ -93,23 +93,23 @@ files_DATA = \
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = elpa-$(ELPA_LIB_VERSION).pc
+pkgconfig_DATA = elpa.pc
 
 # test programs
 noinst_bindir = $(abs_top_builddir)
 noinst_bin_PROGRAMS = test_real test_real2 test_complex test_complex2
 
 test_real_SOURCES = test/test_real.f90
-test_real_LDADD = libelpa-@ELPA_LIB_VERSION@.la 
+test_real_LDADD = libelpa.la 
 
 test_real2_SOURCES = test/test_real2.f90
-test_real2_LDADD = libelpa-@ELPA_LIB_VERSION@.la 
+test_real2_LDADD = libelpa.la 
 
 test_complex_SOURCES = test/test_complex.f90
-test_complex_LDADD = libelpa-@ELPA_LIB_VERSION@.la
+test_complex_LDADD = libelpa.la
 
 test_complex2_SOURCES = test/test_complex2.f90
-test_complex2_LDADD = libelpa-@ELPA_LIB_VERSION@.la
+test_complex2_LDADD = libelpa.la
 
 
 check_SCRIPTS = test_real.sh test_real2.sh test_complex.sh test_complex2.sh   

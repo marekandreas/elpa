@@ -23,10 +23,10 @@ AX_PROG_FC_MPI([],[have_mpi=yes],[have_mpi=no
 		  fi])
 
 
-AC_SUBST([ELPA_LIB_VERSION], [2011.12-${FC}])
+AC_SUBST([ELPA_LIB_VERSION], [2011.12])
 # this is the version of the API, should be changed in the major revision
 # if and only if the actual API changes
-AC_SUBST([ELPA_SO_VERSION], [2011:12:0])
+AC_SUBST([ELPA_SO_VERSION], [0:0:0])
 
 AC_FC_FREEFORM
 AC_FC_MODULE_FLAG
@@ -178,6 +178,6 @@ mkdir modules
 
 AC_CONFIG_FILES([
   Makefile
-  elpa-${ELPA_LIB_VERSION}.pc:elpa.pc.in
+  elpa.pc:elpa.pc.in
 ])
 AC_OUTPUT
