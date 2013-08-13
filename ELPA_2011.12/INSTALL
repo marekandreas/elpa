@@ -15,10 +15,11 @@ The configure installation is best done in four steps
    linkline with the variables "BLACS_LDFLAGS" and "BLACS_FCFLAGS". 
    You can either specify your own builds of lapack/blacs/scalapack
    or use specialized Vendor packages, e.g. if available you can use 
-   Intel's MKL
+   Intel's MKL. If you do not set these variables ELPA will not be
+   build!
 
-   Please set the optimisation that you would like with the
-   variable "OPT_FCFLAGS", e.g. OPT_FCFLAGS="-O3 -xAVX"
+   Please set the further optimisation that you would like with the
+   variable "FCFLAGS", "CFLAGS", and "CXXFLAGS", e.g. FCFLAGS="-O3 -xAVX"
 
    Check the available options with "configure --help". 
    If available you can e.g. choose especially optimized elpa kernels

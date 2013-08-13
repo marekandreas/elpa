@@ -15530,8 +15530,6 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
-#AC_SUBST(OPT_FCFLAGS)
-
 mkdir modules
 
 ac_config_files="$ac_config_files Makefile elpa.pc:elpa.pc.in"

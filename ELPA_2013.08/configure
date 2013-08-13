@@ -19759,8 +19759,6 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
-#AC_SUBST(OPT_FCFLAGS)
-
 mkdir modules
 
 #gl_VISIBILITY
