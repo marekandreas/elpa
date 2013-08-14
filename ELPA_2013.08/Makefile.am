@@ -19,22 +19,22 @@ libelpa_la_SOURCES = src/elpa1.f90 src/elpa2.F90
 
 if WITH_GENERIC_SIMPLE
   libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90 \
-                                           src/elpa2_kernels/elpa2_kernels_real_simple.f90
+                        src/elpa2_kernels/elpa2_kernels_real_simple.f90
 endif
 
 if WITH_GENERIC
   libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex.f90 \
-                                           src/elpa2_kernels/elpa2_kernels_real.f90
+                       src/elpa2_kernels/elpa2_kernels_real.f90
 endif
 
 if WITH_BGP
   libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90 \
-                                           src/elpa2_kernels/elpa2_kernels_complex.f90 
+                        src/elpa2_kernels/elpa2_kernels_complex.f90 
 endif
 
 if WITH_BGQ
   libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90 \
-                                           src/elpa2_kernels/elpa2_kernels_complex.f90 
+                        src/elpa2_kernels/elpa2_kernels_complex.f90 
 endif
 
 if WITH_SSE_AS
@@ -43,13 +43,13 @@ endif
 
 if WITH_AVX_SANDYBRIDGE
   libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
-                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+                        src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 endif
 
 if WITH_AMD_BULLDOZER
   libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
-                                           src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
-                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+                        src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
+                        src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 endif
 if WITH_AVX_COMPLEX_BLOCK1
   libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
@@ -57,7 +57,7 @@ endif
 
 if WITH_AVX_COMPLEX_BLOCK2
   libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp \
-                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+                        src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 endif
 
 if WITH_AVX_REAL_BLOCK2
