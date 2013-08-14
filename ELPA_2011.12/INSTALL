@@ -12,7 +12,15 @@ The configure installation is best done in four steps
 
 1) run configure: 
    please point to your blacs/scalapack installation and the
-   linkline with the variables "BLACS_LDFLAGS" and "BLACS_FCFLAGS". 
+   linkline with the variables "BLACS_LDFLAGS" and "BLACS_FCFLAGS".
+   "BLACS_LDFLAGS" should then contain the correct linkline for your
+   blacs/scalapack installation and "BLACS_FCFLAGS" the include path
+   and any other flags you need at compile time.
+
+   It is recommended that you use the "rpath functionality" in the linkline,
+   otherwise it will be necessary to update the LD_LIBRARY_PATH environment
+   variable.
+ 
    You can either specify your own builds of lapack/blacs/scalapack
    or use specialized Vendor packages, e.g. if available you can use 
    Intel's MKL. If you do not set these variables ELPA will not be
