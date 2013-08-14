@@ -1751,7 +1751,30 @@ contains
         ttt = mpi_wtime()
         nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
  
-#if defined(WITH_AVX_REAL_BLOCK2) || defined(WITH_AVX_INTEL)
+#if defined(WITH_AVX_REAL_BLOCK2) || defined(WITH_AVX_SANDYBRIDGE) || defined(WITH_GENERIC)
+        !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
+        do j = ncols, 2, -2
+            w(:,1) = bcast_buffer(1:nbw,j+off)
+            w(:,2) = bcast_buffer(1:nbw,j+off-1)
+            call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+        enddo
+        if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+
+#endif
+
+#if defined(WITH_GENERIC_SIMPLE) || defined(WITH_SSE_AS)
+        !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
+        do j = ncols, 2, -2
+            w(:,1) = bcast_buffer(1:nbw,j+off)
+            w(:,2) = bcast_buffer(1:nbw,j+off-1)
+            call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+        enddo
+        if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+
+#endif
+
+
+#if defined(WITH_BGPG) || defined(WITH_BGQ)
         !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
         do j = ncols, 2, -2
             w(:,1) = bcast_buffer(1:nbw,j+off)
