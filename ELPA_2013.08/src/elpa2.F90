@@ -1774,7 +1774,7 @@ contains
 #endif
 
 
-#if defined(WITH_BGPG) || defined(WITH_BGQ)
+#if defined(WITH_BGP) || defined(WITH_BGQ)
         !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
         do j = ncols, 2, -2
             w(:,1) = bcast_buffer(1:nbw,j+off)

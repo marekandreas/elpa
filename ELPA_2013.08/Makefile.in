@@ -54,28 +54,28 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @WITH_GENERIC_SIMPLE_TRUE@am__append_1 = src/elpa2_kernels/elpa2_kernels_complex_simple.f90 \
-@WITH_GENERIC_SIMPLE_TRUE@                                           src/elpa2_kernels/elpa2_kernels_real_simple.f90
+@WITH_GENERIC_SIMPLE_TRUE@                        src/elpa2_kernels/elpa2_kernels_real_simple.f90
 
 @WITH_GENERIC_TRUE@am__append_2 = src/elpa2_kernels/elpa2_kernels_complex.f90 \
-@WITH_GENERIC_TRUE@                                           src/elpa2_kernels/elpa2_kernels_real.f90
+@WITH_GENERIC_TRUE@                       src/elpa2_kernels/elpa2_kernels_real.f90
 
 @WITH_BGP_TRUE@am__append_3 = src/elpa2_kernels/elpa2_kernels_real_bgp.f90 \
-@WITH_BGP_TRUE@                                           src/elpa2_kernels/elpa2_kernels_complex.f90 
+@WITH_BGP_TRUE@                        src/elpa2_kernels/elpa2_kernels_complex.f90 
 
 @WITH_BGQ_TRUE@am__append_4 = src/elpa2_kernels/elpa2_kernels_real_bgq.f90 \
-@WITH_BGQ_TRUE@                                           src/elpa2_kernels/elpa2_kernels_complex.f90 
+@WITH_BGQ_TRUE@                        src/elpa2_kernels/elpa2_kernels_complex.f90 
 
 @WITH_SSE_AS_TRUE@am__append_5 = src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 @WITH_AVX_SANDYBRIDGE_TRUE@am__append_6 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
-@WITH_AVX_SANDYBRIDGE_TRUE@                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+@WITH_AVX_SANDYBRIDGE_TRUE@                        src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 
 @WITH_AMD_BULLDOZER_TRUE@am__append_7 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
-@WITH_AMD_BULLDOZER_TRUE@                                           src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
-@WITH_AMD_BULLDOZER_TRUE@                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+@WITH_AMD_BULLDOZER_TRUE@                        src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
+@WITH_AMD_BULLDOZER_TRUE@                        src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 
 @WITH_AVX_COMPLEX_BLOCK1_TRUE@am__append_8 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 @WITH_AVX_COMPLEX_BLOCK2_TRUE@am__append_9 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp \
-@WITH_AVX_COMPLEX_BLOCK2_TRUE@                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+@WITH_AVX_COMPLEX_BLOCK2_TRUE@                        src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 
 @WITH_AVX_REAL_BLOCK2_TRUE@am__append_10 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
 @WITH_AVX_REAL_BLOCK4_TRUE@am__append_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
