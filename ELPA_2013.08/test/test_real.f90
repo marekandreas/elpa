@@ -86,11 +86,16 @@ program test_real
 
 
    integer :: STATUS
+
+   logical :: write_to_file
    !-------------------------------------------------------------------------------
    !  Parse command line argumnents, if given
    character*16 arg1
    character*16 arg2
    character*16 arg3
+   character*16 arg4
+
+   write_to_file = .false.
 
    nblk = 16
    na = 4000
@@ -105,6 +110,16 @@ program test_real
       read(arg3, *) nblk
    endif
 
+   if (iargc() == 4) then
+      call getarg(1, arg1)
+      call getarg(2, arg2)
+      call getarg(3, arg3)
+      call getarg(4, arg4)
+      read(arg1, *) na
+      read(arg2, *) nev
+      read(arg3, *) nblk
+ 
+   endif
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
@@ -112,6 +127,10 @@ program test_real
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
+   if (arg4 .eq. "output") then 
+      write_to_file = .true.
+      if (myid .eq. 0) print *,"Writing output files"
+   endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible
@@ -238,6 +257,16 @@ program test_real
    if(myid == 0) print *,'Time tridiag_real :',time_evp_fwd
    if(myid == 0) print *,'Time solve_tridi  :',time_evp_solve
    if(myid == 0) print *,'Time trans_ev_real:',time_evp_back
+
+   if(write_to_file) then
+      if (myid == 0) then
+         open(17,file="EVs_real_out.txt",form='formatted',status='new')
+         do i=1,na
+            write(17,*) i,ev(i)
+         enddo
+         close(17)
+      endif
+   endif
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
