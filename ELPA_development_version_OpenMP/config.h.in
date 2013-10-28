@@ -101,5 +101,8 @@
    optimizations) */
 #undef WITH_GENERIC_SIMPLE
 
+/* use OpenMP threading */
+#undef WITH_OPENMP
+
 /* use kernel tuned for SSE (written in gcc assembler) */
 #undef WITH_SSE_AS

@@ -595,7 +595,7 @@ PACKAGE_STRING='elpa 2013.08.001'
 PACKAGE_BUGREPORT='elpa-library@rzg.mpg.de'
 PACKAGE_URL=''
 
-ac_unique_file="src/elpa1.f90"
+ac_unique_file="src/elpa1.F90"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -672,6 +672,9 @@ build_vendor
 build_cpu
 build
 LIBTOOL
+OPENMP_FCFLAGS
+WITH_OPENMP_FALSE
+WITH_OPENMP_TRUE
 WITH_AVX_REAL_BLOCK6_FALSE
 WITH_AVX_REAL_BLOCK6_TRUE
 WITH_AVX_REAL_BLOCK4_FALSE
@@ -811,6 +814,8 @@ with_avx_complex_block2
 with_avx_real_block2
 with_avx_real_block4
 with_avx_real_block6
+with_openmp
+enable_openmp
 enable_shared
 enable_static
 with_pic
@@ -1458,6 +1463,7 @@ Optional Features:
                           do not reject slow dependency extractors
   --disable-dependency-tracking
                           speeds up one-time build
+  --disable-openmp        do not use OpenMP
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -1491,6 +1497,7 @@ Optional Packages:
                           (written in gcc assembler), default no.
   --with-avx-real-block6  use AVX optimized real kernel with blocking 6
                           (written in gcc assembler), default no.
+  --with-openmp           use OpenMP threading, default no.
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
@@ -5793,6 +5800,101 @@ $as_echo "#define WITH_AVX_REAL_BLOCK6 1" >>confdefs.h
   fi
 
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether OpenMP usage is specified" >&5
+$as_echo_n "checking whether OpenMP usage is specified... " >&6; }
+
+# Check whether --with-openmp was given.
+if test "${with_openmp+set}" = set; then :
+  withval=$with_openmp; with_openmp=yes
+else
+  with_openmp=no
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${with_openmp}" >&5
+$as_echo "${with_openmp}" >&6; }
+   if test x"$with_openmp" = x"yes"; then
+  WITH_OPENMP_TRUE=
+  WITH_OPENMP_FALSE='#'
+else
+  WITH_OPENMP_TRUE='#'
+  WITH_OPENMP_FALSE=
+fi
+
+  if test "x${with_openmp}" = xyes; then
+
+$as_echo "#define WITH_OPENMP 1" >>confdefs.h
+
+
+  OPENMP_FCFLAGS=
+  # Check whether --enable-openmp was given.
+if test "${enable_openmp+set}" = set; then :
+  enableval=$enable_openmp;
+fi
+
+  if test "$enable_openmp" != no; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $FC option to support OpenMP" >&5
+$as_echo_n "checking for $FC option to support OpenMP... " >&6; }
+if ${ac_cv_prog_fc_openmp+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+      implicit none
+!$    integer tid
+      tid = 42
+      call omp_set_num_threads(2)
+      end
+
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_prog_fc_openmp='none needed'
+else
+  ac_cv_prog_fc_openmp='unsupported'
+	  	  	  	  	  	  	                                	  	  	  	  	  	  for ac_option in -fopenmp -xopenmp -openmp -mp -omp -qsmp=omp -homp \
+                           -Popenmp --openmp; do
+	    ac_save_FCFLAGS=$FCFLAGS
+	    FCFLAGS="$FCFLAGS $ac_option"
+	    cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+      implicit none
+!$    integer tid
+      tid = 42
+      call omp_set_num_threads(2)
+      end
+
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_prog_fc_openmp=$ac_option
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	    FCFLAGS=$ac_save_FCFLAGS
+	    if test "$ac_cv_prog_fc_openmp" != unsupported; then
+	      break
+	    fi
+	  done
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_fc_openmp" >&5
+$as_echo "$ac_cv_prog_fc_openmp" >&6; }
+    case $ac_cv_prog_fc_openmp in #(
+      "none needed" | unsupported)
+	;; #(
+      *)
+	OPENMP_FCFLAGS=$ac_cv_prog_fc_openmp ;;
+    esac
+  fi
+
+
+  fi
+
+FCFLAGS="$FCFLAGS $OPENMP_FCFLAGS $OPENMP_FFFLAGS"
+#LDFLAGS="$LDFLAGS $OPENMP_FCFLAGS $OPENMP_FFFLAGS"
 
 
 save_FCFLAGS=$FCFLAGS
@@ -19759,6 +19861,8 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
+#AC_SUBST(OPT_FCFLAGS)
+
 mkdir modules
 
 #gl_VISIBILITY
@@ -19965,6 +20069,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${WITH_AVX_REAL_BLOCK6_TRUE}" && test -z "${WITH_AVX_REAL_BLOCK6_FALSE}"; then
   as_fn_error $? "conditional \"WITH_AVX_REAL_BLOCK6\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${WITH_OPENMP_TRUE}" && test -z "${WITH_OPENMP_FALSE}"; then
+  as_fn_error $? "conditional \"WITH_OPENMP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

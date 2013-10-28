@@ -46,6 +46,8 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 
+#include "config-f90.h"
+
 module ELPA1
 
 ! Version 1.1.2, 2011-02-21
@@ -351,10 +353,17 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
    integer istep, i, j, lcs, lce, lrs, lre
    integer tile_size, l_rows_tile, l_cols_tile
 
+#ifdef WITH_OPENMP
+   integer my_thread, n_threads, max_threads, n_iter
+   integer omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
+#endif
+
    real*8 vav, vnorm2, x, aux(2*max_stored_rows), aux1(2), aux2(2), vrl, xf
 
    real*8, allocatable:: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
-
+#ifdef WITH_OPENMP
+   real*8, allocatable:: ur_p(:,:), uc_p(:,:)
+#endif
    integer pcol, prow
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
@@ -386,6 +395,13 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
    allocate(ur(max_local_rows))
    allocate(vc(max_local_cols))
    allocate(uc(max_local_cols))
+
+#ifdef WITH_OPENMP
+   max_threads = omp_get_max_threads()
+
+   allocate(ur_p(max_local_rows,0:max_threads-1))
+   allocate(uc_p(max_local_cols,0:max_threads-1))
+#endif
 
    tmp = 0
    vr = 0
@@ -478,6 +494,17 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
       ur(1:l_rows) = 0
       if(l_rows>0 .and. l_cols>0) then
 
+#ifdef WITH_OPENMP
+!$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,lcs,lce,j,lrs,lre)
+
+         my_thread = omp_get_thread_num()
+         n_threads = omp_get_num_threads()
+
+         n_iter = 0
+
+         uc_p(1:l_cols,my_thread) = 0.
+         ur_p(1:l_rows,my_thread) = 0.
+#endif
          do i=0,(istep-2)/tile_size
             lcs = i*l_cols_tile+1
             lce = min(l_cols,(i+1)*l_cols_tile)
@@ -486,11 +513,27 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
                lrs = j*l_rows_tile+1
                lre = min(l_rows,(j+1)*l_rows_tile)
                if(lre<lrs) cycle
+#ifdef WITH_OPENMP
+               if(mod(n_iter,n_threads) == my_thread) then
+                 call DGEMV('T',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vr(lrs),1,1.d0,uc_p(lcs,my_thread),1)
+                 if(i/=j) call DGEMV('N',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vc(lcs),1,1.d0,ur_p(lrs,my_thread),1)
+               endif
+               n_iter = n_iter+1
+#else
                call DGEMV('T',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vr(lrs),1,1.d0,uc(lcs),1)
                if(i/=j) call DGEMV('N',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vc(lcs),1,1.d0,ur(lrs),1)
+
+#endif
             enddo
          enddo
-
+#ifdef WITH_OPENMP
+!$OMP END PARALLEL
+      
+         do i=0,max_threads-1
+            uc(1:l_cols) = uc(1:l_cols) + uc_p(1:l_cols,i)
+            ur(1:l_rows) = ur(1:l_rows) + ur_p(1:l_rows,i)
+         enddo
+#endif
          if(nstor>0) then
             call DGEMV('T',l_rows,2*nstor,1.d0,vur,ubound(vur,1),vr,1,0.d0,aux,1)
             call DGEMV('N',l_cols,2*nstor,1.d0,uvc,ubound(uvc,1),aux,1,1.d0,uc,1)
@@ -1027,10 +1070,18 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
    integer istep, i, j, lcs, lce, lrs, lre
    integer tile_size, l_rows_tile, l_cols_tile
 
+#ifdef WITH_OPENMP
+   integer my_thread, n_threads, max_threads, n_iter
+   integer omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
+#endif
+
    real*8 vnorm2
    complex*16 vav, xc, aux(2*max_stored_rows),  aux1(2), aux2(2), vrl, xf
 
    complex*16, allocatable:: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
+#ifdef WITH_OPENMP
+   complex*16, allocatable:: ur_p(:,:), uc_p(:,:)
+#endif
    real*8, allocatable:: tmpr(:)
 
    integer pcol, prow
@@ -1064,6 +1115,13 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
    allocate(ur(max_local_rows))
    allocate(vc(max_local_cols))
    allocate(uc(max_local_cols))
+
+#ifdef WITH_OPENMP
+   max_threads = omp_get_max_threads()
+
+   allocate(ur_p(max_local_rows,0:max_threads-1))
+   allocate(uc_p(max_local_cols,0:max_threads-1))
+#endif
 
    tmp = 0
    vr = 0
@@ -1155,6 +1213,17 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
       uc(1:l_cols) = 0
       ur(1:l_rows) = 0
       if(l_rows>0 .and. l_cols>0) then
+#ifdef WITH_OPENMP
+!$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,lcs,lce,j,lrs,lre)
+
+         my_thread = omp_get_thread_num()
+         n_threads = omp_get_num_threads()
+
+         n_iter = 0
+
+         uc_p(1:l_cols,my_thread) = 0.
+         ur_p(1:l_rows,my_thread) = 0.
+#endif
 
          do i=0,(istep-2)/tile_size
             lcs = i*l_cols_tile+1
@@ -1164,10 +1233,26 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
                lrs = j*l_rows_tile+1
                lre = min(l_rows,(j+1)*l_rows_tile)
                if(lre<lrs) cycle
-               call ZGEMV('C',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vr(lrs),1,CONE,uc(lcs),1)
+#ifdef WITH_OPENMP
+               if(mod(n_iter,n_threads) == my_thread) then
+                  call ZGEMV('C',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vr(lrs),1,CONE,uc_p(lcs,my_thread),1)
+                  if(i/=j) call ZGEMV('N',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vc(lcs),1,CONE,ur_p(lrs,my_thread),1)
+               endif
+               n_iter = n_iter+1
+#else
+              call ZGEMV('C',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vr(lrs),1,CONE,uc(lcs),1)
                if(i/=j) call ZGEMV('N',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vc(lcs),1,CONE,ur(lrs),1)
+#endif
             enddo
          enddo
+#ifdef WITH_OPENMP
+!$OMP END PARALLEL
+
+         do i=0,max_threads-1
+            uc(1:l_cols) = uc(1:l_cols) + uc_p(1:l_cols,i)
+            ur(1:l_rows) = ur(1:l_rows) + ur_p(1:l_rows,i)
+         enddo
+#endif
 
          if(nstor>0) then
             call ZGEMV('C',l_rows,2*nstor,CONE,vur,ubound(vur,1),vr,1,CZERO,aux,1)
@@ -2124,6 +2209,9 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
    real*8 z(na), d1(na), d2(na), z1(na), delta(na), dbase(na), ddiff(na), ev_scale(na), tmp(na)
    real*8 d1u(na), zu(na), d1l(na), zl(na)
    real*8, allocatable :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
+#ifdef WITH_OPENMP
+   real*8, allocatable :: z_p(:,:)
+#endif
 
    integer i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, l_rqm, ns, info
    integer l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, l_cols_qreorg, np, l_idx, nqcols1, nqcols2
@@ -2132,6 +2220,14 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
    integer idx(na), idx1(na), idx2(na)
    integer coltyp(na), idxq1(na), idxq2(na)
 
+#ifdef WITH_OPENMP
+   integer max_threads, my_thread
+   integer omp_get_max_threads, omp_get_thread_num
+
+   max_threads = omp_get_max_threads()
+
+   allocate(z_p(na,0:max_threads-1))
+#endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -2405,11 +2501,18 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       ! Solve secular equation
 
       z(1:na1) = 1
+#ifdef WITH_OPENMP
+      z_p(1:na1,:) = 1
+#endif
       dbase(1:na1) = 0
       ddiff(1:na1) = 0
 
       info = 0
-
+#ifdef WITH_OPENMP
+!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,j)
+      my_thread = omp_get_thread_num()
+!$OMP DO
+#endif
       DO i = my_proc+1, na1, n_procs ! work distributed over all processors
 
          call DLAED4(na1, i, d1, z1, delta, rho, s, info) ! s is not used!
@@ -2423,11 +2526,17 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
 
          ! Compute updated z
 
+#ifdef WITH_OPENMP
+         do j=1,na1
+            if(i/=j)  z_p(j,my_thread) = z_p(j,my_thread)*( delta(j) / (d1(j)-d1(i)) )
+         enddo
+         z_p(i,my_thread) = z_p(i,my_thread)*delta(i)
+#else
          do j=1,na1
             if(i/=j)  z(j) = z(j)*( delta(j) / (d1(j)-d1(i)) )
          enddo
          z(i) = z(i)*delta(i)
-
+#endif
          ! store dbase/ddiff
 
          if(i<na1) then
@@ -2443,6 +2552,13 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
             ddiff(i) = delta(i)
          endif
       enddo
+#ifdef WITH_OPENMP
+!$OMP END PARALLEL
+
+      do i = 0, max_threads-1
+         z(1:na1) = z(1:na1)*z_p(1:na1,i)
+      enddo
+#endif
 
       call global_product(z, na1)
       z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
@@ -2453,8 +2569,14 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
 
       ! Calculate scale factors for eigenvectors
 
-      ev_scale(:) = 0
+      ev_scale(:) = 0.
 
+#ifdef WITH_OPENMP
+!$OMP PARALLEL DO PRIVATE(i) SHARED(na1, my_proc, n_procs,  &
+!$OMP d1,dbase, ddiff, z, ev_scale) &
+!$OMP DEFAULT(NONE)
+
+#endif
       DO i = my_proc+1, na1, n_procs ! work distributed over all processors
 
          ! tmp(1:na1) = z(1:na1) / delta(1:na1,i)  ! original code
@@ -2462,12 +2584,14 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
 
          ! All we want to calculate is tmp = (d1(1:na1)-dbase(i))+ddiff(i)
          ! in exactly this order, but we want to prevent compiler optimization
-
-         tmp(1:na1) = d1(1:na1)-dbase(i)
-         call v_add_s(tmp,na1,ddiff(i))
-         tmp(1:na1) = z(1:na1) / tmp(1:na1)
-         ev_scale(i) = 1.0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
+!         ev_scale_val = ev_scale(i)
+         call add_tmp(d1, dbase, ddiff, z, ev_scale(i), na1,i)
+!         ev_scale(i) = ev_scale_val
       enddo
+#ifdef WITH_OPENMP
+!$OMP END PARALLEL DO
+#endif
+
       call global_gather(ev_scale, na1)
 
       ! Add the deflated eigenvalues
@@ -2667,6 +2791,31 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
 !-------------------------------------------------------------------------------
 
 contains
+  subroutine add_tmp(d1, dbase, ddiff, z, ev_scale_value, na1,i)
+
+    implicit none
+    
+    integer, intent(in) :: na1, i
+    
+    real*8, intent(in)  :: d1(:), dbase(:), ddiff(:), z(:)
+    real*8, intent(inout) :: ev_scale_value
+    real*8  :: tmp(1:na1)
+
+         ! tmp(1:na1) = z(1:na1) / delta(1:na1,i)  ! original code
+         ! tmp(1:na1) = z(1:na1) / (d1(1:na1)-d(i))! bad results
+
+         ! All we want to calculate is tmp = (d1(1:na1)-dbase(i))+ddiff(i)
+         ! in exactly this order, but we want to prevent compiler optimization
+    
+    tmp(1:na1) = d1(1:na1) -dbase(i)
+    call v_add_s(tmp(1:na1),na1,ddiff(i))
+    
+    tmp(1:na1) = z(1:na1) / tmp(1:na1)
+   
+    ev_scale_value = 1.0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
+    
+  end subroutine add_tmp
+
 subroutine resort_ev(idx_ev)
 
    implicit none

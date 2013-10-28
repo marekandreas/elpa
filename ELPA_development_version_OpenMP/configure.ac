@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 AC_INIT([elpa],[2013.08.001], elpa-library@rzg.mpg.de)
-AC_CONFIG_SRCDIR([src/elpa1.f90])
+AC_CONFIG_SRCDIR([src/elpa1.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
@@ -101,6 +101,22 @@ DEFINE_OPTION([WITH_AVX_REAL_BLOCK6], [avx-real-block6],
 	      [use AVX optimized real kernel with blocking 6 (written in gcc assembler)],
 	      [no],[])
 
+
+AC_MSG_CHECKING(whether OpenMP usage is specified)
+AC_ARG_WITH([openmp],
+		AS_HELP_STRING([--with-openmp],
+			       [use OpenMP threading, default no.]),
+	      [with_openmp=yes],
+	      [with_openmp=no])
+  AC_MSG_RESULT([${with_openmp}])
+  AM_CONDITIONAL([WITH_OPENMP],[test x"$with_openmp" = x"yes"])
+  if test "x${with_openmp}" = xyes; then
+	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
+         AC_OPENMP
+  fi
+
+FCFLAGS="$FCFLAGS $OPENMP_FCFLAGS $OPENMP_FFFLAGS"
+#LDFLAGS="$LDFLAGS $OPENMP_FCFLAGS $OPENMP_FFFLAGS"
 
 
 save_FCFLAGS=$FCFLAGS
@@ -230,6 +246,8 @@ AC_SUBST([FC_MODINC])
 AC_SUBST([FC_MODOUT])
 AC_SUBST(BLACS_LDFLAGS)
 AC_SUBST(BLACS_FCFLAGS)
+
+#AC_SUBST(OPT_FCFLAGS)
 
 mkdir modules
 
