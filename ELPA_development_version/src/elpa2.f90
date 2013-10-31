@@ -922,10 +922,8 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
     integer my_prow, np_rows, my_pcol, np_cols
     integer ireq_ab, ireq_hv
     integer na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
-    integer max_threads, my_thread, my_block_s, my_block_e, iter
-    integer mpi_status(MPI_STATUS_SIZE)
+      integer mpi_status(MPI_STATUS_SIZE)
     integer, allocatable :: mpi_statuses(:,:)
-    integer, allocatable :: omp_block_limits(:)
     integer, allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), global_id_tmp(:,:), hh_cnt(:), hh_dst(:)
     integer, allocatable :: limits(:), snd_limits(:,:)
     integer, allocatable :: block_limits(:)
@@ -933,7 +931,6 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
     ! dummies for calling redist_band
     complex*16 :: c_a(1,1), c_ab(1,1)
 
-!$  integer :: omp_get_max_threads
 
 
     call mpi_comm_rank(mpi_comm,my_pe,mpierr)
@@ -1057,25 +1054,6 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
       call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
     enddo
 
-    ! OpenMP work distribution:
-
-    max_threads = 1
-!$ max_threads = omp_get_max_threads()
-
-    ! For OpenMP we need at least 2 blocks for every thread
-    max_threads = MIN(max_threads, nblocks/2)
-    if(max_threads==0) max_threads = 1
-
-    allocate(omp_block_limits(0:max_threads))
-
-    ! Get the OpenMP block limits
-    call divide_band(nblocks, max_threads, omp_block_limits)
-
-    allocate(hv_t(nb,max_threads), tau_t(max_threads))
-    hv_t = 0
-    tau_t = 0
-
-    ! ---------------------------------------------------------------------------
     ! Start of calculations
 
     na_s = block_limits(my_pe)*nb + 1
@@ -1087,7 +1065,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
       call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
     endif
 
-    do istep=1,na-1-block_limits(my_pe)*nb
+    do istep=1,na-1
 
       if(my_pe==0) then
         n = MIN(na-na_s,nb) ! number of rows to be reduced
@@ -1124,171 +1102,6 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
         n_off = n_off + nb
       endif
 
-      if(max_threads > 1) then
-
-        ! Codepath for OpenMP
-
-        ! Please note that in this case it is absolutely necessary to have at least 2 blocks per thread!
-        ! Every thread is one reduction cycle behind its predecessor and thus starts one step later.
-        ! This simulates the behaviour of the MPI tasks which also work after each other.
-        ! The code would be considerably easier, if the MPI communication would be made within
-        ! the parallel region - this is avoided here since this would require 
-        ! MPI_Init_thread(MPI_THREAD_MULTIPLE) at the start of the program.
-
-        hv_t(:,1) = hv
-        tau_t(1) = tau
-
-        do iter = 1, 2
-
-          ! iter=1 : work on first block
-          ! iter=2 : work on remaining blocks
-          ! This is done in 2 iterations so that we have a barrier in between:
-          ! After the first iteration, it is guaranteed that the last row of the last block
-          ! is completed by the next thread.
-          ! After the first iteration it is also the place to exchange the last row
-          ! with MPI calls
-
-!$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
-!$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
-          do my_thread = 1, max_threads
-
-            if(iter == 1) then
-              my_block_s = omp_block_limits(my_thread-1) + 1
-              my_block_e = my_block_s
-            else
-              my_block_s = omp_block_limits(my_thread-1) + 2
-              my_block_e = omp_block_limits(my_thread)
-            endif
-
-            do iblk = my_block_s, my_block_e
-
-              ns = na_s + (iblk-1)*nb - n_off - my_thread + 1 ! first column in block
-              ne = ns+nb-1                    ! last column in block
-
-              if(istep<my_thread .or. ns+n_off>na) exit
-
-              hv = hv_t(:,my_thread)
-              tau = tau_t(my_thread)
-
-              ! Store Householder vector for back transformation
-
-              hh_cnt(iblk) = hh_cnt(iblk) + 1
-
-              hh_gath(1   ,hh_cnt(iblk),iblk) = tau
-              hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
-
-              nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
-              nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
-                                            ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
-
-              ! Transform diagonal block
-
-              call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
-
-              x = dot_product(hv(1:nc),hd(1:nc))*tau
-              hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
-
-              call DSYR2('L',nc,-1.d0,hd,1,hv,1,ab(1,ns),2*nb-1)
-
-              hv_t(:,my_thread) = 0
-              tau_t(my_thread)  = 0
-
-              if(nr<=0) cycle ! No subdiagonal block present any more
-
-              ! Transform subdiagonal block
-
-              call DGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
-
-              if(nr>1) then
-
-                ! complete (old) Householder transformation for first column
-
-                ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
-
-                ! calculate new Householder transformation for first column
-                ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
-
-                vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
-                call hh_transform_real(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
-                hv_t(1   ,my_thread) = 1.
-                hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
-                ab(nb+2:,ns) = 0
-
-                ! update subdiagonal block for old and new Householder transformation
-                ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
-
-                call DGEMV('T',nr,nb-1,tau_t(my_thread),ab(nb,ns+1),2*nb-1,hv_t(1,my_thread),1,0.d0,h(2),1)
-                x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
-                h(2:nb) = h(2:nb) - x*hv(2:nb)
-                ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
-                do i=2,nb
-                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_t(1:nr,my_thread)*h(i) - hs(1:nr)*hv(i)
-                enddo
-
-              else
-
-                ! No new Householder transformation for nr=1, just complete the old one
-                ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
-                do i=2,nb
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
-                enddo
-                ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
-                hv_t(1,my_thread) = 1.
-
-              endif
-
-            enddo
-
-          enddo ! my_thread
-!$omp end parallel do
-
-          if (iter==1) then
-            ! We are at the end of the first block
-
-            ! Send our first column to previous PE
-            if(my_pe>0 .and. na_s <= na) then
-              call mpi_wait(ireq_ab,mpi_status,mpierr)
-              ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
-              call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
-            endif
-
-            ! Request last column from next PE
-            ne = na_s + nblocks*nb - (max_threads-1) - 1
-            if(istep>=max_threads .and. ne <= na) then
-              call mpi_recv(ab(1,ne-n_off),nb+1,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
-            endif
-
-          else
-            ! We are at the end of all blocks
-
-            ! Send last HH vector and TAU to next PE if it has been calculated above
-            ne = na_s + nblocks*nb - (max_threads-1) - 1
-            if(istep>=max_threads .and. ne < na) then
-              call mpi_wait(ireq_hv,mpi_status,mpierr)
-              hv_s(1) = tau_t(max_threads)
-              hv_s(2:) = hv_t(2:,max_threads)
-              call mpi_isend(hv_s,nb,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
-            endif
-
-            ! "Send" HH vector and TAU to next OpenMP thread
-            do my_thread = max_threads, 2, -1
-              hv_t(:,my_thread) = hv_t(:,my_thread-1)
-              tau_t(my_thread)  = tau_t(my_thread-1)
-            enddo
-
-          endif
-        enddo ! iter
-
-      else
-
-        ! Codepath for 1 thread without OpenMP
-
-        ! The following code is structured in a way to keep waiting times for
-        ! other PEs at a minimum, especially if there is only one block.
-        ! For this reason, it requests the last column as late as possible
-        ! and sends the Householder vector and the first column as early
-        ! as possible.
-
         do iblk=1,nblocks
 
           ns = na_s + (iblk-1)*nb - n_off ! first column in block
@@ -1302,6 +1115,27 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
           hh_gath(1   ,hh_cnt(iblk),iblk) = tau
           hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+            if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+               ! Wait for last transfer to finish
+
+               call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
+
+               ! Copy vectors into send buffer
+               hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+               ! Send to destination
+               call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
+                           global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
+                           10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
+            ! Reset counter and increase destination row
+               hh_cnt(iblk) = 0
+               hh_dst(iblk) = hh_dst(iblk)+1
+            endif
+
+            ! The following code is structured in a way to keep waiting times for
+            ! other PEs at a minimum, especially if there is only one block.
+            ! For this reason, it requests the last column as late as possible
+            ! and sends the Householder vector and the first column as early
+            ! as possible.
 
           nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
           nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
@@ -1418,31 +1252,6 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
         enddo
 
-      endif
-
-      do iblk = 1, nblocks
-
-        if(hh_dst(iblk) >= np_rows) exit
-        if(snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
-
-        if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-          ! Wait for last transfer to finish
-          call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
-          ! Copy vectors into send buffer
-          hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-          ! Send to destination
-          call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
-                         global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                         10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
-          ! Reset counter and increase destination row
-          hh_cnt(iblk) = 0
-          hh_dst(iblk) = hh_dst(iblk)+1
-        endif
-
-      enddo
-
-    enddo
-
     ! Finish the last outstanding requests
     call mpi_wait(ireq_ab,mpi_status,mpierr)
     call mpi_wait(ireq_hv,mpi_status,mpierr)
@@ -1505,16 +1314,16 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
     integer current_n, current_local_n, current_n_start, current_n_end
     integer next_n, next_local_n, next_n_start, next_n_end
     integer bottom_msg_length, top_msg_length, next_top_msg_length
-    integer thread_width, stripe_width, stripe_count, csw
+    integer stripe_width, last_stripe_width, stripe_count
     integer num_result_blocks, num_result_buffers, num_bufs_recvd
-    integer a_off, current_tv_off, max_blk_size, b_off, b_len
+    integer a_off, current_tv_off, max_blk_size
     integer mpierr, src, src_offset, dst, offset, nfact, num_blk
     integer mpi_status(MPI_STATUS_SIZE)
     logical flag
 
-    real*8, allocatable :: a(:,:,:,:), row(:)
-    real*8, allocatable :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
-    real*8, allocatable :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
+    real*8, allocatable :: a(:,:,:), row(:)
+    real*8, allocatable :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
+    real*8, allocatable :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
     real*8, allocatable :: result_buffer(:,:,:)
     real*8, allocatable :: bcast_buffer(:,:)
 
@@ -1530,9 +1339,6 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
     integer, parameter :: top_recv_tag    = 222
     integer, parameter :: result_recv_tag = 333
 
-    integer :: max_threads, my_thread
-!$  integer :: omp_get_max_threads
-
     ! Just for measuring the kernel performance
     real*8 kernel_time
     integer*8 kernel_flops
@@ -1540,9 +1346,6 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
     kernel_time = 1.d-100
     kernel_flops = 0
-
-    max_threads = 1
-!$  max_threads = omp_get_max_threads()
 
     call MPI_Comm_rank(mpi_comm_rows, my_prow, mpierr)
     call MPI_Comm_size(mpi_comm_rows, np_rows, mpierr)
@@ -1564,18 +1367,17 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
     l_nev = local_index(nev, my_pcol, np_cols, nblk, -1)
 
     if(l_nev==0) then
-        thread_width = 0
         stripe_width = 0
         stripe_count = 0
     else
         ! Suggested stripe width is 48 since 48*64 real*8 numbers should fit into
         ! every primary cache
-        thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
         stripe_width = 48 ! Must be a multiple of 4
-        stripe_count = (thread_width-1)/stripe_width + 1
+        stripe_count = (l_nev-1)/stripe_width + 1
         ! Adapt stripe width so that last one doesn't get too small
-        stripe_width = (thread_width-1)/stripe_count + 1
+        stripe_width = (l_nev-1)/stripe_count + 1
         stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
+        last_stripe_width = l_nev - (stripe_count-1)*stripe_width
     endif
 
     ! Determine the matrix distribution at the beginning
@@ -1589,8 +1391,8 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
     a_dim2 = max_blk_size + nbw
 
 !DEC$ ATTRIBUTES ALIGN: 64:: a
-    allocate(a(stripe_width,a_dim2,stripe_count,max_threads))
-    ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
+    allocate(a(stripe_width,a_dim2,stripe_count))
+    a(:,:,:) = 0
 
     allocate(row(l_nev))
     row(:) = 0
@@ -1601,15 +1403,6 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
     ! The peculiar way it is done below is due to the fact that the last row should be
     ! ready first since it is the first one to start below
 
-    ! Please note about the OMP usage below:
-    ! This is not for speed, but because we want the matrix a in the memory and
-    ! in the cache of the correct thread (if possible)
-
-!$omp parallel do private(my_thread), schedule(static, 1)
-    do my_thread = 1, max_threads
-        a(:,:,:,my_thread) = 0 ! if possible, do first touch allocation!
-    enddo
-
     do ip = np_rows-1, 0, -1
         if(my_prow == ip) then
             ! Receive my rows which have not yet been received
@@ -1618,17 +1411,11 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                 src = mod((i-1)/nblk, np_rows)
                 if(src < my_prow) then
                     call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, mpi_status, mpierr)
-!$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(ip),my_thread)
-                    enddo
+                    call unpack_row(row,i-limits(ip))
                 elseif(src==my_prow) then
                     src_offset = src_offset+1
                     row(:) = q(src_offset, 1:l_nev)
-!$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(ip),my_thread)
-                    enddo
+                    call unpack_row(row,i-limits(ip))
                 endif
             enddo
             ! Send all rows which have not yet been send
@@ -1658,10 +1445,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                 src = mod((i-1)/nblk, np_rows)
                 if(src == ip) then
                     call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, mpi_status, mpierr)
-!$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(my_prow),my_thread)
-                    enddo
+                    call unpack_row(row,i-limits(my_prow))
                 endif
             enddo
         endif
@@ -1703,15 +1487,15 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
     bottom_send_request(:) = MPI_REQUEST_NULL
     bottom_recv_request(:) = MPI_REQUEST_NULL
 
-    allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count))
-    allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count))
-    allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count))
-    allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count))
+    allocate(top_border_send_buffer(stripe_width, nbw, stripe_count))
+    allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count))
+    allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count))
+    allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count))
 
-    top_border_send_buffer(:,:) = 0
-    top_border_recv_buffer(:,:) = 0
-    bottom_border_send_buffer(:,:) = 0
-    bottom_border_recv_buffer(:,:) = 0
+    top_border_send_buffer(:,:,:) = 0
+    top_border_recv_buffer(:,:,:) = 0
+    bottom_border_send_buffer(:,:,:) = 0
+    bottom_border_recv_buffer(:,:,:) = 0
 
     ! Initialize broadcast buffer
 
@@ -1756,9 +1540,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
         if(sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
             do i = 1, stripe_count
-                csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
-                b_len = csw*nbw*max_threads
-                call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow+1, bottom_recv_tag, &
+                call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
                            mpi_comm_rows, bottom_recv_request(i), mpierr)
             enddo
         endif
@@ -1780,27 +1562,14 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
           do i = 1, stripe_count
 
-            ! Get real stripe width for strip i;
-            ! The last OpenMP tasks may have an even smaller stripe with,
-            ! but we don't care about this, i.e. we send/recv a bit too much in this case.
-            ! csw: current_stripe_width
-
-            csw = min(stripe_width, thread_width-(i-1)*stripe_width)
-
             !wait_b
             if(current_n_end < current_n) then
                 call MPI_Wait(bottom_recv_request(i), mpi_status, mpierr)
-!$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    n_off = current_local_n+a_off
-                    b_len = csw*nbw
-                    b_off = (my_thread-1)*b_len
-                    a(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
-                      reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
-                enddo
+                n_off = current_local_n+a_off
+                a(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
                 if(next_n_end < next_n) then
-                    call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
-                                   MPI_REAL8, my_prow+1, bottom_recv_tag, &
+                    call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
+
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
                 endif
             endif
@@ -1810,89 +1579,63 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                 !wait_t
                 if(top_msg_length>0) then
                     call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+                    a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
                 endif
 
                 !compute
-!$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    if(top_msg_length>0) then
-                        b_len = csw*top_msg_length
-                        b_off = (my_thread-1)*b_len
-                        a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
-                          reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
-                    endif
-                    call compute_hh_trafo(0, current_local_n, i, my_thread)
-                enddo
+                call compute_hh_trafo(0, current_local_n, i)
 
                 !send_b
                 call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
                 if(bottom_msg_length>0) then
                     n_off = current_local_n+nbw-bottom_msg_length+a_off
-                    b_len = csw*bottom_msg_length*max_threads
-                    bottom_border_send_buffer(1:b_len,i) = &
-                        reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
-                    call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+                    call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
+                         top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
                 endif
 
             else
 
                 !compute
-!$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread)
-                enddo
+               call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i)
+ 
 
                 !send_b
                 call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
                 if(bottom_msg_length > 0) then
                     n_off = current_local_n+nbw-bottom_msg_length+a_off
-                    b_len = csw*bottom_msg_length*max_threads
-                    bottom_border_send_buffer(1:b_len,i) = &
-                      reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
-                    call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+                    call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
+                         top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
                 endif
 
                 !compute
-!$omp parallel do private(my_thread), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread)
-                enddo
+                call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i)
+            
 
                 !wait_t
                 if(top_msg_length>0) then
                     call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+                    a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+   
                 endif
 
                 !compute
-!$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    if(top_msg_length>0) then
-                        b_len = csw*top_msg_length
-                        b_off = (my_thread-1)*b_len
-                        a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
-                          reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
-                    endif
-                    call compute_hh_trafo(0, top_msg_length, i, my_thread)
-                enddo
+                call compute_hh_trafo(0, top_msg_length, i)
             endif
 
             if(next_top_msg_length > 0) then
                 !request top_border data
-                b_len = csw*next_top_msg_length*max_threads
-                call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow-1, &
-                               top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
+               call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_REAL8, my_prow-1, &
+                    top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
             endif
 
             !send_t
             if(my_prow > 0) then
                 call MPI_Wait(top_send_request(i), mpi_status, mpierr)
-                b_len = csw*nbw*max_threads
-                top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
-                call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_REAL8, &
-                               my_prow-1, bottom_recv_tag, &
-                               mpi_comm_rows, top_send_request(i), mpierr)
+                top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
+                call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow-1, bottom_recv_tag, &
+                     mpi_comm_rows, top_send_request(i), mpierr)
             endif
 
             ! Care that there are not too many outstanding top_recv_request's
@@ -1990,12 +1733,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
         endif
         a_off = a_off + offset
         if(a_off + next_local_n + nbw > a_dim2) then
-!$omp parallel do private(my_thread, i, j), schedule(static, 1)
-            do my_thread = 1, max_threads
-                do i = 1, stripe_count
-                    do j = top_msg_length+1, top_msg_length+next_local_n
-                       A(:,j,i,my_thread) = A(:,j+a_off,i,my_thread)
-                    enddo
+            do i = 1, stripe_count
+                do j = top_msg_length+1, top_msg_length+next_local_n
+                   A(:,j,i) = A(:,j+a_off,i)
                 enddo
             enddo
             a_off = 0
@@ -2043,102 +1783,47 @@ contains
 
     subroutine pack_row(row, n)
         real*8 row(:)
-        integer n, i, noff, nl, nt
-
-        do nt = 1, max_threads
-            do i = 1, stripe_count
-                noff = (nt-1)*thread_width + (i-1)*stripe_width
-                nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-                if(nl<=0) exit
-                row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-            enddo
-        enddo
-
-    end subroutine
-
-    subroutine unpack_row(row, n, my_thread)
-
-        ! Private variables in OMP regions (my_thread) should better be in the argument list!
-        integer, intent(in) :: n, my_thread
-        real*8, intent(in)  :: row(:)
-        integer i, noff, nl
+        integer n, i, noff, nl
 
         do i=1,stripe_count
-            noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-            nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-            if(nl<=0) exit
-            a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
+            nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+            noff = (i-1)*stripe_width
+            row(noff+1:noff+nl) = a(1:nl,n,i)
         enddo
 
     end subroutine
 
-    subroutine compute_hh_trafo(off, ncols, istripe, my_thread)
+    subroutine unpack_row(row, n)
+        real*8 row(:)
+        integer n, i, noff, nl
+        do i=1,stripe_count
+            nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+            noff = (i-1)*stripe_width
+            a(1:nl,n,i) = row(noff+1:noff+nl)
 
-        ! Private variables in OMP regions (my_thread) should better be in the argument list!
-        integer, intent(in) :: off, ncols, istripe, my_thread
-        integer j, jj, jjj, nl, noff
-        real*8 w(nbw,6), ttt
+        enddo
+
+    end subroutine
+
+    subroutine compute_hh_trafo(off, ncols, istripe)
+
+        integer off, ncols, istripe, j, nl, jj
+
+
+        real*8 w(nbw,2), ttt
 
         ttt = mpi_wtime()
-        if(istripe<stripe_count) then
-          nl = stripe_width
-        else
-          noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
-          nl = min(my_thread*thread_width-noff, l_nev-noff)
-          if(nl<=0) return
-        endif
-        
-        !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
+        nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
+
+         !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
         do j = ncols, 2, -2
             w(:,1) = bcast_buffer(1:nbw,j+off)
             w(:,2) = bcast_buffer(1:nbw,j+off-1)
-            call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+            call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
         enddo
-        if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width)
-                
-        ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
-        !do j = ncols, 4, -4
-        !    w(:,1) = bcast_buffer(1:nbw,j+off)
-        !    w(:,2) = bcast_buffer(1:nbw,j+off-1)
-        !    w(:,3) = bcast_buffer(1:nbw,j+off-2)
-        !    w(:,4) = bcast_buffer(1:nbw,j+off-3)
-        !    call quad_hh_trafo(a(1,j+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-        !enddo
-        !do jj = j, 2, -2
-        !    w(:,1) = bcast_buffer(1:nbw,jj+off)
-        !    w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-        !    call double_hh_trafo(a(1,jj+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-        !enddo
-        !if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width)
-
-        ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
-        !do j = ncols, 6, -6
-        !    w(:,1) = bcast_buffer(1:nbw,j+off)
-        !    w(:,2) = bcast_buffer(1:nbw,j+off-1)
-        !    w(:,3) = bcast_buffer(1:nbw,j+off-2)
-        !    w(:,4) = bcast_buffer(1:nbw,j+off-3)
-        !    w(:,5) = bcast_buffer(1:nbw,j+off-4)
-        !    w(:,6) = bcast_buffer(1:nbw,j+off-5)
-        !    call hexa_hh_trafo(a(1,j+off+a_off-5,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-        !enddo
-        !do jj = j, 4, -4
-        !    w(:,1) = bcast_buffer(1:nbw,jj+off)
-        !    w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-        !    w(:,3) = bcast_buffer(1:nbw,jj+off-2)
-        !    w(:,4) = bcast_buffer(1:nbw,jj+off-3)
-        !    call quad_hh_trafo(a(1,jj+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-        !enddo
-        !do jjj = jj, 2, -2
-        !    w(:,1) = bcast_buffer(1:nbw,jjj+off)
-        !    w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
-        !    call double_hh_trafo(a(1,jjj+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-        !enddo
-        !if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width)
-        
-        if(my_thread==1) then
-            kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
-            kernel_time  = kernel_time + mpi_wtime()-ttt
-        endif
+        if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+        kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
+        kernel_time = kernel_time + mpi_wtime()-ttt
 
     end subroutine
 
@@ -2717,10 +2402,10 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
     integer my_prow, np_rows, my_pcol, np_cols
     integer ireq_ab, ireq_hv
     integer na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
-    integer max_threads, my_thread, my_block_s, my_block_e, iter
+  
     integer mpi_status(MPI_STATUS_SIZE)
     integer, allocatable :: mpi_statuses(:,:)
-    integer, allocatable :: omp_block_limits(:)
+  
     integer, allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), global_id_tmp(:,:), hh_cnt(:), hh_dst(:)
     integer, allocatable :: limits(:), snd_limits(:,:)
     integer, allocatable :: block_limits(:)
@@ -2852,24 +2537,6 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
       call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
     enddo
 
-    ! OpenMP work distribution:
-
-    max_threads = 1
-!$ max_threads = omp_get_max_threads()
-
-    ! For OpenMP we need at least 2 blocks for every thread
-    max_threads = MIN(max_threads, nblocks/2)
-    if(max_threads==0) max_threads = 1
-
-    allocate(omp_block_limits(0:max_threads))
-
-    ! Get the OpenMP block limits
-    call divide_band(nblocks, max_threads, omp_block_limits)
-
-    allocate(hv_t(nb,max_threads), tau_t(max_threads))
-    hv_t = 0
-    tau_t = 0
-
     ! ---------------------------------------------------------------------------
     ! Start of calculations
 
@@ -2882,7 +2549,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
       call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
     endif
 
-    do istep=1,na-1-block_limits(my_pe)*nb
+    do istep=1,na-1
 
       if(my_pe==0) then
         n = MIN(na-na_s,nb) ! number of rows to be reduced
@@ -2920,171 +2587,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
         n_off = n_off + nb
       endif
 
-      if(max_threads > 1) then
-
-        ! Codepath for OpenMP
-
-        ! Please note that in this case it is absolutely necessary to have at least 2 blocks per thread!
-        ! Every thread is one reduction cycle behind its predecessor and thus starts one step later.
-        ! This simulates the behaviour of the MPI tasks which also work after each other.
-        ! The code would be considerably easier, if the MPI communication would be made within
-        ! the parallel region - this is avoided here since this would require 
-        ! MPI_Init_thread(MPI_THREAD_MULTIPLE) at the start of the program.
-
-        hv_t(:,1) = hv
-        tau_t(1) = tau
-
-        do iter = 1, 2
-
-          ! iter=1 : work on first block
-          ! iter=2 : work on remaining blocks
-          ! This is done in 2 iterations so that we have a barrier in between:
-          ! After the first iteration, it is guaranteed that the last row of the last block
-          ! is completed by the next thread.
-          ! After the first iteration it is also the place to exchange the last row
-          ! with MPI calls
-
-!$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
-!$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
-          do my_thread = 1, max_threads
-
-            if(iter == 1) then
-              my_block_s = omp_block_limits(my_thread-1) + 1
-              my_block_e = my_block_s
-            else
-              my_block_s = omp_block_limits(my_thread-1) + 2
-              my_block_e = omp_block_limits(my_thread)
-            endif
-
-            do iblk = my_block_s, my_block_e
-
-              ns = na_s + (iblk-1)*nb - n_off - my_thread + 1 ! first column in block
-              ne = ns+nb-1                    ! last column in block
-
-              if(istep<my_thread .or. ns+n_off>na) exit
-
-              hv = hv_t(:,my_thread)
-              tau = tau_t(my_thread)
-
-              ! Store Householder vector for back transformation
-
-              hh_cnt(iblk) = hh_cnt(iblk) + 1
-
-              hh_gath(1   ,hh_cnt(iblk),iblk) = tau
-              hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
-
-              nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
-              nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
-                                            ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
-
-              ! Transform diagonal block
-
-              call ZHEMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,(0.d0,0.d0),hd,1)
-
-              x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
-              hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
-
-              call ZHER2('L',nc,(-1.d0,0.d0),hd,1,hv,1,ab(1,ns),2*nb-1)
-
-              hv_t(:,my_thread) = 0
-              tau_t(my_thread)  = 0
-
-              if(nr<=0) cycle ! No subdiagonal block present any more
-
-              ! Transform subdiagonal block
-
-              call ZGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
-
-              if(nr>1) then
-
-                ! complete (old) Householder transformation for first column
-
-                ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
-
-                ! calculate new Householder transformation for first column
-                ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
-
-                vnorm2 = sum(dble(ab(nb+2:nb+nr,ns))**2+dimag(ab(nb+2:nb+nr,ns))**2)
-                call hh_transform_complex(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
-                hv_t(1   ,my_thread) = 1.
-                hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
-                ab(nb+2:,ns) = 0
-
-                ! update subdiagonal block for old and new Householder transformation
-                ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
-
-                call ZGEMV('C',nr,nb-1,tau_t(my_thread),ab(nb,ns+1),2*nb-1,hv_t(1,my_thread),1,(0.d0,0.d0),h(2),1)
-                x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
-                h(2:nb) = h(2:nb) - x*hv(2:nb)
-                ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
-                do i=2,nb
-                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_t(1:nr,my_thread)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
-                enddo
-
-              else
-
-                ! No new Householder transformation for nr=1, just complete the old one
-                ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
-                do i=2,nb
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
-                enddo
-                ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
-                hv_t(1,my_thread) = 1.
-
-              endif
-
-            enddo
-
-          enddo ! my_thread
-!$omp end parallel do
-
-          if (iter==1) then
-            ! We are at the end of the first block
-
-            ! Send our first column to previous PE
-            if(my_pe>0 .and. na_s <= na) then
-              call mpi_wait(ireq_ab,mpi_status,mpierr)
-              ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
-              call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
-            endif
-
-            ! Request last column from next PE
-            ne = na_s + nblocks*nb - (max_threads-1) - 1
-            if(istep>=max_threads .and. ne <= na) then
-              call mpi_recv(ab(1,ne-n_off),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
-            endif
-
-          else
-            ! We are at the end of all blocks
-
-            ! Send last HH vector and TAU to next PE if it has been calculated above
-            ne = na_s + nblocks*nb - (max_threads-1) - 1
-            if(istep>=max_threads .and. ne < na) then
-              call mpi_wait(ireq_hv,mpi_status,mpierr)
-              hv_s(1) = tau_t(max_threads)
-              hv_s(2:) = hv_t(2:,max_threads)
-              call mpi_isend(hv_s,nb,MPI_COMPLEX16,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
-            endif
-
-            ! "Send" HH vector and TAU to next OpenMP thread
-            do my_thread = max_threads, 2, -1
-              hv_t(:,my_thread) = hv_t(:,my_thread-1)
-              tau_t(my_thread)  = tau_t(my_thread-1)
-            enddo
-
-          endif
-        enddo ! iter
-
-      else
-
-        ! Codepath for 1 thread without OpenMP
-
-        ! The following code is structured in a way to keep waiting times for
-        ! other PEs at a minimum, especially if there is only one block.
-        ! For this reason, it requests the last column as late as possible
-        ! and sends the Householder vector and the first column as early
-        ! as possible.
-
+        
         do iblk=1,nblocks
 
           ns = na_s + (iblk-1)*nb - n_off ! first column in block
@@ -3098,6 +2601,28 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
           hh_gath(1   ,hh_cnt(iblk),iblk) = tau
           hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+
+         if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+            ! Wait for last transfer to finish
+            call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
+            ! Copy vectors into send buffer
+            hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+            ! Send to destination
+            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_COMPLEX16, &
+                           global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
+                           10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
+            ! Reset counter and increase destination row
+            hh_cnt(iblk) = 0
+            hh_dst(iblk) = hh_dst(iblk)+1
+         endif
+
+
+
+         ! The following code is structured in a way to keep waiting times for
+         ! other PEs at a minimum, especially if there is only one block.
+         ! For this reason, it requests the last column as late as possible
+         ! and sends the Householder vector and the first column as early
+         ! as possible.
 
           nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
           nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
@@ -3214,29 +2739,6 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
         enddo
 
-      endif
-
-      do iblk = 1, nblocks
-
-        if(hh_dst(iblk) >= np_rows) exit
-        if(snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
-
-        if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-          ! Wait for last transfer to finish
-          call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
-          ! Copy vectors into send buffer
-          hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-          ! Send to destination
-          call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_COMPLEX16, &
-                         global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                         10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
-          ! Reset counter and increase destination row
-          hh_cnt(iblk) = 0
-          hh_dst(iblk) = hh_dst(iblk)+1
-        endif
-
-      enddo
-
     enddo
 
     ! Finish the last outstanding requests
@@ -3301,16 +2803,16 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     integer current_n, current_local_n, current_n_start, current_n_end
     integer next_n, next_local_n, next_n_start, next_n_end
     integer bottom_msg_length, top_msg_length, next_top_msg_length
-    integer thread_width, stripe_width, stripe_count, csw
+    integer stripe_width, stripe_count
     integer num_result_blocks, num_result_buffers, num_bufs_recvd
-    integer a_off, current_tv_off, max_blk_size, b_off, b_len
+    integer a_off, current_tv_off, max_blk_size
     integer mpierr, src, src_offset, dst, offset, nfact, num_blk
     integer mpi_status(MPI_STATUS_SIZE)
     logical flag
 
-    complex*16, allocatable :: a(:,:,:,:), row(:)
-    complex*16, allocatable :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
-    complex*16, allocatable :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
+    complex*16, allocatable ::  a(:,:,:), row(:)
+    complex*16, allocatable :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
+    complex*16, allocatable :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
     complex*16, allocatable :: result_buffer(:,:,:)
     complex*16, allocatable :: bcast_buffer(:,:)
 
@@ -3326,9 +2828,6 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     integer, parameter :: top_recv_tag    = 222
     integer, parameter :: result_recv_tag = 333
 
-    integer :: max_threads, my_thread
-!$  integer :: omp_get_max_threads
-
     ! Just for measuring the kernel performance
     real*8 kernel_time
     integer*8 kernel_flops
@@ -3336,9 +2835,6 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
     kernel_time = 1.d-100
     kernel_flops = 0
-
-    max_threads = 1
-!$  max_threads = omp_get_max_threads()
 
     call MPI_Comm_rank(mpi_comm_rows, my_prow, mpierr)
     call MPI_Comm_size(mpi_comm_rows, np_rows, mpierr)
@@ -3360,17 +2856,17 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     l_nev = local_index(nev, my_pcol, np_cols, nblk, -1)
 
     if(l_nev==0) then
-        thread_width = 0
-        stripe_width = 0
-        stripe_count = 0
+       stripe_width = 0
+       stripe_count = 0
     else
         ! Suggested stripe width is 48 - should this be reduced for the complex case ???
-        thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
+
         stripe_width = 48 ! Must be a multiple of 4
-        stripe_count = (thread_width-1)/stripe_width + 1
+        stripe_count = (l_nev-1)/stripe_width + 1
         ! Adapt stripe width so that last one doesn't get too small
-        stripe_width = (thread_width-1)/stripe_count + 1
+        stripe_width = (l_nev-1)/stripe_count + 1
         stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
+        last_stripe_width = l_nev - (stripe_count-1)*stripe_width
     endif
 
     ! Determine the matrix distribution at the beginning
@@ -3384,8 +2880,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     a_dim2 = max_blk_size + nbw
 
 !DEC$ ATTRIBUTES ALIGN: 64:: a
-    allocate(a(stripe_width,a_dim2,stripe_count,max_threads))
-    ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
+    allocate(a(stripe_width,a_dim2,stripe_count))
+    a(:,:,:) = 0
 
     allocate(row(l_nev))
     row(:) = 0
@@ -3396,15 +2892,6 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     ! The peculiar way it is done below is due to the fact that the last row should be
     ! ready first since it is the first one to start below
 
-    ! Please note about the OMP usage below:
-    ! This is not for speed, but because we want the matrix a in the memory and
-    ! in the cache of the correct thread (if possible)
-
-!$omp parallel do private(my_thread), schedule(static, 1)
-    do my_thread = 1, max_threads
-        a(:,:,:,my_thread) = 0 ! if possible, do first touch allocation!
-    enddo
-
     do ip = np_rows-1, 0, -1
         if(my_prow == ip) then
             ! Receive my rows which have not yet been received
@@ -3413,17 +2900,11 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
                 src = mod((i-1)/nblk, np_rows)
                 if(src < my_prow) then
                     call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
-!$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(ip),my_thread)
-                    enddo
+                    call unpack_row(row,i-limits(ip))
                 elseif(src==my_prow) then
                     src_offset = src_offset+1
                     row(:) = q(src_offset, 1:l_nev)
-!$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(ip),my_thread)
-                    enddo
+                    call unpack_row(row,i-limits(ip))
                 endif
             enddo
             ! Send all rows which have not yet been send
@@ -3453,10 +2934,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
                 src = mod((i-1)/nblk, np_rows)
                 if(src == ip) then
                     call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
-!$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(my_prow),my_thread)
-                    enddo
+                    call unpack_row(row,i-limits(my_prow))
                 endif
             enddo
         endif
@@ -3498,16 +2976,15 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     bottom_send_request(:) = MPI_REQUEST_NULL
     bottom_recv_request(:) = MPI_REQUEST_NULL
 
-    allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count))
-    allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count))
-    allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count))
-    allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count))
+    allocate(top_border_send_buffer(stripe_width, nbw, stripe_count))
+    allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count))
+    allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count))
+    allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count))
 
-    top_border_send_buffer(:,:) = 0
-    top_border_recv_buffer(:,:) = 0
-    bottom_border_send_buffer(:,:) = 0
-    bottom_border_recv_buffer(:,:) = 0
-
+    top_border_send_buffer(:,:,:) = 0
+    top_border_recv_buffer(:,:,:) = 0
+    bottom_border_send_buffer(:,:,:) = 0
+    bottom_border_recv_buffer(:,:,:) = 0
     ! Initialize broadcast buffer
 
     allocate(bcast_buffer(nbw, max_blk_size))
@@ -3551,10 +3028,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
         if(sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
             do i = 1, stripe_count
-                csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
-                b_len = csw*nbw*max_threads
-                call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
-                           mpi_comm_rows, bottom_recv_request(i), mpierr)
+                call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
+                     mpi_comm_rows, bottom_recv_request(i), mpierr)
             enddo
         endif
 
@@ -3575,27 +3050,14 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
           do i = 1, stripe_count
 
-            ! Get real stripe width for strip i;
-            ! The last OpenMP tasks may have an even smaller stripe with,
-            ! but we don't care about this, i.e. we send/recv a bit too much in this case.
-            ! csw: current_stripe_width
-
-            csw = min(stripe_width, thread_width-(i-1)*stripe_width)
-
             !wait_b
             if(current_n_end < current_n) then
                 call MPI_Wait(bottom_recv_request(i), mpi_status, mpierr)
-!$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    n_off = current_local_n+a_off
-                    b_len = csw*nbw
-                    b_off = (my_thread-1)*b_len
-                    a(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
-                      reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
-                enddo
+                n_off = current_local_n+a_off
+                a(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
                 if(next_n_end < next_n) then
-                    call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
-                                   MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
+                   call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
+
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
                 endif
             endif
@@ -3606,87 +3068,58 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
                 if(top_msg_length>0) then
                     call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
                 endif
-
+                a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
                 !compute
-!$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    if(top_msg_length>0) then
-                        b_len = csw*top_msg_length
-                        b_off = (my_thread-1)*b_len
-                        a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
-                          reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
-                    endif
-                    call compute_hh_trafo(0, current_local_n, i, my_thread)
-                enddo
+                call compute_hh_trafo(0, current_local_n, i)
 
                 !send_b
                 call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
                 if(bottom_msg_length>0) then
                     n_off = current_local_n+nbw-bottom_msg_length+a_off
-                    b_len = csw*bottom_msg_length*max_threads
-                    bottom_border_send_buffer(1:b_len,i) = &
-                        reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
-                    call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, &
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+                    call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX16, my_prow+1, &
+                         top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
                 endif
 
             else
 
                 !compute
-!$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread)
-                enddo
+               call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i)
 
                 !send_b
                 call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
                 if(bottom_msg_length > 0) then
                     n_off = current_local_n+nbw-bottom_msg_length+a_off
-                    b_len = csw*bottom_msg_length*max_threads
-                    bottom_border_send_buffer(1:b_len,i) = &
-                      reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
-                    call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, &
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+                    call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX16, my_prow+1, &
+                         top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
                 endif
 
                 !compute
-!$omp parallel do private(my_thread), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread)
-                enddo
+                call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i)
 
                 !wait_t
                 if(top_msg_length>0) then
                     call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
                 endif
+                a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
 
                 !compute
-!$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    if(top_msg_length>0) then
-                        b_len = csw*top_msg_length
-                        b_off = (my_thread-1)*b_len
-                        a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
-                          reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
-                    endif
-                    call compute_hh_trafo(0, top_msg_length, i, my_thread)
-                enddo
+                call compute_hh_trafo(0, top_msg_length, i)
             endif
 
             if(next_top_msg_length > 0) then
                 !request top_border data
-                b_len = csw*next_top_msg_length*max_threads
-                call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_COMPLEX16, my_prow-1, &
+               call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_COMPLEX16, my_prow-1, &
+
                                top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
             endif
 
             !send_t
             if(my_prow > 0) then
                 call MPI_Wait(top_send_request(i), mpi_status, mpierr)
-                b_len = csw*nbw*max_threads
-                top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
-                call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_COMPLEX16, &
-                               my_prow-1, bottom_recv_tag, &
+                top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
+                call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow-1, bottom_recv_tag, &
                                mpi_comm_rows, top_send_request(i), mpierr)
             endif
 
@@ -3785,12 +3218,9 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
         endif
         a_off = a_off + offset
         if(a_off + next_local_n + nbw > a_dim2) then
-!$omp parallel do private(my_thread, i, j), schedule(static, 1)
-            do my_thread = 1, max_threads
-                do i = 1, stripe_count
-                    do j = top_msg_length+1, top_msg_length+next_local_n
-                       A(:,j,i,my_thread) = A(:,j+a_off,i,my_thread)
-                    enddo
+            do i = 1, stripe_count
+                do j = top_msg_length+1, top_msg_length+next_local_n
+                   A(:,j,i) = A(:,j+a_off,i)
                 enddo
             enddo
             a_off = 0
@@ -3835,43 +3265,36 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     deallocate(bottom_recv_request)
 
 contains
-
     subroutine pack_row(row, n)
         complex*16 row(:)
-        integer n, i, noff, nl, nt
-
-        do nt = 1, max_threads
-            do i = 1, stripe_count
-                noff = (nt-1)*thread_width + (i-1)*stripe_width
-                nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-                if(nl<=0) exit
-                row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-            enddo
-        enddo
-
-    end subroutine
-
-    subroutine unpack_row(row, n, my_thread)
-
-        ! Private variables in OMP regions (my_thread) should better be in the argument list!
-        integer, intent(in) :: n, my_thread
-        complex*16, intent(in)  :: row(:)
-        integer i, noff, nl
+        integer n, i, noff, nl
 
         do i=1,stripe_count
-            noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-            nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-            if(nl<=0) exit
-            a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
+            nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+            noff = (i-1)*stripe_width
+            row(noff+1:noff+nl) = a(1:nl,n,i)
+
+
+
         enddo
+      end subroutine pack_row
+   subroutine unpack_row(row, n)
+        complex*16 row(:)
+        integer n, i, noff, nl
 
-    end subroutine
+        do i=1,stripe_count
+            nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+            noff = (i-1)*stripe_width
+            a(1:nl,n,i) = row(noff+1:noff+nl)
 
-    subroutine compute_hh_trafo(off, ncols, istripe, my_thread)
+        enddo
+      end  subroutine unpack_row
+
+      subroutine compute_hh_trafo(off, ncols, istripe)
 
         ! Private variables in OMP regions (my_thread) should better be in the argument list!
-        integer, intent(in) :: off, ncols, istripe, my_thread
-        integer j, nl, noff
+        integer, intent(in) :: off, ncols, istripe
+        integer j, nl
         real*8 ttt
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !        Currently (on Sandy Bridge), single is faster than double
@@ -3882,13 +3305,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         ttt = mpi_wtime()
-        if(istripe<stripe_count) then
-          nl = stripe_width
-        else
-          noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
-          nl = min(my_thread*thread_width-noff, l_nev-noff)
-          if(nl<=0) return
-        endif
+        nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !        Currently (on Sandy Bridge), single is faster than double
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3902,12 +3319,12 @@ contains
 !        Currently (on Sandy Bridge), single is faster than double
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         do j = ncols, 1, -1
-          call single_hh_trafo_complex(a(1,j+off+a_off,istripe,my_thread),bcast_buffer(1,j+off),nbw,nl,stripe_width)
+           call single_hh_trafo_complex(a(1,j+off+a_off,istripe),bcast_buffer(1,j+off),nbw,nl,stripe_width)
         enddo
-        if(my_thread==1) then
+    
           kernel_flops = kernel_flops + 4*4*int(nl,8)*int(ncols,8)*int(nbw,8)
           kernel_time  = kernel_time + mpi_wtime()-ttt
-        endif
+ 
 
     end subroutine
 

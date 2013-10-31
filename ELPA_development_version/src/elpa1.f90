@@ -351,13 +351,9 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
    integer istep, i, j, lcs, lce, lrs, lre
    integer tile_size, l_rows_tile, l_cols_tile
 
-   integer my_thread, n_threads, max_threads, n_iter
-!$ integer omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
-
    real*8 vav, vnorm2, x, aux(2*max_stored_rows), aux1(2), aux2(2), vrl, xf
 
    real*8, allocatable:: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
-   real*8, allocatable:: ur_p(:,:), uc_p(:,:)
 
    integer pcol, prow
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
@@ -390,11 +386,6 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
    allocate(ur(max_local_rows))
    allocate(vc(max_local_cols))
    allocate(uc(max_local_cols))
-
-   max_threads = 1
-!$ max_threads = omp_get_max_threads()
-   allocate(ur_p(max_local_rows,0:max_threads-1))
-   allocate(uc_p(max_local_cols,0:max_threads-1))
 
    tmp = 0
    vr = 0
@@ -487,16 +478,6 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
       ur(1:l_rows) = 0
       if(l_rows>0 .and. l_cols>0) then
 
-!$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,lcs,lce,j,lrs,lre)
-         my_thread = 0
-         n_threads = 1
-!$       my_thread = omp_get_thread_num()
-!$       n_threads = omp_get_num_threads()
-         n_iter = 0
-
-         uc_p(1:l_cols,my_thread) = 0.
-         ur_p(1:l_rows,my_thread) = 0.
-
          do i=0,(istep-2)/tile_size
             lcs = i*l_cols_tile+1
             lce = min(l_cols,(i+1)*l_cols_tile)
@@ -505,18 +486,10 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
                lrs = j*l_rows_tile+1
                lre = min(l_rows,(j+1)*l_rows_tile)
                if(lre<lrs) cycle
-               if(mod(n_iter,n_threads) == my_thread) then
-                 call DGEMV('T',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vr(lrs),1,1.d0,uc_p(lcs,my_thread),1)
-                 if(i/=j) call DGEMV('N',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vc(lcs),1,1.d0,ur_p(lrs,my_thread),1)
-               endif
-               n_iter = n_iter+1
+               call DGEMV('T',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vr(lrs),1,1.d0,uc(lcs),1)
+                 if(i/=j) call DGEMV('N',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vc(lcs),1,1.d0,ur(lrs),1)
+                 n_iter = n_iter+1
             enddo
-         enddo
-!$OMP END PARALLEL
-
-         do i=0,max_threads-1
-            uc(1:l_cols) = uc(1:l_cols) + uc_p(1:l_cols,i)
-            ur(1:l_rows) = ur(1:l_rows) + ur_p(1:l_rows,i)
          enddo
 
          if(nstor>0) then
@@ -1055,14 +1028,10 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
    integer istep, i, j, lcs, lce, lrs, lre
    integer tile_size, l_rows_tile, l_cols_tile
 
-   integer my_thread, n_threads, max_threads, n_iter
-!$ integer omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
-
    real*8 vnorm2
    complex*16 vav, xc, aux(2*max_stored_rows),  aux1(2), aux2(2), vrl, xf
 
    complex*16, allocatable:: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
-   complex*16, allocatable:: ur_p(:,:), uc_p(:,:)
    real*8, allocatable:: tmpr(:)
 
    integer pcol, prow
@@ -1096,11 +1065,6 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
    allocate(ur(max_local_rows))
    allocate(vc(max_local_cols))
    allocate(uc(max_local_cols))
-
-   max_threads = 1
-!$ max_threads = omp_get_max_threads()
-   allocate(ur_p(max_local_rows,0:max_threads-1))
-   allocate(uc_p(max_local_cols,0:max_threads-1))
 
    tmp = 0
    vr = 0
@@ -1193,16 +1157,6 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
       ur(1:l_rows) = 0
       if(l_rows>0 .and. l_cols>0) then
 
-!$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,lcs,lce,j,lrs,lre)
-         my_thread = 0
-         n_threads = 1
-!$       my_thread = omp_get_thread_num()
-!$       n_threads = omp_get_num_threads()
-         n_iter = 0
-
-         uc_p(1:l_cols,my_thread) = 0.
-         ur_p(1:l_rows,my_thread) = 0.
-
          do i=0,(istep-2)/tile_size
             lcs = i*l_cols_tile+1
             lce = min(l_cols,(i+1)*l_cols_tile)
@@ -1211,18 +1165,10 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
                lrs = j*l_rows_tile+1
                lre = min(l_rows,(j+1)*l_rows_tile)
                if(lre<lrs) cycle
-               if(mod(n_iter,n_threads) == my_thread) then
-                  call ZGEMV('C',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vr(lrs),1,CONE,uc_p(lcs,my_thread),1)
-                  if(i/=j) call ZGEMV('N',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vc(lcs),1,CONE,ur_p(lrs,my_thread),1)
-               endif
+               call ZGEMV('C',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vr(lrs),1,CONE,uc(lcs),1)
+               if(i/=j) call ZGEMV('N',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vc(lcs),1,CONE,ur(lrs),1)
                n_iter = n_iter+1
             enddo
-         enddo
-!$OMP END PARALLEL
-
-         do i=0,max_threads-1
-            uc(1:l_cols) = uc(1:l_cols) + uc_p(1:l_cols,i)
-            ur(1:l_rows) = ur(1:l_rows) + ur_p(1:l_rows,i)
          enddo
 
          if(nstor>0) then
@@ -2180,7 +2126,6 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
    real*8 z(na), d1(na), d2(na), z1(na), delta(na), dbase(na), ddiff(na), ev_scale(na), tmp(na)
    real*8 d1u(na), zu(na), d1l(na), zl(na)
    real*8, allocatable :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
-   real*8, allocatable :: z_p(:,:)
 
    integer i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, l_rqm, ns, info
    integer l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, l_cols_qreorg, np, l_idx, nqcols1, nqcols2
@@ -2188,13 +2133,6 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
    integer np_next, np_prev, np_rem
    integer idx(na), idx1(na), idx2(na)
    integer coltyp(na), idxq1(na), idxq2(na)
-
-   integer max_threads, my_thread
-!$ integer omp_get_max_threads, omp_get_thread_num
-
-   max_threads = 1
-!$ max_threads = omp_get_max_threads()
-   allocate(z_p(na,0:max_threads-1))
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -2468,16 +2406,11 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       ! Solve secular equation
 
       z(1:na1) = 1
-      z_p(1:na1,:) = 1
       dbase(1:na1) = 0
       ddiff(1:na1) = 0
 
       info = 0
 
-!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,j)
-      my_thread = 0
-!$    my_thread = omp_get_thread_num()
-!$OMP DO
       DO i = my_proc+1, na1, n_procs ! work distributed over all processors
 
          call DLAED4(na1, i, d1, z1, delta, rho, s, info) ! s is not used!
@@ -2492,9 +2425,9 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
          ! Compute updated z
 
          do j=1,na1
-            if(i/=j)  z_p(j,my_thread) = z_p(j,my_thread)*( delta(j) / (d1(j)-d1(i)) )
+            if(i/=j)  z(j) = z(j)*( delta(j) / (d1(j)-d1(i)) )
          enddo
-         z_p(i,my_thread) = z_p(i,my_thread)*delta(i)
+         z(i) = z(i)*delta(i)
 
          ! store dbase/ddiff
 
@@ -2511,10 +2444,6 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
             ddiff(i) = delta(i)
          endif
       enddo
-!$OMP END PARALLEL
-      do i = 0, max_threads-1
-         z(1:na1) = z(1:na1)*z_p(1:na1,i)
-      enddo
 
       call global_product(z, na1)
       z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
@@ -2527,7 +2456,6 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
 
       ev_scale(:) = 0
 
-!$OMP PARALLEL DO PRIVATE(i,tmp)
       DO i = my_proc+1, na1, n_procs ! work distributed over all processors
 
          ! tmp(1:na1) = z(1:na1) / delta(1:na1,i)  ! original code
@@ -2541,7 +2469,7 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
          tmp(1:na1) = z(1:na1) / tmp(1:na1)
          ev_scale(i) = 1.0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
       enddo
-!$OMP END PARALLEL DO
+
       call global_gather(ev_scale, na1)
 
       ! Add the deflated eigenvalues
