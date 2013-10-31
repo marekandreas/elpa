@@ -39,6 +39,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 program test_complex2
 
 !-------------------------------------------------------------------------------
@@ -89,7 +90,9 @@ program test_complex2
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    integer :: STATUS
-
+#ifdef WITH_OPENMP
+   integer :: omp_get_max_threads
+#endif
    logical :: write_to_file
    !-------------------------------------------------------------------------------
    !  Parse command line argumnents, if given
@@ -131,6 +134,43 @@ program test_complex2
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
    STATUS = 0
+
+#ifdef WITH_OPENMP
+   if (myid .eq. 0) then
+      print *,"Threaded version of test program"
+      print *,"Using ",omp_get_max_threads()," threads"
+      print *," "
+   endif
+#endif
+
+   if (myid .eq. 0) then
+      print *," "
+      print *,"This ELPA2 is build with"
+#ifdef WITH_AVX_COMPLEX_BLOCK2
+      print *,"AVX optimized kernel (2 blocking) for complex matrices"
+#endif
+#ifdef WITH_AVX_COMPLEX_BLOCK1
+      print *,"AVX optimized kernel (1 blocking) for complex matrices"
+#endif
+#ifdef WITH_AVX_SANDYBRIDGE
+     print *,"AVX SANDYBRIDGE optimized kernel for complex matrices"
+#endif
+#ifdef WITH_GENERIC
+     print *,"GENERIC kernel for complex matrices"
+#endif
+#ifdef WITH_GENERIC_SIMPLE
+     print *,"GENERIC SIMPLE kernel for complex matrices"
+#endif
+#ifdef WITH_SSE_AS
+     print *,"SSE ASSEMBLER kernel for complex matrices"
+#endif
+#ifdef WITH_BGP
+     print *,"BGP kernel for complex matrices"
+#endif
+#ifdef WITH_BGQ
+     print *,"BGQ kernel for complex matrices"
+#endif
+   endif
 
    if (arg4 .eq. "output") then 
       write_to_file = .true.
@@ -238,6 +278,7 @@ program test_complex2
    if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
    if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
    if(myid == 0) print *,'Time transform back EVs :',time_evp_back
+   if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
 
    if(write_to_file) then
       if (myid == 0) then

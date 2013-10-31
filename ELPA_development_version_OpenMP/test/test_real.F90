@@ -39,6 +39,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 program test_real
 
 !-------------------------------------------------------------------------------
@@ -86,7 +87,9 @@ program test_real
 
 
    integer :: STATUS
-
+#ifdef WITH_OPENMP
+   integer :: omp_get_max_threads
+#endif
    logical :: write_to_file
    !-------------------------------------------------------------------------------
    !  Parse command line argumnents, if given
@@ -139,7 +142,13 @@ program test_real
 
 
    STATUS = 0
-
+#ifdef WITH_OPENMP
+   if (myid .eq. 0) then
+      print *,"Threaded version of test program"
+      print *,"Using ",omp_get_max_threads()," threads"
+      print *," "
+   endif
+#endif
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
@@ -254,10 +263,10 @@ program test_real
      print *
    end if
 
-   if(myid == 0) print *,'Time tridiag_real :',time_evp_fwd
-   if(myid == 0) print *,'Time solve_tridi  :',time_evp_solve
-   if(myid == 0) print *,'Time trans_ev_real:',time_evp_back
-
+   if(myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
+   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+   if(myid == 0) print *,'Time trans_ev_real    :',time_evp_back
+   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
    if(write_to_file) then
       if (myid == 0) then
          open(17,file="EVs_real_out.txt",form='formatted',status='new')

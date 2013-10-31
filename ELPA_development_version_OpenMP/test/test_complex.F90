@@ -39,6 +39,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 program test_complex
 
 !-------------------------------------------------------------------------------
@@ -87,7 +88,9 @@ program test_complex
 
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
    integer :: STATUS
-
+#ifdef WITH_OPENMP
+   integer :: omp_get_max_threads
+#endif
    logical :: write_to_file
    !-------------------------------------------------------------------------------
    !  Parse command line argumnents, if given
@@ -128,7 +131,13 @@ program test_complex
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
    STATUS = 0
-     
+#ifdef WITH_OPENMP
+   if (myid .eq. 0) then
+      print *,"Threaded version of test program"
+      print *,"Using ",omp_get_max_threads()," threads"
+      print *," "
+   endif
+#endif
    if (arg4 .eq. "output") then 
       write_to_file = .true.
       if (myid .eq. 0) print *,"Writing output files"
@@ -259,9 +268,10 @@ program test_complex
      print *
    end if
 
-   if(myid == 0) print *,'Time tridiag_complex :',time_evp_fwd
-   if(myid == 0) print *,'Time solve_tridi     :',time_evp_solve
-   if(myid == 0) print *,'Time trans_ev_complex:',time_evp_back
+   if(myid == 0) print *,'Time tridiag_complex  :',time_evp_fwd
+   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+   if(myid == 0) print *,'Time trans_ev_complex :',time_evp_back
+   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
 
    if(write_to_file) then
       if (myid == 0) then
