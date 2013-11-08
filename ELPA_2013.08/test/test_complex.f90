@@ -339,7 +339,7 @@ program test_complex
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
-
+   call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
    call EXIT(STATUS)
 end

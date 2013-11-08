@@ -96,8 +96,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = elpa.pc
 
 # test programs
-noinst_bindir = $(abs_top_builddir)
-noinst_bin_PROGRAMS = test_real test_real2 test_complex test_complex2
+#noinst_bindir = $(abs_top_builddir)
+bin_PROGRAMS = test_real test_real2 test_complex test_complex2
 
 test_real_SOURCES = test/test_real.f90
 test_real_LDADD = libelpa.la 

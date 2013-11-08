@@ -80,7 +80,7 @@ host_triplet = @host@
 @WITH_AVX_REAL_BLOCK2_TRUE@am__append_10 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
 @WITH_AVX_REAL_BLOCK4_TRUE@am__append_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
 @WITH_AVX_REAL_BLOCK6_TRUE@am__append_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
-noinst_bin_PROGRAMS = test_real$(EXEEXT) test_real2$(EXEEXT) \
+bin_PROGRAMS = test_real$(EXEEXT) test_real2$(EXEEXT) \
 	test_complex$(EXEEXT) test_complex2$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) \
@@ -129,7 +129,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(noinst_bindir)" \
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(filesdir)" "$(DESTDIR)$(pkgconfigdir)" \
 	"$(DESTDIR)$(elpa_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
@@ -180,7 +180,7 @@ libelpa_la_OBJECTS = $(am_libelpa_la_OBJECTS)
 libelpa_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libelpa_la_LDFLAGS) $(LDFLAGS) -o $@
-PROGRAMS = $(noinst_bin_PROGRAMS)
+PROGRAMS = $(bin_PROGRAMS)
 am_test_complex_OBJECTS = test/test_complex.$(OBJEXT)
 test_complex_OBJECTS = $(am_test_complex_OBJECTS)
 test_complex_DEPENDENCIES = libelpa.la
@@ -438,9 +438,6 @@ files_DATA = \
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = elpa.pc
-
-# test programs
-noinst_bindir = $(abs_top_builddir)
 test_real_SOURCES = test/test_real.f90
 test_real_LDADD = libelpa.la 
 test_real2_SOURCES = test/test_real2.f90
@@ -594,12 +591,12 @@ src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo:  \
 	src/elpa2_kernels/$(DEPDIR)/$(am__dirstamp)
 libelpa.la: $(libelpa_la_OBJECTS) $(libelpa_la_DEPENDENCIES) $(EXTRA_libelpa_la_DEPENDENCIES) 
 	$(libelpa_la_LINK) -rpath $(libdir) $(libelpa_la_OBJECTS) $(libelpa_la_LIBADD) $(LIBS)
-install-noinst_binPROGRAMS: $(noinst_bin_PROGRAMS)
+install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
-	@list='$(noinst_bin_PROGRAMS)'; test -n "$(noinst_bindir)" || list=; \
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
 	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(noinst_bindir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(noinst_bindir)" || exit 1; \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
 	fi; \
 	for p in $$list; do echo "$$p $$p"; done | \
 	sed 's/$(EXEEXT)$$//' | \
@@ -617,23 +614,23 @@ install-noinst_binPROGRAMS: $(noinst_bin_PROGRAMS)
 	while read type dir files; do \
 	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
 	    test -z "$$files" || { \
-	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(noinst_bindir)$$dir'"; \
-	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(noinst_bindir)$$dir" || exit $$?; \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
 	    } \
 	; done
 
-uninstall-noinst_binPROGRAMS:
+uninstall-binPROGRAMS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(noinst_bin_PROGRAMS)'; test -n "$(noinst_bindir)" || list=; \
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
 	files=`for p in $$list; do echo "$$p"; done | \
 	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
 	      -e 's/$$/$(EXEEXT)/' `; \
 	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(noinst_bindir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(noinst_bindir)" && rm -f $$files
+	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(bindir)" && rm -f $$files
 
-clean-noinst_binPROGRAMS:
-	@list='$(noinst_bin_PROGRAMS)'; test -n "$$list" || exit 0; \
+clean-binPROGRAMS:
+	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
 	echo " rm -f" $$list; \
 	rm -f $$list || exit $$?; \
 	test -n "$(EXEEXT)" || exit 0; \
@@ -1194,8 +1191,10 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS) \
 		config.h
+install-binPROGRAMS: install-libLTLIBRARIES
+
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(noinst_bindir)" "$(DESTDIR)$(filesdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(elpa_includedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(filesdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(elpa_includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -1237,8 +1236,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
-	clean-noinst_binPROGRAMS mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
+	clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1260,13 +1259,13 @@ info: info-am
 info-am:
 
 install-data-am: install-filesDATA install-nobase_elpa_includeHEADERS \
-	install-noinst_binPROGRAMS install-pkgconfigDATA
+	install-pkgconfigDATA
 
 install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-libLTLIBRARIES
+install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
 
 install-html: install-html-am
 
@@ -1308,33 +1307,33 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-filesDATA uninstall-libLTLIBRARIES \
-	uninstall-nobase_elpa_includeHEADERS \
-	uninstall-noinst_binPROGRAMS uninstall-pkgconfigDATA
+uninstall-am: uninstall-binPROGRAMS uninstall-filesDATA \
+	uninstall-libLTLIBRARIES uninstall-nobase_elpa_includeHEADERS \
+	uninstall-pkgconfigDATA
 
 .MAKE: all check-am install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-TESTS check-am \
-	clean clean-cscope clean-generic clean-libLTLIBRARIES \
-	clean-libtool clean-noinst_binPROGRAMS cscope cscopelist ctags \
+	clean clean-binPROGRAMS clean-cscope clean-generic \
+	clean-libLTLIBRARIES clean-libtool cscope cscopelist ctags \
 	dist dist-all dist-bzip2 dist-gzip dist-lzip dist-shar \
 	dist-tarZ dist-xz dist-zip distcheck distclean \
 	distclean-compile distclean-generic distclean-hdr \
 	distclean-libtool distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-filesDATA \
-	install-html install-html-am install-info install-info-am \
-	install-libLTLIBRARIES install-man \
-	install-nobase_elpa_includeHEADERS install-noinst_binPROGRAMS \
-	install-pdf install-pdf-am install-pkgconfigDATA install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-filesDATA uninstall-libLTLIBRARIES \
-	uninstall-nobase_elpa_includeHEADERS \
-	uninstall-noinst_binPROGRAMS uninstall-pkgconfigDATA
+	install install-am install-binPROGRAMS install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-filesDATA install-html install-html-am \
+	install-info install-info-am install-libLTLIBRARIES \
+	install-man install-nobase_elpa_includeHEADERS install-pdf \
+	install-pdf-am install-pkgconfigDATA install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-filesDATA \
+	uninstall-libLTLIBRARIES uninstall-nobase_elpa_includeHEADERS \
+	uninstall-pkgconfigDATA
 
 
 test_real.sh:
