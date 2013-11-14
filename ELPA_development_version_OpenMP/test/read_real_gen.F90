@@ -39,6 +39,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 program read_real_gen
 
 !-------------------------------------------------------------------------------
@@ -78,11 +79,27 @@ program read_real_gen
 
    character(256) :: filename, fmttype
    real*8 ttt0, ttt1
-
+#ifdef WITH_OPENMP
+   integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+#endif
    !-------------------------------------------------------------------------------
    !  MPI Initialization
-
+#ifndef WITH_OPENMP
    call mpi_init(mpierr)
+#else
+   required_mpi_thread_level = MPI_THREAD_MULTIPLE
+ 
+   call mpi_init_thread(required_mpi_thread_level,     &
+                        provided_mpi_thread_level, mpierr)
+
+   if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
+      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+      print *,"           ", provided_mpi_thread_level, " is available"
+      stop
+   endif
+
+#endif
+
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
@@ -391,7 +408,7 @@ program read_real_gen
    err = maxval(abs(tmp1))
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
-
+   call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 
 

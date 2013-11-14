@@ -361,5 +361,6 @@ program test_real_gen
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
 
+   call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 end

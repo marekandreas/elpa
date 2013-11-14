@@ -87,7 +87,7 @@ program test_real2
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
    integer :: STATUS
 #ifdef WITH_OPENMP
-   integer :: omp_get_max_threads
+   integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    logical :: write_to_file
    !-------------------------------------------------------------------------------
@@ -124,7 +124,20 @@ program test_real2
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
+#ifndef WITH_OPENMP
    call mpi_init(mpierr)
+#else
+   required_mpi_thread_level = MPI_THREAD_MULTIPLE
+   call mpi_init_thread(required_mpi_thread_level,     &
+                        provided_mpi_thread_level, mpierr)
+
+   if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
+      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+      print *,"           ", provided_mpi_thread_level, " is available"
+      stop
+   endif
+
+#endif  
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
@@ -379,7 +392,7 @@ program test_real2
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
-
+   call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
    call EXIT(STATUS)
 end

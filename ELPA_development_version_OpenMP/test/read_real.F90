@@ -39,6 +39,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 program read_real
 
 !-------------------------------------------------------------------------------
@@ -76,11 +77,27 @@ program read_real
    real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
    character*256 filename
-
+#ifdef WITH_OPENMP
+   integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+#endif
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
+#ifndef WITH_OPENMP
    call mpi_init(mpierr)
+#else
+   required_mpi_thread_level = MPI_THREAD_MULTIPLE
+
+   call mpi_init_thread(required_mpi_thread_level,     &
+                        provided_mpi_thread_level, mpierr)
+
+   if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
+      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+      print *,"           ", provided_mpi_thread_level, " is available"
+      stop
+   endif
+
+#endif
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
@@ -268,7 +285,7 @@ program read_real
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
-
+   call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 
 end
