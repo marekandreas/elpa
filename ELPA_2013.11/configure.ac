@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([elpa],[2013.08.001], elpa-library@rzg.mpg.de)
+AC_INIT([elpa],[2013.11.000], elpa-library@rzg.mpg.de)
 AC_CONFIG_SRCDIR([src/elpa1.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
@@ -24,7 +24,7 @@ AX_PROG_FC_MPI([],[have_mpi=yes],[have_mpi=no
 		  fi])
 
 
-AC_SUBST([ELPA_LIB_VERSION], [2013.08.001])
+AC_SUBST([ELPA_LIB_VERSION], [2013.11.000])
 # this is the version of the API, should be changed in the major revision
 # if and only if the actual API changes
 AC_SUBST([ELPA_SO_VERSION], [0:0:0])
