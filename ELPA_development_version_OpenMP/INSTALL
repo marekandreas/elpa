@@ -90,8 +90,20 @@ B) Installing ELPA without the autotools procedure
     - the file elpa2.F90 uses preprocessor defines for the different kernels.
       you will have to do this by hand, if you do not use the autotools 
       infrastructure.
+    - also the test programs now use preprocessor defines, discriminating
+      between version with and without OpenMP
+    - it is entirely possible that due to ever growing complexity of ELPA
+      in future releases the build procedure without autotools will not be 
+      supported anymore
+      
 
-
+    Thus, if you really want to use ELPA this way and not with the autotools
+    please ensure the following
+    - make yourself familiar with the preprocessor flags you will need
+      for your configuration of ELPA and define them in a file "config-f90.h"
+    - adapte the Makefile.example accordingly to your needs
+   
+    Again, it is strongly encouraged to use the autotools build procedure!
 
 How to use ELPA:
 -----------------
