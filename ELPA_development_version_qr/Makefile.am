@@ -147,14 +147,14 @@ nobase_elpa_include_HEADERS = $(wildcard modules/*)
 # other files to distribute
 filesdir = $(datarootdir)
 files_DATA = \
-	test/read_real.f90 \
-	test/read_real_gen.f90 \
+	test/read_real.F90 \
+	test/read_real_gen.F90 \
 	test/test_complex2.F90 \
 	test/test_complex.F90 \
-	test/test_complex_gen.f90 \
+	test/test_complex_gen.F90 \
 	test/test_real2.F90 \
 	test/test_real.F90 \
-	test/test_real_gen.f90
+	test/test_real_gen.F90
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
@@ -166,8 +166,9 @@ build_lib = libelpa_mt.la
 else
 build_lib = libelpa.la 
 endif
-noinst_bindir = $(abs_top_builddir)
-noinst_bin_PROGRAMS = test_real test_real2 test_complex test_complex2
+
+#bindir = $(abs_top_builddir)
+bin_PROGRAMS = test_real test_real2 test_complex test_complex2
 
 test_real_SOURCES = test/test_real.F90
 test_real_LDADD = $(build_lib)
