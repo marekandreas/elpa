@@ -13,15 +13,26 @@ else
 lib_LTLIBRARIES = libelpa.la
 endif
 
-##rule to produce fortran config file:
-#config_f90.h: ./config.h
-#	grep "^#define" ./config.h > $@
+if WITH_QR
+if WITH_OPENMP
+libelpa_mt_la_SOURCES = src/elpa_qr/qr_utils.f90 src/elpa_qr/elpa_qrkernels.f90 src/elpa_qr/elpa_pdlarfb.f90 src/elpa_qr/elpa_pdgeqrf.f90  src/elpa1.F90 src/elpa2.F90
+else
+libelpa_la_SOURCES = src/elpa_qr/qr_utils.f90 src/elpa_qr/elpa_qrkernels.f90 src/elpa_qr/elpa_pdlarfb.f90 src/elpa_qr/elpa_pdgeqrf.f90  src/elpa1.F90 src/elpa2.F90 
+endif
 
+else
 if WITH_OPENMP
 libelpa_mt_la_SOURCES = src/elpa1.F90 src/elpa2.F90
 else
 libelpa_la_SOURCES = src/elpa1.F90 src/elpa2.F90
 endif
+endif
+
+
+##rule to produce fortran config file:
+#config_f90.h: ./config.h
+#	grep "^#define" ./config.h > $@
+
 
 if WITH_GENERIC_SIMPLE
 if WITH_OPENMP

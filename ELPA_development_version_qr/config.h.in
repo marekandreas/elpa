@@ -104,5 +104,8 @@
 /* use OpenMP threading */
 #undef WITH_OPENMP
 
+/* use QR decomposition */
+#undef WITH_QR
+
 /* use kernel tuned for SSE (written in gcc assembler) */
 #undef WITH_SSE_AS

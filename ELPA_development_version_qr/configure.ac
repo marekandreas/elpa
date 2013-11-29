@@ -115,6 +115,18 @@ AC_ARG_WITH([openmp],
          AC_OPENMP
   fi
 
+AC_MSG_CHECKING(whether QR-decomposition usage is specified)
+AC_ARG_WITH([qr],
+		AS_HELP_STRING([--with-qr],
+			       [use QR decomposition, default no.]),
+	      [with_qr=yes],
+	      [with_qr=no])
+  AC_MSG_RESULT([${with_qr}])
+  AM_CONDITIONAL([WITH_QR],[test x"$with_qr" = x"yes"])
+  if test "x${with_qr}" = xyes; then
+	AC_DEFINE([WITH_QR], [1], [use QR decomposition])
+  fi
+
 FCFLAGS="$FCFLAGS $OPENMP_FCFLAGS $OPENMP_FFFLAGS"
 #LDFLAGS="$LDFLAGS $OPENMP_FCFLAGS $OPENMP_FFFLAGS"
 

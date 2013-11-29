@@ -43,23 +43,23 @@ module elpa_pdgeqrf
 
     use elpa1
     use elpa_pdlarfb
-    use tum_utils
+    use qr_utils_mod
  
     implicit none
 
     PRIVATE
 
-    public :: tum_pdgeqrf_2dcomm
-    public :: tum_pqrparam_init
-    public :: tum_pdlarfg2_1dcomm_check
+    public :: qr_pdgeqrf_2dcomm
+    public :: qr_pqrparam_init
+    public :: qr_pdlarfg2_1dcomm_check
     
     include 'mpif.h'
 
 contains
 
-subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,colidx,rev,trans,PQRPARAM,mpicomm_rows,mpicomm_cols,blockheuristic)
+subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,colidx,rev,trans,PQRPARAM,mpicomm_rows,mpicomm_cols,blockheuristic)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
   
     implicit none
  
@@ -109,12 +109,12 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
     call mpi_comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
   
    
-    call tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans,PQRPARAM(4),mpicomm_rows,blockheuristic)
-    call tum_pdgeqrf_pack_unpack(v,ldv,dbroadcast_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,0,mpicomm_rows)
-    call tum_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,dtmat_bcast_size(1),-1,total_cols,0)
+    call qr_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans,PQRPARAM(4),mpicomm_rows,blockheuristic)
+    call qr_pdgeqrf_pack_unpack(v,ldv,dbroadcast_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,0,mpicomm_rows)
+    call qr_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,dtmat_bcast_size(1),-1,total_cols,0)
     pdlarft_size(1) = 0.0d0
-    call tum_pdlarfb_1dcomm(m,mb,total_cols,total_cols,a,lda,v,ldv,tau,t,ldt,rowidx,rowidx,rev,mpicomm_rows,pdlarfb_size(1),-1)
-    call tum_tmerge_pdlarfb_1dcomm(m,mb,total_cols,total_cols,total_cols,v,ldv,t,ldt,a,lda,rowidx,rev,updatemode,mpicomm_rows,tmerge_pdlarfb_size(1),-1)
+    call qr_pdlarfb_1dcomm(m,mb,total_cols,total_cols,a,lda,v,ldv,tau,t,ldt,rowidx,rowidx,rev,mpicomm_rows,pdlarfb_size(1),-1)
+    call qr_tmerge_pdlarfb_1dcomm(m,mb,total_cols,total_cols,total_cols,v,ldv,t,ldt,a,lda,rowidx,rev,updatemode,mpicomm_rows,tmerge_pdlarfb_size(1),-1)
 
 
     temptau_offset = 1
@@ -176,20 +176,20 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
 
             tau(offset:offset+lcols-1) = 0.0d0
 
-            call tum_pdgeqrf_1dcomm(a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt,work(work_offset),lwork,m,lcols,mb,rowidx,idx,rev,trans,PQRPARAM(4),mpicomm_rows,blockheuristic)
+            call qr_pdgeqrf_1dcomm(a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt,work(work_offset),lwork,m,lcols,mb,rowidx,idx,rev,trans,PQRPARAM(4),mpicomm_rows,blockheuristic)
             !print *,'offset voffset',offset,voffset,idx
     
             ! pack broadcast buffer (v + tau)
-            call tum_pdgeqrf_pack_unpack(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,idx,rev,0,mpicomm_rows)
+            call qr_pdgeqrf_pack_unpack(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,idx,rev,0,mpicomm_rows)
      
             ! determine broadcast size
-            call tum_pdgeqrf_pack_unpack(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,0,mpicomm_rows)
+            call qr_pdgeqrf_pack_unpack(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,0,mpicomm_rows)
             broadcast_size = dbroadcast_size(1)
   
             !if (mpirank_rows .eq. 0) then
             ! pack tmatrix into broadcast buffer and calculate new size
-            call tum_pdgeqrf_pack_unpack_tmatrix(tau(offset),t(voffset,voffset),ldt,work(broadcast_offset+broadcast_size),lwork,lcols,0)
-            call tum_pdgeqrf_pack_unpack_tmatrix(tau(offset),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
+            call qr_pdgeqrf_pack_unpack_tmatrix(tau(offset),t(voffset,voffset),ldt,work(broadcast_offset+broadcast_size),lwork,lcols,0)
+            call qr_pdgeqrf_pack_unpack_tmatrix(tau(offset),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
             broadcast_size = broadcast_size + dtmat_bcast_size(1)
             !end if
  
@@ -205,10 +205,10 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
             ! vector exchange part
 
             ! determine broadcast size
-            call tum_pdgeqrf_pack_unpack(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
+            call qr_pdgeqrf_pack_unpack(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
             broadcast_size = dbroadcast_size(1)
  
-            call tum_pdgeqrf_pack_unpack_tmatrix(work(temptau_offset+voffset-1),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
+            call qr_pdgeqrf_pack_unpack_tmatrix(work(temptau_offset+voffset-1),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
             tmat_bcast_size = dtmat_bcast_size(1)
 
             !print *,'broadcast_size (nonqr)',broadcast_size
@@ -222,14 +222,14 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
             ! fetch from first process in each column
  
             ! unpack broadcast buffer (v + tau)
-            call tum_pdgeqrf_pack_unpack(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
+            call qr_pdgeqrf_pack_unpack(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
  
             ! now send t matrix to other processes in our process column
             broadcast_size = dbroadcast_size(1)
             tmat_bcast_size = dtmat_bcast_size(1)
 
             ! t matrix should now be available on all processes => unpack
-            call tum_pdgeqrf_pack_unpack_tmatrix(work(temptau_offset+voffset-1),t(voffset,voffset),ldt,work(broadcast_offset+broadcast_size),lwork,lcols,1)
+            call qr_pdgeqrf_pack_unpack_tmatrix(work(temptau_offset+voffset-1),t(voffset,voffset),ldt,work(broadcast_offset+broadcast_size),lwork,lcols,1)
         end if
 
         remaining_cols = remaining_cols - lcols
@@ -255,19 +255,19 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
 				print *,'pdgeqrf_2dcomm: incremental update not yet implemented! rev=1'
 			else if (updatemode .eq. ichar('F')) then
 				! full update no merging
-				call tum_pdlarfb_1dcomm(m,mb,lcols,update_lcols,a(1,offset),lda,v(1,update_voffset),ldv, &
+				call qr_pdlarfb_1dcomm(m,mb,lcols,update_lcols,a(1,offset),lda,v(1,update_voffset),ldv, &
 							work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
 							rowidx,idx,1,mpicomm_rows,work(work_offset),lwork)
 			else 
 				! full update + merging default
-				call tum_tmerge_pdlarfb_1dcomm(m,mb,lcols,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
+				call qr_tmerge_pdlarfb_1dcomm(m,mb,lcols,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
 							   t(update_voffset,update_voffset),ldt, &
 							   a(1,offset),lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
 			end if
         else
 			if (updatemode .eq. ichar('I')) then
 				print *,'sole merging of (incremental) T matrix', mpirank_cols, n-(update_voffset+incremental_update_size-1)
-				call tum_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+incremental_update_size-1),incremental_update_size,v(1,update_voffset),ldv, &
+				call qr_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+incremental_update_size-1),incremental_update_size,v(1,update_voffset),ldv, &
 											   t(update_voffset,update_voffset),ldt, &
 											   a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
 
@@ -275,7 +275,7 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
 				incremental_update_size = 0
 			else if (updatemode .eq. ichar('M')) then
 				! final merge
-				call tum_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
+				call qr_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
 											   t(update_voffset,update_voffset),ldt, &
 											   a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
 			else 
@@ -289,14 +289,14 @@ subroutine tum_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,
  
     if ((tmerge .gt. 0) .and. (updatemode .eq. ichar('F'))) then
         ! finally merge all small T parts
-        call tum_pdlarft_tree_merge_1dcomm(m,mb,n,size2d,tmerge,v,ldv,t,ldt,rowidx,rev,mpicomm_rows,work,lwork)
+        call qr_pdlarft_tree_merge_1dcomm(m,mb,n,size2d,tmerge,v,ldv,t,ldt,rowidx,rev,mpicomm_rows,work,lwork)
     end if
 
     !print *,'stop decomposition',rowidx,colidx
  
-end subroutine tum_pdgeqrf_2dcomm
+end subroutine qr_pdgeqrf_2dcomm
 
-subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
+subroutine qr_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
     use ELPA1
   
     implicit none
@@ -315,7 +315,7 @@ subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
 
     ! derived input variables
   
-    ! derived further input variables from TUM_PQRPARAM
+    ! derived further input variables from QR_PQRPARAM
     integer size1d,updatemode,tmerge
 
     ! output variables (global)
@@ -330,14 +330,14 @@ subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
     tmerge = PQRPARAM(3)
 
     if (lwork .eq. -1) then
-        call tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, & 
+        call qr_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, & 
                                 m,size1d,mb,baseidx,baseidx,rev,trans,PQRPARAM(4),mpicomm,blockheuristic)
 
         ! reserve more space for incremental mode
-        call tum_tmerge_pdlarfb_1dcomm(m,mb,n,n,n,v,ldv,t,ldt, &
+        call qr_tmerge_pdlarfb_1dcomm(m,mb,n,n,n,v,ldv,t,ldt, &
                                        a,lda,baseidx,rev,updatemode,mpicomm,pdlarfb_size,-1)
  
-        call tum_pdlarft_tree_merge_1dcomm(m,mb,n,size1d,tmerge,v,ldv,t,ldt,baseidx,rev,mpicomm,tmerge_tree_size,-1)
+        call qr_pdlarft_tree_merge_1dcomm(m,mb,n,size1d,tmerge,v,ldv,t,ldt,baseidx,rev,mpicomm,tmerge_tree_size,-1)
 
         work(1) = max(pdlarfb_size(1),pdgeqr2_size(1),tmerge_tree_size(1))
         return
@@ -352,30 +352,30 @@ subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
             updatesize = n-(current_block+1)*size1d
             aoffset = 1+updatesize
 
-            call tum_pdgeqr2_1dcomm(a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, & 
+            call qr_pdgeqr2_1dcomm(a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, & 
                                     m,size1d,mb,baseidx,idx,1,trans,PQRPARAM(4),mpicomm,blockheuristic)
 
             if (updatemode .eq. ichar('M')) then
                 ! full update + merging
-                call tum_tmerge_pdlarfb_1dcomm(m,mb,updatesize,current_block*size1d,size1d, & 
+                call qr_tmerge_pdlarfb_1dcomm(m,mb,updatesize,current_block*size1d,size1d, & 
                                                v(1,aoffset),ldv,t(aoffset,aoffset),ldt, &
                                                a,lda,baseidx,1,ichar('F'),mpicomm,work,lwork)
             else if (updatemode .eq. ichar('I')) then
                 if (updatesize .ge. size1d) then
                     ! incremental update + merging
-                    call tum_tmerge_pdlarfb_1dcomm(m,mb,size1d,current_block*size1d,size1d, & 
+                    call qr_tmerge_pdlarfb_1dcomm(m,mb,size1d,current_block*size1d,size1d, & 
                                                    v(1,aoffset),ldv,t(aoffset,aoffset),ldt, &
                                                    a(1,aoffset-size1d),lda,baseidx,1,updatemode,mpicomm,work,lwork)
 
                 else ! only remainder left
                     ! incremental update + merging
-                    call tum_tmerge_pdlarfb_1dcomm(m,mb,remainder,current_block*size1d,size1d, & 
+                    call qr_tmerge_pdlarfb_1dcomm(m,mb,remainder,current_block*size1d,size1d, & 
                                                    v(1,aoffset),ldv,t(aoffset,aoffset),ldt, &
                                                    a(1,1),lda,baseidx,1,updatemode,mpicomm,work,lwork)
                 end if
             else ! full update no merging is default
                 ! full update no merging
-                call tum_pdlarfb_1dcomm(m,mb,updatesize,size1d,a,lda,v(1,aoffset),ldv, &
+                call qr_pdlarfb_1dcomm(m,mb,updatesize,size1d,a,lda,v(1,aoffset),ldv, &
                                         tau(aoffset),t(aoffset,aoffset),ldt,baseidx,idx,1,mpicomm,work,lwork)
             end if
 
@@ -386,12 +386,12 @@ subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
         if (remainder .gt. 0) then
             aoffset = 1
             idx = rowidx-size1d*nr_blocks
-            call tum_pdgeqr2_1dcomm(a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
+            call qr_pdgeqr2_1dcomm(a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
                                     m,remainder,mb,baseidx,idx,1,trans,PQRPARAM(4),mpicomm,blockheuristic)
 
             if ((updatemode .eq. ichar('I')) .or. (updatemode .eq. ichar('M'))) then
                 ! final merging
-                call tum_tmerge_pdlarfb_1dcomm(m,mb,0,size1d*nr_blocks,remainder, & 
+                call qr_tmerge_pdlarfb_1dcomm(m,mb,0,size1d*nr_blocks,remainder, & 
                                                v,ldv,t,ldt, &
                                                a,lda,baseidx,1,updatemode,mpicomm,work,lwork) ! updatemode argument does not matter
             end if
@@ -399,16 +399,16 @@ subroutine tum_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
  
     if ((tmerge .gt. 0) .and. (updatemode .eq. ichar('F'))) then
         ! finally merge all small T parts
-        call tum_pdlarft_tree_merge_1dcomm(m,mb,n,size1d,tmerge,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
+        call qr_pdlarft_tree_merge_1dcomm(m,mb,n,size1d,tmerge,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
     end if
 
-end subroutine tum_pdgeqrf_1dcomm
+end subroutine qr_pdgeqrf_1dcomm
 
 ! local a and tau are assumed to be positioned at the right column from a local
 ! perspective
 ! TODO: if local amount of data turns to zero the algorithm might produce wrong
 ! results (probably due to old buffer contents)
-subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
+subroutine qr_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
     use ELPA1
   
     implicit none
@@ -428,7 +428,7 @@ subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
     ! output variables (global)
     double precision blockheuristic(*)
  
-    ! derived further input variables from TUM_PQRPARAM
+    ! derived further input variables from QR_PQRPARAM
     integer maxrank,hgmode,updatemode
 
     ! local scalars
@@ -455,15 +455,15 @@ subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
     end if
     
     if (lwork .eq. -1) then
-        call tum_pdlarfg_1dcomm(a,incx,tau(1),pdlarfg_size(1),-1,n,rowidx,mb,hgmode,rev,mpicomm)
-        call tum_pdlarfl_1dcomm(v,1,baseidx,a,lda,tau(1),pdlarf_size(1),-1,m,n,rowidx,mb,rev,mpicomm)
-        call tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
-        call tum_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m,n,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
-        call tum_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,pdlarfl2_size(1),-1,m,n,rowidx,mb,rev,mpicomm)
+        call qr_pdlarfg_1dcomm(a,incx,tau(1),pdlarfg_size(1),-1,n,rowidx,mb,hgmode,rev,mpicomm)
+        call qr_pdlarfl_1dcomm(v,1,baseidx,a,lda,tau(1),pdlarf_size(1),-1,m,n,rowidx,mb,rev,mpicomm)
+        call qr_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
+        call qr_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m,n,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
+        call qr_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,pdlarfl2_size(1),-1,m,n,rowidx,mb,rev,mpicomm)
         pdlarft_size(1) = 0.0d0
-        call tum_pdlarfb_1dcomm(m,mb,n,n,a,lda,v,ldv,tau,t,ldt,baseidx,rowidx,1,mpicomm,pdlarfb_size(1),-1)
+        call qr_pdlarfb_1dcomm(m,mb,n,n,a,lda,v,ldv,tau,t,ldt,baseidx,rowidx,1,mpicomm,pdlarfb_size(1),-1)
         pdlarft_pdlarfb_size(1) = 0.0d0
-        call tum_tmerge_pdlarfb_1dcomm(m,mb,n,n,n,v,ldv,t,ldt,a,lda,rowidx,rev,updatemode,mpicomm,tmerge_pdlarfb_size(1),-1)
+        call qr_tmerge_pdlarfb_1dcomm(m,mb,n,n,n,v,ldv,t,ldt,a,lda,rowidx,rev,updatemode,mpicomm,tmerge_pdlarfb_size(1),-1)
 
         total_size = max(pdlarfg_size(1),pdlarf_size(1),pdlarfg2_size(1),pdlarfgk_size(1),pdlarfl2_size(1),pdlarft_size(1),pdlarfb_size(1),pdlarft_pdlarfb_size(1),tmerge_pdlarfb_size(1))
 
@@ -487,12 +487,12 @@ subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
 
             if (rank .eq. 1) then
 
-                call tum_pdlarfg_1dcomm(a(1,current_column),incx, &
+                call qr_pdlarfg_1dcomm(a(1,current_column),incx, &
                                         tau(current_column),work,lwork, &
                                         m,idx,mb,hgmode,1,mpicomm)
 
                 v(1:ldv,current_column) = 0.0d0
-                call tum_pdlarfg_copy_1dcomm(a(1,current_column),incx, &
+                call qr_pdlarfg_copy_1dcomm(a(1,current_column),incx, &
                                              v(1,current_column),1, &
                                              m,baseidx,idx,mb,1,mpicomm)
 
@@ -502,12 +502,12 @@ subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
                 actualrank = 1
 
             else if (rank .eq. 2) then 
-                call tum_pdlarfg2_1dcomm_ref(a(1,current_column),lda,tau(current_column), &
+                call qr_pdlarfg2_1dcomm_ref(a(1,current_column),lda,tau(current_column), &
                                              t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                             baseidx,work,lwork,m,idx,mb,PQRPARAM,1,mpicomm,actualrank)
             
             else 
-                call tum_pdlarfgk_1dcomm(a(1,current_column),lda,tau(current_column), &
+                call qr_pdlarfgk_1dcomm(a(1,current_column),lda,tau(current_column), &
                                          t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                          baseidx,work,lwork,m,rank,idx,mb,PQRPARAM,1,mpicomm,actualrank)
  
@@ -528,29 +528,29 @@ subroutine tum_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,ro
  
                 if (updatemode .eq. ichar('I')) then
                     ! incremental update + merging
-                    call tum_tmerge_pdlarfb_1dcomm(m,mb,nextrank-(rank-actualrank),n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv, &
+                    call qr_tmerge_pdlarfb_1dcomm(m,mb,nextrank-(rank-actualrank),n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv, &
                                                    t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
                                                    a(1,current_column-nextrank+(rank-actualrank)),lda,baseidx,rev,updatemode,mpicomm,work,lwork)
                 else
                     ! full update + merging
-                    call tum_tmerge_pdlarfb_1dcomm(m,mb,update_cols,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv, &
+                    call qr_tmerge_pdlarfb_1dcomm(m,mb,update_cols,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv, &
                                                    t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
                                                    a(1,1),lda,baseidx,rev,updatemode,mpicomm,work,lwork)
                 end if
             else
-                call tum_tmerge_pdlarfb_1dcomm(m,mb,0,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv, &
+                call qr_tmerge_pdlarfb_1dcomm(m,mb,0,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv, &
                                                t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
                                                a,lda,baseidx,rev,updatemode,mpicomm,work,lwork)
             end if
 
         end do
-end subroutine tum_pdgeqr2_1dcomm
+end subroutine qr_pdgeqr2_1dcomm
 
 ! incx == 1: column major
 ! incx != 1: row major
-subroutine tum_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm)
+subroutine qr_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
     
     implicit none
  
@@ -742,9 +742,9 @@ subroutine tum_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm
     !print *,'hg:mpirank,idx,beta,alpha:',mpirank,idx,beta,alpha,1.0d0/(beta+alpha),tau
     !print *,x(1:n)
 
-end subroutine tum_pdlarfg_1dcomm
+end subroutine qr_pdlarfg_1dcomm
 
-subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,idx,mb,PQRPARAM,rev,mpicomm,actualk)
+subroutine qr_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,idx,mb,PQRPARAM,rev,mpicomm,actualk)
     implicit none
  
     ! parameter setup
@@ -762,7 +762,7 @@ subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,id
     ! output variables (global)
     integer actualk
  
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
     integer eps
 
     ! local scalars
@@ -771,7 +771,7 @@ subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,id
     integer seedwork_offset,seed_offset
     logical accurate
 
-    call tum_pdlarfg2_1dcomm_seed(a,lda,dseedwork_size(1),-1,work,m,mb,idx,rev,mpicomm)
+    call qr_pdlarfg2_1dcomm_seed(a,lda,dseedwork_size(1),-1,work,m,mb,idx,rev,mpicomm)
     seedwork_size = dseedwork_size(1)
     seed_size = seedwork_size
  
@@ -792,36 +792,36 @@ subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,id
 		return
 	end if
 
-    call tum_pdlarfg2_1dcomm_seed(a,lda,work(seedwork_offset),lwork,work(seed_offset),m,mb,idx,rev,mpicomm)
+    call qr_pdlarfg2_1dcomm_seed(a,lda,work(seedwork_offset),lwork,work(seed_offset),m,mb,idx,rev,mpicomm)
 
         if (eps .gt. 0) then
-            accurate = tum_pdlarfg2_1dcomm_check(work(seed_offset),eps)
+            accurate = qr_pdlarfg2_1dcomm_check(work(seed_offset),eps)
         else
             accurate = .true.
         end if
 
-        call tum_pdlarfg2_1dcomm_vector(a(1,2),1,tau(2),work(seed_offset), &
+        call qr_pdlarfg2_1dcomm_vector(a(1,2),1,tau(2),work(seed_offset), &
                                         m,mb,idx,0,1,mpicomm)
 
-        call tum_pdlarfg_copy_1dcomm(a(1,2),1, &
+        call qr_pdlarfg_copy_1dcomm(a(1,2),1, &
                                      v(1,2),1, &
                                      m,baseidx,idx,mb,1,mpicomm)
 
-        call tum_pdlarfg2_1dcomm_update(v(1,2),1,baseidx,a(1,1),lda,work(seed_offset),m,idx,mb,rev,mpicomm)
+        call qr_pdlarfg2_1dcomm_update(v(1,2),1,baseidx,a(1,1),lda,work(seed_offset),m,idx,mb,rev,mpicomm)
 
         ! check for 2x2 matrix case => only one householder vector will be
         ! generated
         if (idx .gt. 2) then
             if (accurate .eqv. .true.) then
-                call tum_pdlarfg2_1dcomm_vector(a(1,1),1,tau(1),work(seed_offset), &
+                call qr_pdlarfg2_1dcomm_vector(a(1,1),1,tau(1),work(seed_offset), &
                                                 m,mb,idx-1,1,1,mpicomm)
 
-                call tum_pdlarfg_copy_1dcomm(a(1,1),1, &
+                call qr_pdlarfg_copy_1dcomm(a(1,1),1, &
                                              v(1,1),1, &
                                              m,baseidx,idx-1,mb,1,mpicomm)
 
                 ! generate fuse element
-                call tum_pdlarfg2_1dcomm_finalize_tmatrix(work(seed_offset),tau,t,ldt)
+                call qr_pdlarfg2_1dcomm_finalize_tmatrix(work(seed_offset),tau,t,ldt)
 
                 actualk = 2
             else
@@ -845,11 +845,11 @@ subroutine tum_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,id
             !print *,'rank2: no more data'
         end if
 
-end subroutine tum_pdlarfg2_1dcomm_ref
+end subroutine qr_pdlarfg2_1dcomm_ref
 
-subroutine tum_pdlarfg2_1dcomm_seed(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
+subroutine qr_pdlarfg2_1dcomm_seed(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
 
     implicit none
 
@@ -930,9 +930,9 @@ subroutine tum_pdlarfg2_1dcomm_seed(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
     ! exchange partial results
     call mpi_allreduce(work, seed, 8, mpi_real8, mpi_sum, &
                        mpicomm, mpierr)
-end subroutine tum_pdlarfg2_1dcomm_seed
+end subroutine qr_pdlarfg2_1dcomm_seed
 
-logical function tum_pdlarfg2_1dcomm_check(seed,eps)
+logical function qr_pdlarfg2_1dcomm_check(seed,eps)
     implicit none
 
     ! input variables
@@ -964,7 +964,7 @@ logical function tum_pdlarfg2_1dcomm_check(seed,eps)
  
     ! zero Householder vector (zero norm) case
     if (first*second .eq. 0.0d0) then
-       tum_pdlarfg2_1dcomm_check = .false.
+       qr_pdlarfg2_1dcomm_check = .false.
        return
     end if
 
@@ -975,14 +975,14 @@ logical function tum_pdlarfg2_1dcomm_check(seed,eps)
     ! if accurate the following check holds
     accurate = (estimate .LE. (epsd/(1.0d0+epsd)))
   
-    tum_pdlarfg2_1dcomm_check = accurate
-end function tum_pdlarfg2_1dcomm_check
+    qr_pdlarfg2_1dcomm_check = accurate
+end function qr_pdlarfg2_1dcomm_check
 
 ! id=0: first vector
 ! id=1: second vector
-subroutine tum_pdlarfg2_1dcomm_vector(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
+subroutine qr_pdlarfg2_1dcomm_vector(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
  
     implicit none
 
@@ -1048,11 +1048,11 @@ subroutine tum_pdlarfg2_1dcomm_vector(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
 
         seed(8) = beta
     end if
-end subroutine tum_pdlarfg2_1dcomm_vector
+end subroutine qr_pdlarfg2_1dcomm_vector
 
-subroutine tum_pdlarfg2_1dcomm_update(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
+subroutine qr_pdlarfg2_1dcomm_update(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
  
     implicit none
 
@@ -1132,10 +1132,10 @@ subroutine tum_pdlarfg2_1dcomm_update(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpi
     ! prepare dot matrix for fuse element of T matrix
     ! replace top11 value with -beta1
     seed(1) = beta
-end subroutine tum_pdlarfg2_1dcomm_update
+end subroutine qr_pdlarfg2_1dcomm_update
 
 ! run this function after second vector
-subroutine tum_pdlarfg2_1dcomm_finalize_tmatrix(seed,tau,t,ldt)
+subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix(seed,tau,t,ldt)
     implicit none
 
     integer ldt
@@ -1155,9 +1155,9 @@ subroutine tum_pdlarfg2_1dcomm_finalize_tmatrix(seed,tau,t,ldt)
     t(1,1) = tau(1)
     t(1,2) = dot12
     t(2,2) = tau(2)
-end subroutine tum_pdlarfg2_1dcomm_finalize_tmatrix
+end subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix
 
-subroutine tum_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,mb,PQRPARAM,rev,mpicomm,actualk)
+subroutine qr_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,mb,PQRPARAM,rev,mpicomm,actualk)
 
     implicit none
  
@@ -1190,19 +1190,19 @@ subroutine tum_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,
     work_offset = seedD_offset + seedD_size
 
     if (lwork .eq. -1) then
-        call tum_pdlarfg_1dcomm(a,1,tau(1),pdlarfg_size(1),-1,m,baseidx,mb,PQRPARAM(4),rev,mpicomm)
-        call tum_pdlarfl_1dcomm(v,1,baseidx,a,lda,tau(1),pdlarf_size(1),-1,m,k,baseidx,mb,rev,mpicomm)
-        call tum_pdlarfgk_1dcomm_seed(a,lda,baseidx,pdlarfgk_1dcomm_seed_size(1),-1,work,work,m,k,mb,mpicomm)
-        !call tum_pdlarfgk_1dcomm_check(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
-        call tum_pdlarfgk_1dcomm_check_improved(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
-        call tum_pdlarfgk_1dcomm_update(a,lda,baseidx,pdlarfgk_1dcomm_update_size(1),-1,work,work,k,k,1,work,m,mb,rev,mpicomm)
+        call qr_pdlarfg_1dcomm(a,1,tau(1),pdlarfg_size(1),-1,m,baseidx,mb,PQRPARAM(4),rev,mpicomm)
+        call qr_pdlarfl_1dcomm(v,1,baseidx,a,lda,tau(1),pdlarf_size(1),-1,m,k,baseidx,mb,rev,mpicomm)
+        call qr_pdlarfgk_1dcomm_seed(a,lda,baseidx,pdlarfgk_1dcomm_seed_size(1),-1,work,work,m,k,mb,mpicomm)
+        !call qr_pdlarfgk_1dcomm_check(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
+        call qr_pdlarfgk_1dcomm_check_improved(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
+        call qr_pdlarfgk_1dcomm_update(a,lda,baseidx,pdlarfgk_1dcomm_update_size(1),-1,work,work,k,k,1,work,m,mb,rev,mpicomm)
         work(1) = max(pdlarfg_size(1),pdlarf_size(1),pdlarfgk_1dcomm_seed_size(1),pdlarfgk_1dcomm_check_size(1),pdlarfgk_1dcomm_update_size(1)) + DBLE(seedC_size + seedD_size);
         return
     end if
 
-        call tum_pdlarfgk_1dcomm_seed(a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset),work(seedD_offset),m,k,mb,mpicomm)
-        !call tum_pdlarfgk_1dcomm_check(work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
-        call tum_pdlarfgk_1dcomm_check_improved(work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
+        call qr_pdlarfgk_1dcomm_seed(a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset),work(seedD_offset),m,k,mb,mpicomm)
+        !call qr_pdlarfgk_1dcomm_check(work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
+        call qr_pdlarfgk_1dcomm_check_improved(work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
  
         !print *,'possible rank:', actualk
 
@@ -1211,27 +1211,27 @@ subroutine tum_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,
         !actualk = k
         !actualk= min(actualk,2)
         do ivector=1,actualk
-            call tum_pdlarfgk_1dcomm_vector(a(1,k-ivector+1),1,idx,tau(k-ivector+1), &
+            call qr_pdlarfgk_1dcomm_vector(a(1,k-ivector+1),1,idx,tau(k-ivector+1), &
                                             work(seedC_offset),work(seedD_offset),k, &
                                             ivector,m,mb,rev,mpicomm)
 
-            call tum_pdlarfgk_1dcomm_update(a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
+            call qr_pdlarfgk_1dcomm_update(a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
                                             work(seedD_offset),k,actualk,ivector,tau, & 
                                             m,mb,rev,mpicomm)
 
-            call tum_pdlarfg_copy_1dcomm(a(1,k-ivector+1),1, &
+            call qr_pdlarfg_copy_1dcomm(a(1,k-ivector+1),1, &
                                          v(1,k-ivector+1),1, &
                                          m,baseidx,idx-ivector+1,mb,1,mpicomm)
         end do
 
         ! generate final T matrix and convert preliminary tau values into real ones
-        call tum_pdlarfgk_1dcomm_generateT(work(seedC_offset),work(seedD_offset),k,actualk,tau,t,ldt)
+        call qr_pdlarfgk_1dcomm_generateT(work(seedC_offset),work(seedD_offset),k,actualk,tau,t,ldt)
 
-end subroutine tum_pdlarfgk_1dcomm
+end subroutine qr_pdlarfgk_1dcomm
 
-subroutine tum_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,mpicomm)
+subroutine qr_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
 
     implicit none
  
@@ -1247,7 +1247,7 @@ subroutine tum_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,
  
     ! output variables (global)
 
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
 
     ! local scalars
     integer mpierr,mpirank,mpiprocs,mpirank_top
@@ -1338,10 +1338,10 @@ subroutine tum_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,
     do icol=1,k
         seedD(1:k,icol) = work(recvoffset+C_size+(icol-1)*k:recvoffset+C_size+icol*k-1)
     end do
-end subroutine tum_pdlarfgk_1dcomm_seed
+end subroutine qr_pdlarfgk_1dcomm_seed
 
 ! k is assumed to be larger than two
-subroutine tum_pdlarfgk_1dcomm_check_improved(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
+subroutine qr_pdlarfgk_1dcomm_check_improved(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
     implicit none
 
     ! input variables (global)
@@ -1352,7 +1352,7 @@ subroutine tum_pdlarfgk_1dcomm_check_improved(seedC,seedD,k,PQRPARAM,work,lwork,
     ! output variables (global)
     integer possiblerank
  
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
     integer eps
 
     ! local variables
@@ -1444,12 +1444,12 @@ subroutine tum_pdlarfgk_1dcomm_check_improved(seedC,seedD,k,PQRPARAM,work,lwork,
 
     possiblerank = i
     !print *,'possible rank', possiblerank
-end subroutine tum_pdlarfgk_1dcomm_check_improved
+end subroutine qr_pdlarfgk_1dcomm_check_improved
 
 ! TODO: zero Householder vector (zero norm) case
 ! - check alpha values as well (from seedC)
-subroutine tum_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
-    use tum_utils
+subroutine qr_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
+    use qr_utils_mod
 
     implicit none
 
@@ -1465,7 +1465,7 @@ subroutine tum_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possibler
     ! output variables (global)
     integer possiblerank
 
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
     integer eps
 
     ! local scalars
@@ -1573,14 +1573,14 @@ subroutine tum_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possibler
 
     ! if we get to this point, the accuracy condition holds for the whole block
     possiblerank = k
-end subroutine tum_pdlarfgk_1dcomm_check
+end subroutine qr_pdlarfgk_1dcomm_check
 
 !sidx: seed idx
 !k: max rank used during seed phase
 !rank: actual rank (k >= rank)
-subroutine tum_pdlarfgk_1dcomm_vector(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
+subroutine qr_pdlarfgk_1dcomm_vector(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
  
     implicit none
 
@@ -1649,16 +1649,16 @@ subroutine tum_pdlarfgk_1dcomm_vector(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb
         end if
     end if
   
-end subroutine tum_pdlarfgk_1dcomm_vector
+end subroutine qr_pdlarfgk_1dcomm_vector
 
 !k: original max rank used during seed function
 !rank: possible rank as from check function
 ! TODO: if rank is less than k, reduce buffersize in such a way
 ! that only the required entries for the next pdlarfg steps are
 ! computed
-subroutine tum_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
+subroutine qr_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
 
     implicit none
 
@@ -1677,7 +1677,7 @@ subroutine tum_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,ran
     ! output variables (global)
     double precision seedC(k,*),seedD(k,*),tau(*)
 
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
 
     ! local scalars
     double precision alpha
@@ -1772,10 +1772,10 @@ subroutine tum_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,ran
 	call dger(k-sidx,sidx,-1.0d0,work(yoffset),1,seedD(k-sidx+1,k-sidx+1),k,seedD(1,k-sidx+1),k)
 	seedC(k,k-sidx+1) = 1.0d0/(alpha+beta)
 
-end subroutine tum_pdlarfgk_1dcomm_update
+end subroutine qr_pdlarfgk_1dcomm_update
 
 
-subroutine tum_pdlarfgk_1dcomm_generateT(seedC,seedD,k,actualk,tau,t,ldt)
+subroutine qr_pdlarfgk_1dcomm_generateT(seedC,seedD,k,actualk,tau,t,ldt)
     implicit none
 
     integer k,actualk,ldt
@@ -1799,15 +1799,15 @@ subroutine tum_pdlarfgk_1dcomm_generateT(seedC,seedD,k,actualk,tau,t,ldt)
             end do
         end do
  
-        call tum_dlarft_kernel(actualk,tau(k-actualk+1),seedC(k-actualk+1,k-actualk+2),k,t(k-actualk+1,k-actualk+1),ldt)
+        call qr_dlarft_kernel(actualk,tau(k-actualk+1),seedC(k-actualk+1,k-actualk+2),k,t(k-actualk+1,k-actualk+1),ldt)
 
-end subroutine tum_pdlarfgk_1dcomm_generateT
+end subroutine qr_pdlarfgk_1dcomm_generateT
 
 !direction=0: pack into work buffer
 !direction=1: unpack from work buffer
-subroutine tum_pdgeqrf_pack_unpack(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
+subroutine qr_pdgeqrf_pack_unpack(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
   
     implicit none
 
@@ -1856,13 +1856,13 @@ subroutine tum_pdgeqrf_pack_unpack(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,di
 
     return
 
-end subroutine tum_pdgeqrf_pack_unpack
+end subroutine qr_pdgeqrf_pack_unpack
 
 !direction=0: pack into work buffer
 !direction=1: unpack from work buffer
-subroutine tum_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,work,lwork,n,direction)
+subroutine qr_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,work,lwork,n,direction)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
   
     implicit none
 
@@ -1898,7 +1898,7 @@ subroutine tum_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,work,lwork,n,direction)
         end do
     end if
 
-end subroutine tum_pdgeqrf_pack_unpack_tmatrix
+end subroutine qr_pdgeqrf_pack_unpack_tmatrix
 
 
 ! TODO: encode following functionality
@@ -1934,7 +1934,7 @@ end subroutine tum_pdgeqrf_pack_unpack_tmatrix
 !        o after full local column block decomposition (BLOCK)
 !  LOOP Housegen -> BCAST -> GENT/EXTENDT -> LOOP HouseLeft
 
-!subroutine tum_pqrparam_init(PQRPARAM, DIRECTION, RANK, NORMMODE, &
+!subroutine qr_pqrparam_init(PQRPARAM, DIRECTION, RANK, NORMMODE, &
 !                             SUBBLK, UPDATE, TGEN, BCAST)
 
 ! gmode: control communication pattern of dlarfg
@@ -1944,7 +1944,7 @@ end subroutine tum_pdgeqrf_pack_unpack_tmatrix
 !               merging = full update with tmatrix merging
 ! tmerge*: 0: do not merge, 1: incremental merge, >1: recursive merge
 !               only matters if update* == full
-subroutine tum_pqrparam_init(pqrparam,size2d,update2d,tmerge2d,size1d,update1d,tmerge1d,maxrank,update,eps,hgmode)
+subroutine qr_pqrparam_init(pqrparam,size2d,update2d,tmerge2d,size1d,update1d,tmerge1d,maxrank,update,eps,hgmode)
 
     implicit none
 
@@ -1969,12 +1969,12 @@ subroutine tum_pqrparam_init(pqrparam,size2d,update2d,tmerge2d,size1d,update1d,t
     PQRPARAM(9) = eps
     PQRPARAM(10) = ichar(hgmode)
 
-end subroutine tum_pqrparam_init
+end subroutine qr_pqrparam_init
 
 
-subroutine tum_pdlarfg_copy_1dcomm(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
+subroutine qr_pdlarfg_copy_1dcomm(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
 
     implicit none
  
@@ -2015,6 +2015,6 @@ subroutine tum_pdlarfg_copy_1dcomm(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
         v(local_size*incv) = 1.0d0
     end if
 
-end subroutine tum_pdlarfg_copy_1dcomm
+end subroutine qr_pdlarfg_copy_1dcomm
 
 end module elpa_pdgeqrf

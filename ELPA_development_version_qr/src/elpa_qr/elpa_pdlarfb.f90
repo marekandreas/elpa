@@ -42,27 +42,27 @@
 module elpa_pdlarfb
 
     use elpa1
-    use tum_utils
+    use qr_utils_mod
  
     implicit none
 
     PRIVATE
 
-    public :: tum_pdlarfb_1dcomm
-    public :: tum_pdlarft_pdlarfb_1dcomm
-    public :: tum_pdlarft_set_merge_1dcomm
-    public :: tum_pdlarft_tree_merge_1dcomm
-    public :: tum_pdlarfl_1dcomm
-    public :: tum_pdlarfl2_tmatrix_1dcomm
-    public :: tum_tmerge_pdlarfb_1dcomm
+    public :: qr_pdlarfb_1dcomm
+    public :: qr_pdlarft_pdlarfb_1dcomm
+    public :: qr_pdlarft_set_merge_1dcomm
+    public :: qr_pdlarft_tree_merge_1dcomm
+    public :: qr_pdlarfl_1dcomm
+    public :: qr_pdlarfl2_tmatrix_1dcomm
+    public :: qr_tmerge_pdlarfb_1dcomm
     
     include 'mpif.h'
 
 contains
 
-subroutine tum_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
+subroutine qr_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
     
-    use tum_utils
+    use qr_utils_mod
 
     implicit none
  
@@ -75,7 +75,7 @@ subroutine tum_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpi
  
     ! output variables (global)
 
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
 
     ! local scalars
     integer localsize,offset,baseoffset
@@ -86,11 +86,11 @@ subroutine tum_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpi
     if (n .le. 0) return ! nothing to do
 
     if (k .eq. 1) then
-        call tum_pdlarfl_1dcomm(v,1,baseidx,a,lda,tau(1), &
+        call qr_pdlarfl_1dcomm(v,1,baseidx,a,lda,tau(1), &
                                 work,lwork,m,n,idx,mb,rev,mpicomm)
         return
     else if (k .eq. 2) then
-        call tum_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt, &
+        call qr_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt, &
                                  work,lwork,m,n,idx,mb,rev,mpicomm)
         return
     end if
@@ -120,13 +120,13 @@ subroutine tum_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpi
     ! data exchange
     call mpi_allreduce(work(1,1),work(1,n+1),k*n,mpi_real8,mpi_sum,mpicomm,mpierr)
     
-    call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t,ldt,work(1,n+1),k)
-end subroutine tum_pdlarfb_1dcomm 
+    call qr_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t,ldt,work(1,n+1),k)
+end subroutine qr_pdlarfb_1dcomm 
 
 ! generalized pdlarfl2 version
 ! TODO: include T merge here (seperate by "old" and "new" index)
-subroutine tum_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx,rev,mpicomm,work,lwork)
-    use tum_utils
+subroutine qr_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx,rev,mpicomm,work,lwork)
+    use qr_utils_mod
 
     implicit none
 
@@ -139,7 +139,7 @@ subroutine tum_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseid
  
     ! output variables (global)
 
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
 
     ! local scalars
     integer localsize,offset,baseoffset
@@ -202,10 +202,10 @@ subroutine tum_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseid
         ! A = A - Y * V'
         call dgemm("Notrans","Notrans",localsize,n,k,-1.0d0,v(baseoffset,1),ldv,work(1,recvoffset+k),k,1.0d0,a(offset,1),lda)
 
-end subroutine tum_pdlarft_pdlarfb_1dcomm
+end subroutine qr_pdlarft_pdlarfb_1dcomm
 
-subroutine tum_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
-    use tum_utils
+subroutine qr_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
+    use qr_utils_mod
 
     implicit none
  
@@ -218,7 +218,7 @@ subroutine tum_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,t,ldt,baseidx,rev
  
     ! output variables (global)
 
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
 
     ! local scalars
     integer localsize,offset,baseoffset
@@ -246,12 +246,12 @@ subroutine tum_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,t,ldt,baseidx,rev
         ! skip Y4'*Y4 part
         offset = mod(n,blocksize)
         if (offset .eq. 0) offset=blocksize
-        call tum_tmerge_set_kernel(n,blocksize,t,ldt,work(1,n+1+offset),n)
+        call qr_tmerge_set_kernel(n,blocksize,t,ldt,work(1,n+1+offset),n)
 
-end subroutine tum_pdlarft_set_merge_1dcomm
+end subroutine qr_pdlarft_set_merge_1dcomm
 
-subroutine tum_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
-    use tum_utils
+subroutine qr_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
+    use qr_utils_mod
 
     implicit none
  
@@ -264,7 +264,7 @@ subroutine tum_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,t,ldt,
  
     ! output variables (global)
 
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
 
     ! local scalars
     integer localsize,offset,baseoffset
@@ -294,16 +294,16 @@ subroutine tum_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,t,ldt,
         ! skip Y4'*Y4 part
         offset = mod(n,blocksize)
         if (offset .eq. 0) offset=blocksize
-        call tum_tmerge_tree_kernel(n,blocksize,treeorder,t,ldt,work(1,n+1+offset),n)
+        call qr_tmerge_tree_kernel(n,blocksize,treeorder,t,ldt,work(1,n+1+offset),n)
 
-end subroutine tum_pdlarft_tree_merge_1dcomm
+end subroutine qr_pdlarft_tree_merge_1dcomm
 
 ! apply householder vector to the left 
 ! - assume unitary matrix
 ! - assume right positions for v
-subroutine tum_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,mpicomm)
+subroutine qr_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
 
     implicit none
  
@@ -369,11 +369,11 @@ subroutine tum_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev
          enddo
     end if
 
-end subroutine tum_pdlarfl_1dcomm
+end subroutine qr_pdlarfl_1dcomm
 
-subroutine tum_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,idx,mb,rev,mpicomm)
+subroutine qr_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,idx,mb,rev,mpicomm)
     use ELPA1
-    use tum_utils
+    use qr_utils_mod
 
     implicit none
  
@@ -418,7 +418,7 @@ subroutine tum_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,
 
         ! in 2x2 matrix case only one householder vector was generated
         if (idx .le. 2) then
-            call tum_pdlarfl_1dcomm(v(1,2),1,baseidx,a,lda,t(2,2), &
+            call qr_pdlarfl_1dcomm(v(1,2),1,baseidx,a,lda,t(2,2), &
                                     work,lwork,m,n,idx,mb,rev,mpicomm)
             return
         end if
@@ -480,12 +480,12 @@ subroutine tum_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,
         end do
     end do
 
-end subroutine tum_pdlarfl2_tmatrix_1dcomm
+end subroutine qr_pdlarfl2_tmatrix_1dcomm
 
 ! generalized pdlarfl2 version
 ! TODO: include T merge here (seperate by "old" and "new" index)
-subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev,updatemode,mpicomm,work,lwork)
-    use tum_utils
+subroutine qr_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev,updatemode,mpicomm,work,lwork)
+    use qr_utils_mod
 
     implicit none
 
@@ -498,7 +498,7 @@ subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev
  
     ! output variables (global)
 
-    ! derived input variables from TUM_PQRPARAM
+    ! derived input variables from QR_PQRPARAM
 
     ! local scalars
     integer localsize,offset,baseoffset
@@ -601,25 +601,25 @@ subroutine tum_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev
     tgenoffset = recvoffset+tgenoffset
 
         if (oldk .gt. 0) then
-            call tum_pdlarft_merge_kernel_local(oldk,k,t,ldt,work(mergeoffset),mergelda)
+            call qr_pdlarft_merge_kernel_local(oldk,k,t,ldt,work(mergeoffset),mergelda)
 
             if (localsize .gt. 0) then
                 if (updatemode .eq. ichar('I')) then
 
                     ! update matrix (pdlarfb) with complete T
-                    call tum_pdlarfb_kernel_local(localsize,n,k+oldk,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
+                    call qr_pdlarfb_kernel_local(localsize,n,k+oldk,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
                 else
                     ! update matrix (pdlarfb) with small T (same as update with no old T TODO)
-                    call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
+                    call qr_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
                 end if
             end if
         else
             if (localsize .gt. 0) then
                 ! update matrix (pdlarfb) with small T
-                call tum_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
+                call qr_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
             end if
         end if
 
-end subroutine tum_tmerge_pdlarfb_1dcomm
+end subroutine qr_tmerge_pdlarfb_1dcomm
 
 end module elpa_pdlarfb

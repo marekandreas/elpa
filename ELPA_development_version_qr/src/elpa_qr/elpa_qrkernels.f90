@@ -43,7 +43,7 @@
 ! calculates A = A - Y*T*Z (rev=1)
 ! T upper triangle matrix
 ! assuming zero entries in matrix in upper kxk block
-subroutine tum_pdlarfb_kernel_local(m,n,k,a,lda,v,ldv,t,ldt,z,ldz)
+subroutine qr_pdlarfb_kernel_local(m,n,k,a,lda,v,ldv,t,ldt,z,ldz)
     implicit none
  
     ! input variables (local)
@@ -177,7 +177,7 @@ subroutine tum_pdlarfb_kernel_local(m,n,k,a,lda,v,ldv,t,ldt,z,ldz)
     end if
 
 end subroutine
-subroutine tum_pdlarft_merge_kernel_local(oldk,k,t,ldt,yty,ldy)
+subroutine qr_pdlarft_merge_kernel_local(oldk,k,t,ldt,yty,ldy)
     implicit none
 
     ! input variables (local)
@@ -517,7 +517,7 @@ end subroutine
 !    0     Y2'*Y3  Y2'*Y4 ...
 !    0        0    Y3'*Y4 ...
 !    0        0       0   ...
-subroutine tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
+subroutine qr_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
     implicit none
  
     ! input variables (local)
@@ -545,19 +545,19 @@ subroutine tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
         yty_column = 1
  
         if (remainder .gt. 0) then
-            call tum_pdlarft_merge_kernel_local(blocksize,remainder,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
+            call qr_pdlarft_merge_kernel_local(blocksize,remainder,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
             current_block = 1
             oldk = remainder+blocksize
             yty_column =  yty_column + blocksize
         else
-            call tum_pdlarft_merge_kernel_local(blocksize,blocksize,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
+            call qr_pdlarft_merge_kernel_local(blocksize,blocksize,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
             current_block = 2
             oldk = 2*blocksize
             yty_column = yty_column + blocksize
         end if
  
         do while (current_block .lt. nr_blocks)
-            call tum_pdlarft_merge_kernel_local(blocksize,oldk,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
+            call qr_pdlarft_merge_kernel_local(blocksize,oldk,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
 
             current_block = current_block + 1
             oldk = oldk + blocksize
@@ -571,7 +571,7 @@ end subroutine
 !    0        0    Y3'*Y4 ...
 !    0        0       0   ...
 
-subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
+subroutine qr_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
     implicit none
  
     ! input variables (local)
@@ -593,7 +593,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
     if (treeorder .eq. 0) return ! no merging
 
     if (treeorder .eq. 1) then
-        call tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
+        call qr_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
         return
     end if
   
@@ -601,7 +601,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
     max_treeorder = min(nr_blocks,treeorder)
 
     if (max_treeorder .eq. 1) then
-        call tum_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
+        call qr_tmerge_set_kernel(k,blocksize,t,ldt,yty,ldy)
         return
     end if
  
@@ -661,7 +661,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
                 if (yty_remainder .gt. 0) then
                     yty_column = yty_remainder
                     !print *,'final merging with remainder',temp_blocksize,k,remaining_size,yty_column
-                    call tum_tmerge_set_kernel(k,temp_blocksize,t,ldt,yty(1,yty_column),ldy)
+                    call qr_tmerge_set_kernel(k,temp_blocksize,t,ldt,yty(1,yty_column),ldy)
                 else
                     !print *,'no remainder - no merging needed',temp_blocksize,k,remaining_size
                 endif
@@ -681,13 +681,13 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
                     yty_column = yty_column_start
  
                     !print *,'set merging', toffset, yty_column,remainder
-                    call tum_tmerge_set_kernel(remainder,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
+                    call qr_tmerge_set_kernel(remainder,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
 
                     if (total_remainder .gt. 0) then
                         ! merge with existing global remainder part
                         !print *,'single+set merging',yty_remainder,total_remainder,remainder
 
-                        call tum_pdlarft_merge_kernel_local(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
+                        call qr_pdlarft_merge_kernel_local(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
       
                         yty_remainder = yty_remainder + remainder
                         toffset_start = toffset_start + remainder
@@ -709,7 +709,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
                         ! merge with existing global remainder part
                         !print *,'single merging',yty_remainder,total_remainder,remainder
 
-                        call tum_pdlarft_merge_kernel_local(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
+                        call qr_pdlarft_merge_kernel_local(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
       
                         yty_remainder = yty_remainder + remainder
                         toffset_start = toffset_start + remainder
@@ -738,7 +738,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
 
                 !print *,'recursive merging', toffset, yty_column,setsize
 
-                call tum_tmerge_set_kernel(setsize,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
+                call qr_tmerge_set_kernel(setsize,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
                 
                 current_set = current_set +  1
             end do
@@ -749,7 +749,7 @@ subroutine tum_tmerge_tree_kernel(k,blocksize,treeorder,t,ldt,yty,ldy)
         end do
 end subroutine
 ! yty should not contain the inner products vi'*vi
-subroutine tum_dlarft_kernel(n,tau,yty,ldy,t,ldt)
+subroutine qr_dlarft_kernel(n,tau,yty,ldy,t,ldt)
     implicit none
 
     ! input variables
