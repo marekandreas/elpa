@@ -37,14 +37,14 @@ foreach my $file (@ARGV) {
 	my $re;
 	my $add;
 	my $object;
-	if ($file =~ /(.*).def_mods$/) {
+	if ($file =~ /^(.*)\.def_mods(\..*)$/) {
 		$re = $def_re;
 		$add = \&add_def;
-		$object = $1 . ".o";
-	} elsif ($file =~ /^(.*).use_mods$/) {
+		$object = $1 . $2;
+	} elsif ($file =~ /^(.*)\.use_mods(\..*)$/) {
 		$re = $use_re;
 		$add = \&add_use;
-		$object = $1 . ".o";
+		$object = $1 . $2;
 	} else {
 		die "Unrecognized file extension for '$file'";
 	}
@@ -62,5 +62,11 @@ foreach my $file (@ARGV) {
 }
 
 foreach my $object (sort keys %uses) {
-	print "$object: ", join(" ", sort (map {$defs{$_}} keys $uses{$object})), "\n";
+	for my $m (keys $uses{$object}) {
+		if (defined $defs{$m}) {
+			print "$object: ", $defs{$m}, "\n";
+		} elsif (defined($ENV{V}) && $ENV{V} eq "1") {
+			print STDERR "Warning: Cannot find definition of module $m in files for current program, might be external\n";
+		}
+	}
 }
