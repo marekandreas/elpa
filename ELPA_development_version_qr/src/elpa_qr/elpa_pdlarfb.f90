@@ -365,7 +365,8 @@ subroutine qr_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,
 
          do icol=1,n
                a(local_offset:local_offset+local_size-1,icol) = a(local_offset:local_offset+local_size-1,icol) &
-                                                                - tau*work(sendsize+icol)*v(v_local_offset:v_local_offset+local_size-1)
+                                                                - tau*work(sendsize+icol)*v(v_local_offset:v_local_offset+ &
+                                                                           local_size-1)
          enddo
     end if
 
@@ -438,7 +439,8 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,i
         work(1:sendsize) = 0.0d0
 
         call dgemv("Trans",local_size1,n,1.0d0,a(local_offset1,1),lda,v(v1_local_offset,v1col),1,0.0d0,work(dgemv1_offset),1)
-        call dgemv("Trans",local_size2,n,t(v2col,v2col),a(local_offset2,1),lda,v(v2_local_offset,v2col),1,0.0d0,work(dgemv2_offset),1)
+        call dgemv("Trans",local_size2,n,t(v2col,v2col),a(local_offset2,1),lda,v(v2_local_offset,v2col),1,0.0d0, &
+                   work(dgemv2_offset),1)
 
         call mpi_allreduce(work, work(sendsize+1), sendsize, mpi_real8, mpi_sum, mpicomm, mpierr)
   
@@ -555,14 +557,17 @@ subroutine qr_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev,
 
                 if (updatemode .eq. ichar('I')) then
                     ! Z' = (Y1,Y2)' * A
-                    call dgemm("Trans","Notrans",k+oldk,n,localsize,1.0d0,v(baseoffset,1),ldv,a(offset,1),lda,0.0d0,work(sendoffset+updateoffset),updatelda)
+                    call dgemm("Trans","Notrans",k+oldk,n,localsize,1.0d0,v(baseoffset,1),ldv,a(offset,1),lda,0.0d0, &
+                               work(sendoffset+updateoffset),updatelda)
                 else
                     ! Z' = Y1' * A
-                    call dgemm("Trans","Notrans",k,n,localsize,1.0d0,v(baseoffset,1),ldv,a(offset,1),lda,0.0d0,work(sendoffset+updateoffset),updatelda)
+                    call dgemm("Trans","Notrans",k,n,localsize,1.0d0,v(baseoffset,1),ldv,a(offset,1),lda,0.0d0, &
+                               work(sendoffset+updateoffset),updatelda)
                 end if
 
                 ! calculate parts needed for T merge
-                call dgemm("Trans","Notrans",k,oldk,localsize,1.0d0,v(baseoffset,1),ldv,v(baseoffset,k+1),ldv,0.0d0,work(sendoffset+mergeoffset),mergelda)
+                call dgemm("Trans","Notrans",k,oldk,localsize,1.0d0,v(baseoffset,1),ldv,v(baseoffset,k+1),ldv,0.0d0, &
+                           work(sendoffset+mergeoffset),mergelda)
 
             else
                 ! cleanup buffer
@@ -580,7 +585,8 @@ subroutine qr_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev,
             if (localsize .gt. 0) then
                 ! calculate matrix matrix product of householder vectors and target matrix 
                 ! Z' = (Y1)' * A
-                call dgemm("Trans","Notrans",k,n,localsize,1.0d0,v(baseoffset,1),ldv,a(offset,1),lda,0.0d0,work(sendoffset+updateoffset),updatelda)
+                call dgemm("Trans","Notrans",k,n,localsize,1.0d0,v(baseoffset,1),ldv,a(offset,1),lda,0.0d0, &
+                           work(sendoffset+updateoffset),updatelda)
 
             else
                 ! cleanup buffer
@@ -607,16 +613,19 @@ subroutine qr_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev,
                 if (updatemode .eq. ichar('I')) then
 
                     ! update matrix (pdlarfb) with complete T
-                    call qr_pdlarfb_kernel_local(localsize,n,k+oldk,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
+                    call qr_pdlarfb_kernel_local(localsize,n,k+oldk,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt, &
+                                                 work(updateoffset),updatelda)
                 else
                     ! update matrix (pdlarfb) with small T (same as update with no old T TODO)
-                    call qr_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
+                    call qr_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt, &
+                                                 work(updateoffset),updatelda)
                 end if
             end if
         else
             if (localsize .gt. 0) then
                 ! update matrix (pdlarfb) with small T
-                call qr_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt,work(updateoffset),updatelda)
+                call qr_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt, &
+                                             work(updateoffset),updatelda)
             end if
         end if
 

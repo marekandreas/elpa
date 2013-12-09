@@ -57,7 +57,8 @@ module elpa_pdgeqrf
 
 contains
 
-subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,colidx,rev,trans,PQRPARAM,mpicomm_rows,mpicomm_cols,blockheuristic)
+subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,colidx,rev,trans,PQRPARAM, &
+                             mpicomm_rows,mpicomm_cols,blockheuristic)
     use ELPA1
     use qr_utils_mod
   
@@ -109,12 +110,15 @@ subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,c
     call mpi_comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
   
    
-    call qr_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans,PQRPARAM(4),mpicomm_rows,blockheuristic)
+    call qr_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans, &
+                           PQRPARAM(4),mpicomm_rows,blockheuristic)
     call qr_pdgeqrf_pack_unpack(v,ldv,dbroadcast_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,0,mpicomm_rows)
     call qr_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,dtmat_bcast_size(1),-1,total_cols,0)
     pdlarft_size(1) = 0.0d0
-    call qr_pdlarfb_1dcomm(m,mb,total_cols,total_cols,a,lda,v,ldv,tau,t,ldt,rowidx,rowidx,rev,mpicomm_rows,pdlarfb_size(1),-1)
-    call qr_tmerge_pdlarfb_1dcomm(m,mb,total_cols,total_cols,total_cols,v,ldv,t,ldt,a,lda,rowidx,rev,updatemode,mpicomm_rows,tmerge_pdlarfb_size(1),-1)
+    call qr_pdlarfb_1dcomm(m,mb,total_cols,total_cols,a,lda,v,ldv,tau,t,ldt,rowidx,rowidx,rev,mpicomm_rows, &
+                           pdlarfb_size(1),-1)
+    call qr_tmerge_pdlarfb_1dcomm(m,mb,total_cols,total_cols,total_cols,v,ldv,t,ldt,a,lda,rowidx,rev,updatemode, &
+                                  mpicomm_rows,tmerge_pdlarfb_size(1),-1)
 
 
     temptau_offset = 1
@@ -124,7 +128,8 @@ subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,c
     work_offset = broadcast_offset + broadcast_size
 
     if (lwork .eq. -1) then
-        work(1) = (DBLE(temptau_size) + DBLE(broadcast_size) + max(pdgeqrf_size(1),pdlarft_size(1),pdlarfb_size(1),tmerge_pdlarfb_size(1)))
+        work(1) = (DBLE(temptau_size) + DBLE(broadcast_size) + max(pdgeqrf_size(1),pdlarft_size(1),pdlarfb_size(1), &
+                   tmerge_pdlarfb_size(1)))
         return
     end if
 
@@ -176,19 +181,23 @@ subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,c
 
             tau(offset:offset+lcols-1) = 0.0d0
 
-            call qr_pdgeqrf_1dcomm(a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt,work(work_offset),lwork,m,lcols,mb,rowidx,idx,rev,trans,PQRPARAM(4),mpicomm_rows,blockheuristic)
-            !print *,'offset voffset',offset,voffset,idx
-    
+            call qr_pdgeqrf_1dcomm(a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt, &
+                                   work(work_offset),lwork,m,lcols,mb,rowidx,idx,rev,trans,PQRPARAM(4), &
+                                   mpicomm_rows,blockheuristic)
+             
             ! pack broadcast buffer (v + tau)
-            call qr_pdgeqrf_pack_unpack(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,idx,rev,0,mpicomm_rows)
+            call qr_pdgeqrf_pack_unpack(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,&
+                                        idx,rev,0,mpicomm_rows)
      
             ! determine broadcast size
-            call qr_pdgeqrf_pack_unpack(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,0,mpicomm_rows)
+            call qr_pdgeqrf_pack_unpack(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,&
+                                        0,mpicomm_rows)
             broadcast_size = dbroadcast_size(1)
   
             !if (mpirank_rows .eq. 0) then
             ! pack tmatrix into broadcast buffer and calculate new size
-            call qr_pdgeqrf_pack_unpack_tmatrix(tau(offset),t(voffset,voffset),ldt,work(broadcast_offset+broadcast_size),lwork,lcols,0)
+            call qr_pdgeqrf_pack_unpack_tmatrix(tau(offset),t(voffset,voffset),ldt, &
+                                                work(broadcast_offset+broadcast_size),lwork,lcols,0)
             call qr_pdgeqrf_pack_unpack_tmatrix(tau(offset),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
             broadcast_size = broadcast_size + dtmat_bcast_size(1)
             !end if
@@ -208,7 +217,8 @@ subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,c
             call qr_pdgeqrf_pack_unpack(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
             broadcast_size = dbroadcast_size(1)
  
-            call qr_pdgeqrf_pack_unpack_tmatrix(work(temptau_offset+voffset-1),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
+            call qr_pdgeqrf_pack_unpack_tmatrix(work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
+                                                dtmat_bcast_size(1),-1,lcols,0)
             tmat_bcast_size = dtmat_bcast_size(1)
 
             !print *,'broadcast_size (nonqr)',broadcast_size
@@ -229,7 +239,8 @@ subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,c
             tmat_bcast_size = dtmat_bcast_size(1)
 
             ! t matrix should now be available on all processes => unpack
-            call qr_pdgeqrf_pack_unpack_tmatrix(work(temptau_offset+voffset-1),t(voffset,voffset),ldt,work(broadcast_offset+broadcast_size),lwork,lcols,1)
+            call qr_pdgeqrf_pack_unpack_tmatrix(work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
+                                                work(broadcast_offset+broadcast_size),lwork,lcols,1)
         end if
 
         remaining_cols = remaining_cols - lcols
@@ -256,28 +267,34 @@ subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,c
 			else if (updatemode .eq. ichar('F')) then
 				! full update no merging
 				call qr_pdlarfb_1dcomm(m,mb,lcols,update_lcols,a(1,offset),lda,v(1,update_voffset),ldv, &
-							work(temptau_offset+update_voffset-1),t(update_voffset,update_voffset),ldt, &
+							work(temptau_offset+update_voffset-1),                          &
+                                                        t(update_voffset,update_voffset),ldt, &
 							rowidx,idx,1,mpicomm_rows,work(work_offset),lwork)
 			else 
 				! full update + merging default
-				call qr_tmerge_pdlarfb_1dcomm(m,mb,lcols,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
-							   t(update_voffset,update_voffset),ldt, &
-							   a(1,offset),lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
+				call qr_tmerge_pdlarfb_1dcomm(m,mb,lcols,n-(update_voffset+update_lcols-1),update_lcols, &
+                                                              v(1,update_voffset),ldv, &
+							      t(update_voffset,update_voffset),ldt, &
+							      a(1,offset),lda,rowidx,1,updatemode,mpicomm_rows, &
+                                                              work(work_offset),lwork)
 			end if
         else
 			if (updatemode .eq. ichar('I')) then
-				print *,'sole merging of (incremental) T matrix', mpirank_cols, n-(update_voffset+incremental_update_size-1)
-				call qr_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+incremental_update_size-1),incremental_update_size,v(1,update_voffset),ldv, &
-											   t(update_voffset,update_voffset),ldt, &
-											   a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
+				print *,'sole merging of (incremental) T matrix', mpirank_cols,  &
+                                        n-(update_voffset+incremental_update_size-1)
+				call qr_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+incremental_update_size-1),   &
+                                                              incremental_update_size,v(1,update_voffset),ldv, &
+							      t(update_voffset,update_voffset),ldt, &
+							      a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
 
 				! reset for upcoming incremental updates
 				incremental_update_size = 0
 			else if (updatemode .eq. ichar('M')) then
 				! final merge
-				call qr_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+update_lcols-1),update_lcols,v(1,update_voffset),ldv, &
-											   t(update_voffset,update_voffset),ldt, &
-											   a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
+				call qr_tmerge_pdlarfb_1dcomm(m,mb,0,n-(update_voffset+update_lcols-1),update_lcols, &
+                                                              v(1,update_voffset),ldv, &
+							      t(update_voffset,update_voffset),ldt, &
+							      a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
 			else 
 				! full updatemode - nothing to update
 			end if
@@ -465,7 +482,8 @@ subroutine qr_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,row
         pdlarft_pdlarfb_size(1) = 0.0d0
         call qr_tmerge_pdlarfb_1dcomm(m,mb,n,n,n,v,ldv,t,ldt,a,lda,rowidx,rev,updatemode,mpicomm,tmerge_pdlarfb_size(1),-1)
 
-        total_size = max(pdlarfg_size(1),pdlarf_size(1),pdlarfg2_size(1),pdlarfgk_size(1),pdlarfl2_size(1),pdlarft_size(1),pdlarfb_size(1),pdlarft_pdlarfb_size(1),tmerge_pdlarfb_size(1))
+        total_size = max(pdlarfg_size(1),pdlarf_size(1),pdlarfg2_size(1),pdlarfgk_size(1),pdlarfl2_size(1),pdlarft_size(1), &
+                         pdlarfb_size(1),pdlarft_pdlarfb_size(1),tmerge_pdlarfb_size(1))
 
         work(1) = total_size
         return
@@ -528,19 +546,23 @@ subroutine qr_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,row
  
                 if (updatemode .eq. ichar('I')) then
                     ! incremental update + merging
-                    call qr_tmerge_pdlarfb_1dcomm(m,mb,nextrank-(rank-actualrank),n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv, &
-                                                   t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
-                                                   a(1,current_column-nextrank+(rank-actualrank)),lda,baseidx,rev,updatemode,mpicomm,work,lwork)
+                    call qr_tmerge_pdlarfb_1dcomm(m,mb,nextrank-(rank-actualrank),n-(current_column+rank-1),actualrank, &
+                                                  v(1,current_column+(rank-actualrank)),ldv, &
+                                                  t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
+                                                  a(1,current_column-nextrank+(rank-actualrank)),lda,baseidx,rev,updatemode,&
+                                                  mpicomm,work,lwork)
                 else
                     ! full update + merging
-                    call qr_tmerge_pdlarfb_1dcomm(m,mb,update_cols,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv, &
-                                                   t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
-                                                   a(1,1),lda,baseidx,rev,updatemode,mpicomm,work,lwork)
+                    call qr_tmerge_pdlarfb_1dcomm(m,mb,update_cols,n-(current_column+rank-1),actualrank, &
+                                                  v(1,current_column+(rank-actualrank)),ldv, &
+                                                  t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
+                                                  a(1,1),lda,baseidx,rev,updatemode,mpicomm,work,lwork)
                 end if
             else
-                call qr_tmerge_pdlarfb_1dcomm(m,mb,0,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)),ldv, &
-                                               t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
-                                               a,lda,baseidx,rev,updatemode,mpicomm,work,lwork)
+                call qr_tmerge_pdlarfb_1dcomm(m,mb,0,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)), &
+                                              ldv, &
+                                              t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
+                                              a,lda,baseidx,rev,updatemode,mpicomm,work,lwork)
             end if
 
         end do
@@ -1196,7 +1218,8 @@ subroutine qr_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,m
         !call qr_pdlarfgk_1dcomm_check(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
         call qr_pdlarfgk_1dcomm_check_improved(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
         call qr_pdlarfgk_1dcomm_update(a,lda,baseidx,pdlarfgk_1dcomm_update_size(1),-1,work,work,k,k,1,work,m,mb,rev,mpicomm)
-        work(1) = max(pdlarfg_size(1),pdlarf_size(1),pdlarfgk_1dcomm_seed_size(1),pdlarfgk_1dcomm_check_size(1),pdlarfgk_1dcomm_update_size(1)) + DBLE(seedC_size + seedD_size);
+        work(1) = max(pdlarfg_size(1),pdlarf_size(1),pdlarfgk_1dcomm_seed_size(1),pdlarfgk_1dcomm_check_size(1), &
+                      pdlarfgk_1dcomm_update_size(1)) + DBLE(seedC_size + seedD_size);
         return
     end if
 
