@@ -27,8 +27,13 @@ Currently we offer the following alternatives for the ELPA2 kernels:
                                in the hope to get optimal code from most FORTRAN
                                compilers. The configure option "--with-generic"
                                uses these kernels. They are propably a good
-                               default if you do not know which kernel to use.
-
+                               default if you do not know which kernel
+                               to use. Note that in the real version,
+                               there is used a complex variable in
+                               order to enforce better compiler
+                               optimizations. This produces correct
+                               code, however, some compilers might
+                               produce a warning.                            
 
 
 
@@ -87,6 +92,10 @@ Several
 			       -funsafe-math-optimizations -ftree-vect-loop-version \
 			       -ftree-vectorize"
 			       for best performace results.
+
+                               For convenience the flag
+                               "--with-avx-optimization" sets these
+                               CFLAGS and CXXFLAGS automatically.
 
                                On Intel Sandybridge architectures the
                                configure option "--with-intel-sandybride" 
