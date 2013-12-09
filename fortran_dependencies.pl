@@ -62,7 +62,7 @@ foreach my $file (@ARGV) {
 }
 
 foreach my $object (sort keys %uses) {
-	for my $m (keys $uses{$object}) {
+	for my $m (keys %{$uses{$object}}) {
 		if (defined $defs{$m}) {
 			print "$object: ", $defs{$m}, "\n";
 		} elsif (defined($ENV{V}) && $ENV{V} eq "1") {
