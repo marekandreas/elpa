@@ -4,13 +4,10 @@ How to install ELPA:
 ELPA is shipped with a typical "configure" and "make" procedure. It is
 recommended to use this way to install ELPA, see (A). If you do not want to 
 install ELPA as library, but to include it in your source code, please refer 
-to point (B)
-
-
-
-you can find a 
-"Makefile.example" in ./test, to see how this is done. Please distibute then 
-all files of ELPA with your code.
+to point (B). An example makefile "Makefile.example" can be found in ./test, 
+to give some hints how this is done. Please distibute then all files of ELPA 
+with your code. Please note, that usage of ELPA as described in Section (B) 
+requires advanced knowledge about compilers, preprocessor flags, and optimizations.
 
 
 (A): Installing ELPA as library with configure
@@ -43,13 +40,12 @@ The configure installation is best done in four steps
 
    You can either specify your own builds of lapack/blacs/scalapack
    or use specialized Vendor packages, e.g. if available you can use 
-   Intel's MKL. If you do not set these variables ELPA will not be
-   build!
+   Intel's MKL. If you do not set the variables "BLACS_LDFLAGS" and 
+   "BLACS_FCFLAGS" ELPA will not be build!
 
 
    Please set the optimisation that you would like with the
-   variable "FCFLAGS", "CFLAGS", and "CXXFLAGS", e.g. FCFLAGS="-O3 -xAVX".
-   For some elpa2-kernels, it is MANDATORY to set a few options,
+   variable "FCFLAGS", "CFLAGS", and "CXXFLAGS", e.g. FCFLAGS="-O3 -xAVX", 
    please see "./src/elpa2_kernels/README_elpa2_kernels.txt".
 
    Set the "prefix" - flag, if you wish another installation location than
@@ -82,14 +78,27 @@ B) Installing ELPA without the autotools procedure
     If you do so, please distibute then all files of ELPA with your code.
 
     However, this is not the recommended way for several reasons:
-     - from the last release, ELPA has grown substantially in performance
-       optimizations but also complexity. The simple "just use elpa source
-       files in your code" approach is becoming more and more difficult.
+    - from the last release, ELPA has grown substantially in performance
+      optimizations but also complexity. The simple "just use elpa source
+      files in your code" approach is becoming more and more difficult.
     - you still have to choose an elpa2-kernel (see at (A)). Getting them
       build from hand might be tedious.
     - the file elpa2.F90 uses preprocessor defines for the different kernels.
       you will have to do this by hand, if you do not use the autotools 
       infrastructure.
+
+  
+    If the above warnings do not frighten you to build ELPA without the
+    "configure & make" procedure, here are some hints that might be 
+    useful for you
+
+    - choose the appropriate compiler and compiler optimization flags,
+      take care that -- depending on the use case of ELPA -- you will need
+      a fortran, (GNU) c, and GNU C++ compiler.
+
+    - make yourself accquainted with the used preprocessor flags which are
+      used in ELPA. Write by hand a file "config-f90.h", which defines the
+      necessary preprocessor flags for your desired build
 
 
 

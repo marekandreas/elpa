@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([elpa],[2013.08.002], elpa-library@rzg.mpg.de)
+AC_INIT([elpa],[2013.08.003], elpa-library@rzg.mpg.de)
 AC_CONFIG_SRCDIR([src/elpa1.f90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
@@ -7,33 +7,21 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 #AM_SILENT_RULES([yes])
 
+AX_CHECK_GNU_MAKE()
+if test x$_cv_gnu_make_command = x ; then
+        AC_MSG_ERROR([Need GNU Make])
+fi
+
+AC_CHECK_PROG(CPP_FOUND,cpp,yes,no)
+if test "x${CPP_FOUND}" = xno; then
+  AC_MSG_ERROR([no cpp found])
+fi
 
 AC_PROG_INSTALL
 AM_PROG_CC_C_O
 AM_PROG_AR
 AM_PROG_AS
 AC_PROG_CXX
-
-AC_LANG(Fortran)
-m4_include([m4/ax_prog_fc_mpi.m4])
-dnl check whether an mpi compiler is available;
-dnl if not abort since it is mandatory
-AX_PROG_FC_MPI([],[have_mpi=yes],[have_mpi=no
-		 if test "x${have_mpi}" = xno; then
-  		  AC_MSG_ERROR([no mpi found])
-		  fi])
-
-
-AC_SUBST([ELPA_LIB_VERSION], [2013.08.002])
-# this is the version of the API, should be changed in the major revision
-# if and only if the actual API changes
-AC_SUBST([ELPA_SO_VERSION], [0:0:0])
-
-AC_FC_FREEFORM
-AC_FC_MODULE_FLAG
-AC_FC_MODULE_OUTPUT_FLAG
-
-
 
 dnl  macro for an --with-$2 switch that sets the
 dnl  preprocessor define $1, with description $3, default $4, possible values $5
@@ -52,6 +40,7 @@ AC_DEFUN([DEFINE_OPTION],[
 #	AC_DEFINE([$1], [0], [$3])
   fi
 ])
+
 
 DEFINE_OPTION([WITH_GENERIC], [generic],
 	      [use generic kernel for all architectures (with some hand-coded optimizations)],
@@ -100,6 +89,102 @@ DEFINE_OPTION([WITH_AVX_REAL_BLOCK4], [avx-real-block4],
 DEFINE_OPTION([WITH_AVX_REAL_BLOCK6], [avx-real-block6],
 	      [use AVX optimized real kernel with blocking 6 (written in gcc assembler)],
 	      [no],[])
+
+dnl check whether we better check if AVX compilation should work
+if test "x${with_avx_sandybridge}" = xyes; then
+  check_avx_compilation=yes
+fi
+if test "x${with_amd_bulldozer}" = xyes; then
+  check_avx_compilation=yes
+fi
+if test "x${with_avx_complex_block1}" = xyes; then
+  check_avx_compilation=yes
+fi
+if test "x${with_avx_complex_block2}" = xyes; then
+  check_avx_compilation=yes
+fi
+if test "x${with_avx_real_block2}" = xyes; then
+  check_avx_compilation=yes
+fi
+if test "x${with_avx_real_block4}" = xyes; then
+  check_avx_compilation=yes
+fi
+if test "x${with_avx_real_block6}" = xyes; then
+  check_avx_compilation=yes
+fi
+
+dnl if necessary do the check for avx compilation
+if test "x${check_avx_compilation}" = xyes; then
+ dnl check whether one can compile with avx - gcc intrinsics
+
+ AC_MSG_CHECKING([whether we can compile a gcc intrinsic AVX program])
+
+ dnl first pass: try with specified CFLAGS and CXXFLAGS
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
+  #include <x86intrin.h> 
+  void main(){
+  double* q;
+  __m256d a1_1 = _mm256_load_pd(q);
+  }
+  ])],
+  [can_compile_avx_prog=yes],
+  [can_compile_avx_prog=no]
+ )
+ dnl first test failed: try again after updating  CFLAGS and CXXFLAGS with -mavx
+ if test "x${can_compile_avx_prog}" = xno; then
+ CFLAGS="$CFLAGS -mavx"
+ CXXFLAGS="$CXXFLAGS -mavx"
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
+  #include <x86intrin.h> 
+  void main(){
+  double* q;
+  __m256d a1_1 = _mm256_load_pd(q);
+  }
+  ])],
+  [can_compile_avx_prog=yes],
+  [can_compile_avx_prog=no]
+ )
+ fi
+
+ AC_MSG_RESULT([${can_compile_avx_prog}])
+
+ if test "x${can_compile_avx_prog}" = xno; then
+   AC_MSG_ERROR([could not compile with gcc AVX intrinsic! Maybe choose another kernel])
+ fi
+fi
+
+dnl set the AVX optimization flags if this option is specified
+AC_MSG_CHECKING(whether AVX optimization flags should be set automatically)
+AC_ARG_WITH([avx-optimization],
+		AS_HELP_STRING([--with-avx-optimization],
+			       [use AVX optimization, default no.]),
+	      [with_avx_optimization=yes],
+	      [with_avx_optimization=no])
+  AC_MSG_RESULT([${with_avx_optimization}])
+  if test "x${with_avx_optimization}" = xyes; then
+    CFLAGS="$CFLAGS -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize"
+    CXXFLAGS="$CXXFLAGS -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize"
+  fi
+
+
+AC_LANG(Fortran)
+m4_include([m4/ax_prog_fc_mpi.m4])
+dnl check whether an mpi compiler is available;
+dnl if not abort since it is mandatory
+AX_PROG_FC_MPI([],[have_mpi=yes],[have_mpi=no
+		 if test "x${have_mpi}" = xno; then
+  		  AC_MSG_ERROR([no mpi found])
+		  fi])
+
+
+AC_SUBST([ELPA_LIB_VERSION], [2013.08.003])
+# this is the version of the API, should be changed in the major revision
+# if and only if the actual API changes
+AC_SUBST([ELPA_SO_VERSION], [0:0:0])
+
+AC_FC_FREEFORM
+AC_FC_MODULE_FLAG
+AC_FC_MODULE_OUTPUT_FLAG
 
 
 
