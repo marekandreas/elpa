@@ -4,13 +4,11 @@ How to install ELPA:
 ELPA is shipped with a typical "configure" and "make" procedure. It is
 recommended to use this way to install ELPA, see (A). If you do not want to 
 install ELPA as library, but to include it in your source code, please refer 
-to point (B)
+to point (B). An example makefile "Makefile.example" can be found in ./test, 
+to give some hints how this is done. Please distibute then all files of ELPA 
+with your code. Please note, that usage of ELPA as described in Section (B) 
+requires advanced knowledge about compilers, preprocessor flags, and optimizations.
 
-
-
-you can find a 
-"Makefile.example" in ./test, to see how this is done. Please distibute then 
-all files of ELPA with your code.
 
 
 (A): Installing ELPA as library with configure
@@ -43,17 +41,19 @@ The configure installation is best done in four steps
 
    You can either specify your own builds of lapack/blacs/scalapack
    or use specialized Vendor packages, e.g. if available you can use 
-   Intel's MKL. If you do not set these variables ELPA will not be
-   build!
-
+   Intel's MKL. If you do not set the variables "BLACS_LDFLAGS" and 
+   "BLACS_FCFLAGS" ELPA will not be build! 
 
    Please set the optimisation that you would like with the
-   variable "FCFLAGS", "CFLAGS", and "CXXFLAGS", e.g. FCFLAGS="-O3 -xAVX".
-   For some elpa2-kernels, it is MANDATORY to set a few options,
+   variable "FCFLAGS", "CFLAGS", and "CXXFLAGS", e.g. FCFLAGS="-O3 -xAVX",
    please see "./src/elpa2_kernels/README_elpa2_kernels.txt".
 
    Set the "prefix" - flag, if you wish another installation location than
    the default "/usr/local/".
+
+   If you want to use the hybrid MPI/OpenMP version of ELPA please specify
+   "--enable-openmp" or "--with-openmp"
+
 
    Note, that at the moment we do not officially support "cross compilation"
    allthough it should work.
