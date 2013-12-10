@@ -133,3 +133,5 @@ test_complex2.sh:
 
 
 CLEANFILES = test_real.sh test_real2.sh test_complex.sh test_complex2.sh
+
+@FORTRAN_MODULE_DEPS@
