@@ -52,7 +52,9 @@ The configure installation is best done in four steps
    the default "/usr/local/".
 
    If you want to use the hybrid MPI/OpenMP version of ELPA please specify
-   "--enable-openmp" or "--with-openmp"
+   "--enable-openmp" or "--with-openmp".  Note that the Bluegene P/Q kernels
+   are not yet tested in the combination with OpenMP and thus at the moment
+   this combination is switched of. Please see ./src/elpa2_kernels/README_elpa2_kernels.txt for more details and a hint how to use it anyway.
 
    Note, that at the moment we do not officially support "cross compilation"
    allthough it should work.

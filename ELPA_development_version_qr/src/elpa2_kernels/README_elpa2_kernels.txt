@@ -54,7 +54,14 @@ Currently we offer the following alternatives for the ELPA2 kernels:
                                eigenvalue problem the "elpa2_kernels_complex.f90"
                                is recommended. The configure option 
                                "--with-generic-bgp" uses these
-			       kernels.
+			       kernels. Note that the OpenMP functionality of
+			       this kernel is not yet tested and thus an
+			       preprocessor error is thrown in the combination
+			       of this kernel with OpenMP. By manually editing
+			       the file src/elpa2.F90 one can avoid this and
+       			       test the OpenMP functionality. The ELPA 
+                               developers would welcome every feedback
+			       to this subject.
 
 * elpa2_kernels_real_bgq.f90 
                              - Fortran code enhanced with assembler calls
@@ -62,7 +69,14 @@ Currently we offer the following alternatives for the ELPA2 kernels:
                                eigenvalue problem the "elpa2_kernels_complex.f90"
                                is recommended. The configure option 
                                "--with-generic-bgq" uses these
-			       kernels.
+			       kernels. Note that the OpenMP functionality of
+			       this kernel is not yet tested and thus an
+			       preprocessor error is thrown in the combination
+			       of this kernel with OpenMP. By manually editing
+			       the file src/elpa2.F90 one can avoid this and
+       			       test the OpenMP functionality. The ELPA 
+                               developers would welcome every feedback
+			       to this subject.
 
 * elpa2_kernels_asm_x86_64.s
                              - Fortran code enhanced with assembler 

@@ -2560,9 +2560,6 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
 
 #if (defined(WITH_AVX_REAL_BLOCK6) && defined(WITH_AVX_REAL_BLOCK4) && defined(WITH_AVX_REAL_BLOCK2))
-#ifdef WITH_OPENMP
-#error "AVX optimization and OPENMP ??"
-#endif
          ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
          do j = ncols, 6, -6
              w(:,1) = bcast_buffer(1:nbw,j+off)
