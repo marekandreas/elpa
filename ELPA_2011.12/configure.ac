@@ -1,19 +1,33 @@
 AC_PREREQ([2.69])
-AC_INIT([elpa],[2011.12.001], elpa-library@rzg.mpg.de)
+AC_INIT([elpa],[2011.12.002], elpa-library@rzg.mpg.de)
 AC_CONFIG_SRCDIR([src/elpa1.f90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
-#AM_SILENT_RULES([yes])
+AM_SILENT_RULES([yes])
 
-#AC_CONFIG_FILES([Makefile src/Makefile test/Makefile])
+AX_CHECK_GNU_MAKE()
+if test x$_cv_gnu_make_command = x ; then
+        AC_MSG_ERROR([Need GNU Make])
+fi
+
+AC_CHECK_PROG(CPP_FOUND,cpp,yes,no)
+if test "x${CPP_FOUND}" = xno; then
+AC_MSG_ERROR([no cpp found])
+fi
+
+# gnu-make fortran module dependencies
+m4_include([fdep/fortran_dependencies.m4])
+FDEP_F90_GNU_MAKE_DEPS
 
 AC_PROG_INSTALL
+#AC_PROG_CPP
 AM_PROG_CC_C_O
 AM_PROG_AR
 
 AC_LANG(Fortran)
+
 m4_include([m4/ax_prog_fc_mpi.m4])
 dnl check whether an mpi compiler is available;
 dnl if not abort since it is mandatory
@@ -23,7 +37,7 @@ AX_PROG_FC_MPI([],[have_mpi=yes],[have_mpi=no
 		  fi])
 
 
-AC_SUBST([ELPA_LIB_VERSION], [2011.12.001])
+AC_SUBST([ELPA_LIB_VERSION], [2011.12.002])
 # this is the version of the API, should be changed in the major revision
 # if and only if the actual API changes
 AC_SUBST([ELPA_SO_VERSION], [0:0:0])
@@ -178,4 +192,5 @@ AC_CONFIG_FILES([
   Makefile
   elpa.pc:elpa.pc.in
 ])
+
 AC_OUTPUT
