@@ -5,7 +5,7 @@ AC_CONFIG_SRCDIR([src/elpa1.F90])
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
-#AM_SILENT_RULES([yes])
+AM_SILENT_RULES([yes])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -16,6 +16,10 @@ AC_CHECK_PROG(CPP_FOUND,cpp,yes,no)
 if test "x${CPP_FOUND}" = xno; then
   AC_MSG_ERROR([no cpp found])
 fi
+
+# gnu-make fortran module dependencies
+m4_include([fdep/fortran_dependencies.m4])
+FDEP_F90_GNU_MAKE_DEPS
 
 
 AC_PROG_INSTALL
