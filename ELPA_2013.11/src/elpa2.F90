@@ -2336,15 +2336,21 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
              w(:,1) = bcast_buffer(1:nbw,j+off)
              w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, &
+                                  nbw, nl, stripe_width, nbw)
 #else
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+             call double_hh_trafo(a(1,j+off+a_off-1,istripe),           w, &
+                                  nbw, nl, stripe_width, nbw)
 #endif
          enddo
 #ifdef WITH_OPENMP
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+                                       bcast_buffer(1,off+1), nbw, nl,     &
+                                       stripe_width)
 #else
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
+                                       bcast_buffer(1,off+1), nbw, nl,     &
+                                       stripe_width)
 #endif
 
 #endif
@@ -2355,15 +2361,21 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
              w(:,1) = bcast_buffer(1:nbw,j+off)
              w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, &
+                                  nbw, nl, stripe_width, nbw)
 #else
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+             call double_hh_trafo(a(1,j+off+a_off-1,istripe),           w, &
+                                  nbw, nl, stripe_width, nbw)
 #endif
          enddo
 #ifdef WITH_OPENMP
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+                                       bcast_buffer(1,off+1), nbw, nl,     &
+                                       stripe_width)
 #else
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
+                                       bcast_buffer(1,off+1), nbw, nl,     &
+                                       stripe_width)
 #endif
 
 #endif
@@ -2374,15 +2386,21 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
              w(:,1) = bcast_buffer(1:nbw,j+off)
              w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, &
+                                  nbw, nl, stripe_width, nbw)
 #else
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+             call double_hh_trafo(a(1,j+off+a_off-1,istripe),           w, &
+                                  nbw, nl, stripe_width, nbw)
 #endif
          enddo
 #ifdef WITH_OPENMP
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+                                       bcast_buffer(1,off+1), nbw, nl,     &
+                                       stripe_width)
 #else
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
+                                       bcast_buffer(1,off+1), nbw, nl,     &
+                                       stripe_width)
 #endif
 #endif
 
@@ -2394,10 +2412,23 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
          do j = ncols, 2, -2
              w(:,1) = bcast_buffer(1:nbw,j+off)
              w(:,2) = bcast_buffer(1:nbw,j+off-1)
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+#ifdef WITH_OPENMP
+             call double_hh_trafo(a(1,j+off+a_off-1,istripe, my_thread), w, &
+                                  nbw, nl, stripe_width, nbw)
+#else
+             call double_hh_trafo(a(1,j+off+a_off-1,istripe),            w, &
+                                  nbw, nl, stripe_width, nbw)
+#endif
          enddo
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
-
+#ifdef WITH_OPENMP
+         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+                                       bcast_buffer(1,off+1), nbw, nl,     &
+                                       stripe_width)
+#else
+         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
+                                       bcast_buffer(1,off+1), nbw, nl,     &
+                                       stripe_width)
+#endif
 #endif
 
 #if (defined(WITH_AVX_REAL_BLOCK4) && defined(WITH_AVX_REAL_BLOCK2)) || defined(WITH_AMD_BULLDOZER)
@@ -2409,24 +2440,32 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
              w(:,3) = bcast_buffer(1:nbw,j+off-2)
              w(:,4) = bcast_buffer(1:nbw,j+off-3)
 #ifdef WITH_OPENMP
-             call quad_hh_trafo(a(1,j+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+             call quad_hh_trafo(a(1,j+off+a_off-3,istripe,my_thread), w, &
+                                nbw, nl, stripe_width, nbw)
 #else
-             call quad_hh_trafo(a(1,j+off+a_off-3,istripe), w, nbw, nl, stripe_width, nbw)
+             call quad_hh_trafo(a(1,j+off+a_off-3,istripe),           w, &
+                                nbw, nl, stripe_width, nbw)
 #endif
          enddo
          do jj = j, 2, -2
              w(:,1) = bcast_buffer(1:nbw,jj+off)
              w(:,2) = bcast_buffer(1:nbw,jj+off-1)
 #ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, &
+                                  nbw, nl, stripe_width, nbw)
 #else
-             call double_hh_trafo(a(1,jj+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+             call double_hh_trafo(a(1,jj+off+a_off-1,istripe),          w, &
+                                  nbw, nl, stripe_width, nbw)
 #endif
          enddo
 #ifdef WITH_OPENMP
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+                                       bcast_buffer(1,off+1), nbw, nl,     &
+                                       stripe_width)
 #else
-         if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+         if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe),          &
+                                        bcast_buffer(1,off+1), nbw, nl,    &
+                                        stripe_width)
 #endif
 #endif
 
@@ -2440,21 +2479,47 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
              w(:,4) = bcast_buffer(1:nbw,j+off-3)
              w(:,5) = bcast_buffer(1:nbw,j+off-4)
              w(:,6) = bcast_buffer(1:nbw,j+off-5)
-             call hexa_hh_trafo(a(1,j+off+a_off-5,istripe), w, nbw, nl, stripe_width, nbw)
+#ifdef WITH_OPENMP
+             call hexa_hh_trafo(a(1,j+off+a_off-5,istripe,my_thread), w, &
+                                nbw, nl, stripe_width, nbw)
+#else
+             call hexa_hh_trafo(a(1,j+off+a_off-5,istripe),           w, &
+                                nbw, nl, stripe_width, nbw)
+#endif
          enddo
          do jj = j, 4, -4
              w(:,1) = bcast_buffer(1:nbw,jj+off)
              w(:,2) = bcast_buffer(1:nbw,jj+off-1)
              w(:,3) = bcast_buffer(1:nbw,jj+off-2)
              w(:,4) = bcast_buffer(1:nbw,jj+off-3)
-             call quad_hh_trafo(a(1,jj+off+a_off-3,istripe), w, nbw, nl, stripe_width, nbw)
+#ifdef WITH_OPENMP
+             call quad_hh_trafo(a(1,jj+off+a_off-3,istripe,my_thread), w, &
+                                nbw, nl, stripe_width, nbw)
+#else
+             call quad_hh_trafo(a(1,jj+off+a_off-3,istripe),           w, &
+                                nbw, nl, stripe_width, nbw)
+#endif
          enddo
          do jjj = jj, 2, -2
              w(:,1) = bcast_buffer(1:nbw,jjj+off)
              w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
-             call double_hh_trafo(a(1,jjj+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+#ifdef WITH_OPENMP
+             call double_hh_trafo(a(1,jjj+off+a_off-1,istripe,my_thread), w, &
+                                  nbw, nl, stripe_width, nbw)
+#else
+             call double_hh_trafo(a(1,jjj+off+a_off-1,istripe),           w, &
+                                  nbw, nl, stripe_width, nbw)
+#endif
          enddo
-         if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#ifdef WITH_OPENMP
+         if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+                                         bcast_buffer(1,off+1), nbw, nl,     &
+                                         stripe_width)
+#else
+         if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
+                                         bcast_buffer(1,off+1), nbw, nl,     &
+                                         stripe_width)
+#endif
 #endif
 
 #ifdef WITH_OPENMP
@@ -4543,9 +4608,13 @@ contains
 #endif
         do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-          call single_hh_trafo_complex(a(1,j+off+a_off,istripe,my_thread),bcast_buffer(1,j+off),nbw,nl,stripe_width)
+          call single_hh_trafo_complex(a(1,j+off+a_off,istripe,my_thread), &
+                                       bcast_buffer(1,j+off),nbw,nl,       &
+                                       stripe_width)
 #else
-          call single_hh_trafo_complex(a(1,j+off+a_off,istripe),bcast_buffer(1,j+off),nbw,nl,stripe_width)
+          call single_hh_trafo_complex(a(1,j+off+a_off,istripe),           &
+                                       bcast_buffer(1,j+off),nbw,nl,       &
+                                       stripe_width)
 #endif
         enddo
 #ifdef WITH_OPENMP
