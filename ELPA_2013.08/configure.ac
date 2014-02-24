@@ -27,6 +27,9 @@ AM_PROG_AR
 AM_PROG_AS
 AC_PROG_CXX
 
+dnl necessary for later checking
+ELPA_KERNEL_SET=no
+
 dnl  macro for an --with-$2 switch that sets the
 dnl  preprocessor define $1, with description $3, default $4, possible values $5
 AC_DEFUN([DEFINE_OPTION],[
@@ -42,6 +45,7 @@ AC_DEFUN([DEFINE_OPTION],[
 	AC_DEFINE([$1], [1], [$3])
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([$1], [0], [$3])
+        ELPA_KERNEL_SET=yes
   fi
 ])
 
@@ -93,6 +97,13 @@ DEFINE_OPTION([WITH_AVX_REAL_BLOCK4], [avx-real-block4],
 DEFINE_OPTION([WITH_AVX_REAL_BLOCK6], [avx-real-block6],
 	      [use AVX optimized real kernel with blocking 6 (written in gcc assembler)],
 	      [no],[])
+
+dnl check whether any kernel was specified
+AC_MSG_CHECKING(whether the user defined an ELPA kernel)
+AC_MSG_RESULT([${with_option}])
+if test "x${ELPA_KERNEL_SET}" = xno; then
+   AC_MSG_ERROR(no ELPA kernel choosen by user! Please look at the manual! Aborting...)
+fi
 
 dnl check whether we better check if AVX compilation should work
 if test "x${with_avx_sandybridge}" = xyes; then

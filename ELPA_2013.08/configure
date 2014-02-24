@@ -4919,6 +4919,8 @@ fi
 
 
 
+ELPA_KERNEL_SET=no
+
 
 
 
@@ -4949,6 +4951,7 @@ $as_echo "#define WITH_GENERIC 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_GENERIC], [0], [use generic kernel for all architectures (with some hand-coded optimizations)])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -4979,6 +4982,7 @@ $as_echo "#define WITH_GENERIC_SIMPLE 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_GENERIC_SIMPLE], [0], [use generic simple kernel for all architectures (without any hand-coded optimizations)])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5009,6 +5013,7 @@ $as_echo "#define WITH_BGP 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_BGP], [0], [use optimized kernel for IBM BG/P])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5039,6 +5044,7 @@ $as_echo "#define WITH_BGQ 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_BGQ], [0], [use optimized kernel for IBM BG/Q])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5069,6 +5075,7 @@ $as_echo "#define WITH_SSE_AS 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_SSE_AS], [0], [use kernel tuned for SSE (written in gcc assembler)])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5099,6 +5106,7 @@ $as_echo "#define WITH_AVX_SANDYBRIDGE 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_AVX_SANDYBRIDGE], [0], [use kernel tuned for AVX on Intel Sandybridge (written in gcc assembler)])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5129,6 +5137,7 @@ $as_echo "#define WITH_AMD_BULLDOZER 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_AMD_BULLDOZER], [0], [use kernel tuned for AVX on AMD Bulldozer (written in gcc assembler)])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5159,6 +5168,7 @@ $as_echo "#define WITH_AVX_COMPLEX_BLOCK1 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_AVX_COMPLEX_BLOCK1], [0], [use AVX optimized complex kernel with blocking 1 (written in gcc assembler)])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5189,6 +5199,7 @@ $as_echo "#define WITH_AVX_COMPLEX_BLOCK2 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_AVX_COMPLEX_BLOCK2], [0], [use AVX optimized complex kernel with blocking 2 (written in gcc assembler)])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5219,6 +5230,7 @@ $as_echo "#define WITH_AVX_REAL_BLOCK2 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_AVX_REAL_BLOCK2], [0], [use AVX optimized real kernel with blocking 2 (written in gcc assembler)])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5249,6 +5261,7 @@ $as_echo "#define WITH_AVX_REAL_BLOCK4 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_AVX_REAL_BLOCK4], [0], [use AVX optimized real kernel with blocking 4 (written in gcc assembler)])
+        ELPA_KERNEL_SET=yes
   fi
 
 
@@ -5279,8 +5292,17 @@ $as_echo "#define WITH_AVX_REAL_BLOCK6 1" >>confdefs.h
 
 #  elif test "x${with_option}" = xno; then
 #	AC_DEFINE([WITH_AVX_REAL_BLOCK6], [0], [use AVX optimized real kernel with blocking 6 (written in gcc assembler)])
+        ELPA_KERNEL_SET=yes
   fi
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the user defined an ELPA kernel" >&5
+$as_echo_n "checking whether the user defined an ELPA kernel... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${with_option}" >&5
+$as_echo "${with_option}" >&6; }
+if test "x${ELPA_KERNEL_SET}" = xno; then
+   as_fn_error $? "no ELPA kernel choosen by user! Please look at the manual! Aborting..." "$LINENO" 5
+fi
 
 if test "x${with_avx_sandybridge}" = xyes; then
   check_avx_compilation=yes

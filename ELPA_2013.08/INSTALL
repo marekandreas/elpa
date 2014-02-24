@@ -27,6 +27,8 @@ The configure installation is best done in four steps
    "--with-..." option. For hints which kernels might be best
    for you, please refer to the file 
    "./src/elpa2_kernels/README_elpa2_kernels.txt".
+   If no kernel is specified at the configure step an exception
+   prompting this error is thrown.
 
    Please point to your blacs/scalapack installation and the
    linkline with the variables "BLACS_LDFLAGS" and "BLACS_FCFLAGS".
