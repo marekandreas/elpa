@@ -39,6 +39,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 program test_real_gen
 
 !-------------------------------------------------------------------------------
@@ -88,7 +89,22 @@ program test_real_gen
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
+#ifndef WITH_OPENMP
    call mpi_init(mpierr)
+#else
+   required_mpi_thread_level = MPI_THREAD_MULTIPLE
+   call mpi_init_thread(required_mpi_thread_level,     &
+                        provided_mpi_thread_level, mpierr)
+
+   if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
+      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+      print *,"           ", provided_mpi_thread_level, " is available"
+      call EXIT(1)
+      stop 1
+   endif
+
+#endif
+
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 

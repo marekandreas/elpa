@@ -136,9 +136,10 @@ program test_complex
    if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
       print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
       print *,"           ", provided_mpi_thread_level, " is available"
-      stop
+      call EXIT(1)
+      stop 1
    endif
-
+   
 #endif
    
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
