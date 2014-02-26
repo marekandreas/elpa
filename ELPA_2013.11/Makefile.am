@@ -135,9 +135,9 @@ endif
 endif
 
 if WITH_OPENMP
-libelpa_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
-else
 libelpa_mt_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
+else
+libelpa_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
 endif
 
 # install any .mod files in the include/ dir

@@ -679,7 +679,6 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OPENMP_FCFLAGS = @OPENMP_FCFLAGS@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -777,8 +776,8 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 @WITH_OPENMP_FALSE@	$(am__append_14) $(am__append_16) \
 @WITH_OPENMP_FALSE@	$(am__append_18) $(am__append_20) \
 @WITH_OPENMP_FALSE@	$(am__append_22) $(am__append_24)
-@WITH_OPENMP_TRUE@libelpa_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
-@WITH_OPENMP_FALSE@libelpa_mt_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
+@WITH_OPENMP_TRUE@libelpa_mt_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
+@WITH_OPENMP_FALSE@libelpa_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
 
 # install any .mod files in the include/ dir
 elpa_includedir = $(includedir)/elpa
