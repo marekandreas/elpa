@@ -1785,7 +1785,7 @@ contains
 
 #endif
 
-#if (defined(WITH_AVX_REAL_BLOCK4) && defined(WITH_AVX_REAL_BLOCK2)) || defined(WITH_AMD_BULLDOZER)            
+#if defined(WITH_AVX_REAL_BLOCK4)  || defined(WITH_AMD_BULLDOZER)            
         ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
         do j = ncols, 4, -4
             w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -1803,7 +1803,7 @@ contains
 #endif
 
 
-#if (defined(WITH_AVX_REAL_BLOCK6) && defined(WITH_AVX_REAL_BLOCK4) && defined(WITH_AVX_REAL_BLOCK2))
+#if defined(WITH_AVX_REAL_BLOCK6)
         ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
         do j = ncols, 6, -6
             w(:,1) = bcast_buffer(1:nbw,j+off)

@@ -106,8 +106,13 @@ host_triplet = @host@
 @WITH_AVX_COMPLEX_BLOCK2_TRUE@                        src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 
 @WITH_AVX_REAL_BLOCK2_TRUE@am__append_10 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
-@WITH_AVX_REAL_BLOCK4_TRUE@am__append_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
-@WITH_AVX_REAL_BLOCK6_TRUE@am__append_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
+@WITH_AVX_REAL_BLOCK4_TRUE@am__append_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
+@WITH_AVX_REAL_BLOCK4_TRUE@                        src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+
+@WITH_AVX_REAL_BLOCK6_TRUE@am__append_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c \
+@WITH_AVX_REAL_BLOCK6_TRUE@                        src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
+@WITH_AVX_REAL_BLOCK6_TRUE@                        src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+
 bin_PROGRAMS = test_real$(EXEEXT) test_real2$(EXEEXT) \
 	test_complex$(EXEEXT) test_complex2$(EXEEXT)
 subdir = .
@@ -199,8 +204,11 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @WITH_AVX_COMPLEX_BLOCK2_TRUE@am__objects_9 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo \
 @WITH_AVX_COMPLEX_BLOCK2_TRUE@	src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.lo
 @WITH_AVX_REAL_BLOCK2_TRUE@am__objects_10 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
-@WITH_AVX_REAL_BLOCK4_TRUE@am__objects_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo
-@WITH_AVX_REAL_BLOCK6_TRUE@am__objects_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo
+@WITH_AVX_REAL_BLOCK4_TRUE@am__objects_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo \
+@WITH_AVX_REAL_BLOCK4_TRUE@	src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
+@WITH_AVX_REAL_BLOCK6_TRUE@am__objects_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo \
+@WITH_AVX_REAL_BLOCK6_TRUE@	src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo \
+@WITH_AVX_REAL_BLOCK6_TRUE@	src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
 am_libelpa_la_OBJECTS = src/elpa1.lo src/elpa2.lo $(am__objects_1) \
 	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
 	$(am__objects_5) $(am__objects_6) $(am__objects_7) \

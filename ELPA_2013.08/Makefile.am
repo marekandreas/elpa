@@ -65,11 +65,14 @@ if WITH_AVX_REAL_BLOCK2
 endif
 
 if WITH_AVX_REAL_BLOCK4
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
+                        src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
 endif
 
 if WITH_AVX_REAL_BLOCK6
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
+  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c \
+                        src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
+                        src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
 endif
 
 
