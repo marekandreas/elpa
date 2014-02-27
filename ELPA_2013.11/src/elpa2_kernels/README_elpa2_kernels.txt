@@ -112,12 +112,16 @@ Several
                                CFLAGS and CXXFLAGS automatically.
 
                                On Intel Sandybridge architectures the
-                               configure option "--with-intel-sandybride" 
-			       use the best combination.
+                               configure option "--with-avx-sandybride" 
+			       uses the best combination, which is a 
+                               combination of block2 for real matrices
+                               and block1 for complex matrices.
 
                                On AMD Bulldozer architectures the
                                configure option "--with-amd-bulldozer" 
-			       use the best combination.
+			       uses the best combination, which is a
+			       combination of block4 for real matrices 
+			       and block1 for complex matrices.
 
 			       Otherwise, you can try out your own
 			       combinations with the configure options 
