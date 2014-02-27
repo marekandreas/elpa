@@ -134,10 +134,20 @@ host_triplet = @host@
 
 @WITH_AVX_REAL_BLOCK2_TRUE@@WITH_OPENMP_TRUE@am__append_19 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
 @WITH_AVX_REAL_BLOCK2_TRUE@@WITH_OPENMP_FALSE@am__append_20 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
-@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_TRUE@am__append_21 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
-@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_FALSE@am__append_22 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
-@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_TRUE@am__append_23 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
-@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_FALSE@am__append_24 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
+@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_TRUE@am__append_21 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
+@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_TRUE@			src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+
+@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_FALSE@am__append_22 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
+@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_FALSE@			src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_TRUE@am__append_23 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c \
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_TRUE@			src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_TRUE@			src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_FALSE@am__append_24 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c \
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_FALSE@			src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_FALSE@			src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+
 bin_PROGRAMS = test_real$(EXEEXT) test_real2$(EXEEXT) \
 	test_complex$(EXEEXT) test_complex2$(EXEEXT)
 subdir = .
@@ -228,8 +238,11 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @WITH_AVX_COMPLEX_BLOCK2_TRUE@@WITH_OPENMP_FALSE@am__objects_9 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo \
 @WITH_AVX_COMPLEX_BLOCK2_TRUE@@WITH_OPENMP_FALSE@	src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.lo
 @WITH_AVX_REAL_BLOCK2_TRUE@@WITH_OPENMP_FALSE@am__objects_10 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
-@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_FALSE@am__objects_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo
-@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_FALSE@am__objects_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo
+@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_FALSE@am__objects_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo \
+@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_FALSE@	src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_FALSE@am__objects_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo \
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_FALSE@	src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo \
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_FALSE@	src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
 @WITH_OPENMP_FALSE@@WITH_QR_FALSE@am_libelpa_la_OBJECTS =  \
 @WITH_OPENMP_FALSE@@WITH_QR_FALSE@	src/elpa1.lo src/elpa2.lo \
 @WITH_OPENMP_FALSE@@WITH_QR_FALSE@	$(am__objects_1) \
@@ -305,8 +318,11 @@ am__libelpa_mt_la_SOURCES_DIST = src/elpa1.F90 src/elpa2.F90 \
 @WITH_AVX_COMPLEX_BLOCK2_TRUE@@WITH_OPENMP_TRUE@am__objects_21 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo \
 @WITH_AVX_COMPLEX_BLOCK2_TRUE@@WITH_OPENMP_TRUE@	src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.lo
 @WITH_AVX_REAL_BLOCK2_TRUE@@WITH_OPENMP_TRUE@am__objects_22 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
-@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_TRUE@am__objects_23 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo
-@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_TRUE@am__objects_24 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo
+@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_TRUE@am__objects_23 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo \
+@WITH_AVX_REAL_BLOCK4_TRUE@@WITH_OPENMP_TRUE@	src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_TRUE@am__objects_24 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo \
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_TRUE@	src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo \
+@WITH_AVX_REAL_BLOCK6_TRUE@@WITH_OPENMP_TRUE@	src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
 @WITH_OPENMP_TRUE@@WITH_QR_FALSE@am_libelpa_mt_la_OBJECTS =  \
 @WITH_OPENMP_TRUE@@WITH_QR_FALSE@	src/elpa1.lo src/elpa2.lo \
 @WITH_OPENMP_TRUE@@WITH_QR_FALSE@	$(am__objects_13) \
