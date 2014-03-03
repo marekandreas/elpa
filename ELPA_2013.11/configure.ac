@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([elpa],[2013.11.006], elpa-library@rzg.mpg.de)
+AC_INIT([elpa],[2013.11.007], elpa-library@rzg.mpg.de)
 AC_CONFIG_SRCDIR([src/elpa1.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])

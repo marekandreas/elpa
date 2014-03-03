@@ -4580,14 +4580,31 @@ contains
         complex*16 w(nbw,2)
 #if defined(WITH_AVX_COMPLEX_BLOCK2)
         ttt = mpi_wtime()
+#ifdef WITH_OPENMP
+        if(istripe<stripe_count) then
+          nl = stripe_width
+        else
+          noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
+          nl = min(my_thread*thread_width-noff, l_nev-noff)
+          if(nl<=0) return
+        endif
+#else
         nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
+#endif
         do j = ncols, 2, -2
             w(:,1) = bcast_buffer(1:nbw,j+off)
             w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+            call double_hh_trafo_complex(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+#else
             call double_hh_trafo_complex(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+#endif
         enddo
+#ifdef WITH_OPENMP
+        if(j==1) call single_hh_trafo_complex(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width,my_thread)
+#else
         if(j==1) call single_hh_trafo_complex(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
-
+#endif
 
 #endif
 
