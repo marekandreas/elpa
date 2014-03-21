@@ -104,25 +104,27 @@ program test_real
    na = 4000
    nev = 1500
 
-   if (iargc() == 3) then
-      call getarg(1, arg1)
-      call getarg(2, arg2)
-      call getarg(3, arg3)
+   if (COMMAND_ARGUMENT_COUNT() == 3) then
+      call GET_COMMAND_ARGUMENT(1, arg1)
+      call GET_COMMAND_ARGUMENT(2, arg2)
+      call GET_COMMAND_ARGUMENT(3, arg3)
+
       read(arg1, *) na
       read(arg2, *) nev
       read(arg3, *) nblk
    endif
 
-   if (iargc() == 4) then
-      call getarg(1, arg1)
-      call getarg(2, arg2)
-      call getarg(3, arg3)
-      call getarg(4, arg4)
+   if (COMMAND_ARGUMENT_COUNT() == 4) then
+      call GET_COMMAND_ARGUMENT(1, arg1)
+      call GET_COMMAND_ARGUMENT(2, arg2)
+      call GET_COMMAND_ARGUMENT(3, arg3)
+      call GET_COMMAND_ARGUMENT(4, arg4)
       read(arg1, *) na
       read(arg2, *) nev
       read(arg3, *) nblk
- 
+      
    endif
+
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 #ifndef WITH_OPENMP
