@@ -123,10 +123,8 @@ program test_real2
       read(arg3, *) nblk
       
    endif
-
    !-------------------------------------------------------------------------------
    !  MPI Initialization
-
 #ifndef WITH_OPENMP
    call mpi_init(mpierr)
 #else
@@ -141,11 +139,12 @@ program test_real2
       stop 1
    endif
 
-#endif  
+#endif
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
    STATUS = 0
+
 #ifdef WITH_OPENMP
    if (myid .eq. 0) then
       print *,"Threaded version of test program"
@@ -154,35 +153,6 @@ program test_real2
    endif
 #endif
 
-   if (myid .eq. 0) then
-      print *," "
-      print *,"This ELPA2 is build with"
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-      print *,"AVX optimized kernel (2 blocking) for real matrices"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-      print *,"AVX optimized kernel (4 blocking) for real matrices"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-      print *,"AVX optimized kernel (6 blocking) for real matrices"
-#endif
-
-#ifdef WITH_REAL_GENERIC_KERNEL
-     print *,"GENERIC kernel for real matrices"
-#endif
-#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
-     print *,"GENERIC SIMPLE kernel for real matrices"
-#endif
-#ifdef WITH_REAL_SSE_KERNEL
-     print *,"SSE ASSEMBLER kernel for real matrices"
-#endif
-#ifdef WITH_REAL_BGP_KERNEL
-     print *,"BGP kernel for real matrices"
-#endif
-#ifdef WITH_REAL_BGQ_KERNEL
-     print *,"BGQ kernel for real matrices"
-#endif
-   endif
    if (arg4 .eq. "output") then 
       write_to_file = .true.
       if (myid .eq. 0) print *,"Writing output files"
@@ -207,6 +177,20 @@ program test_real2
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
+      print *, "This is an example how to determine the ELPA2 kernel with"
+      print *, "an api call. Note, however, that setting the kernel via"
+      print *, "an environment variable will always take precedence over"
+      print *, "everything else! "
+      print *
+#ifndef HAVE_ENVIRONMENT_CHECKING   
+      print *, " Notice that it is not possible with this build to set the "
+      print *, " kernel via an environment variable! To change this re-install"
+      print *, " the library and have a look at the log files"
+#endif
+      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
+      print *
+      
+
    endif
 
    !-------------------------------------------------------------------------------
@@ -301,9 +285,13 @@ program test_real2
      print *
    end if
 
+
+   ! ELPA is called with a kernel specification in the API
+
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    call solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
+                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
 
    if (myid==0) then
      print '(a)','| Two-step ELPA solver complete.'
@@ -314,8 +302,6 @@ program test_real2
    if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
    if(myid == 0) print *,'Time transform back EVs :',time_evp_back
    if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-      
-
 
    if(write_to_file) then
       if (myid == 0) then

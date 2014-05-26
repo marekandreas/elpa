@@ -40,10 +40,11 @@
 !
 !
 #include "config-f90.h"
-program test_real2
+
+program test_complex2
 
 !-------------------------------------------------------------------------------
-! Standard eigenvalue problem - REAL version
+! Standard eigenvalue problem - COMPLEX version
 !
 ! This program demonstrates the use of the ELPA module
 ! together with standard scalapack routines
@@ -52,7 +53,6 @@ program test_real2
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
-!
 !-------------------------------------------------------------------------------
 
    use ELPA1
@@ -60,6 +60,7 @@ program test_real2
 
    implicit none
    include 'mpif.h'
+
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
@@ -82,9 +83,14 @@ program test_real2
    integer, external :: numroc
 
    real*8 err, errmax
-   real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real*8, allocatable :: ev(:), xr(:,:)
+   complex*16 :: xc
+   complex*16, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+
+   complex*16, parameter :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
+
    integer :: STATUS
 #ifdef WITH_OPENMP
    integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
@@ -123,10 +129,8 @@ program test_real2
       read(arg3, *) nblk
       
    endif
-
    !-------------------------------------------------------------------------------
    !  MPI Initialization
-
 #ifndef WITH_OPENMP
    call mpi_init(mpierr)
 #else
@@ -141,11 +145,12 @@ program test_real2
       stop 1
    endif
 
-#endif  
+#endif
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
    STATUS = 0
+
 #ifdef WITH_OPENMP
    if (myid .eq. 0) then
       print *,"Threaded version of test program"
@@ -154,39 +159,11 @@ program test_real2
    endif
 #endif
 
-   if (myid .eq. 0) then
-      print *," "
-      print *,"This ELPA2 is build with"
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-      print *,"AVX optimized kernel (2 blocking) for real matrices"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-      print *,"AVX optimized kernel (4 blocking) for real matrices"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-      print *,"AVX optimized kernel (6 blocking) for real matrices"
-#endif
-
-#ifdef WITH_REAL_GENERIC_KERNEL
-     print *,"GENERIC kernel for real matrices"
-#endif
-#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
-     print *,"GENERIC SIMPLE kernel for real matrices"
-#endif
-#ifdef WITH_REAL_SSE_KERNEL
-     print *,"SSE ASSEMBLER kernel for real matrices"
-#endif
-#ifdef WITH_REAL_BGP_KERNEL
-     print *,"BGP kernel for real matrices"
-#endif
-#ifdef WITH_REAL_BGQ_KERNEL
-     print *,"BGQ kernel for real matrices"
-#endif
-   endif
    if (arg4 .eq. "output") then 
       write_to_file = .true.
       if (myid .eq. 0) print *,"Writing output files"
    endif
+
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible
@@ -202,10 +179,22 @@ program test_real2
 
    if(myid==0) then
       print *
-      print '(a)','Standard eigenvalue problem - REAL version'
+      print '(a)','Standard eigenvalue problem - COMPLEX version'
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
+      print *
+      print *, "This is an example how to determine the ELPA2 kernel with"
+      print *, "an api call. Note, however, that setting the kernel via"
+      print *, "an environment variable will always take precedence over"
+      print *, "everything else! "
+      print *
+#ifndef HAVE_ENVIRONMENT_CHECKING   
+      print *, " Notice that it is not possible with this build to set the "
+      print *, " kernel via an environment variable! To change this re-install"
+      print *, " the library and have a look at the log files"
+#endif
+      print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE"
       print *
    endif
 
@@ -253,7 +242,6 @@ program test_real2
    if (myid==0) then
      print '(a)','| Past scalapack descriptor setup.'
    end if
-
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
 
@@ -263,8 +251,8 @@ program test_real2
 
    allocate(ev(na))
 
-   ! For getting a symmetric test matrix A we get a random matrix Z
-   ! and calculate A = Z + Z**T
+   ! For getting a hermitian test matrix A we get a random matrix Z
+   ! and calculate A = Z + Z**H
 
    ! We want different random numbers on every process
    ! (otherways A might get rank deficient):
@@ -272,19 +260,16 @@ program test_real2
    iseed(:) = myid
    call RANDOM_SEED(put=iseed)
 
-   call RANDOM_NUMBER(z)
+   allocate(xr(na_rows,na_cols))
+   call RANDOM_NUMBER(xr)
+   z(:,:) = xr(:,:)
+   call RANDOM_NUMBER(xr)
+   z(:,:) = z(:,:) + (0.d0,1.d0)*xr(:,:)
+   deallocate(xr)
 
    a(:,:) = z(:,:)
+   call pztranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
 
-   if (myid==0) then
-     print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
-   end if
-
-   call pdtran(na, na,  1.d0, z, 1, 1, sc_desc, 1.d0, a, 1, 1, sc_desc) ! A = A + Z**T
-
-   if (myid==0) then
-     print '(a)','| Random matrix has been symmetrized.'
-   end if
 
    ! Save original matrix A for later accuracy checks
 
@@ -301,25 +286,22 @@ program test_real2
      print *
    end if
 
-   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   call solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
-   if (myid==0) then
-     print '(a)','| Two-step ELPA solver complete.'
-     print *
-   end if
+   ! ELPA is called a kernel specification in the API
+  
+   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+   call solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
+                                 COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
 
    if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
    if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
    if(myid == 0) print *,'Time transform back EVs :',time_evp_back
    if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-      
-
 
    if(write_to_file) then
       if (myid == 0) then
-         open(17,file="EVs_real2_out.txt",form='formatted',status='new')
+         open(17,file="EVs_complex2_out.txt",form='formatted',status='new')
          do i=1,na
             write(17,*) i,ev(i)
          enddo
@@ -329,14 +311,14 @@ program test_real2
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
 
+   ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
+
    deallocate(a)
    allocate(tmp1(na_rows,na_cols))
 
-   ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
-
    ! tmp1 =  A * Z
-   call pdgemm('N','N',na,nev,na,1.d0,as,1,1,sc_desc, &
-           z,1,1,sc_desc,0.d0,tmp1,1,1,sc_desc)
+   call pzgemm('N','N',na,nev,na,CONE,as,1,1,sc_desc, &
+               z,1,1,sc_desc,CZERO,tmp1,1,1,sc_desc)
 
    deallocate(as)
    allocate(tmp2(na_rows,na_cols))
@@ -344,7 +326,8 @@ program test_real2
    ! tmp2 = Zi*EVi
    tmp2(:,:) = z(:,:)
    do i=1,nev
-      call pdscal(na,ev(i),tmp2,1,i,sc_desc,1)
+      xc = ev(i)
+      call pzscal(na,xc,tmp2,1,i,sc_desc,1)
    enddo
 
    !  tmp1 = A*Zi - Zi*EVi
@@ -353,9 +336,9 @@ program test_real2
    ! Get maximum norm of columns of tmp1
    errmax = 0
    do i=1,nev
-      err = 0
-      call pdnrm2(na,err,tmp1,1,i,sc_desc,1)
-      errmax = max(errmax, err)
+      xc = 0
+      call pzdotc(na,xc,tmp1,1,i,sc_desc,1,tmp1,1,i,sc_desc,1)
+      errmax = max(errmax, sqrt(real(xc,8)))
    enddo
 
    ! Get maximum error norm over all processors
@@ -372,11 +355,11 @@ program test_real2
 
    ! tmp1 = Z**T * Z
    tmp1 = 0
-   call pdgemm('T','N',nev,nev,na,1.d0,z,1,1,sc_desc, &
-           z,1,1,sc_desc,0.d0,tmp1,1,1,sc_desc)
+   call pzgemm('C','N',nev,nev,na,CONE,z,1,1,sc_desc, &
+               z,1,1,sc_desc,CZERO,tmp1,1,1,sc_desc)
    ! Initialize tmp2 to unit matrix
    tmp2 = 0
-   call pdlaset('A',nev,nev,0.d0,1.d0,tmp2,1,1,sc_desc)
+   call pzlaset('A',nev,nev,CZERO,CONE,tmp2,1,1,sc_desc)
 
    ! tmp1 = Z**T * Z - Unit Matrix
    tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
@@ -385,7 +368,7 @@ program test_real2
    err = maxval(abs(tmp1))
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
-   
+
    if (errmax .gt. 5e-12) then
       status = 1
    endif

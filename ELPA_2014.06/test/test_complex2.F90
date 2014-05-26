@@ -161,30 +161,23 @@ program test_complex2
    if (myid .eq. 0) then
       print *," "
       print *,"This ELPA2 is build with"
-#ifdef WITH_AVX_COMPLEX_BLOCK2
+#ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
       print *,"AVX optimized kernel (2 blocking) for complex matrices"
 #endif
-#ifdef WITH_AVX_COMPLEX_BLOCK1
+#ifdef WITH_COMPLEX_AVX_BLOCK1_KERNEL
       print *,"AVX optimized kernel (1 blocking) for complex matrices"
 #endif
-#ifdef WITH_AVX_SANDYBRIDGE
-     print *,"AVX SANDYBRIDGE optimized kernel for complex matrices"
-#endif
-#ifdef WITH_GENERIC
+
+#ifdef WITH_COMPLEX_GENERIC_KERNEL
      print *,"GENERIC kernel for complex matrices"
 #endif
-#ifdef WITH_GENERIC_SIMPLE
+#ifdef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
      print *,"GENERIC SIMPLE kernel for complex matrices"
 #endif
-#ifdef WITH_SSE_AS
+#ifdef WITH_COMPLEX_SSE_KERNEL
      print *,"SSE ASSEMBLER kernel for complex matrices"
 #endif
-#ifdef WITH_BGP
-     print *,"BGP kernel for complex matrices"
-#endif
-#ifdef WITH_BGQ
-     print *,"BGQ kernel for complex matrices"
-#endif
+
    endif
 
    if (arg4 .eq. "output") then 

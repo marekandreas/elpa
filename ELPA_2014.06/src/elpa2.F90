@@ -86,10 +86,157 @@ module ELPA2
   public :: trans_ev_tridi_to_band_complex
   public :: trans_ev_band_to_full_complex
 
+  public :: get_actual_real_kernel_name, get_actual_complex_kernel_name
+  public :: REAL_ELPA_KERNEL_GENERIC, REAL_ELPA_KERNEL_GENERIC_SIMPLE, &
+            REAL_ELPA_KERNEL_BGP, REAL_ELPA_KERNEL_BGQ,                &
+            REAL_ELPA_KERNEL_SSE, REAL_ELPA_KERNEL_AVX_BLOCK2,         &
+            REAL_ELPA_KERNEL_AVX_BLOCK4, REAL_ELPA_KERNEL_AVX_BLOCK6
+
+  public :: COMPLEX_ELPA_KERNEL_GENERIC, COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE, &
+            COMPLEX_ELPA_KERNEL_BGP, COMPLEX_ELPA_KERNEL_BGQ,                &
+            COMPLEX_ELPA_KERNEL_SSE, COMPLEX_ELPA_KERNEL_AVX_BLOCK1,         &
+            COMPLEX_ELPA_KERNEL_AVX_BLOCK2
+
+  public :: print_available_real_kernels, print_available_complex_kernels
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter :: error_unit = 6
 #endif
 
+
+  integer, parameter :: number_of_real_kernels           = 8
+  integer, parameter :: REAL_ELPA_KERNEL_GENERIC         = 1
+  integer, parameter :: REAL_ELPA_KERNEL_GENERIC_SIMPLE  = 2
+  integer, parameter :: REAL_ELPA_KERNEL_BGP             = 3
+  integer, parameter :: REAL_ELPA_KERNEL_BGQ             = 4
+  integer, parameter :: REAL_ELPA_KERNEL_SSE             = 5
+  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK2      = 6
+  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK4      = 7
+  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK6      = 8
+
+#if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = 6
+#else
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = 1
+#endif
+  character(35), parameter, dimension(number_of_real_kernels) :: &
+  REAL_ELPA_KERNEL_NAMES = (/"REAL_ELPA_KERNEL_GENERIC",         &
+                             "REAL_ELPA_KERNEL_GENERIC_SIMPLE",  &
+                             "REAL_ELPA_KERNEL_BGP",             &
+                             "REAL_ELPA_KERNEL_BGQ",             &
+                             "REAL_ELPA_KERNEL_SSE",             &
+                             "REAL_ELPA_KERNEL_AVX_BLOCK2",      &
+                             "REAL_ELPA_KERNEL_AVX_BLOCK4",      &
+                             "REAL_ELPA_KERNEL_AVX_BLOCK6"/)
+
+  integer, parameter :: number_of_complex_kernels           = 7
+  integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC         = 1
+  integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE  = 2
+  integer, parameter :: COMPLEX_ELPA_KERNEL_BGP             = 3
+  integer, parameter :: COMPLEX_ELPA_KERNEL_BGQ             = 4
+  integer, parameter :: COMPLEX_ELPA_KERNEL_SSE             = 5
+  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK1      = 6
+  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK2      = 7
+
+#if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = 6
+#else
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = 1
+#endif
+  character(35), parameter, dimension(number_of_complex_kernels) :: &
+  COMPLEX_ELPA_KERNEL_NAMES = (/"COMPLEX_ELPA_KERNEL_GENERIC",      &
+                             "COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE",  &
+                             "COMPLEX_ELPA_KERNEL_BGP",             &
+                             "COMPLEX_ELPA_KERNEL_BGQ",             &
+                             "COMPLEX_ELPA_KERNEL_SSE",             &
+                             "COMPLEX_ELPA_KERNEL_AVX_BLOCK1",      &
+                             "COMPLEX_ELPA_KERNEL_AVX_BLOCK2"/)
+
+
+
+  integer, parameter                                    ::             &
+           AVAILABLE_REAL_ELPA_KERNELS(number_of_real_kernels) =       &
+                                      (/                               &
+#if WITH_REAL_GENERIC_KERNEL
+                                        1                              &
+#else
+                                        0                              &        
+#endif
+#if WITH_REAL_GENERIC_SIMPLE_KERNEL
+                                          ,1                           &
+#else
+                                          ,0                           &
+#endif
+#if WITH_REAL_BGP_KERNEL
+                                            ,1                         &
+#else
+                                            ,0                         &
+#endif
+#if WITH_REAL_BGQ_KERNEL
+                                              ,1                       &
+#else
+                                              ,0                       &
+#endif
+#if WITH_REAL_SSE_KERNEL
+                                                ,1                     &
+#else
+                                                ,0                     &
+#endif
+#if WITH_REAL_AVX_BLOCK2_KERNEL
+                                                  ,1                   &
+#else
+                                                  ,0                   &
+#endif
+#if WITH_REAL_AVX_BLOCK4_KERNEL
+                                                    ,1                 &
+#else
+                                                    ,0                 &
+#endif
+#if WITH_REAL_AVX_BLOCK6_KERNEL
+                                                      ,1               &
+#else
+                                                      ,0               &
+#endif
+                                                       /)
+
+  integer, parameter ::                                                   &
+           AVAILABLE_COMPLEX_ELPA_KERNELS(number_of_complex_kernels) =    &
+                                      (/                                  &
+#if WITH_COMPLEX_GENERIC_KERNEL
+                                        1                                 &
+#else
+                                        0                                 &
+#endif
+#if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
+                                          ,1                              &
+#else
+                                          ,0                              &
+#endif
+#if WITH_COMPLEX_BGP_KERNEL
+                                            ,1                            &
+#else
+                                            ,0                            &
+#endif
+#if WITH_COMPLEX_BGQ_KERNEL
+                                              ,1                          &
+#else
+                                              ,0                          &
+#endif
+#if WITH_COMPLEX_SSE_KERNEL
+                                                ,1                        &
+#else
+                                                ,0                        &
+#endif
+#if WITH_COMPLEX_AVX_BLOCK1
+                                                  ,1                      &
+#else
+                                                  ,0                      &
+#endif
+#if WITH_COMPLEX_AVX_BLOCK2
+                                                    ,1                    &
+#else
+                                                    ,0                    &
+#endif
+                                                   /)
 !-------------------------------------------------------------------------------
 
   ! The following array contains the Householder vectors of the
@@ -108,8 +255,157 @@ module ELPA2
 
 !******
 contains
+subroutine print_available_real_kernels
 
-subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+  implicit none
+
+  integer :: i
+  
+  do i=1, number_of_real_kernels
+     if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
+        write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
+     endif
+  enddo
+  write(error_unit,*) " "
+  write(error_unit,*) " At the moment the following kernel would be choosen:"
+  write(error_unit,*) get_actual_real_kernel_name()
+
+
+end subroutine print_available_real_kernels
+
+subroutine print_available_complex_kernels
+
+  implicit none
+
+  integer :: i
+  
+  do i=1, number_of_real_kernels
+     if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
+        write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
+     endif
+  enddo
+  write(error_unit,*) " "
+  write(error_unit,*) " At the moment the following kernel would be choosen:"
+  write(error_unit,*) get_actual_real_kernel_name()
+
+
+end subroutine print_available_complex_kernels
+
+function get_actual_real_kernel result(actual_kernel)
+
+  integer :: actual_kernel
+     
+  ! if kernel is not choosen via api
+  ! check whether set by environment variable
+  actual_kernel = real_kernel_via_environment_variable()
+      
+  if (actual_kernel .eq. 0) then
+     ! if not then set default kernel
+     actual_kernel = DEFAULT_REAL_ELPA_KERNEL
+  endif
+end function get_actual_real_kernel
+
+function get_actual_real_kernel_name result(actual_kernel_name)
+
+  character(35) :: actual_kernel_name
+  integer       :: actual_kernel
+  actual_kernel = get_actual_real_kernel()
+  actual_kernel_name = REAL_ELPA_KERNEL_NAMES(actual_kernel)
+end function get_actual_real_kernel_name
+
+function get_actual_complex_kernel result(actual_kernel)
+
+  integer :: actual_kernel
+     
+  ! if kernel is not choosen via api
+  ! check whether set by environment variable
+  actual_kernel = complex_kernel_via_environment_variable()
+      
+  if (actual_kernel .eq. 0) then
+     ! if not then set default kernel
+     actual_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
+  endif
+end function get_actual_complex_kernel
+
+function get_actual_complex_kernel_name result(actual_kernel_name)
+
+  character(35) :: actual_kernel_name
+  integer       :: actual_kernel
+  actual_kernel = get_actual_complex_kernel()
+  actual_kernel_name = COMPLEX_ELPA_KERNEL_NAMES(actual_kernel)
+end function get_actual_complex_kernel_name
+
+function check_allowed_real_kernels(THIS_REAL_ELPA_KERNEL) result(err)
+
+  implicit none
+  integer, intent(in) :: THIS_REAL_ELPA_KERNEL
+
+  logical             :: err
+
+  err = .false.
+
+  if (AVAILABLE_REAL_ELPA_KERNELS(THIS_REAL_ELPA_KERNEL) .ne. 1) err=.true.
+
+end function check_allowed_real_kernels
+
+function check_allowed_complex_kernels(THIS_COMPLEX_ELPA_KERNEL) result(err)
+
+  implicit none
+  integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
+
+  logical             :: err
+
+  err = .false.
+
+  if (AVAILABLE_COMPLEX_ELPA_KERNELS(THIS_COMPLEX_ELPA_KERNEL) .ne. 1) err=.true.
+end function check_allowed_complex_kernels
+
+function real_kernel_via_environment_variable result(kernel)
+  implicit none
+  integer :: kernel
+  CHARACTER(len=255) :: REAL_KERNEL_ENVIRONMENT
+  integer :: i
+
+#if defined(HAVE_ENVIRONMENT_CHECKING)
+  call get_environment_variable("REAL_ELPA_KERNEL",REAL_KERNEL_ENVIRONMENT)
+#endif
+  do i=1,size(REAL_ELPA_KERNEL_NAMES(:))
+!     if (trim(dummy_char) .eq. trim(REAL_ELPA_KERNEL_NAMES(i))) then
+     if (trim(REAL_KERNEL_ENVIRONMENT) .eq. trim(REAL_ELPA_KERNEL_NAMES(i))) then
+        kernel = i
+        exit
+     else
+        kernel = 0
+     endif
+  enddo
+
+
+end function real_kernel_via_environment_variable
+
+function complex_kernel_via_environment_variable result(kernel)
+  implicit none
+  integer :: kernel
+
+  CHARACTER(len=255) :: COMPLEX_KERNEL_ENVIRONMENT
+  integer :: i
+#if defined(HAVE_ENVIRONMENT_CHECKING)
+  call get_environment_variable("COMPLEX_ELPA_KERNEL",COMPLEX_KERNEL_ENVIRONMENT)
+#endif
+
+  do i=1,size(COMPLEX_ELPA_KERNEL_NAMES(:))
+     if (trim(COMPLEX_ELPA_KERNEL_NAMES(i)) .eq. trim(COMPLEX_KERNEL_ENVIRONMENT)) then
+        kernel = i
+        exit
+     else
+        kernel = 0
+     endif
+  enddo
+
+end function complex_kernel_via_environment_variable
+
+subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
+                                 mpi_comm_rows, mpi_comm_cols,        &
+                                 mpi_comm_all, THIS_REAL_ELPA_KERNEL_API)
 
 !-------------------------------------------------------------------------------
 !  solve_evp_real_2stage: Solves the real eigenvalue problem with a 2 stage approach
@@ -147,14 +443,18 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_row
 !-------------------------------------------------------------------------------
 
    implicit none
+   integer, intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+  integer                       :: THIS_REAL_ELPA_KERNEL 
 
-   integer, intent(in) :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   integer, intent(in)   :: na, nev, lda, ldq, nblk, mpi_comm_rows, &
+                            mpi_comm_cols, mpi_comm_all
    real*8, intent(inout) :: a(lda,*), ev(na), q(ldq,*)
 
    integer my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer nbw, num_blocks
    real*8, allocatable :: tmat(:,:,:), e(:)
    real*8 ttt0, ttt1, ttts
+   integer :: i
 
    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
@@ -163,6 +463,37 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_row
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+ if (present(THIS_REAL_ELPA_KERNEL_API)) then
+      ! user defined kernel via the optional argument in the API call
+      THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
+   else
+      
+      ! if kernel is not choosen via api
+      ! check whether set by environment variable
+      THIS_REAL_ELPA_KERNEL = get_actual_real_kernel()
+   endif
+
+   ! check whether choosen kernel is allowed
+   if (check_allowed_real_kernels(THIS_REAL_ELPA_KERNEL)) then
+    
+      if(my_pe == 0) then
+         write(error_unit,*) " "
+         write(error_unit,*) "The choosen kernel ",REAL_ELPA_KERNEL_NAMES(THIS_REAL_ELPA_KERNEL)
+         write(error_unit,*) "is not in the list of the allowed kernels!"
+         write(error_unit,*) " "
+         write(error_unit,*) "Allowed kernels are:"
+         do i=1,size(REAL_ELPA_KERNEL_NAMES(:))
+            if (AVAILABLE_REAL_ELPA_KERNELS(i) .ne. 0) then
+               write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
+            endif
+         enddo
+
+         write(error_unit,*) " "
+         write(error_unit,*) "The defaul kernel REAL_ELPA_KERNEL_GENERIC will be used !"
+      endif
+         THIS_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
+
+   endif
 
    ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
 
@@ -186,7 +517,8 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_row
    allocate(e(na))
 
    ttt0 = MPI_Wtime()
-   call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+   call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, mpi_comm_rows, &
+                          mpi_comm_cols, mpi_comm_all)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_real          :',ttt1-ttt0
@@ -212,7 +544,7 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_row
    ! Backtransform stage 1
 
    ttt0 = MPI_Wtime()
-   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, mpi_comm_cols, THIS_REAL_ELPA_KERNEL)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_tridi_to_band_real:',ttt1-ttt0
@@ -239,7 +571,9 @@ end subroutine solve_evp_real_2stage
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
+                                    mpi_comm_rows, mpi_comm_cols,      &
+                                    mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
 
 !-------------------------------------------------------------------------------
 !  solve_evp_complex_2stage: Solves the complex eigenvalue problem with a 2 stage approach
@@ -277,22 +611,56 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_
 !-------------------------------------------------------------------------------
 
    implicit none
-
+   integer, intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
+   integer                       :: THIS_COMPLEX_ELPA_KERNEL
    integer, intent(in) :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
    complex*16, intent(inout) :: a(lda,*), q(ldq,*)
    real*8, intent(inout) :: ev(na)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
    integer l_cols, l_rows, l_cols_nev, nbw, num_blocks
    complex*16, allocatable :: tmat(:,:,:)
    real*8, allocatable :: q_real(:,:), e(:)
    real*8 ttt0, ttt1, ttts
+   integer :: i
+
+   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+  if (present(THIS_COMPLEX_ELPA_KERNEL_API)) then
+      ! user defined kernel via the optional argument in the API call
+      THIS_COMPLEX_ELPA_KERNEL = THIS_COMPLEX_ELPA_KERNEL_API
+   else
+      ! if kernel is not choosen via api
+      ! check whether set by environment variable
+      THIS_COMPLEX_ELPA_KERNEL = get_actual_complex_kernel()
+   endif
 
+   ! check whether choosen kernel is allowed
+   if (check_allowed_complex_kernels(THIS_COMPLEX_ELPA_KERNEL)) then
+ 
+      if(my_pe == 0) then
+         write(error_unit,*) " "
+         write(error_unit,*) "The choosen kernel ",COMPLEX_ELPA_KERNEL_NAMES(THIS_COMPLEX_ELPA_KERNEL)
+         write(error_unit,*) "is not in the list of the allowed kernels!"
+         write(error_unit,*) " "
+         write(error_unit,*) "Allowed kernels are:"
+         do i=1,size(COMPLEX_ELPA_KERNEL_NAMES(:))
+            if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .ne. 0) then
+               write(error_unit,*) COMPLEX_ELPA_KERNEL_NAMES(i)
+            endif
+         enddo
+
+         write(error_unit,*) " "
+         write(error_unit,*) "The defaul kernel COMPLEX_ELPA_KERNEL_GENERIC will be used !"
+      endif
+         THIS_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
+!      call MPI_ABORT(mpi_comm_all, mpierr)
+   endif
    ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
 
    nbw = (31/nblk+1)*nblk
@@ -349,7 +717,8 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_
    ! Backtransform stage 1
 
    ttt0 = MPI_Wtime()
-   call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,  &
+                                       mpi_comm_rows, mpi_comm_cols,THIS_COMPLEX_ELPA_KERNEL)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_tridi_to_band_complex:',ttt1-ttt0
@@ -700,6 +1069,7 @@ end subroutine symm_matrix_allreduce
 !-------------------------------------------------------------------------------
 
 subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
+
 
 !-------------------------------------------------------------------------------
 !  trans_ev_band_to_full_real:
@@ -1495,8 +1865,10 @@ enddo
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, mpi_comm_cols)
 
+subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
+                                       mpi_comm_rows, mpi_comm_cols, &
+                                       THIS_REAL_ELPA_KERNEL)
 !-------------------------------------------------------------------------------
 !  trans_ev_tridi_to_band_real:
 !  Transforms the eigenvectors of a tridiagonal matrix back to the eigenvectors of the band matrix
@@ -1525,6 +1897,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
     implicit none
 
+    integer, intent(in) :: THIS_REAL_ELPA_KERNEL
     integer, intent(in) :: na, nev, nblk, nbw, ldq, mpi_comm_rows, mpi_comm_cols
     real*8 q(ldq,*)
 
@@ -1940,10 +2313,12 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                         a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                     endif
-                    call compute_hh_trafo(0, current_local_n, i, my_thread)
+                    call compute_hh_trafo(0, current_local_n, i, my_thread, &
+                                      THIS_REAL_ELPA_KERNEL)
                 enddo
 #else
-                call compute_hh_trafo(0, current_local_n, i)
+                call compute_hh_trafo(0, current_local_n, i, &
+                                      THIS_REAL_ELPA_KERNEL)
 #endif
                 !send_b
 #ifdef WITH_OPENMP
@@ -1973,7 +2348,8 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 #ifdef WITH_OPENMP
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
-                    call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread)
+                    call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
+                                      THIS_REAL_ELPA_KERNEL)
                 enddo
 
                 !send_b
@@ -1987,7 +2363,8 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                                    top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
                 endif
 #else
-                call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i)
+                call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, &
+                                      THIS_REAL_ELPA_KERNEL)
 
 
 
@@ -2008,10 +2385,12 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 #ifdef WITH_OPENMP
 !$omp parallel do private(my_thread), schedule(static, 1)
                 do my_thread = 1, max_threads
-                    call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread)
+                    call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
+                                      THIS_REAL_ELPA_KERNEL)
                 enddo
 #else
-                call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i)
+                call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
+                                      THIS_REAL_ELPA_KERNEL)
 
 #endif
                 !wait_t
@@ -2034,10 +2413,12 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                         a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                     endif
-                    call compute_hh_trafo(0, top_msg_length, i, my_thread)
+                    call compute_hh_trafo(0, top_msg_length, i, my_thread, &
+                                      THIS_REAL_ELPA_KERNEL)
                 enddo
 #else
-                call compute_hh_trafo(0, top_msg_length, i)
+                call compute_hh_trafo(0, top_msg_length, i, &
+                                      THIS_REAL_ELPA_KERNEL)
 #endif
             endif
 
@@ -2308,10 +2689,30 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 #endif
 
 #ifdef WITH_OPENMP
-     subroutine compute_hh_trafo(off, ncols, istripe, my_thread)
+     subroutine compute_hh_trafo(off, ncols, istripe, my_thread, THIS_REAL_ELPA_KERNEL)
 #else
-     subroutine compute_hh_trafo(off, ncols, istripe)
+     subroutine compute_hh_trafo(off, ncols, istripe, THIS_REAL_ELPA_KERNEL)
 #endif
+
+#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
+      use real_generic_simple_kernel, only : double_hh_trafo_generic_simple
+#endif
+
+!#if defined(WITH_REAL_GENERIC_KERNEL)
+!      use real_generic_kernel, only : double_hh_trafo_generic
+!#endif
+
+#if defined(WITH_REAL_BGP_KERNEL)
+      use real_bgp_kernel, only : double_hh_trafo_bgp
+#endif
+
+#if defined(WITH_REAL_BGQ_KERNEL)
+      use real_bgp_kernel, only : double_hh_trafo_bgq
+#endif
+      implicit none
+
+      integer, intent(in) :: THIS_REAL_ELPA_KERNEL
+
        ! Private variables in OMP regions (my_thread) should better be in the argument list!
          integer off, ncols, istripe
 #ifdef WITH_OPENMP
@@ -2336,20 +2737,146 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
          endif
 #endif
 
-#if defined(WITH_AVX_REAL_BLOCK2) || defined(WITH_AVX_SANDYBRIDGE) || defined(WITH_GENERIC)
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
+            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
+            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
+
+            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE .or.        &
+            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP .or.        &
+            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
 
          !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
-         do j = ncols, 2, -2
-             w(:,1) = bcast_buffer(1:nbw,j+off)
-             w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#if defined(WITH_REAL_GENERIC_KERNEL)
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) then
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+              do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, &
-                                  nbw, nl, stripe_width, nbw)
+                 call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe,my_thread), w, &
+                                      nbw, nl, stripe_width, nbw)
 #else
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe),           w, &
-                                  nbw, nl, stripe_width, nbw)
+                 call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe),           w, &
+                                      nbw, nl, stripe_width, nbw)
 #endif
-         enddo
+              enddo
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           endif
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_REAL_GENERIC_KERNEL */
+
+
+#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) then
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+              do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+                 call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe,my_thread), &
+                                                     w, nbw, nl, stripe_width, nbw)
+#else
+                 call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe), &
+                                                     w, nbw, nl, stripe_width, nbw)
+#endif
+              enddo
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           endif
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_REAL_GENERIC_SIMPLE_KERNEL */
+
+
+#if defined(WITH_REAL_SSE_KERNEL)
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) then
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+              do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+                 call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
+                                      stripe_width, nbw)
+#else
+                 call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
+                                      stripe_width, nbw)
+#endif
+              enddo
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           endif
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_REAL_SSE_KERNEL */
+
+
+#if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) then
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+              do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+                 call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
+                                                       w, nbw, nl, stripe_width, nbw)
+#else
+                 call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
+                                                       w, nbw, nl, stripe_width, nbw)
+#endif
+              enddo
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           endif
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_REAL_AVX_BLOCK2_KERNEL */
+
+#if defined(WITH_REAL_BGP_KERNEL)
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP) then
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+              do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+                 call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
+                                          stripe_width, nbw)
+#else
+                 call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
+                                          stripe_width, nbw)
+#endif
+              enddo
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           endif
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_REAL_BGP_KERNEL */
+
+
+#if defined(WITH_REAL_BGQ_KERNEL)
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+              do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+                 call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
+                                          stripe_width, nbw)
+#else
+                 call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
+                                          stripe_width, nbw)
+#endif
+              enddo
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+           endif
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_REAL_BGQ_KERNEL */
+
+
+!#if defined(WITH_AVX_SANDYBRIDGE) 
+!              call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+!#endif
+
 #ifdef WITH_OPENMP
          if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
                                        bcast_buffer(1,off+1), nbw, nl,     &
@@ -2360,183 +2887,120 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
                                        stripe_width)
 #endif
 
-#endif
 
-#if defined(WITH_GENERIC_SIMPLE)
-         !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
-         do j = ncols, 2, -2
-             w(:,1) = bcast_buffer(1:nbw,j+off)
-             w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, &
-                                  nbw, nl, stripe_width, nbw)
-#else
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe),           w, &
-                                  nbw, nl, stripe_width, nbw)
-#endif
-         enddo
-#ifdef WITH_OPENMP
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
-                                       bcast_buffer(1,off+1), nbw, nl,     &
-                                       stripe_width)
-#else
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
-                                       bcast_buffer(1,off+1), nbw, nl,     &
-                                       stripe_width)
-#endif
-
-#endif
-
-#if defined(WITH_SSE_AS)
-         !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
-         do j = ncols, 2, -2
-             w(:,1) = bcast_buffer(1:nbw,j+off)
-             w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, &
-                                  nbw, nl, stripe_width, nbw)
-#else
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe),           w, &
-                                  nbw, nl, stripe_width, nbw)
-#endif
-         enddo
-#ifdef WITH_OPENMP
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
-                                       bcast_buffer(1,off+1), nbw, nl,     &
-                                       stripe_width)
-#else
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
-                                       bcast_buffer(1,off+1), nbw, nl,     &
-                                       stripe_width)
-#endif
-#endif
-
-#if defined(WITH_BGP) || defined(WITH_BGQ)
-#ifdef WITH_OPENMP
-#error "Bluegene and OPENMP ??"
-#endif
-         !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
-         do j = ncols, 2, -2
-             w(:,1) = bcast_buffer(1:nbw,j+off)
-             w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe, my_thread), w, &
-                                  nbw, nl, stripe_width, nbw)
-#else
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe),            w, &
-                                  nbw, nl, stripe_width, nbw)
-#endif
-         enddo
-#ifdef WITH_OPENMP
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
-                                       bcast_buffer(1,off+1), nbw, nl,     &
-                                       stripe_width)
-#else
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
-                                       bcast_buffer(1,off+1), nbw, nl,     &
-                                       stripe_width)
-#endif
-#endif
-
-#if defined(WITH_AVX_REAL_BLOCK4) || defined(WITH_AMD_BULLDOZER)
-
-         ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
-         do j = ncols, 4, -4
-             w(:,1) = bcast_buffer(1:nbw,j+off)
-             w(:,2) = bcast_buffer(1:nbw,j+off-1)
-             w(:,3) = bcast_buffer(1:nbw,j+off-2)
-             w(:,4) = bcast_buffer(1:nbw,j+off-3)
-#ifdef WITH_OPENMP
-             call quad_hh_trafo(a(1,j+off+a_off-3,istripe,my_thread), w, &
-                                nbw, nl, stripe_width, nbw)
-#else
-             call quad_hh_trafo(a(1,j+off+a_off-3,istripe),           w, &
-                                nbw, nl, stripe_width, nbw)
-#endif
-         enddo
-         do jj = j, 2, -2
-             w(:,1) = bcast_buffer(1:nbw,jj+off)
-             w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-#ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, &
-                                  nbw, nl, stripe_width, nbw)
-#else
-             call double_hh_trafo(a(1,jj+off+a_off-1,istripe),          w, &
-                                  nbw, nl, stripe_width, nbw)
-#endif
-         enddo
-#ifdef WITH_OPENMP
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
-                                       bcast_buffer(1,off+1), nbw, nl,     &
-                                       stripe_width)
-#else
-         if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe),          &
-                                        bcast_buffer(1,off+1), nbw, nl,    &
-                                        stripe_width)
-#endif
-#endif
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+        endif !
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
 
 
-#if defined(WITH_AVX_REAL_BLOCK6)
-         ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
-         do j = ncols, 6, -6
-             w(:,1) = bcast_buffer(1:nbw,j+off)
-             w(:,2) = bcast_buffer(1:nbw,j+off-1)
-             w(:,3) = bcast_buffer(1:nbw,j+off-2)
-             w(:,4) = bcast_buffer(1:nbw,j+off-3)
-             w(:,5) = bcast_buffer(1:nbw,j+off-4)
-             w(:,6) = bcast_buffer(1:nbw,j+off-5)
-#ifdef WITH_OPENMP
-             call hexa_hh_trafo(a(1,j+off+a_off-5,istripe,my_thread), w, &
-                                nbw, nl, stripe_width, nbw)
-#else
-             call hexa_hh_trafo(a(1,j+off+a_off-5,istripe),           w, &
-                                nbw, nl, stripe_width, nbw)
-#endif
-         enddo
-         do jj = j, 4, -4
-             w(:,1) = bcast_buffer(1:nbw,jj+off)
-             w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-             w(:,3) = bcast_buffer(1:nbw,jj+off-2)
-             w(:,4) = bcast_buffer(1:nbw,jj+off-3)
-#ifdef WITH_OPENMP
-             call quad_hh_trafo(a(1,jj+off+a_off-3,istripe,my_thread), w, &
-                                nbw, nl, stripe_width, nbw)
-#else
-             call quad_hh_trafo(a(1,jj+off+a_off-3,istripe),           w, &
-                                nbw, nl, stripe_width, nbw)
-#endif
-         enddo
-         do jjj = jj, 2, -2
-             w(:,1) = bcast_buffer(1:nbw,jjj+off)
-             w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
-#ifdef WITH_OPENMP
-             call double_hh_trafo(a(1,jjj+off+a_off-1,istripe,my_thread), w, &
-                                  nbw, nl, stripe_width, nbw)
-#else
-             call double_hh_trafo(a(1,jjj+off+a_off-1,istripe),           w, &
-                                  nbw, nl, stripe_width, nbw)
-#endif
-         enddo
-#ifdef WITH_OPENMP
-         if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
-                                         bcast_buffer(1,off+1), nbw, nl,     &
-                                         stripe_width)
-#else
-         if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
-                                         bcast_buffer(1,off+1), nbw, nl,     &
-                                         stripe_width)
-#endif
-#endif
 
+#if defined(WITH_REAL_AVX_BLOCK4_KERNEL)
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) then
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+           ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
+           do j = ncols, 4, -4
+              w(:,1) = bcast_buffer(1:nbw,j+off)
+              w(:,2) = bcast_buffer(1:nbw,j+off-1)
+              w(:,3) = bcast_buffer(1:nbw,j+off-2)
+              w(:,4) = bcast_buffer(1:nbw,j+off-3)
+#ifdef WITH_OPENMP
+              call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe,my_thread), w, &
+                                                  nbw, nl, stripe_width, nbw)
+#else
+              call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe), w, &
+                                                  nbw, nl, stripe_width, nbw)
+#endif
+           enddo
+           do jj = j, 2, -2
+              w(:,1) = bcast_buffer(1:nbw,jj+off)
+              w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+#ifdef WITH_OPENMP
+              call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe,my_thread), &
+                                                    w, nbw, nl, stripe_width, nbw)
+#else
+              call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe), &
+                                                    w, nbw, nl, stripe_width, nbw)
+#endif
+           enddo
+#ifdef WITH_OPENMP
+           if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+                                          bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#else
+           if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
+                                          bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#endif
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+        endif
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
+
+
+#if defined(WITH_REAL_AVX_BLOCK6_KERNEL)
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) then
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+           ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
+           do j = ncols, 6, -6
+              w(:,1) = bcast_buffer(1:nbw,j+off)
+              w(:,2) = bcast_buffer(1:nbw,j+off-1)
+              w(:,3) = bcast_buffer(1:nbw,j+off-2)
+              w(:,4) = bcast_buffer(1:nbw,j+off-3)
+              w(:,5) = bcast_buffer(1:nbw,j+off-4)
+              w(:,6) = bcast_buffer(1:nbw,j+off-5)
+#ifdef WITH_OPENMP
+              call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe,my_thread), w, &
+                                                  nbw, nl, stripe_width, nbw)
+#else
+              call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe), w, &
+                                                  nbw, nl, stripe_width, nbw)
+#endif
+           enddo
+           do jj = j, 4, -4
+              w(:,1) = bcast_buffer(1:nbw,jj+off)
+              w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+              w(:,3) = bcast_buffer(1:nbw,jj+off-2)
+              w(:,4) = bcast_buffer(1:nbw,jj+off-3)
+#ifdef WITH_OPENMP
+              call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe,my_thread), w, &
+                                                  nbw, nl, stripe_width, nbw)
+#else
+              call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe), w, &
+                                                  nbw, nl, stripe_width, nbw)
+#endif
+           enddo
+           do jjj = jj, 2, -2
+              w(:,1) = bcast_buffer(1:nbw,jjj+off)
+              w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
+#ifdef WITH_OPENMP
+              call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe,my_trhead), &
+                                                    w, nbw, nl, stripe_width, nbw)
+#else
+              call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe), &
+                                                    w, nbw, nl, stripe_width, nbw)
+#endif
+           enddo
+#ifdef WITH_OPENMP
+           if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+                                           bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#else
+           if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
+                                           bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#endif
+#if defined(WITH_SPECIFIC_REAL_KERNEL)
+        endif
+#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
+        
 #ifdef WITH_OPENMP
    if(my_thread==1) then
 #endif
-      kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
-      kernel_time = kernel_time + mpi_wtime()-ttt
+        kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
+        kernel_time = kernel_time + mpi_wtime()-ttt
 #ifdef WITH_OPENMP
     endif
 #endif
+
   end subroutine compute_hh_trafo
 
  end subroutine  trans_ev_tridi_to_band_real
@@ -3718,7 +4182,10 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
 !---------------------------------------------------------------------------------------------------
 
-subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, mpi_comm_cols)
+
+subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
+                                          mpi_comm_rows, mpi_comm_cols, &
+                                          THIS_COMPLEX_ELPA_KERNEL)
 
 !-------------------------------------------------------------------------------
 !  trans_ev_tridi_to_band_complex:
@@ -3748,6 +4215,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
     implicit none
 
+    integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
     integer, intent(in) :: na, nev, nblk, nbw, ldq, mpi_comm_rows, mpi_comm_cols
     complex*16 q(ldq,*)
 
@@ -4180,10 +4648,12 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
                         a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                     endif
-                    call compute_hh_trafo(0, current_local_n, i, my_thread)
+                    call compute_hh_trafo_complex(0, current_local_n, i, my_thread, &
+                                      THIS_COMPLEX_ELPA_KERNEL)
                 enddo
 #else
-                call compute_hh_trafo(0, current_local_n, i)
+                call compute_hh_trafo_complex(0, current_local_n, i, &
+                                      THIS_COMPLEX_ELPA_KERNEL)
 #endif
                 !send_b
 #ifdef WITH_OPENMP
@@ -4214,10 +4684,12 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 #ifdef WITH_OPENMP
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
-                    call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread)
+                    call compute_hh_trafo_complex(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
+                                      THIS_COMPLEX_ELPA_KERNEL)
                 enddo
 #else
-                call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i)
+                call compute_hh_trafo_complex(current_local_n - bottom_msg_length, bottom_msg_length, i, &
+                                      THIS_COMPLEX_ELPA_KERNEL)
 
 
 #endif
@@ -4249,10 +4721,12 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 #ifdef WITH_OPENMP
 !$omp parallel do private(my_thread), schedule(static, 1)
                 do my_thread = 1, max_threads
-                    call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread)
+                    call compute_hh_trafo_complex(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
+                                      THIS_COMPLEX_ELPA_KERNEL)
                 enddo
 #else
-                call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i)
+                call compute_hh_trafo_complex(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
+                                      THIS_COMPLEX_ELPA_KERNEL)
 
 #endif
                 !wait_t
@@ -4278,10 +4752,12 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
                         a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                     endif
-                    call compute_hh_trafo(0, top_msg_length, i, my_thread)
+                    call compute_hh_trafo_complex(0, top_msg_length, i, my_thread, &
+                                      THIS_COMPLEX_ELPA_KERNEL)
                 enddo
 #else
-                call compute_hh_trafo(0, top_msg_length, i)
+                call compute_hh_trafo_complex(0, top_msg_length, i, &
+                                      THIS_COMPLEX_ELPA_KERNEL)
 #endif
             endif
 
@@ -4568,10 +5044,20 @@ contains
 #endif
 
 #ifdef WITH_OPENMP
-    subroutine compute_hh_trafo(off, ncols, istripe, my_thread)
+    subroutine compute_hh_trafo_complex(off, ncols, istripe, my_thread, THIS_COMPLEX_ELPA_KERNEL)
 #else
-    subroutine compute_hh_trafo(off, ncols, istripe)
+    subroutine compute_hh_trafo_complex(off, ncols, istripe, THIS_COMPLEX_ELPA_KERNEL)
 #endif
+
+#if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
+      use complex_generic_simple_kernel, only : single_hh_trafo_complex_generic_simple
+#endif
+#if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
+      use complex_generic_kernel, only : single_hh_trafo_complex_generic
+#endif
+      implicit none
+      integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
+
         ! Private variables in OMP regions (my_thread) should better be in the argument list!
 
         integer off, ncols, istripe, j, nl, jj
@@ -4585,8 +5071,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         complex*16 w(nbw,2)
-#if defined(WITH_AVX_COMPLEX_BLOCK2)
-        ttt = mpi_wtime()
+
 #ifdef WITH_OPENMP
         if(istripe<stripe_count) then
           nl = stripe_width
@@ -4598,49 +5083,124 @@ contains
 #else
         nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
 #endif
-        do j = ncols, 2, -2
-            w(:,1) = bcast_buffer(1:nbw,j+off)
-            w(:,2) = bcast_buffer(1:nbw,j+off-1)
+ 
+
+#if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL)
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) then
+#endif  /* WITH_SPECIFIC_COMPLEX_KERNEL */
+           ttt = mpi_wtime()
+           do j = ncols, 2, -2
+              w(:,1) = bcast_buffer(1:nbw,j+off)
+              w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-            call double_hh_trafo_complex(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+              call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
+                                                       w, nbw, nl, stripe_width, nbw)
 #else
-            call double_hh_trafo_complex(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+              call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
+                                                       w, nbw, nl, stripe_width, nbw)
 #endif
-        enddo
+           enddo
 #ifdef WITH_OPENMP
-        if(j==1) call single_hh_trafo_complex(a(1,1+off+a_off,istripe,my_thread),bcast_buffer(1,off+1), nbw, nl, stripe_width,my_thread)
+           if(j==1) call single_hh_trafo_complex_sse_avx_1hv(a(1,1+off+a_off,istripe,my_thread), &
+                                                             bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
-        if(j==1) call single_hh_trafo_complex(a(1,1+off+a_off,istripe),bcast_buffer(1,off+1), nbw, nl, stripe_width)
+           if(j==1) call single_hh_trafo_complex_sse_avx_1hv(a(1,1+off+a_off,istripe), &
+                                                             bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
-
-#endif
-
-
-
-#if !defined(WITH_AVX_COMPLEX_BLOCK2)
-       ttt = mpi_wtime()
-#ifdef WITH_OPENMP
-        if(istripe<stripe_count) then
-          nl = stripe_width
-        else
-          noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
-          nl = min(my_thread*thread_width-noff, l_nev-noff)
-          if(nl<=0) return
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
         endif
-#else
-        nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
-#endif
-        do j = ncols, 1, -1
+#endif  /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL */
+
+
+#if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) then 
+#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+           ttt = mpi_wtime()
+           do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-          call single_hh_trafo_complex(a(1,j+off+a_off,istripe,my_thread), &
-                                       bcast_buffer(1,j+off),nbw,nl,       &
-                                       stripe_width)
+              call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe,my_thread), &
+                                                          bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
-          call single_hh_trafo_complex(a(1,j+off+a_off,istripe),           &
-                                       bcast_buffer(1,j+off),nbw,nl,       &
-                                       stripe_width)
+              call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe), &
+                                                          bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
-        enddo
+           enddo
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+        endif
+#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_COMPLEX_GENERIC_SIMPLE_KERNEL */
+
+
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC .or. &
+            THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGP .or. &
+            THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGQ ) then
+#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+           ttt = mpi_wtime()
+           do j = ncols, 1, -1
+#ifdef WITH_OPENMP
+              call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe,my_thread), &
+                                                   bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#else
+              call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe), &
+                                                   bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#endif
+           enddo
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+        endif
+#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+
+
+#if defined(WITH_COMPLEX_SSE_KERNEL)
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) then
+#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+           ttt = mpi_wtime()
+           do j = ncols, 1, -1
+#ifdef WITH_OPENMP
+              call single_hh_trafo_complex(a(1,j+off+a_off,istripe,my_thread), &
+                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#else
+              call single_hh_trafo_complex(a(1,j+off+a_off,istripe), &
+                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#endif
+           enddo
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+        endif
+#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_COMPLEX_SSE_KERNEL */
+
+
+!#if defined(WITH_AVX_SANDYBRIDGE)
+!              call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe),bcast_buffer(1,j+off),nbw,nl,stripe_width)
+!#endif
+
+!#if defined(WITH_AMD_BULLDOZER)
+!              call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe),bcast_buffer(1,j+off),nbw,nl,stripe_width)
+!#endif
+
+#if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) then
+#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+           ttt = mpi_wtime()
+           do j = ncols, 1, -1
+#ifdef WITH_OPENMP
+              call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe,my_thread), &
+                                                       bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#else
+              call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe), &
+                                                       bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#endif
+           enddo
+#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+        endif
+#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNE */
+
 #ifdef WITH_OPENMP
         if(my_thread==1) then
 #endif
@@ -4649,10 +5209,6 @@ contains
 #ifdef WITH_OPENMP
         endif
 #endif
-
-#endif
-
-
 
     end subroutine
 

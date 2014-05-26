@@ -3,6 +3,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Fortran can querry environment variables */
+#undef HAVE_ENVIRONMENT_CHECKING
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -67,45 +70,47 @@
 /* Version number of package */
 #undef VERSION
 
-/* use kernel tuned for AVX on AMD Bulldozer (written in gcc assembler) */
-#undef WITH_AMD_BULLDOZER
+/* can use complex_avx_block1 kernel */
+#undef WITH_COMPLEX_AVX_BLOCK1_KERNEL
 
-/* use AVX optimized complex kernel with blocking 1 (written in gcc assembler)
-   */
-#undef WITH_AVX_COMPLEX_BLOCK1
+/* can use complex_avx_block2 kernel */
+#undef WITH_COMPLEX_AVX_BLOCK2_KERNEL
 
-/* use AVX optimized complex kernel with blocking 2 (written in gcc assembler)
-   */
-#undef WITH_AVX_COMPLEX_BLOCK2
+/* can use complex generic kernel */
+#undef WITH_COMPLEX_GENERIC_KERNEL
 
-/* use AVX optimized real kernel with blocking 2 (written in gcc assembler) */
-#undef WITH_AVX_REAL_BLOCK2
+/* can use complex generic-simple kernel */
+#undef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
 
-/* use AVX optimized real kernel with blocking 4 (written in gcc assembler) */
-#undef WITH_AVX_REAL_BLOCK4
-
-/* use AVX optimized real kernel with blocking 6 (written in gcc assembler) */
-#undef WITH_AVX_REAL_BLOCK6
-
-/* use kernel tuned for AVX on Intel Sandybridge (written in gcc assembler) */
-#undef WITH_AVX_SANDYBRIDGE
-
-/* use optimized kernel for IBM BG/P */
-#undef WITH_BGP
-
-/* use optimized kernel for IBM BG/Q */
-#undef WITH_BGQ
-
-/* use generic kernel for all architectures (with some hand-coded
-   optimizations) */
-#undef WITH_GENERIC
-
-/* use generic simple kernel for all architectures (without any hand-coded
-   optimizations) */
-#undef WITH_GENERIC_SIMPLE
+/* can use complex SSE kernel */
+#undef WITH_COMPLEX_SSE_KERNEL
 
 /* use OpenMP threading */
 #undef WITH_OPENMP
 
-/* use kernel tuned for SSE (written in gcc assembler) */
-#undef WITH_SSE_AS
+/* can use real_avx_block2 kernel */
+#undef WITH_REAL_AVX_BLOCK2_KERNEL
+
+/* can use real_avx_block4 kernel */
+#undef WITH_REAL_AVX_BLOCK4_KERNEL
+
+/* can use real_avx_block6 kernel */
+#undef WITH_REAL_AVX_BLOCK6_KERNEL
+
+/* can use real BGP kernel */
+#undef WITH_REAL_BGP_KERNEL
+
+/* can use real BGQ kernel */
+#undef WITH_REAL_BGQ_KERNEL
+
+/* can use real generic kernel */
+#undef WITH_REAL_GENERIC_KERNEL
+
+/* can use real generic-simple kernel */
+#undef WITH_REAL_GENERIC_SIMPLE_KERNEL
+
+/* can use real SSE kernel */
+#undef WITH_REAL_SSE_KERNEL
+
+/* use specific real kernel */
+#undef WITH_SPECIFIC_COMPLEX_KERNEL

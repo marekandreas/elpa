@@ -130,7 +130,7 @@ static __forceinline void hh_trafo_complex_kernel_4_C_1hv(std::complex<double>* 
 }
 #endif // if 0
 
-void single_hh_trafo_complex_(std::complex<double>* q, std::complex<double>* hh, int* pnb, int* pnq, int* pldq)
+void single_hh_trafo_complex_sse_avx_1hv_(std::complex<double>* q, std::complex<double>* hh, int* pnb, int* pnq, int* pldq)
 {
 	int i;
 	int nb = *pnb;
