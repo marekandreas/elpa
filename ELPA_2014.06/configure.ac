@@ -1,11 +1,16 @@
 AC_PREREQ([2.69])
-AC_INIT([elpa],[2013.11.008], elpa-library@rzg.mpg.de)
+AC_INIT([elpa],[2014.06.000], elpa-library@rzg.mpg.de)
 AC_CONFIG_SRCDIR([src/elpa1.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
+
+AC_SUBST([ELPA_LIB_VERSION], [2014.06.000])
+# this is the version of the API, should be changed in the major revision
+# if and only if the actual API changes
+AC_SUBST([ELPA_SO_VERSION], [0:0:0])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -195,12 +200,6 @@ AX_PROG_FC_MPI([],[have_mpi=yes],[have_mpi=no
   		  AC_MSG_ERROR([no mpi found])
 		  fi])
 
-
-AC_SUBST([ELPA_LIB_VERSION], [2013.11.006])
-# this is the version of the API, should be changed in the major revision
-# if and only if the actual API changes
-AC_SUBST([ELPA_SO_VERSION], [0:0:0])
-
 AC_FC_FREEFORM
 AC_FC_MODULE_FLAG
 AC_FC_MODULE_OUTPUT_FLAG
@@ -235,6 +234,21 @@ save_LDFLAGS=$LDFLAGS
 
 FCFLAGS="$FCFLAGS $BLACS_FCFLAGS"
 LDFLAGS="$LDFLAGS $BLACS_LDFLAGS"
+
+dnl check wheter fortran error_unit is defined
+AC_MSG_CHECKING([whether Fortran module iso_fortran_env is available])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
+  program test_error_unit
+    use ISO_FORTRAN_ENV, only : error_unit
+    implicit none
+
+    write(error_unit,*) "error_unit is defined"
+  end program
+])],
+  [can_use_iso_fortran_env=yes],
+  [can_use_iso_fortran_env=no]
+)
+
 dnl check whether one can link with specified MKL (desired method)
 AC_MSG_CHECKING([whether we can compile a Fortran program using MKL])
 
@@ -330,6 +344,11 @@ dnl important: reset them again!
 FCFLAGS=$save_FCFLAGS
 LDFLAGS=$save_LDFLAGS
 
+
+dnl set the conditionals according to the previous tests
+if test "x${can_use_iso_fortran_env}" = "xyes" ; then
+ AC_DEFINE([HAVE_ISO_FORTRAN_ENV],[1],[can use module iso_fortran_env])
+fi
 
 
 LT_INIT

@@ -50,7 +50,9 @@
 
 module ELPA1
 
-! Version 1.1.2, 2011-02-21
+#ifdef HAVE_ISO_FORTRAN_ENV
+  use iso_fortran_env, only : error_unit
+#endif
 
   implicit none
 
@@ -84,6 +86,10 @@ module ELPA1
 
   public :: hh_transform_real
   public :: hh_transform_complex
+
+#ifndef HAVE_ISO_FORTRAN_ENV
+  integer, parameter :: error_unit = 6
+#endif
 
 !-------------------------------------------------------------------------------
 
@@ -199,19 +205,19 @@ subroutine solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_
    ttt0 = MPI_Wtime()
    call tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) print *,'Time tridiag_real :',ttt1-ttt0
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
    time_evp_fwd = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
    call solve_tridi(na, nev, ev, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) print *,'Time solve_tridi  :',ttt1-ttt0
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi  :',ttt1-ttt0
    time_evp_solve = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
    call trans_ev_real(na, nev, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) print *,'Time trans_ev_real:',ttt1-ttt0
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
    time_evp_back = ttt1-ttt0
 
    deallocate(e, tau)
@@ -285,13 +291,13 @@ subroutine solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, m
    ttt0 = MPI_Wtime()
    call tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) print *,'Time tridiag_complex :',ttt1-ttt0
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_complex :',ttt1-ttt0
    time_evp_fwd = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
    call solve_tridi(na, nev, ev, e, q_real, l_rows, nblk, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) print *,'Time solve_tridi     :',ttt1-ttt0
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi     :',ttt1-ttt0
    time_evp_solve = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
@@ -299,7 +305,7 @@ subroutine solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, m
 
    call trans_ev_complex(na, nev, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) print *,'Time trans_ev_complex:',ttt1-ttt0
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_complex:',ttt1-ttt0
    time_evp_back = ttt1-ttt0
 
    deallocate(q_real)
@@ -1800,7 +1806,7 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
       ! Scalapack supports it but delivers no results for these columns,
       ! which is rather annoying
       if(nc==0) then
-         print *,'ERROR: Problem contains processor column with zero width'
+         write(error_unit,*) 'ERROR: Problem contains processor column with zero width'
          call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
       endif
 
@@ -1888,7 +1894,7 @@ recursive subroutine merge_recursive(np_off, nprocs)
 
    if(nprocs<=1) then
       ! Safety check only
-      print *,"INTERNAL error merge_recursive: nprocs=",nprocs
+      write(error_unit,*) "INTERNAL error merge_recursive: nprocs=",nprocs
       call mpi_abort(MPI_COMM_WORLD,1,mpierr)
    endif
 
@@ -2144,7 +2150,7 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq)
 
       ! DSTEDC failed, try DSTEQR. The workspace is enough for DSTEQR.
 
-      print '(a,i8,a)','Warning: Lapack routine DSTEDC failed, info= ',info,', Trying DSTEQR!'
+      write(error_unit,'(a,i8,a)') 'Warning: Lapack routine DSTEDC failed, info= ',info,', Trying DSTEQR!'
 
       d(:) = ds(:)
       e(:) = es(:)
@@ -2152,7 +2158,7 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq)
 
       ! If DSTEQR fails also, we don't know what to do further ...
       if(info /= 0) then
-         print '(a,i8,a)','ERROR: Lapack routine DSTEQR failed, info= ',info,', Aborting!'
+         write(error_unit,'(a,i8,a)') 'ERROR: Lapack routine DSTEQR failed, info= ',info,', Aborting!'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
 
@@ -2166,12 +2172,12 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq)
    do i=1,nlen-1
       if(d(i+1)<d(i)) then
          if (abs(d(i+1) - d(i)) / abs(d(i+1) + d(i)) > 1d-14) then
-            print '(a,i8,2g25.16)','***WARNING: Monotony error dste**:',i+1,d(i),d(i+1)
+            write(error_unit,'(a,i8,2g25.16)') '***WARNING: Monotony error dste**:',i+1,d(i),d(i+1)
          else
-            print '(a,i8,2g25.16)','Info: Monotony error dste{dc,qr}:',i+1,d(i),d(i+1)
-            print '(a)', 'The eigenvalues from a lapack call are not sorted to machine precision.'
-            print '(a)', 'In this extent, this is completely harmless.'
-            print '(a)', 'Still, we keep this info message just in case.'
+            write(error_unit,'(a,i8,2g25.16)') 'Info: Monotony error dste{dc,qr}:',i+1,d(i),d(i+1)
+            write(error_unit,'(a)') 'The eigenvalues from a lapack call are not sorted to machine precision.'
+            write(error_unit,'(a)') 'In this extent, this is completely harmless.'
+            write(error_unit,'(a)') 'Still, we keep this info message just in case.'
          end if
          allocate(qtmp(nlen))
          dtmp = d(i+1)
@@ -3016,7 +3022,7 @@ subroutine check_monotony(n,d,text)
 
    do i=1,n-1
       if(d(i+1)<d(i)) then
-         print '(a,a,i8,2g25.17)','Monotony error on ',text,i,d(i),d(i+1)
+         write(error_unit,'(a,a,i8,2g25.17)') 'Monotony error on ',text,i,d(i),d(i+1)
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
    enddo
@@ -3353,7 +3359,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
             call dpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               print *,"Error in dpotrf"
+               write(error_unit,*) "Error in dpotrf"
                call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
@@ -3373,7 +3379,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
             call dpotrf('U',nblk,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               print *,"Error in dpotrf"
+               write(error_unit,*) "Error in dpotrf"
                call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
@@ -3518,7 +3524,7 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
             call DTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               print *,"Error in DTRTRI"
+               write(error_unit,*) "Error in DTRTRI"
                call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
@@ -3663,7 +3669,7 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
             call zpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               print *,"Error in zpotrf"
+               write(error_unit,*) "Error in zpotrf"
                call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
@@ -3683,7 +3689,7 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
             call zpotrf('U',nblk,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               print *,"Error in zpotrf"
+               write(error_unit,*) "Error in zpotrf"
                call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
@@ -3829,7 +3835,7 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
             call ZTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               print *,"Error in ZTRTRI"
+               write(error_unit,*) "Error in ZTRTRI"
                call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 

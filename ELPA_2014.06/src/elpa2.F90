@@ -64,6 +64,9 @@ module ELPA2
 
   USE ELPA1
 
+#ifdef HAVE_ISO_FORTRAN_ENV
+  use iso_fortran_env, only : error_unit
+#endif
   implicit none
 
   PRIVATE ! By default, all routines contained are private
@@ -82,6 +85,10 @@ module ELPA2
   public :: tridiag_band_complex
   public :: trans_ev_tridi_to_band_complex
   public :: trans_ev_band_to_full_complex
+
+#ifndef HAVE_ISO_FORTRAN_ENV
+  integer, parameter :: error_unit = 6
+#endif
 
 !-------------------------------------------------------------------------------
 
@@ -172,7 +179,7 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_row
    call bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      print 1,'Time bandred_real               :',ttt1-ttt0
+      write(error_unit,*) 'Time bandred_real               :',ttt1-ttt0
 
    ! Reduction band -> tridiagonal
 
@@ -182,7 +189,7 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_row
    call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      print 1,'Time tridiag_band_real          :',ttt1-ttt0
+      write(error_unit,*) 'Time tridiag_band_real          :',ttt1-ttt0
 
    call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
    call mpi_bcast(e,na,MPI_REAL8,0,mpi_comm_all,mpierr)
@@ -196,7 +203,7 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_row
    call solve_tridi(na, nev, ev, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      print 1,'Time solve_tridi                :',ttt1-ttt0
+      write(error_unit,*) 'Time solve_tridi                :',ttt1-ttt0
    time_evp_solve = ttt1-ttt0
    ttts = ttt1
 
@@ -208,7 +215,7 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_row
    call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      print 1,'Time trans_ev_tridi_to_band_real:',ttt1-ttt0
+      write(error_unit,*) 'Time trans_ev_tridi_to_band_real:',ttt1-ttt0
 
    ! We can now deallocate the stored householder vectors
    deallocate(hh_trans_real)
@@ -219,7 +226,7 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_row
    call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      print 1,'Time trans_ev_band_to_full_real :',ttt1-ttt0
+      write(error_unit,*) 'Time trans_ev_band_to_full_real :',ttt1-ttt0
    time_evp_back = ttt1-ttts
 
    deallocate(tmat)
@@ -301,7 +308,7 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_
    call bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      print 1,'Time bandred_complex               :',ttt1-ttt0
+      write(error_unit,*) 'Time bandred_complex               :',ttt1-ttt0
 
    ! Reduction band -> tridiagonal
 
@@ -311,7 +318,7 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_
    call tridiag_band_complex(na, nbw, nblk, a, lda, ev, e, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      print 1,'Time tridiag_band_complex          :',ttt1-ttt0
+      write(error_unit,*) 'Time tridiag_band_complex          :',ttt1-ttt0
 
    call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
    call mpi_bcast(e,na,MPI_REAL8,0,mpi_comm_all,mpierr)
@@ -331,7 +338,7 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_
    call solve_tridi(na, nev, ev, e, q_real, ubound(q_real,1), nblk, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times)  &
-      print 1,'Time solve_tridi                   :',ttt1-ttt0
+      write(error_unit,*) 'Time solve_tridi                   :',ttt1-ttt0
    time_evp_solve = ttt1-ttt0
    ttts = ttt1
 
@@ -345,7 +352,7 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_
    call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      print 1,'Time trans_ev_tridi_to_band_complex:',ttt1-ttt0
+      write(error_unit,*) 'Time trans_ev_tridi_to_band_complex:',ttt1-ttt0
 
    ! We can now deallocate the stored householder vectors
    deallocate(hh_trans_complex)
@@ -356,7 +363,7 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_
    call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      print 1,'Time trans_ev_band_to_full_complex :',ttt1-ttt0
+      write(error_unit,*) 'Time trans_ev_band_to_full_complex :',ttt1-ttt0
    time_evp_back = ttt1-ttts
 
    deallocate(tmat)
@@ -426,8 +433,8 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
 
    if(mod(nbw,nblk)/=0) then
       if(my_prow==0 .and. my_pcol==0) then
-         print *,'ERROR: nbw=',nbw,', nblk=',nblk
-         print *,'ELPA2 works only for nbw==n*nblk'
+         write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
+         write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
    endif
@@ -1592,8 +1599,8 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
     if(mod(nbw,nblk)/=0) then
       if(my_prow==0 .and. my_pcol==0) then
-         print *,'ERROR: nbw=',nbw,', nblk=',nblk
-         print *,'band backtransform works only for nbw==n*nblk'
+         write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
+         write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
     endif
@@ -2179,7 +2186,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 
          offset = nbw - top_msg_length
          if(offset<0) then
-             print *,'internal error, offset for shifting = ',offset
+             write(error_unit,*) 'internal error, offset for shifting = ',offset
              call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
          endif
          a_off = a_off + offset
@@ -2204,10 +2211,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
      enddo
 
      ! Just for safety:
-     if(ANY(top_send_request    /= MPI_REQUEST_NULL)) print *,'*** ERROR top_send_request ***',my_prow,my_pcol
-     if(ANY(bottom_send_request /= MPI_REQUEST_NULL)) print *,'*** ERROR bottom_send_request ***',my_prow,my_pcol
-     if(ANY(top_recv_request    /= MPI_REQUEST_NULL)) print *,'*** ERROR top_recv_request ***',my_prow,my_pcol
-     if(ANY(bottom_recv_request /= MPI_REQUEST_NULL)) print *,'*** ERROR bottom_recv_request ***',my_prow,my_pcol
+     if(ANY(top_send_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_send_request ***',my_prow,my_pcol
+     if(ANY(bottom_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_send_request ***',my_prow,my_pcol
+     if(ANY(top_recv_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_recv_request ***',my_prow,my_pcol
+     if(ANY(bottom_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_recv_request ***',my_prow,my_pcol
 
      if(my_prow == 0) then
 #ifdef WITH_OPENMP
@@ -2219,11 +2226,11 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows
 #endif
      endif
 
-     if(ANY(result_send_request /= MPI_REQUEST_NULL)) print *,'*** ERROR result_send_request ***',my_prow,my_pcol
-     if(ANY(result_recv_request /= MPI_REQUEST_NULL)) print *,'*** ERROR result_recv_request ***',my_prow,my_pcol
+     if(ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
+     if(ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
 
      if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-         print '(" Kernel time:",f10.3," MFlops: ",f10.3)', kernel_time, kernel_flops/kernel_time*1.d-6
+         write(error_unit,'(" Kernel time:",f10.3," MFlops: ",f10.3)')  kernel_time, kernel_flops/kernel_time*1.d-6
 
      ! deallocate all working space
 
@@ -2656,8 +2663,8 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 
    if(mod(nbw,nblk)/=0) then
       if(my_prow==0 .and. my_pcol==0) then
-         print *,'ERROR: nbw=',nbw,', nblk=',nblk
-         print *,'ELPA2 works only for nbw==n*nblk'
+         write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
+         write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
    endif
@@ -3814,8 +3821,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
     if(mod(nbw,nblk)/=0) then
       if(my_prow==0 .and. my_pcol==0) then
-         print *,'ERROR: nbw=',nbw,', nblk=',nblk
-         print *,'band backtransform works only for nbw==n*nblk'
+         write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
+         write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
     endif
@@ -4430,7 +4437,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 
         offset = nbw - top_msg_length
         if(offset<0) then
-            print *,'internal error, offset for shifting = ',offset
+            write(error_unit,*) 'internal error, offset for shifting = ',offset
             call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
         endif
         a_off = a_off + offset
@@ -4455,10 +4462,10 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
     enddo
 
     ! Just for safety:
-    if(ANY(top_send_request    /= MPI_REQUEST_NULL)) print *,'*** ERROR top_send_request ***',my_prow,my_pcol
-    if(ANY(bottom_send_request /= MPI_REQUEST_NULL)) print *,'*** ERROR bottom_send_request ***',my_prow,my_pcol
-    if(ANY(top_recv_request    /= MPI_REQUEST_NULL)) print *,'*** ERROR top_recv_request ***',my_prow,my_pcol
-    if(ANY(bottom_recv_request /= MPI_REQUEST_NULL)) print *,'*** ERROR bottom_recv_request ***',my_prow,my_pcol
+    if(ANY(top_send_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_send_request ***',my_prow,my_pcol
+    if(ANY(bottom_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_send_request ***',my_prow,my_pcol
+    if(ANY(top_recv_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_recv_request ***',my_prow,my_pcol
+    if(ANY(bottom_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_recv_request ***',my_prow,my_pcol
 
     if(my_prow == 0) then
 #ifdef WITH_OPENMP
@@ -4470,11 +4477,11 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, mpi_comm_r
 #endif
     endif
 
-    if(ANY(result_send_request /= MPI_REQUEST_NULL)) print *,'*** ERROR result_send_request ***',my_prow,my_pcol
-    if(ANY(result_recv_request /= MPI_REQUEST_NULL)) print *,'*** ERROR result_recv_request ***',my_prow,my_pcol
+    if(ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
+    if(ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
 
     if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-        print '(" Kernel time:",f10.3," MFlops: ",f10.3)', kernel_time, kernel_flops/kernel_time*1.d-6
+        write(error_unit,'(" Kernel time:",f10.3," MFlops: ",f10.3)') kernel_time, kernel_flops/kernel_time*1.d-6
 
     ! deallocate all working space
 
