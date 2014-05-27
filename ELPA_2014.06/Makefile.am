@@ -176,11 +176,6 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = elpa.pc
 
 # test programs
-if WITH_OPENMP
-build_lib = libelpa_mt.la 
-else
-build_lib = libelpa.la 
-endif
 
 #bindir = $(abs_top_builddir)
 bin_PROGRAMS = test_real test_real2 test_real2_default_kernel test_complex test_complex2 test_complex2_default_kernel test_real2_choose_kernel_with_api test_complex2_choose_kernel_with_api print_available_elpa2_kernels
