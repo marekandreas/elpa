@@ -3,6 +3,15 @@ AC_INIT([elpa],[2014.06.000], elpa-library@rzg.mpg.de)
 AC_CONFIG_SRCDIR([src/elpa1.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
+
+# Without this, automake tries to be smart and rebuilt
+# the autoconf generated files such as configure, aclocal.m4, etc.,
+# in case the timestamps of files such as configure.ac are newer
+#
+# This only makes trouble for end users with out-of-date autoconf versions
+# that cannot produce these files
+AM_MAINTAINER_MODE([disable])
+
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
