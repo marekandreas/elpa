@@ -89,7 +89,7 @@ host_triplet = @host@
 @WITH_OPENMP_FALSE@@WITH_REAL_GENERIC_SIMPLE_KERNEL_TRUE@am__append_6 = src/elpa2_kernels/elpa2_kernels_real_simple.f90
 @WITH_COMPLEX_GENERIC_SIMPLE_KERNEL_TRUE@@WITH_OPENMP_TRUE@am__append_7 = src/elpa2_kernels/elpa2_kernels_complex_simple.f90
 @WITH_COMPLEX_GENERIC_SIMPLE_KERNEL_TRUE@@WITH_OPENMP_FALSE@am__append_8 = src/elpa2_kernels/elpa2_kernels_complex_simple.f90
-@WITH_OPENMP_TRUE@@WITH_REAL_BGP_KERNEL_TRUE@am__append_9 = src/elpa2_kernels/elpa2_kernels_real_bgp.f90 
+@WITH_OPENMP_TRUE@@WITH_REAL_BGP_KERNEL_TRUE@am__append_9 = src/elpa2_kernels/elpa2_kernels_real_bgp.f90
 @WITH_OPENMP_FALSE@@WITH_REAL_BGP_KERNEL_TRUE@am__append_10 = src/elpa2_kernels/elpa2_kernels_real_bgp.f90
 @WITH_OPENMP_TRUE@@WITH_REAL_BGQ_KERNEL_TRUE@am__append_11 = src/elpa2_kernels/elpa2_kernels_real_bgq.f90
 @WITH_OPENMP_FALSE@@WITH_REAL_BGQ_KERNEL_TRUE@am__append_12 = src/elpa2_kernels/elpa2_kernels_real_bgq.f90
@@ -262,35 +262,64 @@ print_available_elpa2_kernels_DEPENDENCIES = $(build_lib)
 am_test_complex_OBJECTS = test/test_complex.$(OBJEXT)
 test_complex_OBJECTS = $(am_test_complex_OBJECTS)
 test_complex_DEPENDENCIES = $(build_lib)
+test_complex_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
+	$(test_complex_LDFLAGS) $(LDFLAGS) -o $@
 am_test_complex2_OBJECTS = test/test_complex2.$(OBJEXT)
 test_complex2_OBJECTS = $(am_test_complex2_OBJECTS)
 test_complex2_DEPENDENCIES = $(build_lib)
+test_complex2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
+	$(test_complex2_LDFLAGS) $(LDFLAGS) -o $@
 am_test_complex2_choose_kernel_with_api_OBJECTS =  \
 	test/test_complex2_choose_kernel_with_api.$(OBJEXT)
 test_complex2_choose_kernel_with_api_OBJECTS =  \
 	$(am_test_complex2_choose_kernel_with_api_OBJECTS)
 test_complex2_choose_kernel_with_api_DEPENDENCIES = $(build_lib)
+test_complex2_choose_kernel_with_api_LINK = $(LIBTOOL) $(AM_V_lt) \
+	--tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
+	$(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
+	$(test_complex2_choose_kernel_with_api_LDFLAGS) $(LDFLAGS) -o \
+	$@
 am_test_complex2_default_kernel_OBJECTS =  \
 	test/test_complex2_default_kernel.$(OBJEXT)
 test_complex2_default_kernel_OBJECTS =  \
 	$(am_test_complex2_default_kernel_OBJECTS)
 test_complex2_default_kernel_DEPENDENCIES = $(build_lib)
+test_complex2_default_kernel_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(FCLD) \
+	$(AM_FCFLAGS) $(FCFLAGS) \
+	$(test_complex2_default_kernel_LDFLAGS) $(LDFLAGS) -o $@
 am_test_real_OBJECTS = test/test_real.$(OBJEXT)
 test_real_OBJECTS = $(am_test_real_OBJECTS)
 test_real_DEPENDENCIES = $(build_lib)
+test_real_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
+	$(test_real_LDFLAGS) $(LDFLAGS) -o $@
 am_test_real2_OBJECTS = test/test_real2.$(OBJEXT)
 test_real2_OBJECTS = $(am_test_real2_OBJECTS)
 test_real2_DEPENDENCIES = $(build_lib)
+test_real2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
+	$(test_real2_LDFLAGS) $(LDFLAGS) -o $@
 am_test_real2_choose_kernel_with_api_OBJECTS =  \
 	test/test_real2_choose_kernel_with_api.$(OBJEXT)
 test_real2_choose_kernel_with_api_OBJECTS =  \
 	$(am_test_real2_choose_kernel_with_api_OBJECTS)
 test_real2_choose_kernel_with_api_DEPENDENCIES = $(build_lib)
+test_real2_choose_kernel_with_api_LINK = $(LIBTOOL) $(AM_V_lt) \
+	--tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
+	$(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
+	$(test_real2_choose_kernel_with_api_LDFLAGS) $(LDFLAGS) -o $@
 am_test_real2_default_kernel_OBJECTS =  \
 	test/test_real2_default_kernel.$(OBJEXT)
 test_real2_default_kernel_OBJECTS =  \
 	$(am_test_real2_default_kernel_OBJECTS)
 test_real2_default_kernel_DEPENDENCIES = $(build_lib)
+test_real2_default_kernel_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(FCLD) \
+	$(AM_FCFLAGS) $(FCFLAGS) $(test_real2_default_kernel_LDFLAGS) \
+	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -815,33 +844,41 @@ files_DATA = \
 	test/test_real.F90 \
 	test/test_real_gen.F90
 
-@WITH_OPENMP_FALSE@build_lib = libelpa.la 
+@WITH_OPENMP_FALSE@build_lib = libelpa.la
 
 # test programs
-@WITH_OPENMP_TRUE@build_lib = libelpa_mt.la 
+@WITH_OPENMP_TRUE@build_lib = libelpa_mt.la
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = elpa.pc
 test_real_SOURCES = test/test_real.F90
 test_real_LDADD = $(build_lib)
+test_real_LDFLAGS = -static
 test_real2_SOURCES = test/test_real2.F90
 test_real2_LDADD = $(build_lib)
+test_real2_LDFLAGS = -static
 test_real2_default_kernel_SOURCES = test/test_real2_default_kernel.F90
 test_real2_default_kernel_LDADD = $(build_lib)
+test_real2_default_kernel_LDFLAGS = -static
 test_real2_choose_kernel_with_api_SOURCES = test/test_real2_choose_kernel_with_api.F90
 test_real2_choose_kernel_with_api_LDADD = $(build_lib)
+test_real2_choose_kernel_with_api_LDFLAGS = -static
 test_complex_SOURCES = test/test_complex.F90
 test_complex_LDADD = $(build_lib)
+test_complex_LDFLAGS = -static
 test_complex2_SOURCES = test/test_complex2.F90
 test_complex2_LDADD = $(build_lib)
+test_complex2_LDFLAGS = -static
 test_complex2_default_kernel_SOURCES = test/test_complex2_default_kernel.F90
-test_complex2_default_kernel_LDADD = $(build_lib) 
+test_complex2_default_kernel_LDADD = $(build_lib)
+test_complex2_default_kernel_LDFLAGS = -static
 test_complex2_choose_kernel_with_api_SOURCES = test/test_complex2_choose_kernel_with_api.F90
 test_complex2_choose_kernel_with_api_LDADD = $(build_lib)
+test_complex2_choose_kernel_with_api_LDFLAGS = -static
 print_available_elpa2_kernels_SOURCES = test/print_available_elpa2_kernels.F90
 print_available_elpa2_kernels_LDADD = $(build_lib)
-check_SCRIPTS = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels.sh 
+check_SCRIPTS = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels.sh
 TESTS = $(check_SCRIPTS)
 CLEANFILES = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels elpa2.i
 all: config.h
@@ -1057,49 +1094,49 @@ test/test_complex.$(OBJEXT): test/$(am__dirstamp) \
 
 test_complex$(EXEEXT): $(test_complex_OBJECTS) $(test_complex_DEPENDENCIES) $(EXTRA_test_complex_DEPENDENCIES) 
 	@rm -f test_complex$(EXEEXT)
-	$(AM_V_FCLD)$(FCLINK) $(test_complex_OBJECTS) $(test_complex_LDADD) $(LIBS)
+	$(AM_V_FCLD)$(test_complex_LINK) $(test_complex_OBJECTS) $(test_complex_LDADD) $(LIBS)
 test/test_complex2.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
 test_complex2$(EXEEXT): $(test_complex2_OBJECTS) $(test_complex2_DEPENDENCIES) $(EXTRA_test_complex2_DEPENDENCIES) 
 	@rm -f test_complex2$(EXEEXT)
-	$(AM_V_FCLD)$(FCLINK) $(test_complex2_OBJECTS) $(test_complex2_LDADD) $(LIBS)
+	$(AM_V_FCLD)$(test_complex2_LINK) $(test_complex2_OBJECTS) $(test_complex2_LDADD) $(LIBS)
 test/test_complex2_choose_kernel_with_api.$(OBJEXT):  \
 	test/$(am__dirstamp) test/$(DEPDIR)/$(am__dirstamp)
 
 test_complex2_choose_kernel_with_api$(EXEEXT): $(test_complex2_choose_kernel_with_api_OBJECTS) $(test_complex2_choose_kernel_with_api_DEPENDENCIES) $(EXTRA_test_complex2_choose_kernel_with_api_DEPENDENCIES) 
 	@rm -f test_complex2_choose_kernel_with_api$(EXEEXT)
-	$(AM_V_FCLD)$(FCLINK) $(test_complex2_choose_kernel_with_api_OBJECTS) $(test_complex2_choose_kernel_with_api_LDADD) $(LIBS)
+	$(AM_V_FCLD)$(test_complex2_choose_kernel_with_api_LINK) $(test_complex2_choose_kernel_with_api_OBJECTS) $(test_complex2_choose_kernel_with_api_LDADD) $(LIBS)
 test/test_complex2_default_kernel.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
 test_complex2_default_kernel$(EXEEXT): $(test_complex2_default_kernel_OBJECTS) $(test_complex2_default_kernel_DEPENDENCIES) $(EXTRA_test_complex2_default_kernel_DEPENDENCIES) 
 	@rm -f test_complex2_default_kernel$(EXEEXT)
-	$(AM_V_FCLD)$(FCLINK) $(test_complex2_default_kernel_OBJECTS) $(test_complex2_default_kernel_LDADD) $(LIBS)
+	$(AM_V_FCLD)$(test_complex2_default_kernel_LINK) $(test_complex2_default_kernel_OBJECTS) $(test_complex2_default_kernel_LDADD) $(LIBS)
 test/test_real.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
 test_real$(EXEEXT): $(test_real_OBJECTS) $(test_real_DEPENDENCIES) $(EXTRA_test_real_DEPENDENCIES) 
 	@rm -f test_real$(EXEEXT)
-	$(AM_V_FCLD)$(FCLINK) $(test_real_OBJECTS) $(test_real_LDADD) $(LIBS)
+	$(AM_V_FCLD)$(test_real_LINK) $(test_real_OBJECTS) $(test_real_LDADD) $(LIBS)
 test/test_real2.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
 test_real2$(EXEEXT): $(test_real2_OBJECTS) $(test_real2_DEPENDENCIES) $(EXTRA_test_real2_DEPENDENCIES) 
 	@rm -f test_real2$(EXEEXT)
-	$(AM_V_FCLD)$(FCLINK) $(test_real2_OBJECTS) $(test_real2_LDADD) $(LIBS)
+	$(AM_V_FCLD)$(test_real2_LINK) $(test_real2_OBJECTS) $(test_real2_LDADD) $(LIBS)
 test/test_real2_choose_kernel_with_api.$(OBJEXT):  \
 	test/$(am__dirstamp) test/$(DEPDIR)/$(am__dirstamp)
 
 test_real2_choose_kernel_with_api$(EXEEXT): $(test_real2_choose_kernel_with_api_OBJECTS) $(test_real2_choose_kernel_with_api_DEPENDENCIES) $(EXTRA_test_real2_choose_kernel_with_api_DEPENDENCIES) 
 	@rm -f test_real2_choose_kernel_with_api$(EXEEXT)
-	$(AM_V_FCLD)$(FCLINK) $(test_real2_choose_kernel_with_api_OBJECTS) $(test_real2_choose_kernel_with_api_LDADD) $(LIBS)
+	$(AM_V_FCLD)$(test_real2_choose_kernel_with_api_LINK) $(test_real2_choose_kernel_with_api_OBJECTS) $(test_real2_choose_kernel_with_api_LDADD) $(LIBS)
 test/test_real2_default_kernel.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
 test_real2_default_kernel$(EXEEXT): $(test_real2_default_kernel_OBJECTS) $(test_real2_default_kernel_DEPENDENCIES) $(EXTRA_test_real2_default_kernel_DEPENDENCIES) 
 	@rm -f test_real2_default_kernel$(EXEEXT)
-	$(AM_V_FCLD)$(FCLINK) $(test_real2_default_kernel_OBJECTS) $(test_real2_default_kernel_LDADD) $(LIBS)
+	$(AM_V_FCLD)$(test_real2_default_kernel_LINK) $(test_real2_default_kernel_OBJECTS) $(test_real2_default_kernel_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -1860,27 +1897,27 @@ uninstall-am: uninstall-binPROGRAMS uninstall-filesDATA \
 
 test_real.sh:
 	echo "mpiexec -n 2 ./test_real > /dev/null 2>&1" > test_real.sh
-	chmod +x test_real.sh	
+	chmod +x test_real.sh
 
 test_real2.sh:
 	echo "mpiexec -n 2 ./test_real2 > /dev/null 2>&1" > test_real2.sh
-	chmod +x test_real2.sh	
+	chmod +x test_real2.sh
 
 test_real2_default_kernel.sh:
 	echo "mpiexec -n 2 ./test_real2_default_kernel > /dev/null 2>&1" > test_real2_default_kernel.sh
-	chmod +x test_real2_default_kernel.sh	
+	chmod +x test_real2_default_kernel.sh
 
 test_real2_choose_kernel_with_api.sh:
 	echo "mpiexec -n 2 ./test_real2_choose_kernel_with_api > /dev/null 2>&1" > test_real2_choose_kernel_with_api.sh
-	chmod +x test_real2_choose_kernel_with_api.sh	
+	chmod +x test_real2_choose_kernel_with_api.sh
 
 test_complex.sh:
 	echo "mpiexec -n 2 ./test_complex > /dev/null 2>&1" > test_complex.sh
-	chmod +x test_complex.sh	
+	chmod +x test_complex.sh
 
 test_complex2.sh:
 	echo "mpiexec -n 2 ./test_complex2 > /dev/null 2>&1" > test_complex2.sh
-	chmod +x test_complex2.sh	
+	chmod +x test_complex2.sh
 test_complex2_default_kernel.sh:
 	echo "mpiexec -n 2 ./test_complex2_default_kernel > /dev/null 2>&1" > test_complex2_default_kernel.sh
 	chmod +x test_complex2_default_kernel.sh
