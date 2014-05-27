@@ -5094,10 +5094,10 @@ contains
               w(:,1) = bcast_buffer(1:nbw,j+off)
               w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-              call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
+              call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
-              call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
+              call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
            enddo
