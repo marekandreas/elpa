@@ -1463,7 +1463,7 @@ AC_SUBST(BLACS_FCFLAGS)
 
 #AC_SUBST(OPT_FCFLAGS)
 
-rm -rf modules/
+rm -rf modules/ .fortran_dependencies/
 mkdir modules
 
 #gl_VISIBILITY

@@ -21619,7 +21619,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 #AC_SUBST(OPT_FCFLAGS)
 
-rm -rf modules/
+rm -rf modules/ .fortran_dependencies/
 mkdir modules
 
 #gl_VISIBILITY
