@@ -31,7 +31,14 @@ AC_PROG_INSTALL
 AM_PROG_CC_C_O
 AM_PROG_AR
 AM_PROG_AS
-AC_PROG_CXX
+
+#AC_PROG_CXX
+
+m4_include([m4/ax_prog_cxx_mpi.m4])
+AX_PROG_CXX_MPI([],[have_mpi=yes],[have_mpi=no
+		 if test "x${have_mpi}" = xno; then
+  		  AC_MSG_ERROR([no mpi found])
+		  fi])
 
 
 dnl variables needed for the tests
@@ -76,7 +83,8 @@ install_complex_avx_block1=no
 install_complex_avx_block2=no
 AC_MSG_CHECKING(whether SSE assembler kernel can be compiled)
 
-echo "  .globl double_hh_trafo_
+echo <<EOF > ./test.s
+        .globl double_hh_trafo_
         .globl single_hh_trafo_complex_
         .text
 
@@ -633,7 +641,8 @@ test_2:
 return2:
         ret
 
-        .align    16,0x90" > ./test.s
+        .align    16,0x90
+EOF
 
  $CC -c ./test.s
  if test "$?" == 0; then
@@ -706,8 +715,9 @@ if test "x${with_avx_optimization}" = xyes; then
  CXXFLAGS="$CXXFLAGS -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize"
 fi
 
-AC_LANG(Fortran)
+AC_LANG([Fortran])
 m4_include([m4/ax_prog_fc_mpi.m4])
+
 dnl check whether an mpi compiler is available;
 dnl if not abort since it is mandatory
 AX_PROG_FC_MPI([],[have_mpi=yes],[have_mpi=no
@@ -816,6 +826,7 @@ else
   fi
 	
   dnl now blacs
+  AC_SEARCH_LIBS([bi_f77_init],[mpiblacsF77init],[],[],[-lmpiblacs])
   AC_SEARCH_LIBS([blacs_gridinit],[mpiblacs],[have_blacs=yes],[have_blacs=no])
   AC_MSG_CHECKING([whether we can link a program with a blacs lib])
   AC_MSG_RESULT([${have_blacs}])
@@ -827,7 +838,7 @@ else
   fi
 	
   dnl now scalapack
-  AC_SEARCH_LIBS([pdtran],[mpiscalapack],[have_scalapack=yes],[have_scalapack=no])
+  AC_SEARCH_LIBS([pdtran],[mpiscalapack scalapack],[have_scalapack=yes],[have_scalapack=no])
   AC_MSG_CHECKING([whether we can link a program with a scalapack lib])
   AC_MSG_RESULT([${have_scalapack}])
 
