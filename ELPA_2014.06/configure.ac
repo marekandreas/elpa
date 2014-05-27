@@ -10,7 +10,8 @@ AM_SILENT_RULES([yes])
 AC_SUBST([ELPA_LIB_VERSION], [2014.06.000])
 # this is the version of the API, should be changed in the major revision
 # if and only if the actual API changes
-AC_SUBST([ELPA_SO_VERSION], [0:0:0])
+# see http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+AC_SUBST([ELPA_SO_VERSION], [1:0:0])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -18,7 +19,7 @@ if test x$_cv_gnu_make_command = x ; then
 fi
 
 AC_CHECK_PROG(CPP_FOUND,cpp,yes,no)
-if test "x${CPP_FOUND}" = xno; then
+if test x"${CPP_FOUND}" = xno; then
   AC_MSG_ERROR([no cpp found])
 fi
 
@@ -665,7 +666,7 @@ dnl check whether one can compile with avx - gcc intrinsics
   [can_compile_avx=no]
  )
 dnl first test failed: try again after updating  CFLAGS and CXXFLAGS with -mavx
- if test "x${can_compile_avx}" = "xno"; then
+ if test x"${can_compile_avx}" = x"no"; then
  CFLAGS="$CFLAGS -mavx"
  CXXFLAGS="$CXXFLAGS -mavx"
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
@@ -681,7 +682,7 @@ dnl first test failed: try again after updating  CFLAGS and CXXFLAGS with -mavx
  fi
 AC_MSG_RESULT([${can_compile_avx}])
 
-if test "x${can_compile_avx}" = "xyes"; then
+if test x"${can_compile_avx}" = x"yes"; then
   install_real_avx_block2=yes
   install_real_avx_block4=yes
   install_real_avx_block6=yes
@@ -700,7 +701,7 @@ AC_ARG_WITH([avx-optimization],
 	      [with_avx_optimization=yes],
 	      [with_avx_optimization=no])
 AC_MSG_RESULT([${with_avx_optimization}])
-if test "x${with_avx_optimization}" = xyes; then
+if test x"${with_avx_optimization}" = xyes; then
  CFLAGS="$CFLAGS -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize"
  CXXFLAGS="$CXXFLAGS -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize"
 fi
@@ -710,7 +711,7 @@ m4_include([m4/ax_prog_fc_mpi.m4])
 dnl check whether an mpi compiler is available;
 dnl if not abort since it is mandatory
 AX_PROG_FC_MPI([],[have_mpi=yes],[have_mpi=no
-		 if test "x${have_mpi}" = xno; then
+		 if test x"${have_mpi}" = xno; then
   		  AC_MSG_ERROR([no mpi found])
 		  fi])
 
@@ -725,13 +726,13 @@ AC_ARG_WITH([openmp],
 	      [with_openmp=yes],
 	      [with_openmp=no])
   AC_MSG_RESULT([${with_openmp}])
-  if test "x${enable_openmp}" = xyes; then
+  if test x"${enable_openmp}" = xyes; then
      with_openmp=yes
      AC_MSG_CHECKING(whether --enable-openmp is specified)
      AC_MSG_RESULT([${enable_openmp}])
   fi
   AM_CONDITIONAL([WITH_OPENMP],[test x"$with_openmp" = x"yes"])
-  if test "x${with_openmp}" = xyes; then
+  if test x"${with_openmp}" = xyes; then
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
         AX_ELPA_OPENMP
   fi
@@ -793,7 +794,7 @@ if test x"$can_compile_with_mkl" = x"yes" ; then
 fi
 
 dnl if not mkl, check all the necessary individually
-if test "x${have_mkl}" = "xyes" ; then
+if test x"${have_mkl}" = x"yes" ; then
   WITH_MKL=1
 else
 
@@ -802,7 +803,7 @@ else
   AC_MSG_CHECKING([whether we can link a program with a blas lib])
   AC_MSG_RESULT([${have_blas}])
 
-  if test "x${have_blas}" = "xno" ; then
+  if test x"${have_blas}" = x"no" ; then
     AC_MSG_ERROR([could not link with blas: specify path]) 
   fi	
   dnl now lapack
@@ -810,7 +811,7 @@ else
   AC_MSG_CHECKING([whether we can link a program with a lapack lib])
   AC_MSG_RESULT([${have_lapack}])
 
-  if test "x${have_lapack}" = "xno" ; then
+  if test x"${have_lapack}" = x"no" ; then
     AC_MSG_ERROR([could not link with lapack: specify path]) 
   fi
 	
@@ -821,7 +822,7 @@ else
 
 
 
-  if test "x${have_blacs}" = "xno" ; then
+  if test x"${have_blacs}" = x"no" ; then
     AC_MSG_ERROR([could not link with blacs: specify path]) 
   fi
 	
@@ -830,7 +831,7 @@ else
   AC_MSG_CHECKING([whether we can link a program with a scalapack lib])
   AC_MSG_RESULT([${have_scalapack}])
 
-  if test "x${have_scalapack}" = "xno" ; then
+  if test x"${have_scalapack}" = x"no" ; then
     AC_MSG_ERROR([could not link with scalapack: specify path]) 
   fi
 
@@ -854,7 +855,7 @@ else
    )
    AC_MSG_RESULT([${can_link_with_blacs_scalapack}])
 
-   if test "x${can_link_with_blacs_scalapack}" = "xyes" ; then
+   if test x"${can_link_with_blacs_scalapack}" = x"yes" ; then
      WITH_BLACS=1
    else
    AC_MSG_ERROR([We can neither link with MKL or another Scalpack. Please specify BLACS_LDFLAGS and BLACS_FCFLAGS!])
@@ -904,7 +905,7 @@ AC_LINK_IFELSE([AC_LANG_SOURCE([
 )
 AC_MSG_RESULT([${can_compile_bgp}])
 
-if test "x${can_compile_bgp}" = "xyes" ; then
+if test x"${can_compile_bgp}" = x"yes" ; then
   install_real_bgp=yes
   install_complex_bgp=yes
 fi
@@ -925,14 +926,14 @@ AC_LINK_IFELSE([AC_LANG_SOURCE([
 )
 AC_MSG_RESULT([${can_compile_bgq}])
 
-if test "x${can_compile_bgq}" = "xyes" ; then
+if test x"${can_compile_bgq}" = x"yes" ; then
   install_real_bgq=yes
   install_complex_bgq=yes
 fi
 
 
 dnl environment variable setting of kernel
-if test "x${fortran_can_check_environment}" = "xyes" ; then
+if test x"${fortran_can_check_environment}" = x"yes" ; then
  AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can querry environment variables])
 fi
 
@@ -944,9 +945,9 @@ dnl generic kernel
 AC_ARG_WITH([real-generic-kernel],
  [AS_HELP_STRING([-with-real-generic-kernel],[only compile generic-kernel for real case])],[],[with_real_generic_kernel=no])
 
-if test "${with_real_generic_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-#  if test "x${can_compile_sse}" = "xyes" ; then
+if test x"${with_real_generic_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+#  if test x"${can_compile_sse}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_real_generic=yes
@@ -972,8 +973,8 @@ dnl generic-simple kernel
 AC_ARG_WITH([real-generic-simple-kernel],
  [AS_HELP_STRING([-with-real-generic-simple-kernel],[only compile generic-simple-kernel for real case])],[],[with_real_generic_simple_kernel=no])
 
-if test "${with_real_generic_simple_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
+if test x"${with_real_generic_simple_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
 
     dnl make sure that all the other kernels are unset
     install_real_generic=no
@@ -997,9 +998,9 @@ dnl sse kernel
 AC_ARG_WITH([real-sse-kernel],
  [AS_HELP_STRING([-with-real-sse-kernel],[only compile sse-kernel for real case])],[],[with_real_sse_kernel=no])
 
-if test "${with_real_sse_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_sse}" = "xyes" ; then
+if test x"${with_real_sse_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_sse}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_real_generic=no
@@ -1025,9 +1026,9 @@ dnl bgp kernel
 AC_ARG_WITH([real-bgp-kernel],
  [AS_HELP_STRING([-with-real-bgp-kernel],[only compile bgp-kernel for real case])],[],[with_real_bgp_kernel=no])
 
-if test "${with_real_bgp_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_bgp}" = "xyes" ; then
+if test x"${with_real_bgp_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_bgp}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_real_generic=no
@@ -1053,9 +1054,9 @@ dnl bgq kernel
 AC_ARG_WITH([real-bgq-kernel],
  [AS_HELP_STRING([-with-real-bgq-kernel],[only compile bgq-kernel for real case])],[],[with_real_bgq_kernel=no])
 
-if test "${with_real_bgq_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_bgq}" = "xyes" ; then
+if test x"${with_real_bgq_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_bgq}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_real_generic=no
@@ -1081,9 +1082,9 @@ dnl real-avx-block2 kernel
 AC_ARG_WITH([real-avx-block2-kernel],
  [AS_HELP_STRING([-with-real-avx-block2-kernel],[only compile real-avx-block2-kernel for real case])],[],[with_real_avx_block2_kernel=no])
 
-if test "${with_real_avx_block2_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_real_avx_block2_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_real_generic=no
@@ -1109,9 +1110,9 @@ dnl real-avx-block4 kernel
 AC_ARG_WITH([real-avx-block4-kernel],
  [AS_HELP_STRING([-with-real-avx-block4-kernel],[only compile real-avx-block4-kernel for real case])],[],[with_real_avx_block4_kernel=no])
 
-if test "${with_real_avx_block4_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_real_avx_block4_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_real_generic=no
@@ -1137,9 +1138,9 @@ dnl real-avx-block6 kernel
 AC_ARG_WITH([real-avx-block6-kernel],
  [AS_HELP_STRING([-with-real-avx-block6-kernel],[only compile real-avx-block6-kernel for real case])],[],[with_real_avx_block6_kernel=no])
 
-if test "${with_real_avx_block6_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_real_avx_block6_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_real_generic=no
@@ -1170,8 +1171,8 @@ dnl generic kernel
 AC_ARG_WITH([complex-generic-kernel],
  [AS_HELP_STRING([-with-complex-generic-kernel],[only compile generic-kernel for complex case])],[],[with_complex_generic_kernel=no])
 
-if test "${with_complex_generic_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
+if test x"${with_complex_generic_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
 
     dnl make sure that all the other kernels are unset
     install_complex_generic=yes
@@ -1194,8 +1195,8 @@ dnl generic-simple kernel
 AC_ARG_WITH([complex-generic-simple-kernel],
  [AS_HELP_STRING([-with-complex-generic-simple-kernel],[only compile generic-simple-kernel for complex case])],[],[with_complex_generic_simple_kernel=no])
 
-if test "${with_complex_generic_simple_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
+if test x"${with_complex_generic_simple_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
 
     dnl make sure that all the other kernels are unset
     install_complex_generic=no
@@ -1219,9 +1220,9 @@ dnl sse kernel
 AC_ARG_WITH([complex-sse-kernel],
  [AS_HELP_STRING([-with-complex-sse-kernel],[only compile sse-kernel for complex case])],[],[with_complex_sse_kernel=no])
 
-if test "${with_complex_sse_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_sse}" = "xyes" ; then
+if test x"${with_complex_sse_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_sse}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_complex_generic=no
@@ -1247,9 +1248,9 @@ dnl complex-bqp kernel
 AC_ARG_WITH([complex-bgp-kernel],
  [AS_HELP_STRING([-with-complex-bgp-kernel],[only compile BGP-kernel (identical with complex-generic kernel) for complex case])],[],[with_complex_bgp_kernel=no])
 
-if test "${with_complex_bgp_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_bgp}" = "xyes" ; then
+if test x"${with_complex_bgp_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_bgp}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_complex_generic=no
@@ -1276,9 +1277,9 @@ dnl complex-bqq kernel
 AC_ARG_WITH([complex-bgq-kernel],
  [AS_HELP_STRING([-with-complex-bgq-kernel],[only compile BGQ-kernel (identical with complex-generic kernel) for complex case])],[],[with_complex_bgq_kernel=no])
 
-if test "${with_complex_bgq_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_bgq}" = "xyes" ; then
+if test x"${with_complex_bgq_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_bgq}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_complex_generic=no
@@ -1304,9 +1305,9 @@ dnl complex-avx-block1 kernel
 AC_ARG_WITH([complex-avx-block1-kernel],
  [AS_HELP_STRING([-with-complex-avx-block1-kernel],[only compile complex-avx-block1-kernel for complex case])],[],[with_complex_avx_block1_kernel=no])
 
-if test "${with_complex_avx_block1_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_complex_avx_block1_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_complex_generic=no
@@ -1330,9 +1331,9 @@ dnl complex-avx-block2 kernel
 AC_ARG_WITH([complex-avx-block2-kernel],
  [AS_HELP_STRING([-with-complex-avx-block2-kernel],[only compile complex-avx-block2-kernel for complex case])],[],[with_complex_avx_block2_kernel=no])
 
-if test "${with_complex_avx_block2_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_complex_avx_block2_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
     dnl make sure that all the other kernels are unset
     install_complex_generic=no
@@ -1354,81 +1355,81 @@ fi
 
 
 dnl set the conditionals according to the previous tests
-if test "x${can_use_iso_fortran_env}" = "xyes" ; then
+if test x"${can_use_iso_fortran_env}" = x"yes" ; then
  AC_DEFINE([HAVE_ISO_FORTRAN_ENV],[1],[can use module iso_fortran_env])
 fi
 
 
 AM_CONDITIONAL([WITH_REAL_GENERIC_KERNEL],[test x"$install_real_generic" = x"yes"])
-if test "x${install_real_generic}" = "xyes" ; then
+if test x"${install_real_generic}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_GENERIC_KERNEL],[1],[can use real generic kernel])
 fi
 
 AM_CONDITIONAL([WITH_COMPLEX_GENERIC_KERNEL],[test x"$install_complex_generic" = x"yes"])
-if test "x${install_complex_generic}" = "xyes" ; then
+if test x"${install_complex_generic}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_GENERIC_KERNEL],[1],[can use complex generic kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_GENERIC_SIMPLE_KERNEL],[test x"$install_real_generic_simple" = x"yes"])
-if test "x${install_real_generic_simple}" = "xyes" ; then
+if test x"${install_real_generic_simple}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_GENERIC_SIMPLE_KERNEL],[1],[can use real generic-simple kernel])
 fi
 
 AM_CONDITIONAL([WITH_COMPLEX_GENERIC_SIMPLE_KERNEL],[test x"$install_complex_generic_simple" = x"yes"])
-if test "x${install_complex_generic_simple}" = "xyes" ; then
+if test x"${install_complex_generic_simple}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_GENERIC_SIMPLE_KERNEL],[1],[can use complex generic-simple kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_SSE_KERNEL],[test x"$install_real_sse" = x"yes"])
-if test "x${install_real_sse}" = "xyes" ; then
+if test x"${install_real_sse}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_SSE_KERNEL],[1],[can use real SSE kernel])
 fi
 
 AM_CONDITIONAL([WITH_COMPLEX_SSE_KERNEL],[test x"$install_complex_sse" = x"yes"])
-if test "x${install_complex_sse}" = "xyes" ; then
+if test x"${install_complex_sse}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_SSE_KERNEL],[1],[can use complex SSE kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_AVX_BLOCK2_KERNEL],[test x"$install_real_avx_block2" = x"yes"])
-if test "x${install_real_avx_block2}" = "xyes" ; then
+if test x"${install_real_avx_block2}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_AVX_BLOCK2_KERNEL],[1],[can use real_avx_block2 kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_AVX_BLOCK4_KERNEL],[test x"$install_real_avx_block4" = x"yes"])
-if test "x${install_real_avx_block4}" = "xyes" ; then
+if test x"${install_real_avx_block4}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_AVX_BLOCK4_KERNEL],[1],[can use real_avx_block4 kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_AVX_BLOCK6_KERNEL],[test x"$install_real_avx_block6" = x"yes"])
-if test "x${install_real_avx_block6}" = "xyes" ; then
+if test x"${install_real_avx_block6}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_AVX_BLOCK6_KERNEL],[1],[can use real_avx_block6 kernel])
 fi
 
 AM_CONDITIONAL([WITH_COMPLEX_AVX_BLOCK1_KERNEL],[test x"$install_complex_avx_block1" = x"yes"])
-if test "x${install_complex_avx_block1}" = "xyes" ; then
+if test x"${install_complex_avx_block1}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_AVX_BLOCK1_KERNEL],[1],[can use complex_avx_block1 kernel])
 fi
 
 AM_CONDITIONAL([WITH_COMPLEX_AVX_BLOCK2_KERNEL],[test x"$install_complex_avx_block2" = x"yes"])
-if test "x${install_complex_avx_block2}" = "xyes" ; then
+if test x"${install_complex_avx_block2}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_AVX_BLOCK2_KERNEL],[1],[can use complex_avx_block2 kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_BGP_KERNEL],[test x"$install_real_bgp" = x"yes"])
-if test "x${install_real_bgp}" = "xyes" ; then
+if test x"${install_real_bgp}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_BGP_KERNEL],[1],[can use real BGP kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_BGQ_KERNEL],[test x"$install_real_bgq" = x"yes"])
-if test "x${install_real_bgq}" = "xyes" ; then
+if test x"${install_real_bgq}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_BGQ_KERNEL],[1],[can use real BGQ kernel])
 fi
 
-if test "x${use_specific_complex_kernel}" = "xyes" ; then
+if test x"${use_specific_complex_kernel}" = x"yes" ; then
  AC_DEFINE([WITH_SPECIFIC_COMPLEX_KERNEL],[1],[use specific complex kernel])
 fi
 
-if test "x${use_specific_real_kernel}" = "xyes" ; then
+if test x"${use_specific_real_kernel}" = x"yes" ; then
  AC_DEFINE([WITH_SPECIFIC_COMPLEX_KERNEL],[1],[use specific real kernel])
 fi
 

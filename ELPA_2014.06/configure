@@ -3057,7 +3057,8 @@ ELPA_LIB_VERSION=2014.06.000
 
 # this is the version of the API, should be changed in the major revision
 # if and only if the actual API changes
-ELPA_SO_VERSION=0:0:0
+# see http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+ELPA_SO_VERSION=1:0:0
 
 
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GNU make" >&5
@@ -3128,7 +3129,7 @@ $as_echo "no" >&6; }
 fi
 
 
-if test "x${CPP_FOUND}" = xno; then
+if test x"${CPP_FOUND}" = xno; then
   as_fn_error $? "no cpp found" "$LINENO" 5
 fi
 
@@ -5579,7 +5580,7 @@ else
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
- if test "x${can_compile_avx}" = "xno"; then
+ if test x"${can_compile_avx}" = x"no"; then
  CFLAGS="$CFLAGS -mavx"
  CXXFLAGS="$CXXFLAGS -mavx"
  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -5603,7 +5604,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${can_compile_avx}" >&5
 $as_echo "${can_compile_avx}" >&6; }
 
-if test "x${can_compile_avx}" = "xyes"; then
+if test x"${can_compile_avx}" = x"yes"; then
   install_real_avx_block2=yes
   install_real_avx_block4=yes
   install_real_avx_block6=yes
@@ -5626,7 +5627,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${with_avx_optimization}" >&5
 $as_echo "${with_avx_optimization}" >&6; }
-if test "x${with_avx_optimization}" = xyes; then
+if test x"${with_avx_optimization}" = xyes; then
  CFLAGS="$CFLAGS -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize"
  CXXFLAGS="$CXXFLAGS -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize"
 fi
@@ -6128,7 +6129,7 @@ if test x"$_ax_prog_fc_mpi_mpi_found" = xyes; then :
 else
 
         have_mpi=no
-		 if test "x${have_mpi}" = xno; then
+		 if test x"${have_mpi}" = xno; then
   		  as_fn_error $? "no mpi found" "$LINENO" 5
 		  fi
         :
@@ -6341,7 +6342,7 @@ fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${with_openmp}" >&5
 $as_echo "${with_openmp}" >&6; }
-  if test "x${enable_openmp}" = xyes; then
+  if test x"${enable_openmp}" = xyes; then
      with_openmp=yes
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether --enable-openmp is specified" >&5
 $as_echo_n "checking whether --enable-openmp is specified... " >&6; }
@@ -6356,7 +6357,7 @@ else
   WITH_OPENMP_FALSE=
 fi
 
-  if test "x${with_openmp}" = xyes; then
+  if test x"${with_openmp}" = xyes; then
 
 $as_echo "#define WITH_OPENMP 1" >>confdefs.h
 
@@ -6495,7 +6496,7 @@ rm -f core conftest.err conftest.$ac_objext \
 $as_echo "${have_mkl}" >&6; }
 fi
 
-if test "x${have_mkl}" = "xyes" ; then
+if test x"${have_mkl}" = x"yes" ; then
   WITH_MKL=1
 else
 
@@ -6549,7 +6550,7 @@ $as_echo_n "checking whether we can link a program with a blas lib... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${have_blas}" >&5
 $as_echo "${have_blas}" >&6; }
 
-  if test "x${have_blas}" = "xno" ; then
+  if test x"${have_blas}" = x"no" ; then
     as_fn_error $? "could not link with blas: specify path" "$LINENO" 5
   fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlarrv" >&5
@@ -6602,7 +6603,7 @@ $as_echo_n "checking whether we can link a program with a lapack lib... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${have_lapack}" >&5
 $as_echo "${have_lapack}" >&6; }
 
-  if test "x${have_lapack}" = "xno" ; then
+  if test x"${have_lapack}" = x"no" ; then
     as_fn_error $? "could not link with lapack: specify path" "$LINENO" 5
   fi
 
@@ -6658,7 +6659,7 @@ $as_echo "${have_blacs}" >&6; }
 
 
 
-  if test "x${have_blacs}" = "xno" ; then
+  if test x"${have_blacs}" = x"no" ; then
     as_fn_error $? "could not link with blacs: specify path" "$LINENO" 5
   fi
 
@@ -6712,7 +6713,7 @@ $as_echo_n "checking whether we can link a program with a scalapack lib... " >&6
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${have_scalapack}" >&5
 $as_echo "${have_scalapack}" >&6; }
 
-  if test "x${have_scalapack}" = "xno" ; then
+  if test x"${have_scalapack}" = x"no" ; then
     as_fn_error $? "could not link with scalapack: specify path" "$LINENO" 5
   fi
 
@@ -6744,7 +6745,7 @@ rm -f core conftest.err conftest.$ac_objext \
    { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${can_link_with_blacs_scalapack}" >&5
 $as_echo "${can_link_with_blacs_scalapack}" >&6; }
 
-   if test "x${can_link_with_blacs_scalapack}" = "xyes" ; then
+   if test x"${can_link_with_blacs_scalapack}" = x"yes" ; then
      WITH_BLACS=1
    else
    as_fn_error $? "We can neither link with MKL or another Scalpack. Please specify BLACS_LDFLAGS and BLACS_FCFLAGS!" "$LINENO" 5
@@ -6805,7 +6806,7 @@ rm -f core conftest.err conftest.$ac_objext \
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${can_compile_bgp}" >&5
 $as_echo "${can_compile_bgp}" >&6; }
 
-if test "x${can_compile_bgp}" = "xyes" ; then
+if test x"${can_compile_bgp}" = x"yes" ; then
   install_real_bgp=yes
   install_complex_bgp=yes
 fi
@@ -6834,13 +6835,13 @@ rm -f core conftest.err conftest.$ac_objext \
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${can_compile_bgq}" >&5
 $as_echo "${can_compile_bgq}" >&6; }
 
-if test "x${can_compile_bgq}" = "xyes" ; then
+if test x"${can_compile_bgq}" = x"yes" ; then
   install_real_bgq=yes
   install_complex_bgq=yes
 fi
 
 
-if test "x${fortran_can_check_environment}" = "xyes" ; then
+if test x"${fortran_can_check_environment}" = x"yes" ; then
 
 $as_echo "#define HAVE_ENVIRONMENT_CHECKING 1" >>confdefs.h
 
@@ -6855,9 +6856,9 @@ else
 fi
 
 
-if test "${with_real_generic_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-#  if test "x${can_compile_sse}" = "xyes" ; then
+if test x"${with_real_generic_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+#  if test x"${can_compile_sse}" = x"yes" ; then
 
         install_real_generic=yes
     install_real_generic_simple=no
@@ -6891,8 +6892,8 @@ else
 fi
 
 
-if test "${with_real_generic_simple_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
+if test x"${with_real_generic_simple_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
 
         install_real_generic=no
     install_real_generic_simple=yes
@@ -6924,9 +6925,9 @@ else
 fi
 
 
-if test "${with_real_sse_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_sse}" = "xyes" ; then
+if test x"${with_real_sse_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_sse}" = x"yes" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
@@ -6963,9 +6964,9 @@ else
 fi
 
 
-if test "${with_real_bgp_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_bgp}" = "xyes" ; then
+if test x"${with_real_bgp_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_bgp}" = x"yes" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
@@ -7002,9 +7003,9 @@ else
 fi
 
 
-if test "${with_real_bgq_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_bgq}" = "xyes" ; then
+if test x"${with_real_bgq_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_bgq}" = x"yes" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
@@ -7041,9 +7042,9 @@ else
 fi
 
 
-if test "${with_real_avx_block2_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_real_avx_block2_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
@@ -7080,9 +7081,9 @@ else
 fi
 
 
-if test "${with_real_avx_block4_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_real_avx_block4_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
@@ -7119,9 +7120,9 @@ else
 fi
 
 
-if test "${with_real_avx_block6_kernel}" = "xyes" ; then
- if test "x${use_specific_real_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_real_avx_block6_kernel}" = x"yes" ; then
+ if test x"${use_specific_real_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
@@ -7159,8 +7160,8 @@ else
 fi
 
 
-if test "${with_complex_generic_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
+if test x"${with_complex_generic_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
 
         install_complex_generic=yes
     install_complex_generic_simple=no
@@ -7191,8 +7192,8 @@ else
 fi
 
 
-if test "${with_complex_generic_simple_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
+if test x"${with_complex_generic_simple_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
 
         install_complex_generic=no
     install_complex_generic_simple=yes
@@ -7224,9 +7225,9 @@ else
 fi
 
 
-if test "${with_complex_sse_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_sse}" = "xyes" ; then
+if test x"${with_complex_sse_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_sse}" = x"yes" ; then
 
         install_complex_generic=no
     install_complex_generic_simple=no
@@ -7263,9 +7264,9 @@ else
 fi
 
 
-if test "${with_complex_bgp_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_bgp}" = "xyes" ; then
+if test x"${with_complex_bgp_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_bgp}" = x"yes" ; then
 
         install_complex_generic=no
     install_complex_generic_simple=no
@@ -7303,9 +7304,9 @@ else
 fi
 
 
-if test "${with_complex_bgq_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_bgq}" = "xyes" ; then
+if test x"${with_complex_bgq_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_bgq}" = x"yes" ; then
 
         install_complex_generic=no
     install_complex_generic_simple=no
@@ -7342,9 +7343,9 @@ else
 fi
 
 
-if test "${with_complex_avx_block1_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_complex_avx_block1_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
         install_complex_generic=no
     install_complex_generic_simple=no
@@ -7379,9 +7380,9 @@ else
 fi
 
 
-if test "${with_complex_avx_block2_kernel}" = "xyes" ; then
- if test "x${use_specific_complex_kernel}" = "xno" ; then
-  if test "x${can_compile_avx}" = "xyes" ; then
+if test x"${with_complex_avx_block2_kernel}" = x"yes" ; then
+ if test x"${use_specific_complex_kernel}" = x"no" ; then
+  if test x"${can_compile_avx}" = x"yes" ; then
 
         install_complex_generic=no
     install_complex_generic_simple=no
@@ -7408,7 +7409,7 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-if test "x${can_use_iso_fortran_env}" = "xyes" ; then
+if test x"${can_use_iso_fortran_env}" = x"yes" ; then
 
 $as_echo "#define HAVE_ISO_FORTRAN_ENV 1" >>confdefs.h
 
@@ -7423,7 +7424,7 @@ else
   WITH_REAL_GENERIC_KERNEL_FALSE=
 fi
 
-if test "x${install_real_generic}" = "xyes" ; then
+if test x"${install_real_generic}" = x"yes" ; then
 
 $as_echo "#define WITH_REAL_GENERIC_KERNEL 1" >>confdefs.h
 
@@ -7437,7 +7438,7 @@ else
   WITH_COMPLEX_GENERIC_KERNEL_FALSE=
 fi
 
-if test "x${install_complex_generic}" = "xyes" ; then
+if test x"${install_complex_generic}" = x"yes" ; then
 
 $as_echo "#define WITH_COMPLEX_GENERIC_KERNEL 1" >>confdefs.h
 
@@ -7451,7 +7452,7 @@ else
   WITH_REAL_GENERIC_SIMPLE_KERNEL_FALSE=
 fi
 
-if test "x${install_real_generic_simple}" = "xyes" ; then
+if test x"${install_real_generic_simple}" = x"yes" ; then
 
 $as_echo "#define WITH_REAL_GENERIC_SIMPLE_KERNEL 1" >>confdefs.h
 
@@ -7465,7 +7466,7 @@ else
   WITH_COMPLEX_GENERIC_SIMPLE_KERNEL_FALSE=
 fi
 
-if test "x${install_complex_generic_simple}" = "xyes" ; then
+if test x"${install_complex_generic_simple}" = x"yes" ; then
 
 $as_echo "#define WITH_COMPLEX_GENERIC_SIMPLE_KERNEL 1" >>confdefs.h
 
@@ -7479,7 +7480,7 @@ else
   WITH_REAL_SSE_KERNEL_FALSE=
 fi
 
-if test "x${install_real_sse}" = "xyes" ; then
+if test x"${install_real_sse}" = x"yes" ; then
 
 $as_echo "#define WITH_REAL_SSE_KERNEL 1" >>confdefs.h
 
@@ -7493,7 +7494,7 @@ else
   WITH_COMPLEX_SSE_KERNEL_FALSE=
 fi
 
-if test "x${install_complex_sse}" = "xyes" ; then
+if test x"${install_complex_sse}" = x"yes" ; then
 
 $as_echo "#define WITH_COMPLEX_SSE_KERNEL 1" >>confdefs.h
 
@@ -7507,7 +7508,7 @@ else
   WITH_REAL_AVX_BLOCK2_KERNEL_FALSE=
 fi
 
-if test "x${install_real_avx_block2}" = "xyes" ; then
+if test x"${install_real_avx_block2}" = x"yes" ; then
 
 $as_echo "#define WITH_REAL_AVX_BLOCK2_KERNEL 1" >>confdefs.h
 
@@ -7521,7 +7522,7 @@ else
   WITH_REAL_AVX_BLOCK4_KERNEL_FALSE=
 fi
 
-if test "x${install_real_avx_block4}" = "xyes" ; then
+if test x"${install_real_avx_block4}" = x"yes" ; then
 
 $as_echo "#define WITH_REAL_AVX_BLOCK4_KERNEL 1" >>confdefs.h
 
@@ -7535,7 +7536,7 @@ else
   WITH_REAL_AVX_BLOCK6_KERNEL_FALSE=
 fi
 
-if test "x${install_real_avx_block6}" = "xyes" ; then
+if test x"${install_real_avx_block6}" = x"yes" ; then
 
 $as_echo "#define WITH_REAL_AVX_BLOCK6_KERNEL 1" >>confdefs.h
 
@@ -7549,7 +7550,7 @@ else
   WITH_COMPLEX_AVX_BLOCK1_KERNEL_FALSE=
 fi
 
-if test "x${install_complex_avx_block1}" = "xyes" ; then
+if test x"${install_complex_avx_block1}" = x"yes" ; then
 
 $as_echo "#define WITH_COMPLEX_AVX_BLOCK1_KERNEL 1" >>confdefs.h
 
@@ -7563,7 +7564,7 @@ else
   WITH_COMPLEX_AVX_BLOCK2_KERNEL_FALSE=
 fi
 
-if test "x${install_complex_avx_block2}" = "xyes" ; then
+if test x"${install_complex_avx_block2}" = x"yes" ; then
 
 $as_echo "#define WITH_COMPLEX_AVX_BLOCK2_KERNEL 1" >>confdefs.h
 
@@ -7577,7 +7578,7 @@ else
   WITH_REAL_BGP_KERNEL_FALSE=
 fi
 
-if test "x${install_real_bgp}" = "xyes" ; then
+if test x"${install_real_bgp}" = x"yes" ; then
 
 $as_echo "#define WITH_REAL_BGP_KERNEL 1" >>confdefs.h
 
@@ -7591,19 +7592,19 @@ else
   WITH_REAL_BGQ_KERNEL_FALSE=
 fi
 
-if test "x${install_real_bgq}" = "xyes" ; then
+if test x"${install_real_bgq}" = x"yes" ; then
 
 $as_echo "#define WITH_REAL_BGQ_KERNEL 1" >>confdefs.h
 
 fi
 
-if test "x${use_specific_complex_kernel}" = "xyes" ; then
+if test x"${use_specific_complex_kernel}" = x"yes" ; then
 
 $as_echo "#define WITH_SPECIFIC_COMPLEX_KERNEL 1" >>confdefs.h
 
 fi
 
-if test "x${use_specific_real_kernel}" = "xyes" ; then
+if test x"${use_specific_real_kernel}" = x"yes" ; then
 
 $as_echo "#define WITH_SPECIFIC_COMPLEX_KERNEL 1" >>confdefs.h
 

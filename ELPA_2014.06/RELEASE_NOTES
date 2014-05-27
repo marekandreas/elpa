@@ -1,0 +1,29 @@
+This file contains the release notes for the ELPA 2014.06.000 version
+
+
+
+What is new?
+-------------
+
+With this release (and newer) it is not mandatory anymore to specify the real
+and complex kernels at build-time! Instead the choice of kernel is now a
+run-time option
+
+The kernels can either be choosen by environment variables "REAL_ELPA_KERNEL" 
+and "COMPLEX_ELPA_KERNEL", or in the code with an additional argument in
+the call to the library (see the examples in ./test for more details)
+
+It is still possible to build ELPA with a specific real and complex kernel, if 
+one wants to obtain the old behaviour (see configure --help for the exact 
+options)
+
+
+Any incompatibles to previous version?
+---------------------------------------
+
+The ABI of ELPA has changed! It will be necessary to rebuild the programs using
+ELPA if this new version should be used. Beware, that not rebuilding the user 
+programs most likely leads to undefined behaviour!
+
+
+
