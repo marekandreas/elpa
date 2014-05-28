@@ -1,8 +1,7 @@
 _f90_verbose = $(_f90_verbose_$(V))
 _f90_verbose_ = $(_f90_verbose_$(AM_DEFAULT_VERBOSITY))
 _f90_verbose_0 = @echo "  $1";
-_f90_targets = $(subst .,_,$(bin_PROGRAMS) $(lib_LTLIBRARIES))
-
+_f90_targets = $(subst -,_,$(patsubst %.la,%_la,$(patsubst %.a,%_a,$(patsubst %.so,%_so,$(PROGRAMS) $(LTLIBRARIES)))))
 FORTRAN_CPP ?= cpp -P -traditional -Wall -Werror
 
 # $1 source files
@@ -59,11 +58,16 @@ define is_clean
 $(if $(filter-out mostlyclean clean distclean maintainer-clean,$(MAKECMDGOALS)),0,1)
 endef
 
+define _fdep_newline
+
+
+endef
+
 ifneq ($(call is_clean),1)
 include $(_f90_depfile)
 endif
 $(_f90_depfile): $(top_srcdir)/fdep/fortran_dependencies.pl $(foreach p,$(_f90_targets),$(_$p_use_mods) $(_$p_def_mods)) | $(foreach p,$(_f90_targets),$(_f90_depdir)/$p)
-	$(call _f90_verbose,F90 DEPS $@)echo > $@; $(foreach p,$(_f90_targets),$(top_srcdir)/fdep/fortran_dependencies.pl $(_$p_use_mods) $(_$p_def_mods) >> $@; )
+	$(call _f90_verbose,F90 DEPS $@)echo > $@; $(foreach p,$(_f90_targets),$(top_srcdir)/fdep/fortran_dependencies.pl $p $(_$p_use_mods) $(_$p_def_mods) >> $@;$(_fdep_newline))
 
 $(_f90_depdir):
 	@mkdir $@
