@@ -943,8 +943,8 @@ dnl
 dnl real kernels
 dnl
 dnl generic kernel
-AC_ARG_WITH([real-generic-kernel],
- [AS_HELP_STRING([-with-real-generic-kernel],[only compile generic-kernel for real case])],[],[with_real_generic_kernel=no])
+AC_ARG_WITH([-only-real-generic-kernel],
+ [AS_HELP_STRING([--with-real-generic-kernel],[only compile generic-kernel for real case])],[],[with_real_generic_kernel=no])
 
 if test x"${with_real_generic_kernel}" = x"yes" ; then
  if test x"${use_specific_real_kernel}" = x"no" ; then
@@ -971,8 +971,8 @@ if test x"${with_real_generic_kernel}" = x"yes" ; then
 fi
 
 dnl generic-simple kernel
-AC_ARG_WITH([real-generic-simple-kernel],
- [AS_HELP_STRING([-with-real-generic-simple-kernel],[only compile generic-simple-kernel for real case])],[],[with_real_generic_simple_kernel=no])
+AC_ARG_WITH([-only-real-generic-simple-kernel],
+ [AS_HELP_STRING([--with-only-real-generic-simple-kernel],[only compile generic-simple-kernel for real case])],[],[with_real_generic_simple_kernel=no])
 
 if test x"${with_real_generic_simple_kernel}" = x"yes" ; then
  if test x"${use_specific_real_kernel}" = x"no" ; then
@@ -996,8 +996,8 @@ if test x"${with_real_generic_simple_kernel}" = x"yes" ; then
 fi
 
 dnl sse kernel
-AC_ARG_WITH([real-sse-kernel],
- [AS_HELP_STRING([-with-real-sse-kernel],[only compile sse-kernel for real case])],[],[with_real_sse_kernel=no])
+AC_ARG_WITH([-only-real-sse-kernel],
+ [AS_HELP_STRING([--with-only-real-sse-kernel],[only compile sse-kernel for real case])],[],[with_real_sse_kernel=no])
 
 if test x"${with_real_sse_kernel}" = x"yes" ; then
  if test x"${use_specific_real_kernel}" = x"no" ; then
@@ -1024,8 +1024,8 @@ if test x"${with_real_sse_kernel}" = x"yes" ; then
 fi
 
 dnl bgp kernel
-AC_ARG_WITH([real-bgp-kernel],
- [AS_HELP_STRING([-with-real-bgp-kernel],[only compile bgp-kernel for real case])],[],[with_real_bgp_kernel=no])
+AC_ARG_WITH([-only-real-bgp-kernel],
+ [AS_HELP_STRING([--with-only-real-bgp-kernel],[only compile bgp-kernel for real case])],[],[with_real_bgp_kernel=no])
 
 if test x"${with_real_bgp_kernel}" = x"yes" ; then
  if test x"${use_specific_real_kernel}" = x"no" ; then
@@ -1052,8 +1052,8 @@ if test x"${with_real_bgp_kernel}" = x"yes" ; then
 fi
 
 dnl bgq kernel
-AC_ARG_WITH([real-bgq-kernel],
- [AS_HELP_STRING([-with-real-bgq-kernel],[only compile bgq-kernel for real case])],[],[with_real_bgq_kernel=no])
+AC_ARG_WITH([-only-real-bgq-kernel],
+ [AS_HELP_STRING([--with-only-real-bgq-kernel],[only compile bgq-kernel for real case])],[],[with_real_bgq_kernel=no])
 
 if test x"${with_real_bgq_kernel}" = x"yes" ; then
  if test x"${use_specific_real_kernel}" = x"no" ; then
@@ -1080,8 +1080,8 @@ if test x"${with_real_bgq_kernel}" = x"yes" ; then
 fi
 
 dnl real-avx-block2 kernel
-AC_ARG_WITH([real-avx-block2-kernel],
- [AS_HELP_STRING([-with-real-avx-block2-kernel],[only compile real-avx-block2-kernel for real case])],[],[with_real_avx_block2_kernel=no])
+AC_ARG_WITH([-only-real-avx-block2-kernel],
+ [AS_HELP_STRING([--with-only-real-avx-block2-kernel],[only compile real-avx-block2-kernel for real case])],[],[with_real_avx_block2_kernel=no])
 
 if test x"${with_real_avx_block2_kernel}" = x"yes" ; then
  if test x"${use_specific_real_kernel}" = x"no" ; then
@@ -1108,8 +1108,8 @@ if test x"${with_real_avx_block2_kernel}" = x"yes" ; then
 fi
 
 dnl real-avx-block4 kernel
-AC_ARG_WITH([real-avx-block4-kernel],
- [AS_HELP_STRING([-with-real-avx-block4-kernel],[only compile real-avx-block4-kernel for real case])],[],[with_real_avx_block4_kernel=no])
+AC_ARG_WITH([-only-real-avx-block4-kernel],
+ [AS_HELP_STRING([--with-only-real-avx-block4-kernel],[only compile real-avx-block4-kernel for real case])],[],[with_real_avx_block4_kernel=no])
 
 if test x"${with_real_avx_block4_kernel}" = x"yes" ; then
  if test x"${use_specific_real_kernel}" = x"no" ; then
@@ -1136,8 +1136,8 @@ if test x"${with_real_avx_block4_kernel}" = x"yes" ; then
 fi
 
 dnl real-avx-block6 kernel
-AC_ARG_WITH([real-avx-block6-kernel],
- [AS_HELP_STRING([-with-real-avx-block6-kernel],[only compile real-avx-block6-kernel for real case])],[],[with_real_avx_block6_kernel=no])
+AC_ARG_WITH([-only-real-avx-block6-kernel],
+ [AS_HELP_STRING([--with-only-real-avx-block6-kernel],[only compile real-avx-block6-kernel for real case])],[],[with_real_avx_block6_kernel=no])
 
 if test x"${with_real_avx_block6_kernel}" = x"yes" ; then
  if test x"${use_specific_real_kernel}" = x"no" ; then
@@ -1169,8 +1169,8 @@ dnl
 dnl complex kernels
 dnl
 dnl generic kernel
-AC_ARG_WITH([complex-generic-kernel],
- [AS_HELP_STRING([-with-complex-generic-kernel],[only compile generic-kernel for complex case])],[],[with_complex_generic_kernel=no])
+AC_ARG_WITH([-only-complex-generic-kernel],
+ [AS_HELP_STRING([--with-only-complex-generic-kernel],[only compile generic-kernel for complex case])],[],[with_complex_generic_kernel=no])
 
 if test x"${with_complex_generic_kernel}" = x"yes" ; then
  if test x"${use_specific_complex_kernel}" = x"no" ; then
@@ -1193,8 +1193,8 @@ if test x"${with_complex_generic_kernel}" = x"yes" ; then
 fi
 
 dnl generic-simple kernel
-AC_ARG_WITH([complex-generic-simple-kernel],
- [AS_HELP_STRING([-with-complex-generic-simple-kernel],[only compile generic-simple-kernel for complex case])],[],[with_complex_generic_simple_kernel=no])
+AC_ARG_WITH([-only-complex-generic-simple-kernel],
+ [AS_HELP_STRING([--with-only-complex-generic-simple-kernel],[only compile generic-simple-kernel for complex case])],[],[with_complex_generic_simple_kernel=no])
 
 if test x"${with_complex_generic_simple_kernel}" = x"yes" ; then
  if test x"${use_specific_complex_kernel}" = x"no" ; then
@@ -1218,8 +1218,8 @@ if test x"${with_complex_generic_simple_kernel}" = x"yes" ; then
 fi
 
 dnl sse kernel
-AC_ARG_WITH([complex-sse-kernel],
- [AS_HELP_STRING([-with-complex-sse-kernel],[only compile sse-kernel for complex case])],[],[with_complex_sse_kernel=no])
+AC_ARG_WITH(-only-[complex-sse-kernel],
+ [AS_HELP_STRING([--with-only-complex-sse-kernel],[only compile sse-kernel for complex case])],[],[with_complex_sse_kernel=no])
 
 if test x"${with_complex_sse_kernel}" = x"yes" ; then
  if test x"${use_specific_complex_kernel}" = x"no" ; then
@@ -1246,8 +1246,8 @@ if test x"${with_complex_sse_kernel}" = x"yes" ; then
 fi
 
 dnl complex-bqp kernel
-AC_ARG_WITH([complex-bgp-kernel],
- [AS_HELP_STRING([-with-complex-bgp-kernel],[only compile BGP-kernel (identical with complex-generic kernel) for complex case])],[],[with_complex_bgp_kernel=no])
+AC_ARG_WITH([-only-complex-bgp-kernel],
+ [AS_HELP_STRING([--with-only-complex-bgp-kernel],[only compile BGP-kernel (identical with complex-generic kernel) for complex case])],[],[with_complex_bgp_kernel=no])
 
 if test x"${with_complex_bgp_kernel}" = x"yes" ; then
  if test x"${use_specific_complex_kernel}" = x"no" ; then
@@ -1275,8 +1275,8 @@ fi
 
 
 dnl complex-bqq kernel
-AC_ARG_WITH([complex-bgq-kernel],
- [AS_HELP_STRING([-with-complex-bgq-kernel],[only compile BGQ-kernel (identical with complex-generic kernel) for complex case])],[],[with_complex_bgq_kernel=no])
+AC_ARG_WITH([-only-complex-bgq-kernel],
+ [AS_HELP_STRING([--with-only-complex-bgq-kernel],[only compile BGQ-kernel (identical with complex-generic kernel) for complex case])],[],[with_complex_bgq_kernel=no])
 
 if test x"${with_complex_bgq_kernel}" = x"yes" ; then
  if test x"${use_specific_complex_kernel}" = x"no" ; then
@@ -1303,8 +1303,8 @@ if test x"${with_complex_bgq_kernel}" = x"yes" ; then
 fi
 
 dnl complex-avx-block1 kernel
-AC_ARG_WITH([complex-avx-block1-kernel],
- [AS_HELP_STRING([-with-complex-avx-block1-kernel],[only compile complex-avx-block1-kernel for complex case])],[],[with_complex_avx_block1_kernel=no])
+AC_ARG_WITH([-only-complex-avx-block1-kernel],
+ [AS_HELP_STRING([--with-only-complex-avx-block1-kernel],[only compile complex-avx-block1-kernel for complex case])],[],[with_complex_avx_block1_kernel=no])
 
 if test x"${with_complex_avx_block1_kernel}" = x"yes" ; then
  if test x"${use_specific_complex_kernel}" = x"no" ; then
@@ -1329,8 +1329,8 @@ if test x"${with_complex_avx_block1_kernel}" = x"yes" ; then
 fi
 
 dnl complex-avx-block2 kernel
-AC_ARG_WITH([complex-avx-block2-kernel],
- [AS_HELP_STRING([-with-complex-avx-block2-kernel],[only compile complex-avx-block2-kernel for complex case])],[],[with_complex_avx_block2_kernel=no])
+AC_ARG_WITH([-only-complex-avx-block2-kernel],
+ [AS_HELP_STRING([--with-only-complex-avx-block2-kernel],[only compile complex-avx-block2-kernel for complex case])],[],[with_complex_avx_block2_kernel=no])
 
 if test x"${with_complex_avx_block2_kernel}" = x"yes" ; then
  if test x"${use_specific_complex_kernel}" = x"no" ; then
