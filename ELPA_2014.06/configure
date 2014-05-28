@@ -6446,6 +6446,8 @@ else
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${can_use_iso_fortran_env}" >&5
+$as_echo "${can_use_iso_fortran_env}" >&6; }
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we can compile a Fortran program using MKL" >&5
 $as_echo_n "checking whether we can compile a Fortran program using MKL... " >&6; }
@@ -21263,7 +21265,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 #AC_SUBST(OPT_FCFLAGS)
 
-rm -rf modules/
+rm -rf modules/ .fortran_dependencies/
 mkdir modules
 
 #gl_VISIBILITY

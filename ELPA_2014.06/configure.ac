@@ -759,6 +759,7 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   [can_use_iso_fortran_env=yes],
   [can_use_iso_fortran_env=no]
 )
+AC_MSG_RESULT([${can_use_iso_fortran_env}])
 
 dnl check whether one can link with specified MKL (desired method)
 AC_MSG_CHECKING([whether we can compile a Fortran program using MKL])
@@ -1452,7 +1453,7 @@ AC_SUBST(BLACS_FCFLAGS)
 
 #AC_SUBST(OPT_FCFLAGS)
 
-rm -rf modules/
+rm -rf modules/ .fortran_dependencies/
 mkdir modules
 
 #gl_VISIBILITY
