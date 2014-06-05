@@ -1,0 +1,7 @@
+*.o
+*.lo
+*.deps
+*.dirstamp
+*.libs
+*.fortran_dependencies
+modules/

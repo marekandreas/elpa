@@ -119,14 +119,14 @@ module ELPA2
   integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = 1
 #endif
   character(35), parameter, dimension(number_of_real_kernels) :: &
-  REAL_ELPA_KERNEL_NAMES = (/"REAL_ELPA_KERNEL_GENERIC",         &
-                             "REAL_ELPA_KERNEL_GENERIC_SIMPLE",  &
-                             "REAL_ELPA_KERNEL_BGP",             &
-                             "REAL_ELPA_KERNEL_BGQ",             &
-                             "REAL_ELPA_KERNEL_SSE",             &
-                             "REAL_ELPA_KERNEL_AVX_BLOCK2",      &
-                             "REAL_ELPA_KERNEL_AVX_BLOCK4",      &
-                             "REAL_ELPA_KERNEL_AVX_BLOCK6"/)
+  REAL_ELPA_KERNEL_NAMES =    (/"REAL_ELPA_KERNEL_GENERIC         ", &
+                                "REAL_ELPA_KERNEL_GENERIC_SIMPLE  ", &
+                                "REAL_ELPA_KERNEL_BGP             ", &
+                                "REAL_ELPA_KERNEL_BGQ             ", &
+                                "REAL_ELPA_KERNEL_SSE             ", &
+                                "REAL_ELPA_KERNEL_AVX_BLOCK2      ", &
+                                "REAL_ELPA_KERNEL_AVX_BLOCK4      ", &
+                                "REAL_ELPA_KERNEL_AVX_BLOCK6      "/)
 
   integer, parameter :: number_of_complex_kernels           = 7
   integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC         = 1
@@ -143,15 +143,13 @@ module ELPA2
   integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = 1
 #endif
   character(35), parameter, dimension(number_of_complex_kernels) :: &
-  COMPLEX_ELPA_KERNEL_NAMES = (/"COMPLEX_ELPA_KERNEL_GENERIC",      &
-                             "COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE",  &
-                             "COMPLEX_ELPA_KERNEL_BGP",             &
-                             "COMPLEX_ELPA_KERNEL_BGQ",             &
-                             "COMPLEX_ELPA_KERNEL_SSE",             &
-                             "COMPLEX_ELPA_KERNEL_AVX_BLOCK1",      &
-                             "COMPLEX_ELPA_KERNEL_AVX_BLOCK2"/)
-
-
+  COMPLEX_ELPA_KERNEL_NAMES = (/"COMPLEX_ELPA_KERNEL_GENERIC         ", &
+                                "COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE  ", &
+                                "COMPLEX_ELPA_KERNEL_BGP             ", &
+                                "COMPLEX_ELPA_KERNEL_BGQ             ", &
+                                "COMPLEX_ELPA_KERNEL_SSE             ", &
+                                "COMPLEX_ELPA_KERNEL_AVX_BLOCK1      ", &
+                                "COMPLEX_ELPA_KERNEL_AVX_BLOCK2      "/)
 
   integer, parameter                                    ::             &
            AVAILABLE_REAL_ELPA_KERNELS(number_of_real_kernels) =       &
@@ -159,7 +157,7 @@ module ELPA2
 #if WITH_REAL_GENERIC_KERNEL
                                         1                              &
 #else
-                                        0                              &        
+                                        0                              &
 #endif
 #if WITH_REAL_GENERIC_SIMPLE_KERNEL
                                           ,1                           &
@@ -260,7 +258,7 @@ subroutine print_available_real_kernels
   implicit none
 
   integer :: i
-  
+
   do i=1, number_of_real_kernels
      if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
         write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
@@ -278,7 +276,7 @@ subroutine print_available_complex_kernels
   implicit none
 
   integer :: i
-  
+
   do i=1, number_of_real_kernels
      if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
         write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
@@ -291,21 +289,21 @@ subroutine print_available_complex_kernels
 
 end subroutine print_available_complex_kernels
 
-function get_actual_real_kernel result(actual_kernel)
+function get_actual_real_kernel() result(actual_kernel)
 
   integer :: actual_kernel
-     
+
   ! if kernel is not choosen via api
   ! check whether set by environment variable
   actual_kernel = real_kernel_via_environment_variable()
-      
+
   if (actual_kernel .eq. 0) then
      ! if not then set default kernel
      actual_kernel = DEFAULT_REAL_ELPA_KERNEL
   endif
 end function get_actual_real_kernel
 
-function get_actual_real_kernel_name result(actual_kernel_name)
+function get_actual_real_kernel_name() result(actual_kernel_name)
 
   character(35) :: actual_kernel_name
   integer       :: actual_kernel
@@ -313,21 +311,21 @@ function get_actual_real_kernel_name result(actual_kernel_name)
   actual_kernel_name = REAL_ELPA_KERNEL_NAMES(actual_kernel)
 end function get_actual_real_kernel_name
 
-function get_actual_complex_kernel result(actual_kernel)
+function get_actual_complex_kernel() result(actual_kernel)
 
   integer :: actual_kernel
-     
+
   ! if kernel is not choosen via api
   ! check whether set by environment variable
   actual_kernel = complex_kernel_via_environment_variable()
-      
+
   if (actual_kernel .eq. 0) then
      ! if not then set default kernel
      actual_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
   endif
 end function get_actual_complex_kernel
 
-function get_actual_complex_kernel_name result(actual_kernel_name)
+function get_actual_complex_kernel_name() result(actual_kernel_name)
 
   character(35) :: actual_kernel_name
   integer       :: actual_kernel
@@ -360,7 +358,7 @@ function check_allowed_complex_kernels(THIS_COMPLEX_ELPA_KERNEL) result(err)
   if (AVAILABLE_COMPLEX_ELPA_KERNELS(THIS_COMPLEX_ELPA_KERNEL) .ne. 1) err=.true.
 end function check_allowed_complex_kernels
 
-function real_kernel_via_environment_variable result(kernel)
+function real_kernel_via_environment_variable() result(kernel)
   implicit none
   integer :: kernel
   CHARACTER(len=255) :: REAL_KERNEL_ENVIRONMENT
@@ -382,7 +380,7 @@ function real_kernel_via_environment_variable result(kernel)
 
 end function real_kernel_via_environment_variable
 
-function complex_kernel_via_environment_variable result(kernel)
+function complex_kernel_via_environment_variable() result(kernel)
   implicit none
   integer :: kernel
 
@@ -444,7 +442,7 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
 
    implicit none
    integer, intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
-  integer                       :: THIS_REAL_ELPA_KERNEL 
+  integer                       :: THIS_REAL_ELPA_KERNEL
 
    integer, intent(in)   :: na, nev, lda, ldq, nblk, mpi_comm_rows, &
                             mpi_comm_cols, mpi_comm_all
@@ -467,7 +465,7 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
       ! user defined kernel via the optional argument in the API call
       THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
    else
-      
+
       ! if kernel is not choosen via api
       ! check whether set by environment variable
       THIS_REAL_ELPA_KERNEL = get_actual_real_kernel()
@@ -475,7 +473,7 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
 
    ! check whether choosen kernel is allowed
    if (check_allowed_real_kernels(THIS_REAL_ELPA_KERNEL)) then
-    
+
       if(my_pe == 0) then
          write(error_unit,*) " "
          write(error_unit,*) "The choosen kernel ",REAL_ELPA_KERNEL_NAMES(THIS_REAL_ELPA_KERNEL)
@@ -642,7 +640,7 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
    ! check whether choosen kernel is allowed
    if (check_allowed_complex_kernels(THIS_COMPLEX_ELPA_KERNEL)) then
- 
+
       if(my_pe == 0) then
          write(error_unit,*) " "
          write(error_unit,*) "The choosen kernel ",COMPLEX_ELPA_KERNEL_NAMES(THIS_COMPLEX_ELPA_KERNEL)
@@ -1711,7 +1709,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
                ! Normal matrix multiply
                call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
                if(nr>0) call DGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
-               
+
             endif
 
             ! Calculate first column of subdiagonal block and calculate new
@@ -1723,7 +1721,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
             if(nr>0) then
 
                ! complete (old) Householder transformation for first column
-               
+
                ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
 
             ! calculate new Householder transformation ...
@@ -1747,7 +1745,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
                   hv_s(2:) = hv_new(2:)
                   call mpi_isend(hv_s,nb,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
                endif
-               
+
             endif
 
             ! Transform diagonal block
@@ -1763,21 +1761,21 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
                ! ... send it away ...
 
-#ifdef WITH_OPENMP               
+#ifdef WITH_OPENMP
                call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
 #else
                call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
                ab_s(1:nb+1) = ab(1:nb+1,ns)
                call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
-               
+
                ! ... and calculate remaining columns with rank-2 update
                if(nc>1) call DSYR2('L',nc-1,-1.d0,hd(2),1,hv(2),1,ab(1,ns+1),2*nb-1)
             else
                ! No need to  send, just a rank-2 update
                call DSYR2('L',nc,-1.d0,hd,1,hv,1,ab(1,ns),2*nb-1)
             endif
-            
+
          ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
             if(nr>0) then
@@ -1796,7 +1794,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
                enddo
             endif
          endif
-         
+
          ! Use new HH vector for the next block
          hv(:) = hv_new(:)
          tau = tau_new
@@ -1813,7 +1811,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
       if(hh_dst(iblk) >= np_rows) exit
       if(snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
-      
+
       if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
          ! Wait for last transfer to finish
          call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
@@ -1827,7 +1825,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
          hh_cnt(iblk) = 0
          hh_dst(iblk) = hh_dst(iblk)+1
       endif
-      
+
    enddo
 #endif
 enddo
@@ -2873,7 +2871,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif /* WITH_REAL_BGQ_KERNEL */
 
 
-!#if defined(WITH_AVX_SANDYBRIDGE) 
+!#if defined(WITH_AVX_SANDYBRIDGE)
 !              call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
 !#endif
 
@@ -2991,7 +2989,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
         endif
 #endif /* WITH_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
-        
+
 #ifdef WITH_OPENMP
    if(my_thread==1) then
 #endif
@@ -3970,7 +3968,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
          hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
 
 
-#ifndef WITH_OPENMP 
+#ifndef WITH_OPENMP
          if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
             call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
@@ -4059,7 +4057,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
                call mpi_wait(ireq_hv,mpi_status,mpierr)
 #else
                call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
-#endif     
+#endif
                hv_s(1) = tau_new
                hv_s(2:) = hv_new(2:)
                call mpi_isend(hv_s,nb,MPI_COMPLEX16,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
@@ -4148,7 +4146,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
       enddo
 #endif
    enddo
-   
+
 
 
    ! Finish the last outstanding requests
@@ -4781,7 +4779,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #else
                 call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
-               
+
 #ifdef WITH_OPENMP
                 b_len = csw*nbw*max_threads
                 top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
@@ -4792,7 +4790,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                 top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
                 call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow-1, bottom_recv_tag, &
                                mpi_comm_rows, top_send_request(i), mpierr)
- 
+
 #endif
             endif
 
@@ -4886,7 +4884,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                 else
 #ifdef WITH_OPENMP
                    call MPI_Wait(result_recv_request(nbuf), mpi_status, mpierr)
-    
+
 #else
 
                     call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
@@ -5083,7 +5081,7 @@ contains
 #else
         nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
 #endif
- 
+
 
 #if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL)
 #if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
@@ -5116,7 +5114,7 @@ contains
 
 #if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
 #if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
-        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) then 
+        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) then
 #endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
            ttt = mpi_wtime()
            do j = ncols, 1, -1
