@@ -816,21 +816,21 @@ enable_dependency_tracking
 with_avx_optimization
 with_openmp
 enable_openmp
-with__only_real_generic_kernel
-with__only_real_generic_simple_kernel
-with__only_real_sse_kernel
-with__only_real_bgp_kernel
-with__only_real_bgq_kernel
-with__only_real_avx_block2_kernel
-with__only_real_avx_block4_kernel
-with__only_real_avx_block6_kernel
-with__only_complex_generic_kernel
-with__only_complex_generic_simple_kernel
-with__only_complex_sse_kernel
-with__only_complex_bgp_kernel
-with__only_complex_bgq_kernel
-with__only_complex_avx_block1_kernel
-with__only_complex_avx_block2_kernel
+with_only_real_generic_kernel
+with_only_real_generic_simple_kernel
+with_only_real_sse_kernel
+with_only_real_bgp_kernel
+with_only_real_bgq_kernel
+with_only_real_avx_block2_kernel
+with_only_real_avx_block4_kernel
+with_only_real_avx_block6_kernel
+with_only_complex_generic_kernel
+with_only_complex_generic_simple_kernel
+with_only_complex_sse_kernel
+with_only_complex_bgp_kernel
+with_only_complex_bgq_kernel
+with_only_complex_avx_block1_kernel
+with_only_complex_avx_block2_kernel
 enable_shared
 enable_static
 with_pic
@@ -1493,7 +1493,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-avx-optimization use AVX optimization, default no.
   --with-openmp           use OpenMP threading, default no.
-  --with-real-generic-kernel
+  --with-only-real-generic-kernel
                           only compile generic-kernel for real case
   --with-only-real-generic-simple-kernel
                           only compile generic-simple-kernel for real case
@@ -7210,9 +7210,9 @@ $as_echo "#define HAVE_ENVIRONMENT_CHECKING 1" >>confdefs.h
 fi
 
 
-# Check whether --with--only-real-generic-kernel was given.
-if test "${with__only_real_generic_kernel+set}" = set; then :
-  withval=$with__only_real_generic_kernel;
+# Check whether --with-only-real-generic-kernel was given.
+if test "${with_only_real_generic_kernel+set}" = set; then :
+  withval=$with_only_real_generic_kernel; with_real_generic_kernel=yes
 else
   with_real_generic_kernel=no
 fi
@@ -7246,9 +7246,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-real-generic-simple-kernel was given.
-if test "${with__only_real_generic_simple_kernel+set}" = set; then :
-  withval=$with__only_real_generic_simple_kernel;
+# Check whether --with-only-real-generic-simple-kernel was given.
+if test "${with_only_real_generic_simple_kernel+set}" = set; then :
+  withval=$with_only_real_generic_simple_kernel;
 else
   with_real_generic_simple_kernel=no
 fi
@@ -7279,9 +7279,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-real-sse-kernel was given.
-if test "${with__only_real_sse_kernel+set}" = set; then :
-  withval=$with__only_real_sse_kernel;
+# Check whether --with-only-real-sse-kernel was given.
+if test "${with_only_real_sse_kernel+set}" = set; then :
+  withval=$with_only_real_sse_kernel;
 else
   with_real_sse_kernel=no
 fi
@@ -7318,9 +7318,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-real-bgp-kernel was given.
-if test "${with__only_real_bgp_kernel+set}" = set; then :
-  withval=$with__only_real_bgp_kernel;
+# Check whether --with-only-real-bgp-kernel was given.
+if test "${with_only_real_bgp_kernel+set}" = set; then :
+  withval=$with_only_real_bgp_kernel;
 else
   with_real_bgp_kernel=no
 fi
@@ -7357,9 +7357,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-real-bgq-kernel was given.
-if test "${with__only_real_bgq_kernel+set}" = set; then :
-  withval=$with__only_real_bgq_kernel;
+# Check whether --with-only-real-bgq-kernel was given.
+if test "${with_only_real_bgq_kernel+set}" = set; then :
+  withval=$with_only_real_bgq_kernel;
 else
   with_real_bgq_kernel=no
 fi
@@ -7396,9 +7396,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-real-avx-block2-kernel was given.
-if test "${with__only_real_avx_block2_kernel+set}" = set; then :
-  withval=$with__only_real_avx_block2_kernel;
+# Check whether --with-only-real-avx-block2-kernel was given.
+if test "${with_only_real_avx_block2_kernel+set}" = set; then :
+  withval=$with_only_real_avx_block2_kernel;
 else
   with_real_avx_block2_kernel=no
 fi
@@ -7435,9 +7435,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-real-avx-block4-kernel was given.
-if test "${with__only_real_avx_block4_kernel+set}" = set; then :
-  withval=$with__only_real_avx_block4_kernel;
+# Check whether --with-only-real-avx-block4-kernel was given.
+if test "${with_only_real_avx_block4_kernel+set}" = set; then :
+  withval=$with_only_real_avx_block4_kernel;
 else
   with_real_avx_block4_kernel=no
 fi
@@ -7474,9 +7474,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-real-avx-block6-kernel was given.
-if test "${with__only_real_avx_block6_kernel+set}" = set; then :
-  withval=$with__only_real_avx_block6_kernel;
+# Check whether --with-only-real-avx-block6-kernel was given.
+if test "${with_only_real_avx_block6_kernel+set}" = set; then :
+  withval=$with_only_real_avx_block6_kernel;
 else
   with_real_avx_block6_kernel=no
 fi
@@ -7514,9 +7514,9 @@ fi
 
 
 
-# Check whether --with--only-complex-generic-kernel was given.
-if test "${with__only_complex_generic_kernel+set}" = set; then :
-  withval=$with__only_complex_generic_kernel;
+# Check whether --with-only-complex-generic-kernel was given.
+if test "${with_only_complex_generic_kernel+set}" = set; then :
+  withval=$with_only_complex_generic_kernel;
 else
   with_complex_generic_kernel=no
 fi
@@ -7546,9 +7546,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-complex-generic-simple-kernel was given.
-if test "${with__only_complex_generic_simple_kernel+set}" = set; then :
-  withval=$with__only_complex_generic_simple_kernel;
+# Check whether --with-only-complex-generic-simple-kernel was given.
+if test "${with_only_complex_generic_simple_kernel+set}" = set; then :
+  withval=$with_only_complex_generic_simple_kernel;
 else
   with_complex_generic_simple_kernel=no
 fi
@@ -7579,9 +7579,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-complex-sse-kernel was given.
-if test "${with__only_complex_sse_kernel+set}" = set; then :
-  withval=$with__only_complex_sse_kernel;
+# Check whether --with-only-complex-sse-kernel was given.
+if test "${with_only_complex_sse_kernel+set}" = set; then :
+  withval=$with_only_complex_sse_kernel;
 else
   with_complex_sse_kernel=no
 fi
@@ -7618,9 +7618,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-complex-bgp-kernel was given.
-if test "${with__only_complex_bgp_kernel+set}" = set; then :
-  withval=$with__only_complex_bgp_kernel;
+# Check whether --with-only-complex-bgp-kernel was given.
+if test "${with_only_complex_bgp_kernel+set}" = set; then :
+  withval=$with_only_complex_bgp_kernel;
 else
   with_complex_bgp_kernel=no
 fi
@@ -7658,9 +7658,9 @@ fi
 
 
 
-# Check whether --with--only-complex-bgq-kernel was given.
-if test "${with__only_complex_bgq_kernel+set}" = set; then :
-  withval=$with__only_complex_bgq_kernel;
+# Check whether --with-only-complex-bgq-kernel was given.
+if test "${with_only_complex_bgq_kernel+set}" = set; then :
+  withval=$with_only_complex_bgq_kernel;
 else
   with_complex_bgq_kernel=no
 fi
@@ -7697,9 +7697,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-complex-avx-block1-kernel was given.
-if test "${with__only_complex_avx_block1_kernel+set}" = set; then :
-  withval=$with__only_complex_avx_block1_kernel;
+# Check whether --with-only-complex-avx-block1-kernel was given.
+if test "${with_only_complex_avx_block1_kernel+set}" = set; then :
+  withval=$with_only_complex_avx_block1_kernel;
 else
   with_complex_avx_block1_kernel=no
 fi
@@ -7734,9 +7734,9 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-# Check whether --with--only-complex-avx-block2-kernel was given.
-if test "${with__only_complex_avx_block2_kernel+set}" = set; then :
-  withval=$with__only_complex_avx_block2_kernel;
+# Check whether --with-only-complex-avx-block2-kernel was given.
+if test "${with_only_complex_avx_block2_kernel+set}" = set; then :
+  withval=$with_only_complex_avx_block2_kernel;
 else
   with_complex_avx_block2_kernel=no
 fi
@@ -7776,7 +7776,6 @@ if test x"${can_use_iso_fortran_env}" = x"yes" ; then
 $as_echo "#define HAVE_ISO_FORTRAN_ENV 1" >>confdefs.h
 
 fi
-
 
  if test x"$install_real_generic" = x"yes"; then
   WITH_REAL_GENERIC_KERNEL_TRUE=
