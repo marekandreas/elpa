@@ -840,7 +840,7 @@ print_available_elpa2_kernels_SOURCES = test/print_available_elpa2_kernels.F90
 print_available_elpa2_kernels_LDADD = $(build_lib)
 check_SCRIPTS = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels.sh 
 TESTS = $(check_SCRIPTS)
-CLEANFILES = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh  test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels
+CLEANFILES = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels elpa2.i
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

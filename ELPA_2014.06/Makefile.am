@@ -253,6 +253,6 @@ elpa2.i: $(top_srcdir)/src/elpa2.F90
 elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
 
-CLEANFILES = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh  test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels
+CLEANFILES = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels elpa2.i
 
 @FORTRAN_MODULE_DEPS@
