@@ -949,7 +949,7 @@ if test x"${fortran_can_check_environment}" = x"yes" ; then
  AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can querry environment variables])
 fi
 
-dnl last check whether user wants to compile ony a specific kernel
+dnl last check whether user wants to compile only a specific kernel
 dnl
 dnl real kernels
 dnl
@@ -1437,12 +1437,12 @@ if test x"${install_real_bgq}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_BGQ_KERNEL],[1],[can use real BGQ kernel])
 fi
 
-if test x"${use_specific_complex_kernel}" = x"yes" ; then
- AC_DEFINE([WITH_SPECIFIC_COMPLEX_KERNEL],[1],[use specific complex kernel])
+if test x"${use_specific_complex_kernel}" = x"no" ; then
+ AC_DEFINE([WITH_NO_SPECIFIC_COMPLEX_KERNEL],[1],[do not use only one specific complex kernel (set at compile time)])
 fi
 
-if test x"${use_specific_real_kernel}" = x"yes" ; then
- AC_DEFINE([WITH_SPECIFIC_COMPLEX_KERNEL],[1],[use specific real kernel])
+if test x"${use_specific_real_kernel}" = x"no" ; then
+ AC_DEFINE([WITH_NO_SPECIFIC_REAL_KERNEL],[1],[do not use only one specific real kernel (set at compile time)])
 fi
 
 LT_INIT

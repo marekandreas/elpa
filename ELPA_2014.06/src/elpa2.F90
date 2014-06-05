@@ -2735,7 +2735,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
          endif
 #endif
 
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
@@ -2743,13 +2743,13 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE .or.        &
             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP .or.        &
             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 
          !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
 #if defined(WITH_REAL_GENERIC_KERNEL)
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) then
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
               do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -2761,16 +2761,16 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                                       nbw, nl, stripe_width, nbw)
 #endif
               enddo
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            endif
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_GENERIC_KERNEL */
 
 
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) then
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
               do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -2782,16 +2782,16 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                                                      w, nbw, nl, stripe_width, nbw)
 #endif
               enddo
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            endif
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_GENERIC_SIMPLE_KERNEL */
 
 
 #if defined(WITH_REAL_SSE_KERNEL)
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) then
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
               do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -2803,16 +2803,16 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                                       stripe_width, nbw)
 #endif
               enddo
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            endif
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_KERNEL */
 
 
 #if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) then
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
               do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -2824,15 +2824,15 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
               enddo
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            endif
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK2_KERNEL */
 
 #if defined(WITH_REAL_BGP_KERNEL)
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP) then
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
               do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -2844,16 +2844,16 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                                           stripe_width, nbw)
 #endif
               enddo
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            endif
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_BGP_KERNEL */
 
 
 #if defined(WITH_REAL_BGQ_KERNEL)
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
               do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -2865,9 +2865,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                                           stripe_width, nbw)
 #endif
               enddo
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            endif
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_BGQ_KERNEL */
 
 
@@ -2886,16 +2886,16 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
 
 
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
         endif !
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 
 
 
 #if defined(WITH_REAL_AVX_BLOCK4_KERNEL)
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) then
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
            ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
            do j = ncols, 4, -4
               w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -2928,16 +2928,16 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
            if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
                                           bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
         endif
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
 
 
 #if defined(WITH_REAL_AVX_BLOCK6_KERNEL)
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) then
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
            ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
            do j = ncols, 6, -6
               w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -2985,9 +2985,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
            if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
                                            bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
-#if defined(WITH_SPECIFIC_REAL_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
         endif
-#endif /* WITH_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
 
 #ifdef WITH_OPENMP
@@ -5084,9 +5084,9 @@ contains
 
 
 #if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL)
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) then
-#endif  /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
            ttt = mpi_wtime()
            do j = ncols, 2, -2
               w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -5106,16 +5106,16 @@ contains
            if(j==1) call single_hh_trafo_complex_sse_avx_1hv(a(1,1+off+a_off,istripe), &
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
-#endif  /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL */
 
 
 #if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) then
-#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
            ttt = mpi_wtime()
            do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -5126,17 +5126,17 @@ contains
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
            enddo
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
-#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_GENERIC_SIMPLE_KERNEL */
 
 
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC .or. &
             THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGP .or. &
             THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGQ ) then
-#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
            ttt = mpi_wtime()
            do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -5147,15 +5147,15 @@ contains
                                                    bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
            enddo
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
-#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 
 
 #if defined(WITH_COMPLEX_SSE_KERNEL)
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) then
-#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
            ttt = mpi_wtime()
            do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -5166,9 +5166,9 @@ contains
                                            bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
            enddo
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
-#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_KERNEL */
 
 
@@ -5181,9 +5181,9 @@ contains
 !#endif
 
 #if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) then
-#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
            ttt = mpi_wtime()
            do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -5194,9 +5194,9 @@ contains
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
            enddo
-#if defined(WITH_SPECIFIC_COMPLEX_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
-#endif /* WITH_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX_BLOCK1_KERNE */
 
 #ifdef WITH_OPENMP

@@ -85,6 +85,12 @@
 /* can use complex SSE kernel */
 #undef WITH_COMPLEX_SSE_KERNEL
 
+/* do not use only one specific complex kernel (set at compile time) */
+#undef WITH_NO_SPECIFIC_COMPLEX_KERNEL
+
+/* do not use only one specific real kernel (set at compile time) */
+#undef WITH_NO_SPECIFIC_REAL_KERNEL
+
 /* use OpenMP threading */
 #undef WITH_OPENMP
 
@@ -111,6 +117,3 @@
 
 /* can use real SSE kernel */
 #undef WITH_REAL_SSE_KERNEL
-
-/* use specific real kernel */
-#undef WITH_SPECIFIC_COMPLEX_KERNEL

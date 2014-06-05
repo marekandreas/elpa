@@ -7960,15 +7960,15 @@ $as_echo "#define WITH_REAL_BGQ_KERNEL 1" >>confdefs.h
 
 fi
 
-if test x"${use_specific_complex_kernel}" = x"yes" ; then
+if test x"${use_specific_complex_kernel}" = x"no" ; then
 
-$as_echo "#define WITH_SPECIFIC_COMPLEX_KERNEL 1" >>confdefs.h
+$as_echo "#define WITH_NO_SPECIFIC_COMPLEX_KERNEL 1" >>confdefs.h
 
 fi
 
-if test x"${use_specific_real_kernel}" = x"yes" ; then
+if test x"${use_specific_real_kernel}" = x"no" ; then
 
-$as_echo "#define WITH_SPECIFIC_COMPLEX_KERNEL 1" >>confdefs.h
+$as_echo "#define WITH_NO_SPECIFIC_REAL_KERNEL 1" >>confdefs.h
 
 fi
 
