@@ -1516,11 +1516,9 @@ Optional Packages:
   --with-only-complex-sse-kernel
                           only compile sse-kernel for complex case
   --with-only-complex-bgp-kernel
-                          only compile BGP-kernel (identical with
-                          complex-generic kernel) for complex case
+                          only compile bgp-kernel for complex case
   --with-only-complex-bgq-kernel
-                          only compile BGQ-kernel (identical with
-                          complex-generic kernel) for complex case
+                          only compile bgq-kernel for complex case
   --with-only-complex-avx-block1-kernel
                           only compile complex-avx-block1-kernel for complex
                           case
@@ -3057,6 +3055,9 @@ else
   AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
 fi
 AM_BACKSLASH='\'
+
+
+rm -rf config.h config-f90.h
 
 
 ELPA_LIB_VERSION=2014.06.000
@@ -7210,19 +7211,25 @@ $as_echo "#define HAVE_ENVIRONMENT_CHECKING 1" >>confdefs.h
 fi
 
 
+
+
+
+
+
+
+
 # Check whether --with-only-real-generic-kernel was given.
 if test "${with_only_real_generic_kernel+set}" = set; then :
-  withval=$with_only_real_generic_kernel; with_real_generic_kernel=yes
+  withval=$with_only_real_generic_kernel;
 else
-  with_real_generic_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_real_generic_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-#  if test x"${can_compile_sse}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_real_kernel}" = x"no" ; then
 
-        install_real_generic=yes
+        install_real_generic=no
     install_real_generic_simple=no
     install_real_sse=no
     install_real_bgp=no
@@ -7230,261 +7237,357 @@ if test x"${with_real_generic_kernel}" = x"yes" ; then
     install_real_avx_block2=no
     install_real_avx_block4=no
     install_real_avx_block6=no
-
     use_specific_real_kernel=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: real-generic-kernel will be the only compiled kernel for real case" >&5
-$as_echo "$as_me: real-generic-kernel will be the only compiled kernel for real case" >&6;}
-#  else
-#  AC_MSG_FAILURE([--with-sse-generic-kernel failed; SSE kernel cannot be compiled on the system])
-#  fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        install_real_generic=yes
+
+        if test x"${install_real_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "generic-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-real-generic-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-real-generic-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-generic-kernel failed; A specific kernel for real case has already been defined before!
+as_fn_error $? "only-real-generic-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+   fi
+  fi
+
+
 
 
 # Check whether --with-only-real-generic-simple-kernel was given.
 if test "${with_only_real_generic_simple_kernel+set}" = set; then :
   withval=$with_only_real_generic_simple_kernel;
 else
-  with_real_generic_simple_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_real_generic_simple_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_real_kernel}" = x"no" ; then
 
         install_real_generic=no
-    install_real_generic_simple=yes
+    install_real_generic_simple=no
     install_real_sse=no
     install_real_bgp=no
     install_real_bgq=no
     install_real_avx_block2=no
     install_real_avx_block4=no
     install_real_avx_block6=no
-
     use_specific_real_kernel=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: real-generic-simple-kernel will be the only compiled kernel for real case" >&5
-$as_echo "$as_me: real-generic-simple-kernel will be the only compiled kernel for real case" >&6;}
+        install_real_generic_simple=yes
 
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        if test x"${install_real_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "generic-simple-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-simple-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-simple-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-simple-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-real-generic-simple-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-real-generic-simple-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-generic-simple-kernel failed; A specific kernel for real case has already been defined before!
+as_fn_error $? "only-real-generic-simple-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+   fi
+  fi
+
+
 
 
 # Check whether --with-only-real-sse-kernel was given.
 if test "${with_only_real_sse_kernel+set}" = set; then :
   withval=$with_only_real_sse_kernel;
 else
-  with_real_sse_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_real_sse_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_sse}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_real_kernel}" = x"no" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
-    install_real_sse=yes
+    install_real_sse=no
     install_real_bgp=no
     install_real_bgq=no
     install_real_avx_block2=no
     install_real_avx_block4=no
     install_real_avx_block6=no
-
     use_specific_real_kernel=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: real-sse-kernel will be the only compiled kernel for real case" >&5
-$as_echo "$as_me: real-sse-kernel will be the only compiled kernel for real case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        install_real_sse=yes
+
+        if test x"${install_real_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "sse-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "sse-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "sse-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "sse-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-real-sse-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-real-sse-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-sse-kernel failed; SSE kernel cannot be compiled on the system
+as_fn_error $? "only-real-sse-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-sse-kernel failed; A specific kernel for real case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+
+
 
 
 # Check whether --with-only-real-bgp-kernel was given.
 if test "${with_only_real_bgp_kernel+set}" = set; then :
   withval=$with_only_real_bgp_kernel;
 else
-  with_real_bgp_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_real_bgp_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_bgp}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_real_kernel}" = x"no" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
     install_real_sse=no
-    install_real_bgp=yes
+    install_real_bgp=no
     install_real_bgq=no
     install_real_avx_block2=no
     install_real_avx_block4=no
     install_real_avx_block6=no
-
     use_specific_real_kernel=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: real-bgp-kernel will be the only compiled kernel for real case" >&5
-$as_echo "$as_me: real-bgp-kernel will be the only compiled kernel for real case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        install_real_bgp=yes
+
+        if test x"${install_real_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "bgp-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgp-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgp-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgp-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-real-bgp-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-real-bgp-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-bgp-kernel failed; BGP kernel cannot be compiled on the system
+as_fn_error $? "only-real-bgp-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-bgp-kernel failed; A specific kernel for real case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+
+
 
 
 # Check whether --with-only-real-bgq-kernel was given.
 if test "${with_only_real_bgq_kernel+set}" = set; then :
   withval=$with_only_real_bgq_kernel;
 else
-  with_real_bgq_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_real_bgq_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_bgq}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_real_kernel}" = x"no" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
     install_real_sse=no
     install_real_bgp=no
-    install_real_bgq=yes
+    install_real_bgq=no
     install_real_avx_block2=no
     install_real_avx_block4=no
     install_real_avx_block6=no
-
     use_specific_real_kernel=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: real-bgq-kernel will be the only compiled kernel for real case" >&5
-$as_echo "$as_me: real-bgq-kernel will be the only compiled kernel for real case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        install_real_bgq=yes
+
+        if test x"${install_real_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "bgq-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgq-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgq-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgq-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-real-bgq-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-real-bgq-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-bgq-kernel failed; BGQ kernel cannot be compiled on the system
+as_fn_error $? "only-real-bgq-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-bgq-kernel failed; A specific kernel for real case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+
+
 
 
 # Check whether --with-only-real-avx-block2-kernel was given.
 if test "${with_only_real_avx_block2_kernel+set}" = set; then :
   withval=$with_only_real_avx_block2_kernel;
 else
-  with_real_avx_block2_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_real_avx_block2_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_real_kernel}" = x"no" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
     install_real_sse=no
     install_real_bgp=no
     install_real_bgq=no
-    install_real_avx_block2=yes
+    install_real_avx_block2=no
     install_real_avx_block4=no
     install_real_avx_block6=no
-
     use_specific_real_kernel=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: real-avx-block2-kernel will be the only compiled kernel for real case" >&5
-$as_echo "$as_me: real-avx-block2-kernel will be the only compiled kernel for real case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        install_real_avx_block2=yes
+
+        if test x"${install_real_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "real-avx-block2-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "real-avx-block2-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "real-avx-block2-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "real-avx-block2-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-real-avx-block2-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-real-avx-block2-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-avx-block2-kernel failed; AVX kernels cannot be compiled on the system
+as_fn_error $? "only-real-avx-block2-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-avx-block2-kernel failed; A specific kernel for real case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+
+
 
 
 # Check whether --with-only-real-avx-block4-kernel was given.
 if test "${with_only_real_avx_block4_kernel+set}" = set; then :
   withval=$with_only_real_avx_block4_kernel;
 else
-  with_real_avx_block4_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_real_avx_block4_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
-
-        install_real_generic=no
-    install_real_generic_simple=no
-    install_real_sse=no
-    install_real_bgp=no
-    install_real_bgq=no
-    install_real_avx_block2=no
-    install_real_avx_block4=yes
-    install_real_avx_block6=no
-
-    use_specific_real_kernel=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: real-avx-block4-kernel will be the only compiled kernel for real case" >&5
-$as_echo "$as_me: real-avx-block4-kernel will be the only compiled kernel for real case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-avx-block4-kernel failed; AVX kernels cannot be compiled on the system
-See \`config.log' for more details" "$LINENO" 5; }
-  fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-avx-block4-kernel failed; A specific kernel for real case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
-
-
-# Check whether --with-only-real-avx-block6-kernel was given.
-if test "${with_only_real_avx_block6_kernel+set}" = set; then :
-  withval=$with_only_real_avx_block6_kernel;
-else
-  with_real_avx_block6_kernel=no
-fi
-
-
-if test x"${with_real_avx_block6_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_real_kernel}" = x"no" ; then
 
         install_real_generic=no
     install_real_generic_simple=no
@@ -7493,24 +7596,109 @@ if test x"${with_real_avx_block6_kernel}" = x"yes" ; then
     install_real_bgq=no
     install_real_avx_block2=no
     install_real_avx_block4=no
-    install_real_avx_block6=yes
-
+    install_real_avx_block6=no
     use_specific_real_kernel=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: real-avx-block6-kernel will be the only compiled kernel for real case" >&5
-$as_echo "$as_me: real-avx-block6-kernel will be the only compiled kernel for real case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        install_real_avx_block4=yes
+
+        if test x"${install_real_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "real-avx-block4-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "real-avx-block4-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "real-avx-block4-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "real-avx-block4-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-real-avx-block4-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-real-avx-block4-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-avx-block6-kernel failed; AVX kernels cannot be compiled on the system
+as_fn_error $? "only-real-avx-block4-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-real-avx-block6-kernel failed; A specific kernel for real case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
+
+
+
+
+# Check whether --with-only-real-avx-block6-kernel was given.
+if test "${with_only_real_avx_block6_kernel+set}" = set; then :
+  withval=$with_only_real_avx_block6_kernel;
+else
+  with_option=no
 fi
+
+
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_real_kernel}" = x"no" ; then
+
+        install_real_generic=no
+    install_real_generic_simple=no
+    install_real_sse=no
+    install_real_bgp=no
+    install_real_bgq=no
+    install_real_avx_block2=no
+    install_real_avx_block4=no
+    install_real_avx_block6=no
+    use_specific_real_kernel=yes
+        install_real_avx_block6=yes
+
+        if test x"${install_real_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "real-avx-block6-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "real-avx-block6-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "real-avx-block6-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "real-avx-block6-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-real-avx-block6-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-real-avx-block6-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "only-real-avx-block6-kernel failed; A specific kernel for real case has already been defined before!
+See \`config.log' for more details" "$LINENO" 5; }
+   fi
+  fi
+
+
+
+
+
 
 
 
@@ -7518,12 +7706,12 @@ fi
 if test "${with_only_complex_generic_kernel+set}" = set; then :
   withval=$with_only_complex_generic_kernel;
 else
-  with_complex_generic_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_complex_generic_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_complex_kernel}" = x"no" ; then
 
         install_complex_generic=yes
     install_complex_generic_simple=no
@@ -7534,31 +7722,53 @@ if test x"${with_complex_generic_kernel}" = x"yes" ; then
     install_complex_avx_block2=no
 
     use_specific_complex_kernel=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: complex-generic-kernel will be the only compiled kernel for complex case" >&5
-$as_echo "$as_me: complex-generic-kernel will be the only compiled kernel for complex case" >&6;}
+        install_complex_generic=yes
 
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        if test x"${install_complex_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "generic-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block1}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-complex-generic-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-complex-generic-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-generic-kernel failed; A specific kernel for complex case has already been defined before!
+as_fn_error $? "only-complex-generic-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+   fi
+  fi
+
+
+
 
 
 # Check whether --with-only-complex-generic-simple-kernel was given.
 if test "${with_only_complex_generic_simple_kernel+set}" = set; then :
   withval=$with_only_complex_generic_simple_kernel;
 else
-  with_complex_generic_simple_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_complex_generic_simple_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_complex_kernel}" = x"no" ; then
 
-        install_complex_generic=no
-    install_complex_generic_simple=yes
+        install_complex_generic=yes
+    install_complex_generic_simple=no
     install_complex_sse=no
     install_complex_bgp=no
     install_complex_bgq=no
@@ -7566,95 +7776,143 @@ if test x"${with_complex_generic_simple_kernel}" = x"yes" ; then
     install_complex_avx_block2=no
 
     use_specific_complex_kernel=yes
+        install_complex_generic_simple=yes
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: complex-generic-simple-kernel will be the only compiled kernel for complex case" >&5
-$as_echo "$as_me: complex-generic-simple-kernel will be the only compiled kernel for complex case" >&6;}
+        if test x"${install_complex_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "generic-simple-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
 
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+    if test x"${install_complex_avx_block1}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-simple-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "generic-simple-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-complex-generic-simple-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-complex-generic-simple-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-generic-simple-kernel failed; A specific kernel for complex case has already been defined before!
+as_fn_error $? "only-complex-generic-simple-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+   fi
+  fi
+
+
 
 
 # Check whether --with-only-complex-sse-kernel was given.
 if test "${with_only_complex_sse_kernel+set}" = set; then :
   withval=$with_only_complex_sse_kernel;
 else
-  with_complex_sse_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_complex_sse_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_sse}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_complex_kernel}" = x"no" ; then
 
-        install_complex_generic=no
+        install_complex_generic=yes
     install_complex_generic_simple=no
-    install_complex_sse=yes
+    install_complex_sse=no
     install_complex_bgp=no
     install_complex_bgq=no
     install_complex_avx_block1=no
     install_complex_avx_block2=no
 
     use_specific_complex_kernel=yes
+        install_complex_sse=yes
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: complex-sse-kernel will be the only compiled kernel for complex case" >&5
-$as_echo "$as_me: complex-sse-kernel will be the only compiled kernel for complex case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        if test x"${install_complex_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "sse-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block1}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "sse-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "sse-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-complex-sse-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-complex-sse-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-sse-kernel failed; SSE kernel cannot be compiled on the system
+as_fn_error $? "only-complex-sse-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-sse-kernel failed; A specific kernel for complex case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+
+
+
 
 
 # Check whether --with-only-complex-bgp-kernel was given.
 if test "${with_only_complex_bgp_kernel+set}" = set; then :
   withval=$with_only_complex_bgp_kernel;
 else
-  with_complex_bgp_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_complex_bgp_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_bgp}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_complex_kernel}" = x"no" ; then
 
-        install_complex_generic=no
+        install_complex_generic=yes
     install_complex_generic_simple=no
     install_complex_sse=no
-    install_complex_bgp=yes
+    install_complex_bgp=no
     install_complex_bgq=no
     install_complex_avx_block1=no
     install_complex_avx_block2=no
 
     use_specific_complex_kernel=yes
+        install_complex_bgp=yes
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: complex-bgp-kernel will be the only compiled kernel for complex case" >&5
-$as_echo "$as_me: complex-bgp-kernel will be the only compiled kernel for complex case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        if test x"${install_complex_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "bgp-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block1}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgp-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgp-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-complex-bgp-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-complex-bgp-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-bgp-kernel failed; BGP kernel cannot be compiled on the system
+as_fn_error $? "only-complex-bgp-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-bgp-kernel failed; A specific kernel for complex case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+
 
 
 
@@ -7662,113 +7920,158 @@ fi
 if test "${with_only_complex_bgq_kernel+set}" = set; then :
   withval=$with_only_complex_bgq_kernel;
 else
-  with_complex_bgq_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_complex_bgq_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_bgq}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_complex_kernel}" = x"no" ; then
 
-        install_complex_generic=no
+        install_complex_generic=yes
     install_complex_generic_simple=no
     install_complex_sse=no
     install_complex_bgp=no
-    install_complex_bgq=yes
+    install_complex_bgq=no
     install_complex_avx_block1=no
     install_complex_avx_block2=no
 
     use_specific_complex_kernel=yes
+        install_complex_bgq=yes
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: complex-bgq-kernel will be the only compiled kernel for complex case" >&5
-$as_echo "$as_me: complex-bgq-kernel will be the only compiled kernel for complex case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        if test x"${install_complex_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "bgq-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block1}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgq-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "bgq-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-complex-bgq-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-complex-bgq-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-bgq-kernel failed; BGQ kernel cannot be compiled on the system
+as_fn_error $? "only-complex-bgq-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-bgq-kernel failed; A specific kernel for complex case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+
+
 
 
 # Check whether --with-only-complex-avx-block1-kernel was given.
 if test "${with_only_complex_avx_block1_kernel+set}" = set; then :
   withval=$with_only_complex_avx_block1_kernel;
 else
-  with_complex_avx_block1_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_complex_avx_block1_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_complex_kernel}" = x"no" ; then
 
-        install_complex_generic=no
+        install_complex_generic=yes
     install_complex_generic_simple=no
     install_complex_sse=no
-    install_complex_avx_block1=yes
+    install_complex_bgp=no
+    install_complex_bgq=no
+    install_complex_avx_block1=no
     install_complex_avx_block2=no
 
     use_specific_complex_kernel=yes
+        install_complex_avx_block1=yes
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: complex-avx-block1-kernel will be the only compiled kernel for complex case" >&5
-$as_echo "$as_me: complex-avx-block1-kernel will be the only compiled kernel for complex case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        if test x"${install_complex_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "complex-avx-block1-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block1}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "complex-avx-block1-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "complex-avx-block1-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-complex-avx-block1-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-complex-avx-block1-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-avx-block1-kernel failed; AVX kernels cannot be compiled on the system
+as_fn_error $? "only-complex-avx-block1-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-avx-block1-kernel failed; A specific kernel for complex case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+
+
 
 
 # Check whether --with-only-complex-avx-block2-kernel was given.
 if test "${with_only_complex_avx_block2_kernel+set}" = set; then :
   withval=$with_only_complex_avx_block2_kernel;
 else
-  with_complex_avx_block2_kernel=no
+  with_option=no
 fi
 
 
-if test x"${with_complex_avx_block2_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_complex_kernel}" = x"no" ; then
 
-        install_complex_generic=no
+        install_complex_generic=yes
     install_complex_generic_simple=no
     install_complex_sse=no
+    install_complex_bgp=no
+    install_complex_bgq=no
     install_complex_avx_block1=no
-    install_complex_avx_block2=yes
+    install_complex_avx_block2=no
 
     use_specific_complex_kernel=yes
+        install_complex_avx_block2=yes
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: complex-avx-block2-kernel will be the only compiled kernel for complex case" >&5
-$as_echo "$as_me: complex-avx-block2-kernel will be the only compiled kernel for complex case" >&6;}
-  else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+        if test x"${install_complex_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       as_fn_error $? "complex-avx-block2-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block1}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "complex-avx-block2-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    if test x"${install_complex_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       as_fn_error $? "complex-avx-block2-kernel kernel was set, but cannot be compiled!" "$LINENO" 5
+     fi
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: only-complex-avx-block2-kernel will be the only compiled kernel for real case" >&5
+$as_echo "$as_me: only-complex-avx-block2-kernel will be the only compiled kernel for real case" >&6;}
+   else
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-avx-block2-kernel failed; AVX kernels cannot be compiled on the system
+as_fn_error $? "only-complex-avx-block2-kernel failed; A specific kernel for real case has already been defined before!
 See \`config.log' for more details" "$LINENO" 5; }
+   fi
   fi
- else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "--with-complex-avx-block2-kernel failed; A specific kernel for complex case has already been defined before!
-See \`config.log' for more details" "$LINENO" 5; }
- fi
-fi
+
 
 
 if test x"${can_use_iso_fortran_env}" = x"yes" ; then
@@ -7776,6 +8079,7 @@ if test x"${can_use_iso_fortran_env}" = x"yes" ; then
 $as_echo "#define HAVE_ISO_FORTRAN_ENV 1" >>confdefs.h
 
 fi
+
 
  if test x"$install_real_generic" = x"yes"; then
   WITH_REAL_GENERIC_KERNEL_TRUE=

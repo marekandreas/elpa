@@ -7,6 +7,9 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
 
+rm -rf config.h config-f90.h
+
+
 AC_SUBST([ELPA_LIB_VERSION], [2014.06.000])
 # this is the version of the API, should be changed in the major revision
 # if and only if the actual API changes
@@ -756,7 +759,7 @@ save_LDFLAGS=$LDFLAGS
 FCFLAGS="$FCFLAGS $BLACS_FCFLAGS"
 LDFLAGS="$LDFLAGS $BLACS_LDFLAGS"
 
-dnl check wheter fortran error_unit is defined
+dnl check whether fortran error_unit is defined
 AC_MSG_CHECKING([whether Fortran module iso_fortran_env is available])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
   program test_error_unit
@@ -949,242 +952,109 @@ if test x"${fortran_can_check_environment}" = x"yes" ; then
  AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can querry environment variables])
 fi
 
+
+dnl macro for testing whether the user wanted to compile only with one
+dnl specific real kernel
+
+dnl usage: DEFINE_OPTION([only-real-generic-kernel],[generic-kernel],[with_real_generic_kernel],[install_real_generic])
+
+AC_DEFUN([DEFINE_OPTION_REAL_KERNEL],[
+  AC_ARG_WITH([$1],
+               AS_HELP_STRING([--with-$1],
+                              [only compile $2 for real case]),
+              [],[with_option=no])
+   
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_real_kernel}" = x"no" ; then
+
+    dnl make sure that all the other kernels are unset
+    install_real_generic=no
+    install_real_generic_simple=no
+    install_real_sse=no
+    install_real_bgp=no	
+    install_real_bgq=no
+    install_real_avx_block2=no
+    install_real_avx_block4=no
+    install_real_avx_block6=no
+    use_specific_real_kernel=yes
+    dnl now set the specific kernel
+    $3=yes
+
+    dnl in case of SSE or AVX make sure that we can compile the choosen kernel
+    if test x"${install_real_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     fi		   
+    fi
+
+    if test x"${install_real_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     fi		   
+    fi
+
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     fi		   
+    fi
+
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     fi		   
+    fi
+
+
+    AC_MSG_NOTICE([$1 will be the only compiled kernel for real case])
+   else
+    AC_MSG_FAILURE([$1 failed; A specific kernel for real case has already been defined before!])
+   fi
+  fi
+])
+
+
 dnl last check whether user wants to compile only a specific kernel
 dnl
 dnl real kernels
 dnl
 dnl generic kernel
-AC_ARG_WITH([only-real-generic-kernel],
- [AS_HELP_STRING([--with-only-real-generic-kernel],[only compile generic-kernel for real case])],[with_real_generic_kernel=yes],[with_real_generic_kernel=no])
-
-if test x"${with_real_generic_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-#  if test x"${can_compile_sse}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_real_generic=yes
-    install_real_generic_simple=no
-    install_real_sse=no
-    install_real_bgp=no	
-    install_real_bgq=no
-    install_real_avx_block2=no
-    install_real_avx_block4=no
-    install_real_avx_block6=no
-
-    use_specific_real_kernel=yes
-    AC_MSG_NOTICE([real-generic-kernel will be the only compiled kernel for real case])
-#  else
-#  AC_MSG_FAILURE([--with-sse-generic-kernel failed; SSE kernel cannot be compiled on the system])
-#  fi 
- else
-  AC_MSG_FAILURE([--with-real-generic-kernel failed; A specific kernel for real case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_REAL_KERNEL([only-real-generic-kernel],[generic-kernel],[install_real_generic])
 
 dnl generic-simple kernel
-AC_ARG_WITH([only-real-generic-simple-kernel],
- [AS_HELP_STRING([--with-only-real-generic-simple-kernel],[only compile generic-simple-kernel for real case])],[],[with_real_generic_simple_kernel=no])
-
-if test x"${with_real_generic_simple_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_real_generic=no
-    install_real_generic_simple=yes
-    install_real_sse=no
-    install_real_bgp=no	
-    install_real_bgq=no
-    install_real_avx_block2=no
-    install_real_avx_block4=no
-    install_real_avx_block6=no
-
-    use_specific_real_kernel=yes
-    AC_MSG_NOTICE([real-generic-simple-kernel will be the only compiled kernel for real case])
-
- else
-  AC_MSG_FAILURE([--with-real-generic-simple-kernel failed; A specific kernel for real case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_REAL_KERNEL([only-real-generic-simple-kernel],[generic-simple-kernel],[install_real_generic_simple])
 
 dnl sse kernel
-AC_ARG_WITH([only-real-sse-kernel],
- [AS_HELP_STRING([--with-only-real-sse-kernel],[only compile sse-kernel for real case])],[],[with_real_sse_kernel=no])
-
-if test x"${with_real_sse_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_sse}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_real_generic=no
-    install_real_generic_simple=no
-    install_real_sse=yes
-    install_real_bgp=no	
-    install_real_bgq=no
-    install_real_avx_block2=no
-    install_real_avx_block4=no
-    install_real_avx_block6=no
-
-    use_specific_real_kernel=yes
-    AC_MSG_NOTICE([real-sse-kernel will be the only compiled kernel for real case])
-  else
-  AC_MSG_FAILURE([--with-real-sse-kernel failed; SSE kernel cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-real-sse-kernel failed; A specific kernel for real case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_REAL_KERNEL([only-real-sse-kernel],[sse-kernel],[install_real_sse])
 
 dnl bgp kernel
-AC_ARG_WITH([only-real-bgp-kernel],
- [AS_HELP_STRING([--with-only-real-bgp-kernel],[only compile bgp-kernel for real case])],[],[with_real_bgp_kernel=no])
-
-if test x"${with_real_bgp_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_bgp}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_real_generic=no
-    install_real_generic_simple=no
-    install_real_sse=no
-    install_real_bgp=yes	
-    install_real_bgq=no
-    install_real_avx_block2=no
-    install_real_avx_block4=no
-    install_real_avx_block6=no
-
-    use_specific_real_kernel=yes
-    AC_MSG_NOTICE([real-bgp-kernel will be the only compiled kernel for real case])
-  else
-  AC_MSG_FAILURE([--with-real-bgp-kernel failed; BGP kernel cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-real-bgp-kernel failed; A specific kernel for real case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_REAL_KERNEL([only-real-bgp-kernel],[bgp-kernel],[install_real_bgp])
 
 dnl bgq kernel
-AC_ARG_WITH([only-real-bgq-kernel],
- [AS_HELP_STRING([--with-only-real-bgq-kernel],[only compile bgq-kernel for real case])],[],[with_real_bgq_kernel=no])
-
-if test x"${with_real_bgq_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_bgq}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_real_generic=no
-    install_real_generic_simple=no
-    install_real_sse=no
-    install_real_bgp=no	
-    install_real_bgq=yes
-    install_real_avx_block2=no
-    install_real_avx_block4=no
-    install_real_avx_block6=no
-
-    use_specific_real_kernel=yes
-    AC_MSG_NOTICE([real-bgq-kernel will be the only compiled kernel for real case])
-  else
-  AC_MSG_FAILURE([--with-real-bgq-kernel failed; BGQ kernel cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-real-bgq-kernel failed; A specific kernel for real case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_REAL_KERNEL([only-real-bgq-kernel],[bgq-kernel],[install_real_bgq])
 
 dnl real-avx-block2 kernel
-AC_ARG_WITH([only-real-avx-block2-kernel],
- [AS_HELP_STRING([--with-only-real-avx-block2-kernel],[only compile real-avx-block2-kernel for real case])],[],[with_real_avx_block2_kernel=no])
-
-if test x"${with_real_avx_block2_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_real_generic=no
-    install_real_generic_simple=no
-    install_real_sse=no
-    install_real_bgp=no	
-    install_real_bgq=no
-    install_real_avx_block2=yes
-    install_real_avx_block4=no
-    install_real_avx_block6=no
-
-    use_specific_real_kernel=yes
-    AC_MSG_NOTICE([real-avx-block2-kernel will be the only compiled kernel for real case])
-  else
-  AC_MSG_FAILURE([--with-real-avx-block2-kernel failed; AVX kernels cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-real-avx-block2-kernel failed; A specific kernel for real case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_REAL_KERNEL([only-real-avx-block2-kernel],[real-avx-block2-kernel],[install_real_avx_block2])
 
 dnl real-avx-block4 kernel
-AC_ARG_WITH([only-real-avx-block4-kernel],
- [AS_HELP_STRING([--with-only-real-avx-block4-kernel],[only compile real-avx-block4-kernel for real case])],[],[with_real_avx_block4_kernel=no])
-
-if test x"${with_real_avx_block4_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_real_generic=no
-    install_real_generic_simple=no
-    install_real_sse=no
-    install_real_bgp=no	
-    install_real_bgq=no
-    install_real_avx_block2=no
-    install_real_avx_block4=yes
-    install_real_avx_block6=no
-
-    use_specific_real_kernel=yes
-    AC_MSG_NOTICE([real-avx-block4-kernel will be the only compiled kernel for real case])
-  else
-  AC_MSG_FAILURE([--with-real-avx-block4-kernel failed; AVX kernels cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-real-avx-block4-kernel failed; A specific kernel for real case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_REAL_KERNEL([only-real-avx-block4-kernel],[real-avx-block4-kernel],[install_real_avx_block4])
 
 dnl real-avx-block6 kernel
-AC_ARG_WITH([only-real-avx-block6-kernel],
- [AS_HELP_STRING([--with-only-real-avx-block6-kernel],[only compile real-avx-block6-kernel for real case])],[],[with_real_avx_block6_kernel=no])
-
-if test x"${with_real_avx_block6_kernel}" = x"yes" ; then
- if test x"${use_specific_real_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_real_generic=no
-    install_real_generic_simple=no
-    install_real_sse=no
-    install_real_bgp=no	
-    install_real_bgq=no
-    install_real_avx_block2=no
-    install_real_avx_block4=no
-    install_real_avx_block6=yes
-
-    use_specific_real_kernel=yes
-    AC_MSG_NOTICE([real-avx-block6-kernel will be the only compiled kernel for real case])
-  else
-  AC_MSG_FAILURE([--with-real-avx-block6-kernel failed; AVX kernels cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-real-avx-block6-kernel failed; A specific kernel for real case has already been defined before!])
- fi
-fi
-
+DEFINE_OPTION_REAL_KERNEL([only-real-avx-block6-kernel],[real-avx-block6-kernel],[install_real_avx_block6])
 
 dnl last check whether user wants to compile ony a specific kernel
 dnl
 dnl complex kernels
 dnl
-dnl generic kernel
-AC_ARG_WITH([only-complex-generic-kernel],
- [AS_HELP_STRING([--with-only-complex-generic-kernel],[only compile generic-kernel for complex case])],[],[with_complex_generic_kernel=no])
 
-if test x"${with_complex_generic_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
+AC_DEFUN([DEFINE_OPTION_COMPLEX_KERNEL],[
+  AC_ARG_WITH([$1],
+                 AS_HELP_STRING([--with-$1],
+                                [only compile $2 for complex case]),
+              [],[with_option=no])
+   
+   if test x"${with_option}" = x"yes" ; then
+    if test x"${use_specific_complex_kernel}" = x"no" ; then
 
     dnl make sure that all the other kernels are unset
     install_complex_generic=yes
@@ -1196,180 +1066,65 @@ if test x"${with_complex_generic_kernel}" = x"yes" ; then
     install_complex_avx_block2=no
 
     use_specific_complex_kernel=yes
-    AC_MSG_NOTICE([complex-generic-kernel will be the only compiled kernel for complex case])
- 
- else
-  AC_MSG_FAILURE([--with-complex-generic-kernel failed; A specific kernel for complex case has already been defined before!])
- fi
-fi
+    dnl now set the specific kernel
+    $3=yes
+
+    dnl in case of SSE or AVX make sure that we can compile the choosen kernel
+    if test x"${install_complex_sse}" = x"yes" ; then
+     if test x"${can_compile_sse}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     fi		   
+    fi
+
+    if test x"${install_complex_avx_block1}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     fi		   
+    fi
+
+    if test x"${install_complex_avx_block2}" = x"yes" ; then
+     if test x"${can_compile_avx}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     fi		   
+    fi
+
+    AC_MSG_NOTICE([$1 will be the only compiled kernel for real case])
+   else
+    AC_MSG_FAILURE([$1 failed; A specific kernel for real case has already been defined before!])
+   fi
+  fi
+])
+
+
+dnl generic kernel
+DEFINE_OPTION_COMPLEX_KERNEL([only-complex-generic-kernel],[generic-kernel],[install_complex_generic])
+
 
 dnl generic-simple kernel
-AC_ARG_WITH([only-complex-generic-simple-kernel],
- [AS_HELP_STRING([--with-only-complex-generic-simple-kernel],[only compile generic-simple-kernel for complex case])],[],[with_complex_generic_simple_kernel=no])
-
-if test x"${with_complex_generic_simple_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_complex_generic=no
-    install_complex_generic_simple=yes
-    install_complex_sse=no
-    install_complex_bgp=no
-    install_complex_bgq=no
-    install_complex_avx_block1=no
-    install_complex_avx_block2=no
-
-    use_specific_complex_kernel=yes
-
-    AC_MSG_NOTICE([complex-generic-simple-kernel will be the only compiled kernel for complex case])
-
- else
-  AC_MSG_FAILURE([--with-complex-generic-simple-kernel failed; A specific kernel for complex case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_COMPLEX_KERNEL([only-complex-generic-simple-kernel],[generic-simple-kernel],[install_complex_generic_simple])
 
 dnl sse kernel
-AC_ARG_WITH(only-[complex-sse-kernel],
- [AS_HELP_STRING([--with-only-complex-sse-kernel],[only compile sse-kernel for complex case])],[],[with_complex_sse_kernel=no])
+DEFINE_OPTION_COMPLEX_KERNEL([only-complex-sse-kernel],[sse-kernel],[install_complex_sse])
 
-if test x"${with_complex_sse_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_sse}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_complex_generic=no
-    install_complex_generic_simple=no
-    install_complex_sse=yes
-    install_complex_bgp=no	
-    install_complex_bgq=no
-    install_complex_avx_block1=no
-    install_complex_avx_block2=no
-
-    use_specific_complex_kernel=yes
-
-    AC_MSG_NOTICE([complex-sse-kernel will be the only compiled kernel for complex case])
-  else
-  AC_MSG_FAILURE([--with-complex-sse-kernel failed; SSE kernel cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-complex-sse-kernel failed; A specific kernel for complex case has already been defined before!])
- fi
-fi
 
 dnl complex-bqp kernel
-AC_ARG_WITH([only-complex-bgp-kernel],
- [AS_HELP_STRING([--with-only-complex-bgp-kernel],[only compile BGP-kernel (identical with complex-generic kernel) for complex case])],[],[with_complex_bgp_kernel=no])
-
-if test x"${with_complex_bgp_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_bgp}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_complex_generic=no
-    install_complex_generic_simple=no
-    install_complex_sse=no
-    install_complex_bgp=yes	
-    install_complex_bgq=no
-    install_complex_avx_block1=no
-    install_complex_avx_block2=no
-
-    use_specific_complex_kernel=yes
-
-    AC_MSG_NOTICE([complex-bgp-kernel will be the only compiled kernel for complex case])
-  else
-  AC_MSG_FAILURE([--with-complex-bgp-kernel failed; BGP kernel cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-complex-bgp-kernel failed; A specific kernel for complex case has already been defined before!])
- fi
-fi
-
+DEFINE_OPTION_COMPLEX_KERNEL([only-complex-bgp-kernel],[bgp-kernel],[install_complex_bgp])
 
 dnl complex-bqq kernel
-AC_ARG_WITH([only-complex-bgq-kernel],
- [AS_HELP_STRING([--with-only-complex-bgq-kernel],[only compile BGQ-kernel (identical with complex-generic kernel) for complex case])],[],[with_complex_bgq_kernel=no])
-
-if test x"${with_complex_bgq_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_bgq}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_complex_generic=no
-    install_complex_generic_simple=no
-    install_complex_sse=no
-    install_complex_bgp=no	
-    install_complex_bgq=yes
-    install_complex_avx_block1=no
-    install_complex_avx_block2=no
-
-    use_specific_complex_kernel=yes
-
-    AC_MSG_NOTICE([complex-bgq-kernel will be the only compiled kernel for complex case])
-  else
-  AC_MSG_FAILURE([--with-complex-bgq-kernel failed; BGQ kernel cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-complex-bgq-kernel failed; A specific kernel for complex case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_COMPLEX_KERNEL([only-complex-bgq-kernel],[bgq-kernel],[install_complex_bgq])
 
 dnl complex-avx-block1 kernel
-AC_ARG_WITH([only-complex-avx-block1-kernel],
- [AS_HELP_STRING([--with-only-complex-avx-block1-kernel],[only compile complex-avx-block1-kernel for complex case])],[],[with_complex_avx_block1_kernel=no])
-
-if test x"${with_complex_avx_block1_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_complex_generic=no
-    install_complex_generic_simple=no
-    install_complex_sse=no
-    install_complex_avx_block1=yes
-    install_complex_avx_block2=no
-
-    use_specific_complex_kernel=yes
-
-    AC_MSG_NOTICE([complex-avx-block1-kernel will be the only compiled kernel for complex case])
-  else
-  AC_MSG_FAILURE([--with-complex-avx-block1-kernel failed; AVX kernels cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-complex-avx-block1-kernel failed; A specific kernel for complex case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_COMPLEX_KERNEL([only-complex-avx-block1-kernel],[complex-avx-block1-kernel],[install_complex_avx_block1])
 
 dnl complex-avx-block2 kernel
-AC_ARG_WITH([only-complex-avx-block2-kernel],
- [AS_HELP_STRING([--with-only-complex-avx-block2-kernel],[only compile complex-avx-block2-kernel for complex case])],[],[with_complex_avx_block2_kernel=no])
-
-if test x"${with_complex_avx_block2_kernel}" = x"yes" ; then
- if test x"${use_specific_complex_kernel}" = x"no" ; then
-  if test x"${can_compile_avx}" = x"yes" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_complex_generic=no
-    install_complex_generic_simple=no
-    install_complex_sse=no
-    install_complex_avx_block1=no
-    install_complex_avx_block2=yes
-
-    use_specific_complex_kernel=yes
-
-    AC_MSG_NOTICE([complex-avx-block2-kernel will be the only compiled kernel for complex case])
-  else
-  AC_MSG_FAILURE([--with-complex-avx-block2-kernel failed; AVX kernels cannot be compiled on the system])
-  fi 
- else
-  AC_MSG_FAILURE([--with-complex-avx-block2-kernel failed; A specific kernel for complex case has already been defined before!])
- fi
-fi
+DEFINE_OPTION_COMPLEX_KERNEL([only-complex-avx-block2-kernel],[complex-avx-block2-kernel],[install_complex_avx_block2])
 
 
 dnl set the conditionals according to the previous tests
 if test x"${can_use_iso_fortran_env}" = x"yes" ; then
  AC_DEFINE([HAVE_ISO_FORTRAN_ENV],[1],[can use module iso_fortran_env])
 fi
+
 
 AM_CONDITIONAL([WITH_REAL_GENERIC_KERNEL],[test x"$install_real_generic" = x"yes"])
 if test x"${install_real_generic}" = x"yes" ; then
@@ -1382,7 +1137,7 @@ if test x"${install_complex_generic}" = x"yes" ; then
 fi
 
 AM_CONDITIONAL([WITH_REAL_GENERIC_SIMPLE_KERNEL],[test x"$install_real_generic_simple" = x"yes"])
-if test x"${install_real_generic_simple}" = x"yes" ; then 
+if test x"${install_real_generic_simple}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_GENERIC_SIMPLE_KERNEL],[1],[can use real generic-simple kernel])
 fi
 
