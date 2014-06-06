@@ -224,12 +224,12 @@ module ELPA2
 #else
                                                 ,0                        &
 #endif
-#if WITH_COMPLEX_AVX_BLOCK1
+#if WITH_COMPLEX_AVX_BLOCK1_KERNEL
                                                   ,1                      &
 #else
                                                   ,0                      &
 #endif
-#if WITH_COMPLEX_AVX_BLOCK2
+#if WITH_COMPLEX_AVX_BLOCK2_KERNEL
                                                     ,1                    &
 #else
                                                     ,0                    &
@@ -277,9 +277,9 @@ subroutine print_available_complex_kernels
 
   integer :: i
 
-  do i=1, number_of_real_kernels
-     if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
-        write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
+  do i=1, number_of_complex_kernels
+     if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .eq. 1) then
+        write(error_unit,*) COMPLEX_ELPA_KERNEL_NAMES(i)
      endif
   enddo
   write(error_unit,*) " "
