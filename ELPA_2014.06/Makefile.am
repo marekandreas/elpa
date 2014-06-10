@@ -273,8 +273,10 @@ CLEANFILES = \
 	test_complex2_choose_kernel_with_api.sh \
 	print_available_elpa2_kernels.sh \
 	elpa2.i \
-	config-f90.h \
-	modules/*
+	config-f90.h
+
+clean-local:
+	-rm -rf modules .fortran_dependencies
 
 EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
 @FORTRAN_MODULE_DEPS@
