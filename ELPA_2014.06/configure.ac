@@ -1,5 +1,6 @@
 AC_PREREQ([2.69])
 AC_INIT([elpa],[2014.06.000], elpa-library@rzg.mpg.de)
+AC_SUBST([PACKAGE_VERSION])
 AC_CONFIG_SRCDIR([src/elpa1.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
@@ -18,8 +19,6 @@ AM_SILENT_RULES([yes])
 
 rm -rf config.h config-f90.h
 
-
-AC_SUBST([ELPA_LIB_VERSION], [2014.06.000])
 # this is the version of the API, should be changed in the major revision
 # if and only if the actual API changes
 # see http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
@@ -44,13 +43,12 @@ AM_PROG_CC_C_O
 AM_PROG_AR
 AM_PROG_AS
 
-#AC_PROG_CXX
-
+# C++
 m4_include([m4/ax_prog_cxx_mpi.m4])
 AX_PROG_CXX_MPI([],[have_mpi=yes],[have_mpi=no
-		 if test "x${have_mpi}" = xno; then
-  		  AC_MSG_ERROR([no mpi found])
-		  fi])
+                 if test x"${have_mpi}" = x"no"; then
+                  AC_MSG_ERROR([no mpi found])
+                  fi])
 
 
 dnl variables needed for the tests
@@ -64,7 +62,7 @@ have_mkl=no
 have_mpi=no
 have_lapack=no
 have_scalapack=no
-	
+
 dnl these tests will decide which kernels can be build
 dnl the usual case is all except the BlueGene (bg) kernels
 
@@ -676,8 +674,8 @@ dnl check whether one can compile with avx - gcc intrinsics
  AC_MSG_CHECKING([whether we can compile a gcc intrinsic AVX program])
 
  dnl first pass: try with specified CFLAGS and CXXFLAGS
- AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
-  #include <x86intrin.h> 
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+  #include <x86intrin.h>
   void main(){
   double* q;
   __m256d a1_1 = _mm256_load_pd(q);
@@ -690,8 +688,8 @@ dnl first test failed: try again after updating  CFLAGS and CXXFLAGS with -mavx
  if test x"${can_compile_avx}" = x"no"; then
  CFLAGS="$CFLAGS -mavx"
  CXXFLAGS="$CXXFLAGS -mavx"
- AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
-  #include <x86intrin.h> 
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+  #include <x86intrin.h>
   void main(){
   double* q;
   __m256d a1_1 = _mm256_load_pd(q);
@@ -722,7 +720,7 @@ AC_ARG_WITH([avx-optimization],
 	      [with_avx_optimization=yes],
 	      [with_avx_optimization=no])
 AC_MSG_RESULT([${with_avx_optimization}])
-if test x"${with_avx_optimization}" = xyes; then
+if test x"${with_avx_optimization}" = x"yes"; then
  CFLAGS="$CFLAGS -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize"
  CXXFLAGS="$CXXFLAGS -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize"
 fi
@@ -748,29 +746,29 @@ AC_ARG_WITH([openmp],
 	      [with_openmp=yes],
 	      [with_openmp=no])
   AC_MSG_RESULT([${with_openmp}])
-  if test x"${enable_openmp}" = xyes; then
+  if test x"${enable_openmp}" = x"yes"; then
      with_openmp=yes
      AC_MSG_CHECKING(whether --enable-openmp is specified)
      AC_MSG_RESULT([${enable_openmp}])
   fi
   AM_CONDITIONAL([WITH_OPENMP],[test x"$with_openmp" = x"yes"])
-  if test x"${with_openmp}" = xyes; then
+  if test x"${with_openmp}" = x"yes"; then
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
         AX_ELPA_OPENMP
   fi
 
-FCFLAGS="$FCFLAGS $OPENMP_FCFLAGS $OPENMP_FFFLAGS"
-#LDFLAGS="$LDFLAGS $OPENMP_FCFLAGS $OPENMP_FFFLAGS"
-
 save_FCFLAGS=$FCFLAGS
 save_LDFLAGS=$LDFLAGS
 
-FCFLAGS="$FCFLAGS $BLACS_FCFLAGS"
-LDFLAGS="$LDFLAGS $BLACS_LDFLAGS"
+AC_ARG_VAR([SCALAPACK_LDFLAGS],[Extra LDFLAGS necessary to link a program with Scalapack])
+AC_ARG_VAR([SCALAPACK_FCFLAGS],[Extra FCFLAGS necessary to compile a Fortran program with Scalapack])
+
+FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS"
+LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS"
 
 dnl check whether fortran error_unit is defined
 AC_MSG_CHECKING([whether Fortran module iso_fortran_env is available])
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   program test_error_unit
     use ISO_FORTRAN_ENV, only : error_unit
     implicit none
@@ -787,9 +785,9 @@ dnl check whether one can link with specified MKL (desired method)
 AC_MSG_CHECKING([whether we can compile a Fortran program using MKL])
 
 
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   program test_mkl
-    use mkl_service	
+    use mkl_service
     character*198 :: string
     call mkl_get_version_string(string)
     write(*,'(a)') string
@@ -802,9 +800,9 @@ AC_MSG_RESULT([${can_compile_with_mkl}])
 
 if test x"$can_compile_with_mkl" = x"yes" ; then
   AC_MSG_CHECKING([whether we can link a Fortran program with MKL])
-  AC_LINK_IFELSE([AC_LANG_SOURCE([     
+  AC_LINK_IFELSE([AC_LANG_SOURCE([
     program test_mkl
-      use mkl_service	
+      use mkl_service
       character*198 :: string
       call mkl_get_version_string(string)
       write(*,'(a)') string
@@ -828,41 +826,39 @@ else
 
   if test x"${have_blas}" = x"no" ; then
     AC_MSG_ERROR([could not link with blas: specify path]) 
-  fi	
+  fi
   dnl now lapack
   AC_SEARCH_LIBS([dlarrv],[lapack],[have_lapack=yes],[have_lapack=no])
   AC_MSG_CHECKING([whether we can link a program with a lapack lib])
   AC_MSG_RESULT([${have_lapack}])
 
   if test x"${have_lapack}" = x"no" ; then
-    AC_MSG_ERROR([could not link with lapack: specify path]) 
+    AC_MSG_ERROR([could not link with lapack: specify path])
   fi
-	
-  dnl now blacs
-  AC_SEARCH_LIBS([bi_f77_init],[mpiblacsF77init],[],[],[-lmpiblacs])
-  AC_SEARCH_LIBS([blacs_gridinit],[mpiblacs],[have_blacs=yes],[have_blacs=no])
-  AC_MSG_CHECKING([whether we can link a program with a blacs lib])
-  AC_MSG_RESULT([${have_blacs}])
 
+  dnl test whether scalapack already contains blacs
+  scalapack_libs="mpiscalapack scalapack"
+  AC_SEARCH_LIBS([blacs_gridinit], [$scalapack_libs],[have_blacs=yes],[have_blacs=no])
 
-
-  if test x"${have_blacs}" = x"no" ; then
-    AC_MSG_ERROR([could not link with blacs: specify path]) 
+  dnl Test for stand-alone blacs
+  if test x"${have_blacs}" = x"no"; then
+    AC_SEARCH_LIBS([bi_f77_init],[mpiblacsF77init],[],[],[-lmpiblacs])
+    AC_SEARCH_LIBS([blacs_gridinit],[mpiblacs blacs],[have_blacs=yes],[have_blacs=no])
   fi
-	
-  dnl now scalapack
+
+  if x"${have_blacs}" = x"no"; then
+    AC_MSG_ERROR([No usable BLACS or ScaLAPACK 2 found. If installed in a non-standard place, please specify suitable LDFLAGS and FCFLAGS as arguments to configure])
+  fi
+
   AC_SEARCH_LIBS([pdtran],[mpiscalapack scalapack],[have_scalapack=yes],[have_scalapack=no])
-  AC_MSG_CHECKING([whether we can link a program with a scalapack lib])
-  AC_MSG_RESULT([${have_scalapack}])
 
   if test x"${have_scalapack}" = x"no" ; then
-    AC_MSG_ERROR([could not link with scalapack: specify path]) 
+    AC_MSG_ERROR([could not link with scalapack: specify path])
   fi
 
   dnl check whether we can link alltogehter
-
   AC_MSG_CHECKING([whether we can link a Fortran program with all blacs/scalapack])
-  AC_LINK_IFELSE([AC_LANG_SOURCE([     
+  AC_LINK_IFELSE([AC_LANG_SOURCE([
     program dgemm_test
 
       integer , parameter:: n_cols=3,l_cols=3
@@ -882,15 +878,19 @@ else
    if test x"${can_link_with_blacs_scalapack}" = x"yes" ; then
      WITH_BLACS=1
    else
-   AC_MSG_ERROR([We can neither link with MKL or another Scalpack. Please specify BLACS_LDFLAGS and BLACS_FCFLAGS!])
+   AC_MSG_ERROR([We can neither link with MKL or another Scalpack. Please specify SCALAPACK_LDFLAGS and SCALAPACK_FCFLAGS!])
    fi
 fi
+
+dnl important: reset them again!
+FCFLAGS=$save_FCFLAGS
+LDFLAGS=$save_LDFLAGS
 
 dnl check for intrinsic fortran function of 2003 standard
 AC_MSG_CHECKING([whether we can use the intrinsic Fortran function "get_environment_variable"])
 
 
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([     
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   program test_get_environment
 
     character(len=256) :: homedir
@@ -903,11 +903,6 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_MSG_RESULT([${fortran_can_check_environment}])
 
 
-dnl important: reset them again!
-FCFLAGS=$save_FCFLAGS
-LDFLAGS=$save_LDFLAGS
-
-
 dnl now check which kernels can be compiled
 
 dnl the checks for SSE were already done before
@@ -917,11 +912,11 @@ dnl check BGP kernel
 AC_MSG_CHECKING([whether we can compile with BGP intrinsics])
 
 
-AC_LINK_IFELSE([AC_LANG_SOURCE([     
+AC_LINK_IFELSE([AC_LANG_SOURCE([
   program test_bgp
     complex*16 :: y3,q3,h2
     y3 = fxcpmadd(y3,q3,h2)
-  
+
   end program
 ])],
   [can_compile_bgp=yes],
@@ -937,12 +932,12 @@ fi
 dnl check BGQ kernel
 AC_MSG_CHECKING([whether we can compile with BGQ intrinsics])
 
-AC_LINK_IFELSE([AC_LANG_SOURCE([     
+AC_LINK_IFELSE([AC_LANG_SOURCE([
   program test_bgq
     VECTOR(REAL(8))::QPX_x1
     real*8 :: hh(10,2))
     QPX_h2 = VEC_SPLATS(hh(2,2))
-  
+
   end program
 ])],
   [can_compile_bgq=yes],
@@ -980,7 +975,7 @@ AC_DEFUN([DEFINE_OPTION_REAL_KERNEL],[
     install_real_generic=no
     install_real_generic_simple=no
     install_real_sse=no
-    install_real_bgp=no	
+    install_real_bgp=no
     install_real_bgq=no
     install_real_avx_block2=no
     install_real_avx_block4=no
@@ -1210,21 +1205,11 @@ fi
 
 LT_INIT
 
-AC_SUBST([AM_FCFLAGS])
-AC_SUBST([AM_LDFLAGS])
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])
 AC_SUBST([with_amd_bulldozer_kernel])
-AC_SUBST([CFLAGS])
-AC_SUBST([FCFLAGS])
-AC_SUBST([CPPFLAGS])
-AC_SUBST([LDFLAGS])
-AC_SUBST([RANLIB])
 AC_SUBST([FC_MODINC])
 AC_SUBST([FC_MODOUT])
-AC_SUBST(BLACS_LDFLAGS)
-AC_SUBST(BLACS_FCFLAGS)
-
 #AC_SUBST(OPT_FCFLAGS)
 
 rm -rf modules/ .fortran_dependencies/
@@ -1241,7 +1226,7 @@ mkdir modules
 
 AC_CONFIG_FILES([
   Makefile
-  elpa.pc:elpa.pc.in
+  elpa-${PACKAGE_VERSION}.pc:elpa.pc.in
 ])
 AC_OUTPUT
 grep "^#define" config.h > config-f90.h

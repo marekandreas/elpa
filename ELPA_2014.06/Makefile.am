@@ -1,16 +1,15 @@
+## Process this file with automake to produce Makefile.in
+
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-AM_FCFLAGS = @AM_FCFLAGS@ @FC_MODINC@modules @FC_MODOUT@modules
-
-AM_LDFLAGS = @AM_LDFLAGS@ @BLACS_LDFLAGS@
-
-BLACS_LDFLAGS = @BLACS_LDFLAGS@
+AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
+AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 
 # libelpa
 if WITH_OPENMP
-lib_LTLIBRARIES = libelpa_mt.la
+lib_LTLIBRARIES = libelpa-@PACKAGE_VERSION@_mt.la
 else
-lib_LTLIBRARIES = libelpa.la
+lib_LTLIBRARIES = libelpa-@PACKAGE_VERSION@.la
 endif
 
 ##rule to produce fortran config file:
@@ -18,138 +17,138 @@ endif
 #	grep "^#define" ./config.h > $@
 
 if WITH_OPENMP
-libelpa_mt_la_SOURCES = src/elpa1.F90 src/elpa2.F90
+libelpa_@PACKAGE_VERSION@_mt_la_SOURCES = src/elpa1.F90 src/elpa2.F90
 else
-libelpa_la_SOURCES = src/elpa1.F90 src/elpa2.F90
+libelpa_@PACKAGE_VERSION@_la_SOURCES = src/elpa1.F90 src/elpa2.F90
 endif
 
 if WITH_REAL_GENERIC_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.f90
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.f90
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real.f90
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real.f90
 endif
 endif
 
 if WITH_COMPLEX_GENERIC_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.f90
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.f90
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex.f90
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex.f90
 endif
 endif
 
 if WITH_REAL_GENERIC_SIMPLE_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.f90
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.f90
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.f90
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.f90
 endif
 endif
 
 if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90
 endif
 endif
 
 if WITH_REAL_BGP_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90
 endif
 endif
 
 if WITH_REAL_BGQ_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90
 endif
 endif
 
 if WITH_REAL_SSE_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 endif
 else
 if WITH_COMPLEX_SSE_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 endif
 endif
 endif
 
 if WITH_REAL_AVX_BLOCK2_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
 endif
 endif
 
 if WITH_REAL_AVX_BLOCK4_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
 else
- libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
+ libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
 endif
 endif
 
 if WITH_REAL_AVX_BLOCK6_KERNEL
 if WITH_OPENMP
-  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
+  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
 endif
 endif
 
 if WITH_COMPLEX_AVX_BLOCK1_KERNEL
 if WITH_OPENMP
- libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+ libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 endif
 endif
 
 if WITH_COMPLEX_AVX_BLOCK2_KERNEL
 if WITH_OPENMP
- libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
+ libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
 else
-  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
+  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
 endif
 endif
 
 #if WITH_AVX_SANDYBRIDGE
 #if WITH_OPENMP
-#  libelpa_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
-                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+#  libelpa_@PACKAGE_VERSION@_mt_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
+#                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 #else
-#  libelpa_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
-                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+#  libelpa_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
+#                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 #endif
 #endif
 
 if WITH_OPENMP
-libelpa_mt_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
+libelpa_@PACKAGE_VERSION@_mt_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 else
-libelpa_la_LDFLAGS = -version-info $(ELPA_SO_VERSION)
+libelpa_@PACKAGE_VERSION@_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 endif
 
 # install any .mod files in the include/ dir
-elpa_includedir = $(includedir)/elpa
+elpa_includedir = $(includedir)/elpa-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = $(wildcard modules/*)
 
 # other files to distribute
-filesdir = $(datarootdir)
-files_DATA = \
+filesdir = $(datadir)/@PACKAGE@-@PACKAGE_VERSION@/examples
+dist_files_DATA = \
 	test/read_real.F90 \
 	test/read_real_gen.F90 \
 	test/test_complex2.F90 \
@@ -166,57 +165,62 @@ files_DATA = \
 
 # test programs
 if WITH_OPENMP
-build_lib = libelpa_mt.la
+build_lib = libelpa-@PACKAGE_VERSION@_mt.la
 else
-build_lib = libelpa.la
+build_lib = libelpa-@PACKAGE_VERSION@.la
 endif
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = elpa.pc
+pkgconfig_DATA = elpa-@PACKAGE_VERSION@.pc
 
 # test programs
 
 #bindir = $(abs_top_builddir)
-bin_PROGRAMS = test_real test_real2 test_real2_default_kernel test_complex test_complex2 test_complex2_default_kernel test_real2_choose_kernel_with_api test_complex2_choose_kernel_with_api print_available_elpa2_kernels
+testsdir = $(datadir)/@PACKAGE@-@PACKAGE_VERSION@/tests
+tests_PROGRAMS = test_real test_real2 test_real2_default_kernel test_complex test_complex2 test_complex2_default_kernel test_real2_choose_kernel_with_api test_complex2_choose_kernel_with_api
+
+bin_PROGRAMS = print_available_elpa2_kernels
 
 
 test_real_SOURCES = test/test_real.F90
 test_real_LDADD = $(build_lib)
-test_real_LDFLAGS = -static
+test_real_LDFLAGS = $(AM_LDFLAGS) -static
 
 test_real2_SOURCES = test/test_real2.F90
 test_real2_LDADD = $(build_lib)
-test_real2_LDFLAGS = -static
+test_real2_LDFLAGS = $(AM_LDFLAGS) -static
 
 test_real2_default_kernel_SOURCES = test/test_real2_default_kernel.F90
 test_real2_default_kernel_LDADD = $(build_lib)
-test_real2_default_kernel_LDFLAGS = -static
+test_real2_default_kernel_LDFLAGS = $(AM_LDFLAGS) -static
 
 test_real2_choose_kernel_with_api_SOURCES = test/test_real2_choose_kernel_with_api.F90
 test_real2_choose_kernel_with_api_LDADD = $(build_lib)
-test_real2_choose_kernel_with_api_LDFLAGS = -static
+test_real2_choose_kernel_with_api_LDFLAGS = $(AM_LDFLAGS) -static
 
 test_complex_SOURCES = test/test_complex.F90
 test_complex_LDADD = $(build_lib)
-test_complex_LDFLAGS = -static
+test_complex_LDFLAGS = $(AM_LDFLAGS) -static
 
 test_complex2_SOURCES = test/test_complex2.F90
 test_complex2_LDADD = $(build_lib)
-test_complex2_LDFLAGS = -static
+test_complex2_LDFLAGS = $(AM_LDFLAGS) -static
 
 test_complex2_default_kernel_SOURCES = test/test_complex2_default_kernel.F90
 test_complex2_default_kernel_LDADD = $(build_lib)
-test_complex2_default_kernel_LDFLAGS = -static
+test_complex2_default_kernel_LDFLAGS = $(AM_LDFLAGS) -static
 
 test_complex2_choose_kernel_with_api_SOURCES = test/test_complex2_choose_kernel_with_api.F90
 test_complex2_choose_kernel_with_api_LDADD = $(build_lib)
-test_complex2_choose_kernel_with_api_LDFLAGS = -static
+test_complex2_choose_kernel_with_api_LDFLAGS = $(AM_LDFLAGS) -static
 
 print_available_elpa2_kernels_SOURCES = test/print_available_elpa2_kernels.F90
 print_available_elpa2_kernels_LDADD = $(build_lib)
 
-check_SCRIPTS = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels.sh
+#check_SCRIPTS = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels.sh
+#TESTS = $(check_SCRIPTS)
+check_SCRIPTS = print_available_elpa2_kernels.sh
 TESTS = $(check_SCRIPTS)
 
 test_real.sh:
@@ -261,6 +265,18 @@ elpa2.i: $(top_srcdir)/src/elpa2.F90
 elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
 
-CLEANFILES = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels elpa2.i
+CLEANFILES = \
+	test_real.sh \
+	test_real2.sh \
+	test_real2_default_kernel.sh \
+	test_complex.sh test_complex2.sh \
+	test_complex2_default_kernel.sh \
+	test_real2_choose_kernel_with_api.sh \
+	test_complex2_choose_kernel_with_api.sh \
+	print_available_elpa2_kernels.sh \
+	elpa2.i \
+	config-f90.h \
+	modules/*
 
+EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
 @FORTRAN_MODULE_DEPS@
