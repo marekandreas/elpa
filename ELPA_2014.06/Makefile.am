@@ -218,9 +218,7 @@ test_complex2_choose_kernel_with_api_LDFLAGS = $(AM_LDFLAGS) -static
 print_available_elpa2_kernels_SOURCES = test/print_available_elpa2_kernels.F90
 print_available_elpa2_kernels_LDADD = $(build_lib)
 
-#check_SCRIPTS = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels.sh
-#TESTS = $(check_SCRIPTS)
-check_SCRIPTS = print_available_elpa2_kernels.sh
+check_SCRIPTS = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels.sh
 TESTS = $(check_SCRIPTS)
 
 test_real.sh:
