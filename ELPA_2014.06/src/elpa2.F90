@@ -284,7 +284,7 @@ subroutine print_available_complex_kernels
   enddo
   write(error_unit,*) " "
   write(error_unit,*) " At the moment the following kernel would be choosen:"
-  write(error_unit,*) get_actual_real_kernel_name()
+  write(error_unit,*) get_actual_complex_kernel_name()
 
 
 end subroutine print_available_complex_kernels
