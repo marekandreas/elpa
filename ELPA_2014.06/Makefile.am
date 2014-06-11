@@ -163,6 +163,8 @@ dist_files_DATA = \
 	test/test_real.F90 \
 	test/test_real_gen.F90
 
+dist_doc_DATA = README COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
+
 # test programs
 if WITH_OPENMP
 build_lib = libelpa-@PACKAGE_VERSION@_mt.la
@@ -174,88 +176,89 @@ endif
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = elpa-@PACKAGE_VERSION@.pc
 
-# test programs
+# programs
+bin_PROGRAMS = \
+	elpa1_test_real \
+	elpa1_test_complex \
+	elpa2_print_kernels \
+	elpa2_test_real \
+	elpa2_test_real_default_kernel \
+	elpa2_test_complex \
+	elpa2_test_complex_default_kernel \
+	elpa2_test_real_choose_kernel_with_api \
+	elpa2_test_complex_choose_kernel_with_api
 
-#bindir = $(abs_top_builddir)
-testsdir = $(datadir)/@PACKAGE@-@PACKAGE_VERSION@/tests
-tests_PROGRAMS = test_real test_real2 test_real2_default_kernel test_complex test_complex2 test_complex2_default_kernel test_real2_choose_kernel_with_api test_complex2_choose_kernel_with_api
+elpa1_test_real_SOURCES = test/test_real.F90
+elpa1_test_real_LDADD = $(build_lib)
 
-bin_PROGRAMS = print_available_elpa2_kernels
+elpa2_test_real_SOURCES = test/test_real2.F90
+elpa2_test_real_LDADD = $(build_lib)
 
+elpa2_test_real_default_kernel_SOURCES = test/test_real2_default_kernel.F90
+elpa2_test_real_default_kernel_LDADD = $(build_lib)
 
-test_real_SOURCES = test/test_real.F90
-test_real_LDADD = $(build_lib)
-test_real_LDFLAGS = $(AM_LDFLAGS) -static
+elpa2_test_real_choose_kernel_with_api_SOURCES = test/test_real2_choose_kernel_with_api.F90
+elpa2_test_real_choose_kernel_with_api_LDADD = $(build_lib)
 
-test_real2_SOURCES = test/test_real2.F90
-test_real2_LDADD = $(build_lib)
-test_real2_LDFLAGS = $(AM_LDFLAGS) -static
+elpa1_test_complex_SOURCES = test/test_complex.F90
+elpa1_test_complex_LDADD = $(build_lib)
 
-test_real2_default_kernel_SOURCES = test/test_real2_default_kernel.F90
-test_real2_default_kernel_LDADD = $(build_lib)
-test_real2_default_kernel_LDFLAGS = $(AM_LDFLAGS) -static
+elpa2_test_complex_SOURCES = test/test_complex2.F90
+elpa2_test_complex_LDADD = $(build_lib)
 
-test_real2_choose_kernel_with_api_SOURCES = test/test_real2_choose_kernel_with_api.F90
-test_real2_choose_kernel_with_api_LDADD = $(build_lib)
-test_real2_choose_kernel_with_api_LDFLAGS = $(AM_LDFLAGS) -static
+elpa2_test_complex_default_kernel_SOURCES = test/test_complex2_default_kernel.F90
+elpa2_test_complex_default_kernel_LDADD = $(build_lib)
 
-test_complex_SOURCES = test/test_complex.F90
-test_complex_LDADD = $(build_lib)
-test_complex_LDFLAGS = $(AM_LDFLAGS) -static
+elpa2_test_complex_choose_kernel_with_api_SOURCES = test/test_complex2_choose_kernel_with_api.F90
+elpa2_test_complex_choose_kernel_with_api_LDADD = $(build_lib)
 
-test_complex2_SOURCES = test/test_complex2.F90
-test_complex2_LDADD = $(build_lib)
-test_complex2_LDFLAGS = $(AM_LDFLAGS) -static
+elpa2_print_kernels_SOURCES = test/print_available_elpa2_kernels.F90
+elpa2_print_kernels_LDADD = $(build_lib)
 
-test_complex2_default_kernel_SOURCES = test/test_complex2_default_kernel.F90
-test_complex2_default_kernel_LDADD = $(build_lib)
-test_complex2_default_kernel_LDFLAGS = $(AM_LDFLAGS) -static
+check_SCRIPTS = \
+	elpa1_test_real.sh \
+	elpa2_test_real.sh \
+	elpa2_test_real_default_kernel.sh \
+	elpa1_test_complex.sh \
+	elpa2_test_complex.sh \
+	elpa2_test_complex_default_kernel.sh \
+	elpa2_test_real_choose_kernel_with_api.sh \
+	elpa2_test_complex_choose_kernel_with_api.sh \
+	elpa2_print_kernels
 
-test_complex2_choose_kernel_with_api_SOURCES = test/test_complex2_choose_kernel_with_api.F90
-test_complex2_choose_kernel_with_api_LDADD = $(build_lib)
-test_complex2_choose_kernel_with_api_LDFLAGS = $(AM_LDFLAGS) -static
-
-print_available_elpa2_kernels_SOURCES = test/print_available_elpa2_kernels.F90
-print_available_elpa2_kernels_LDADD = $(build_lib)
-
-check_SCRIPTS = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels.sh
 TESTS = $(check_SCRIPTS)
 
-test_real.sh:
-	echo "mpiexec -n 2 ./test_real > /dev/null 2>&1" > test_real.sh
-	chmod +x test_real.sh
+elpa1_test_real.sh:
+	echo "mpiexec -n 2 ./elpa1_test_real > /dev/null 2>&1" > elpa1_test_real.sh
+	chmod +x elpa1_test_real.sh
 
-test_real2.sh:
-	echo "mpiexec -n 2 ./test_real2 > /dev/null 2>&1" > test_real2.sh
-	chmod +x test_real2.sh
+elpa2_test_real.sh:
+	echo "mpiexec -n 2 ./elpa2_test_real > /dev/null 2>&1" > elpa2_test_real.sh
+	chmod +x elpa2_test_real.sh
 
-test_real2_default_kernel.sh:
-	echo "mpiexec -n 2 ./test_real2_default_kernel > /dev/null 2>&1" > test_real2_default_kernel.sh
-	chmod +x test_real2_default_kernel.sh
+elpa2_test_real_default_kernel.sh:
+	echo "mpiexec -n 2 ./elpa2_test_real_default_kernel > /dev/null 2>&1" > elpa2_test_real_default_kernel.sh
+	chmod +x elpa2_test_real_default_kernel.sh
 
-test_real2_choose_kernel_with_api.sh:
-	echo "mpiexec -n 2 ./test_real2_choose_kernel_with_api > /dev/null 2>&1" > test_real2_choose_kernel_with_api.sh
-	chmod +x test_real2_choose_kernel_with_api.sh
+elpa2_test_real_choose_kernel_with_api.sh:
+	echo "mpiexec -n 2 ./elpa2_test_real_choose_kernel_with_api > /dev/null 2>&1" > elpa2_test_real_choose_kernel_with_api.sh
+	chmod +x elpa2_test_real_choose_kernel_with_api.sh
 
-test_complex.sh:
-	echo "mpiexec -n 2 ./test_complex > /dev/null 2>&1" > test_complex.sh
-	chmod +x test_complex.sh
+elpa1_test_complex.sh:
+	echo "mpiexec -n 2 ./elpa1_test_complex > /dev/null 2>&1" > elpa1_test_complex.sh
+	chmod +x elpa1_test_complex.sh
 
-test_complex2.sh:
-	echo "mpiexec -n 2 ./test_complex2 > /dev/null 2>&1" > test_complex2.sh
-	chmod +x test_complex2.sh
-test_complex2_default_kernel.sh:
-	echo "mpiexec -n 2 ./test_complex2_default_kernel > /dev/null 2>&1" > test_complex2_default_kernel.sh
-	chmod +x test_complex2_default_kernel.sh
+elpa2_test_complex.sh:
+	echo "mpiexec -n 2 ./elpa2_test_complex > /dev/null 2>&1" > elpa2_test_complex.sh
+	chmod +x elpa2_test_complex.sh
 
-test_complex2_choose_kernel_with_api.sh:
-	echo "mpiexec -n 2 ./test_complex2_choose_kernel_with_api > /dev/null 2>&1" > test_complex2_choose_kernel_with_api.sh
-	chmod +x test_complex2_choose_kernel_with_api.sh
+elpa2_test_complex_default_kernel.sh:
+	echo "mpiexec -n 2 ./elpa2_test_complex_default_kernel > /dev/null 2>&1" > elpa2_test_complex_default_kernel.sh
+	chmod +x elpa2_test_complex_default_kernel.sh
 
-print_available_elpa2_kernels.sh:
-	echo "./print_available_elpa2_kernels" > print_available_elpa2_kernels.sh
-	chmod +x print_available_elpa2_kernels.sh
-
+elpa2_test_complex_choose_kernel_with_api.sh:
+	echo "mpiexec -n 2 ./elpa2_test_complex_choose_kernel_with_api > /dev/null 2>&1" > elpa2_test_complex_choose_kernel_with_api.sh
+	chmod +x elpa2_test_complex_choose_kernel_with_api.sh
 
 elpa2.i: $(top_srcdir)/src/elpa2.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2.F90 -o $@
@@ -264,19 +267,22 @@ elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
 
 CLEANFILES = \
-	test_real.sh \
-	test_real2.sh \
-	test_real2_default_kernel.sh \
-	test_complex.sh test_complex2.sh \
-	test_complex2_default_kernel.sh \
-	test_real2_choose_kernel_with_api.sh \
-	test_complex2_choose_kernel_with_api.sh \
-	print_available_elpa2_kernels.sh \
-	elpa2.i \
+	elpa1_test_real.sh \
+	elpa1_test_complex.sh \
+	elpa2_test_real.sh \
+	elpa2_test_real_default_kernel.sh \
+	elpa2_test_complex.sh \
+	elpa2_test_complex_default_kernel.sh \
+	elpa2_test_real_choose_kernel_with_api.sh \
+	elpa2_test_complex_choose_kernel_with_api.sh \
+	elpa2_print_kernels.sh \
+	*.i \
 	config-f90.h
 
 clean-local:
 	-rm -rf modules .fortran_dependencies
 
 EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
+
+
 @FORTRAN_MODULE_DEPS@

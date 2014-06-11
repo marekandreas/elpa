@@ -107,19 +107,22 @@ host_triplet = @host@
 @WITH_COMPLEX_AVX_BLOCK1_KERNEL_TRUE@@WITH_OPENMP_FALSE@am__append_24 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 @WITH_COMPLEX_AVX_BLOCK2_KERNEL_TRUE@@WITH_OPENMP_TRUE@am__append_25 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
 @WITH_COMPLEX_AVX_BLOCK2_KERNEL_TRUE@@WITH_OPENMP_FALSE@am__append_26 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
-tests_PROGRAMS = test_real$(EXEEXT) test_real2$(EXEEXT) \
-	test_real2_default_kernel$(EXEEXT) test_complex$(EXEEXT) \
-	test_complex2$(EXEEXT) test_complex2_default_kernel$(EXEEXT) \
-	test_real2_choose_kernel_with_api$(EXEEXT) \
-	test_complex2_choose_kernel_with_api$(EXEEXT)
-bin_PROGRAMS = print_available_elpa2_kernels$(EXEEXT)
+bin_PROGRAMS = elpa1_test_real$(EXEEXT) elpa1_test_complex$(EXEEXT) \
+	elpa2_print_kernels$(EXEEXT) elpa2_test_real$(EXEEXT) \
+	elpa2_test_real_default_kernel$(EXEEXT) \
+	elpa2_test_complex$(EXEEXT) \
+	elpa2_test_complex_default_kernel$(EXEEXT) \
+	elpa2_test_real_choose_kernel_with_api$(EXEEXT) \
+	elpa2_test_complex_choose_kernel_with_api$(EXEEXT)
+TESTS = $(am__EXEEXT_1)
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
 	$(srcdir)/config.h.in $(srcdir)/elpa.pc.in depcomp \
-	$(dist_files_DATA) $(nobase_elpa_include_HEADERS) test-driver \
-	INSTALL README ar-lib compile config.guess config.sub \
-	install-sh missing ltmain.sh
+	$(dist_doc_DATA) $(dist_files_DATA) \
+	$(nobase_elpa_include_HEADERS) test-driver INSTALL README \
+	ar-lib compile config.guess config.sub install-sh missing \
+	ltmain.sh
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_gnu_make.m4 \
 	$(top_srcdir)/m4/ax_elpa_openmp.m4 $(top_srcdir)/m4/libtool.m4 \
@@ -164,7 +167,7 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(testsdir)" "$(DESTDIR)$(filesdir)" \
+	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(filesdir)" \
 	"$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(elpa_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libelpa_@PACKAGE_VERSION@_la_LIBADD =
@@ -258,73 +261,43 @@ libelpa_@PACKAGE_VERSION@_mt_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(libelpa_@PACKAGE_VERSION@_mt_la_LDFLAGS) $(LDFLAGS) -o $@
 @WITH_OPENMP_TRUE@am_libelpa_@PACKAGE_VERSION@_mt_la_rpath = -rpath \
 @WITH_OPENMP_TRUE@	$(libdir)
-PROGRAMS = $(bin_PROGRAMS) $(tests_PROGRAMS)
-am_print_available_elpa2_kernels_OBJECTS =  \
+PROGRAMS = $(bin_PROGRAMS)
+am_elpa1_test_complex_OBJECTS = test/test_complex.$(OBJEXT)
+elpa1_test_complex_OBJECTS = $(am_elpa1_test_complex_OBJECTS)
+elpa1_test_complex_DEPENDENCIES = $(build_lib)
+am_elpa1_test_real_OBJECTS = test/test_real.$(OBJEXT)
+elpa1_test_real_OBJECTS = $(am_elpa1_test_real_OBJECTS)
+elpa1_test_real_DEPENDENCIES = $(build_lib)
+am_elpa2_print_kernels_OBJECTS =  \
 	test/print_available_elpa2_kernels.$(OBJEXT)
-print_available_elpa2_kernels_OBJECTS =  \
-	$(am_print_available_elpa2_kernels_OBJECTS)
-print_available_elpa2_kernels_DEPENDENCIES = $(build_lib)
-am_test_complex_OBJECTS = test/test_complex.$(OBJEXT)
-test_complex_OBJECTS = $(am_test_complex_OBJECTS)
-test_complex_DEPENDENCIES = $(build_lib)
-test_complex_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
-	$(test_complex_LDFLAGS) $(LDFLAGS) -o $@
-am_test_complex2_OBJECTS = test/test_complex2.$(OBJEXT)
-test_complex2_OBJECTS = $(am_test_complex2_OBJECTS)
-test_complex2_DEPENDENCIES = $(build_lib)
-test_complex2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
-	$(test_complex2_LDFLAGS) $(LDFLAGS) -o $@
-am_test_complex2_choose_kernel_with_api_OBJECTS =  \
+elpa2_print_kernels_OBJECTS = $(am_elpa2_print_kernels_OBJECTS)
+elpa2_print_kernels_DEPENDENCIES = $(build_lib)
+am_elpa2_test_complex_OBJECTS = test/test_complex2.$(OBJEXT)
+elpa2_test_complex_OBJECTS = $(am_elpa2_test_complex_OBJECTS)
+elpa2_test_complex_DEPENDENCIES = $(build_lib)
+am_elpa2_test_complex_choose_kernel_with_api_OBJECTS =  \
 	test/test_complex2_choose_kernel_with_api.$(OBJEXT)
-test_complex2_choose_kernel_with_api_OBJECTS =  \
-	$(am_test_complex2_choose_kernel_with_api_OBJECTS)
-test_complex2_choose_kernel_with_api_DEPENDENCIES = $(build_lib)
-test_complex2_choose_kernel_with_api_LINK = $(LIBTOOL) $(AM_V_lt) \
-	--tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
-	$(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
-	$(test_complex2_choose_kernel_with_api_LDFLAGS) $(LDFLAGS) -o \
-	$@
-am_test_complex2_default_kernel_OBJECTS =  \
+elpa2_test_complex_choose_kernel_with_api_OBJECTS =  \
+	$(am_elpa2_test_complex_choose_kernel_with_api_OBJECTS)
+elpa2_test_complex_choose_kernel_with_api_DEPENDENCIES = $(build_lib)
+am_elpa2_test_complex_default_kernel_OBJECTS =  \
 	test/test_complex2_default_kernel.$(OBJEXT)
-test_complex2_default_kernel_OBJECTS =  \
-	$(am_test_complex2_default_kernel_OBJECTS)
-test_complex2_default_kernel_DEPENDENCIES = $(build_lib)
-test_complex2_default_kernel_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(FCLD) \
-	$(AM_FCFLAGS) $(FCFLAGS) \
-	$(test_complex2_default_kernel_LDFLAGS) $(LDFLAGS) -o $@
-am_test_real_OBJECTS = test/test_real.$(OBJEXT)
-test_real_OBJECTS = $(am_test_real_OBJECTS)
-test_real_DEPENDENCIES = $(build_lib)
-test_real_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
-	$(test_real_LDFLAGS) $(LDFLAGS) -o $@
-am_test_real2_OBJECTS = test/test_real2.$(OBJEXT)
-test_real2_OBJECTS = $(am_test_real2_OBJECTS)
-test_real2_DEPENDENCIES = $(build_lib)
-test_real2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
-	$(test_real2_LDFLAGS) $(LDFLAGS) -o $@
-am_test_real2_choose_kernel_with_api_OBJECTS =  \
+elpa2_test_complex_default_kernel_OBJECTS =  \
+	$(am_elpa2_test_complex_default_kernel_OBJECTS)
+elpa2_test_complex_default_kernel_DEPENDENCIES = $(build_lib)
+am_elpa2_test_real_OBJECTS = test/test_real2.$(OBJEXT)
+elpa2_test_real_OBJECTS = $(am_elpa2_test_real_OBJECTS)
+elpa2_test_real_DEPENDENCIES = $(build_lib)
+am_elpa2_test_real_choose_kernel_with_api_OBJECTS =  \
 	test/test_real2_choose_kernel_with_api.$(OBJEXT)
-test_real2_choose_kernel_with_api_OBJECTS =  \
-	$(am_test_real2_choose_kernel_with_api_OBJECTS)
-test_real2_choose_kernel_with_api_DEPENDENCIES = $(build_lib)
-test_real2_choose_kernel_with_api_LINK = $(LIBTOOL) $(AM_V_lt) \
-	--tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
-	$(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
-	$(test_real2_choose_kernel_with_api_LDFLAGS) $(LDFLAGS) -o $@
-am_test_real2_default_kernel_OBJECTS =  \
+elpa2_test_real_choose_kernel_with_api_OBJECTS =  \
+	$(am_elpa2_test_real_choose_kernel_with_api_OBJECTS)
+elpa2_test_real_choose_kernel_with_api_DEPENDENCIES = $(build_lib)
+am_elpa2_test_real_default_kernel_OBJECTS =  \
 	test/test_real2_default_kernel.$(OBJEXT)
-test_real2_default_kernel_OBJECTS =  \
-	$(am_test_real2_default_kernel_OBJECTS)
-test_real2_default_kernel_DEPENDENCIES = $(build_lib)
-test_real2_default_kernel_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(FCLD) \
-	$(AM_FCFLAGS) $(FCFLAGS) $(test_real2_default_kernel_LDFLAGS) \
-	$(LDFLAGS) -o $@
+elpa2_test_real_default_kernel_OBJECTS =  \
+	$(am_elpa2_test_real_default_kernel_OBJECTS)
+elpa2_test_real_default_kernel_DEPENDENCIES = $(build_lib)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -412,28 +385,28 @@ am__v_CCAS_0 = @echo "  CCAS    " $@;
 am__v_CCAS_1 = 
 SOURCES = $(libelpa_@PACKAGE_VERSION@_la_SOURCES) \
 	$(libelpa_@PACKAGE_VERSION@_mt_la_SOURCES) \
-	$(print_available_elpa2_kernels_SOURCES) \
-	$(test_complex_SOURCES) $(test_complex2_SOURCES) \
-	$(test_complex2_choose_kernel_with_api_SOURCES) \
-	$(test_complex2_default_kernel_SOURCES) $(test_real_SOURCES) \
-	$(test_real2_SOURCES) \
-	$(test_real2_choose_kernel_with_api_SOURCES) \
-	$(test_real2_default_kernel_SOURCES)
+	$(elpa1_test_complex_SOURCES) $(elpa1_test_real_SOURCES) \
+	$(elpa2_print_kernels_SOURCES) $(elpa2_test_complex_SOURCES) \
+	$(elpa2_test_complex_choose_kernel_with_api_SOURCES) \
+	$(elpa2_test_complex_default_kernel_SOURCES) \
+	$(elpa2_test_real_SOURCES) \
+	$(elpa2_test_real_choose_kernel_with_api_SOURCES) \
+	$(elpa2_test_real_default_kernel_SOURCES)
 DIST_SOURCES = $(am__libelpa_@PACKAGE_VERSION@_la_SOURCES_DIST) \
 	$(am__libelpa_@PACKAGE_VERSION@_mt_la_SOURCES_DIST) \
-	$(print_available_elpa2_kernels_SOURCES) \
-	$(test_complex_SOURCES) $(test_complex2_SOURCES) \
-	$(test_complex2_choose_kernel_with_api_SOURCES) \
-	$(test_complex2_default_kernel_SOURCES) $(test_real_SOURCES) \
-	$(test_real2_SOURCES) \
-	$(test_real2_choose_kernel_with_api_SOURCES) \
-	$(test_real2_default_kernel_SOURCES)
+	$(elpa1_test_complex_SOURCES) $(elpa1_test_real_SOURCES) \
+	$(elpa2_print_kernels_SOURCES) $(elpa2_test_complex_SOURCES) \
+	$(elpa2_test_complex_choose_kernel_with_api_SOURCES) \
+	$(elpa2_test_complex_default_kernel_SOURCES) \
+	$(elpa2_test_real_SOURCES) \
+	$(elpa2_test_real_choose_kernel_with_api_SOURCES) \
+	$(elpa2_test_real_default_kernel_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-DATA = $(dist_files_DATA) $(pkgconfig_DATA)
+DATA = $(dist_doc_DATA) $(dist_files_DATA) $(pkgconfig_DATA)
 HEADERS = $(nobase_elpa_include_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) \
 	$(LISP)config.h.in
@@ -613,6 +586,12 @@ am__set_TESTS_bases = \
   bases=`for i in $$bases; do echo $$i; done | sed 's/\.log$$//'`; \
   bases=`echo $$bases`
 RECHECK_LOGS = $(TEST_LOGS)
+am__EXEEXT_1 = elpa1_test_real.sh elpa2_test_real.sh \
+	elpa2_test_real_default_kernel.sh elpa1_test_complex.sh \
+	elpa2_test_complex.sh elpa2_test_complex_default_kernel.sh \
+	elpa2_test_real_choose_kernel_with_api.sh \
+	elpa2_test_complex_choose_kernel_with_api.sh \
+	elpa2_print_kernels$(EXEEXT)
 TEST_SUITE_LOG = test-suite.log
 TEST_EXTENSIONS = @EXEEXT@ .test
 LOG_DRIVER = $(SHELL) $(top_srcdir)/test-driver
@@ -850,6 +829,7 @@ dist_files_DATA = \
 	test/test_real.F90 \
 	test/test_real_gen.F90
 
+dist_doc_DATA = README COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 @WITH_OPENMP_FALSE@build_lib = libelpa-@PACKAGE_VERSION@.la
 
 # test programs
@@ -858,49 +838,46 @@ dist_files_DATA = \
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = elpa-@PACKAGE_VERSION@.pc
+elpa1_test_real_SOURCES = test/test_real.F90
+elpa1_test_real_LDADD = $(build_lib)
+elpa2_test_real_SOURCES = test/test_real2.F90
+elpa2_test_real_LDADD = $(build_lib)
+elpa2_test_real_default_kernel_SOURCES = test/test_real2_default_kernel.F90
+elpa2_test_real_default_kernel_LDADD = $(build_lib)
+elpa2_test_real_choose_kernel_with_api_SOURCES = test/test_real2_choose_kernel_with_api.F90
+elpa2_test_real_choose_kernel_with_api_LDADD = $(build_lib)
+elpa1_test_complex_SOURCES = test/test_complex.F90
+elpa1_test_complex_LDADD = $(build_lib)
+elpa2_test_complex_SOURCES = test/test_complex2.F90
+elpa2_test_complex_LDADD = $(build_lib)
+elpa2_test_complex_default_kernel_SOURCES = test/test_complex2_default_kernel.F90
+elpa2_test_complex_default_kernel_LDADD = $(build_lib)
+elpa2_test_complex_choose_kernel_with_api_SOURCES = test/test_complex2_choose_kernel_with_api.F90
+elpa2_test_complex_choose_kernel_with_api_LDADD = $(build_lib)
+elpa2_print_kernels_SOURCES = test/print_available_elpa2_kernels.F90
+elpa2_print_kernels_LDADD = $(build_lib)
+check_SCRIPTS = \
+	elpa1_test_real.sh \
+	elpa2_test_real.sh \
+	elpa2_test_real_default_kernel.sh \
+	elpa1_test_complex.sh \
+	elpa2_test_complex.sh \
+	elpa2_test_complex_default_kernel.sh \
+	elpa2_test_real_choose_kernel_with_api.sh \
+	elpa2_test_complex_choose_kernel_with_api.sh \
+	elpa2_print_kernels
 
-# test programs
-
-#bindir = $(abs_top_builddir)
-testsdir = $(datadir)/@PACKAGE@-@PACKAGE_VERSION@/tests
-test_real_SOURCES = test/test_real.F90
-test_real_LDADD = $(build_lib)
-test_real_LDFLAGS = $(AM_LDFLAGS) -static
-test_real2_SOURCES = test/test_real2.F90
-test_real2_LDADD = $(build_lib)
-test_real2_LDFLAGS = $(AM_LDFLAGS) -static
-test_real2_default_kernel_SOURCES = test/test_real2_default_kernel.F90
-test_real2_default_kernel_LDADD = $(build_lib)
-test_real2_default_kernel_LDFLAGS = $(AM_LDFLAGS) -static
-test_real2_choose_kernel_with_api_SOURCES = test/test_real2_choose_kernel_with_api.F90
-test_real2_choose_kernel_with_api_LDADD = $(build_lib)
-test_real2_choose_kernel_with_api_LDFLAGS = $(AM_LDFLAGS) -static
-test_complex_SOURCES = test/test_complex.F90
-test_complex_LDADD = $(build_lib)
-test_complex_LDFLAGS = $(AM_LDFLAGS) -static
-test_complex2_SOURCES = test/test_complex2.F90
-test_complex2_LDADD = $(build_lib)
-test_complex2_LDFLAGS = $(AM_LDFLAGS) -static
-test_complex2_default_kernel_SOURCES = test/test_complex2_default_kernel.F90
-test_complex2_default_kernel_LDADD = $(build_lib)
-test_complex2_default_kernel_LDFLAGS = $(AM_LDFLAGS) -static
-test_complex2_choose_kernel_with_api_SOURCES = test/test_complex2_choose_kernel_with_api.F90
-test_complex2_choose_kernel_with_api_LDADD = $(build_lib)
-test_complex2_choose_kernel_with_api_LDFLAGS = $(AM_LDFLAGS) -static
-print_available_elpa2_kernels_SOURCES = test/print_available_elpa2_kernels.F90
-print_available_elpa2_kernels_LDADD = $(build_lib)
-check_SCRIPTS = test_real.sh test_real2.sh test_real2_default_kernel.sh test_complex.sh test_complex2.sh test_complex2_default_kernel.sh test_real2_choose_kernel_with_api.sh test_complex2_choose_kernel_with_api.sh print_available_elpa2_kernels.sh
-TESTS = $(check_SCRIPTS)
 CLEANFILES = \
-	test_real.sh \
-	test_real2.sh \
-	test_real2_default_kernel.sh \
-	test_complex.sh test_complex2.sh \
-	test_complex2_default_kernel.sh \
-	test_real2_choose_kernel_with_api.sh \
-	test_complex2_choose_kernel_with_api.sh \
-	print_available_elpa2_kernels.sh \
-	elpa2.i \
+	elpa1_test_real.sh \
+	elpa1_test_complex.sh \
+	elpa2_test_real.sh \
+	elpa2_test_real_default_kernel.sh \
+	elpa2_test_complex.sh \
+	elpa2_test_complex_default_kernel.sh \
+	elpa2_test_real_choose_kernel_with_api.sh \
+	elpa2_test_complex_choose_kernel_with_api.sh \
+	elpa2_print_kernels.sh \
+	*.i \
 	config-f90.h
 
 EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
@@ -1100,115 +1077,66 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
-install-testsPROGRAMS: $(tests_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	@list='$(tests_PROGRAMS)'; test -n "$(testsdir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(testsdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(testsdir)" || exit 1; \
-	fi; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p \
-	 || test -f $$p1 \
-	  ; then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' \
-	    -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(testsdir)$$dir'"; \
-	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(testsdir)$$dir" || exit $$?; \
-	    } \
-	; done
-
-uninstall-testsPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(tests_PROGRAMS)'; test -n "$(testsdir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' \
-	`; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(testsdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(testsdir)" && rm -f $$files
-
-clean-testsPROGRAMS:
-	@list='$(tests_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
 test/$(am__dirstamp):
 	@$(MKDIR_P) test
 	@: > test/$(am__dirstamp)
 test/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) test/$(DEPDIR)
 	@: > test/$(DEPDIR)/$(am__dirstamp)
-test/print_available_elpa2_kernels.$(OBJEXT): test/$(am__dirstamp) \
-	test/$(DEPDIR)/$(am__dirstamp)
-
-print_available_elpa2_kernels$(EXEEXT): $(print_available_elpa2_kernels_OBJECTS) $(print_available_elpa2_kernels_DEPENDENCIES) $(EXTRA_print_available_elpa2_kernels_DEPENDENCIES) 
-	@rm -f print_available_elpa2_kernels$(EXEEXT)
-	$(AM_V_FCLD)$(FCLINK) $(print_available_elpa2_kernels_OBJECTS) $(print_available_elpa2_kernels_LDADD) $(LIBS)
 test/test_complex.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
-test_complex$(EXEEXT): $(test_complex_OBJECTS) $(test_complex_DEPENDENCIES) $(EXTRA_test_complex_DEPENDENCIES) 
-	@rm -f test_complex$(EXEEXT)
-	$(AM_V_FCLD)$(test_complex_LINK) $(test_complex_OBJECTS) $(test_complex_LDADD) $(LIBS)
-test/test_complex2.$(OBJEXT): test/$(am__dirstamp) \
-	test/$(DEPDIR)/$(am__dirstamp)
-
-test_complex2$(EXEEXT): $(test_complex2_OBJECTS) $(test_complex2_DEPENDENCIES) $(EXTRA_test_complex2_DEPENDENCIES) 
-	@rm -f test_complex2$(EXEEXT)
-	$(AM_V_FCLD)$(test_complex2_LINK) $(test_complex2_OBJECTS) $(test_complex2_LDADD) $(LIBS)
-test/test_complex2_choose_kernel_with_api.$(OBJEXT):  \
-	test/$(am__dirstamp) test/$(DEPDIR)/$(am__dirstamp)
-
-test_complex2_choose_kernel_with_api$(EXEEXT): $(test_complex2_choose_kernel_with_api_OBJECTS) $(test_complex2_choose_kernel_with_api_DEPENDENCIES) $(EXTRA_test_complex2_choose_kernel_with_api_DEPENDENCIES) 
-	@rm -f test_complex2_choose_kernel_with_api$(EXEEXT)
-	$(AM_V_FCLD)$(test_complex2_choose_kernel_with_api_LINK) $(test_complex2_choose_kernel_with_api_OBJECTS) $(test_complex2_choose_kernel_with_api_LDADD) $(LIBS)
-test/test_complex2_default_kernel.$(OBJEXT): test/$(am__dirstamp) \
-	test/$(DEPDIR)/$(am__dirstamp)
-
-test_complex2_default_kernel$(EXEEXT): $(test_complex2_default_kernel_OBJECTS) $(test_complex2_default_kernel_DEPENDENCIES) $(EXTRA_test_complex2_default_kernel_DEPENDENCIES) 
-	@rm -f test_complex2_default_kernel$(EXEEXT)
-	$(AM_V_FCLD)$(test_complex2_default_kernel_LINK) $(test_complex2_default_kernel_OBJECTS) $(test_complex2_default_kernel_LDADD) $(LIBS)
+elpa1_test_complex$(EXEEXT): $(elpa1_test_complex_OBJECTS) $(elpa1_test_complex_DEPENDENCIES) $(EXTRA_elpa1_test_complex_DEPENDENCIES) 
+	@rm -f elpa1_test_complex$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa1_test_complex_OBJECTS) $(elpa1_test_complex_LDADD) $(LIBS)
 test/test_real.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
-test_real$(EXEEXT): $(test_real_OBJECTS) $(test_real_DEPENDENCIES) $(EXTRA_test_real_DEPENDENCIES) 
-	@rm -f test_real$(EXEEXT)
-	$(AM_V_FCLD)$(test_real_LINK) $(test_real_OBJECTS) $(test_real_LDADD) $(LIBS)
+elpa1_test_real$(EXEEXT): $(elpa1_test_real_OBJECTS) $(elpa1_test_real_DEPENDENCIES) $(EXTRA_elpa1_test_real_DEPENDENCIES) 
+	@rm -f elpa1_test_real$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa1_test_real_OBJECTS) $(elpa1_test_real_LDADD) $(LIBS)
+test/print_available_elpa2_kernels.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+
+elpa2_print_kernels$(EXEEXT): $(elpa2_print_kernels_OBJECTS) $(elpa2_print_kernels_DEPENDENCIES) $(EXTRA_elpa2_print_kernels_DEPENDENCIES) 
+	@rm -f elpa2_print_kernels$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa2_print_kernels_OBJECTS) $(elpa2_print_kernels_LDADD) $(LIBS)
+test/test_complex2.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+
+elpa2_test_complex$(EXEEXT): $(elpa2_test_complex_OBJECTS) $(elpa2_test_complex_DEPENDENCIES) $(EXTRA_elpa2_test_complex_DEPENDENCIES) 
+	@rm -f elpa2_test_complex$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa2_test_complex_OBJECTS) $(elpa2_test_complex_LDADD) $(LIBS)
+test/test_complex2_choose_kernel_with_api.$(OBJEXT):  \
+	test/$(am__dirstamp) test/$(DEPDIR)/$(am__dirstamp)
+
+elpa2_test_complex_choose_kernel_with_api$(EXEEXT): $(elpa2_test_complex_choose_kernel_with_api_OBJECTS) $(elpa2_test_complex_choose_kernel_with_api_DEPENDENCIES) $(EXTRA_elpa2_test_complex_choose_kernel_with_api_DEPENDENCIES) 
+	@rm -f elpa2_test_complex_choose_kernel_with_api$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa2_test_complex_choose_kernel_with_api_OBJECTS) $(elpa2_test_complex_choose_kernel_with_api_LDADD) $(LIBS)
+test/test_complex2_default_kernel.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+
+elpa2_test_complex_default_kernel$(EXEEXT): $(elpa2_test_complex_default_kernel_OBJECTS) $(elpa2_test_complex_default_kernel_DEPENDENCIES) $(EXTRA_elpa2_test_complex_default_kernel_DEPENDENCIES) 
+	@rm -f elpa2_test_complex_default_kernel$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa2_test_complex_default_kernel_OBJECTS) $(elpa2_test_complex_default_kernel_LDADD) $(LIBS)
 test/test_real2.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
-test_real2$(EXEEXT): $(test_real2_OBJECTS) $(test_real2_DEPENDENCIES) $(EXTRA_test_real2_DEPENDENCIES) 
-	@rm -f test_real2$(EXEEXT)
-	$(AM_V_FCLD)$(test_real2_LINK) $(test_real2_OBJECTS) $(test_real2_LDADD) $(LIBS)
+elpa2_test_real$(EXEEXT): $(elpa2_test_real_OBJECTS) $(elpa2_test_real_DEPENDENCIES) $(EXTRA_elpa2_test_real_DEPENDENCIES) 
+	@rm -f elpa2_test_real$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa2_test_real_OBJECTS) $(elpa2_test_real_LDADD) $(LIBS)
 test/test_real2_choose_kernel_with_api.$(OBJEXT):  \
 	test/$(am__dirstamp) test/$(DEPDIR)/$(am__dirstamp)
 
-test_real2_choose_kernel_with_api$(EXEEXT): $(test_real2_choose_kernel_with_api_OBJECTS) $(test_real2_choose_kernel_with_api_DEPENDENCIES) $(EXTRA_test_real2_choose_kernel_with_api_DEPENDENCIES) 
-	@rm -f test_real2_choose_kernel_with_api$(EXEEXT)
-	$(AM_V_FCLD)$(test_real2_choose_kernel_with_api_LINK) $(test_real2_choose_kernel_with_api_OBJECTS) $(test_real2_choose_kernel_with_api_LDADD) $(LIBS)
+elpa2_test_real_choose_kernel_with_api$(EXEEXT): $(elpa2_test_real_choose_kernel_with_api_OBJECTS) $(elpa2_test_real_choose_kernel_with_api_DEPENDENCIES) $(EXTRA_elpa2_test_real_choose_kernel_with_api_DEPENDENCIES) 
+	@rm -f elpa2_test_real_choose_kernel_with_api$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa2_test_real_choose_kernel_with_api_OBJECTS) $(elpa2_test_real_choose_kernel_with_api_LDADD) $(LIBS)
 test/test_real2_default_kernel.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
-test_real2_default_kernel$(EXEEXT): $(test_real2_default_kernel_OBJECTS) $(test_real2_default_kernel_DEPENDENCIES) $(EXTRA_test_real2_default_kernel_DEPENDENCIES) 
-	@rm -f test_real2_default_kernel$(EXEEXT)
-	$(AM_V_FCLD)$(test_real2_default_kernel_LINK) $(test_real2_default_kernel_OBJECTS) $(test_real2_default_kernel_LDADD) $(LIBS)
+elpa2_test_real_default_kernel$(EXEEXT): $(elpa2_test_real_default_kernel_OBJECTS) $(elpa2_test_real_default_kernel_DEPENDENCIES) $(EXTRA_elpa2_test_real_default_kernel_DEPENDENCIES) 
+	@rm -f elpa2_test_real_default_kernel$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa2_test_real_default_kernel_OBJECTS) $(elpa2_test_real_default_kernel_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -1312,6 +1240,27 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
+install-dist_docDATA: $(dist_doc_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(docdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(docdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(docdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(docdir)" || exit $$?; \
+	done
+
+uninstall-dist_docDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(docdir)'; $(am__uninstall_files_from_dir)
 install-dist_filesDATA: $(dist_files_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(dist_files_DATA)'; test -n "$(filesdir)" || list=; \
@@ -1579,65 +1528,65 @@ recheck: all $(check_SCRIPTS)
 	        am__force_recheck=am--force-recheck \
 	        TEST_LOGS="$$log_list"; \
 	exit $$?
-test_real.sh.log: test_real.sh
-	@p='test_real.sh'; \
-	b='test_real.sh'; \
+elpa1_test_real.sh.log: elpa1_test_real.sh
+	@p='elpa1_test_real.sh'; \
+	b='elpa1_test_real.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-test_real2.sh.log: test_real2.sh
-	@p='test_real2.sh'; \
-	b='test_real2.sh'; \
+elpa2_test_real.sh.log: elpa2_test_real.sh
+	@p='elpa2_test_real.sh'; \
+	b='elpa2_test_real.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-test_real2_default_kernel.sh.log: test_real2_default_kernel.sh
-	@p='test_real2_default_kernel.sh'; \
-	b='test_real2_default_kernel.sh'; \
+elpa2_test_real_default_kernel.sh.log: elpa2_test_real_default_kernel.sh
+	@p='elpa2_test_real_default_kernel.sh'; \
+	b='elpa2_test_real_default_kernel.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-test_complex.sh.log: test_complex.sh
-	@p='test_complex.sh'; \
-	b='test_complex.sh'; \
+elpa1_test_complex.sh.log: elpa1_test_complex.sh
+	@p='elpa1_test_complex.sh'; \
+	b='elpa1_test_complex.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-test_complex2.sh.log: test_complex2.sh
-	@p='test_complex2.sh'; \
-	b='test_complex2.sh'; \
+elpa2_test_complex.sh.log: elpa2_test_complex.sh
+	@p='elpa2_test_complex.sh'; \
+	b='elpa2_test_complex.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-test_complex2_default_kernel.sh.log: test_complex2_default_kernel.sh
-	@p='test_complex2_default_kernel.sh'; \
-	b='test_complex2_default_kernel.sh'; \
+elpa2_test_complex_default_kernel.sh.log: elpa2_test_complex_default_kernel.sh
+	@p='elpa2_test_complex_default_kernel.sh'; \
+	b='elpa2_test_complex_default_kernel.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-test_real2_choose_kernel_with_api.sh.log: test_real2_choose_kernel_with_api.sh
-	@p='test_real2_choose_kernel_with_api.sh'; \
-	b='test_real2_choose_kernel_with_api.sh'; \
+elpa2_test_real_choose_kernel_with_api.sh.log: elpa2_test_real_choose_kernel_with_api.sh
+	@p='elpa2_test_real_choose_kernel_with_api.sh'; \
+	b='elpa2_test_real_choose_kernel_with_api.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-test_complex2_choose_kernel_with_api.sh.log: test_complex2_choose_kernel_with_api.sh
-	@p='test_complex2_choose_kernel_with_api.sh'; \
-	b='test_complex2_choose_kernel_with_api.sh'; \
+elpa2_test_complex_choose_kernel_with_api.sh.log: elpa2_test_complex_choose_kernel_with_api.sh
+	@p='elpa2_test_complex_choose_kernel_with_api.sh'; \
+	b='elpa2_test_complex_choose_kernel_with_api.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-print_available_elpa2_kernels.sh.log: print_available_elpa2_kernels.sh
-	@p='print_available_elpa2_kernels.sh'; \
-	b='print_available_elpa2_kernels.sh'; \
+elpa2_print_kernels.log: elpa2_print_kernels$(EXEEXT)
+	@p='elpa2_print_kernels$(EXEEXT)'; \
+	b='elpa2_print_kernels'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1829,7 +1778,7 @@ all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS) \
 install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(testsdir)" "$(DESTDIR)$(filesdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(elpa_includedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(filesdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(elpa_includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -1875,7 +1824,7 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool clean-local clean-testsPROGRAMS mostlyclean-am
+	clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1896,9 +1845,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-dist_filesDATA \
-	install-nobase_elpa_includeHEADERS install-pkgconfigDATA \
-	install-testsPROGRAMS
+install-data-am: install-dist_docDATA install-dist_filesDATA \
+	install-nobase_elpa_includeHEADERS install-pkgconfigDATA
 
 install-dvi: install-dvi-am
 
@@ -1946,70 +1894,67 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-dist_filesDATA \
-	uninstall-libLTLIBRARIES uninstall-nobase_elpa_includeHEADERS \
-	uninstall-pkgconfigDATA uninstall-testsPROGRAMS
+uninstall-am: uninstall-binPROGRAMS uninstall-dist_docDATA \
+	uninstall-dist_filesDATA uninstall-libLTLIBRARIES \
+	uninstall-nobase_elpa_includeHEADERS uninstall-pkgconfigDATA
 
 .MAKE: all check-am install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-TESTS \
 	check-am clean clean-binPROGRAMS clean-cscope clean-generic \
-	clean-libLTLIBRARIES clean-libtool clean-local \
-	clean-testsPROGRAMS cscope cscopelist-am ctags ctags-am dist \
-	dist-all dist-bzip2 dist-gzip dist-lzip dist-shar dist-tarZ \
-	dist-xz dist-zip distcheck distclean distclean-compile \
-	distclean-generic distclean-hdr distclean-libtool \
-	distclean-tags distcleancheck distdir distuninstallcheck dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am \
-	install-dist_filesDATA install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-libLTLIBRARIES install-man \
+	clean-libLTLIBRARIES clean-libtool clean-local cscope \
+	cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
+	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
+	distcheck distclean distclean-compile distclean-generic \
+	distclean-hdr distclean-libtool distclean-tags distcleancheck \
+	distdir distuninstallcheck dvi dvi-am html html-am info \
+	info-am install install-am install-binPROGRAMS install-data \
+	install-data-am install-dist_docDATA install-dist_filesDATA \
+	install-dvi install-dvi-am install-exec install-exec-am \
+	install-html install-html-am install-info install-info-am \
+	install-libLTLIBRARIES install-man \
 	install-nobase_elpa_includeHEADERS install-pdf install-pdf-am \
 	install-pkgconfigDATA install-ps install-ps-am install-strip \
-	install-testsPROGRAMS installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am recheck tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-dist_filesDATA \
-	uninstall-libLTLIBRARIES uninstall-nobase_elpa_includeHEADERS \
-	uninstall-pkgconfigDATA uninstall-testsPROGRAMS
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	recheck tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-dist_docDATA \
+	uninstall-dist_filesDATA uninstall-libLTLIBRARIES \
+	uninstall-nobase_elpa_includeHEADERS uninstall-pkgconfigDATA
 
 
-test_real.sh:
-	echo "mpiexec -n 2 ./test_real > /dev/null 2>&1" > test_real.sh
-	chmod +x test_real.sh
+elpa1_test_real.sh:
+	echo "mpiexec -n 2 ./elpa1_test_real > /dev/null 2>&1" > elpa1_test_real.sh
+	chmod +x elpa1_test_real.sh
 
-test_real2.sh:
-	echo "mpiexec -n 2 ./test_real2 > /dev/null 2>&1" > test_real2.sh
-	chmod +x test_real2.sh
+elpa2_test_real.sh:
+	echo "mpiexec -n 2 ./elpa2_test_real > /dev/null 2>&1" > elpa2_test_real.sh
+	chmod +x elpa2_test_real.sh
 
-test_real2_default_kernel.sh:
-	echo "mpiexec -n 2 ./test_real2_default_kernel > /dev/null 2>&1" > test_real2_default_kernel.sh
-	chmod +x test_real2_default_kernel.sh
+elpa2_test_real_default_kernel.sh:
+	echo "mpiexec -n 2 ./elpa2_test_real_default_kernel > /dev/null 2>&1" > elpa2_test_real_default_kernel.sh
+	chmod +x elpa2_test_real_default_kernel.sh
 
-test_real2_choose_kernel_with_api.sh:
-	echo "mpiexec -n 2 ./test_real2_choose_kernel_with_api > /dev/null 2>&1" > test_real2_choose_kernel_with_api.sh
-	chmod +x test_real2_choose_kernel_with_api.sh
+elpa2_test_real_choose_kernel_with_api.sh:
+	echo "mpiexec -n 2 ./elpa2_test_real_choose_kernel_with_api > /dev/null 2>&1" > elpa2_test_real_choose_kernel_with_api.sh
+	chmod +x elpa2_test_real_choose_kernel_with_api.sh
 
-test_complex.sh:
-	echo "mpiexec -n 2 ./test_complex > /dev/null 2>&1" > test_complex.sh
-	chmod +x test_complex.sh
+elpa1_test_complex.sh:
+	echo "mpiexec -n 2 ./elpa1_test_complex > /dev/null 2>&1" > elpa1_test_complex.sh
+	chmod +x elpa1_test_complex.sh
 
-test_complex2.sh:
-	echo "mpiexec -n 2 ./test_complex2 > /dev/null 2>&1" > test_complex2.sh
-	chmod +x test_complex2.sh
-test_complex2_default_kernel.sh:
-	echo "mpiexec -n 2 ./test_complex2_default_kernel > /dev/null 2>&1" > test_complex2_default_kernel.sh
-	chmod +x test_complex2_default_kernel.sh
+elpa2_test_complex.sh:
+	echo "mpiexec -n 2 ./elpa2_test_complex > /dev/null 2>&1" > elpa2_test_complex.sh
+	chmod +x elpa2_test_complex.sh
 
-test_complex2_choose_kernel_with_api.sh:
-	echo "mpiexec -n 2 ./test_complex2_choose_kernel_with_api > /dev/null 2>&1" > test_complex2_choose_kernel_with_api.sh
-	chmod +x test_complex2_choose_kernel_with_api.sh
+elpa2_test_complex_default_kernel.sh:
+	echo "mpiexec -n 2 ./elpa2_test_complex_default_kernel > /dev/null 2>&1" > elpa2_test_complex_default_kernel.sh
+	chmod +x elpa2_test_complex_default_kernel.sh
 
-print_available_elpa2_kernels.sh:
-	echo "./print_available_elpa2_kernels" > print_available_elpa2_kernels.sh
-	chmod +x print_available_elpa2_kernels.sh
+elpa2_test_complex_choose_kernel_with_api.sh:
+	echo "mpiexec -n 2 ./elpa2_test_complex_choose_kernel_with_api > /dev/null 2>&1" > elpa2_test_complex_choose_kernel_with_api.sh
+	chmod +x elpa2_test_complex_choose_kernel_with_api.sh
 
 elpa2.i: $(top_srcdir)/src/elpa2.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2.F90 -o $@
@@ -2019,6 +1964,7 @@ elpa1.i: $(top_srcdir)/src/elpa1.F90
 
 clean-local:
 	-rm -rf modules .fortran_dependencies
+
 @FORTRAN_MODULE_DEPS@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
