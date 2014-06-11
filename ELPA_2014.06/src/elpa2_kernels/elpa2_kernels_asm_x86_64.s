@@ -11,7 +11,6 @@
 # distributed along with the original code in the file "COPYING".
 #
 # --------------------------------------------------------------------------------------------------
-
         .globl double_hh_trafo_
         .globl single_hh_trafo_complex_
         .text
@@ -697,3 +696,6 @@ return2:
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
+
+# Declare that we do not need an executable stack here
+	.section	.note.GNU-stack,"",@progbits
