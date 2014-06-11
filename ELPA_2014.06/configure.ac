@@ -1,6 +1,9 @@
 AC_PREREQ([2.69])
-AC_INIT([elpa],[2014.06.000], elpa-library@rzg.mpg.de)
+
+AC_INIT([elpa],[2014.06], [elpa-library@rzg.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
+AC_SUBST([PACKAGE_MINOR_VERSION],[001])
+
 AC_CONFIG_SRCDIR([src/elpa1.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
@@ -22,7 +25,7 @@ rm -rf config.h config-f90.h
 # this is the version of the API, should be changed in the major revision
 # if and only if the actual API changes
 # see http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
-AC_SUBST([ELPA_SO_VERSION], [1:0:0])
+AC_SUBST([ELPA_SO_VERSION], [0:0:0])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
