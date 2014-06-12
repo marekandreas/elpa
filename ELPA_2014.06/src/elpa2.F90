@@ -2971,7 +2971,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
               w(:,1) = bcast_buffer(1:nbw,jjj+off)
               w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
 #ifdef WITH_OPENMP
-              call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe,my_trhead), &
+              call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe,my_thread), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
               call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe), &
