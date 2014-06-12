@@ -766,8 +766,8 @@ save_LDFLAGS=$LDFLAGS
 AC_ARG_VAR([SCALAPACK_LDFLAGS],[Extra LDFLAGS necessary to link a program with Scalapack])
 AC_ARG_VAR([SCALAPACK_FCFLAGS],[Extra FCFLAGS necessary to compile a Fortran program with Scalapack])
 
-FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS"
-LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS"
+FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS $OPENMP_FCFLAGS"
+LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS $OPENMP_FCFLAGS"
 
 dnl check whether fortran error_unit is defined
 AC_MSG_CHECKING([whether Fortran module iso_fortran_env is available])
