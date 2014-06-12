@@ -771,8 +771,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 with_amd_bulldozer_kernel = @with_amd_bulldozer_kernel@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
-AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
-AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
+AM_FCFLAGS = $(SCALAPACK_FCFLAGS) $(OPENMP_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
+AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(OPENMP_FCFLAGS)
 @WITH_OPENMP_FALSE@lib_LTLIBRARIES = libelpa-@PACKAGE_VERSION@.la
 
 # libelpa
@@ -878,8 +878,7 @@ CLEANFILES = \
 	elpa2_test_real_choose_kernel_with_api.sh \
 	elpa2_test_complex_choose_kernel_with_api.sh \
 	elpa2_print_kernels.sh \
-	*.i \
-	config-f90.h
+	*.i
 
 EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
 all: config.h
@@ -1832,7 +1831,7 @@ distclean: distclean-am
 	-rm -rf src/elpa2_kernels/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags
+	distclean-hdr distclean-libtool distclean-local distclean-tags
 
 dvi: dvi-am
 
@@ -1907,13 +1906,13 @@ uninstall-am: uninstall-binPROGRAMS uninstall-dist_docDATA \
 	cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
 	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
 	distcheck distclean distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags distcleancheck \
-	distdir distuninstallcheck dvi dvi-am html html-am info \
-	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-dist_docDATA install-dist_filesDATA \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-libLTLIBRARIES install-man \
+	distclean-hdr distclean-libtool distclean-local distclean-tags \
+	distcleancheck distdir distuninstallcheck dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
+	install-data install-data-am install-dist_docDATA \
+	install-dist_filesDATA install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-libLTLIBRARIES install-man \
 	install-nobase_elpa_includeHEADERS install-pdf install-pdf-am \
 	install-pkgconfigDATA install-ps install-ps-am install-strip \
 	installcheck installcheck-am installdirs maintainer-clean \
@@ -1964,7 +1963,10 @@ elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
 
 clean-local:
-	-rm -rf modules .fortran_dependencies
+	-rm -rf modules/* .fortran_dependencies/*
+
+distclean-local:
+	-rm config-f90.h
 
 @FORTRAN_MODULE_DEPS@
 

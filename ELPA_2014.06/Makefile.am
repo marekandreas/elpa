@@ -2,8 +2,8 @@
 
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
-AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
+AM_FCFLAGS = $(SCALAPACK_FCFLAGS) $(OPENMP_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
+AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(OPENMP_FCFLAGS)
 
 # libelpa
 if WITH_OPENMP
@@ -276,11 +276,13 @@ CLEANFILES = \
 	elpa2_test_real_choose_kernel_with_api.sh \
 	elpa2_test_complex_choose_kernel_with_api.sh \
 	elpa2_print_kernels.sh \
-	*.i \
-	config-f90.h
+	*.i
 
 clean-local:
-	-rm -rf modules .fortran_dependencies
+	-rm -rf modules/* .fortran_dependencies/*
+
+distclean-local:
+	-rm config-f90.h
 
 EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
 

@@ -6774,8 +6774,8 @@ save_LDFLAGS=$LDFLAGS
 
 
 
-FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS"
-LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS"
+FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS $OPENMP_FCFLAGS"
+LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS $OPENMP_FCFLAGS"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether Fortran module iso_fortran_env is available" >&5
 $as_echo_n "checking whether Fortran module iso_fortran_env is available... " >&6; }
