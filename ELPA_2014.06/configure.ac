@@ -757,7 +757,22 @@ AC_ARG_WITH([openmp],
   AM_CONDITIONAL([WITH_OPENMP],[test x"$with_openmp" = x"yes"])
   if test x"${with_openmp}" = x"yes"; then
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
-        AX_ELPA_OPENMP
+
+        # Fortran
+        AC_LANG_PUSH([Fortran])
+           AX_ELPA_OPENMP
+        AC_LANG_POP()
+
+        # C++
+        AC_LANG_PUSH([C++])
+           AX_ELPA_OPENMP
+        AC_LANG_POP()
+
+        # Append to flags as this influences which
+        # kind of MPI library has to be used (thread-safe or not)
+        CXXFLAGS="$OPENMP_CXXFLAGS $CXXFLAGS"
+        FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
+	LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
   fi
 
 save_FCFLAGS=$FCFLAGS
