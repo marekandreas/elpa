@@ -54,7 +54,7 @@ AC_DEFUN([AX_ELPA_OPENMP],
   AC_ARG_ENABLE([openmp],
     [AS_HELP_STRING([--disable-openmp], [do not use OpenMP])])
   if test "$enable_openmp" != no; then
-    AC_CACHE_CHECK([for $CC option to support OpenMP],
+    AC_CACHE_CHECK([for _AC_LANG_ABBREV option to support OpenMP],
       [ac_cv_prog_[]_AC_LANG_ABBREV[]_openmp],
       [AC_LINK_IFELSE([_AX_ELPA_LANG_OPENMP],
 	 [ac_cv_prog_[]_AC_LANG_ABBREV[]_openmp='none needed'],

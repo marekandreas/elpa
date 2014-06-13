@@ -696,6 +696,7 @@ WITH_REAL_GENERIC_KERNEL_FALSE
 WITH_REAL_GENERIC_KERNEL_TRUE
 SCALAPACK_FCFLAGS
 SCALAPACK_LDFLAGS
+OPENMP_CXXFLAGS
 OPENMP_FCFLAGS
 WITH_OPENMP_FALSE
 WITH_OPENMP_TRUE
@@ -6712,6 +6713,13 @@ fi
 $as_echo "#define WITH_OPENMP 1" >>confdefs.h
 
 
+        # Fortran
+        ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
   OPENMP_FCFLAGS=
   # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
@@ -6719,8 +6727,8 @@ if test "${enable_openmp+set}" = set; then :
 fi
 
   if test "$enable_openmp" != no; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $CC option to support OpenMP" >&5
-$as_echo_n "checking for $CC option to support OpenMP... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for fc option to support OpenMP" >&5
+$as_echo_n "checking for fc option to support OpenMP... " >&6; }
 if ${ac_cv_prog_fc_openmp+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -6766,6 +6774,95 @@ $as_echo "$ac_cv_prog_fc_openmp" >&6; }
   fi
 
 
+        ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+        # C++
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+  OPENMP_CXXFLAGS=
+  # Check whether --enable-openmp was given.
+if test "${enable_openmp+set}" = set; then :
+  enableval=$enable_openmp;
+fi
+
+  if test "$enable_openmp" != no; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cxx option to support OpenMP" >&5
+$as_echo_n "checking for cxx option to support OpenMP... " >&6; }
+if ${ac_cv_prog_cxx_openmp+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifndef _OPENMP
+ choke me
+#endif
+#include <omp.h>
+int main () { return omp_get_num_threads (); }
+
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_prog_cxx_openmp='none needed'
+else
+  ac_cv_prog_cxx_openmp='unsupported'
+	  	  	  	  	  	  	  	  	  	  	  	  	  for ac_option in -openmp -fopenmp -xopenmp -mp -omp -qsmp=omp; do
+	    ac_save_CXXFLAGS=$CXXFLAGS
+	    CXXFLAGS="$CXXFLAGS $ac_option"
+	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifndef _OPENMP
+ choke me
+#endif
+#include <omp.h>
+int main () { return omp_get_num_threads (); }
+
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_prog_cxx_openmp=$ac_option
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	    CXXFLAGS=$ac_save_CXXFLAGS
+	    if test "$ac_cv_prog_cxx_openmp" != unsupported; then
+	      break
+	    fi
+	  done
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cxx_openmp" >&5
+$as_echo "$ac_cv_prog_cxx_openmp" >&6; }
+    case $ac_cv_prog_cxx_openmp in #(
+      "none needed" | unsupported)
+        ;; #(
+      *)
+        OPENMP_CXXFLAGS=$ac_cv_prog_cxx_openmp ;;
+    esac
+  fi
+
+
+        ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+        # Append to flags as this influences which
+        # kind of MPI library has to be used (thread-safe or not)
+        CXXFLAGS="$OPENMP_CXXFLAGS $CXXFLAGS"
+        FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
+	LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
   fi
 
 save_FCFLAGS=$FCFLAGS
