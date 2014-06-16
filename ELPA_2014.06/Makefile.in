@@ -129,7 +129,6 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_gnu_make.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/fdep/fortran_dependencies.m4 \
-	$(top_srcdir)/m4/ax_prog_cxx_mpi.m4 \
 	$(top_srcdir)/m4/ax_prog_fc_mpi.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -208,14 +207,6 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @WITH_OPENMP_FALSE@	$(am__objects_12) $(am__objects_13)
 libelpa_@PACKAGE_VERSION@_la_OBJECTS =  \
 	$(am_libelpa_@PACKAGE_VERSION@_la_OBJECTS)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
-libelpa_@PACKAGE_VERSION@_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(libelpa_@PACKAGE_VERSION@_la_LDFLAGS) $(LDFLAGS) -o $@
 @WITH_OPENMP_FALSE@am_libelpa_@PACKAGE_VERSION@_la_rpath = -rpath \
 @WITH_OPENMP_FALSE@	$(libdir)
 libelpa_@PACKAGE_VERSION@_mt_la_LIBADD =
@@ -255,16 +246,16 @@ am__libelpa_@PACKAGE_VERSION@_mt_la_SOURCES_DIST = src/elpa1.F90 \
 @WITH_OPENMP_TRUE@	$(am__objects_25) $(am__objects_26)
 libelpa_@PACKAGE_VERSION@_mt_la_OBJECTS =  \
 	$(am_libelpa_@PACKAGE_VERSION@_mt_la_OBJECTS)
-libelpa_@PACKAGE_VERSION@_mt_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(libelpa_@PACKAGE_VERSION@_mt_la_LDFLAGS) $(LDFLAGS) -o $@
 @WITH_OPENMP_TRUE@am_libelpa_@PACKAGE_VERSION@_mt_la_rpath = -rpath \
 @WITH_OPENMP_TRUE@	$(libdir)
 PROGRAMS = $(bin_PROGRAMS)
 am_elpa1_test_complex_OBJECTS = test/test_complex.$(OBJEXT)
 elpa1_test_complex_OBJECTS = $(am_elpa1_test_complex_OBJECTS)
 elpa1_test_complex_DEPENDENCIES = $(build_lib)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 am_elpa1_test_real_OBJECTS = test/test_real.$(OBJEXT)
 elpa1_test_real_OBJECTS = $(am_elpa1_test_real_OBJECTS)
 elpa1_test_real_DEPENDENCIES = $(build_lib)
@@ -685,13 +676,11 @@ MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
-MPICXX = @MPICXX@
 MPIFC = @MPIFC@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OPENMP_CXXFLAGS = @OPENMP_CXXFLAGS@
 OPENMP_FCFLAGS = @OPENMP_FCFLAGS@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
@@ -772,12 +761,16 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 with_amd_bulldozer_kernel = @with_amd_bulldozer_kernel@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
-AM_FCFLAGS = $(SCALAPACK_FCFLAGS) $(OPENMP_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
-AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(OPENMP_FCFLAGS)
+AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
+AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 @WITH_OPENMP_FALSE@lib_LTLIBRARIES = libelpa-@PACKAGE_VERSION@.la
 
 # libelpa
 @WITH_OPENMP_TRUE@lib_LTLIBRARIES = libelpa-@PACKAGE_VERSION@_mt.la
+@WITH_OPENMP_TRUE@libelpa_@PACKAGE_VERSION@_mt_la_LINK = $(FCLINK)
+@WITH_OPENMP_TRUE@libelpa_@PACKAGE_VERSION@_mt_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
+@WITH_OPENMP_FALSE@libelpa_@PACKAGE_VERSION@_la_LINK = $(FCLINK)
+@WITH_OPENMP_FALSE@libelpa_@PACKAGE_VERSION@_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
 #config_f90.h: ./config.h
 #	grep "^#define" ./config.h > $@
@@ -807,8 +800,6 @@ AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(OPENMP_FCFLAGS)
 #                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 #endif
 #endif
-@WITH_OPENMP_TRUE@libelpa_@PACKAGE_VERSION@_mt_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
-@WITH_OPENMP_FALSE@libelpa_@PACKAGE_VERSION@_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
 # install any .mod files in the include/ dir
 elpa_includedir = $(includedir)/elpa-@PACKAGE_VERSION@
@@ -882,6 +873,7 @@ CLEANFILES = \
 	*.i
 
 EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -1025,10 +1017,10 @@ src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo:  \
 	src/elpa2_kernels/$(DEPDIR)/$(am__dirstamp)
 
 libelpa-@PACKAGE_VERSION@.la: $(libelpa_@PACKAGE_VERSION@_la_OBJECTS) $(libelpa_@PACKAGE_VERSION@_la_DEPENDENCIES) $(EXTRA_libelpa_@PACKAGE_VERSION@_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libelpa_@PACKAGE_VERSION@_la_LINK) $(am_libelpa_@PACKAGE_VERSION@_la_rpath) $(libelpa_@PACKAGE_VERSION@_la_OBJECTS) $(libelpa_@PACKAGE_VERSION@_la_LIBADD) $(LIBS)
+	$(AM_V_GEN)$(libelpa_@PACKAGE_VERSION@_la_LINK) $(am_libelpa_@PACKAGE_VERSION@_la_rpath) $(libelpa_@PACKAGE_VERSION@_la_OBJECTS) $(libelpa_@PACKAGE_VERSION@_la_LIBADD) $(LIBS)
 
 libelpa-@PACKAGE_VERSION@_mt.la: $(libelpa_@PACKAGE_VERSION@_mt_la_OBJECTS) $(libelpa_@PACKAGE_VERSION@_mt_la_DEPENDENCIES) $(EXTRA_libelpa_@PACKAGE_VERSION@_mt_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libelpa_@PACKAGE_VERSION@_mt_la_LINK) $(am_libelpa_@PACKAGE_VERSION@_mt_la_rpath) $(libelpa_@PACKAGE_VERSION@_mt_la_OBJECTS) $(libelpa_@PACKAGE_VERSION@_mt_la_LIBADD) $(LIBS)
+	$(AM_V_GEN)$(libelpa_@PACKAGE_VERSION@_mt_la_LINK) $(am_libelpa_@PACKAGE_VERSION@_mt_la_rpath) $(libelpa_@PACKAGE_VERSION@_mt_la_OBJECTS) $(libelpa_@PACKAGE_VERSION@_mt_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -1968,6 +1960,8 @@ clean-local:
 
 distclean-local:
 	-rm config-f90.h
+libtool: $(LIBTOOL_DEPS)
+	$(SHELL) ./config.status libtool
 
 @FORTRAN_MODULE_DEPS@
 
