@@ -46,13 +46,7 @@ AM_PROG_CC_C_O
 AM_PROG_AR
 AM_PROG_AS
 
-# C++
-m4_include([m4/ax_prog_cxx_mpi.m4])
-AX_PROG_CXX_MPI([],[have_mpi=yes],[have_mpi=no
-                 if test x"${have_mpi}" = x"no"; then
-                  AC_MSG_ERROR([no mpi found])
-                  fi])
-
+AC_PROG_CXX
 
 dnl variables needed for the tests
 
@@ -758,19 +752,10 @@ AC_ARG_WITH([openmp],
   if test x"${with_openmp}" = x"yes"; then
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
 
-        # Fortran
-        AC_LANG_PUSH([Fortran])
-           AX_ELPA_OPENMP
-        AC_LANG_POP()
-
-        # C++
-        AC_LANG_PUSH([C++])
-           AX_ELPA_OPENMP
-        AC_LANG_POP()
+        AX_ELPA_OPENMP
 
         # Append to flags as this influences which
         # kind of MPI library has to be used (thread-safe or not)
-        CXXFLAGS="$OPENMP_CXXFLAGS $CXXFLAGS"
         FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 	LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
   fi
@@ -1241,6 +1226,17 @@ mkdir modules
 #define EXPORTED
 #define HIDDEN
 #endif])
+
+
+# Some part of libtool is too smart and tries to parse the output of
+#   gfortran -v
+# and catches anything that resembles a -l library link specification.
+# Unfortunately, recent versions of gfortran emit
+#   -l gfortran
+# with a space between -l and gfortran. The empty -l is then included
+# into "postdeps_FC" and causes linking errors later on.
+postdeps_FC=$(echo $postdeps_FC | sed 's/-l //g')
+echo "postdeps_FC=$postdeps_FC"
 
 AC_CONFIG_FILES([
   Makefile

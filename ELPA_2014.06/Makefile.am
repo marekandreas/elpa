@@ -2,15 +2,20 @@
 
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-AM_FCFLAGS = $(SCALAPACK_FCFLAGS) $(OPENMP_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
-AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(OPENMP_FCFLAGS)
+AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
+AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 
 # libelpa
 if WITH_OPENMP
 lib_LTLIBRARIES = libelpa-@PACKAGE_VERSION@_mt.la
+libelpa_@PACKAGE_VERSION@_mt_la_LINK = $(FCLINK)
+libelpa_@PACKAGE_VERSION@_mt_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 else
 lib_LTLIBRARIES = libelpa-@PACKAGE_VERSION@.la
+libelpa_@PACKAGE_VERSION@_la_LINK = $(FCLINK)
+libelpa_@PACKAGE_VERSION@_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 endif
+
 
 ##rule to produce fortran config file:
 #config_f90.h: ./config.h
@@ -135,12 +140,6 @@ endif
 #                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 #endif
 #endif
-
-if WITH_OPENMP
-libelpa_@PACKAGE_VERSION@_mt_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
-else
-libelpa_@PACKAGE_VERSION@_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
-endif
 
 # install any .mod files in the include/ dir
 elpa_includedir = $(includedir)/elpa-@PACKAGE_VERSION@
@@ -286,5 +285,8 @@ distclean-local:
 
 EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
 
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
+libtool: $(LIBTOOL_DEPS)
+	$(SHELL) ./config.status libtool
 
 @FORTRAN_MODULE_DEPS@
