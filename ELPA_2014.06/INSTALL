@@ -1,10 +1,18 @@
 How to install ELPA:
 ----------------------
 
-ELPA is shipped with a typical "configure" and "make" procedure. It is
-recommended to use this way to install ELPA, see (A). If you do not want to 
-install ELPA as library, but to include it in your source code, please refer 
-to point (B). An example makefile "Makefile.example" can be found in ./test, 
+First of all, if you do not want to build ELPA yourself, and you run Linux,
+it is worth haveing a look at the ELPA webpage and/or the repositories of 
+your Linux distibution: there exist pre-build packages for a few 
+distributions like Fedora, Debian, and Opensuse. More, will hopefully follow
+in the future.
+
+If you want to build (or have to since no packages are available) ELPA yourself,
+please note that ELPA is shipped with a typical "configure" and "make" 
+procedure. It is recommended to use this way to install ELPA, see (A). 
+If you do not want to  install ELPA as library, but to include it in your 
+source code, please refer to point (B). 
+An example makefile "Makefile.example" can be found in ./test, 
 to give some hints how this is done. Please distibute then all files of ELPA 
 with your code. Please note, that usage of ELPA as described in Section (B) 
 requires advanced knowledge about compilers, preprocessor flags, and
@@ -43,29 +51,31 @@ The configure installation is best done in four steps
    file "./src/elpa2_kernels/README_elpa2_kernels.txt".
 
 
-1.2 Setting up blacs/scalapack
+1.2 Setting up Blacs/Scalapack
 
-   Please point to your blacs/scalapack installation and the
-   linkline with the variables "BLACS_LDFLAGS" and "BLACS_FCFLAGS".
-   "BLACS_LDFLAGS" should  contain the correct linkline for your
-   blacs/scalapack installation and "BLACS_FCFLAGS" the include path
+   The configure script tries to auto-detect an installed Blacs/Scalapack
+   library. If this is successfull, you do not have to specify anything
+   in this regard. However, this will fail, if you do not use Netlib 
+   Blacs/Scalapack but vendor specific implementations (e.g. Intel's MKL 
+   library or the implementation of Cray).
+
+   Please then point to your Blacs/Scalapack installation and the
+   linkline with the variables "SCALAPACK_LDFLAGS" and "SCALAPACK_FCFLAGS".
+   "SCALAPACK_LDFLAGS" should  contain the correct linkline for your
+   Blacs/Scalapack installation and "SCALAPACK_FCFLAGS" the include path
    and any other flags you need at compile time.
 
    It is recommended that you use the "rpath functionality" in the linkline,
    otherwise it will be necessary to update the LD_LIBRARY_PATH environment
    variable.
 
-   You can either specify your own builds of lapack/blacs/scalapack
-   or use specialized Vendor packages, e.g. if available you can use 
-   Intel's MKL. 
-
-   The configure procedure will check whether blacs/scalapack is available
-   at build-time. If you do not set the variables "BLACS_LDFLAGS" and 
-   "BLACS_FCFLAGS" the chances are high that ELPA will not build.
+   In any case, auto-detection of manual specifing of Blacs/Scalapack,
+   the configure procedure will check whether Blacs/Scalapack is available
+   at build-time and try to link with it.
 
 1.3 Setting optimizations
 
-   Please set the optimisation that you would like with the
+   Please set the optimisation that you prefer with the
    variable "FCFLAGS", "CFLAGS", and "CXXFLAGS", e.g. FCFLAGS="-O3 -xAVX",
    please see "./src/elpa2_kernels/README_elpa2_kernels.txt".
 
@@ -84,7 +94,8 @@ The configure installation is best done in four steps
 1.5 Hybrid OpenMP support
 
    If you want to use the hybrid MPI/OpenMP version of ELPA please specify
-   "--enable-openmp" or "--with-openmp".
+   "--with-openmp". Note that the ELPA library will then contain a "_mt" in
+   it's name to indicate multi threading support.
 
 1.6 Other
 
@@ -96,15 +107,16 @@ The configure installation is best done in four steps
 3) run "make check"
    a simple test of ELPA is done. At the moment the usage of "mpiexec"
    is required. If this is not possible at your system, you can run the
-   binaries "test_real", "test_real2", "test_complex", "test_complex2",
-   "test_complex2_default_kernel", "test_complex2_choose_kernel_with_api",
-   "test_real2_default_kernel", and "test_real2_choose_kernel_with_api"
+   binaries "elpa1_test_real", "elpa2_test_real", 
+   "elpa1_test_complex", "elpa2_test_complex",
+   "elpa2_test_complex_default_kernel", "elpa2_test_complex_choose_kernel_with_api",
+   "elpa2_test_real_default_kernel", and "elpa2_test_real_choose_kernel_with_api"
    yourself. At the moment the tests check whether the residual and the
    orthogonality of the found eigenvectors are lower than a threshold of
    5e-12. If this test fails, or if you believe the threshold should be
    even lower, please talk to us. Furthermore, your run-time choice of
    ELPA kernels is tested. This is intended as a help to get used to this
-   new feature. With the same thought in mind a binary "print_available_elpa2_kernels"
+   new feature. With the same thought in mind, a binary "elpa2_print_kernels"
    is provided, which is rather self-explanatory.
 
 

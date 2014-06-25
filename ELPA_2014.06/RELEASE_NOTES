@@ -1,9 +1,11 @@
-This file contains the release notes for the ELPA 2014.06.000 version
+This file contains the release notes for the ELPA 2014.06.001 version
 
 
 
 What is new?
 -------------
+
+a)
 
 With this release (and newer) it is not mandatory anymore to specify the real
 and complex kernels at build-time! Instead the choice of kernel is now a
@@ -17,6 +19,24 @@ It is still possible to build ELPA with a specific real and complex kernel, if
 one wants to obtain the old behaviour (see configure --help for the exact 
 options)
 
+b) 
+At build time, configure now expects variables "SCALAPACK_FCFLAGS" and 
+"SCLAPACK_LDFLAGS" to be set, which replace the previous "BLACS_FCFLAGS" and 
+"BLACS_LDFLAGS".
+
+c)
+Binaries names for the test programs have been renamed: instead of
+"test_real1" (for ELPA 1) and "test_real2" (for ELPA 2) and so forth, now
+the binary names are "elpa1_test_real" and "elpa2_test_real" ...
+
+d)
+The name of the installed library has changed: since this release changes the 
+ABI of ELPA, it is possible to have several versions of ELPA installed with 
+different ABIs. In order to have an unique identifier, the library will from 
+now on be called "libelpa_[package_version].so" (for single threaded version)
+ and "libelpa_[package_version]_mt.so" (for the multi threaded version). In 
+this release this is "elpa_2014.06{_mt}.so" 
+
 
 Any incompatibles to previous version?
 ---------------------------------------
@@ -24,6 +44,9 @@ Any incompatibles to previous version?
 The ABI of ELPA has changed! It will be necessary to rebuild the programs using
 ELPA if this new version should be used. Beware, that not rebuilding the user 
 programs most likely leads to undefined behaviour!
+Note also, that the library names have changed, in order to reflect the new ABI
+(see point d above).
+
 
 
 
