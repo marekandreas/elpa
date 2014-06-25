@@ -136,7 +136,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = elpa-${PACKAGE_VERSION}.pc
+CONFIG_CLEAN_FILES = ${PKG_CONFIG_FILE}
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -693,6 +693,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG_FILE = @PKG_CONFIG_FILE@
 RANLIB = @RANLIB@
 SCALAPACK_FCFLAGS = @SCALAPACK_FCFLAGS@
 SCALAPACK_LDFLAGS = @SCALAPACK_LDFLAGS@
@@ -830,7 +831,7 @@ dist_doc_DATA = README COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = elpa-@PACKAGE_VERSION@.pc
+pkgconfig_DATA = @PKG_CONFIG_FILE@
 elpa1_test_real_SOURCES = test/test_real.F90
 elpa1_test_real_LDADD = $(build_lib)
 elpa2_test_real_SOURCES = test/test_real2.F90
@@ -928,7 +929,7 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-elpa-${PACKAGE_VERSION}.pc: $(top_builddir)/config.status $(srcdir)/elpa.pc.in
+${PKG_CONFIG_FILE}: $(top_builddir)/config.status $(srcdir)/elpa.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)

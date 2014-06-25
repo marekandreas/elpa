@@ -1236,11 +1236,17 @@ mkdir modules
 # with a space between -l and gfortran. The empty -l is then included
 # into "postdeps_FC" and causes linking errors later on.
 postdeps_FC=$(echo $postdeps_FC | sed 's/-l //g')
-echo "postdeps_FC=$postdeps_FC"
+
+if test x"${with_openmp}" = x"yes"; then
+	MT="_mt"
+else
+	MT=""
+fi
+AC_SUBST([PKG_CONFIG_FILE],[elpa${MT}-${PACKAGE_VERSION}.pc])
 
 AC_CONFIG_FILES([
   Makefile
-  elpa-${PACKAGE_VERSION}.pc:elpa.pc.in
+  ${PKG_CONFIG_FILE}:elpa.pc.in
 ])
 AC_OUTPUT
 grep "^#define" config.h > config-f90.h

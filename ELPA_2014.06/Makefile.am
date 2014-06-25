@@ -173,7 +173,7 @@ endif
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = elpa-@PACKAGE_VERSION@.pc
+pkgconfig_DATA = @PKG_CONFIG_FILE@
 
 # programs
 bin_PROGRAMS = \

@@ -636,6 +636,7 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+PKG_CONFIG_FILE
 with_amd_bulldozer_kernel
 WITH_BLACS
 WITH_MKL
@@ -21704,9 +21705,16 @@ mkdir modules
 # with a space between -l and gfortran. The empty -l is then included
 # into "postdeps_FC" and causes linking errors later on.
 postdeps_FC=$(echo $postdeps_FC | sed 's/-l //g')
-echo "postdeps_FC=$postdeps_FC"
 
-ac_config_files="$ac_config_files Makefile elpa-${PACKAGE_VERSION}.pc:elpa.pc.in"
+if test x"${with_openmp}" = x"yes"; then
+	MT="_mt"
+else
+	MT=""
+fi
+PKG_CONFIG_FILE=elpa${MT}-${PACKAGE_VERSION}.pc
+
+
+ac_config_files="$ac_config_files Makefile ${PKG_CONFIG_FILE}:elpa.pc.in"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -22972,7 +22980,7 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "elpa-${PACKAGE_VERSION}.pc") CONFIG_FILES="$CONFIG_FILES elpa-${PACKAGE_VERSION}.pc:elpa.pc.in" ;;
+    "${PKG_CONFIG_FILE}") CONFIG_FILES="$CONFIG_FILES ${PKG_CONFIG_FILE}:elpa.pc.in" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
