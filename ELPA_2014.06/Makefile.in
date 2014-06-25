@@ -1966,6 +1966,17 @@ libtool: $(LIBTOOL_DEPS)
 
 @FORTRAN_MODULE_DEPS@
 
+# Fortran module dependencies only work within each target,
+# specify that the test programs need a finished library before
+# one can compile them
+
+# $1	Object name
+define require_elpa_lib
+$1: $(build_lib)
+
+endef
+$(foreach p,$(bin_PROGRAMS),$(foreach o,$($p_OBJECTS),$(eval $(call require_elpa_lib,$o))))
+
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -289,4 +289,16 @@ LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status libtool
 
+
 @FORTRAN_MODULE_DEPS@
+
+# Fortran module dependencies only work within each target,
+# specify that the test programs need a finished library before
+# one can compile them
+
+# $1	Object name
+define require_elpa_lib
+$1: $(build_lib)
+
+endef
+$(foreach p,$(bin_PROGRAMS),$(foreach o,$($p_OBJECTS),$(eval $(call require_elpa_lib,$o))))
