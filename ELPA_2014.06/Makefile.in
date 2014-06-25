@@ -1961,6 +1961,11 @@ clean-local:
 
 distclean-local:
 	-rm config-f90.h
+	-rmdir ./src/.deps
+	-rmdir ./src
+	-rmdir ./test/.deps
+	-rmdir ./test
+	-rmdir modules/
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status libtool
 

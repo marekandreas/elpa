@@ -282,6 +282,11 @@ clean-local:
 
 distclean-local:
 	-rm config-f90.h
+	-rmdir ./src/.deps
+	-rmdir ./src
+	-rmdir ./test/.deps
+	-rmdir ./test
+	-rmdir modules/
 
 EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
 
