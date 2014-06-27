@@ -6231,7 +6231,7 @@ fi
 
   fi
 
-  if x"${have_blacs}" = x"no"; then
+  if test x"${have_blacs}" = x"no"; then
     as_fn_error $? "No usable BLACS or ScaLAPACK 2 found. If installed in a non-standard place, please specify suitable LDFLAGS and FCFLAGS as arguments to configure" "$LINENO" 5
   fi
 

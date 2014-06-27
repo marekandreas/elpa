@@ -286,7 +286,7 @@ else
     AC_SEARCH_LIBS([blacs_gridinit],[mpiblacs blacs],[have_blacs=yes],[have_blacs=no])
   fi
 
-  if x"${have_blacs}" = x"no"; then
+  if test x"${have_blacs}" = x"no"; then
     AC_MSG_ERROR([No usable BLACS or ScaLAPACK 2 found. If installed in a non-standard place, please specify suitable LDFLAGS and FCFLAGS as arguments to configure])
   fi
 
