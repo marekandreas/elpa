@@ -6094,54 +6094,34 @@ $as_echo "${have_lapack}" >&6; }
   fi
 
     scalapack_libs="mpiscalapack scalapack"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing blacs_gridinit" >&5
-$as_echo_n "checking for library containing blacs_gridinit... " >&6; }
-if ${ac_cv_search_blacs_gridinit+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat > conftest.$ac_ext <<_ACEOF
+  old_LIBS="$LIBS"
+  for lib in ${scalapack_libs}; do
+    LIBS="-l${lib} ${old_LIBS}"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether -l${lib} already contains a BLACS implementation" >&5
+$as_echo_n "checking whether -l${lib} already contains a BLACS implementation... " >&6; }
+    cat > conftest.$ac_ext <<_ACEOF
       program main
       call blacs_gridinit
       end
 _ACEOF
-for ac_lib in '' $scalapack_libs; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_fc_try_link "$LINENO"; then :
-  ac_cv_search_blacs_gridinit=$ac_res
+if ac_fn_fc_try_link "$LINENO"; then :
+  blacs_in_scalapack=yes
+else
+  blacs_in_scalapack=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_blacs_gridinit+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_blacs_gridinit+:} false; then :
+    conftest$ac_exeext conftest.$ac_ext
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${blacs_in_scalapack}" >&5
+$as_echo "${blacs_in_scalapack}" >&6; }
+    if test x"${blacs_in_scalapack}" = x"yes"; then
+      break
+    fi
+  done
 
-else
-  ac_cv_search_blacs_gridinit=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_blacs_gridinit" >&5
-$as_echo "$ac_cv_search_blacs_gridinit" >&6; }
-ac_res=$ac_cv_search_blacs_gridinit
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  have_blacs=yes
-else
-  have_blacs=no
-fi
+  if test x"${blacs_in_scalapack}" = x"no"; then
+    LIBS="${old_LIBS}"
 
-
-    if test x"${have_blacs}" = x"no"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing bi_f77_init" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing bi_f77_init" >&5
 $as_echo_n "checking for library containing bi_f77_init... " >&6; }
 if ${ac_cv_search_bi_f77_init+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -6229,10 +6209,10 @@ else
   have_blacs=no
 fi
 
-  fi
 
-  if test x"${have_blacs}" = x"no"; then
-    as_fn_error $? "No usable BLACS or ScaLAPACK 2 found. If installed in a non-standard place, please specify suitable LDFLAGS and FCFLAGS as arguments to configure" "$LINENO" 5
+    if test x"${have_blacs}" = x"no"; then
+      as_fn_error $? "No usable BLACS found. If installed in a non-standard place, please specify suitable LDFLAGS and FCFLAGS as arguments to configure" "$LINENO" 5
+    fi
   fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing pdtran" >&5
@@ -6246,7 +6226,7 @@ cat > conftest.$ac_ext <<_ACEOF
       call pdtran
       end
 _ACEOF
-for ac_lib in '' mpiscalapack scalapack; do
+for ac_lib in '' $scalapack_libs; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else

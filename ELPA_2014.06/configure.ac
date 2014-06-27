@@ -278,19 +278,30 @@ else
 
   dnl test whether scalapack already contains blacs
   scalapack_libs="mpiscalapack scalapack"
-  AC_SEARCH_LIBS([blacs_gridinit], [$scalapack_libs],[have_blacs=yes],[have_blacs=no])
+  old_LIBS="$LIBS"
+  for lib in ${scalapack_libs}; do
+    LIBS="-l${lib} ${old_LIBS}"
+    AC_MSG_CHECKING([whether -l${lib} already contains a BLACS implementation])
+    AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY([blacs_gridinit])],[blacs_in_scalapack=yes],[blacs_in_scalapack=no])
+    AC_MSG_RESULT([${blacs_in_scalapack}])
+    if test x"${blacs_in_scalapack}" = x"yes"; then
+      break
+    fi
+  done
 
-  dnl Test for stand-alone blacs
-  if test x"${have_blacs}" = x"no"; then
+  if test x"${blacs_in_scalapack}" = x"no"; then
+    LIBS="${old_LIBS}"
+
+    dnl Test for stand-alone blacs
     AC_SEARCH_LIBS([bi_f77_init],[mpiblacsF77init],[],[],[-lmpiblacs])
     AC_SEARCH_LIBS([blacs_gridinit],[mpiblacs blacs],[have_blacs=yes],[have_blacs=no])
+
+    if test x"${have_blacs}" = x"no"; then
+      AC_MSG_ERROR([No usable BLACS found. If installed in a non-standard place, please specify suitable LDFLAGS and FCFLAGS as arguments to configure])
+    fi
   fi
 
-  if test x"${have_blacs}" = x"no"; then
-    AC_MSG_ERROR([No usable BLACS or ScaLAPACK 2 found. If installed in a non-standard place, please specify suitable LDFLAGS and FCFLAGS as arguments to configure])
-  fi
-
-  AC_SEARCH_LIBS([pdtran],[mpiscalapack scalapack],[have_scalapack=yes],[have_scalapack=no])
+  AC_SEARCH_LIBS([pdtran],[$scalapack_libs],[have_scalapack=yes],[have_scalapack=no])
 
   if test x"${have_scalapack}" = x"no" ; then
     AC_MSG_ERROR([could not link with scalapack: specify path])
