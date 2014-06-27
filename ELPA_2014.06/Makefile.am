@@ -158,7 +158,7 @@ dist_files_DATA = \
 	test/test_real2.F90 \
 	test/test_real2_default_kernel.F90 \
 	test/test_real2_choose_kernel_with_api.F90 \
-	test/print_available_elpa2_kernels.F90 \
+	src/print_available_elpa2_kernels.F90 \
 	test/test_real.F90 \
 	test/test_real_gen.F90
 
@@ -211,7 +211,7 @@ elpa2_test_complex_default_kernel_LDADD = $(build_lib)
 elpa2_test_complex_choose_kernel_with_api_SOURCES = test/test_complex2_choose_kernel_with_api.F90
 elpa2_test_complex_choose_kernel_with_api_LDADD = $(build_lib)
 
-elpa2_print_kernels_SOURCES = test/print_available_elpa2_kernels.F90
+elpa2_print_kernels_SOURCES = src/print_available_elpa2_kernels.F90
 elpa2_print_kernels_LDADD = $(build_lib)
 
 check_SCRIPTS = \
