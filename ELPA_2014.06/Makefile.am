@@ -228,35 +228,35 @@ check_SCRIPTS = \
 TESTS = $(check_SCRIPTS)
 
 elpa1_test_real.sh:
-	echo "mpiexec -n 2 ./elpa1_test_real $$TEST_FLAGS" > elpa1_test_real.sh
+	echo 'mpiexec -n 2 ./elpa1_test_real $$TEST_FLAGS' > elpa1_test_real.sh
 	chmod +x elpa1_test_real.sh
 
 elpa2_test_real.sh:
-	echo "mpiexec -n 2 ./elpa2_test_real $$TEST_FLAGS" > elpa2_test_real.sh
+	echo 'mpiexec -n 2 ./elpa2_test_real $$TEST_FLAGS' > elpa2_test_real.sh
 	chmod +x elpa2_test_real.sh
 
 elpa2_test_real_default_kernel.sh:
-	echo "mpiexec -n 2 ./elpa2_test_real_default_kernel $$TEST_FLAGS" > elpa2_test_real_default_kernel.sh
+	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel $$TEST_FLAGS' > elpa2_test_real_default_kernel.sh
 	chmod +x elpa2_test_real_default_kernel.sh
 
 elpa2_test_real_choose_kernel_with_api.sh:
-	echo "mpiexec -n 2 ./elpa2_test_real_choose_kernel_with_api $$TEST_FLAGS" > elpa2_test_real_choose_kernel_with_api.sh
+	echo 'mpiexec -n 2 ./elpa2_test_real_choose_kernel_with_api $$TEST_FLAGS' > elpa2_test_real_choose_kernel_with_api.sh
 	chmod +x elpa2_test_real_choose_kernel_with_api.sh
 
 elpa1_test_complex.sh:
-	echo "mpiexec -n 2 ./elpa1_test_complex $$TEST_FLAGS" > elpa1_test_complex.sh
+	echo 'mpiexec -n 2 ./elpa1_test_complex $$TEST_FLAGS' > elpa1_test_complex.sh
 	chmod +x elpa1_test_complex.sh
 
 elpa2_test_complex.sh:
-	echo "mpiexec -n 2 ./elpa2_test_complex $$TEST_FLAGS" > elpa2_test_complex.sh
+	echo 'mpiexec -n 2 ./elpa2_test_complex $$TEST_FLAGS' > elpa2_test_complex.sh
 	chmod +x elpa2_test_complex.sh
 
 elpa2_test_complex_default_kernel.sh:
-	echo "mpiexec -n 2 ./elpa2_test_complex_default_kernel $$TEST_FLAGS" > elpa2_test_complex_default_kernel.sh
+	echo 'mpiexec -n 2 ./elpa2_test_complex_default_kernel $$TEST_FLAGS' > elpa2_test_complex_default_kernel.sh
 	chmod +x elpa2_test_complex_default_kernel.sh
 
 elpa2_test_complex_choose_kernel_with_api.sh:
-	echo "mpiexec -n 2 ./elpa2_test_complex_choose_kernel_with_api $$TEST_FLAGS" > elpa2_test_complex_choose_kernel_with_api.sh
+	echo 'mpiexec -n 2 ./elpa2_test_complex_choose_kernel_with_api $$TEST_FLAGS' > elpa2_test_complex_choose_kernel_with_api.sh
 	chmod +x elpa2_test_complex_choose_kernel_with_api.sh
 
 elpa2.i: $(top_srcdir)/src/elpa2.F90
