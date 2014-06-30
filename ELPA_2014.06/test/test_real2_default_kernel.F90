@@ -58,6 +58,9 @@ program test_real2
    use ELPA1
    use ELPA2
 
+#ifdef HAVE_ISO_FORTRAN_ENV
+  use iso_fortran_env, only : error_unit
+#endif
    implicit none
    include 'mpif.h'
 
@@ -97,7 +100,14 @@ program test_real2
    character*16 arg3
    character*16 arg4
 
-   write_to_file = .false.
+#ifndef HAVE_ISO_FORTRAN_ENV
+  integer, parameter   :: error_unit = 6
+#endif
+
+  logical              :: success
+
+  success = .true. 
+  write_to_file = .false.
 
    nblk = 16
    na = 4000
@@ -133,8 +143,8 @@ program test_real2
                         provided_mpi_thread_level, mpierr)
 
    if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
-      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
-      print *,"           ", provided_mpi_thread_level, " is available"
+       write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+       write(error_unit,*) "           ", provided_mpi_thread_level, " is available"
       call EXIT(1)
       stop 1
    endif
@@ -291,8 +301,13 @@ program test_real2
    ! environment variable
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   call solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+
+   if (.not.(success)) then
+      write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
+      call MPI_ABORT(mpi_comm_world, mpierr)
+   endif
 
    if (myid==0) then
      print '(a)','| Two-step ELPA solver complete.'

@@ -152,7 +152,7 @@ end subroutine get_elpa_row_col_comms
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
+function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols) result(success)
 
 !-------------------------------------------------------------------------------
 !  solve_evp_real: Solves the real eigenvalue problem
@@ -190,15 +190,18 @@ subroutine solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_
 
    implicit none
 
-   integer, intent(in) :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
-   real*8 :: a(lda,*), ev(na), q(ldq,*)
+   integer, intent(in)  :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
+   real*8               :: a(lda,*), ev(na), q(ldq,*)
 
-   integer my_prow, my_pcol, mpierr
-   real*8, allocatable :: e(:), tau(:)
-   real*8 ttt0, ttt1
+   integer              :: my_prow, my_pcol, mpierr
+   real*8, allocatable  :: e(:), tau(:)
+   real*8               :: ttt0, ttt1
+   logical              :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+
+   success = .true.
 
    allocate(e(na), tau(na))
 
@@ -209,7 +212,10 @@ subroutine solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_
    time_evp_fwd = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
-   call solve_tridi(na, nev, ev, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
+   call solve_tridi(na, nev, ev, e, q, ldq, nblk, mpi_comm_rows, &
+                    mpi_comm_cols, success)
+   if (.not.(success)) return
+
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi  :',ttt1-ttt0
    time_evp_solve = ttt1-ttt0
@@ -222,12 +228,12 @@ subroutine solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_
 
    deallocate(e, tau)
 
-end subroutine solve_evp_real
+end function solve_evp_real
 
 !-------------------------------------------------------------------------------
 
 
-subroutine solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
+function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols) result(success)
 
 !-------------------------------------------------------------------------------
 !  solve_evp_complex: Solves the complex eigenvalue problem
@@ -265,20 +271,24 @@ subroutine solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, m
 
    implicit none
 
-   integer, intent(in) :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
-   complex*16 :: a(lda,*), q(ldq,*)
-   real*8 :: ev(na)
+   integer, intent(in)     :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,*), q(ldq,*)
+   real*8                  :: ev(na)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer l_rows, l_cols, l_cols_nev
-   real*8, allocatable :: q_real(:,:), e(:)
+   integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer                 :: l_rows, l_cols, l_cols_nev
+   real*8, allocatable     :: q_real(:,:), e(:)
    complex*16, allocatable :: tau(:)
    real*8 ttt0, ttt1
+
+   logical                 :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+   success = .true.
 
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
@@ -295,7 +305,10 @@ subroutine solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, m
    time_evp_fwd = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
-   call solve_tridi(na, nev, ev, e, q_real, l_rows, nblk, mpi_comm_rows, mpi_comm_cols)
+   call solve_tridi(na, nev, ev, e, q_real, l_rows, nblk, mpi_comm_rows, &
+                    mpi_comm_cols, success)
+   if (.not.(success)) return
+
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi     :',ttt1-ttt0
    time_evp_solve = ttt1-ttt0
@@ -311,7 +324,7 @@ subroutine solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, m
    deallocate(q_real)
    deallocate(e, tau)
 
-end subroutine solve_evp_complex
+end function solve_evp_complex
 
 !-------------------------------------------------------------------------------
 
@@ -1767,7 +1780,7 @@ end subroutine mult_ah_b_complex
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols )
+subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols, success )
 
    implicit none
 
@@ -1779,11 +1792,14 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
 
    integer, allocatable :: limits(:), l_col(:), p_col(:), l_col_bc(:), p_col_bc(:)
 
+   logical, intent(out) :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+   success = .true.
 
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
@@ -1807,7 +1823,9 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
       ! which is rather annoying
       if(nc==0) then
          write(error_unit,*) 'ERROR: Problem contains processor column with zero width'
-         call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+!         call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+         success = .false.
+         return
       endif
 
       limits(np+1) = limits(np) + nc
@@ -1830,8 +1848,9 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
    else
       nev1 = MIN(nev,l_cols)
    endif
-   call solve_tridi_col(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk, mpi_comm_rows)
-
+   call solve_tridi_col(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
+                        mpi_comm_rows,success)
+   if (.not.(success)) return
 
    ! If there is only 1 processor column, we are done
 
@@ -1877,25 +1896,32 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
 
    ! Recursively merge sub problems
 
-   call merge_recursive(0, np_cols)
+   call merge_recursive(0, np_cols, success)
+   if (.not.(success)) return
 
    deallocate(limits,l_col,p_col,l_col_bc,p_col_bc)
 
 contains
-recursive subroutine merge_recursive(np_off, nprocs)
+recursive subroutine merge_recursive(np_off, nprocs, success)
 
    implicit none
 
    ! noff is always a multiple of nblk_ev
    ! nlen-noff is always > nblk_ev
 
-   integer np_off, nprocs
-   integer np1, np2, noff, nlen, nmid, n, mpi_status(mpi_status_size)
-
+   integer              :: np_off, nprocs
+   integer              :: np1, np2, noff, nlen, nmid, n, &
+                           mpi_status(mpi_status_size)
+   logical, intent(out) :: success
+   
+   success = .true.
+   
    if(nprocs<=1) then
       ! Safety check only
       write(error_unit,*) "INTERNAL error merge_recursive: nprocs=",nprocs
-      call mpi_abort(MPI_COMM_WORLD,1,mpierr)
+!      call mpi_abort(MPI_COMM_WORLD,1,mpierr)
+      success = .false.
+      return
    endif
 
    ! Split problem into 2 subproblems of size np1 / np2
@@ -1903,9 +1929,10 @@ recursive subroutine merge_recursive(np_off, nprocs)
    np1 = nprocs/2
    np2 = nprocs-np1
 
-   if(np1 > 1) call merge_recursive(np_off, np1)
-   if(np2 > 1) call merge_recursive(np_off+np1, np2)
-
+   if(np1 > 1) call merge_recursive(np_off, np1, success)
+   if (.not.(success)) return
+   if(np2 > 1) call merge_recursive(np_off+np1, np2, success)
+   if (.not.(success)) return
 
    noff = limits(np_off)
    nmid = limits(np_off+np1) - noff
@@ -1936,15 +1963,16 @@ recursive subroutine merge_recursive(np_off, nprocs)
 
       call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                          nblk, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
-                         l_col_bc, p_col_bc, np_off, nprocs )
-
+                         l_col_bc, p_col_bc, np_off, nprocs, success )
+      if (.not.(success)) return
    else
 
       ! Not last merge, leave dense column distribution
 
       call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                          nblk, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
-                         l_col(noff+1), p_col(noff+1), np_off, nprocs )
+                         l_col(noff+1), p_col(noff+1), np_off, nprocs, success )
+      if (.not.(success)) return
    endif
 
 end subroutine merge_recursive
@@ -1953,7 +1981,7 @@ end subroutine solve_tridi
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows )
+subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -1961,23 +1989,23 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows )
 
    implicit none
 
-   integer  na, nev, nqoff, ldq, nblk, mpi_comm_rows
-   real*8 d(na), e(na), q(ldq,*)
+   integer              :: na, nev, nqoff, ldq, nblk, mpi_comm_rows
+   real*8               :: d(na), e(na), q(ldq,*)
 
-   integer, parameter:: min_submatrix_size = 16 ! Minimum size of the submatrices to be used
+   integer, parameter   :: min_submatrix_size = 16 ! Minimum size of the submatrices to be used
 
-   real*8, allocatable :: qmat1(:,:), qmat2(:,:)
-
-   integer i, n, np
-   integer ndiv, noff, nmid, nlen, max_size
-   integer my_prow, np_rows, mpierr
+   real*8, allocatable  :: qmat1(:,:), qmat2(:,:)
+   integer              :: i, n, np
+   integer              :: ndiv, noff, nmid, nlen, max_size
+   integer              :: my_prow, np_rows, mpierr
 
    integer, allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
-
+   logical, intent(out) :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
 
+   success = .true.
    ! Calculate the number of subdivisions needed.
 
    n = na
@@ -2031,7 +2059,9 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows )
          noff = limits(n)        ! Start of subproblem
          nlen = limits(n+1)-noff ! Size of subproblem
 
-         call solve_tridi_single(nlen,d(noff+1),e(noff+1),q(nqoff+noff+1,noff+1),ubound(q,1))
+         call solve_tridi_single(nlen,d(noff+1),e(noff+1), &
+                                 q(nqoff+noff+1,noff+1),ubound(q,1), success)
+         if (.not.(success)) return
       enddo
 
    else
@@ -2049,8 +2079,10 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows )
          noff = limits(my_prow)        ! Start of subproblem
          nlen = limits(my_prow+1)-noff ! Size of subproblem
 
-         call solve_tridi_single(nlen,d(noff+1),e(noff+1),qmat1,ubound(qmat1,1))
+         call solve_tridi_single(nlen,d(noff+1),e(noff+1),qmat1, &
+                                 ubound(qmat1,1), success)
 
+         if (.not.(success)) return
       endif
 
       ! Fill eigenvectors in qmat1 into global matrix q
@@ -2102,8 +2134,9 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows )
 
          call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                             mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
-                            l_col(noff+1), p_col_o(noff+1), 0, 1)
-
+                            l_col(noff+1), p_col_o(noff+1), 0, 1, success)
+         if (.not.(success)) return
+         
       enddo
 
       n = 2*n
@@ -2116,22 +2149,25 @@ end subroutine solve_tridi_col
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_tridi_single(nlen, d, e, q, ldq)
+subroutine solve_tridi_single(nlen, d, e, q, ldq, success)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
 
    implicit none
 
-   integer nlen, ldq
-   real*8 d(nlen), e(nlen), q(ldq,nlen)
+   integer              :: nlen, ldq
+   real*8               :: d(nlen), e(nlen), q(ldq,nlen)
 
-   real*8, allocatable :: work(:), qtmp(:), ds(:), es(:)
-   real*8 dtmp
+   real*8, allocatable  :: work(:), qtmp(:), ds(:), es(:)
+   real*8               :: dtmp
 
-   integer i, j, lwork, liwork, info, mpierr
+   integer              :: i, j, lwork, liwork, info, mpierr
    integer, allocatable :: iwork(:)
 
+   logical, intent(out) :: success
+
+   success = .true. 
    allocate(ds(nlen), es(nlen))
 
    ! Save d and e for the case that dstedc fails
@@ -2159,7 +2195,9 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq)
       ! If DSTEQR fails also, we don't know what to do further ...
       if(info /= 0) then
          write(error_unit,'(a,i8,a)') 'ERROR: Lapack routine DSTEQR failed, info= ',info,', Aborting!'
-         call mpi_abort(mpi_comm_world,0,mpierr)
+!         call mpi_abort(mpi_comm_world,0,mpierr)
+         success = .false.
+         return
       endif
 
    end if
@@ -2201,39 +2239,47 @@ end subroutine solve_tridi_single
 !-------------------------------------------------------------------------------
 
 subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_comm_cols, &
-                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n)
+                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, success)
 
    implicit none
 
-   integer  na, nm, ldq, nqoff, nblk, mpi_comm_rows, mpi_comm_cols, npc_0, npc_n
-   integer  l_col(na), p_col(na), l_col_out(na), p_col_out(na)
-   real*8 d(na), e, q(ldq,*)
+   integer              :: na, nm, ldq, nqoff, nblk, mpi_comm_rows, &
+                           mpi_comm_cols, npc_0, npc_n
+   integer              :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
+   real*8               :: d(na), e, q(ldq,*)
 
-   integer, parameter :: max_strip=128
+   integer, parameter   :: max_strip=128
 
-   real*8 beta, sig, s, c, t, tau, rho, eps, tol, dlamch, dlapy2, qtrans(2,2), dmax, zmax, d1new, d2new
-   real*8 z(na), d1(na), d2(na), z1(na), delta(na), dbase(na), ddiff(na), ev_scale(na), tmp(na)
-   real*8 d1u(na), zu(na), d1l(na), zl(na)
-   real*8, allocatable :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
+   real*8               :: beta, sig, s, c, t, tau, rho, eps, tol, dlamch, &
+                           dlapy2, qtrans(2,2), dmax, zmax, d1new, d2new
+   real*8               :: z(na), d1(na), d2(na), z1(na), delta(na),  &
+                           dbase(na), ddiff(na), ev_scale(na), tmp(na)
+   real*8               :: d1u(na), zu(na), d1l(na), zl(na)
+   real*8, allocatable  :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
 #ifdef WITH_OPENMP
-   real*8, allocatable :: z_p(:,:)
+   real*8, allocatable  :: z_p(:,:)
 #endif
 
-   integer i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, l_rqm, ns, info
-   integer l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, l_cols_qreorg, np, l_idx, nqcols1, nqcols2
-   integer my_proc, n_procs, my_prow, my_pcol, np_rows, np_cols, mpierr, mpi_status(mpi_status_size)
-   integer np_next, np_prev, np_rem
-   integer idx(na), idx1(na), idx2(na)
-   integer coltyp(na), idxq1(na), idxq2(na)
+   integer              :: i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
+                           l_rqm, ns, info
+   integer              :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
+                           l_cols_qreorg, np, l_idx, nqcols1, nqcols2
+   integer              :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
+                           np_cols, mpierr, mpi_status(mpi_status_size)
+   integer              :: np_next, np_prev, np_rem
+   integer              :: idx(na), idx1(na), idx2(na)
+   integer              :: coltyp(na), idxq1(na), idxq2(na)
 
+   logical, intent(out) :: success
 #ifdef WITH_OPENMP
-   integer max_threads, my_thread
-   integer omp_get_max_threads, omp_get_thread_num
+   integer              :: max_threads, my_thread
+   integer              :: omp_get_max_threads, omp_get_thread_num
 
    max_threads = omp_get_max_threads()
 
    allocate(z_p(na,0:max_threads-1))
 #endif
+   success = .true. 
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -2258,8 +2304,11 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       np_prev = my_pcol - 1
    endif
 
-   call check_monotony(nm,d,'Input1')
-   call check_monotony(na-nm,d(nm+1),'Input2')
+   call check_monotony(nm,d,'Input1',success)
+   if (.not.(success)) return
+
+   call check_monotony(na-nm,d(nm+1),'Input2',success)
+   if (.not.(success)) return
 
    ! Get global number of processors and my processor number.
    ! Please note that my_proc does not need to match any real processor number,
@@ -2461,8 +2510,10 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       endif
 
    enddo
-   call check_monotony(na1,d1,'Sorted1')
-   call check_monotony(na2,d2,'Sorted2')
+   call check_monotony(na1,d1,'Sorted1', success)
+   if (.not.(success)) return
+   call check_monotony(na2,d2,'Sorted2', success)
+   if (.not.(success)) return
 
    if(na1==1 .or. na1==2) then
       ! if(my_proc==0) print *,'--- Remark solve_tridi: na1==',na1,' proc==',myid
@@ -2613,7 +2664,8 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       do i=1,na
          d(i) = tmp(idx(i))
       enddo
-      call check_monotony(na,d,'Output')
+      call check_monotony(na,d,'Output', success)
+      if (.not.(success)) return
 
       ! Eigenvector calculations
 
@@ -3007,23 +3059,27 @@ subroutine global_product(z, n)
 
 end subroutine global_product
 
-subroutine check_monotony(n,d,text)
+subroutine check_monotony(n,d,text, success)
 
 ! This is a test routine for checking if the eigenvalues are monotonically increasing.
 ! It is for debug purposes only, an error should never be triggered!
 
    implicit none
 
-   integer n
-   real*8 d(n)
-   character*(*) text
+   integer              :: n
+   real*8               :: d(n)
+   character*(*)        :: text
 
-   integer i
-
+   integer              :: i
+   logical, intent(out) :: success
+   
+   success = .true. 
    do i=1,n-1
       if(d(i+1)<d(i)) then
          write(error_unit,'(a,a,i8,2g25.17)') 'Monotony error on ',text,i,d(i),d(i+1)
-         call mpi_abort(mpi_comm_world,0,mpierr)
+         success = .false. 
+         return
+!         call mpi_abort(mpi_comm_world,0,mpierr)
       endif
    enddo
 
@@ -3268,7 +3324,7 @@ end function local_index
 
 !-------------------------------------------------------------------------------
 
-subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
+subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success)
 
 !-------------------------------------------------------------------------------
 !  cholesky_real: Cholesky factorization of a real symmetric matrix
@@ -3295,26 +3351,31 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
    implicit none
 
-   integer na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   real*8 a(lda,*)
+   integer              :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
+   real*8               :: a(lda,*)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-   integer n, nc, i, info
-   integer lcs, lce, lrs, lre
-   integer tile_size, l_rows_tile, l_cols_tile
+   integer              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+   integer              :: n, nc, i, info
+   integer              :: lcs, lce, lrs, lre
+   integer              :: tile_size, l_rows_tile, l_cols_tile
 
-   real*8, allocatable:: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
+   real*8, allocatable  :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
 
-   integer pcol, prow
+   integer              :: pcol, prow
+
+   ! carefull STATEMENT FUNCTION
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+   logical, intent(out) :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+   success = .true. 
 
    ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
@@ -3360,7 +3421,9 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
             call dpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if(info/=0) then
                write(error_unit,*) "Error in dpotrf"
-               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+               success = .false.
+               return 
             endif
 
          endif
@@ -3380,7 +3443,9 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
             call dpotrf('U',nblk,a(l_row1,l_col1),lda,info)
             if(info/=0) then
                write(error_unit,*) "Error in dpotrf"
-               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+               success = .false.
+               return
+!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
             nc = 0
@@ -3445,7 +3510,7 @@ end subroutine cholesky_real
 
 !-------------------------------------------------------------------------------
 
-subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
+subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success)
 
 !-------------------------------------------------------------------------------
 !  invert_trm_real: Inverts a upper triangular matrix
@@ -3471,24 +3536,28 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
    implicit none
 
-   integer na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   real*8 a(lda,*)
+   integer             :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
+   real*8              :: a(lda,*)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-   integer n, nc, i, info, ns, nb
+   integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+   integer             :: n, nc, i, info, ns, nb
 
-   real*8, allocatable:: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
+   real*8, allocatable :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 
-   integer pcol, prow
+   integer             :: pcol, prow
+   ! carefull statement function
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+   logical, intent(out) :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+   success = .false.
 
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
@@ -3525,7 +3594,9 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
             call DTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
             if(info/=0) then
                write(error_unit,*) "Error in DTRTRI"
-               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+               success = .false.
+               return
+!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
             nc = 0
@@ -3578,7 +3649,7 @@ end subroutine invert_trm_real
 
 !-------------------------------------------------------------------------------
 
-subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
+subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success)
 
 !-------------------------------------------------------------------------------
 !  cholesky_complex: Cholesky factorization of a complex hermitian matrix
@@ -3605,21 +3676,26 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
    implicit none
 
-   integer na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   complex*16 a(lda,*)
+   integer                 :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,*)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-   integer n, nc, i, info
-   integer lcs, lce, lrs, lre
-   integer tile_size, l_rows_tile, l_cols_tile
+   integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+   integer                 :: n, nc, i, info
+   integer                 :: lcs, lce, lrs, lre
+   integer                 :: tile_size, l_rows_tile, l_cols_tile
 
-   complex*16, allocatable:: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
+   complex*16, allocatable :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
 
-   integer pcol, prow
+   integer                 :: pcol, prow
+
+   
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+   logical, intent(out)    :: success
+
+   success = .true. 
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -3670,7 +3746,9 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
             call zpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if(info/=0) then
                write(error_unit,*) "Error in zpotrf"
-               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+               success = .false. 
+               return
+!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
          endif
@@ -3690,7 +3768,9 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
             call zpotrf('U',nblk,a(l_row1,l_col1),lda,info)
             if(info/=0) then
                write(error_unit,*) "Error in zpotrf"
-               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+               success = .false.
+               return
+!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
             nc = 0
@@ -3756,7 +3836,7 @@ end subroutine cholesky_complex
 
 !-------------------------------------------------------------------------------
 
-subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
+subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success)
 
 !-------------------------------------------------------------------------------
 !  invert_trm_complex: Inverts a upper triangular matrix
@@ -3782,24 +3862,28 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
 
    implicit none
 
-   integer na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   complex*16 a(lda,*)
+   integer                 :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,*)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-   integer n, nc, i, info, ns, nb
+   integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+   integer                 :: n, nc, i, info, ns, nb
 
-   complex*16, allocatable:: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
+   complex*16, allocatable :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 
-   integer pcol, prow
+   integer                 :: pcol, prow
+   
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
-
+   
+   logical, intent(out)    :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+   success = .true.
 
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
@@ -3836,7 +3920,9 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols)
             call ZTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
             if(info/=0) then
                write(error_unit,*) "Error in ZTRTRI"
-               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+               success = .false.
+               return
+!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
             nc = 0

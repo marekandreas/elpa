@@ -57,6 +57,10 @@ program test_real
 
    use ELPA1
 
+#ifdef HAVE_ISO_FORTRAN_ENV
+  use iso_fortran_env, only : error_unit
+#endif
+
    implicit none
    include 'mpif.h'
 
@@ -73,30 +77,39 @@ program test_real
    !-------------------------------------------------------------------------------
    !  Local Variables
 
-   integer np_rows, np_cols, na_rows, na_cols
+   integer             :: np_rows, np_cols, na_rows, na_cols
 
-   integer myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer             :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer             :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer, external :: numroc
+   integer, external   :: numroc
 
-   real*8 err, errmax
+   real*8              :: err, errmax
    real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
-   integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
+   integer             :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
 
-   integer :: STATUS
+   integer             :: STATUS
 #ifdef WITH_OPENMP
-   integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   integer             :: omp_get_max_threads,  required_mpi_thread_level, &
+                          provided_mpi_thread_level
 #endif
-   logical :: write_to_file
+   logical             :: write_to_file
    !-------------------------------------------------------------------------------
    !  Parse command line argumnents, if given
-   character*16 arg1
-   character*16 arg2
-   character*16 arg3
-   character*16 arg4
+   character*16        :: arg1
+   character*16        :: arg2
+   character*16        :: arg3
+   character*16        :: arg4
+
+#ifndef HAVE_ISO_FORTRAN_ENV
+  integer, parameter   :: error_unit = 6
+#endif
+
+   logical             :: success
+
+   success = .true.
 
    write_to_file = .false.
 
@@ -136,8 +149,8 @@ program test_real
                         provided_mpi_thread_level, mpierr)
 
    if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
-      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
-      print *,"           ", provided_mpi_thread_level, " is available"
+      write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+      write(error_unit,*) "           ", provided_mpi_thread_level, " is available"
       call EXIT(1)
       stop 1
    endif
@@ -271,8 +284,14 @@ program test_real
    end if
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   call solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                       mpi_comm_rows, mpi_comm_cols)
+   success = solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                          mpi_comm_rows, mpi_comm_cols)
+
+   if (.not.(success)) then
+      write(error_unit,*) "solve_evp_real produced an error! Aborting..."
+      call MPI_ABORT(mpi_comm_world, mpierr)
+   endif
+
 
    if (myid==0) then
      print '(a)','| One-step ELPA solver complete.'
