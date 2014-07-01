@@ -697,4 +697,10 @@ AC_CONFIG_FILES([
   ${PKG_CONFIG_FILE}:elpa.pc.in
 ])
 AC_OUTPUT
-grep "^#define" config.h > config-f90.h
+
+
+if test -e config.h ; then
+  grep "^#define" config.h > config-f90.h
+else
+  echo "Warning! No config.h was generated, check for errors and re-run configure!"
+fi
