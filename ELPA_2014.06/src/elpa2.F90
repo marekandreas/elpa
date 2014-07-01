@@ -401,9 +401,9 @@ function complex_kernel_via_environment_variable() result(kernel)
 
 end function complex_kernel_via_environment_variable
 
-subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
+function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
                                  mpi_comm_rows, mpi_comm_cols,        &
-                                 mpi_comm_all, THIS_REAL_ELPA_KERNEL_API)
+                                 mpi_comm_all, THIS_REAL_ELPA_KERNEL_API) result(success)
 
 !-------------------------------------------------------------------------------
 !  solve_evp_real_2stage: Solves the real eigenvalue problem with a 2 stage approach
@@ -442,17 +442,18 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
 
    implicit none
    integer, intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
-  integer                       :: THIS_REAL_ELPA_KERNEL
+   integer                       :: THIS_REAL_ELPA_KERNEL
 
-   integer, intent(in)   :: na, nev, lda, ldq, nblk, mpi_comm_rows, &
-                            mpi_comm_cols, mpi_comm_all
-   real*8, intent(inout) :: a(lda,*), ev(na), q(ldq,*)
+   integer, intent(in)           :: na, nev, lda, ldq, nblk, mpi_comm_rows, &
+                                    mpi_comm_cols, mpi_comm_all
+   real*8, intent(inout)         :: a(lda,*), ev(na), q(ldq,*)
 
-   integer my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer nbw, num_blocks
-   real*8, allocatable :: tmat(:,:,:), e(:)
-   real*8 ttt0, ttt1, ttts
-   integer :: i
+   integer                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer                       :: nbw, num_blocks
+   real*8, allocatable           :: tmat(:,:,:), e(:)
+   real*8                        :: ttt0, ttt1, ttts
+   integer                       :: i
+   logical                       :: success
 
    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
@@ -461,6 +462,9 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+  
+   success = .true.
+
  if (present(THIS_REAL_ELPA_KERNEL_API)) then
       ! user defined kernel via the optional argument in the API call
       THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
@@ -505,7 +509,9 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
 
    ttt0 = MPI_Wtime()
    ttts = ttt0
-   call bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat)
+   call bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
+                     tmat, success)
+   if (.not.(success)) return
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time bandred_real               :',ttt1-ttt0
@@ -530,7 +536,10 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    ! Solve tridiagonal system
 
    ttt0 = MPI_Wtime()
-   call solve_tridi(na, nev, ev, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
+   call solve_tridi(na, nev, ev, e, q, ldq, nblk, mpi_comm_rows,  &
+                    mpi_comm_cols, success)
+   if (.not.(success)) return
+
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time solve_tridi                :',ttt1-ttt0
@@ -542,7 +551,9 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    ! Backtransform stage 1
 
    ttt0 = MPI_Wtime()
-   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, mpi_comm_cols, THIS_REAL_ELPA_KERNEL)
+   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, &
+                                    mpi_comm_cols, success, THIS_REAL_ELPA_KERNEL)
+   if (.not.(success)) return
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_tridi_to_band_real:',ttt1-ttt0
@@ -563,15 +574,15 @@ subroutine solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
 
 1  format(a,f10.3)
 
-end subroutine solve_evp_real_2stage
+end function solve_evp_real_2stage
 
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
+function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
                                     mpi_comm_rows, mpi_comm_cols,      &
-                                    mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
+                                    mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API) result(success)
 
 !-------------------------------------------------------------------------------
 !  solve_evp_complex_2stage: Solves the complex eigenvalue problem with a 2 stage approach
@@ -611,16 +622,18 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    implicit none
    integer, intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
    integer                       :: THIS_COMPLEX_ELPA_KERNEL
-   integer, intent(in) :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-   complex*16, intent(inout) :: a(lda,*), q(ldq,*)
-   real*8, intent(inout) :: ev(na)
+   integer, intent(in)           :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   complex*16, intent(inout)     :: a(lda,*), q(ldq,*)
+   real*8, intent(inout)         :: ev(na)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
-   integer l_cols, l_rows, l_cols_nev, nbw, num_blocks
-   complex*16, allocatable :: tmat(:,:,:)
-   real*8, allocatable :: q_real(:,:), e(:)
-   real*8 ttt0, ttt1, ttts
-   integer :: i
+   integer                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
+   integer                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
+   complex*16, allocatable       :: tmat(:,:,:)
+   real*8, allocatable           :: q_real(:,:), e(:)
+   real*8                        :: ttt0, ttt1, ttts
+   integer                       :: i
+   
+   logical                       :: success
 
    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
@@ -629,6 +642,9 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+   success = .true.
+
   if (present(THIS_COMPLEX_ELPA_KERNEL_API)) then
       ! user defined kernel via the optional argument in the API call
       THIS_COMPLEX_ELPA_KERNEL = THIS_COMPLEX_ELPA_KERNEL_API
@@ -671,7 +687,10 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
    ttt0 = MPI_Wtime()
    ttts = ttt0
-   call bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat)
+   call bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
+                        tmat, success)
+   if (.not.(success)) return
+
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time bandred_complex               :',ttt1-ttt0
@@ -701,7 +720,10 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ! Solve tridiagonal system
 
    ttt0 = MPI_Wtime()
-   call solve_tridi(na, nev, ev, e, q_real, ubound(q_real,1), nblk, mpi_comm_rows, mpi_comm_cols)
+   call solve_tridi(na, nev, ev, e, q_real, ubound(q_real,1), nblk, &
+                    mpi_comm_rows, mpi_comm_cols, success)
+   if (.not.(success)) return
+
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times)  &
       write(error_unit,*) 'Time solve_tridi                   :',ttt1-ttt0
@@ -716,7 +738,9 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
    ttt0 = MPI_Wtime()
    call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,  &
-                                       mpi_comm_rows, mpi_comm_cols,THIS_COMPLEX_ELPA_KERNEL)
+                                       mpi_comm_rows, mpi_comm_cols,&
+                                       success,THIS_COMPLEX_ELPA_KERNEL)
+   if (.not.(success)) return
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_tridi_to_band_complex:',ttt1-ttt0
@@ -737,11 +761,12 @@ subroutine solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
 1  format(a,f10.3)
 
-end subroutine solve_evp_complex_2stage
+end function solve_evp_complex_2stage
 
 !-------------------------------------------------------------------------------
 
-subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat)
+subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
+                        tmat, success)
 
 !-------------------------------------------------------------------------------
 !  bandred_real: Reduces a distributed symmetric matrix to band form
@@ -773,28 +798,31 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
 
    implicit none
 
-   integer na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   real*8 a(lda,*), tmat(nbw,nbw,*)
+   integer             :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
+   real*8              :: a(lda,*), tmat(nbw,nbw,*)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer l_cols, l_rows
-   integer i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
-   integer istep, ncol, lch, lcx, nlc
-   integer tile_size, l_rows_tile, l_cols_tile
+   integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer             :: l_cols, l_rows
+   integer             :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
+   integer             :: istep, ncol, lch, lcx, nlc
+   integer             :: tile_size, l_rows_tile, l_cols_tile
 
-   real*8 vnorm2, xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
+   real*8              :: vnorm2, xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
-   real*8, allocatable:: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
+   real*8, allocatable :: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
 
-   integer pcol, prow
+   integer             :: pcol, prow
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
+
+   logical, intent(out):: success
 
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+   success = .true.
 
    ! Semibandwith nbw must be a multiple of blocksize nblk
 
@@ -802,7 +830,8 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tma
       if(my_prow==0 .and. my_pcol==0) then
          write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
          write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
-         call mpi_abort(mpi_comm_world,0,mpierr)
+         success = .false.
+!         call mpi_abort(mpi_comm_world,0,mpierr)
       endif
    endif
 
@@ -1865,7 +1894,7 @@ enddo
 
 
 subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
-                                       mpi_comm_rows, mpi_comm_cols, &
+                                       mpi_comm_rows, mpi_comm_cols, success, &
                                        THIS_REAL_ELPA_KERNEL)
 !-------------------------------------------------------------------------------
 !  trans_ev_tridi_to_band_real:
@@ -1942,19 +1971,22 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
     ! MPI send/recv tags, arbitrary
 
-    integer, parameter :: bottom_recv_tag = 111
-    integer, parameter :: top_recv_tag    = 222
-    integer, parameter :: result_recv_tag = 333
+    integer, parameter  :: bottom_recv_tag = 111
+    integer, parameter  :: top_recv_tag    = 222
+    integer, parameter  :: result_recv_tag = 333
 
     ! Just for measuring the kernel performance
-    real*8 kernel_time
-    integer*8 kernel_flops
+    real*8              :: kernel_time
+    integer*8           :: kernel_flops
 
 #ifdef WITH_OPENMP
-    integer max_threads, my_thread
-    integer omp_get_max_threads
+    integer             :: max_threads, my_thread
+    integer             :: omp_get_max_threads
 #endif
 
+    logical             :: success
+
+    success = .true.
     kernel_time = 1.d-100
     kernel_flops = 0
 
@@ -1972,7 +2004,8 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
       if(my_prow==0 .and. my_pcol==0) then
          write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
          write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
-         call mpi_abort(mpi_comm_world,0,mpierr)
+         success = .false.
+!         call mpi_abort(mpi_comm_world,0,mpierr)
       endif
     endif
 
@@ -2566,7 +2599,8 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
          offset = nbw - top_msg_length
          if(offset<0) then
              write(error_unit,*) 'internal error, offset for shifting = ',offset
-             call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
+             success = .false.
+!             call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
          endif
          a_off = a_off + offset
          if(a_off + next_local_n + nbw > a_dim2) then
@@ -3063,7 +3097,7 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat)
+subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat, success)
 
 !-------------------------------------------------------------------------------
 !  bandred_complex: Reduces a distributed hermitian matrix to band form
@@ -3115,11 +3149,14 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+   logical, intent(out) :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+   success = .true.
 
    ! Semibandwith nbw must be a multiple of blocksize nblk
 
@@ -3127,7 +3164,8 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
       if(my_prow==0 .and. my_pcol==0) then
          write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
          write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
-         call mpi_abort(mpi_comm_world,0,mpierr)
+         success = .false.
+!         call mpi_abort(mpi_comm_world,0,mpierr)
       endif
    endif
 
@@ -4184,7 +4222,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
 subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                                           mpi_comm_rows, mpi_comm_cols, &
-                                          THIS_COMPLEX_ELPA_KERNEL)
+                                          success, THIS_COMPLEX_ELPA_KERNEL)
 
 !-------------------------------------------------------------------------------
 !  trans_ev_tridi_to_band_complex:
@@ -4271,8 +4309,9 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     ! Just for measuring the kernel performance
     real*8 kernel_time
     integer*8 kernel_flops
-
-
+    
+    logical :: success
+    
     kernel_time = 1.d-100
     kernel_flops = 0
 
@@ -4286,11 +4325,14 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     call MPI_Comm_rank(mpi_comm_cols, my_pcol, mpierr)
     call MPI_Comm_size(mpi_comm_cols, np_cols, mpierr)
 
+    success = .true.
+
     if(mod(nbw,nblk)/=0) then
       if(my_prow==0 .and. my_pcol==0) then
          write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
          write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
-         call mpi_abort(mpi_comm_world,0,mpierr)
+!         call mpi_abort(mpi_comm_world,0,mpierr)
+         success = .false. 
       endif
     endif
 
@@ -4913,7 +4955,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
         offset = nbw - top_msg_length
         if(offset<0) then
             write(error_unit,*) 'internal error, offset for shifting = ',offset
-            call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
+!            call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
+            success = .false. 
         endif
         a_off = a_off + offset
         if(a_off + next_local_n + nbw > a_dim2) then

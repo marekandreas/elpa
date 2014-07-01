@@ -44,6 +44,9 @@ Any incompatibles to previous version?
 The ABI of ELPA has changed! It will be necessary to rebuild the programs using
 ELPA if this new version should be used. Beware, that not rebuilding the user 
 programs most likely leads to undefined behaviour!
+Among others, the ELPA drivers are now functions, which return a logical "success", which is false in case that an error occured. Please, check for this logical
+in your user code! See the the examples in the subdirectoy "./test".
+
 Note also, that the library names have changed, in order to reflect the new ABI
 (see point d above).
 

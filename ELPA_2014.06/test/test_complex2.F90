@@ -60,6 +60,10 @@ program test_complex2
    use test_util
 #endif
 
+#ifdef HAVE_ISO_FORTRAN_ENV
+  use iso_fortran_env, only : error_unit
+#endif
+
    implicit none
    include 'mpif.h'
 
@@ -104,7 +108,14 @@ program test_complex2
    character*16 arg3
    character*16 arg4
 
+#ifndef HAVE_ISO_FORTRAN_ENV
+  integer, parameter   :: error_unit = 6
+#endif
+
+  logical :: success
+
    write_to_file = .false.
+   success = .true. 
 
    nblk = 16
    na = 4000
@@ -141,8 +152,8 @@ program test_complex2
                         provided_mpi_thread_level, mpierr)
 
    if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
-      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
-      print *,"           ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
+      write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+      write(error_unit,*) "           ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
       call EXIT(1)
       stop 1
    endif
@@ -283,8 +294,13 @@ program test_complex2
    ! Calculate eigenvalues/eigenvectors
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   call solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                  mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+
+   if (.not.(success)) then
+      write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."
+      call MPI_ABORT(mpi_comm_world, mpierr)
+   endif
 
    if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
    if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
