@@ -6,71 +6,71 @@ AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 
 # libelpa
-lib_LTLIBRARIES = libelpa-@PACKAGE_VERSION@@SUFFIX@.la
-libelpa_@PACKAGE_VERSION@@SUFFIX@_la_LINK = $(FCLINK)
-libelpa_@PACKAGE_VERSION@@SUFFIX@_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
+lib_LTLIBRARIES = libelpa@SUFFIX@-@PACKAGE_VERSION@.la
+libelpa@SUFFIX@_@PACKAGE_VERSION@_la_LINK = $(FCLINK)
+libelpa@SUFFIX@_@PACKAGE_VERSION@_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
 
 ##rule to produce fortran config file:
 #config_f90.h: ./config.h
 #	grep "^#define" ./config.h > $@
 
-libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES = src/elpa1.F90 src/elpa2.F90
+libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES = src/elpa1.F90 src/elpa2.F90
 
 if WITH_REAL_GENERIC_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.f90
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.f90
 endif
 
 if WITH_COMPLEX_GENERIC_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.f90
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.f90
 endif
 
 if WITH_REAL_GENERIC_SIMPLE_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.f90
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.f90
 endif
 
 if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90
 endif
 
 if WITH_REAL_BGP_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90
 endif
 
 if WITH_REAL_BGQ_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90
 endif
 
 if WITH_REAL_SSE_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 else
 if WITH_COMPLEX_SSE_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 endif
 endif
 
 if WITH_REAL_AVX_BLOCK2_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
 endif
 
 if WITH_REAL_AVX_BLOCK4_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
 endif
 
 if WITH_REAL_AVX_BLOCK6_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
 endif
 
 if WITH_COMPLEX_AVX_BLOCK1_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 endif
 
 if WITH_COMPLEX_AVX_BLOCK2_KERNEL
-  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
+  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
 endif
 
 #if WITH_AVX_SANDYBRIDGE
-#  libelpa_@PACKAGE_VERSION@@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
+#  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
 #                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 #endif
 
@@ -115,7 +115,7 @@ noinst_PROGRAMS = \
 	elpa2_test_real_choose_kernel_with_api@SUFFIX@ \
 	elpa2_test_complex_choose_kernel_with_api@SUFFIX@
 
-build_lib = libelpa-@PACKAGE_VERSION@@SUFFIX@.la
+build_lib = libelpa@SUFFIX@-@PACKAGE_VERSION@.la
 
 elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90 test/util.F90
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
@@ -236,7 +236,7 @@ libtool: $(LIBTOOL_DEPS)
 
 # $1	Object name
 define require_elpa_lib
-$1: libelpa-@PACKAGE_VERSION@@SUFFIX@.la
+$1: libelpa@SUFFIX@-@PACKAGE_VERSION@.la
 
 endef
 $(foreach p,$(bin_PROGRAMS) $(noinst_PROGRAMS),$(foreach o,$($p_OBJECTS),$(eval $(call require_elpa_lib,$o))))

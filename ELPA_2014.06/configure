@@ -638,6 +638,8 @@ LTLIBOBJS
 LIBOBJS
 PKG_CONFIG_FILE
 SUFFIX
+OPENMP_LDFLAGS
+OPENMP_CFLAGS
 with_amd_bulldozer_kernel
 WITH_BLACS
 WITH_MKL
@@ -5900,7 +5902,7 @@ $as_echo "$ac_cv_prog_fc_openmp" >&6; }
         # Append to flags as this influences which
         # kind of MPI library has to be used (thread-safe or not)
         FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
-	LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
+	LDFLAGS="$OPENMP_FCFLAGS $LDFLAGS"
   fi
 
 save_FCFLAGS=$FCFLAGS
@@ -5909,8 +5911,8 @@ save_LDFLAGS=$LDFLAGS
 
 
 
-FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS $OPENMP_FCFLAGS"
-LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS $OPENMP_FCFLAGS"
+FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS"
+LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether Fortran module iso_fortran_env is available" >&5
 $as_echo_n "checking whether Fortran module iso_fortran_env is available... " >&6; }
@@ -21092,6 +21094,9 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 # Only expand once:
+
+
+
 
 
 

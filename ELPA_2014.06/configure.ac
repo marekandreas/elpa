@@ -194,7 +194,7 @@ AC_ARG_WITH([openmp],
         # Append to flags as this influences which
         # kind of MPI library has to be used (thread-safe or not)
         FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
-	LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
+	LDFLAGS="$OPENMP_FCFLAGS $LDFLAGS"
   fi
 
 save_FCFLAGS=$FCFLAGS
@@ -203,8 +203,8 @@ save_LDFLAGS=$LDFLAGS
 AC_ARG_VAR([SCALAPACK_LDFLAGS],[Extra LDFLAGS necessary to link a program with Scalapack])
 AC_ARG_VAR([SCALAPACK_FCFLAGS],[Extra FCFLAGS necessary to compile a Fortran program with Scalapack])
 
-FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS $OPENMP_FCFLAGS"
-LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS $OPENMP_FCFLAGS"
+FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS"
+LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS"
 
 dnl check whether fortran error_unit is defined
 AC_MSG_CHECKING([whether Fortran module iso_fortran_env is available])
@@ -661,6 +661,9 @@ AC_SUBST([WITH_BLACS])
 AC_SUBST([with_amd_bulldozer_kernel])
 AC_SUBST([FC_MODINC])
 AC_SUBST([FC_MODOUT])
+AC_SUBST([OPENMP_CFLAGS])
+AC_SUBST([OPENMP_FCFLAGS])
+AC_SUBST([OPENMP_LDFLAGS])
 #AC_SUBST(OPT_FCFLAGS)
 
 rm -rf modules/ .fortran_dependencies/
