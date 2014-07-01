@@ -33,7 +33,7 @@ endef
 #
 # returns: the appropriate extension (i.e. 'o' for normal programs, '.lo' for libraries)
 define object_extension
-$(if $(filter $2,$(bin_PROGRAMS)),o,lo)
+$(if $(filter $1,$(PROGRAMS)),o,lo)
 endef
 
 # $1 source_file
