@@ -637,6 +637,7 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
 PKG_CONFIG_FILE
+SUFFIX
 with_amd_bulldozer_kernel
 WITH_BLACS
 WITH_MKL
@@ -21124,11 +21125,12 @@ mkdir modules
 postdeps_FC=$(echo $postdeps_FC | sed 's/-l //g')
 
 if test x"${with_openmp}" = x"yes"; then
-	MT="_mt"
+	SUFFIX="_openmp"
 else
-	MT=""
+	SUFFIX=""
 fi
-PKG_CONFIG_FILE=elpa${MT}-${PACKAGE_VERSION}.pc
+
+PKG_CONFIG_FILE=elpa${SUFFIX}-${PACKAGE_VERSION}.pc
 
 
 ac_config_files="$ac_config_files Makefile ${PKG_CONFIG_FILE}:elpa.pc.in"

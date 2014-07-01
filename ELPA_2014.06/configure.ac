@@ -686,11 +686,12 @@ mkdir modules
 postdeps_FC=$(echo $postdeps_FC | sed 's/-l //g')
 
 if test x"${with_openmp}" = x"yes"; then
-	MT="_mt"
+	SUFFIX="_openmp"
 else
-	MT=""
+	SUFFIX=""
 fi
-AC_SUBST([PKG_CONFIG_FILE],[elpa${MT}-${PACKAGE_VERSION}.pc])
+AC_SUBST([SUFFIX])
+AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
 
 AC_CONFIG_FILES([
   Makefile
