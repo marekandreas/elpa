@@ -117,31 +117,31 @@ noinst_PROGRAMS = \
 
 build_lib = libelpa-@PACKAGE_VERSION@@SUFFIX@.la
 
-elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90
+elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90 test/util.F90
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90
+elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90 test/util.F90
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90
+elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90 test/util.F90
 elpa2_test_real_default_kernel@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_real2_choose_kernel_with_api.F90
+elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_real2_choose_kernel_with_api.F90 test/util.F90
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 
-elpa1_test_complex@SUFFIX@_SOURCES = test/test_complex.F90
+elpa1_test_complex@SUFFIX@_SOURCES = test/test_complex.F90 test/util.F90
 elpa1_test_complex@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_complex@SUFFIX@_SOURCES = test/test_complex2.F90
+elpa2_test_complex@SUFFIX@_SOURCES = test/test_complex2.F90 test/util.F90
 elpa2_test_complex@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/test_complex2_default_kernel.F90
+elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/test_complex2_default_kernel.F90 test/util.F90
 elpa2_test_complex_default_kernel@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_complex2_choose_kernel_with_api.F90
+elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_complex2_choose_kernel_with_api.F90 test/util.F90
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90
+elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 test/util.F90
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 
 check_SCRIPTS = \

@@ -55,6 +55,9 @@ program test_complex
 !-------------------------------------------------------------------------------
 
    use ELPA1
+#ifdef WITH_OPENMP
+   use test_util
+#endif
 
    implicit none
    include 'mpif.h'
@@ -137,7 +140,7 @@ program test_complex
 
    if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
       print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
-      print *,"           ", provided_mpi_thread_level, " is available"
+      print *,"           ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
       call EXIT(1)
       stop 1
    endif

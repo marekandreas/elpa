@@ -195,7 +195,8 @@ am_libelpa_@PACKAGE_VERSION@@SUFFIX@_la_OBJECTS = src/elpa1.lo \
 libelpa_@PACKAGE_VERSION@@SUFFIX@_la_OBJECTS =  \
 	$(am_libelpa_@PACKAGE_VERSION@@SUFFIX@_la_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
-am_elpa1_test_complex@SUFFIX@_OBJECTS = test/test_complex.$(OBJEXT)
+am_elpa1_test_complex@SUFFIX@_OBJECTS = test/test_complex.$(OBJEXT) \
+	test/util.$(OBJEXT)
 elpa1_test_complex@SUFFIX@_OBJECTS =  \
 	$(am_elpa1_test_complex@SUFFIX@_OBJECTS)
 elpa1_test_complex@SUFFIX@_DEPENDENCIES = $(build_lib)
@@ -203,41 +204,48 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_elpa1_test_real@SUFFIX@_OBJECTS = test/test_real.$(OBJEXT)
+am_elpa1_test_real@SUFFIX@_OBJECTS = test/test_real.$(OBJEXT) \
+	test/util.$(OBJEXT)
 elpa1_test_real@SUFFIX@_OBJECTS =  \
 	$(am_elpa1_test_real@SUFFIX@_OBJECTS)
 elpa1_test_real@SUFFIX@_DEPENDENCIES = $(build_lib)
 am_elpa2_print_kernels@SUFFIX@_OBJECTS =  \
-	src/print_available_elpa2_kernels.$(OBJEXT)
+	src/print_available_elpa2_kernels.$(OBJEXT) \
+	test/util.$(OBJEXT)
 elpa2_print_kernels@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_print_kernels@SUFFIX@_OBJECTS)
 elpa2_print_kernels@SUFFIX@_DEPENDENCIES = $(build_lib)
-am_elpa2_test_complex@SUFFIX@_OBJECTS = test/test_complex2.$(OBJEXT)
+am_elpa2_test_complex@SUFFIX@_OBJECTS = test/test_complex2.$(OBJEXT) \
+	test/util.$(OBJEXT)
 elpa2_test_complex@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_complex@SUFFIX@_OBJECTS)
 elpa2_test_complex@SUFFIX@_DEPENDENCIES = $(build_lib)
 am_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_OBJECTS =  \
-	test/test_complex2_choose_kernel_with_api.$(OBJEXT)
+	test/test_complex2_choose_kernel_with_api.$(OBJEXT) \
+	test/util.$(OBJEXT)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_OBJECTS = $(am_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_OBJECTS)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_DEPENDENCIES =  \
 	$(build_lib)
 am_elpa2_test_complex_default_kernel@SUFFIX@_OBJECTS =  \
-	test/test_complex2_default_kernel.$(OBJEXT)
+	test/test_complex2_default_kernel.$(OBJEXT) \
+	test/util.$(OBJEXT)
 elpa2_test_complex_default_kernel@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_complex_default_kernel@SUFFIX@_OBJECTS)
 elpa2_test_complex_default_kernel@SUFFIX@_DEPENDENCIES = $(build_lib)
-am_elpa2_test_real@SUFFIX@_OBJECTS = test/test_real2.$(OBJEXT)
+am_elpa2_test_real@SUFFIX@_OBJECTS = test/test_real2.$(OBJEXT) \
+	test/util.$(OBJEXT)
 elpa2_test_real@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_real@SUFFIX@_OBJECTS)
 elpa2_test_real@SUFFIX@_DEPENDENCIES = $(build_lib)
 am_elpa2_test_real_choose_kernel_with_api@SUFFIX@_OBJECTS =  \
-	test/test_real2_choose_kernel_with_api.$(OBJEXT)
+	test/test_real2_choose_kernel_with_api.$(OBJEXT) \
+	test/util.$(OBJEXT)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_real_choose_kernel_with_api@SUFFIX@_OBJECTS)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_DEPENDENCIES =  \
 	$(build_lib)
 am_elpa2_test_real_default_kernel@SUFFIX@_OBJECTS =  \
-	test/test_real2_default_kernel.$(OBJEXT)
+	test/test_real2_default_kernel.$(OBJEXT) test/util.$(OBJEXT)
 elpa2_test_real_default_kernel@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_real_default_kernel@SUFFIX@_OBJECTS)
 elpa2_test_real_default_kernel@SUFFIX@_DEPENDENCIES = $(build_lib)
@@ -767,23 +775,23 @@ dist_doc_DATA = README COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = @PKG_CONFIG_FILE@
 build_lib = libelpa-@PACKAGE_VERSION@@SUFFIX@.la
-elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90
+elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90 test/util.F90
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90
+elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90 test/util.F90
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90
+elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90 test/util.F90
 elpa2_test_real_default_kernel@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_real2_choose_kernel_with_api.F90
+elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_real2_choose_kernel_with_api.F90 test/util.F90
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
-elpa1_test_complex@SUFFIX@_SOURCES = test/test_complex.F90
+elpa1_test_complex@SUFFIX@_SOURCES = test/test_complex.F90 test/util.F90
 elpa1_test_complex@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_complex@SUFFIX@_SOURCES = test/test_complex2.F90
+elpa2_test_complex@SUFFIX@_SOURCES = test/test_complex2.F90 test/util.F90
 elpa2_test_complex@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/test_complex2_default_kernel.F90
+elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/test_complex2_default_kernel.F90 test/util.F90
 elpa2_test_complex_default_kernel@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_complex2_choose_kernel_with_api.F90
+elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_complex2_choose_kernel_with_api.F90 test/util.F90
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
-elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90
+elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 test/util.F90
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 check_SCRIPTS = \
 	elpa1_test_real.sh \
@@ -1018,6 +1026,8 @@ test/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) test/$(DEPDIR)
 	@: > test/$(DEPDIR)/$(am__dirstamp)
 test/test_complex.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+test/util.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
 elpa1_test_complex@SUFFIX@$(EXEEXT): $(elpa1_test_complex@SUFFIX@_OBJECTS) $(elpa1_test_complex@SUFFIX@_DEPENDENCIES) $(EXTRA_elpa1_test_complex@SUFFIX@_DEPENDENCIES) 
