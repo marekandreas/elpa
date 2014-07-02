@@ -22,10 +22,22 @@ AM_SILENT_RULES([yes])
 
 rm -rf config.h config-f90.h
 
-# this is the version of the API, should be changed in the major revision
-# if and only if the actual API changes
-# see http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
-AC_SUBST([ELPA_SO_VERSION], [0:0:0])
+# Set the libtool library version, see LIBRARY_INTERFACE
+#
+# See http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+#
+# [c:r:a]
+#
+# c: The currently implement interface
+# r: The revision number of the current interface, that is the number
+#    of released source-code changes for the current interface
+# a: The "age" is the number of interfaces prior to c that are also supported
+#    by the current interface, as they are ABI compatible (e.g. only new symbols
+#    were added by the new interface)
+#
+AC_SUBST([ELPA_SO_VERSION], [1:0:0])
+#
+
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then

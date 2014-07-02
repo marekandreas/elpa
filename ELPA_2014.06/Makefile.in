@@ -158,9 +158,9 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(filesdir)" \
 	"$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(elpa_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libelpa@SUFFIX@_@PACKAGE_VERSION@_la_LIBADD =
-am__libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES_DIST = src/elpa1.F90 \
-	src/elpa2.F90 src/elpa2_kernels/elpa2_kernels_real.f90 \
+libelpa@SUFFIX@_la_LIBADD =
+am__libelpa@SUFFIX@_la_SOURCES_DIST = src/elpa1.F90 src/elpa2.F90 \
+	src/elpa2_kernels/elpa2_kernels_real.f90 \
 	src/elpa2_kernels/elpa2_kernels_complex.f90 \
 	src/elpa2_kernels/elpa2_kernels_real_simple.f90 \
 	src/elpa2_kernels/elpa2_kernels_complex_simple.f90 \
@@ -186,14 +186,13 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @WITH_REAL_AVX_BLOCK6_KERNEL_TRUE@am__objects_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo
 @WITH_COMPLEX_AVX_BLOCK1_KERNEL_TRUE@am__objects_12 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.lo
 @WITH_COMPLEX_AVX_BLOCK2_KERNEL_TRUE@am__objects_13 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo
-am_libelpa@SUFFIX@_@PACKAGE_VERSION@_la_OBJECTS = src/elpa1.lo \
-	src/elpa2.lo $(am__objects_1) $(am__objects_2) \
-	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
-	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
-	$(am__objects_12) $(am__objects_13)
-libelpa@SUFFIX@_@PACKAGE_VERSION@_la_OBJECTS =  \
-	$(am_libelpa@SUFFIX@_@PACKAGE_VERSION@_la_OBJECTS)
+am_libelpa@SUFFIX@_la_OBJECTS = src/elpa1.lo src/elpa2.lo \
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
+	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
+	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
+	$(am__objects_13)
+libelpa@SUFFIX@_la_OBJECTS = $(am_libelpa@SUFFIX@_la_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
 am_elpa1_test_complex@SUFFIX@_OBJECTS = test/test_complex.$(OBJEXT) \
 	test/util.$(OBJEXT)
@@ -334,7 +333,7 @@ AM_V_CCAS = $(am__v_CCAS_@AM_V@)
 am__v_CCAS_ = $(am__v_CCAS_@AM_DEFAULT_V@)
 am__v_CCAS_0 = @echo "  CCAS    " $@;
 am__v_CCAS_1 = 
-SOURCES = $(libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES) \
+SOURCES = $(libelpa@SUFFIX@_la_SOURCES) \
 	$(elpa1_test_complex@SUFFIX@_SOURCES) \
 	$(elpa1_test_real@SUFFIX@_SOURCES) \
 	$(elpa2_print_kernels@SUFFIX@_SOURCES) \
@@ -344,8 +343,7 @@ SOURCES = $(libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES) \
 	$(elpa2_test_real@SUFFIX@_SOURCES) \
 	$(elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES) \
 	$(elpa2_test_real_default_kernel@SUFFIX@_SOURCES)
-DIST_SOURCES =  \
-	$(am__libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES_DIST) \
+DIST_SOURCES = $(am__libelpa@SUFFIX@_la_SOURCES_DIST) \
 	$(elpa1_test_complex@SUFFIX@_SOURCES) \
 	$(elpa1_test_real@SUFFIX@_SOURCES) \
 	$(elpa2_print_kernels@SUFFIX@_SOURCES) \
@@ -732,51 +730,47 @@ AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 
 # libelpa
-lib_LTLIBRARIES = libelpa@SUFFIX@-@PACKAGE_VERSION@.la
-libelpa@SUFFIX@_@PACKAGE_VERSION@_la_LINK = $(FCLINK)
-libelpa@SUFFIX@_@PACKAGE_VERSION@_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
-
-#config_f90.h: ./config.h
-#	grep "^#define" ./config.h > $@
-libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES = src/elpa1.F90 \
-	src/elpa2.F90 $(am__append_1) $(am__append_2) $(am__append_3) \
+lib_LTLIBRARIES = libelpa@SUFFIX@.la
+libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
+libelpa@SUFFIX@_la_SOURCES = src/elpa1.F90 src/elpa2.F90 \
+	$(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
 	$(am__append_7) $(am__append_8) $(am__append_9) \
 	$(am__append_10) $(am__append_11) $(am__append_12) \
 	$(am__append_13)
 
 #if WITH_AVX_SANDYBRIDGE
-#  libelpa@SUFFIX@_@PACKAGE_VERSION@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
+#  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
 #                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
 #endif
 
 # install any .mod files in the include/ dir
-elpa_includedir = $(includedir)/elpa-@PACKAGE_VERSION@
+elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = $(wildcard modules/*)
 
 # other files to distribute
-filesdir = $(datadir)/@PACKAGE@-@PACKAGE_VERSION@/examples
+filesdir = $(docdir)/examples
 dist_files_DATA = \
-	test/read_real.F90 \
-	test/read_real_gen.F90 \
-	test/test_complex2.F90 \
-	test/test_complex2_default_kernel.F90 \
-	test/test_complex2_choose_kernel_with_api.F90 \
-	test/test_complex.F90 \
-	test/test_complex_gen.F90 \
-	test/test_real2.F90 \
-	test/test_real2_default_kernel.F90 \
-	test/test_real2_choose_kernel_with_api.F90 \
-	src/print_available_elpa2_kernels.F90 \
-	test/test_real.F90 \
-	test/test_real_gen.F90
+  test/read_real.F90 \
+  test/read_real_gen.F90 \
+  test/test_complex2.F90 \
+  test/test_complex2_default_kernel.F90 \
+  test/test_complex2_choose_kernel_with_api.F90 \
+  test/test_complex.F90 \
+  test/test_complex_gen.F90 \
+  test/test_real2.F90 \
+  test/test_real2_default_kernel.F90 \
+  test/test_real2_choose_kernel_with_api.F90 \
+  src/print_available_elpa2_kernels.F90 \
+  test/test_real.F90 \
+  test/test_real_gen.F90
 
 dist_doc_DATA = README COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = @PKG_CONFIG_FILE@
-build_lib = libelpa@SUFFIX@-@PACKAGE_VERSION@.la
+build_lib = libelpa@SUFFIX@.la
 elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90 test/util.F90
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90 test/util.F90
@@ -796,26 +790,26 @@ elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 test/util.F90
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 check_SCRIPTS = \
-	elpa1_test_real.sh \
-	elpa2_test_real.sh \
-	elpa2_test_real_default_kernel.sh \
-	elpa1_test_complex.sh \
-	elpa2_test_complex.sh \
-	elpa2_test_complex_default_kernel.sh \
-	elpa2_test_real_choose_kernel_with_api.sh \
-	elpa2_test_complex_choose_kernel_with_api.sh \
-	elpa2_print_kernels@SUFFIX@
+  elpa1_test_real.sh \
+  elpa2_test_real.sh \
+  elpa2_test_real_default_kernel.sh \
+  elpa1_test_complex.sh \
+  elpa2_test_complex.sh \
+  elpa2_test_complex_default_kernel.sh \
+  elpa2_test_real_choose_kernel_with_api.sh \
+  elpa2_test_complex_choose_kernel_with_api.sh \
+  elpa2_print_kernels@SUFFIX@
 
 CLEANFILES = \
-	elpa1_test_real.sh \
-	elpa1_test_complex.sh \
-	elpa2_test_real.sh \
-	elpa2_test_real_default_kernel.sh \
-	elpa2_test_complex.sh \
-	elpa2_test_complex_default_kernel.sh \
-	elpa2_test_real_choose_kernel_with_api.sh \
-	elpa2_test_complex_choose_kernel_with_api.sh \
-	*.i
+  elpa1_test_real.sh \
+  elpa1_test_complex.sh \
+  elpa2_test_real.sh \
+  elpa2_test_real_default_kernel.sh \
+  elpa2_test_complex.sh \
+  elpa2_test_complex_default_kernel.sh \
+  elpa2_test_real_choose_kernel_with_api.sh \
+  elpa2_test_complex_choose_kernel_with_api.sh \
+  *.i
 
 EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
@@ -961,8 +955,8 @@ src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo:  \
 	src/elpa2_kernels/$(am__dirstamp) \
 	src/elpa2_kernels/$(DEPDIR)/$(am__dirstamp)
 
-libelpa@SUFFIX@-@PACKAGE_VERSION@.la: $(libelpa@SUFFIX@_@PACKAGE_VERSION@_la_OBJECTS) $(libelpa@SUFFIX@_@PACKAGE_VERSION@_la_DEPENDENCIES) $(EXTRA_libelpa@SUFFIX@_@PACKAGE_VERSION@_la_DEPENDENCIES) 
-	$(AM_V_GEN)$(libelpa@SUFFIX@_@PACKAGE_VERSION@_la_LINK) -rpath $(libdir) $(libelpa@SUFFIX@_@PACKAGE_VERSION@_la_OBJECTS) $(libelpa@SUFFIX@_@PACKAGE_VERSION@_la_LIBADD) $(LIBS)
+libelpa@SUFFIX@.la: $(libelpa@SUFFIX@_la_OBJECTS) $(libelpa@SUFFIX@_la_DEPENDENCIES) $(EXTRA_libelpa@SUFFIX@_la_DEPENDENCIES) 
+	$(AM_V_GEN)$(libelpa@SUFFIX@_la_LINK) -rpath $(libdir) $(libelpa@SUFFIX@_la_OBJECTS) $(libelpa@SUFFIX@_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -1914,13 +1908,13 @@ clean-local:
 
 distclean-local:
 	-rm config-f90.h
-	-rmdir ./src/elpa2_kernels/.deps
+	-rm -rf ./src/elpa2_kernels/.deps
+	-rm -rf ./src/.deps
+	-rm -rf ./test/.deps
 	-rmdir ./src/elpa2_kernels/
-	-rmdir ./src/.deps
-	-rmdir ./src/.deps
 	-rmdir ./src
-	-rmdir ./test/.deps
 	-rmdir ./test
+	-rmdir ./m4
 	-rmdir modules/
 	-rmdir .fortran_dependencies/
 libtool: $(LIBTOOL_DEPS)
@@ -1932,9 +1926,9 @@ libtool: $(LIBTOOL_DEPS)
 # specify that the test programs need a finished library before
 # one can compile them
 
-# $1	Object name
+# $1  Object name
 define require_elpa_lib
-$1: libelpa@SUFFIX@-@PACKAGE_VERSION@.la
+$1: libelpa@SUFFIX@.la
 
 endef
 $(foreach p,$(bin_PROGRAMS) $(noinst_PROGRAMS),$(foreach o,$($p_OBJECTS),$(eval $(call require_elpa_lib,$o))))
