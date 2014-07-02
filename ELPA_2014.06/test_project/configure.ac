@@ -37,11 +37,6 @@ AM_PROG_CC_C_O
 AM_PROG_AR
 AM_PROG_AS
 
-# Here comes the ELPA specific part
-PKG_PROG_PKG_CONFIG
-PKG_CHECK_MODULES([ELPA],[elpa-2014.06],[],[AC_MSG_ERROR(["Need elpa-2014.06"])])
-PKG_CHECK_VAR([ELPA_FCFLAGS],[elpa-2014.06],[fcflags])
-
 AC_LANG([Fortran])
 m4_include([m4/ax_prog_fc_mpi.m4])
 
@@ -72,7 +67,15 @@ AC_ARG_WITH([openmp],
   if test x"${with_openmp}" = x"yes"; then
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
         AX_ELPA_OPENMP
+	elpa="elpa_openmp-2014.06.001"
+  else
+	elpa="elpa-2014.06.001"
   fi
+
+# Here comes the ELPA specific part
+PKG_PROG_PKG_CONFIG
+PKG_CHECK_MODULES([ELPA],[${elpa}],[],[AC_MSG_ERROR(["Need ${elpa}"])])
+PKG_CHECK_VAR([ELPA_FCFLAGS],[${elpa}],[fcflags])
 
 LT_INIT
 
