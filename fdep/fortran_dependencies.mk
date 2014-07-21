@@ -46,7 +46,7 @@ $(dir $1)$2$(call strip_fortran_ext,$(notdir $1)).use_mods.$3.$(call object_exte
 
 $(eval _$3_def_mods += $(dir $1)$2$(call strip_fortran_ext,$(notdir $1)).def_mods.$3.$(call object_extension,$3))
 $(dir $1)$2$(call strip_fortran_ext,$(notdir $1)).def_mods.$3.$(call object_extension,$3): $1 $(dir $1)$(am__dirstamp)
-	$(call _f90_verbose,F90 MOD  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | grep -i -o '^ *module [^!]*' > $$@ || true
+	$(call _f90_verbose,F90 MOD  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | grep -i -o '^ *module [^!]*' | grep -v "\<procedure\>" > $$@ || true
 
 endef
 $(foreach p,$(_f90_targets),$(if $(call is_per_target,$p),$(foreach s,$(call fortran_sources,$p),$(eval $(call module_targets,$s,$p-,$p))),$(foreach s,$(call fortran_sources,$p),$(eval $(call module_targets,$s,,$p)))))
@@ -67,7 +67,7 @@ ifneq ($(call is_clean),1)
 include $(_f90_depfile)
 endif
 $(_f90_depfile): $(top_srcdir)/fdep/fortran_dependencies.pl $(foreach p,$(_f90_targets),$(_$p_use_mods) $(_$p_def_mods)) | $(foreach p,$(_f90_targets),$(_f90_depdir)/$p)
-	$(call _f90_verbose,F90 DEPS $@)echo > $@; $(foreach p,$(_f90_targets),$(top_srcdir)/fdep/fortran_dependencies.pl $p $(_$p_use_mods) $(_$p_def_mods) >> $@;$(_fdep_newline))
+	$(call _f90_verbose,F90 DEPS $@)echo > $@; $(foreach p,$(_f90_targets),$(top_srcdir)/fdep/fortran_dependencies.pl $p $(_$p_use_mods) $(_$p_def_mods) >> $@ || { rm $@; exit 1; } ;$(_fdep_newline))
 
 $(_f90_depdir):
 	@mkdir $@
