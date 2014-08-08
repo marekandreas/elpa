@@ -60,6 +60,9 @@ program test_real_gen
    use test_util
 #endif
 
+#ifdef HAVE_ISO_FORTRAN_ENV
+   use iso_fortran_env, only : error_unit
+#endif
    implicit none
    include 'mpif.h'
 
@@ -89,6 +92,12 @@ program test_real_gen
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
    real*8 ttt0, ttt1
 
+#ifndef HAVE_ISO_FORTRAN_ENV
+   integer, parameter       :: error_unit = 6
+#endif
+   logical                  :: success
+  
+   success = .true. 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
@@ -100,8 +109,8 @@ program test_real_gen
                         provided_mpi_thread_level, mpierr)
 
    if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
-      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
-      print *,"           ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
+      write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+      write(error_unit,*) "           ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
       call EXIT(1)
       stop 1
    endif
@@ -298,8 +307,13 @@ program test_real_gen
      print *
    end if
 
-   call solve_evp_real(na, nev, a, na_rows, ev, tmp1, na_rows, nblk, &
+   success = solve_evp_real(na, nev, a, na_rows, ev, tmp1, na_rows, nblk, &
                        mpi_comm_rows, mpi_comm_cols)
+
+   if (.not.(success)) then
+      write(error_unit,*) "solve_evp_complex produced an error! Aborting..."
+      call MPI_ABORT(mpi_comm_world, mpierr)
+   endif
 
    if (myid==0) then
      print '(a)','| One-step ELPA solver complete.'
@@ -382,4 +396,4 @@ program test_real_gen
 
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
-end
+ end program test_real_gen

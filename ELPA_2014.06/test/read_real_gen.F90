@@ -54,6 +54,10 @@ program read_real_gen
    use test_util
 #endif
 
+#ifdef HAVE_ISO_FORTRAN_ENV
+   use iso_fortran_env, only : error_unit
+#endif
+
    implicit none
    include 'mpif.h'
 
@@ -85,6 +89,13 @@ program read_real_gen
 #ifdef WITH_OPENMP
    integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
+
+#ifndef HAVE_ISO_FORTRAN_ENV
+   integer, parameter       :: error_unit = 6
+#endif
+   logical                  :: success
+  
+   success = .true. 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 #ifndef WITH_OPENMP
@@ -96,8 +107,8 @@ program read_real_gen
                         provided_mpi_thread_level, mpierr)
 
    if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
-      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
-      print *,"           ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
+      write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+      write(error_unit,*) "           ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
       call EXIT(1)
       stop 1
    endif
@@ -124,7 +135,7 @@ program read_real_gen
       if (  info /= 0  .or.                                              &
             (  trim(fmttype) /= 'bin'  .and.  trim(fmttype) /= 'asc'  )  &
          ) then
-         print *, 'Usage:  read_real_gen  format  matrix_file_1  matrix_file_2'
+         write(error_unit,*) 'Usage:  read_real_gen  format  matrix_file_1  matrix_file_2'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
 
@@ -140,14 +151,14 @@ program read_real_gen
       call get_command_argument(2,filename,lenarg,info)
 
       if(info/=0) then
-         print *, 'Usage:  read_real_gen  format  matrix_file_1  matrix_file_2'
+         write(error_unit,*) 'Usage:  read_real_gen  format  matrix_file_1  matrix_file_2'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
 
       open( 10, file=filename, action='READ', status='OLD', form=trim(fmttype), iostat=info )
 
       if(info/=0) then
-         print *,'Error: Unable to open ',trim(filename)
+          write(error_unit,*) 'Error: Unable to open ',trim(filename)
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
 
@@ -157,14 +168,14 @@ program read_real_gen
       call get_command_argument(3,filename,lenarg,info)
 
       if(info/=0) then
-         print *, 'Usage:  read_real_gen  format  matrix_file_1  matrix_file_2'
+         write(error_unit,*) 'Usage:  read_real_gen  format  matrix_file_1  matrix_file_2'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
 
       open( 20, file=filename, action='READ', status='OLD', form=trim(fmttype), iostat=info )
 
       if(info/=0) then
-         print *,'Error: Unable to open ',trim(filename)
+         write(error_unit,*) 'Error: Unable to open ',trim(filename)
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
 
@@ -227,7 +238,7 @@ program read_real_gen
       endif
 
       if ( na /= nb ) then
-         print *, 'Error: Matrix sizes in input differ: ', na, nb
+         write(error_unit,*) 'Error: Matrix sizes in input differ: ', na, nb
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
 
@@ -237,7 +248,7 @@ program read_real_gen
 
    ! Quick check for plausibility
    if(na<=0 .or. na>10000000) then
-      if(myid==0) print *,'Illegal value for matrix size: ',na
+      if(myid==0)   write(error_unit,*) 'Illegal value for matrix size: ',na
       call mpi_finalize(mpierr)
       stop
    endif
@@ -331,8 +342,13 @@ program read_real_gen
    ! 3. Calculate eigenvalues/eigenvectors of U**-T * A * U**-1
    !    Eigenvectors go to tmp1
 
-   call solve_evp_real(na, nev, a, na_rows, ev, tmp1, na_rows, nblk, &
+   success = solve_evp_real(na, nev, a, na_rows, ev, tmp1, na_rows, nblk, &
                        mpi_comm_rows, mpi_comm_cols)
+
+   if (.not.(success)) then
+      write(error_unit,*) "solve_evp_complex produced an error! Aborting..."
+      call MPI_ABORT(mpi_comm_world, mpierr)
+   endif
 
    if(myid == 0) print *,'Time tridiag_real :',time_evp_fwd
    if(myid == 0) print *,'Time solve_tridi  :',time_evp_solve
