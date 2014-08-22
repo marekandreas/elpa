@@ -1,17 +1,17 @@
 !    This file is part of ELPA.
 !
-!    The ELPA library was originally created by the ELPA consortium, 
+!    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), 
+!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
-!      Schwerpunkt Wissenschaftliches Rechnen , 
-!    - Fritz-Haber-Institut, Berlin, Abt. Theorie, 
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn, 
-!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition, 
-!      and  
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
 !    - IBM Deutschland GmbH
 !
 !
@@ -19,8 +19,8 @@
 !    http://elpa.rzg.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
-!    it under the terms of the version 3 of the license of the 
-!    GNU Lesser General Public License as published by the Free 
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
 !    Software Foundation.
 !
 !    ELPA is distributed in the hope that it will be useful,
@@ -40,6 +40,17 @@
 !
 !
 #include "config-f90.h"
+!>
+!> Fortran test programm to demonstrates the use of
+!> ELPA 1 real case library.
+!> This program can read a matrix from an ascii
+!> file and computes then the Eigenvectors.
+!> If "HAVE_REDIRECT" was defined at build time
+!> the stdout and stderr output of each MPI task
+!> can be redirected to files if the environment
+!> variable "REDIRECT_ELPA_TEST_OUTPUT" is set
+!> to "true".
+!>
 program read_real
 
 !-------------------------------------------------------------------------------
@@ -52,6 +63,12 @@ program read_real
    use ELPA1
 #ifdef WITH_OPENMP
    use test_util
+#endif
+#ifdef HAVE_ISO_FORTRAN_ENV
+    use iso_fortran_env, only : error_unit
+#endif
+#ifdef HAVE_REDIRECT
+   use redirect
 #endif
 
    implicit none
@@ -83,6 +100,9 @@ program read_real
 #ifdef WITH_OPENMP
    integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
+#ifndef HAVE_ISO_FORTRAN_ENV
+  integer, parameter       :: error_unit = 6
+#endif
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
@@ -95,15 +115,31 @@ program read_real
                         provided_mpi_thread_level, mpierr)
 
    if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
-      print *,"MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
-      print *,"           ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
-      call EXIT(1)
-      stop 1
+     write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+     write(error_unit,*) "           ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
+     call EXIT(1)
+     stop 1
    endif
 
 #endif
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
+
+#ifdef HAVE_REDIRECT
+   if (check_redirect_environment_variable()) then
+     if (myid .eq. 0) then
+       print *," "
+       print *,"Redirection of mpi processes is used"
+       print *," "
+       if (create_directories() .ne. 1) then
+         write(error_unit,*) "Unable to create directory for stdout and stderr!"
+         stop
+       endif
+     endif
+     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+     call redirect_stdout(myid)
+   endif
+#endif
 
    !-------------------------------------------------------------------------------
    ! Get the name of the input file containing the matrix and open input file
@@ -114,12 +150,12 @@ program read_real
    if(myid==0) then
       call get_command_argument(1,filename,lenarg,info)
       if(info/=0) then
-         print *,'Usage: test_real matrix_file'
+         write(error_unit,*) 'Usage: test_real matrix_file'
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
       open(10,file=filename,action='READ',status='OLD',iostat=info)
       if(info/=0) then
-         print *,'Error: Unable to open ',trim(filename)
+         write(error_unit,*) 'Error: Unable to open ',trim(filename)
          call mpi_abort(mpi_comm_world,0,mpierr)
       endif
    endif
@@ -172,7 +208,7 @@ program read_real
 
    ! Quick check for plausibility
    if(na<=0 .or. na>10000000) then
-      if(myid==0) print *,'Illegal value for matrix size: ',na
+      if(myid==0) write(error_unit,*) 'Illegal value for matrix size: ',na
       call mpi_finalize(mpierr)
       stop
    endif
@@ -192,7 +228,7 @@ program read_real
    call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
 
    !-------------------------------------------------------------------------------
-   ! Allocate matrices 
+   ! Allocate matrices
 
    allocate(a (na_rows,na_cols))
    allocate(z (na_rows,na_cols))
@@ -284,7 +320,7 @@ program read_real
    err = maxval(abs(tmp1))
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
-   
+
    deallocate(z)
    deallocate(tmp1)
    deallocate(tmp2)

@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 
-AC_INIT([elpa],[2014.06.002], [elpa-library@rzg.mpg.de])
+AC_INIT([elpa],[2014.06.003], [elpa-library@rzg.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
@@ -99,6 +99,22 @@ install_complex_bgp=no
 install_complex_bgq=no
 install_complex_avx_block1=no
 install_complex_avx_block2=no
+
+dnl build with the possibilty to redirect stdout and stderr
+dnl per MPI task in a file
+AC_MSG_CHECKING(whether stdout/stderr file redirect should be enabled)
+AC_ARG_WITH([redirect],
+		AS_HELP_STRING([--with-redirect],
+			       [for test programs, allow redirection of stdout/stderr per MPI taks in a file (useful for ftimings), default no.]),
+	      [with_redirect=yes],
+	      [with_redirect=no])
+AC_MSG_RESULT([${with_redirect}])
+
+if test x"${with_redirect}" = x"yes"; then
+  AC_DEFINE([HAVE_REDIRECT], [1], [Redirect stdout and stderr of test programs per MPI tasks to a file])
+fi
+AM_CONDITIONAL([HAVE_REDIRECT],[test x"$with_redirect" = x"yes"])
+	
 AC_MSG_CHECKING(whether SSE assembler kernel can be compiled)
 
 $CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64.s -o test.o 2>/dev/null

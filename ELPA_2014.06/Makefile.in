@@ -194,8 +194,12 @@ am_libelpa@SUFFIX@_la_OBJECTS = src/elpa1.lo src/elpa2.lo \
 	$(am__objects_13)
 libelpa@SUFFIX@_la_OBJECTS = $(am_libelpa@SUFFIX@_la_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
+am__elpa1_test_complex@SUFFIX@_SOURCES_DIST = test/test_complex.F90 \
+	test/util.F90 test/redir.c test/redirect.F90
+@HAVE_REDIRECT_TRUE@am__objects_14 = test/redir.$(OBJEXT) \
+@HAVE_REDIRECT_TRUE@	test/redirect.$(OBJEXT)
 am_elpa1_test_complex@SUFFIX@_OBJECTS = test/test_complex.$(OBJEXT) \
-	test/util.$(OBJEXT)
+	test/util.$(OBJEXT) $(am__objects_14)
 elpa1_test_complex@SUFFIX@_OBJECTS =  \
 	$(am_elpa1_test_complex@SUFFIX@_OBJECTS)
 elpa1_test_complex@SUFFIX@_DEPENDENCIES = $(build_lib)
@@ -203,48 +207,70 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am__elpa1_test_real@SUFFIX@_SOURCES_DIST = test/test_real.F90 \
+	test/util.F90 test/redir.c test/redirect.F90
 am_elpa1_test_real@SUFFIX@_OBJECTS = test/test_real.$(OBJEXT) \
-	test/util.$(OBJEXT)
+	test/util.$(OBJEXT) $(am__objects_14)
 elpa1_test_real@SUFFIX@_OBJECTS =  \
 	$(am_elpa1_test_real@SUFFIX@_OBJECTS)
 elpa1_test_real@SUFFIX@_DEPENDENCIES = $(build_lib)
+am__elpa2_print_kernels@SUFFIX@_SOURCES_DIST =  \
+	src/print_available_elpa2_kernels.F90 test/util.F90 \
+	test/redir.c test/redirect.F90
 am_elpa2_print_kernels@SUFFIX@_OBJECTS =  \
 	src/print_available_elpa2_kernels.$(OBJEXT) \
-	test/util.$(OBJEXT)
+	test/util.$(OBJEXT) $(am__objects_14)
 elpa2_print_kernels@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_print_kernels@SUFFIX@_OBJECTS)
 elpa2_print_kernels@SUFFIX@_DEPENDENCIES = $(build_lib)
+am__elpa2_test_complex@SUFFIX@_SOURCES_DIST = test/test_complex2.F90 \
+	test/util.F90 test/redir.c test/redirect.F90
 am_elpa2_test_complex@SUFFIX@_OBJECTS = test/test_complex2.$(OBJEXT) \
-	test/util.$(OBJEXT)
+	test/util.$(OBJEXT) $(am__objects_14)
 elpa2_test_complex@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_complex@SUFFIX@_OBJECTS)
 elpa2_test_complex@SUFFIX@_DEPENDENCIES = $(build_lib)
+am__elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES_DIST =  \
+	test/test_complex2_choose_kernel_with_api.F90 test/util.F90 \
+	test/redir.c test/redirect.F90
 am_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_OBJECTS =  \
 	test/test_complex2_choose_kernel_with_api.$(OBJEXT) \
-	test/util.$(OBJEXT)
+	test/util.$(OBJEXT) $(am__objects_14)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_OBJECTS = $(am_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_OBJECTS)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_DEPENDENCIES =  \
 	$(build_lib)
+am__elpa2_test_complex_default_kernel@SUFFIX@_SOURCES_DIST =  \
+	test/test_complex2_default_kernel.F90 test/util.F90 \
+	test/redir.c test/redirect.F90
 am_elpa2_test_complex_default_kernel@SUFFIX@_OBJECTS =  \
 	test/test_complex2_default_kernel.$(OBJEXT) \
-	test/util.$(OBJEXT)
+	test/util.$(OBJEXT) $(am__objects_14)
 elpa2_test_complex_default_kernel@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_complex_default_kernel@SUFFIX@_OBJECTS)
 elpa2_test_complex_default_kernel@SUFFIX@_DEPENDENCIES = $(build_lib)
+am__elpa2_test_real@SUFFIX@_SOURCES_DIST = test/test_real2.F90 \
+	test/util.F90 test/redir.c test/redirect.F90
 am_elpa2_test_real@SUFFIX@_OBJECTS = test/test_real2.$(OBJEXT) \
-	test/util.$(OBJEXT)
+	test/util.$(OBJEXT) $(am__objects_14)
 elpa2_test_real@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_real@SUFFIX@_OBJECTS)
 elpa2_test_real@SUFFIX@_DEPENDENCIES = $(build_lib)
+am__elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES_DIST =  \
+	test/test_real2_choose_kernel_with_api.F90 test/util.F90 \
+	test/redir.c test/redirect.F90
 am_elpa2_test_real_choose_kernel_with_api@SUFFIX@_OBJECTS =  \
 	test/test_real2_choose_kernel_with_api.$(OBJEXT) \
-	test/util.$(OBJEXT)
+	test/util.$(OBJEXT) $(am__objects_14)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_real_choose_kernel_with_api@SUFFIX@_OBJECTS)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_DEPENDENCIES =  \
 	$(build_lib)
+am__elpa2_test_real_default_kernel@SUFFIX@_SOURCES_DIST =  \
+	test/test_real2_default_kernel.F90 test/util.F90 test/redir.c \
+	test/redirect.F90
 am_elpa2_test_real_default_kernel@SUFFIX@_OBJECTS =  \
-	test/test_real2_default_kernel.$(OBJEXT) test/util.$(OBJEXT)
+	test/test_real2_default_kernel.$(OBJEXT) test/util.$(OBJEXT) \
+	$(am__objects_14)
 elpa2_test_real_default_kernel@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_real_default_kernel@SUFFIX@_OBJECTS)
 elpa2_test_real_default_kernel@SUFFIX@_DEPENDENCIES = $(build_lib)
@@ -344,15 +370,15 @@ SOURCES = $(libelpa@SUFFIX@_la_SOURCES) \
 	$(elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES) \
 	$(elpa2_test_real_default_kernel@SUFFIX@_SOURCES)
 DIST_SOURCES = $(am__libelpa@SUFFIX@_la_SOURCES_DIST) \
-	$(elpa1_test_complex@SUFFIX@_SOURCES) \
-	$(elpa1_test_real@SUFFIX@_SOURCES) \
-	$(elpa2_print_kernels@SUFFIX@_SOURCES) \
-	$(elpa2_test_complex@SUFFIX@_SOURCES) \
-	$(elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES) \
-	$(elpa2_test_complex_default_kernel@SUFFIX@_SOURCES) \
-	$(elpa2_test_real@SUFFIX@_SOURCES) \
-	$(elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES) \
-	$(elpa2_test_real_default_kernel@SUFFIX@_SOURCES)
+	$(am__elpa1_test_complex@SUFFIX@_SOURCES_DIST) \
+	$(am__elpa1_test_real@SUFFIX@_SOURCES_DIST) \
+	$(am__elpa2_print_kernels@SUFFIX@_SOURCES_DIST) \
+	$(am__elpa2_test_complex@SUFFIX@_SOURCES_DIST) \
+	$(am__elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES_DIST) \
+	$(am__elpa2_test_complex_default_kernel@SUFFIX@_SOURCES_DIST) \
+	$(am__elpa2_test_real@SUFFIX@_SOURCES_DIST) \
+	$(am__elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES_DIST) \
+	$(am__elpa2_test_real_default_kernel@SUFFIX@_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -770,23 +796,25 @@ dist_doc_DATA = README COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = @PKG_CONFIG_FILE@
 build_lib = libelpa@SUFFIX@.la
-elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90 test/util.F90
+@HAVE_REDIRECT_FALSE@redirect_sources = 
+@HAVE_REDIRECT_TRUE@redirect_sources = test/redir.c test/redirect.F90
+elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90 test/util.F90 $(redirect_sources)
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90 test/util.F90
+elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90 test/util.F90 $(redirect_sources)
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90 test/util.F90
+elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90 test/util.F90 $(redirect_sources)
 elpa2_test_real_default_kernel@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_real2_choose_kernel_with_api.F90 test/util.F90
+elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_real2_choose_kernel_with_api.F90 test/util.F90 $(redirect_sources)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
-elpa1_test_complex@SUFFIX@_SOURCES = test/test_complex.F90 test/util.F90
+elpa1_test_complex@SUFFIX@_SOURCES = test/test_complex.F90 test/util.F90 $(redirect_sources)
 elpa1_test_complex@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_complex@SUFFIX@_SOURCES = test/test_complex2.F90 test/util.F90
+elpa2_test_complex@SUFFIX@_SOURCES = test/test_complex2.F90 test/util.F90 $(redirect_sources)
 elpa2_test_complex@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/test_complex2_default_kernel.F90 test/util.F90
+elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/test_complex2_default_kernel.F90 test/util.F90 $(redirect_sources)
 elpa2_test_complex_default_kernel@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_complex2_choose_kernel_with_api.F90 test/util.F90
+elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_complex2_choose_kernel_with_api.F90 test/util.F90 $(redirect_sources)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
-elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 test/util.F90
+elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 test/util.F90 $(redirect_sources)
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 check_SCRIPTS = \
   elpa1_test_real.sh \
@@ -1024,6 +1052,10 @@ test/test_complex.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/util.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
+test/redir.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+test/redirect.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
 
 elpa1_test_complex@SUFFIX@$(EXEEXT): $(elpa1_test_complex@SUFFIX@_OBJECTS) $(elpa1_test_complex@SUFFIX@_DEPENDENCIES) $(EXTRA_elpa1_test_complex@SUFFIX@_DEPENDENCIES) 
 	@rm -f elpa1_test_complex@SUFFIX@$(EXEEXT)
@@ -1093,6 +1125,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/elpa2_kernels/$(DEPDIR)/elpa2_kernels_real_sse-avx_2hv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/elpa2_kernels/$(DEPDIR)/elpa2_kernels_real_sse-avx_4hv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/elpa2_kernels/$(DEPDIR)/elpa2_kernels_real_sse-avx_6hv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/redir.Po@am__quote@
 
 .F90.o:
 	$(AM_V_PPFC)$(PPFCCOMPILE) -c -o $@ $<
@@ -1760,7 +1793,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/elpa2_kernels/$(DEPDIR)
+	-rm -rf src/elpa2_kernels/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-local distclean-tags
@@ -1809,7 +1842,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/elpa2_kernels/$(DEPDIR)
+	-rm -rf src/elpa2_kernels/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

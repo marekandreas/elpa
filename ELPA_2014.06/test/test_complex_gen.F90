@@ -1,17 +1,17 @@
 !    This file is part of ELPA.
 !
-!    The ELPA library was originally created by the ELPA consortium, 
+!    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), 
+!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
-!      Schwerpunkt Wissenschaftliches Rechnen , 
-!    - Fritz-Haber-Institut, Berlin, Abt. Theorie, 
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn, 
-!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition, 
-!      and  
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
 !    - IBM Deutschland GmbH
 !
 !
@@ -19,8 +19,8 @@
 !    http://elpa.rzg.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
-!    it under the terms of the version 3 of the license of the 
-!    GNU Lesser General Public License as published by the Free 
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
 !    Software Foundation.
 !
 !    ELPA is distributed in the hope that it will be useful,
@@ -40,6 +40,26 @@
 !
 !
 #include "config-f90.h"
+!>
+!> Fortran test programm to demonstrates the use of
+!> ELPA 1 complex case library.
+!> A matric can be read from an ASCII file and then
+!> the Eigenvectors are computed.
+!> If "HAVE_REDIRECT" was defined at build time
+!> the stdout and stderr output of each MPI task
+!> can be redirected to files if the environment
+!> variable "REDIRECT_ELPA_TEST_OUTPUT" is set
+!> to "true".
+!>
+!> By calling executable [arg1] [arg2] [arg3] [arg4]
+!> one can define the size (arg1), the number of
+!> Eigenvectors to compute (arg2), and the blocking (arg3).
+!> If these values are not set default values (4000, 1500, 16)
+!> are choosen.
+!> If these values are set the 4th argument can be
+!> "output", which specifies that the EV's are written to
+!> an ascii file.
+!>
 program test_complex_gen
 
 !-------------------------------------------------------------------------------
@@ -47,7 +67,7 @@ program test_complex_gen
 !
 ! This program demonstrates the use of the ELPA module
 ! together with standard scalapack routines
-! 
+!
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
@@ -63,6 +83,10 @@ program test_complex_gen
 #ifdef HAVE_ISO_FORTRAN_ENV
    use iso_fortran_env, only : error_unit
 #endif
+#ifdef HAVE_REDIRECT
+   use redirect
+#endif
+
    implicit none
    include 'mpif.h'
 
@@ -103,8 +127,8 @@ program test_complex_gen
   integer, parameter       :: error_unit = 6
 #endif
   logical                  :: success
-  
-  success = .true. 
+
+  success = .true.
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
@@ -113,7 +137,7 @@ program test_complex_gen
    call mpi_init(mpierr)
 #else
    required_mpi_thread_level = MPI_THREAD_MULTIPLE
- 
+
    call mpi_init_thread(required_mpi_thread_level,     &
                         provided_mpi_thread_level, mpierr)
 
@@ -124,9 +148,24 @@ program test_complex_gen
       stop 1
    endif
 
-#endif  
+#endif
    call mpi_comm_rank(mpi_comm_world,myid,mpierr)
    call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
+#ifdef HAVE_REDIRECT
+   if (check_redirect_environment_variable()) then
+     if (myid .eq. 0) then
+       print *," "
+       print *,"Redirection of mpi processes is used"
+       print *," "
+       if (create_directories() .ne. 1) then
+         write(error_unit,*) "Unable to create directory for stdout and stderr!"
+         stop
+       endif
+     endif
+     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+     call redirect_stdout(myid)
+   endif
+#endif
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns

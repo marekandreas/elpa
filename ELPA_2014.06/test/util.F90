@@ -5,7 +5,13 @@ module test_util
   include 'mpif.h'
 
   contains
-
+!>
+!> This function translates, if ELPA was build with OpenMP support,
+!> the found evel of "thread safetiness" from the internal number
+!> of the MPI library into a human understandable value
+!>
+!> \param level thread-saftiness of the MPI library
+!> \return str human understandable value of thread saftiness
   pure function mpi_thread_level_name(level) result(str)
     integer, intent(in) :: level
     character(len=21) :: str
