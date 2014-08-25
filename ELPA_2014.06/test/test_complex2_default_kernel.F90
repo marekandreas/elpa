@@ -90,6 +90,10 @@ program test_complex2
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
    include 'mpif.h'
 
@@ -217,6 +221,33 @@ program test_complex2
       if (myid .eq. 0) print *,"Writing output files"
    endif
 
+#ifdef HAVE_DETAILED_TIMINGS
+
+   ! initialise the timing functionality
+
+#ifdef HAVE_LIBPAPI
+   call timer%measure_flops(.true.)
+#endif
+
+   call timer%measure_allocated_memory(.true.)
+   call timer%measure_virtual_memory(.true.)
+   call timer%measure_max_allocated_memory(.true.)
+
+   call timer%set_print_options(&
+#ifdef HAVE_LIBPAPI
+                print_flop_count=.true., &
+                print_flop_rate=.true., &
+#endif
+                print_allocated_memory = .true. , &
+                print_virtual_memory=.true., &
+                print_max_allocated_memory=.true.)
+
+
+  call timer%enable()
+
+  call timer%start("program")
+#endif
+
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible
@@ -299,7 +330,9 @@ program test_complex2
    end if
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("set up matrix")
+#endif
    allocate(a (na_rows,na_cols))
    allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -330,6 +363,9 @@ program test_complex2
 
    as = a
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("set up matrix")
+#endif
    ! set print flag in elpa1
    elpa_print_times = .true.
 
@@ -439,6 +475,15 @@ program test_complex2
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("program")
+   print *," "
+   print *,"Timings program:"
+   call timer%print("program")
+   print *," "
+   print *,"End timings program"
+#endif
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
    call EXIT(STATUS)

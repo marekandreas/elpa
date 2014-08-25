@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 
-AC_INIT([elpa],[2014.06.003], [elpa-library@rzg.mpg.de])
+AC_INIT([elpa],[2014.06.004], [elpa-library@rzg.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
@@ -100,6 +100,15 @@ install_complex_bgq=no
 install_complex_avx_block1=no
 install_complex_avx_block2=no
 
+dnl build with ftimings support
+AC_MSG_CHECKING(whether ELPA should be build with ftimings support)
+AC_ARG_WITH([ftimings],
+		AS_HELP_STRING([--with-ftimings],
+			       [detailed timings, default no.]),
+	      [with_ftimings=yes],
+	      [with_ftimings=no])
+AC_MSG_RESULT([${with_ftimings}])
+
 dnl build with the possibilty to redirect stdout and stderr
 dnl per MPI task in a file
 AC_MSG_CHECKING(whether stdout/stderr file redirect should be enabled)
@@ -114,7 +123,28 @@ if test x"${with_redirect}" = x"yes"; then
   AC_DEFINE([HAVE_REDIRECT], [1], [Redirect stdout and stderr of test programs per MPI tasks to a file])
 fi
 AM_CONDITIONAL([HAVE_REDIRECT],[test x"$with_redirect" = x"yes"])
-	
+
+if test x"${with_ftimings}" = x"yes"; then
+  AC_DEFINE([HAVE_DETAILED_TIMINGS], [1], [Enable more timings])
+  AC_ARG_ENABLE([papi],
+	[AS_HELP_STRING([--disable-papi],[Do not use PAPI to also measure flop count, autodetected by default])],
+	[want_papi=$enableval],[want_papi="auto"])
+  papi_found=unknown
+  if test x"$want_papi" != x"no" ; then
+    AC_CHECK_LIB([papi],[PAPI_library_init],[papi_found="yes"],[papi_found="no"])
+    if test x"$want_papi" = x"yes" ; then
+      if test x"$papi_found" = x"no" ; then
+        AC_MSG_ERROR(["Could not find usable PAPI installation, please adjust CFLAGS, LDFLAGS"])
+      fi
+    fi
+  fi
+  if test x"$papi_found" = x"yes"; then
+    AC_DEFINE([HAVE_LIBPAPI], [1], [Use the PAPI library])
+    LIBS="-lpapi $LIBS"
+  fi
+fi
+AM_CONDITIONAL([HAVE_DETAILED_TIMINGS],[test x"$with_ftimings" = x"yes"])
+
 AC_MSG_CHECKING(whether SSE assembler kernel can be compiled)
 
 $CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64.s -o test.o 2>/dev/null

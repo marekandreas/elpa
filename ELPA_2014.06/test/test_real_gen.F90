@@ -86,7 +86,9 @@ program test_real_gen
 #ifdef HAVE_REDIRECT
    use redirect
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
    include 'mpif.h'
 
@@ -159,6 +161,32 @@ program test_real_gen
    endif
 #endif
 
+#ifdef HAVE_DETAILED_TIMINGS
+
+   ! initialise the timing functionality
+
+#ifdef HAVE_LIBPAPI
+   call timer%measure_flops(.true.)
+#endif
+
+   call timer%measure_allocated_memory(.true.)
+   call timer%measure_virtual_memory(.true.)
+   call timer%measure_max_allocated_memory(.true.)
+
+   call timer%set_print_options(&
+#ifdef HAVE_LIBPAPI
+                print_flop_count=.true., &
+                print_flop_rate=.true., &
+#endif
+                print_allocated_memory = .true. , &
+                print_virtual_memory=.true., &
+                print_max_allocated_memory=.true.)
+
+
+  call timer%enable()
+
+  call timer%start("program")
+#endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible
@@ -228,7 +256,9 @@ program test_real_gen
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up test matrices for the eigenvalue problem
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("set up matrix")
+#endif
    allocate(a (na_rows,na_cols))
    allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -276,7 +306,9 @@ program test_real_gen
 
    as = a
    bs = b
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("set up matrix")
+#endif
    !-------------------------------------------------------------------------------
    ! Solve generalized problem
    !
@@ -432,7 +464,14 @@ program test_real_gen
    err = maxval(abs(tmp1))
    call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
    if(myid==0) print *,'Error Orthogonality:',errmax
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("program")
+   print *," "
+   print *,"Timings program:"
+   call timer%print("program")
+   print *," "
+   print *,"End timings program"
+#endif
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
  end program test_real_gen

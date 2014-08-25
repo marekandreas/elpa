@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Enable more timings */
+#undef HAVE_DETAILED_TIMINGS
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -11,6 +14,9 @@
 
 /* can use module iso_fortran_env */
 #undef HAVE_ISO_FORTRAN_ENV
+
+/* Use the PAPI library */
+#undef HAVE_LIBPAPI
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H

@@ -53,7 +53,9 @@ module ELPA1
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
   implicit none
 
   PRIVATE ! By default, all routines contained are private
@@ -187,7 +189,9 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
 !              MPI-Communicators for rows/columns
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer, intent(in)  :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
@@ -197,6 +201,10 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
    real*8, allocatable  :: e(:), tau(:)
    real*8               :: ttt0, ttt1
    logical              :: success
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve_evp_real")
+#endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -227,6 +235,10 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
    time_evp_back = ttt1-ttt0
 
    deallocate(e, tau)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_evp_real")
+#endif
 
 end function solve_evp_real
 
@@ -268,6 +280,9 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
 !              MPI-Communicators for rows/columns
 !
 !-------------------------------------------------------------------------------
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
 
    implicit none
 
@@ -282,6 +297,9 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
    real*8 ttt0, ttt1
 
    logical                 :: success
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve_evp_complex")
+#endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -323,6 +341,9 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
 
    deallocate(q_real)
    deallocate(e, tau)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_evp_complex")
+#endif
 
 end function solve_evp_complex
 
@@ -358,7 +379,9 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 !  tau(na)     Factors for the Householder vectors (returned), needed for back transformation
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer na, lda, nblk, mpi_comm_rows, mpi_comm_cols
@@ -387,6 +410,9 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("tridiag_real")
+#endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -514,6 +540,11 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
       if(l_rows>0 .and. l_cols>0) then
 
 #ifdef WITH_OPENMP
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,lcs,lce,j,lrs,lre)
 
          my_thread = omp_get_thread_num()
@@ -546,8 +577,11 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
             enddo
          enddo
 #ifdef WITH_OPENMP
-!$OMP END PARALLEL
-      
+!$OMP END PARALLEL  
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
          do i=0,max_threads-1
             uc(1:l_cols) = uc(1:l_cols) + uc_p(1:l_cols,i)
             ur(1:l_rows) = ur(1:l_rows) + ur_p(1:l_rows,i)
@@ -648,6 +682,9 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
    tmp = e
    call mpi_allreduce(tmp,e,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
    deallocate(tmp)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("tridiag_real")
+#endif
 
 end subroutine tridiag_real
 
@@ -686,7 +723,9 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
 !              MPI-Communicators for rows/columns
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer na, nqc, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
@@ -706,6 +745,9 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("trans_ev_real")
+#endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -824,6 +866,9 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
 
    deallocate(tmat, h1, h2, tmp1, tmp2, hvb, hvm)
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("trans_ev_real")
+#endif
 
 end subroutine trans_ev_real
 
@@ -878,7 +923,9 @@ subroutine mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_com
 !  ldc         Leading dimension of c
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    character*1 uplo_a, uplo_c
@@ -897,7 +944,9 @@ subroutine mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_com
 
    real*8, allocatable:: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
 
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mult_at_b_real")
+#endif
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -1037,6 +1086,9 @@ subroutine mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_com
    enddo
 
    deallocate(aux_mat, aux_bc, lrs_save, lre_save)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mult_at_b_real")
+#endif
 
 end subroutine mult_at_b_real
 
@@ -1072,7 +1124,9 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 !  tau(na)     Factors for the Householder vectors (returned), needed for back transformation
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer na, lda, nblk, mpi_comm_rows, mpi_comm_cols
@@ -1107,6 +1161,9 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("tridiag_complex")
+#endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -1232,7 +1289,13 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
       uc(1:l_cols) = 0
       ur(1:l_rows) = 0
       if(l_rows>0 .and. l_cols>0) then
+
 #ifdef WITH_OPENMP
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,lcs,lce,j,lrs,lre)
 
          my_thread = omp_get_thread_num()
@@ -1264,8 +1327,12 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 #endif
             enddo
          enddo
+
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
 
          do i=0,max_threads-1
             uc(1:l_cols) = uc(1:l_cols) + uc_p(1:l_cols,i)
@@ -1379,6 +1446,9 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
    tmpr = e
    call mpi_allreduce(tmpr,e,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
    deallocate(tmpr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("tridiag_complex")
+#endif
 
 end subroutine tridiag_complex
 
@@ -1417,7 +1487,9 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
 !              MPI-Communicators for rows/columns
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer na, nqc, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
@@ -1439,7 +1511,9 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("trans_ev_complex")
+#endif
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -1562,6 +1636,9 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
 
    deallocate(tmat, h1, h2, tmp1, tmp2, hvb, hvm)
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("trans_ev_complex")
+#endif
 
 end subroutine trans_ev_complex
 
@@ -1616,7 +1693,9 @@ subroutine mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_
 !  ldc         Leading dimension of c
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    character*1 uplo_a, uplo_c
@@ -1635,7 +1714,9 @@ subroutine mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_
 
    complex*16, allocatable:: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
 
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mult_ah_b_complex")
+#endif
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -1775,13 +1856,18 @@ subroutine mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_
    enddo
 
    deallocate(aux_mat, aux_bc, lrs_save, lre_save)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mult_ah_b_complex")
+#endif
 
 end subroutine mult_ah_b_complex
 
 !-------------------------------------------------------------------------------
 
 subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols, success )
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer  na, nev, ldq, nblk, mpi_comm_rows, mpi_comm_cols
@@ -1793,7 +1879,9 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
    integer, allocatable :: limits(:), l_col(:), p_col(:), l_col_bc(:), p_col_bc(:)
 
    logical, intent(out) :: success
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve_tridi")
+#endif
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -1822,6 +1910,9 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
       ! Scalapack supports it but delivers no results for these columns,
       ! which is rather annoying
       if(nc==0) then
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_tridi")
+#endif
          write(error_unit,*) 'ERROR: Problem contains processor column with zero width'
 !         call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
          success = .false.
@@ -1850,12 +1941,19 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
    endif
    call solve_tridi_col(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         mpi_comm_rows,success)
-   if (.not.(success)) return
-
+   if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_tridi")
+#endif
+     return
+   endif
    ! If there is only 1 processor column, we are done
 
    if(np_cols==1) then
       deallocate(limits)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_tridi")
+#endif
       return
    endif
 
@@ -1897,9 +1995,18 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
    ! Recursively merge sub problems
 
    call merge_recursive(0, np_cols, success)
-   if (.not.(success)) return
+   if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_tridi")
+#endif
+     return
+   endif
 
    deallocate(limits,l_col,p_col,l_col_bc,p_col_bc)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_tridi")
+#endif
+   return
 
 contains
 recursive subroutine merge_recursive(np_off, nprocs, success)
@@ -1986,7 +2093,9 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, s
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
    ! Works best if the number of processor rows is a power of 2!
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer              :: na, nev, nqoff, ldq, nblk, mpi_comm_rows
@@ -2001,6 +2110,9 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, s
 
    integer, allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
    logical, intent(out) :: success
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve_tridi_col")
+#endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -2144,6 +2256,9 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, s
    enddo
 
    deallocate(limits, l_col, p_col_i, p_col_o)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_tridi_col")
+#endif
 
 end subroutine solve_tridi_col
 
@@ -2153,7 +2268,9 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq, success)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer              :: nlen, ldq
@@ -2166,6 +2283,9 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq, success)
    integer, allocatable :: iwork(:)
 
    logical, intent(out) :: success
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve_tridi_single")
+#endif
 
    success = .true. 
    allocate(ds(nlen), es(nlen))
@@ -2233,6 +2353,9 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq, success)
          deallocate(qtmp)
       endif
    enddo
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_tridi_single")
+#endif
 
 end subroutine solve_tridi_single
 
@@ -2240,7 +2363,9 @@ end subroutine solve_tridi_single
 
 subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_comm_cols, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, success)
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer              :: na, nm, ldq, nqoff, nblk, mpi_comm_rows, &
@@ -2278,6 +2403,9 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
    max_threads = omp_get_max_threads()
 
    allocate(z_p(na,0:max_threads-1))
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("merge_systems")
 #endif
    success = .true. 
 
@@ -2398,6 +2526,9 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       ! Rearrange eigenvectors
 
       call resort_ev(idx)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("merge_systems")
+#endif
 
       return
    ENDIF
@@ -2566,6 +2697,11 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
 
       info = 0
 #ifdef WITH_OPENMP
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,j)
       my_thread = omp_get_thread_num()
 !$OMP DO
@@ -2612,6 +2748,10 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
       do i = 0, max_threads-1
          z(1:na1) = z(1:na1)*z_p(1:na1,i)
       enddo
@@ -2629,6 +2769,11 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       ev_scale(:) = 0.
 
 #ifdef WITH_OPENMP
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$OMP PARALLEL DO PRIVATE(i) SHARED(na1, my_proc, n_procs,  &
 !$OMP d1,dbase, ddiff, z, ev_scale) &
 !$OMP DEFAULT(NONE)
@@ -2647,6 +2792,11 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       enddo
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL DO
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
 #endif
 
       call global_gather(ev_scale, na1)
@@ -2845,16 +2995,19 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       deallocate(ev, qtmp1, qtmp2)
 
    endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("merge_systems")
+#endif
+   return
 !-------------------------------------------------------------------------------
 
 contains
   subroutine add_tmp(d1, dbase, ddiff, z, ev_scale_value, na1,i)
 
     implicit none
-    
+
     integer, intent(in) :: na1, i
-    
+
     real*8, intent(in)  :: d1(:), dbase(:), ddiff(:), z(:)
     real*8, intent(inout) :: ev_scale_value
     real*8  :: tmp(1:na1)
@@ -3180,7 +3333,9 @@ subroutine solve_secular_equation(n, i, d, z, delta, rho, dlam)
 !         The computed lambda_I, the I-th updated eigenvalue.
 !-------------------------------------------------------------------------------
 
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer n, i
@@ -3194,7 +3349,9 @@ subroutine solve_secular_equation(n, i, d, z, delta, rho, dlam)
 
    ! Upper and lower bound of the shifted solution interval are a and b
 
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call  timer%start("solve_secular_equation")
+#endif
    if(i==n) then
 
       ! Special case: Last eigenvalue
@@ -3260,6 +3417,9 @@ subroutine solve_secular_equation(n, i, d, z, delta, rho, dlam)
 
    dlam = x + dshift
    delta(:) = delta(:) - x
+#ifdef HAVE_DETAILED_TIMINGS
+   call  timer%stop("solve_secular_equation")
+#endif
 
 end subroutine solve_secular_equation
 
@@ -3348,7 +3508,9 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success
 !              MPI-Communicators for rows/columns
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer              :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
@@ -3369,6 +3531,10 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
    logical, intent(out) :: success
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("cholesky_real")
+#endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -3505,6 +3671,9 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success
          a(l_row1:l_rows,l_col1) = 0
       endif
    enddo
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("cholesky_real")
+#endif
 
 end subroutine cholesky_real
 
@@ -3673,7 +3842,9 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, succ
 !              MPI-Communicators for rows/columns
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer                 :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
@@ -3694,7 +3865,9 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, succ
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
    logical, intent(out)    :: success
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("cholesky_complex")
+#endif
    success = .true. 
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -3831,6 +4004,9 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, succ
          a(l_row1:l_rows,l_col1) = 0
       endif
    enddo
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("cholesky_complex")
+#endif
 
 end subroutine cholesky_complex
 

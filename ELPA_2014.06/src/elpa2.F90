@@ -439,7 +439,9 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
 !              MPI-Communicator for the total processor set
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
    integer, intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
    integer                       :: THIS_REAL_ELPA_KERNEL
@@ -454,7 +456,9 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    real*8                        :: ttt0, ttt1, ttts
    integer                       :: i
    logical                       :: success
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve_evp_real_2stage")
+#endif
    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
 
@@ -571,7 +575,9 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    time_evp_back = ttt1-ttts
 
    deallocate(tmat)
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_evp_real_2stage")
+#endif
 1  format(a,f10.3)
 
 end function solve_evp_real_2stage
@@ -618,7 +624,9 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 !              MPI-Communicator for the total processor set
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
    integer, intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
    integer                       :: THIS_COMPLEX_ELPA_KERNEL
@@ -634,7 +642,9 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    integer                       :: i
    
    logical                       :: success
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve_evp_complex_2stage")
+#endif
    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
 
@@ -689,8 +699,12 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ttts = ttt0
    call bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
                         tmat, success)
-   if (.not.(success)) return
-
+   if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+     call timer%stop()
+#endif
+     return
+   endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time bandred_complex               :',ttt1-ttt0
@@ -758,6 +772,9 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    time_evp_back = ttt1-ttts
 
    deallocate(tmat)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_evp_complex_2stage")
+#endif
 
 1  format(a,f10.3)
 
@@ -795,7 +812,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 !              Factors for the Householder vectors (returned), needed for back transformation
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer             :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
@@ -817,7 +836,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 
    logical, intent(out):: success
 
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("bandred_real")
+#endif
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -1056,6 +1077,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
       deallocate(vmr, umc, vr)
 
    enddo
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("bandred_real")
+#endif
 
 end subroutine bandred_real
 
@@ -1130,7 +1154,9 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 !              MPI-Communicators for rows/columns
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
@@ -1147,6 +1173,9 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("trans_ev_band_to_full_real")
+#endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -1230,6 +1259,9 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
    deallocate(tmp1, tmp2, hvb, hvm)
 
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("trans_ev_band_to_full_real")
+#endif
 end subroutine trans_ev_band_to_full_real
 
 ! --------------------------------------------------------------------------------------------------
@@ -1260,7 +1292,9 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 !  mpi_comm
 !              MPI-Communicator for the total processor set
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer, intent(in) ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
@@ -1292,6 +1326,9 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
 #ifdef WITH_OPENMP
    integer :: omp_get_max_threads
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("tridiag_band_real")
 #endif
 
    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
@@ -1522,6 +1559,9 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
           ! is completed by the next thread.
           ! After the first iteration it is also the place to exchange the last row
           ! with MPI calls
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
 
 !$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
 !$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
@@ -1616,6 +1656,9 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
             enddo ! my_thread
 !$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
 
             if (iter==1) then
                ! We are at the end of the first block
@@ -1887,6 +1930,9 @@ enddo
    deallocate(limits, snd_limits)
    deallocate(block_limits)
    deallocate(global_id)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("tridiag_band_real")
+#endif
 
  end subroutine tridiag_band_real
 
@@ -1921,7 +1967,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 !              MPI-Communicators for rows/columns/both
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
     implicit none
 
     integer, intent(in) :: THIS_REAL_ELPA_KERNEL
@@ -1985,7 +2033,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
 
     logical             :: success
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("trans_ev_tridi_to_band_real")
+#endif
     success = .true.
     kernel_time = 1.d-100
     kernel_flops = 0
@@ -2076,11 +2126,18 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
     ! Please note about the OMP usage below:
     ! This is not for speed, but because we want the matrix a in the memory and
     ! in the cache of the correct thread (if possible)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
 
 !$omp parallel do private(my_thread), schedule(static, 1)
     do my_thread = 1, max_threads
         a(:,:,:,my_thread) = 0 ! if possible, do first touch allocation!
     enddo
+    !$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
 #endif
 
     do ip = np_rows-1, 0, -1
@@ -2092,10 +2149,19 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                 if(src < my_prow) then
 #ifdef WITH_OPENMP
                    call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(ip),my_thread)
                     enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
 #else
                     call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
                     call unpack_row(row,i-limits(ip))
@@ -2104,10 +2170,19 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                     src_offset = src_offset+1
                     row(:) = q(src_offset, 1:l_nev)
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(ip),my_thread)
                     enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
 #else
                     call unpack_row(row,i-limits(ip))
 #endif
@@ -2141,10 +2216,19 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                 if(src == ip) then
 #ifdef WITH_OPENMP
                     call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(my_prow),my_thread)
-                     enddo
+                    enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("OpenMP parallel")
+#endif
+
 #else
                     call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
                     call unpack_row(row,i-limits(my_prow))
@@ -2295,6 +2379,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
             if(current_n_end < current_n) then
 #ifdef WITH_OPENMP
                 call MPI_Wait(bottom_recv_request(i), MPI_STATUS, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     n_off = current_local_n+a_off
@@ -2303,6 +2391,11 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                     a(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
                       reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
 #else
                 call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
                 n_off = current_local_n+a_off
@@ -2336,6 +2429,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
                 !compute
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     if(top_msg_length>0) then
@@ -2347,6 +2444,11 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                     call compute_hh_trafo(0, current_local_n, i, my_thread, &
                                       THIS_REAL_ELPA_KERNEL)
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
 #else
                 call compute_hh_trafo(0, current_local_n, i, &
                                       THIS_REAL_ELPA_KERNEL)
@@ -2377,11 +2479,19 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
                 !compute
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
                                       THIS_REAL_ELPA_KERNEL)
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
 
                 !send_b
                 call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
@@ -2414,11 +2524,20 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
                 !compute
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread), schedule(static, 1)
                 do my_thread = 1, max_threads
                     call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
                                       THIS_REAL_ELPA_KERNEL)
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
 #else
                 call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                                       THIS_REAL_ELPA_KERNEL)
@@ -2436,6 +2555,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
                 !compute
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     if(top_msg_length>0) then
@@ -2447,6 +2570,11 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                     call compute_hh_trafo(0, top_msg_length, i, my_thread, &
                                       THIS_REAL_ELPA_KERNEL)
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
 #else
                 call compute_hh_trafo(0, top_msg_length, i, &
                                       THIS_REAL_ELPA_KERNEL)
@@ -2605,6 +2733,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
          a_off = a_off + offset
          if(a_off + next_local_n + nbw > a_dim2) then
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
+
  !$omp parallel do private(my_thread, i, j), schedule(static, 1)
              do my_thread = 1, max_threads
                  do i = 1, stripe_count
@@ -2618,6 +2750,11 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
                  enddo
              enddo
+#ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+#endif
              a_off = 0
          endif
 
@@ -2662,6 +2799,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
      deallocate(top_recv_request)
      deallocate(bottom_send_request)
      deallocate(bottom_recv_request)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("trans_ev_tridi_to_band_real")
+#endif
+   return
 
  contains
 
@@ -2741,6 +2882,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #if defined(WITH_REAL_BGQ_KERNEL)
       use real_bgp_kernel, only : double_hh_trafo_bgq
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
       implicit none
 
       integer, intent(in) :: THIS_REAL_ELPA_KERNEL
@@ -2753,6 +2897,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
          integer j, nl, jj, jjj
          real*8 w(nbw,6), ttt
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("compute_hh_trafo")
+#endif
 
          ttt = mpi_wtime()
 
@@ -3032,6 +3179,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #ifdef WITH_OPENMP
     endif
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("compute_hh_trafo")
+#endif
 
   end subroutine compute_hh_trafo
 
@@ -3126,7 +3276,9 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 !              Factors for the Householder vectors (returned), needed for back transformation
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
@@ -3150,7 +3302,9 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
    logical, intent(out) :: success
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("bandred_complex")
+#endif
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -3390,6 +3544,9 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
       deallocate(vmr, umc, vr)
 
    enddo
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("bandred_complex")
+#endif
 
 end subroutine bandred_complex
 
@@ -3463,7 +3620,9 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 !              MPI-Communicators for rows/columns
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
@@ -3482,7 +3641,9 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("trans_ev_band_to_full_complex")
+#endif
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -3564,6 +3725,9 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
    deallocate(tmp1, tmp2, hvb, hvm)
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("trans_ev_band_to_full_complex")
+#endif
 
  end subroutine trans_ev_band_to_full_complex
 
@@ -3595,7 +3759,9 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 !  mpi_comm
 !              MPI-Communicator for the total processor set
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
 
    integer, intent(in) ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
@@ -3627,7 +3793,9 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
    ! dummies for calling redist_band
    real*8 :: r_a(1,1), r_ab(1,1)
 
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("tridiag_band_complex")
+#endif
    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
    call mpi_comm_size(mpi_comm,n_pes,mpierr)
 
@@ -3847,6 +4015,9 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
           ! is completed by the next thread.
           ! After the first iteration it is also the place to exchange the last row
           ! with MPI calls
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("OpenMP parallel")
+#endif
 
 !$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
 !$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
@@ -3942,6 +4113,11 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
           enddo ! my_thread
 !$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("OpenMP parallel")
+#endif
+
+
 
           if (iter==1) then
             ! We are at the end of the first block
@@ -4051,7 +4227,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
             ! ... then request last column ...
 #ifdef WITH_OPENMP
-      call	mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+            call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
 
 #else
             call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
@@ -4163,8 +4339,6 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 #ifdef WITH_OPENMP
       do iblk = 1, nblocks
 
-
-
         if(hh_dst(iblk) >= np_rows) exit
         if(snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
 
@@ -4214,6 +4388,9 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
    deallocate(limits, snd_limits)
    deallocate(block_limits)
    deallocate(global_id)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("tridiag_band_complex")
+#endif
 
  end subroutine tridiag_band_complex
 
@@ -4249,7 +4426,9 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 !              MPI-Communicators for rows/columns/both
 !
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
     implicit none
 
     integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
@@ -4311,7 +4490,11 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     integer*8 kernel_flops
     
     logical :: success
-    
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("trans_ev_tridi_to_band_complex")
+#endif
+
     kernel_time = 1.d-100
     kernel_flops = 0
 
@@ -4405,11 +4588,19 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     ! Please note about the OMP usage below:
     ! This is not for speed, but because we want the matrix a in the memory and
     ! in the cache of the correct thread (if possible)
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("OpenMP parallel")
+#endif
 
 !$omp parallel do private(my_thread), schedule(static, 1)
     do my_thread = 1, max_threads
         a(:,:,:,my_thread) = 0 ! if possible, do first touch allocation!
     enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("OpenMP parallel")
+#endif
+
 #endif
     do ip = np_rows-1, 0, -1
         if(my_prow == ip) then
@@ -4426,10 +4617,19 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #endif
 
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(ip),my_thread)
                     enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("OpenMP parallel")
+#endif
+
 #else
                     call unpack_row(row,i-limits(ip))
 #endif
@@ -4437,10 +4637,19 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                     src_offset = src_offset+1
                     row(:) = q(src_offset, 1:l_nev)
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(ip),my_thread)
                     enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%stop("OpenMP parallel")
+#endif
+
 #else
                     call unpack_row(row,i-limits(ip))
 #endif
@@ -4479,10 +4688,18 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #endif
 
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%start("OpenMP parallel")
+#endif
 !$omp parallel do private(my_thread), schedule(static, 1)
                     do my_thread = 1, max_threads
                         call unpack_row(row,i-limits(my_prow),my_thread)
                     enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%stop("OpenMP parallel")
+#endif
+
 #else
                     call unpack_row(row,i-limits(my_prow))
 #endif
@@ -4640,6 +4857,9 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                 call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%start("OpenMP parallel")
+#endif
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     n_off = current_local_n+a_off
@@ -4648,6 +4868,11 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                     a(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
                       reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%stop("OpenMP parallel")
+#endif
+
 #else
                 n_off = current_local_n+a_off
                 a(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
@@ -4681,6 +4906,10 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
                 !compute
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     if(top_msg_length>0) then
@@ -4692,6 +4921,11 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                     call compute_hh_trafo_complex(0, current_local_n, i, my_thread, &
                                       THIS_COMPLEX_ELPA_KERNEL)
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%stop("OpenMP parallel")
+#endif
+
 #else
                 call compute_hh_trafo_complex(0, current_local_n, i, &
                                       THIS_COMPLEX_ELPA_KERNEL)
@@ -4723,11 +4957,20 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
                 !compute
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     call compute_hh_trafo_complex(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
                                       THIS_COMPLEX_ELPA_KERNEL)
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%stop("OpenMP parallel")
+#endif
+
 #else
                 call compute_hh_trafo_complex(current_local_n - bottom_msg_length, bottom_msg_length, i, &
                                       THIS_COMPLEX_ELPA_KERNEL)
@@ -4760,11 +5003,20 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
                 !compute
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread), schedule(static, 1)
                 do my_thread = 1, max_threads
                     call compute_hh_trafo_complex(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
                                       THIS_COMPLEX_ELPA_KERNEL)
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%stop("OpenMP parallel")
+#endif
+
 #else
                 call compute_hh_trafo_complex(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                                       THIS_COMPLEX_ELPA_KERNEL)
@@ -4785,6 +5037,10 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
                 !compute
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                     if(top_msg_length>0) then
@@ -4796,6 +5052,11 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                     call compute_hh_trafo_complex(0, top_msg_length, i, my_thread, &
                                       THIS_COMPLEX_ELPA_KERNEL)
                 enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%stop("OpenMP parallel")
+#endif
+
 #else
                 call compute_hh_trafo_complex(0, top_msg_length, i, &
                                       THIS_COMPLEX_ELPA_KERNEL)
@@ -4961,6 +5222,10 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
         a_off = a_off + offset
         if(a_off + next_local_n + nbw > a_dim2) then
 #ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%start("OpenMP parallel")
+#endif
+
 !$omp parallel do private(my_thread, i, j), schedule(static, 1)
             do my_thread = 1, max_threads
                 do i = 1, stripe_count
@@ -4974,6 +5239,12 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #endif
                 enddo
             enddo
+#ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+                 call timer%stop("OpenMP parallel")
+#endif
+#endif
+
             a_off = 0
         endif
 
@@ -5018,7 +5289,10 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     deallocate(top_recv_request)
     deallocate(bottom_send_request)
     deallocate(bottom_recv_request)
-
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("trans_ev_tridi_to_band_complex")
+#endif
+    return
 contains
 
 #ifdef WITH_OPENMP
@@ -5097,6 +5371,9 @@ contains
 #if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
       use complex_generic_kernel, only : single_hh_trafo_complex_generic
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
       implicit none
       integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
 
@@ -5113,6 +5390,10 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         complex*16 w(nbw,2)
+
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("compute_hh_trafo_complex")
+#endif
 
 #ifdef WITH_OPENMP
         if(istripe<stripe_count) then
@@ -5251,6 +5532,10 @@ contains
 #ifdef WITH_OPENMP
         endif
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("compute_hh_trafo_complex")
+#endif
+
 
     end subroutine
 

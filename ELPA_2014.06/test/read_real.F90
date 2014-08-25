@@ -70,7 +70,9 @@ program read_real
 #ifdef HAVE_REDIRECT
    use redirect
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
    include 'mpif.h'
 
@@ -141,6 +143,32 @@ program read_real
    endif
 #endif
 
+#ifdef HAVE_DETAILED_TIMINGS
+
+   ! initialise the timing functionality
+
+#ifdef HAVE_LIBPAPI
+   call timer%measure_flops(.true.)
+#endif
+
+   call timer%measure_allocated_memory(.true.)
+   call timer%measure_virtual_memory(.true.)
+   call timer%measure_max_allocated_memory(.true.)
+
+   call timer%set_print_options(&
+#ifdef HAVE_LIBPAPI
+                print_flop_count=.true., &
+                print_flop_rate=.true., &
+#endif
+                print_allocated_memory = .true. , &
+                print_virtual_memory=.true., &
+                print_max_allocated_memory=.true.)
+
+
+  call timer%enable()
+
+  call timer%start("program")
+#endif
    !-------------------------------------------------------------------------------
    ! Get the name of the input file containing the matrix and open input file
    ! Please note:
@@ -229,7 +257,9 @@ program read_real
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("set up matrix")
+#endif
    allocate(a (na_rows,na_cols))
    allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -247,7 +277,9 @@ program read_real
    ! Save original matrix A for later accuracy checks
 
    as = a
-
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("set up matrix")
+#endif
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
@@ -325,6 +357,14 @@ program read_real
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("program")
+   print *," "
+   print *,"Timings program:"
+   call timer%print("program")
+   print *," "
+   print *,"End timings program"
+#endif
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 

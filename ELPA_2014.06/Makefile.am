@@ -11,6 +11,18 @@ libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSIO
 
 libelpa@SUFFIX@_la_SOURCES = src/elpa1.F90 src/elpa2.F90
 
+if HAVE_DETAILED_TIMINGS
+  libelpa@SUFFIX@_la_SOURCES += src/timer.F90 \
+                                src/ftimings/ftimings.F90 \
+                                src/ftimings/ftimings_type.F90 \
+                                src/ftimings/ftimings_value.F90 \
+                                src/ftimings/highwater_mark.c \
+                                src/ftimings/resident_set_size.c \
+                                src/ftimings/time.c \
+                                src/ftimings/virtual_memory.c \
+                                src/ftimings/papi.c
+endif
+
 if WITH_REAL_GENERIC_KERNEL
   libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.f90
 endif
