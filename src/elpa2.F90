@@ -268,6 +268,7 @@ module ELPA2
 
 !******
 contains
+
 subroutine print_available_real_kernels
 
   implicit none
@@ -275,9 +276,9 @@ subroutine print_available_real_kernels
   integer :: i
 
   do i=1, number_of_real_kernels
-     if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
-        write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
-     endif
+    if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
+      write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
+    endif
   enddo
   write(error_unit,*) " "
   write(error_unit,*) " At the moment the following kernel would be choosen:"
@@ -293,9 +294,9 @@ subroutine print_available_complex_kernels
   integer :: i
 
   do i=1, number_of_complex_kernels
-     if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .eq. 1) then
-        write(error_unit,*) COMPLEX_ELPA_KERNEL_NAMES(i)
-     endif
+    if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .eq. 1) then
+       write(error_unit,*) COMPLEX_ELPA_KERNEL_NAMES(i)
+    endif
   enddo
   write(error_unit,*) " "
   write(error_unit,*) " At the moment the following kernel would be choosen:"
@@ -313,8 +314,8 @@ function get_actual_real_kernel() result(actual_kernel)
   actual_kernel = real_kernel_via_environment_variable()
 
   if (actual_kernel .eq. 0) then
-     ! if not then set default kernel
-     actual_kernel = DEFAULT_REAL_ELPA_KERNEL
+    ! if not then set default kernel
+    actual_kernel = DEFAULT_REAL_ELPA_KERNEL
   endif
 end function get_actual_real_kernel
 
@@ -335,8 +336,8 @@ function get_actual_complex_kernel() result(actual_kernel)
   actual_kernel = complex_kernel_via_environment_variable()
 
   if (actual_kernel .eq. 0) then
-     ! if not then set default kernel
-     actual_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
+    ! if not then set default kernel
+    actual_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
   endif
 end function get_actual_complex_kernel
 
@@ -384,15 +385,13 @@ function real_kernel_via_environment_variable() result(kernel)
 #endif
   do i=1,size(REAL_ELPA_KERNEL_NAMES(:))
 !     if (trim(dummy_char) .eq. trim(REAL_ELPA_KERNEL_NAMES(i))) then
-     if (trim(REAL_KERNEL_ENVIRONMENT) .eq. trim(REAL_ELPA_KERNEL_NAMES(i))) then
-        kernel = i
-        exit
-     else
-        kernel = 0
-     endif
+    if (trim(REAL_KERNEL_ENVIRONMENT) .eq. trim(REAL_ELPA_KERNEL_NAMES(i))) then
+      kernel = i
+      exit
+    else
+      kernel = 0
+    endif
   enddo
-
-
 end function real_kernel_via_environment_variable
 
 function complex_kernel_via_environment_variable() result(kernel)
@@ -406,12 +405,12 @@ function complex_kernel_via_environment_variable() result(kernel)
 #endif
 
   do i=1,size(COMPLEX_ELPA_KERNEL_NAMES(:))
-     if (trim(COMPLEX_ELPA_KERNEL_NAMES(i)) .eq. trim(COMPLEX_KERNEL_ENVIRONMENT)) then
-        kernel = i
-        exit
-     else
-        kernel = 0
-     endif
+    if (trim(COMPLEX_ELPA_KERNEL_NAMES(i)) .eq. trim(COMPLEX_KERNEL_ENVIRONMENT)) then
+      kernel = i
+      exit
+    else
+      kernel = 0
+    endif
   enddo
 
 end function complex_kernel_via_environment_variable
@@ -484,35 +483,35 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
 
    success = .true.
 
- if (present(THIS_REAL_ELPA_KERNEL_API)) then
-      ! user defined kernel via the optional argument in the API call
-      THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
+   if (present(THIS_REAL_ELPA_KERNEL_API)) then
+     ! user defined kernel via the optional argument in the API call
+     THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
    else
 
-      ! if kernel is not choosen via api
-      ! check whether set by environment variable
-      THIS_REAL_ELPA_KERNEL = get_actual_real_kernel()
+     ! if kernel is not choosen via api
+     ! check whether set by environment variable
+     THIS_REAL_ELPA_KERNEL = get_actual_real_kernel()
    endif
 
    ! check whether choosen kernel is allowed
    if (check_allowed_real_kernels(THIS_REAL_ELPA_KERNEL)) then
 
-      if(my_pe == 0) then
-         write(error_unit,*) " "
-         write(error_unit,*) "The choosen kernel ",REAL_ELPA_KERNEL_NAMES(THIS_REAL_ELPA_KERNEL)
-         write(error_unit,*) "is not in the list of the allowed kernels!"
-         write(error_unit,*) " "
-         write(error_unit,*) "Allowed kernels are:"
-         do i=1,size(REAL_ELPA_KERNEL_NAMES(:))
-            if (AVAILABLE_REAL_ELPA_KERNELS(i) .ne. 0) then
-               write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
-            endif
-         enddo
+     if (my_pe == 0) then
+       write(error_unit,*) " "
+       write(error_unit,*) "The choosen kernel ",REAL_ELPA_KERNEL_NAMES(THIS_REAL_ELPA_KERNEL)
+       write(error_unit,*) "is not in the list of the allowed kernels!"
+       write(error_unit,*) " "
+       write(error_unit,*) "Allowed kernels are:"
+       do i=1,size(REAL_ELPA_KERNEL_NAMES(:))
+         if (AVAILABLE_REAL_ELPA_KERNELS(i) .ne. 0) then
+           write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
+         endif
+       enddo
 
-         write(error_unit,*) " "
-         write(error_unit,*) "The defaul kernel REAL_ELPA_KERNEL_GENERIC will be used !"
-      endif
-         THIS_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
+       write(error_unit,*) " "
+       write(error_unit,*) "The defaul kernel REAL_ELPA_KERNEL_GENERIC will be used !"
+     endif
+     THIS_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
 
    endif
 
@@ -532,7 +531,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
                      tmat, success)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time bandred_real               :',ttt1-ttt0
 
    ! Reduction band -> tridiagonal
@@ -543,7 +542,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, mpi_comm_rows, &
                           mpi_comm_cols, mpi_comm_all)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_real          :',ttt1-ttt0
 
    call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
@@ -560,8 +559,8 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    if (.not.(success)) return
 
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      write(error_unit,*) 'Time solve_tridi                :',ttt1-ttt0
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+     write(error_unit,*) 'Time solve_tridi                :',ttt1-ttt0
    time_evp_solve = ttt1-ttt0
    ttts = ttt1
 
@@ -574,7 +573,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
                                     mpi_comm_cols, success, THIS_REAL_ELPA_KERNEL)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_tridi_to_band_real:',ttt1-ttt0
 
    ! We can now deallocate the stored householder vectors
@@ -585,7 +584,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    ttt0 = MPI_Wtime()
    call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_band_to_full_real :',ttt1-ttt0
    time_evp_back = ttt1-ttts
 
@@ -670,34 +669,34 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
    success = .true.
 
-  if (present(THIS_COMPLEX_ELPA_KERNEL_API)) then
-      ! user defined kernel via the optional argument in the API call
-      THIS_COMPLEX_ELPA_KERNEL = THIS_COMPLEX_ELPA_KERNEL_API
+   if (present(THIS_COMPLEX_ELPA_KERNEL_API)) then
+     ! user defined kernel via the optional argument in the API call
+     THIS_COMPLEX_ELPA_KERNEL = THIS_COMPLEX_ELPA_KERNEL_API
    else
-      ! if kernel is not choosen via api
-      ! check whether set by environment variable
-      THIS_COMPLEX_ELPA_KERNEL = get_actual_complex_kernel()
+     ! if kernel is not choosen via api
+     ! check whether set by environment variable
+     THIS_COMPLEX_ELPA_KERNEL = get_actual_complex_kernel()
    endif
 
    ! check whether choosen kernel is allowed
    if (check_allowed_complex_kernels(THIS_COMPLEX_ELPA_KERNEL)) then
 
-      if(my_pe == 0) then
-         write(error_unit,*) " "
-         write(error_unit,*) "The choosen kernel ",COMPLEX_ELPA_KERNEL_NAMES(THIS_COMPLEX_ELPA_KERNEL)
-         write(error_unit,*) "is not in the list of the allowed kernels!"
-         write(error_unit,*) " "
-         write(error_unit,*) "Allowed kernels are:"
-         do i=1,size(COMPLEX_ELPA_KERNEL_NAMES(:))
-            if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .ne. 0) then
-               write(error_unit,*) COMPLEX_ELPA_KERNEL_NAMES(i)
-            endif
-         enddo
+     if (my_pe == 0) then
+       write(error_unit,*) " "
+       write(error_unit,*) "The choosen kernel ",COMPLEX_ELPA_KERNEL_NAMES(THIS_COMPLEX_ELPA_KERNEL)
+       write(error_unit,*) "is not in the list of the allowed kernels!"
+       write(error_unit,*) " "
+       write(error_unit,*) "Allowed kernels are:"
+       do i=1,size(COMPLEX_ELPA_KERNEL_NAMES(:))
+         if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .ne. 0) then
+           write(error_unit,*) COMPLEX_ELPA_KERNEL_NAMES(i)
+         endif
+       enddo
 
-         write(error_unit,*) " "
-         write(error_unit,*) "The defaul kernel COMPLEX_ELPA_KERNEL_GENERIC will be used !"
-      endif
-         THIS_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
+       write(error_unit,*) " "
+       write(error_unit,*) "The defaul kernel COMPLEX_ELPA_KERNEL_GENERIC will be used !"
+     endif
+     THIS_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
 !      call MPI_ABORT(mpi_comm_all, mpierr)
    endif
    ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
@@ -721,7 +720,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
      return
    endif
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time bandred_complex               :',ttt1-ttt0
 
    ! Reduction band -> tridiagonal
@@ -731,7 +730,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ttt0 = MPI_Wtime()
    call tridiag_band_complex(na, nbw, nblk, a, lda, ev, e, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_complex          :',ttt1-ttt0
 
    call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
@@ -754,7 +753,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    if (.not.(success)) return
 
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times)  &
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times)  &
       write(error_unit,*) 'Time solve_tridi                   :',ttt1-ttt0
    time_evp_solve = ttt1-ttt0
    ttts = ttt1
@@ -771,7 +770,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
                                        success,THIS_COMPLEX_ELPA_KERNEL)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_tridi_to_band_complex:',ttt1-ttt0
 
    ! We can now deallocate the stored householder vectors
@@ -782,7 +781,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ttt0 = MPI_Wtime()
    call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_band_to_full_complex :',ttt1-ttt0
    time_evp_back = ttt1-ttts
 
@@ -870,13 +869,13 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 
    ! Semibandwith nbw must be a multiple of blocksize nblk
 
-   if(mod(nbw,nblk)/=0) then
-      if(my_prow==0 .and. my_pcol==0) then
-         write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
-         write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
-         success = .false.
+   if (mod(nbw,nblk)/=0) then
+     if (my_prow==0 .and. my_pcol==0) then
+       write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
+       write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
+       success = .false.
 !         call mpi_abort(mpi_comm_world,0,mpierr)
-      endif
+     endif
    endif
 
    ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
@@ -890,258 +889,258 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 #ifdef WITH_QR
 
    if (which_qr_decomposition == 1) then
-      call qr_pqrparam_init(pqrparam,    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
-      allocate(tauvector(na))
-      allocate(blockheuristic(nblk))
-      l_rows = local_index(na, my_prow, np_rows, nblk, -1)
-      allocate(vmr(max(l_rows,1),na))
+     call qr_pqrparam_init(pqrparam,    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
+     allocate(tauvector(na))
+     allocate(blockheuristic(nblk))
+     l_rows = local_index(na, my_prow, np_rows, nblk, -1)
+     allocate(vmr(max(l_rows,1),na))
 
-      call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,1), nbw, dwork_size(1), -1, na, &
+     call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,1), nbw, dwork_size(1), -1, na, &
                              nbw, nblk, nblk, na, na, 1, 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols, blockheuristic)
-      work_size = dwork_size(1)
-      allocate(work_blocked(work_size))
+     work_size = dwork_size(1)
+     allocate(work_blocked(work_size))
 
-      work_blocked = 0.0d0
-      deallocate(vmr)
+     work_blocked = 0.0d0
+     deallocate(vmr)
    endif
 #endif
 
 
    do istep = (na-1)/nbw, 1, -1
 
-      n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
+     n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
 
-      ! Number of local columns/rows of remaining matrix
-      l_cols = local_index(istep*nbw, my_pcol, np_cols, nblk, -1)
-      l_rows = local_index(istep*nbw, my_prow, np_rows, nblk, -1)
+     ! Number of local columns/rows of remaining matrix
+     l_cols = local_index(istep*nbw, my_pcol, np_cols, nblk, -1)
+     l_rows = local_index(istep*nbw, my_prow, np_rows, nblk, -1)
 
-      ! Allocate vmr and umc to their exact sizes so that they can be used in bcasts and reduces
+     ! Allocate vmr and umc to their exact sizes so that they can be used in bcasts and reduces
 
-      allocate(vmr(max(l_rows,1),2*n_cols))
-      allocate(umc(max(l_cols,1),2*n_cols))
+     allocate(vmr(max(l_rows,1),2*n_cols))
+     allocate(umc(max(l_cols,1),2*n_cols))
 
-      allocate(vr(l_rows+1))
+     allocate(vr(l_rows+1))
 
-      vmr(1:l_rows,1:n_cols) = 0.
-      vr(:) = 0
-      tmat(:,:,istep) = 0
+     vmr(1:l_rows,1:n_cols) = 0.
+     vr(:) = 0
+     tmat(:,:,istep) = 0
 
-      ! Reduce current block to lower triangular form
+     ! Reduce current block to lower triangular form
 #ifdef WITH_QR
-      if (which_qr_decomposition == 1) then
-         call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), &
-                                 tmat(1,1,istep), nbw, work_blocked,       &
-                                 work_size, na, n_cols, nblk, nblk,        &
-                                 istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
-                                 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols,&
-                                 blockheuristic)
-      else
+     if (which_qr_decomposition == 1) then
+       call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), &
+                               tmat(1,1,istep), nbw, work_blocked,       &
+                               work_size, na, n_cols, nblk, nblk,        &
+                               istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
+                               0, PQRPARAM, mpi_comm_rows, mpi_comm_cols,&
+                               blockheuristic)
+     else
 
 #endif
-        do lc = n_cols, 1, -1
+       do lc = n_cols, 1, -1
 
-           ncol = istep*nbw + lc ! absolute column number of householder vector
-           nrow = ncol - nbw ! Absolute number of pivot row
+         ncol = istep*nbw + lc ! absolute column number of householder vector
+         nrow = ncol - nbw ! Absolute number of pivot row
 
-           lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
-           lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+         lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
+         lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
 
-           tau = 0
+         tau = 0
 
-           if(nrow == 1) exit ! Nothing to do
+         if (nrow == 1) exit ! Nothing to do
 
-           cur_pcol = pcol(ncol) ! Processor column owning current block
+         cur_pcol = pcol(ncol) ! Processor column owning current block
 
-           if(my_pcol==cur_pcol) then
+         if (my_pcol==cur_pcol) then
 
-              ! Get vector to be transformed; distribute last element and norm of
-              ! remaining elements to all procs in current column
+           ! Get vector to be transformed; distribute last element and norm of
+           ! remaining elements to all procs in current column
 
-              vr(1:lr) = a(1:lr,lch) ! vector to be transformed
+           vr(1:lr) = a(1:lr,lch) ! vector to be transformed
 
-              if(my_prow==prow(nrow)) then
-                 aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
-                 aux1(2) = vr(lr)
-              else
-                 aux1(1) = dot_product(vr(1:lr),vr(1:lr))
-                 aux1(2) = 0.
-              endif
-
-              call mpi_allreduce(aux1,aux2,2,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-
-              vnorm2 = aux2(1)
-              vrl    = aux2(2)
-
-              ! Householder transformation
-
-              call hh_transform_real(vrl, vnorm2, xf, tau)
-
-              ! Scale vr and store Householder vector for back transformation
-
-              vr(1:lr) = vr(1:lr) * xf
-              if(my_prow==prow(nrow)) then
-                 a(1:lr-1,lch) = vr(1:lr-1)
-                 a(lr,lch) = vrl
-                 vr(lr) = 1.
-              else
-                 a(1:lr,lch) = vr(1:lr)
-              endif
-
+           if (my_prow==prow(nrow)) then
+             aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
+             aux1(2) = vr(lr)
+           else
+             aux1(1) = dot_product(vr(1:lr),vr(1:lr))
+             aux1(2) = 0.
            endif
 
-           ! Broadcast Householder vector and tau along columns
+           call mpi_allreduce(aux1,aux2,2,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
 
-           vr(lr+1) = tau
-           call MPI_Bcast(vr,lr+1,MPI_REAL8,cur_pcol,mpi_comm_cols,mpierr)
-           vmr(1:lr,lc) = vr(1:lr)
-           tau = vr(lr+1)
-           tmat(lc,lc,istep) = tau ! Store tau in diagonal of tmat
+           vnorm2 = aux2(1)
+           vrl    = aux2(2)
 
-           ! Transform remaining columns in current block with Householder vector
-           ! Local dot product
+           ! Householder transformation
 
-           aux1 = 0
+           call hh_transform_real(vrl, vnorm2, xf, tau)
 
-           nlc = 0 ! number of local columns
-           do j=1,lc-1
-              lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-              if(lcx>0) then
-                 nlc = nlc+1
-                 if(lr>0) aux1(nlc) = dot_product(vr(1:lr),a(1:lr,lcx))
-              endif
-           enddo
+           ! Scale vr and store Householder vector for back transformation
 
-           ! Get global dot products
-           if(nlc>0) call mpi_allreduce(aux1,aux2,nlc,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+           vr(1:lr) = vr(1:lr) * xf
+           if (my_prow==prow(nrow)) then
+             a(1:lr-1,lch) = vr(1:lr-1)
+             a(lr,lch) = vrl
+             vr(lr) = 1.
+           else
+             a(1:lr,lch) = vr(1:lr)
+           endif
 
-           ! Transform
+         endif
 
-           nlc = 0
-           do j=1,lc-1
-              lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-              if(lcx>0) then
-                 nlc = nlc+1
-                 a(1:lr,lcx) = a(1:lr,lcx) - tau*aux2(nlc)*vr(1:lr)
-              endif
-           enddo
+         ! Broadcast Householder vector and tau along columns
 
-        enddo
+         vr(lr+1) = tau
+         call MPI_Bcast(vr,lr+1,MPI_REAL8,cur_pcol,mpi_comm_cols,mpierr)
+         vmr(1:lr,lc) = vr(1:lr)
+         tau = vr(lr+1)
+         tmat(lc,lc,istep) = tau ! Store tau in diagonal of tmat
 
-        ! Calculate scalar products of stored Householder vectors.
-        ! This can be done in different ways, we use dsyrk
+         ! Transform remaining columns in current block with Householder vector
+         ! Local dot product
 
-        vav = 0
-        if(l_rows>0) &
+         aux1 = 0
+
+         nlc = 0 ! number of local columns
+         do j=1,lc-1
+           lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+           if (lcx>0) then
+             nlc = nlc+1
+             if (lr>0) aux1(nlc) = dot_product(vr(1:lr),a(1:lr,lcx))
+           endif
+         enddo
+
+         ! Get global dot products
+         if (nlc>0) call mpi_allreduce(aux1,aux2,nlc,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+
+         ! Transform
+
+         nlc = 0
+         do j=1,lc-1
+           lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+           if (lcx>0) then
+             nlc = nlc+1
+             a(1:lr,lcx) = a(1:lr,lcx) - tau*aux2(nlc)*vr(1:lr)
+           endif
+         enddo
+
+       enddo
+
+       ! Calculate scalar products of stored Householder vectors.
+       ! This can be done in different ways, we use dsyrk
+
+       vav = 0
+       if (l_rows>0) &
            call dsyrk('U','T',n_cols,l_rows,1.d0,vmr,ubound(vmr,1),0.d0,vav,ubound(vav,1))
-        call symm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_rows)
+       call symm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_rows)
 
-        ! Calculate triangular matrix T for block Householder Transformation
+       ! Calculate triangular matrix T for block Householder Transformation
 
-        do lc=n_cols,1,-1
-           tau = tmat(lc,lc,istep)
-           if(lc<n_cols) then
-              call dtrmv('U','T','N',n_cols-lc,tmat(lc+1,lc+1,istep),ubound(tmat,1),vav(lc+1,lc),1)
-              tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
-           endif
-        enddo
+       do lc=n_cols,1,-1
+         tau = tmat(lc,lc,istep)
+         if (lc<n_cols) then
+           call dtrmv('U','T','N',n_cols-lc,tmat(lc+1,lc+1,istep),ubound(tmat,1),vav(lc+1,lc),1)
+           tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
+         endif
+       enddo
 
 #ifdef WITH_QR
      endif
 #endif
 
-      ! Transpose vmr -> vmc (stored in umc, second half)
+    ! Transpose vmr -> vmc (stored in umc, second half)
 
-      call elpa_transpose_vectors  (vmr, ubound(vmr,1), mpi_comm_rows, &
+    call elpa_transpose_vectors  (vmr, ubound(vmr,1), mpi_comm_rows, &
                                     umc(1,n_cols+1), ubound(umc,1), mpi_comm_cols, &
                                     1, istep*nbw, n_cols, nblk)
 
-      ! Calculate umc = A**T * vmr
-      ! Note that the distributed A has to be transposed
-      ! Opposed to direct tridiagonalization there is no need to use the cache locality
-      ! of the tiles, so we can use strips of the matrix
+    ! Calculate umc = A**T * vmr
+    ! Note that the distributed A has to be transposed
+    ! Opposed to direct tridiagonalization there is no need to use the cache locality
+    ! of the tiles, so we can use strips of the matrix
 
-      umc(1:l_cols,1:n_cols) = 0.d0
-      vmr(1:l_rows,n_cols+1:2*n_cols) = 0
-      if(l_cols>0 .and. l_rows>0) then
-         do i=0,(istep*nbw-1)/tile_size
-
-            lcs = i*l_cols_tile+1
-            lce = min(l_cols,(i+1)*l_cols_tile)
-            if(lce<lcs) cycle
-
-            lre = min(l_rows,(i+1)*l_rows_tile)
-            call DGEMM('T','N',lce-lcs+1,n_cols,lre,1.d0,a(1,lcs),ubound(a,1), &
-                       vmr,ubound(vmr,1),1.d0,umc(lcs,1),ubound(umc,1))
-
-            if(i==0) cycle
-            lre = min(l_rows,i*l_rows_tile)
-            call DGEMM('N','N',lre,n_cols,lce-lcs+1,1.d0,a(1,lcs),lda, &
-                       umc(lcs,n_cols+1),ubound(umc,1),1.d0,vmr(1,n_cols+1),ubound(vmr,1))
-         enddo
-      endif
-
-      ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
-      ! on the processors containing the diagonal
-      ! This is only necessary if ur has been calculated, i.e. if the
-      ! global tile size is smaller than the global remaining matrix
-
-      if(tile_size < istep*nbw) then
-         call elpa_reduce_add_vectors  (vmr(1,n_cols+1),ubound(vmr,1),mpi_comm_rows, &
-                                        umc, ubound(umc,1), mpi_comm_cols, &
-                                        istep*nbw, n_cols, nblk)
-      endif
-
-      if(l_cols>0) then
-         allocate(tmp(l_cols,n_cols))
-         call mpi_allreduce(umc,tmp,l_cols*n_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-         umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
-         deallocate(tmp)
-      endif
-
-      ! U = U * Tmat**T
-
-      call dtrmm('Right','Upper','Trans','Nonunit',l_cols,n_cols,1.d0,tmat(1,1,istep),ubound(tmat,1),umc,ubound(umc,1))
-
-      ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-
-      call dgemm('T','N',n_cols,n_cols,l_cols,1.d0,umc,ubound(umc,1),umc(1,n_cols+1),ubound(umc,1),0.d0,vav,ubound(vav,1))
-      call dtrmm('Right','Upper','Trans','Nonunit',n_cols,n_cols,1.d0,tmat(1,1,istep),ubound(tmat,1),vav,ubound(vav,1))
-
-      call symm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_cols)
-
-      ! U = U - 0.5 * V * VAV
-      call dgemm('N','N',l_cols,n_cols,n_cols,-0.5d0,umc(1,n_cols+1),ubound(umc,1),vav,ubound(vav,1),1.d0,umc,ubound(umc,1))
-
-      ! Transpose umc -> umr (stored in vmr, second half)
-
-       call elpa_transpose_vectors  (umc, ubound(umc,1), mpi_comm_cols, &
-                                     vmr(1,n_cols+1), ubound(vmr,1), mpi_comm_rows, &
-                                     1, istep*nbw, n_cols, nblk)
-
-      ! A = A - V*U**T - U*V**T
-
+    umc(1:l_cols,1:n_cols) = 0.d0
+    vmr(1:l_rows,n_cols+1:2*n_cols) = 0
+    if (l_cols>0 .and. l_rows>0) then
       do i=0,(istep*nbw-1)/tile_size
-         lcs = i*l_cols_tile+1
-         lce = min(l_cols,(i+1)*l_cols_tile)
-         lre = min(l_rows,(i+1)*l_rows_tile)
-         if(lce<lcs .or. lre<1) cycle
-         call dgemm('N','T',lre,lce-lcs+1,2*n_cols,-1.d0, &
-                    vmr,ubound(vmr,1),umc(lcs,1),ubound(umc,1), &
-                    1.d0,a(1,lcs),lda)
+
+        lcs = i*l_cols_tile+1
+        lce = min(l_cols,(i+1)*l_cols_tile)
+        if (lce<lcs) cycle
+
+        lre = min(l_rows,(i+1)*l_rows_tile)
+        call DGEMM('T','N',lce-lcs+1,n_cols,lre,1.d0,a(1,lcs),ubound(a,1), &
+                     vmr,ubound(vmr,1),1.d0,umc(lcs,1),ubound(umc,1))
+
+        if (i==0) cycle
+        lre = min(l_rows,i*l_rows_tile)
+        call DGEMM('N','N',lre,n_cols,lce-lcs+1,1.d0,a(1,lcs),lda, &
+                     umc(lcs,n_cols+1),ubound(umc,1),1.d0,vmr(1,n_cols+1),ubound(vmr,1))
       enddo
+    endif
 
-      deallocate(vmr, umc, vr)
+    ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
+    ! on the processors containing the diagonal
+    ! This is only necessary if ur has been calculated, i.e. if the
+    ! global tile size is smaller than the global remaining matrix
 
-   enddo
+    if (tile_size < istep*nbw) then
+       call elpa_reduce_add_vectors  (vmr(1,n_cols+1),ubound(vmr,1),mpi_comm_rows, &
+                                      umc, ubound(umc,1), mpi_comm_cols, &
+                                      istep*nbw, n_cols, nblk)
+    endif
+
+    if (l_cols>0) then
+      allocate(tmp(l_cols,n_cols))
+      call mpi_allreduce(umc,tmp,l_cols*n_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+      umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
+      deallocate(tmp)
+    endif
+
+    ! U = U * Tmat**T
+
+    call dtrmm('Right','Upper','Trans','Nonunit',l_cols,n_cols,1.d0,tmat(1,1,istep),ubound(tmat,1),umc,ubound(umc,1))
+
+    ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+
+    call dgemm('T','N',n_cols,n_cols,l_cols,1.d0,umc,ubound(umc,1),umc(1,n_cols+1),ubound(umc,1),0.d0,vav,ubound(vav,1))
+    call dtrmm('Right','Upper','Trans','Nonunit',n_cols,n_cols,1.d0,tmat(1,1,istep),ubound(tmat,1),vav,ubound(vav,1))
+
+    call symm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_cols)
+
+    ! U = U - 0.5 * V * VAV
+    call dgemm('N','N',l_cols,n_cols,n_cols,-0.5d0,umc(1,n_cols+1),ubound(umc,1),vav,ubound(vav,1),1.d0,umc,ubound(umc,1))
+
+    ! Transpose umc -> umr (stored in vmr, second half)
+
+    call elpa_transpose_vectors  (umc, ubound(umc,1), mpi_comm_cols, &
+                                   vmr(1,n_cols+1), ubound(vmr,1), mpi_comm_rows, &
+                                   1, istep*nbw, n_cols, nblk)
+
+    ! A = A - V*U**T - U*V**T
+
+    do i=0,(istep*nbw-1)/tile_size
+      lcs = i*l_cols_tile+1
+      lce = min(l_cols,(i+1)*l_cols_tile)
+      lre = min(l_rows,(i+1)*l_rows_tile)
+      if (lce<lcs .or. lre<1) cycle
+      call dgemm('N','T',lre,lce-lcs+1,2*n_cols,-1.d0, &
+                  vmr,ubound(vmr,1),umc(lcs,1),ubound(umc,1), &
+                  1.d0,a(1,lcs),lda)
+    enddo
+
+    deallocate(vmr, umc, vr)
+
+  enddo
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("bandred_real")
+  call timer%stop("bandred_real")
 #endif
 
 #ifdef WITH_QR
-   if (which_qr_decomposition == 1) then
-      deallocate(work_blocked)
-      deallocate(tauvector)
-   endif
+  if (which_qr_decomposition == 1) then
+    deallocate(work_blocked)
+    deallocate(tauvector)
+  endif
 #endif
 
 end subroutine bandred_real
@@ -1165,17 +1164,17 @@ subroutine symm_matrix_allreduce(n,a,lda,comm)
 
    nc = 0
    do i=1,n
-      h1(nc+1:nc+i) = a(1:i,i)
-      nc = nc+i
+     h1(nc+1:nc+i) = a(1:i,i)
+     nc = nc+i
    enddo
 
    call mpi_allreduce(h1,h2,nc,MPI_REAL8,MPI_SUM,comm,mpierr)
 
    nc = 0
    do i=1,n
-      a(1:i,i) = h2(nc+1:nc+i)
-      a(i,1:i-1) = a(1:i-1,i)
-      nc = nc+i
+     a(1:i,i) = h2(nc+1:nc+i)
+     a(i,1:i-1) = a(1:i-1,i)
+     nc = nc+i
    enddo
 
 end subroutine symm_matrix_allreduce
@@ -1282,80 +1281,80 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 
 #ifdef WITH_QR
    do istep=1,((na-1)/nbw-1)/t_blocking + 1
-      n_cols = MIN(na,istep*cwy_blocking+nbw) - (istep-1)*cwy_blocking - nbw ! Number of columns in current step
+     n_cols = MIN(na,istep*cwy_blocking+nbw) - (istep-1)*cwy_blocking - nbw ! Number of columns in current step
 #else
    do istep=1,(na-1)/nbw
 
-      n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
+     n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
 #endif
 
-      ! Broadcast all Householder vectors for current step compressed in hvb
+     ! Broadcast all Householder vectors for current step compressed in hvb
 
-      nb = 0
-      ns = 0
+     nb = 0
+     ns = 0
 
-      do lc = 1, n_cols
+     do lc = 1, n_cols
 #ifdef WITH_QR
-         ncol = (istep-1)*cwy_blocking + nbw + lc ! absolute column number of householder vector
+       ncol = (istep-1)*cwy_blocking + nbw + lc ! absolute column number of householder vector
 #else
-         ncol = istep*nbw + lc ! absolute column number of householder vector
+       ncol = istep*nbw + lc ! absolute column number of householder vector
 #endif
-         nrow = ncol - nbw ! absolute number of pivot row
+       nrow = ncol - nbw ! absolute number of pivot row
 
-         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
-         l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
+       l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+       l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
 
-         if(my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+       if (my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
 
-         nb = nb+l_rows
+       nb = nb+l_rows
 
-         if(lc==n_cols .or. mod(ncol,nblk)==0) then
-            call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol),mpi_comm_cols,mpierr)
-            ns = nb
-         endif
-      enddo
+       if (lc==n_cols .or. mod(ncol,nblk)==0) then
+         call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol),mpi_comm_cols,mpierr)
+         ns = nb
+       endif
+     enddo
 
-      ! Expand compressed Householder vectors into matrix hvm
+     ! Expand compressed Householder vectors into matrix hvm
 
-      nb = 0
-      do lc = 1, n_cols
+     nb = 0
+     do lc = 1, n_cols
 #ifdef WITH_QR
-         nrow = (istep-1)*cwy_blocking + lc ! absolute number of pivot row
+       nrow = (istep-1)*cwy_blocking + lc ! absolute number of pivot row
 #else
-         nrow = (istep-1)*nbw+lc ! absolute number of pivot row
+       nrow = (istep-1)*nbw+lc ! absolute number of pivot row
 #endif
-         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+       l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
-         hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-         if(my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
+       hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
+       if (my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
 
-         nb = nb+l_rows
-      enddo
+       nb = nb+l_rows
+     enddo
 
 #ifdef WITH_QR
-      l_rows = local_index(MIN(na,(istep+1)*cwy_blocking), my_prow, np_rows, nblk, -1)
+     l_rows = local_index(MIN(na,(istep+1)*cwy_blocking), my_prow, np_rows, nblk, -1)
 
-      ! compute tmat2 out of tmat(:,:,)
-      tmat_complete = 0
-      do i = 1, t_blocking
-         t_cols = MIN(nbw, n_cols - (i-1)*nbw)
-         if(t_cols <= 0) exit
-         t_rows = (i - 1) * nbw
-         tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
-         if(i > 1) then
-            call dgemm('T', 'N', t_rows, t_cols, l_rows, 1.d0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
-                       max_local_rows, 0.d0, t_tmp, cwy_blocking)
-            call mpi_allreduce(t_tmp,t_tmp2,cwy_blocking*nbw,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-            call dtrmm('L','U','N','N',t_rows,t_cols,1.0d0,tmat_complete,cwy_blocking,t_tmp2,cwy_blocking)
-            call dtrmm('R','U','N','N',t_rows,t_cols,-1.0d0,tmat_complete(t_rows+1,t_rows+1),cwy_blocking,t_tmp2,cwy_blocking)
-            tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
-         endif
-      enddo
+     ! compute tmat2 out of tmat(:,:,)
+     tmat_complete = 0
+     do i = 1, t_blocking
+       t_cols = MIN(nbw, n_cols - (i-1)*nbw)
+       if (t_cols <= 0) exit
+       t_rows = (i - 1) * nbw
+       tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
+       if (i > 1) then
+         call dgemm('T', 'N', t_rows, t_cols, l_rows, 1.d0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
+                     max_local_rows, 0.d0, t_tmp, cwy_blocking)
+         call mpi_allreduce(t_tmp,t_tmp2,cwy_blocking*nbw,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+         call dtrmm('L','U','N','N',t_rows,t_cols,1.0d0,tmat_complete,cwy_blocking,t_tmp2,cwy_blocking)
+         call dtrmm('R','U','N','N',t_rows,t_cols,-1.0d0,tmat_complete(t_rows+1,t_rows+1),cwy_blocking,t_tmp2,cwy_blocking)
+         tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
+       endif
+     enddo
 #else
-      l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
+     l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
 #endif
 
-      ! Q = Q - V * T**T * V**T * Q
+     ! Q = Q - V * T**T * V**T * Q
 
       if(l_rows>0) then
          call dgemm('T','N',n_cols,l_cols,l_rows,1.d0,hvm,ubound(hvm,1), &
@@ -1515,15 +1514,15 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
    num_chunks  = 0
    nx = na
    do n = 1, nblocks_total
-      call determine_workload(nx, nb, np_rows, limits)
-      local_size = limits(my_prow+1) - limits(my_prow)
-      ! add to number of householder vectors
-      ! please note: for nx==1 the one and only HH vector is 0 and is neither calculated nor send below!
-      if(mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
-         num_hh_vecs = num_hh_vecs + local_size
-         num_chunks  = num_chunks+1
-      endif
-      nx = nx - nb
+     call determine_workload(nx, nb, np_rows, limits)
+     local_size = limits(my_prow+1) - limits(my_prow)
+     ! add to number of householder vectors
+     ! please note: for nx==1 the one and only HH vector is 0 and is neither calculated nor send below!
+     if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
+       num_hh_vecs = num_hh_vecs + local_size
+       num_chunks  = num_chunks+1
+     endif
+     nx = nx - nb
    enddo
 
    ! Allocate space for HH vectors
@@ -1540,18 +1539,18 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
    nx = na
    nt = 0
    do n = 1, nblocks_total
-      call determine_workload(nx, nb, np_rows, limits)
-      local_size = limits(my_prow+1) - limits(my_prow)
-      if(mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
-         num_chunks  = num_chunks+1
-         call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, mpi_real8, nt, &
+     call determine_workload(nx, nb, np_rows, limits)
+     local_size = limits(my_prow+1) - limits(my_prow)
+     if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
+       num_chunks  = num_chunks+1
+       call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, mpi_real8, nt, &
                         10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
-         num_hh_vecs = num_hh_vecs + local_size
-      endif
-      nx = nx - nb
-      if(n == block_limits(nt+1)) then
-         nt = nt + 1
-      endif
+       num_hh_vecs = num_hh_vecs + local_size
+     endif
+     nx = nx - nb
+     if (n == block_limits(nt+1)) then
+       nt = nt + 1
+     endif
    enddo
 
    ireq_hhs(:) = MPI_REQUEST_NULL
@@ -1579,27 +1578,27 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
    allocate(snd_limits(0:np_rows,nblocks))
 
    do iblk=1,nblocks
-      call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
+     call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
    enddo
 
 #ifdef WITH_OPENMP
-    ! OpenMP work distribution:
+   ! OpenMP work distribution:
 
-    max_threads = 1
-    max_threads = omp_get_max_threads()
+   max_threads = 1
+   max_threads = omp_get_max_threads()
 
-    ! For OpenMP we need at least 2 blocks for every thread
-    max_threads = MIN(max_threads, nblocks/2)
-    if(max_threads==0) max_threads = 1
+   ! For OpenMP we need at least 2 blocks for every thread
+   max_threads = MIN(max_threads, nblocks/2)
+   if (max_threads==0) max_threads = 1
 
-    allocate(omp_block_limits(0:max_threads))
+   allocate(omp_block_limits(0:max_threads))
 
-    ! Get the OpenMP block limits
-    call divide_band(nblocks, max_threads, omp_block_limits)
+   ! Get the OpenMP block limits
+   call divide_band(nblocks, max_threads, omp_block_limits)
 
-    allocate(hv_t(nb,max_threads), tau_t(max_threads))
-    hv_t = 0
-    tau_t = 0
+   allocate(hv_t(nb,max_threads), tau_t(max_threads))
+   hv_t = 0
+   tau_t = 0
 #endif
 
    ! ---------------------------------------------------------------------------
@@ -1607,11 +1606,11 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
    na_s = block_limits(my_pe)*nb + 1
 
-   if(my_pe>0 .and. na_s<=na) then
-      ! send first column to previous PE
-      ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
-      ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
-      call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+   if (my_pe>0 .and. na_s<=na) then
+     ! send first column to previous PE
+     ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
+     ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+     call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
    endif
 
 #ifdef WITH_OPENMP
@@ -1620,443 +1619,438 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
    do istep=1,na-1
 #endif
 
-      if(my_pe==0) then
-         n = MIN(na-na_s,nb) ! number of rows to be reduced
-         hv(:) = 0
-         tau = 0
-         ! The last step (istep=na-1) is only needed for sending the last HH vectors.
-         ! We don't want the sign of the last element flipped (analogous to the other sweeps)
-         if(istep < na-1) then
-            ! Transform first column of remaining matrix
-            vnorm2 = sum(ab(3:n+1,na_s-n_off)**2)
-            call hh_transform_real(ab(2,na_s-n_off),vnorm2,hf,tau)
-            hv(1) = 1
-            hv(2:n) = ab(3:n+1,na_s-n_off)*hf
-         endif
-         d(istep) = ab(1,na_s-n_off)
-         e(istep) = ab(2,na_s-n_off)
-         if(istep == na-1) then
-            d(na) = ab(1,na_s+1-n_off)
-            e(na) = 0
-         endif
-      else
-         if(na>na_s) then
-            ! Receive Householder vector from previous task, from PE owning subdiagonal
+     if (my_pe==0) then
+       n = MIN(na-na_s,nb) ! number of rows to be reduced
+       hv(:) = 0
+       tau = 0
+       ! The last step (istep=na-1) is only needed for sending the last HH vectors.
+       ! We don't want the sign of the last element flipped (analogous to the other sweeps)
+       if (istep < na-1) then
+         ! Transform first column of remaining matrix
+         vnorm2 = sum(ab(3:n+1,na_s-n_off)**2)
+         call hh_transform_real(ab(2,na_s-n_off),vnorm2,hf,tau)
+         hv(1) = 1
+         hv(2:n) = ab(3:n+1,na_s-n_off)*hf
+       endif
+       d(istep) = ab(1,na_s-n_off)
+       e(istep) = ab(2,na_s-n_off)
+       if (istep == na-1) then
+         d(na) = ab(1,na_s+1-n_off)
+         e(na) = 0
+       endif
+     else
+       if (na>na_s) then
+         ! Receive Householder vector from previous task, from PE owning subdiagonal
 #ifdef WITH_OPENMP
-            call mpi_recv(hv,nb,mpi_real8,my_pe-1,2,mpi_comm,MPI_STATUS,mpierr)
+         call mpi_recv(hv,nb,mpi_real8,my_pe-1,2,mpi_comm,MPI_STATUS,mpierr)
 #else
-            call mpi_recv(hv,nb,mpi_real8,my_pe-1,2,mpi_comm,MPI_STATUS_IGNORE,mpierr)
+         call mpi_recv(hv,nb,mpi_real8,my_pe-1,2,mpi_comm,MPI_STATUS_IGNORE,mpierr)
 #endif
-            tau = hv(1)
-            hv(1) = 1.
-         endif
-      endif
+         tau = hv(1)
+         hv(1) = 1.
+       endif
+     endif
 
-      na_s = na_s+1
-      if(na_s-n_off > nb) then
-         ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-         ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
-         n_off = n_off + nb
-      endif
+     na_s = na_s+1
+     if (na_s-n_off > nb) then
+       ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
+       ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
+       n_off = n_off + nb
+     endif
 
 
 #ifdef WITH_OPENMP
-      if(max_threads > 1) then
+     if (max_threads > 1) then
 
-        ! Codepath for OpenMP
+       ! Codepath for OpenMP
 
-        ! Please note that in this case it is absolutely necessary to have at least 2 blocks per thread!
-        ! Every thread is one reduction cycle behind its predecessor and thus starts one step later.
-        ! This simulates the behaviour of the MPI tasks which also work after each other.
-        ! The code would be considerably easier, if the MPI communication would be made within
-        ! the parallel region - this is avoided here since this would require
-        ! MPI_Init_thread(MPI_THREAD_MULTIPLE) at the start of the program.
+       ! Please note that in this case it is absolutely necessary to have at least 2 blocks per thread!
+       ! Every thread is one reduction cycle behind its predecessor and thus starts one step later.
+       ! This simulates the behaviour of the MPI tasks which also work after each other.
+       ! The code would be considerably easier, if the MPI communication would be made within
+       ! the parallel region - this is avoided here since this would require
+       ! MPI_Init_thread(MPI_THREAD_MULTIPLE) at the start of the program.
 
-         hv_t(:,1) = hv
-         tau_t(1) = tau
+       hv_t(:,1) = hv
+       tau_t(1) = tau
 
-         do iter = 1, 2
+       do iter = 1, 2
 
-          ! iter=1 : work on first block
-          ! iter=2 : work on remaining blocks
-          ! This is done in 2 iterations so that we have a barrier in between:
-          ! After the first iteration, it is guaranteed that the last row of the last block
-          ! is completed by the next thread.
-          ! After the first iteration it is also the place to exchange the last row
-          ! with MPI calls
+         ! iter=1 : work on first block
+         ! iter=2 : work on remaining blocks
+         ! This is done in 2 iterations so that we have a barrier in between:
+         ! After the first iteration, it is guaranteed that the last row of the last block
+         ! is completed by the next thread.
+         ! After the first iteration it is also the place to exchange the last row
+         ! with MPI calls
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
+         call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
 !$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
-            do my_thread = 1, max_threads
+         do my_thread = 1, max_threads
 
-               if(iter == 1) then
-                  my_block_s = omp_block_limits(my_thread-1) + 1
-                  my_block_e = my_block_s
-               else
-                  my_block_s = omp_block_limits(my_thread-1) + 2
-                  my_block_e = omp_block_limits(my_thread)
-               endif
+           if (iter == 1) then
+             my_block_s = omp_block_limits(my_thread-1) + 1
+             my_block_e = my_block_s
+           else
+             my_block_s = omp_block_limits(my_thread-1) + 2
+             my_block_e = omp_block_limits(my_thread)
+           endif
 
-               do iblk = my_block_s, my_block_e
+           do iblk = my_block_s, my_block_e
 
-                  ns = na_s + (iblk-1)*nb - n_off - my_thread + 1 ! first column in block
-                  ne = ns+nb-1                    ! last column in block
+             ns = na_s + (iblk-1)*nb - n_off - my_thread + 1 ! first column in block
+             ne = ns+nb-1                    ! last column in block
 
-                  if(istep<my_thread .or. ns+n_off>na) exit
+             if (istep<my_thread .or. ns+n_off>na) exit
 
-                  hv = hv_t(:,my_thread)
-                  tau = tau_t(my_thread)
+             hv = hv_t(:,my_thread)
+             tau = tau_t(my_thread)
 
-                  ! Store Householder vector for back transformation
+             ! Store Householder vector for back transformation
 
-                  hh_cnt(iblk) = hh_cnt(iblk) + 1
+             hh_cnt(iblk) = hh_cnt(iblk) + 1
 
-                  hh_gath(1   ,hh_cnt(iblk),iblk) = tau
-                  hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+             hh_gath(1   ,hh_cnt(iblk),iblk) = tau
+             hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
 
-                  nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
-                  nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
-                                            ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
+             nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
+             nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
+                                       ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
-                  ! Transform diagonal block
+             ! Transform diagonal block
 
-                  call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
+             call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
 
-                  x = dot_product(hv(1:nc),hd(1:nc))*tau
-                  hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
+             x = dot_product(hv(1:nc),hd(1:nc))*tau
+             hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
 
-                  call DSYR2('L',nc,-1.d0,hd,1,hv,1,ab(1,ns),2*nb-1)
+             call DSYR2('L',nc,-1.d0,hd,1,hv,1,ab(1,ns),2*nb-1)
 
-                  hv_t(:,my_thread) = 0
-                  tau_t(my_thread)  = 0
+             hv_t(:,my_thread) = 0
+             tau_t(my_thread)  = 0
 
-                  if(nr<=0) cycle ! No subdiagonal block present any more
+             if (nr<=0) cycle ! No subdiagonal block present any more
 
-                  ! Transform subdiagonal block
+             ! Transform subdiagonal block
 
-                  call DGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
+             call DGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
 
-                  if(nr>1) then
+             if (nr>1) then
 
-                     ! complete (old) Householder transformation for first column
+               ! complete (old) Householder transformation for first column
 
-                     ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
+               ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
 
-                     ! calculate new Householder transformation for first column
-                     ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
+               ! calculate new Householder transformation for first column
+               ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
 
-                     vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
-                     call hh_transform_real(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
-                     hv_t(1   ,my_thread) = 1.
-                     hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
-                     ab(nb+2:,ns) = 0
+               vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
+               call hh_transform_real(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
+               hv_t(1   ,my_thread) = 1.
+               hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
+               ab(nb+2:,ns) = 0
 
-                     ! update subdiagonal block for old and new Householder transformation
-                     ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
+               ! update subdiagonal block for old and new Householder transformation
+               ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
 
-                     call DGEMV('T',nr,nb-1,tau_t(my_thread),ab(nb,ns+1),2*nb-1,hv_t(1,my_thread),1,0.d0,h(2),1)
-                     x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
-                     h(2:nb) = h(2:nb) - x*hv(2:nb)
-                     ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
-                     do i=2,nb
-                        ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_t(1:nr,my_thread)*h(i) - hs(1:nr)*hv(i)
-                     enddo
-
-                  else
-
-                     ! No new Householder transformation for nr=1, just complete the old one
-                     ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
-                     do i=2,nb
-                        ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
-                     enddo
-                     ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
-                     hv_t(1,my_thread) = 1.
-
-                  endif
-
+               call DGEMV('T',nr,nb-1,tau_t(my_thread),ab(nb,ns+1),2*nb-1,hv_t(1,my_thread),1,0.d0,h(2),1)
+               x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
+               h(2:nb) = h(2:nb) - x*hv(2:nb)
+               ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
+               do i=2,nb
+                 ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_t(1:nr,my_thread)*h(i) - hs(1:nr)*hv(i)
                enddo
 
-            enddo ! my_thread
+             else
+
+               ! No new Householder transformation for nr=1, just complete the old one
+               ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
+               do i=2,nb
+                 ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
+               enddo
+               ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
+               hv_t(1,my_thread) = 1.
+
+             endif
+
+           enddo
+
+         enddo ! my_thread
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
+         call timer%stop("OpenMP parallel")
 #endif
 
-            if (iter==1) then
-               ! We are at the end of the first block
+         if (iter==1) then
+           ! We are at the end of the first block
 
-               ! Send our first column to previous PE
-               if(my_pe>0 .and. na_s <= na) then
-                  call mpi_wait(ireq_ab,mpi_status,mpierr)
-                  ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
-                  call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
-               endif
+           ! Send our first column to previous PE
+           if (my_pe>0 .and. na_s <= na) then
+             call mpi_wait(ireq_ab,mpi_status,mpierr)
+             ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+             call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+           endif
 
-               ! Request last column from next PE
-               ne = na_s + nblocks*nb - (max_threads-1) - 1
-               if(istep>=max_threads .and. ne <= na) then
-                  call mpi_recv(ab(1,ne-n_off),nb+1,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
-               endif
+           ! Request last column from next PE
+           ne = na_s + nblocks*nb - (max_threads-1) - 1
+           if (istep>=max_threads .and. ne <= na) then
+             call mpi_recv(ab(1,ne-n_off),nb+1,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+           endif
 
-            else
-               ! We are at the end of all blocks
+         else
+           ! We are at the end of all blocks
 
-               ! Send last HH vector and TAU to next PE if it has been calculated above
-               ne = na_s + nblocks*nb - (max_threads-1) - 1
-               if(istep>=max_threads .and. ne < na) then
-                  call mpi_wait(ireq_hv,mpi_status,mpierr)
-                  hv_s(1) = tau_t(max_threads)
-                  hv_s(2:) = hv_t(2:,max_threads)
-                  call mpi_isend(hv_s,nb,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
-               endif
+           ! Send last HH vector and TAU to next PE if it has been calculated above
+           ne = na_s + nblocks*nb - (max_threads-1) - 1
+           if (istep>=max_threads .and. ne < na) then
+             call mpi_wait(ireq_hv,mpi_status,mpierr)
+             hv_s(1) = tau_t(max_threads)
+             hv_s(2:) = hv_t(2:,max_threads)
+             call mpi_isend(hv_s,nb,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
+           endif
 
-               ! "Send" HH vector and TAU to next OpenMP thread
-               do my_thread = max_threads, 2, -1
-                  hv_t(:,my_thread) = hv_t(:,my_thread-1)
-                  tau_t(my_thread)  = tau_t(my_thread-1)
-               enddo
+           ! "Send" HH vector and TAU to next OpenMP thread
+           do my_thread = max_threads, 2, -1
+             hv_t(:,my_thread) = hv_t(:,my_thread-1)
+             tau_t(my_thread)  = tau_t(my_thread-1)
+           enddo
 
-            endif
-         enddo ! iter
+         endif
+       enddo ! iter
 
-      else
+     else
 
-         ! Codepath for 1 thread without OpenMP
+       ! Codepath for 1 thread without OpenMP
+
+       ! The following code is structured in a way to keep waiting times for
+       ! other PEs at a minimum, especially if there is only one block.
+       ! For this reason, it requests the last column as late as possible
+       ! and sends the Householder vector and the first column as early
+       ! as possible.
+
+#endif /* WITH_OPENMP */
+
+       do iblk=1,nblocks
+
+         ns = na_s + (iblk-1)*nb - n_off ! first column in block
+         ne = ns+nb-1                    ! last column in block
+
+         if (ns+n_off>na) exit
+
+         ! Store Householder vector for back transformation
+
+         hh_cnt(iblk) = hh_cnt(iblk) + 1
+
+         hh_gath(1   ,hh_cnt(iblk),iblk) = tau
+         hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+
+#ifndef WITH_OPENMP
+         if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+           ! Wait for last transfer to finish
+
+           call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
+
+           ! Copy vectors into send buffer
+           hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+           ! Send to destination
+           call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
+                        global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
+                        10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
+         ! Reset counter and increase destination row
+           hh_cnt(iblk) = 0
+           hh_dst(iblk) = hh_dst(iblk)+1
+         endif
 
          ! The following code is structured in a way to keep waiting times for
          ! other PEs at a minimum, especially if there is only one block.
          ! For this reason, it requests the last column as late as possible
          ! and sends the Householder vector and the first column as early
          ! as possible.
-
-#endif /* WITH_OPENMP */
-
-         do iblk=1,nblocks
-
-            ns = na_s + (iblk-1)*nb - n_off ! first column in block
-            ne = ns+nb-1                    ! last column in block
-
-            if(ns+n_off>na) exit
-
-            ! Store Householder vector for back transformation
-
-            hh_cnt(iblk) = hh_cnt(iblk) + 1
-
-            hh_gath(1   ,hh_cnt(iblk),iblk) = tau
-            hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
-
-#ifndef WITH_OPENMP
-            if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-               ! Wait for last transfer to finish
-
-               call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
-
-               ! Copy vectors into send buffer
-               hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-               ! Send to destination
-               call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
-                           global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                           10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
-            ! Reset counter and increase destination row
-               hh_cnt(iblk) = 0
-               hh_dst(iblk) = hh_dst(iblk)+1
-            endif
-
-            ! The following code is structured in a way to keep waiting times for
-            ! other PEs at a minimum, especially if there is only one block.
-            ! For this reason, it requests the last column as late as possible
-            ! and sends the Householder vector and the first column as early
-            ! as possible.
 #endif
-            nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
-            nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
+         nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
+         nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
                                        ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
-            ! Multiply diagonal block and subdiagonal block with Householder vector
+         ! Multiply diagonal block and subdiagonal block with Householder vector
 
-            if(iblk==nblocks .and. nc==nb) then
+         if (iblk==nblocks .and. nc==nb) then
 
-            ! We need the last column from the next PE.
-            ! First do the matrix multiplications without last column ...
+           ! We need the last column from the next PE.
+           ! First do the matrix multiplications without last column ...
 
-            ! Diagonal block, the contribution of the last element is added below!
-               ab(1,ne) = 0
-               call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
+           ! Diagonal block, the contribution of the last element is added below!
+           ab(1,ne) = 0
+           call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
 
-            ! Subdiagonal block
-               if(nr>0) call DGEMV('N',nr,nb-1,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
+           ! Subdiagonal block
+           if (nr>0) call DGEMV('N',nr,nb-1,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
 
-            ! ... then request last column ...
+           ! ... then request last column ...
 #ifdef WITH_OPENMP
-               call mpi_recv(ab(1,ne),nb+1,mpi_real8,my_pe+1,1,mpi_comm,MPI_STATUS,mpierr)
+           call mpi_recv(ab(1,ne),nb+1,mpi_real8,my_pe+1,1,mpi_comm,MPI_STATUS,mpierr)
 #else
-               call mpi_recv(ab(1,ne),nb+1,mpi_real8,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
-
+           call mpi_recv(ab(1,ne),nb+1,mpi_real8,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
 #endif
 
-            ! ... and complete the result
-               hs(1:nr) = hs(1:nr) + ab(2:nr+1,ne)*tau*hv(nb)
-               hd(nb) = hd(nb) + ab(1,ne)*hv(nb)*tau
+           ! ... and complete the result
+           hs(1:nr) = hs(1:nr) + ab(2:nr+1,ne)*tau*hv(nb)
+           hd(nb) = hd(nb) + ab(1,ne)*hv(nb)*tau
 
-            else
+         else
 
-               ! Normal matrix multiply
-               call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
-               if(nr>0) call DGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
+           ! Normal matrix multiply
+           call DSYMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,0.d0,hd,1)
+           if (nr>0) call DGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,0.d0,hs,1)
 
-            endif
+         endif
 
-            ! Calculate first column of subdiagonal block and calculate new
-            ! Householder transformation for this column
+         ! Calculate first column of subdiagonal block and calculate new
+         ! Householder transformation for this column
 
-            hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
-            tau_new = 0
+         hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
+         tau_new = 0
 
-            if(nr>0) then
+         if (nr>0) then
 
-               ! complete (old) Householder transformation for first column
+           ! complete (old) Householder transformation for first column
 
-               ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
+           ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
 
-            ! calculate new Householder transformation ...
-               if(nr>1) then
-                  vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
-                  call hh_transform_real(ab(nb+1,ns),vnorm2,hf,tau_new)
-                  hv_new(1) = 1.
-                  hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
-                  ab(nb+2:,ns) = 0
-               endif
+           ! calculate new Householder transformation ...
+           if (nr>1) then
+             vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
+             call hh_transform_real(ab(nb+1,ns),vnorm2,hf,tau_new)
+             hv_new(1) = 1.
+             hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
+             ab(nb+2:,ns) = 0
+           endif
 
-               ! ... and send it away immediatly if this is the last block
+           ! ... and send it away immediatly if this is the last block
 
-               if(iblk==nblocks) then
+           if (iblk==nblocks) then
 #ifdef WITH_OPENMP
-                  call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+             call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #else
-                  call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+             call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
-                  hv_s(1) = tau_new
-                  hv_s(2:) = hv_new(2:)
-                  call mpi_isend(hv_s,nb,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
-               endif
+             hv_s(1) = tau_new
+             hv_s(2:) = hv_new(2:)
+             call mpi_isend(hv_s,nb,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
+           endif
 
-            endif
+         endif
 
-            ! Transform diagonal block
-            x = dot_product(hv(1:nc),hd(1:nc))*tau
-            hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
+         ! Transform diagonal block
+         x = dot_product(hv(1:nc),hd(1:nc))*tau
+         hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
 
-            if(my_pe>0 .and. iblk==1) then
+         if (my_pe>0 .and. iblk==1) then
 
-               ! The first column of the diagonal block has to be send to the previous PE
-               ! Calculate first column only ...
+           ! The first column of the diagonal block has to be send to the previous PE
+           ! Calculate first column only ...
 
-               ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
+           ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
 
-               ! ... send it away ...
+           ! ... send it away ...
 
 #ifdef WITH_OPENMP
-               call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
+           call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
 #else
-               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+           call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
-               ab_s(1:nb+1) = ab(1:nb+1,ns)
-               call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+           ab_s(1:nb+1) = ab(1:nb+1,ns)
+           call mpi_isend(ab_s,nb+1,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
 
-               ! ... and calculate remaining columns with rank-2 update
-               if(nc>1) call DSYR2('L',nc-1,-1.d0,hd(2),1,hv(2),1,ab(1,ns+1),2*nb-1)
-            else
-               ! No need to  send, just a rank-2 update
-               call DSYR2('L',nc,-1.d0,hd,1,hv,1,ab(1,ns),2*nb-1)
-            endif
+           ! ... and calculate remaining columns with rank-2 update
+           if (nc>1) call DSYR2('L',nc-1,-1.d0,hd(2),1,hv(2),1,ab(1,ns+1),2*nb-1)
+         else
+           ! No need to  send, just a rank-2 update
+           call DSYR2('L',nc,-1.d0,hd,1,hv,1,ab(1,ns),2*nb-1)
+         endif
 
          ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
-            if(nr>0) then
-               if(nr>1) then
-                  call DGEMV('T',nr,nb-1,tau_new,ab(nb,ns+1),2*nb-1,hv_new,1,0.d0,h(2),1)
-                  x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
-                  h(2:nb) = h(2:nb) - x*hv(2:nb)
-                  ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update
-                  do i=2,nb
-                     ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*h(i) - hs(1:nr)*hv(i)
-                  enddo
-               else
-                  ! No double Householder transformation for nr=1, just complete the row
-                  do i=2,nb
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
-               enddo
-            endif
+         if (nr>0) then
+           if (nr>1) then
+             call DGEMV('T',nr,nb-1,tau_new,ab(nb,ns+1),2*nb-1,hv_new,1,0.d0,h(2),1)
+             x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
+             h(2:nb) = h(2:nb) - x*hv(2:nb)
+             ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update
+             do i=2,nb
+               ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*h(i) - hs(1:nr)*hv(i)
+             enddo
+           else
+             ! No double Householder transformation for nr=1, just complete the row
+             do i=2,nb
+               ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
+             enddo
+           endif
          endif
 
          ! Use new HH vector for the next block
          hv(:) = hv_new(:)
          tau = tau_new
 
-      enddo
+       enddo
 
 #ifdef WITH_OPENMP
-   endif
+     endif
 
 
-   do iblk = 1, nblocks
+     do iblk = 1, nblocks
 
+      if (hh_dst(iblk) >= np_rows) exit
+      if (snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
 
-
-      if(hh_dst(iblk) >= np_rows) exit
-      if(snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
-
-      if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-         ! Wait for last transfer to finish
-         call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
-         ! Copy vectors into send buffer
-         hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-         ! Send to destination
-         call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
+      if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+        ! Wait for last transfer to finish
+        call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+        ! Copy vectors into send buffer
+        hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+        ! Send to destination
+        call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
               global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
               10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
-         ! Reset counter and increase destination row
-         hh_cnt(iblk) = 0
-         hh_dst(iblk) = hh_dst(iblk)+1
+        ! Reset counter and increase destination row
+        hh_cnt(iblk) = 0
+        hh_dst(iblk) = hh_dst(iblk)+1
       endif
 
-   enddo
+    enddo
 #endif
-enddo
+  enddo
 
-
-
-   ! Finish the last outstanding requests
+  ! Finish the last outstanding requests
 #ifdef WITH_OPENMP
-   call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
-   call mpi_wait(ireq_hv,MPI_STATUS,mpierr)
+  call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
+  call mpi_wait(ireq_hv,MPI_STATUS,mpierr)
 
-   allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)))
-   call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES, mpierr)
-   call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES, mpierr)
-   deallocate(mpi_statuses)
+  allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)))
+  call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES, mpierr)
+  call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES, mpierr)
+  deallocate(mpi_statuses)
 #else
-   call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-   call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+  call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+  call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 
-   call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
-   call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+  call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
+  call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
 #endif
 
-   call mpi_barrier(mpi_comm,mpierr)
+  call mpi_barrier(mpi_comm,mpierr)
 
-   deallocate(ab)
-   deallocate(ireq_hhr, ireq_hhs)
-   deallocate(hh_cnt, hh_dst)
-   deallocate(hh_gath, hh_send)
-   deallocate(limits, snd_limits)
-   deallocate(block_limits)
-   deallocate(global_id)
+  deallocate(ab)
+  deallocate(ireq_hhr, ireq_hhs)
+  deallocate(hh_cnt, hh_dst)
+  deallocate(hh_gath, hh_send)
+  deallocate(limits, snd_limits)
+  deallocate(block_limits)
+  deallocate(global_id)
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("tridiag_band_real")
+  call timer%stop("tridiag_band_real")
 #endif
 
  end subroutine tridiag_band_real
@@ -2175,11 +2169,11 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
     call MPI_Comm_rank(mpi_comm_cols, my_pcol, mpierr)
     call MPI_Comm_size(mpi_comm_cols, np_cols, mpierr)
 
-    if(mod(nbw,nblk)/=0) then
-      if(my_prow==0 .and. my_pcol==0) then
-         write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
-         write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
-         success = .false.
+    if (mod(nbw,nblk)/=0) then
+      if (my_prow==0 .and. my_pcol==0) then
+        write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
+        write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
+        success = .false.
 !         call mpi_abort(mpi_comm_world,0,mpierr)
       endif
     endif
@@ -2190,33 +2184,33 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
     ! local number of eigenvectors
     l_nev = local_index(nev, my_pcol, np_cols, nblk, -1)
 
-    if(l_nev==0) then
+    if (l_nev==0) then
 #ifdef WITH_OPENMP
-        thread_width = 0
+      thread_width = 0
 #endif
-        stripe_width = 0
-        stripe_count = 0
-        last_stripe_width = 0
+      stripe_width = 0
+      stripe_count = 0
+      last_stripe_width = 0
     else
-        ! Suggested stripe width is 48 since 48*64 real*8 numbers should fit into
-        ! every primary cache
+      ! Suggested stripe width is 48 since 48*64 real*8 numbers should fit into
+      ! every primary cache
 #ifdef WITH_OPENMP
-       thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
+      thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
 #endif
-        stripe_width = 48 ! Must be a multiple of 4
+      stripe_width = 48 ! Must be a multiple of 4
 #ifdef WITH_OPENMP
-        stripe_count = (thread_width-1)/stripe_width + 1
+      stripe_count = (thread_width-1)/stripe_width + 1
 #else
-        stripe_count = (l_nev-1)/stripe_width + 1
+      stripe_count = (l_nev-1)/stripe_width + 1
 #endif
-        ! Adapt stripe width so that last one doesn't get too small
+      ! Adapt stripe width so that last one doesn't get too small
 #ifdef WITH_OPENMP
-        stripe_width = (thread_width-1)/stripe_count + 1
+      stripe_width = (thread_width-1)/stripe_count + 1
 #else
-        stripe_width = (l_nev-1)/stripe_count + 1
+      stripe_width = (l_nev-1)/stripe_count + 1
 #endif
-        stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
-        last_stripe_width = l_nev - (stripe_count-1)*stripe_width
+      stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
+      last_stripe_width = l_nev - (stripe_count-1)*stripe_width
     endif
 
     ! Determine the matrix distribution at the beginning
@@ -2252,659 +2246,650 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
     ! This is not for speed, but because we want the matrix a in the memory and
     ! in the cache of the correct thread (if possible)
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
+    call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread), schedule(static, 1)
     do my_thread = 1, max_threads
-        a(:,:,:,my_thread) = 0 ! if possible, do first touch allocation!
+      a(:,:,:,my_thread) = 0 ! if possible, do first touch allocation!
     enddo
     !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
-#endif
-#endif
-
-    do ip = np_rows-1, 0, -1
-        if(my_prow == ip) then
-            ! Receive my rows which have not yet been received
-            src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
-            do i=limits(ip)+1,limits(ip+1)
-                src = mod((i-1)/nblk, np_rows)
-                if(src < my_prow) then
-#ifdef WITH_OPENMP
-                   call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
-#endif
-
-!$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(ip),my_thread)
-                    enddo
-!$omp end parallel do
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
-#endif
-
-#else
-                    call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-                    call unpack_row(row,i-limits(ip))
-#endif
-                elseif(src==my_prow) then
-                    src_offset = src_offset+1
-                    row(:) = q(src_offset, 1:l_nev)
-#ifdef WITH_OPENMP
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
-#endif
-
-!$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(ip),my_thread)
-                    enddo
-!$omp end parallel do
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
-#endif
-
-#else
-                    call unpack_row(row,i-limits(ip))
-#endif
-                endif
-            enddo
-            ! Send all rows which have not yet been send
-            src_offset = 0
-            do dst = 0, ip-1
-              do i=limits(dst)+1,limits(dst+1)
-                if(mod((i-1)/nblk, np_rows) == my_prow) then
-                    src_offset = src_offset+1
-                    row(:) = q(src_offset, 1:l_nev)
-                    call MPI_Send(row, l_nev, MPI_REAL8, dst, 0, mpi_comm_rows, mpierr)
-                endif
-              enddo
-            enddo
-        else if(my_prow < ip) then
-            ! Send all rows going to PE ip
-            src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
-            do i=limits(ip)+1,limits(ip+1)
-                src = mod((i-1)/nblk, np_rows)
-                if(src == my_prow) then
-                    src_offset = src_offset+1
-                    row(:) = q(src_offset, 1:l_nev)
-                    call MPI_Send(row, l_nev, MPI_REAL8, ip, 0, mpi_comm_rows, mpierr)
-                endif
-            enddo
-            ! Receive all rows from PE ip
-            do i=limits(my_prow)+1,limits(my_prow+1)
-                src = mod((i-1)/nblk, np_rows)
-                if(src == ip) then
-#ifdef WITH_OPENMP
-                    call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
-#endif
-
-!$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(my_prow),my_thread)
-                    enddo
-!$omp end parallel do
-#ifdef HAVE_DETAILED_TIMINGS
     call timer%stop("OpenMP parallel")
 #endif
+#endif
+
+   do ip = np_rows-1, 0, -1
+     if (my_prow == ip) then
+       ! Receive my rows which have not yet been received
+       src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
+       do i=limits(ip)+1,limits(ip+1)
+         src = mod((i-1)/nblk, np_rows)
+         if (src < my_prow) then
+#ifdef WITH_OPENMP
+           call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("OpenMP parallel")
+#endif
+
+!$omp parallel do private(my_thread), schedule(static, 1)
+           do my_thread = 1, max_threads
+             call unpack_row(row,i-limits(ip),my_thread)
+           enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("OpenMP parallel")
+#endif
 
 #else
-                    call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-                    call unpack_row(row,i-limits(my_prow))
+           call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+           call unpack_row(row,i-limits(ip))
 #endif
-                endif
-            enddo
-        endif
-    enddo
+         elseif (src==my_prow) then
+           src_offset = src_offset+1
+           row(:) = q(src_offset, 1:l_nev)
+#ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("OpenMP parallel")
+#endif
+
+!$omp parallel do private(my_thread), schedule(static, 1)
+           do my_thread = 1, max_threads
+             call unpack_row(row,i-limits(ip),my_thread)
+           enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("OpenMP parallel")
+#endif
+
+#else
+           call unpack_row(row,i-limits(ip))
+#endif
+         endif
+       enddo
+       ! Send all rows which have not yet been send
+       src_offset = 0
+       do dst = 0, ip-1
+         do i=limits(dst)+1,limits(dst+1)
+           if (mod((i-1)/nblk, np_rows) == my_prow) then
+             src_offset = src_offset+1
+             row(:) = q(src_offset, 1:l_nev)
+             call MPI_Send(row, l_nev, MPI_REAL8, dst, 0, mpi_comm_rows, mpierr)
+           endif
+         enddo
+       enddo
+     else if (my_prow < ip) then
+       ! Send all rows going to PE ip
+       src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
+       do i=limits(ip)+1,limits(ip+1)
+         src = mod((i-1)/nblk, np_rows)
+         if (src == my_prow) then
+           src_offset = src_offset+1
+           row(:) = q(src_offset, 1:l_nev)
+           call MPI_Send(row, l_nev, MPI_REAL8, ip, 0, mpi_comm_rows, mpierr)
+         endif
+       enddo
+       ! Receive all rows from PE ip
+       do i=limits(my_prow)+1,limits(my_prow+1)
+         src = mod((i-1)/nblk, np_rows)
+         if (src == ip) then
+#ifdef WITH_OPENMP
+           call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("OpenMP parallel")
+#endif
+
+!$omp parallel do private(my_thread), schedule(static, 1)
+           do my_thread = 1, max_threads
+             call unpack_row(row,i-limits(my_prow),my_thread)
+           enddo
+!$omp end parallel do
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("OpenMP parallel")
+#endif
+
+#else
+           call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+           call unpack_row(row,i-limits(my_prow))
+#endif
+         endif
+       enddo
+     endif
+   enddo
 
 
-    ! Set up result buffer queue
+   ! Set up result buffer queue
 
-    num_result_blocks = ((na-1)/nblk + np_rows - my_prow) / np_rows
+   num_result_blocks = ((na-1)/nblk + np_rows - my_prow) / np_rows
 
-    num_result_buffers = 4*nfact
-    allocate(result_buffer(l_nev,nblk,num_result_buffers))
+   num_result_buffers = 4*nfact
+   allocate(result_buffer(l_nev,nblk,num_result_buffers))
 
-    allocate(result_send_request(num_result_buffers))
-    allocate(result_recv_request(num_result_buffers))
-    result_send_request(:) = MPI_REQUEST_NULL
-    result_recv_request(:) = MPI_REQUEST_NULL
+   allocate(result_send_request(num_result_buffers))
+   allocate(result_recv_request(num_result_buffers))
+   result_send_request(:) = MPI_REQUEST_NULL
+   result_recv_request(:) = MPI_REQUEST_NULL
 
-    ! Queue up buffers
+   ! Queue up buffers
 
-    if(my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
-        do j = 1, min(num_result_buffers, num_result_blocks)
-            call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_REAL8, 0, result_recv_tag, &
+   if (my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
+     do j = 1, min(num_result_buffers, num_result_blocks)
+       call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_REAL8, 0, result_recv_tag, &
                            mpi_comm_rows, result_recv_request(j), mpierr)
-        enddo
-    endif
+     enddo
+   endif
 
-    num_bufs_recvd = 0 ! No buffers received yet
+   num_bufs_recvd = 0 ! No buffers received yet
 
-    ! Initialize top/bottom requests
+   ! Initialize top/bottom requests
 
-    allocate(top_send_request(stripe_count))
-    allocate(top_recv_request(stripe_count))
-    allocate(bottom_send_request(stripe_count))
-    allocate(bottom_recv_request(stripe_count))
+   allocate(top_send_request(stripe_count))
+   allocate(top_recv_request(stripe_count))
+   allocate(bottom_send_request(stripe_count))
+   allocate(bottom_recv_request(stripe_count))
 
-    top_send_request(:) = MPI_REQUEST_NULL
-    top_recv_request(:) = MPI_REQUEST_NULL
-    bottom_send_request(:) = MPI_REQUEST_NULL
-    bottom_recv_request(:) = MPI_REQUEST_NULL
+   top_send_request(:) = MPI_REQUEST_NULL
+   top_recv_request(:) = MPI_REQUEST_NULL
+   bottom_send_request(:) = MPI_REQUEST_NULL
+   bottom_recv_request(:) = MPI_REQUEST_NULL
 
 #ifdef WITH_OPENMP
-    allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count))
-    allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count))
-    allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count))
-    allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count))
+   allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count))
+   allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count))
+   allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count))
+   allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count))
 
-    top_border_send_buffer(:,:) = 0
-    top_border_recv_buffer(:,:) = 0
-    bottom_border_send_buffer(:,:) = 0
-    bottom_border_recv_buffer(:,:) = 0
+   top_border_send_buffer(:,:) = 0
+   top_border_recv_buffer(:,:) = 0
+   bottom_border_send_buffer(:,:) = 0
+   bottom_border_recv_buffer(:,:) = 0
 
-    ! Initialize broadcast buffer
+   ! Initialize broadcast buffer
 #else
-    allocate(top_border_send_buffer(stripe_width, nbw, stripe_count))
-    allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count))
-    allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count))
-    allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count))
+   allocate(top_border_send_buffer(stripe_width, nbw, stripe_count))
+   allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count))
+   allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count))
+   allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count))
 
-    top_border_send_buffer(:,:,:) = 0
-    top_border_recv_buffer(:,:,:) = 0
-    bottom_border_send_buffer(:,:,:) = 0
-    bottom_border_recv_buffer(:,:,:) = 0
+   top_border_send_buffer(:,:,:) = 0
+   top_border_recv_buffer(:,:,:) = 0
+   bottom_border_send_buffer(:,:,:) = 0
+   bottom_border_recv_buffer(:,:,:) = 0
 #endif
 
-    allocate(bcast_buffer(nbw, max_blk_size))
-    bcast_buffer = 0
+   allocate(bcast_buffer(nbw, max_blk_size))
+   bcast_buffer = 0
 
-    current_tv_off = 0 ! Offset of next row to be broadcast
+   current_tv_off = 0 ! Offset of next row to be broadcast
 
 
     ! ------------------- start of work loop -------------------
 
-    a_off = 0 ! offset in A (to avoid unnecessary shifts)
+   a_off = 0 ! offset in A (to avoid unnecessary shifts)
 
-    top_msg_length = 0
-    bottom_msg_length = 0
+   top_msg_length = 0
+   bottom_msg_length = 0
 
-    do sweep = 0, (na-1)/nbw
+   do sweep = 0, (na-1)/nbw
 
-        current_n = na - sweep*nbw
-        call determine_workload(current_n, nbw, np_rows, limits)
-        current_n_start = limits(my_prow)
-        current_n_end   = limits(my_prow+1)
-        current_local_n = current_n_end - current_n_start
+     current_n = na - sweep*nbw
+     call determine_workload(current_n, nbw, np_rows, limits)
+     current_n_start = limits(my_prow)
+     current_n_end   = limits(my_prow+1)
+     current_local_n = current_n_end - current_n_start
 
-        next_n = max(current_n - nbw, 0)
-        call determine_workload(next_n, nbw, np_rows, limits)
-        next_n_start = limits(my_prow)
-        next_n_end   = limits(my_prow+1)
-        next_local_n = next_n_end - next_n_start
+     next_n = max(current_n - nbw, 0)
+     call determine_workload(next_n, nbw, np_rows, limits)
+     next_n_start = limits(my_prow)
+     next_n_end   = limits(my_prow+1)
+     next_local_n = next_n_end - next_n_start
 
-        if(next_n_end < next_n) then
-            bottom_msg_length = current_n_end - next_n_end
-        else
-            bottom_msg_length = 0
-        endif
+     if (next_n_end < next_n) then
+       bottom_msg_length = current_n_end - next_n_end
+     else
+       bottom_msg_length = 0
+     endif
 
-        if(next_local_n > 0) then
-            next_top_msg_length = current_n_start - next_n_start
-        else
-            next_top_msg_length = 0
-        endif
+     if (next_local_n > 0) then
+       next_top_msg_length = current_n_start - next_n_start
+     else
+       next_top_msg_length = 0
+     endif
 
-        if(sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
-            do i = 1, stripe_count
+     if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+       do i = 1, stripe_count
 #ifdef WITH_OPENMP
-                csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
-                b_len = csw*nbw*max_threads
-                call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow+1, bottom_recv_tag, &
+         csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
+         b_len = csw*nbw*max_threads
+         call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow+1, bottom_recv_tag, &
                            mpi_comm_rows, bottom_recv_request(i), mpierr)
 #else
-                call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
-                     mpi_comm_rows, bottom_recv_request(i), mpierr)
+         call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
+                        mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
-            enddo
-        endif
+       enddo
+     endif
 
-        if(current_local_n > 1) then
-            if(my_pcol == mod(sweep,np_cols)) then
-                bcast_buffer(:,1:current_local_n) = hh_trans_real(:,current_tv_off+1:current_tv_off+current_local_n)
-                current_tv_off = current_tv_off + current_local_n
-            endif
-            call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_REAL8, mod(sweep,np_cols), mpi_comm_cols, mpierr)
-        else
-            ! for current_local_n == 1 the one and only HH vector is 0 and not stored in hh_trans_real
-            bcast_buffer(:,1) = 0
-        endif
+     if (current_local_n > 1) then
+       if (my_pcol == mod(sweep,np_cols)) then
+         bcast_buffer(:,1:current_local_n) = hh_trans_real(:,current_tv_off+1:current_tv_off+current_local_n)
+         current_tv_off = current_tv_off + current_local_n
+       endif
+       call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_REAL8, mod(sweep,np_cols), mpi_comm_cols, mpierr)
+     else
+       ! for current_local_n == 1 the one and only HH vector is 0 and not stored in hh_trans_real
+       bcast_buffer(:,1) = 0
+     endif
 
-        if(l_nev == 0) cycle
+     if (l_nev == 0) cycle
 
-        if(current_local_n > 0) then
+     if (current_local_n > 0) then
 
-          do i = 1, stripe_count
+       do i = 1, stripe_count
 #ifdef WITH_OPENMP
-            ! Get real stripe width for strip i;
-            ! The last OpenMP tasks may have an even smaller stripe with,
-            ! but we don't care about this, i.e. we send/recv a bit too much in this case.
-            ! csw: current_stripe_width
+         ! Get real stripe width for strip i;
+         ! The last OpenMP tasks may have an even smaller stripe with,
+         ! but we don't care about this, i.e. we send/recv a bit too much in this case.
+         ! csw: current_stripe_width
 
-            csw = min(stripe_width, thread_width-(i-1)*stripe_width)
+         csw = min(stripe_width, thread_width-(i-1)*stripe_width)
 #endif
-            !wait_b
-            if(current_n_end < current_n) then
+         !wait_b
+         if (current_n_end < current_n) then
 #ifdef WITH_OPENMP
-                call MPI_Wait(bottom_recv_request(i), MPI_STATUS, mpierr)
+           call MPI_Wait(bottom_recv_request(i), MPI_STATUS, mpierr)
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
+           call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    n_off = current_local_n+a_off
-                    b_len = csw*nbw
-                    b_off = (my_thread-1)*b_len
-                    a(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
-                      reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
-                enddo
+           do my_thread = 1, max_threads
+             n_off = current_local_n+a_off
+             b_len = csw*nbw
+             b_off = (my_thread-1)*b_len
+             a(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
+               reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
+           enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
+           call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
-                n_off = current_local_n+a_off
-                a(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
+           call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+           n_off = current_local_n+a_off
+           a(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
 
 #endif
-                if(next_n_end < next_n) then
+           if (next_n_end < next_n) then
 #ifdef WITH_OPENMP
-                    call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
+             call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
                                    MPI_REAL8, my_prow+1, bottom_recv_tag, &
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
 #else
-                    call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
+             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
 
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
-                endif
-            endif
+           endif
+         endif
 
-            if(current_local_n <= bottom_msg_length + top_msg_length) then
+         if (current_local_n <= bottom_msg_length + top_msg_length) then
 
-                !wait_t
-                if(top_msg_length>0) then
+           !wait_t
+           if (top_msg_length>0) then
 #ifdef WITH_OPENMP
-                    call MPI_Wait(top_recv_request(i), MPI_STATUS, mpierr)
+             call MPI_Wait(top_recv_request(i), MPI_STATUS, mpierr)
 #else
-                    call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
-                    a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+             call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+             a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
 #endif
-                endif
+           endif
 
-                !compute
+           !compute
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
+           call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    if(top_msg_length>0) then
-                        b_len = csw*top_msg_length
-                        b_off = (my_thread-1)*b_len
-                        a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
+           do my_thread = 1, max_threads
+             if (top_msg_length>0) then
+               b_len = csw*top_msg_length
+               b_off = (my_thread-1)*b_len
+               a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
-                    endif
-                    call compute_hh_trafo(0, current_local_n, i, my_thread, &
+             endif
+             call compute_hh_trafo(0, current_local_n, i, my_thread, &
                                       THIS_REAL_ELPA_KERNEL)
-                enddo
+           enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
+           call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                call compute_hh_trafo(0, current_local_n, i, &
+           call compute_hh_trafo(0, current_local_n, i, &
                                       THIS_REAL_ELPA_KERNEL)
 #endif
-                !send_b
+           !send_b
 #ifdef WITH_OPENMP
-                call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
-                if(bottom_msg_length>0) then
-                    n_off = current_local_n+nbw-bottom_msg_length+a_off
-                    b_len = csw*bottom_msg_length*max_threads
-                    bottom_border_send_buffer(1:b_len,i) = &
-                        reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
-                    call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
-                endif
+           call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+           if (bottom_msg_length>0) then
+             n_off = current_local_n+nbw-bottom_msg_length+a_off
+             b_len = csw*bottom_msg_length*max_threads
+             bottom_border_send_buffer(1:b_len,i) = &
+                 reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+             call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
+                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+           endif
 #else
-                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
-                if(bottom_msg_length>0) then
-                    n_off = current_local_n+nbw-bottom_msg_length+a_off
-                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
-                    call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
+           call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+           if (bottom_msg_length>0) then
+             n_off = current_local_n+nbw-bottom_msg_length+a_off
+             bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+             call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
 
 
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
-                endif
+                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+           endif
 #endif
-            else
+         else
 
-                !compute
+         !compute
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
+         call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
-                                      THIS_REAL_ELPA_KERNEL)
-                enddo
+        do my_thread = 1, max_threads
+          call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
+                              THIS_REAL_ELPA_KERNEL)
+        enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
+        call timer%stop("OpenMP parallel")
 #endif
 
-                !send_b
-                call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
-                if(bottom_msg_length > 0) then
-                    n_off = current_local_n+nbw-bottom_msg_length+a_off
-                    b_len = csw*bottom_msg_length*max_threads
-                    bottom_border_send_buffer(1:b_len,i) = &
-                      reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
-                    call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
-                endif
+        !send_b
+        call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+        if (bottom_msg_length > 0) then
+          n_off = current_local_n+nbw-bottom_msg_length+a_off
+          b_len = csw*bottom_msg_length*max_threads
+          bottom_border_send_buffer(1:b_len,i) = &
+              reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+          call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
+                           top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+        endif
 #else
-                call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, &
+        call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, &
                                       THIS_REAL_ELPA_KERNEL)
 
-
-
-
-                !send_b
-                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
-                if(bottom_msg_length > 0) then
-                    n_off = current_local_n+nbw-bottom_msg_length+a_off
-                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
-                    call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
-
-
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
-                endif
+        !send_b
+        call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+        if (bottom_msg_length > 0) then
+          n_off = current_local_n+nbw-bottom_msg_length+a_off
+          bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+          call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
+                         top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+        endif
 #endif
 
-                !compute
+        !compute
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
+        call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
-                                      THIS_REAL_ELPA_KERNEL)
-                enddo
+        do my_thread = 1, max_threads
+          call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
+                                THIS_REAL_ELPA_KERNEL)
+        enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
+        call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
-                                      THIS_REAL_ELPA_KERNEL)
+        call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
+                              THIS_REAL_ELPA_KERNEL)
 
 #endif
-                !wait_t
-                if(top_msg_length>0) then
+        !wait_t
+        if (top_msg_length>0) then
 #ifdef WITH_OPENMP
-                    call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+          call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
 #else
-                    call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
-                    a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+          call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+          a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
 #endif
-                endif
+        endif
 
-                !compute
+        !compute
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
+        call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    if(top_msg_length>0) then
-                        b_len = csw*top_msg_length
-                        b_off = (my_thread-1)*b_len
-                        a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
-                          reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
-                    endif
-                    call compute_hh_trafo(0, top_msg_length, i, my_thread, &
-                                      THIS_REAL_ELPA_KERNEL)
-                enddo
+        do my_thread = 1, max_threads
+          if (top_msg_length>0) then
+            b_len = csw*top_msg_length
+            b_off = (my_thread-1)*b_len
+            a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
+              reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
+          endif
+          call compute_hh_trafo(0, top_msg_length, i, my_thread, THIS_REAL_ELPA_KERNEL)
+        enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
+        call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                call compute_hh_trafo(0, top_msg_length, i, &
-                                      THIS_REAL_ELPA_KERNEL)
+        call compute_hh_trafo(0, top_msg_length, i, THIS_REAL_ELPA_KERNEL)
 #endif
-            endif
+      endif
 
-            if(next_top_msg_length > 0) then
-                !request top_border data
+      if (next_top_msg_length > 0) then
+        !request top_border data
 #ifdef WITH_OPENMP
-                b_len = csw*next_top_msg_length*max_threads
-                call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow-1, &
-                               top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
+        b_len = csw*next_top_msg_length*max_threads
+        call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow-1, &
+                       top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #else
-                call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_REAL8, my_prow-1, &
-
-                               top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
+        call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_REAL8, my_prow-1, &
+                       top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #endif
-            endif
+      endif
 
-            !send_t
-            if(my_prow > 0) then
+      !send_t
+      if (my_prow > 0) then
 #ifdef WITH_OPENMP
-                call MPI_Wait(top_send_request(i), mpi_status, mpierr)
-                b_len = csw*nbw*max_threads
-                top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
-                call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_REAL8, &
-                               my_prow-1, bottom_recv_tag, &
-                               mpi_comm_rows, top_send_request(i), mpierr)
+        call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+        b_len = csw*nbw*max_threads
+        top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
+        call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_REAL8, &
+                       my_prow-1, bottom_recv_tag, &
+                       mpi_comm_rows, top_send_request(i), mpierr)
 #else
-                call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
-                top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
-                call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow-1, bottom_recv_tag, &
-                               mpi_comm_rows, top_send_request(i), mpierr)
+        call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+        top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
+        call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow-1, bottom_recv_tag, &
+                       mpi_comm_rows, top_send_request(i), mpierr)
 
 #endif
-            endif
+      endif
 
-            ! Care that there are not too many outstanding top_recv_request's
-            if(stripe_count > 1) then
-                if(i>1) then
+      ! Care that there are not too many outstanding top_recv_request's
+      if (stripe_count > 1) then
+        if (i>1) then
 #ifdef WITH_OPENMP
-                     call MPI_Wait(top_recv_request(i-1), MPI_STATUS, mpierr)
+          call MPI_Wait(top_recv_request(i-1), MPI_STATUS, mpierr)
 #else
-                     call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
+          call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
 #endif
-                 else
+        else
 #ifdef WITH_OPENMP
-                     call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS, mpierr)
+          call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS, mpierr)
 #else
-                     call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
+          call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
 #endif
-                 endif
-             endif
+        endif
+      endif
 
-           enddo
+    enddo
 
-           top_msg_length = next_top_msg_length
+    top_msg_length = next_top_msg_length
 
-         else
-             ! wait for last top_send_request
-           do i = 1, stripe_count
+  else
+    ! wait for last top_send_request
+    do i = 1, stripe_count
 #ifdef WITH_OPENMP
-             call MPI_Wait(top_send_request(i), MPI_STATUS, mpierr)
+      call MPI_Wait(top_send_request(i), MPI_STATUS, mpierr)
 #else
-             call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+      call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
-           enddo
-         endif
+      enddo
+    endif
 
-         ! Care about the result
+    ! Care about the result
 
-         if(my_prow == 0) then
+    if (my_prow == 0) then
 
-             ! topmost process sends nbw rows to destination processes
+      ! topmost process sends nbw rows to destination processes
 
-             do j=0,nfact-1
+      do j=0,nfact-1
+        num_blk = sweep*nfact+j ! global number of destination block, 0 based
+        if (num_blk*nblk >= na) exit
 
-                 num_blk = sweep*nfact+j ! global number of destination block, 0 based
-                 if(num_blk*nblk >= na) exit
-
-                 nbuf = mod(num_blk, num_result_buffers) + 1 ! buffer number to get this block
+          nbuf = mod(num_blk, num_result_buffers) + 1 ! buffer number to get this block
 
 #ifdef WITH_OPENMP
-                 call MPI_Wait(result_send_request(nbuf), MPI_STATUS, mpierr)
+          call MPI_Wait(result_send_request(nbuf), MPI_STATUS, mpierr)
 #else
-                 call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+          call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
-                 dst = mod(num_blk, np_rows)
+          dst = mod(num_blk, np_rows)
 
-                 if(dst == 0) then
-                     do i = 1, min(na - num_blk*nblk, nblk)
-                         call pack_row(row, j*nblk+i+a_off)
-                         q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
-                     enddo
-                 else
-                     do i = 1, nblk
-                         call pack_row(result_buffer(:,i,nbuf),j*nblk+i+a_off)
-                     enddo
-                     call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL8, dst, &
+          if (dst == 0) then
+            do i = 1, min(na - num_blk*nblk, nblk)
+              call pack_row(row, j*nblk+i+a_off)
+              q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
+            enddo
+          else
+            do i = 1, nblk
+              call pack_row(result_buffer(:,i,nbuf),j*nblk+i+a_off)
+            enddo
+            call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL8, dst, &
                                     result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
-                 endif
-             enddo
+          endif
+        enddo
 
-         else
+      else
 
-            ! receive and store final result
+        ! receive and store final result
 
-             do j = num_bufs_recvd, num_result_blocks-1
+        do j = num_bufs_recvd, num_result_blocks-1
 
-                 nbuf = mod(j, num_result_buffers) + 1 ! buffer number to get this block
+          nbuf = mod(j, num_result_buffers) + 1 ! buffer number to get this block
 
-                 ! If there is still work to do, just test for the next result request
-                 ! and leave the loop if it is not ready, otherwise wait for all
-                 ! outstanding requests
+          ! If there is still work to do, just test for the next result request
+          ! and leave the loop if it is not ready, otherwise wait for all
+          ! outstanding requests
 
-                 if(next_local_n > 0) then
+          if (next_local_n > 0) then
 #ifdef WITH_OPENMP
-                     call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS, mpierr)
+            call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS, mpierr)
 #else
-                     call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
+            call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
 
 #endif
-                     if(.not.flag) exit
-                 else
+            if (.not.flag) exit
+          else
 #ifdef WITH_OPENMP
-                     call MPI_Wait(result_recv_request(nbuf), MPI_STATUS, mpierr)
+            call MPI_Wait(result_recv_request(nbuf), MPI_STATUS, mpierr)
 #else
-                     call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+            call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
-                 endif
+          endif
 
-                 ! Fill result buffer into q
-                 num_blk = j*np_rows + my_prow ! global number of current block, 0 based
-                 do i = 1, min(na - num_blk*nblk, nblk)
-                     q(j*nblk+i, 1:l_nev) = result_buffer(1:l_nev, i, nbuf)
-                 enddo
+          ! Fill result buffer into q
+           num_blk = j*np_rows + my_prow ! global number of current block, 0 based
+           do i = 1, min(na - num_blk*nblk, nblk)
+             q(j*nblk+i, 1:l_nev) = result_buffer(1:l_nev, i, nbuf)
+           enddo
 
-                 ! Queue result buffer again if there are outstanding blocks left
-                 if(j+num_result_buffers < num_result_blocks) &
+           ! Queue result buffer again if there are outstanding blocks left
+           if (j+num_result_buffers < num_result_blocks) &
                      call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL8, 0, result_recv_tag, &
                                     mpi_comm_rows, result_recv_request(nbuf), mpierr)
 
-             enddo
-             num_bufs_recvd = j
+         enddo
+         num_bufs_recvd = j
 
-         endif
+       endif
 
-         ! Shift the remaining rows to the front of A (if necessary)
+       ! Shift the remaining rows to the front of A (if necessary)
 
-         offset = nbw - top_msg_length
-         if(offset<0) then
-             write(error_unit,*) 'internal error, offset for shifting = ',offset
-             success = .false.
+       offset = nbw - top_msg_length
+       if (offset<0) then
+         write(error_unit,*) 'internal error, offset for shifting = ',offset
+         success = .false.
 !             call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
-         endif
-         a_off = a_off + offset
-         if(a_off + next_local_n + nbw > a_dim2) then
+       endif
+       a_off = a_off + offset
+       if (a_off + next_local_n + nbw > a_dim2) then
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
+         call timer%start("OpenMP parallel")
 #endif
 
  !$omp parallel do private(my_thread, i, j), schedule(static, 1)
-             do my_thread = 1, max_threads
-                 do i = 1, stripe_count
-                     do j = top_msg_length+1, top_msg_length+next_local_n
-                        A(:,j,i,my_thread) = A(:,j+a_off,i,my_thread)
-                     enddo
-#else
-             do i = 1, stripe_count
-                 do j = top_msg_length+1, top_msg_length+next_local_n
-                    A(:,j,i) = A(:,j+a_off,i)
-#endif
-                 enddo
+         do my_thread = 1, max_threads
+           do i = 1, stripe_count
+             do j = top_msg_length+1, top_msg_length+next_local_n
+               A(:,j,i,my_thread) = A(:,j+a_off,i,my_thread)
              enddo
+#else
+         do i = 1, stripe_count
+           do j = top_msg_length+1, top_msg_length+next_local_n
+             A(:,j,i) = A(:,j+a_off,i)
+#endif
+           enddo
+         enddo
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
+         call timer%stop("OpenMP parallel")
 #endif
 #endif
-             a_off = 0
-         endif
+         a_off = 0
+       endif
 
      enddo
 
      ! Just for safety:
-     if(ANY(top_send_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_send_request ***',my_prow,my_pcol
-     if(ANY(bottom_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_send_request ***',my_prow,my_pcol
-     if(ANY(top_recv_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_recv_request ***',my_prow,my_pcol
-     if(ANY(bottom_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_recv_request ***',my_prow,my_pcol
+     if (ANY(top_send_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_send_request ***',my_prow,my_pcol
+     if (ANY(bottom_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_send_request ***',my_prow,my_pcol
+     if (ANY(top_recv_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_recv_request ***',my_prow,my_pcol
+     if (ANY(bottom_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_recv_request ***',my_prow,my_pcol
 
-     if(my_prow == 0) then
+     if (my_prow == 0) then
 #ifdef WITH_OPENMP
-         allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers))
-         call MPI_Waitall(num_result_buffers, result_send_request, mpi_statuses, mpierr)
-         deallocate(mpi_statuses)
+       allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers))
+       call MPI_Waitall(num_result_buffers, result_send_request, mpi_statuses, mpierr)
+       deallocate(mpi_statuses)
 #else
-         call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
+       call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
 #endif
      endif
 
-     if(ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
-     if(ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
+     if (ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
+     if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
 
-     if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
          write(error_unit,'(" Kernel time:",f10.3," MFlops: ",f10.3)')  kernel_time, kernel_flops/kernel_time*1.d-6
 
      ! deallocate all working space
@@ -2925,50 +2910,50 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
      deallocate(bottom_send_request)
      deallocate(bottom_recv_request)
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("trans_ev_tridi_to_band_real")
+     call timer%stop("trans_ev_tridi_to_band_real")
 #endif
    return
 
  contains
 
      subroutine pack_row(row, n)
-         real*8 row(:)
-         integer n, i, noff, nl
+       real*8 row(:)
+       integer n, i, noff, nl
 #ifdef WITH_OPENMP
-         integer nt
+       integer nt
 #endif
 
 #ifdef WITH_OPENMP
-         do nt = 1, max_threads
-             do i = 1, stripe_count
-                 noff = (nt-1)*thread_width + (i-1)*stripe_width
-                 nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-                 if(nl<=0) exit
-                 row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-             enddo
+       do nt = 1, max_threads
+         do i = 1, stripe_count
+           noff = (nt-1)*thread_width + (i-1)*stripe_width
+           nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
+           if (nl<=0) exit
+           row(noff+1:noff+nl) = a(1:nl,n,i,nt)
          enddo
+       enddo
 #else
-         do i=1,stripe_count
-             nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-             noff = (i-1)*stripe_width
-             row(noff+1:noff+nl) = a(1:nl,n,i)
-         enddo
+       do i=1,stripe_count
+         nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+         noff = (i-1)*stripe_width
+         row(noff+1:noff+nl) = a(1:nl,n,i)
+       enddo
 #endif
 
-       end subroutine pack_row
+     end subroutine pack_row
 
 #ifdef WITH_OPENMP
-       subroutine unpack_row(row, n, my_thread)
+     subroutine unpack_row(row, n, my_thread)
        ! Private variables in OMP regions (my_thread) should better be in the argument list!
          integer, intent(in) :: n, my_thread
          real*8, intent(in)  :: row(:)
          integer i, noff, nl
 
          do i=1,stripe_count
-             noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-             nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-             if(nl<=0) exit
-             a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
+           noff = (my_thread-1)*thread_width + (i-1)*stripe_width
+           nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
+           if(nl<=0) exit
+           a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
          enddo
 
        end subroutine unpack_row
@@ -2978,9 +2963,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
          integer n, i, noff, nl
 
          do i=1,stripe_count
-             nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-             noff = (i-1)*stripe_width
-             a(1:nl,n,i) = row(noff+1:noff+nl)
+           nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+           noff = (i-1)*stripe_width
+           a(1:nl,n,i) = row(noff+1:noff+nl)
          enddo
 
        end subroutine unpack_row
@@ -3014,165 +2999,164 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
       integer, intent(in) :: THIS_REAL_ELPA_KERNEL
 
-       ! Private variables in OMP regions (my_thread) should better be in the argument list!
-         integer off, ncols, istripe
+      ! Private variables in OMP regions (my_thread) should better be in the argument list!
+      integer off, ncols, istripe
 #ifdef WITH_OPENMP
-         integer my_thread, noff
+      integer my_thread, noff
 #endif
-         integer j, nl, jj, jjj
-         real*8 w(nbw,6), ttt
+      integer j, nl, jj, jjj
+      real*8 w(nbw,6), ttt
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("compute_hh_trafo")
+      call timer%start("compute_hh_trafo")
 #endif
 
-         ttt = mpi_wtime()
+      ttt = mpi_wtime()
 
 #ifndef WITH_OPENMP
-         nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
+      nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
 #else
 
-         if(istripe<stripe_count) then
-           nl = stripe_width
-         else
-           noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
-           nl = min(my_thread*thread_width-noff, l_nev-noff)
-           if(nl<=0) return
-         endif
+      if (istripe<stripe_count) then
+        nl = stripe_width
+      else
+        noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
+        nl = min(my_thread*thread_width-noff, l_nev-noff)
+        if (nl<=0) return
+      endif
 #endif
 
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
-            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
-            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
-
-            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE .or.        &
-            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP .or.        &
-            THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
+      if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
+          THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
+          THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
+          THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE .or.        &
+          THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP .or.        &
+          THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 
-         !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
+        !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
 #if defined(WITH_REAL_GENERIC_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) then
+        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-              do j = ncols, 2, -2
-                 w(:,1) = bcast_buffer(1:nbw,j+off)
-                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+          do j = ncols, 2, -2
+            w(:,1) = bcast_buffer(1:nbw,j+off)
+            w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-                 call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe,my_thread), w, &
+            call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe,my_thread), w, &
                                       nbw, nl, stripe_width, nbw)
 #else
-                 call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe),           w, &
+            call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe),           w, &
                                       nbw, nl, stripe_width, nbw)
 #endif
-              enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+        endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_GENERIC_KERNEL */
 
 
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) then
+        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-              do j = ncols, 2, -2
-                 w(:,1) = bcast_buffer(1:nbw,j+off)
-                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+          do j = ncols, 2, -2
+            w(:,1) = bcast_buffer(1:nbw,j+off)
+            w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-                 call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe,my_thread), &
+            call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe,my_thread), &
                                                      w, nbw, nl, stripe_width, nbw)
 #else
-                 call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe), &
+            call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe), &
                                                      w, nbw, nl, stripe_width, nbw)
 #endif
-              enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+        endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_GENERIC_SIMPLE_KERNEL */
 
 
 #if defined(WITH_REAL_SSE_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) then
+        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-              do j = ncols, 2, -2
-                 w(:,1) = bcast_buffer(1:nbw,j+off)
-                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+          do j = ncols, 2, -2
+            w(:,1) = bcast_buffer(1:nbw,j+off)
+            w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-                 call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
+            call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                       stripe_width, nbw)
 #else
-                 call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
+            call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
                                       stripe_width, nbw)
 #endif
-              enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+        endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_KERNEL */
 
 
 #if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) then
+        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-              do j = ncols, 2, -2
-                 w(:,1) = bcast_buffer(1:nbw,j+off)
-                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+          do j = ncols, 2, -2
+            w(:,1) = bcast_buffer(1:nbw,j+off)
+            w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-                 call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
+            call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
-                 call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
+            call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
-              enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+        endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK2_KERNEL */
 
 #if defined(WITH_REAL_BGP_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP) then
+        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-              do j = ncols, 2, -2
-                 w(:,1) = bcast_buffer(1:nbw,j+off)
-                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+          do j = ncols, 2, -2
+            w(:,1) = bcast_buffer(1:nbw,j+off)
+            w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-                 call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
+            call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                           stripe_width, nbw)
 #else
-                 call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
+            call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
                                           stripe_width, nbw)
 #endif
-              enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+        endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_BGP_KERNEL */
 
 
 #if defined(WITH_REAL_BGQ_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
+        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-              do j = ncols, 2, -2
-                 w(:,1) = bcast_buffer(1:nbw,j+off)
-                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+          do j = ncols, 2, -2
+            w(:,1) = bcast_buffer(1:nbw,j+off)
+            w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-                 call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
+            call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                           stripe_width, nbw)
 #else
-                 call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
+            call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
                                           stripe_width, nbw)
 #endif
-              enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+        endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_BGQ_KERNEL */
 
@@ -3182,130 +3166,130 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 !#endif
 
 #ifdef WITH_OPENMP
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
-                                       bcast_buffer(1,off+1), nbw, nl,     &
-                                       stripe_width)
+        if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+                                      bcast_buffer(1,off+1), nbw, nl,     &
+                                      stripe_width)
 #else
-         if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
-                                       bcast_buffer(1,off+1), nbw, nl,     &
-                                       stripe_width)
+        if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
+                                      bcast_buffer(1,off+1), nbw, nl,     &
+                                      stripe_width)
 #endif
 
 
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-        endif !
+      endif !
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 
 
 
 #if defined(WITH_REAL_AVX_BLOCK4_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) then
+      if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-           ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
-           do j = ncols, 4, -4
-              w(:,1) = bcast_buffer(1:nbw,j+off)
-              w(:,2) = bcast_buffer(1:nbw,j+off-1)
-              w(:,3) = bcast_buffer(1:nbw,j+off-2)
-              w(:,4) = bcast_buffer(1:nbw,j+off-3)
+        ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
+        do j = ncols, 4, -4
+          w(:,1) = bcast_buffer(1:nbw,j+off)
+          w(:,2) = bcast_buffer(1:nbw,j+off-1)
+          w(:,3) = bcast_buffer(1:nbw,j+off-2)
+          w(:,4) = bcast_buffer(1:nbw,j+off-3)
 #ifdef WITH_OPENMP
-              call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe,my_thread), w, &
+          call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe,my_thread), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
-              call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe), w, &
+          call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
-           enddo
-           do jj = j, 2, -2
-              w(:,1) = bcast_buffer(1:nbw,jj+off)
-              w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+        enddo
+        do jj = j, 2, -2
+          w(:,1) = bcast_buffer(1:nbw,jj+off)
+          w(:,2) = bcast_buffer(1:nbw,jj+off-1)
 #ifdef WITH_OPENMP
-              call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe,my_thread), &
+          call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe,my_thread), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
-              call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe), &
+          call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe), &
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
-           enddo
+        enddo
 #ifdef WITH_OPENMP
-           if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+        if (jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
                                           bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
-           if(jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
+        if (jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
                                           bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-        endif
+      endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
 
 
 #if defined(WITH_REAL_AVX_BLOCK6_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-        if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) then
+      if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-           ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
-           do j = ncols, 6, -6
-              w(:,1) = bcast_buffer(1:nbw,j+off)
-              w(:,2) = bcast_buffer(1:nbw,j+off-1)
-              w(:,3) = bcast_buffer(1:nbw,j+off-2)
-              w(:,4) = bcast_buffer(1:nbw,j+off-3)
-              w(:,5) = bcast_buffer(1:nbw,j+off-4)
-              w(:,6) = bcast_buffer(1:nbw,j+off-5)
+        ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
+        do j = ncols, 6, -6
+          w(:,1) = bcast_buffer(1:nbw,j+off)
+          w(:,2) = bcast_buffer(1:nbw,j+off-1)
+          w(:,3) = bcast_buffer(1:nbw,j+off-2)
+          w(:,4) = bcast_buffer(1:nbw,j+off-3)
+          w(:,5) = bcast_buffer(1:nbw,j+off-4)
+          w(:,6) = bcast_buffer(1:nbw,j+off-5)
 #ifdef WITH_OPENMP
-              call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe,my_thread), w, &
+          call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe,my_thread), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
-              call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe), w, &
+          call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
-           enddo
-           do jj = j, 4, -4
-              w(:,1) = bcast_buffer(1:nbw,jj+off)
-              w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-              w(:,3) = bcast_buffer(1:nbw,jj+off-2)
-              w(:,4) = bcast_buffer(1:nbw,jj+off-3)
+        enddo
+        do jj = j, 4, -4
+          w(:,1) = bcast_buffer(1:nbw,jj+off)
+          w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+          w(:,3) = bcast_buffer(1:nbw,jj+off-2)
+          w(:,4) = bcast_buffer(1:nbw,jj+off-3)
 #ifdef WITH_OPENMP
-              call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe,my_thread), w, &
+          call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe,my_thread), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
-              call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe), w, &
+          call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
-           enddo
-           do jjj = jj, 2, -2
-              w(:,1) = bcast_buffer(1:nbw,jjj+off)
-              w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
+        enddo
+        do jjj = jj, 2, -2
+          w(:,1) = bcast_buffer(1:nbw,jjj+off)
+          w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
 #ifdef WITH_OPENMP
-              call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe,my_thread), &
+        call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe,my_thread), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
-              call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe), &
+        call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe), &
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
-           enddo
+      enddo
 #ifdef WITH_OPENMP
-           if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+      if (jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
                                            bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
-           if(jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
+      if (jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
                                            bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-        endif
+    endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
 
 #ifdef WITH_OPENMP
-   if(my_thread==1) then
+    if (my_thread==1) then
 #endif
-        kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
-        kernel_time = kernel_time + mpi_wtime()-ttt
+      kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
+      kernel_time = kernel_time + mpi_wtime()-ttt
 #ifdef WITH_OPENMP
     endif
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("compute_hh_trafo")
+    call timer%stop("compute_hh_trafo")
 #endif
 
   end subroutine compute_hh_trafo
@@ -3329,7 +3313,7 @@ subroutine single_hh_trafo(q, hh, nb, nq, ldq)
     ! v = q * hh
     v(:) = q(1:nq,1)
     do i=2,nb
-        v(:) = v(:) + q(1:nq,i) * hh(i)
+      v(:) = v(:) + q(1:nq,i) * hh(i)
     enddo
 
     ! v = v * tau
@@ -3338,7 +3322,7 @@ subroutine single_hh_trafo(q, hh, nb, nq, ldq)
     ! q = q - v * hh**T
     q(1:nq,1) = q(1:nq,1) - v(:)
     do i=2,nb
-        q(1:nq,i) = q(1:nq,i) - v(:) * hh(i)
+      q(1:nq,i) = q(1:nq,i) - v(:) * hh(i)
     enddo
 
 end subroutine
@@ -3352,20 +3336,20 @@ subroutine determine_workload(na, nb, nprocs, limits)
 
     integer i
 
-    if(na <= 0) then
-        limits(:) = 0
-        return
+    if (na <= 0) then
+      limits(:) = 0
+      return
     endif
 
-    if(nb*nprocs > na) then
+    if (nb*nprocs > na) then
         ! there is not enough work for all
-        do i = 0, nprocs
-            limits(i) = min(na, i*nb)
-        enddo
+      do i = 0, nprocs
+        limits(i) = min(na, i*nb)
+      enddo
     else
-        do i = 0, nprocs
-            limits(i) = (i*na)/nprocs
-        enddo
+       do i = 0, nprocs
+         limits(i) = (i*na)/nprocs
+       enddo
     endif
 
 end subroutine
@@ -3439,13 +3423,13 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 
    ! Semibandwith nbw must be a multiple of blocksize nblk
 
-   if(mod(nbw,nblk)/=0) then
-      if(my_prow==0 .and. my_pcol==0) then
-         write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
-         write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
-         success = .false.
+   if (mod(nbw,nblk)/=0) then
+     if (my_prow==0 .and. my_pcol==0) then
+       write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
+       write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
+       success = .false.
 !         call mpi_abort(mpi_comm_world,0,mpierr)
-      endif
+     endif
    endif
 
    ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
@@ -3458,215 +3442,215 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 
    do istep = (na-1)/nbw, 1, -1
 
-      n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
+     n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
 
-      ! Number of local columns/rows of remaining matrix
-      l_cols = local_index(istep*nbw, my_pcol, np_cols, nblk, -1)
-      l_rows = local_index(istep*nbw, my_prow, np_rows, nblk, -1)
+     ! Number of local columns/rows of remaining matrix
+     l_cols = local_index(istep*nbw, my_pcol, np_cols, nblk, -1)
+     l_rows = local_index(istep*nbw, my_prow, np_rows, nblk, -1)
 
-      ! Allocate vmr and umc to their exact sizes so that they can be used in bcasts and reduces
+     ! Allocate vmr and umc to their exact sizes so that they can be used in bcasts and reduces
 
-      allocate(vmr(max(l_rows,1),2*n_cols))
-      allocate(umc(max(l_cols,1),2*n_cols))
+     allocate(vmr(max(l_rows,1),2*n_cols))
+     allocate(umc(max(l_cols,1),2*n_cols))
 
-      allocate(vr(l_rows+1))
+     allocate(vr(l_rows+1))
 
-      vmr(1:l_rows,1:n_cols) = 0.
-      vr(:) = 0
-      tmat(:,:,istep) = 0
+     vmr(1:l_rows,1:n_cols) = 0.
+     vr(:) = 0
+     tmat(:,:,istep) = 0
 
-      ! Reduce current block to lower triangular form
+     ! Reduce current block to lower triangular form
 
-      do lc = n_cols, 1, -1
+     do lc = n_cols, 1, -1
 
-         ncol = istep*nbw + lc ! absolute column number of householder vector
-         nrow = ncol - nbw ! Absolute number of pivot row
+       ncol = istep*nbw + lc ! absolute column number of householder vector
+       nrow = ncol - nbw ! Absolute number of pivot row
 
-         lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
-         lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+       lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
+       lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
 
-         tau = 0
+       tau = 0
 
-         if(nrow == 1) exit ! Nothing to do
+       if(nrow == 1) exit ! Nothing to do
 
-         cur_pcol = pcol(ncol) ! Processor column owning current block
+       cur_pcol = pcol(ncol) ! Processor column owning current block
 
-         if(my_pcol==cur_pcol) then
+       if (my_pcol==cur_pcol) then
 
-            ! Get vector to be transformed; distribute last element and norm of
-            ! remaining elements to all procs in current column
+         ! Get vector to be transformed; distribute last element and norm of
+         ! remaining elements to all procs in current column
 
-            vr(1:lr) = a(1:lr,lch) ! vector to be transformed
+         vr(1:lr) = a(1:lr,lch) ! vector to be transformed
 
-            if(my_prow==prow(nrow)) then
-               aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
-               aux1(2) = vr(lr)
-            else
-               aux1(1) = dot_product(vr(1:lr),vr(1:lr))
-               aux1(2) = 0.
-            endif
-
-            call mpi_allreduce(aux1,aux2,2,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
-
-            vnorm2 = aux2(1)
-            vrl    = aux2(2)
-
-            ! Householder transformation
-
-            call hh_transform_complex(vrl, vnorm2, xf, tau)
-
-            ! Scale vr and store Householder vector for back transformation
-
-            vr(1:lr) = vr(1:lr) * xf
-            if(my_prow==prow(nrow)) then
-               a(1:lr-1,lch) = vr(1:lr-1)
-               a(lr,lch) = vrl
-               vr(lr) = 1.
-            else
-               a(1:lr,lch) = vr(1:lr)
-            endif
-
+         if (my_prow==prow(nrow)) then
+           aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
+           aux1(2) = vr(lr)
+         else
+           aux1(1) = dot_product(vr(1:lr),vr(1:lr))
+           aux1(2) = 0.
          endif
 
-         ! Broadcast Householder vector and tau along columns
+         call mpi_allreduce(aux1,aux2,2,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
 
-         vr(lr+1) = tau
-         call MPI_Bcast(vr,lr+1,MPI_DOUBLE_COMPLEX,cur_pcol,mpi_comm_cols,mpierr)
-         vmr(1:lr,lc) = vr(1:lr)
-         tau = vr(lr+1)
-         tmat(lc,lc,istep) = conjg(tau) ! Store tau in diagonal of tmat
+         vnorm2 = aux2(1)
+         vrl    = aux2(2)
 
-         ! Transform remaining columns in current block with Householder vector
+         ! Householder transformation
 
-         ! Local dot product
+         call hh_transform_complex(vrl, vnorm2, xf, tau)
 
-         aux1 = 0
+         ! Scale vr and store Householder vector for back transformation
 
-         nlc = 0 ! number of local columns
-         do j=1,lc-1
-            lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-            if(lcx>0) then
-               nlc = nlc+1
-               aux1(nlc) = dot_product(vr(1:lr),a(1:lr,lcx))
-            endif
-         enddo
-
-         ! Get global dot products
-         if(nlc>0) call mpi_allreduce(aux1,aux2,nlc,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
-
-         ! Transform
-
-         nlc = 0
-         do j=1,lc-1
-            lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-            if(lcx>0) then
-               nlc = nlc+1
-               a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
-            endif
-         enddo
-
-      enddo
-
-      ! Calculate scalar products of stored Householder vectors.
-      ! This can be done in different ways, we use zherk
-
-      vav = 0
-      if(l_rows>0) &
-         call zherk('U','C',n_cols,l_rows,CONE,vmr,ubound(vmr,1),CZERO,vav,ubound(vav,1))
-      call herm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_rows)
-
-      ! Calculate triangular matrix T for block Householder Transformation
-
-      do lc=n_cols,1,-1
-         tau = tmat(lc,lc,istep)
-         if(lc<n_cols) then
-            call ztrmv('U','C','N',n_cols-lc,tmat(lc+1,lc+1,istep),ubound(tmat,1),vav(lc+1,lc),1)
-            tmat(lc,lc+1:n_cols,istep) = -tau * conjg(vav(lc+1:n_cols,lc))
+         vr(1:lr) = vr(1:lr) * xf
+         if (my_prow==prow(nrow)) then
+           a(1:lr-1,lch) = vr(1:lr-1)
+           a(lr,lch) = vrl
+           vr(lr) = 1.
+         else
+           a(1:lr,lch) = vr(1:lr)
          endif
-      enddo
 
-      ! Transpose vmr -> vmc (stored in umc, second half)
+       endif
 
-      call elpa_transpose_vectors  (vmr, 2*ubound(vmr,1), mpi_comm_rows, &
-                                    umc(1,n_cols+1), 2*ubound(umc,1), mpi_comm_cols, &
-                                    1, 2*istep*nbw, n_cols, 2*nblk)
+       ! Broadcast Householder vector and tau along columns
 
-      ! Calculate umc = A**T * vmr
-      ! Note that the distributed A has to be transposed
-      ! Opposed to direct tridiagonalization there is no need to use the cache locality
-      ! of the tiles, so we can use strips of the matrix
+       vr(lr+1) = tau
+       call MPI_Bcast(vr,lr+1,MPI_DOUBLE_COMPLEX,cur_pcol,mpi_comm_cols,mpierr)
+       vmr(1:lr,lc) = vr(1:lr)
+       tau = vr(lr+1)
+       tmat(lc,lc,istep) = conjg(tau) ! Store tau in diagonal of tmat
 
-      umc(1:l_cols,1:n_cols) = 0.d0
-      vmr(1:l_rows,n_cols+1:2*n_cols) = 0
-      if(l_cols>0 .and. l_rows>0) then
-         do i=0,(istep*nbw-1)/tile_size
+       ! Transform remaining columns in current block with Householder vector
 
-            lcs = i*l_cols_tile+1
-            lce = min(l_cols,(i+1)*l_cols_tile)
-            if(lce<lcs) cycle
+       ! Local dot product
 
-            lre = min(l_rows,(i+1)*l_rows_tile)
-            call ZGEMM('C','N',lce-lcs+1,n_cols,lre,CONE,a(1,lcs),ubound(a,1), &
-                       vmr,ubound(vmr,1),CONE,umc(lcs,1),ubound(umc,1))
+       aux1 = 0
 
-            if(i==0) cycle
-            lre = min(l_rows,i*l_rows_tile)
-            call ZGEMM('N','N',lre,n_cols,lce-lcs+1,CONE,a(1,lcs),lda, &
-                       umc(lcs,n_cols+1),ubound(umc,1),CONE,vmr(1,n_cols+1),ubound(vmr,1))
-         enddo
-      endif
+       nlc = 0 ! number of local columns
+       do j=1,lc-1
+         lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+         if (lcx>0) then
+           nlc = nlc+1
+           aux1(nlc) = dot_product(vr(1:lr),a(1:lr,lcx))
+         endif
+       enddo
 
-      ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
-      ! on the processors containing the diagonal
-      ! This is only necessary if ur has been calculated, i.e. if the
-      ! global tile size is smaller than the global remaining matrix
+       ! Get global dot products
+       if (nlc>0) call mpi_allreduce(aux1,aux2,nlc,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
 
-      if(tile_size < istep*nbw) then
-         call elpa_reduce_add_vectors  (vmr(1,n_cols+1),2*ubound(vmr,1),mpi_comm_rows, &
-                                        umc, 2*ubound(umc,1), mpi_comm_cols, &
-                                        2*istep*nbw, n_cols, 2*nblk)
-      endif
+       ! Transform
 
-      if(l_cols>0) then
-         allocate(tmp(l_cols,n_cols))
-         call mpi_allreduce(umc,tmp,l_cols*n_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
-         umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
-         deallocate(tmp)
-      endif
+       nlc = 0
+       do j=1,lc-1
+         lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+         if (lcx>0) then
+           nlc = nlc+1
+           a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+         endif
+       enddo
 
-      ! U = U * Tmat**T
+     enddo
 
-      call ztrmm('Right','Upper','C','Nonunit',l_cols,n_cols,CONE,tmat(1,1,istep),ubound(tmat,1),umc,ubound(umc,1))
+     ! Calculate scalar products of stored Householder vectors.
+     ! This can be done in different ways, we use zherk
 
-      ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+     vav = 0
+     if (l_rows>0) &
+        call zherk('U','C',n_cols,l_rows,CONE,vmr,ubound(vmr,1),CZERO,vav,ubound(vav,1))
+     call herm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_rows)
 
-      call zgemm('C','N',n_cols,n_cols,l_cols,CONE,umc,ubound(umc,1),umc(1,n_cols+1),ubound(umc,1),CZERO,vav,ubound(vav,1))
-      call ztrmm('Right','Upper','C','Nonunit',n_cols,n_cols,CONE,tmat(1,1,istep),ubound(tmat,1),vav,ubound(vav,1))
+     ! Calculate triangular matrix T for block Householder Transformation
 
-      call herm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_cols)
+     do lc=n_cols,1,-1
+       tau = tmat(lc,lc,istep)
+       if (lc<n_cols) then
+         call ztrmv('U','C','N',n_cols-lc,tmat(lc+1,lc+1,istep),ubound(tmat,1),vav(lc+1,lc),1)
+         tmat(lc,lc+1:n_cols,istep) = -tau * conjg(vav(lc+1:n_cols,lc))
+       endif
+     enddo
 
-      ! U = U - 0.5 * V * VAV
-      call zgemm('N','N',l_cols,n_cols,n_cols,(-0.5d0,0.d0),umc(1,n_cols+1),ubound(umc,1),vav,ubound(vav,1),CONE,umc,ubound(umc,1))
+     ! Transpose vmr -> vmc (stored in umc, second half)
 
-      ! Transpose umc -> umr (stored in vmr, second half)
+     call elpa_transpose_vectors  (vmr, 2*ubound(vmr,1), mpi_comm_rows, &
+                                   umc(1,n_cols+1), 2*ubound(umc,1), mpi_comm_cols, &
+                                   1, 2*istep*nbw, n_cols, 2*nblk)
 
-       call elpa_transpose_vectors  (umc, 2*ubound(umc,1), mpi_comm_cols, &
-                                     vmr(1,n_cols+1), 2*ubound(vmr,1), mpi_comm_rows, &
-                                     1, 2*istep*nbw, n_cols, 2*nblk)
+     ! Calculate umc = A**T * vmr
+     ! Note that the distributed A has to be transposed
+     ! Opposed to direct tridiagonalization there is no need to use the cache locality
+     ! of the tiles, so we can use strips of the matrix
 
-      ! A = A - V*U**T - U*V**T
+     umc(1:l_cols,1:n_cols) = 0.d0
+     vmr(1:l_rows,n_cols+1:2*n_cols) = 0
+     if (l_cols>0 .and. l_rows>0) then
+       do i=0,(istep*nbw-1)/tile_size
 
-      do i=0,(istep*nbw-1)/tile_size
          lcs = i*l_cols_tile+1
          lce = min(l_cols,(i+1)*l_cols_tile)
-         lre = min(l_rows,(i+1)*l_rows_tile)
-         if(lce<lcs .or. lre<1) cycle
-         call zgemm('N','C',lre,lce-lcs+1,2*n_cols,-CONE, &
-                    vmr,ubound(vmr,1),umc(lcs,1),ubound(umc,1), &
-                    CONE,a(1,lcs),lda)
-      enddo
+         if (lce<lcs) cycle
 
-      deallocate(vmr, umc, vr)
+         lre = min(l_rows,(i+1)*l_rows_tile)
+         call ZGEMM('C','N',lce-lcs+1,n_cols,lre,CONE,a(1,lcs),ubound(a,1), &
+                      vmr,ubound(vmr,1),CONE,umc(lcs,1),ubound(umc,1))
+
+         if (i==0) cycle
+         lre = min(l_rows,i*l_rows_tile)
+         call ZGEMM('N','N',lre,n_cols,lce-lcs+1,CONE,a(1,lcs),lda, &
+                      umc(lcs,n_cols+1),ubound(umc,1),CONE,vmr(1,n_cols+1),ubound(vmr,1))
+       enddo
+     endif
+
+     ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
+     ! on the processors containing the diagonal
+     ! This is only necessary if ur has been calculated, i.e. if the
+     ! global tile size is smaller than the global remaining matrix
+
+     if (tile_size < istep*nbw) then
+       call elpa_reduce_add_vectors  (vmr(1,n_cols+1),2*ubound(vmr,1),mpi_comm_rows, &
+                                       umc, 2*ubound(umc,1), mpi_comm_cols, &
+                                       2*istep*nbw, n_cols, 2*nblk)
+     endif
+
+     if (l_cols>0) then
+       allocate(tmp(l_cols,n_cols))
+       call mpi_allreduce(umc,tmp,l_cols*n_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
+       umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
+       deallocate(tmp)
+     endif
+
+     ! U = U * Tmat**T
+
+     call ztrmm('Right','Upper','C','Nonunit',l_cols,n_cols,CONE,tmat(1,1,istep),ubound(tmat,1),umc,ubound(umc,1))
+
+     ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+
+     call zgemm('C','N',n_cols,n_cols,l_cols,CONE,umc,ubound(umc,1),umc(1,n_cols+1),ubound(umc,1),CZERO,vav,ubound(vav,1))
+     call ztrmm('Right','Upper','C','Nonunit',n_cols,n_cols,CONE,tmat(1,1,istep),ubound(tmat,1),vav,ubound(vav,1))
+
+     call herm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_cols)
+
+     ! U = U - 0.5 * V * VAV
+     call zgemm('N','N',l_cols,n_cols,n_cols,(-0.5d0,0.d0),umc(1,n_cols+1),ubound(umc,1),vav,ubound(vav,1),CONE,umc,ubound(umc,1))
+
+     ! Transpose umc -> umr (stored in vmr, second half)
+
+     call elpa_transpose_vectors  (umc, 2*ubound(umc,1), mpi_comm_cols, &
+                                    vmr(1,n_cols+1), 2*ubound(vmr,1), mpi_comm_rows, &
+                                    1, 2*istep*nbw, n_cols, 2*nblk)
+
+     ! A = A - V*U**T - U*V**T
+
+     do i=0,(istep*nbw-1)/tile_size
+       lcs = i*l_cols_tile+1
+       lce = min(l_cols,(i+1)*l_cols_tile)
+       lre = min(l_rows,(i+1)*l_rows_tile)
+       if (lce<lcs .or. lre<1) cycle
+       call zgemm('N','C',lre,lce-lcs+1,2*n_cols,-CONE, &
+                   vmr,ubound(vmr,1),umc(lcs,1),ubound(umc,1), &
+                   CONE,a(1,lcs),lda)
+     enddo
+
+     deallocate(vmr, umc, vr)
 
    enddo
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3694,17 +3678,17 @@ subroutine herm_matrix_allreduce(n,a,lda,comm)
 
    nc = 0
    do i=1,n
-      h1(nc+1:nc+i) = a(1:i,i)
-      nc = nc+i
+     h1(nc+1:nc+i) = a(1:i,i)
+     nc = nc+i
    enddo
 
    call mpi_allreduce(h1,h2,nc,MPI_DOUBLE_COMPLEX,MPI_SUM,comm,mpierr)
 
    nc = 0
    do i=1,n
-      a(1:i,i) = h2(nc+1:nc+i)
-      a(i,1:i-1) = conjg(a(1:i-1,i))
-      nc = nc+i
+     a(1:i,i) = h2(nc+1:nc+i)
+     a(i,1:i-1) = conjg(a(1:i-1,i))
+     nc = nc+i
    enddo
 
 end subroutine herm_matrix_allreduce
@@ -3792,59 +3776,59 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
    do istep=1,(na-1)/nbw
 
-      n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
+     n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
 
-      ! Broadcast all Householder vectors for current step compressed in hvb
+     ! Broadcast all Householder vectors for current step compressed in hvb
 
-      nb = 0
-      ns = 0
+     nb = 0
+     ns = 0
 
-      do lc = 1, n_cols
-         ncol = istep*nbw + lc ! absolute column number of householder vector
-         nrow = ncol - nbw ! absolute number of pivot row
+     do lc = 1, n_cols
+       ncol = istep*nbw + lc ! absolute column number of householder vector
+       nrow = ncol - nbw ! absolute number of pivot row
 
-         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
-         l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
+       l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+       l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
 
-         if(my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+       if (my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
 
-         nb = nb+l_rows
+       nb = nb+l_rows
 
-         if(lc==n_cols .or. mod(ncol,nblk)==0) then
-            call MPI_Bcast(hvb(ns+1),nb-ns,MPI_DOUBLE_COMPLEX,pcol(ncol),mpi_comm_cols,mpierr)
-            ns = nb
-         endif
-      enddo
+       if (lc==n_cols .or. mod(ncol,nblk)==0) then
+         call MPI_Bcast(hvb(ns+1),nb-ns,MPI_DOUBLE_COMPLEX,pcol(ncol),mpi_comm_cols,mpierr)
+         ns = nb
+       endif
+     enddo
 
-      ! Expand compressed Householder vectors into matrix hvm
+     ! Expand compressed Householder vectors into matrix hvm
 
-      nb = 0
-      do lc = 1, n_cols
-         nrow = (istep-1)*nbw+lc ! absolute number of pivot row
-         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+     nb = 0
+     do lc = 1, n_cols
+       nrow = (istep-1)*nbw+lc ! absolute number of pivot row
+       l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
-         hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-         if(my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
+       hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
+       if (my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
 
-         nb = nb+l_rows
-      enddo
+       nb = nb+l_rows
+     enddo
 
-      l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
+     l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
 
-      ! Q = Q - V * T**T * V**T * Q
+     ! Q = Q - V * T**T * V**T * Q
 
-      if(l_rows>0) then
-         call zgemm('C','N',n_cols,l_cols,l_rows,CONE,hvm,ubound(hvm,1), &
-                    q,ldq,CZERO,tmp1,n_cols)
-      else
-         tmp1(1:l_cols*n_cols) = 0
-      endif
-      call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
-      if(l_rows>0) then
-         call ztrmm('L','U','C','N',n_cols,l_cols,CONE,tmat(1,1,istep),ubound(tmat,1),tmp2,n_cols)
-         call zgemm('N','N',l_rows,l_cols,n_cols,-CONE,hvm,ubound(hvm,1), &
-                    tmp2,n_cols,CONE,q,ldq)
-      endif
+     if (l_rows>0) then
+       call zgemm('C','N',n_cols,l_cols,l_rows,CONE,hvm,ubound(hvm,1), &
+                   q,ldq,CZERO,tmp1,n_cols)
+     else
+       tmp1(1:l_cols*n_cols) = 0
+     endif
+     call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
+     if (l_rows>0) then
+       call ztrmm('L','U','C','N',n_cols,l_cols,CONE,tmat(1,1,istep),ubound(tmat,1),tmp2,n_cols)
+       call zgemm('N','N',l_rows,l_cols,n_cols,-CONE,hvm,ubound(hvm,1), &
+                   tmp2,n_cols,CONE,q,ldq)
+     endif
 
    enddo
 
@@ -3972,15 +3956,15 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
    num_chunks  = 0
    nx = na
    do n = 1, nblocks_total
-      call determine_workload(nx, nb, np_rows, limits)
-      local_size = limits(my_prow+1) - limits(my_prow)
-      ! add to number of householder vectors
-      ! please note: for nx==1 the one and only HH vector is 0 and is neither calculated nor send below!
-      if(mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
-         num_hh_vecs = num_hh_vecs + local_size
-         num_chunks  = num_chunks+1
-      endif
-      nx = nx - nb
+     call determine_workload(nx, nb, np_rows, limits)
+     local_size = limits(my_prow+1) - limits(my_prow)
+     ! add to number of householder vectors
+     ! please note: for nx==1 the one and only HH vector is 0 and is neither calculated nor send below!
+     if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
+       num_hh_vecs = num_hh_vecs + local_size
+       num_chunks  = num_chunks+1
+     endif
+     nx = nx - nb
    enddo
 
    ! Allocate space for HH vectors
@@ -3997,18 +3981,18 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
    nx = na
    nt = 0
    do n = 1, nblocks_total
-      call determine_workload(nx, nb, np_rows, limits)
-      local_size = limits(my_prow+1) - limits(my_prow)
-      if(mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
-         num_chunks  = num_chunks+1
-         call mpi_irecv(hh_trans_complex(1,num_hh_vecs+1), nb*local_size, MPI_COMPLEX16, nt, &
+     call determine_workload(nx, nb, np_rows, limits)
+     local_size = limits(my_prow+1) - limits(my_prow)
+     if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
+       num_chunks  = num_chunks+1
+       call mpi_irecv(hh_trans_complex(1,num_hh_vecs+1), nb*local_size, MPI_COMPLEX16, nt, &
                         10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
-         num_hh_vecs = num_hh_vecs + local_size
-      endif
-      nx = nx - nb
-      if(n == block_limits(nt+1)) then
-         nt = nt + 1
-      endif
+       num_hh_vecs = num_hh_vecs + local_size
+     endif
+     nx = nx - nb
+     if (n == block_limits(nt+1)) then
+       nt = nt + 1
+     endif
    enddo
 
    ireq_hhs(:) = MPI_REQUEST_NULL
@@ -4036,7 +4020,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
    allocate(snd_limits(0:np_rows,nblocks))
 
    do iblk=1,nblocks
-      call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
+     call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
    enddo
 
 #ifdef WITH_OPENMP
@@ -4047,7 +4031,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
     ! For OpenMP we need at least 2 blocks for every thread
     max_threads = MIN(max_threads, nblocks/2)
-    if(max_threads==0) max_threads = 1
+    if (max_threads==0) max_threads = 1
 
     allocate(omp_block_limits(0:max_threads))
 
@@ -4065,11 +4049,11 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
    na_s = block_limits(my_pe)*nb + 1
 
-   if(my_pe>0 .and. na_s<=na) then
-      ! send first column to previous PE
-      ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
-      ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
-      call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+   if (my_pe>0 .and. na_s<=na) then
+     ! send first column to previous PE
+     ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
+     ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+     call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
    endif
 
 #ifdef WITH_OPENMP
@@ -4077,228 +4061,228 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 #else
    do istep=1,na-1
 #endif
-      if(my_pe==0) then
-         n = MIN(na-na_s,nb) ! number of rows to be reduced
-         hv(:) = 0
-         tau = 0
-         ! Transform first column of remaining matrix
-         ! Opposed to the real case, the last step (istep=na-1) is needed here for making
-         ! the last subdiagonal element a real number
-         vnorm2 = sum(dble(ab(3:n+1,na_s-n_off))**2+dimag(ab(3:n+1,na_s-n_off))**2)
-         if(n<2) vnorm2 = 0. ! Safety only
-         call hh_transform_complex(ab(2,na_s-n_off),vnorm2,hf,tau)
+     if (my_pe==0) then
+       n = MIN(na-na_s,nb) ! number of rows to be reduced
+       hv(:) = 0
+       tau = 0
+       ! Transform first column of remaining matrix
+       ! Opposed to the real case, the last step (istep=na-1) is needed here for making
+       ! the last subdiagonal element a real number
+       vnorm2 = sum(dble(ab(3:n+1,na_s-n_off))**2+dimag(ab(3:n+1,na_s-n_off))**2)
+       if (n<2) vnorm2 = 0. ! Safety only
+       call hh_transform_complex(ab(2,na_s-n_off),vnorm2,hf,tau)
 
-         hv(1) = 1
-         hv(2:n) = ab(3:n+1,na_s-n_off)*hf
+       hv(1) = 1
+       hv(2:n) = ab(3:n+1,na_s-n_off)*hf
 
-         d(istep) = ab(1,na_s-n_off)
-         e(istep) = ab(2,na_s-n_off)
-         if(istep == na-1) then
-            d(na) = ab(1,na_s+1-n_off)
-            e(na) = 0
-         endif
-      else
-         if(na>na_s) then
-            ! Receive Householder vector from previous task, from PE owning subdiagonal
+       d(istep) = ab(1,na_s-n_off)
+       e(istep) = ab(2,na_s-n_off)
+       if (istep == na-1) then
+         d(na) = ab(1,na_s+1-n_off)
+         e(na) = 0
+       endif
+     else
+       if (na>na_s) then
+         ! Receive Householder vector from previous task, from PE owning subdiagonal
 #ifdef WITH_OPENMP
-            call mpi_recv(hv,nb,MPI_COMPLEX16,my_pe-1,2,mpi_comm,mpi_status,mpierr)
+         call mpi_recv(hv,nb,MPI_COMPLEX16,my_pe-1,2,mpi_comm,mpi_status,mpierr)
 #else
-            call mpi_recv(hv,nb,MPI_COMPLEX16,my_pe-1,2,mpi_comm,MPI_STATUS_IGNORE,mpierr)
+         call mpi_recv(hv,nb,MPI_COMPLEX16,my_pe-1,2,mpi_comm,MPI_STATUS_IGNORE,mpierr)
 #endif
-            tau = hv(1)
-            hv(1) = 1.
-         endif
-      endif
+         tau = hv(1)
+         hv(1) = 1.
+       endif
+     endif
 
-      na_s = na_s+1
-      if(na_s-n_off > nb) then
-         ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-         ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
-         n_off = n_off + nb
-      endif
+     na_s = na_s+1
+     if (na_s-n_off > nb) then
+       ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
+       ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
+       n_off = n_off + nb
+     endif
 #ifdef WITH_OPENMP
-      if(max_threads > 1) then
+     if (max_threads > 1) then
 
-        ! Codepath for OpenMP
+       ! Codepath for OpenMP
 
-        ! Please note that in this case it is absolutely necessary to have at least 2 blocks per thread!
-        ! Every thread is one reduction cycle behind its predecessor and thus starts one step later.
-        ! This simulates the behaviour of the MPI tasks which also work after each other.
-        ! The code would be considerably easier, if the MPI communication would be made within
-        ! the parallel region - this is avoided here since this would require
-        ! MPI_Init_thread(MPI_THREAD_MULTIPLE) at the start of the program.
+       ! Please note that in this case it is absolutely necessary to have at least 2 blocks per thread!
+       ! Every thread is one reduction cycle behind its predecessor and thus starts one step later.
+       ! This simulates the behaviour of the MPI tasks which also work after each other.
+       ! The code would be considerably easier, if the MPI communication would be made within
+       ! the parallel region - this is avoided here since this would require
+       ! MPI_Init_thread(MPI_THREAD_MULTIPLE) at the start of the program.
 
-        hv_t(:,1) = hv
-        tau_t(1) = tau
+       hv_t(:,1) = hv
+       tau_t(1) = tau
 
-        do iter = 1, 2
+       do iter = 1, 2
 
-          ! iter=1 : work on first block
-          ! iter=2 : work on remaining blocks
-          ! This is done in 2 iterations so that we have a barrier in between:
-          ! After the first iteration, it is guaranteed that the last row of the last block
-          ! is completed by the next thread.
-          ! After the first iteration it is also the place to exchange the last row
-          ! with MPI calls
+         ! iter=1 : work on first block
+         ! iter=2 : work on remaining blocks
+         ! This is done in 2 iterations so that we have a barrier in between:
+         ! After the first iteration, it is guaranteed that the last row of the last block
+         ! is completed by the next thread.
+         ! After the first iteration it is also the place to exchange the last row
+         ! with MPI calls
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("OpenMP parallel")
+         call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
 !$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
-          do my_thread = 1, max_threads
+         do my_thread = 1, max_threads
 
-            if(iter == 1) then
-              my_block_s = omp_block_limits(my_thread-1) + 1
-              my_block_e = my_block_s
-            else
-              my_block_s = omp_block_limits(my_thread-1) + 2
-              my_block_e = omp_block_limits(my_thread)
-            endif
+           if (iter == 1) then
+             my_block_s = omp_block_limits(my_thread-1) + 1
+             my_block_e = my_block_s
+           else
+             my_block_s = omp_block_limits(my_thread-1) + 2
+             my_block_e = omp_block_limits(my_thread)
+           endif
 
-            do iblk = my_block_s, my_block_e
+           do iblk = my_block_s, my_block_e
 
-              ns = na_s + (iblk-1)*nb - n_off - my_thread + 1 ! first column in block
-              ne = ns+nb-1                    ! last column in block
+             ns = na_s + (iblk-1)*nb - n_off - my_thread + 1 ! first column in block
+             ne = ns+nb-1                    ! last column in block
 
-              if(istep<my_thread .or. ns+n_off>na) exit
+             if (istep<my_thread .or. ns+n_off>na) exit
 
-              hv = hv_t(:,my_thread)
-              tau = tau_t(my_thread)
+             hv = hv_t(:,my_thread)
+             tau = tau_t(my_thread)
 
-              ! Store Householder vector for back transformation
+             ! Store Householder vector for back transformation
 
-              hh_cnt(iblk) = hh_cnt(iblk) + 1
+             hh_cnt(iblk) = hh_cnt(iblk) + 1
 
-              hh_gath(1   ,hh_cnt(iblk),iblk) = tau
-              hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+             hh_gath(1   ,hh_cnt(iblk),iblk) = tau
+             hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
 
-              nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
-              nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
+             nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
+             nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
                                             ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
-              ! Transform diagonal block
+             ! Transform diagonal block
 
-              call ZHEMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,(0.d0,0.d0),hd,1)
+             call ZHEMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,(0.d0,0.d0),hd,1)
 
-              x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
-              hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
+             x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
+             hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
 
-              call ZHER2('L',nc,(-1.d0,0.d0),hd,1,hv,1,ab(1,ns),2*nb-1)
+             call ZHER2('L',nc,(-1.d0,0.d0),hd,1,hv,1,ab(1,ns),2*nb-1)
 
-              hv_t(:,my_thread) = 0
-              tau_t(my_thread)  = 0
+             hv_t(:,my_thread) = 0
+             tau_t(my_thread)  = 0
 
-              if(nr<=0) cycle ! No subdiagonal block present any more
+             if (nr<=0) cycle ! No subdiagonal block present any more
 
-              ! Transform subdiagonal block
+             ! Transform subdiagonal block
 
-              call ZGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
+             call ZGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
 
-              if(nr>1) then
+             if (nr>1) then
 
-                ! complete (old) Householder transformation for first column
+               ! complete (old) Householder transformation for first column
 
-                ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
+               ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
 
-                ! calculate new Householder transformation for first column
-                ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
+               ! calculate new Householder transformation for first column
+               ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
 
-                vnorm2 = sum(dble(ab(nb+2:nb+nr,ns))**2+dimag(ab(nb+2:nb+nr,ns))**2)
-                call hh_transform_complex(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
-                hv_t(1   ,my_thread) = 1.
-                hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
-                ab(nb+2:,ns) = 0
+               vnorm2 = sum(dble(ab(nb+2:nb+nr,ns))**2+dimag(ab(nb+2:nb+nr,ns))**2)
+               call hh_transform_complex(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
+               hv_t(1   ,my_thread) = 1.
+               hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
+               ab(nb+2:,ns) = 0
 
-                ! update subdiagonal block for old and new Householder transformation
-                ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
+               ! update subdiagonal block for old and new Householder transformation
+               ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
 
-                call ZGEMV('C',nr,nb-1,tau_t(my_thread),ab(nb,ns+1),2*nb-1,hv_t(1,my_thread),1,(0.d0,0.d0),h(2),1)
-                x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
-                h(2:nb) = h(2:nb) - x*hv(2:nb)
-                ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
-                do i=2,nb
-                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) &
+               call ZGEMV('C',nr,nb-1,tau_t(my_thread),ab(nb,ns+1),2*nb-1,hv_t(1,my_thread),1,(0.d0,0.d0),h(2),1)
+               x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
+               h(2:nb) = h(2:nb) - x*hv(2:nb)
+               ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
+               do i=2,nb
+                 ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) &
                                                 - hv_t(1:nr,my_thread)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
-                enddo
+               enddo
 
-              else
+             else
 
-                ! No new Householder transformation for nr=1, just complete the old one
-                ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
-                do i=2,nb
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
-                enddo
-                ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
-                hv_t(1,my_thread) = 1.
+               ! No new Householder transformation for nr=1, just complete the old one
+               ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
+               do i=2,nb
+                 ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
+               enddo
+               ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
+               hv_t(1,my_thread) = 1.
 
-              endif
+             endif
 
-            enddo
+           enddo
 
-          enddo ! my_thread
+         enddo ! my_thread
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("OpenMP parallel")
+         call timer%stop("OpenMP parallel")
 #endif
 
 
 
-          if (iter==1) then
-            ! We are at the end of the first block
+         if (iter==1) then
+           ! We are at the end of the first block
 
-            ! Send our first column to previous PE
-            if(my_pe>0 .and. na_s <= na) then
-              call mpi_wait(ireq_ab,mpi_status,mpierr)
-              ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
-              call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
-            endif
+           ! Send our first column to previous PE
+           if (my_pe>0 .and. na_s <= na) then
+             call mpi_wait(ireq_ab,mpi_status,mpierr)
+             ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+             call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+           endif
 
-            ! Request last column from next PE
-            ne = na_s + nblocks*nb - (max_threads-1) - 1
-            if(istep>=max_threads .and. ne <= na) then
-              call mpi_recv(ab(1,ne-n_off),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
-            endif
+           ! Request last column from next PE
+           ne = na_s + nblocks*nb - (max_threads-1) - 1
+           if (istep>=max_threads .and. ne <= na) then
+             call mpi_recv(ab(1,ne-n_off),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+           endif
 
-          else
-            ! We are at the end of all blocks
+         else
+           ! We are at the end of all blocks
 
-            ! Send last HH vector and TAU to next PE if it has been calculated above
-            ne = na_s + nblocks*nb - (max_threads-1) - 1
-            if(istep>=max_threads .and. ne < na) then
-              call mpi_wait(ireq_hv,mpi_status,mpierr)
-              hv_s(1) = tau_t(max_threads)
-              hv_s(2:) = hv_t(2:,max_threads)
-              call mpi_isend(hv_s,nb,MPI_COMPLEX16,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
-            endif
+           ! Send last HH vector and TAU to next PE if it has been calculated above
+           ne = na_s + nblocks*nb - (max_threads-1) - 1
+           if (istep>=max_threads .and. ne < na) then
+             call mpi_wait(ireq_hv,mpi_status,mpierr)
+             hv_s(1) = tau_t(max_threads)
+             hv_s(2:) = hv_t(2:,max_threads)
+             call mpi_isend(hv_s,nb,MPI_COMPLEX16,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
+           endif
 
-            ! "Send" HH vector and TAU to next OpenMP thread
-            do my_thread = max_threads, 2, -1
-              hv_t(:,my_thread) = hv_t(:,my_thread-1)
-              tau_t(my_thread)  = tau_t(my_thread-1)
-            enddo
+           ! "Send" HH vector and TAU to next OpenMP thread
+           do my_thread = max_threads, 2, -1
+             hv_t(:,my_thread) = hv_t(:,my_thread-1)
+             tau_t(my_thread)  = tau_t(my_thread-1)
+           enddo
 
-          endif
-        enddo ! iter
+         endif
+       enddo ! iter
 
-      else
+     else
 
-        ! Codepath for 1 thread without OpenMP
+       ! Codepath for 1 thread without OpenMP
 
-        ! The following code is structured in a way to keep waiting times for
-        ! other PEs at a minimum, especially if there is only one block.
-        ! For this reason, it requests the last column as late as possible
-        ! and sends the Householder vector and the first column as early
-        ! as possible.
+       ! The following code is structured in a way to keep waiting times for
+       ! other PEs at a minimum, especially if there is only one block.
+       ! For this reason, it requests the last column as late as possible
+       ! and sends the Householder vector and the first column as early
+       ! as possible.
 
 #endif
 
-      do iblk=1,nblocks
+       do iblk=1,nblocks
 
          ns = na_s + (iblk-1)*nb - n_off ! first column in block
          ne = ns+nb-1                    ! last column in block
 
-         if(ns+n_off>na) exit
+         if (ns+n_off>na) exit
 
          ! Store Householder vector for back transformation
 
@@ -4309,18 +4293,18 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
 
 #ifndef WITH_OPENMP
-         if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-            ! Wait for last transfer to finish
-            call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
-            ! Copy vectors into send buffer
-            hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-            ! Send to destination
-            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_COMPLEX16, &
+         if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+           ! Wait for last transfer to finish
+           call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
+           ! Copy vectors into send buffer
+           hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+           ! Send to destination
+           call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_COMPLEX16, &
                            global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
                            10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
-            ! Reset counter and increase destination row
-            hh_cnt(iblk) = 0
-            hh_dst(iblk) = hh_dst(iblk)+1
+           ! Reset counter and increase destination row
+           hh_cnt(iblk) = 0
+           hh_dst(iblk) = hh_dst(iblk)+1
          endif
 
 
@@ -4338,61 +4322,60 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
          ! Multiply diagonal block and subdiagonal block with Householder vector
 
-         if(iblk==nblocks .and. nc==nb) then
+         if (iblk==nblocks .and. nc==nb) then
 
-            ! We need the last column from the next PE.
-            ! First do the matrix multiplications without last column ...
+           ! We need the last column from the next PE.
+           ! First do the matrix multiplications without last column ...
 
-            ! Diagonal block, the contribution of the last element is added below!
-            ab(1,ne) = 0
-            call ZHEMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,(0.d0,0.d0),hd,1)
+           ! Diagonal block, the contribution of the last element is added below!
+           ab(1,ne) = 0
+           call ZHEMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,(0.d0,0.d0),hd,1)
 
-            ! Subdiagonal block
-            if(nr>0) call ZGEMV('N',nr,nb-1,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
+           ! Subdiagonal block
+           if (nr>0) call ZGEMV('N',nr,nb-1,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
 
-            ! ... then request last column ...
+           ! ... then request last column ...
 #ifdef WITH_OPENMP
-            call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+           call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
 
 #else
-            call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
+           call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
 #endif
-            ! ... and complete the result
-            hs(1:nr) = hs(1:nr) + ab(2:nr+1,ne)*tau*hv(nb)
-            hd(nb) = hd(nb) + ab(1,ne)*hv(nb)*tau
+           ! ... and complete the result
+           hs(1:nr) = hs(1:nr) + ab(2:nr+1,ne)*tau*hv(nb)
+           hd(nb) = hd(nb) + ab(1,ne)*hv(nb)*tau
 
          else
-
-            ! Normal matrix multiply
-            call ZHEMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,(0.d0,0.d0),hd,1)
-            if(nr>0) call ZGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
+           ! Normal matrix multiply
+           call ZHEMV('L',nc,tau,ab(1,ns),2*nb-1,hv,1,(0.d0,0.d0),hd,1)
+           if (nr>0) call ZGEMV('N',nr,nb,tau,ab(nb+1,ns),2*nb-1,hv,1,(0.d0,0.d0),hs,1)
 
          endif
 
-         ! Calculate first column of subdiagonal block and calculate new
-         ! Householder transformation for this column
+           ! Calculate first column of subdiagonal block and calculate new
+           ! Householder transformation for this column
 
-         hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
-         tau_new = 0
+           hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
+           tau_new = 0
 
-         if(nr>0) then
+           if (nr>0) then
 
-            ! complete (old) Householder transformation for first column
+             ! complete (old) Householder transformation for first column
 
-            ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
+             ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
 
-            ! calculate new Householder transformation ...
-            if(nr>1) then
+             ! calculate new Householder transformation ...
+             if (nr>1) then
                vnorm2 = sum(dble(ab(nb+2:nb+nr,ns))**2+dimag(ab(nb+2:nb+nr,ns))**2)
                call hh_transform_complex(ab(nb+1,ns),vnorm2,hf,tau_new)
                hv_new(1) = 1.
                hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
                ab(nb+2:,ns) = 0
-            endif
+             endif
 
-            ! ... and send it away immediatly if this is the last block
+             ! ... and send it away immediatly if this is the last block
 
-            if(iblk==nblocks) then
+             if (iblk==nblocks) then
 #ifdef WITH_OPENMP
                call mpi_wait(ireq_hv,mpi_status,mpierr)
 #else
@@ -4401,16 +4384,16 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
                hv_s(1) = tau_new
                hv_s(2:) = hv_new(2:)
                call mpi_isend(hv_s,nb,MPI_COMPLEX16,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
-            endif
+             endif
 
-         endif
+           endif
 
 
-         ! Transform diagonal block
-         x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
-         hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
+          ! Transform diagonal block
+          x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
+          hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
 
-         if(my_pe>0 .and. iblk==1) then
+          if (my_pe>0 .and. iblk==1) then
 
             ! The first column of the diagonal block has to be send to the previous PE
             ! Calculate first column only ...
@@ -4427,94 +4410,91 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
             call mpi_isend(ab_s,nb+1,MPI_COMPLEX16,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
 
             ! ... and calculate remaining columns with rank-2 update
-            if(nc>1) call ZHER2('L',nc-1,(-1.d0,0.d0),hd(2),1,hv(2),1,ab(1,ns+1),2*nb-1)
-         else
+            if (nc>1) call ZHER2('L',nc-1,(-1.d0,0.d0),hd(2),1,hv(2),1,ab(1,ns+1),2*nb-1)
+          else
             ! No need to  send, just a rank-2 update
             call ZHER2('L',nc,(-1.d0,0.d0),hd,1,hv,1,ab(1,ns),2*nb-1)
-         endif
+          endif
 
-         ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
+          ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
-         if(nr>0) then
-            if(nr>1) then
-               call ZGEMV('C',nr,nb-1,tau_new,ab(nb,ns+1),2*nb-1,hv_new,1,(0.d0,0.d0),h(2),1)
-               x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
+          if (nr>0) then
+            if (nr>1) then
+              call ZGEMV('C',nr,nb-1,tau_new,ab(nb,ns+1),2*nb-1,hv_new,1,(0.d0,0.d0),h(2),1)
+              x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
                h(2:nb) = h(2:nb) - x*hv(2:nb)
                ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update
                do i=2,nb
-                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
+                 ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
                enddo
-            else
+             else
                ! No double Householder transformation for nr=1, just complete the row
                do i=2,nb
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
+                 ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
                enddo
-            endif
-         endif
+             endif
+           endif
 
-         ! Use new HH vector for the next block
-         hv(:) = hv_new(:)
-         tau = tau_new
+           ! Use new HH vector for the next block
+           hv(:) = hv_new(:)
+           tau = tau_new
 
-      enddo
+         enddo
 #ifdef WITH_OPENMP
-   endif
+       endif
 #endif
 
 #ifdef WITH_OPENMP
-      do iblk = 1, nblocks
+       do iblk = 1, nblocks
 
-        if(hh_dst(iblk) >= np_rows) exit
-        if(snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
+         if (hh_dst(iblk) >= np_rows) exit
+         if (snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
 
-        if(hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-          ! Wait for last transfer to finish
-          call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
-          ! Copy vectors into send buffer
-          hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-          ! Send to destination
-          call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_complex16, &
+         if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+           ! Wait for last transfer to finish
+           call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+           ! Copy vectors into send buffer
+           hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+           ! Send to destination
+           call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_complex16, &
                          global_id(hh_dst(iblk),mod(iblk+block_limits(my_pe)-1,np_cols)), &
                          10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
-          ! Reset counter and increase destination row
-          hh_cnt(iblk) = 0
-          hh_dst(iblk) = hh_dst(iblk)+1
-        endif
-
-      enddo
+           ! Reset counter and increase destination row
+           hh_cnt(iblk) = 0
+           hh_dst(iblk) = hh_dst(iblk)+1
+         endif
+       enddo
 #endif
-   enddo
+     enddo
 
-
-
-   ! Finish the last outstanding requests
+     ! Finish the last outstanding requests
 #ifdef WITH_OPENMP
-    call mpi_wait(ireq_ab,mpi_status,mpierr)
-    call mpi_wait(ireq_hv,mpi_status,mpierr)
+     call mpi_wait(ireq_ab,mpi_status,mpierr)
+     call mpi_wait(ireq_hv,mpi_status,mpierr)
 
-    allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)))
-    call mpi_waitall(nblocks, ireq_hhs, mpi_statuses, mpierr)
-    call mpi_waitall(num_chunks, ireq_hhr, mpi_statuses, mpierr)
-    deallocate(mpi_statuses)
+     allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)))
+     call mpi_waitall(nblocks, ireq_hhs, mpi_statuses, mpierr)
+     call mpi_waitall(num_chunks, ireq_hhr, mpi_statuses, mpierr)
+     deallocate(mpi_statuses)
 #else
-   call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-   call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+     call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+     call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 
-   call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
-   call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+     call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
+     call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
 
 #endif
-   call mpi_barrier(mpi_comm,mpierr)
+     call mpi_barrier(mpi_comm,mpierr)
 
-   deallocate(ab)
-   deallocate(ireq_hhr, ireq_hhs)
-   deallocate(hh_cnt, hh_dst)
-   deallocate(hh_gath, hh_send)
-   deallocate(limits, snd_limits)
-   deallocate(block_limits)
-   deallocate(global_id)
+     deallocate(ab)
+     deallocate(ireq_hhr, ireq_hhs)
+     deallocate(hh_cnt, hh_dst)
+     deallocate(hh_gath, hh_send)
+     deallocate(limits, snd_limits)
+     deallocate(block_limits)
+     deallocate(global_id)
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("tridiag_band_complex")
+     call timer%stop("tridiag_band_complex")
 #endif
 
  end subroutine tridiag_band_complex
@@ -4635,12 +4615,12 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     success = .true.
 
-    if(mod(nbw,nblk)/=0) then
-      if(my_prow==0 .and. my_pcol==0) then
-         write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
-         write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
+    if (mod(nbw,nblk)/=0) then
+      if (my_prow==0 .and. my_pcol==0) then
+        write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
+        write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
 !         call mpi_abort(mpi_comm_world,0,mpierr)
-         success = .false.
+        success = .false.
       endif
     endif
 
@@ -4650,34 +4630,34 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     ! local number of eigenvectors
     l_nev = local_index(nev, my_pcol, np_cols, nblk, -1)
 
-    if(l_nev==0) then
+    if (l_nev==0) then
 #ifdef WITH_OPENMP
-        thread_width = 0
+      thread_width = 0
 #endif
-        stripe_width = 0
-        stripe_count = 0
-        last_stripe_width = 0
+      stripe_width = 0
+      stripe_count = 0
+      last_stripe_width = 0
     else
-        ! Suggested stripe width is 48 - should this be reduced for the complex case ???
+      ! Suggested stripe width is 48 - should this be reduced for the complex case ???
 #ifdef WITH_OPENMP
-       thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
+      thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
 #endif
 
-        stripe_width = 48 ! Must be a multiple of 4
+      stripe_width = 48 ! Must be a multiple of 4
 #ifdef WITH_OPENMP
-        stripe_count = (thread_width-1)/stripe_width + 1
+      stripe_count = (thread_width-1)/stripe_width + 1
 #else
-        stripe_count = (l_nev-1)/stripe_width + 1
+      stripe_count = (l_nev-1)/stripe_width + 1
 #endif
-        ! Adapt stripe width so that last one doesn't get too small
+      ! Adapt stripe width so that last one doesn't get too small
 #ifdef WITH_OPENMP
-        stripe_width = (thread_width-1)/stripe_count + 1
+      stripe_width = (thread_width-1)/stripe_count + 1
 #else
-        stripe_width = (l_nev-1)/stripe_count + 1
+      stripe_width = (l_nev-1)/stripe_count + 1
 #endif
-        stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
+      stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
 #ifndef WITH_OPENMP
-        last_stripe_width = l_nev - (stripe_count-1)*stripe_width
+      last_stripe_width = l_nev - (stripe_count-1)*stripe_width
 #endif
     endif
 
@@ -4719,7 +4699,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
 !$omp parallel do private(my_thread), schedule(static, 1)
     do my_thread = 1, max_threads
-        a(:,:,:,my_thread) = 0 ! if possible, do first touch allocation!
+      a(:,:,:,my_thread) = 0 ! if possible, do first touch allocation!
     enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4848,11 +4828,11 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     ! Queue up buffers
 
-    if(my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
-        do j = 1, min(num_result_buffers, num_result_blocks)
-            call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_COMPLEX16, 0, result_recv_tag, &
+    if (my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
+      do j = 1, min(num_result_buffers, num_result_blocks)
+        call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_COMPLEX16, 0, result_recv_tag, &
                            mpi_comm_rows, result_recv_request(j), mpierr)
-        enddo
+      enddo
     endif
 
     num_bufs_recvd = 0 ! No buffers received yet
@@ -4908,516 +4888,508 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     do sweep = 0, (na-1)/nbw
 
-        current_n = na - sweep*nbw
-        call determine_workload(current_n, nbw, np_rows, limits)
-        current_n_start = limits(my_prow)
-        current_n_end   = limits(my_prow+1)
-        current_local_n = current_n_end - current_n_start
+      current_n = na - sweep*nbw
+      call determine_workload(current_n, nbw, np_rows, limits)
+      current_n_start = limits(my_prow)
+      current_n_end   = limits(my_prow+1)
+      current_local_n = current_n_end - current_n_start
 
-        next_n = max(current_n - nbw, 0)
-        call determine_workload(next_n, nbw, np_rows, limits)
-        next_n_start = limits(my_prow)
-        next_n_end   = limits(my_prow+1)
-        next_local_n = next_n_end - next_n_start
+      next_n = max(current_n - nbw, 0)
+      call determine_workload(next_n, nbw, np_rows, limits)
+      next_n_start = limits(my_prow)
+      next_n_end   = limits(my_prow+1)
+      next_local_n = next_n_end - next_n_start
 
-        if(next_n_end < next_n) then
-            bottom_msg_length = current_n_end - next_n_end
-        else
-            bottom_msg_length = 0
-        endif
+      if (next_n_end < next_n) then
+        bottom_msg_length = current_n_end - next_n_end
+      else
+        bottom_msg_length = 0
+      endif
 
-        if(next_local_n > 0) then
-            next_top_msg_length = current_n_start - next_n_start
-        else
-            next_top_msg_length = 0
-        endif
+      if (next_local_n > 0) then
+        next_top_msg_length = current_n_start - next_n_start
+      else
+        next_top_msg_length = 0
+      endif
 
-        if(sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
-            do i = 1, stripe_count
+      if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+        do i = 1, stripe_count
 #ifdef WITH_OPENMP
-                csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
-                b_len = csw*nbw*max_threads
-                call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
-                           mpi_comm_rows, bottom_recv_request(i), mpierr)
+          csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
+          b_len = csw*nbw*max_threads
+          call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
+                     mpi_comm_rows, bottom_recv_request(i), mpierr)
 #else
-                call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
-
-
-                           mpi_comm_rows, bottom_recv_request(i), mpierr)
+          call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
+                         mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
-            enddo
+        enddo
+      endif
+
+      if (current_local_n > 1) then
+        if (my_pcol == mod(sweep,np_cols)) then
+          bcast_buffer(:,1:current_local_n) = hh_trans_complex(:,current_tv_off+1:current_tv_off+current_local_n)
+          current_tv_off = current_tv_off + current_local_n
         endif
+        call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_COMPLEX16, mod(sweep,np_cols), mpi_comm_cols, mpierr)
+       else
+         ! for current_local_n == 1 the one and only HH vector is 0 and not stored in hh_trans_complex
+         bcast_buffer(:,1) = 0
+       endif
 
-        if(current_local_n > 1) then
-            if(my_pcol == mod(sweep,np_cols)) then
-                bcast_buffer(:,1:current_local_n) = hh_trans_complex(:,current_tv_off+1:current_tv_off+current_local_n)
-                current_tv_off = current_tv_off + current_local_n
-            endif
-            call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_COMPLEX16, mod(sweep,np_cols), mpi_comm_cols, mpierr)
-        else
-            ! for current_local_n == 1 the one and only HH vector is 0 and not stored in hh_trans_complex
-            bcast_buffer(:,1) = 0
-        endif
+       if (l_nev == 0) cycle
 
-        if(l_nev == 0) cycle
+       if (current_local_n > 0) then
 
-        if(current_local_n > 0) then
-
-          do i = 1, stripe_count
+         do i = 1, stripe_count
 
 #ifdef WITH_OPENMP
-            ! Get real stripe width for strip i;
-            ! The last OpenMP tasks may have an even smaller stripe with,
-            ! but we don't care about this, i.e. we send/recv a bit too much in this case.
-            ! csw: current_stripe_width
+           ! Get real stripe width for strip i;
+           ! The last OpenMP tasks may have an even smaller stripe with,
+           ! but we don't care about this, i.e. we send/recv a bit too much in this case.
+           ! csw: current_stripe_width
 
-            csw = min(stripe_width, thread_width-(i-1)*stripe_width)
+           csw = min(stripe_width, thread_width-(i-1)*stripe_width)
 #endif
 
-            !wait_b
-            if(current_n_end < current_n) then
+           !wait_b
+           if (current_n_end < current_n) then
 #ifdef WITH_OPENMP
-               call MPI_Wait(bottom_recv_request(i), mpi_status, mpierr)
+             call MPI_Wait(bottom_recv_request(i), mpi_status, mpierr)
 #else
-                call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+             call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%start("OpenMP parallel")
+             call timer%start("OpenMP parallel")
 #endif
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    n_off = current_local_n+a_off
-                    b_len = csw*nbw
-                    b_off = (my_thread-1)*b_len
-                    a(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
-                      reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
-                enddo
+             do my_thread = 1, max_threads
+               n_off = current_local_n+a_off
+               b_len = csw*nbw
+               b_off = (my_thread-1)*b_len
+               a(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
+                  reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
+             enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%stop("OpenMP parallel")
+             call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                n_off = current_local_n+a_off
-                a(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
+             n_off = current_local_n+a_off
+             a(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
 #endif
-                if(next_n_end < next_n) then
+             if (next_n_end < next_n) then
 #ifdef WITH_OPENMP
-                    call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
+               call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
                                    MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
 #else
-                    call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
+               call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
 
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
-                endif
-            endif
+             endif
+           endif
 
-            if(current_local_n <= bottom_msg_length + top_msg_length) then
+           if (current_local_n <= bottom_msg_length + top_msg_length) then
 
-                !wait_t
-                if(top_msg_length>0) then
+             !wait_t
+             if (top_msg_length>0) then
 #ifdef WITH_OPENMP
-                   call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+               call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
 #else
-                    call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+               call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
 #ifndef WITH_OPENMP
-                    a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+               a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
 #endif
-                endif
+             endif
 
-                !compute
+             !compute
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%start("OpenMP parallel")
+             call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    if(top_msg_length>0) then
-                        b_len = csw*top_msg_length
-                        b_off = (my_thread-1)*b_len
-                        a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
+             do my_thread = 1, max_threads
+               if (top_msg_length>0) then
+                 b_len = csw*top_msg_length
+                 b_off = (my_thread-1)*b_len
+                 a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
-                    endif
-                    call compute_hh_trafo_complex(0, current_local_n, i, my_thread, &
+               endif
+               call compute_hh_trafo_complex(0, current_local_n, i, my_thread, &
                                       THIS_COMPLEX_ELPA_KERNEL)
-                enddo
+             enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%stop("OpenMP parallel")
+             call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                call compute_hh_trafo_complex(0, current_local_n, i, &
+             call compute_hh_trafo_complex(0, current_local_n, i, &
                                       THIS_COMPLEX_ELPA_KERNEL)
 #endif
-                !send_b
+             !send_b
 #ifdef WITH_OPENMP
-                call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+             call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
 #else
-                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+             call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
-                if(bottom_msg_length>0) then
-                    n_off = current_local_n+nbw-bottom_msg_length+a_off
+             if (bottom_msg_length>0) then
+               n_off = current_local_n+nbw-bottom_msg_length+a_off
 #ifdef WITH_OPENMP
-                    b_len = csw*bottom_msg_length*max_threads
-                    bottom_border_send_buffer(1:b_len,i) = &
+               b_len = csw*bottom_msg_length*max_threads
+               bottom_border_send_buffer(1:b_len,i) = &
                         reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
-                    call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, &
+               call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, &
                                    top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #else
-                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
-                    call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX16, my_prow+1, &
-
-
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+               bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+               call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX16, my_prow+1, &
+                              top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
-                endif
+             endif
 
-            else
+           else
 
-                !compute
+             !compute
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%start("OpenMP parallel")
+             call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    call compute_hh_trafo_complex(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
+             do my_thread = 1, max_threads
+               call compute_hh_trafo_complex(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
                                       THIS_COMPLEX_ELPA_KERNEL)
-                enddo
+             enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%stop("OpenMP parallel")
+             call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                call compute_hh_trafo_complex(current_local_n - bottom_msg_length, bottom_msg_length, i, &
+             call compute_hh_trafo_complex(current_local_n - bottom_msg_length, bottom_msg_length, i, &
                                       THIS_COMPLEX_ELPA_KERNEL)
 
 
 #endif
-                !send_b
+             !send_b
 #ifdef WITH_OPENMP
-                call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+             call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
 #else
 
-                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+             call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
-                if(bottom_msg_length > 0) then
-                    n_off = current_local_n+nbw-bottom_msg_length+a_off
+             if (bottom_msg_length > 0) then
+               n_off = current_local_n+nbw-bottom_msg_length+a_off
 #ifdef WITH_OPENMP
-                    b_len = csw*bottom_msg_length*max_threads
-                    bottom_border_send_buffer(1:b_len,i) = &
+               b_len = csw*bottom_msg_length*max_threads
+               bottom_border_send_buffer(1:b_len,i) = &
                       reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
-                    call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, &
+               call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, &
                                    top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #else
-                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
-                    call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX16, my_prow+1, &
-
-
-                                   top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+               bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+               call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX16, my_prow+1, &
+                              top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
-                endif
+             endif
 
-                !compute
+             !compute
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%start("OpenMP parallel")
+             call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    call compute_hh_trafo_complex(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
+             do my_thread = 1, max_threads
+               call compute_hh_trafo_complex(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
                                       THIS_COMPLEX_ELPA_KERNEL)
-                enddo
+             enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%stop("OpenMP parallel")
+             call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                call compute_hh_trafo_complex(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
+             call compute_hh_trafo_complex(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                                       THIS_COMPLEX_ELPA_KERNEL)
 
 #endif
-                !wait_t
-                if(top_msg_length>0) then
+             !wait_t
+             if (top_msg_length>0) then
 #ifdef WITH_OPENMP
-                   call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+               call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
 #else
-                    call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+               call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
 #ifndef WITH_OPENMP
-                    a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+               a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
 
 #endif
-                endif
+             endif
 
-                !compute
+             !compute
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%start("OpenMP parallel")
+             call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                    if(top_msg_length>0) then
-                        b_len = csw*top_msg_length
-                        b_off = (my_thread-1)*b_len
-                        a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
+             do my_thread = 1, max_threads
+               if (top_msg_length>0) then
+                 b_len = csw*top_msg_length
+                 b_off = (my_thread-1)*b_len
+                 a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
-                    endif
-                    call compute_hh_trafo_complex(0, top_msg_length, i, my_thread, &
+               endif
+               call compute_hh_trafo_complex(0, top_msg_length, i, my_thread, &
                                       THIS_COMPLEX_ELPA_KERNEL)
-                enddo
+             enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%stop("OpenMP parallel")
+             call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                call compute_hh_trafo_complex(0, top_msg_length, i, &
+             call compute_hh_trafo_complex(0, top_msg_length, i, &
                                       THIS_COMPLEX_ELPA_KERNEL)
 #endif
-            endif
+           endif
 
-            if(next_top_msg_length > 0) then
-                !request top_border data
+           if (next_top_msg_length > 0) then
+             !request top_border data
 #ifdef WITH_OPENMP
-                b_len = csw*next_top_msg_length*max_threads
-                call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_COMPLEX16, my_prow-1, &
+             b_len = csw*next_top_msg_length*max_threads
+             call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_COMPLEX16, my_prow-1, &
                                top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #else
-                call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_COMPLEX16, my_prow-1, &
-
+             call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_COMPLEX16, my_prow-1, &
                                top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #endif
-            endif
+           endif
 
-            !send_t
-            if(my_prow > 0) then
-#ifdef WITH_OPENMP
-               call MPI_Wait(top_send_request(i), mpi_status, mpierr)
-#else
-                call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
-#endif
-
-#ifdef WITH_OPENMP
-                b_len = csw*nbw*max_threads
-                top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
-                call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_COMPLEX16, &
-                               my_prow-1, bottom_recv_tag, &
-                               mpi_comm_rows, top_send_request(i), mpierr)
-#else
-                top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
-                call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow-1, bottom_recv_tag, &
-                               mpi_comm_rows, top_send_request(i), mpierr)
-
-#endif
-            endif
-
-            ! Care that there are not too many outstanding top_recv_request's
-            if(stripe_count > 1) then
-                if(i>1) then
-#ifdef WITH_OPENMP
-                   call MPI_Wait(top_recv_request(i-1), mpi_status, mpierr)
-#else
-                    call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
-#endif
-                else
-#ifdef WITH_OPENMP
-                   call MPI_Wait(top_recv_request(stripe_count), mpi_status, mpierr)
-#else
-                    call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
-#endif
-                endif
-            endif
-
-          enddo
-
-          top_msg_length = next_top_msg_length
-
-        else
-            ! wait for last top_send_request
-          do i = 1, stripe_count
+           !send_t
+           if (my_prow > 0) then
 #ifdef WITH_OPENMP
              call MPI_Wait(top_send_request(i), mpi_status, mpierr)
 #else
-            call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+             call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
-          enddo
-        endif
-
-        ! Care about the result
-
-        if(my_prow == 0) then
-
-            ! topmost process sends nbw rows to destination processes
-
-            do j=0,nfact-1
-
-                num_blk = sweep*nfact+j ! global number of destination block, 0 based
-                if(num_blk*nblk >= na) exit
-
-                nbuf = mod(num_blk, num_result_buffers) + 1 ! buffer number to get this block
 
 #ifdef WITH_OPENMP
-                call MPI_Wait(result_send_request(nbuf), mpi_status, mpierr)
+             b_len = csw*nbw*max_threads
+             top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
+             call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_COMPLEX16, &
+                               my_prow-1, bottom_recv_tag, &
+                               mpi_comm_rows, top_send_request(i), mpierr)
 #else
-                call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+             top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
+             call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow-1, bottom_recv_tag, &
+                               mpi_comm_rows, top_send_request(i), mpierr)
+
+#endif
+           endif
+
+           ! Care that there are not too many outstanding top_recv_request's
+           if (stripe_count > 1) then
+             if (i>1) then
+#ifdef WITH_OPENMP
+               call MPI_Wait(top_recv_request(i-1), mpi_status, mpierr)
+#else
+               call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
+#endif
+             else
+#ifdef WITH_OPENMP
+               call MPI_Wait(top_recv_request(stripe_count), mpi_status, mpierr)
+#else
+               call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
+#endif
+             endif
+           endif
+
+         enddo
+
+         top_msg_length = next_top_msg_length
+
+       else
+         ! wait for last top_send_request
+         do i = 1, stripe_count
+#ifdef WITH_OPENMP
+           call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+#else
+           call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
+         enddo
+       endif
+
+       ! Care about the result
+
+       if (my_prow == 0) then
+
+         ! topmost process sends nbw rows to destination processes
+
+         do j=0,nfact-1
+
+           num_blk = sweep*nfact+j ! global number of destination block, 0 based
+           if (num_blk*nblk >= na) exit
+
+           nbuf = mod(num_blk, num_result_buffers) + 1 ! buffer number to get this block
+
+#ifdef WITH_OPENMP
+           call MPI_Wait(result_send_request(nbuf), mpi_status, mpierr)
+#else
+           call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
 
-                dst = mod(num_blk, np_rows)
+           dst = mod(num_blk, np_rows)
 
-                if(dst == 0) then
-                    do i = 1, min(na - num_blk*nblk, nblk)
-                        call pack_row(row, j*nblk+i+a_off)
-                        q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
-                    enddo
-                else
-                    do i = 1, nblk
-                        call pack_row(result_buffer(:,i,nbuf),j*nblk+i+a_off)
-                    enddo
-                    call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX16, dst, &
+           if (dst == 0) then
+             do i = 1, min(na - num_blk*nblk, nblk)
+               call pack_row(row, j*nblk+i+a_off)
+               q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
+             enddo
+           else
+             do i = 1, nblk
+               call pack_row(result_buffer(:,i,nbuf),j*nblk+i+a_off)
+             enddo
+             call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX16, dst, &
                                    result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
-                endif
-            enddo
+           endif
+         enddo
 
-        else
+       else
 
-           ! receive and store final result
+         ! receive and store final result
 
-            do j = num_bufs_recvd, num_result_blocks-1
+         do j = num_bufs_recvd, num_result_blocks-1
 
-                nbuf = mod(j, num_result_buffers) + 1 ! buffer number to get this block
+           nbuf = mod(j, num_result_buffers) + 1 ! buffer number to get this block
 
-                ! If there is still work to do, just test for the next result request
-                ! and leave the loop if it is not ready, otherwise wait for all
-                ! outstanding requests
+           ! If there is still work to do, just test for the next result request
+           ! and leave the loop if it is not ready, otherwise wait for all
+           ! outstanding requests
 
-                if(next_local_n > 0) then
+           if (next_local_n > 0) then
 #ifdef WITH_OPENMP
-                   call MPI_Test(result_recv_request(nbuf), flag, mpi_status, mpierr)
+             call MPI_Test(result_recv_request(nbuf), flag, mpi_status, mpierr)
 
 #else
-                    call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
+             call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
 #endif
-                    if(.not.flag) exit
-                else
+             if (.not.flag) exit
+           else
 #ifdef WITH_OPENMP
-                   call MPI_Wait(result_recv_request(nbuf), mpi_status, mpierr)
+             call MPI_Wait(result_recv_request(nbuf), mpi_status, mpierr)
 
 #else
 
-                    call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+             call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
-                endif
+           endif
 
-                ! Fill result buffer into q
-                num_blk = j*np_rows + my_prow ! global number of current block, 0 based
-                do i = 1, min(na - num_blk*nblk, nblk)
-                    q(j*nblk+i, 1:l_nev) = result_buffer(1:l_nev, i, nbuf)
-                enddo
+             ! Fill result buffer into q
+             num_blk = j*np_rows + my_prow ! global number of current block, 0 based
+             do i = 1, min(na - num_blk*nblk, nblk)
+               q(j*nblk+i, 1:l_nev) = result_buffer(1:l_nev, i, nbuf)
+             enddo
 
-                ! Queue result buffer again if there are outstanding blocks left
-                if(j+num_result_buffers < num_result_blocks) &
+             ! Queue result buffer again if there are outstanding blocks left
+             if (j+num_result_buffers < num_result_blocks) &
                     call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX16, 0, result_recv_tag, &
                                    mpi_comm_rows, result_recv_request(nbuf), mpierr)
 
-            enddo
-            num_bufs_recvd = j
+           enddo
+           num_bufs_recvd = j
 
-        endif
+         endif
 
-        ! Shift the remaining rows to the front of A (if necessary)
+         ! Shift the remaining rows to the front of A (if necessary)
 
-        offset = nbw - top_msg_length
-        if(offset<0) then
-            write(error_unit,*) 'internal error, offset for shifting = ',offset
+         offset = nbw - top_msg_length
+         if (offset<0) then
+           write(error_unit,*) 'internal error, offset for shifting = ',offset
 !            call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
-            success = .false.
-        endif
-        a_off = a_off + offset
-        if(a_off + next_local_n + nbw > a_dim2) then
+           success = .false.
+         endif
+         a_off = a_off + offset
+         if (a_off + next_local_n + nbw > a_dim2) then
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%start("OpenMP parallel")
+           call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread, i, j), schedule(static, 1)
-            do my_thread = 1, max_threads
-                do i = 1, stripe_count
-                    do j = top_msg_length+1, top_msg_length+next_local_n
-                       A(:,j,i,my_thread) = A(:,j+a_off,i,my_thread)
-                    enddo
+           do my_thread = 1, max_threads
+             do i = 1, stripe_count
+               do j = top_msg_length+1, top_msg_length+next_local_n
+                 A(:,j,i,my_thread) = A(:,j+a_off,i,my_thread)
+               enddo
 #else
-            do i = 1, stripe_count
-                do j = top_msg_length+1, top_msg_length+next_local_n
-                   A(:,j,i) = A(:,j+a_off,i)
+           do i = 1, stripe_count
+             do j = top_msg_length+1, top_msg_length+next_local_n
+               A(:,j,i) = A(:,j+a_off,i)
 #endif
-                enddo
-            enddo
+             enddo
+           enddo
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%stop("OpenMP parallel")
+           call timer%stop("OpenMP parallel")
 #endif
 #endif
 
-            a_off = 0
+           a_off = 0
         endif
+      enddo
 
-    enddo
+     ! Just for safety:
+     if (ANY(top_send_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_send_request ***',my_prow,my_pcol
+     if (ANY(bottom_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_send_request ***',my_prow,my_pcol
+     if (ANY(top_recv_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_recv_request ***',my_prow,my_pcol
+     if (ANY(bottom_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_recv_request ***',my_prow,my_pcol
 
-    ! Just for safety:
-    if(ANY(top_send_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_send_request ***',my_prow,my_pcol
-    if(ANY(bottom_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_send_request ***',my_prow,my_pcol
-    if(ANY(top_recv_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_recv_request ***',my_prow,my_pcol
-    if(ANY(bottom_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_recv_request ***',my_prow,my_pcol
-
-    if(my_prow == 0) then
+     if (my_prow == 0) then
 #ifdef WITH_OPENMP
-        allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers))
-        call MPI_Waitall(num_result_buffers, result_send_request, mpi_statuses, mpierr)
-        deallocate(mpi_statuses)
+       allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers))
+       call MPI_Waitall(num_result_buffers, result_send_request, mpi_statuses, mpierr)
+       deallocate(mpi_statuses)
 #else
-        call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
+       call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
 #endif
-    endif
+     endif
 
-    if(ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
-    if(ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
+     if (ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
+     if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
 
-    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-        write(error_unit,'(" Kernel time:",f10.3," MFlops: ",f10.3)') kernel_time, kernel_flops/kernel_time*1.d-6
+     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+       write(error_unit,'(" Kernel time:",f10.3," MFlops: ",f10.3)') kernel_time, kernel_flops/kernel_time*1.d-6
 
-    ! deallocate all working space
+     ! deallocate all working space
 
-    deallocate(a)
-    deallocate(row)
-    deallocate(limits)
-    deallocate(result_send_request)
-    deallocate(result_recv_request)
-    deallocate(top_border_send_buffer)
-    deallocate(top_border_recv_buffer)
-    deallocate(bottom_border_send_buffer)
-    deallocate(bottom_border_recv_buffer)
-    deallocate(result_buffer)
-    deallocate(bcast_buffer)
-    deallocate(top_send_request)
-    deallocate(top_recv_request)
-    deallocate(bottom_send_request)
-    deallocate(bottom_recv_request)
+     deallocate(a)
+     deallocate(row)
+     deallocate(limits)
+     deallocate(result_send_request)
+     deallocate(result_recv_request)
+     deallocate(top_border_send_buffer)
+     deallocate(top_border_recv_buffer)
+     deallocate(bottom_border_send_buffer)
+     deallocate(bottom_border_recv_buffer)
+     deallocate(result_buffer)
+     deallocate(bcast_buffer)
+     deallocate(top_send_request)
+     deallocate(top_recv_request)
+     deallocate(bottom_send_request)
+     deallocate(bottom_recv_request)
 #ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("trans_ev_tridi_to_band_complex")
+     call timer%stop("trans_ev_tridi_to_band_complex")
 #endif
-    return
+     return
 contains
 
 #ifdef WITH_OPENMP
@@ -5426,12 +5398,12 @@ contains
         integer n, i, noff, nl, nt
 
         do nt = 1, max_threads
-            do i = 1, stripe_count
-                noff = (nt-1)*thread_width + (i-1)*stripe_width
-                nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-                if(nl<=0) exit
-                row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-            enddo
+          do i = 1, stripe_count
+            noff = (nt-1)*thread_width + (i-1)*stripe_width
+            nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
+            if (nl<=0) exit
+            row(noff+1:noff+nl) = a(1:nl,n,i,nt)
+          enddo
         enddo
 
       end subroutine pack_row
@@ -5441,12 +5413,9 @@ contains
         integer n, i, noff, nl
 
         do i=1,stripe_count
-            nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-            noff = (i-1)*stripe_width
-            row(noff+1:noff+nl) = a(1:nl,n,i)
-
-
-
+          nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+          noff = (i-1)*stripe_width
+          row(noff+1:noff+nl) = a(1:nl,n,i)
         enddo
       end subroutine pack_row
 #endif
@@ -5459,10 +5428,10 @@ contains
         complex*16, intent(in)  :: row(:)
         integer i, noff, nl
         do i=1,stripe_count
-            noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-            nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-            if(nl<=0) exit
-            a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
+          noff = (my_thread-1)*thread_width + (i-1)*stripe_width
+          nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
+          if (nl<=0) exit
+          a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
         enddo
 
       end subroutine unpack_row
@@ -5471,14 +5440,10 @@ contains
         complex*16 row(:)
         integer n, i, noff, nl
 
-
-
-
-
         do i=1,stripe_count
-            nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-            noff = (i-1)*stripe_width
-            a(1:nl,n,i) = row(noff+1:noff+nl)
+          nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+          noff = (i-1)*stripe_width
+          a(1:nl,n,i) = row(noff+1:noff+nl)
 
         enddo
       end  subroutine unpack_row
@@ -5521,7 +5486,7 @@ contains
 #endif
 
 #ifdef WITH_OPENMP
-        if(istripe<stripe_count) then
+        if (istripe<stripe_count) then
           nl = stripe_width
         else
           noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
@@ -5537,23 +5502,23 @@ contains
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) then
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-           ttt = mpi_wtime()
-           do j = ncols, 2, -2
-              w(:,1) = bcast_buffer(1:nbw,j+off)
-              w(:,2) = bcast_buffer(1:nbw,j+off-1)
+          ttt = mpi_wtime()
+          do j = ncols, 2, -2
+            w(:,1) = bcast_buffer(1:nbw,j+off)
+            w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-              call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
+            call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
-              call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
+            call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
-           enddo
+          enddo
 #ifdef WITH_OPENMP
-           if(j==1) call single_hh_trafo_complex_sse_avx_1hv(a(1,1+off+a_off,istripe,my_thread), &
+          if (j==1) call single_hh_trafo_complex_sse_avx_1hv(a(1,1+off+a_off,istripe,my_thread), &
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
-           if(j==1) call single_hh_trafo_complex_sse_avx_1hv(a(1,1+off+a_off,istripe), &
+          if (j==1) call single_hh_trafo_complex_sse_avx_1hv(a(1,1+off+a_off,istripe), &
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
@@ -5566,16 +5531,16 @@ contains
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-           ttt = mpi_wtime()
-           do j = ncols, 1, -1
+          ttt = mpi_wtime()
+          do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-              call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe,my_thread), &
+            call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe,my_thread), &
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
-              call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe), &
+            call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe), &
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
-           enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
@@ -5587,16 +5552,16 @@ contains
             THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGP .or. &
             THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGQ ) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-           ttt = mpi_wtime()
-           do j = ncols, 1, -1
+          ttt = mpi_wtime()
+          do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-              call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe,my_thread), &
+            call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe,my_thread), &
                                                    bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
-              call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe), &
+            call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe), &
                                                    bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
-           enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
@@ -5606,16 +5571,16 @@ contains
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-           ttt = mpi_wtime()
-           do j = ncols, 1, -1
+          ttt = mpi_wtime()
+          do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-              call single_hh_trafo_complex(a(1,j+off+a_off,istripe,my_thread), &
+            call single_hh_trafo_complex(a(1,j+off+a_off,istripe,my_thread), &
                                            bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
-              call single_hh_trafo_complex(a(1,j+off+a_off,istripe), &
+            call single_hh_trafo_complex(a(1,j+off+a_off,istripe), &
                                            bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
-           enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
@@ -5634,23 +5599,23 @@ contains
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-           ttt = mpi_wtime()
-           do j = ncols, 1, -1
+          ttt = mpi_wtime()
+          do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-              call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe,my_thread), &
+            call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe,my_thread), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
-              call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe), &
+            call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
-           enddo
+          enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX_BLOCK1_KERNE */
 
 #ifdef WITH_OPENMP
-        if(my_thread==1) then
+        if (my_thread==1) then
 #endif
           kernel_flops = kernel_flops + 4*4*int(nl,8)*int(ncols,8)*int(nbw,8)
           kernel_time  = kernel_time + mpi_wtime()-ttt
@@ -5731,31 +5696,31 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
    ncnt_s(:) = 0
    np = 0 ! receiver PE number
    do j=0,(na-1)/nblk ! loop over rows of blocks
-      if(j/nfact==block_limits(np+1)) np = np+1
-      if(mod(j,np_rows) == my_prow) then
-         do i=0,nfact
-            if(mod(i+j,np_cols) == my_pcol) then
-               ncnt_s(np) = ncnt_s(np) + 1
-            endif
-         enddo
-      endif
+     if (j/nfact==block_limits(np+1)) np = np+1
+     if (mod(j,np_rows) == my_prow) then
+       do i=0,nfact
+         if (mod(i+j,np_cols) == my_pcol) then
+           ncnt_s(np) = ncnt_s(np) + 1
+         endif
+       enddo
+     endif
    enddo
 
    ! Allocate send buffer
 
-   if(l_real) then
-      allocate(r_sbuf(nblk,nblk,sum(ncnt_s)))
-      r_sbuf(:,:,:) = 0.
+   if (l_real) then
+     allocate(r_sbuf(nblk,nblk,sum(ncnt_s)))
+     r_sbuf(:,:,:) = 0.
    else
-      allocate(c_sbuf(nblk,nblk,sum(ncnt_s)))
-      c_sbuf(:,:,:) = 0.
+     allocate(c_sbuf(nblk,nblk,sum(ncnt_s)))
+     c_sbuf(:,:,:) = 0.
    endif
 
    ! Determine start offsets in send buffer
 
    nstart_s(0) = 0
    do i=1,n_pes-1
-      nstart_s(i) = nstart_s(i-1) + ncnt_s(i-1)
+     nstart_s(i) = nstart_s(i-1) + ncnt_s(i-1)
    enddo
 
    ! Fill send buffer
@@ -5765,22 +5730,22 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
 
    np = 0
    do j=0,(na-1)/nblk ! loop over rows of blocks
-      if(j/nfact==block_limits(np+1)) np = np+1
-      if(mod(j,np_rows) == my_prow) then
-         do i=0,nfact
-            if(mod(i+j,np_cols) == my_pcol) then
-               nstart_s(np) = nstart_s(np) + 1
-               js = (j/np_rows)*nblk
-               is = ((i+j)/np_cols)*nblk
-               jl = MIN(nblk,l_rows-js)
-               il = MIN(nblk,l_cols-is)
-               if(l_real) then
-                  r_sbuf(1:jl,1:il,nstart_s(np)) = r_a(js+1:js+jl,is+1:is+il)
-               else
-                  c_sbuf(1:jl,1:il,nstart_s(np)) = c_a(js+1:js+jl,is+1:is+il)
-               endif
-            endif
-         enddo
+     if (j/nfact==block_limits(np+1)) np = np+1
+     if (mod(j,np_rows) == my_prow) then
+       do i=0,nfact
+         if (mod(i+j,np_cols) == my_pcol) then
+           nstart_s(np) = nstart_s(np) + 1
+           js = (j/np_rows)*nblk
+           is = ((i+j)/np_cols)*nblk
+           jl = MIN(nblk,l_rows-js)
+           il = MIN(nblk,l_cols-is)
+           if (l_real) then
+             r_sbuf(1:jl,1:il,nstart_s(np)) = r_a(js+1:js+jl,is+1:is+il)
+           else
+             c_sbuf(1:jl,1:il,nstart_s(np)) = c_a(js+1:js+jl,is+1:is+il)
+           endif
+         endif
+       enddo
       endif
    enddo
 
@@ -5788,20 +5753,20 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
 
    ncnt_r(:) = 0
    do j=block_limits(my_pe)*nfact,min(block_limits(my_pe+1)*nfact-1,(na-1)/nblk)
-      npr = mod(j,np_rows)
-      do i=0,nfact
-         npc = mod(i+j,np_cols)
-         np = global_id(npr,npc)
-         ncnt_r(np) = ncnt_r(np) + 1
-      enddo
+     npr = mod(j,np_rows)
+     do i=0,nfact
+       npc = mod(i+j,np_cols)
+       np = global_id(npr,npc)
+       ncnt_r(np) = ncnt_r(np) + 1
+     enddo
    enddo
 
    ! Allocate receive buffer
 
-   if(l_real) then
-      allocate(r_rbuf(nblk,nblk,sum(ncnt_r)))
+   if (l_real) then
+     allocate(r_rbuf(nblk,nblk,sum(ncnt_r)))
    else
-      allocate(c_rbuf(nblk,nblk,sum(ncnt_r)))
+     allocate(c_rbuf(nblk,nblk,sum(ncnt_r)))
    endif
 
    ! Set send counts/send offsets, receive counts/receive offsets
@@ -5811,22 +5776,22 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
 
    nstart_s(0) = 0
    do i=1,n_pes-1
-      nstart_s(i) = nstart_s(i-1) + ncnt_s(i-1)
+     nstart_s(i) = nstart_s(i-1) + ncnt_s(i-1)
    enddo
 
    ncnt_r(:) = ncnt_r(:)*nblk*nblk
 
    nstart_r(0) = 0
    do i=1,n_pes-1
-      nstart_r(i) = nstart_r(i-1) + ncnt_r(i-1)
+     nstart_r(i) = nstart_r(i-1) + ncnt_r(i-1)
    enddo
 
    ! Exchange all data with MPI_Alltoallv
 
-   if(l_real) then
-      call MPI_Alltoallv(r_sbuf,ncnt_s,nstart_s,MPI_REAL8,r_rbuf,ncnt_r,nstart_r,MPI_REAL8,mpi_comm,mpierr)
+   if (l_real) then
+     call MPI_Alltoallv(r_sbuf,ncnt_s,nstart_s,MPI_REAL8,r_rbuf,ncnt_r,nstart_r,MPI_REAL8,mpi_comm,mpierr)
    else
-      call MPI_Alltoallv(c_sbuf,ncnt_s,nstart_s,MPI_COMPLEX16,c_rbuf,ncnt_r,nstart_r,MPI_COMPLEX16,mpi_comm,mpierr)
+     call MPI_Alltoallv(c_sbuf,ncnt_s,nstart_s,MPI_COMPLEX16,c_rbuf,ncnt_r,nstart_r,MPI_COMPLEX16,mpi_comm,mpierr)
    endif
 
    ! set band from receive buffer
@@ -5835,47 +5800,48 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
 
    nstart_r(0) = 0
    do i=1,n_pes-1
-      nstart_r(i) = nstart_r(i-1) + ncnt_r(i-1)
+     nstart_r(i) = nstart_r(i-1) + ncnt_r(i-1)
    enddo
 
-   if(l_real) then
-      allocate(r_buf((nfact+1)*nblk,nblk))
+   if (l_real) then
+     allocate(r_buf((nfact+1)*nblk,nblk))
    else
-      allocate(c_buf((nfact+1)*nblk,nblk))
+     allocate(c_buf((nfact+1)*nblk,nblk))
    endif
 
    ! n_off: Offset of ab within band
    n_off = block_limits(my_pe)*nbw
 
    do j=block_limits(my_pe)*nfact,min(block_limits(my_pe+1)*nfact-1,(na-1)/nblk)
-      npr = mod(j,np_rows)
-      do i=0,nfact
-         npc = mod(i+j,np_cols)
-         np = global_id(npr,npc)
-         nstart_r(np) = nstart_r(np) + 1
-         if(l_real) then
-            r_buf(i*nblk+1:i*nblk+nblk,:) = transpose(r_rbuf(:,:,nstart_r(np)))
-         else
-            c_buf(i*nblk+1:i*nblk+nblk,:) = conjg(transpose(c_rbuf(:,:,nstart_r(np))))
-         endif
-      enddo
-      do i=1,MIN(nblk,na-j*nblk)
-         if(l_real) then
-            r_ab(1:nbw+1,i+j*nblk-n_off) = r_buf(i:i+nbw,i)
-         else
-            c_ab(1:nbw+1,i+j*nblk-n_off) = c_buf(i:i+nbw,i)
-         endif
-      enddo
+     npr = mod(j,np_rows)
+     do i=0,nfact
+       npc = mod(i+j,np_cols)
+       np = global_id(npr,npc)
+       nstart_r(np) = nstart_r(np) + 1
+       if (l_real) then
+         r_buf(i*nblk+1:i*nblk+nblk,:) = transpose(r_rbuf(:,:,nstart_r(np)))
+       else
+         c_buf(i*nblk+1:i*nblk+nblk,:) = conjg(transpose(c_rbuf(:,:,nstart_r(np))))
+       endif
+     enddo
+     do i=1,MIN(nblk,na-j*nblk)
+       if (l_real) then
+         r_ab(1:nbw+1,i+j*nblk-n_off) = r_buf(i:i+nbw,i)
+       else
+         c_ab(1:nbw+1,i+j*nblk-n_off) = c_buf(i:i+nbw,i)
+       endif
+     enddo
    enddo
 
    deallocate(ncnt_s, nstart_s)
    deallocate(ncnt_r, nstart_r)
    deallocate(global_id)
    deallocate(block_limits)
-   if(l_real) then
-      deallocate(r_sbuf, r_rbuf, r_buf)
+
+   if (l_real) then
+     deallocate(r_sbuf, r_rbuf, r_buf)
    else
-      deallocate(c_sbuf, c_rbuf, c_buf)
+     deallocate(c_sbuf, c_rbuf, c_buf)
    endif
 
 end subroutine
@@ -5893,23 +5859,23 @@ subroutine divide_band(nblocks_total, n_pes, block_limits)
    integer :: n, nblocks, nblocks_left
 
    block_limits(0) = 0
-   if(nblocks_total < n_pes) then
-      ! Not enough work for all: The first tasks get exactly 1 block
-      do n=1,n_pes
-         block_limits(n) = min(nblocks_total,n)
-      enddo
+   if (nblocks_total < n_pes) then
+     ! Not enough work for all: The first tasks get exactly 1 block
+     do n=1,n_pes
+       block_limits(n) = min(nblocks_total,n)
+     enddo
    else
-      ! Enough work for all. If there is no exact loadbalance,
-      ! the LAST tasks get more work since they are finishing earlier!
-      nblocks = nblocks_total/n_pes
-      nblocks_left = nblocks_total - n_pes*nblocks
-      do n=1,n_pes
-         if(n<=n_pes-nblocks_left) then
-            block_limits(n) = block_limits(n-1) + nblocks
-         else
-            block_limits(n) = block_limits(n-1) + nblocks + 1
-         endif
-      enddo
+     ! Enough work for all. If there is no exact loadbalance,
+     ! the LAST tasks get more work since they are finishing earlier!
+     nblocks = nblocks_total/n_pes
+     nblocks_left = nblocks_total - n_pes*nblocks
+     do n=1,n_pes
+       if (n<=n_pes-nblocks_left) then
+         block_limits(n) = block_limits(n-1) + nblocks
+       else
+         block_limits(n) = block_limits(n-1) + nblocks + 1
+       endif
+     enddo
    endif
 
 end subroutine
@@ -5994,10 +5960,10 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
 
    allocate(ireq_ab2(1:nblocks2))
    ireq_ab2 = MPI_REQUEST_NULL
-   if(nb2>1) then
-       do i=0,nblocks2-1
-           call mpi_irecv(ab2(1,i*nb2+1),2*nb2*nb2,mpi_real8,0,3,mpi_comm,ireq_ab2(i+1),mpierr)
-       enddo
+   if (nb2>1) then
+     do i=0,nblocks2-1
+       call mpi_irecv(ab2(1,i*nb2+1),2*nb2*nb2,mpi_real8,0,3,mpi_comm,ireq_ab2(i+1),mpierr)
+     enddo
    endif
 
    ! n_off: Offset of ab within band
@@ -6013,76 +5979,76 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
 
    na_s = block_limits(my_pe)*nb + 1
 
-   if(my_pe>0 .and. na_s<=na) then
-      ! send first nb2 columns to previous PE
-      ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
-      do i=1,nb2
-      	ab_s(1:nb+1,i) = ab(1:nb+1,na_s-n_off+i-1)
-      enddo
-      call mpi_isend(ab_s,(nb+1)*nb2,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+   if (my_pe>0 .and. na_s<=na) then
+     ! send first nb2 columns to previous PE
+     ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
+     do i=1,nb2
+       ab_s(1:nb+1,i) = ab(1:nb+1,na_s-n_off+i-1)
+     enddo
+     call mpi_isend(ab_s,(nb+1)*nb2,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
    endif
 
    do istep=1,na/nb2
 
-      if(my_pe==0) then
+     if (my_pe==0) then
 
-         n = MIN(na-na_s-nb2+1,nb) ! number of rows to be reduced
-         hv(:,:) = 0
-         tau(:) = 0
+       n = MIN(na-na_s-nb2+1,nb) ! number of rows to be reduced
+       hv(:,:) = 0
+       tau(:) = 0
 
-         ! The last step (istep=na-1) is only needed for sending the last HH vectors.
-         ! We don't want the sign of the last element flipped (analogous to the other sweeps)
-         if(istep < na/nb2) then
+       ! The last step (istep=na-1) is only needed for sending the last HH vectors.
+       ! We don't want the sign of the last element flipped (analogous to the other sweeps)
+       if (istep < na/nb2) then
 
-            ! Transform first block column of remaining matrix
-            call dgeqrf(n, nb2, ab(1+nb2,na_s-n_off), 2*nb-1, tau, work, lwork, info);
+         ! Transform first block column of remaining matrix
+         call dgeqrf(n, nb2, ab(1+nb2,na_s-n_off), 2*nb-1, tau, work, lwork, info);
 
-            do i=1,nb2
-            	hv(i,i) = 1.0
-            	hv(i+1:n,i) = ab(1+nb2+1:1+nb2+n-i,na_s-n_off+i-1)
-            	ab(1+nb2+1:2*nb,na_s-n_off+i-1) = 0
-            enddo
+         do i=1,nb2
+           hv(i,i) = 1.0
+           hv(i+1:n,i) = ab(1+nb2+1:1+nb2+n-i,na_s-n_off+i-1)
+           ab(1+nb2+1:2*nb,na_s-n_off+i-1) = 0
+         enddo
 
+       endif
+
+       if (nb2==1) then
+         d(istep) = ab(1,na_s-n_off)
+	 e(istep) = ab(2,na_s-n_off)
+	 if (istep == na) then
+	   e(na) = 0
          endif
-
-         if(nb2==1) then
-            d(istep) = ab(1,na_s-n_off)
-	    e(istep) = ab(2,na_s-n_off)
-	    if(istep == na) then
-	    	e(na) = 0
-            endif
-         else
-            ab_s2 = 0
-            ab_s2(:,:) = ab(1:nb2+1,na_s-n_off:na_s-n_off+nb2-1)
-            if(block_limits2(dest+1)<istep) then
-            	dest = dest+1
-            endif
-            call mpi_send(ab_s2,2*nb2*nb2,mpi_real8,dest,3,mpi_comm,mpierr)
+       else
+         ab_s2 = 0
+         ab_s2(:,:) = ab(1:nb2+1,na_s-n_off:na_s-n_off+nb2-1)
+         if (block_limits2(dest+1)<istep) then
+           dest = dest+1
          endif
+         call mpi_send(ab_s2,2*nb2*nb2,mpi_real8,dest,3,mpi_comm,mpierr)
+       endif
 
-      else
-         if(na>na_s+nb2-1) then
-            ! Receive Householder vectors from previous task, from PE owning subdiagonal
-            call mpi_recv(hv,nb*nb2,mpi_real8,my_pe-1,2,mpi_comm,mpi_status,mpierr)
-            do i=1,nb2
-	       	tau(i) = hv(i,i)
-	       	hv(i,i) = 1.
-            enddo
-         endif
-      endif
+     else
+       if (na>na_s+nb2-1) then
+         ! Receive Householder vectors from previous task, from PE owning subdiagonal
+         call mpi_recv(hv,nb*nb2,mpi_real8,my_pe-1,2,mpi_comm,mpi_status,mpierr)
+         do i=1,nb2
+	   tau(i) = hv(i,i)
+	   hv(i,i) = 1.
+         enddo
+       endif
+     endif
 
-      na_s = na_s+nb2
-      if(na_s-n_off > nb) then
-         ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-         ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
-         n_off = n_off + nb
-      endif
+     na_s = na_s+nb2
+     if (na_s-n_off > nb) then
+       ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
+       ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
+       n_off = n_off + nb
+     endif
 
-      do iblk=1,nblocks
-         ns = na_s + (iblk-1)*nb - n_off ! first column in block
-         ne = ns+nb-nb2                    ! last column in block
+     do iblk=1,nblocks
+       ns = na_s + (iblk-1)*nb - n_off ! first column in block
+       ne = ns+nb-nb2                    ! last column in block
 
-         if(ns+n_off>na) exit
+       if (ns+n_off>na) exit
 
          nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
          nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
@@ -6090,76 +6056,74 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
 
          call wy_gen(nc,nb2,w,hv,tau,work,nb)
 
-         if(iblk==nblocks .and. nc==nb) then
-             !request last nb2 columns
-             call mpi_recv(ab_r,(nb+1)*nb2,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
-             do i=1,nb2
-	         ab(1:nb+1,ne+i-1) = ab_r(:,i)
-             enddo
+         if (iblk==nblocks .and. nc==nb) then
+           !request last nb2 columns
+           call mpi_recv(ab_r,(nb+1)*nb2,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+           do i=1,nb2
+	     ab(1:nb+1,ne+i-1) = ab_r(:,i)
+           enddo
          endif
 
          hv_new(:,:) = 0 ! Needed, last rows must be 0 for nr < nb
          tau_new(:) = 0
 
-         if(nr>0) then
-             call wy_right(nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
+         if (nr>0) then
+           call wy_right(nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
 
-             call dgeqrf(nr,nb2,ab(nb+1,ns),2*nb-1,tau_new,work,lwork,info);
+           call dgeqrf(nr,nb2,ab(nb+1,ns),2*nb-1,tau_new,work,lwork,info);
 
-             do i=1,nb2
-	     	 hv_new(i,i) = 1.0
-	     	 hv_new(i+1:,i) = ab(nb+2:2*nb-i+1,ns+i-1)
-	     	 ab(nb+2:,ns+i-1) = 0
-	     enddo
+           do i=1,nb2
+	     hv_new(i,i) = 1.0
+	     hv_new(i+1:,i) = ab(nb+2:2*nb-i+1,ns+i-1)
+	     ab(nb+2:,ns+i-1) = 0
+	   enddo
 
-	     !send hh-vector
-	     if(iblk==nblocks) then
-	         call mpi_wait(ireq_hv,mpi_status,mpierr)
-	         hv_s = hv_new
-	         do i=1,nb2
-		     hv_s(i,i) = tau_new(i)
-                 enddo
-	         call mpi_isend(hv_s,nb*nb2,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
-             endif
+	   !send hh-vector
+	   if (iblk==nblocks) then
+	     call mpi_wait(ireq_hv,mpi_status,mpierr)
+	     hv_s = hv_new
+	     do i=1,nb2
+	       hv_s(i,i) = tau_new(i)
+             enddo
+	     call mpi_isend(hv_s,nb*nb2,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
+           endif
 
          endif
 
 	 call wy_symm(nc,nb2,ab(1,ns),2*nb-1,w,hv,work,work2,nb)
 
-         if(my_pe>0 .and. iblk==1) then
-	     !send first nb2 columns to previous PE
-	     call mpi_wait(ireq_ab,mpi_status,mpierr)
-	     do i=1,nb2
-	         ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
-	     enddo
-	     call mpi_isend(ab_s,(nb+1)*nb2,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+         if (my_pe>0 .and. iblk==1) then
+	   !send first nb2 columns to previous PE
+	   call mpi_wait(ireq_ab,mpi_status,mpierr)
+	   do i=1,nb2
+	     ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
+	   enddo
+	   call mpi_isend(ab_s,(nb+1)*nb2,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
          endif
 
-         if(nr>0) then
-             call wy_gen(nr,nb2,w_new,hv_new,tau_new,work,nb)
-	     call wy_left(nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
+         if (nr>0) then
+           call wy_gen(nr,nb2,w_new,hv_new,tau_new,work,nb)
+	   call wy_left(nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
          endif
 
          ! Use new HH vector for the next block
 	 hv(:,:) = hv_new(:,:)
          tau = tau_new
-
+       enddo
      enddo
 
-   enddo
+     ! Finish the last outstanding requests
+     call mpi_wait(ireq_ab,mpi_status,mpierr)
+     call mpi_wait(ireq_hv,mpi_status,mpierr)
+     allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2))
+     call mpi_waitall(nblocks2,ireq_ab2,mpi_statuses,mpierr)
+     deallocate(mpi_statuses)
 
-   ! Finish the last outstanding requests
-   call mpi_wait(ireq_ab,mpi_status,mpierr)
-   call mpi_wait(ireq_hv,mpi_status,mpierr)
-   allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2))
-   call mpi_waitall(nblocks2,ireq_ab2,mpi_statuses,mpierr)
-   deallocate(mpi_statuses)
+     call mpi_barrier(mpi_comm,mpierr)
 
-   call mpi_barrier(mpi_comm,mpierr)
-
-   deallocate(block_limits)
-   deallocate(block_limits2)
-   deallocate(ireq_ab2)
+     deallocate(block_limits)
+     deallocate(block_limits2)
+     deallocate(ireq_ab2)
 
 end subroutine
 
@@ -6177,9 +6141,9 @@ subroutine wy_gen(n, nb, W, Y, tau, mem, lda)
 
     W(1:n,1) = tau(1)*Y(1:n,1)
     do i=2,nb
-        W(1:n,i) = tau(i)*Y(1:n,i)
-        call DGEMV('T',n,i-1,1.d0,Y,lda,W(1,i),1,0.d0,mem,1)
-	call DGEMV('N',n,i-1,-1.d0,W,lda,mem,1,1.d0,W(1,i),1)
+      W(1:n,i) = tau(i)*Y(1:n,i)
+      call DGEMV('T',n,i-1,1.d0,Y,lda,W(1,i),1,0.d0,mem,1)
+      call DGEMV('N',n,i-1,-1.d0,W,lda,mem,1,1.d0,W(1,i),1)
     enddo
 
 end subroutine
