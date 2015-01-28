@@ -49,9 +49,6 @@
    */
 #undef LT_OBJDIR
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
-
 /* Name of package */
 #undef PACKAGE
 
@@ -102,6 +99,9 @@
 
 /* use OpenMP threading */
 #undef WITH_OPENMP
+
+/* use QR decomposition */
+#undef WITH_QR
 
 /* can use real_avx_block2 kernel */
 #undef WITH_REAL_AVX_BLOCK2_KERNEL

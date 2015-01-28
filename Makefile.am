@@ -23,6 +23,13 @@ if HAVE_DETAILED_TIMINGS
                                 src/ftimings/papi.c
 endif
 
+if WITH_QR
+ libelpa@SUFFIX@_la_SOURCES += src/elpa_qr/qr_utils.f90 \
+                               src/elpa_qr/elpa_qrkernels.f90 \
+                               src/elpa_qr/elpa_pdlarfb.f90 \
+                               src/elpa_qr/elpa_pdgeqrf.f90
+endif
+
 if WITH_REAL_GENERIC_KERNEL
   libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.f90
 endif

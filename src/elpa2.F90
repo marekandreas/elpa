@@ -67,6 +67,11 @@ module ELPA2
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
 #endif
+
+#ifdef WITH_QR
+  use elpa_pdgeqrf
+#endif
+
   implicit none
 
   PRIVATE ! By default, all routines contained are private
@@ -235,6 +240,16 @@ module ELPA2
                                                     ,0                    &
 #endif
                                                    /)
+
+#ifdef WITH_QR
+  public :: band_band_real
+  public :: divide_band
+
+  integer, public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
+                                                    ! 0 for unblocked
+                                                    ! 1 for blocked (maxrank: nblk)
+
+#endif
 !-------------------------------------------------------------------------------
 
   ! The following array contains the Householder vectors of the
@@ -466,7 +481,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-  
+
    success = .true.
 
  if (present(THIS_REAL_ELPA_KERNEL_API)) then
@@ -640,7 +655,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    real*8, allocatable           :: q_real(:,:), e(:)
    real*8                        :: ttt0, ttt1, ttts
    integer                       :: i
-   
+
    logical                       :: success
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex_2stage")
@@ -831,6 +846,14 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    real*8, allocatable :: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
 
    integer             :: pcol, prow
+
+#ifdef WITH_QR
+   ! needed for blocked QR decomposition
+   integer             :: PQRPARAM(11), work_size
+   real*8              :: dwork_size(1)
+   real*8, allocatable :: work_blocked(:), tauvector(:), blockheuristic(:)
+#endif
+
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
@@ -864,6 +887,26 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    l_rows_tile = tile_size/np_rows ! local rows of a tile
    l_cols_tile = tile_size/np_cols ! local cols of a tile
 
+#ifdef WITH_QR
+
+   if (which_qr_decomposition == 1) then
+      call qr_pqrparam_init(pqrparam,    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
+      allocate(tauvector(na))
+      allocate(blockheuristic(nblk))
+      l_rows = local_index(na, my_prow, np_rows, nblk, -1)
+      allocate(vmr(max(l_rows,1),na))
+
+      call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,1), nbw, dwork_size(1), -1, na, &
+                             nbw, nblk, nblk, na, na, 1, 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols, blockheuristic)
+      work_size = dwork_size(1)
+      allocate(work_blocked(work_size))
+
+      work_blocked = 0.0d0
+      deallocate(vmr)
+   endif
+#endif
+
+
    do istep = (na-1)/nbw, 1, -1
 
       n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
@@ -884,114 +927,127 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
       tmat(:,:,istep) = 0
 
       ! Reduce current block to lower triangular form
+#ifdef WITH_QR
+      if (which_qr_decomposition == 1) then
+         call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), &
+                                 tmat(1,1,istep), nbw, work_blocked,       &
+                                 work_size, na, n_cols, nblk, nblk,        &
+                                 istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
+                                 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols,&
+                                 blockheuristic)
+      else
 
-      do lc = n_cols, 1, -1
+#endif
+        do lc = n_cols, 1, -1
 
-         ncol = istep*nbw + lc ! absolute column number of householder vector
-         nrow = ncol - nbw ! Absolute number of pivot row
+           ncol = istep*nbw + lc ! absolute column number of householder vector
+           nrow = ncol - nbw ! Absolute number of pivot row
 
-         lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
-         lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+           lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
+           lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
 
-         tau = 0
+           tau = 0
 
-         if(nrow == 1) exit ! Nothing to do
+           if(nrow == 1) exit ! Nothing to do
 
-         cur_pcol = pcol(ncol) ! Processor column owning current block
+           cur_pcol = pcol(ncol) ! Processor column owning current block
 
-         if(my_pcol==cur_pcol) then
+           if(my_pcol==cur_pcol) then
 
-            ! Get vector to be transformed; distribute last element and norm of
-            ! remaining elements to all procs in current column
+              ! Get vector to be transformed; distribute last element and norm of
+              ! remaining elements to all procs in current column
 
-            vr(1:lr) = a(1:lr,lch) ! vector to be transformed
+              vr(1:lr) = a(1:lr,lch) ! vector to be transformed
 
-            if(my_prow==prow(nrow)) then
-               aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
-               aux1(2) = vr(lr)
-            else
-               aux1(1) = dot_product(vr(1:lr),vr(1:lr))
-               aux1(2) = 0.
-            endif
+              if(my_prow==prow(nrow)) then
+                 aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
+                 aux1(2) = vr(lr)
+              else
+                 aux1(1) = dot_product(vr(1:lr),vr(1:lr))
+                 aux1(2) = 0.
+              endif
 
-            call mpi_allreduce(aux1,aux2,2,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+              call mpi_allreduce(aux1,aux2,2,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
 
-            vnorm2 = aux2(1)
-            vrl    = aux2(2)
+              vnorm2 = aux2(1)
+              vrl    = aux2(2)
 
-            ! Householder transformation
+              ! Householder transformation
 
-            call hh_transform_real(vrl, vnorm2, xf, tau)
+              call hh_transform_real(vrl, vnorm2, xf, tau)
 
-            ! Scale vr and store Householder vector for back transformation
+              ! Scale vr and store Householder vector for back transformation
 
-            vr(1:lr) = vr(1:lr) * xf
-            if(my_prow==prow(nrow)) then
-               a(1:lr-1,lch) = vr(1:lr-1)
-               a(lr,lch) = vrl
-               vr(lr) = 1.
-            else
-               a(1:lr,lch) = vr(1:lr)
-            endif
+              vr(1:lr) = vr(1:lr) * xf
+              if(my_prow==prow(nrow)) then
+                 a(1:lr-1,lch) = vr(1:lr-1)
+                 a(lr,lch) = vrl
+                 vr(lr) = 1.
+              else
+                 a(1:lr,lch) = vr(1:lr)
+              endif
 
-         endif
+           endif
 
-         ! Broadcast Householder vector and tau along columns
+           ! Broadcast Householder vector and tau along columns
 
-         vr(lr+1) = tau
-         call MPI_Bcast(vr,lr+1,MPI_REAL8,cur_pcol,mpi_comm_cols,mpierr)
-         vmr(1:lr,lc) = vr(1:lr)
-         tau = vr(lr+1)
-         tmat(lc,lc,istep) = tau ! Store tau in diagonal of tmat
+           vr(lr+1) = tau
+           call MPI_Bcast(vr,lr+1,MPI_REAL8,cur_pcol,mpi_comm_cols,mpierr)
+           vmr(1:lr,lc) = vr(1:lr)
+           tau = vr(lr+1)
+           tmat(lc,lc,istep) = tau ! Store tau in diagonal of tmat
 
-         ! Transform remaining columns in current block with Householder vector
+           ! Transform remaining columns in current block with Householder vector
+           ! Local dot product
 
-         ! Local dot product
+           aux1 = 0
 
-         aux1 = 0
+           nlc = 0 ! number of local columns
+           do j=1,lc-1
+              lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+              if(lcx>0) then
+                 nlc = nlc+1
+                 if(lr>0) aux1(nlc) = dot_product(vr(1:lr),a(1:lr,lcx))
+              endif
+           enddo
 
-         nlc = 0 ! number of local columns
-         do j=1,lc-1
-            lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-            if(lcx>0) then
-               nlc = nlc+1
-               if(lr>0) aux1(nlc) = dot_product(vr(1:lr),a(1:lr,lcx))
-            endif
-         enddo
+           ! Get global dot products
+           if(nlc>0) call mpi_allreduce(aux1,aux2,nlc,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
 
-         ! Get global dot products
-         if(nlc>0) call mpi_allreduce(aux1,aux2,nlc,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+           ! Transform
 
-         ! Transform
+           nlc = 0
+           do j=1,lc-1
+              lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+              if(lcx>0) then
+                 nlc = nlc+1
+                 a(1:lr,lcx) = a(1:lr,lcx) - tau*aux2(nlc)*vr(1:lr)
+              endif
+           enddo
 
-         nlc = 0
-         do j=1,lc-1
-            lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-            if(lcx>0) then
-               nlc = nlc+1
-               a(1:lr,lcx) = a(1:lr,lcx) - tau*aux2(nlc)*vr(1:lr)
-            endif
-         enddo
+        enddo
 
-      enddo
+        ! Calculate scalar products of stored Householder vectors.
+        ! This can be done in different ways, we use dsyrk
 
-      ! Calculate scalar products of stored Householder vectors.
-      ! This can be done in different ways, we use dsyrk
+        vav = 0
+        if(l_rows>0) &
+           call dsyrk('U','T',n_cols,l_rows,1.d0,vmr,ubound(vmr,1),0.d0,vav,ubound(vav,1))
+        call symm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_rows)
 
-      vav = 0
-      if(l_rows>0) &
-         call dsyrk('U','T',n_cols,l_rows,1.d0,vmr,ubound(vmr,1),0.d0,vav,ubound(vav,1))
-      call symm_matrix_allreduce(n_cols,vav,ubound(vav,1),mpi_comm_rows)
+        ! Calculate triangular matrix T for block Householder Transformation
 
-      ! Calculate triangular matrix T for block Householder Transformation
+        do lc=n_cols,1,-1
+           tau = tmat(lc,lc,istep)
+           if(lc<n_cols) then
+              call dtrmv('U','T','N',n_cols-lc,tmat(lc+1,lc+1,istep),ubound(tmat,1),vav(lc+1,lc),1)
+              tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
+           endif
+        enddo
 
-      do lc=n_cols,1,-1
-         tau = tmat(lc,lc,istep)
-         if(lc<n_cols) then
-            call dtrmv('U','T','N',n_cols-lc,tmat(lc+1,lc+1,istep),ubound(tmat,1),vav(lc+1,lc),1)
-            tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
-         endif
-      enddo
+#ifdef WITH_QR
+     endif
+#endif
 
       ! Transpose vmr -> vmc (stored in umc, second half)
 
@@ -1079,6 +1135,13 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    enddo
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("bandred_real")
+#endif
+
+#ifdef WITH_QR
+   if (which_qr_decomposition == 1) then
+      deallocate(work_blocked)
+      deallocate(tauvector)
+   endif
 #endif
 
 end subroutine bandred_real
@@ -1170,6 +1233,11 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
    real*8, allocatable:: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
 
    integer pcol, prow, i
+
+#ifdef WITH_QR
+   real*8, allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
+   integer :: cwy_blocking, t_blocking, t_cols, t_rows
+#endif
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
@@ -1187,20 +1255,39 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 
    max_local_rows = max_blocks_row*nblk
    max_local_cols = max_blocks_col*nblk
+#ifdef WITH_QR
+   t_blocking = 2 ! number of matrices T (tmat) which are aggregated into a new (larger) T matrix (tmat_complete) and applied at once
+   cwy_blocking = t_blocking * nbw
+
+   allocate(tmp1(max_local_cols*cwy_blocking))
+   allocate(tmp2(max_local_cols*cwy_blocking))
+   allocate(hvb(max_local_rows*cwy_blocking))
+   allocate(hvm(max_local_rows,cwy_blocking))
+   allocate(tmat_complete(cwy_blocking,cwy_blocking))
+   allocate(t_tmp(cwy_blocking,nbw))
+   allocate(t_tmp2(cwy_blocking,nbw))
+
+#else
 
    allocate(tmp1(max_local_cols*nbw))
    allocate(tmp2(max_local_cols*nbw))
    allocate(hvb(max_local_rows*nbw))
    allocate(hvm(max_local_rows,nbw))
+#endif
 
    hvm = 0   ! Must be set to 0 !!!
    hvb = 0   ! Safety only
 
    l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
+#ifdef WITH_QR
+   do istep=1,((na-1)/nbw-1)/t_blocking + 1
+      n_cols = MIN(na,istep*cwy_blocking+nbw) - (istep-1)*cwy_blocking - nbw ! Number of columns in current step
+#else
    do istep=1,(na-1)/nbw
 
       n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
+#endif
 
       ! Broadcast all Householder vectors for current step compressed in hvb
 
@@ -1208,7 +1295,11 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
       ns = 0
 
       do lc = 1, n_cols
+#ifdef WITH_QR
+         ncol = (istep-1)*cwy_blocking + nbw + lc ! absolute column number of householder vector
+#else
          ncol = istep*nbw + lc ! absolute column number of householder vector
+#endif
          nrow = ncol - nbw ! absolute number of pivot row
 
          l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
@@ -1228,7 +1319,11 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 
       nb = 0
       do lc = 1, n_cols
+#ifdef WITH_QR
+         nrow = (istep-1)*cwy_blocking + lc ! absolute number of pivot row
+#else
          nrow = (istep-1)*nbw+lc ! absolute number of pivot row
+#endif
          l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
          hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
@@ -1237,7 +1332,28 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
          nb = nb+l_rows
       enddo
 
+#ifdef WITH_QR
+      l_rows = local_index(MIN(na,(istep+1)*cwy_blocking), my_prow, np_rows, nblk, -1)
+
+      ! compute tmat2 out of tmat(:,:,)
+      tmat_complete = 0
+      do i = 1, t_blocking
+         t_cols = MIN(nbw, n_cols - (i-1)*nbw)
+         if(t_cols <= 0) exit
+         t_rows = (i - 1) * nbw
+         tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
+         if(i > 1) then
+            call dgemm('T', 'N', t_rows, t_cols, l_rows, 1.d0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
+                       max_local_rows, 0.d0, t_tmp, cwy_blocking)
+            call mpi_allreduce(t_tmp,t_tmp2,cwy_blocking*nbw,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+            call dtrmm('L','U','N','N',t_rows,t_cols,1.0d0,tmat_complete,cwy_blocking,t_tmp2,cwy_blocking)
+            call dtrmm('R','U','N','N',t_rows,t_cols,-1.0d0,tmat_complete(t_rows+1,t_rows+1),cwy_blocking,t_tmp2,cwy_blocking)
+            tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
+         endif
+      enddo
+#else
       l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
+#endif
 
       ! Q = Q - V * T**T * V**T * Q
 
@@ -1249,14 +1365,23 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
       endif
       call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       if(l_rows>0) then
+#ifdef WITH_QR
+         call dtrmm('L','U','T','N',n_cols,l_cols,1.0d0,tmat_complete,cwy_blocking,tmp2,n_cols)
+         call dgemm('N','N',l_rows,l_cols,n_cols,-1.d0,hvm,ubound(hvm,1), tmp2,n_cols,1.d0,q,ldq)
+
+#else
          call dtrmm('L','U','T','N',n_cols,l_cols,1.0d0,tmat(1,1,istep),ubound(tmat,1),tmp2,n_cols)
          call dgemm('N','N',l_rows,l_cols,n_cols,-1.d0,hvm,ubound(hvm,1), &
                     tmp2,n_cols,1.d0,q,ldq)
+#endif
       endif
 
    enddo
 
    deallocate(tmp1, tmp2, hvb, hvm)
+#ifdef WITH_QR
+   deallocate(tmat_complete, t_tmp, t_tmp2)
+#endif
 
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4488,7 +4613,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     ! Just for measuring the kernel performance
     real*8 kernel_time
     integer*8 kernel_flops
-    
+
     logical :: success
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4515,7 +4640,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
          write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
          write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
 !         call mpi_abort(mpi_comm_world,0,mpierr)
-         success = .false. 
+         success = .false.
       endif
     endif
 
@@ -4603,109 +4728,109 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
 #endif
     do ip = np_rows-1, 0, -1
-        if(my_prow == ip) then
-            ! Receive my rows which have not yet been received
-            src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
-            do i=limits(ip)+1,limits(ip+1)
-                src = mod((i-1)/nblk, np_rows)
-                if(src < my_prow) then
+      if (my_prow == ip) then
+        ! Receive my rows which have not yet been received
+        src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
+        do i=limits(ip)+1,limits(ip+1)
+          src = mod((i-1)/nblk, np_rows)
+          if (src < my_prow) then
 #ifdef WITH_OPENMP
-                    call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
+            call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
 
 #else
-                    call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+            call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("OpenMP parallel")
+            call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(ip),my_thread)
-                    enddo
+            do my_thread = 1, max_threads
+              call unpack_row(row,i-limits(ip),my_thread)
+            enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("OpenMP parallel")
+            call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                    call unpack_row(row,i-limits(ip))
+            call unpack_row(row,i-limits(ip))
 #endif
-                 elseif(src==my_prow) then
-                    src_offset = src_offset+1
-                    row(:) = q(src_offset, 1:l_nev)
+          elseif (src==my_prow) then
+            src_offset = src_offset+1
+            row(:) = q(src_offset, 1:l_nev)
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%start("OpenMP parallel")
+            call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(ip),my_thread)
-                    enddo
+            do my_thread = 1, max_threads
+              call unpack_row(row,i-limits(ip),my_thread)
+            enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%stop("OpenMP parallel")
+            call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                    call unpack_row(row,i-limits(ip))
+            call unpack_row(row,i-limits(ip))
 #endif
-                endif
-            enddo
-            ! Send all rows which have not yet been send
-            src_offset = 0
-            do dst = 0, ip-1
-              do i=limits(dst)+1,limits(dst+1)
-                if(mod((i-1)/nblk, np_rows) == my_prow) then
-                    src_offset = src_offset+1
-                    row(:) = q(src_offset, 1:l_nev)
-                    call MPI_Send(row, l_nev, MPI_COMPLEX16, dst, 0, mpi_comm_rows, mpierr)
-                endif
-              enddo
-            enddo
-        else if(my_prow < ip) then
-            ! Send all rows going to PE ip
-            src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
-            do i=limits(ip)+1,limits(ip+1)
-                src = mod((i-1)/nblk, np_rows)
-                if(src == my_prow) then
-                    src_offset = src_offset+1
-                    row(:) = q(src_offset, 1:l_nev)
-                    call MPI_Send(row, l_nev, MPI_COMPLEX16, ip, 0, mpi_comm_rows, mpierr)
-                endif
-            enddo
-            ! Receive all rows from PE ip
-            do i=limits(my_prow)+1,limits(my_prow+1)
-                src = mod((i-1)/nblk, np_rows)
-                if(src == ip) then
+          endif
+        enddo
+        ! Send all rows which have not yet been send
+        src_offset = 0
+        do dst = 0, ip-1
+          do i=limits(dst)+1,limits(dst+1)
+            if(mod((i-1)/nblk, np_rows) == my_prow) then
+                src_offset = src_offset+1
+                row(:) = q(src_offset, 1:l_nev)
+                call MPI_Send(row, l_nev, MPI_COMPLEX16, dst, 0, mpi_comm_rows, mpierr)
+            endif
+          enddo
+        enddo
+      else if(my_prow < ip) then
+        ! Send all rows going to PE ip
+        src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
+        do i=limits(ip)+1,limits(ip+1)
+          src = mod((i-1)/nblk, np_rows)
+          if (src == my_prow) then
+            src_offset = src_offset+1
+            row(:) = q(src_offset, 1:l_nev)
+            call MPI_Send(row, l_nev, MPI_COMPLEX16, ip, 0, mpi_comm_rows, mpierr)
+          endif
+        enddo
+        ! Receive all rows from PE ip
+        do i=limits(my_prow)+1,limits(my_prow+1)
+          src = mod((i-1)/nblk, np_rows)
+          if (src == ip) then
 #ifdef WITH_OPENMP
-                   call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
+            call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
 #else
-                    call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+            call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #ifdef WITH_OPENMP
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%start("OpenMP parallel")
+            call timer%start("OpenMP parallel")
 #endif
 !$omp parallel do private(my_thread), schedule(static, 1)
-                    do my_thread = 1, max_threads
-                        call unpack_row(row,i-limits(my_prow),my_thread)
-                    enddo
+            do my_thread = 1, max_threads
+              call unpack_row(row,i-limits(my_prow),my_thread)
+            enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-                 call timer%stop("OpenMP parallel")
+            call timer%stop("OpenMP parallel")
 #endif
 
 #else
-                    call unpack_row(row,i-limits(my_prow))
+            call unpack_row(row,i-limits(my_prow))
 #endif
-                endif
-            enddo
-        endif
+          endif
+        enddo
+      endif
     enddo
 
 
@@ -5217,7 +5342,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
         if(offset<0) then
             write(error_unit,*) 'internal error, offset for shifting = ',offset
 !            call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
-            success = .false. 
+            success = .false.
         endif
         a_off = a_off + offset
         if(a_off + next_local_n + nbw > a_dim2) then
@@ -5788,5 +5913,333 @@ subroutine divide_band(nblocks_total, n_pes, block_limits)
    endif
 
 end subroutine
+
+#ifdef WITH_QR
+subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
+
+!-------------------------------------------------------------------------------
+! band_band_real:
+! Reduces a real symmetric banded matrix to a real symmetric matrix with smaller bandwidth. Householder transformations are not stored.
+! Matrix size na and original bandwidth nb have to be a multiple of the target bandwidth nb2. (Hint: expand your matrix with zero entries, if this
+! requirement doesn't hold)
+!
+!  na          Order of matrix
+!
+!  nb          Semi bandwidth of original matrix
+!
+!  nb2         Semi bandwidth of target matrix
+!
+!  ab          Input matrix with bandwidth nb. The leading dimension of the banded matrix has to be 2*nb. The parallel data layout
+!              has to be accordant to divide_band(), i.e. the matrix columns block_limits(n)*nb+1 to min(na, block_limits(n+1)*nb)
+!              are located on rank n.
+!
+!  ab2         Output matrix with bandwidth nb2. The leading dimension of the banded matrix is 2*nb2. The parallel data layout is
+!              accordant to divide_band(), i.e. the matrix columns block_limits(n)*nb2+1 to min(na, block_limits(n+1)*nb2) are located
+!              on rank n.
+!
+!  d(na)       Diagonal of tridiagonal matrix, set only on PE 0, set only if ab2 = 1 (output)
+!
+!  e(na)       Subdiagonal of tridiagonal matrix, set only on PE 0, set only if ab2 = 1 (output)
+!
+!  mpi_comm
+!              MPI-Communicator for the total processor set
+!-------------------------------------------------------------------------------
+
+   implicit none
+
+   integer, intent(in) ::  na, nb, nb2, mpi_comm
+   real*8, intent(inout)  :: ab(2*nb,*)
+   real*8, intent(inout)  :: ab2(2*nb2,*)
+   real*8, intent(out) :: d(na), e(na) ! set only on PE 0
+
+!----------------
+
+   real*8 hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), tau_new(nb2), ab_s(1+nb,nb2), &
+          ab_r(1+nb,nb2), ab_s2(2*nb2,nb2), hv_s(nb,nb2)
+
+   real*8 work(nb*nb2), work2(nb2*nb2)
+   integer lwork, info
+
+   integer istep, i, n, dest
+   integer n_off, na_s
+   integer my_pe, n_pes, mpierr
+   integer nblocks_total, nblocks
+   integer nblocks_total2, nblocks2
+   integer ireq_ab, ireq_hv
+   integer mpi_status(MPI_STATUS_SIZE)
+   integer, allocatable :: mpi_statuses(:,:)
+   integer, allocatable :: block_limits(:), block_limits2(:), ireq_ab2(:)
+
+!----------------
+
+   integer j, nc, nr, ns, ne, iblk
+
+   call mpi_comm_rank(mpi_comm,my_pe,mpierr)
+   call mpi_comm_size(mpi_comm,n_pes,mpierr)
+
+   ! Total number of blocks in the band:
+   nblocks_total = (na-1)/nb + 1
+   nblocks_total2 = (na-1)/nb2 + 1
+
+   ! Set work distribution
+   allocate(block_limits(0:n_pes))
+   call divide_band(nblocks_total, n_pes, block_limits)
+
+   allocate(block_limits2(0:n_pes))
+   call divide_band(nblocks_total2, n_pes, block_limits2)
+
+   ! nblocks: the number of blocks for my task
+   nblocks = block_limits(my_pe+1) - block_limits(my_pe)
+   nblocks2 = block_limits2(my_pe+1) - block_limits2(my_pe)
+
+   allocate(ireq_ab2(1:nblocks2))
+   ireq_ab2 = MPI_REQUEST_NULL
+   if(nb2>1) then
+       do i=0,nblocks2-1
+           call mpi_irecv(ab2(1,i*nb2+1),2*nb2*nb2,mpi_real8,0,3,mpi_comm,ireq_ab2(i+1),mpierr)
+       enddo
+   endif
+
+   ! n_off: Offset of ab within band
+   n_off = block_limits(my_pe)*nb
+   lwork = nb*nb2
+   dest = 0
+
+   ireq_ab = MPI_REQUEST_NULL
+   ireq_hv = MPI_REQUEST_NULL
+
+   ! ---------------------------------------------------------------------------
+   ! Start of calculations
+
+   na_s = block_limits(my_pe)*nb + 1
+
+   if(my_pe>0 .and. na_s<=na) then
+      ! send first nb2 columns to previous PE
+      ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
+      do i=1,nb2
+      	ab_s(1:nb+1,i) = ab(1:nb+1,na_s-n_off+i-1)
+      enddo
+      call mpi_isend(ab_s,(nb+1)*nb2,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+   endif
+
+   do istep=1,na/nb2
+
+      if(my_pe==0) then
+
+         n = MIN(na-na_s-nb2+1,nb) ! number of rows to be reduced
+         hv(:,:) = 0
+         tau(:) = 0
+
+         ! The last step (istep=na-1) is only needed for sending the last HH vectors.
+         ! We don't want the sign of the last element flipped (analogous to the other sweeps)
+         if(istep < na/nb2) then
+
+            ! Transform first block column of remaining matrix
+            call dgeqrf(n, nb2, ab(1+nb2,na_s-n_off), 2*nb-1, tau, work, lwork, info);
+
+            do i=1,nb2
+            	hv(i,i) = 1.0
+            	hv(i+1:n,i) = ab(1+nb2+1:1+nb2+n-i,na_s-n_off+i-1)
+            	ab(1+nb2+1:2*nb,na_s-n_off+i-1) = 0
+            enddo
+
+         endif
+
+         if(nb2==1) then
+            d(istep) = ab(1,na_s-n_off)
+	    e(istep) = ab(2,na_s-n_off)
+	    if(istep == na) then
+	    	e(na) = 0
+            endif
+         else
+            ab_s2 = 0
+            ab_s2(:,:) = ab(1:nb2+1,na_s-n_off:na_s-n_off+nb2-1)
+            if(block_limits2(dest+1)<istep) then
+            	dest = dest+1
+            endif
+            call mpi_send(ab_s2,2*nb2*nb2,mpi_real8,dest,3,mpi_comm,mpierr)
+         endif
+
+      else
+         if(na>na_s+nb2-1) then
+            ! Receive Householder vectors from previous task, from PE owning subdiagonal
+            call mpi_recv(hv,nb*nb2,mpi_real8,my_pe-1,2,mpi_comm,mpi_status,mpierr)
+            do i=1,nb2
+	       	tau(i) = hv(i,i)
+	       	hv(i,i) = 1.
+            enddo
+         endif
+      endif
+
+      na_s = na_s+nb2
+      if(na_s-n_off > nb) then
+         ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
+         ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
+         n_off = n_off + nb
+      endif
+
+      do iblk=1,nblocks
+         ns = na_s + (iblk-1)*nb - n_off ! first column in block
+         ne = ns+nb-nb2                    ! last column in block
+
+         if(ns+n_off>na) exit
+
+         nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
+         nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
+                                       ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
+
+         call wy_gen(nc,nb2,w,hv,tau,work,nb)
+
+         if(iblk==nblocks .and. nc==nb) then
+             !request last nb2 columns
+             call mpi_recv(ab_r,(nb+1)*nb2,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+             do i=1,nb2
+	         ab(1:nb+1,ne+i-1) = ab_r(:,i)
+             enddo
+         endif
+
+         hv_new(:,:) = 0 ! Needed, last rows must be 0 for nr < nb
+         tau_new(:) = 0
+
+         if(nr>0) then
+             call wy_right(nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
+
+             call dgeqrf(nr,nb2,ab(nb+1,ns),2*nb-1,tau_new,work,lwork,info);
+
+             do i=1,nb2
+	     	 hv_new(i,i) = 1.0
+	     	 hv_new(i+1:,i) = ab(nb+2:2*nb-i+1,ns+i-1)
+	     	 ab(nb+2:,ns+i-1) = 0
+	     enddo
+
+	     !send hh-vector
+	     if(iblk==nblocks) then
+	         call mpi_wait(ireq_hv,mpi_status,mpierr)
+	         hv_s = hv_new
+	         do i=1,nb2
+		     hv_s(i,i) = tau_new(i)
+                 enddo
+	         call mpi_isend(hv_s,nb*nb2,mpi_real8,my_pe+1,2,mpi_comm,ireq_hv,mpierr)
+             endif
+
+         endif
+
+	 call wy_symm(nc,nb2,ab(1,ns),2*nb-1,w,hv,work,work2,nb)
+
+         if(my_pe>0 .and. iblk==1) then
+	     !send first nb2 columns to previous PE
+	     call mpi_wait(ireq_ab,mpi_status,mpierr)
+	     do i=1,nb2
+	         ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
+	     enddo
+	     call mpi_isend(ab_s,(nb+1)*nb2,mpi_real8,my_pe-1,1,mpi_comm,ireq_ab,mpierr)
+         endif
+
+         if(nr>0) then
+             call wy_gen(nr,nb2,w_new,hv_new,tau_new,work,nb)
+	     call wy_left(nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
+         endif
+
+         ! Use new HH vector for the next block
+	 hv(:,:) = hv_new(:,:)
+         tau = tau_new
+
+     enddo
+
+   enddo
+
+   ! Finish the last outstanding requests
+   call mpi_wait(ireq_ab,mpi_status,mpierr)
+   call mpi_wait(ireq_hv,mpi_status,mpierr)
+   allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2))
+   call mpi_waitall(nblocks2,ireq_ab2,mpi_statuses,mpierr)
+   deallocate(mpi_statuses)
+
+   call mpi_barrier(mpi_comm,mpierr)
+
+   deallocate(block_limits)
+   deallocate(block_limits2)
+   deallocate(ireq_ab2)
+
+end subroutine
+
+subroutine wy_gen(n, nb, W, Y, tau, mem, lda)
+
+    integer, intent(in) :: n		!length of householder-vectors
+    integer, intent(in) :: nb		!number of householder-vectors
+    integer, intent(in) :: lda		!leading dimension of Y and W
+    real*8, intent(in) :: Y(lda,nb)	!matrix containing nb householder-vectors of length b
+    real*8, intent(in) :: tau(nb)	!tau values
+    real*8, intent(out) :: W(lda,nb)	!output matrix W
+    real*8, intent(in) :: mem(nb)	!memory for a temporary matrix of size nb
+
+    integer i
+
+    W(1:n,1) = tau(1)*Y(1:n,1)
+    do i=2,nb
+        W(1:n,i) = tau(i)*Y(1:n,i)
+        call DGEMV('T',n,i-1,1.d0,Y,lda,W(1,i),1,0.d0,mem,1)
+	call DGEMV('N',n,i-1,-1.d0,W,lda,mem,1,1.d0,W(1,i),1)
+    enddo
+
+end subroutine
+subroutine wy_left(n, m, nb, A, lda, W, Y, mem, lda2)
+
+    integer, intent(in) :: n		!width of the matrix A
+    integer, intent(in) :: m		!length of matrix W and Y
+    integer, intent(in) :: nb		!width of matrix W and Y
+    integer, intent(in) :: lda		!leading dimension of A
+    integer, intent(in) :: lda2		!leading dimension of W and Y
+    real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
+    real*8, intent(in) :: W(m,nb)	!blocked transformation matrix W
+    real*8, intent(in) :: Y(m,nb)	!blocked transformation matrix Y
+    real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
+
+    call DGEMM('T', 'N', nb, n, m, 1.d0, W, lda2, A, lda, 0.d0, mem, nb)
+    call DGEMM('N', 'N', m, n, nb, -1.d0, Y, lda2, mem, nb, 1.d0, A, lda)
+
+end subroutine
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine wy_right(n, m, nb, A, lda, W, Y, mem, lda2)
+
+    integer, intent(in) :: n		!height of the matrix A
+    integer, intent(in) :: m		!length of matrix W and Y
+    integer, intent(in) :: nb		!width of matrix W and Y
+    integer, intent(in) :: lda		!leading dimension of A
+    integer, intent(in) :: lda2		!leading dimension of W and Y
+    real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
+    real*8, intent(in) :: W(m,nb)	!blocked transformation matrix W
+    real*8, intent(in) :: Y(m,nb)	!blocked transformation matrix Y
+    real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
+
+    call DGEMM('N', 'N', n, nb, m, 1.d0, A, lda, W, lda2, 0.d0, mem, n)
+    call DGEMM('N', 'T', n, m, nb, -1.d0, mem, n, Y, lda2, 1.d0, A, lda)
+
+end subroutine
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine wy_symm(n, nb, A, lda, W, Y, mem, mem2, lda2)
+
+    integer, intent(in) :: n		!width/heigth of the matrix A; length of matrix W and Y
+    integer, intent(in) :: nb		!width of matrix W and Y
+    integer, intent(in) :: lda		!leading dimension of A
+    integer, intent(in) :: lda2		!leading dimension of W and Y
+    real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
+    real*8, intent(in) :: W(n,nb)	!blocked transformation matrix W
+    real*8, intent(in) :: Y(n,nb)	!blocked transformation matrix Y
+    real*8 :: mem(n,nb)			!memory for a temporary matrix of size n x nb
+    real*8 :: mem2(nb,nb)		!memory for a temporary matrix of size nb x nb
+
+    call DSYMM('L', 'L', n, nb, 1.d0, A, lda, W, lda2, 0.d0, mem, n)
+    call DGEMM('T', 'N', nb, nb, n, 1.d0, mem, n, W, lda2, 0.d0, mem2, nb)
+    call DGEMM('N', 'N', n, nb, nb, -0.5d0, Y, lda2, mem2, nb, 1.d0, mem, n)
+    call DSYR2K('L', 'N', n, nb, -1.d0, Y, lda2, mem, n, 1.d0, A, lda)
+
+end subroutine
+#endif
+
 
 end module ELPA2
