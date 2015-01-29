@@ -91,30 +91,26 @@ host_triplet = @host@
 @HAVE_DETAILED_TIMINGS_TRUE@                                src/ftimings/virtual_memory.c \
 @HAVE_DETAILED_TIMINGS_TRUE@                                src/ftimings/papi.c
 
-@WITH_QR_TRUE@am__append_2 = src/elpa_qr/qr_utils.f90 \
-@WITH_QR_TRUE@                               src/elpa_qr/elpa_qrkernels.f90 \
-@WITH_QR_TRUE@                               src/elpa_qr/elpa_pdlarfb.f90 \
-@WITH_QR_TRUE@                               src/elpa_qr/elpa_pdgeqrf.f90
-
-@WITH_REAL_GENERIC_KERNEL_TRUE@am__append_3 = src/elpa2_kernels/elpa2_kernels_real.f90
-@WITH_COMPLEX_GENERIC_KERNEL_TRUE@am__append_4 = src/elpa2_kernels/elpa2_kernels_complex.f90
-@WITH_REAL_GENERIC_SIMPLE_KERNEL_TRUE@am__append_5 = src/elpa2_kernels/elpa2_kernels_real_simple.f90
-@WITH_COMPLEX_GENERIC_SIMPLE_KERNEL_TRUE@am__append_6 = src/elpa2_kernels/elpa2_kernels_complex_simple.f90
-@WITH_REAL_BGP_KERNEL_TRUE@am__append_7 = src/elpa2_kernels/elpa2_kernels_real_bgp.f90
-@WITH_REAL_BGQ_KERNEL_TRUE@am__append_8 = src/elpa2_kernels/elpa2_kernels_real_bgq.f90
-@WITH_REAL_SSE_KERNEL_TRUE@am__append_9 = src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
-@WITH_COMPLEX_SSE_KERNEL_TRUE@@WITH_REAL_SSE_KERNEL_FALSE@am__append_10 = src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
-@WITH_REAL_AVX_BLOCK2_KERNEL_TRUE@am__append_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
-@WITH_REAL_AVX_BLOCK4_KERNEL_TRUE@am__append_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
-@WITH_REAL_AVX_BLOCK6_KERNEL_TRUE@am__append_13 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
-@WITH_COMPLEX_AVX_BLOCK1_KERNEL_TRUE@am__append_14 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
-@WITH_COMPLEX_AVX_BLOCK2_KERNEL_TRUE@am__append_15 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
+@WITH_REAL_GENERIC_KERNEL_TRUE@am__append_2 = src/elpa2_kernels/elpa2_kernels_real.f90
+@WITH_COMPLEX_GENERIC_KERNEL_TRUE@am__append_3 = src/elpa2_kernels/elpa2_kernels_complex.f90
+@WITH_REAL_GENERIC_SIMPLE_KERNEL_TRUE@am__append_4 = src/elpa2_kernels/elpa2_kernels_real_simple.f90
+@WITH_COMPLEX_GENERIC_SIMPLE_KERNEL_TRUE@am__append_5 = src/elpa2_kernels/elpa2_kernels_complex_simple.f90
+@WITH_REAL_BGP_KERNEL_TRUE@am__append_6 = src/elpa2_kernels/elpa2_kernels_real_bgp.f90
+@WITH_REAL_BGQ_KERNEL_TRUE@am__append_7 = src/elpa2_kernels/elpa2_kernels_real_bgq.f90
+@WITH_REAL_SSE_KERNEL_TRUE@am__append_8 = src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+@WITH_COMPLEX_SSE_KERNEL_TRUE@@WITH_REAL_SSE_KERNEL_FALSE@am__append_9 = src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+@WITH_REAL_AVX_BLOCK2_KERNEL_TRUE@am__append_10 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+@WITH_REAL_AVX_BLOCK4_KERNEL_TRUE@am__append_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
+@WITH_REAL_AVX_BLOCK6_KERNEL_TRUE@am__append_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
+@WITH_COMPLEX_AVX_BLOCK1_KERNEL_TRUE@am__append_13 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+@WITH_COMPLEX_AVX_BLOCK2_KERNEL_TRUE@am__append_14 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
 bin_PROGRAMS = elpa1_test_real@SUFFIX@$(EXEEXT) \
 	elpa1_test_complex@SUFFIX@$(EXEEXT) \
 	elpa2_test_real@SUFFIX@$(EXEEXT) \
 	elpa2_test_complex@SUFFIX@$(EXEEXT) \
 	elpa2_print_kernels@SUFFIX@$(EXEEXT)
 noinst_PROGRAMS = elpa2_test_real_default_kernel@SUFFIX@$(EXEEXT) \
+	elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@$(EXEEXT) \
 	elpa2_test_complex_default_kernel@SUFFIX@$(EXEEXT) \
 	elpa2_test_real_choose_kernel_with_api@SUFFIX@$(EXEEXT) \
 	elpa2_test_complex_choose_kernel_with_api@SUFFIX@$(EXEEXT)
@@ -175,14 +171,13 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libelpa@SUFFIX@_la_LIBADD =
 am__libelpa@SUFFIX@_la_SOURCES_DIST = src/elpa1.F90 src/elpa2.F90 \
+	src/elpa_qr/qr_utils.f90 src/elpa_qr/elpa_qrkernels.f90 \
+	src/elpa_qr/elpa_pdlarfb.f90 src/elpa_qr/elpa_pdgeqrf.f90 \
 	src/timer.F90 src/ftimings/ftimings.F90 \
 	src/ftimings/ftimings_type.F90 src/ftimings/ftimings_value.F90 \
 	src/ftimings/highwater_mark.c src/ftimings/resident_set_size.c \
 	src/ftimings/time.c src/ftimings/virtual_memory.c \
-	src/ftimings/papi.c src/elpa_qr/qr_utils.f90 \
-	src/elpa_qr/elpa_qrkernels.f90 src/elpa_qr/elpa_pdlarfb.f90 \
-	src/elpa_qr/elpa_pdgeqrf.f90 \
-	src/elpa2_kernels/elpa2_kernels_real.f90 \
+	src/ftimings/papi.c src/elpa2_kernels/elpa2_kernels_real.f90 \
 	src/elpa2_kernels/elpa2_kernels_complex.f90 \
 	src/elpa2_kernels/elpa2_kernels_real_simple.f90 \
 	src/elpa2_kernels/elpa2_kernels_complex_simple.f90 \
@@ -204,37 +199,35 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @HAVE_DETAILED_TIMINGS_TRUE@	src/ftimings/time.lo \
 @HAVE_DETAILED_TIMINGS_TRUE@	src/ftimings/virtual_memory.lo \
 @HAVE_DETAILED_TIMINGS_TRUE@	src/ftimings/papi.lo
-@WITH_QR_TRUE@am__objects_2 = src/elpa_qr/qr_utils.lo \
-@WITH_QR_TRUE@	src/elpa_qr/elpa_qrkernels.lo \
-@WITH_QR_TRUE@	src/elpa_qr/elpa_pdlarfb.lo \
-@WITH_QR_TRUE@	src/elpa_qr/elpa_pdgeqrf.lo
-@WITH_REAL_GENERIC_KERNEL_TRUE@am__objects_3 = src/elpa2_kernels/elpa2_kernels_real.lo
-@WITH_COMPLEX_GENERIC_KERNEL_TRUE@am__objects_4 = src/elpa2_kernels/elpa2_kernels_complex.lo
-@WITH_REAL_GENERIC_SIMPLE_KERNEL_TRUE@am__objects_5 = src/elpa2_kernels/elpa2_kernels_real_simple.lo
-@WITH_COMPLEX_GENERIC_SIMPLE_KERNEL_TRUE@am__objects_6 = src/elpa2_kernels/elpa2_kernels_complex_simple.lo
-@WITH_REAL_BGP_KERNEL_TRUE@am__objects_7 = src/elpa2_kernels/elpa2_kernels_real_bgp.lo
-@WITH_REAL_BGQ_KERNEL_TRUE@am__objects_8 = src/elpa2_kernels/elpa2_kernels_real_bgq.lo
-@WITH_REAL_SSE_KERNEL_TRUE@am__objects_9 = src/elpa2_kernels/elpa2_kernels_asm_x86_64.lo
-@WITH_COMPLEX_SSE_KERNEL_TRUE@@WITH_REAL_SSE_KERNEL_FALSE@am__objects_10 = src/elpa2_kernels/elpa2_kernels_asm_x86_64.lo
-@WITH_REAL_AVX_BLOCK2_KERNEL_TRUE@am__objects_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
-@WITH_REAL_AVX_BLOCK4_KERNEL_TRUE@am__objects_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo
-@WITH_REAL_AVX_BLOCK6_KERNEL_TRUE@am__objects_13 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo
-@WITH_COMPLEX_AVX_BLOCK1_KERNEL_TRUE@am__objects_14 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.lo
-@WITH_COMPLEX_AVX_BLOCK2_KERNEL_TRUE@am__objects_15 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo
+@WITH_REAL_GENERIC_KERNEL_TRUE@am__objects_2 = src/elpa2_kernels/elpa2_kernels_real.lo
+@WITH_COMPLEX_GENERIC_KERNEL_TRUE@am__objects_3 = src/elpa2_kernels/elpa2_kernels_complex.lo
+@WITH_REAL_GENERIC_SIMPLE_KERNEL_TRUE@am__objects_4 = src/elpa2_kernels/elpa2_kernels_real_simple.lo
+@WITH_COMPLEX_GENERIC_SIMPLE_KERNEL_TRUE@am__objects_5 = src/elpa2_kernels/elpa2_kernels_complex_simple.lo
+@WITH_REAL_BGP_KERNEL_TRUE@am__objects_6 = src/elpa2_kernels/elpa2_kernels_real_bgp.lo
+@WITH_REAL_BGQ_KERNEL_TRUE@am__objects_7 = src/elpa2_kernels/elpa2_kernels_real_bgq.lo
+@WITH_REAL_SSE_KERNEL_TRUE@am__objects_8 = src/elpa2_kernels/elpa2_kernels_asm_x86_64.lo
+@WITH_COMPLEX_SSE_KERNEL_TRUE@@WITH_REAL_SSE_KERNEL_FALSE@am__objects_9 = src/elpa2_kernels/elpa2_kernels_asm_x86_64.lo
+@WITH_REAL_AVX_BLOCK2_KERNEL_TRUE@am__objects_10 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.lo
+@WITH_REAL_AVX_BLOCK4_KERNEL_TRUE@am__objects_11 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.lo
+@WITH_REAL_AVX_BLOCK6_KERNEL_TRUE@am__objects_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo
+@WITH_COMPLEX_AVX_BLOCK1_KERNEL_TRUE@am__objects_13 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.lo
+@WITH_COMPLEX_AVX_BLOCK2_KERNEL_TRUE@am__objects_14 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo
 am_libelpa@SUFFIX@_la_OBJECTS = src/elpa1.lo src/elpa2.lo \
+	src/elpa_qr/qr_utils.lo src/elpa_qr/elpa_qrkernels.lo \
+	src/elpa_qr/elpa_pdlarfb.lo src/elpa_qr/elpa_pdgeqrf.lo \
 	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
 	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
 	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
-	$(am__objects_13) $(am__objects_14) $(am__objects_15)
+	$(am__objects_13) $(am__objects_14)
 libelpa@SUFFIX@_la_OBJECTS = $(am_libelpa@SUFFIX@_la_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
 am__elpa1_test_complex@SUFFIX@_SOURCES_DIST = test/test_complex.F90 \
 	test/util.F90 test/redir.c test/redirect.F90
-@HAVE_REDIRECT_TRUE@am__objects_16 = test/redir.$(OBJEXT) \
+@HAVE_REDIRECT_TRUE@am__objects_15 = test/redir.$(OBJEXT) \
 @HAVE_REDIRECT_TRUE@	test/redirect.$(OBJEXT)
 am_elpa1_test_complex@SUFFIX@_OBJECTS = test/test_complex.$(OBJEXT) \
-	test/util.$(OBJEXT) $(am__objects_16)
+	test/util.$(OBJEXT) $(am__objects_15)
 elpa1_test_complex@SUFFIX@_OBJECTS =  \
 	$(am_elpa1_test_complex@SUFFIX@_OBJECTS)
 elpa1_test_complex@SUFFIX@_DEPENDENCIES = $(build_lib)
@@ -245,7 +238,7 @@ am__v_lt_1 =
 am__elpa1_test_real@SUFFIX@_SOURCES_DIST = test/test_real.F90 \
 	test/util.F90 test/redir.c test/redirect.F90
 am_elpa1_test_real@SUFFIX@_OBJECTS = test/test_real.$(OBJEXT) \
-	test/util.$(OBJEXT) $(am__objects_16)
+	test/util.$(OBJEXT) $(am__objects_15)
 elpa1_test_real@SUFFIX@_OBJECTS =  \
 	$(am_elpa1_test_real@SUFFIX@_OBJECTS)
 elpa1_test_real@SUFFIX@_DEPENDENCIES = $(build_lib)
@@ -254,14 +247,14 @@ am__elpa2_print_kernels@SUFFIX@_SOURCES_DIST =  \
 	test/redir.c test/redirect.F90
 am_elpa2_print_kernels@SUFFIX@_OBJECTS =  \
 	src/print_available_elpa2_kernels.$(OBJEXT) \
-	test/util.$(OBJEXT) $(am__objects_16)
+	test/util.$(OBJEXT) $(am__objects_15)
 elpa2_print_kernels@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_print_kernels@SUFFIX@_OBJECTS)
 elpa2_print_kernels@SUFFIX@_DEPENDENCIES = $(build_lib)
 am__elpa2_test_complex@SUFFIX@_SOURCES_DIST = test/test_complex2.F90 \
 	test/util.F90 test/redir.c test/redirect.F90
 am_elpa2_test_complex@SUFFIX@_OBJECTS = test/test_complex2.$(OBJEXT) \
-	test/util.$(OBJEXT) $(am__objects_16)
+	test/util.$(OBJEXT) $(am__objects_15)
 elpa2_test_complex@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_complex@SUFFIX@_OBJECTS)
 elpa2_test_complex@SUFFIX@_DEPENDENCIES = $(build_lib)
@@ -270,7 +263,7 @@ am__elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES_DIST =  \
 	test/redir.c test/redirect.F90
 am_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_OBJECTS =  \
 	test/test_complex2_choose_kernel_with_api.$(OBJEXT) \
-	test/util.$(OBJEXT) $(am__objects_16)
+	test/util.$(OBJEXT) $(am__objects_15)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_OBJECTS = $(am_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_OBJECTS)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_DEPENDENCIES =  \
 	$(build_lib)
@@ -279,14 +272,14 @@ am__elpa2_test_complex_default_kernel@SUFFIX@_SOURCES_DIST =  \
 	test/redir.c test/redirect.F90
 am_elpa2_test_complex_default_kernel@SUFFIX@_OBJECTS =  \
 	test/test_complex2_default_kernel.$(OBJEXT) \
-	test/util.$(OBJEXT) $(am__objects_16)
+	test/util.$(OBJEXT) $(am__objects_15)
 elpa2_test_complex_default_kernel@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_complex_default_kernel@SUFFIX@_OBJECTS)
 elpa2_test_complex_default_kernel@SUFFIX@_DEPENDENCIES = $(build_lib)
 am__elpa2_test_real@SUFFIX@_SOURCES_DIST = test/test_real2.F90 \
 	test/util.F90 test/redir.c test/redirect.F90
 am_elpa2_test_real@SUFFIX@_OBJECTS = test/test_real2.$(OBJEXT) \
-	test/util.$(OBJEXT) $(am__objects_16)
+	test/util.$(OBJEXT) $(am__objects_15)
 elpa2_test_real@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_real@SUFFIX@_OBJECTS)
 elpa2_test_real@SUFFIX@_DEPENDENCIES = $(build_lib)
@@ -295,7 +288,7 @@ am__elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES_DIST =  \
 	test/redir.c test/redirect.F90
 am_elpa2_test_real_choose_kernel_with_api@SUFFIX@_OBJECTS =  \
 	test/test_real2_choose_kernel_with_api.$(OBJEXT) \
-	test/util.$(OBJEXT) $(am__objects_16)
+	test/util.$(OBJEXT) $(am__objects_15)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_real_choose_kernel_with_api@SUFFIX@_OBJECTS)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_DEPENDENCIES =  \
@@ -305,10 +298,19 @@ am__elpa2_test_real_default_kernel@SUFFIX@_SOURCES_DIST =  \
 	test/redirect.F90
 am_elpa2_test_real_default_kernel@SUFFIX@_OBJECTS =  \
 	test/test_real2_default_kernel.$(OBJEXT) test/util.$(OBJEXT) \
-	$(am__objects_16)
+	$(am__objects_15)
 elpa2_test_real_default_kernel@SUFFIX@_OBJECTS =  \
 	$(am_elpa2_test_real_default_kernel@SUFFIX@_OBJECTS)
 elpa2_test_real_default_kernel@SUFFIX@_DEPENDENCIES = $(build_lib)
+am__elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES_DIST =  \
+	test/test_real2_default_kernel_qr_decomposition.F90 \
+	test/util.F90 test/redir.c test/redirect.F90
+am_elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_OBJECTS =  \
+	test/test_real2_default_kernel_qr_decomposition.$(OBJEXT) \
+	test/util.$(OBJEXT) $(am__objects_15)
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_OBJECTS = $(am_elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_OBJECTS)
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_DEPENDENCIES =  \
+	$(build_lib)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -403,7 +405,8 @@ SOURCES = $(libelpa@SUFFIX@_la_SOURCES) \
 	$(elpa2_test_complex_default_kernel@SUFFIX@_SOURCES) \
 	$(elpa2_test_real@SUFFIX@_SOURCES) \
 	$(elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES) \
-	$(elpa2_test_real_default_kernel@SUFFIX@_SOURCES)
+	$(elpa2_test_real_default_kernel@SUFFIX@_SOURCES) \
+	$(elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES)
 DIST_SOURCES = $(am__libelpa@SUFFIX@_la_SOURCES_DIST) \
 	$(am__elpa1_test_complex@SUFFIX@_SOURCES_DIST) \
 	$(am__elpa1_test_real@SUFFIX@_SOURCES_DIST) \
@@ -413,7 +416,8 @@ DIST_SOURCES = $(am__libelpa@SUFFIX@_la_SOURCES_DIST) \
 	$(am__elpa2_test_complex_default_kernel@SUFFIX@_SOURCES_DIST) \
 	$(am__elpa2_test_real@SUFFIX@_SOURCES_DIST) \
 	$(am__elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES_DIST) \
-	$(am__elpa2_test_real_default_kernel@SUFFIX@_SOURCES_DIST)
+	$(am__elpa2_test_real_default_kernel@SUFFIX@_SOURCES_DIST) \
+	$(am__elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -602,6 +606,7 @@ RECHECK_LOGS = $(TEST_LOGS)
 am__EXEEXT_1 = elpa1_test_real.sh elpa2_test_real.sh \
 	elpa2_test_real_default_kernel.sh elpa1_test_complex.sh \
 	elpa2_test_complex.sh elpa2_test_complex_default_kernel.sh \
+	elpa2_test_complex_default_kernel_qr_decomposition.sh \
 	elpa2_test_real_choose_kernel_with_api.sh \
 	elpa2_test_complex_choose_kernel_with_api.sh \
 	elpa2_print_kernels@SUFFIX@$(EXEEXT)
@@ -793,11 +798,13 @@ AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 libelpa@SUFFIX@_la_SOURCES = src/elpa1.F90 src/elpa2.F90 \
+	src/elpa_qr/qr_utils.f90 src/elpa_qr/elpa_qrkernels.f90 \
+	src/elpa_qr/elpa_pdlarfb.f90 src/elpa_qr/elpa_pdgeqrf.f90 \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
 	$(am__append_7) $(am__append_8) $(am__append_9) \
 	$(am__append_10) $(am__append_11) $(am__append_12) \
-	$(am__append_13) $(am__append_14) $(am__append_15)
+	$(am__append_13) $(am__append_14)
 
 #if WITH_AVX_SANDYBRIDGE
 #  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
@@ -820,6 +827,7 @@ dist_files_DATA = \
   test/test_complex_gen.F90 \
   test/test_real2.F90 \
   test/test_real2_default_kernel.F90 \
+  test/test_real2_default_kernel_qr_decomposition.F90 \
   test/test_real2_choose_kernel_with_api.F90 \
   src/print_available_elpa2_kernels.F90 \
   test/test_real.F90 \
@@ -839,6 +847,8 @@ elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90 test/util.F90 $(redirect_s
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90 test/util.F90 $(redirect_sources)
 elpa2_test_real_default_kernel@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES = test/test_real2_default_kernel_qr_decomposition.F90 test/util.F90 $(redirect_sources)
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_real2_choose_kernel_with_api.F90 test/util.F90 $(redirect_sources)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_complex@SUFFIX@_SOURCES = test/test_complex.F90 test/util.F90 $(redirect_sources)
@@ -858,6 +868,7 @@ check_SCRIPTS = \
   elpa1_test_complex.sh \
   elpa2_test_complex.sh \
   elpa2_test_complex_default_kernel.sh \
+  elpa2_test_complex_default_kernel_qr_decomposition.sh \
   elpa2_test_real_choose_kernel_with_api.sh \
   elpa2_test_complex_choose_kernel_with_api.sh \
   elpa2_print_kernels@SUFFIX@
@@ -867,6 +878,7 @@ CLEANFILES = \
   elpa1_test_complex.sh \
   elpa2_test_real.sh \
   elpa2_test_real_default_kernel.sh \
+  elpa2_test_real_default_kernel_qr_decomposition.sh \
   elpa2_test_complex.sh \
   elpa2_test_complex_default_kernel.sh \
   elpa2_test_real_choose_kernel_with_api.sh \
@@ -974,6 +986,20 @@ src/$(DEPDIR)/$(am__dirstamp):
 	@: > src/$(DEPDIR)/$(am__dirstamp)
 src/elpa1.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/elpa2.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/elpa_qr/$(am__dirstamp):
+	@$(MKDIR_P) src/elpa_qr
+	@: > src/elpa_qr/$(am__dirstamp)
+src/elpa_qr/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/elpa_qr/$(DEPDIR)
+	@: > src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
+src/elpa_qr/qr_utils.lo: src/elpa_qr/$(am__dirstamp) \
+	src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
+src/elpa_qr/elpa_qrkernels.lo: src/elpa_qr/$(am__dirstamp) \
+	src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
+src/elpa_qr/elpa_pdlarfb.lo: src/elpa_qr/$(am__dirstamp) \
+	src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
+src/elpa_qr/elpa_pdgeqrf.lo: src/elpa_qr/$(am__dirstamp) \
+	src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
 src/timer.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/ftimings/$(am__dirstamp):
 	@$(MKDIR_P) src/ftimings
@@ -997,20 +1023,6 @@ src/ftimings/virtual_memory.lo: src/ftimings/$(am__dirstamp) \
 	src/ftimings/$(DEPDIR)/$(am__dirstamp)
 src/ftimings/papi.lo: src/ftimings/$(am__dirstamp) \
 	src/ftimings/$(DEPDIR)/$(am__dirstamp)
-src/elpa_qr/$(am__dirstamp):
-	@$(MKDIR_P) src/elpa_qr
-	@: > src/elpa_qr/$(am__dirstamp)
-src/elpa_qr/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/elpa_qr/$(DEPDIR)
-	@: > src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
-src/elpa_qr/qr_utils.lo: src/elpa_qr/$(am__dirstamp) \
-	src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
-src/elpa_qr/elpa_qrkernels.lo: src/elpa_qr/$(am__dirstamp) \
-	src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
-src/elpa_qr/elpa_pdlarfb.lo: src/elpa_qr/$(am__dirstamp) \
-	src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
-src/elpa_qr/elpa_pdgeqrf.lo: src/elpa_qr/$(am__dirstamp) \
-	src/elpa_qr/$(DEPDIR)/$(am__dirstamp)
 src/elpa2_kernels/$(am__dirstamp):
 	@$(MKDIR_P) src/elpa2_kernels
 	@: > src/elpa2_kernels/$(am__dirstamp)
@@ -1180,6 +1192,12 @@ test/test_real2_default_kernel.$(OBJEXT): test/$(am__dirstamp) \
 elpa2_test_real_default_kernel@SUFFIX@$(EXEEXT): $(elpa2_test_real_default_kernel@SUFFIX@_OBJECTS) $(elpa2_test_real_default_kernel@SUFFIX@_DEPENDENCIES) $(EXTRA_elpa2_test_real_default_kernel@SUFFIX@_DEPENDENCIES) 
 	@rm -f elpa2_test_real_default_kernel@SUFFIX@$(EXEEXT)
 	$(AM_V_FCLD)$(FCLINK) $(elpa2_test_real_default_kernel@SUFFIX@_OBJECTS) $(elpa2_test_real_default_kernel@SUFFIX@_LDADD) $(LIBS)
+test/test_real2_default_kernel_qr_decomposition.$(OBJEXT):  \
+	test/$(am__dirstamp) test/$(DEPDIR)/$(am__dirstamp)
+
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@$(EXEEXT): $(elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_OBJECTS) $(elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_DEPENDENCIES) $(EXTRA_elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_DEPENDENCIES) 
+	@rm -f elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@$(EXEEXT)
+	$(AM_V_FCLD)$(FCLINK) $(elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_OBJECTS) $(elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -1625,6 +1643,13 @@ elpa2_test_complex_default_kernel.sh.log: elpa2_test_complex_default_kernel.sh
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elpa2_test_complex_default_kernel_qr_decomposition.sh.log: elpa2_test_complex_default_kernel_qr_decomposition.sh
+	@p='elpa2_test_complex_default_kernel_qr_decomposition.sh'; \
+	b='elpa2_test_complex_default_kernel_qr_decomposition.sh'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 elpa2_test_real_choose_kernel_with_api.sh.log: elpa2_test_real_choose_kernel_with_api.sh
 	@p='elpa2_test_real_choose_kernel_with_api.sh'; \
 	b='elpa2_test_real_choose_kernel_with_api.sh'; \
@@ -1995,6 +2020,10 @@ elpa2_test_real.sh:
 elpa2_test_real_default_kernel.sh:
 	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel.sh
 	chmod +x elpa2_test_real_default_kernel.sh
+
+elpa2_test_real_default_kernel_qr_decomposition.sh:
+	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel_qr_decomposition.sh
+	chmod +x elpa2_test_real_default_kernel_qr_decomposition.sh
 
 elpa2_test_real_choose_kernel_with_api.sh:
 	echo 'mpiexec -n 2 ./elpa2_test_real_choose_kernel_with_api@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_choose_kernel_with_api.sh

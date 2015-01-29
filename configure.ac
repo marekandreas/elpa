@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 
-AC_INIT([elpa],[2014.06.004], [elpa-library@rzg.mpg.de])
+AC_INIT([elpa],[2015.02.001], [elpa-library@rzg.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
@@ -34,7 +34,7 @@ rm -rf config.h config-f90.h
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [1:0:0])
+AC_SUBST([ELPA_SO_VERSION], [2:0:0])
 #
 
 
@@ -252,18 +252,6 @@ AC_ARG_WITH([openmp],
         # kind of MPI library has to be used (thread-safe or not)
         FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 	LDFLAGS="$OPENMP_FCFLAGS $LDFLAGS"
-  fi
-
-AC_MSG_CHECKING(whether QR-decomposition usage is specified)
-AC_ARG_WITH([qr],
-                AS_HELP_STRING([--with-qr],
-                               [use QR decomposition, default no.]),
-              [with_qr=yes],
-              [with_qr=no])
-  AC_MSG_RESULT([${with_qr}])
-  AM_CONDITIONAL([WITH_QR],[test x"$with_qr" = x"yes"])
-  if test "x${with_qr}" = xyes; then
-        AC_DEFINE([WITH_QR], [1], [use QR decomposition])
   fi
 
 save_FCFLAGS=$FCFLAGS

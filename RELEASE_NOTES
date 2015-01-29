@@ -1,4 +1,4 @@
-This file contains the release notes for the ELPA 2014.06.001 version
+This file contains the release notes for the ELPA 2015.02.001 version
 
 
 
@@ -10,56 +10,31 @@ a)
 Most importantly, the ABI of the ELPA libray changed!
 A rebuild/relink of the user code using the ELPA library is mandatory!
 
-Furthermore, the name of the installed library has changed, in order to allow the
- possiblity to have several versions of ELPA installed with 
-different ABIs. In order to have an unique identifier, the library will from 
-now on be called "libelpa.so.[versioning]" (for single threaded version)
- and "libelpa_openmp.so.[versioning]" (for the hybrid MPI/OpenMP version). 
-"Versioning", is an implementation (i.e. operating system) dependent, which
-uniquely defines the library version. In  this release this is is most 
-propably "elpa{_openmp}.so.1.0.0" 
-
 b)
 
-With this release (and newer) it is not mandatory anymore to specify the real
-and complex kernels at build-time! Instead the choice of kernel is now a
-run-time option
+The only major change (which results in point a) is in the ELPA-2
+part of the library for real matrices:
 
-The kernels can either be choosen by environment variables "REAL_ELPA_KERNEL" 
-and "COMPLEX_ELPA_KERNEL", or in the code with an additional argument in
-the call to the library (see the examples in ./test for more details)
+the fully blocked QR decomposition has been moved from the development part
+to the release!
 
-It is still possible to build ELPA with a specific real and complex kernel, if 
-one wants to obtain the old behaviour (see configure --help for the exact 
-options)
+It is now possible to use this QR decomposition by either setting an
+environment variable "ELPA_QR_DECOMPOSITION" to "yes", or to call the
+"solve_evp_real_2stage" solver with the additional (optional) argument
+"useQR=.true."
 
-c)
- 
-At build time, configure now expects variables "SCALAPACK_FCFLAGS" and 
-"SCLAPACK_LDFLAGS" to be set, which replace the previous "BLACS_FCFLAGS" and 
-"BLACS_LDFLAGS".
+Note, that the environment variable always takes precedence over the setting in
+the API call.
 
-d)
-
-Binaries names for the test programs have been renamed: instead of
-"test_real1" (for ELPA 1) and "test_real2" (for ELPA 2) and so forth, now
-the binary names are "elpa1_test_real" and "elpa2_test_real" ...
-
+Furthernote, that if neither the environment variable or the API keyword are not
+set, or set to "no" or ".false.", respectively, then no qr decomposition is used
+(i.e. the previous behaviour is maintained).
 
 Any incompatibles to previous version?
 ---------------------------------------
 
-As mentioned before, the ABI of ELPA has changed! It will be necessary 
-to rebuild the programs using ELPA, if this new version should be used. 
-Beware, using the new library with code which was build with an older version
+As mentioned before, the ABI of ELPA has changed! It will be necessary
+to rebuild the programs using ELPA, if this new version should be used.
+Beware, using the new library with code which was build with an older verion
 should not even run. If it does, the results will be wrong !
-
-Among others, the ELPA drivers are now functions, which return a logical 
-"success" value, which is false in case that an error occured. 
-Please, catch this error flag in your user code! See the the examples in the 
-subdirectoy "./test".
-
-
-
-
 

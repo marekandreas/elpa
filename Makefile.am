@@ -10,7 +10,10 @@ lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
 libelpa@SUFFIX@_la_SOURCES = src/elpa1.F90 src/elpa2.F90
-
+libelpa@SUFFIX@_la_SOURCES += src/elpa_qr/qr_utils.f90 \
+                               src/elpa_qr/elpa_qrkernels.f90 \
+                               src/elpa_qr/elpa_pdlarfb.f90 \
+                               src/elpa_qr/elpa_pdgeqrf.f90
 if HAVE_DETAILED_TIMINGS
   libelpa@SUFFIX@_la_SOURCES += src/timer.F90 \
                                 src/ftimings/ftimings.F90 \
@@ -21,13 +24,6 @@ if HAVE_DETAILED_TIMINGS
                                 src/ftimings/time.c \
                                 src/ftimings/virtual_memory.c \
                                 src/ftimings/papi.c
-endif
-
-if WITH_QR
- libelpa@SUFFIX@_la_SOURCES += src/elpa_qr/qr_utils.f90 \
-                               src/elpa_qr/elpa_qrkernels.f90 \
-                               src/elpa_qr/elpa_pdlarfb.f90 \
-                               src/elpa_qr/elpa_pdgeqrf.f90
 endif
 
 if WITH_REAL_GENERIC_KERNEL
@@ -103,6 +99,7 @@ dist_files_DATA = \
   test/test_complex_gen.F90 \
   test/test_real2.F90 \
   test/test_real2_default_kernel.F90 \
+  test/test_real2_default_kernel_qr_decomposition.F90 \
   test/test_real2_choose_kernel_with_api.F90 \
   src/print_available_elpa2_kernels.F90 \
   test/test_real.F90 \
@@ -124,6 +121,7 @@ bin_PROGRAMS = \
 
 noinst_PROGRAMS = \
   elpa2_test_real_default_kernel@SUFFIX@ \
+  elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@ \
   elpa2_test_complex_default_kernel@SUFFIX@ \
   elpa2_test_real_choose_kernel_with_api@SUFFIX@ \
   elpa2_test_complex_choose_kernel_with_api@SUFFIX@
@@ -146,6 +144,10 @@ elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90 test/util.F90 $(redirect_sources)
 
 elpa2_test_real_default_kernel@SUFFIX@_LDADD = $(build_lib)
+
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES = test/test_real2_default_kernel_qr_decomposition.F90 test/util.F90 $(redirect_sources)
+
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_LDADD = $(build_lib)
 
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_real2_choose_kernel_with_api.F90 test/util.F90 $(redirect_sources)
 
@@ -178,6 +180,7 @@ check_SCRIPTS = \
   elpa1_test_complex.sh \
   elpa2_test_complex.sh \
   elpa2_test_complex_default_kernel.sh \
+  elpa2_test_complex_default_kernel_qr_decomposition.sh \
   elpa2_test_real_choose_kernel_with_api.sh \
   elpa2_test_complex_choose_kernel_with_api.sh \
   elpa2_print_kernels@SUFFIX@
@@ -195,6 +198,10 @@ elpa2_test_real.sh:
 elpa2_test_real_default_kernel.sh:
 	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel.sh
 	chmod +x elpa2_test_real_default_kernel.sh
+
+elpa2_test_real_default_kernel_qr_decomposition.sh:
+	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel_qr_decomposition.sh
+	chmod +x elpa2_test_real_default_kernel_qr_decomposition.sh
 
 elpa2_test_real_choose_kernel_with_api.sh:
 	echo 'mpiexec -n 2 ./elpa2_test_real_choose_kernel_with_api@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_choose_kernel_with_api.sh
@@ -227,6 +234,7 @@ CLEANFILES = \
   elpa1_test_complex.sh \
   elpa2_test_real.sh \
   elpa2_test_real_default_kernel.sh \
+  elpa2_test_real_default_kernel_qr_decomposition.sh \
   elpa2_test_complex.sh \
   elpa2_test_complex_default_kernel.sh \
   elpa2_test_real_choose_kernel_with_api.sh \

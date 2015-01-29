@@ -68,9 +68,7 @@ module ELPA2
   use iso_fortran_env, only : error_unit
 #endif
 
-#ifdef WITH_QR
   use elpa_pdgeqrf
-#endif
 
   implicit none
 
@@ -241,15 +239,12 @@ module ELPA2
 #endif
                                                    /)
 
-#ifdef WITH_QR
   public :: band_band_real
   public :: divide_band
 
   integer, public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
                                                     ! 0 for unblocked
                                                     ! 1 for blocked (maxrank: nblk)
-
-#endif
 !-------------------------------------------------------------------------------
 
   ! The following array contains the Householder vectors of the
@@ -374,6 +369,29 @@ function check_allowed_complex_kernels(THIS_COMPLEX_ELPA_KERNEL) result(err)
   if (AVAILABLE_COMPLEX_ELPA_KERNELS(THIS_COMPLEX_ELPA_KERNEL) .ne. 1) err=.true.
 end function check_allowed_complex_kernels
 
+function qr_decomposition_via_environment_variable(useQR) result(isSet)
+  implicit none
+  logical, intent(out) :: useQR
+  logical              :: isSet
+  CHARACTER(len=255)   :: ELPA_QR_DECOMPOSITION
+
+  isSet = .false.
+
+#if defined(HAVE_ENVIRONMENT_CHECKING)
+  call get_environment_variable("ELPA_QR_DECOMPOSITION",ELPA_QR_DECOMPOSITION)
+#endif
+  if (trim(ELPA_QR_DECOMPOSITION) .eq. "yes") then
+    useQR = .true.
+    isSet = .true.
+  endif
+  if (trim(ELPA_QR_DECOMPOSITION) .eq. "no") then
+    useQR = .false.
+    isSet = .true.
+  endif
+
+end function qr_decomposition_via_environment_variable
+
+
 function real_kernel_via_environment_variable() result(kernel)
   implicit none
   integer :: kernel
@@ -415,9 +433,10 @@ function complex_kernel_via_environment_variable() result(kernel)
 
 end function complex_kernel_via_environment_variable
 
-function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
-                                 mpi_comm_rows, mpi_comm_cols,        &
-                                 mpi_comm_all, THIS_REAL_ELPA_KERNEL_API) result(success)
+function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
+                                 mpi_comm_rows, mpi_comm_cols,           &
+                                 mpi_comm_all, THIS_REAL_ELPA_KERNEL_API,&
+                                 useQR) result(success)
 
 !-------------------------------------------------------------------------------
 !  solve_evp_real_2stage: Solves the real eigenvalue problem with a 2 stage approach
@@ -457,6 +476,8 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
  use timings
 #endif
    implicit none
+   logical, intent(in), optional :: useQR
+   logical                       :: useQRActual, useQREnvironment
    integer, intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
    integer                       :: THIS_REAL_ELPA_KERNEL
 
@@ -470,6 +491,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    real*8                        :: ttt0, ttt1, ttts
    integer                       :: i
    logical                       :: success
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_real_2stage")
 #endif
@@ -482,6 +504,20 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
    success = .true.
+
+   useQRActual = .false.
+
+   ! set usage of qr decomposition via API call
+   if (present(useQR)) then
+     if (useQR) useQRActual = .true.
+     if (useQR .and. na .lt. 800) useQRActual = .false.
+     if (.not.(useQR)) useQRACtual = .false.
+   endif
+
+   ! overwrite this with environment variable settings
+   if (qr_decomposition_via_environment_variable(useQREnvironment)) then
+     useQRActual = useQREnvironment
+   endif
 
    if (present(THIS_REAL_ELPA_KERNEL_API)) then
      ! user defined kernel via the optional argument in the API call
@@ -528,7 +564,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    ttt0 = MPI_Wtime()
    ttts = ttt0
    call bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
-                     tmat, success)
+                     tmat, success, useQRActual)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -582,7 +618,8 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,   &
    ! Backtransform stage 2
 
    ttt0 = MPI_Wtime()
-   call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, &
+                                   mpi_comm_cols, useQRActual)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_band_to_full_real :',ttt1-ttt0
@@ -797,7 +834,7 @@ end function solve_evp_complex_2stage
 !-------------------------------------------------------------------------------
 
 subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
-                        tmat, success)
+                        tmat, success, useQR)
 
 !-------------------------------------------------------------------------------
 !  bandred_real: Reduces a distributed symmetric matrix to band form
@@ -846,17 +883,17 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 
    integer             :: pcol, prow
 
-#ifdef WITH_QR
    ! needed for blocked QR decomposition
    integer             :: PQRPARAM(11), work_size
    real*8              :: dwork_size(1)
    real*8, allocatable :: work_blocked(:), tauvector(:), blockheuristic(:)
-#endif
 
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
    logical, intent(out):: success
+
+   logical, intent(in) :: useQR
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("bandred_real")
@@ -886,25 +923,23 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    l_rows_tile = tile_size/np_rows ! local rows of a tile
    l_cols_tile = tile_size/np_cols ! local cols of a tile
 
-#ifdef WITH_QR
+   if (useQR) then
+     if (which_qr_decomposition == 1) then
+       call qr_pqrparam_init(pqrparam,    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
+       allocate(tauvector(na))
+       allocate(blockheuristic(nblk))
+       l_rows = local_index(na, my_prow, np_rows, nblk, -1)
+       allocate(vmr(max(l_rows,1),na))
 
-   if (which_qr_decomposition == 1) then
-     call qr_pqrparam_init(pqrparam,    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
-     allocate(tauvector(na))
-     allocate(blockheuristic(nblk))
-     l_rows = local_index(na, my_prow, np_rows, nblk, -1)
-     allocate(vmr(max(l_rows,1),na))
-
-     call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,1), nbw, dwork_size(1), -1, na, &
+       call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,1), nbw, dwork_size(1), -1, na, &
                              nbw, nblk, nblk, na, na, 1, 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols, blockheuristic)
-     work_size = dwork_size(1)
-     allocate(work_blocked(work_size))
+       work_size = dwork_size(1)
+       allocate(work_blocked(work_size))
 
-     work_blocked = 0.0d0
-     deallocate(vmr)
+       work_blocked = 0.0d0
+       deallocate(vmr)
+     endif
    endif
-#endif
-
 
    do istep = (na-1)/nbw, 1, -1
 
@@ -926,17 +961,18 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
      tmat(:,:,istep) = 0
 
      ! Reduce current block to lower triangular form
-#ifdef WITH_QR
-     if (which_qr_decomposition == 1) then
-       call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), &
-                               tmat(1,1,istep), nbw, work_blocked,       &
-                               work_size, na, n_cols, nblk, nblk,        &
-                               istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
-                               0, PQRPARAM, mpi_comm_rows, mpi_comm_cols,&
-                               blockheuristic)
+
+     if (useQR) then
+       if (which_qr_decomposition == 1) then
+         call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), &
+                                  tmat(1,1,istep), nbw, work_blocked,       &
+                                  work_size, na, n_cols, nblk, nblk,        &
+                                  istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
+                                  0, PQRPARAM, mpi_comm_rows, mpi_comm_cols,&
+                                  blockheuristic)
+       endif
      else
 
-#endif
        do lc = n_cols, 1, -1
 
          ncol = istep*nbw + lc ! absolute column number of householder vector
@@ -1043,10 +1079,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
            tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
          endif
        enddo
-
-#ifdef WITH_QR
      endif
-#endif
 
     ! Transpose vmr -> vmc (stored in umc, second half)
 
@@ -1136,12 +1169,12 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
   call timer%stop("bandred_real")
 #endif
 
-#ifdef WITH_QR
-  if (which_qr_decomposition == 1) then
-    deallocate(work_blocked)
-    deallocate(tauvector)
+  if (useQR) then
+    if (which_qr_decomposition == 1) then
+      deallocate(work_blocked)
+      deallocate(tauvector)
+    endif
   endif
-#endif
 
 end subroutine bandred_real
 
@@ -1181,7 +1214,8 @@ end subroutine symm_matrix_allreduce
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
+subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, &
+                                      mpi_comm_cols, useQR)
 
 
 !-------------------------------------------------------------------------------
@@ -1221,22 +1255,23 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 #endif
    implicit none
 
-   integer na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   real*8 a(lda,*), q(ldq,*), tmat(nbw, nbw, *)
+   integer              :: na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
+   real*8               :: a(lda,*), q(ldq,*), tmat(nbw, nbw, *)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
-   integer l_cols, l_rows, l_colh, n_cols
-   integer istep, lc, ncol, nrow, nb, ns
+   integer              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer              :: max_blocks_row, max_blocks_col, max_local_rows, &
+                           max_local_cols
+   integer              :: l_cols, l_rows, l_colh, n_cols
+   integer              :: istep, lc, ncol, nrow, nb, ns
 
-   real*8, allocatable:: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+   real*8, allocatable  :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
 
-   integer pcol, prow, i
+   integer              :: pcol, prow, i
 
-#ifdef WITH_QR
    real*8, allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
-   integer :: cwy_blocking, t_blocking, t_cols, t_rows
-#endif
+   integer              :: cwy_blocking, t_blocking, t_cols, t_rows
+   logical, intent(in)  :: useQR
+
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
@@ -1254,134 +1289,172 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 
    max_local_rows = max_blocks_row*nblk
    max_local_cols = max_blocks_col*nblk
-#ifdef WITH_QR
-   t_blocking = 2 ! number of matrices T (tmat) which are aggregated into a new (larger) T matrix (tmat_complete) and applied at once
-   cwy_blocking = t_blocking * nbw
 
-   allocate(tmp1(max_local_cols*cwy_blocking))
-   allocate(tmp2(max_local_cols*cwy_blocking))
-   allocate(hvb(max_local_rows*cwy_blocking))
-   allocate(hvm(max_local_rows,cwy_blocking))
-   allocate(tmat_complete(cwy_blocking,cwy_blocking))
-   allocate(t_tmp(cwy_blocking,nbw))
-   allocate(t_tmp2(cwy_blocking,nbw))
+   if (useQR) then
+     t_blocking = 2 ! number of matrices T (tmat) which are aggregated into a new (larger) T matrix (tmat_complete) and applied at once
+     cwy_blocking = t_blocking * nbw
 
-#else
-
-   allocate(tmp1(max_local_cols*nbw))
-   allocate(tmp2(max_local_cols*nbw))
-   allocate(hvb(max_local_rows*nbw))
-   allocate(hvm(max_local_rows,nbw))
-#endif
+     allocate(tmp1(max_local_cols*cwy_blocking))
+     allocate(tmp2(max_local_cols*cwy_blocking))
+     allocate(hvb(max_local_rows*cwy_blocking))
+     allocate(hvm(max_local_rows,cwy_blocking))
+     allocate(tmat_complete(cwy_blocking,cwy_blocking))
+     allocate(t_tmp(cwy_blocking,nbw))
+     allocate(t_tmp2(cwy_blocking,nbw))
+   else
+     allocate(tmp1(max_local_cols*nbw))
+     allocate(tmp2(max_local_cols*nbw))
+     allocate(hvb(max_local_rows*nbw))
+     allocate(hvm(max_local_rows,nbw))
+   endif
 
    hvm = 0   ! Must be set to 0 !!!
    hvb = 0   ! Safety only
 
    l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
-#ifdef WITH_QR
-   do istep=1,((na-1)/nbw-1)/t_blocking + 1
-     n_cols = MIN(na,istep*cwy_blocking+nbw) - (istep-1)*cwy_blocking - nbw ! Number of columns in current step
-#else
-   do istep=1,(na-1)/nbw
+   if (useQR) then
 
-     n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
-#endif
+     do istep=1,((na-1)/nbw-1)/t_blocking + 1
+       n_cols = MIN(na,istep*cwy_blocking+nbw) - (istep-1)*cwy_blocking - nbw ! Number of columns in current step
 
-     ! Broadcast all Householder vectors for current step compressed in hvb
+       ! Broadcast all Householder vectors for current step compressed in hvb
 
-     nb = 0
-     ns = 0
+       nb = 0
+       ns = 0
 
-     do lc = 1, n_cols
-#ifdef WITH_QR
-       ncol = (istep-1)*cwy_blocking + nbw + lc ! absolute column number of householder vector
-#else
-       ncol = istep*nbw + lc ! absolute column number of householder vector
-#endif
-       nrow = ncol - nbw ! absolute number of pivot row
+       do lc = 1, n_cols
+         ncol = (istep-1)*cwy_blocking + nbw + lc ! absolute column number of householder vector
+         nrow = ncol - nbw ! absolute number of pivot row
 
-       l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
-       l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
+         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+         l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
 
-       if (my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+         if (my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
 
-       nb = nb+l_rows
+         nb = nb+l_rows
 
-       if (lc==n_cols .or. mod(ncol,nblk)==0) then
-         call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol),mpi_comm_cols,mpierr)
-         ns = nb
-       endif
-     enddo
+         if (lc==n_cols .or. mod(ncol,nblk)==0) then
+           call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol),mpi_comm_cols,mpierr)
+           ns = nb
+         endif
+       enddo
 
-     ! Expand compressed Householder vectors into matrix hvm
+       ! Expand compressed Householder vectors into matrix hvm
 
-     nb = 0
-     do lc = 1, n_cols
-#ifdef WITH_QR
-       nrow = (istep-1)*cwy_blocking + lc ! absolute number of pivot row
-#else
-       nrow = (istep-1)*nbw+lc ! absolute number of pivot row
-#endif
-       l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+       nb = 0
+       do lc = 1, n_cols
+         nrow = (istep-1)*cwy_blocking + lc ! absolute number of pivot row
+         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
-       hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-       if (my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
+         hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
+         if (my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
 
-       nb = nb+l_rows
-     enddo
+         nb = nb+l_rows
+       enddo
 
-#ifdef WITH_QR
-     l_rows = local_index(MIN(na,(istep+1)*cwy_blocking), my_prow, np_rows, nblk, -1)
+       l_rows = local_index(MIN(na,(istep+1)*cwy_blocking), my_prow, np_rows, nblk, -1)
 
-     ! compute tmat2 out of tmat(:,:,)
-     tmat_complete = 0
-     do i = 1, t_blocking
-       t_cols = MIN(nbw, n_cols - (i-1)*nbw)
-       if (t_cols <= 0) exit
-       t_rows = (i - 1) * nbw
-       tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
-       if (i > 1) then
-         call dgemm('T', 'N', t_rows, t_cols, l_rows, 1.d0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
+       ! compute tmat2 out of tmat(:,:,)
+       tmat_complete = 0
+       do i = 1, t_blocking
+         t_cols = MIN(nbw, n_cols - (i-1)*nbw)
+         if (t_cols <= 0) exit
+         t_rows = (i - 1) * nbw
+         tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
+         if (i > 1) then
+           call dgemm('T', 'N', t_rows, t_cols, l_rows, 1.d0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                      max_local_rows, 0.d0, t_tmp, cwy_blocking)
-         call mpi_allreduce(t_tmp,t_tmp2,cwy_blocking*nbw,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-         call dtrmm('L','U','N','N',t_rows,t_cols,1.0d0,tmat_complete,cwy_blocking,t_tmp2,cwy_blocking)
-         call dtrmm('R','U','N','N',t_rows,t_cols,-1.0d0,tmat_complete(t_rows+1,t_rows+1),cwy_blocking,t_tmp2,cwy_blocking)
-         tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
-       endif
-     enddo
-#else
-     l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
-#endif
+           call mpi_allreduce(t_tmp,t_tmp2,cwy_blocking*nbw,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+           call dtrmm('L','U','N','N',t_rows,t_cols,1.0d0,tmat_complete,cwy_blocking,t_tmp2,cwy_blocking)
+           call dtrmm('R','U','N','N',t_rows,t_cols,-1.0d0,tmat_complete(t_rows+1,t_rows+1),cwy_blocking,t_tmp2,cwy_blocking)
+           tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
+         endif
+       enddo
 
-     ! Q = Q - V * T**T * V**T * Q
+       ! Q = Q - V * T**T * V**T * Q
 
-      if(l_rows>0) then
+       if (l_rows>0) then
          call dgemm('T','N',n_cols,l_cols,l_rows,1.d0,hvm,ubound(hvm,1), &
                     q,ldq,0.d0,tmp1,n_cols)
-      else
+       else
          tmp1(1:l_cols*n_cols) = 0
-      endif
-      call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-      if(l_rows>0) then
-#ifdef WITH_QR
+       endif
+       call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+
+
+       if (l_rows>0) then
          call dtrmm('L','U','T','N',n_cols,l_cols,1.0d0,tmat_complete,cwy_blocking,tmp2,n_cols)
          call dgemm('N','N',l_rows,l_cols,n_cols,-1.d0,hvm,ubound(hvm,1), tmp2,n_cols,1.d0,q,ldq)
+       endif
+     enddo
 
-#else
+   else !  do not useQR
+
+     do istep=1,(na-1)/nbw
+
+       n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
+
+       ! Broadcast all Householder vectors for current step compressed in hvb
+
+       nb = 0
+       ns = 0
+
+       do lc = 1, n_cols
+         ncol = istep*nbw + lc ! absolute column number of householder vector
+         nrow = ncol - nbw ! absolute number of pivot row
+
+         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+         l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
+
+         if (my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+
+         nb = nb+l_rows
+
+         if (lc==n_cols .or. mod(ncol,nblk)==0) then
+           call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol),mpi_comm_cols,mpierr)
+           ns = nb
+         endif
+       enddo
+
+       ! Expand compressed Householder vectors into matrix hvm
+
+       nb = 0
+       do lc = 1, n_cols
+         nrow = (istep-1)*nbw+lc ! absolute number of pivot row
+         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+
+         hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
+         if (my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
+
+         nb = nb+l_rows
+       enddo
+
+       l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
+
+       ! Q = Q - V * T**T * V**T * Q
+
+       if (l_rows>0) then
+         call dgemm('T','N',n_cols,l_cols,l_rows,1.d0,hvm,ubound(hvm,1), &
+                    q,ldq,0.d0,tmp1,n_cols)
+       else
+         tmp1(1:l_cols*n_cols) = 0
+       endif
+
+       call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+
+       if (l_rows>0) then
          call dtrmm('L','U','T','N',n_cols,l_cols,1.0d0,tmat(1,1,istep),ubound(tmat,1),tmp2,n_cols)
          call dgemm('N','N',l_rows,l_cols,n_cols,-1.d0,hvm,ubound(hvm,1), &
                     tmp2,n_cols,1.d0,q,ldq)
-#endif
-      endif
-
-   enddo
+       endif
+     enddo
+   endif ! endQR
 
    deallocate(tmp1, tmp2, hvb, hvm)
-#ifdef WITH_QR
-   deallocate(tmat_complete, t_tmp, t_tmp2)
-#endif
-
+   if (useQr) then
+     deallocate(tmat_complete, t_tmp, t_tmp2)
+   endif
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("trans_ev_band_to_full_real")
@@ -5880,7 +5953,6 @@ subroutine divide_band(nblocks_total, n_pes, block_limits)
 
 end subroutine
 
-#ifdef WITH_QR
 subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
 
 !-------------------------------------------------------------------------------
@@ -6203,7 +6275,5 @@ subroutine wy_symm(n, nb, A, lda, W, Y, mem, mem2, lda2)
     call DSYR2K('L', 'N', n, nb, -1.d0, Y, lda2, mem, n, 1.d0, A, lda)
 
 end subroutine
-#endif
-
 
 end module ELPA2

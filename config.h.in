@@ -100,9 +100,6 @@
 /* use OpenMP threading */
 #undef WITH_OPENMP
 
-/* use QR decomposition */
-#undef WITH_QR
-
 /* can use real_avx_block2 kernel */
 #undef WITH_REAL_AVX_BLOCK2_KERNEL
 
