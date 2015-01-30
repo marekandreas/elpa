@@ -247,6 +247,9 @@ AC_ARG_WITH([openmp],
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
 
         AX_ELPA_OPENMP
+        if test "$ac_cv_prog_fc_openmp" = unsupported; then
+          AC_MSG_ERROR([Could not compile a program with OpenMP, adjust FCFLAGS])
+        fi
 
         # Append to flags as this influences which
         # kind of MPI library has to be used (thread-safe or not)
