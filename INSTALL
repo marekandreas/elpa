@@ -80,12 +80,22 @@ The configure installation is best done in four steps
    variable "FCFLAGS", "CFLAGS", and "CXXFLAGS", e.g. FCFLAGS="-O3 -xAVX",
    please see "./src/elpa2_kernels/README_elpa2_kernels.txt".
 
+   Note that _NO_ compiler omptimization flags are set automatically. It
+   is always adviced to set the by e.g.:
+
+   CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O2" ./configure
+
    Setting the optimization flags for the AVX kernels can be a hazel. If AVX
    kernels are build for your system, you can set the configure option
    "--with-avx-optimizations=yes". This will automatically set a few compiler
    optimization flags which turned out to be beneficial for AVX support.
    However, it might be that on your system/compiler version etc. other flags
-   are the better choice.
+   are the better choice. AND this thus _not_ set the above mentioned flags,
+
+   which you should still set by hand:
+
+   CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O2" ./configure
+
 
 1.4 Installation location
 

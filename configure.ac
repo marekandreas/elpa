@@ -53,10 +53,15 @@ m4_include([fdep/fortran_dependencies.m4])
 FDEP_F90_GNU_MAKE_DEPS
 
 AC_PROG_INSTALL
-AM_PROG_CC_C_O
+
+: ${CFLAGS=""}
+: ${CXXFLAGS=""}
+#: ${FCLAGS="-O2"}
+
+AC_PROG_CC
+#AM_PROG_CC_C_O
 AM_PROG_AR
 AM_PROG_AS
-
 AC_PROG_CXX
 
 dnl variables needed for the tests

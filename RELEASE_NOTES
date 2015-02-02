@@ -30,6 +30,12 @@ Furthernote, that if neither the environment variable or the API keyword are not
 set, or set to "no" or ".false.", respectively, then no qr decomposition is used
 (i.e. the previous behaviour is maintained).
 
+
+c)
+
+The configure procedure was adapted to be more consistent. No compiler omptimization
+flags are set automatically anymore, this is up to the user at build time
+
 Any incompatibles to previous version?
 ---------------------------------------
 
