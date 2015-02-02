@@ -31,7 +31,14 @@ m4_copy([_AX_ELPA_LANG_OPENMP(C)], [_AX_ELPA_LANG_OPENMP(C++)])
 # _AX_ELPA_LANG_OPENMP(Fortran 77)
 # ---------------------------
 m4_define([_AX_ELPA_LANG_OPENMP(Fortran 77)],
-[AC_LANG_FUNC_LINK_TRY([omp_get_num_threads])])
+[
+program test_openmp
+ use omp_lib
+ implicit none
+ !$ integer :: foobar
+ foobar = omp_get_num_threads()
+end program
+])
 
 # _AX_ELPA_LANG_OPENMP(Fortran)
 # ---------------------------
