@@ -265,10 +265,16 @@ module ELPA2
 contains
 
 subroutine print_available_real_kernels
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
   implicit none
 
   integer :: i
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("print_available_real_kernels")
+#endif
 
   do i=1, number_of_real_kernels
     if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
@@ -279,14 +285,23 @@ subroutine print_available_real_kernels
   write(error_unit,*) " At the moment the following kernel would be choosen:"
   write(error_unit,*) get_actual_real_kernel_name()
 
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("print_available_real_kernels")
+#endif
 
 end subroutine print_available_real_kernels
 
 subroutine print_available_complex_kernels
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
 
   implicit none
 
   integer :: i
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("print_available_complex_kernels")
+#endif
 
   do i=1, number_of_complex_kernels
     if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .eq. 1) then
@@ -297,12 +312,24 @@ subroutine print_available_complex_kernels
   write(error_unit,*) " At the moment the following kernel would be choosen:"
   write(error_unit,*) get_actual_complex_kernel_name()
 
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("print_available_complex_kernels")
+#endif
 
 end subroutine print_available_complex_kernels
 
 function get_actual_real_kernel() result(actual_kernel)
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
+  implicit none
 
   integer :: actual_kernel
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("get_actual_real_kernel")
+#endif
+
 
   ! if kernel is not choosen via api
   ! check whether set by environment variable
@@ -312,19 +339,46 @@ function get_actual_real_kernel() result(actual_kernel)
     ! if not then set default kernel
     actual_kernel = DEFAULT_REAL_ELPA_KERNEL
   endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("get_actual_real_kernel")
+#endif
+
 end function get_actual_real_kernel
 
 function get_actual_real_kernel_name() result(actual_kernel_name)
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
+  implicit none
 
   character(35) :: actual_kernel_name
   integer       :: actual_kernel
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("get_actual_real_kernel_name")
+#endif
+
   actual_kernel = get_actual_real_kernel()
   actual_kernel_name = REAL_ELPA_KERNEL_NAMES(actual_kernel)
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("get_actual_real_kernel_name")
+#endif
+
 end function get_actual_real_kernel_name
 
 function get_actual_complex_kernel() result(actual_kernel)
-
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
+  implicit none
   integer :: actual_kernel
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("get_actual_complex_kernel")
+#endif
+
 
   ! if kernel is not choosen via api
   ! check whether set by environment variable
@@ -334,46 +388,90 @@ function get_actual_complex_kernel() result(actual_kernel)
     ! if not then set default kernel
     actual_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
   endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("get_actual_complex_kernel")
+#endif
+
 end function get_actual_complex_kernel
 
 function get_actual_complex_kernel_name() result(actual_kernel_name)
-
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
+  implicit none
   character(35) :: actual_kernel_name
   integer       :: actual_kernel
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("get_actual_complex_kernel_name")
+#endif
+
   actual_kernel = get_actual_complex_kernel()
   actual_kernel_name = COMPLEX_ELPA_KERNEL_NAMES(actual_kernel)
+
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("get_actual_complex_kernel_name")
+#endif
+
 end function get_actual_complex_kernel_name
 
 function check_allowed_real_kernels(THIS_REAL_ELPA_KERNEL) result(err)
-
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
   implicit none
   integer, intent(in) :: THIS_REAL_ELPA_KERNEL
 
   logical             :: err
 
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("check_allowed_real_kernels")
+#endif
   err = .false.
 
   if (AVAILABLE_REAL_ELPA_KERNELS(THIS_REAL_ELPA_KERNEL) .ne. 1) err=.true.
 
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("check_allowed_real_kernels")
+#endif
+
 end function check_allowed_real_kernels
 
 function check_allowed_complex_kernels(THIS_COMPLEX_ELPA_KERNEL) result(err)
-
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
   implicit none
   integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
 
   logical             :: err
-
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("check_allowed_complex_kernels")
+#endif
   err = .false.
 
   if (AVAILABLE_COMPLEX_ELPA_KERNELS(THIS_COMPLEX_ELPA_KERNEL) .ne. 1) err=.true.
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("check_allowed_complex_kernels")
+#endif
+
 end function check_allowed_complex_kernels
 
 function qr_decomposition_via_environment_variable(useQR) result(isSet)
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
   implicit none
   logical, intent(out) :: useQR
   logical              :: isSet
   CHARACTER(len=255)   :: ELPA_QR_DECOMPOSITION
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("qr_decomposition_via_environment_variable")
+#endif
 
   isSet = .false.
 
@@ -389,14 +487,25 @@ function qr_decomposition_via_environment_variable(useQR) result(isSet)
     isSet = .true.
   endif
 
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("qr_decomposition_via_environment_variable")
+#endif
+
 end function qr_decomposition_via_environment_variable
 
 
 function real_kernel_via_environment_variable() result(kernel)
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
   implicit none
   integer :: kernel
   CHARACTER(len=255) :: REAL_KERNEL_ENVIRONMENT
   integer :: i
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("real_kernel_via_environment_variable")
+#endif
 
 #if defined(HAVE_ENVIRONMENT_CHECKING)
   call get_environment_variable("REAL_ELPA_KERNEL",REAL_KERNEL_ENVIRONMENT)
@@ -410,14 +519,27 @@ function real_kernel_via_environment_variable() result(kernel)
       kernel = 0
     endif
   enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("real_kernel_via_environment_variable")
+#endif
+
 end function real_kernel_via_environment_variable
 
 function complex_kernel_via_environment_variable() result(kernel)
+#ifdef HAVE_DETAILED_TIMINGS
+  use timings
+#endif
   implicit none
   integer :: kernel
 
   CHARACTER(len=255) :: COMPLEX_KERNEL_ENVIRONMENT
   integer :: i
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("complex_kernel_via_environment_variable")
+#endif
+
 #if defined(HAVE_ENVIRONMENT_CHECKING)
   call get_environment_variable("COMPLEX_ELPA_KERNEL",COMPLEX_KERNEL_ENVIRONMENT)
 #endif
@@ -430,6 +552,11 @@ function complex_kernel_via_environment_variable() result(kernel)
       kernel = 0
     endif
   enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("complex_kernel_via_environment_variable")
+#endif
+
 
 end function complex_kernel_via_environment_variable
 
@@ -1165,9 +1292,6 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
     deallocate(vmr, umc, vr)
 
   enddo
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("bandred_real")
-#endif
 
   if (useQR) then
     if (which_qr_decomposition == 1) then
@@ -1176,6 +1300,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
     endif
   endif
 
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("bandred_real")
+#endif
 end subroutine bandred_real
 
 !-------------------------------------------------------------------------------
@@ -1187,13 +1314,19 @@ subroutine symm_matrix_allreduce(n,a,lda,comm)
 !  On entry, only the upper half of A needs to be set
 !  On exit, the complete matrix is set
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+ use timings
+#endif
    implicit none
-   integer n, lda, comm
-   real*8 a(lda,*)
+   integer  :: n, lda, comm
+   real*8   :: a(lda,*)
 
-   integer i, nc, mpierr
-   real*8 h1(n*n), h2(n*n)
+   integer  :: i, nc, mpierr
+   real*8   :: h1(n*n), h2(n*n)
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%start("symm_matrix_allreduce")
+#endif
 
    nc = 0
    do i=1,n
@@ -1209,6 +1342,10 @@ subroutine symm_matrix_allreduce(n,a,lda,comm)
      a(i,1:i-1) = a(1:i-1,i)
      nc = nc+i
    enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+  call timer%stop("symm_matrix_allreduce")
+#endif
 
 end subroutine symm_matrix_allreduce
 
@@ -1524,6 +1661,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 #ifdef WITH_OPENMP
    integer :: omp_get_max_threads
 #endif
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("tridiag_band_real")
 #endif
@@ -2122,6 +2260,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
   deallocate(limits, snd_limits)
   deallocate(block_limits)
   deallocate(global_id)
+
 #ifdef HAVE_DETAILED_TIMINGS
   call timer%stop("tridiag_band_real")
 #endif
@@ -2225,6 +2364,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
 
     logical             :: success
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("trans_ev_tridi_to_band_real")
 #endif
@@ -2982,6 +3122,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
      deallocate(top_recv_request)
      deallocate(bottom_send_request)
      deallocate(bottom_recv_request)
+
 #ifdef HAVE_DETAILED_TIMINGS
      call timer%stop("trans_ev_tridi_to_band_real")
 #endif
@@ -2989,65 +3130,101 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
  contains
 
-     subroutine pack_row(row, n)
-       real*8 row(:)
-       integer n, i, noff, nl
+   subroutine pack_row(row, n)
+#ifdef HAVE_DETAILED_TIMINGS
+     use timings
+#endif
+     implicit none
+     real*8  :: row(:)
+     integer :: n, i, noff, nl
 #ifdef WITH_OPENMP
-       integer nt
+     integer :: nt
+#endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+     call timer%start("pack_row")
 #endif
 
 #ifdef WITH_OPENMP
-       do nt = 1, max_threads
-         do i = 1, stripe_count
-           noff = (nt-1)*thread_width + (i-1)*stripe_width
-           nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-           if (nl<=0) exit
-           row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-         enddo
+     do nt = 1, max_threads
+       do i = 1, stripe_count
+         noff = (nt-1)*thread_width + (i-1)*stripe_width
+         nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
+         if (nl<=0) exit
+         row(noff+1:noff+nl) = a(1:nl,n,i,nt)
        enddo
+     enddo
 #else
-       do i=1,stripe_count
-         nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-         noff = (i-1)*stripe_width
-         row(noff+1:noff+nl) = a(1:nl,n,i)
-       enddo
+     do i=1,stripe_count
+       nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+       noff = (i-1)*stripe_width
+       row(noff+1:noff+nl) = a(1:nl,n,i)
+     enddo
 #endif
 
-     end subroutine pack_row
+#ifdef HAVE_DETAILED_TIMINGS
+     call timer%stop("pack_row")
+#endif
+
+   end subroutine pack_row
 
 #ifdef WITH_OPENMP
-     subroutine unpack_row(row, n, my_thread)
-       ! Private variables in OMP regions (my_thread) should better be in the argument list!
-         integer, intent(in) :: n, my_thread
-         real*8, intent(in)  :: row(:)
-         integer i, noff, nl
+   subroutine unpack_row(row, n, my_thread)
+#ifdef HAVE_DETAILED_TIMINGS
+     use timings
+#endif
+     implicit none
 
-         do i=1,stripe_count
-           noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-           nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-           if(nl<=0) exit
-           a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
-         enddo
+     ! Private variables in OMP regions (my_thread) should better be in the argument list!
+     integer, intent(in) :: n, my_thread
+     real*8, intent(in)  :: row(:)
+     integer             :: i, noff, nl
 
-       end subroutine unpack_row
+#ifdef HAVE_DETAILED_TIMINGS
+     call timer%start("unpack_row")
+#endif
+     do i=1,stripe_count
+       noff = (my_thread-1)*thread_width + (i-1)*stripe_width
+       nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
+       if(nl<=0) exit
+       a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
+     enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+     call timer%stop("unpack_row")
+#endif
+
+   end subroutine unpack_row
 #else
-     subroutine unpack_row(row, n)
-         real*8 row(:)
-         integer n, i, noff, nl
+   subroutine unpack_row(row, n)
+#ifdef HAVE_DETAILED_TIMINGS
+     use timings
+#endif
+     implicit none
 
-         do i=1,stripe_count
-           nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-           noff = (i-1)*stripe_width
-           a(1:nl,n,i) = row(noff+1:noff+nl)
-         enddo
+     real*8  :: row(:)
+     integer :: n, i, noff, nl
 
-       end subroutine unpack_row
+#ifdef HAVE_DETAILED_TIMINGS
+     call timer%start("unpack_row")
+#endif
+
+     do i=1,stripe_count
+       nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+       noff = (i-1)*stripe_width
+       a(1:nl,n,i) = row(noff+1:noff+nl)
+     enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+     call timer%stop("unpack_row")
+#endif
+   end subroutine unpack_row
 #endif
 
 #ifdef WITH_OPENMP
-     subroutine compute_hh_trafo(off, ncols, istripe, my_thread, THIS_REAL_ELPA_KERNEL)
+   subroutine compute_hh_trafo(off, ncols, istripe, my_thread, THIS_REAL_ELPA_KERNEL)
 #else
-     subroutine compute_hh_trafo(off, ncols, istripe, THIS_REAL_ELPA_KERNEL)
+   subroutine compute_hh_trafo(off, ncols, istripe, THIS_REAL_ELPA_KERNEL)
 #endif
 
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
@@ -3066,19 +3243,19 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
       use real_bgp_kernel, only : double_hh_trafo_bgq
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+      use timings
 #endif
       implicit none
 
       integer, intent(in) :: THIS_REAL_ELPA_KERNEL
 
       ! Private variables in OMP regions (my_thread) should better be in the argument list!
-      integer off, ncols, istripe
+      integer             :: off, ncols, istripe
 #ifdef WITH_OPENMP
-      integer my_thread, noff
+      integer             :: my_thread, noff
 #endif
-      integer j, nl, jj, jjj
-      real*8 w(nbw,6), ttt
+      integer             :: j, nl, jj, jjj
+      real*8              :: w(nbw,6), ttt
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("compute_hh_trafo")
@@ -3372,16 +3549,23 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 !-------------------------------------------------------------------------------
 
 subroutine single_hh_trafo(q, hh, nb, nq, ldq)
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
 
     ! Perform single real Householder transformation.
     ! This routine is not performance critical and thus it is coded here in Fortran
 
     implicit none
-    integer nb, nq, ldq
-    real*8 q(ldq, *), hh(*)
+    integer  :: nb, nq, ldq
+    real*8   :: q(ldq, *), hh(*)
 
-    integer i
-    real*8 v(nq)
+    integer  :: i
+    real*8   :: v(nq)
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("single_hh_trafo")
+#endif
 
     ! v = q * hh
     v(:) = q(1:nq,1)
@@ -3398,16 +3582,29 @@ subroutine single_hh_trafo(q, hh, nb, nq, ldq)
       q(1:nq,i) = q(1:nq,i) - v(:) * hh(i)
     enddo
 
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("single_hh_trafo")
+#endif
+
+
 end subroutine
 
 !-------------------------------------------------------------------------------
 
 subroutine determine_workload(na, nb, nprocs, limits)
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
+    implicit none
 
-    integer, intent(in) :: na, nb, nprocs
+    integer, intent(in)  :: na, nb, nprocs
     integer, intent(out) :: limits(0:nprocs)
 
-    integer i
+    integer              :: i
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("determine_workload")
+#endif
 
     if (na <= 0) then
       limits(:) = 0
@@ -3425,6 +3622,9 @@ subroutine determine_workload(na, nb, nprocs, limits)
        enddo
     endif
 
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("determine_workload")
+#endif
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -3459,27 +3659,27 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 !
 !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+   use timings
 #endif
    implicit none
 
-   integer na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   complex*16 a(lda,*), tmat(nbw,nbw,*)
+   integer                 :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,*), tmat(nbw,nbw,*)
 
-   complex*16, parameter :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+   complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer l_cols, l_rows
-   integer i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
-   integer istep, ncol, lch, lcx, nlc
-   integer tile_size, l_rows_tile, l_cols_tile
+   integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer                 :: l_cols, l_rows
+   integer                 :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
+   integer                 :: istep, ncol, lch, lcx, nlc
+   integer                 :: tile_size, l_rows_tile, l_cols_tile
 
-   real*8 vnorm2
-   complex*16 xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
+   real*8                  :: vnorm2
+   complex*16              :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
-   complex*16, allocatable:: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
+   complex*16, allocatable :: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
 
-   integer pcol, prow
+   integer                 :: pcol, prow
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
@@ -3741,13 +3941,19 @@ subroutine herm_matrix_allreduce(n,a,lda,comm)
 !  On entry, only the upper half of A needs to be set
 !  On exit, the complete matrix is set
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
    implicit none
-   integer n, lda, comm
-   complex*16 a(lda,*)
+   integer    :: n, lda, comm
+   complex*16 :: a(lda,*)
 
-   integer i, nc, mpierr
-   complex*16 h1(n*n), h2(n*n)
+   integer    :: i, nc, mpierr
+   complex*16 :: h1(n*n), h2(n*n)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("herm_matrix_allreduce")
+#endif
 
    nc = 0
    do i=1,n
@@ -3763,6 +3969,10 @@ subroutine herm_matrix_allreduce(n,a,lda,comm)
      a(i,1:i-1) = conjg(a(1:i-1,i))
      nc = nc+i
    enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("herm_matrix_allreduce")
+#endif
 
 end subroutine herm_matrix_allreduce
 
@@ -3807,19 +4017,20 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 #endif
    implicit none
 
-   integer na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   complex*16 a(lda,*), q(ldq,*), tmat(nbw, nbw, *)
+   integer                 :: na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,*), q(ldq,*), tmat(nbw, nbw, *)
 
-   complex*16, parameter :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+   complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-   integer my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
-   integer l_cols, l_rows, l_colh, n_cols
-   integer istep, lc, ncol, nrow, nb, ns
+   integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer                 :: max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
+   integer                 :: l_cols, l_rows, l_colh, n_cols
+   integer                 :: istep, lc, ncol, nrow, nb, ns
 
-   complex*16, allocatable:: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+   complex*16, allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
 
-   integer pcol, prow, i
+   integer                 :: pcol, prow, i
+
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
@@ -3946,34 +4157,34 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 #endif
    implicit none
 
-   integer, intent(in) ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
-   complex*16, intent(in) :: a(lda,*)
-   real*8, intent(out) :: d(na), e(na) ! set only on PE 0
+   integer, intent(in)      ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
+   complex*16, intent(in)   :: a(lda,*)
+   real*8, intent(out)      :: d(na), e(na) ! set only on PE 0
 
 
-   real*8 vnorm2
-   complex*16 hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
-   complex*16 hd(nb), hs(nb)
+   real*8                   :: vnorm2
+   complex*16               :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
+   complex*16               :: hd(nb), hs(nb)
 
-   integer i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
-   integer my_pe, n_pes, mpierr
-   integer my_prow, np_rows, my_pcol, np_cols
-   integer ireq_ab, ireq_hv
-   integer na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
+   integer                  :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
+   integer                  :: my_pe, n_pes, mpierr
+   integer                  :: my_prow, np_rows, my_pcol, np_cols
+   integer                  :: ireq_ab, ireq_hv
+   integer                  :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
 #ifdef WITH_OPENMP
-    integer, allocatable :: mpi_statuses(:,:)
-    integer, allocatable :: omp_block_limits(:)
-    integer max_threads, my_thread, my_block_s, my_block_e, iter
-    integer :: omp_get_max_threads
-    integer mpi_status(MPI_STATUS_SIZE)
+    integer, allocatable    :: mpi_statuses(:,:)
+    integer, allocatable    :: omp_block_limits(:)
+    integer                 :: max_threads, my_thread, my_block_s, my_block_e, iter
+    integer                 :: omp_get_max_threads
+    integer                 :: mpi_status(MPI_STATUS_SIZE)
     complex*16, allocatable :: hv_t(:,:), tau_t(:)
 #endif
-   integer, allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
-   integer, allocatable :: limits(:), snd_limits(:,:)
-   integer, allocatable :: block_limits(:)
-   complex*16, allocatable :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
+   integer, allocatable     :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
+   integer, allocatable     :: limits(:), snd_limits(:,:)
+   integer, allocatable     :: block_limits(:)
+   complex*16, allocatable  :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
    ! dummies for calling redist_band
-   real*8 :: r_a(1,1), r_ab(1,1)
+   real*8                   :: r_a(1,1), r_ab(1,1)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("tridiag_band_complex")
@@ -4605,28 +4816,28 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 !
 !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+    use timings
 #endif
     implicit none
 
-    integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
-    integer, intent(in) :: na, nev, nblk, nbw, ldq, mpi_comm_rows, mpi_comm_cols
-    complex*16 q(ldq,*)
+    integer, intent(in)     :: THIS_COMPLEX_ELPA_KERNEL
+    integer, intent(in)     :: na, nev, nblk, nbw, ldq, mpi_comm_rows, mpi_comm_cols
+    complex*16              :: q(ldq,*)
 
-    integer np_rows, my_prow, np_cols, my_pcol
+    integer                 :: np_rows, my_prow, np_cols, my_pcol
 
-    integer i, j, ip, sweep, nbuf, l_nev, a_dim2
-    integer current_n, current_local_n, current_n_start, current_n_end
-    integer next_n, next_local_n, next_n_start, next_n_end
-    integer bottom_msg_length, top_msg_length, next_top_msg_length
-    integer stripe_width, last_stripe_width, stripe_count
+    integer                 :: i, j, ip, sweep, nbuf, l_nev, a_dim2
+    integer                 :: current_n, current_local_n, current_n_start, current_n_end
+    integer                 :: next_n, next_local_n, next_n_start, next_n_end
+    integer                 :: bottom_msg_length, top_msg_length, next_top_msg_length
+    integer                 :: stripe_width, last_stripe_width, stripe_count
 #ifdef WITH_OPENMP
-    integer thread_width, csw, b_off, b_len
+    integer                 :: thread_width, csw, b_off, b_len
 #endif
-    integer num_result_blocks, num_result_buffers, num_bufs_recvd
-    integer a_off, current_tv_off, max_blk_size
-    integer mpierr, src, src_offset, dst, offset, nfact, num_blk
-    logical flag
+    integer                 :: num_result_blocks, num_result_buffers, num_bufs_recvd
+    integer                 :: a_off, current_tv_off, max_blk_size
+    integer                 :: mpierr, src, src_offset, dst, offset, nfact, num_blk
+    logical                 :: flag
 
 #ifdef WITH_OPENMP
     complex*16, allocatable :: a(:,:,:,:), row(:)
@@ -4643,31 +4854,31 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     complex*16, allocatable :: result_buffer(:,:,:)
     complex*16, allocatable :: bcast_buffer(:,:)
 
-    integer n_off
-    integer, allocatable :: result_send_request(:), result_recv_request(:), limits(:)
-    integer, allocatable :: top_send_request(:), bottom_send_request(:)
-    integer, allocatable :: top_recv_request(:), bottom_recv_request(:)
+    integer                 :: n_off
+    integer, allocatable    :: result_send_request(:), result_recv_request(:), limits(:)
+    integer, allocatable    :: top_send_request(:), bottom_send_request(:)
+    integer, allocatable    :: top_recv_request(:), bottom_recv_request(:)
 #ifdef WITH_OPENMP
-    integer, allocatable :: mpi_statuses(:,:)
-    integer mpi_status(MPI_STATUS_SIZE)
+    integer, allocatable    :: mpi_statuses(:,:)
+    integer                 :: mpi_status(MPI_STATUS_SIZE)
 #endif
 
     ! MPI send/recv tags, arbitrary
 
-    integer, parameter :: bottom_recv_tag = 111
-    integer, parameter :: top_recv_tag    = 222
-    integer, parameter :: result_recv_tag = 333
+    integer, parameter      :: bottom_recv_tag = 111
+    integer, parameter      :: top_recv_tag    = 222
+    integer, parameter      :: result_recv_tag = 333
 
 #ifdef WITH_OPENMP
-    integer :: max_threads, my_thread
-    integer :: omp_get_max_threads
+    integer                 :: max_threads, my_thread
+    integer                 :: omp_get_max_threads
 #endif
 
     ! Just for measuring the kernel performance
-    real*8 kernel_time
-    integer*8 kernel_flops
+    real*8                  :: kernel_time
+    integer*8               :: kernel_flops
 
-    logical :: success
+    logical                 :: success
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("trans_ev_tridi_to_band_complex")
@@ -5466,66 +5677,121 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 contains
 
 #ifdef WITH_OPENMP
-    subroutine pack_row(row, n)
-        complex*16 row(:)
-        integer n, i, noff, nl, nt
+  subroutine pack_row(row, n)
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
+    implicit none
+    complex*16 :: row(:)
+    integer    :: n, i, noff, nl, nt
 
-        do nt = 1, max_threads
-          do i = 1, stripe_count
-            noff = (nt-1)*thread_width + (i-1)*stripe_width
-            nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-            if (nl<=0) exit
-            row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-          enddo
-        enddo
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("pack_row")
+#endif
+    do nt = 1, max_threads
+      do i = 1, stripe_count
+        noff = (nt-1)*thread_width + (i-1)*stripe_width
+        nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
+        if (nl<=0) exit
+        row(noff+1:noff+nl) = a(1:nl,n,i,nt)
+      enddo
+    enddo
 
-      end subroutine pack_row
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("pack_row")
+#endif
+
+  end subroutine pack_row
 #else
-    subroutine pack_row(row, n)
-        complex*16 row(:)
-        integer n, i, noff, nl
+  subroutine pack_row(row, n)
 
-        do i=1,stripe_count
-          nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-          noff = (i-1)*stripe_width
-          row(noff+1:noff+nl) = a(1:nl,n,i)
-        enddo
-      end subroutine pack_row
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
+    implicit none
+    complex*16 :: row(:)
+    integer    :: n, i, noff, nl
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("unpack_row")
+#endif
+
+    do i=1,stripe_count
+      nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+      noff = (i-1)*stripe_width
+      row(noff+1:noff+nl) = a(1:nl,n,i)
+    enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("unpack_row")
+#endif
+
+
+  end subroutine pack_row
 #endif
 
 #ifdef WITH_OPENMP
-    subroutine unpack_row(row, n, my_thread)
+  subroutine unpack_row(row, n, my_thread)
 
-        ! Private variables in OMP regions (my_thread) should better be in the argument list!
-        integer, intent(in) :: n, my_thread
-        complex*16, intent(in)  :: row(:)
-        integer i, noff, nl
-        do i=1,stripe_count
-          noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-          nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-          if (nl<=0) exit
-          a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
-        enddo
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
 
-      end subroutine unpack_row
+    implicit none
+
+    ! Private variables in OMP regions (my_thread) should better be in the argument list!
+    integer, intent(in)     :: n, my_thread
+    complex*16, intent(in)  :: row(:)
+    integer                 :: i, noff, nl
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("unpack_row")
+#endif
+
+    do i=1,stripe_count
+      noff = (my_thread-1)*thread_width + (i-1)*stripe_width
+      nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
+      if (nl<=0) exit
+      a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
+    enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("unpack_row")
+#endif
+  end subroutine unpack_row
 #else
-    subroutine unpack_row(row, n)
-        complex*16 row(:)
-        integer n, i, noff, nl
+  subroutine unpack_row(row, n)
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
 
-        do i=1,stripe_count
-          nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-          noff = (i-1)*stripe_width
-          a(1:nl,n,i) = row(noff+1:noff+nl)
+    implicit none
 
-        enddo
-      end  subroutine unpack_row
+    complex*16 :: row(:)
+    integer    :: n, i, noff, nl
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("unpack_row")
+#endif
+
+
+    do i=1,stripe_count
+      nl = merge(stripe_width, last_stripe_width, i<stripe_count)
+      noff = (i-1)*stripe_width
+      a(1:nl,n,i) = row(noff+1:noff+nl)
+    enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("unpack_row")
+#endif
+
+  end  subroutine unpack_row
 #endif
 
 #ifdef WITH_OPENMP
-    subroutine compute_hh_trafo_complex(off, ncols, istripe, my_thread, THIS_COMPLEX_ELPA_KERNEL)
+  subroutine compute_hh_trafo_complex(off, ncols, istripe, my_thread, THIS_COMPLEX_ELPA_KERNEL)
 #else
-    subroutine compute_hh_trafo_complex(off, ncols, istripe, THIS_COMPLEX_ELPA_KERNEL)
+  subroutine compute_hh_trafo_complex(off, ncols, istripe, THIS_COMPLEX_ELPA_KERNEL)
 #endif
 
 #if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
@@ -5535,24 +5801,24 @@ contains
       use complex_generic_kernel, only : single_hh_trafo_complex_generic
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+      use timings
 #endif
       implicit none
       integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
 
         ! Private variables in OMP regions (my_thread) should better be in the argument list!
 
-        integer off, ncols, istripe, j, nl, jj
+        integer           :: off, ncols, istripe, j, nl, jj
 #ifdef WITH_OPENMP
-        integer my_thread, noff
+        integer           :: my_thread, noff
 #endif
-        real*8 ttt
+        real*8            :: ttt
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !        Currently (on Sandy Bridge), single is faster than double
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        complex*16 w(nbw,2)
+        complex*16        :: w(nbw,2)
 
 #ifdef HAVE_DETAILED_TIMINGS
         call timer%start("compute_hh_trafo_complex")
@@ -5708,7 +5974,10 @@ end subroutine
 ! redist_band: redistributes band from 2D block cyclic form to 1D band
 
 subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab, c_ab)
-
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   implicit none
    logical, intent(in)     :: l_real
    real*8, intent(in)      :: r_a(lda, *)
    complex*16, intent(in)  :: c_a(lda, *)
@@ -5716,13 +5985,18 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
    real*8, intent(out)     :: r_ab(:,:)
    complex*16, intent(out) :: c_ab(:,:)
 
-   integer, allocatable :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), &
-                           global_id(:,:), global_id_tmp(:,:), block_limits(:)
-   real*8, allocatable :: r_sbuf(:,:,:), r_rbuf(:,:,:), r_buf(:,:)
+   integer, allocatable    :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), &
+                              global_id(:,:), global_id_tmp(:,:), block_limits(:)
+   real*8, allocatable     :: r_sbuf(:,:,:), r_rbuf(:,:,:), r_buf(:,:)
    complex*16, allocatable :: c_sbuf(:,:,:), c_rbuf(:,:,:), c_buf(:,:)
 
-   integer i, j, my_pe, n_pes, my_prow, np_rows, my_pcol, np_cols, nfact, np, npr, npc, mpierr, is, js
-   integer nblocks_total, il, jl, l_rows, l_cols, n_off
+   integer                 :: i, j, my_pe, n_pes, my_prow, np_rows, my_pcol, np_cols, &
+                              nfact, np, npr, npc, mpierr, is, js
+   integer                 :: nblocks_total, il, jl, l_rows, l_cols, n_off
+
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("redist_band")
+#endif
 
    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
    call mpi_comm_size(mpi_comm,n_pes,mpierr)
@@ -5917,6 +6191,11 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
      deallocate(c_sbuf, c_rbuf, c_buf)
    endif
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("redist_band")
+#endif
+
+
 end subroutine
 
 !---------------------------------------------------------------------------------------------------
@@ -5924,12 +6203,19 @@ end subroutine
 ! Proc n works on blocks block_limits(n)+1 .. block_limits(n+1)
 
 subroutine divide_band(nblocks_total, n_pes, block_limits)
-
-   integer, intent(in) :: nblocks_total ! total number of blocks in band
-   integer, intent(in) :: n_pes         ! number of PEs for division
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   implicit none
+   integer, intent(in)  :: nblocks_total ! total number of blocks in band
+   integer, intent(in)  :: n_pes         ! number of PEs for division
    integer, intent(out) :: block_limits(0:n_pes)
 
-   integer :: n, nblocks, nblocks_left
+   integer              :: n, nblocks, nblocks_left
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("divide_band")
+#endif
 
    block_limits(0) = 0
    if (nblocks_total < n_pes) then
@@ -5950,6 +6236,10 @@ subroutine divide_band(nblocks_total, n_pes, block_limits)
        endif
      enddo
    endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("divide_band")
+#endif
 
 end subroutine
 
@@ -5982,36 +6272,41 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
 !  mpi_comm
 !              MPI-Communicator for the total processor set
 !-------------------------------------------------------------------------------
-
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
    implicit none
 
-   integer, intent(in) ::  na, nb, nb2, mpi_comm
+   integer, intent(in)    ::  na, nb, nb2, mpi_comm
    real*8, intent(inout)  :: ab(2*nb,*)
    real*8, intent(inout)  :: ab2(2*nb2,*)
-   real*8, intent(out) :: d(na), e(na) ! set only on PE 0
+   real*8, intent(out)    :: d(na), e(na) ! set only on PE 0
 
 !----------------
 
-   real*8 hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), tau_new(nb2), ab_s(1+nb,nb2), &
-          ab_r(1+nb,nb2), ab_s2(2*nb2,nb2), hv_s(nb,nb2)
+   real*8                 :: hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), &
+                             tau_new(nb2), ab_s(1+nb,nb2), ab_r(1+nb,nb2), ab_s2(2*nb2,nb2), hv_s(nb,nb2)
 
-   real*8 work(nb*nb2), work2(nb2*nb2)
-   integer lwork, info
+   real*8                 :: work(nb*nb2), work2(nb2*nb2)
+   integer                :: lwork, info
 
-   integer istep, i, n, dest
-   integer n_off, na_s
-   integer my_pe, n_pes, mpierr
-   integer nblocks_total, nblocks
-   integer nblocks_total2, nblocks2
-   integer ireq_ab, ireq_hv
-   integer mpi_status(MPI_STATUS_SIZE)
-   integer, allocatable :: mpi_statuses(:,:)
-   integer, allocatable :: block_limits(:), block_limits2(:), ireq_ab2(:)
+   integer                :: istep, i, n, dest
+   integer                :: n_off, na_s
+   integer                :: my_pe, n_pes, mpierr
+   integer                :: nblocks_total, nblocks
+   integer                :: nblocks_total2, nblocks2
+   integer                :: ireq_ab, ireq_hv
+   integer                :: mpi_status(MPI_STATUS_SIZE)
+   integer, allocatable   :: mpi_statuses(:,:)
+   integer, allocatable   :: block_limits(:), block_limits2(:), ireq_ab2(:)
 
 !----------------
 
-   integer j, nc, nr, ns, ne, iblk
+   integer                :: j, nc, nr, ns, ne, iblk
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("band_band_real")
+#endif
    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
    call mpi_comm_size(mpi_comm,n_pes,mpierr)
 
@@ -6196,84 +6491,131 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
      deallocate(block_limits)
      deallocate(block_limits2)
      deallocate(ireq_ab2)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("band_band_real")
+#endif
 
 end subroutine
 
 subroutine wy_gen(n, nb, W, Y, tau, mem, lda)
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   implicit none
+   integer, intent(in) :: n		!length of householder-vectors
+   integer, intent(in) :: nb		!number of householder-vectors
+   integer, intent(in) :: lda		!leading dimension of Y and W
+   real*8, intent(in)  :: Y(lda,nb)	!matrix containing nb householder-vectors of length b
+   real*8, intent(in)  :: tau(nb)	!tau values
+   real*8, intent(out) :: W(lda,nb)	!output matrix W
+   real*8, intent(in)  :: mem(nb)	!memory for a temporary matrix of size nb
 
-    integer, intent(in) :: n		!length of householder-vectors
-    integer, intent(in) :: nb		!number of householder-vectors
-    integer, intent(in) :: lda		!leading dimension of Y and W
-    real*8, intent(in) :: Y(lda,nb)	!matrix containing nb householder-vectors of length b
-    real*8, intent(in) :: tau(nb)	!tau values
-    real*8, intent(out) :: W(lda,nb)	!output matrix W
-    real*8, intent(in) :: mem(nb)	!memory for a temporary matrix of size nb
+   integer             :: i
 
-    integer i
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("wy_gen")
+#endif
 
-    W(1:n,1) = tau(1)*Y(1:n,1)
-    do i=2,nb
-      W(1:n,i) = tau(i)*Y(1:n,i)
-      call DGEMV('T',n,i-1,1.d0,Y,lda,W(1,i),1,0.d0,mem,1)
-      call DGEMV('N',n,i-1,-1.d0,W,lda,mem,1,1.d0,W(1,i),1)
-    enddo
+   W(1:n,1) = tau(1)*Y(1:n,1)
+   do i=2,nb
+     W(1:n,i) = tau(i)*Y(1:n,i)
+     call DGEMV('T',n,i-1,1.d0,Y,lda,W(1,i),1,0.d0,mem,1)
+     call DGEMV('N',n,i-1,-1.d0,W,lda,mem,1,1.d0,W(1,i),1)
+   enddo
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("wy_gen")
+#endif
 
 end subroutine
+
 subroutine wy_left(n, m, nb, A, lda, W, Y, mem, lda2)
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   implicit none
+   integer, intent(in)   :: n		!width of the matrix A
+   integer, intent(in)   :: m		!length of matrix W and Y
+   integer, intent(in)   :: nb		!width of matrix W and Y
+   integer, intent(in)   :: lda		!leading dimension of A
+   integer, intent(in)   :: lda2		!leading dimension of W and Y
+   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
+   real*8, intent(in)    :: W(m,nb)	!blocked transformation matrix W
+   real*8, intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
+   real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
 
-    integer, intent(in) :: n		!width of the matrix A
-    integer, intent(in) :: m		!length of matrix W and Y
-    integer, intent(in) :: nb		!width of matrix W and Y
-    integer, intent(in) :: lda		!leading dimension of A
-    integer, intent(in) :: lda2		!leading dimension of W and Y
-    real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
-    real*8, intent(in) :: W(m,nb)	!blocked transformation matrix W
-    real*8, intent(in) :: Y(m,nb)	!blocked transformation matrix Y
-    real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("wy_left")
+#endif
 
-    call DGEMM('T', 'N', nb, n, m, 1.d0, W, lda2, A, lda, 0.d0, mem, nb)
-    call DGEMM('N', 'N', m, n, nb, -1.d0, Y, lda2, mem, nb, 1.d0, A, lda)
+   call DGEMM('T', 'N', nb, n, m, 1.d0, W, lda2, A, lda, 0.d0, mem, nb)
+   call DGEMM('N', 'N', m, n, nb, -1.d0, Y, lda2, mem, nb, 1.d0, A, lda)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("wy_left")
+#endif
 
 end subroutine
 
 ! --------------------------------------------------------------------------------------------------
 
 subroutine wy_right(n, m, nb, A, lda, W, Y, mem, lda2)
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   implicit none
+   integer, intent(in)   :: n		!height of the matrix A
+   integer, intent(in)   :: m		!length of matrix W and Y
+   integer, intent(in)   :: nb		!width of matrix W and Y
+   integer, intent(in)   :: lda		!leading dimension of A
+   integer, intent(in)   :: lda2		!leading dimension of W and Y
+   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
+   real*8, intent(in)    :: W(m,nb)	!blocked transformation matrix W
+   real*8, intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
+   real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
 
-    integer, intent(in) :: n		!height of the matrix A
-    integer, intent(in) :: m		!length of matrix W and Y
-    integer, intent(in) :: nb		!width of matrix W and Y
-    integer, intent(in) :: lda		!leading dimension of A
-    integer, intent(in) :: lda2		!leading dimension of W and Y
-    real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
-    real*8, intent(in) :: W(m,nb)	!blocked transformation matrix W
-    real*8, intent(in) :: Y(m,nb)	!blocked transformation matrix Y
-    real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("wy_right")
+#endif
 
-    call DGEMM('N', 'N', n, nb, m, 1.d0, A, lda, W, lda2, 0.d0, mem, n)
-    call DGEMM('N', 'T', n, m, nb, -1.d0, mem, n, Y, lda2, 1.d0, A, lda)
+   call DGEMM('N', 'N', n, nb, m, 1.d0, A, lda, W, lda2, 0.d0, mem, n)
+   call DGEMM('N', 'T', n, m, nb, -1.d0, mem, n, Y, lda2, 1.d0, A, lda)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("wy_right")
+#endif
 
 end subroutine
 
 ! --------------------------------------------------------------------------------------------------
 
 subroutine wy_symm(n, nb, A, lda, W, Y, mem, mem2, lda2)
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   implicit none
+   integer, intent(in)   :: n		!width/heigth of the matrix A; length of matrix W and Y
+   integer, intent(in)   :: nb		!width of matrix W and Y
+   integer, intent(in)   :: lda		!leading dimension of A
+   integer, intent(in)   :: lda2		!leading dimension of W and Y
+   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
+   real*8, intent(in)    :: W(n,nb)	!blocked transformation matrix W
+   real*8, intent(in)    :: Y(n,nb)	!blocked transformation matrix Y
+   real*8                :: mem(n,nb)	!memory for a temporary matrix of size n x nb
+   real*8                :: mem2(nb,nb)	!memory for a temporary matrix of size nb x nb
 
-    integer, intent(in) :: n		!width/heigth of the matrix A; length of matrix W and Y
-    integer, intent(in) :: nb		!width of matrix W and Y
-    integer, intent(in) :: lda		!leading dimension of A
-    integer, intent(in) :: lda2		!leading dimension of W and Y
-    real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
-    real*8, intent(in) :: W(n,nb)	!blocked transformation matrix W
-    real*8, intent(in) :: Y(n,nb)	!blocked transformation matrix Y
-    real*8 :: mem(n,nb)			!memory for a temporary matrix of size n x nb
-    real*8 :: mem2(nb,nb)		!memory for a temporary matrix of size nb x nb
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("wy_symm")
+#endif
 
-    call DSYMM('L', 'L', n, nb, 1.d0, A, lda, W, lda2, 0.d0, mem, n)
-    call DGEMM('T', 'N', nb, nb, n, 1.d0, mem, n, W, lda2, 0.d0, mem2, nb)
-    call DGEMM('N', 'N', n, nb, nb, -0.5d0, Y, lda2, mem2, nb, 1.d0, mem, n)
-    call DSYR2K('L', 'N', n, nb, -1.d0, Y, lda2, mem, n, 1.d0, A, lda)
+   call DSYMM('L', 'L', n, nb, 1.d0, A, lda, W, lda2, 0.d0, mem, n)
+   call DGEMM('T', 'N', nb, nb, n, 1.d0, mem, n, W, lda2, 0.d0, mem2, nb)
+   call DGEMM('N', 'N', n, nb, nb, -0.5d0, Y, lda2, mem2, nb, 1.d0, mem, n)
+   call DSYR2K('L', 'N', n, nb, -1.d0, Y, lda2, mem, n, 1.d0, A, lda)
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("wy_symm")
+#endif
 end subroutine
 
 end module ELPA2
