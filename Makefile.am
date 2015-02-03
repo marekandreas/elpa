@@ -10,7 +10,7 @@ lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
 libelpa@SUFFIX@_la_SOURCES = src/elpa1.F90 src/elpa2.F90
-libelpa@SUFFIX@_la_SOURCES += src/elpa_qr/qr_utils.f90 \
+libelpa@SUFFIX@_la_SOURCES += src/elpa_qr/qr_utils.F90 \
                                src/elpa_qr/elpa_qrkernels.f90 \
                                src/elpa_qr/elpa_pdlarfb.f90 \
                                src/elpa_qr/elpa_pdgeqrf.f90
