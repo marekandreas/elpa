@@ -91,19 +91,16 @@ nobase_elpa_include_HEADERS = $(wildcard modules/*)
 filesdir = $(docdir)/examples
 dist_files_DATA = \
   test/read_real.F90 \
-  test/read_real_gen.F90 \
   test/test_complex2.F90 \
   test/test_complex2_default_kernel.F90 \
   test/test_complex2_choose_kernel_with_api.F90 \
   test/test_complex.F90 \
-  test/test_complex_gen.F90 \
   test/test_real2.F90 \
   test/test_real2_default_kernel.F90 \
   test/test_real2_default_kernel_qr_decomposition.F90 \
   test/test_real2_choose_kernel_with_api.F90 \
-  src/print_available_elpa2_kernels.F90 \
   test/test_real.F90 \
-  test/test_real_gen.F90
+  src/print_available_elpa2_kernels.F90
 
 dist_doc_DATA = README COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 
