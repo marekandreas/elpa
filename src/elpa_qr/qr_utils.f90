@@ -51,13 +51,6 @@ module qr_utils_mod
     public :: reverse_matrix_1dcomm
     public :: reverse_matrix_2dcomm_ref
 
-
-#ifdef OLD
-    public :: tsqr_groups_size
-    public :: tsqr_groups_initialize
-    public :: tsqr_groups_finalize
-#endif
-
 contains
 
 ! rev parameter is critical, even in rev only mode!
@@ -393,95 +386,4 @@ subroutine reverse_matrix_1dcomm(trans,m,n,b,a,lda,work,lwork,mpicomm)
             work(newmatrix_offset+(icol-1)*lrows:newmatrix_offset+icol*lrows-1)
    end do
 end subroutine reverse_matrix_1dcomm
-
-#if 0
-integer function tsqr_groups_size(comm,treeorder)
-    use mpi
-
-    implicit none
-
-    ! input
-    integer comm,treeorder
-
-    ! local scalars
-    integer mpiprocs,mpierr
-    integer nr_groups,depth,treeprocs
-
-    call MPI_Comm_size(comm,mpiprocs,mpierr)
-
-    ! integer logarithm with base treeorder
-    depth=1
-    treeprocs=treeorder
-    do while(treeprocs .lt. mpiprocs)
-        treeprocs = treeprocs * treeorder
-        depth = depth + 1
-    end do
-
-    tsqr_groups_size = nr_groups
-
-end function
-
-subroutine tsqr_groups_initialize(comm,treeorder,groups)
-    use mpi
-
-    implicit none
-
-    ! input
-    integer comm,treeorder
-
-    ! output
-    integer, allocatable :: groups(:)
-
-    ! local scalars
-    integer nr_groups,igroup,mpierr,mpirank
-    integer split_color,split_key
-    integer prev_treeorder,temp_treeorder
-
-    nr_groups = tsqr_groups_size(comm,treeorder)
-    allocate(groups(nr_groups))
-
-    groups(1) = comm
-
-    call MPI_Comm_rank(comm,mpirank,mpierr)
-
-    prev_treeorder = 1
-    temp_treeorder = treeorder
-    do igroup=2,nr_groups
-        if (mod(mpirank,prev_treeorder) .eq. 0) then
-            split_color=mpirank / temp_treeorder
-            split_key=mod(mpirank / prev_treeorder,treeorder)
-        else
-            split_color = MPI_UNDEFINED
-            split_key = 0 ! ignored due to MPI_UNDEFINED color
-        end if
-
-        call MPI_Comm_split(comm,split_color,split_key,groups(igroup),mpierr)
-
-        prev_treeorder = temp_treeorder
-        temp_treeorder = temp_treeorder * treeorder
-    end do
-
-end subroutine
-
-subroutine tsqr_groups_finalize(groups,treeorder)
-    use mpi
-
-    implicit none
-
-    ! input
-    integer, allocatable :: groups(:)
-    integer treeorder
-
-    ! local scalars
-    integer nr_groups,igroup,mpierr
-
-    nr_groups = tsqr_groups_size(groups(1),treeorder)
-
-    do igroup=2,nr_groups
-       call MPI_Comm_free(groups(igroup),mpierr)
-    end do
-
-    deallocate(groups)
-end subroutine
-#endif
 end module
