@@ -6001,9 +6001,14 @@ if ${ac_cv_prog_fc_openmp+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<_ACEOF
-      program main
-      call omp_get_num_threads
-      end
+
+program test_openmp
+ use omp_lib
+ implicit none
+ !$ integer :: foobar
+ foobar = omp_get_num_threads()
+end program
+
 _ACEOF
 if ac_fn_fc_try_link "$LINENO"; then :
   ac_cv_prog_fc_openmp='none needed'
@@ -6013,9 +6018,14 @@ else
 	    ac_save_FCFLAGS=$FCFLAGS
 	    FCFLAGS="$FCFLAGS $ac_option"
 	    cat > conftest.$ac_ext <<_ACEOF
-      program main
-      call omp_get_num_threads
-      end
+
+program test_openmp
+ use omp_lib
+ implicit none
+ !$ integer :: foobar
+ foobar = omp_get_num_threads()
+end program
+
 _ACEOF
 if ac_fn_fc_try_link "$LINENO"; then :
   ac_cv_prog_fc_openmp=$ac_option
@@ -6042,6 +6052,9 @@ $as_echo "$ac_cv_prog_fc_openmp" >&6; }
   fi
 
 
+        if test "$ac_cv_prog_fc_openmp" = unsupported; then
+          as_fn_error $? "Could not compile a program with OpenMP, adjust FCFLAGS" "$LINENO" 5
+        fi
 
         # Append to flags as this influences which
         # kind of MPI library has to be used (thread-safe or not)

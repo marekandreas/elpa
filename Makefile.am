@@ -180,7 +180,7 @@ check_SCRIPTS = \
   elpa1_test_complex.sh \
   elpa2_test_complex.sh \
   elpa2_test_complex_default_kernel.sh \
-  elpa2_test_complex_default_kernel_qr_decomposition.sh \
+  elpa2_test_real_default_kernel_qr_decomposition.sh \
   elpa2_test_real_choose_kernel_with_api.sh \
   elpa2_test_complex_choose_kernel_with_api.sh \
   elpa2_print_kernels@SUFFIX@

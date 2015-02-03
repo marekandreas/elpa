@@ -606,7 +606,7 @@ RECHECK_LOGS = $(TEST_LOGS)
 am__EXEEXT_1 = elpa1_test_real.sh elpa2_test_real.sh \
 	elpa2_test_real_default_kernel.sh elpa1_test_complex.sh \
 	elpa2_test_complex.sh elpa2_test_complex_default_kernel.sh \
-	elpa2_test_complex_default_kernel_qr_decomposition.sh \
+	elpa2_test_real_default_kernel_qr_decomposition.sh \
 	elpa2_test_real_choose_kernel_with_api.sh \
 	elpa2_test_complex_choose_kernel_with_api.sh \
 	elpa2_print_kernels@SUFFIX@$(EXEEXT)
@@ -868,7 +868,7 @@ check_SCRIPTS = \
   elpa1_test_complex.sh \
   elpa2_test_complex.sh \
   elpa2_test_complex_default_kernel.sh \
-  elpa2_test_complex_default_kernel_qr_decomposition.sh \
+  elpa2_test_real_default_kernel_qr_decomposition.sh \
   elpa2_test_real_choose_kernel_with_api.sh \
   elpa2_test_complex_choose_kernel_with_api.sh \
   elpa2_print_kernels@SUFFIX@
@@ -1643,9 +1643,9 @@ elpa2_test_complex_default_kernel.sh.log: elpa2_test_complex_default_kernel.sh
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-elpa2_test_complex_default_kernel_qr_decomposition.sh.log: elpa2_test_complex_default_kernel_qr_decomposition.sh
-	@p='elpa2_test_complex_default_kernel_qr_decomposition.sh'; \
-	b='elpa2_test_complex_default_kernel_qr_decomposition.sh'; \
+elpa2_test_real_default_kernel_qr_decomposition.sh.log: elpa2_test_real_default_kernel_qr_decomposition.sh
+	@p='elpa2_test_real_default_kernel_qr_decomposition.sh'; \
+	b='elpa2_test_real_default_kernel_qr_decomposition.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
