@@ -16,7 +16,8 @@ The only major change (which results in point a) is in the ELPA-2
 part of the library for real matrices:
 
 the fully blocked QR decomposition has been moved from the development part
-to the release!
+to the release! However, this is still experimental, since there is still
+a bug. For some matrix sizes the results are wrong
 
 It is now possible to use this QR decomposition by either setting an
 environment variable "ELPA_QR_DECOMPOSITION" to "yes", or to call the
@@ -35,6 +36,10 @@ c)
 
 The configure procedure was adapted to be more consistent. No compiler omptimization
 flags are set automatically anymore, this is up to the user at build time
+
+d)
+
+The checks for OpenMP in the configure have been improved
 
 Any incompatibles to previous version?
 ---------------------------------------

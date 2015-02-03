@@ -646,6 +646,11 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
      useQRActual = useQREnvironment
    endif
 
+   if (useQRActual) then
+     print *,"Carefull you use the experimental feature QR-decomposition"
+     print *,"it is possible that the results are wrong"
+   endif
+
    if (present(THIS_REAL_ELPA_KERNEL_API)) then
      ! user defined kernel via the optional argument in the API call
      THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
