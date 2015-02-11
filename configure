@@ -6523,7 +6523,7 @@ $as_echo_n "checking whether we can compile with BGQ intrinsics... " >&6; }
 cat > conftest.$ac_ext <<_ACEOF
 
   program test_bgq
-    VECTOR(REAL(8))::QPX_x1
+    VECTOR(REAL(8))::QPX_x2
     real*8 :: hh(10,2))
     QPX_h2 = VEC_SPLATS(hh(2,2))
 

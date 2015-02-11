@@ -2837,7 +2837,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
 
 #if defined(WITH_REAL_BGQ_KERNEL)
-      use real_bgp_kernel, only : double_hh_trafo_bgq
+      use real_bgq_kernel, only : double_hh_trafo_bgq
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
