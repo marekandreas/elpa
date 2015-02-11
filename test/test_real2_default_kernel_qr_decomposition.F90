@@ -81,6 +81,8 @@ program test_real2
 
    use ELPA1
    use ELPA2
+   use elpa2_utilities
+
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -143,9 +145,9 @@ program test_real2
   success = .true.
   write_to_file = .false.
 
-   nblk = 16
-   na = 4000
-   nev = 1500
+   nblk = 2
+   na   = 4000
+   nev  = 1500
 
    if (COMMAND_ARGUMENT_COUNT() == 3) then
       call GET_COMMAND_ARGUMENT(1, arg1)

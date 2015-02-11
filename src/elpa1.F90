@@ -1,17 +1,17 @@
 !    This file is part of ELPA.
 !
-!    The ELPA library was originally created by the ELPA consortium, 
+!    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), 
+!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
-!      Schwerpunkt Wissenschaftliches Rechnen , 
-!    - Fritz-Haber-Institut, Berlin, Abt. Theorie, 
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn, 
-!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition, 
-!      and  
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
 !    - IBM Deutschland GmbH
 !
 !
@@ -19,8 +19,8 @@
 !    http://elpa.rzg.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
-!    it under the terms of the version 3 of the license of the 
-!    GNU Lesser General Public License as published by the Free 
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
 !    Software Foundation.
 !
 !    ELPA is distributed in the hope that it will be useful,
@@ -40,7 +40,7 @@
 !
 !
 ! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
-! 
+!
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
@@ -49,6 +49,8 @@
 #include "config-f90.h"
 
 module ELPA1
+
+  use elpa_utilities
 
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
@@ -201,6 +203,8 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
    real*8, allocatable  :: e(:), tau(:)
    real*8               :: ttt0, ttt1
    logical              :: success
+   logical, save        :: firstCall = .true.
+   logical              :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_real")
@@ -210,6 +214,13 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
 
    success = .true.
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
 
    allocate(e(na), tau(na))
 
@@ -221,7 +232,7 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
 
    ttt0 = MPI_Wtime()
    call solve_tridi(na, nev, ev, e, q, ldq, nblk, mpi_comm_rows, &
-                    mpi_comm_cols, success)
+                    mpi_comm_cols, wantDebug, success)
    if (.not.(success)) return
 
    ttt1 = MPI_Wtime()
@@ -297,6 +308,9 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
    real*8 ttt0, ttt1
 
    logical                 :: success
+   logical, save           :: firstCall = .true.
+   logical                 :: wantDebug
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex")
 #endif
@@ -307,6 +321,14 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
    success = .true.
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
+
 
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
@@ -324,7 +346,7 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
 
    ttt0 = MPI_Wtime()
    call solve_tridi(na, nev, ev, e, q_real, l_rows, nblk, mpi_comm_rows, &
-                    mpi_comm_cols, success)
+                    mpi_comm_cols, wantDebug, success)
    if (.not.(success)) return
 
    ttt1 = MPI_Wtime()
@@ -1864,7 +1886,7 @@ end subroutine mult_ah_b_complex
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols, success )
+subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success )
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
@@ -1878,6 +1900,7 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
 
    integer, allocatable :: limits(:), l_col(:), p_col(:), l_col_bc(:), p_col_bc(:)
 
+   logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_tridi")
@@ -1909,16 +1932,15 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
       ! This is not supported!
       ! Scalapack supports it but delivers no results for these columns,
       ! which is rather annoying
-      if(nc==0) then
+      if (nc==0) then
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve_tridi")
+        call timer%stop("solve_tridi")
 #endif
-         write(error_unit,*) 'ERROR: Problem contains processor column with zero width'
-!         call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
-         success = .false.
-         return
+        if (wantDebug) write(error_unit,*) 'ELPA1_solve_tridi: ERROR: Problem contains processor column with zero width'
+!       call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
+        success = .false.
+        return
       endif
-
       limits(np+1) = limits(np) + nc
    enddo
 
@@ -1940,7 +1962,7 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
       nev1 = MIN(nev,l_cols)
    endif
    call solve_tridi_col(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
-                        mpi_comm_rows,success)
+                        mpi_comm_rows, wantDebug, success)
    if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("solve_tridi")
@@ -1994,7 +2016,7 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
 
    ! Recursively merge sub problems
 
-   call merge_recursive(0, np_cols, success)
+   call merge_recursive(0, np_cols, wantDebug, success)
    if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("solve_tridi")
@@ -2009,7 +2031,7 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
    return
 
 contains
-recursive subroutine merge_recursive(np_off, nprocs, success)
+recursive subroutine merge_recursive(np_off, nprocs, wantDebug, success)
 
    implicit none
 
@@ -2019,16 +2041,17 @@ recursive subroutine merge_recursive(np_off, nprocs, success)
    integer              :: np_off, nprocs
    integer              :: np1, np2, noff, nlen, nmid, n, &
                            mpi_status(mpi_status_size)
+   logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
-   
+
    success = .true.
-   
-   if(nprocs<=1) then
-      ! Safety check only
-      write(error_unit,*) "INTERNAL error merge_recursive: nprocs=",nprocs
-!      call mpi_abort(MPI_COMM_WORLD,1,mpierr)
-      success = .false.
-      return
+
+   if (nprocs<=1) then
+     ! Safety check only
+     if (wantDebug) write(error_unit,*) "ELPA1_merge_recursive: INTERNAL error merge_recursive: nprocs=",nprocs
+!    call mpi_abort(MPI_COMM_WORLD,1,mpierr)
+     success = .false.
+     return
    endif
 
    ! Split problem into 2 subproblems of size np1 / np2
@@ -2036,9 +2059,9 @@ recursive subroutine merge_recursive(np_off, nprocs, success)
    np1 = nprocs/2
    np2 = nprocs-np1
 
-   if(np1 > 1) call merge_recursive(np_off, np1, success)
+   if(np1 > 1) call merge_recursive(np_off, np1, wantDebug, success)
    if (.not.(success)) return
-   if(np2 > 1) call merge_recursive(np_off+np1, np2, success)
+   if(np2 > 1) call merge_recursive(np_off+np1, np2, wantDebug, success)
    if (.not.(success)) return
 
    noff = limits(np_off)
@@ -2070,7 +2093,7 @@ recursive subroutine merge_recursive(np_off, nprocs, success)
 
       call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                          nblk, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
-                         l_col_bc, p_col_bc, np_off, nprocs, success )
+                         l_col_bc, p_col_bc, np_off, nprocs, wantDebug, success )
       if (.not.(success)) return
    else
 
@@ -2078,7 +2101,7 @@ recursive subroutine merge_recursive(np_off, nprocs, success)
 
       call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                          nblk, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
-                         l_col(noff+1), p_col(noff+1), np_off, nprocs, success )
+                         l_col(noff+1), p_col(noff+1), np_off, nprocs, wantDebug, success )
       if (.not.(success)) return
    endif
 
@@ -2088,7 +2111,7 @@ end subroutine solve_tridi
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, success )
+subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, wantDebug, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -2109,6 +2132,7 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, s
    integer              :: my_prow, np_rows, mpierr
 
    integer, allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
+   logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_tridi_col")
@@ -2172,7 +2196,7 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, s
          nlen = limits(n+1)-noff ! Size of subproblem
 
          call solve_tridi_single(nlen,d(noff+1),e(noff+1), &
-                                 q(nqoff+noff+1,noff+1),ubound(q,1), success)
+                                 q(nqoff+noff+1,noff+1),ubound(q,1), wantDebug, success)
          if (.not.(success)) return
       enddo
 
@@ -2192,7 +2216,7 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, s
          nlen = limits(my_prow+1)-noff ! Size of subproblem
 
          call solve_tridi_single(nlen,d(noff+1),e(noff+1),qmat1, &
-                                 ubound(qmat1,1), success)
+                                 ubound(qmat1,1), wantDebug, success)
 
          if (.not.(success)) return
       endif
@@ -2246,9 +2270,9 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, s
 
          call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                             mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
-                            l_col(noff+1), p_col_o(noff+1), 0, 1, success)
+                            l_col(noff+1), p_col_o(noff+1), 0, 1, wantDebug, success)
          if (.not.(success)) return
-         
+
       enddo
 
       n = 2*n
@@ -2264,7 +2288,7 @@ end subroutine solve_tridi_col
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_tridi_single(nlen, d, e, q, ldq, success)
+subroutine solve_tridi_single(nlen, d, e, q, ldq, wantDebug, success)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
@@ -2282,12 +2306,14 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq, success)
    integer              :: i, j, lwork, liwork, info, mpierr
    integer, allocatable :: iwork(:)
 
+   logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_tridi_single")
 #endif
 
-   success = .true. 
+   success = .true.
    allocate(ds(nlen), es(nlen))
 
    ! Save d and e for the case that dstedc fails
@@ -2313,8 +2339,10 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq, success)
       call dsteqr('I',nlen,d,e,q,ldq,work,info)
 
       ! If DSTEQR fails also, we don't know what to do further ...
-      if(info /= 0) then
-         write(error_unit,'(a,i8,a)') 'ERROR: Lapack routine DSTEQR failed, info= ',info,', Aborting!'
+
+      if (info /= 0) then
+        if (wantDebug) &
+         write(error_unit,'(a,i8,a)') 'ELPA1_solve_tridi_single: ERROR: Lapack routine DSTEQR failed, info= ',info,', Aborting!'
 !         call mpi_abort(mpi_comm_world,0,mpierr)
          success = .false.
          return
@@ -2362,7 +2390,7 @@ end subroutine solve_tridi_single
 !-------------------------------------------------------------------------------
 
 subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_comm_cols, &
-                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, success)
+                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, wantDebug, success)
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
@@ -2395,6 +2423,7 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
    integer              :: idx(na), idx1(na), idx2(na)
    integer              :: coltyp(na), idxq1(na), idxq2(na)
 
+   logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
 #ifdef WITH_OPENMP
    integer              :: max_threads, my_thread
@@ -2407,7 +2436,7 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("merge_systems")
 #endif
-   success = .true. 
+   success = .true.
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -2432,10 +2461,10 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       np_prev = my_pcol - 1
    endif
 
-   call check_monotony(nm,d,'Input1',success)
+   call check_monotony(nm,d,'Input1',wantDebug, success)
    if (.not.(success)) return
 
-   call check_monotony(na-nm,d(nm+1),'Input2',success)
+   call check_monotony(na-nm,d(nm+1),'Input2',wantDebug, success)
    if (.not.(success)) return
 
    ! Get global number of processors and my processor number.
@@ -2641,9 +2670,9 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       endif
 
    enddo
-   call check_monotony(na1,d1,'Sorted1', success)
+   call check_monotony(na1,d1,'Sorted1', wantDebug, success)
    if (.not.(success)) return
-   call check_monotony(na2,d2,'Sorted2', success)
+   call check_monotony(na2,d2,'Sorted2', wantDebug, success)
    if (.not.(success)) return
 
    if(na1==1 .or. na1==2) then
@@ -2814,7 +2843,7 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
       do i=1,na
          d(i) = tmp(idx(i))
       enddo
-      call check_monotony(na,d,'Output', success)
+      call check_monotony(na,d,'Output', wantDebug, success)
       if (.not.(success)) return
 
       ! Eigenvector calculations
@@ -3017,14 +3046,14 @@ contains
 
          ! All we want to calculate is tmp = (d1(1:na1)-dbase(i))+ddiff(i)
          ! in exactly this order, but we want to prevent compiler optimization
-    
+
     tmp(1:na1) = d1(1:na1) -dbase(i)
     call v_add_s(tmp(1:na1),na1,ddiff(i))
-    
+
     tmp(1:na1) = z(1:na1) / tmp(1:na1)
-   
+
     ev_scale_value = 1.0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
-    
+
   end subroutine add_tmp
 
 subroutine resort_ev(idx_ev)
@@ -3212,7 +3241,7 @@ subroutine global_product(z, n)
 
 end subroutine global_product
 
-subroutine check_monotony(n,d,text, success)
+subroutine check_monotony(n,d,text, wantDebug, success)
 
 ! This is a test routine for checking if the eigenvalues are monotonically increasing.
 ! It is for debug purposes only, an error should never be triggered!
@@ -3224,13 +3253,14 @@ subroutine check_monotony(n,d,text, success)
    character*(*)        :: text
 
    integer              :: i
+   logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
-   
-   success = .true. 
+
+   success = .true.
    do i=1,n-1
       if(d(i+1)<d(i)) then
-         write(error_unit,'(a,a,i8,2g25.17)') 'Monotony error on ',text,i,d(i),d(i+1)
-         success = .false. 
+        if (wantDebug) write(error_unit,'(a,a,i8,2g25.17)') 'ELPA1_check_monotony: Monotony error on ',text,i,d(i),d(i+1)
+         success = .false.
          return
 !         call mpi_abort(mpi_comm_world,0,mpierr)
       endif
@@ -3484,7 +3514,7 @@ end function local_index
 
 !-------------------------------------------------------------------------------
 
-subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success)
+subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  cholesky_real: Cholesky factorization of a real symmetric matrix
@@ -3530,6 +3560,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+   logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3541,7 +3572,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
-   success = .true. 
+   success = .true.
 
    ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
@@ -3586,10 +3617,10 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success
 
             call dpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               write(error_unit,*) "Error in dpotrf"
+              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
 !               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
                success = .false.
-               return 
+               return
             endif
 
          endif
@@ -3608,7 +3639,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success
 
             call dpotrf('U',nblk,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               write(error_unit,*) "Error in dpotrf"
+              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
                success = .false.
                return
 !               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
@@ -3679,7 +3710,7 @@ end subroutine cholesky_real
 
 !-------------------------------------------------------------------------------
 
-subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success)
+subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  invert_trm_real: Inverts a upper triangular matrix
@@ -3719,6 +3750,7 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, succe
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+   logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -3762,7 +3794,7 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, succe
 
             call DTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               write(error_unit,*) "Error in DTRTRI"
+              if (wantDebug) write(error_unit,*) "ELPA1_invert_trm_real: Error in DTRTRI"
                success = .false.
                return
 !               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
@@ -3818,7 +3850,7 @@ end subroutine invert_trm_real
 
 !-------------------------------------------------------------------------------
 
-subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success)
+subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  cholesky_complex: Cholesky factorization of a complex hermitian matrix
@@ -3860,15 +3892,14 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, succ
 
    integer                 :: pcol, prow
 
-   
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
-
+   logical, intent(in)     :: wantDebug
    logical, intent(out)    :: success
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("cholesky_complex")
 #endif
-   success = .true. 
+   success = .true.
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -3918,8 +3949,8 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, succ
 
             call zpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               write(error_unit,*) "Error in zpotrf"
-               success = .false. 
+              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_complex: Error in zpotrf"
+               success = .false.
                return
 !               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
@@ -3940,7 +3971,7 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, succ
 
             call zpotrf('U',nblk,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               write(error_unit,*) "Error in zpotrf"
+              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_complex: Error in zpotrf"
                success = .false.
                return
 !               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
@@ -4012,7 +4043,7 @@ end subroutine cholesky_complex
 
 !-------------------------------------------------------------------------------
 
-subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, success)
+subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  invert_trm_complex: Inverts a upper triangular matrix
@@ -4048,10 +4079,10 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, su
    complex*16, allocatable :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 
    integer                 :: pcol, prow
-   
+
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
-   
+   logical, intent(in)     :: wantDebug
    logical, intent(out)    :: success
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -4095,7 +4126,7 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, su
 
             call ZTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
             if(info/=0) then
-               write(error_unit,*) "Error in ZTRTRI"
+              if (wantDebug) write(error_unit,*) "ELPA1_invert_trm_complex: Error in ZTRTRI"
                success = .false.
                return
 !               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)

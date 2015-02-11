@@ -170,7 +170,8 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(elpa_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libelpa@SUFFIX@_la_LIBADD =
-am__libelpa@SUFFIX@_la_SOURCES_DIST = src/elpa1.F90 src/elpa2.F90 \
+am__libelpa@SUFFIX@_la_SOURCES_DIST = src/elpa_utilities.F90 \
+	src/elpa1.F90 src/elpa2_utilities.F90 src/elpa2.F90 \
 	src/elpa_qr/qr_utils.f90 src/elpa_qr/elpa_qrkernels.f90 \
 	src/elpa_qr/elpa_pdlarfb.f90 src/elpa_qr/elpa_pdgeqrf.f90 \
 	src/timer.F90 src/ftimings/ftimings.F90 \
@@ -212,14 +213,14 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @WITH_REAL_AVX_BLOCK6_KERNEL_TRUE@am__objects_12 = src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.lo
 @WITH_COMPLEX_AVX_BLOCK1_KERNEL_TRUE@am__objects_13 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.lo
 @WITH_COMPLEX_AVX_BLOCK2_KERNEL_TRUE@am__objects_14 = src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.lo
-am_libelpa@SUFFIX@_la_OBJECTS = src/elpa1.lo src/elpa2.lo \
-	src/elpa_qr/qr_utils.lo src/elpa_qr/elpa_qrkernels.lo \
-	src/elpa_qr/elpa_pdlarfb.lo src/elpa_qr/elpa_pdgeqrf.lo \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
-	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
-	$(am__objects_13) $(am__objects_14)
+am_libelpa@SUFFIX@_la_OBJECTS = src/elpa_utilities.lo src/elpa1.lo \
+	src/elpa2_utilities.lo src/elpa2.lo src/elpa_qr/qr_utils.lo \
+	src/elpa_qr/elpa_qrkernels.lo src/elpa_qr/elpa_pdlarfb.lo \
+	src/elpa_qr/elpa_pdgeqrf.lo $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
+	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
+	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
+	$(am__objects_12) $(am__objects_13) $(am__objects_14)
 libelpa@SUFFIX@_la_OBJECTS = $(am_libelpa@SUFFIX@_la_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
 am__elpa1_test_complex@SUFFIX@_SOURCES_DIST = test/test_complex.F90 \
@@ -797,14 +798,14 @@ AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 # libelpa
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
-libelpa@SUFFIX@_la_SOURCES = src/elpa1.F90 src/elpa2.F90 \
-	src/elpa_qr/qr_utils.f90 src/elpa_qr/elpa_qrkernels.f90 \
-	src/elpa_qr/elpa_pdlarfb.f90 src/elpa_qr/elpa_pdgeqrf.f90 \
-	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9) \
-	$(am__append_10) $(am__append_11) $(am__append_12) \
-	$(am__append_13) $(am__append_14)
+libelpa@SUFFIX@_la_SOURCES = src/elpa_utilities.F90 src/elpa1.F90 \
+	src/elpa2_utilities.F90 src/elpa2.F90 src/elpa_qr/qr_utils.f90 \
+	src/elpa_qr/elpa_qrkernels.f90 src/elpa_qr/elpa_pdlarfb.f90 \
+	src/elpa_qr/elpa_pdgeqrf.f90 $(am__append_1) $(am__append_2) \
+	$(am__append_3) $(am__append_4) $(am__append_5) \
+	$(am__append_6) $(am__append_7) $(am__append_8) \
+	$(am__append_9) $(am__append_10) $(am__append_11) \
+	$(am__append_12) $(am__append_13) $(am__append_14)
 
 #if WITH_AVX_SANDYBRIDGE
 #  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
@@ -984,7 +985,11 @@ src/$(am__dirstamp):
 src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
+src/elpa_utilities.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/elpa1.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/elpa2_utilities.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/elpa2.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/elpa_qr/$(am__dirstamp):
 	@$(MKDIR_P) src/elpa_qr

@@ -62,7 +62,10 @@ module ELPA2
 
 ! Version 1.1.2, 2011-02-21
 
+  use elpa_utilities
   USE ELPA1
+  use elpa2_utilities
+
 
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
@@ -88,156 +91,9 @@ module ELPA2
   public :: tridiag_band_complex
   public :: trans_ev_tridi_to_band_complex
   public :: trans_ev_band_to_full_complex
-
-  public :: get_actual_real_kernel_name, get_actual_complex_kernel_name
-  public :: REAL_ELPA_KERNEL_GENERIC, REAL_ELPA_KERNEL_GENERIC_SIMPLE, &
-            REAL_ELPA_KERNEL_BGP, REAL_ELPA_KERNEL_BGQ,                &
-            REAL_ELPA_KERNEL_SSE, REAL_ELPA_KERNEL_AVX_BLOCK2,         &
-            REAL_ELPA_KERNEL_AVX_BLOCK4, REAL_ELPA_KERNEL_AVX_BLOCK6
-
-  public :: COMPLEX_ELPA_KERNEL_GENERIC, COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE, &
-            COMPLEX_ELPA_KERNEL_BGP, COMPLEX_ELPA_KERNEL_BGQ,                &
-            COMPLEX_ELPA_KERNEL_SSE, COMPLEX_ELPA_KERNEL_AVX_BLOCK1,         &
-            COMPLEX_ELPA_KERNEL_AVX_BLOCK2
-
-  public :: print_available_real_kernels, print_available_complex_kernels
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter :: error_unit = 6
 #endif
-
-
-  integer, parameter :: number_of_real_kernels           = 8
-  integer, parameter :: REAL_ELPA_KERNEL_GENERIC         = 1
-  integer, parameter :: REAL_ELPA_KERNEL_GENERIC_SIMPLE  = 2
-  integer, parameter :: REAL_ELPA_KERNEL_BGP             = 3
-  integer, parameter :: REAL_ELPA_KERNEL_BGQ             = 4
-  integer, parameter :: REAL_ELPA_KERNEL_SSE             = 5
-  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK2      = 6
-  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK4      = 7
-  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK6      = 8
-
-#if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
-  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
-#else
-  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
-#endif
-  character(35), parameter, dimension(number_of_real_kernels) :: &
-  REAL_ELPA_KERNEL_NAMES =    (/"REAL_ELPA_KERNEL_GENERIC         ", &
-                                "REAL_ELPA_KERNEL_GENERIC_SIMPLE  ", &
-                                "REAL_ELPA_KERNEL_BGP             ", &
-                                "REAL_ELPA_KERNEL_BGQ             ", &
-                                "REAL_ELPA_KERNEL_SSE             ", &
-                                "REAL_ELPA_KERNEL_AVX_BLOCK2      ", &
-                                "REAL_ELPA_KERNEL_AVX_BLOCK4      ", &
-                                "REAL_ELPA_KERNEL_AVX_BLOCK6      "/)
-
-  integer, parameter :: number_of_complex_kernels           = 7
-  integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC         = 1
-  integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE  = 2
-  integer, parameter :: COMPLEX_ELPA_KERNEL_BGP             = 3
-  integer, parameter :: COMPLEX_ELPA_KERNEL_BGQ             = 4
-  integer, parameter :: COMPLEX_ELPA_KERNEL_SSE             = 5
-  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK1      = 6
-  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK2      = 7
-
-#if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
-  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
-#else
-  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
-#endif
-  character(35), parameter, dimension(number_of_complex_kernels) :: &
-  COMPLEX_ELPA_KERNEL_NAMES = (/"COMPLEX_ELPA_KERNEL_GENERIC         ", &
-                                "COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE  ", &
-                                "COMPLEX_ELPA_KERNEL_BGP             ", &
-                                "COMPLEX_ELPA_KERNEL_BGQ             ", &
-                                "COMPLEX_ELPA_KERNEL_SSE             ", &
-                                "COMPLEX_ELPA_KERNEL_AVX_BLOCK1      ", &
-                                "COMPLEX_ELPA_KERNEL_AVX_BLOCK2      "/)
-
-  integer, parameter                                    ::             &
-           AVAILABLE_REAL_ELPA_KERNELS(number_of_real_kernels) =       &
-                                      (/                               &
-#if WITH_REAL_GENERIC_KERNEL
-                                        1                              &
-#else
-                                        0                              &
-#endif
-#if WITH_REAL_GENERIC_SIMPLE_KERNEL
-                                          ,1                           &
-#else
-                                          ,0                           &
-#endif
-#if WITH_REAL_BGP_KERNEL
-                                            ,1                         &
-#else
-                                            ,0                         &
-#endif
-#if WITH_REAL_BGQ_KERNEL
-                                              ,1                       &
-#else
-                                              ,0                       &
-#endif
-#if WITH_REAL_SSE_KERNEL
-                                                ,1                     &
-#else
-                                                ,0                     &
-#endif
-#if WITH_REAL_AVX_BLOCK2_KERNEL
-                                                  ,1                   &
-#else
-                                                  ,0                   &
-#endif
-#if WITH_REAL_AVX_BLOCK4_KERNEL
-                                                    ,1                 &
-#else
-                                                    ,0                 &
-#endif
-#if WITH_REAL_AVX_BLOCK6_KERNEL
-                                                      ,1               &
-#else
-                                                      ,0               &
-#endif
-                                                       /)
-
-  integer, parameter ::                                                   &
-           AVAILABLE_COMPLEX_ELPA_KERNELS(number_of_complex_kernels) =    &
-                                      (/                                  &
-#if WITH_COMPLEX_GENERIC_KERNEL
-                                        1                                 &
-#else
-                                        0                                 &
-#endif
-#if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
-                                          ,1                              &
-#else
-                                          ,0                              &
-#endif
-#if WITH_COMPLEX_BGP_KERNEL
-                                            ,1                            &
-#else
-                                            ,0                            &
-#endif
-#if WITH_COMPLEX_BGQ_KERNEL
-                                              ,1                          &
-#else
-                                              ,0                          &
-#endif
-#if WITH_COMPLEX_SSE_KERNEL
-                                                ,1                        &
-#else
-                                                ,0                        &
-#endif
-#if WITH_COMPLEX_AVX_BLOCK1_KERNEL
-                                                  ,1                      &
-#else
-                                                  ,0                      &
-#endif
-#if WITH_COMPLEX_AVX_BLOCK2_KERNEL
-                                                    ,1                    &
-#else
-                                                    ,0                    &
-#endif
-                                                   /)
 
   public :: band_band_real
   public :: divide_band
@@ -263,302 +119,6 @@ module ELPA2
 
 !******
 contains
-
-subroutine print_available_real_kernels
-#ifdef HAVE_DETAILED_TIMINGS
- use timings
-#endif
-  implicit none
-
-  integer :: i
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("print_available_real_kernels")
-#endif
-
-  do i=1, number_of_real_kernels
-    if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
-      write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
-    endif
-  enddo
-  write(error_unit,*) " "
-  write(error_unit,*) " At the moment the following kernel would be choosen:"
-  write(error_unit,*) get_actual_real_kernel_name()
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("print_available_real_kernels")
-#endif
-
-end subroutine print_available_real_kernels
-
-subroutine print_available_complex_kernels
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-
-  implicit none
-
-  integer :: i
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("print_available_complex_kernels")
-#endif
-
-  do i=1, number_of_complex_kernels
-    if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .eq. 1) then
-       write(error_unit,*) COMPLEX_ELPA_KERNEL_NAMES(i)
-    endif
-  enddo
-  write(error_unit,*) " "
-  write(error_unit,*) " At the moment the following kernel would be choosen:"
-  write(error_unit,*) get_actual_complex_kernel_name()
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("print_available_complex_kernels")
-#endif
-
-end subroutine print_available_complex_kernels
-
-function get_actual_real_kernel() result(actual_kernel)
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  implicit none
-
-  integer :: actual_kernel
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("get_actual_real_kernel")
-#endif
-
-
-  ! if kernel is not choosen via api
-  ! check whether set by environment variable
-  actual_kernel = real_kernel_via_environment_variable()
-
-  if (actual_kernel .eq. 0) then
-    ! if not then set default kernel
-    actual_kernel = DEFAULT_REAL_ELPA_KERNEL
-  endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("get_actual_real_kernel")
-#endif
-
-end function get_actual_real_kernel
-
-function get_actual_real_kernel_name() result(actual_kernel_name)
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  implicit none
-
-  character(35) :: actual_kernel_name
-  integer       :: actual_kernel
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("get_actual_real_kernel_name")
-#endif
-
-  actual_kernel = get_actual_real_kernel()
-  actual_kernel_name = REAL_ELPA_KERNEL_NAMES(actual_kernel)
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("get_actual_real_kernel_name")
-#endif
-
-end function get_actual_real_kernel_name
-
-function get_actual_complex_kernel() result(actual_kernel)
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  implicit none
-  integer :: actual_kernel
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("get_actual_complex_kernel")
-#endif
-
-
-  ! if kernel is not choosen via api
-  ! check whether set by environment variable
-  actual_kernel = complex_kernel_via_environment_variable()
-
-  if (actual_kernel .eq. 0) then
-    ! if not then set default kernel
-    actual_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
-  endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("get_actual_complex_kernel")
-#endif
-
-end function get_actual_complex_kernel
-
-function get_actual_complex_kernel_name() result(actual_kernel_name)
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  implicit none
-  character(35) :: actual_kernel_name
-  integer       :: actual_kernel
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("get_actual_complex_kernel_name")
-#endif
-
-  actual_kernel = get_actual_complex_kernel()
-  actual_kernel_name = COMPLEX_ELPA_KERNEL_NAMES(actual_kernel)
-
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("get_actual_complex_kernel_name")
-#endif
-
-end function get_actual_complex_kernel_name
-
-function check_allowed_real_kernels(THIS_REAL_ELPA_KERNEL) result(err)
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  implicit none
-  integer, intent(in) :: THIS_REAL_ELPA_KERNEL
-
-  logical             :: err
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("check_allowed_real_kernels")
-#endif
-  err = .false.
-
-  if (AVAILABLE_REAL_ELPA_KERNELS(THIS_REAL_ELPA_KERNEL) .ne. 1) err=.true.
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("check_allowed_real_kernels")
-#endif
-
-end function check_allowed_real_kernels
-
-function check_allowed_complex_kernels(THIS_COMPLEX_ELPA_KERNEL) result(err)
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  implicit none
-  integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
-
-  logical             :: err
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("check_allowed_complex_kernels")
-#endif
-  err = .false.
-
-  if (AVAILABLE_COMPLEX_ELPA_KERNELS(THIS_COMPLEX_ELPA_KERNEL) .ne. 1) err=.true.
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("check_allowed_complex_kernels")
-#endif
-
-end function check_allowed_complex_kernels
-
-function qr_decomposition_via_environment_variable(useQR) result(isSet)
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  implicit none
-  logical, intent(out) :: useQR
-  logical              :: isSet
-  CHARACTER(len=255)   :: ELPA_QR_DECOMPOSITION
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("qr_decomposition_via_environment_variable")
-#endif
-
-  isSet = .false.
-
-#if defined(HAVE_ENVIRONMENT_CHECKING)
-  call get_environment_variable("ELPA_QR_DECOMPOSITION",ELPA_QR_DECOMPOSITION)
-#endif
-  if (trim(ELPA_QR_DECOMPOSITION) .eq. "yes") then
-    useQR = .true.
-    isSet = .true.
-  endif
-  if (trim(ELPA_QR_DECOMPOSITION) .eq. "no") then
-    useQR = .false.
-    isSet = .true.
-  endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("qr_decomposition_via_environment_variable")
-#endif
-
-end function qr_decomposition_via_environment_variable
-
-
-function real_kernel_via_environment_variable() result(kernel)
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  implicit none
-  integer :: kernel
-  CHARACTER(len=255) :: REAL_KERNEL_ENVIRONMENT
-  integer :: i
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("real_kernel_via_environment_variable")
-#endif
-
-#if defined(HAVE_ENVIRONMENT_CHECKING)
-  call get_environment_variable("REAL_ELPA_KERNEL",REAL_KERNEL_ENVIRONMENT)
-#endif
-  do i=1,size(REAL_ELPA_KERNEL_NAMES(:))
-!     if (trim(dummy_char) .eq. trim(REAL_ELPA_KERNEL_NAMES(i))) then
-    if (trim(REAL_KERNEL_ENVIRONMENT) .eq. trim(REAL_ELPA_KERNEL_NAMES(i))) then
-      kernel = i
-      exit
-    else
-      kernel = 0
-    endif
-  enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("real_kernel_via_environment_variable")
-#endif
-
-end function real_kernel_via_environment_variable
-
-function complex_kernel_via_environment_variable() result(kernel)
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  implicit none
-  integer :: kernel
-
-  CHARACTER(len=255) :: COMPLEX_KERNEL_ENVIRONMENT
-  integer :: i
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%start("complex_kernel_via_environment_variable")
-#endif
-
-#if defined(HAVE_ENVIRONMENT_CHECKING)
-  call get_environment_variable("COMPLEX_ELPA_KERNEL",COMPLEX_KERNEL_ENVIRONMENT)
-#endif
-
-  do i=1,size(COMPLEX_ELPA_KERNEL_NAMES(:))
-    if (trim(COMPLEX_ELPA_KERNEL_NAMES(i)) .eq. trim(COMPLEX_KERNEL_ENVIRONMENT)) then
-      kernel = i
-      exit
-    else
-      kernel = 0
-    endif
-  enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-  call timer%stop("complex_kernel_via_environment_variable")
-#endif
-
-
-end function complex_kernel_via_environment_variable
 
 function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
                                  mpi_comm_rows, mpi_comm_cols,           &
@@ -608,8 +168,9 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    integer, intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
    integer                       :: THIS_REAL_ELPA_KERNEL
 
-   integer, intent(in)           :: na, nev, lda, ldq, nblk, mpi_comm_rows, &
+   integer, intent(in)           :: na, nev, lda, ldq, mpi_comm_rows, &
                                     mpi_comm_cols, mpi_comm_all
+   integer, intent(inout)        :: nblk
    real*8, intent(inout)         :: a(lda,*), ev(na), q(ldq,*)
 
    integer                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -618,6 +179,8 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    real*8                        :: ttt0, ttt1, ttts
    integer                       :: i
    logical                       :: success
+   logical, save                 :: firstCall = .true.
+   logical                       :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_real_2stage")
@@ -630,6 +193,14 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
+
    success = .true.
 
    useQRActual = .false.
@@ -637,7 +208,6 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    ! set usage of qr decomposition via API call
    if (present(useQR)) then
      if (useQR) useQRActual = .true.
-     if (useQR .and. na .lt. 800) useQRActual = .false.
      if (.not.(useQR)) useQRACtual = .false.
    endif
 
@@ -647,9 +217,14 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    endif
 
    if (useQRActual) then
-     print *,"Carefull you use the experimental feature QR-decomposition"
-     print *,"it is possible that the results are wrong"
+     if (mod(na,nblk) .ne. 0) then
+       if (wantDebug) then
+         write(error_unit,*) "solve_evp_real_2stage: QR-decomposition: blocksize does not fit with matrixsize"
+       endif
+     stop "Do not use QR-decomposition for this matrix and blocksize."
+     endif
    endif
+
 
    if (present(THIS_REAL_ELPA_KERNEL_API)) then
      ! user defined kernel via the optional argument in the API call
@@ -696,7 +271,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    ttt0 = MPI_Wtime()
    ttts = ttt0
    call bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
-                     tmat, success, useQRActual)
+                     tmat, wantDebug, success, useQRActual)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -723,7 +298,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 
    ttt0 = MPI_Wtime()
    call solve_tridi(na, nev, ev, e, q, ldq, nblk, mpi_comm_rows,  &
-                    mpi_comm_cols, success)
+                    mpi_comm_cols, wantDebug, success)
    if (.not.(success)) return
 
    ttt1 = MPI_Wtime()
@@ -738,7 +313,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 
    ttt0 = MPI_Wtime()
    call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, &
-                                    mpi_comm_cols, success, THIS_REAL_ELPA_KERNEL)
+                                    mpi_comm_cols, wantDebug, success, THIS_REAL_ELPA_KERNEL)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -824,7 +399,9 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    real*8                        :: ttt0, ttt1, ttts
    integer                       :: i
 
-   logical                       :: success
+   logical                       :: success, wantDebug
+   logical, save                 :: firstCall = .true.
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex_2stage")
 #endif
@@ -835,6 +412,14 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
+
 
    success = .true.
 
@@ -881,7 +466,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ttt0 = MPI_Wtime()
    ttts = ttt0
    call bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
-                        tmat, success)
+                        tmat, wantDebug, success)
    if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
      call timer%stop()
@@ -918,7 +503,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
    ttt0 = MPI_Wtime()
    call solve_tridi(na, nev, ev, e, q_real, ubound(q_real,1), nblk, &
-                    mpi_comm_rows, mpi_comm_cols, success)
+                    mpi_comm_rows, mpi_comm_cols, wantDebug, success)
    if (.not.(success)) return
 
    ttt1 = MPI_Wtime()
@@ -936,7 +521,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ttt0 = MPI_Wtime()
    call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,  &
                                        mpi_comm_rows, mpi_comm_cols,&
-                                       success,THIS_COMPLEX_ELPA_KERNEL)
+                                       wantDebug, success,THIS_COMPLEX_ELPA_KERNEL)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -966,7 +551,7 @@ end function solve_evp_complex_2stage
 !-------------------------------------------------------------------------------
 
 subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
-                        tmat, success, useQR)
+                        tmat, wantDebug, success, useQR)
 
 !-------------------------------------------------------------------------------
 !  bandred_real: Reduces a distributed symmetric matrix to band form
@@ -999,7 +584,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
  use timings
 #endif
    implicit none
-
+   
    integer             :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
    real*8              :: a(lda,*), tmat(nbw,nbw,*)
 
@@ -1023,6 +608,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+   logical, intent(in) :: wantDebug
    logical, intent(out):: success
 
    logical, intent(in) :: useQR
@@ -1036,14 +622,16 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
    success = .true.
 
-   ! Semibandwith nbw must be a multiple of blocksize nblk
 
+   ! Semibandwith nbw must be a multiple of blocksize nblk
    if (mod(nbw,nblk)/=0) then
      if (my_prow==0 .and. my_pcol==0) then
-       write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
-       write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
+       if (wantDebug) then
+         write(error_unit,*) 'ELPA2_bandred_real: ERROR: nbw=',nbw,', nblk=',nblk
+         write(error_unit,*) 'ELPA2_bandred_real: ELPA2 works only for nbw==n*nblk'
+       endif
        success = .false.
-!         call mpi_abort(mpi_comm_world,0,mpierr)
+!           call mpi_abort(mpi_comm_world,0,mpierr)
      endif
    endif
 
@@ -2276,7 +1864,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 
 
 subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
-                                       mpi_comm_rows, mpi_comm_cols, success, &
+                                       mpi_comm_rows, mpi_comm_cols, wantDebug, success, &
                                        THIS_REAL_ELPA_KERNEL)
 !-------------------------------------------------------------------------------
 !  trans_ev_tridi_to_band_real:
@@ -2368,6 +1956,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
     integer             :: omp_get_max_threads
 #endif
 
+    logical, intent(in) :: wantDebug
     logical             :: success
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -2389,10 +1978,12 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
     if (mod(nbw,nblk)/=0) then
       if (my_prow==0 .and. my_pcol==0) then
-        write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
-        write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
+        if (wantDebug) then
+          write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_real: ERROR: nbw=',nbw,', nblk=',nblk
+          write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_real: band backtransform works only for nbw==n*nblk'
+        endif
         success = .false.
-!         call mpi_abort(mpi_comm_world,0,mpierr)
+!           call mpi_abort(mpi_comm_world,0,mpierr)
       endif
     endif
 
@@ -3054,10 +2645,11 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
        offset = nbw - top_msg_length
        if (offset<0) then
-         write(error_unit,*) 'internal error, offset for shifting = ',offset
+         if (wantDebug) write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_real: internal error, offset for shifting = ',offset
          success = .false.
-!             call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
+!               call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
        endif
+
        a_off = a_off + offset
        if (a_off + next_local_n + nbw > a_dim2) then
 #ifdef WITH_OPENMP
@@ -3634,7 +3226,7 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat, success)
+subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  bandred_complex: Reduces a distributed hermitian matrix to band form
@@ -3688,6 +3280,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
    pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
    prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
+   logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("bandred_complex")
@@ -3703,10 +3296,12 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 
    if (mod(nbw,nblk)/=0) then
      if (my_prow==0 .and. my_pcol==0) then
-       write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
-       write(error_unit,*) 'ELPA2 works only for nbw==n*nblk'
+       if (wantDebug) then
+         write(error_unit,*) 'ELPA2_bandred_complex: ERROR: nbw=',nbw,', nblk=',nblk
+         write(error_unit,*) 'ELPA2_bandred_complex: ELPA2 works only for nbw==n*nblk'
+       endif
        success = .false.
-!         call mpi_abort(mpi_comm_world,0,mpierr)
+!           call mpi_abort(mpi_comm_world,0,mpierr)
      endif
    endif
 
@@ -4793,7 +4388,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
 subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                                           mpi_comm_rows, mpi_comm_cols, &
-                                          success, THIS_COMPLEX_ELPA_KERNEL)
+                                          wantDebug, success, THIS_COMPLEX_ELPA_KERNEL)
 
 !-------------------------------------------------------------------------------
 !  trans_ev_tridi_to_band_complex:
@@ -4883,6 +4478,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     real*8                  :: kernel_time
     integer*8               :: kernel_flops
 
+    logical, intent(in)     :: wantDebug
     logical                 :: success
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4906,9 +4502,12 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     if (mod(nbw,nblk)/=0) then
       if (my_prow==0 .and. my_pcol==0) then
-        write(error_unit,*) 'ERROR: nbw=',nbw,', nblk=',nblk
-        write(error_unit,*) 'band backtransform works only for nbw==n*nblk'
-!         call mpi_abort(mpi_comm_world,0,mpierr)
+        if (wantDebug) then
+          write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_complex: ERROR: nbw=',nbw,', nblk=',nblk
+          write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_complex: band backtransform works only for nbw==n*nblk'
+        endif
+
+!           call mpi_abort(mpi_comm_world,0,mpierr)
         success = .false.
       endif
     endif
@@ -5601,11 +5200,13 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
          ! Shift the remaining rows to the front of A (if necessary)
 
          offset = nbw - top_msg_length
+
          if (offset<0) then
-           write(error_unit,*) 'internal error, offset for shifting = ',offset
-!            call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
+           if (wantDebug) write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_complex: internal error, offset for shifting = ',offset
+!              call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
            success = .false.
          endif
+
          a_off = a_off + offset
          if (a_off + next_local_n + nbw > a_dim2) then
 #ifdef WITH_OPENMP

@@ -80,6 +80,8 @@ program test_real2
 
    use ELPA1
    use ELPA2
+   use elpa2_utilities
+
 #ifdef WITH_OPENMP
    use test_util
 #endif
