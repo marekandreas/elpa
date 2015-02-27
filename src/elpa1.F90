@@ -3758,7 +3758,7 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
-   success = .false.
+   success = .true.
 
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
