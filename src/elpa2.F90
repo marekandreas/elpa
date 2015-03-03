@@ -221,7 +221,8 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
        if (wantDebug) then
          write(error_unit,*) "solve_evp_real_2stage: QR-decomposition: blocksize does not fit with matrixsize"
        endif
-     stop "Do not use QR-decomposition for this matrix and blocksize."
+     print *, "Do not use QR-decomposition for this matrix and blocksize."
+     call mpi_abort(mpi_comm_world,0,mpierr)
      endif
    endif
 
