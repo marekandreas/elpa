@@ -1937,7 +1937,6 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
         call timer%stop("solve_tridi")
 #endif
         if (wantDebug) write(error_unit,*) 'ELPA1_solve_tridi: ERROR: Problem contains processor column with zero width'
-!       call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
         success = .false.
         return
       endif
@@ -2049,7 +2048,6 @@ recursive subroutine merge_recursive(np_off, nprocs, wantDebug, success)
    if (nprocs<=1) then
      ! Safety check only
      if (wantDebug) write(error_unit,*) "ELPA1_merge_recursive: INTERNAL error merge_recursive: nprocs=",nprocs
-!    call mpi_abort(MPI_COMM_WORLD,1,mpierr)
      success = .false.
      return
    endif
@@ -2343,7 +2341,6 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq, wantDebug, success)
       if (info /= 0) then
         if (wantDebug) &
          write(error_unit,'(a,i8,a)') 'ELPA1_solve_tridi_single: ERROR: Lapack routine DSTEQR failed, info= ',info,', Aborting!'
-!         call mpi_abort(mpi_comm_world,0,mpierr)
          success = .false.
          return
       endif
@@ -3262,7 +3259,6 @@ subroutine check_monotony(n,d,text, wantDebug, success)
         if (wantDebug) write(error_unit,'(a,a,i8,2g25.17)') 'ELPA1_check_monotony: Monotony error on ',text,i,d(i),d(i+1)
          success = .false.
          return
-!         call mpi_abort(mpi_comm_world,0,mpierr)
       endif
    enddo
 
@@ -3618,7 +3614,6 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
             call dpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if(info/=0) then
               if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
-!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
                success = .false.
                return
             endif
@@ -3642,7 +3637,6 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
               if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
                success = .false.
                return
-!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
             nc = 0
@@ -3797,7 +3791,6 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
               if (wantDebug) write(error_unit,*) "ELPA1_invert_trm_real: Error in DTRTRI"
                success = .false.
                return
-!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
             nc = 0
@@ -3952,7 +3945,6 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
               if (wantDebug) write(error_unit,*) "ELPA1_cholesky_complex: Error in zpotrf"
                success = .false.
                return
-!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
          endif
@@ -3974,7 +3966,6 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
               if (wantDebug) write(error_unit,*) "ELPA1_cholesky_complex: Error in zpotrf"
                success = .false.
                return
-!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
             nc = 0
@@ -4129,7 +4120,6 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wa
               if (wantDebug) write(error_unit,*) "ELPA1_invert_trm_complex: Error in ZTRTRI"
                success = .false.
                return
-!               call MPI_Abort(MPI_COMM_WORLD,1,mpierr)
             endif
 
             nc = 0

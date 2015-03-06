@@ -632,7 +632,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
          write(error_unit,*) 'ELPA2_bandred_real: ELPA2 works only for nbw==n*nblk'
        endif
        success = .false.
-!           call mpi_abort(mpi_comm_world,0,mpierr)
+       return
      endif
    endif
 
@@ -1984,7 +1984,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
           write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_real: band backtransform works only for nbw==n*nblk'
         endif
         success = .false.
-!           call mpi_abort(mpi_comm_world,0,mpierr)
+        return
       endif
     endif
 
@@ -2648,7 +2648,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
        if (offset<0) then
          if (wantDebug) write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_real: internal error, offset for shifting = ',offset
          success = .false.
-!               call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
+         return
        endif
 
        a_off = a_off + offset
@@ -3302,7 +3302,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
          write(error_unit,*) 'ELPA2_bandred_complex: ELPA2 works only for nbw==n*nblk'
        endif
        success = .false.
-!           call mpi_abort(mpi_comm_world,0,mpierr)
+       return
      endif
    endif
 
@@ -4508,8 +4508,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
           write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_complex: band backtransform works only for nbw==n*nblk'
         endif
 
-!           call mpi_abort(mpi_comm_world,0,mpierr)
         success = .false.
+        return
       endif
     endif
 
@@ -5203,9 +5203,11 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
          offset = nbw - top_msg_length
 
          if (offset<0) then
-           if (wantDebug) write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_complex: internal error, offset for shifting = ',offset
-!              call MPI_Abort(MPI_COMM_WORLD, 1, mpierr)
+           if (wantDebug) then
+             write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_complex: internal error, offset for shifting = ',offset
+           endif
            success = .false.
+           return
          endif
 
          a_off = a_off + offset
