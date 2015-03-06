@@ -55,54 +55,59 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 
+
 #include "config-f90.h"
-program print_available_elpa2_kernels
 
-   use ELPA1
-   use ELPA2
+module ELPA_utilities
 
-   use elpa2_utilities
 
-   implicit none
-
-   integer :: i
-
-   print *, "This program will give information on the ELPA2 kernels, "
-   print *, "which are available with this library and it will give "
-   print *, "information if (and how) the kernels can be choosen at "
-   print *, "runtime"
-   print *
-   print *
-#ifdef WITH_OPENMP
-   print *, " ELPA supports threads: yes"
-#else
-   print *, " ELPA supports threads: no"
+#ifdef HAVE_ISO_FORTRAN_ENV
+  use iso_fortran_env, only : error_unit
 #endif
 
-   print *, "Information on ELPA2 real case: "
-   print *, "=============================== "
-#ifdef HAVE_ENVIRONMENT_CHECKING
-   print *, " choice via environment variable: yes"
-   print *, " environment variable name      : REAL_ELPA_KERNEL"
-#else
-   print *  " choice via environment variable: no"
-#endif
-   print *
-   print *, " Available real kernels are: "
-   call print_available_real_kernels()
+  implicit none
 
-   print *
-   print *
-   print *, "Information on ELPA2 complex case: "
-   print *, "=============================== "
-#ifdef HAVE_ENVIRONMENT_CHECKING
-   print *, " choice via environment variable: yes"
-   print *, " environment variable name      : COMPLEX_ELPA_KERNEL"
-#else
-   print *  " choice via environment variable: no"
-#endif
-   print *
-   print *, " Available complex kernels are: "
-   call print_available_complex_kernels()
+  PRIVATE ! By default, all routines contained are private
 
-end program print_available_elpa2_kernels
+  public :: debug_messages_via_environment_variable
+#ifndef HAVE_ISO_FORTRAN_ENV
+  integer, parameter :: error_unit = 6
+#endif
+
+
+  !******
+  contains
+
+   function debug_messages_via_environment_variable() result(isSet)
+#ifdef HAVE_DETAILED_TIMINGS
+     use timings
+#endif
+     implicit none
+     logical              :: isSet
+     CHARACTER(len=255)   :: ELPA_DEBUG_MESSAGES
+
+#ifdef HAVE_DETAILED_TIMINGS
+     call timer%start("debug_messages_via_environment_variable")
+#endif
+
+     isSet = .false.
+
+#if defined(HAVE_ENVIRONMENT_CHECKING)
+     call get_environment_variable("ELPA_DEBUG_MESSAGES",ELPA_DEBUG_MESSAGES)
+#endif
+     if (trim(ELPA_DEBUG_MESSAGES) .eq. "yes") then
+       isSet = .true.
+     endif
+     if (trim(ELPA_DEBUG_MESSAGES) .eq. "no") then
+       isSet = .true.
+     endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+     call timer%stop("debug_messages_via_environment_variable")
+#endif
+
+   end function debug_messages_via_environment_variable
+
+!-------------------------------------------------------------------------------
+
+end module ELPA_utilities

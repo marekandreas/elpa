@@ -450,7 +450,7 @@ AC_MSG_CHECKING([whether we can compile with BGQ intrinsics])
 
 AC_LINK_IFELSE([AC_LANG_SOURCE([
   program test_bgq
-    VECTOR(REAL(8))::QPX_x1
+    VECTOR(REAL(8))::QPX_x2
     real*8 :: hh(10,2))
     QPX_h2 = VEC_SPLATS(hh(2,2))
 

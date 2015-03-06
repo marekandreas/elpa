@@ -5,12 +5,14 @@ This file contains the release notes for the ELPA 2015.02.001 version
 What is new?
 -------------
 
-a)
+a) ABI change
+---------------------
 
 Most importantly, the ABI of the ELPA libray changed!
 A rebuild/relink of the user code using the ELPA library is mandatory!
 
-b)
+b) QR-decomposition
+---------------------
 
 The only major change (which results in point a) is in the ELPA-2
 part of the library for real matrices:
@@ -27,14 +29,32 @@ Note, that the environment variable always takes precedence over the setting in
 the API call.
 
 Furthernote, that if neither the environment variable or the API keyword are not
-set, or set to "no" or ".false.", respectively, then no qr decomposition is used
+set, or set to "no" or ".false.", respectively, then no QR-decomposition is used
 (i.e. the previous behaviour is maintained).
 
+The QR-decomposition fails, if the chosen matrix size is not a multiple of the
+blocksize. The library will give a warning message if this happens and it will
+abort.
 
-c)
+c) Debug messages
+----------------------
+
+By setting the environment variable "ELPA_DEBUG_MESSAGES" to "yes", ELPA will now
+print more information if an error occurs.
+
+
+d) Optimization flags
+-----------------------
 
 The configure procedure was adapted to be more consistent. No compiler omptimization
 flags are set automatically anymore, this is up to the user at build time
+
+e) OpenMP check
+----------------------
+
+The checks for OpenMP in the configure have been improved
+
+
 
 Any incompatibles to previous version?
 ---------------------------------------

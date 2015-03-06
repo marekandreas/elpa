@@ -79,6 +79,8 @@ program test_complex2
 
    use ELPA1
    use ELPA2
+   use elpa2_utilities
+
 #ifdef WITH_OPENMP
    use test_util
 #endif
