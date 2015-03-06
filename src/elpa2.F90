@@ -599,15 +599,10 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 
    real*8, allocatable :: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
 
-   integer             :: pcol, prow
-
    ! needed for blocked QR decomposition
    integer             :: PQRPARAM(11), work_size
    real*8              :: dwork_size(1)
    real*8, allocatable :: work_blocked(:), tauvector(:), blockheuristic(:)
-
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
    logical, intent(in) :: wantDebug
    logical, intent(out):: success
@@ -706,7 +701,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 
          if (nrow == 1) exit ! Nothing to do
 
-         cur_pcol = pcol(ncol) ! Processor column owning current block
+         cur_pcol = pcol(ncol, nblk, np_cols) ! Processor column owning current block
 
          if (my_pcol==cur_pcol) then
 
@@ -715,7 +710,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 
            vr(1:lr) = a(1:lr,lch) ! vector to be transformed
 
-           if (my_prow==prow(nrow)) then
+           if (my_prow==prow(nrow, nblk, np_rows)) then
              aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
              aux1(2) = vr(lr)
            else
@@ -735,7 +730,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
            ! Scale vr and store Householder vector for back transformation
 
            vr(1:lr) = vr(1:lr) * xf
-           if (my_prow==prow(nrow)) then
+           if (my_prow==prow(nrow, nblk, np_rows)) then
              a(1:lr-1,lch) = vr(1:lr-1)
              a(lr,lch) = vrl
              vr(lr) = 1.
@@ -997,14 +992,11 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 
    real*8, allocatable  :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
 
-   integer              :: pcol, prow, i
+   integer              :: i
 
    real*8, allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
    integer              :: cwy_blocking, t_blocking, t_cols, t_rows
    logical, intent(in)  :: useQR
-
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("trans_ev_band_to_full_real")
@@ -1061,12 +1053,12 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
          l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
          l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
 
-         if (my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+         if (my_pcol==pcol(ncol, nblk, np_cols)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
 
          nb = nb+l_rows
 
          if (lc==n_cols .or. mod(ncol,nblk)==0) then
-           call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol),mpi_comm_cols,mpierr)
+           call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol, nblk, np_cols),mpi_comm_cols,mpierr)
            ns = nb
          endif
        enddo
@@ -1079,7 +1071,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
          l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
          hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-         if (my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
+         if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
 
          nb = nb+l_rows
        enddo
@@ -1138,12 +1130,12 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
          l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
          l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
 
-         if (my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+         if (my_pcol==pcol(ncol, nblk, np_cols)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
 
          nb = nb+l_rows
 
          if (lc==n_cols .or. mod(ncol,nblk)==0) then
-           call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol),mpi_comm_cols,mpierr)
+           call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol, nblk, np_cols),mpi_comm_cols,mpierr)
            ns = nb
          endif
        enddo
@@ -1156,7 +1148,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
          l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
          hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-         if (my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
+         if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
 
          nb = nb+l_rows
        enddo
@@ -3277,10 +3269,6 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 
    complex*16, allocatable :: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
 
-   integer                 :: pcol, prow
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
-
    logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3347,7 +3335,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 
        if(nrow == 1) exit ! Nothing to do
 
-       cur_pcol = pcol(ncol) ! Processor column owning current block
+       cur_pcol = pcol(ncol, nblk, np_cols) ! Processor column owning current block
 
        if (my_pcol==cur_pcol) then
 
@@ -3356,7 +3344,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 
          vr(1:lr) = a(1:lr,lch) ! vector to be transformed
 
-         if (my_prow==prow(nrow)) then
+         if (my_prow==prow(nrow, nblk, np_rows)) then
            aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
            aux1(2) = vr(lr)
          else
@@ -3376,7 +3364,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
          ! Scale vr and store Householder vector for back transformation
 
          vr(1:lr) = vr(1:lr) * xf
-         if (my_prow==prow(nrow)) then
+         if (my_prow==prow(nrow, nblk, np_rows)) then
            a(1:lr-1,lch) = vr(1:lr-1)
            a(lr,lch) = vrl
            vr(lr) = 1.
@@ -3630,10 +3618,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
    complex*16, allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
 
-   integer                 :: pcol, prow, i
-
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
+   integer                 :: i
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("trans_ev_band_to_full_complex")
@@ -3675,12 +3660,12 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
        l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
        l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
 
-       if (my_pcol==pcol(ncol)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+       if (my_pcol==pcol(ncol, nblk, np_cols)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
 
        nb = nb+l_rows
 
        if (lc==n_cols .or. mod(ncol,nblk)==0) then
-         call MPI_Bcast(hvb(ns+1),nb-ns,MPI_DOUBLE_COMPLEX,pcol(ncol),mpi_comm_cols,mpierr)
+         call MPI_Bcast(hvb(ns+1),nb-ns,MPI_DOUBLE_COMPLEX,pcol(ncol, nblk, np_cols),mpi_comm_cols,mpierr)
          ns = nb
        endif
      enddo
@@ -3693,7 +3678,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
        l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
        hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-       if (my_prow==prow(nrow)) hvm(l_rows+1,lc) = 1.
+       if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
 
        nb = nb+l_rows
      enddo

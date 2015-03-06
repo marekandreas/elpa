@@ -69,7 +69,7 @@ module ELPA_utilities
 
   PRIVATE ! By default, all routines contained are private
 
-  public :: debug_messages_via_environment_variable
+  public :: debug_messages_via_environment_variable, pcol, prow
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter :: error_unit = 6
 #endif
@@ -107,6 +107,24 @@ module ELPA_utilities
 #endif
 
    end function debug_messages_via_environment_variable
+
+!-------------------------------------------------------------------------------
+
+  !Processor col for global col number
+  pure function pcol(i, nblk, np_cols) result(col)
+    integer, intent(in) :: i, nblk, np_cols
+    integer :: col
+    col = MOD((i-1)/nblk,np_cols)
+  end function
+
+!-------------------------------------------------------------------------------
+
+  !Processor row for global row number
+  pure function prow(i, nblk, np_rows) result(row)
+    integer, intent(in) :: i, nblk, np_rows
+    integer :: row
+    row = MOD((i-1)/nblk,np_rows)
+  end function
 
 !-------------------------------------------------------------------------------
 

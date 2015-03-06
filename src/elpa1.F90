@@ -428,9 +428,6 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 #ifdef WITH_OPENMP
    real*8, allocatable:: ur_p(:,:), uc_p(:,:)
 #endif
-   integer pcol, prow
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("tridiag_real")
@@ -487,7 +484,7 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
-   if(my_prow==prow(na) .and. my_pcol==pcol(na)) d(na) = a(l_rows,l_cols)
+   if(my_prow==prow(na, nblk, np_rows) .and. my_pcol==pcol(na, nblk, np_cols)) d(na) = a(l_rows,l_cols)
 
    do istep=na,3,-1
 
@@ -500,7 +497,7 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
       ! Calculate vector for Householder transformation on all procs
       ! owning column istep
 
-      if(my_pcol==pcol(istep)) then
+      if(my_pcol==pcol(istep, nblk, np_cols)) then
 
          ! Get vector to be transformed; distribute last element and norm of
          ! remaining elements to all procs in current column
@@ -511,7 +508,7 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
                        uvc(l_cols+1,1),ubound(uvc,1),1.d0,vr,1)
          endif
 
-         if(my_prow==prow(istep-1)) then
+         if(my_prow==prow(istep-1, nblk, np_rows)) then
             aux1(1) = dot_product(vr(1:l_rows-1),vr(1:l_rows-1))
             aux1(2) = vr(l_rows)
          else
@@ -531,7 +528,7 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
          ! Scale vr and store Householder vector for back transformation
 
          vr(1:l_rows) = vr(1:l_rows) * xf
-         if(my_prow==prow(istep-1)) then
+         if(my_prow==prow(istep-1, nblk, np_rows)) then
             vr(l_rows) = 1.
             e(istep-1) = vrl
          endif
@@ -541,8 +538,8 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 
       ! Broadcast the Householder vector (and tau) along columns
 
-      if(my_pcol==pcol(istep)) vr(l_rows+1) = tau(istep)
-      call MPI_Bcast(vr,l_rows+1,MPI_REAL8,pcol(istep),mpi_comm_cols,mpierr)
+      if(my_pcol==pcol(istep, nblk, np_cols)) vr(l_rows+1) = tau(istep)
+      call MPI_Bcast(vr,l_rows+1,MPI_REAL8,pcol(istep, nblk, np_cols),mpi_comm_cols,mpierr)
       tau(istep) =  vr(l_rows+1)
 
       ! Transpose Householder vector vr -> vc
@@ -677,7 +674,7 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 
       endif
 
-      if(my_prow==prow(istep-1) .and. my_pcol==pcol(istep-1)) then
+      if(my_prow==prow(istep-1, nblk, np_rows) .and. my_pcol==pcol(istep-1, nblk, np_cols)) then
          if(nstor>0) a(l_rows,l_cols) = a(l_rows,l_cols) &
                         + dot_product(vur(l_rows,1:2*nstor),uvc(l_cols,1:2*nstor))
          d(istep-1) = a(l_rows,l_cols)
@@ -687,8 +684,8 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 
    ! Store e(1) and d(1)
 
-   if(my_prow==prow(1) .and. my_pcol==pcol(2)) e(1) = a(1,l_cols) ! use last l_cols value of loop above
-   if(my_prow==prow(1) .and. my_pcol==pcol(1)) d(1) = a(1,1)
+   if(my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) e(1) = a(1,l_cols) ! use last l_cols value of loop above
+   if(my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) d(1) = a(1,1)
 
    deallocate(tmp, vr, ur, vc, uc, vur, uvc)
 
@@ -763,10 +760,6 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
    real*8, allocatable:: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
    real*8, allocatable:: tmat(:,:), h1(:), h2(:)
 
-   integer pcol, prow
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
-
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("trans_ev_real")
 #endif
@@ -808,7 +801,7 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
       ice = MIN(istep+nblk-1,na)
       if(ice<ics) cycle
 
-      cur_pcol = pcol(istep)
+      cur_pcol = pcol(istep, nblk, np_cols)
 
       nb = 0
       do ic=ics,ice
@@ -819,7 +812,7 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
 
          if(my_pcol==cur_pcol) then
             hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
-            if(my_prow==prow(ic-1)) then
+            if(my_prow==prow(ic-1, nblk, np_rows)) then
                hvb(nb+l_rows) = 1.
             endif
          endif
@@ -1179,10 +1172,6 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 #endif
    real*8, allocatable:: tmpr(:)
 
-   integer pcol, prow
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
-
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("tridiag_complex")
 #endif
@@ -1238,7 +1227,7 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
-   if(my_prow==prow(na) .and. my_pcol==pcol(na)) d(na) = a(l_rows,l_cols)
+   if(my_prow==prow(na, nblk, np_rows) .and. my_pcol==pcol(na, nblk, np_cols)) d(na) = a(l_rows,l_cols)
 
    do istep=na,3,-1
 
@@ -1251,7 +1240,7 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
       ! Calculate vector for Householder transformation on all procs
       ! owning column istep
 
-      if(my_pcol==pcol(istep)) then
+      if(my_pcol==pcol(istep, nblk, np_cols)) then
 
          ! Get vector to be transformed; distribute last element and norm of
          ! remaining elements to all procs in current column
@@ -1263,7 +1252,7 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
                        aux,1,CONE,vr,1)
          endif
 
-         if(my_prow==prow(istep-1)) then
+         if(my_prow==prow(istep-1, nblk, np_rows)) then
             aux1(1) = dot_product(vr(1:l_rows-1),vr(1:l_rows-1))
             aux1(2) = vr(l_rows)
          else
@@ -1283,7 +1272,7 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
          ! Scale vr and store Householder vector for back transformation
 
          vr(1:l_rows) = vr(1:l_rows) * xf
-         if(my_prow==prow(istep-1)) then
+         if(my_prow==prow(istep-1, nblk, np_rows)) then
             vr(l_rows) = 1.
             e(istep-1) = vrl
          endif
@@ -1293,8 +1282,8 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 
       ! Broadcast the Householder vector (and tau) along columns
 
-      if(my_pcol==pcol(istep)) vr(l_rows+1) = tau(istep)
-      call MPI_Bcast(vr,l_rows+1,MPI_DOUBLE_COMPLEX,pcol(istep),mpi_comm_cols,mpierr)
+      if(my_pcol==pcol(istep, nblk, np_cols)) vr(l_rows+1) = tau(istep)
+      call MPI_Bcast(vr,l_rows+1,MPI_DOUBLE_COMPLEX,pcol(istep, nblk, np_cols),mpi_comm_cols,mpierr)
       tau(istep) =  vr(l_rows+1)
 
       ! Transpose Householder vector vr -> vc
@@ -1430,7 +1419,7 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 
       endif
 
-      if(my_prow==prow(istep-1) .and. my_pcol==pcol(istep-1)) then
+      if(my_prow==prow(istep-1, nblk, np_rows) .and. my_pcol==pcol(istep-1, nblk, np_cols)) then
          if(nstor>0) a(l_rows,l_cols) = a(l_rows,l_cols) &
                         + dot_product(vur(l_rows,1:2*nstor),uvc(l_cols,1:2*nstor))
          d(istep-1) = a(l_rows,l_cols)
@@ -1440,19 +1429,19 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 
    ! Store e(1) and d(1)
 
-   if(my_pcol==pcol(2)) then
-      if(my_prow==prow(1)) then
+   if(my_pcol==pcol(2, nblk, np_cols)) then
+      if(my_prow==prow(1, nblk, np_rows)) then
          ! We use last l_cols value of loop above
          vrl = a(1,l_cols)
          call hh_transform_complex(vrl, 0.d0, xf, tau(2))
          e(1) = vrl
          a(1,l_cols) = 1. ! for consistency only
       endif
-      call mpi_bcast(tau(2),1,MPI_DOUBLE_COMPLEX,prow(1),mpi_comm_rows,mpierr)
+      call mpi_bcast(tau(2),1,MPI_DOUBLE_COMPLEX,prow(1, nblk, np_rows),mpi_comm_rows,mpierr)
    endif
-   call mpi_bcast(tau(2),1,MPI_DOUBLE_COMPLEX,pcol(2),mpi_comm_cols,mpierr)
+   call mpi_bcast(tau(2),1,MPI_DOUBLE_COMPLEX,pcol(2, nblk, np_cols),mpi_comm_cols,mpierr)
 
-   if(my_prow==prow(1) .and. my_pcol==pcol(1)) d(1) = a(1,1)
+   if(my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) d(1) = a(1,1)
 
    deallocate(tmp, vr, ur, vc, uc, vur, uvc)
 
@@ -1529,10 +1518,6 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
    complex*16, allocatable:: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
    complex*16, allocatable:: tmat(:,:), h1(:), h2(:)
 
-   integer pcol, prow
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
-
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("trans_ev_complex")
 #endif
@@ -1568,7 +1553,7 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
    nstor = 0
 
    ! In the complex case tau(2) /= 0
-   if(my_prow == prow(1)) then
+   if(my_prow == prow(1, nblk, np_rows)) then
       q(1,1:l_cols) = q(1,1:l_cols)*((1.d0,0.d0)-tau(2))
    endif
 
@@ -1578,7 +1563,7 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
       ice = MIN(istep+nblk-1,na)
       if(ice<ics) cycle
 
-      cur_pcol = pcol(istep)
+      cur_pcol = pcol(istep, nblk, np_cols)
 
       nb = 0
       do ic=ics,ice
@@ -1589,7 +1574,7 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
 
          if(my_pcol==cur_pcol) then
             hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
-            if(my_prow==prow(ic-1)) then
+            if(my_prow==prow(ic-1, nblk, np_rows)) then
                hvb(nb+l_rows) = 1.
             endif
          endif
@@ -3550,12 +3535,6 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
 
    real*8, allocatable  :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
 
-   integer              :: pcol, prow
-
-   ! carefull STATEMENT FUNCTION
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
-
    logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
 
@@ -3609,7 +3588,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
          ! This is the last step, just do a Cholesky-Factorization
          ! of the remaining block
 
-         if(my_prow==prow(n) .and. my_pcol==pcol(n)) then
+         if(my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
 
             call dpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if(info/=0) then
@@ -3625,9 +3604,9 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
       endif
 
 
-      if(my_prow==prow(n)) then
+      if(my_prow==prow(n, nblk, np_rows)) then
 
-         if(my_pcol==pcol(n)) then
+         if(my_pcol==pcol(n, nblk, np_cols)) then
 
             ! The process owning the upper left remaining block does the
             ! Cholesky-Factorization of this block
@@ -3646,7 +3625,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
             enddo
          endif
 
-         call MPI_Bcast(tmp1,nblk*(nblk+1)/2,MPI_REAL8,pcol(n),mpi_comm_cols,mpierr)
+         call MPI_Bcast(tmp1,nblk*(nblk+1)/2,MPI_REAL8,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
 
          nc = 0
          do i=1,nblk
@@ -3661,9 +3640,9 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
 
       do i=1,nblk
 
-         if(my_prow==prow(n)) tmatc(l_colx:l_cols,i) = a(l_row1+i-1,l_colx:l_cols)
+         if(my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = a(l_row1+i-1,l_colx:l_cols)
          if(l_cols-l_colx+1>0) &
-            call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_REAL8,prow(n),mpi_comm_rows,mpierr)
+            call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_REAL8,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
 
       enddo
 
@@ -3689,7 +3668,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
    ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)
 
    do i=1,na
-      if(my_pcol==pcol(i)) then
+      if(my_pcol==pcol(i, nblk, np_cols)) then
          ! column i is on local processor
          l_col1 = local_index(i  , my_pcol, np_cols, nblk, +1) ! local column number
          l_row1 = local_index(i+1, my_prow, np_rows, nblk, +1) ! first row below diagonal
@@ -3739,11 +3718,6 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
 
    real*8, allocatable :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 
-   integer             :: pcol, prow
-   ! carefull statement function
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
-
    logical, intent(in)  :: wantDebug
    logical, intent(out) :: success
 
@@ -3782,9 +3756,9 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
       l_colx = local_index(n+nb, my_pcol, np_cols, nblk, +1)
 
 
-      if(my_prow==prow(n)) then
+      if(my_prow==prow(n, nblk, np_rows)) then
 
-         if(my_pcol==pcol(n)) then
+         if(my_pcol==pcol(n, nblk, np_cols)) then
 
             call DTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
             if(info/=0) then
@@ -3800,7 +3774,7 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
             enddo
          endif
 
-         call MPI_Bcast(tmp1,nb*(nb+1)/2,MPI_REAL8,pcol(n),mpi_comm_cols,mpierr)
+         call MPI_Bcast(tmp1,nb*(nb+1)/2,MPI_REAL8,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
 
          nc = 0
          do i=1,nb
@@ -3812,23 +3786,23 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
             call DTRMM('L','U','N','N',nb,l_cols-l_colx+1,1.d0,tmp2,ubound(tmp2,1),a(l_row1,l_colx),lda)
 
          if(l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
-         if(my_pcol==pcol(n)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
+         if(my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 
       endif
 
       if(l_row1>1) then
-         if(my_pcol==pcol(n)) then
+         if(my_pcol==pcol(n, nblk, np_cols)) then
             tmat1(1:l_row1-1,1:nb) = a(1:l_row1-1,l_col1:l_col1+nb-1)
             a(1:l_row1-1,l_col1:l_col1+nb-1) = 0
          endif
 
          do i=1,nb
-            call MPI_Bcast(tmat1(1,i),l_row1-1,MPI_REAL8,pcol(n),mpi_comm_cols,mpierr)
+            call MPI_Bcast(tmat1(1,i),l_row1-1,MPI_REAL8,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
          enddo
       endif
 
       if(l_cols-l_col1+1>0) &
-         call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_REAL8,prow(n),mpi_comm_rows,mpierr)
+         call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_REAL8,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
 
       if(l_row1>1 .and. l_cols-l_col1+1>0) &
          call dgemm('N','N',l_row1-1,l_cols-l_col1+1,nb, -1.d0, &
@@ -3883,10 +3857,6 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
 
    complex*16, allocatable :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
 
-   integer                 :: pcol, prow
-
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
    logical, intent(in)     :: wantDebug
    logical, intent(out)    :: success
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3938,7 +3908,7 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
          ! This is the last step, just do a Cholesky-Factorization
          ! of the remaining block
 
-         if(my_prow==prow(n) .and. my_pcol==pcol(n)) then
+         if(my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
 
             call zpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if(info/=0) then
@@ -3954,9 +3924,9 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
       endif
 
 
-      if(my_prow==prow(n)) then
+      if(my_prow==prow(n, nblk, np_rows)) then
 
-         if(my_pcol==pcol(n)) then
+         if(my_pcol==pcol(n, nblk, np_cols)) then
 
             ! The process owning the upper left remaining block does the
             ! Cholesky-Factorization of this block
@@ -3975,7 +3945,7 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
             enddo
          endif
 
-         call MPI_Bcast(tmp1,nblk*(nblk+1)/2,MPI_DOUBLE_COMPLEX,pcol(n),mpi_comm_cols,mpierr)
+         call MPI_Bcast(tmp1,nblk*(nblk+1)/2,MPI_DOUBLE_COMPLEX,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
 
          nc = 0
          do i=1,nblk
@@ -3990,9 +3960,9 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
 
       do i=1,nblk
 
-         if(my_prow==prow(n)) tmatc(l_colx:l_cols,i) = conjg(a(l_row1+i-1,l_colx:l_cols))
+         if(my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = conjg(a(l_row1+i-1,l_colx:l_cols))
          if(l_cols-l_colx+1>0) &
-            call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_DOUBLE_COMPLEX,prow(n),mpi_comm_rows,mpierr)
+            call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_DOUBLE_COMPLEX,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
 
       enddo
 
@@ -4019,7 +3989,7 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
    ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)
 
    do i=1,na
-      if(my_pcol==pcol(i)) then
+      if(my_pcol==pcol(i, nblk, np_cols)) then
          ! column i is on local processor
          l_col1 = local_index(i  , my_pcol, np_cols, nblk, +1) ! local column number
          l_row1 = local_index(i+1, my_prow, np_rows, nblk, +1) ! first row below diagonal
@@ -4069,10 +4039,6 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wa
 
    complex*16, allocatable :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 
-   integer                 :: pcol, prow
-
-   pcol(i) = MOD((i-1)/nblk,np_cols) !Processor col for global col number
-   prow(i) = MOD((i-1)/nblk,np_rows) !Processor row for global row number
    logical, intent(in)     :: wantDebug
    logical, intent(out)    :: success
 
@@ -4111,9 +4077,9 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wa
       l_colx = local_index(n+nb, my_pcol, np_cols, nblk, +1)
 
 
-      if(my_prow==prow(n)) then
+      if(my_prow==prow(n, nblk, np_rows)) then
 
-         if(my_pcol==pcol(n)) then
+         if(my_pcol==pcol(n, nblk, np_cols)) then
 
             call ZTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
             if(info/=0) then
@@ -4129,7 +4095,7 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wa
             enddo
          endif
 
-         call MPI_Bcast(tmp1,nb*(nb+1)/2,MPI_DOUBLE_COMPLEX,pcol(n),mpi_comm_cols,mpierr)
+         call MPI_Bcast(tmp1,nb*(nb+1)/2,MPI_DOUBLE_COMPLEX,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
 
          nc = 0
          do i=1,nb
@@ -4141,23 +4107,23 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wa
             call ZTRMM('L','U','N','N',nb,l_cols-l_colx+1,(1.d0,0.d0),tmp2,ubound(tmp2,1),a(l_row1,l_colx),lda)
 
          if(l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
-         if(my_pcol==pcol(n)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
+         if(my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 
       endif
 
       if(l_row1>1) then
-         if(my_pcol==pcol(n)) then
+         if(my_pcol==pcol(n, nblk, np_cols)) then
             tmat1(1:l_row1-1,1:nb) = a(1:l_row1-1,l_col1:l_col1+nb-1)
             a(1:l_row1-1,l_col1:l_col1+nb-1) = 0
          endif
 
          do i=1,nb
-            call MPI_Bcast(tmat1(1,i),l_row1-1,MPI_DOUBLE_COMPLEX,pcol(n),mpi_comm_cols,mpierr)
+            call MPI_Bcast(tmat1(1,i),l_row1-1,MPI_DOUBLE_COMPLEX,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
          enddo
       endif
 
       if(l_cols-l_col1+1>0) &
-         call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_DOUBLE_COMPLEX,prow(n),mpi_comm_rows,mpierr)
+         call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_DOUBLE_COMPLEX,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
 
       if(l_row1>1 .and. l_cols-l_col1+1>0) &
          call ZGEMM('N','N',l_row1-1,l_cols-l_col1+1,nb, (-1.d0,0.d0), &
