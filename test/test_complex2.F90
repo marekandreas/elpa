@@ -309,8 +309,8 @@ program test_complex2
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in get_elpa_row_col_comms.
 
-   call get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
-                               mpi_comm_rows, mpi_comm_cols)
+   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+                                   mpi_comm_rows, mpi_comm_cols)
 
    ! Determine the necessary size of the distributed matrices,
    ! we use the Scalapack tools routine NUMROC for that.

@@ -307,8 +307,8 @@ program test_complex2
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in get_elpa_row_col_comms.
 
-   call get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
-                               mpi_comm_rows, mpi_comm_cols)
+   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+                                   mpi_comm_rows, mpi_comm_cols)
    if (myid==0) then
      print '(a)','| Past split communicator setup for rows and columns.'
    end if

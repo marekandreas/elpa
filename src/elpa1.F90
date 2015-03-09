@@ -115,7 +115,7 @@ contains
 
 !-------------------------------------------------------------------------------
 
-subroutine get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols)
+function get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
 
 !-------------------------------------------------------------------------------
 ! get_elpa_row_col_comms:
@@ -152,7 +152,7 @@ subroutine get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_ro
    call mpi_comm_split(mpi_comm_global,my_pcol,my_prow,mpi_comm_rows,mpierr)
    call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols,mpierr)
 
-end subroutine get_elpa_row_col_comms
+end function get_elpa_row_col_comms
 
 !-------------------------------------------------------------------------------
 

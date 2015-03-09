@@ -145,10 +145,6 @@ program test_real2
   success = .true.
   write_to_file = .false.
 
-   nblk = 2
-   na   = 4000
-   nev  = 1500
-
    if (COMMAND_ARGUMENT_COUNT() == 3) then
       call GET_COMMAND_ARGUMENT(1, arg1)
       call GET_COMMAND_ARGUMENT(2, arg2)
@@ -169,6 +165,11 @@ program test_real2
       read(arg3, *) nblk
 
    endif
+
+   nblk = 2
+   na   = 4000
+   nev  = 1500
+
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 #ifndef WITH_OPENMP
@@ -301,8 +302,8 @@ program test_real2
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in get_elpa_row_col_comms.
 
-   call get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
-                               mpi_comm_rows, mpi_comm_cols)
+   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+                                   mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
      print '(a)','| Past split communicator setup for rows and columns.'
