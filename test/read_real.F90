@@ -178,12 +178,12 @@ program read_real
       call get_command_argument(1,filename,lenarg,info)
       if(info/=0) then
          write(error_unit,*) 'Usage: test_real matrix_file'
-         call mpi_abort(mpi_comm_world,0,mpierr)
+         call mpi_abort(mpi_comm_world,1,mpierr)
       endif
       open(10,file=filename,action='READ',status='OLD',iostat=info)
       if(info/=0) then
          write(error_unit,*) 'Error: Unable to open ',trim(filename)
-         call mpi_abort(mpi_comm_world,0,mpierr)
+         call mpi_abort(mpi_comm_world,1,mpierr)
       endif
    endif
    call mpi_barrier(mpi_comm_world, mpierr) ! Just for safety

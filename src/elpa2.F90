@@ -222,7 +222,8 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
          write(error_unit,*) "solve_evp_real_2stage: QR-decomposition: blocksize does not fit with matrixsize"
        endif
      print *, "Do not use QR-decomposition for this matrix and blocksize."
-     call mpi_abort(mpi_comm_world,0,mpierr)
+     success = .false.
+     return
      endif
    endif
 
@@ -452,7 +453,6 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
        write(error_unit,*) "The defaul kernel COMPLEX_ELPA_KERNEL_GENERIC will be used !"
      endif
      THIS_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
-!      call MPI_ABORT(mpi_comm_all, mpierr)
    endif
    ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
 

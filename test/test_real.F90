@@ -365,7 +365,7 @@ program test_real
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real produced an error! Aborting..."
-      call MPI_ABORT(mpi_comm_world, mpierr)
+      call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif
 
 
