@@ -170,7 +170,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 
    integer, intent(in)           :: na, nev, lda, ldq, mpi_comm_rows, &
                                     mpi_comm_cols, mpi_comm_all
-   integer, intent(inout)        :: nblk
+   integer, intent(in)           :: nblk
    real*8, intent(inout)         :: a(lda,*), ev(na), q(ldq,*)
 
    integer                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
