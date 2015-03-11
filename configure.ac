@@ -52,17 +52,35 @@ fi
 m4_include([fdep/fortran_dependencies.m4])
 FDEP_F90_GNU_MAKE_DEPS
 
+dnl check whether mpi compilers are available;
+dnl if not abort since it is mandatory
+
+# C
+AC_LANG([C])
+m4_include([m4/ax_prog_cc_mpi.m4])
+AX_PROG_CC_MPI([true],[],[AC_MSG_ERROR([no MPI C wrapper found])])
 AC_PROG_INSTALL
 
 : ${CFLAGS=""}
 : ${CXXFLAGS=""}
 #: ${FCLAGS="-O2"}
 
-AC_PROG_CC
-#AM_PROG_CC_C_O
 AM_PROG_AR
 AM_PROG_AS
+
+
+# Fortran
+AC_LANG([Fortran])
+m4_include([m4/ax_prog_fc_mpi.m4])
+AX_PROG_FC_MPI([],[],[AC_MSG_ERROR([no MPI Fortran wrapper found])])
+
+
+# C++
+AC_LANG([C++])
 AC_PROG_CXX
+
+
+
 
 dnl variables needed for the tests
 
@@ -72,7 +90,6 @@ dnl lapack, and scalapack test can fail and vice versa
 have_blas=no
 have_blacs=no
 have_mkl=no
-have_mpi=no
 have_lapack=no
 have_scalapack=no
 
@@ -104,6 +121,8 @@ install_complex_bgp=no
 install_complex_bgq=no
 install_complex_avx_block1=no
 install_complex_avx_block2=no
+
+AC_LANG([C])
 
 dnl build with ftimings support
 AC_MSG_CHECKING(whether ELPA should be build with ftimings support)
@@ -222,15 +241,6 @@ if test x"${with_avx_optimization}" = x"yes"; then
 fi
 
 AC_LANG([Fortran])
-m4_include([m4/ax_prog_fc_mpi.m4])
-
-dnl check whether an mpi compiler is available;
-dnl if not abort since it is mandatory
-AX_PROG_FC_MPI([],[have_mpi=yes],[have_mpi=no
-		 if test x"${have_mpi}" = xno; then
-  		  AC_MSG_ERROR([no mpi found])
-		  fi])
-
 AC_FC_FREEFORM
 AC_FC_MODULE_FLAG
 AC_FC_MODULE_OUTPUT_FLAG
@@ -772,4 +782,10 @@ if test -e config.h ; then
   grep "^#define" config.h > config-f90.h
 else
   echo "Warning! No config.h was generated, check for errors and re-run configure!"
+  exit 1
 fi
+
+echo "Generating elpa/elpa_generated.h..."
+mkdir -p elpa
+grep "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
+

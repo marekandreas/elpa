@@ -42,7 +42,7 @@
 #include "config-f90.h"
 !>
 !> Fortran test programm to demonstrates the use of
-!> ELPA 2 real case library.
+!> ELPA 1 real case library.
 !> If "HAVE_REDIRECT" was defined at build time
 !> the stdout and stderr output of each MPI task
 !> can be redirected to files if the environment
@@ -58,12 +58,7 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-!> The complex ELPA 2 kernel is set in this program via
-!> the API call. However, this can be overriden by setting
-!> the environment variable "REAL_ELPA_KERNEL" to an
-!> appropiate value.
-!>
-program test_real2
+program test_real
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -79,9 +74,10 @@ program test_real2
 !-------------------------------------------------------------------------------
 
    use ELPA1
-   use ELPA2
-
-   use elpa2_utilities
+   use from_c
+#ifdef WITH_OPENMP
+   use test_util
+#endif
 
    use mod_read_input_parameters
    use mod_check_correctness
@@ -89,17 +85,12 @@ program test_real2
    use mod_blacs_infrastructure
    use mod_prepare_matrix
 
-#ifdef WITH_OPENMP
-   use test_util
-#endif
-
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
 #endif
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
-
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
@@ -113,38 +104,48 @@ program test_real2
    ! nev:  Number of eigenvectors to be calculated
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
-
    integer :: nblk
    integer na, nev
+
 
    !-------------------------------------------------------------------------------
    !  Local Variables
 
-   integer np_rows, np_cols, na_rows, na_cols
+   integer             :: np_rows, np_cols, na_rows, na_cols
 
-   integer myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer             :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer             :: mpi_comm_rows_fromC, mpi_comm_cols_fromC
+   integer             :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol,j
 
-   integer, external :: numroc
+   integer             :: my_prowFromC, my_pcolFromC
+   integer, external   :: numroc
 
    real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
-   integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
-   integer :: STATUS
+   real*8, allocatable :: aFromC(:,:), evFromC(:), zFromC(:,:)
+
+   integer             :: iseed(4096) ! Random seed, size should be sufficient for every generator
+
+
+   integer             :: STATUS
 #ifdef WITH_OPENMP
-   integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   integer             :: omp_get_max_threads,  required_mpi_thread_level, &
+                          provided_mpi_thread_level
 #endif
-   logical :: write_to_file
+   logical             :: write_to_file
+
+   integer             :: checksWrong, checksWrongRecv
 
 
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter   :: error_unit = 6
 #endif
 
-  logical :: success
+   logical             :: success
+
+   success = .true.
 
    write_to_file = .false.
-   success = .true.
 
    nblk = 16
    na = 4000
@@ -153,34 +154,11 @@ program test_real2
    ! read input parameters if they are provided
    call read_input_parameters(na, nev, nblk, write_to_file)
 
+
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   STATUS = 0
-
-#ifdef WITH_OPENMP
-   if (myid .eq. 0) then
-      print *,"Threaded version of test program"
-      print *,"Using ",omp_get_max_threads()," threads"
-      print *," "
-   endif
-#endif
-#ifdef HAVE_REDIRECT
-   if (check_redirect_environment_variable()) then
-     if (myid .eq. 0) then
-       print *," "
-       print *,"Redirection of mpi processes is used"
-       print *," "
-       if (create_directories() .ne. 1) then
-         write(error_unit,*) "Unable to create directory for stdout and stderr!"
-         stop
-       endif
-     endif
-     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-     call redirect_stdout(myid)
-   endif
-#endif
    if (write_to_file) then
      if (myid .eq. 0) print *,"Writing output files"
    endif
@@ -217,6 +195,33 @@ program test_real2
    ! divisors of nprocs with a number next to the square root of nprocs
    ! and decrement it until a divisor is found.
 
+
+   STATUS = 0
+#ifdef WITH_OPENMP
+   if (myid .eq. 0) then
+      print *,"Threaded version of test program"
+      print *,"Using ",omp_get_max_threads()," threads"
+      print *," "
+   endif
+#endif
+    call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+
+#ifdef HAVE_REDIRECT
+   if (check_redirect_environment_variable()) then
+     if (myid .eq. 0) then
+       print *," "
+       print *,"Redirection of mpi processes is used"
+       print *," "
+       if (create_directories() .ne. 1) then
+         write(error_unit,*) "Unable to create directory for stdout and stderr!"
+         stop
+       endif
+      endif
+      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+      call redirect_stdout(myid)
+    endif
+#endif
+
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
@@ -231,20 +236,6 @@ program test_real2
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is an example how to determine the ELPA2 kernel with"
-      print *, "an api call. Note, however, that setting the kernel via"
-      print *, "an environment variable will always take precedence over"
-      print *, "everything else! "
-      print *
-#ifndef HAVE_ENVIRONMENT_CHECKING
-      print *, " Notice that it is not possible with this build to set the "
-      print *, " kernel via an environment variable! To change this re-install"
-      print *, " the library and have a look at the log files"
-#endif
-      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
-      print *
-
-
    endif
 
    !-------------------------------------------------------------------------------
@@ -264,11 +255,19 @@ program test_real2
      print '(a)','| Past BLACS_Gridinfo.'
    end if
 
+   my_prowFromC = my_prow
+   my_pcolFromC = my_pcol
+
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in get_elpa_row_col_comms.
 
    mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
+
+   ! call here a c function, which via the c-interface in turn calls the
+   ! appropiate elpa function
+   mpierr = call_elpa_get_comm_from_c(mpi_comm_world, my_prowFromC, my_pcolFromC, &
+                                      mpi_comm_rows_fromC, mpi_comm_cols_fromC)
 
    if (myid==0) then
      print '(a)','| Past split communicator setup for rows and columns.'
@@ -292,57 +291,124 @@ program test_real2
 
    allocate(ev(na))
 
+   allocate(aFromC (na_rows,na_cols))
+   allocate(zFromC (na_rows,na_cols))
+
+   allocate(evFromC(na))
+
    call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+
+   aFromC = a
+   zFromC = z
+   evFromC = ev
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-   ! set print flag in elpa1
-   elpa_print_times = .true.
 
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
    if (myid==0) then
-     print '(a)','| Entering two-stage ELPA solver ... '
+     print '(a)','| Entering one-step ELPA solver ... '
      print *
    end if
 
-
-   ! ELPA is called with a kernel specification in the API
-
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
+   success = solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                          mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
+      write(error_unit,*) "solve_evp_real produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif
 
+
    if (myid==0) then
-     print '(a)','| Two-step ELPA solver complete.'
+     print '(a)','| One-step ELPA solver complete.'
      print *
    end if
 
-   if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-   if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
-   if(myid == 0) print *,'Time transform back EVs :',time_evp_back
-   if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-
+   if(myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
+   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+   if(myid == 0) print *,'Time trans_ev_real    :',time_evp_back
+   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
    if(write_to_file) then
       if (myid == 0) then
-         open(17,file="EVs_real2_out.txt",form='formatted',status='new')
+         open(17,file="EVs_real_out.txt",form='formatted',status='new')
          do i=1,na
             write(17,*) i,ev(i)
          enddo
          close(17)
       endif
    endif
+
+   ! call the c function
+   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+   if (myid==0) then
+     print *," "
+     print '(a)','| Testing with C-interface ... '
+     print *," "
+   end if
+
+   success = solve_elpa1_real_call_from_c(na, nev, na_cols, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
+                                          mpi_comm_rows_fromC, mpi_comm_cols_fromC )
+
+   if (myid==0) then
+     print *," "
+     print '(a)','| C call done... '
+     print *," "
+   end if
+   ! check whether c results are the same
+   checksWrong = 0
+   do j=1,na_cols
+     do i=1,na_rows
+       if (a(i,j) .ne. aFromC(i,j)) then
+         print *,"results for a from Fortran and C are not the same!"
+         print *,i,j,a(i,j),aFromC(i,j)
+         checksWrong = 1
+         cycle
+       endif
+       if (z(i,j) .ne. zFromC(i,j)) then
+         print *,"results for z from Fortran and C are not the same!"
+         print *,i,j,z(i,j),zFromC(i,j)
+         checksWrong = 1
+       endif
+
+     enddo
+   enddo
+
+   ! reduction
+   call mpi_allreduce(checksWrong, checksWrongRecv,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,mpierr)
+   checksWrong = checksWrongRecv
+
+   if (checksWrong == 0) then
+     if (myid == 0) then
+       print *,' Checks for matrix a and z are ok... '
+     endif
+   endif
+
+   checksWrong = 0
+   do i=1,na
+     if (ev(i) .ne. evFromC(i)) then
+       print *,"results for EV from Fortran and C are not the same!"
+       print *,i,ev(i),evFromC(i)
+       checksWrong = 1
+     endif
+   enddo
+
+   ! reduction
+   call mpi_allreduce(checksWrong, checksWrongRecv,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,mpierr)
+   checksWrong = checksWrongRecv
+
+   if (checksWrong == 0) then
+     if (myid == 0) then
+       print *,' Checks for EVs are ok... '
+     endif
+   endif
+
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
@@ -360,13 +426,19 @@ program test_real2
    call timer%stop("program")
    print *," "
    print *,"Timings program:"
+   print *," "
    call timer%print("program")
+   print *," "
+   print *,"End timings program"
    print *," "
    print *,"End timings program"
 #endif
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
+
    call EXIT(STATUS)
+
+
 end
 
 !-------------------------------------------------------------------------------

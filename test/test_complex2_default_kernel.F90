@@ -81,6 +81,12 @@ program test_complex2
    use ELPA2
 
    use elpa2_utilities
+   use mod_read_input_parameters
+   use mod_check_correctness
+   use mod_setup_mpi
+   use mod_blacs_infrastructure
+   use mod_prepare_matrix
+
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -119,9 +125,8 @@ program test_complex2
 
    integer, external :: numroc
 
-   real*8 err, errmax
    real*8, allocatable :: ev(:), xr(:,:)
-   complex*16 :: xc
+
    complex*16, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
    complex*16, parameter :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
@@ -133,12 +138,6 @@ program test_complex2
    integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    logical :: write_to_file
-   !-------------------------------------------------------------------------------
-   !  Parse command line argumnents, if given
-   character*16 arg1
-   character*16 arg2
-   character*16 arg3
-   character*16 arg4
 
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter   :: error_unit = 6
@@ -153,44 +152,11 @@ program test_complex2
    na = 4000
    nev = 1500
 
-   if (COMMAND_ARGUMENT_COUNT() == 3) then
-      call GET_COMMAND_ARGUMENT(1, arg1)
-      call GET_COMMAND_ARGUMENT(2, arg2)
-      call GET_COMMAND_ARGUMENT(3, arg3)
-
-      read(arg1, *) na
-      read(arg2, *) nev
-      read(arg3, *) nblk
-   endif
-
-   if (COMMAND_ARGUMENT_COUNT() == 4) then
-      call GET_COMMAND_ARGUMENT(1, arg1)
-      call GET_COMMAND_ARGUMENT(2, arg2)
-      call GET_COMMAND_ARGUMENT(3, arg3)
-      call GET_COMMAND_ARGUMENT(4, arg4)
-      read(arg1, *) na
-      read(arg2, *) nev
-      read(arg3, *) nblk
-
-   endif
+   ! read input parameters if they are provided
+   call read_input_parameters(na, nev, nblk, write_to_file)
    !-------------------------------------------------------------------------------
    !  MPI Initialization
-#ifndef WITH_OPENMP
-   call mpi_init(mpierr)
-#else
-   required_mpi_thread_level = MPI_THREAD_MULTIPLE
-   call mpi_init_thread(required_mpi_thread_level,     &
-                        provided_mpi_thread_level, mpierr)
-
-   if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
-      write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
-      write(error_unit,*) "           only ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
-      call exit(77)
-   endif
-
-#endif
-   call mpi_comm_rank(mpi_comm_world,myid,mpierr)
-   call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
+   call setup_mpi(myid, nprocs)
 
    STATUS = 0
 
@@ -217,9 +183,8 @@ program test_complex2
    endif
 #endif
 
-   if (arg4 .eq. "output") then
-      write_to_file = .true.
-      if (myid .eq. 0) print *,"Writing output files"
+   if (write_to_file) then
+     if (myid .eq. 0) print *,"Writing output files"
    endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -296,9 +261,8 @@ program test_complex2
    ! consistent (i.e. 0<=my_prow<np_rows, 0<=my_pcol<np_cols and every
    ! process has a unique (my_prow,my_pcol) pair).
 
-   my_blacs_ctxt = mpi_comm_world
-   call BLACS_Gridinit( my_blacs_ctxt, 'C', np_rows, np_cols )
-   call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
+   call set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, np_cols, &
+                         nprow, npcol, my_prow, my_pcol)
 
    if (myid==0) then
      print '(a)','| Past BLACS_Gridinfo.'
@@ -309,6 +273,7 @@ program test_complex2
 
    mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
+
    if (myid==0) then
      print '(a)','| Past split communicator setup for rows and columns.'
    end if
@@ -316,15 +281,8 @@ program test_complex2
    ! Determine the necessary size of the distributed matrices,
    ! we use the Scalapack tools routine NUMROC for that.
 
-   na_rows = numroc(na, nblk, my_prow, 0, np_rows)
-   na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
-
-   ! Set up a scalapack descriptor for the checks below.
-   ! For ELPA the following restrictions hold:
-   ! - block sizes in both directions must be identical (args 4+5)
-   ! - first row and column of the distributed matrix must be on row/col 0/0 (args 6+7)
-
-   call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
+   call set_up_blacs_descriptor(na ,nblk, my_prow, my_pcol, np_rows, np_cols, &
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
 
    if (myid==0) then
      print '(a)','| Past scalapack descriptor setup.'
@@ -339,30 +297,11 @@ program test_complex2
    allocate(as(na_rows,na_cols))
 
    allocate(ev(na))
-
-   ! For getting a hermitian test matrix A we get a random matrix Z
-   ! and calculate A = Z + Z**H
-
-   ! We want different random numbers on every process
-   ! (otherways A might get rank deficient):
-
-   iseed(:) = myid
-   call RANDOM_SEED(put=iseed)
-
    allocate(xr(na_rows,na_cols))
-   call RANDOM_NUMBER(xr)
-   z(:,:) = xr(:,:)
-   call RANDOM_NUMBER(xr)
-   z(:,:) = z(:,:) + (0.d0,1.d0)*xr(:,:)
+
+   call prepare_matrix(na, myid, sc_desc, iseed, xr, a, z, as)
+
    deallocate(xr)
-
-   a(:,:) = z(:,:)
-   call pztranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
-
-
-   ! Save original matrix A for later accuracy checks
-
-   as = a
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -409,68 +348,13 @@ program test_complex2
    endif
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-
-   ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
-
-   deallocate(a)
    allocate(tmp1(na_rows,na_cols))
-
-   ! tmp1 =  A * Z
-   call pzgemm('N','N',na,nev,na,CONE,as,1,1,sc_desc, &
-               z,1,1,sc_desc,CZERO,tmp1,1,1,sc_desc)
-
-   deallocate(as)
    allocate(tmp2(na_rows,na_cols))
 
-   ! tmp2 = Zi*EVi
-   tmp2(:,:) = z(:,:)
-   do i=1,nev
-      xc = ev(i)
-      call pzscal(na,xc,tmp2,1,i,sc_desc,1)
-   enddo
+   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
-   !  tmp1 = A*Zi - Zi*EVi
-   tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
-
-   ! Get maximum norm of columns of tmp1
-   errmax = 0
-   do i=1,nev
-      xc = 0
-      call pzdotc(na,xc,tmp1,1,i,sc_desc,1,tmp1,1,i,sc_desc,1)
-      errmax = max(errmax, sqrt(real(xc,8)))
-   enddo
-
-   ! Get maximum error norm over all processors
-   err = errmax
-   call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
-   if(myid==0) print *
-   if(myid==0) print *,'Error Residual     :',errmax
-
-   if (errmax .gt. 5e-12) then
-      status = 1
-   endif
-
-   ! 2. Eigenvector orthogonality
-
-   ! tmp1 = Z**T * Z
-   tmp1 = 0
-   call pzgemm('C','N',nev,nev,na,CONE,z,1,1,sc_desc, &
-               z,1,1,sc_desc,CZERO,tmp1,1,1,sc_desc)
-   ! Initialize tmp2 to unit matrix
-   tmp2 = 0
-   call pzlaset('A',nev,nev,CZERO,CONE,tmp2,1,1,sc_desc)
-
-   ! tmp1 = Z**T * Z - Unit Matrix
-   tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
-
-   ! Get maximum error (max abs value in tmp1)
-   err = maxval(abs(tmp1))
-   call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
-   if(myid==0) print *,'Error Orthogonality:',errmax
-
-   if (errmax .gt. 5e-12) then
-      status = 1
-   endif
+   deallocate(a)
+   deallocate(as)
 
    deallocate(z)
    deallocate(tmp1)

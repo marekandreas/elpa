@@ -57,6 +57,7 @@
 
 
 #include "config-f90.h"
+#include <elpa/elpa_kernel_constants.h>
 
 module ELPA2_utilities
 
@@ -98,16 +99,15 @@ module ELPA2_utilities
   integer, parameter :: error_unit = 6
 #endif
 
-
-  integer, parameter :: number_of_real_kernels           = 8
-  integer, parameter :: REAL_ELPA_KERNEL_GENERIC         = 1
-  integer, parameter :: REAL_ELPA_KERNEL_GENERIC_SIMPLE  = 2
-  integer, parameter :: REAL_ELPA_KERNEL_BGP             = 3
-  integer, parameter :: REAL_ELPA_KERNEL_BGQ             = 4
-  integer, parameter :: REAL_ELPA_KERNEL_SSE             = 5
-  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK2      = 6
-  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK4      = 7
-  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK6      = 8
+  integer, parameter :: number_of_real_kernels           = ELPA2_NUMBER_OF_REAL_KERNELS
+  integer, parameter :: REAL_ELPA_KERNEL_GENERIC         = ELPA2_REAL_KERNEL_GENERIC
+  integer, parameter :: REAL_ELPA_KERNEL_GENERIC_SIMPLE  = ELPA2_REAL_KERNEL_GENERIC_SIMPLE
+  integer, parameter :: REAL_ELPA_KERNEL_BGP             = ELPA2_REAL_KERNEL_BGP
+  integer, parameter :: REAL_ELPA_KERNEL_BGQ             = ELPA2_REAL_KERNEL_BGQ
+  integer, parameter :: REAL_ELPA_KERNEL_SSE             = ELPA2_REAL_KERNEL_SSE
+  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK2      = ELPA2_REAL_KERNEL_AVX_BLOCK2
+  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK4      = ELPA2_REAL_KERNEL_AVX_BLOCK4
+  integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK6      = ELPA2_REAL_KERNEL_AVX_BLOCK6
 
 #if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
   integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
@@ -124,14 +124,14 @@ module ELPA2_utilities
                                 "REAL_ELPA_KERNEL_AVX_BLOCK4      ", &
                                 "REAL_ELPA_KERNEL_AVX_BLOCK6      "/)
 
-  integer, parameter :: number_of_complex_kernels           = 7
-  integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC         = 1
-  integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE  = 2
-  integer, parameter :: COMPLEX_ELPA_KERNEL_BGP             = 3
-  integer, parameter :: COMPLEX_ELPA_KERNEL_BGQ             = 4
-  integer, parameter :: COMPLEX_ELPA_KERNEL_SSE             = 5
-  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK1      = 6
-  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK2      = 7
+  integer, parameter :: number_of_complex_kernels           = ELPA2_NUMBER_OF_COMPLEX_KERNELS
+  integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC         = ELPA2_COMPLEX_KERNEL_GENERIC
+  integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE  = ELPA2_COMPLEX_KERNEL_GENERIC_SIMPLE
+  integer, parameter :: COMPLEX_ELPA_KERNEL_BGP             = ELPA2_COMPLEX_KERNEL_BGP
+  integer, parameter :: COMPLEX_ELPA_KERNEL_BGQ             = ELPA2_COMPLEX_KERNEL_BGQ
+  integer, parameter :: COMPLEX_ELPA_KERNEL_SSE             = ELPA2_COMPLEX_KERNEL_SSE
+  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK1      = ELPA2_COMPLEX_KERNEL_AVX_BLOCK1
+  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK2      = ELPA2_COMPLEX_KERNEL_AVX_BLOCK2
 
 #if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
   integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
