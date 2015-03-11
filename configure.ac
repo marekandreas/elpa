@@ -387,12 +387,10 @@ else
   AC_LINK_IFELSE([AC_LANG_SOURCE([
     program dgemm_test
 
-      integer , parameter:: n_cols=3,l_cols=3
-      real :: hvm(n_cols,l_cols)
+      integer , parameter:: M = 4, N = 3, K = 2
+      real :: A(M,K), B(K,N), C(M,N)
 
-      call dgemm('T','N',n_cols,n_cols,l_cols,1.,hvm,ubound(hvm,1), &
-      hvm(1,n_cols+1),ubound(hvm,1),0.,hvm,ubound(hvm,1))
-
+      call dgemm('N','N',M,N,K,1.0,A,M,B,K,0.0,C,M)
 
      end program dgemm_test
      ])],
