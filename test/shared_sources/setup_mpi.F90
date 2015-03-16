@@ -48,6 +48,7 @@ module mod_setup_mpi
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
 #endif
+      use test_util
       implicit none
       include 'mpif.h'
 
