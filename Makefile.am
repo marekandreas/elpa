@@ -149,7 +149,7 @@ elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90 $(shared_sources) $(redirect_sources)
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
 
-elpa1_test_real_with_c@SUFFIX@_SOURCES = test/test_real_with_c.F90 test//shared_sources/mod_from_c.F90 test//shared_sources/call_elpa1_real.c  $(shared_sources) $(redirect_sources)
+elpa1_test_real_with_c@SUFFIX@_SOURCES = test/test_real_with_c.F90 test/shared_sources/mod_from_c.F90 test/shared_sources/call_elpa1_real.c  $(shared_sources) $(redirect_sources)
 elpa1_test_real_with_c@SUFFIX@_LDADD = $(build_lib)
 
 elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90 $(shared_sources) $(redirect_sources)
