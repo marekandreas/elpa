@@ -79,6 +79,10 @@ program test_complex2
 
    use ELPA1
    use ELPA2
+#ifdef WITH_GPU_VERSION
+   use cuda_routines
+#endif
+
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -115,35 +119,38 @@ program test_complex2
    !-------------------------------------------------------------------------------
    !  Local Variables
 
-   integer np_rows, np_cols, na_rows, na_cols
+   integer                 :: np_rows, np_cols, na_rows, na_cols
 
-   integer myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer                 :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer                 :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer, external :: numroc
+   integer, external       :: numroc
 
-   complex*16, parameter     :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
-   real*8, allocatable :: ev(:), xr(:,:)
+   complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+   real*8, allocatable     :: ev(:), xr(:,:)
 
    complex*16, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
 
 
-   integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
+   integer                 :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
-   integer :: STATUS
+   integer                 :: STATUS
 #ifdef WITH_OPENMP
-   integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   integer                 :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
-   logical :: write_to_file
-
-
+   logical                 :: write_to_file
 
 #ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter   :: error_unit = 6
+   integer, parameter       :: error_unit = 6
 #endif
 
-  logical :: success
+   logical                  :: success
+
+#ifdef WITH_GPU_VERSION
+   character(len=1024)     :: envname
+   integer                 :: istat, devnum
+#endif
 
    write_to_file = .false.
    success = .true.
@@ -157,6 +164,15 @@ program test_complex2
       !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
+#ifdef WITH_GPU_VERSION
+   devnum = 0
+   istat = cuda_setdevice(devnum)
+
+   if (istat .ne. 0) then
+     print *,"Cannot set CudaDevice"
+     stop
+   endif
+#endif
 
    STATUS = 0
 
@@ -186,6 +202,10 @@ program test_complex2
    if (myid .eq. 0) then
       print *," "
       print *,"This ELPA2 is build with"
+#ifdef WITH_GPU_VERSION
+      print *,"GPU support"
+#else
+
 #ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
       print *,"AVX optimized kernel (2 blocking) for complex matrices"
 #endif
@@ -201,6 +221,8 @@ program test_complex2
 #endif
 #ifdef WITH_COMPLEX_SSE_KERNEL
      print *,"SSE ASSEMBLER kernel for complex matrices"
+#endif
+
 #endif
 
    endif

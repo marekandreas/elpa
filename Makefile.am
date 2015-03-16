@@ -30,6 +30,10 @@ if HAVE_DETAILED_TIMINGS
                                 src/ftimings/papi.c
 endif
 
+if WITH_GPU_VERSION
+  libelpa@SUFFIX@_la_SOURCES +=  src/interface_cuda.F90 src/interface_c_kernel.F90 src/ev_tridi_band_gpu_c_v2.cu src/cuUtils.cu
+endif
+
 if WITH_REAL_GENERIC_KERNEL
   libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.f90
 endif
@@ -82,10 +86,8 @@ if WITH_COMPLEX_AVX_BLOCK2_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
 endif
 
-#if WITH_AVX_SANDYBRIDGE
-#  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
-#                                           src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
-#endif
+.cu.lo:
+	NVCC="$(NVCC)" libtool --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -c $< -o $@
 
 # install any .mod files in the include/ dir
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
@@ -155,6 +157,7 @@ elpa1_test_real_with_c@SUFFIX@_LDADD = $(build_lib)
 
 elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90 $(shared_sources) $(redirect_sources)
 
+elpa2_test_real@SUFFIX@_LDFLAGS = -static
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
 
 elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90 $(shared_sources) $(redirect_sources)
@@ -258,7 +261,7 @@ elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
 
 CLEANFILES = \
-  elpa-generated.h \
+  elpa/elpa-generated.h \
   elpa1_test_real.sh \
   elpa1_test_complex.sh \
   elpa2_test_real.sh \
