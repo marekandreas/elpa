@@ -50,73 +50,73 @@
 #include <elpa/elpa.h>
 
 main(int argc, char** argv) {
-    int         myid;
-    int         nprocs;
+   int myid;
+   int nprocs;
 
-    int na, nev, nblk;
+   int na, nev, nblk;
 
-    int status;
+   int status;
 
-    int np_cols, np_rows, np_colsStart;
+   int np_cols, np_rows, np_colsStart;
 
-    int my_blacs_ctxt, nprow, npcol, my_prow, my_pcol;
+   int my_blacs_ctxt, nprow, npcol, my_prow, my_pcol;
 
-    int mpierr;
+   int mpierr;
 
-    int  my_mpi_comm_world;
-    int  mpi_comm_rows, mpi_comm_cols;
+   int my_mpi_comm_world;
+   int mpi_comm_rows, mpi_comm_cols;
 
-    int info, *sc_desc;
+   int info, *sc_desc;
 
-    int na_rows, na_cols;
-    double startVal;
+   int na_rows, na_cols;
+   double startVal;
 
-    double *a, *z, *as, *ev, *tmp1, *tmp2;
+   double *a, *z, *as, *ev, *tmp1, *tmp2;
 
-    int *iseed;
+   int *iseed;
 
-    int success;
+   int success;
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+   MPI_Init(&argc, &argv);
+   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
-    na = 1000;
-    nev = 500;
-    nblk = 16;
+   na = 1000;
+   nev = 500;
+   nblk = 16;
 
-    if (myid == 0) {
-      printf("This is the c version of an ELPA test-programm\n");
-      printf("\n");
-      printf("It will call the 1stage ELPA real solver for an\n");
-      printf("of matrix size %d. It will compute %d eigenvalues\n",na,nev);
-      printf("and uses a blocksize of %d\n",nblk);
-      printf("\n");
-      printf("This is an example program with much less functionality\n");
-      printf("as it's Fortran counterpart \n");
-      printf("\n");
+   if (myid == 0) {
+     printf("This is the c version of an ELPA test-programm\n");
+     printf("\n");
+     printf("It will call the 1stage ELPA real solver for an\n");
+     printf("of matrix size %d. It will compute %d eigenvalues\n",na,nev);
+     printf("and uses a blocksize of %d\n",nblk);
+     printf("\n");
+     printf("This is an example program with much less functionality\n");
+     printf("as it's Fortran counterpart \n");
+     printf("\n");
 
-    }
+   }
 
-    status = 0;
+   status = 0;
 
-    startVal = sqrt((double) nprocs);
-    np_colsStart = (int) round(startVal);
-    for (np_cols=np_colsStart;np_cols>1;np_cols--){
-      if (nprocs %np_cols ==0){
-      break;
-      }
-    }
+   startVal = sqrt((double) nprocs);
+   np_colsStart = (int) round(startVal);
+   for (np_cols=np_colsStart;np_cols>1;np_cols--){
+     if (nprocs %np_cols ==0){
+     break;
+     }
+   }
 
-    np_rows = nprocs/np_cols;
+   np_rows = nprocs/np_cols;
 
-    if (myid == 0) {
-      printf("\n");
-      printf("Number of processor rows %d, cols %d, total %d \n",np_rows,np_cols,nprocs);
-    }
+   if (myid == 0) {
+     printf("\n");
+     printf("Number of processor rows %d, cols %d, total %d \n",np_rows,np_cols,nprocs);
+   }
 
-    // set up blacs
-    // convert communicators before
+   /* set up blacs */
+   /* convert communicators before */
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
    set_up_blacsgrid_from_fortran(my_mpi_comm_world, &my_blacs_ctxt, &np_rows, &np_cols, &nprow, &npcol, &my_prow, &my_pcol);
 
@@ -126,8 +126,8 @@ main(int argc, char** argv) {
      printf("\n");
    }
 
-   // get the ELPA row and col communicators.
-   // These are NOT usable in C without calling the MPI_Comm_f2c function on them !!
+   /* get the ELPA row and col communicators. */
+   /* These are NOT usable in C without calling the MPI_Comm_f2c function on them !! */
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
    mpierr = elpa_get_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
@@ -147,7 +147,7 @@ main(int argc, char** argv) {
      printf("\n");
    }
 
-   // allocate the matrices needed for elpa
+   /* allocate the matrices needed for elpa */
    if (myid == 0) {
      printf("\n");
      printf("Allocating matrices with na_rows=%d and na_cols=%d\n",na_rows, na_cols);
@@ -190,7 +190,7 @@ main(int argc, char** argv) {
      printf("\n");
    }
 
-   // check the results
+   /* check the results */
    status = check_correctness_real_from_fortran(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
 
    if (status !=0){
@@ -200,13 +200,15 @@ main(int argc, char** argv) {
      printf("All ok!\n");
    }
 
-    free(sc_desc);
-    free(a);
-    free(z);
-    free(as);
+   free(sc_desc);
+   free(a);
+   free(z);
+   free(as);
 
-    free(tmp1);
-    free(tmp2);
+   free(tmp1);
+   free(tmp2);
 
-    MPI_Finalize();
+   MPI_Finalize();
+
+   return 0;
 }

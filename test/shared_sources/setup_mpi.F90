@@ -56,8 +56,8 @@ module mod_setup_mpi
 
       integer, intent(out) :: myid, nprocs
 #ifdef WITH_OPENMP
-   integer    :: required_mpi_thread_level, &
-                 provided_mpi_thread_level
+      integer    :: required_mpi_thread_level, &
+                    provided_mpi_thread_level
 #endif
 #ifndef WITH_OPENMP
       call mpi_init(mpierr)
