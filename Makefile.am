@@ -224,7 +224,7 @@ elpa2_test_real_default_kernel.sh:
 	chmod +x elpa2_test_real_default_kernel.sh
 
 elpa2_test_real_default_kernel_qr_decomposition.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel_qr_decomposition.sh
+	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > elpa2_test_real_default_kernel_qr_decomposition.sh
 	chmod +x elpa2_test_real_default_kernel_qr_decomposition.sh
 
 elpa2_test_real_choose_kernel_with_api.sh:

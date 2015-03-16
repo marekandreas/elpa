@@ -137,15 +137,18 @@ program test_real2
 
 
 #ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter   :: error_unit = 6
+   integer, parameter   :: error_unit = 6
 #endif
 
-  logical              :: success
+   logical              :: success
 
-  success = .true.
-  write_to_file = .false.
-   ! read input parameters if they are provided
-   call read_input_parameters(na, nev, nblk, write_to_file)
+   success = .true.
+   write_to_file = .false.
+
+   if (COMMAND_ARGUMENT_COUNT() /= 0) then
+     write(error_unit,*) "This program does not support any command-line arguments"
+     stop 1
+   endif
 
    nblk = 2
    na   = 4000
@@ -206,9 +209,9 @@ program test_real2
                 print_max_allocated_memory=.true.)
 
 
-  call timer%enable()
+   call timer%enable()
 
-  call timer%start("program")
+   call timer%start("program")
 #endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
