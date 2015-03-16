@@ -117,7 +117,6 @@ pkgconfig_DATA = @PKG_CONFIG_FILE@
 # programs
 bin_PROGRAMS = \
   elpa1_test_real@SUFFIX@ \
-  elpa1_test_real_with_c@SUFFIX@ \
   elpa1_test_complex@SUFFIX@ \
   elpa2_test_real@SUFFIX@ \
   elpa2_test_complex@SUFFIX@ \
@@ -129,7 +128,8 @@ noinst_PROGRAMS = \
   elpa2_test_complex_default_kernel@SUFFIX@ \
   elpa2_test_real_choose_kernel_with_api@SUFFIX@ \
   elpa2_test_complex_choose_kernel_with_api@SUFFIX@ \
-  elpa1_test_real_c_version@SUFFIX@
+  elpa1_test_real_c_version@SUFFIX@ \
+  elpa1_test_real_with_c@SUFFIX@
 
 
 build_lib = libelpa@SUFFIX@.la
