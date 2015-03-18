@@ -1,25 +1,20 @@
-How to install ELPA:
-----------------------
+How to install ELPA
+===================
 
 First of all, if you do not want to build ELPA yourself, and you run Linux,
-it is worth haveing a look at the ELPA webpage and/or the repositories of
-your Linux distibution: there exist pre-build packages for a few
-distributions like Fedora, Debian, and Opensuse. More, will hopefully follow
-in the future.
+it is worth having a look at the ELPA webpage http://elpa.rzg.mpg.de
+and/or the repositories of your Linux distribution: there exist
+pre-build packages for a number of Linux distributions like Fedora,
+Debian, and OpenSuse. More, will hopefully follow in the future.
 
 If you want to build (or have to since no packages are available) ELPA yourself,
 please note that ELPA is shipped with a typical "configure" and "make"
-procedure. It is recommended to use this way to install ELPA, see (A).
-If you do not want to  install ELPA as library, but to include it in your
-source code, please refer to point (B). Note, that this is not recommended
-and no support whatsoever can be given for this approach !
-However, an example makefile "Makefile.example" can be found in ./test,
-to give some hints how this is done. Please distibute then all files of ELPA
-with your code. Please note, that usage of ELPA as described in Section (B)
-requires advanced knowledge about compilers, preprocessor flags, and
-optimizations. Please also not, that we cannot give any official support if
-ELPA is used as described in Section (B)!
+procedure. This is the only supported way how to build and install ELPA.
 
+If --- against our recommendations --- you do not want to install ELPA as
+library, but to include it in your source code you will have to find a solution
+by yourself. If you do this anyway, please distribute then all files of ELPA
+with your code.
 
 
 (A): Installing ELPA as library with configure
@@ -37,7 +32,7 @@ The configure installation is best done in four steps
 1.1) Choice of ELPA2 kernels
 
    With the release of ELPA (2014.06 or newer) it is _not_
-   mandatory anymore to define the (real and complex) kernels
+   mandatory any more to define the (real and complex) kernels
    at build time. The configure procedure will build all the
    kernels which can be used on the build system. The choice of
    the kernels is now a run-time option. This is the most
@@ -55,22 +50,23 @@ The configure installation is best done in four steps
 1.2 Setting up Blacs/Scalapack
 
    The configure script tries to auto-detect an installed Blacs/Scalapack
-   library. If this is successfull, you do not have to specify anything
+   library. If this is successful, you do not have to specify anything
    in this regard. However, this will fail, if you do not use Netlib
    Blacs/Scalapack but vendor specific implementations (e.g. Intel's MKL
    library or the implementation of Cray).
 
    Please then point to your Blacs/Scalapack installation and the
-   linkline with the variables "SCALAPACK_LDFLAGS" and "SCALAPACK_FCFLAGS".
-   "SCALAPACK_LDFLAGS" should  contain the correct linkline for your
+   link-line with the variables "SCALAPACK_LDFLAGS" and "SCALAPACK_FCFLAGS".
+   "SCALAPACK_LDFLAGS" should  contain the correct link-line for your
    Blacs/Scalapack installation and "SCALAPACK_FCFLAGS" the include path
    and any other flags you need at compile time.
 
-   It is recommended that you use the "rpath functionality" in the linkline,
+   If your libraries are in non-standard locations, you can think about
+   specifying a runtime library search path ("rpath") in the link-line,
    otherwise it will be necessary to update the LD_LIBRARY_PATH environment
    variable.
 
-   In any case, auto-detection of manual specifing of Blacs/Scalapack,
+   In any case, auto-detection or manual specification of Blacs/Scalapack,
    the configure procedure will check whether Blacs/Scalapack is available
    at build-time and try to link with it.
 
@@ -80,26 +76,28 @@ The configure installation is best done in four steps
    variable "FCFLAGS", "CFLAGS", and "CXXFLAGS", e.g. FCFLAGS="-O3 -xAVX",
    please see "./src/elpa2_kernels/README_elpa2_kernels.txt".
 
-   Note that _NO_ compiler omptimization flags are set automatically. It
-   is always adviced to set the by e.g.:
+   Note that _NO_ compiler optimization flags are set automatically. It
+   is always adviced to set them by e.g.:
 
-   CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O2" ./configure
+   ./configure CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O2"
 
-   Setting the optimization flags for the AVX kernels can be a hazel. If AVX
+   Note that it is mandatory to set optimization flags for C, C++, and Fortran
+   since ELPA uses source files and compile steps from all these languages.
+
+   Setting the optimization flags for the AVX kernels can be a hassle. If AVX
    kernels are build for your system, you can set the configure option
    "--with-avx-optimizations=yes". This will automatically set a few compiler
    optimization flags which turned out to be beneficial for AVX support.
    However, it might be that on your system/compiler version etc. other flags
    are the better choice. AND this thus _not_ set the above mentioned flags,
-
    which you should still set by hand:
 
-   CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O2" ./configure
+   ./configure CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O2"
 
 
 1.4 Installation location
 
-   Set the "prefix" - flag, if you wish another installation location than
+   Set the "--prefix" flag if you wish another installation location than
    the default "/usr/local/".
 
 1.5 Hybrid OpenMP support
@@ -111,17 +109,25 @@ The configure installation is best done in four steps
 1.6 Other
 
    Note, that at the moment we do not officially support "cross compilation"
-   allthough it should work.
+   although it should work.
 
 2) run "make"
 
 3) run "make check"
-   a simple test of ELPA is done. At the moment the usage of "mpiexec"
+
+   A simple test of ELPA is done. At the moment the usage of "mpiexec"
    is required. If this is not possible at your system, you can run the
-   binaries "elpa1_test_real", "elpa2_test_real",
-   "elpa1_test_complex", "elpa2_test_complex",
-   "elpa2_test_complex_default_kernel", "elpa2_test_complex_choose_kernel_with_api",
-   "elpa2_test_real_default_kernel", and "elpa2_test_real_choose_kernel_with_api"
+   binaries
+
+     elpa1_test_real
+     elpa2_test_real
+     elpa1_test_complex
+     elpa2_test_complex
+     elpa2_test_complex_default_kernel
+     elpa2_test_complex_choose_kernel_with_api
+     elpa2_test_real_default_kernel
+     elpa2_test_real_choose_kernel_with_api
+
    yourself. At the moment the tests check whether the residual and the
    orthogonality of the found eigenvectors are lower than a threshold of
    5e-12. If this test fails, or if you believe the threshold should be
@@ -132,45 +138,24 @@ The configure installation is best done in four steps
 
 
 4) run "make install"
-   Note that a pckconfig file for ELPA is produced. You should then be
+
+   Note that a pkg-config file for ELPA is produced. You should then be
    able to link the ELPA library to your own applications.
 
 
 B) Installing ELPA without the autotools procedure
 ===================================================
-    You can find an example makefile "Makefile.example" in "./test",
-    to see how you can use ELPA directly in your code, and not as library.
-    If you do so, please distibute then all files of ELPA with your code.
 
-    However, this is not the recommended way for several reasons:
-     - for several releases, ELPA has grown substantially in performance
-       optimizations but also complexity. The simple "just use elpa source
-       files in your code" approach is becoming more and more difficult.
-    - you still have to choose an elpa2-kernel (see at (A)). Getting them
-      build from hand might be tedious.
-    - the file elpa2.F90 uses preprocessor defines for the different kernels.
-      you will have to do this by hand, if you do not use the autotools
-      infrastructure.
-    - also the test programs now use preprocessor defines, discriminating
-      between version with and without OpenMP
-    - it is entirely possible that due to ever growing complexity of ELPA
-      in future releases the build procedure without autotools will not be
-      supported anymore
+   We do not support installation without the autotools anymore!
+   If you think you need this, sorry, but then you are on your own.
 
 
-    Thus, if you really want to use ELPA this way and not with the autotools
-    please ensure the following
-    - make yourself familiar with the preprocessor flags you will need
-      for your configuration of ELPA and define them in a file "config-f90.h"
-    - adapte the Makefile.example accordingly to your needs
+How to use ELPA
+===============
 
-    Again, it is strongly encouraged to use the autotools build procedure!
-
-How to use ELPA:
------------------
-Using ELPA should be quite simple. It is similiar to ScalaPack but the API
-is different. See the examples in the directory "./test". There is shown how
+Using ELPA should be quite simple. It is similar to ScalaPack but the API
+is different. See the examples in the directory "./test". There it is shown how
 to evoke ELPA from a Fortran code.
 
-If you installed ELPA with the build procedure a pk-config file is produced,
-which will tell you how to link against ELPA.
+If you installed ELPA, a pkg-config file is produced which will tell you how to
+link your own program with ELPA.

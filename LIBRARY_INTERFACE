@@ -10,3 +10,17 @@ https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
   conditions.
 
   The state of release 2014.06.001 defines this interface
+
+- 2
+  Incompatible API change. The routine for ELPA 2 real case takes an
+  optional argument, defining whether QR decomposition is used or not
+
+  The state of release 2015.02.001 defines this interface
+
+- 3
+  Incompatible API change. C Functions are added to provide an C interface.
+  The subroutine "get_elpa_row_col_comms" has been converted to a function
+  which returns an error code.
+
+  The state of release 2015.02.002 defines this interface
+

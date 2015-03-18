@@ -10,49 +10,15 @@ a) ABI change
 
 Most importantly, the ABI of the ELPA libray changed!
 A rebuild/relink of the user code using the ELPA library is mandatory!
+Hopefully, this will be the last ABI change for some time.
 
-b) QR-decomposition
----------------------
-
-The only major change (which results in point a) is in the ELPA-2
-part of the library for real matrices:
-
-the fully blocked QR decomposition has been moved from the development part
-to the release!
-
-It is now possible to use this QR decomposition by either setting an
-environment variable "ELPA_QR_DECOMPOSITION" to "yes", or to call the
-"solve_evp_real_2stage" solver with the additional (optional) argument
-"useQR=.true."
-
-Note, that the environment variable always takes precedence over the setting in
-the API call.
-
-Furthernote, that if neither the environment variable or the API keyword are not
-set, or set to "no" or ".false.", respectively, then no QR-decomposition is used
-(i.e. the previous behaviour is maintained).
-
-The QR-decomposition fails, if the chosen matrix size is not a multiple of the
-blocksize. The library will give a warning message if this happens and it will
-abort.
-
-c) Debug messages
+b) C interface
 ----------------------
 
-By setting the environment variable "ELPA_DEBUG_MESSAGES" to "yes", ELPA will now
-print more information if an error occurs.
-
-
-d) Optimization flags
------------------------
-
-The configure procedure was adapted to be more consistent. No compiler omptimization
-flags are set automatically anymore, this is up to the user at build time
-
-e) OpenMP check
-----------------------
-
-The checks for OpenMP in the configure have been improved
+ELPA now is shipped with a C interface to directly call the ELPA library (written in Fortran)
+from C code. Header files are provided to declare the c functions.
+Since ELPA is still a Fortran library it might be necessary to link it together with the needed
+Fortran runtime libraries in your C code.
 
 
 
