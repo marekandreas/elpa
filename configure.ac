@@ -186,35 +186,45 @@ AC_MSG_RESULT([${can_compile_sse}])
 
 dnl check whether one can compile with avx - gcc intrinsics
 
- AC_MSG_CHECKING([whether we can compile a gcc intrinsic AVX program])
-
- dnl first pass: try with specified CFLAGS and CXXFLAGS
- AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-  #include <x86intrin.h>
-  void main(){
-  double* q;
-  __m256d a1_1 = _mm256_load_pd(q);
-  }
-  ])],
-  [can_compile_avx=yes],
-  [can_compile_avx=no]
- )
-dnl first test failed: try again after updating  CFLAGS and CXXFLAGS with -mavx
- if test x"${can_compile_avx}" = x"no"; then
- CFLAGS="$CFLAGS -mavx"
- CXXFLAGS="$CXXFLAGS -mavx"
- AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-  #include <x86intrin.h>
-  void main(){
-  double* q;
-  __m256d a1_1 = _mm256_load_pd(q);
-  }
-  ])],
-  [can_compile_avx=yes],
-  [can_compile_avx=no]
- )
- fi
+dnl first pass: try with specified CFLAGS and CXXFLAGS
+AC_MSG_CHECKING([whether we can compile a gcc intrinsic AVX program])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+ #include <x86intrin.h>
+ void main(){
+ double* q;
+ __m256d a1_1 = _mm256_load_pd(q);
+ }
+ ])],
+ [can_compile_avx=yes],
+ [can_compile_avx=no]
+)
 AC_MSG_RESULT([${can_compile_avx}])
+
+dnl first test failed: try again after updating  CFLAGS and CXXFLAGS with -mavx
+if test x"${can_compile_avx}" = x"no"; then
+  AC_MSG_CHECKING([whether we can compile a gcc intrinsic AVX program with -mavx])
+  save_CFLAGS="$CFLAGS"
+  save_CXXFLAGS="$CXXFLAGS"
+  CFLAGS="$CFLAGS -mavx"
+  CXXFLAGS="$CXXFLAGS -mavx"
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <x86intrin.h>
+   void main(){
+   double* q;
+   __m256d a1_1 = _mm256_load_pd(q);
+   }
+   ])],
+   [can_compile_avx=yes],
+   [can_compile_avx=no]
+  )
+  AC_MSG_RESULT([${can_compile_avx}])
+
+  if test x"${can_compile_avx}" = x"no"; then
+    # strip -mavx again
+    CFLAGS="$save_CFLAGS"
+    CXXFLAGS="$save_CXXFLAGS"
+  fi
+fi
 
 if test x"${can_compile_avx}" = x"yes"; then
   install_real_avx_block2=yes
