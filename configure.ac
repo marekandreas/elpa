@@ -97,7 +97,6 @@ dnl these tests will decide which kernels can be build
 dnl the usual case is all except the BlueGene (bg) kernels
 
 can_compile_sse=no
-can_compile_avx=no
 can_compile_bgp=no
 can_compile_bqq=no
 
@@ -187,55 +186,48 @@ AC_MSG_RESULT([${can_compile_sse}])
 dnl check whether one can compile with avx - gcc intrinsics
 
 dnl first pass: try with specified CFLAGS and CXXFLAGS
-AC_MSG_CHECKING([whether we can compile a gcc intrinsic AVX program])
+AC_MSG_CHECKING([whether we can compile AVX intrinsics in C])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  #include <x86intrin.h>
- void main(){
+ int main(int argc, char **argv){
  double* q;
  __m256d a1_1 = _mm256_load_pd(q);
+ return 0;
  }
  ])],
  [can_compile_avx=yes],
  [can_compile_avx=no]
 )
 AC_MSG_RESULT([${can_compile_avx}])
-
-dnl first test failed: try again after updating  CFLAGS and CXXFLAGS with -mavx
-if test x"${can_compile_avx}" = x"no"; then
-  AC_MSG_CHECKING([whether we can compile a gcc intrinsic AVX program with -mavx])
-  save_CFLAGS="$CFLAGS"
-  save_CXXFLAGS="$CXXFLAGS"
-  CFLAGS="$CFLAGS -mavx"
-  CXXFLAGS="$CXXFLAGS -mavx"
+if test "${can_compile_avx}" = "yes" ; then
+  AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
+  AC_LANG_PUSH([C++])
   AC_COMPILE_IFELSE([AC_LANG_SOURCE([
    #include <x86intrin.h>
-   void main(){
+   int main(int argc, char **argv){
    double* q;
    __m256d a1_1 = _mm256_load_pd(q);
+   return 0;
    }
    ])],
    [can_compile_avx=yes],
    [can_compile_avx=no]
   )
+  AC_LANG_POP([C++])
   AC_MSG_RESULT([${can_compile_avx}])
-
-  if test x"${can_compile_avx}" = x"no"; then
-    # strip -mavx again
-    CFLAGS="$save_CFLAGS"
-    CXXFLAGS="$save_CXXFLAGS"
+  if test "${can_compile_avx}" = "no" ; then
+    AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
   fi
 fi
 
-if test x"${can_compile_avx}" = x"yes"; then
+if test "${can_compile_avx}" = "yes" ; then
   install_real_avx_block2=yes
   install_real_avx_block4=yes
   install_real_avx_block6=yes
 
   install_complex_avx_block1=yes
   install_complex_avx_block2=yes
-
 fi
-
 
 dnl set the AVX optimization flags if this option is specified
 AC_MSG_CHECKING(whether AVX optimization flags should be set automatically)
@@ -784,6 +776,7 @@ AC_CONFIG_FILES([
   Makefile
   ${PKG_CONFIG_FILE}:elpa.pc.in
 ])
+
 AC_OUTPUT
 
 
@@ -797,4 +790,8 @@ fi
 echo "Generating elpa/elpa_generated.h..."
 mkdir -p elpa
 grep "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
+
+if test "${can_compile_avx}" = "no" ; then
+  AC_MSG_WARN([Could not compile AVX instructions])
+fi
 
