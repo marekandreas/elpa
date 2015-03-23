@@ -59,6 +59,12 @@
 #include <complex>
 #include <x86intrin.h>
 
+#ifndef __AVX__
+#ifndef __SSE3__
+#error Neither SSE3 nor AVX are supported, cannot compile file this file
+#endif
+#endif
+
 #define __forceinline __attribute__((always_inline))
 
 #ifdef __USE_AVX128__
