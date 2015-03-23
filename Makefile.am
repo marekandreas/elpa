@@ -145,6 +145,7 @@ shared_sources = test/shared_sources/util.F90 test/shared_sources/read_input_par
 
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/test_real_c_version.c $(shared_sources) $(redirect_sources)
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 
 elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90 $(shared_sources) $(redirect_sources)
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
