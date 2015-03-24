@@ -907,7 +907,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
        vav = 0
 #ifdef WITH_GPU_VERSION
        if (l_rows>0) &
-         call dsyrk('U','T',n_cols,l_rows,1.d0,vmr,ubound(vmr,1),0.d0,vav,ubound(vav,1))
+         call dsyrk('U','T',n_cols,l_rows,1.d0,vmr,cur_l_rows,0.d0,vav,ubound(vav,1))
 #else
        if (l_rows>0) &
            call dsyrk('U','T',n_cols,l_rows,1.d0,vmr,ubound(vmr,1),0.d0,vav,ubound(vav,1))
