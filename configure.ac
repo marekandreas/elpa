@@ -52,6 +52,20 @@ fi
 m4_include([fdep/fortran_dependencies.m4])
 FDEP_F90_GNU_MAKE_DEPS
 
+###
+
+AC_MSG_CHECKING(whether --enable-openmp is specified)
+AC_ARG_ENABLE([openmp],
+		AS_HELP_STRING([--with-openmp],
+			       [use OpenMP threading, default no.]),
+	      [],
+	      [enable_openmp=no])
+AC_MSG_RESULT([${enable_openmp}])
+AM_CONDITIONAL([WITH_OPENMP],[test x"$enable_openmp" = x"yes"])
+if test x"${enable_openmp}" = x"yes"; then
+	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
+fi
+
 dnl check whether mpi compilers are available;
 dnl if not abort since it is mandatory
 
@@ -59,12 +73,15 @@ dnl if not abort since it is mandatory
 AC_LANG([C])
 m4_include([m4/ax_prog_cc_mpi.m4])
 AX_PROG_CC_MPI([true],[],[AC_MSG_ERROR([no MPI C wrapper found])])
+if test x"${enable_openmp}" = x"yes"; then
+	AX_ELPA_OPENMP
+	if test "$ac_cv_prog_cc_openmp" = unsupported; then
+	  AC_MSG_ERROR([Could not compile a C program with OpenMP, adjust CFLAGS])
+	fi
+	CFLAGS="$OPENMP_CFLAGS $CFLAGS"
+fi
+
 AC_PROG_INSTALL
-
-: ${CFLAGS=""}
-: ${CXXFLAGS=""}
-#: ${FCLAGS="-O2"}
-
 AM_PROG_AR
 AM_PROG_AS
 
@@ -74,11 +91,27 @@ AC_LANG([Fortran])
 m4_include([m4/ax_prog_fc_mpi.m4])
 AX_PROG_FC_MPI([],[],[AC_MSG_ERROR([no MPI Fortran wrapper found])])
 
+if test x"${enable_openmp}" = x"yes"; then
+	AX_ELPA_OPENMP
+	if test "$ac_cv_prog_fc_openmp" = unsupported; then
+	  AC_MSG_ERROR([Could not compile a Fortran program with OpenMP, adjust FCFLAGS])
+	fi
+	FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
+fi
+
+
 
 # C++
 AC_LANG([C++])
 AC_PROG_CXX
 
+if test x"${enable_openmp}" = x"yes"; then
+	AX_ELPA_OPENMP
+	if test "$ac_cv_prog_cxx_openmp" = unsupported; then
+	  AC_MSG_ERROR([Could not compile a C++ program with OpenMP, adjust CXXFLAGS])
+	fi
+	CXXFLAGS="$OPENMP_CXXFLAGS $CXXFLAGS"
+fi
 
 
 
@@ -247,33 +280,6 @@ AC_FC_FREEFORM
 AC_FC_MODULE_FLAG
 AC_FC_MODULE_OUTPUT_FLAG
 AC_FC_LIBRARY_LDFLAGS
-
-AC_MSG_CHECKING(whether OpenMP usage is specified)
-AC_ARG_WITH([openmp],
-		AS_HELP_STRING([--with-openmp],
-			       [use OpenMP threading, default no.]),
-	      [with_openmp=yes],
-	      [with_openmp=no])
-  AC_MSG_RESULT([${with_openmp}])
-  if test x"${enable_openmp}" = x"yes"; then
-     with_openmp=yes
-     AC_MSG_CHECKING(whether --enable-openmp is specified)
-     AC_MSG_RESULT([${enable_openmp}])
-  fi
-  AM_CONDITIONAL([WITH_OPENMP],[test x"$with_openmp" = x"yes"])
-  if test x"${with_openmp}" = x"yes"; then
-	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
-
-        AX_ELPA_OPENMP
-        if test "$ac_cv_prog_fc_openmp" = unsupported; then
-          AC_MSG_ERROR([Could not compile a program with OpenMP, adjust FCFLAGS])
-        fi
-
-        # Append to flags as this influences which
-        # kind of MPI library has to be used (thread-safe or not)
-        FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
-	LDFLAGS="$OPENMP_FCFLAGS $LDFLAGS"
-  fi
 
 save_FCFLAGS=$FCFLAGS
 save_LDFLAGS=$LDFLAGS
@@ -764,7 +770,7 @@ mkdir modules
 # into "postdeps_FC" and causes linking errors later on.
 postdeps_FC=$(echo $postdeps_FC | sed 's/-l //g')
 
-if test x"${with_openmp}" = x"yes"; then
+if test x"${enable_openmp}" = x"yes"; then
 	SUFFIX="_openmp"
 else
 	SUFFIX=""
