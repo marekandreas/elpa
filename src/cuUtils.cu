@@ -433,8 +433,8 @@ __global__ void  compute_hh_dotp_c_kernel(double* hh, double* v_dot, const int n
     //  The thread index indicates the position within the two HH reflectors
     t_idx = threadIdx.x ;
 
-    //  The contents of the shared memory must be fully reset
-     reset_shared_block_c(hh_s, 128);
+//    //  The contents of the shared memory must be fully reset
+//     reset_shared_block_c(hh_s, 128);
 
     //  Initialize the contents of the shared buffer (preparing for reduction)
     if (t_idx  > 0)
