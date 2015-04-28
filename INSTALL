@@ -53,13 +53,26 @@ The configure installation is best done in four steps
    library. If this is successful, you do not have to specify anything
    in this regard. However, this will fail, if you do not use Netlib
    Blacs/Scalapack but vendor specific implementations (e.g. Intel's MKL
-   library or the implementation of Cray).
+   library or the implementation of Cray and so forth...).
 
-   Please then point to your Blacs/Scalapack installation and the
+   In this case, please  point to your Blacs/Scalapack installation and the
    link-line with the variables "SCALAPACK_LDFLAGS" and "SCALAPACK_FCFLAGS".
    "SCALAPACK_LDFLAGS" should  contain the correct link-line for your
    Blacs/Scalapack installation and "SCALAPACK_FCFLAGS" the include path
    and any other flags you need at compile time.
+
+   For example with Intel's MKL 11.2 library one might have to set
+
+   SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 \
+                      -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 \
+		      -lpthread -lm -Wl,-rpath,$MKL_HOME/lib/intel64"
+   and
+
+   SCALAPACK_FCFLAGS="-L$MKLROOT/mkl/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 \
+                      -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread  \
+		      -lm -I$MKLROOT/include/intel64/lp64"
+
+   Note, that the actual MKL linkline depends on the installed MKL version.
 
    If your libraries are in non-standard locations, you can think about
    specifying a runtime library search path ("rpath") in the link-line,
