@@ -32,12 +32,12 @@ m4_copy([_AX_ELPA_LANG_OPENMP(C)], [_AX_ELPA_LANG_OPENMP(C++)])
 # ---------------------------
 m4_define([_AX_ELPA_LANG_OPENMP(Fortran 77)],
 [
-program test_openmp
- use omp_lib
- implicit none
- !$ integer :: foobar
- foobar = omp_get_num_threads()
-end program
+      program test_openmp
+       use omp_lib
+       implicit none
+!$     integer :: foobar
+       foobar = omp_get_num_threads()
+      end program
 ])
 
 # _AX_ELPA_LANG_OPENMP(Fortran)
@@ -63,7 +63,7 @@ AC_DEFUN([AX_ELPA_OPENMP],
   if test "$enable_openmp" != no; then
     AC_CACHE_CHECK([for _AC_LANG_ABBREV option to support OpenMP],
       [ac_cv_prog_[]_AC_LANG_ABBREV[]_openmp],
-      [AC_LINK_IFELSE([_AX_ELPA_LANG_OPENMP],
+      [AC_LINK_IFELSE([AC_LANG_SOURCE([_AX_ELPA_LANG_OPENMP])],
 	 [ac_cv_prog_[]_AC_LANG_ABBREV[]_openmp='none needed'],
 	 [ac_cv_prog_[]_AC_LANG_ABBREV[]_openmp='unsupported'
 	  dnl Try these flags:
@@ -81,7 +81,7 @@ AC_DEFUN([AX_ELPA_OPENMP],
 	  for ac_option in -openmp -fopenmp -xopenmp -mp -omp -qsmp=omp; do
 	    ac_save_[]_AC_LANG_PREFIX[]FLAGS=$[]_AC_LANG_PREFIX[]FLAGS
 	    _AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS $ac_option"
-	    AC_LINK_IFELSE([_AX_ELPA_LANG_OPENMP],
+	    AC_LINK_IFELSE([AC_LANG_SOURCE([_AX_ELPA_LANG_OPENMP])],
 	      [ac_cv_prog_[]_AC_LANG_ABBREV[]_openmp=$ac_option])
 	    _AC_LANG_PREFIX[]FLAGS=$ac_save_[]_AC_LANG_PREFIX[]FLAGS
 	    if test "$ac_cv_prog_[]_AC_LANG_ABBREV[]_openmp" != unsupported; then
