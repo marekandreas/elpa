@@ -187,6 +187,13 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    logical, save                 :: firstCall = .true.
    logical                       :: wantDebug
 
+#ifdef WITH_GPU_VERSION
+   if (nblk .ne. 128) then
+     print *,"At the moment GPU version needs blocksize 128"
+     stop
+   endif
+#endif
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_real_2stage")
 #endif
@@ -411,6 +418,13 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
    logical                       :: success, wantDebug
    logical, save                 :: firstCall = .true.
+
+#ifdef WITH_GPU_VERSION
+   if (nblk .ne. 128) then
+     print *,"At the moment GPU version needs blocksize 128"
+     stop
+   endif
+#endif
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex_2stage")
@@ -1421,10 +1435,13 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 
 #ifdef WITH_GPU_VERSION
          hvm_tmp(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
+         if (my_prow==prow(nrow, nblk, np_rows)) hvm_tmp(l_rows+1,lc) = 1.
+
 #else
          hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-#endif
          if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
+
+#endif
          nb = nb+l_rows
        enddo
 
@@ -2856,7 +2873,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
              endif
-             call compute_hh_trafo(0, current_local_n, i, my_thread, &
+             call compute_hh_trafo_real(0, current_local_n, i, my_thread, &
                                       THIS_REAL_ELPA_KERNEL)
            enddo
 !$omp end parallel do
@@ -2865,7 +2882,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
 
 #else /* WITH_OPENMP */
-           call compute_hh_trafo(0, current_local_n, i, &
+           call compute_hh_trafo_real(0, current_local_n, i, &
                                       THIS_REAL_ELPA_KERNEL)
 #endif /* WITH_OPENMP */
 
@@ -2915,7 +2932,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
-          call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
+          call compute_hh_trafo_real(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
                               THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
@@ -2934,7 +2951,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
         endif
 #else /* WITH_OPENMP */
-        call compute_hh_trafo(current_local_n - bottom_msg_length, bottom_msg_length, i, &
+        call compute_hh_trafo_real(current_local_n - bottom_msg_length, bottom_msg_length, i, &
                                       THIS_REAL_ELPA_KERNEL)
 
         !send_b
@@ -2966,7 +2983,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
 !$omp parallel do private(my_thread), schedule(static, 1)
         do my_thread = 1, max_threads
-          call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
+          call compute_hh_trafo_real(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
                                 THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
@@ -2975,7 +2992,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
 
 #else /* WITH_OPENMP */
-        call compute_hh_trafo(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
+        call compute_hh_trafo_real(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                               THIS_REAL_ELPA_KERNEL)
 
 #endif /* WITH_OPENMP */
@@ -3021,7 +3038,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
             a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
               reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
           endif
-          call compute_hh_trafo(0, top_msg_length, i, my_thread, THIS_REAL_ELPA_KERNEL)
+          call compute_hh_trafo_real(0, top_msg_length, i, my_thread, THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3029,7 +3046,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
 
 #else /* WITH_OPENMP */
-        call compute_hh_trafo(0, top_msg_length, i, THIS_REAL_ELPA_KERNEL)
+        call compute_hh_trafo_real(0, top_msg_length, i, THIS_REAL_ELPA_KERNEL)
 #endif /* WITH_OPENMP */
 
       endif
@@ -3598,9 +3615,9 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
     ! - "compute_hh_trafo_single_kernel" is the reference Fortran kernel
 #endif
 #ifdef WITH_OPENMP
-   subroutine compute_hh_trafo(off, ncols, istripe, my_thread, THIS_REAL_ELPA_KERNEL)
+   subroutine compute_hh_trafo_real(off, ncols, istripe, my_thread, THIS_REAL_ELPA_KERNEL)
 #else
-   subroutine compute_hh_trafo(off, ncols, istripe, THIS_REAL_ELPA_KERNEL)
+   subroutine compute_hh_trafo_real(off, ncols, istripe, THIS_REAL_ELPA_KERNEL)
 #endif
 
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
@@ -3634,7 +3651,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
       real*8              :: w(nbw,6), ttt
 
 
-#ifdef WITH_GPU_KERNEL
+#ifdef WITH_GPU_VERSION
 
       print *,"which kernel is used ??"
       stop
@@ -3644,7 +3661,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("compute_hh_trafo")
+      call timer%start("compute_hh_trafo_real")
 #endif
 
       ttt = mpi_wtime()
@@ -3938,10 +3955,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
     endif
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("compute_hh_trafo")
+    call timer%stop("compute_hh_trafo_real")
 #endif
 
-  end subroutine compute_hh_trafo
+  end subroutine compute_hh_trafo_real
 
  end subroutine  trans_ev_tridi_to_band_real
 
@@ -7306,7 +7323,7 @@ contains
 #endif
 
 
-    end subroutine
+    end subroutine compute_hh_trafo_complex
 
 #endif /* WITH_GPU_VERSION */
 
@@ -7419,7 +7436,7 @@ contains
       kernel_flops = kernel_flops + 4 * int(nl, 8) * int(ncols, 8) * int(nbw,8)
       kernel_time = kernel_time + mpi_wtime() - ttt
       n_times =n_times +1
-    end subroutine
+    end subroutine compute_hh_trafo_complex_gpu
 
 #endif /* WITH_GPU_VERSION */
 
