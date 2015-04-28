@@ -56,7 +56,7 @@ FDEP_F90_GNU_MAKE_DEPS
 
 AC_MSG_CHECKING(whether --enable-openmp is specified)
 AC_ARG_ENABLE([openmp],
-		AS_HELP_STRING([--with-openmp],
+		AS_HELP_STRING([--enable-openmp],
 			       [use OpenMP threading, default no.]),
 	      [],
 	      [enable_openmp=no])
