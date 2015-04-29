@@ -54,6 +54,8 @@ FDEP_F90_GNU_MAKE_DEPS
 
 ###
 
+m4_include([m4/ax_elpa_openmp.m4])
+
 AC_MSG_CHECKING(whether --enable-openmp is specified)
 AC_ARG_ENABLE([openmp],
 		AS_HELP_STRING([--enable-openmp],
@@ -541,231 +543,66 @@ if test x"${fortran_can_check_environment}" = x"yes" ; then
  AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can querry environment variables])
 fi
 
-dnl macro for testing whether the user wanted to compile only with the GPU version
-
-dnl usage: DEFINE_OPTION([gpu-support-only],[gpu-support],[with_gpu_support],[install_gpu])
-
-AC_DEFUN([DEFINE_OPTION_GPU_SUPPORT],[
-  AC_ARG_WITH([$1],
-               AS_HELP_STRING([--with-$1],
-                              [only compile $2 ]),
-              [with_option=yes],[with_option=no])
-
-  if test x"${with_option}" = x"yes" ; then
-    dnl make sure that all the other kernels are unset
-    install_real_generic=no
-    install_real_generic_simple=no
-    install_real_sse=no
-    install_real_bgp=no
-    install_real_bgq=no
-    install_real_avx_block2=no
-    install_real_avx_block4=no
-    install_real_avx_block6=no
-
-
-    install_complex_generic=no
-    install_complex_generic_simple=no
-    install_complex_sse=no
-    install_complex_bgp=no
-    install_complex_bgq=no
-    install_complex_avx_block1=no
-    install_complex_avx_block2=no
-
-
-    install_gpu=yes
-
-    build_with_gpu_support_only=yes
-    use_specific_complex_kernel=yes
-    use_specific_real_kernel=yes
-    dnl now set the specific kernel
-    $3=yes
-
-    AC_MSG_NOTICE([ELPA will be build only with $1])
-  fi
-])
-dnl GPU version
-DEFINE_OPTION_GPU_SUPPORT([gpu-version-only],[gpu-support],[install_gpu])
-
-dnl macro for testing whether the user wanted to compile only with one
-dnl specific real kernel
-
-dnl usage: DEFINE_OPTION([real-generic-kernel-only],[generic-kernel],[with_real_generic_kernel],[install_real_generic])
-
-AC_DEFUN([DEFINE_OPTION_REAL_KERNEL],[
-  AC_ARG_WITH([$1],
-               AS_HELP_STRING([--with-$1],
-                              [only compile $2 for real case]),
-              [with_option=yes],[with_option=no])
-
-   if test x"${with_option}" = x"yes" ; then
-    if test x"${use_specific_real_kernel}" = x"no" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_real_generic=no
-    install_real_generic_simple=no
-    install_real_sse=no
-    install_real_bgp=no
-    install_real_bgq=no
-    install_real_avx_block2=no
-    install_real_avx_block4=no
-    install_real_avx_block6=no
-    install_gpu=no
-
-    use_specific_real_kernel=yes
-    dnl now set the specific kernel
-    $3=yes
-
-    dnl in case of SSE or AVX make sure that we can compile the choosen kernel
-    if test x"${install_real_sse}" = x"yes" ; then
-     if test x"${can_compile_sse}" = x"no" ; then
-       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
-     fi
-    fi
-
-    if test x"${install_real_avx_block2}" = x"yes" ; then
-     if test x"${can_compile_avx}" = x"no" ; then
-       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
-     fi
-    fi
-
-    if test x"${install_real_avx_block4}" = x"yes" ; then
-     if test x"${can_compile_avx}" = x"no" ; then
-       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
-     fi
-    fi
-
-    if test x"${install_real_avx_block6}" = x"yes" ; then
-     if test x"${can_compile_avx}" = x"no" ; then
-       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
-     fi
-    fi
-
-
-    AC_MSG_NOTICE([$1 will be the only compiled kernel for real case])
-    if test x"${want_gpu}" = x"yes" ; then
-      AC_MSG_WARN([At the moment this disables GPU support!])
-      AC_MSG_WARN([IF GPU support is wanted do NOT specify a specific real kernel])
-    fi
-   else
-    AC_MSG_FAILURE([$1 failed; A specific kernel for real case has already been defined before!])
-   fi
-  fi
-])
-
+dnl GPU version only
+m4_include([m4/ax_elpa_gpu_version_only.m4])
+DEFINE_OPTION_GPU_SUPPORT_ONLY([gpu-version-only],[gpu-support],[install_gpu])
 
 
 dnl last check whether user wants to compile only a specific kernel
 dnl
-dnl real kernels
-dnl
+m4_include([m4/ax_elpa_specific_kernels.m4])
 
 dnl only do this if GPU support only has not been requested
 if test x"${build_with_gpu_support_only}" = x"no" ; then
 
+dnl real kernels
+
   dnl generic kernel
-  DEFINE_OPTION_REAL_KERNEL([real-generic-kernel-only],[generic-kernel],[install_real_generic])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-kernel-only],[generic-kernel],[install_real_generic])
 
   dnl generic-simple kernel
-  DEFINE_OPTION_REAL_KERNEL([real-generic-simple-kernel-only],[generic-simple-kernel],[install_real_generic_simple])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-simple-kernel-only],[generic-simple-kernel],[install_real_generic_simple])
 
   dnl sse kernel
-  DEFINE_OPTION_REAL_KERNEL([real-sse-kernel-only],[sse-kernel],[install_real_sse])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-kernel-only],[sse-kernel],[install_real_sse])
 
   dnl bgp kernel
-  DEFINE_OPTION_REAL_KERNEL([real-bgp-kernel-only],[bgp-kernel],[install_real_bgp])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgp-kernel-only],[bgp-kernel],[install_real_bgp])
 
   dnl bgq kernel
-  DEFINE_OPTION_REAL_KERNEL([real-bgq-kernel-only],[bgq-kernel],[install_real_bgq])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgq-kernel-only],[bgq-kernel],[install_real_bgq])
 
   dnl real-avx-block2 kernel
-  DEFINE_OPTION_REAL_KERNEL([real-avx-block2-kernel-only],[real-avx-block2-kernel],[install_real_avx_block2])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block2-kernel-only],[real-avx-block2-kernel],[install_real_avx_block2])
 
   dnl real-avx-block4 kernel
-  DEFINE_OPTION_REAL_KERNEL([real-avx-block4-kernel]-only,[real-avx-block4-kernel],[install_real_avx_block4])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block4-kernel]-only,[real-avx-block4-kernel],[install_real_avx_block4])
 
   dnl real-avx-block6 kernel
-  DEFINE_OPTION_REAL_KERNEL([real-avx-block6-kernel-only],[real-avx-block6-kernel],[install_real_avx_block6])
-fi
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block6-kernel-only],[real-avx-block6-kernel],[install_real_avx_block6])
 
-dnl last check whether user wants to compile ony a specific kernel
-dnl
 dnl complex kernels
-dnl
 
-AC_DEFUN([DEFINE_OPTION_COMPLEX_KERNEL],[
-  AC_ARG_WITH([$1],
-                 AS_HELP_STRING([--with-$1],
-                                [only compile $2 for complex case]),
-              [with_option=yes],[with_option=no])
-
-   if test x"${with_option}" = x"yes" ; then
-    if test x"${use_specific_complex_kernel}" = x"no" ; then
-
-    dnl make sure that all the other kernels are unset
-    install_complex_generic=no
-    install_complex_generic_simple=no
-    install_complex_sse=no
-    install_complex_bgp=no
-    install_complex_bgq=no
-    install_complex_avx_block1=no
-    install_complex_avx_block2=no
-
-    install_gpu=no
-    use_specific_complex_kernel=yes
-    dnl now set the specific kernel
-    $3=yes
-
-    dnl in case of SSE or AVX make sure that we can compile the choosen kernel
-    if test x"${install_complex_sse}" = x"yes" ; then
-     if test x"${can_compile_sse}" = x"no" ; then
-       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
-     fi
-    fi
-
-    if test x"${install_complex_avx_block1}" = x"yes" ; then
-     if test x"${can_compile_avx}" = x"no" ; then
-       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
-     fi
-    fi
-
-    if test x"${install_complex_avx_block2}" = x"yes" ; then
-     if test x"${can_compile_avx}" = x"no" ; then
-       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
-     fi
-    fi
-
-    AC_MSG_NOTICE([$1 will be the only compiled kernel for real case])
-    if test x"${want_gpu}" = x"yes" ; then
-      AC_MSG_WARN([At the moment this disables GPU support!])
-      AC_MSG_WARN([IF GPU support is wanted do NOT specify a specific complex kernel])
-    fi
-   else
-    AC_MSG_FAILURE([$1 failed; A specific kernel for real case has already been defined before!])
-   fi
-  fi
-])
-
-if test x"${build_with_gpu_support_only}" = x"no" ; then
   dnl generic kernel
-  DEFINE_OPTION_COMPLEX_KERNEL([complex-generic-kernel-only],[generic-kernel],[install_complex_generic])
+  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-kernel-only],[generic-kernel],[install_complex_generic])
 
   dnl generic-simple kernel
-  DEFINE_OPTION_COMPLEX_KERNEL([complex-generic-simple-kernel-only],[generic-simple-kernel],[install_complex_generic_simple])
+  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-simple-kernel-only],[generic-simple-kernel],[install_complex_generic_simple])
 
   dnl sse kernel
-  DEFINE_OPTION_COMPLEX_KERNEL([complex-sse-kernel-only],[sse-kernel],[install_complex_sse])
+  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-kernel-only],[sse-kernel],[install_complex_sse])
 
   dnl complex-bqp kernel
-  DEFINE_OPTION_COMPLEX_KERNEL([complex-bgp-kernel-only],[bgp-kernel],[install_complex_bgp])
+  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgp-kernel-only],[bgp-kernel],[install_complex_bgp])
 
   dnl complex-bqq kernel
-  DEFINE_OPTION_COMPLEX_KERNEL([complex-bgq-kernel-only],[bgq-kernel],[install_complex_bgq])
+  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgq-kernel-only],[bgq-kernel],[install_complex_bgq])
 
   dnl complex-avx-block1 kernel
-  DEFINE_OPTION_COMPLEX_KERNEL([complex-avx-block1-kernel-only],[complex-avx-block1-kernel],[install_complex_avx_block1])
+  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block1-kernel-only],[complex-avx-block1-kernel],[install_complex_avx_block1])
 
   dnl complex-avx-block2 kernel
-  DEFINE_OPTION_COMPLEX_KERNEL([complex-avx-block2-kernel-only],[complex-avx-block2-kernel],[install_complex_avx_block2])
+  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block2-kernel-only],[complex-avx-block2-kernel],[install_complex_avx_block2])
 fi
 
 dnl set the conditionals according to the previous tests
@@ -831,7 +668,6 @@ fi
 #  AC_LANG_POP([C])
 #  AC_DEFINE([WITH_GPU_VERSION],[1],[build with GPU support])
 #fi
-echo $install_gpu
 AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$install_gpu" = x"yes"])
 if test x"${install_gpu}" = x"yes" ; then
   AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
