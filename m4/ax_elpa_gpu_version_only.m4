@@ -32,6 +32,8 @@ AC_DEFUN([DEFINE_OPTION_GPU_SUPPORT_ONLY],[
 
     install_gpu=yes
 
+    want_avx=no
+
     build_with_gpu_support_only=yes
     use_specific_complex_kernel=yes
     use_specific_real_kernel=yes
@@ -39,6 +41,8 @@ AC_DEFUN([DEFINE_OPTION_GPU_SUPPORT_ONLY],[
     $3=yes
 
     AC_MSG_NOTICE([ELPA will be build only with $1])
+  else
+    build_with_gpu_support_only=no
   fi
 ])
 

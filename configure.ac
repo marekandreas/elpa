@@ -118,48 +118,19 @@ fi
 
 
 dnl variables needed for the tests
-N="0"
+dnl do NOT remove any variables here, until
+dnl 1. you know 100% what you are doing
+dnl 2. you tested ALL configure functionality afterwards
+dnl Otherwise, you most likely break some functionality
 
-dnl these test will cause an abort of configure if not
-dnl successful. However, if MKL is found then the blas, blacs,
-dnl lapack, and scalapack test can fail and vice versa
-have_blas=no
-have_blacs=no
-have_mkl=no
-have_lapack=no
-have_scalapack=no
-
-dnl these tests will decide which kernels can be build
-dnl the usual case is all except the BlueGene (bg) kernels
-
-can_compile_sse=no
-can_compile_bgp=no
-can_compile_bqq=no
-can_compile_gpu=no
-
-fortran_can_check_environment=no
-use_specific_real_kernel=no
-use_specific_complex_kernel=no
-build_with_gpu_support_only=no
-
+dnl as default always define the generic kernels to be build
+dnl this is only unset if gpu_support_only is defined, or
+dnl other specific real/complex kernels are wanted
 install_real_generic=yes
 install_real_generic_simple=yes
-install_real_sse=no
-install_real_bgp=no
-install_real_bgq=no
-install_real_avx_block2=no
-install_real_avx_block4=no
-install_real_avx_block6=no
 
 install_complex_generic=yes
 install_complex_generic_simple=yes
-install_complex_sse=no
-install_complex_bgp=no
-install_complex_bgq=no
-install_complex_avx_block1=no
-install_complex_avx_block2=no
-
-install_gpu=no
 
 AC_LANG([C])
 
@@ -267,6 +238,17 @@ if test "${can_compile_avx}" = "yes" ; then
 
   install_complex_avx_block1=yes
   install_complex_avx_block2=yes
+
+  want_avx=yes
+else
+  install_real_avx_block2=no
+  install_real_avx_block4=no
+  install_real_avx_block6=no
+
+  install_complex_avx_block1=no
+  install_complex_avx_block2=no
+
+  want_avx=yes
 fi
 
 dnl set the AVX optimization flags if this option is specified
@@ -489,6 +471,7 @@ if test x"${want_gpu}" = x"yes" ; then
   fi
   AC_LANG_POP([C])
   install_gpu=yes
+  can_compile_gpu=yes
 fi
 
 dnl now check which kernels can be compiled
@@ -514,6 +497,9 @@ AC_MSG_RESULT([${can_compile_bgp}])
 if test x"${can_compile_bgp}" = x"yes" ; then
   install_real_bgp=yes
   install_complex_bgp=yes
+else
+  install_real_bgp=no
+  install_complex_bgp=no
 fi
 
 dnl check BGQ kernel
@@ -535,6 +521,9 @@ AC_MSG_RESULT([${can_compile_bgq}])
 if test x"${can_compile_bgq}" = x"yes" ; then
   install_real_bgq=yes
   install_complex_bgq=yes
+else
+  install_real_bgq=no
+  install_complex_bgq=no
 fi
 
 
@@ -556,6 +545,8 @@ dnl only do this if GPU support only has not been requested
 if test x"${build_with_gpu_support_only}" = x"no" ; then
 
 dnl real kernels
+  dnl do not remove this variable it is needed in the macros
+  use_specific_real_kernel=no
 
   dnl generic kernel
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-kernel-only],[generic-kernel],[install_real_generic])
@@ -583,6 +574,9 @@ dnl real kernels
 
 dnl complex kernels
 
+  dnl do not remove this variable it is needed in the macros
+  use_specific_complex_kernel=no
+
   dnl generic kernel
   DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-kernel-only],[generic-kernel],[install_complex_generic])
 
@@ -609,65 +603,6 @@ dnl set the conditionals according to the previous tests
 if test x"${can_use_iso_fortran_env}" = x"yes" ; then
  AC_DEFINE([HAVE_ISO_FORTRAN_ENV],[1],[can use module iso_fortran_env])
 fi
-
-#dnl check whether GPU version is requested
-#
-#CUDA_INSTALL_PATH="/usr/local/cuda/"
-##CUDA_SDK_INSTALL_PATH="/usr/local/NVIDIA_GPU_Computing_SDK"
-#
-#
-#AC_MSG_CHECKING(whether GPU support is requested)
-#AC_ARG_ENABLE(gpu-support,[AS_HELP_STRING([--enable-gpu-support],
-#	                                   [build ELPA2 with GPU-support ( no CPU version available)])],
-#              want_gpu="yes", want_gpu="no")
-##AC_ARG_WITH([GPU-SUPPORT], [AS_HELP_STRING([--with-GPU-SUPPORT],
-##	                                   [build ELPA2 with GPU-support ( no CPU version available)])],
-##			   [with_gpu=yes],[with_gpu=no])
-#AC_MSG_RESULT([${want_gpu}])
-#
-#
-#
-#AC_ARG_WITH([cuda-path],[AS_HELP_STRING([--with-cuda-path=PATH],[prefix where CUDA is installed @<:@default=auto@:>@])],
-#            [CUDA_INSTALL_PATH=$withval], [with_cuda=auto])
-#
-#AC_ARG_WITH([cuda-sdk-path],[AS_HELP_STRING([--with-cuda-sdk-path=PATH],[prefix where CUDA SDK is installed @<:@default=auto@:>@])],
-#            [CUDA_SDK_INSTALL_PATH=$withval],[with_cuda_sdk=auto])
-#
-#
-##AC_ARG_VAR([SCALAPACK_LDFLAGS],[Extra LDFLAGS necessary to link a program with Scalapack])
-##AC_ARG_VAR([SCALAPACK_FCFLAGS],[Extra FCFLAGS necessary to compile a Fortran program with Scalapack])
-#
-##FCFLAGS="$FCFLAGS $SCALAPACK_FCFLAGS"
-##LDFLAGS="$LDFLAGS $SCALAPACK_LDFLAGS"
-#
-#dnl setup nvcc flags
-#if test x"${want_gpu}" = x"yes" ; then
-#  AC_LANG_PUSH([C])
-#  CUDA_CFLAGS="$CUDA_CFLAGS -arch sm_35 -I$CUDA_INSTALL_PATH/include"
-#  LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
-#  NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
-#  NVCC="nvcc"
-#  AC_SUBST(NVCC)
-#  AC_SUBST(NVCCFLAGS)
-#
-#  dnl check whether nvcc compiler is found
-#  AC_CHECK_PROG(nvcc_found,nvcc,yes,no)
-#  if test x"${nvcc_found}" = x"no" ; then
-#    AC_MSG_ERROR([nvcc not found])
-#  fi
-#
-#  dnl check whether we find cublas
-#  AC_SEARCH_LIBS([cublasDgemm],[cublas],[have_cublas=yes],[have_cublas=no])
-#  if test x"${have_cublas}" = x"no"; then
-#    AC_MSG_ERROR([Could not link cublas])
-#  fi
-#  AC_SEARCH_LIBS([cudaMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
-#  if test x"${have_cudart}" = x"no"; then
-#    AC_MSG_ERROR([Could not link cudart])
-#  fi
-#  AC_LANG_POP([C])
-#  AC_DEFINE([WITH_GPU_VERSION],[1],[build with GPU support])
-#fi
 AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$install_gpu" = x"yes"])
 if test x"${install_gpu}" = x"yes" ; then
   AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
@@ -808,5 +743,7 @@ mkdir -p elpa
 grep "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
 
 if test "${can_compile_avx}" = "no" ; then
-  AC_MSG_WARN([Could not compile AVX instructions])
+  if test x"${want_avx}" = x"yes" ; then
+    AC_MSG_WARN([Could not compile AVX instructions])
+  fi
 fi
