@@ -119,42 +119,20 @@ fi
 
 dnl variables needed for the tests
 
-dnl these test will cause an abort of configure if not
-dnl successful. However, if MKL is found then the blas, blacs,
-dnl lapack, and scalapack test can fail and vice versa
-have_blas=no
-have_blacs=no
-have_mkl=no
-have_lapack=no
-have_scalapack=no
+dnl do NOT remove any variables here, until
+dnl 1. you know 100% what you are doing
+dnl 2. you tested ALL configure functionality afterwards
+dnl Otherwise, you most likely break some functionality
 
-dnl these tests will decide which kernels can be build
-dnl the usual case is all except the BlueGene (bg) kernels
-
-can_compile_sse=no
-can_compile_bgp=no
-can_compile_bqq=no
-
-fortran_can_check_environment=no
-use_specific_real_kernel=no
-use_specific_complex_kernel=no
+dnl as default always define the generic kernels to be build
+dnl this is only unset if gpu_support_only is defined, or
+dnl other specific real/complex kernels are wanted
 
 install_real_generic=yes
 install_real_generic_simple=yes
-install_real_sse=no
-install_real_bgp=no
-install_real_bgq=no
-install_real_avx_block2=no
-install_real_avx_block4=no
-install_real_avx_block6=no
 
 install_complex_generic=yes
 install_complex_generic_simple=yes
-install_complex_sse=no
-install_complex_bgp=no
-install_complex_bgq=no
-install_complex_avx_block1=no
-install_complex_avx_block2=no
 
 AC_LANG([C])
 
@@ -262,6 +240,17 @@ if test "${can_compile_avx}" = "yes" ; then
 
   install_complex_avx_block1=yes
   install_complex_avx_block2=yes
+
+  want_avx=yes
+else
+  install_real_avx_block2=no
+  install_real_avx_block4=no
+  install_real_avx_block6=no
+
+  install_complex_avx_block1=no
+  install_complex_avx_block2=no
+
+  want_avx=yes
 fi
 
 dnl set the AVX optimization flags if this option is specified
@@ -437,7 +426,6 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 )
 AC_MSG_RESULT([${fortran_can_check_environment}])
 
-
 dnl now check which kernels can be compiled
 
 dnl the checks for SSE were already done before
@@ -462,6 +450,9 @@ AC_MSG_RESULT([${can_compile_bgp}])
 if test x"${can_compile_bgp}" = x"yes" ; then
   install_real_bgp=yes
   install_complex_bgp=yes
+else
+  install_real_bgp=no
+  install_complex_bgp=no
 fi
 
 dnl check BGQ kernel
@@ -483,6 +474,9 @@ AC_MSG_RESULT([${can_compile_bgq}])
 if test x"${can_compile_bgq}" = x"yes" ; then
   install_real_bgq=yes
   install_complex_bgq=yes
+else
+  install_real_bgq=no
+  install_complex_bgq=no
 fi
 
 
@@ -497,6 +491,8 @@ dnl
 m4_include([m4/ax_elpa_specific_kernels.m4])
 
 dnl real kernels
+  dnl do not remove this variable it is needed in the macros
+  use_specific_real_kernel=no
 
   dnl generic kernel
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-kernel-only],[generic-kernel],[install_real_generic])
@@ -521,6 +517,12 @@ dnl real kernels
 
   dnl real-avx-block6 kernel
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block6-kernel-only],[real-avx-block6-kernel],[install_real_avx_block6])
+
+
+dnl complex kernels
+
+  dnl do not remove this variable it is needed in the macros
+  use_specific_complex_kernel=no
 
   dnl generic kernel
   DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-kernel-only],[generic-kernel],[install_complex_generic])
@@ -684,6 +686,8 @@ mkdir -p elpa
 grep "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
 
 if test "${can_compile_avx}" = "no" ; then
-  AC_MSG_WARN([Could not compile AVX instructions])
+  if test x"${want_avx}" = x"yes" ; then
+    AC_MSG_WARN([Could not compile AVX instructions])
+  fi
 fi
 

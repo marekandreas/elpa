@@ -22,6 +22,7 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_REAL_KERNEL],[
     install_real_avx_block2=no
     install_real_avx_block4=no
     install_real_avx_block6=no
+    want_avx=no
     install_gpu=no
 
     use_specific_real_kernel=yes
@@ -38,21 +39,26 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_REAL_KERNEL],[
     if test x"${install_real_avx_block2}" = x"yes" ; then
      if test x"${can_compile_avx}" = x"no" ; then
        AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_avx=yes
      fi
     fi
 
     if test x"${install_real_avx_block4}" = x"yes" ; then
      if test x"${can_compile_avx}" = x"no" ; then
        AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_avx=yes
      fi
     fi
 
     if test x"${install_real_avx_block6}" = x"yes" ; then
      if test x"${can_compile_avx}" = x"no" ; then
        AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_avx=yes
      fi
     fi
-
 
     AC_MSG_NOTICE([$1 will be the only compiled kernel for real case])
     if test x"${want_gpu}" = x"yes" ; then
@@ -83,6 +89,7 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL],[
     install_complex_bgq=no
     install_complex_avx_block1=no
     install_complex_avx_block2=no
+    want_avx=no
 
     install_gpu=no
     use_specific_complex_kernel=yes
@@ -99,12 +106,16 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL],[
     if test x"${install_complex_avx_block1}" = x"yes" ; then
      if test x"${can_compile_avx}" = x"no" ; then
        AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_avx=yes
      fi
     fi
 
     if test x"${install_complex_avx_block2}" = x"yes" ; then
      if test x"${can_compile_avx}" = x"no" ; then
        AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_avx=yes
      fi
     fi
 
