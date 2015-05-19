@@ -1,8 +1,5 @@
-Welcome to the git-based distribution of the ELPA eigensolver library.
-
-If you are reading this file, you have obtained the ELPA library
-through the git repository that hosts the source code and also allows
-you to contribute improvements to the project if necessary.
+If you obtained ELPA via the official git repository please have
+a look at the "INSTALL_FROM_GIT_VERSION" for specific instructions
 
 In your use of ELPA, please respect the copyright restrictions
 found below and in the "COPYING" directory in this repository. In a

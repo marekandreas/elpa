@@ -1,0 +1,19 @@
+Welcome to the git-based distribution of the ELPA eigensolver library.
+
+If you are reading this file, you have obtained the ELPA library
+through the git repository that hosts the source code and also allows
+you to contribute improvements to the project if necessary.
+
+The git version does not contain the necessary build script:
+configure, Makefile ...
+
+If you use the git version, you are most likely actively developing
+features/improvements for ELPA, and a rebuild of the autotools scripts
+will be necessary anyway.
+
+Thus please run "autogen.sh" after your changes, in order to build the
+autotoos scripts. Note that autoconf version >= 2.69 is needed for
+ELPA.
+
+After this step, please proceed as written in the "INSTALL" file.
+
