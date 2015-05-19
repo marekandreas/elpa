@@ -544,7 +544,6 @@ dnl complex kernels
 
   dnl complex-avx-block2 kernel
   DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block2-kernel-only],[complex-avx-block2-kernel],[install_complex_avx_block2])
-fi
 
 dnl set the conditionals according to the previous tests
 if test x"${can_use_iso_fortran_env}" = x"yes" ; then
