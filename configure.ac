@@ -447,7 +447,7 @@ AC_ARG_WITH([cuda-sdk-path],[AS_HELP_STRING([--with-cuda-sdk-path=PATH],[prefix 
 dnl setup nvcc flags and use them in later tests
 if test x"${want_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  CUDA_CFLAGS="$CUDA_CFLAGS -arch sm_35 -I$CUDA_INSTALL_PATH/include"
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch sm_35 -O2 -I$CUDA_INSTALL_PATH/include"
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
   NVCC="nvcc"

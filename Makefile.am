@@ -252,13 +252,13 @@ elpa2_test_complex_choose_kernel_with_api.sh:
 	chmod +x elpa2_test_complex_choose_kernel_with_api.sh
 
 elpa2_utilities.i: $(top_srcdir)/src/elpa2_utilities.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2_utilities.F90 -o $@
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa2_utilities.F90 -o $@
 
 elpa2.i: $(top_srcdir)/src/elpa2.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2.F90 -o $@
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa2.F90 -o $@
 
 elpa1.i: $(top_srcdir)/src/elpa1.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
 
 CLEANFILES = \
   elpa/elpa-generated.h \
