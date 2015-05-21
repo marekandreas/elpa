@@ -70,14 +70,14 @@ subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,c
 
     ! input variables (local)
     integer lda,lwork,ldv,ldt
-    double precision a(:,:),v(:,:),tau(:),work(:),t(ldt,*)
+    double precision a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
 
     ! input variables (global)
     integer m,n,mb,nb,rowidx,colidx,rev,trans,mpicomm_cols,mpicomm_rows
     integer PQRPARAM(*)
 
     ! output variables (global)
-    double precision blockheuristic(:)
+    double precision blockheuristic(*)
 
     ! input variables derived from PQRPARAM
     integer updatemode,tmerge,size2d
