@@ -139,7 +139,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 !
 !  nev         Number of eigenvalues needed
 !
-!  a(lda,*)    Distributed matrix for which eigenvalues are to be computed.
+!  a(1:lda,:)    Distributed matrix for which eigenvalues are to be computed.
 !              Distribution is like in Scalapack.
 !              The full matrix must be set (not only one half like in scalapack).
 !              Destroyed on exit (upper and lower half).
@@ -148,7 +148,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 !
 !  ev(na)      On output: eigenvalues of a, every processor gets the complete set
 !
-!  q(ldq,*)    On output: Eigenvectors of a
+!  q(1:ldq,:)    On output: Eigenvectors of a
 !              Distribution is like in Scalapack.
 !              Must be always dimensioned to the full size (corresponding to (na,na))
 !              even if only a part of the eigenvalues is needed.
@@ -374,7 +374,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 !
 !  nev         Number of eigenvalues needed
 !
-!  a(lda,*)    Distributed matrix for which eigenvalues are to be computed.
+!  a(1:lda,:)    Distributed matrix for which eigenvalues are to be computed.
 !              Distribution is like in Scalapack.
 !              The full matrix must be set (not only one half like in scalapack).
 !              Destroyed on exit (upper and lower half).
@@ -383,7 +383,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 !
 !  ev(na)      On output: eigenvalues of a, every processor gets the complete set
 !
-!  q(ldq,*)    On output: Eigenvectors of a
+!  q(1:ldq,:)    On output: Eigenvectors of a
 !              Distribution is like in Scalapack.
 !              Must be always dimensioned to the full size (corresponding to (na,na))
 !              even if only a part of the eigenvalues is needed.
@@ -583,7 +583,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
   !
   !  na          Order of matrix
   !
-  !  a(lda,*)    Distributed matrix which should be reduced.
+  !  a(1:lda,:)    Distributed matrix which should be reduced.
   !              Distribution is like in Scalapack.
   !              Opposed to Scalapack, a(:,:) must be set completely (upper and lower half)
   !              a(:,:) is overwritten on exit with the band and the Householder vectors
@@ -615,7 +615,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    implicit none
 
    integer             :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   real*8              :: a(lda,*), tmat(nbw,nbw,*)
+   real*8              :: a(:,:), tmat(nbw,nbw,*)
 
    integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer             :: l_cols, l_rows
@@ -697,7 +697,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
        l_rows = local_index(na, my_prow, np_rows, nblk, -1)
        allocate(vmr(max(l_rows,1),na))
 
-       call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,1), nbw, dwork_size(1), -1, na, &
+       call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector, tmat(1,1,1), nbw, dwork_size(1), -1, na, &
                              nbw, nblk, nblk, na, na, 1, 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols, blockheuristic)
        work_size = dwork_size(1)
        allocate(work_blocked(work_size))
@@ -1157,7 +1157,7 @@ subroutine symm_matrix_allreduce(n,a,lda,comm)
 #endif
    implicit none
    integer  :: n, lda, comm
-   real*8   :: a(lda,*)
+   real*8   :: a(:,:)
 
    integer  :: i, nc, mpierr
    real*8   :: h1(n*n), h2(n*n)
@@ -1207,12 +1207,12 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 !
 !  nbw         semi bandwith
 !
-!  a(lda,*)    Matrix containing the Householder vectors (i.e. matrix a after bandred_real)
+!  a(1:lda,:)    Matrix containing the Householder vectors (i.e. matrix a after bandred_real)
 !              Distribution is like in Scalapack.
 !
 !  lda         Leading dimension of a
 !
-!  tmat(nbw,nbw,.) Factors returned by bandred_real
+!  tmat(nbw,nbw,:) Factors returned by bandred_real
 !
 !  q           On input: Eigenvectors of band matrix
 !              On output: Transformed eigenvectors
@@ -1512,7 +1512,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
-!  a(lda,*)    Distributed system matrix reduced to banded form in the upper diagonal
+!  a(1:lda,:)    Distributed system matrix reduced to banded form in the upper diagonal
 !
 !  lda         Leading dimension of a
 !
@@ -1532,7 +1532,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
    implicit none
 
    integer, intent(in)  ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
-   real*8, intent(in)   :: a(lda,*)
+   real*8, intent(in)   :: a(:,:)
    real*8, intent(out)  :: d(na), e(na) ! set only on PE 0
 
 
@@ -2205,7 +2205,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
     integer, intent(in) :: THIS_REAL_ELPA_KERNEL
     integer, intent(in) :: na, nev, nblk, nbw, ldq, mpi_comm_rows, mpi_comm_cols
-    real*8 q(ldq,*)
+    real*8              :: q(:,:)
 
     integer np_rows, my_prow, np_cols, my_pcol
 
@@ -3810,11 +3810,11 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 !#endif
 
 #ifdef WITH_OPENMP
-        if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+        if(j==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe,my_thread), &
                                       bcast_buffer(1,off+1), nbw, nl,     &
                                       stripe_width)
 #else
-        if(j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
+        if(j==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe),           &
                                       bcast_buffer(1,off+1), nbw, nl,     &
                                       stripe_width)
 #endif
@@ -3856,10 +3856,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
         enddo
 #ifdef WITH_OPENMP
-        if (jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+        if (jj==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe,my_thread), &
                                           bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
-        if (jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
+        if (jj==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe), &
                                           bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
@@ -3913,10 +3913,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #endif
       enddo
 #ifdef WITH_OPENMP
-      if (jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
+      if (jjj==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe,my_thread), &
                                            bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
-      if (jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
+      if (jjj==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe), &
                                            bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
@@ -3945,7 +3945,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
 !-------------------------------------------------------------------------------
 
-subroutine single_hh_trafo(q, hh, nb, nq, ldq)
+subroutine single_hh_trafo_real(q, hh, nb, nq, ldq)
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
 #endif
@@ -3955,13 +3955,14 @@ subroutine single_hh_trafo(q, hh, nb, nq, ldq)
 
     implicit none
     integer  :: nb, nq, ldq
-    real*8   :: q(ldq, *), hh(*)
+    real*8   :: q(:,:)
+    real*8   :: hh(*) ! carefull hh is in the calling subroutine a MPI bcast_buffer(:,:) !
 
     integer  :: i
     real*8   :: v(nq)
 
 #ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("single_hh_trafo")
+    call timer%start("single_hh_trafo_real")
 #endif
 
     ! v = q * hh
@@ -3980,7 +3981,7 @@ subroutine single_hh_trafo(q, hh, nb, nq, ldq)
     enddo
 
 #ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("single_hh_trafo")
+    call timer%stop("single_hh_trafo_real")
 #endif
 
 
