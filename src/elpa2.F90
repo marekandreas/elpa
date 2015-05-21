@@ -176,7 +176,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    integer, intent(in)           :: na, nev, lda, ldq, mpi_comm_rows, &
                                     mpi_comm_cols, mpi_comm_all
    integer, intent(in)           :: nblk
-   real*8, intent(inout)         :: a(lda,*), ev(na), q(ldq,*)
+   real*8, intent(inout)         :: a(:,:), ev(na), q(:,:)
 
    integer                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer                       :: nbw, num_blocks
@@ -406,7 +406,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    integer, intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
    integer                       :: THIS_COMPLEX_ELPA_KERNEL
    integer, intent(in)           :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-   complex*16, intent(inout)     :: a(lda,*), q(ldq,*)
+   complex*16, intent(inout)     :: a(:,:), q(:,:)
    real*8, intent(inout)         :: ev(na)
 
    integer                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
@@ -1239,8 +1239,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
    integer              :: istat
 #endif
    integer              :: na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   real*8               :: a(lda,*), q(ldq,*), tmat(nbw, nbw, *)
-
+   real*8               :: a(:,:), q(:,:), tmat(:,:,:)
    integer              :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer              :: max_blocks_row, max_blocks_col, max_local_rows, &
                            max_local_cols
@@ -1249,7 +1248,6 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 
    real*8, allocatable  :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
 #ifdef WITH_GPU_VERSION
-   real*8, allocatable  :: hvm_tmp(:,:)
    integer(C_SIZE_T)    :: hvm_dev, q_dev, tmp_dev, tmat_dev
 #endif
 
@@ -1298,24 +1296,17 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
      istat = cuda_malloc(hvm_dev, (max_local_rows)*nbw*8_8)
      istat = cuda_malloc(tmp_dev, (max_local_cols)*nbw*8_8)
      istat = cuda_malloc(tmat_dev, nbw*nbw*8_8)
-     istat = cuda_malloc(q_dev, ldq*nqc*8_8)
-     istat = cuda_memcpy(q_dev, loc(q), (ldq)*(nqc)*8_8, cudaMemcpyHostToDevice)
+     istat = cuda_malloc(q_dev, ldq*max_local_cols*8_8)
+     istat = cuda_memcpy(q_dev, loc(q), (ldq)*(max_local_cols)*8_8, cudaMemcpyHostToDevice)
 
-
-     allocate(hvm_tmp(max_local_rows,nbw))
-     istat = cuda_memcpy(q_dev, loc(q), (ldq)*(nqc)*8_8, cudaMemcpyHostToDevice)
      istat = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)*8_8)
-     hvm_tmp = 0
-#else
-     allocate(hvm(max_local_rows,nbw))
 #endif
+     allocate(hvm(max_local_rows,nbw))
    endif
 
-#ifndef WITH_GPU_VERSION
-   hvm = 0   ! Must be set to 0 !!!
-#endif
+   hvm = 0.0   ! Must be set to 0 !!!
 
-   hvb = 0   ! Safety only
+   hvb = 0.0   ! Safety only
 
    l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
@@ -1433,20 +1424,14 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
          nrow = (istep-1)*nbw+lc ! absolute number of pivot row
          l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
-#ifdef WITH_GPU_VERSION
-         hvm_tmp(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-         if (my_prow==prow(nrow, nblk, np_rows)) hvm_tmp(l_rows+1,lc) = 1.
-
-#else
          hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
          if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
 
-#endif
          nb = nb+l_rows
        enddo
 
 #ifdef WITH_GPU_VERSION
-       istat = cuda_memcpy(hvm_dev, loc(hvm_tmp), ((max_local_rows)*nbw*8_8),cudaMemcpyHostToDevice)
+       istat = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw*8_8),cudaMemcpyHostToDevice)
 #endif
        l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
 
@@ -1488,7 +1473,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 #endif
        endif
 #ifdef WITH_GPU_VERSION
-       istat = cuda_memcpy(loc(hvm_tmp), hvm_dev, ((max_local_rows)*nbw*8_8),cudaMemcpyDeviceToHost)
+       istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*8_8),cudaMemcpyDeviceToHost)
 #endif
      enddo
    endif ! endQR
@@ -1496,15 +1481,14 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
    deallocate(tmp1, tmp2, hvb)
 
 #ifdef WITH_GPU_VERSION
-   deallocate(hvm_tmp)
    istat = cuda_free(hvm_dev)
    istat = cuda_free(tmp_dev)
    istat = cuda_free(tmat_dev)
-   istat = cuda_memcpy(loc(q), q_dev, ldq*nqc*8_8, cudaMemcpyDeviceToHost)
+   istat = cuda_memcpy(loc(q), q_dev, ldq*max_local_cols*8_8, cudaMemcpyDeviceToHost)
    istat = cuda_free(q_dev)
-#else
-   deallocate(hvm)
 #endif
+   deallocate(hvm)
+
    if (useQr) then
      deallocate(tmat_complete, t_tmp, t_tmp2)
    endif
@@ -3652,9 +3636,6 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 
 
 #ifdef WITH_GPU_VERSION
-
-      print *,"which kernel is used ??"
-      stop
       ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
       if (ncols < 1) return
 
@@ -4626,7 +4607,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
    implicit none
 
    integer                 :: na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   complex*16              :: a(lda,*), q(ldq,*), tmat(nbw, nbw, *)
+   complex*16              :: a(:,:), q(:,:), tmat(:, :, :)
 
    complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
