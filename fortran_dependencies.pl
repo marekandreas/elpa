@@ -1,4 +1,10 @@
 #!/usr/bin/perl -w
+#
+# Copyright 2015 Lorenz Hdepohl
+#
+# This file is part of fdep and licensed under the MIT license
+# see the file LICENSE for more information
+#
 
 use strict;
 

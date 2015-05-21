@@ -1,3 +1,9 @@
+# Copyright 2015 Lorenz Hdepohl
+#
+# This file is part of fdep and licensed under the MIT license
+# see the file LICENSE for more information
+#
+
 _f90_verbose = $(_f90_verbose_$(V))
 _f90_verbose_ = $(_f90_verbose_$(AM_DEFAULT_VERBOSITY))
 _f90_verbose_0 = @echo "  $1";
