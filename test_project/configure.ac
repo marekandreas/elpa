@@ -14,6 +14,7 @@ FDEP_F90_GNU_MAKE_DEPS
 AC_PROG_FC
 AC_PROG_INSTALL
 AM_PROG_CC_C_O
+AM_PROG_AR
 
 # fortran stuff
 AC_FC_MODULE_FLAG
@@ -30,3 +31,7 @@ AC_SUBST([FC_MODOUT])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
+
+for target in foo test_bar test_baz libdings.la; do
+	mkdir -p fortran_mod_files/$target
+done
