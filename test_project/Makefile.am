@@ -18,10 +18,10 @@ test_baz_CPPFLAGS = -DPROGRAM_test_baz
 test_baz_FCFLAGS = $(FC_MODOUT)./fortran_mod_files/test_baz $(FC_MODINC)./fortran_mod_files/test_baz
 
 # a library
-lib_LTLIBRARIES = libdings.la
+lib_LTLIBRARIES = libdings-2.la
 
-libdings_la_SOURCES = src2/baz.F90 src/bar.F90
-libdings_la_FCFLAGS = $(FC_MODOUT)./fortran_mod_files/libdings.la $(FC_MODINC)./fortran_mod_files/libdings.la
+libdings_2_la_SOURCES = src2/baz.F90 src/bar.F90
+libdings_2_la_FCFLAGS = $(FC_MODOUT)./fortran_mod_files/libdings-2.la $(FC_MODINC)./fortran_mod_files/libdings-2.la
 
 CLEANFILES = fortran_mod_files/*/*
 

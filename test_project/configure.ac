@@ -32,6 +32,6 @@ AC_SUBST([FC_MODOUT])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
-for target in foo test_bar test_baz libdings.la; do
+for target in foo test_bar test_baz libdings-2.la; do
 	mkdir -p fortran_mod_files/$target
 done
