@@ -40,14 +40,13 @@ endef
 #
 # returns: the appropriate extension (i.e. 'o' for normal programs, '.lo' for libraries)
 define object_extension
-$(if $(filter $2,$(bin_PROGRAMS)),o,lo)
+$(if $(filter $1,$(bin_PROGRAMS)),o,lo)
 endef
 
 # $1 source_file
 # $2 stem
 # $3 program
 define module_targets
-$(info called module_targets($1,$2,$3))
 $(eval _$(3)_use_mods += $(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).use_mods.$(call object_extension,$3))
 $(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).use_mods.$(call object_extension,$3): $1 $(dir $1)$(am__dirstamp)
 	$(call _f90_verbose,F90 USE  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | grep -i -o '^ *use [^ ,!:]*' | sort -u > $$@
