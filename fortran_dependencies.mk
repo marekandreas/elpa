@@ -7,7 +7,7 @@
 _f90_verbose = $(_f90_verbose_$(V))
 _f90_verbose_ = $(_f90_verbose_$(AM_DEFAULT_VERBOSITY))
 _f90_verbose_0 = @echo "  $1";
-_f90_targets = $(subst -,_,$(subst .,_,$(bin_PROGRAMS) $(lib_LTLIBRARIES)))
+_f90_targets = $(subst -,_,$(subst .,_,$(PROGRAMS) $(LTLIBRARIES)))
 
 FORTRAN_CPP ?= cpp -P -traditional -Wall -Werror
 
@@ -40,7 +40,7 @@ endef
 #
 # returns: the appropriate extension (i.e. 'o' for normal programs, '.lo' for libraries)
 define object_extension
-$(if $(filter $1,$(bin_PROGRAMS)),o,lo)
+$(if $(filter $1,$(PROGRAMS)),o,lo)
 endef
 
 # $1 source_file
