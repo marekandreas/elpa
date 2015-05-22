@@ -49,11 +49,11 @@ endef
 define module_targets
 $(eval _$(3)_use_mods += $(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).use_mods.$(call object_extension,$3))
 $(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).use_mods.$(call object_extension,$3): $1 $(dir $1)$(am__dirstamp)
-	$(call _f90_verbose,F90 USE  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | grep -i -o '^ *use [^ ,!:]*' | sort -u > $$@
+	$(call _f90_verbose,F90 USE  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | grep -i -o '^ *use [^ ,!:]*' | tr '[:upper:]' '[:lower:]' | sort -u > $$@
 
 $(eval _$(3)_def_mods += $(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).def_mods.$(call object_extension,$3))
 $(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).def_mods.$(call object_extension,$3): $1 $(dir $1)$(am__dirstamp)
-	$(call _f90_verbose,F90 MOD  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | grep -i -o '^ *module [^!]*' > $$@ || true
+	$(call _f90_verbose,F90 MOD  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | grep -i -o '^ *module [^!]*' | tr '[:upper:]' '[:lower:]' | grep -v "\<procedure\>" > $$@ || true
 
 endef
 $(foreach p,$(_f90_targets),$(if $(call is_per_target,$p),$(foreach s,$(call fortran_sources,$p),$(eval $(call module_targets,$s,$p-,$p))),$(foreach s,$(call fortran_sources,$p),$(eval $(call module_targets,$s,,$p)))))
