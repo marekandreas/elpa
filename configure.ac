@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 
-AC_INIT([elpa],[2015.02.002], [elpa-library@rzg.mpg.de])
+AC_INIT([elpa],[2015.05.001], [elpa-library@rzg.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
@@ -34,7 +34,7 @@ rm -rf config.h config-f90.h
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [3:0:0])
+AC_SUBST([ELPA_SO_VERSION], [3:1:0])
 #
 
 
