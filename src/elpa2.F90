@@ -615,7 +615,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    implicit none
 
    integer             :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   real*8              :: a(:,:), tmat(nbw,nbw,*)
+   real*8              :: a(:,:), tmat(nbw,nbw,*) ! this assumed size should be changed once elpa_qr is cleaned up
 
    integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer             :: l_cols, l_rows
@@ -3955,7 +3955,7 @@ subroutine single_hh_trafo_real(q, hh, nb, nq, ldq)
 
     implicit none
     integer  :: nb, nq, ldq
-    real*8   :: q(:,:)
+    real*8   :: q(ldq,*) ! get rid of this at some point
     real*8   :: hh(*) ! carefull hh is in the calling subroutine a MPI bcast_buffer(:,:) !
 
     integer  :: i
@@ -4035,7 +4035,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be reduced.
+!  a(1:lda,:)    Distributed matrix which should be reduced.
 !              Distribution is like in Scalapack.
 !              Opposed to Scalapack, a(:,:) must be set completely (upper and lower half)
 !              a(:,:) is overwritten on exit with the band and the Householder vectors
@@ -4066,7 +4066,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
    implicit none
 
    integer                 :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   complex*16              :: a(lda,*), tmat(nbw,nbw,*)
+   complex*16              :: a(:,:), tmat(:,:,:)
 
    complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
@@ -4532,7 +4532,7 @@ subroutine herm_matrix_allreduce(n,a,lda,comm)
 #endif
    implicit none
    integer    :: n, lda, comm
-   complex*16 :: a(lda,*)
+   complex*16 :: a(:,:)
 
    integer    :: i, nc, mpierr
    complex*16 :: h1(n*n), h2(n*n)
@@ -4580,7 +4580,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 !
 !  nbw         semi bandwith
 !
-!  a(lda,*)    Matrix containing the Householder vectors (i.e. matrix a after bandred_complex)
+!  a(1:lda,:)    Matrix containing the Householder vectors (i.e. matrix a after bandred_complex)
 !              Distribution is like in Scalapack.
 !
 !  lda         Leading dimension of a
@@ -4777,7 +4777,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
-!  a(lda,*)    Distributed system matrix reduced to banded form in the upper diagonal
+!  a(1:lda,:)    Distributed system matrix reduced to banded form in the upper diagonal
 !
 !  lda         Leading dimension of a
 !
@@ -4797,7 +4797,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
    implicit none
 
    integer, intent(in)      :: na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
-   complex*16, intent(in)   :: a(lda,*)
+   complex*16, intent(in)   :: a(:,:)
    real*8, intent(out)      :: d(na), e(na) ! set only on PE 0
 
    integer                  :: mpierr
@@ -5637,7 +5637,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     integer, intent(in)     :: THIS_COMPLEX_ELPA_KERNEL
     integer, intent(in)     :: na, nev, nblk, nbw, ldq, mpi_comm_rows, mpi_comm_cols
-    complex*16              :: q(ldq,*)
+    complex*16              :: q(:,:)
 
     integer                 :: np_rows, my_prow, np_cols, my_pcol
 #ifdef WITH_GPU_VERSION
@@ -7433,8 +7433,8 @@ subroutine redist_band(l_real, r_a, c_a, lda, na, nblk, nbw, mpi_comm_rows, mpi_
 #endif
    implicit none
    logical, intent(in)     :: l_real
-   real*8, intent(in)      :: r_a(lda, *)
-   complex*16, intent(in)  :: c_a(lda, *)
+   real*8, intent(in)      :: r_a(:,:)
+   complex*16, intent(in)  :: c_a(:,:)
    integer, intent(in)     :: lda, na, nblk, nbw, mpi_comm_rows, mpi_comm_cols, mpi_comm
    real*8, intent(out)     :: r_ab(:,:)
    complex*16, intent(out) :: c_ab(:,:)
@@ -7732,8 +7732,8 @@ subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
    implicit none
 
    integer, intent(in)    ::  na, nb, nb2, mpi_comm
-   real*8, intent(inout)  :: ab(2*nb,*)
-   real*8, intent(inout)  :: ab2(2*nb2,*)
+   real*8, intent(inout)  :: ab(2*nb,*)  ! this assumed size array should be replaced by assumed-shape
+   real*8, intent(inout)  :: ab2(2*nb2,*)  ! this assumed size array should be replaced by assumed-shape
    real*8, intent(out)    :: d(na), e(na) ! set only on PE 0
 
 !----------------
@@ -7993,7 +7993,7 @@ subroutine wy_left(n, m, nb, A, lda, W, Y, mem, lda2)
    integer, intent(in)   :: nb		!width of matrix W and Y
    integer, intent(in)   :: lda		!leading dimension of A
    integer, intent(in)   :: lda2		!leading dimension of W and Y
-   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
+   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed ! this assumed size array should be replaced by assumed-shape
    real*8, intent(in)    :: W(m,nb)	!blocked transformation matrix W
    real*8, intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
    real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
@@ -8023,7 +8023,7 @@ subroutine wy_right(n, m, nb, A, lda, W, Y, mem, lda2)
    integer, intent(in)   :: nb		!width of matrix W and Y
    integer, intent(in)   :: lda		!leading dimension of A
    integer, intent(in)   :: lda2		!leading dimension of W and Y
-   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
+   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed ! this assumed size array should be replaced by assumed-shape
    real*8, intent(in)    :: W(m,nb)	!blocked transformation matrix W
    real*8, intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
    real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
@@ -8052,7 +8052,7 @@ subroutine wy_symm(n, nb, A, lda, W, Y, mem, mem2, lda2)
    integer, intent(in)   :: nb		!width of matrix W and Y
    integer, intent(in)   :: lda		!leading dimension of A
    integer, intent(in)   :: lda2		!leading dimension of W and Y
-   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
+   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed ! this assumed size array should be replaced by assumed-shape
    real*8, intent(in)    :: W(n,nb)	!blocked transformation matrix W
    real*8, intent(in)    :: Y(n,nb)	!blocked transformation matrix Y
    real*8                :: mem(n,nb)	!memory for a temporary matrix of size n x nb
