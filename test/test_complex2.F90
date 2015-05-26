@@ -128,7 +128,6 @@ program test_complex2
    complex*16, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
 
-
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    integer :: STATUS
@@ -140,18 +139,12 @@ program test_complex2
 
 
 #ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter   :: error_unit = 6
+   integer, parameter   :: error_unit = 6
 #endif
 
-  logical :: success
+   logical :: success
 
-   write_to_file = .false.
    success = .true.
-
-   nblk = 16
-   na = 4000
-   nev = 1500
-   ! read input parameters if they are provided
 
    call read_input_parameters(na, nev, nblk, write_to_file)
       !-------------------------------------------------------------------------------

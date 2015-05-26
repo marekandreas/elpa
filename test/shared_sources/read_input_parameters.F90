@@ -45,19 +45,32 @@ module mod_read_input_parameters
   contains
 
     subroutine read_input_parameters(na, nev, nblk, write_to_file)
-
+#ifdef HAVE_ISO_FORTRAN_ENV
+      use iso_fortran_env, only : stderr => error_unit
+#else
+#define stderr 0
+#endif
       implicit none
+      include 'mpif.h'
 
-      integer, intent(inout) :: na, nev, nblk
-      logical, intent(inout) :: write_to_file
+      integer, intent(out) :: na, nev, nblk
+      logical, intent(out) :: write_to_file
 
-      !-------------------------------------------------------------------------------
-      !  Parse command line argumnents, if given
-      character*16 arg1
-      character*16 arg2
-      character*16 arg3
-      character*16 arg4
+      ! Command line arguments
+      character(len=128)   :: arg1, arg2, arg3, arg4
+      integer :: mpierr
 
+      ! default parameters
+      na = 4000
+      nev = 1500
+      nblk = 16
+      write_to_file = .false.
+
+      if (.not. any(COMMAND_ARGUMENT_COUNT() == [0, 3, 4])) then
+        write(stderr, '(a,i0,a)') "Invalid number (", COMMAND_ARGUMENT_COUNT(), ") of command line arguments!"
+        write(stderr, *) "Expected: program [ [matrix_size num_eigenvalues block_size] ""output""]"
+        stop 1
+      endif
 
       if (COMMAND_ARGUMENT_COUNT() == 3) then
         call GET_COMMAND_ARGUMENT(1, arg1)
@@ -77,10 +90,14 @@ module mod_read_input_parameters
         read(arg1, *) na
         read(arg2, *) nev
         read(arg3, *) nblk
-      endif
 
-      if (arg4 .eq. "output") then
-        write_to_file = .true.
+        if (arg4 .eq. "output") then
+          write_to_file = .true.
+        else
+          write(stderr, *) "Invalid value for output flag! Must be ""output"" or omitted"
+          stop 1
+        endif
+
       endif
 
     end subroutine

@@ -136,21 +136,14 @@ program test_real2
 #endif
    logical :: write_to_file
 
-
 #ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter   :: error_unit = 6
+   integer, parameter   :: error_unit = 6
 #endif
 
-  logical :: success
+   logical :: success
 
-   write_to_file = .false.
    success = .true.
 
-   nblk = 16
-   na = 4000
-   nev = 1500
-
-   ! read input parameters if they are provided
    call read_input_parameters(na, nev, nblk, write_to_file)
 
    !-------------------------------------------------------------------------------
