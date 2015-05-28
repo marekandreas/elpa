@@ -60,12 +60,7 @@
 #include <elpa/elpa_kernel_constants.h>
 
 module ELPA2_utilities
-
-
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
-
+  use ELPA_utilities
   implicit none
 
   PRIVATE ! By default, all routines contained are private
@@ -94,10 +89,6 @@ module ELPA2_utilities
   public :: print_available_real_kernels, print_available_complex_kernels
 
   public :: qr_decomposition_via_environment_variable
-
-#ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter :: error_unit = 6
-#endif
 
   integer, parameter :: number_of_real_kernels           = ELPA2_NUMBER_OF_REAL_KERNELS
   integer, parameter :: REAL_ELPA_KERNEL_GENERIC         = ELPA2_REAL_KERNEL_GENERIC

@@ -65,12 +65,6 @@ module ELPA2
   use elpa_utilities
   USE ELPA1
   use elpa2_utilities
-
-
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
-
   use elpa_pdgeqrf
 
   implicit none
@@ -91,9 +85,6 @@ module ELPA2
   public :: tridiag_band_complex
   public :: trans_ev_tridi_to_band_complex
   public :: trans_ev_band_to_full_complex
-#ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter :: error_unit = 6
-#endif
 
   public :: band_band_real
   public :: divide_band

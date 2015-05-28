@@ -45,11 +45,7 @@ module mod_read_input_parameters
   contains
 
     subroutine read_input_parameters(na, nev, nblk, write_to_file)
-#ifdef HAVE_ISO_FORTRAN_ENV
-      use iso_fortran_env, only : stderr => error_unit
-#else
-#define stderr 0
-#endif
+      use ELPA_utilities, only : error_unit
       implicit none
       include 'mpif.h'
 
@@ -67,8 +63,8 @@ module mod_read_input_parameters
       write_to_file = .false.
 
       if (.not. any(COMMAND_ARGUMENT_COUNT() == [0, 3, 4])) then
-        write(stderr, '(a,i0,a)') "Invalid number (", COMMAND_ARGUMENT_COUNT(), ") of command line arguments!"
-        write(stderr, *) "Expected: program [ [matrix_size num_eigenvalues block_size] ""output""]"
+        write(error_unit, '(a,i0,a)') "Invalid number (", COMMAND_ARGUMENT_COUNT(), ") of command line arguments!"
+        write(error_unit, *) "Expected: program [ [matrix_size num_eigenvalues block_size] ""output""]"
         stop 1
       endif
 
@@ -94,7 +90,7 @@ module mod_read_input_parameters
         if (arg4 .eq. "output") then
           write_to_file = .true.
         else
-          write(stderr, *) "Invalid value for output flag! Must be ""output"" or omitted"
+          write(error_unit, *) "Invalid value for output flag! Must be ""output"" or omitted"
           stop 1
         endif
 

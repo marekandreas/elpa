@@ -79,6 +79,7 @@ program test_complex2
 
    use ELPA1
    use ELPA2
+   use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -88,9 +89,6 @@ program test_complex2
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
 
 #ifdef HAVE_REDIRECT
   use redirect
@@ -135,13 +133,6 @@ program test_complex2
    integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    logical :: write_to_file
-
-
-
-#ifndef HAVE_ISO_FORTRAN_ENV
-   integer, parameter   :: error_unit = 6
-#endif
-
    logical :: success
 
    success = .true.

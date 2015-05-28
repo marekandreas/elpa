@@ -74,6 +74,7 @@ program test_real
 !-------------------------------------------------------------------------------
 
    use ELPA1
+   use elpa_utilities, only : error_unit
    use from_c
 #ifdef WITH_OPENMP
    use test_util
@@ -85,9 +86,6 @@ program test_real
    use mod_blacs_infrastructure
    use mod_prepare_matrix
 
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
@@ -135,11 +133,6 @@ program test_real
    logical             :: write_to_file
 
    integer             :: checksWrong, checksWrongRecv
-
-#ifndef HAVE_ISO_FORTRAN_ENV
-   integer, parameter  :: error_unit = 6
-#endif
-
    logical             :: success
 
    success = .true.

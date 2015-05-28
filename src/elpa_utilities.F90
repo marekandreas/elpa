@@ -60,18 +60,17 @@
 
 module ELPA_utilities
 
-
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
 #endif
 
   implicit none
 
-  PRIVATE ! By default, all routines contained are private
+  private ! By default, all routines contained are private
 
-  public :: debug_messages_via_environment_variable, pcol, prow
+  public :: debug_messages_via_environment_variable, pcol, prow, error_unit
 #ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter :: error_unit = 6
+  integer, parameter :: error_unit = 0
 #endif
 
 

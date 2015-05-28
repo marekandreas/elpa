@@ -52,9 +52,6 @@ module ELPA1
 
   use elpa_utilities
 
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
@@ -90,10 +87,6 @@ module ELPA1
 
   public :: hh_transform_real
   public :: hh_transform_complex
-
-#ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter :: error_unit = 6
-#endif
 
 !-------------------------------------------------------------------------------
 
