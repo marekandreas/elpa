@@ -79,6 +79,10 @@ program test_complex2
 
    use ELPA1
    use ELPA2
+#ifdef WITH_GPU_VERSION
+   use cuda_routines
+#endif
+
    use elpa2_utilities
 
    use mod_read_input_parameters
@@ -113,39 +117,44 @@ program test_complex2
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   integer :: nblk
-   integer na, nev
+   integer                 :: nblk
+   integer                 :: na, nev
 
    !-------------------------------------------------------------------------------
    !  Local Variables
 
-   integer np_rows, np_cols, na_rows, na_cols
+   integer                 :: np_rows, np_cols, na_rows, na_cols
 
-   integer myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer                 :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer                 :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer, external :: numroc
+   integer, external       :: numroc
 
-   real*8, allocatable :: ev(:), xr(:,:)
+   real*8, allocatable     :: ev(:), xr(:,:)
 
    complex*16, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
-   complex*16, parameter :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+   complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-   integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
+   integer                 :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
-   integer :: STATUS
+   integer                 :: STATUS
 #ifdef WITH_OPENMP
-   integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   integer                 :: omp_get_max_threads,  required_mpi_thread_level, &
+                              provided_mpi_thread_level
 #endif
-   logical :: write_to_file
+   logical                 :: write_to_file
 
 
 #ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter   :: error_unit = 6
+  integer, parameter       :: error_unit = 6
 #endif
 
-  logical :: success
+  logical                  :: success
+#ifdef WITH_GPU_VERSION
+  character(len=1024)      :: envname
+  integer                  :: istat, devnum
+#endif
 
    write_to_file = .false.
    success = .true.
@@ -160,6 +169,17 @@ program test_complex2
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
+
+#ifdef WITH_GPU_VERSION
+   devnum = 0
+   istat = cuda_setdevice(devnum)
+
+   if (istat .ne. 0) then
+     print *,"Cannot set CudaDevice"
+     stop
+   endif
+#endif
+
    STATUS = 0
 
 #ifdef WITH_OPENMP
@@ -324,7 +344,7 @@ program test_complex2
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
+                                 na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
                                  COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
 
 

@@ -113,9 +113,9 @@
 
   end function
 
-  !c> int elpa_solve_evp_real_stage2(int na, int nev, int ncols, double *a, int lda, double *ev, double *q, int ldq, int nblk, int mpi_comm_rows, int mpi_comm_cols, int THIS_REAL_ELPA_KERNEL_API, int useQR);
+  !c> int elpa_solve_evp_real_stage2(int na, int nev, int ncols, double *a, int lda, double *ev, double *q, int ldq, int nblk, int_na_rows, int na_cols, int mpi_comm_rows, int mpi_comm_cols, int THIS_REAL_ELPA_KERNEL_API, int useQR);
   function solve_elpa2_evp_real_wrapper(na, nev, ncols, a, lda, ev, q, ldq, nblk,    &
-                                  mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                  na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
                                   THIS_REAL_ELPA_KERNEL_API, useQR)           &
                                   result(success) bind(C,name="elpa_solve_evp_real_2stage")
 
@@ -123,7 +123,7 @@
     use elpa2, only : solve_evp_real_2stage
 
     integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, ncols, lda, ldq, nblk, mpi_comm_cols, mpi_comm_rows, &
+    integer(kind=c_int), value, intent(in) :: na, nev, ncols, lda, ldq, nblk, na_rows, na_cols, mpi_comm_cols, mpi_comm_rows, &
                                               mpi_comm_all
     integer(kind=c_int), value, intent(in) :: THIS_REAL_ELPA_KERNEL_API, useQR
     real(kind=c_double)                    :: a(1:lda,1:ncols), ev(1:na), q(1:ldq,1:ncols)
@@ -138,7 +138,7 @@
       useQRFortran = .true.
     endif
 
-    successFortran = solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+    successFortran = solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
                                            THIS_REAL_ELPA_KERNEL_API, useQRFortran)
 
     if (successFortran) then
@@ -149,9 +149,9 @@
 
   end function
 
-  ! int elpa_solve_evp_complex_stage2(int na, int nev, int ncols, double_complex *a, int lda, double *ev, double_complex *q, int ldq, int nblk, int mpi_comm_rows, int mpi_comm_cols);
+  ! int elpa_solve_evp_complex_stage2(int na, int nev, int ncols, double_complex *a, int lda, double *ev, double_complex *q, int ldq, int nblk, int na_rows, int na_cols, int mpi_comm_rows, int mpi_comm_cols);
   function solve_elpa2_evp_complex_wrapper(na, nev, ncols, a, lda, ev, q, ldq, nblk,    &
-                                  mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
+                                  na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
                                   THIS_COMPLEX_ELPA_KERNEL_API)                  &
                                   result(success) bind(C,name="elpa_solve_evp_complex_2stage")
 
@@ -159,14 +159,14 @@
     use elpa2, only : solve_evp_complex_2stage
 
     integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, ncols, lda, ldq, nblk, mpi_comm_cols, mpi_comm_rows, &
+    integer(kind=c_int), value, intent(in) :: na, nev, ncols, lda, ldq, nblk, na_rows, na_cols, mpi_comm_cols, mpi_comm_rows, &
                                               mpi_comm_all
     integer(kind=c_int), value, intent(in) :: THIS_COMPLEX_ELPA_KERNEL_API
     complex(kind=c_double_complex)         :: a(1:lda,1:ncols), q(1:ldq,1:ncols)
     real(kind=c_double)                    :: ev(1:na)
     logical                                :: successFortran
 
-    successFortran = solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols, &
+    successFortran = solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, &
                                               mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
 
     if (successFortran) then

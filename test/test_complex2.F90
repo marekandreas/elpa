@@ -346,7 +346,7 @@ program test_complex2
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+                                 na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."

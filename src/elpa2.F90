@@ -125,9 +125,9 @@ module ELPA2
 !******
 contains
 
-function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
-                                 mpi_comm_rows, mpi_comm_cols,           &
-                                 mpi_comm_all, THIS_REAL_ELPA_KERNEL_API,&
+function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, na_rows, na_cols, &
+                                 mpi_comm_rows, mpi_comm_cols,             &
+                                 mpi_comm_all, THIS_REAL_ELPA_KERNEL_API,  &
                                  useQR) result(success)
 
 !-------------------------------------------------------------------------------
@@ -173,7 +173,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    integer, intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
    integer                       :: THIS_REAL_ELPA_KERNEL
 
-   integer, intent(in)           :: na, nev, lda, ldq, mpi_comm_rows, &
+   integer, intent(in)           :: na, nev, lda, ldq, na_rows, na_cols, mpi_comm_rows, &
                                     mpi_comm_cols, mpi_comm_all
    integer, intent(in)           :: nblk
    real*8, intent(inout)         :: a(:,:), ev(na), q(:,:)
@@ -287,7 +287,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 
    ttt0 = MPI_Wtime()
    ttts = ttt0
-   call bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
+   call bandred_real(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, &
                      tmat, wantDebug, success, useQRActual)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
@@ -342,7 +342,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    ! Backtransform stage 2
 
    ttt0 = MPI_Wtime()
-   call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, &
+   call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, na_rows, na_cols, mpi_comm_rows, &
                                    mpi_comm_cols, useQRActual)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -361,7 +361,7 @@ end function solve_evp_real_2stage
 
 !-------------------------------------------------------------------------------
 
-function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
+function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, na_rows, na_cols, &
                                     mpi_comm_rows, mpi_comm_cols,      &
                                     mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API) result(success)
 
@@ -405,7 +405,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    implicit none
    integer, intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
    integer                       :: THIS_COMPLEX_ELPA_KERNEL
-   integer, intent(in)           :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   integer, intent(in)           :: na, nev, lda, ldq, nblk, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
    complex*16, intent(inout)     :: a(:,:), q(:,:)
    real*8, intent(inout)         :: ev(na)
 
@@ -488,7 +488,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
    ttt0 = MPI_Wtime()
    ttts = ttt0
-   call bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
+   call bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, &
                         tmat, wantDebug, success)
    if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
@@ -556,7 +556,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ! Backtransform stage 2
 
    ttt0 = MPI_Wtime()
-   call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_band_to_full_complex :',ttt1-ttt0
@@ -573,7 +573,7 @@ end function solve_evp_complex_2stage
 
 !-------------------------------------------------------------------------------
 
-subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
+subroutine bandred_real(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, &
                         tmat, wantDebug, success, useQR)
 
   !-------------------------------------------------------------------------------
@@ -614,7 +614,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 
    implicit none
 
-   integer             :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
+   integer             :: na, lda, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols
    real*8              :: a(:,:), tmat(nbw,nbw,*) ! this assumed size should be changed once elpa_qr is cleaned up
 
    integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -648,7 +648,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    integer             :: cur_l_rows, cur_l_cols, vmr_size, umc_size
    integer(C_SIZE_T)   :: lc_start, lc_end
    integer             :: lr_end
-   integer             :: na_rows, na_cols
+   integer             :: na_rows2, na_cols2
 #endif
    logical, intent(in) :: wantDebug
    logical, intent(out):: success
@@ -734,8 +734,17 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
    endif
 
 #ifdef WITH_GPU_VERSION
-   na_rows = numroc(na, nblk, my_prow, 0, np_rows)
-   na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
+   na_rows2 = numroc(na, nblk, my_prow, 0, np_rows)
+
+   if (na_rows .ne. na_rows2) then
+     print *,"why is na_rows not equal? ",na_rows,na_rows2
+     stop
+   endif
+   na_cols2 = numroc(na, nblk, my_pcol, 0, np_cols)
+   if (na_cols .ne. na_cols2) then
+     print *,"why is na_cols not equal? ",na_cols,na_cols2
+     stop
+   endif
 
    ! Here we convert the regular host array into a pinned host array
    istat = cuda_malloc(a_dev, lda*na_cols*8_8)
@@ -1417,7 +1426,7 @@ end subroutine symm_matrix_allreduce
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, &
+subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, na_rows, na_cols, mpi_comm_rows, &
                                       mpi_comm_cols, useQR)
 
 
@@ -1463,8 +1472,10 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 #endif
    implicit none
 
-   integer              :: na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   real*8               :: a(:,:), q(:,:), tmat(:,:,:)
+   integer, intent(in)  :: na, nqc, lda, ldq, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols
+   real*8, intent(in)   :: a(:,:), tmat(:,:,:)
+   real*8, intent(inout):: q(:,:)
+   real*8, allocatable  :: q_temp(:,:), tmat_temp(:,:)
    integer              :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer              :: max_blocks_row, max_blocks_col, max_local_rows, &
                            max_local_cols
@@ -1549,7 +1560,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
        stop
      endif
 
-   else
+   else ! no QR
      allocate(tmp1(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"error when allocating tmp1 "//errorMessage
@@ -1569,6 +1580,18 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
      endif
 
 #ifdef WITH_GPU_VERSION
+     allocate(q_temp(ldq,max_local_cols), stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"error when allocating q_temp "//errorMessage
+       stop
+     endif
+
+     allocate(tmat_temp(nbw,nbw), stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"error when allocating tmat_temp "//errorMessage
+       stop
+     endif
+
      istat = cuda_malloc(hvm_dev, (max_local_rows)*nbw*8_8)
      if (istat .ne. 0) then
        print *,"error in cudaMalloc"
@@ -1593,7 +1616,10 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
        stop
      endif
 
-     istat = cuda_memcpy(q_dev, loc(q), (ldq)*(max_local_cols)*8_8, cudaMemcpyHostToDevice)
+     q_temp(:,:) = 0.0
+     q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
+
+     istat = cuda_memcpy(q_dev, loc(q_temp), (ldq)*(max_local_cols)*8_8, cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
        print *,"error in cudaMalloc"
        stop
@@ -1612,11 +1638,13 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
        stop
      endif
 
-   endif
+   endif ! QR
 
    hvm = 0.0   ! Must be set to 0 !!!
 
    hvb = 0.0   ! Safety only
+
+
 
    l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
@@ -1840,15 +1868,29 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
      stop
    endif
 
-   istat = cuda_memcpy(loc(q), q_dev, ldq*max_local_cols*8_8, cudaMemcpyDeviceToHost)
+   istat = cuda_memcpy(loc(q_temp), q_dev, ldq*max_local_cols*8_8, cudaMemcpyDeviceToHost)
    if (istat .ne. 0) then
      print *,"error in cudaFree"
      stop
    endif
 
+   q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
+
    istat = cuda_free(q_dev)
    if (istat .ne. 0) then
      print *,"error in cudaFree"
+     stop
+   endif
+
+   deallocate(q_temp, stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"error when deallocating q_temp "//errorMessage
+     stop
+   endif
+
+   deallocate(tmat_temp, stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"error when deallocating tmat_temp "//errorMessage
      stop
    endif
 
@@ -3475,10 +3517,10 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
            !wait_t
            if (top_msg_length>0) then
 #ifdef WITH_OPENMP
-!#ifdef WITH_GPU_VERSION
-!         print *,"not yet implemented"
-!         stop
-!#endif
+#ifdef WITH_GPU_VERSION
+         print *,"not yet implemented"
+         stop
+#endif
              call MPI_Wait(top_recv_request(i), MPI_STATUS, mpierr)
 #else
              call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
@@ -4761,8 +4803,11 @@ subroutine single_hh_trafo_real(q, hh, nb, nq, ldq)
 
     implicit none
     integer  :: nb, nq, ldq
-!    real*8   :: q(ldq,*) ! remove this
+#ifdef WITH_GPU_VERSION
     real*8   :: q(:,:) ! remove this
+#else
+    real*8   :: q(ldq,*) ! remove this
+#endif
     real*8   :: hh(*) ! carefull hh is in the calling subroutine a MPI bcast_buffer(:,:) !
 
     integer  :: i
@@ -4833,7 +4878,7 @@ subroutine determine_workload(na, nb, nprocs, limits)
 end subroutine
 
 !-------------------------------------------------------------------------------
-subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat, wantDebug, success)
+subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, tmat, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  bandred_complex: Reduces a distributed hermitian matrix to band form
@@ -4872,7 +4917,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 #endif
    implicit none
 
-   integer                 :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
+   integer                 :: na, lda, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols
    complex*16              :: a(:,:), tmat(:,:,:)
 
    complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
@@ -4892,7 +4937,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
    integer(c_size_t)       :: umc_dev, tmat_dev,vav_dev,vmr_dev,a_dev
    integer                 :: cur_l_rows, cur_l_cols,vmr_size ,umc_size
    integer(c_size_t)       :: lc_start, lc_end, lr_end, lce_1, lcs_1,lre_1
-   integer                 :: na_rows, na_cols
+   integer                 :: na_rows2, na_cols2
    integer, external       :: numroc
 #endif
 
@@ -4925,8 +4970,14 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
    endif
 
 #ifdef WITH_GPU_VERSION
-   na_rows = numroc(na, nblk, my_prow, 0, np_rows)
-   na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
+   na_rows2 = numroc(na, nblk, my_prow, 0, np_rows)
+   if (na_rows .ne. na_rows2) then
+     print *,"Why is na_rows not equal? ",na_rows,na_rows2
+   endif
+   na_cols2 = numroc(na, nblk, my_pcol, 0, np_cols)
+   if (na_cols .ne. na_cols2) then
+     print *,"Why is na_cols not equal? ",na_cols,na_cols2
+   endif
 
    istat = cuda_malloc(tmat_dev, nbw*nbw*16_8)
    if (istat .ne. 0) then
@@ -5536,7 +5587,7 @@ end subroutine herm_matrix_allreduce
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
+subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols)
 
 !-------------------------------------------------------------------------------
 !  trans_ev_band_to_full_complex:
@@ -5579,23 +5630,26 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 #endif
    implicit none
 
-   integer                 :: na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   complex*16              :: a(:,:), q(:,:), tmat(:, :, :)
+   integer, intent(in)       :: na, nqc, lda, ldq, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols
+   complex*16, intent(in)    :: a(:,:), tmat(:, :, :)
+   complex*16, intent(inout) :: q(:,:)
+   complex*16, allocatable   :: q_temp(:,:)
+   complex*16, allocatable   :: tmat_temp(:,:)
 
-   complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+   complex*16, parameter     :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-   integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer                 :: max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
-   integer                 :: l_cols, l_rows, l_colh, n_cols
-   integer                 :: istep, lc, ncol, nrow, nb, ns
+   integer                   :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer                   :: max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
+   integer                   :: l_cols, l_rows, l_colh, n_cols
+   integer                   :: istep, lc, ncol, nrow, nb, ns
 
 #ifdef WITH_GPU_VERSION
-   integer(C_SIZE_T)       :: hvm_dev, q_dev, tmat_dev, tmp_dev
+   integer(C_SIZE_T)         :: hvm_dev, q_dev, tmat_dev, tmp_dev
 #endif
-   complex*16, allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
-   integer                 :: i
-   integer                 :: istat
-   character(200)          :: errorMessage
+   complex*16, allocatable   :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+   integer                   :: i
+   integer                   :: istat
+   character(200)            :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("trans_ev_band_to_full_complex")
@@ -5636,6 +5690,16 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
    endif
 
 #ifdef WITH_GPU_VERSION
+   allocate(q_temp(ldq,max_local_cols), stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"error when allocating q_temp "//errorMessage
+   endif
+
+   allocate(tmat_temp(nbw,nbw), stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"error when allocating tmat_temp "//errorMessage
+   endif
+
    istat = cuda_malloc(hvm_dev, max_local_rows*nbw*16_8)
    if (istat .ne. 0) then
      print *,"error in cudaMalloc"
@@ -5671,7 +5735,10 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
    hvb = 0   ! Safety only
 
 #ifdef WITH_GPU_VERSION
-   istat = cuda_memcpy(q_dev, loc(q),ldq*max_local_cols*16_8, cudaMemcpyHostToDevice)
+   q_temp(:,:) = 0.0
+   q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
+
+   istat = cuda_memcpy(q_dev, loc(q_temp),ldq*max_local_cols*16_8, cudaMemcpyHostToDevice)
    if (istat .ne. 0) then
      print *,"error in cudaMemcpy"
      stop
@@ -5777,7 +5844,9 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
      if (l_rows>0) then
 #ifdef WITH_GPU_VERSION
-       istat = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)),nbw*nbw*16_8,cudaMemcpyHostToDevice)
+       tmat_temp(1:nbw,1:nbw) = tmat(1:nbw,1:nbw,istep)
+
+       istat = cuda_memcpy(tmat_dev, loc(tmat_temp(1,1)),nbw*nbw*16_8,cudaMemcpyHostToDevice)
        if (istat .ne. 0) then
          print *,"error in cudaMemcpy"
          stop
@@ -5809,6 +5878,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
    endif
 
 #ifdef WITH_GPU_VERSION
+
    istat = cuda_free(hvm_dev)
    if (istat .ne. 0) then
      print *,"error in cudaFree"
@@ -5827,16 +5897,27 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
      stop
    endif
 
-   istat = cuda_memcpy(loc(q), q_dev,ldq*max_local_cols*16_8, cudaMemcpyDeviceToHost)
+   istat = cuda_memcpy(loc(q_temp), q_dev,ldq*max_local_cols*16_8, cudaMemcpyDeviceToHost)
    if (istat .ne. 0) then
      print *,"error in cudaMemcpy"
      stop
    endif
+   q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
 
    istat = cuda_free(q_dev)
    if (istat .ne. 0) then
      print *,"error in cudaFree"
      stop
+   endif
+
+   deallocate(q_temp, stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"error when deallocating q_temp "//errorMessage
+   endif
+
+   deallocate(tmat_temp, stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"error when deallocating tmat_temp "//errorMessage
    endif
 
 #endif
@@ -5888,12 +5969,10 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
    complex*16               :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
    complex*16               :: hd(nb), hs(nb)
 
-#ifdef WITH_GPU_VERSION
+!#ifdef WITH_GPU_VERSION
 !   integer(C_SIZE_T)        :: h_dev, hv_new_dev ,ab_dev,x_dev,hs_dev,tau_new_dev,hv_dev,hd_dev
-   complex*16, allocatable  :: ab_temp(:,:)
-   real*8                   :: t_1, t_2, start, finish, tstep2, finish_1, tstep1, start_1
-!   integer                  :: istat
-#endif
+!   complex*16, allocatable  :: ab_temp(:,:)
+!#endif
 
    integer                  :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
    integer                  :: my_pe, n_pes, mpier
@@ -5970,18 +6049,17 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
      stop
    endif
 
-#ifdef WITH_GPU_VERSION
-   allocate(ab_temp(2*nb,nblocks*nb), stat=istat, errmsg=errorMessage)
-   if (istat .ne. 0) then
-     print *,"error when allocating ab_temp "//errorMessage
-     stop
-   endif
-#endif
+!#ifdef WITH_GPU_VERSION
+!   allocate(ab_temp(2*nb,nblocks*nb), stat=istat, errmsg=errorMessage)
+!   if (istat .ne. 0) then
+!     print *,"error when allocating ab_temp "//errorMessage
+!     stop
+!   endif
+!#endif
    ab = 0 ! needed for lower half, the extra block should also be set to 0 for safety
 
 
-! check whether GPU should be used here
-!
+
 !#ifdef WITH_GPU_VERSION
 !
 !   istat = cuda_malloc(ab_dev, 2*nb*(nblocks+1)*nb*16_8)
@@ -6010,8 +6088,6 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 !
 !   istat = cuda_malloc(hd_dev , nb*16_8)
 !   if (istat .ne. 0) print *, " cuda malloc failed hd_dev", istat
-!
-!   allocate(ab_temp(2*nb,nblocks*nb))
 !#endif
 
    ! n_off: Offset of ab within band
@@ -6212,12 +6288,12 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
      na_s = na_s+1
      if (na_s-n_off > nb) then
-#ifdef WITH_GPU_VERSION
-       ab_temp(:,1:nblocks*nb) =  ab(:,nb+1:(nblocks +1)*nb)
-       ab(:, 1:nblocks*nb) = ab_temp(:, 1:nblocks*nb)
-#else
+!#ifdef WITH_GPU_VERSION
+!       ab_temp(:,1:nblocks*nb) =  ab(:,nb+1:(nblocks +1)*nb)
+!       ab(:, 1:nblocks*nb) = ab_temp(:, 1:nblocks*nb)
+!#else
        ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-#endif
+!#endif
        ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
        n_off = n_off + nb
      endif
@@ -6398,9 +6474,9 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
 #endif /* WITH_OPENMP */
 
-#ifdef WITH_GPU_VERSION
-       call cpu_time(start)
-#endif
+!#ifdef WITH_GPU_VERSION
+!       call cpu_time(start)
+!#endif
        do iblk=1,nblocks
 
          ns = na_s + (iblk-1)*nb - n_off ! first column in block
@@ -6712,6 +6788,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 !     endif
 !
 !#endif
+
      deallocate(ireq_hhr, ireq_hhs, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"error when deallocating ireq_hhr, ireq_hhs "//errorMessage
@@ -6808,19 +6885,19 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 !       call launch_dot_product_kernel_1(ab_dev,hs_dev, hv_new_dev,x_dev,h_dev,hv_dev,nb , nr, ns)
 !     end subroutine
 !
-!    subroutine double_hh_transform_1( nb , ns)
-!      implicit none
-!      integer, intent(in) ::  nb, ns
+!     subroutine double_hh_transform_1( nb , ns)
+!       implicit none
+!       integer, intent(in) ::  nb, ns
 !
-!      call launch_double_hh_transform_1(ab_dev,hs_dev,hv_dev,nb , ns)
-!    end subroutine
+!       call launch_double_hh_transform_1(ab_dev,hs_dev,hv_dev,nb , ns)
+!     end subroutine
 !
-!    subroutine double_hh_transform_2( ns,nc, nb)
-!      implicit none
-!      integer, intent(in) ::  nc, ns, nb
+!     subroutine double_hh_transform_2( ns,nc, nb)
+!       implicit none
+!       integer, intent(in) ::  nc, ns, nb
 !
-!      call launch_double_hh_transform_2(ab_dev,hd_dev,hv_dev,nc , ns, nb)
-!    end subroutine
+!       call launch_double_hh_transform_2(ab_dev,hd_dev,hv_dev,nc , ns, nb)
+!     end subroutine
 !#endif
  end subroutine tridiag_band_complex ! has to be checked for GPU
 
@@ -7550,19 +7627,19 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     bottom_msg_length = 0
 
 #ifdef WITH_GPU_VERSION
-!    istat = cuda_ProfilerStart()
-!    istat = cudaFuncSetCacheConfig  ( launch_compute_hh_trafo_c_kernel_complex,  cudaFuncCachePreferShared)
-!    t0_compute_kernel = 0
-    t0_mpi_time = 0
-    t0_cuda_memcpy =0
-    t0_cpu_code =0
-    t0_outer_do_time =0
-    t0_inner_do_time =0
-    t1_outer_do_time =MPI_Wtime()
-    t0_block_time =0
-    t0_mpi_wait_time = 0
-    t0_memcpy_time = 0
-    t0_mpi_outer_wait_time=0
+!!    istat = cuda_ProfilerStart()
+!!    istat = cudaFuncSetCacheConfig  ( launch_compute_hh_trafo_c_kernel_complex,  cudaFuncCachePreferShared)
+!!    t0_compute_kernel = 0
+!    t0_mpi_time = 0
+!    t0_cuda_memcpy =0
+!    t0_cpu_code =0
+!    t0_outer_do_time =0
+!    t0_inner_do_time =0
+!    t1_outer_do_time =MPI_Wtime()
+!    t0_block_time =0
+!    t0_mpi_wait_time = 0
+!    t0_memcpy_time = 0
+!    t0_mpi_outer_wait_time=0
 #endif
 
     do sweep = 0, (na-1)/nbw
