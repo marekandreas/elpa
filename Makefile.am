@@ -288,7 +288,7 @@ distclean-local:
 	-rmdir modules/
 	-rmdir .fortran_dependencies/
 
-EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
+EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk nvcc_wrap
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)

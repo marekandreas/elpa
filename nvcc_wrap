@@ -1,0 +1,3 @@
+#!/bin/sh
+
+$NVCC `echo $@ | sed 's/-fPIC/-Xcompiler -fPIC/'`
