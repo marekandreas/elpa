@@ -10,6 +10,7 @@ use strict;
 
 my %defs = ();
 my %uses = ();
+my %files = ();
 
 my $use_re = qr/^\s*use\s+(\S+)\s*$/;
 my $def_re = qr/^\s*module\s+(\S+)\s*$/;
@@ -42,6 +43,11 @@ sub add_def {
 my $target = shift;
 
 foreach my $file (@ARGV) {
+	if (exists $files{$file}) {
+		next;
+	} else {
+		$files{$file} = 1;
+	}
 	my $re;
 	my $add;
 	my $object;
