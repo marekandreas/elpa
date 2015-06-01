@@ -1,4 +1,4 @@
-dnl Copyright 2015 Lorenz Hdepohl
+dnl Copyright 2015 Lorenz Hüdepohl
 dnl
 dnl This file is part of fdep and licensed under the MIT license
 dnl see the file LICENSE for more information

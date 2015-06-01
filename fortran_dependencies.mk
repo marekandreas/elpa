@@ -1,4 +1,4 @@
-# Copyright 2015 Lorenz Hdepohl
+# Copyright 2015 Lorenz Hüdepohl
 #
 # This file is part of fdep and licensed under the MIT license
 # see the file LICENSE for more information
