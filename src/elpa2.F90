@@ -1739,7 +1739,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 #ifdef WITH_OPENMP
              call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #else
-             call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+             call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
              hv_s(1) = tau_new
              hv_s(2:) = hv_new(2:)
