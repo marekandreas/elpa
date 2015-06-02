@@ -543,7 +543,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, na_rows, na
 
    ttt0 = MPI_Wtime()
    call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,  &
-                                       mpi_comm_rows, mpi_comm_cols,&
+                                       na_rows, na_cols, mpi_comm_rows, mpi_comm_cols,&
                                        wantDebug, success,THIS_COMPLEX_ELPA_KERNEL)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
@@ -4909,6 +4909,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
 !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
+ endif
 #endif
 
 #ifdef WITH_GPU_VERSION
@@ -4972,28 +4973,28 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
 #ifdef WITH_GPU_VERSION
    na_rows2 = numroc(na, nblk, my_prow, 0, np_rows)
    if (na_rows .ne. na_rows2) then
-     print *,"Why is na_rows not equal? ",na_rows,na_rows2
+     print *,"bandred_complex: Why is na_rows not equal? ",na_rows,na_rows2
    endif
    na_cols2 = numroc(na, nblk, my_pcol, 0, np_cols)
    if (na_cols .ne. na_cols2) then
-     print *,"Why is na_cols not equal? ",na_cols,na_cols2
+     print *,"bandred_complex: Why is na_cols not equal? ",na_cols,na_cols2
    endif
 
    istat = cuda_malloc(tmat_dev, nbw*nbw*16_8)
    if (istat .ne. 0) then
-     print *, " cuda malloc failed tmat_dev ", istat
+     print *, " bandred_complex: cuda malloc failed tmat_dev ", istat
      stop
    endif
 
    istat = cuda_malloc(vav_dev, nbw*nbw*16_8)
    if (istat .ne. 0) then
-     print *, " cuda malloc failed vav_dev ", istat
+     print *, "bandred_complex:  cuda malloc failed vav_dev ", istat
      stop
    endif
 
    istat = cuda_malloc(a_dev, lda*na_cols*16_8)
    if (istat .ne. 0) then
-     print *, " cuda malloc failed a_dev ", istat
+     print *, "bandred_complex:  cuda malloc failed a_dev ", istat
      stop
    endif
 #endif
@@ -5007,9 +5008,12 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
    l_cols_tile = tile_size/np_cols ! local cols of a tile
 
 #ifdef WITH_GPU_VERSION
+   if (size(a,dim=1) .ne. lda .or. size(a,dim=2) .ne. na_cols) then
+     print *,"bandred_complex: sizes of a wrong ? ",lda,size(a,dim=1),na_cols,size(a,dim=2)
+   endif
    istat = cuda_memcpy(a_dev, loc(a(1,1)),(lda)*(na_cols)*16_8,cudaMemcpyHostToDevice)
    if (istat .ne. 0) then
-     print *, " cuda memcpy faild a_dev ", istat
+     print *, "bandred_complex:  cuda memcpy faild a_dev ", istat
      stop
    endif
 #endif
@@ -5045,13 +5049,17 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
 
        allocate(umc(max(l_cols,1),2*n_cols), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"error when allocating umc "//errorMessage
+         print *,"bandred_complex: error when allocating umc "//errorMessage
          stop
+       endif
+
+       if (max(l_cols,1) * 2*n_cols .gt. umc_size) then
+         print *,"bandred_complex: umc_size ",max(l_cols,1) * 2*n_cols,umc_size
        endif
 
        istat = cuda_malloc(umc_dev, umc_size*16_8)
        if (istat .ne. 0) then
-         print *, " cuda malloc failed umc_dev ", istat
+         print *, "bandred_complex:  cuda malloc failed umc_dev ", istat
          stop
        endif
      endif
@@ -5060,25 +5068,30 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
        if (allocated(vmr)) then
          deallocate(vmr, stat=istat, errmsg=errorMessage)
          if (istat .ne. 0) then
-           print *,"error when deallocating vmr "//errorMessage
+           print *,"bandred_complex: error when deallocating vmr "//errorMessage
            stop
          endif
          istat = cuda_free(vmr_dev)
          if (istat .ne. 0)then
-           print *,"error in cudaFree"
+           print *,"bandred_complex: error in cudaFree"
            stop
          endif
        endif
 
        allocate(vmr(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"error when allocating vmr "//errorMessage
+         print *,"bandred_complex: error when allocating vmr "//errorMessage
          stop
        endif
 
+       if (max(l_rows,1) * 2*n_cols .gt. vmr_size) then
+         print *,"bandred_complex: vmc_size ",max(l_rows,1) * 2*n_cols,vmr_size
+       endif
+
+
        istat = cuda_malloc(vmr_dev, vmr_size*16_8)
        if (istat .ne. 0) then
-         print *, " cuda malloc failed vmr_dev ", istat
+         print *, "bandred_complex:  cuda malloc failed vmr_dev ", istat
          stop
        endif
 
@@ -5088,33 +5101,33 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
        if (allocated(vr)) then
          deallocate(vr, stat=istat, errmsg=errorMessage)
          if (istat .ne. 0) then
-           print *,"error when deallocating vr "//errorMessage
+           print *,"bandred_complex: error when deallocating vr "//errorMessage
            stop
          endif
        endif
 
        allocate(vr(l_rows + 1), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"error when allocating vr "//errorMessage
+         print *,"bandred_complex: error when allocating vr "//errorMessage
          stop
        endif
      endif
 #else
      allocate(vmr(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error when allocating vmr "//errorMessage
+       print *,"bandred_complex: error when allocating vmr "//errorMessage
        stop
      endif
 
      allocate(umc(max(l_cols,1),2*n_cols), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error when allocating umc "//errorMessage
+       print *,"bandred_complex: error when allocating umc "//errorMessage
        stop
      endif
 
      allocate(vr(l_rows+1), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error when allocating vr "//errorMessage
+       print *,"bandred_complex: error when allocating vr "//errorMessage
        stop
      endif
 #endif
@@ -5134,7 +5147,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
          istat = cuda_memcpy2d(loc(a(1, lc_start)), lda*16_8, (a_dev + ((lc_start-1) * lda*16_8)), lda*16_8, &
                                lr_end*16_8, (lc_end - lc_start+1),cudaMemcpyDeviceToHost)
          if (istat .ne. 0) then
-           print *, "error in cudaMemcpy2"
+           print *, "bandred_complex: error in cudaMemcpy2"
            stop
          endif
      endif
@@ -5241,7 +5254,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
         istat = cuda_memcpy2d((a_dev+((lc_start-1)*lda*16_8)), lda*16_8, loc(a(1,lc_start)), &
                 lda*16_8,  lr_end*16_8, (lc_end - lc_start+1),cudaMemcpyHostToDevice)
         if (istat .ne. 0) then
-          print *, "cuda memcpy a_dev  failed ", istat
+          print *, "bandred_complex: cuda memcpy a_dev  failed ", istat
           stop
         endif
      endif
@@ -5276,15 +5289,23 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
      vmr(1:l_rows,n_cols+1:2*n_cols) = 0
      if (l_cols>0 .and. l_rows>0) then
 #ifdef WITH_GPU_VERSION
+       if (size(vmr,dim=1)*size(vmr,dim=2) .gt. vmr_size) then
+         print *,"bandred_complex: vmr size 2 :",size(vmr,dim=1)*size(vmr,dim=2),vmr_size
+         stop
+       endif
        istat = cuda_memcpy(vmr_dev, loc(vmr(1,1)),vmr_size*16_8,cudaMemcpyHostToDevice)
        if (istat .ne. 0) then
-         print *, " cuda memcpy vmr_dev failed ", istat
+         print *, "bandred_complex:  cuda memcpy vmr_dev failed ", istat
+         stop
+       endif
+       if (size(umc,dim=1)*size(umc,dim=2) .gt. umc_size) then
+         print *,"bandred_complex: umc size 2 :",size(umc,dim=1)*size(umc,dim=2),umc_size
          stop
        endif
 
        istat = cuda_memcpy(umc_dev, loc(umc(1,1)),umc_size*16_8,cudaMemcpyHostToDevice)
        if (istat .ne. 0) then
-         print *, " cuda memcpy umc_dev failed  ", istat
+         print *, "bandred_complex:  cuda memcpy umc_dev failed  ", istat
          stop
        endif
 #endif
@@ -5316,15 +5337,24 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
        enddo
 
 #ifdef WITH_GPU_VERSION
+       if (size(vmr,dim=1)*size(vmr,dim=2) .gt. vmr_size) then
+         print *,"bandred_complex: vmr size 3 :",size(vmr,dim=1)*size(vmr,dim=2),vmr_size
+         stop
+       endif
+
        istat = cuda_memcpy(loc(vmr(1,1)),vmr_dev,vmr_size*16_8,cudaMemcpyDeviceToHost)
        if (istat .ne. 0) then
-         print *, " cuad memcpy failed vmr ", istat
+         print *, "bandred_complex:  cuad memcpy failed vmr ", istat
+         stop
+       endif
+       if (size(umc,dim=1)*size(umc,dim=2) .gt. umc_size) then
+         print *,"bandred_complex: umc size 3 :",size(umc,dim=1)*size(umc,dim=2),umc_size
          stop
        endif
 
        istat = cuda_memcpy(loc(umc(1,1)), umc_dev,umc_size*16_8,cudaMemcpyDeviceToHost)
        if (istat .ne. 0) then
-         print *, " cuad memcpy failed umc ", istat
+         print *, "bandred_complex:  cuad memcpy failed umc ", istat
          stop
        endif
 #endif
@@ -5344,7 +5374,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
      if (l_cols>0) then
        allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"error when allocating tmp "//errorMessage
+         print *,"bandred_complex: error when allocating tmp "//errorMessage
          stop
        endif
 
@@ -5353,22 +5383,27 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
        umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
        deallocate(tmp, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"error when deallocating tmp "//errorMessage
+         print *,"bandred_complex: error when deallocating tmp "//errorMessage
          stop
        endif
      endif
 
      ! U = U * Tmat**T
 #ifdef WITH_GPU_VERSION
+     if (size(umc,dim=1)*size(umc,dim=2) .gt. umc_size) then
+       print *,"bandred_complex: umc size 4 :",size(umc,dim=1)*size(umc,dim=2),umc_size
+       stop
+     endif
+
      istat = cuda_memcpy(umc_dev, loc(umc(1,1)),umc_size*16_8,cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
-       print *, " cuad memcpy failed umc_dev ", istat
+       print *, "bandred_complex:  cuad memcpy failed umc_dev ", istat
        stop
      endif
 
      istat = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*16_8,cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
-       print *, " cuad memcpy failed tmat_dev ", istat
+       print *, "bandred_complex:  cuad memcpy failed tmat_dev ", istat
        stop
      endif
 
@@ -5382,7 +5417,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
 #ifdef WITH_GPU_VERSION
      istat = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*16_8,cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
-       print *, " cuad memcpy failed vav_dev ", istat
+       print *, "bandred_complex:  cuad memcpy failed vav_dev ", istat
        stop
      endif
 
@@ -5393,7 +5428,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
 
      istat = cuda_memcpy(loc(vav(1,1)), vav_dev,nbw*nbw*16_8,cudaMemcpyDeviceToHost)
      if (istat .ne. 0) then
-       print *, " cuad memcpy failed vav ", istat
+       print *, "bandred_complex:  cuad memcpy failed vav ", istat
        stop
      endif
 
@@ -5401,7 +5436,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
 
      istat = cuda_memcpy(vav_dev,loc(vav(1,1)),nbw*nbw*16_8,cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
-       print *, " cuad memcpy failed vav_dev ", istat
+       print *, "bandred_complex:  cuad memcpy failed vav_dev ", istat
        stop
      endif
 #else
@@ -5417,25 +5452,39 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
                        nbw,CONE,umc_dev,cur_l_cols)
      ! Transpose umc -> umr (stored in vmr, second half)
 
+     if (size(umc,dim=1)*size(umc,dim=2) .gt. umc_size) then
+       print *,"bandred_complex: umc size 5 :",size(umc,dim=1)*size(umc,dim=2),umc_size
+       stop
+     endif
+
       istat = cuda_memcpy(loc(umc(1,1)),umc_dev,umc_size*16_8,cudaMemcpyDeviceToHost)
       if (istat .ne. 0) then
-        print *, " cuad memcpy failed umc ", istat
+        print *, "bandred_complex:  cuad memcpy failed umc ", istat
         stop
       endif
 
       call elpa_transpose_vectors  (umc, 2*ubound(umc,1), mpi_comm_cols, &
                                     vmr(1,n_cols+1), 2*ubound(vmr,1), mpi_comm_rows, &
                                     1, 2*istep*nbw, n_cols, 2*nblk)
+     if (size(vmr,dim=1)*size(vmr,dim=2) .gt. vmr_size) then
+       print *,"bandred_complex: vmr size 4 :",size(vmr,dim=1)*size(vmr,dim=2),vmr_size
+       stop
+     endif
 
      istat = cuda_memcpy(vmr_dev,loc(vmr(1,1)),vmr_size*16_8,cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
-       print *, " cuda memcpy failed vav_dev", istat
+       print *, "bandred_complex:  cuda memcpy failed vav_dev", istat
+       stop
+     endif
+
+     if (size(umc,dim=1)*size(umc,dim=2) .gt. umc_size) then
+       print *,"bandred_complex: umc size 6 :",size(umc,dim=1)*size(umc,dim=2),umc_size
        stop
      endif
 
      istat = cuda_memcpy(umc_dev,loc(umc(1,1)),umc_size*16_8,cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
-       print *, " cuda memcpy failed umc_dev ", istat
+       print *, "bandred_complex:  cuda memcpy failed umc_dev ", istat
        stop
      endif
 #else
@@ -5468,27 +5517,31 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
 
 #ifdef WITH_GPU_VERSION
    enddo ! istep loop
+     if (size(a,dim=1)*size(a,dim=2) .ne. lda*na_cols) then
+       print *,"bandred_complex: size a ",size(a,dim=1)*size(a,dim=2) , lda*na_cols
+     endif
+
      istat = cuda_memcpy ( loc(a(1,1)), a_dev, lda*na_cols*16_8,cudaMemcpyDeviceToHost)
      if (istat .ne. 0) then
-       print *, " cuad memcpy failed a ", istat
+       print *, "bandred_complex:  cuad memcpy failed a ", istat
        stop
      endif
 
      istat = cuda_free(a_dev)
      if (istat .ne. 0) then
-       print *,"error in cudaFree"
+       print *,"bandred_complex: error in cudaFree"
        stop
      endif
 
      istat = cuda_free(tmat_dev)
      if (istat .ne. 0) then
-       print *,"error in cudaFree"
+       print *,"bandred_complex: error in cudaFree"
        stop
      endif
 
      istat = cuda_free(vav_dev)
      if (istat .ne. 0) then
-       print *,"error in cudaFree"
+       print *,"bandred_complex: error in cudaFree"
        stop
      endif
 
@@ -5496,20 +5549,20 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
      if (allocated(vr)) then
        deallocate(vr, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"error when deallocating vr "//errorMessage
+         print *,"bandred_complex: error when deallocating vr "//errorMessage
          stop
        endif
      endif
      if (allocated(vmr)) then
        deallocate(vmr, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"error when deallocating vmr "//errorMessage
+         print *,"bandred_complex: error when deallocating vmr "//errorMessage
          stop
        endif
 #ifdef WITH_GPU_VERSION
        istat = cuda_free(vmr_dev)
        if (istat .ne. 0) then
-         print *,"error in cudaFree"
+         print *,"bandred_complex: error in cudaFree"
          stop
        endif
 
@@ -5518,14 +5571,14 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_row
      if (allocated(umc)) then
        deallocate(umc, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"error when deallocating umc "//errorMessage
+         print *,"bandred_complex: error when deallocating umc "//errorMessage
          stop
        endif
 
 #ifdef WITH_GPU_VERSION
        istat = cuda_free(umc_dev)
        if (istat .ne. 0) then
-         print *,"error in cudaFree"
+         print *,"bandred_complex: error in cudaFree"
          stop
        endif
 
@@ -5555,7 +5608,7 @@ subroutine herm_matrix_allreduce(n,a,lda,comm)
 #endif
    implicit none
    integer    :: n, lda, comm
-   complex*16 :: a(lda,*)
+   complex*16 :: a(:,:)
 
    integer    :: i, nc, mpierr
    complex*16 :: h1(n*n), h2(n*n)
@@ -5667,66 +5720,67 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
    allocate(tmp1(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating tmp1 "//errorMessage
+     print *,"trans_ev_band_to_full_complex: error when allocating tmp1 "//errorMessage
      stop
    endif
 
    allocate(tmp2(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating tmp2 "//errorMessage
+     print *,"trans_ev_band_to_full_complex: error when allocating tmp2 "//errorMessage
      stop
    endif
 
    allocate(hvb(max_local_rows*nbw), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating hvb "//errorMessage
+     print *,"trans_ev_band_to_full_complex: error when allocating hvb "//errorMessage
      stop
    endif
 
    allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating hvm "//errorMessage
+     print *,"trans_ev_band_to_full_complex: error when allocating hvm "//errorMessage
      stop
    endif
 
 #ifdef WITH_GPU_VERSION
    allocate(q_temp(ldq,max_local_cols), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating q_temp "//errorMessage
+     print *,"trans_ev_band_to_full_complex: error when allocating q_temp "//errorMessage
    endif
 
    allocate(tmat_temp(nbw,nbw), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating tmat_temp "//errorMessage
+     print *,"trans_ev_band_to_full_complex: error when allocating tmat_temp "//errorMessage
    endif
 
    istat = cuda_malloc(hvm_dev, max_local_rows*nbw*16_8)
    if (istat .ne. 0) then
-     print *,"error in cudaMalloc"
+     print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
      stop
    endif
 
    istat = cuda_malloc(tmat_dev, nbw*nbw*16_8)
    if (istat .ne. 0) then
-     print *,"error in cudaMalloc"
+     print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
      stop
    endif
 
    istat = cuda_malloc(q_dev, ldq*max_local_cols*16_8)
    if (istat .ne. 0) then
-     print *,"error in cudaMalloc"
+     print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
      stop
    endif
 
    istat = cuda_malloc(tmp_dev, max_local_cols*nbw*16_8)
    if (istat .ne. 0) then
-     print *,"error in cudaMalloc"
+     print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
      stop
    endif
 
-   istat = cuda_memset(tmp_dev, 0, (max_local_rows)*(nbw)*16_8)
+!e   istat = cuda_memset(tmp_dev, 0, (max_local_rows)*(nbw)*16_8)
+   istat = cuda_memset(tmp_dev, 0, (max_local_cols)*(nbw)*16_8)
    if (istat .ne. 0) then
-     print *,"error in cudaMalloc"
+     print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
      stop
    endif
 #endif
@@ -5740,13 +5794,13 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
    istat = cuda_memcpy(q_dev, loc(q_temp),ldq*max_local_cols*16_8, cudaMemcpyHostToDevice)
    if (istat .ne. 0) then
-     print *,"error in cudaMemcpy"
+     print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
      stop
    endif
 
    istat = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)*16_8)
    if (istat .ne. 0) then
-     print *,"error in cudaMemset"
+     print *,"trans_ev_band_to_full_complex: error in cudaMemset"
      stop
    endif
 
@@ -5799,7 +5853,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 #ifdef WITH_GPU_VERSION
      istat =  cuda_memcpy(hvm_dev,loc(hvm),(max_local_rows*nbw*16_8),cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
-       print *,"error in cudaMemcpy"
+       print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
        stop
      endif
 
@@ -5814,9 +5868,14 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 #endif
      else
 #ifdef WITH_GPU_VERSION
+       if (l_cols*n_cols .gt. (max_local_cols)*(nbw)) then
+         print *,"trans_ev_band_to_full_complex: tmp_dev ",l_cols*n_cols,max_local_cols
+         stop
+       endif
+
        istat = cuda_memset(tmp_dev, 0, l_cols*n_cols*16_8)
        if (istat .ne. 0) then
-         print *,"error in cudaMemset"
+         print *,"trans_ev_band_to_full_complex: error in cudaMemset"
          stop
        endif
 
@@ -5826,16 +5885,34 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
      endif
 
 #ifdef WITH_GPU_VERSION
+       if (l_cols*n_cols .gt. (max_local_cols)*(nbw)) then
+         print *,"trans_ev_band_to_full_complex: tmp_dev 2",l_cols*n_cols,max_local_cols
+         stop
+       endif
+
      istat = cuda_memcpy(loc(tmp1),tmp_dev,l_cols*n_cols*16_8,cudaMemcpyDeviceToHost)
+
+! maybe change back
+!e     istat = cuda_memcpy(loc(tmp1),tmp_dev,max_local_cols*nbw*16_8,cudaMemcpyDeviceToHost)
+
+
      if (istat .ne. 0) then
-       print *,"error in cudaMemcpy"
+       print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
        stop
      endif
 
      call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
+       if (l_cols*n_cols .gt. (max_local_cols)*(nbw)) then
+         print *,"trans_ev_band_to_full_complex: tmp_dev 3 ",l_cols*n_cols,max_local_cols
+         stop
+       endif
+     
      istat = cuda_memcpy(tmp_dev,loc(tmp2),l_cols*n_cols*16_8,cudaMemcpyHostToDevice)
+! maybe change back
+!e     istat = cuda_memcpy(tmp_dev,loc(tmp2),max_local_cols*nbw*16_8,cudaMemcpyHostToDevice)
+
      if (istat .ne. 0) then
-       print *,"error in cudaMemcpy"
+       print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
        stop
      endif
 #else
@@ -5848,7 +5925,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
        istat = cuda_memcpy(tmat_dev, loc(tmat_temp(1,1)),nbw*nbw*16_8,cudaMemcpyHostToDevice)
        if (istat .ne. 0) then
-         print *,"error in cudaMemcpy"
+         print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
          stop
        endif
        call cublas_ztrmm('L','U','C','N',n_cols,l_cols,CONE,tmat_dev,nbw,tmp_dev,n_cols)
@@ -5864,7 +5941,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 #ifdef WITH_GPU_VERSION
      istat =cuda_memcpy(loc(hvm(1,1)),hvm_dev,((max_local_rows)*nbw*16_8),cudaMemcpyDeviceToHost)
      if (istat .ne. 0) then
-       print *,"error in cudaMemcpy"
+       print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
        stop
      endif
 #endif
@@ -5873,7 +5950,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
    deallocate(tmp1, tmp2, hvb, hvm, stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when deallocating tmp1, tmp2, hvb, hvm "//errorMessage
+     print *,"trans_ev_band_to_full_complex: error when deallocating tmp1, tmp2, hvb, hvm "//errorMessage
      stop
    endif
 
@@ -5881,43 +5958,43 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
    istat = cuda_free(hvm_dev)
    if (istat .ne. 0) then
-     print *,"error in cudaFree"
+     print *,"trans_ev_band_to_full_complex: error in cudaFree"
      stop
    endif
 
    istat = cuda_free(tmp_dev)
    if (istat .ne. 0) then
-     print *,"error in cudaFree"
+     print *,"trans_ev_band_to_full_complex: error in cudaFree"
      stop
    endif
 
    istat = cuda_free(tmat_dev)
    if (istat .ne. 0) then
-     print *,"error in cudaFree"
+     print *,"trans_ev_band_to_full_complex: error in cudaFree"
      stop
    endif
 
    istat = cuda_memcpy(loc(q_temp), q_dev,ldq*max_local_cols*16_8, cudaMemcpyDeviceToHost)
    if (istat .ne. 0) then
-     print *,"error in cudaMemcpy"
+     print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
      stop
    endif
    q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
 
    istat = cuda_free(q_dev)
    if (istat .ne. 0) then
-     print *,"error in cudaFree"
+     print *,"trans_ev_band_to_full_complex: error in cudaFree"
      stop
    endif
 
    deallocate(q_temp, stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when deallocating q_temp "//errorMessage
+     print *,"trans_ev_band_to_full_complex: error when deallocating q_temp "//errorMessage
    endif
 
    deallocate(tmat_temp, stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when deallocating tmat_temp "//errorMessage
+     print *,"trans_ev_band_to_full_complex: error when deallocating tmat_temp "//errorMessage
    endif
 
 #endif
@@ -6015,7 +6092,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
    allocate(global_id(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating global_id "//errorMessage
+     print *,"tridiag_band_complex: error when allocating global_id "//errorMessage
      stop
    endif
    global_id(:,:) = 0
@@ -6032,7 +6109,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
    allocate(block_limits(0:n_pes), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating block_limits "//errorMessage
+     print *,"tridiag_band_complex: error when allocating block_limits "//errorMessage
      stop
    endif
 
@@ -6045,7 +6122,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
    ! The size is 1 block larger than needed to avoid extensive shifts
    allocate(ab(2*nb,(nblocks+1)*nb), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating ab "//errorMessage
+     print *,"tridiag_band_complex: error when allocating ab "//errorMessage
      stop
    endif
 
@@ -6122,20 +6199,20 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
    allocate(hh_trans_complex(nb,num_hh_vecs), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating hh_trans_comples "//errorMessage
+     print *,"tridiag_band_complex: error when allocating hh_trans_comples "//errorMessage
      stop
    endif
    ! Allocate and init MPI requests
 
    allocate(ireq_hhr(num_chunks), stat=istat, errmsg=errorMessage) ! Recv requests
    if (istat .ne. 0) then
-     print *,"error when allocating ireq_hhr "//errorMessage
+     print *,"tridiag_band_complex: error when allocating ireq_hhr "//errorMessage
      stop
    endif
 
    allocate(ireq_hhs(nblocks), stat=istat, errmsg=errorMessage)    ! Send requests
    if (istat .ne. 0) then
-     print *,"error when allocating ireq_hhs "//errorMessage
+     print *,"tridiag_band_complex: error when allocating ireq_hhs "//errorMessage
      stop
    endif
 
@@ -6164,13 +6241,13 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
    allocate(hh_gath(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! gathers HH vectors
    if (istat .ne. 0) then
-     print *,"error when allocating hh_gath "//errorMessage
+     print *,"tridiag_band_complex: error when allocating hh_gath "//errorMessage
      stop
    endif
 
    allocate(hh_send(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! send buffer for HH vectors
    if (istat .ne. 0) then
-     print *,"error when allocating hh_sebd "//errorMessage
+     print *,"tridiag_band_complex: error when allocating hh_sebd "//errorMessage
      stop
    endif
 
@@ -6181,12 +6258,12 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
    allocate(hh_cnt(nblocks), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating hh_cnt "//errorMessage
+     print *,"tridiag_band_complex: error when allocating hh_cnt "//errorMessage
      stop
    endif
    allocate(hh_dst(nblocks), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating hh_dst "//errorMessage
+     print *,"tridiag_band_complex: error when allocating hh_dst "//errorMessage
      stop
    endif
 
@@ -6200,7 +6277,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
    allocate(snd_limits(0:np_rows,nblocks), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
-     print *,"error when allocating snd_limits "//errorMessage
+     print *,"tridiag_band_complex: error when allocating snd_limits "//errorMessage
      stop
    endif
    do iblk=1,nblocks
@@ -6219,7 +6296,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
     allocate(omp_block_limits(0:max_threads), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error when allocating omp_block_limits "//errorMessage
+      print *,"tridiag_band_complex: error when allocating omp_block_limits "//errorMessage
       stop
     endif
 
@@ -6228,7 +6305,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
     allocate(hv_t(nb,max_threads), tau_t(max_threads), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error when allocating hv_t, tau_t "//errorMessage
+      print *,"tridiag_band_complex: error when allocating hv_t, tau_t "//errorMessage
       stop
     endif
     hv_t = 0
@@ -6753,14 +6830,14 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
      allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error when allocating mpi_statuses "//errorMessage
+       print *,"tridiag_band_complex: error when allocating mpi_statuses "//errorMessage
        stop
      endif
      call mpi_waitall(nblocks, ireq_hhs, mpi_statuses, mpierr)
      call mpi_waitall(num_chunks, ireq_hhr, mpi_statuses, mpierr)
      deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error when deallocating mpi_statuses "//errorMessage
+       print *,"tridiag_band_complex: error when deallocating mpi_statuses "//errorMessage
        stop
      endif
 
@@ -6776,7 +6853,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
      deallocate(ab, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error when deallocating ab "//errorMessage
+       print *,"tridiag_band_complex: error when deallocating ab "//errorMessage
        stop
      endif
 
@@ -6791,37 +6868,37 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
      deallocate(ireq_hhr, ireq_hhs, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error when deallocating ireq_hhr, ireq_hhs "//errorMessage
+       print *,"tridiag_band_complex: error when deallocating ireq_hhr, ireq_hhs "//errorMessage
        stop
      endif
 
       deallocate(hh_cnt, hh_dst, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"error when deallocating hh_cnt, hh_dst "//errorMessage
+        print *,"tridiag_band_complex: error when deallocating hh_cnt, hh_dst "//errorMessage
         stop
       endif
 
       deallocate(hh_gath, hh_send, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"error when deallocating hh_gath, hh_send,  "//errorMessage
+        print *,"tridiag_band_complex: error when deallocating hh_gath, hh_send,  "//errorMessage
         stop
       endif
 
       deallocate(limits, snd_limits, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"error when deallocating limits, snd_limits  "//errorMessage
+        print *,"tridiag_band_complex: error when deallocating limits, snd_limits  "//errorMessage
         stop
       endif
 
       deallocate(block_limits, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"error when deallocating block_limits,  "//errorMessage
+        print *,"tridiag_band_complex: error when deallocating block_limits,  "//errorMessage
         stop
       endif
 
       deallocate(global_id, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"error when deallocating global_id,  "//errorMessage
+        print *,"tridiag_band_complex: error when deallocating global_id,  "//errorMessage
         stop
       endif
 
@@ -6903,7 +6980,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 
 !---------------------------------------------------------------------------------------------------
 subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
-                                          mpi_comm_rows, mpi_comm_cols, &
+                                          na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, &
                                           wantDebug, success, THIS_COMPLEX_ELPA_KERNEL)
 
 !-------------------------------------------------------------------------------
@@ -6937,8 +7014,10 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     implicit none
 
     integer, intent(in)     :: THIS_COMPLEX_ELPA_KERNEL
-    integer, intent(in)     :: na, nev, nblk, nbw, ldq, mpi_comm_rows, mpi_comm_cols
-    complex*16              :: q(ldq,*)
+    integer, intent(in)     :: na, nev, nblk, nbw, ldq, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols
+
+!    complex*16              :: q(ldq,*)
+    complex*16              :: q(:,:)
 
     integer                 :: np_rows, my_prow, np_cols, my_pcol
 #ifdef WITH_GPU_VERSION
@@ -7002,19 +7081,19 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #endif
 
 #ifdef WITH_GPU_VERSION
-    real*8                  :: ttt0, ttt1, ttt2, t2_compute_kernel, t0_compute_kernel,t1_compute_kernel, &
-                               t0_mpi_time, t1_mpi_time,t2_mpi_time
-    real*8                  :: t0_cpu_code,t1_cpu_code,t2_cpu_code,t0_block_time,t1_block_time,t2_block_time,t0_cuda_memcpy
+!    real*8                  :: ttt0, ttt1, ttt2, t2_compute_kernel, t0_compute_kernel,t1_compute_kernel, &
+!                               t0_mpi_time, t1_mpi_time,t2_mpi_time
+!    real*8                  :: t0_cpu_code,t1_cpu_code,t2_cpu_code,t0_block_time,t1_block_time,t2_block_time,t0_cuda_memcpy
 
-    real*8                  :: t0_inner_do_time, t1_inner_do_time , t2_inner_do_time,t0_outer_do_time ,t1_outer_do_time , &
-                               t2_outer_do_time ,t0_result_time ,t1_result_time, t2_result_time,t0_mpi_recv_time,         &
-                               t1_mpi_recv_time,t2_mpi_recv_time
+!    real*8                  :: t0_inner_do_time, t1_inner_do_time , t2_inner_do_time,t0_outer_do_time ,t1_outer_do_time , &
+!                               t2_outer_do_time ,t0_result_time ,t1_result_time, t2_result_time,t0_mpi_recv_time,         &
+!                               t1_mpi_recv_time,t2_mpi_recv_time
    integer                  :: top, chunk, this_chunk
 
-   real*8                   :: t1_mpi_wait_time,t0_mpi_wait_time,t2_mpi_wait_time,t1_memcpy_time,t0_memcpy_time,t2_memcpy_time, &
-                               t1_mpi_irecv_time,t0_mpi_irecv_time,t2_mpi_irecv_time,t0_mpi_outer_wait_time,t1_mpi_outer_wait_time,&
-                               t2_mpi_outer_wait_time, time0
-   real*4                   :: time1
+!   real*8                   :: t1_mpi_wait_time,t0_mpi_wait_time,t2_mpi_wait_time,t1_memcpy_time,t0_memcpy_time,t2_memcpy_time, &
+!                               t1_mpi_irecv_time,t0_mpi_irecv_time,t2_mpi_irecv_time,t0_mpi_outer_wait_time,t1_mpi_outer_wait_time,&
+!                               t2_mpi_outer_wait_time, time0
+!   real*4                   :: time1
 #endif
 
     ! MPI send/recv tags, arbitrary
@@ -7046,8 +7125,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     !    n_times_1 =0
     unpack_idx = 0
     row_group_size = 0
-    time0=0
-    t0_compute_kernel=0
+!    time0=0
+!    t0_compute_kernel=0
 #endif
     kernel_time = 1.d-100
     kernel_flops = 0
@@ -7138,7 +7217,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     allocate(limits(0:np_rows), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error when allocating limits "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error when allocating limits "//errorMessage
       stop
     endif
 
@@ -7159,7 +7238,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     allocate(a(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating a "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
       stop
     endif
 
@@ -7167,7 +7246,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #else /* OpenMP */
     allocate(a(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating a "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
       stop
     endif
 
@@ -7176,7 +7255,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     allocate(row(l_nev), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating row "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating row "//errorMessage
       stop
     endif
 
@@ -7184,34 +7263,43 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
 #ifdef WITH_GPU_VERSION
     num =  (stripe_width*a_dim2*stripe_count)*16_8
+    if (na_rows * na_cols .lt. stripe_width*a_dim2*stripe_count) then
+      print *,"trans_ev_tridi_to_band_complex a_dev ",na_rows * na_cols, stripe_width*a_dim2*stripe_count
+!      stop
+    endif
+
     istat = cuda_malloc(a_dev, stripe_width*a_dim2*stripe_count*16_8)
     if (istat .ne. 0) then
-      print *,"error in cudaMalloc "
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc "
       stop
     endif
 
+    if (num .gt. na_rows * na_cols) then
+      print *,"trans_ev_tridi_to_band_complex a_dev 1",num, na_rows * na_cols
+!      stop
+    endif
     istat = cuda_memset(a_dev , 0, num)
     if (istat .ne. 0) then
-      print *,"error in cudaMemset "
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMemset "
       stop
     endif
 
     num =  (l_nev)*16_8
     istat = cuda_malloc( row_dev,l_nev*16_8)
     if (istat .ne. 0) then
-      print *,"error in cudaMalloc "
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc "
       stop
     endif
 
     istat = cuda_memset(row_dev , 0, num)
     if (istat .ne. 0) then
-      print *,"error in cudaMemset "
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMemset "
       stop
     endif
 
     allocate(row_group(l_nev, nblk), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating row_group "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating row_group "//errorMessage
       stop
     endif
 
@@ -7220,13 +7308,13 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     num =  (l_nev*nblk)*16_8
     istat = cuda_malloc(row_group_dev, l_nev*nblk*16_8)
     if (istat .ne. 0) then
-      print *,"error in cudaMalloc "
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc "
       stop
     endif
 
     istat = cuda_memset(row_group_dev , 0, num)
     if (istat .ne. 0) then
-      print *,"error in cudaMemset "
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMemset "
       stop
     endif
 
@@ -7428,7 +7516,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     call unpack_and_prepare_row_group_complex(-1, .true.)
     istat = cuda_devicesynchronize()
     if (istat .ne. 0) then
-      print *,"error in cudaDeviceSynchronize"
+      print *,"trans_ev_tridi_to_band_complex: error in cudaDeviceSynchronize"
       stop
     endif
 #endif
@@ -7440,19 +7528,19 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     num_result_buffers = 4*nfact
     allocate(result_buffer(l_nev,nblk,num_result_buffers), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating result_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating result_buffer "//errorMessage
       stop
     endif
 
     allocate(result_send_request(num_result_buffers), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating result_send_request "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating result_send_request "//errorMessage
       stop
     endif
 
     allocate(result_recv_request(num_result_buffers), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating result_recv_request "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating result_recv_request "//errorMessage
       stop
     endif
 
@@ -7474,25 +7562,25 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     allocate(top_send_request(stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating top_send_request "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating top_send_request "//errorMessage
       stop
     endif
 
     allocate(top_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating top_recv_request "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating top_recv_request "//errorMessage
       stop
     endif
 
     allocate(bottom_send_request(stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating bottom_send_request "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating bottom_send_request "//errorMessage
       stop
     endif
 
     allocate(bottom_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating bottom_recv_request "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating bottom_recv_request "//errorMessage
       stop
     endif
 
@@ -7508,25 +7596,25 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #endif
     allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating top_border_send_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating top_border_send_buffer "//errorMessage
       stop
     endif
 
     allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating top_border_recv_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating top_border_recv_buffer "//errorMessage
       stop
     endif
 
     allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating bottom_border_send_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating bottom_border_send_buffer "//errorMessage
       stop
     endif
 
     allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating bottom_border_recv_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating bottom_border_recv_buffer "//errorMessage
       stop
     endif
 
@@ -7537,25 +7625,25 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #else /* OpenMP */
     allocate(top_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating top_border_send_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating top_border_send_buffer "//errorMessage
       stop
     endif
 
     allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating top_border_recv_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating top_border_recv_buffer "//errorMessage
       stop
     endif
 
     allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating bottom_border_send_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating bottom_border_send_buffer "//errorMessage
       stop
     endif
 
     allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating bottom_border_recv_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating bottom_border_recv_buffer "//errorMessage
       stop
     endif
 
@@ -7569,7 +7657,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     allocate(bcast_buffer(nbw, max_blk_size), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"error allocating bcast_buffer "//errorMessage
+      print *,"trans_ev_tridi_to_band_complex: error allocating bcast_buffer "//errorMessage
       stop
     endif
     bcast_buffer = 0
@@ -7578,39 +7666,39 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     num =  ( nbw * max_blk_size) * 16_8
     istat = cuda_malloc(bcast_buffer_dev, nbw * max_blk_size * 16_8)
     if (istat .ne. 0) then
-      print *,"error in cudaMalloc"
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
       stop
     endif
 
     istat = cuda_memset( bcast_buffer_dev, 0, num)
     if (istat .ne. 0) then
-      print *,"error in cudaMemset"
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMemset"
       stop
     endif
 
     num =  (max_blk_size)*16_8
     istat = cuda_malloc( hh_tau_dev, max_blk_size * 16_8)
     if (istat .ne. 0) then
-      print *,"error in cudaMalloc"
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
       stop
     endif
 
     istat = cuda_memset( hh_tau_dev, 0, num)
     if (istat .ne. 0) then
-      print *,"error in cudaMemset"
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMemset"
       stop
     endif
 
     num =  ((max_blk_size-1))*16_8
     istat = cuda_malloc( hh_dot_dev, (max_blk_size -1) * 16_8)
     if (istat .ne. 0) then
-      print *,"error in cudaMalloc"
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
       stop
     endif
 
     istat = cuda_memset( hh_dot_dev, 0, num)
     if (istat .ne. 0) then
-      print *,"error in cudaMemset"
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMemset"
       stop
     endif
 
@@ -7717,14 +7805,14 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #ifdef WITH_GPU_VERSION
         istat = cuda_memset(bcast_buffer_dev, 0, nbw * 16_8)
         if (istat .ne. 0) then
-          print *,"error in cudaMemset"
+          print *,"trans_ev_tridi_to_band_complex: error in cudaMemset"
           stop
         endif
 
         call extract_hh_tau_complex(nbw, 1, .true.)
         istat =  cuda_memcpy(loc(bcast_buffer(1,1)),bcast_buffer_dev,nbw*current_local_n * 16_8 , 2)
         if (istat .ne. 0) then
-          print *,"error in cudaMalloc"
+          print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
           stop
         endif
 
@@ -7813,7 +7901,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
               dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * 16
               istat =  cuda_memcpy( a_dev + dev_offset ,loc(bottom_border_recv_buffer(1,1,i)) ,stripe_width*nbw*16_8 ,1)
               if (istat .ne. 0) then
-                print *,"error in cudaMalloc"
+                print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
                 stop
               endif
 
@@ -7872,7 +7960,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                 host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ))* 16
                 istat =  cuda_memcpy( a_dev+dev_offset ,loc(top_border_recv_buffer(1,1,i)),stripe_width*top_msg_length*16_8 ,1)
                 if (istat .ne. 0) then
-                  print *,"error in cudaMemcpy"
+                  print *,"trans_ev_tridi_to_band_complex: error in cudaMemcpy"
                   stop
                 endif
 
@@ -8061,7 +8149,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                 istat =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), a_dev + dev_offset, &
                                      stripe_width * bottom_msg_length * 16_8 , 2)
                 if (istat .ne. 0) then
-                  print *,"error in cudaMemcpy"
+                  print *,"trans_ev_tridi_to_band_complex: error in cudaMemcpy"
                   stop
                 endif
 
@@ -8130,7 +8218,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                 istat =  cuda_memcpy( a_dev + dev_offset , loc(top_border_recv_buffer(:,1,i)), &
                                      stripe_width * top_msg_length *16_8 ,1)
                 if (istat .ne. 0) then
-                  print *,"error in cudaMemcpy"
+                  print *,"trans_ev_tridi_to_band_complex: error in cudaMemcpy"
                   stop
                 endif
 
@@ -8225,7 +8313,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
               dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * 16
               istat =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), a_dev + dev_offset, stripe_width*nbw*16_8 ,2)
               if (istat .ne. 0) then
-                print *,"error in cudaMemcpy"
+                print *,"trans_ev_tridi_to_band_complex: error in cudaMemcpy"
                 stop
               endif
 
@@ -8433,7 +8521,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                 tmp = cuda_d2d(1)
                 istat =  cuda_memcpy( a_dev + dev_offset , a_dev +dev_offset_1,stripe_width*this_chunk*16_8, tmp)
                 if (istat .ne. 0) then
-                  print *,"error in cudaMemcpy"
+                  print *,"trans_ev_tridi_to_band_complex: error in cudaMemcpy"
                   stop
                 endif
 
@@ -8467,14 +8555,14 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #ifdef WITH_OPENMP
           allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
-            print *,"error allocating mpi_statuses "//errorMessage
+            print *,"trans_ev_tridi_to_band_complex: error allocating mpi_statuses "//errorMessage
             stop
           endif
 
           call MPI_Waitall(num_result_buffers, result_send_request, mpi_statuses, mpierr)
           deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
-            print *,"error deallocating mpi_statuses "//errorMessage
+            print *,"trans_ev_tridi_to_band_complex: error deallocating mpi_statuses "//errorMessage
             stop
           endif
 
@@ -8494,135 +8582,135 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #ifndef WITH_GPU_VERSION
         deallocate(a, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
-          print *,"error deallocating a "//errorMessage
+          print *,"trans_ev_tridi_to_band_complex: error deallocating a "//errorMessage
           stop
         endif
 
 #endif
      deallocate(row, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating row "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating row "//errorMessage
        stop
      endif
 
      deallocate(limits, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating limits "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating limits "//errorMessage
        stop
      endif
 
      deallocate(result_send_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating result_send_request "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating result_send_request "//errorMessage
        stop
      endif
 
      deallocate(result_recv_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating result_recv_request "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating result_recv_request "//errorMessage
        stop
      endif
 
      deallocate(top_border_send_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating top_border_send_buffer "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating top_border_send_buffer "//errorMessage
        stop
      endif
 
      deallocate(top_border_recv_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating top_border_recv_buffer "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating top_border_recv_buffer "//errorMessage
        stop
      endif
 
      deallocate(bottom_border_send_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating top_border_send_buffer "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating top_border_send_buffer "//errorMessage
        stop
      endif
 
      deallocate(bottom_border_recv_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating bottom_border_recv_buffer "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating bottom_border_recv_buffer "//errorMessage
        stop
      endif
 
      deallocate(result_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating result_buffer "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating result_buffer "//errorMessage
        stop
      endif
 
      deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating bcast_buffer "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating bcast_buffer "//errorMessage
        stop
      endif
 
      deallocate(top_send_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating top_send_request "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating top_send_request "//errorMessage
        stop
      endif
 
      deallocate(top_recv_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating top_recv_request "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating top_recv_request "//errorMessage
        stop
      endif
 
      deallocate(bottom_send_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating bottom_send_request "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating bottom_send_request "//errorMessage
        stop
      endif
 
      deallocate(bottom_recv_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating bottom_recv_request "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating bottom_recv_request "//errorMessage
        stop
      endif
 
 #ifdef WITH_GPU_VERSION
      istat = cuda_free(a_dev)
      if (istat .ne. 0) then
-       print *,"error in cudaFree"
+       print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
        stop
      endif
 
      istat = cuda_free(hh_tau_dev)
      if (istat .ne. 0) then
-       print *,"error in cudaFree"
+       print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
        stop
      endif
 
      istat = cuda_free(hh_dot_dev)
      if (istat .ne. 0) then
-       print *,"error in cudaFree"
+       print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
        stop
      endif
 
      istat = cuda_free(row_dev)
      if (istat .ne. 0) then
-       print *,"error in cudaFree"
+       print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
        stop
      endif
 
      deallocate(row_group, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error deallocating row_group "//errorMessage
+       print *,"trans_ev_tridi_to_band_complex: error deallocating row_group "//errorMessage
        stop
      endif
 
      istat= cuda_free(row_group_dev)
      if (istat .ne. 0) then
-       print *,"error in cudaFree"
+       print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
        stop
      endif
 
      istat =  cuda_free(bcast_buffer_dev)
      if (istat .ne. 0) then
-       print *,"error in cudaFree"
+       print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
        stop
      endif
 
@@ -9042,13 +9130,13 @@ contains
       dev_offset_1 = (0 +  (  off-1 )* nbw) *16
       dev_offset_2 =( off-1 )*16
 
-      t1_compute_kernel =MPI_Wtime()
+!      t1_compute_kernel =MPI_Wtime()
       call launch_compute_hh_trafo_c_kernel_complex(a_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
                                                     hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
 
-      time0 = time0 + time1
-      t2_compute_kernel =MPI_Wtime()
-      t0_compute_kernel =  t0_compute_kernel + t2_compute_kernel-t1_compute_kernel
+!      time0 = time0 + time1
+!      t2_compute_kernel =MPI_Wtime()
+!      t0_compute_kernel =  t0_compute_kernel + t2_compute_kernel-t1_compute_kernel
 
       kernel_flops = kernel_flops + 4 * int(nl, 8) * int(ncols, 8) * int(nbw,8)
       kernel_time = kernel_time + mpi_wtime() - ttt
