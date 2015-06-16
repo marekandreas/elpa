@@ -3722,7 +3722,7 @@ subroutine invert_trm_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be inverted.
+!  a(lda,matrixCols)    Distributed matrix which should be inverted.
 !              Distribution is like in Scalapack.
 !              Only upper triangle is needs to be set.
 !              The lower triangle is not referenced.
@@ -3857,13 +3857,14 @@ subroutine cholesky_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_com
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be factorized.
+!  a(lda,matriCols)    Distributed matrix which should be factorized.
 !              Distribution is like in Scalapack.
 !              Only upper triangle is needs to be set.
 !              On return, the upper triangle contains the Cholesky factor
 !              and the lower triangle is set to 0.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
@@ -4044,12 +4045,13 @@ subroutine invert_trm_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_c
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be inverted.
+!  a(lda,matrixCols)    Distributed matrix which should be inverted.
 !              Distribution is like in Scalapack.
 !              Only upper triangle is needs to be set.
 !              The lower triangle is not referenced.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
