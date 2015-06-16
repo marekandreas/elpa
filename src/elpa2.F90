@@ -126,16 +126,17 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 !
 !  nev         Number of eigenvalues needed
 !
-!  a(lda,*)    Distributed matrix for which eigenvalues are to be computed.
+!  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
 !              Distribution is like in Scalapack.
 !              The full matrix must be set (not only one half like in scalapack).
 !              Destroyed on exit (upper and lower half).
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a and q
 !
 !  ev(na)      On output: eigenvalues of a, every processor gets the complete set
 !
-!  q(ldq,*)    On output: Eigenvectors of a
+!  q(ldq,matrixCols)    On output: Eigenvectors of a
 !              Distribution is like in Scalapack.
 !              Must be always dimensioned to the full size (corresponding to (na,na))
 !              even if only a part of the eigenvalues is needed.
@@ -264,7 +265,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 
    ttt0 = MPI_Wtime()
    ttts = ttt0
-   call bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
+   call bandred_real(na, a, lda, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                      tmat, wantDebug, success, useQRActual)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
@@ -276,7 +277,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    allocate(e(na))
 
    ttt0 = MPI_Wtime()
-   call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, mpi_comm_rows, &
+   call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, matrixCols, mpi_comm_rows, &
                           mpi_comm_cols, mpi_comm_all)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -306,7 +307,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    ! Backtransform stage 1
 
    ttt0 = MPI_Wtime()
-   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, mpi_comm_rows, &
+   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, mpi_comm_rows, &
                                     mpi_comm_cols, wantDebug, success, THIS_REAL_ELPA_KERNEL)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
@@ -319,7 +320,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    ! Backtransform stage 2
 
    ttt0 = MPI_Wtime()
-   call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, &
+   call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, mpi_comm_rows, &
                                    mpi_comm_cols, useQRActual)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -351,16 +352,17 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 !
 !  nev         Number of eigenvalues needed
 !
-!  a(lda,*)    Distributed matrix for which eigenvalues are to be computed.
+!  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
 !              Distribution is like in Scalapack.
 !              The full matrix must be set (not only one half like in scalapack).
 !              Destroyed on exit (upper and lower half).
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a and q
 !
 !  ev(na)      On output: eigenvalues of a, every processor gets the complete set
 !
-!  q(ldq,*)    On output: Eigenvectors of a
+!  q(ldq,matrixCols)    On output: Eigenvectors of a
 !              Distribution is like in Scalapack.
 !              Must be always dimensioned to the full size (corresponding to (na,na))
 !              even if only a part of the eigenvalues is needed.
@@ -458,7 +460,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
    ttt0 = MPI_Wtime()
    ttts = ttt0
-   call bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
+   call bandred_complex(na, a, lda, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                         tmat, wantDebug, success)
    if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
@@ -475,7 +477,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    allocate(e(na))
 
    ttt0 = MPI_Wtime()
-   call tridiag_band_complex(na, nbw, nblk, a, lda, ev, e, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+   call tridiag_band_complex(na, nbw, nblk, a, lda, ev, e, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_complex          :',ttt1-ttt0
@@ -513,7 +515,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 
    ttt0 = MPI_Wtime()
    call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,  &
-                                       mpi_comm_rows, mpi_comm_cols,&
+                                       matrixCols, mpi_comm_rows, mpi_comm_cols,&
                                        wantDebug, success,THIS_COMPLEX_ELPA_KERNEL)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
@@ -526,7 +528,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ! Backtransform stage 2
 
    ttt0 = MPI_Wtime()
-   call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_band_to_full_complex :',ttt1-ttt0
@@ -543,7 +545,7 @@ end function solve_evp_complex_2stage
 
 !-------------------------------------------------------------------------------
 
-subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
+subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                         tmat, wantDebug, success, useQR)
 
 !-------------------------------------------------------------------------------
@@ -553,13 +555,14 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be reduced.
+!  a(lda,matrixCols)    Distributed matrix which should be reduced.
 !              Distribution is like in Scalapack.
 !              Opposed to Scalapack, a(:,:) must be set completely (upper and lower half)
 !              a(:,:) is overwritten on exit with the band and the Householder vectors
 !              in the upper half.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
@@ -577,9 +580,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
  use timings
 #endif
    implicit none
-   
-   integer             :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   real*8              :: a(lda,*), tmat(nbw,nbw,*)
+
+   integer             :: na, lda, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real*8              :: a(lda,matrixCols), tmat(nbw,nbw,*)
 
    integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer             :: l_cols, l_rows
@@ -776,7 +779,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
        vav = 0
        if (l_rows>0) &
            call dsyrk('U','T',n_cols,l_rows,1.d0,vmr,ubound(vmr,dim=1),0.d0,vav,ubound(vav,dim=1))
-       call symm_matrix_allreduce(n_cols,vav,ubound(vav,dim=1),mpi_comm_rows)
+       call symm_matrix_allreduce(n_cols,vav, nbw, nbw,mpi_comm_rows)
 
        ! Calculate triangular matrix T for block Householder Transformation
 
@@ -847,7 +850,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, &
     call dgemm('T','N',n_cols,n_cols,l_cols,1.d0,umc,ubound(umc,dim=1),umc(1,n_cols+1),ubound(umc,dim=1),0.d0,vav,ubound(vav,dim=1))
     call dtrmm('Right','Upper','Trans','Nonunit',n_cols,n_cols,1.d0,tmat(1,1,istep),ubound(tmat,dim=1),vav,ubound(vav,dim=1))
 
-    call symm_matrix_allreduce(n_cols,vav,ubound(vav,dim=1),mpi_comm_cols)
+    call symm_matrix_allreduce(n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
     ! U = U - 0.5 * V * VAV
     call dgemm('N','N',l_cols,n_cols,n_cols,-0.5d0,umc(1,n_cols+1),ubound(umc,dim=1),vav,ubound(vav,dim=1),1.d0,umc,ubound(umc,dim=1))
@@ -888,7 +891,7 @@ end subroutine bandred_real
 
 !-------------------------------------------------------------------------------
 
-subroutine symm_matrix_allreduce(n,a,lda,comm)
+subroutine symm_matrix_allreduce(n,a,lda,ldb,comm)
 
 !-------------------------------------------------------------------------------
 !  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
@@ -899,8 +902,8 @@ subroutine symm_matrix_allreduce(n,a,lda,comm)
  use timings
 #endif
    implicit none
-   integer  :: n, lda, comm
-   real*8   :: a(lda,*)
+   integer  :: n, lda, ldb, comm
+   real*8   :: a(lda,ldb)
 
    integer  :: i, nc, mpierr
    real*8   :: h1(n*n), h2(n*n)
@@ -932,7 +935,7 @@ end subroutine symm_matrix_allreduce
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, &
+subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, mpi_comm_rows, &
                                       mpi_comm_cols, useQR)
 
 
@@ -950,10 +953,11 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 !
 !  nbw         semi bandwith
 !
-!  a(lda,*)    Matrix containing the Householder vectors (i.e. matrix a after bandred_real)
+!  a(lda,matrixCols)    Matrix containing the Householder vectors (i.e. matrix a after bandred_real)
 !              Distribution is like in Scalapack.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a and q
 !
 !  tmat(nbw,nbw,.) Factors returned by bandred_real
 !
@@ -973,8 +977,8 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 #endif
    implicit none
 
-   integer              :: na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   real*8               :: a(lda,*), q(ldq,*), tmat(nbw, nbw, *)
+   integer              :: na, nqc, lda, ldq, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real*8               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, *)
 
    integer              :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer              :: max_blocks_row, max_blocks_col, max_local_rows, &
@@ -1178,7 +1182,7 @@ end subroutine trans_ev_band_to_full_real
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm_cols, mpi_comm)
+subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm)
 
 !-------------------------------------------------------------------------------
 ! tridiag_band_real:
@@ -1209,8 +1213,8 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 #endif
    implicit none
 
-   integer, intent(in) ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
-   real*8, intent(in)  :: a(lda,*)
+   integer, intent(in) ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+   real*8, intent(in)  :: a(lda,matrixCols)
    real*8, intent(out) :: d(na), e(na) ! set only on PE 0
 
 
@@ -1848,7 +1852,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm
 ! --------------------------------------------------------------------------------------------------
 
 
-subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
+subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, &
                                        mpi_comm_rows, mpi_comm_cols, wantDebug, success, &
                                        THIS_REAL_ELPA_KERNEL)
 !-------------------------------------------------------------------------------
@@ -1870,6 +1874,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 !              Distribution is like in Scalapack.
 !
 !  ldq         Leading dimension of q
+!  matrixCols  local columns of matrix q
 !
 !  mpi_comm_rows
 !  mpi_comm_cols
@@ -1882,8 +1887,8 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
     implicit none
 
     integer, intent(in) :: THIS_REAL_ELPA_KERNEL
-    integer, intent(in) :: na, nev, nblk, nbw, ldq, mpi_comm_rows, mpi_comm_cols
-    real*8 q(ldq,*)
+    integer, intent(in) :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+    real*8              :: q(ldq,matrixCols)
 
     integer np_rows, my_prow, np_cols, my_pcol
 
@@ -3211,7 +3216,7 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, tmat, wantDebug, success)
+subroutine bandred_complex(na, a, lda, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, tmat, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  bandred_complex: Reduces a distributed hermitian matrix to band form
@@ -3220,13 +3225,14 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be reduced.
+!  a(lda,matrixCols)    Distributed matrix which should be reduced.
 !              Distribution is like in Scalapack.
 !              Opposed to Scalapack, a(:,:) must be set completely (upper and lower half)
 !              a(:,:) is overwritten on exit with the band and the Householder vectors
 !              in the upper half.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
@@ -3245,8 +3251,8 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols, 
 #endif
    implicit none
 
-   integer                 :: na, lda, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   complex*16              :: a(lda,*), tmat(nbw,nbw,*)
+   integer                 :: na, lda, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,matrixCols), tmat(nbw,nbw,*)
 
    complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
@@ -3561,7 +3567,7 @@ end subroutine herm_matrix_allreduce
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, mpi_comm_rows, mpi_comm_cols)
+subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols)
 
 !-------------------------------------------------------------------------------
 !  trans_ev_band_to_full_complex:
@@ -3577,10 +3583,11 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 !
 !  nbw         semi bandwith
 !
-!  a(lda,*)    Matrix containing the Householder vectors (i.e. matrix a after bandred_complex)
+!  a(lda,matrixCols)    Matrix containing the Householder vectors (i.e. matrix a after bandred_complex)
 !              Distribution is like in Scalapack.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a and q
 !
 !  tmat(nbw,nbw,.) Factors returned by bandred_complex
 !
@@ -3600,8 +3607,8 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 #endif
    implicit none
 
-   integer                 :: na, nqc, lda, ldq, nblk, nbw, mpi_comm_rows, mpi_comm_cols
-   complex*16              :: a(lda,*), q(ldq,*), tmat(nbw, nbw, *)
+   integer                 :: na, nqc, lda, ldq, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, *)
 
    complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
@@ -3706,7 +3713,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
 !---------------------------------------------------------------------------------------------------
 
-subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_comm_cols, mpi_comm)
+subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm)
 
 !-------------------------------------------------------------------------------
 ! tridiag_band_complex:
@@ -3737,8 +3744,8 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 #endif
    implicit none
 
-   integer, intent(in)      ::  na, nb, nblk, lda, mpi_comm_rows, mpi_comm_cols, mpi_comm
-   complex*16, intent(in)   :: a(lda,*)
+   integer, intent(in)      ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+   complex*16, intent(in)   :: a(lda,matrixCols)
    real*8, intent(out)      :: d(na), e(na) ! set only on PE 0
 
 
@@ -4366,7 +4373,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
 !---------------------------------------------------------------------------------------------------
 
 
-subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
+subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, matrixCols,  &
                                           mpi_comm_rows, mpi_comm_cols, &
                                           wantDebug, success, THIS_COMPLEX_ELPA_KERNEL)
 
@@ -4389,6 +4396,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 !              Distribution is like in Scalapack.
 !
 !  ldq         Leading dimension of q
+! matrixCols   local columns of matrix q
 !
 !  mpi_comm_rows
 !  mpi_comm_cols
@@ -4401,8 +4409,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     implicit none
 
     integer, intent(in)     :: THIS_COMPLEX_ELPA_KERNEL
-    integer, intent(in)     :: na, nev, nblk, nbw, ldq, mpi_comm_rows, mpi_comm_cols
-    complex*16              :: q(ldq,*)
+    integer, intent(in)     :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+    complex*16              :: q(ldq,matrixCols)
 
     integer                 :: np_rows, my_prow, np_cols, my_pcol
 
