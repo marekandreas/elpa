@@ -310,6 +310,7 @@ program test_complex2
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                                 na_cols, &
                                  mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
                                  COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
 

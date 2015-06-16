@@ -299,6 +299,7 @@ program test_real2
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                              na_cols, &
                               mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then

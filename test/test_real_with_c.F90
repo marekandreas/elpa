@@ -300,7 +300,7 @@ program test_real
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    success = solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                          mpi_comm_rows, mpi_comm_cols)
+                          na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real produced an error! Aborting..."
@@ -335,8 +335,8 @@ program test_real
      print *," "
    end if
 
-   success = solve_elpa1_real_call_from_c(na, nev, na_cols, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
-                                          mpi_comm_rows_fromC, mpi_comm_cols_fromC )
+   success = solve_elpa1_real_call_from_c(na, nev, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
+                                          na_cols, mpi_comm_rows_fromC, mpi_comm_cols_fromC )
 
    if (myid==0) then
      print *," "
