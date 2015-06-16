@@ -143,7 +143,7 @@ program test_real2
 
 #ifdef WITH_GPU_VERSION
    character(len=1024)     :: envname
-   integer                 :: istat, devnum
+   integer                 :: istat, devnum, numdevs
 #endif
    write_to_file = .false.
    success = .true.
@@ -160,13 +160,26 @@ program test_real2
    call setup_mpi(myid, nprocs)
 
 #ifdef WITH_GPU_VERSION
-   devnum = 0
+   ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
+   istat = cuda_getdevicecount(numdevs)
+   if (istat .ne. 0) then
+     print *,"error in cuda_getdevicecount"
+     stop
+   endif
+
+   if (myid==0) then
+     print *
+     print '(3(a,i0))','Found ', numdevs, ' GPUs'
+   endif
+
+   devnum = mod(myid, numdevs)
    istat = cuda_setdevice(devnum)
 
    if (istat .ne. 0) then
      print *,"Cannot set CudaDevice"
      stop
    endif
+   print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', devnum
 #endif
 
    STATUS = 0
@@ -341,7 +354,7 @@ program test_real2
    end if
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, na_rows, na_cols, &
+   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then

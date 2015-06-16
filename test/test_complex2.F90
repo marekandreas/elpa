@@ -149,7 +149,7 @@ program test_complex2
 
 #ifdef WITH_GPU_VERSION
    character(len=1024)     :: envname
-   integer                 :: istat, devnum
+   integer                 :: istat, devnum, numdevs
 #endif
 
    write_to_file = .false.
@@ -165,13 +165,23 @@ program test_complex2
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 #ifdef WITH_GPU_VERSION
-   devnum = 0
+   istat = cuda_getdevicecount(numdevs)
+   if (istat .ne. 0) then
+     print *,"Error in cuda_getdevicecount"
+     stop
+   endif
+   if(myid==0) then
+       print *
+       print '(3(a,i0))','Found ', numdevs, ' GPUs'
+   endif
+   devnum = mod(myid, numdevs)
    istat = cuda_setdevice(devnum)
 
    if (istat .ne. 0) then
      print *,"Cannot set CudaDevice"
      stop
    endif
+   print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', devnum
 #endif
 
    STATUS = 0
@@ -345,8 +355,8 @@ program test_complex2
    ! Calculate eigenvalues/eigenvectors
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                                 na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+   success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, na_cols, nblk, &
+                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."

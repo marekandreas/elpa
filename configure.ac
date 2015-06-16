@@ -428,7 +428,7 @@ AC_MSG_RESULT([${fortran_can_check_environment}])
 
 dnl check whether GPU version is requested
 
-CUDA_INSTALL_PATH="/usr/local/cuda/"
+#CUDA_INSTALL_PATH="/usr/local/cuda/"
 #CUDA_SDK_INSTALL_PATH="/usr/local/NVIDIA_GPU_Computing_SDK"
 
 AC_MSG_CHECKING(whether GPU support is requested)

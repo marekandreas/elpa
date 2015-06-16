@@ -125,7 +125,7 @@ module ELPA2
 !******
 contains
 
-function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, na_rows, na_cols, &
+function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, na_rows, matrixCols, &
                                  mpi_comm_rows, mpi_comm_cols,             &
                                  mpi_comm_all, THIS_REAL_ELPA_KERNEL_API,  &
                                  useQR) result(success)
@@ -1213,6 +1213,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, na_rows, na_cols, mpi_comm_rows, 
 
     ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
 
+    istat = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*8_8,cudaMemcpyHostToDevice)
+    if(istat .ne. 0) print *, " cuad memcpy failed vav_dev ", istat
+
 
     call cublas_dgemm('T','N',n_cols,n_cols,l_cols, &
                   1.d0, umc_dev,cur_l_cols,(umc_dev+(cur_l_cols * n_cols )*8_8),cur_l_cols, &
@@ -1426,7 +1429,7 @@ end subroutine symm_matrix_allreduce
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, na_rows, na_cols, mpi_comm_rows, &
+subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, mpi_comm_rows, &
                                       mpi_comm_cols, useQR)
 
 
@@ -1472,9 +1475,9 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 #endif
    implicit none
 
-   integer, intent(in)  :: na, nqc, lda, ldq, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols
+   integer, intent(in)  :: na, nqc, lda, ldq, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols
    real*8, intent(in)   :: a(:,:), tmat(:,:,:)
-   real*8, intent(inout):: q(:,:)
+   real*8, intent(inout):: q(ldq,matrixCols)
    real*8, allocatable  :: q_temp(:,:), tmat_temp(:,:)
    integer              :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer              :: max_blocks_row, max_blocks_col, max_local_rows, &
@@ -1579,12 +1582,18 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
        stop
      endif
 
-#ifdef WITH_GPU_VERSION
-     allocate(q_temp(ldq,max_local_cols), stat=istat, errmsg=errorMessage)
+     allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"error when allocating q_temp "//errorMessage
+       print *,"error when allocating hvm "//errorMessage
        stop
      endif
+
+#ifdef WITH_GPU_VERSION
+!     allocate(q_temp(ldq,max_local_cols), stat=istat, errmsg=errorMessage)
+!     if (istat .ne. 0) then
+!       print *,"error when allocating q_temp "//errorMessage
+!       stop
+!     endif
 
      allocate(tmat_temp(nbw,nbw), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
@@ -1610,16 +1619,16 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
        stop
      endif
 
-     istat = cuda_malloc(q_dev, ldq*max_local_cols*8_8)
+     istat = cuda_malloc(q_dev, ldq*matrixCols*8_8)
      if (istat .ne. 0) then
        print *,"error in cudaMalloc"
        stop
      endif
 
-     q_temp(:,:) = 0.0
-     q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
+!     q_temp(:,:) = 0.0
+!     q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
 
-     istat = cuda_memcpy(q_dev, loc(q_temp), (ldq)*(max_local_cols)*8_8, cudaMemcpyHostToDevice)
+     istat = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*8_8, cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
        print *,"error in cudaMalloc"
        stop
@@ -1632,11 +1641,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
      endif
 
 #endif
-     allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"error when allocating hvm "//errorMessage
-       stop
-     endif
+
 
    endif ! QR
 
@@ -1771,7 +1776,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 #ifdef WITH_GPU_VERSION
        istat = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw*8_8),cudaMemcpyHostToDevice)
        if (istat .ne. 0) then
-         print *,"error in cudaMemcpy"
+         print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
          stop
        endif
 #endif
@@ -1783,40 +1788,53 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
 #ifdef WITH_GPU_VERSION
          call cublas_dgemm('T','N',n_cols,l_cols,l_rows,1.d0,hvm_dev,max_local_rows, &
                     q_dev,ldq ,0.d0,tmp_dev,n_cols)
+         istat = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*8_8, cudaMemcpyDeviceToHost)
+         if (istat .ne. 0) then
+           print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+           stop
+         endif
 #else
          call dgemm('T','N',n_cols,l_cols,l_rows,1.d0,hvm,ubound(hvm,1), &
                     q,ldq,0.d0,tmp1,n_cols)
 #endif
        else
+!#ifdef WITH_GPU_VERSION
+!         istat = cuda_memset(tmp_dev, 0, l_cols*n_cols*8_8)
+!         if (istat .ne. 0) then
+!           print *,"trans_ev_band_to_full_real: error in cudaMemset"
+!           stop
+!         endif
+!
+!#else
+         tmp1(1:l_cols*n_cols) = 0
+!#endif
+       endif
+
+!#ifdef WITH_GPU_VERSION
+!       istat = cuda_memcpy(loc(tmp1), tmp_dev, max_local_cols*nbw*8_8,cudaMemcpyDeviceToHost)
+!       if (istat .ne. 0) then
+!         print *,"error in cudaMemcpy"
+!         stop
+!       endif
+!#endif
+       call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+
+!#ifdef WITH_GPU_VERSION
+!       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*8_8,cudaMemcpyHostToDevice)
+!       if (istat .ne. 0) then
+!         print *,"error in cudaMemcpy"
+!         stop
+!       endif
+!#endif
+
+       if (l_rows>0) then
 #ifdef WITH_GPU_VERSION
-         istat = cuda_memset(tmp_dev, 0, l_cols*n_cols*8_8)
+         istat = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols*8_8,cudaMemcpyHostToDevice)
          if (istat .ne. 0) then
-           print *,"error in cudaMemset"
+           print *,"error in cudaMemcpy"
            stop
          endif
 
-#else
-         tmp1(1:l_cols*n_cols) = 0
-#endif
-       endif
-
-#ifdef WITH_GPU_VERSION
-       istat = cuda_memcpy(loc(tmp1), tmp_dev, max_local_cols*nbw*8_8,cudaMemcpyDeviceToHost)
-       if (istat .ne. 0) then
-         print *,"error in cudaMemcpy"
-         stop
-       endif
-#endif
-       call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-#ifdef WITH_GPU_VERSION
-       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*8_8,cudaMemcpyHostToDevice)
-       if (istat .ne. 0) then
-         print *,"error in cudaMemcpy"
-         stop
-       endif
-#endif
-       if (l_rows>0) then
-#ifdef WITH_GPU_VERSION
          istat = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*8_8,cudaMemcpyHostToDevice)
          if (istat .ne. 0) then
            print *,"error in cudaMemcpy"
@@ -1826,20 +1844,27 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
          call cublas_dtrmm('L','U','T','N',n_cols,l_cols,1.0d0, tmat_dev, nbw, tmp_dev, n_cols)
          call cublas_dgemm('N','N',l_rows,l_cols,n_cols,-1.d0,hvm_dev,max_local_rows, &
                     tmp_dev,n_cols,1.d0,q_dev,ldq)
+
+         istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*8_8),cudaMemcpyDeviceToHost)
+         if (istat .ne. 0) then
+           print *,"error in cudaMemcpy"
+           stop
+         endif
+
 #else
          call dtrmm('L','U','T','N',n_cols,l_cols,1.0d0,tmat(1,1,istep),ubound(tmat,1),tmp2,n_cols)
          call dgemm('N','N',l_rows,l_cols,n_cols,-1.d0,hvm,ubound(hvm,1), &
                     tmp2,n_cols,1.d0,q,ldq)
 #endif
        endif
-#ifdef WITH_GPU_VERSION
-       istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*8_8),cudaMemcpyDeviceToHost)
-       if (istat .ne. 0) then
-         print *,"error in cudaMemcpy"
-         stop
-       endif
-
-#endif
+!#ifdef WITH_GPU_VERSION
+!       istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*8_8),cudaMemcpyDeviceToHost)
+!       if (istat .ne. 0) then
+!         print *,"error in cudaMemcpy"
+!         stop
+!       endif
+!
+!#endif
      enddo
    endif ! endQR
 
@@ -1868,13 +1893,13 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
      stop
    endif
 
-   istat = cuda_memcpy(loc(q_temp), q_dev, ldq*max_local_cols*8_8, cudaMemcpyDeviceToHost)
+   istat = cuda_memcpy(loc(q), q_dev, ldq*nqc*8_8, cudaMemcpyDeviceToHost)
    if (istat .ne. 0) then
      print *,"error in cudaFree"
      stop
    endif
 
-   q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
+!   q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
 
    istat = cuda_free(q_dev)
    if (istat .ne. 0) then
@@ -1882,11 +1907,11 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
      stop
    endif
 
-   deallocate(q_temp, stat=istat, errmsg=errorMessage)
-   if (istat .ne. 0) then
-     print *,"error when deallocating q_temp "//errorMessage
-     stop
-   endif
+!   deallocate(q_temp, stat=istat, errmsg=errorMessage)
+!   if (istat .ne. 0) then
+!     print *,"error when deallocating q_temp "//errorMessage
+!     stop
+!   endif
 
    deallocate(tmat_temp, stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
@@ -2780,7 +2805,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
     integer(c_size_t)  :: a_dev
     integer(c_size_t)  :: bcast_buffer_dev
     integer(c_size_t)  :: num
-    integer(c_size_t)  :: dev_offset, host_offset,dev_offset_1
+    integer(c_size_t)  :: dev_offset, dev_offset_1
 
 
     integer(c_size_t)  :: row_dev
@@ -3482,7 +3507,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
            call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
            n_off = current_local_n+a_off
 #ifdef WITH_GPU_VERSION
-           dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *8
+           dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *8_8
            istat =  cuda_memcpy( a_dev + dev_offset , loc(bottom_border_recv_buffer(1,1,i)) ,stripe_width*nbw*8_8 ,1)
            if (istat .ne. 0) then
              print *,"error in cudaMemcpy"
@@ -3526,8 +3551,8 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
              call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 
 #ifdef WITH_GPU_VERSION
-             dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8
-             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
+             dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8_8
+!             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
              istat =  cuda_memcpy( a_dev+dev_offset , loc(top_border_recv_buffer(1,1,i)),stripe_width*top_msg_length*8_8 ,1)
              if (istat .ne. 0) then
                print *,"error in cudaMemcpy"
@@ -3593,7 +3618,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
            if (bottom_msg_length>0) then
              n_off = current_local_n+nbw-bottom_msg_length+a_off
 #ifdef WITH_GPU_VERSION
-             dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8
+             dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8_8
              istat =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), a_dev + dev_offset, &
                                    stripe_width * bottom_msg_length * 8_8 ,2)
              if (istat .ne. 0) then
@@ -3651,7 +3676,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
         if (bottom_msg_length > 0) then
           n_off = current_local_n+nbw-bottom_msg_length+a_off
 #ifdef WITH_GPU_VERSION
-          dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8
+          dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8_8
           istat =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), a_dev + dev_offset,stripe_width*bottom_msg_length*8_8 ,2)
           if (istat .ne. 0) then
             print *,"error cudaMemcpy"
@@ -3706,7 +3731,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
 #else /* WITH_OPENMP */
           call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #ifdef WITH_GPU_VERSION
-          dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8
+          dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8_8
           istat =  cuda_memcpy( a_dev + dev_offset , loc( top_border_recv_buffer(:,1,i)), stripe_width * top_msg_length *8_8 ,1)
           if (istat .ne. 0) then
             print *,"error in cudaMemcpy"
@@ -3789,7 +3814,7 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
         call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 
 #ifdef WITH_GPU_VERSION
-        dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * 8
+        dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * 8_8
         istat =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), a_dev + dev_offset, stripe_width*nbw*8_8 ,2)
         if (istat .ne. 0) then
           print *,"error in cudaMemcpy"
@@ -3994,8 +4019,8 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, &
            do j = top_msg_length + 1, top_msg_length + next_local_n, chunk
              top = min(j + chunk, top_msg_length + next_local_n)
              this_chunk = top - j + 1
-             dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8
-             dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8
+             dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8_8
+             dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *8_8
              tmp = cuda_d2d(1)
              istat =  cuda_memcpy( a_dev + dev_offset , a_dev +dev_offset_1, stripe_width*this_chunk*8_8, tmp)
              if (istat .ne. 0) then
@@ -5640,7 +5665,7 @@ end subroutine herm_matrix_allreduce
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols)
+subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols)
 
 !-------------------------------------------------------------------------------
 !  trans_ev_band_to_full_complex:
@@ -5683,9 +5708,11 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 #endif
    implicit none
 
-   integer, intent(in)       :: na, nqc, lda, ldq, nblk, nbw, na_rows, na_cols, mpi_comm_rows, mpi_comm_cols
-   complex*16, intent(in)    :: a(:,:), tmat(:, :, :)
-   complex*16, intent(inout) :: q(:,:)
+   integer, intent(in)       :: na, nqc, lda, ldq, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols
+!   complex*16, intent(in)    :: a(:,:), tmat(:, :, :)
+   complex*16, intent(in)    :: a(lda,*), tmat(nbw, nbw, *)
+!   complex*16, intent(inout) :: q(:,:)
+   complex*16, intent(inout) :: q(ldq,matrixCols)
    complex*16, allocatable   :: q_temp(:,:)
    complex*16, allocatable   :: tmat_temp(:,:)
 
@@ -5743,10 +5770,10 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
    endif
 
 #ifdef WITH_GPU_VERSION
-   allocate(q_temp(ldq,max_local_cols), stat=istat, errmsg=errorMessage)
-   if (istat .ne. 0) then
-     print *,"trans_ev_band_to_full_complex: error when allocating q_temp "//errorMessage
-   endif
+!   allocate(q_temp(ldq,max_local_cols), stat=istat, errmsg=errorMessage)
+!   if (istat .ne. 0) then
+!     print *,"trans_ev_band_to_full_complex: error when allocating q_temp "//errorMessage
+!   endif
 
    allocate(tmat_temp(nbw,nbw), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
@@ -5765,7 +5792,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
      stop
    endif
 
-   istat = cuda_malloc(q_dev, ldq*max_local_cols*16_8)
+   istat = cuda_malloc(q_dev, ldq*matrixCols*16_8)
    if (istat .ne. 0) then
      print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
      stop
@@ -5777,22 +5804,22 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
      stop
    endif
 
-!e   istat = cuda_memset(tmp_dev, 0, (max_local_rows)*(nbw)*16_8)
-   istat = cuda_memset(tmp_dev, 0, (max_local_cols)*(nbw)*16_8)
-   if (istat .ne. 0) then
-     print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
-     stop
-   endif
+!!e   istat = cuda_memset(tmp_dev, 0, (max_local_rows)*(nbw)*16_8)
+!   istat = cuda_memset(tmp_dev, 0, (max_local_cols)*(nbw)*16_8)
+!   if (istat .ne. 0) then
+!     print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
+!     stop
+!   endif
 #endif
 
    hvm = 0   ! Must be set to 0 !!!
    hvb = 0   ! Safety only
 
 #ifdef WITH_GPU_VERSION
-   q_temp(:,:) = 0.0
-   q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
+!   q_temp(:,:) = 0.0
+!   q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
 
-   istat = cuda_memcpy(q_dev, loc(q_temp),ldq*max_local_cols*16_8, cudaMemcpyHostToDevice)
+   istat = cuda_memcpy(q_dev, loc(q),ldq*matrixCols*16_8, cudaMemcpyHostToDevice)
    if (istat .ne. 0) then
      print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
      stop
@@ -5846,10 +5873,6 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
        nb = nb+l_rows
      enddo
-
-     l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
-
-     ! Q = Q - V * T**T * V**T * Q
 #ifdef WITH_GPU_VERSION
      istat =  cuda_memcpy(hvm_dev,loc(hvm),(max_local_rows*nbw*16_8),cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
@@ -5858,10 +5881,20 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
      endif
 
 #endif
+     l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
+
+     ! Q = Q - V * T**T * V**T * Q
+
      if (l_rows>0) then
 #ifdef WITH_GPU_VERSION
        call cublas_zgemm('C','N',n_cols,l_cols,l_rows,CONE,hvm_dev,max_local_rows, &
                  q_dev,ldq,CZERO,tmp_dev,n_cols)
+       istat = cuda_memcpy(loc(tmp1), tmp_dev, n_cols*l_cols*16_8, &
+                           cudaMemcpyDeviceToHost)
+       if (istat .ne. 0) then
+         print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
+         stop
+       endif
 #else
        call zgemm('C','N',n_cols,l_cols,l_rows,CONE,hvm,ubound(hvm,1), &
                    q,ldq,CZERO,tmp1,n_cols)
@@ -5873,54 +5906,31 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
          stop
        endif
 
-       istat = cuda_memset(tmp_dev, 0, l_cols*n_cols*16_8)
-       if (istat .ne. 0) then
-         print *,"trans_ev_band_to_full_complex: error in cudaMemset"
-         stop
-       endif
+!       istat = cuda_memset(tmp_dev, 0, l_cols*n_cols*16_8)
+!       if (istat .ne. 0) then
+!         print *,"trans_ev_band_to_full_complex: error in cudaMemset"
+!         stop
+!       endif
+#endif
 
-#else
        tmp1(1:l_cols*n_cols) = 0
-#endif
-     endif
 
-#ifdef WITH_GPU_VERSION
-       if (l_cols*n_cols .gt. (max_local_cols)*(nbw)) then
-         print *,"trans_ev_band_to_full_complex: tmp_dev 2",l_cols*n_cols,max_local_cols
-         stop
-       endif
-
-     istat = cuda_memcpy(loc(tmp1),tmp_dev,l_cols*n_cols*16_8,cudaMemcpyDeviceToHost)
-
-! maybe change back
-!e     istat = cuda_memcpy(loc(tmp1),tmp_dev,max_local_cols*nbw*16_8,cudaMemcpyDeviceToHost)
-
-
-     if (istat .ne. 0) then
-       print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-       stop
      endif
 
      call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
-       if (l_cols*n_cols .gt. (max_local_cols)*(nbw)) then
-         print *,"trans_ev_band_to_full_complex: tmp_dev 3 ",l_cols*n_cols,max_local_cols
-         stop
-       endif
-     
-     istat = cuda_memcpy(tmp_dev,loc(tmp2),l_cols*n_cols*16_8,cudaMemcpyHostToDevice)
-! maybe change back
-!e     istat = cuda_memcpy(tmp_dev,loc(tmp2),max_local_cols*nbw*16_8,cudaMemcpyHostToDevice)
-
-     if (istat .ne. 0) then
-       print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-       stop
-     endif
-#else
-     call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
-#endif
 
      if (l_rows>0) then
 #ifdef WITH_GPU_VERSION
+
+
+       istat = cuda_memcpy(tmp_dev,loc(tmp2),l_cols*n_cols*16_8,cudaMemcpyHostToDevice)
+       if (istat .ne. 0) then
+         print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
+         stop
+       endif
+
+
+
        tmat_temp(1:nbw,1:nbw) = tmat(1:nbw,1:nbw,istep)
 
        istat = cuda_memcpy(tmat_dev, loc(tmat_temp(1,1)),nbw*nbw*16_8,cudaMemcpyHostToDevice)
@@ -5928,6 +5938,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
          print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
          stop
        endif
+
        call cublas_ztrmm('L','U','C','N',n_cols,l_cols,CONE,tmat_dev,nbw,tmp_dev,n_cols)
        call cublas_zgemm('N','N',l_rows,l_cols,n_cols,-CONE,hvm_dev, max_local_rows, &
                     tmp_dev,n_cols,CONE,q_dev,ldq)
@@ -5938,13 +5949,13 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 #endif
      endif
 
-#ifdef WITH_GPU_VERSION
-     istat =cuda_memcpy(loc(hvm(1,1)),hvm_dev,((max_local_rows)*nbw*16_8),cudaMemcpyDeviceToHost)
-     if (istat .ne. 0) then
-       print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-       stop
-     endif
-#endif
+!#ifdef WITH_GPU_VERSION
+!     istat =cuda_memcpy(loc(hvm(1,1)),hvm_dev,((max_local_rows)*nbw*16_8),cudaMemcpyDeviceToHost)
+!     if (istat .ne. 0) then
+!       print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
+!       stop
+!     endif
+!#endif
 
    enddo
 
@@ -5974,12 +5985,12 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
      stop
    endif
 
-   istat = cuda_memcpy(loc(q_temp), q_dev,ldq*max_local_cols*16_8, cudaMemcpyDeviceToHost)
+   istat = cuda_memcpy(loc(q_temp), q_dev,ldq*matrixCols*16_8, cudaMemcpyDeviceToHost)
    if (istat .ne. 0) then
      print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
      stop
    endif
-   q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
+!   q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
 
    istat = cuda_free(q_dev)
    if (istat .ne. 0) then
@@ -5987,10 +5998,10 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
      stop
    endif
 
-   deallocate(q_temp, stat=istat, errmsg=errorMessage)
-   if (istat .ne. 0) then
-     print *,"trans_ev_band_to_full_complex: error when deallocating q_temp "//errorMessage
-   endif
+!   deallocate(q_temp, stat=istat, errmsg=errorMessage)
+!   if (istat .ne. 0) then
+!     print *,"trans_ev_band_to_full_complex: error when deallocating q_temp "//errorMessage
+!   endif
 
    deallocate(tmat_temp, stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
@@ -6979,6 +6990,11 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, mpi_comm_rows, mpi_c
  end subroutine tridiag_band_complex ! has to be checked for GPU
 
 !---------------------------------------------------------------------------------------------------
+
+#define ATODEV istat = cuda_memcpy(loc(a), a_dev, stripe_width*a_dim2*stripe_count*16_8, cudaMemcpyDeviceToHost)
+#define ATOHOST istat = cuda_memcpy(a_dev, loc(a), stripe_width*a_dim2*stripe_count*16_8, cudaMemcpyDeviceToHost)
+
+
 subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
                                           na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, &
                                           wantDebug, success, THIS_COMPLEX_ELPA_KERNEL)
@@ -7039,11 +7055,18 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     integer                 :: n_times
 #endif
 
+#ifndef WITH_GPU_VERSION
+
 #ifdef WITH_OPENMP
     complex*16, allocatable :: a(:,:,:,:), row(:)
 #else
     complex*16, allocatable :: a(:,:,:), row(:)
 #endif
+
+#endif /* WITH_GPU_VERSION */
+
+    complex*16, allocatable :: row(:)
+
 #ifdef WITH_GPU_VERSION
     complex*16, allocatable :: row_group(:,:)
 #endif
@@ -7061,7 +7084,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     integer(c_size_t)       :: a_dev
     integer(c_size_t)       :: bcast_buffer_dev
     integer(c_size_t)       :: num
-    integer(c_size_t)       :: dev_offset, host_offset,dev_offset_1, dev_offset_2
+    integer(c_size_t)       :: dev_offset, dev_offset_1, dev_offset_2
 
 
     integer(c_size_t)       :: row_dev
@@ -7069,6 +7092,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     integer(c_size_t)       :: hh_tau_dev
     integer(c_size_t)       :: hh_dot_dev
     integer                 :: row_group_size, unpack_idx
+
+    integer                 :: top, chunk, this_chunk
 #endif
 
     integer                 :: n_off
@@ -7191,6 +7216,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 #endif
       stripe_count = (thread_width-1)/stripe_width + 1
 #else /* WITH_OPENMP */
+
       stripe_count = (l_nev-1)/stripe_width + 1
 #endif /* WITH_OPENMP */
 
@@ -7203,10 +7229,14 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
       stripe_width = (thread_width-1)/stripe_count + 1
 #else /* WITH_OPENMP */
+
+#ifndef WITH_GPU_VERSION
       stripe_width = (l_nev-1)/stripe_count + 1
+      stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
+#endif
+
 #endif /* WITH_OPENMP */
 
-      stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
 #ifndef WITH_OPENMP
       last_stripe_width = l_nev - (stripe_count-1)*stripe_width
 #endif /* WITH_OPENMP */
@@ -7236,6 +7266,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
       stop
 #endif
 
+
+#ifndef WITH_GPU_VERSION
     allocate(a(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
       print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
@@ -7243,7 +7275,12 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
     endif
 
     ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
+#endif
+
 #else /* OpenMP */
+
+
+#ifndef WITH_GPU_VERSION
     allocate(a(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
       print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
@@ -7252,6 +7289,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
     a(:,:,:) = 0
 #endif
+
+#endif /* WITH_OPENMP */
 
     allocate(row(l_nev), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
@@ -7297,6 +7336,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
       stop
     endif
 
+     ! "row_group" and "row_group_dev" are needed for GPU optimizations
     allocate(row_group(l_nev, nblk), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
       print *,"trans_ev_tridi_to_band_complex: error allocating row_group "//errorMessage
@@ -7676,19 +7716,6 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
       stop
     endif
 
-    num =  (max_blk_size)*16_8
-    istat = cuda_malloc( hh_tau_dev, max_blk_size * 16_8)
-    if (istat .ne. 0) then
-      print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
-      stop
-    endif
-
-    istat = cuda_memset( hh_tau_dev, 0, num)
-    if (istat .ne. 0) then
-      print *,"trans_ev_tridi_to_band_complex: error in cudaMemset"
-      stop
-    endif
-
     num =  ((max_blk_size-1))*16_8
     istat = cuda_malloc( hh_dot_dev, (max_blk_size -1) * 16_8)
     if (istat .ne. 0) then
@@ -7702,6 +7729,18 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
       stop
     endif
 
+    num =  (max_blk_size)*16_8
+    istat = cuda_malloc( hh_tau_dev, max_blk_size * 16_8)
+    if (istat .ne. 0) then
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
+      stop
+    endif
+
+    istat = cuda_memset( hh_tau_dev, 0, num)
+    if (istat .ne. 0) then
+      print *,"trans_ev_tridi_to_band_complex: error in cudaMemset"
+      stop
+    endif
 #endif
 
     current_tv_off = 0 ! Offset of next row to be broadcast
@@ -7810,11 +7849,13 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
         endif
 
         call extract_hh_tau_complex(nbw, 1, .true.)
-        istat =  cuda_memcpy(loc(bcast_buffer(1,1)),bcast_buffer_dev,nbw*current_local_n * 16_8 , 2)
-        if (istat .ne. 0) then
-          print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
-          stop
-        endif
+
+!NOTE(ca): I commented out the following line
+!        istat =  cuda_memcpy(loc(bcast_buffer(1,1)),bcast_buffer_dev,nbw*current_local_n * 16_8 , 2)
+!        if (istat .ne. 0) then
+!          print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
+!          stop
+!        endif
 
 #endif
       endif
@@ -7898,7 +7939,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
               n_off = current_local_n+a_off
 #ifdef WITH_GPU_VERSION
 !              t1_memcpy_time =MPI_Wtime()
-              dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * 16
+              dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * 16_8
               istat =  cuda_memcpy( a_dev + dev_offset ,loc(bottom_border_recv_buffer(1,1,i)) ,stripe_width*nbw*16_8 ,1)
               if (istat .ne. 0) then
                 print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc"
@@ -7956,8 +7997,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 !                t0_mpi_wait_time = t0_mpi_wait_time + ( t2_mpi_wait_time -t1_mpi_wait_time)
 !                t1_memcpy_time =MPI_Wtime()
 !
-                dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *16
-                host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ))* 16
+                dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *16_8
+!                host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ))* 16
                 istat =  cuda_memcpy( a_dev+dev_offset ,loc(top_border_recv_buffer(1,1,i)),stripe_width*top_msg_length*16_8 ,1)
                 if (istat .ne. 0) then
                   print *,"trans_ev_tridi_to_band_complex: error in cudaMemcpy"
@@ -8052,7 +8093,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
 #ifdef WITH_GPU_VERSION
 !                t1_memcpy_time =MPI_Wtime()
-                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * 16
+                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * 16_8
                 istat =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), a_dev + dev_offset, &
                                      stripe_width * bottom_msg_length * 16_8 , 2)
                 if (istat .ne. 0) then
@@ -8145,7 +8186,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
 #ifdef WITH_GPU_VERSION
 !                t1_memcpy_time =MPI_Wtime()
-                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * 16
+                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * 16_8
                 istat =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), a_dev + dev_offset, &
                                      stripe_width * bottom_msg_length * 16_8 , 2)
                 if (istat .ne. 0) then
@@ -8214,7 +8255,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 !                t0_mpi_wait_time = t0_mpi_wait_time +(t2_mpi_wait_time-t1_mpi_wait_time)
 !
 !                t1_memcpy_time =MPI_Wtime()
-                dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *16
+                dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *16_8
                 istat =  cuda_memcpy( a_dev + dev_offset , loc(top_border_recv_buffer(:,1,i)), &
                                      stripe_width * top_msg_length *16_8 ,1)
                 if (istat .ne. 0) then
@@ -8310,7 +8351,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
 
 #ifdef WITH_GPU_VERSION
 !              t1_memcpy_time =MPI_Wtime()
-              dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * 16
+              dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * 16_8
               istat =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), a_dev + dev_offset, stripe_width*nbw*16_8 ,2)
               if (istat .ne. 0) then
                 print *,"trans_ev_tridi_to_band_complex: error in cudaMemcpy"
@@ -8516,8 +8557,8 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
               do j = top_msg_length + 1, top_msg_length + next_local_n, chunk
                 top = min(j + chunk, top_msg_length + next_local_n)
                 this_chunk = top - j + 1
-                dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * 16 
-                dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *16
+                dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * 16_8
+                dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *16_8
                 tmp = cuda_d2d(1)
                 istat =  cuda_memcpy( a_dev + dev_offset , a_dev +dev_offset_1,stripe_width*this_chunk*16_8, tmp)
                 if (istat .ne. 0) then
@@ -8779,7 +8820,6 @@ contains
   end subroutine pack_row_complex
 #endif /* WITH_OPENMP */
 
-
 #ifdef WITH_OPENMP
   subroutine unpack_row_complex(row, n, my_thread)
 
@@ -9025,30 +9065,29 @@ contains
 #ifdef WITH_GPU_VERSION
     ! The host wrapper for extracting "tau" from the HH reflectors (see the
     ! kernel below)
-    subroutine extract_hh_tau_complex(nbw, n, is_zero)
-
-      implicit none
-      integer, value :: nbw, n
-      logical, value :: is_zero
-      integer        :: val_is_zero
-
-      if (is_zero) then
-        val_is_zero = 1
-      else
-        val_is_zero = 0
-      endif
-      call launch_extract_hh_tau_c_kernel_complex(bcast_buffer_dev,hh_tau_dev, nbw, n,val_is_zero)
-    end subroutine
-
-    subroutine compute_hh_dot_products_complex(nbw, n)
-
-      implicit none
-      integer, value :: nbw, n
-
-      if (n .le. 1) return
-      call launch_compute_hh_dotp_c_kernel_complex( bcast_buffer_dev, hh_dot_dev, nbw,n)
-     end subroutine
-
+!    subroutine extract_hh_tau_complex(nbw, n, is_zero)
+!
+!      implicit none
+!      integer, value :: nbw, n
+!      logical, value :: is_zero
+!      integer        :: val_is_zero
+!
+!      if (is_zero) then
+!        val_is_zero = 1
+!      else
+!        val_is_zero = 0
+!      endif
+!      call launch_extract_hh_tau_c_kernel_complex(bcast_buffer_dev,hh_tau_dev, nbw, n,val_is_zero)
+!    end subroutine
+!
+!    subroutine compute_hh_dot_products_complex(nbw, n)
+!
+!      implicit none
+!      integer, value :: nbw, n
+!
+!      if (n .le. 1) return
+!      call launch_compute_hh_dotp_c_kernel_complex( bcast_buffer_dev, hh_dot_dev, nbw,n)
+!     end subroutine
 
      subroutine pack_row_group_complex(rows, n_offset, row_count)
 

@@ -67,6 +67,13 @@ module cuda_routines
       integer(C_INT)           :: istat
     end function cuda_setdevice
 
+function cuda_getdevicecount(n) result(istat) &
+        bind(C, name="cudaGetDeviceCount")
+    use iso_c_binding
+    integer, intent(out)      :: n
+    integer(C_INT)                      :: istat
+end function cuda_getdevicecount
+
     function cuda_ProfilerStart() result(istat)&
             bind (C, name="cudaProfilerStart")
 

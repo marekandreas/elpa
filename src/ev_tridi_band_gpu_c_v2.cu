@@ -16,6 +16,7 @@ static __device__ __forceinline__ double shfl_xor(double r, int mask)
     return __hiloint2double(hi, lo);
 }
 
+#if 0
 static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComplex r, int mask)
 {
     double real = cuCreal(r) ;
@@ -35,7 +36,7 @@ static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComp
     return       make_cuDoubleComplex(real, imag);
 
 }
-
+#endif
 
 
 // Perform the equivalent of "__shfl_down" on an 8-byte value
