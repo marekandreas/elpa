@@ -74,6 +74,7 @@ program test_real
 !-------------------------------------------------------------------------------
 
    use ELPA1
+   use elpa_utilities, only : error_unit
    use from_c
 #ifdef WITH_OPENMP
    use test_util
@@ -85,9 +86,6 @@ program test_real
    use mod_blacs_infrastructure
    use mod_prepare_matrix
 
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
@@ -135,25 +133,11 @@ program test_real
    logical             :: write_to_file
 
    integer             :: checksWrong, checksWrongRecv
-
-
-#ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter   :: error_unit = 6
-#endif
-
    logical             :: success
 
    success = .true.
 
-   write_to_file = .false.
-
-   nblk = 16
-   na = 4000
-   nev = 1500
-
-   ! read input parameters if they are provided
    call read_input_parameters(na, nev, nblk, write_to_file)
-
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
@@ -316,7 +300,7 @@ program test_real
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    success = solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                          mpi_comm_rows, mpi_comm_cols)
+                          na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real produced an error! Aborting..."
@@ -351,8 +335,8 @@ program test_real
      print *," "
    end if
 
-   success = solve_elpa1_real_call_from_c(na, nev, na_cols, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
-                                          mpi_comm_rows_fromC, mpi_comm_cols_fromC )
+   success = solve_elpa1_real_call_from_c(na, nev, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
+                                          na_cols, mpi_comm_rows_fromC, mpi_comm_cols_fromC )
 
    if (myid==0) then
      print *," "

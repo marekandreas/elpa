@@ -83,6 +83,8 @@ program test_complex2
    use cuda_routines
 #endif
 
+   use elpa_utilities, only : error_unit
+
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -92,9 +94,6 @@ program test_complex2
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
 
 #ifdef HAVE_REDIRECT
   use redirect
@@ -131,34 +130,23 @@ program test_complex2
 
    complex*16, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
-
-
    integer                 :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    integer                 :: STATUS
 #ifdef WITH_OPENMP
    integer                 :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
+
    logical                 :: write_to_file
 
-#ifndef HAVE_ISO_FORTRAN_ENV
-   integer, parameter       :: error_unit = 6
-#endif
-
-   logical                  :: success
+   logical                 :: success
 
 #ifdef WITH_GPU_VERSION
    character(len=1024)     :: envname
    integer                 :: istat, devnum, numdevs
 #endif
 
-   write_to_file = .false.
    success = .true.
-
-   nblk = 16
-   na = 4000
-   nev = 1500
-   ! read input parameters if they are provided
 
    call read_input_parameters(na, nev, nblk, write_to_file)
       !-------------------------------------------------------------------------------
@@ -355,8 +343,9 @@ program test_complex2
    ! Calculate eigenvalues/eigenvectors
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, na_cols, nblk, &
-                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+
+   success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                                      na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."

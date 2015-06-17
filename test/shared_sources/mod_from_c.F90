@@ -45,15 +45,15 @@ module from_c
   public
 
   interface
-    integer(kind=c_int) function elpa1_real_c(na, nev, ncols, a, lda, ev, q, ldq,         &
-                                       nblk, mpi_comm_rows, mpi_comm_cols ) &
+    integer(kind=c_int) function elpa1_real_c(na, nev,  a, lda, ev, q, ldq,         &
+                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols ) &
                                        bind(C, name="call_elpa1_real_solver_from_c")
 
       use iso_c_binding
       implicit none
 
-      integer(kind=c_int), value :: na, nev, ncols, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
-      real(kind=c_double)        :: a(1:lda,1:ncols), ev(1:na), q(1:ldq,1:ncols)
+      integer(kind=c_int), value :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=c_double)        :: a(1:lda,1:matrixCOls), ev(1:na), q(1:ldq,1:matrixCols)
     end function elpa1_real_c
 
 
@@ -73,21 +73,21 @@ module from_c
 
   contains
 
-  function solve_elpa1_real_call_from_c(na, nev, ncols, a, lda, ev, q, ldq,         &
-                      nblk, mpi_comm_rows, mpi_comm_cols ) &
+  function solve_elpa1_real_call_from_c(na, nev, a, lda, ev, q, ldq,         &
+                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols ) &
                       result(success)
 
     use iso_c_binding
     implicit none
 
-    integer :: na, nev, ncols, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
+    integer :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
     logical :: success
     integer :: successC
 
-    real*8  :: a(1:lda,1:ncols), ev(1:na), q(1:ldq,1:ncols)
+    real*8  :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
 
-    successC = elpa1_real_c(na, nev, ncols, a, lda, ev, q, ldq, nblk, &
-                            mpi_comm_rows, mpi_comm_cols)
+    successC = elpa1_real_c(na, nev, a, lda, ev, q, ldq, nblk, &
+                            matrixCols, mpi_comm_rows, mpi_comm_cols)
 
     if (successC .eq. 1) then
       success = .true.

@@ -85,7 +85,7 @@ program test_real2
    use cuda_routines
 #endif
 
-   use elpa2_utilities
+   use elpa_utilities, only : error_unit
 
    use mod_read_input_parameters
    use mod_check_correctness
@@ -97,9 +97,6 @@ program test_real2
    use test_util
 #endif
 
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
@@ -139,11 +136,6 @@ program test_real2
                               provided_mpi_thread_level
 #endif
    logical                 :: write_to_file
-
-
-#ifndef HAVE_ISO_FORTRAN_ENV
-   integer, parameter      :: error_unit = 6
-#endif
 
    logical                 :: success
 
@@ -339,7 +331,7 @@ program test_real2
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              na_rows, na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
+                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
                               useQR=.true.)
 
    if (.not.(success)) then

@@ -58,8 +58,7 @@ m4_copy([_AX_ELPA_LANG_OPENMP(Fortran 77)], [_AX_ELPA_LANG_OPENMP(Fortran)])
 AC_DEFUN([AX_ELPA_OPENMP],
 [
   OPENMP_[]_AC_LANG_PREFIX[]FLAGS=
-  AC_ARG_ENABLE([openmp],
-    [AS_HELP_STRING([--disable-openmp], [do not use OpenMP])])
+  enable_openmp="yes"
   if test "$enable_openmp" != no; then
     AC_CACHE_CHECK([for _AC_LANG_ABBREV option to support OpenMP],
       [ac_cv_prog_[]_AC_LANG_ABBREV[]_openmp],

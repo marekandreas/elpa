@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 
-AC_INIT([elpa],[2015.02.002], [elpa-library@rzg.mpg.de])
+AC_INIT([elpa],[2015.05.001], [elpa-library@rzg.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
@@ -34,7 +34,7 @@ rm -rf config.h config-f90.h
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [3:0:0])
+AC_SUBST([ELPA_SO_VERSION], [3:1:0])
 #
 
 
@@ -118,6 +118,7 @@ fi
 
 
 dnl variables needed for the tests
+
 dnl do NOT remove any variables here, until
 dnl 1. you know 100% what you are doing
 dnl 2. you tested ALL configure functionality afterwards
@@ -126,6 +127,7 @@ dnl Otherwise, you most likely break some functionality
 dnl as default always define the generic kernels to be build
 dnl this is only unset if gpu_support_only is defined, or
 dnl other specific real/complex kernels are wanted
+
 install_real_generic=yes
 install_real_generic_simple=yes
 
@@ -424,8 +426,6 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 )
 AC_MSG_RESULT([${fortran_can_check_environment}])
 
-
-
 dnl check whether GPU version is requested
 
 #CUDA_INSTALL_PATH="/usr/local/cuda/"
@@ -536,7 +536,6 @@ dnl GPU version only
 m4_include([m4/ax_elpa_gpu_version_only.m4])
 DEFINE_OPTION_GPU_SUPPORT_ONLY([gpu-version-only],[gpu-support],[install_gpu])
 
-
 dnl last check whether user wants to compile only a specific kernel
 dnl
 m4_include([m4/ax_elpa_specific_kernels.m4])
@@ -603,6 +602,7 @@ dnl set the conditionals according to the previous tests
 if test x"${can_use_iso_fortran_env}" = x"yes" ; then
  AC_DEFINE([HAVE_ISO_FORTRAN_ENV],[1],[can use module iso_fortran_env])
 fi
+
 AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$install_gpu" = x"yes"])
 if test x"${install_gpu}" = x"yes" ; then
   AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])

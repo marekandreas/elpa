@@ -61,17 +61,15 @@ program read_real
 !-------------------------------------------------------------------------------
 
    use ELPA1
+   use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
    use test_util
-#endif
-#ifdef HAVE_ISO_FORTRAN_ENV
-    use iso_fortran_env, only : error_unit
 #endif
 #ifdef HAVE_REDIRECT
    use redirect
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+   use timings
 #endif
    implicit none
    include 'mpif.h'
@@ -101,9 +99,6 @@ program read_real
    character*256 filename
 #ifdef WITH_OPENMP
    integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
-#endif
-#ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter       :: error_unit = 6
 #endif
    !-------------------------------------------------------------------------------
    !  MPI Initialization

@@ -52,9 +52,6 @@ module ELPA1
 
   use elpa_utilities
 
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
@@ -91,9 +88,8 @@ module ELPA1
   public :: hh_transform_real
   public :: hh_transform_complex
 
-#ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter :: error_unit = 6
-#endif
+  public :: elpa_reduce_add_vectors_complex, elpa_reduce_add_vectors_real
+  public :: elpa_transpose_vectors_complex, elpa_transpose_vectors_real
 
 !-------------------------------------------------------------------------------
 
@@ -156,7 +152,7 @@ end function get_elpa_row_col_comms
 
 !-------------------------------------------------------------------------------
 
-function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols) result(success)
+function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
 
 !-------------------------------------------------------------------------------
 !  solve_evp_real: Solves the real eigenvalue problem
@@ -168,7 +164,7 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
 !  nev         Number of eigenvalues needed.
 !              The smallest nev eigenvalues/eigenvectors are calculated.
 !
-!  a(lda,*)    Distributed matrix for which eigenvalues are to be computed.
+!  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
 !              Distribution is like in Scalapack.
 !              The full matrix must be set (not only one half like in scalapack).
 !              Destroyed on exit (upper and lower half).
@@ -177,7 +173,7 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
 !
 !  ev(na)      On output: eigenvalues of a, every processor gets the complete set
 !
-!  q(ldq,*)    On output: Eigenvectors of a
+!  q(ldq,matrixCols)    On output: Eigenvectors of a
 !              Distribution is like in Scalapack.
 !              Must be always dimensioned to the full size (corresponding to (na,na))
 !              even if only a part of the eigenvalues is needed.
@@ -196,8 +192,8 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
 #endif
    implicit none
 
-   integer, intent(in)  :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
-   real*8               :: a(lda,*), ev(na), q(ldq,*)
+   integer, intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real*8               :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
 
    integer              :: my_prow, my_pcol, mpierr
    real*8, allocatable  :: e(:), tau(:)
@@ -225,13 +221,13 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
    allocate(e(na), tau(na))
 
    ttt0 = MPI_Wtime()
-   call tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+   call tridiag_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
    time_evp_fwd = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
-   call solve_tridi(na, nev, ev, e, q, ldq, nblk, mpi_comm_rows, &
+   call solve_tridi(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                     mpi_comm_cols, wantDebug, success)
    if (.not.(success)) return
 
@@ -240,7 +236,7 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_co
    time_evp_solve = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
-   call trans_ev_real(na, nev, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_real(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
    time_evp_back = ttt1-ttt0
@@ -256,7 +252,7 @@ end function solve_evp_real
 !-------------------------------------------------------------------------------
 
 
-function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols) result(success)
+function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
 
 !-------------------------------------------------------------------------------
 !  solve_evp_complex: Solves the complex eigenvalue problem
@@ -268,7 +264,7 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
 !  nev         Number of eigenvalues needed
 !              The smallest nev eigenvalues/eigenvectors are calculated.
 !
-!  a(lda,*)    Distributed matrix for which eigenvalues are to be computed.
+!  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
 !              Distribution is like in Scalapack.
 !              The full matrix must be set (not only one half like in scalapack).
 !              Destroyed on exit (upper and lower half).
@@ -277,7 +273,7 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
 !
 !  ev(na)      On output: eigenvalues of a, every processor gets the complete set
 !
-!  q(ldq,*)    On output: Eigenvectors of a
+!  q(ldq,matrixCols)    On output: Eigenvectors of a
 !              Distribution is like in Scalapack.
 !              Must be always dimensioned to the full size (corresponding to (na,na))
 !              even if only a part of the eigenvalues is needed.
@@ -297,8 +293,8 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
 
    implicit none
 
-   integer, intent(in)     :: na, nev, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
-   complex*16              :: a(lda,*), q(ldq,*)
+   integer, intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,matrixCols), q(ldq,matrixCols)
    real*8                  :: ev(na)
 
    integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -339,13 +335,13 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
    allocate(q_real(l_rows,l_cols))
 
    ttt0 = MPI_Wtime()
-   call tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+   call tridiag_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_complex :',ttt1-ttt0
    time_evp_fwd = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
-   call solve_tridi(na, nev, ev, e, q_real, l_rows, nblk, mpi_comm_rows, &
+   call solve_tridi(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
                     mpi_comm_cols, wantDebug, success)
    if (.not.(success)) return
 
@@ -356,7 +352,7 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
    ttt0 = MPI_Wtime()
    q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 
-   call trans_ev_complex(na, nev, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_complex(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_complex:',ttt1-ttt0
    time_evp_back = ttt1-ttt0
@@ -369,9 +365,19 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi
 
 end function solve_evp_complex
 
+
+#define DATATYPE REAL
+#define BYTESIZE 8
+#define REALCASE 1
+#include "elpa_transpose_vectors.X90"
+#include "elpa_reduce_add_vectors.X90"
+#undef DATATYPE
+#undef BYTESIZE
+#undef REALCASE
+
 !-------------------------------------------------------------------------------
 
-subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, tau)
+subroutine tridiag_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau)
 
 !-------------------------------------------------------------------------------
 !  tridiag_real: Reduces a distributed symmetric matrix to tridiagonal form
@@ -381,12 +387,13 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be reduced.
+!  a(lda,matrixCols)    Distributed matrix which should be reduced.
 !              Distribution is like in Scalapack.
 !              Opposed to PDSYTRD, a(:,:) must be set completely (upper and lower half)
 !              a(:,:) is overwritten on exit with the Householder vectors
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
@@ -406,8 +413,8 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 #endif
    implicit none
 
-   integer na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   real*8 a(lda,*), d(na), e(na), tau(na)
+   integer na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real*8 a(lda,matrixCols), d(na), e(na), tau(na)
 
    integer, parameter :: max_stored_rows = 32
 
@@ -504,8 +511,8 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 
          vr(1:l_rows) = a(1:l_rows,l_cols+1)
          if(nstor>0 .and. l_rows>0) then
-            call DGEMV('N',l_rows,2*nstor,1.d0,vur,ubound(vur,1), &
-                       uvc(l_cols+1,1),ubound(uvc,1),1.d0,vr,1)
+            call DGEMV('N',l_rows,2*nstor,1.d0,vur,ubound(vur,dim=1), &
+                       uvc(l_cols+1,1),ubound(uvc,dim=1),1.d0,vr,1)
          endif
 
          if(my_prow==prow(istep-1, nblk, np_rows)) then
@@ -544,9 +551,9 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
 
       ! Transpose Householder vector vr -> vc
 
-      call elpa_transpose_vectors  (vr, ubound(vr,1), mpi_comm_rows, &
-                                    vc, ubound(vc,1), mpi_comm_cols, &
-                                    1, istep-1, 1, nblk)
+      call elpa_transpose_vectors_real  (vr, ubound(vr,dim=1), mpi_comm_rows, &
+                                         vc, ubound(vc,dim=1), mpi_comm_cols, &
+                                         1, istep-1, 1, nblk)
 
 
       ! Calculate u = (A + VU**T + UV**T)*v
@@ -596,7 +603,7 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
             enddo
          enddo
 #ifdef WITH_OPENMP
-!$OMP END PARALLEL  
+!$OMP END PARALLEL
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("OpenMP parallel")
 #endif
@@ -607,8 +614,8 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
          enddo
 #endif
          if(nstor>0) then
-            call DGEMV('T',l_rows,2*nstor,1.d0,vur,ubound(vur,1),vr,1,0.d0,aux,1)
-            call DGEMV('N',l_cols,2*nstor,1.d0,uvc,ubound(uvc,1),aux,1,1.d0,uc,1)
+            call DGEMV('T',l_rows,2*nstor,1.d0,vur,ubound(vur,dim=1),vr,1,0.d0,aux,1)
+            call DGEMV('N',l_cols,2*nstor,1.d0,uvc,ubound(uvc,dim=1),aux,1,1.d0,uc,1)
          endif
 
       endif
@@ -619,8 +626,8 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
       ! global tile size is smaller than the global remaining matrix
 
       if(tile_size < istep-1) then
-         call elpa_reduce_add_vectors  (ur, ubound(ur,1), mpi_comm_rows, &
-                                        uc, ubound(uc,1), mpi_comm_cols, &
+         call elpa_reduce_add_vectors_REAL  (ur, ubound(ur,dim=1), mpi_comm_rows, &
+                                        uc, ubound(uc,dim=1), mpi_comm_cols, &
                                         istep-1, 1, nblk)
       endif
 
@@ -631,9 +638,9 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
          call mpi_allreduce(tmp,uc,l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       endif
 
-      call elpa_transpose_vectors  (uc, ubound(uc,1), mpi_comm_cols, &
-                                    ur, ubound(ur,1), mpi_comm_rows, &
-                                    1, istep-1, 1, nblk)
+      call elpa_transpose_vectors_real  (uc, ubound(uc,dim=1), mpi_comm_cols, &
+                                         ur, ubound(ur,dim=1), mpi_comm_rows, &
+                                         1, istep-1, 1, nblk)
 
       ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
 
@@ -666,7 +673,7 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
             lre = min(l_rows,(i+1)*l_rows_tile)
             if(lce<lcs .or. lre<lrs) cycle
             call dgemm('N','T',lre-lrs+1,lce-lcs+1,2*nstor,1.d0, &
-                       vur(lrs,1),ubound(vur,1),uvc(lcs,1),ubound(uvc,1), &
+                       vur(lrs,1),ubound(vur,dim=1),uvc(lcs,1),ubound(uvc,dim=1), &
                        1.d0,a(lrs,lcs),lda)
          enddo
 
@@ -709,7 +716,7 @@ end subroutine tridiag_real
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
+subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
 
 !-------------------------------------------------------------------------------
 !  trans_ev_real: Transforms the eigenvectors of a tridiagonal matrix back
@@ -722,10 +729,11 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
 !
 !  nqc         Number of columns of matrix q
 !
-!  a(lda,*)    Matrix containing the Householder vectors (i.e. matrix a after tridiag_real)
+!  a(lda,matrixCols)    Matrix containing the Householder vectors (i.e. matrix a after tridiag_real)
 !              Distribution is like in Scalapack.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a and q
 !
 !  tau(na)     Factors of the Householder vectors
 !
@@ -747,8 +755,8 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
 #endif
    implicit none
 
-   integer na, nqc, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
-   real*8 a(lda,*), q(ldq,*), tau(na)
+   integer na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real*8 a(lda,matrixCols), q(ldq,matrixCols), tau(na)
 
    integer :: max_stored_rows
 
@@ -839,7 +847,7 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
 
          tmat = 0
          if(l_rows>0) &
-            call dsyrk('U','T',nstor,l_rows,1.d0,hvm,ubound(hvm,1),0.d0,tmat,max_stored_rows)
+            call dsyrk('U','T',nstor,l_rows,1.d0,hvm,ubound(hvm,dim=1),0.d0,tmat,max_stored_rows)
 
          nc = 0
          do n=1,nstor-1
@@ -863,7 +871,7 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
          ! Q = Q - V * T * V**T * Q
 
          if(l_rows>0) then
-            call dgemm('T','N',nstor,l_cols,l_rows,1.d0,hvm,ubound(hvm,1), &
+            call dgemm('T','N',nstor,l_cols,l_rows,1.d0,hvm,ubound(hvm,dim=1), &
                        q,ldq,0.d0,tmp1,nstor)
          else
             tmp1(1:l_cols*nstor) = 0
@@ -871,7 +879,7 @@ subroutine trans_ev_real(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_
          call mpi_allreduce(tmp1,tmp2,nstor*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
          if(l_rows>0) then
             call dtrmm('L','L','N','N',nstor,l_cols,1.0d0,tmat,max_stored_rows,tmp2,nstor)
-            call dgemm('N','N',l_rows,l_cols,nstor,-1.d0,hvm,ubound(hvm,1), &
+            call dgemm('N','N',l_rows,l_cols,nstor,-1.d0,hvm,ubound(hvm,dim=1), &
                        tmp2,nstor,1.d0,q,ldq)
          endif
          nstor = 0
@@ -1078,7 +1086,7 @@ subroutine mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_com
             if(lcs<=lce) then
                allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce))
                if(lrs<=lre) then
-                  call dgemm('T','N',nstor,lce-lcs+1,lre-lrs+1,1.d0,aux_mat(lrs,1),ubound(aux_mat,1), &
+                  call dgemm('T','N',nstor,lce-lcs+1,lre-lrs+1,1.d0,aux_mat(lrs,1),ubound(aux_mat,dim=1), &
                              b(lrs,lcs),ldb,0.d0,tmp1,nstor)
                else
                   tmp1 = 0
@@ -1109,7 +1117,17 @@ end subroutine mult_at_b_real
 
 !-------------------------------------------------------------------------------
 
-subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, tau)
+
+#define DATATYPE COMPLEX
+#define BYTESIZE 16
+#define COMPLEXCASE 1
+#include "elpa_transpose_vectors.X90"
+#include "elpa_reduce_add_vectors.X90"  
+#undef DATATYPE
+#undef BYTESIZE
+#undef COMPLEXCASE
+
+subroutine tridiag_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau)
 
 !-------------------------------------------------------------------------------
 !  tridiag_complex: Reduces a distributed hermitian matrix to tridiagonal form
@@ -1119,12 +1137,13 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be reduced.
+!  a(lda,matrixCols)    Distributed matrix which should be reduced.
 !              Distribution is like in Scalapack.
 !              Opposed to PZHETRD, a(:,:) must be set completely (upper and lower half)
 !              a(:,:) is overwritten on exit with the Householder vectors
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
@@ -1144,8 +1163,8 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 #endif
    implicit none
 
-   integer na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   complex*16 a(lda,*), tau(na)
+   integer na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   complex*16 a(lda,matrixCols), tau(na)
    real*8 d(na), e(na)
 
    integer, parameter :: max_stored_rows = 32
@@ -1248,7 +1267,7 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
          vr(1:l_rows) = a(1:l_rows,l_cols+1)
          if(nstor>0 .and. l_rows>0) then
             aux(1:2*nstor) = conjg(uvc(l_cols+1,1:2*nstor))
-            call ZGEMV('N',l_rows,2*nstor,CONE,vur,ubound(vur,1), &
+            call ZGEMV('N',l_rows,2*nstor,CONE,vur,ubound(vur,dim=1), &
                        aux,1,CONE,vr,1)
          endif
 
@@ -1288,10 +1307,13 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 
       ! Transpose Householder vector vr -> vc
 
-      call elpa_transpose_vectors  (vr, 2*ubound(vr,1), mpi_comm_rows, &
-                                    vc, 2*ubound(vc,1), mpi_comm_cols, &
-                                    1, 2*(istep-1), 1, 2*nblk)
+!      call elpa_transpose_vectors  (vr, 2*ubound(vr,dim=1), mpi_comm_rows, &
+!                                    vc, 2*ubound(vc,dim=1), mpi_comm_cols, &
+!                                    1, 2*(istep-1), 1, 2*nblk)
 
+      call elpa_transpose_vectors_complex  (vr, ubound(vr,dim=1), mpi_comm_rows, &
+                                            vc, ubound(vc,dim=1), mpi_comm_cols, &
+                                            1, (istep-1), 1, nblk)
       ! Calculate u = (A + VU**T + UV**T)*v
 
       ! For cache efficiency, we use only the upper half of the matrix tiles for this,
@@ -1352,8 +1374,8 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
 #endif
 
          if(nstor>0) then
-            call ZGEMV('C',l_rows,2*nstor,CONE,vur,ubound(vur,1),vr,1,CZERO,aux,1)
-            call ZGEMV('N',l_cols,2*nstor,CONE,uvc,ubound(uvc,1),aux,1,CONE,uc,1)
+            call ZGEMV('C',l_rows,2*nstor,CONE,vur,ubound(vur,dim=1),vr,1,CZERO,aux,1)
+            call ZGEMV('N',l_cols,2*nstor,CONE,uvc,ubound(uvc,dim=1),aux,1,CONE,uc,1)
          endif
 
       endif
@@ -1364,9 +1386,9 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
       ! global tile size is smaller than the global remaining matrix
 
       if(tile_size < istep-1) then
-         call elpa_reduce_add_vectors  (ur, 2*ubound(ur,1), mpi_comm_rows, &
-                                        uc, 2*ubound(uc,1), mpi_comm_cols, &
-                                        2*(istep-1), 1, 2*nblk)
+         call elpa_reduce_add_vectors_COMPLEX  (ur, ubound(ur,dim=1), mpi_comm_rows, &
+                                        uc, ubound(uc,dim=1), mpi_comm_cols, &
+                                        (istep-1), 1, nblk)
       endif
 
       ! Sum up all the uc(:) parts, transpose uc -> ur
@@ -1376,9 +1398,15 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
          call mpi_allreduce(tmp,uc,l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
       endif
 
-      call elpa_transpose_vectors  (uc, 2*ubound(uc,1), mpi_comm_cols, &
-                                    ur, 2*ubound(ur,1), mpi_comm_rows, &
-                                    1, 2*(istep-1), 1, 2*nblk)
+!      call elpa_transpose_vectors  (uc, 2*ubound(uc,dim=1), mpi_comm_cols, &
+!                                    ur, 2*ubound(ur,dim=1), mpi_comm_rows, &
+!                                    1, 2*(istep-1), 1, 2*nblk)
+
+      call elpa_transpose_vectors_complex  (uc, ubound(uc,dim=1), mpi_comm_cols, &
+                                            ur, ubound(ur,dim=1), mpi_comm_rows, &
+                                            1, (istep-1), 1, nblk)
+
+
 
       ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
 
@@ -1411,7 +1439,7 @@ subroutine tridiag_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e,
             lre = min(l_rows,(i+1)*l_rows_tile)
             if(lce<lcs .or. lre<lrs) cycle
             call ZGEMM('N','C',lre-lrs+1,lce-lcs+1,2*nstor,CONE, &
-                       vur(lrs,1),ubound(vur,1),uvc(lcs,1),ubound(uvc,1), &
+                       vur(lrs,1),ubound(vur,dim=1),uvc(lcs,1),ubound(uvc,dim=1), &
                        CONE,a(lrs,lcs),lda)
          enddo
 
@@ -1465,7 +1493,7 @@ end subroutine tridiag_complex
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols)
+subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
 
 !-------------------------------------------------------------------------------
 !  trans_ev_complex: Transforms the eigenvectors of a tridiagonal matrix back
@@ -1478,7 +1506,7 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
 !
 !  nqc         Number of columns of matrix q
 !
-!  a(lda,*)    Matrix containing the Householder vectors (i.e. matrix a after tridiag_complex)
+!  a(lda,matrixCols)    Matrix containing the Householder vectors (i.e. matrix a after tridiag_complex)
 !              Distribution is like in Scalapack.
 !
 !  lda         Leading dimension of a
@@ -1503,8 +1531,8 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
 #endif
    implicit none
 
-   integer na, nqc, lda, ldq, nblk, mpi_comm_rows, mpi_comm_cols
-   complex*16 a(lda,*), q(ldq,*), tau(na)
+   integer na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   complex*16 a(lda,matrixCols), q(ldq,matrixCols), tau(na)
 
    integer :: max_stored_rows
 
@@ -1601,7 +1629,7 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
 
          tmat = 0
          if(l_rows>0) &
-            call zherk('U','C',nstor,l_rows,CONE,hvm,ubound(hvm,1),CZERO,tmat,max_stored_rows)
+            call zherk('U','C',nstor,l_rows,CONE,hvm,ubound(hvm,dim=1),CZERO,tmat,max_stored_rows)
 
          nc = 0
          do n=1,nstor-1
@@ -1625,7 +1653,7 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
          ! Q = Q - V * T * V**T * Q
 
          if(l_rows>0) then
-            call zgemm('C','N',nstor,l_cols,l_rows,CONE,hvm,ubound(hvm,1), &
+            call zgemm('C','N',nstor,l_cols,l_rows,CONE,hvm,ubound(hvm,dim=1), &
                        q,ldq,CZERO,tmp1,nstor)
          else
             tmp1(1:l_cols*nstor) = 0
@@ -1633,7 +1661,7 @@ subroutine trans_ev_complex(na, nqc, a, lda, tau, q, ldq, nblk, mpi_comm_rows, m
          call mpi_allreduce(tmp1,tmp2,nstor*l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
          if(l_rows>0) then
             call ztrmm('L','L','N','N',nstor,l_cols,CONE,tmat,max_stored_rows,tmp2,nstor)
-            call zgemm('N','N',l_rows,l_cols,nstor,-CONE,hvm,ubound(hvm,1), &
+            call zgemm('N','N',l_rows,l_cols,nstor,-CONE,hvm,ubound(hvm,dim=1), &
                        tmp2,nstor,CONE,q,ldq)
          endif
          nstor = 0
@@ -1840,7 +1868,7 @@ subroutine mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_
             if(lcs<=lce) then
                allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce))
                if(lrs<=lre) then
-                  call zgemm('C','N',nstor,lce-lcs+1,lre-lrs+1,(1.d0,0.d0),aux_mat(lrs,1),ubound(aux_mat,1), &
+                  call zgemm('C','N',nstor,lce-lcs+1,lre-lrs+1,(1.d0,0.d0),aux_mat(lrs,1),ubound(aux_mat,dim=1), &
                              b(lrs,lcs),ldb,(0.d0,0.d0),tmp1,nstor)
                else
                   tmp1 = 0
@@ -1871,14 +1899,14 @@ end subroutine mult_ah_b_complex
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success )
+subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success )
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
    implicit none
 
-   integer  na, nev, ldq, nblk, mpi_comm_rows, mpi_comm_cols
-   real*8 d(na), e(na), q(ldq,*)
+   integer  na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real*8 d(na), e(na), q(ldq,matrixCols)
 
    integer i, j, n, np, nc, nev1, l_cols, l_rows
    integer my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -1946,7 +1974,7 @@ subroutine solve_tridi( na, nev, d, e, q, ldq, nblk, mpi_comm_rows, mpi_comm_col
       nev1 = MIN(nev,l_cols)
    endif
    call solve_tridi_col(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
-                        mpi_comm_rows, wantDebug, success)
+                        matrixCols, mpi_comm_rows, wantDebug, success)
    if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("solve_tridi")
@@ -2075,7 +2103,7 @@ recursive subroutine merge_recursive(np_off, nprocs, wantDebug, success)
       ! p_col_bc is set so that only nev eigenvalues are calculated
 
       call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
-                         nblk, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
+                         nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
                          l_col_bc, p_col_bc, np_off, nprocs, wantDebug, success )
       if (.not.(success)) return
    else
@@ -2083,7 +2111,7 @@ recursive subroutine merge_recursive(np_off, nprocs, wantDebug, success)
       ! Not last merge, leave dense column distribution
 
       call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
-                         nblk, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
+                         nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
                          l_col(noff+1), p_col(noff+1), np_off, nprocs, wantDebug, success )
       if (.not.(success)) return
    endif
@@ -2094,7 +2122,7 @@ end subroutine solve_tridi
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, wantDebug, success )
+subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -2104,8 +2132,8 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, w
 #endif
    implicit none
 
-   integer              :: na, nev, nqoff, ldq, nblk, mpi_comm_rows
-   real*8               :: d(na), e(na), q(ldq,*)
+   integer              :: na, nev, nqoff, ldq, nblk, matrixCols, mpi_comm_rows
+   real*8               :: d(na), e(na), q(ldq,matrixCols)
 
    integer, parameter   :: min_submatrix_size = 16 ! Minimum size of the submatrices to be used
 
@@ -2179,7 +2207,7 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, w
          nlen = limits(n+1)-noff ! Size of subproblem
 
          call solve_tridi_single(nlen,d(noff+1),e(noff+1), &
-                                 q(nqoff+noff+1,noff+1),ubound(q,1), wantDebug, success)
+                                 q(nqoff+noff+1,noff+1),ubound(q,dim=1), wantDebug, success)
          if (.not.(success)) return
       enddo
 
@@ -2199,7 +2227,7 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, w
          nlen = limits(my_prow+1)-noff ! Size of subproblem
 
          call solve_tridi_single(nlen,d(noff+1),e(noff+1),qmat1, &
-                                 ubound(qmat1,1), wantDebug, success)
+                                 ubound(qmat1,dim=1), wantDebug, success)
 
          if (.not.(success)) return
       endif
@@ -2252,7 +2280,7 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows, w
         endif
 
          call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
-                            mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
+                            matrixCols, mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
                             l_col(noff+1), p_col_o(noff+1), 0, 1, wantDebug, success)
          if (.not.(success)) return
 
@@ -2371,17 +2399,17 @@ end subroutine solve_tridi_single
 
 !-------------------------------------------------------------------------------
 
-subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_comm_cols, &
+subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, wantDebug, success)
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
    implicit none
 
-   integer              :: na, nm, ldq, nqoff, nblk, mpi_comm_rows, &
+   integer              :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
                            mpi_comm_cols, npc_0, npc_n
    integer              :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
-   real*8               :: d(na), e, q(ldq,*)
+   real*8               :: d(na), e, q(ldq,matrixCols)
 
    integer, parameter   :: max_strip=128
 
@@ -2536,7 +2564,7 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
 
       ! Rearrange eigenvectors
 
-      call resort_ev(idx)
+      call resort_ev(idx, na)
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("merge_systems")
 #endif
@@ -2693,7 +2721,7 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
          endif
       enddo
 
-      call resort_ev(idxq1)
+      call resort_ev(idxq1, na)
 
    else if(na1>2) then
 
@@ -2973,8 +3001,8 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
             ! Multiply old Q with eigenvectors (upper half)
 
             if(l_rnm>0 .and. ncnt>0 .and. nnzu>0) &
-               call dgemm('N','N',l_rnm,ncnt,nnzu,1.d0,qtmp1,ubound(qtmp1,1),ev,ubound(ev,1), &
-                          1.d0,qtmp2(1,1),ubound(qtmp2,1))
+               call dgemm('N','N',l_rnm,ncnt,nnzu,1.d0,qtmp1,ubound(qtmp1,dim=1),ev,ubound(ev,dim=1), &
+                          1.d0,qtmp2(1,1),ubound(qtmp2,dim=1))
 
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
@@ -2991,8 +3019,8 @@ subroutine merge_systems( na, nm, d, e, q, ldq, nqoff, nblk, mpi_comm_rows, mpi_
             ! Multiply old Q with eigenvectors (lower half)
 
             if(l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
-               call dgemm('N','N',l_rows-l_rnm,ncnt,nnzl,1.d0,qtmp1(l_rnm+1,1),ubound(qtmp1,1),ev,ubound(ev,1), &
-                          1.d0,qtmp2(l_rnm+1,1),ubound(qtmp2,1))
+               call dgemm('N','N',l_rows-l_rnm,ncnt,nnzl,1.d0,qtmp1(l_rnm+1,1),ubound(qtmp1,dim=1),ev,ubound(ev,dim=1), &
+                          1.d0,qtmp2(l_rnm+1,1),ubound(qtmp2,dim=1))
 
             ! Put partial result into (output) Q
 
@@ -3038,12 +3066,13 @@ contains
 
   end subroutine add_tmp
 
-subroutine resort_ev(idx_ev)
+subroutine resort_ev(idx_ev, nLength)
 
    implicit none
 
-   integer idx_ev(*)
-   integer i, nc, pc1, pc2, lc1, lc2, l_cols_out
+   integer, intent(in) :: nLength
+   integer             :: idx_ev(nLength)
+   integer             :: i, nc, pc1, pc2, lc1, lc2, l_cols_out
 
    real*8, allocatable :: qtmp(:,:)
 
@@ -3267,7 +3296,7 @@ subroutine distribute_global_column(g_col, l_col, noff, nlen, my_prow, np_rows, 
 
    implicit none
 
-   real*8 g_col(nlen), l_col(*)
+   real*8 g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching
    integer noff, nlen, my_prow, np_rows, nblk
 
    integer nbs, nbe, jb, g_off, l_off, js, je
@@ -3495,7 +3524,7 @@ end function local_index
 
 !-------------------------------------------------------------------------------
 
-subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+subroutine cholesky_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  cholesky_real: Cholesky factorization of a real symmetric matrix
@@ -3504,13 +3533,14 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be factorized.
+!  a(lda,matrixCols)    Distributed matrix which should be factorized.
 !              Distribution is like in Scalapack.
 !              Only upper triangle is needs to be set.
 !              On return, the upper triangle contains the Cholesky factor
 !              and the lower triangle is set to 0.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
@@ -3524,8 +3554,8 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
 #endif
    implicit none
 
-   integer              :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   real*8               :: a(lda,*)
+   integer              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real*8               :: a(lda,matrixCols)
 
    integer              :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -3634,7 +3664,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
          enddo
 
          if(l_cols-l_colx+1>0) &
-            call dtrsm('L','U','T','N',nblk,l_cols-l_colx+1,1.d0,tmp2,ubound(tmp2,1),a(l_row1,l_colx),lda)
+            call dtrsm('L','U','T','N',nblk,l_cols-l_colx+1,1.d0,tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
 
       endif
 
@@ -3645,9 +3675,9 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
             call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_REAL8,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
 
       enddo
-
-      call elpa_transpose_vectors  (tmatc, ubound(tmatc,1), mpi_comm_cols, &
-                                    tmatr, ubound(tmatr,1), mpi_comm_rows, &
+      ! this has to be checked since it was changed substantially when doing type safe
+      call elpa_transpose_vectors_real  (tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
+                                    tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
                                     n, na, nblk, nblk)
 
       do i=0,(na-1)/tile_size
@@ -3657,7 +3687,7 @@ subroutine cholesky_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDeb
          lre = min(l_rows,(i+1)*l_rows_tile)
          if(lce<lcs .or. lre<lrs) cycle
          call DGEMM('N','T',lre-lrs+1,lce-lcs+1,nblk,-1.d0, &
-                    tmatr(lrs,1),ubound(tmatr,1),tmatc(lcs,1),ubound(tmatc,1), &
+                    tmatr(lrs,1),ubound(tmatr,dim=1),tmatc(lcs,1),ubound(tmatc,dim=1), &
                     1.d0,a(lrs,lcs),lda)
       enddo
 
@@ -3683,7 +3713,7 @@ end subroutine cholesky_real
 
 !-------------------------------------------------------------------------------
 
-subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+subroutine invert_trm_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  invert_trm_real: Inverts a upper triangular matrix
@@ -3692,12 +3722,13 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be inverted.
+!  a(lda,matrixCols)    Distributed matrix which should be inverted.
 !              Distribution is like in Scalapack.
 !              Only upper triangle is needs to be set.
 !              The lower triangle is not referenced.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
@@ -3709,8 +3740,8 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
 
    implicit none
 
-   integer             :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   real*8              :: a(lda,*)
+   integer             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real*8              :: a(lda,matrixCols)
 
    integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -3783,7 +3814,7 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
          enddo
 
          if(l_cols-l_colx+1>0) &
-            call DTRMM('L','U','N','N',nb,l_cols-l_colx+1,1.d0,tmp2,ubound(tmp2,1),a(l_row1,l_colx),lda)
+            call DTRMM('L','U','N','N',nb,l_cols-l_colx+1,1.d0,tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
 
          if(l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
          if(my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -3806,7 +3837,7 @@ subroutine invert_trm_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantD
 
       if(l_row1>1 .and. l_cols-l_col1+1>0) &
          call dgemm('N','N',l_row1-1,l_cols-l_col1+1,nb, -1.d0, &
-                    tmat1,ubound(tmat1,1),tmat2(1,l_col1),ubound(tmat2,1), &
+                    tmat1,ubound(tmat1,dim=1),tmat2(1,l_col1),ubound(tmat2,dim=1), &
                     1.d0, a(1,l_col1),lda)
 
    enddo
@@ -3817,7 +3848,7 @@ end subroutine invert_trm_real
 
 !-------------------------------------------------------------------------------
 
-subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+subroutine cholesky_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  cholesky_complex: Cholesky factorization of a complex hermitian matrix
@@ -3826,13 +3857,14 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be factorized.
+!  a(lda,matriCols)    Distributed matrix which should be factorized.
 !              Distribution is like in Scalapack.
 !              Only upper triangle is needs to be set.
 !              On return, the upper triangle contains the Cholesky factor
 !              and the lower triangle is set to 0.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
@@ -3846,8 +3878,8 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
 #endif
    implicit none
 
-   integer                 :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   complex*16              :: a(lda,*)
+   integer                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,matrixCols)
 
    integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -3954,7 +3986,7 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
          enddo
 
          if(l_cols-l_colx+1>0) &
-            call ztrsm('L','U','C','N',nblk,l_cols-l_colx+1,(1.d0,0.d0),tmp2,ubound(tmp2,1),a(l_row1,l_colx),lda)
+            call ztrsm('L','U','C','N',nblk,l_cols-l_colx+1,(1.d0,0.d0),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
 
       endif
 
@@ -3965,10 +3997,10 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
             call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_DOUBLE_COMPLEX,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
 
       enddo
-
-      call elpa_transpose_vectors  (tmatc, 2*ubound(tmatc,1), mpi_comm_cols, &
-                                    tmatr, 2*ubound(tmatr,1), mpi_comm_rows, &
-                                    2*n-1, 2*na, nblk, 2*nblk)
+      ! this has to be checked since it was changed substantially when doing type safe
+      call elpa_transpose_vectors_complex  (tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
+                                    tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
+                                    n, na, nblk, nblk)
 
 
       do i=0,(na-1)/tile_size
@@ -3978,7 +4010,7 @@ subroutine cholesky_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, want
          lre = min(l_rows,(i+1)*l_rows_tile)
          if(lce<lcs .or. lre<lrs) cycle
          call ZGEMM('N','C',lre-lrs+1,lce-lcs+1,nblk,(-1.d0,0.d0), &
-                    tmatr(lrs,1),ubound(tmatr,1),tmatc(lcs,1),ubound(tmatc,1), &
+                    tmatr(lrs,1),ubound(tmatr,dim=1),tmatc(lcs,1),ubound(tmatc,dim=1), &
                     (1.d0,0.d0),a(lrs,lcs),lda)
       enddo
 
@@ -4004,7 +4036,7 @@ end subroutine cholesky_complex
 
 !-------------------------------------------------------------------------------
 
-subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+subroutine invert_trm_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 !-------------------------------------------------------------------------------
 !  invert_trm_complex: Inverts a upper triangular matrix
@@ -4013,12 +4045,13 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wa
 !
 !  na          Order of matrix
 !
-!  a(lda,*)    Distributed matrix which should be inverted.
+!  a(lda,matrixCols)    Distributed matrix which should be inverted.
 !              Distribution is like in Scalapack.
 !              Only upper triangle is needs to be set.
 !              The lower triangle is not referenced.
 !
 !  lda         Leading dimension of a
+!  matrixCols  local columns of matrix a
 !
 !  nblk        blocksize of cyclic distribution, must be the same in both directions!
 !
@@ -4030,8 +4063,8 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wa
 
    implicit none
 
-   integer                 :: na, lda, nblk, mpi_comm_rows, mpi_comm_cols
-   complex*16              :: a(lda,*)
+   integer                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   complex*16              :: a(lda,matrixCols)
 
    integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -4104,7 +4137,7 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wa
          enddo
 
          if(l_cols-l_colx+1>0) &
-            call ZTRMM('L','U','N','N',nb,l_cols-l_colx+1,(1.d0,0.d0),tmp2,ubound(tmp2,1),a(l_row1,l_colx),lda)
+            call ZTRMM('L','U','N','N',nb,l_cols-l_colx+1,(1.d0,0.d0),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
 
          if(l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
          if(my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -4127,7 +4160,7 @@ subroutine invert_trm_complex(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, wa
 
       if(l_row1>1 .and. l_cols-l_col1+1>0) &
          call ZGEMM('N','N',l_row1-1,l_cols-l_col1+1,nb, (-1.d0,0.d0), &
-                    tmat1,ubound(tmat1,1),tmat2(1,l_col1),ubound(tmat2,1), &
+                    tmat1,ubound(tmat1,dim=1),tmat2(1,l_col1),ubound(tmat2,dim=1), &
                     (1.d0,0.d0), a(1,l_col1),lda)
 
    enddo
@@ -4257,207 +4290,9 @@ end module ELPA1
 ! so that they can be used with real or complex data
 ! --------------------------------------------------------------------------------------------------
 
-subroutine elpa_transpose_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
+
+! to do: write interface and put them into module
 
 !-------------------------------------------------------------------------------
-! This routine transposes an array of vectors which are distributed in
-! communicator comm_s into its transposed form distributed in communicator comm_t.
-! There must be an identical copy of vmat_s in every communicator comm_s.
-! After this routine, there is an identical copy of vmat_t in every communicator comm_t.
-!
-! vmat_s    original array of vectors
-! ld_s      leading dimension of vmat_s
-! comm_s    communicator over which vmat_s is distributed
-! vmat_t    array of vectors in transposed form
-! ld_t      leading dimension of vmat_t
-! comm_t    communicator over which vmat_t is distributed
-! nvs       global index where to start in vmat_s/vmat_t
-!           Please note: this is kind of a hint, some values before nvs will be
-!           accessed in vmat_s/put into vmat_t
-! nvr       global length of vmat_s/vmat_t
-! nvc       number of columns in vmat_s/vmat_t
-! nblk      block size of block cyclic distribution
-!
-!-------------------------------------------------------------------------------
-
-   use ELPA1 ! for least_common_multiple
-
-   implicit none
-
-   include 'mpif.h'
-
-   integer, intent(in)   :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
-   real*8, intent(in)    :: vmat_s(ld_s,nvc)
-   real*8, intent(inout) :: vmat_t(ld_t,nvc)
-
-   real*8, allocatable :: aux(:)
-   integer myps, mypt, nps, npt
-   integer n, lc, k, i, ips, ipt, ns, nl, mpierr
-   integer lcm_s_t, nblks_tot, nblks_comm, nblks_skip
-
-   call mpi_comm_rank(comm_s,myps,mpierr)
-   call mpi_comm_size(comm_s,nps ,mpierr)
-   call mpi_comm_rank(comm_t,mypt,mpierr)
-   call mpi_comm_size(comm_t,npt ,mpierr)
-
-   ! The basic idea of this routine is that for every block (in the block cyclic
-   ! distribution), the processor within comm_t which owns the diagonal
-   ! broadcasts its values of vmat_s to all processors within comm_t.
-   ! Of course this has not to be done for every block separately, since
-   ! the communictation pattern repeats in the global matrix after
-   ! the least common multiple of (nps,npt) blocks
-
-   lcm_s_t   = least_common_multiple(nps,npt) ! least common multiple of nps, npt
-
-   nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
-
-   ! Get the number of blocks to be skipped at the begin.
-   ! This must be a multiple of lcm_s_t (else it is getting complicated),
-   ! thus some elements before nvs will be accessed/set.
-
-   nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
-
-   allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
-
-   do n = 0, lcm_s_t-1
-
-      ips = mod(n,nps)
-      ipt = mod(n,npt)
-
-      if(mypt == ipt) then
-
-         nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
-         if(nblks_comm==0) cycle
-
-         if(myps == ips) then
-            k = 0
-            do lc=1,nvc
-               do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-                  ns = (i/nps)*nblk ! local start of block i
-                  nl = min(nvr-i*nblk,nblk) ! length
-                  aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
-                  k = k+nblk
-               enddo
-            enddo
-         endif
-
-         call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_REAL8,ips,comm_s,mpierr)
-
-         k = 0
-         do lc=1,nvc
-            do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-               ns = (i/npt)*nblk ! local start of block i
-               nl = min(nvr-i*nblk,nblk) ! length
-               vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)
-               k = k+nblk
-            enddo
-         enddo
-
-      endif
-
-   enddo
-
-   deallocate(aux)
-
-end subroutine
-
-!-------------------------------------------------------------------------------
-
-subroutine elpa_reduce_add_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
-
-!-------------------------------------------------------------------------------
-! This routine does a reduce of all vectors in vmat_s over the communicator comm_t.
-! The result of the reduce is gathered on the processors owning the diagonal
-! and added to the array of vectors vmat_t (which is distributed over comm_t).
-!
-! Opposed to elpa_transpose_vectors, there is NO identical copy of vmat_s
-! in the different members within vmat_t (else a reduce wouldn't be necessary).
-! After this routine, an allreduce of vmat_t has to be done.
-!
-! vmat_s    array of vectors to be reduced and added
-! ld_s      leading dimension of vmat_s
-! comm_s    communicator over which vmat_s is distributed
-! vmat_t    array of vectors to which vmat_s is added
-! ld_t      leading dimension of vmat_t
-! comm_t    communicator over which vmat_t is distributed
-! nvr       global length of vmat_s/vmat_t
-! nvc       number of columns in vmat_s/vmat_t
-! nblk      block size of block cyclic distribution
-!
-!-------------------------------------------------------------------------------
-
-   use ELPA1 ! for least_common_multiple
-
-   implicit none
-
-   include 'mpif.h'
-
-   integer, intent(in)   :: ld_s, comm_s, ld_t, comm_t, nvr, nvc, nblk
-   real*8, intent(in)    :: vmat_s(ld_s,nvc)
-   real*8, intent(inout) :: vmat_t(ld_t,nvc)
-
-   real*8, allocatable :: aux1(:), aux2(:)
-   integer myps, mypt, nps, npt
-   integer n, lc, k, i, ips, ipt, ns, nl, mpierr
-   integer lcm_s_t, nblks_tot
-
-   call mpi_comm_rank(comm_s,myps,mpierr)
-   call mpi_comm_size(comm_s,nps ,mpierr)
-   call mpi_comm_rank(comm_t,mypt,mpierr)
-   call mpi_comm_size(comm_t,npt ,mpierr)
-
-   ! Look to elpa_transpose_vectors for the basic idea!
-
-   ! The communictation pattern repeats in the global matrix after
-   ! the least common multiple of (nps,npt) blocks
-
-   lcm_s_t   = least_common_multiple(nps,npt) ! least common multiple of nps, npt
-
-   nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
-
-   allocate(aux1( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
-   allocate(aux2( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
-   aux1(:) = 0
-   aux2(:) = 0
-
-   do n = 0, lcm_s_t-1
-
-      ips = mod(n,nps)
-      ipt = mod(n,npt)
-
-      if(myps == ips) then
-
-         k = 0
-         do lc=1,nvc
-            do i = n, nblks_tot-1, lcm_s_t
-               ns = (i/nps)*nblk ! local start of block i
-               nl = min(nvr-i*nblk,nblk) ! length
-               aux1(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
-               k = k+nblk
-            enddo
-         enddo
-
-         if(k>0) call mpi_reduce(aux1,aux2,k,MPI_REAL8,MPI_SUM,ipt,comm_t,mpierr)
-
-         if(mypt == ipt) then
-            k = 0
-            do lc=1,nvc
-               do i = n, nblks_tot-1, lcm_s_t
-                  ns = (i/npt)*nblk ! local start of block i
-                  nl = min(nvr-i*nblk,nblk) ! length
-                  vmat_t(ns+1:ns+nl,lc) = vmat_t(ns+1:ns+nl,lc) + aux2(k+1:k+nl)
-                  k = k+nblk
-               enddo
-            enddo
-         endif
-
-      endif
-
-   enddo
-
-   deallocate(aux1)
-   deallocate(aux2)
-
-end subroutine
 
 !-------------------------------------------------------------------------------

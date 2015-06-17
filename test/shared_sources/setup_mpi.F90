@@ -45,10 +45,8 @@ module mod_setup_mpi
   contains
 
     subroutine setup_mpi(myid, nprocs)
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
       use test_util
+      use ELPA_utilities
       implicit none
       include 'mpif.h'
 

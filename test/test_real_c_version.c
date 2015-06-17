@@ -176,7 +176,7 @@ main(int argc, char** argv) {
 
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 
-   success = elpa_solve_evp_real_1stage(na, nev, na_cols, a, na_rows, ev, z, na_rows, nblk, mpi_comm_rows, mpi_comm_cols);
+   success = elpa_solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
 
    if (success != 1) {
      printf("error in ELPA solve \n");

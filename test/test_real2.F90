@@ -83,6 +83,7 @@ program test_real2
 #ifdef WITH_GPU_VERSION
    use cuda_routines
 #endif
+   use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -93,9 +94,6 @@ program test_real2
    use mod_blacs_infrastructure
    use mod_prepare_matrix
 
-#ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
-#endif
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
@@ -134,25 +132,15 @@ program test_real2
 #endif
    logical                 :: write_to_file
 
-
-#ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter       :: error_unit = 6
-#endif
-
   logical                  :: success
 
 #ifdef WITH_GPU_VERSION
    character(len=1024)     :: envname
    integer                 :: istat, devnum, numdevs
 #endif
-   write_to_file = .false.
+
    success = .true.
 
-   nblk = 16
-   na = 4000
-   nev = 1500
-
-   ! read input parameters if they are provided
    call read_input_parameters(na, nev, nblk, write_to_file)
 
    !-------------------------------------------------------------------------------
@@ -354,7 +342,7 @@ program test_real2
    end if
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
                               mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
