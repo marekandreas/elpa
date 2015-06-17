@@ -700,7 +700,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
    integer             :: cur_l_rows, cur_l_cols, vmr_size, umc_size
    integer(C_SIZE_T)   :: lc_start, lc_end
    integer             :: lr_end
-   integer             :: na_rows2, na_cols2
+   integer             :: na_rows, na_cols
 #endif
    logical, intent(in) :: wantDebug
    logical, intent(out):: success
@@ -730,6 +730,11 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
        return
      endif
    endif
+
+#ifdef WITH_GPU_VERSION
+   na_rows = numroc(na, nblk, my_prow, 0, np_rows)
+   na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
+#endif
 
    ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
@@ -783,37 +788,25 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
 
      endif
 #endif
-   endif
+   endif ! useQr
 
 #ifdef WITH_GPU_VERSION
-   na_rows2 = numroc(na, nblk, my_prow, 0, np_rows)
-
-   if (na_rows .ne. na_rows2) then
-     print *,"why is na_rows not equal? ",na_rows,na_rows2
-     stop
-   endif
-   na_cols2 = numroc(na, nblk, my_pcol, 0, np_cols)
-   if (na_cols .ne. na_cols2) then
-     print *,"why is na_cols not equal? ",na_cols,na_cols2
-     stop
-   endif
-
    ! Here we convert the regular host array into a pinned host array
    istat = cuda_malloc(a_dev, lda*na_cols*8_8)
    if (istat .ne. 0) then
-     print *,"error in cudaMalloc"
+     print *,"bandred_real: error in cudaMalloc"
      stop
    endif
 
    istat = cuda_malloc(tmat_dev, nbw*nbw*8_8)
    if (istat .ne. 0) then
-     print *,"error in cudaMalloc"
+     print *,"bandred_real: error in cudaMalloc"
      stop
    endif
 
    istat = cuda_malloc(vav_dev, nbw*nbw*8_8)
    if (istat .ne. 0) then
-     print *,"error in cudaMalloc"
+     print *,"bandred_real: error in cudaMalloc"
      stop
    endif
 
@@ -822,7 +815,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
 
    istat = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)*8_8,cudaMemcpyHostToDevice)
    if (istat .ne. 0) then
-     print *,"error in cudaMemcpy"
+     print *,"bandred_real: error in cudaMemcpy"
      stop
    endif
 
@@ -1286,7 +1279,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
       stop
     endif
 
-    call symm_matrix_allreduce(n_cols,vav,ubound(vav,dim=1),mpi_comm_cols)
+    call symm_matrix_allreduce(n_cols,vav, nbw,nbw,mpi_comm_cols)
 
     istat = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*8_8,cudaMemcpyHostToDevice)
     if (istat .ne. 0) then
@@ -1370,6 +1363,23 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
     stop
   endif
 
+  istat = cuda_free(a_dev)
+  if (istat .ne. 0) then
+    print *,"bandred_real: error in cudaFree"
+    stop
+  endif
+
+  istat = cuda_free(tmat_dev)
+  if (istat .ne. 0) then
+    print *,"bandred_real: error in cudaFree"
+    stop
+  endif
+
+  istat = cuda_free(vav_dev)
+  if (istat .ne. 0) then
+    print *,"bandred_real: error in cudaFree"
+    stop
+  endif
 #endif
 
     if (allocated(vr)) then
@@ -1948,7 +1958,7 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
      stop
    endif
 
-   istat = cuda_memcpy(loc(q), q_dev, ldq*nqc*8_8, cudaMemcpyDeviceToHost)
+   istat = cuda_memcpy(loc(q), q_dev, ldq*matrixCols*8_8, cudaMemcpyDeviceToHost)
    if (istat .ne. 0) then
      print *,"trans_ev_band_to_full_real: error in cudaFree"
      stop
@@ -5037,7 +5047,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_com
    integer(c_size_t)       :: umc_dev, tmat_dev,vav_dev,vmr_dev,a_dev
    integer                 :: cur_l_rows, cur_l_cols,vmr_size ,umc_size
    integer(c_size_t)       :: lc_start, lc_end, lr_end, lce_1, lcs_1,lre_1
-   integer                 :: na_rows2, na_cols2
+   integer                 :: na_rows, na_cols
    integer, external       :: numroc
 #endif
 
@@ -5070,14 +5080,14 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_com
    endif
 
 #ifdef WITH_GPU_VERSION
-   na_rows2 = numroc(na, nblk, my_prow, 0, np_rows)
-   if (na_rows .ne. na_rows2) then
-     print *,"bandred_complex: Why is na_rows not equal? ",na_rows,na_rows2
-   endif
-   na_cols2 = numroc(na, nblk, my_pcol, 0, np_cols)
-   if (na_cols .ne. na_cols2) then
-     print *,"bandred_complex: Why is na_cols not equal? ",na_cols,na_cols2
-   endif
+   na_rows = numroc(na, nblk, my_prow, 0, np_rows)
+!   if (na_rows .ne. na_rows2) then
+!     print *,"bandred_complex: Why is na_rows not equal? ",na_rows,na_rows2
+!   endif
+   na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
+!   if (na_cols .ne. na_cols2) then
+!     print *,"bandred_complex: Why is na_cols not equal? ",na_cols,na_cols2
+!   endif
 
    istat = cuda_malloc(tmat_dev, nbw*nbw*16_8)
    if (istat .ne. 0) then
@@ -5531,7 +5541,7 @@ subroutine bandred_complex(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_com
        stop
      endif
 
-     call herm_matrix_allreduce(n_cols,vav,ubound(vav,dim=1),mpi_comm_cols)
+     call herm_matrix_allreduce(n_cols,vav, nbw, nbw,mpi_comm_cols)
 
      istat = cuda_memcpy(vav_dev,loc(vav(1,1)),nbw*nbw*16_8,cudaMemcpyHostToDevice)
      if (istat .ne. 0) then
@@ -6058,7 +6068,7 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
      stop
    endif
 
-   istat = cuda_memcpy(loc(q_temp), q_dev,ldq*matrixCols*16_8, cudaMemcpyDeviceToHost)
+   istat = cuda_memcpy(loc(q), q_dev,ldq*matrixCols*16_8, cudaMemcpyDeviceToHost)
    if (istat .ne. 0) then
      print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
      stop
@@ -9145,29 +9155,29 @@ contains
 #ifdef WITH_GPU_VERSION
     ! The host wrapper for extracting "tau" from the HH reflectors (see the
     ! kernel below)
-!    subroutine extract_hh_tau_complex(nbw, n, is_zero)
-!
-!      implicit none
-!      integer, value :: nbw, n
-!      logical, value :: is_zero
-!      integer        :: val_is_zero
-!
-!      if (is_zero) then
-!        val_is_zero = 1
-!      else
-!        val_is_zero = 0
-!      endif
-!      call launch_extract_hh_tau_c_kernel_complex(bcast_buffer_dev,hh_tau_dev, nbw, n,val_is_zero)
-!    end subroutine
-!
-!    subroutine compute_hh_dot_products_complex(nbw, n)
-!
-!      implicit none
-!      integer, value :: nbw, n
-!
-!      if (n .le. 1) return
-!      call launch_compute_hh_dotp_c_kernel_complex( bcast_buffer_dev, hh_dot_dev, nbw,n)
-!     end subroutine
+    subroutine extract_hh_tau_complex(nbw, n, is_zero)
+
+      implicit none
+      integer, value :: nbw, n
+      logical, value :: is_zero
+      integer        :: val_is_zero
+
+      if (is_zero) then
+        val_is_zero = 1
+      else
+        val_is_zero = 0
+      endif
+      call launch_extract_hh_tau_c_kernel_complex(bcast_buffer_dev,hh_tau_dev, nbw, n,val_is_zero)
+    end subroutine
+
+    subroutine compute_hh_dot_products_complex(nbw, n)
+
+      implicit none
+      integer, value :: nbw, n
+
+      if (n .le. 1) return
+      call launch_compute_hh_dotp_c_kernel_complex( bcast_buffer_dev, hh_dot_dev, nbw,n)
+     end subroutine
 
      subroutine pack_row_group_complex(rows, n_offset, row_count)
 
@@ -9241,13 +9251,14 @@ contains
 
       integer             :: a_off
       integer(c_size_t)   :: dev_offset, dev_offset_1, dev_offset_2
+
       if (ncols < 1) return
       ttt = mpi_wtime()
       nl = merge(stripe_width, last_stripe_width, istripe < stripe_count)
 
-      dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) *16
-      dev_offset_1 = (0 +  (  off-1 )* nbw) *16
-      dev_offset_2 =( off-1 )*16
+      dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) *16_8
+      dev_offset_1 = (0 +  (  off-1 )* nbw) *16_8
+      dev_offset_2 =( off-1 )*16_8
 
 !      t1_compute_kernel =MPI_Wtime()
       call launch_compute_hh_trafo_c_kernel_complex(a_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
