@@ -14,6 +14,9 @@
 !      and
 !    - IBM Deutschland GmbH
 !
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of 
+!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.rzg.mpg.de/
@@ -4274,11 +4277,14 @@ subroutine elpa_transpose_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,
 !-------------------------------------------------------------------------------
 
    use ELPA1 ! for least_common_multiple
+#ifdef WITH_OPENMP
+   use omp_lib
+#endif
 
    implicit none
 
    include 'mpif.h'
-
+   
    integer, intent(in)   :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
    real*8, intent(in)    :: vmat_s(ld_s,nvc)
    real*8, intent(inout) :: vmat_t(ld_t,nvc)
@@ -4287,6 +4293,8 @@ subroutine elpa_transpose_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,
    integer myps, mypt, nps, npt
    integer n, lc, k, i, ips, ipt, ns, nl, mpierr
    integer lcm_s_t, nblks_tot, nblks_comm, nblks_skip
+   integer auxstride
+   integer, parameter :: error_unit = 6
 
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)
@@ -4310,8 +4318,9 @@ subroutine elpa_transpose_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,
 
    nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
 
-   allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
-
+   allocate( aux( (nblks_tot-nblks_skip+lcm_s_t-1) / lcm_s_t * nblk * nvc ) )
+    
+   !$omp parallel private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n)
    do n = 0, lcm_s_t-1
 
       ips = mod(n,nps)
@@ -4320,35 +4329,41 @@ subroutine elpa_transpose_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,
       if(mypt == ipt) then
 
          nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
-         if(nblks_comm==0) cycle
+         auxstride = nblk * nblks_comm
+         if(nblks_comm .ne. 0) then
 
          if(myps == ips) then
-            k = 0
+            !$omp do
             do lc=1,nvc
                do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+                  k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                   ns = (i/nps)*nblk ! local start of block i
                   nl = min(nvr-i*nblk,nblk) ! length
                   aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
-                  k = k+nblk
                enddo
             enddo
          endif
-
+         
+         !$omp barrier
+         !$omp master
          call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_REAL8,ips,comm_s,mpierr)
+         !$omp end master
+         !$omp barrier
 
-         k = 0
+         !$omp do
          do lc=1,nvc
             do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+               k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                ns = (i/npt)*nblk ! local start of block i
                nl = min(nvr-i*nblk,nblk) ! length
                vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)
-               k = k+nblk
             enddo
          enddo
-
+         endif
       endif
-
    enddo
+   
+   !$omp end parallel
 
    deallocate(aux)
 
@@ -4380,6 +4395,9 @@ subroutine elpa_reduce_add_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc
 !-------------------------------------------------------------------------------
 
    use ELPA1 ! for least_common_multiple
+#ifdef WITH_OPENMP
+   use omp_lib
+#endif
 
    implicit none
 
@@ -4393,6 +4411,7 @@ subroutine elpa_reduce_add_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc
    integer myps, mypt, nps, npt
    integer n, lc, k, i, ips, ipt, ns, nl, mpierr
    integer lcm_s_t, nblks_tot
+   integer auxstride, tylerk, error_unit
 
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)
@@ -4412,34 +4431,42 @@ subroutine elpa_reduce_add_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc
    allocate(aux2( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
    aux1(:) = 0
    aux2(:) = 0
-
+   
+   !$omp parallel private(ips, ipt, auxstride, lc, i, k, ns, nl)
    do n = 0, lcm_s_t-1
 
       ips = mod(n,nps)
       ipt = mod(n,npt)
 
+      auxstride = nblk * ((nblks_tot - n + lcm_s_t - 1)/lcm_s_t)
+
       if(myps == ips) then
 
-         k = 0
+         !$omp do
          do lc=1,nvc
             do i = n, nblks_tot-1, lcm_s_t
+               k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                ns = (i/nps)*nblk ! local start of block i
                nl = min(nvr-i*nblk,nblk) ! length
                aux1(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
-               k = k+nblk
             enddo
          enddo
 
+         k = nvc * auxstride
+         !$omp barrier
+         !$omp master
          if(k>0) call mpi_reduce(aux1,aux2,k,MPI_REAL8,MPI_SUM,ipt,comm_t,mpierr)
+         !$omp end master
+         !$omp barrier
 
          if(mypt == ipt) then
-            k = 0
+            !$omp do
             do lc=1,nvc
                do i = n, nblks_tot-1, lcm_s_t
+                  k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                   ns = (i/npt)*nblk ! local start of block i
                   nl = min(nvr-i*nblk,nblk) ! length
                   vmat_t(ns+1:ns+nl,lc) = vmat_t(ns+1:ns+nl,lc) + aux2(k+1:k+nl)
-                  k = k+nblk
                enddo
             enddo
          endif
@@ -4447,6 +4474,7 @@ subroutine elpa_reduce_add_vectors(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc
       endif
 
    enddo
+   !$omp end parallel
 
    deallocate(aux1)
    deallocate(aux2)

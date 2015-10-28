@@ -56,6 +56,11 @@ module mod_setup_mpi
 #ifdef WITH_OPENMP
       integer    :: required_mpi_thread_level, &
                     provided_mpi_thread_level
+
+#ifndef HAVE_ISO_FORTRAN_ENV
+      integer, parameter :: error_unit = 6
+#endif
+
 #endif
 #ifndef WITH_OPENMP
       call mpi_init(mpierr)
