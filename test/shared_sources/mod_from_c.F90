@@ -60,6 +60,23 @@ module from_c
   end interface
 
   interface
+    integer(kind=c_int) function elpa1_complex_c(na, nev,  a, lda, ev, q, ldq,         &
+                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols ) &
+                                       bind(C, name="call_elpa1_complex_solver_from_c")
+
+      use iso_c_binding
+      implicit none
+
+      integer(kind=c_int), value  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=c_double)         :: ev(1:na)
+      complex(kind=c_double)      :: a(1:lda,1:matrixCOls), q(1:ldq,1:matrixCols)
+
+    end function elpa1_complex_c
+
+
+  end interface
+
+  interface
     integer(kind=c_int) function elpa_get_comm_c(mpi_comm_world, my_prow, my_pcol, &
                                                  mpi_comm_rows, mpi_comm_cols)     &
                                                  bind(C, name="call_elpa_get_comm_from_c")
@@ -84,7 +101,7 @@ module from_c
     logical :: success
     integer :: successC
 
-    real*8  :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+    real(kind=c_double)  :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
 
     successC = elpa1_real_c(na, nev, a, lda, ev, q, ldq, nblk, &
                             matrixCols, mpi_comm_rows, mpi_comm_cols)
@@ -96,6 +113,33 @@ module from_c
     endif
 
   end function
+
+  function solve_elpa1_complex_call_from_c(na, nev, a, lda, ev, q, ldq,         &
+                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols ) &
+                      result(success)
+
+    use iso_c_binding
+    implicit none
+
+    integer :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+    logical :: success
+    integer :: successC
+
+    real(kind=c_double)    :: ev(1:na)
+    complex(kind=c_double) :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+
+
+    successC = elpa1_complex_c(na, nev, a, lda, ev, q, ldq, nblk, &
+                            matrixCols, mpi_comm_rows, mpi_comm_cols)
+
+    if (successC .eq. 1) then
+      success = .true.
+    else
+      success = .false.
+    endif
+
+  end function
+
 
   function call_elpa_get_comm_from_c(mpi_comm_world, my_prow, my_pcol, &
                                      mpi_comm_rows, mpi_comm_cols) result(mpierr)

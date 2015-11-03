@@ -93,7 +93,8 @@ main(int argc, char** argv) {
      printf("and uses a blocksize of %d\n",nblk);
      printf("\n");
      printf("This is an example program with much less functionality\n");
-     printf("as it's Fortran counterpart \n");
+     printf("as it's Fortran counterpart. It's only purpose is to show how \n");
+     printf("to evoke ELPA1 from a c programm\n");
      printf("\n");
 
    }

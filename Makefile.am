@@ -95,17 +95,17 @@ nobase_elpa_include_HEADERS += elpa/elpa.h elpa/elpa_kernel_constants.h elpa/elp
 # other files to distribute
 filesdir = $(docdir)/examples
 dist_files_DATA = \
-  test/read_real.F90 \
-  test/test_complex2.F90 \
-  test/test_complex2_default_kernel.F90 \
-  test/test_complex2_choose_kernel_with_api.F90 \
-  test/test_complex.F90 \
-  test/test_real2.F90 \
-  test/test_real2_default_kernel.F90 \
-  test/test_real2_default_kernel_qr_decomposition.F90 \
-  test/test_real2_choose_kernel_with_api.F90 \
-  test/test_real.F90 \
-  test/test_real_with_c.F90 \
+  test/fortran_test_programs/read_real.F90 \
+  test/fortran_test_programs/test_complex2.F90 \
+  test/fortran_test_programs/test_complex2_default_kernel.F90 \
+  test/fortran_test_programs/test_complex2_choose_kernel_with_api.F90 \
+  test/fortran_test_programs/test_complex.F90 \
+  test/fortran_test_programs/test_real2.F90 \
+  test/fortran_test_programs/test_real2_default_kernel.F90 \
+  test/fortran_test_programs/test_real2_default_kernel_qr_decomposition.F90 \
+  test/fortran_test_programs/test_real2_choose_kernel_with_api.F90 \
+  test/fortran_test_programs/test_real.F90 \
+  test/fortran_test_programs/test_real_with_c.F90 \
   src/print_available_elpa2_kernels.F90
 
 dist_doc_DATA = README COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
@@ -129,6 +129,9 @@ noinst_PROGRAMS = \
   elpa2_test_real_choose_kernel_with_api@SUFFIX@ \
   elpa2_test_complex_choose_kernel_with_api@SUFFIX@ \
   elpa1_test_real_c_version@SUFFIX@ \
+  elpa1_test_complex_c_version@SUFFIX@ \
+  elpa2_test_real_c_version@SUFFIX@ \
+  elpa2_test_complex_c_version@SUFFIX@ \
   elpa1_test_real_with_c@SUFFIX@
 
 
@@ -143,45 +146,61 @@ endif
 shared_sources = test/shared_sources/util.F90 test/shared_sources/read_input_parameters.F90  test/shared_sources/check_correctnes.F90 test/shared_sources/setup_mpi.F90 \
 		 test/shared_sources/blacs_infrastructure.F90 test/shared_sources/prepare_matrix.F90
 
-elpa1_test_real_c_version@SUFFIX@_SOURCES = test/test_real_c_version.c $(shared_sources) $(redirect_sources)
+elpa1_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_real_c_version.c $(shared_sources) $(redirect_sources)
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 
-elpa1_test_real@SUFFIX@_SOURCES = test/test_real.F90 $(shared_sources) $(redirect_sources)
+elpa1_test_complex_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_complex_c_version.c $(shared_sources) $(redirect_sources)
+elpa1_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
+
+elpa2_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa2_test_real_c_version.c $(shared_sources) $(redirect_sources)
+elpa2_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
+
+elpa2_test_complex_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa2_test_complex_c_version.c $(shared_sources) $(redirect_sources)
+elpa2_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
+
+
+elpa1_test_real@SUFFIX@_SOURCES = test/fortran_test_programs/test_real.F90 $(shared_sources) $(redirect_sources)
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
 
-elpa1_test_real_with_c@SUFFIX@_SOURCES = test/test_real_with_c.F90 test/shared_sources/mod_from_c.F90 test/shared_sources/call_elpa1_real.c  $(shared_sources) $(redirect_sources)
+elpa1_test_real_with_c@SUFFIX@_SOURCES = test/fortran_test_programs/test_real_with_c.F90 test/shared_sources/mod_from_c.F90 test/shared_sources/call_elpa1.c $(shared_sources) $(redirect_sources)
 elpa1_test_real_with_c@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_real@SUFFIX@_SOURCES = test/test_real2.F90 $(shared_sources) $(redirect_sources)
+elpa1_test_complex_with_c@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex_with_c.F90 test/shared_sources/mod_from_c.F90 test/shared_sources/call_elpa1.c $(shared_sources) $(redirect_sources)
+elpa1_test_cpmplex_with_c@SUFFIX@_LDADD = $(build_lib)
+
+elpa2_test_real@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2.F90 $(shared_sources) $(redirect_sources)
 
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/test_real2_default_kernel.F90 $(shared_sources) $(redirect_sources)
+elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_default_kernel.F90 $(shared_sources) $(redirect_sources)
 
 elpa2_test_real_default_kernel@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES = test/test_real2_default_kernel_qr_decomposition.F90 $(shared_sources) $(redirect_sources)
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_default_kernel_qr_decomposition.F90 $(shared_sources) $(redirect_sources)
 
 elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_real2_choose_kernel_with_api.F90 $(shared_sources) $(redirect_sources)
+elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_choose_kernel_with_api.F90 $(shared_sources) $(redirect_sources)
 
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 
-elpa1_test_complex@SUFFIX@_SOURCES = test/test_complex.F90 $(shared_sources) $(redirect_sources)
+elpa1_test_complex@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex.F90 $(shared_sources) $(redirect_sources)
 
 elpa1_test_complex@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_complex@SUFFIX@_SOURCES = test/test_complex2.F90 $(shared_sources) $(redirect_sources)
+elpa2_test_complex@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex2.F90 $(shared_sources) $(redirect_sources)
 
 elpa2_test_complex@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/test_complex2_default_kernel.F90 $(shared_sources) $(redirect_sources)
+elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex2_default_kernel.F90 $(shared_sources) $(redirect_sources)
 
 elpa2_test_complex_default_kernel@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/test_complex2_choose_kernel_with_api.F90 $(shared_sources) $(redirect_sources)
+elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex2_choose_kernel_with_api.F90 $(shared_sources) $(redirect_sources)
 
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 
@@ -193,6 +212,9 @@ check_SCRIPTS = \
   elpa1_test_real.sh \
   elpa1_test_real_with_c.sh \
   elpa1_test_real_c_version.sh \
+  elpa1_test_complex_c_version.sh \
+  elpa2_test_real_c_version.sh \
+  elpa2_test_complex_c_version.sh \
   elpa2_test_real.sh \
   elpa2_test_real_default_kernel.sh \
   elpa1_test_complex.sh \
@@ -216,6 +238,25 @@ elpa1_test_real_c_version.sh:
 	echo 'mpiexec -n 2 ./elpa1_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_c_version.sh
 	chmod +x elpa1_test_real_c_version.sh
 
+elpa1_test_complex_c_version.sh:
+	echo 'mpiexec -n 2 ./elpa1_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex_c_version.sh
+	chmod +x elpa1_test_complex_c_version.sh
+
+elpa2_test_real_c_version.sh:
+	echo 'mpiexec -n 2 ./elpa2_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_c_version.sh
+	chmod +x elpa2_test_real_c_version.sh
+
+elpa2_test_complex_c_version.sh:
+	echo 'mpiexec -n 2 ./elpa2_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_c_version.sh
+	chmod +x elpa2_test_complex_c_version.sh
+
+elpa1_test_real_c_version.sh:
+	echo 'mpiexec -n 2 ./elpa1_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_c_version.sh
+	chmod +x elpa1_test_real_c_version.sh
+
+elpa1_test_complex_c_version.sh:
+	echo 'mpiexec -n 2 ./elpa1_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex_c_version.sh
+	chmod +x elpa1_test_complex_c_version.sh
 elpa2_test_real.sh:
 	echo 'mpiexec -n 2 ./elpa2_test_real@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real.sh
 	chmod +x elpa2_test_real.sh

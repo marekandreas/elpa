@@ -47,6 +47,7 @@
 ! distributed along with the original code in the file "COPYING".
 
 #include "config-f90.h"
+  !c> #include <complex.h>
 
   !c> int elpa_get_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
   function get_elpa_row_col_comms_wrapper(mpi_comm_world, my_prow, my_pcol, &
@@ -55,6 +56,7 @@
     use, intrinsic :: iso_c_binding
     use elpa1, only : get_elpa_row_col_comms
 
+    implicit none
     integer(kind=c_int)         :: mpierr
     integer(kind=c_int), value  :: mpi_comm_world, my_prow, my_pcol
     integer(kind=c_int)         :: mpi_comm_rows, mpi_comm_cols
@@ -72,6 +74,7 @@
     use, intrinsic :: iso_c_binding
     use elpa1, only : solve_evp_real
 
+    implicit none
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows
     real(kind=c_double)                    :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
@@ -88,7 +91,7 @@
 
   end function
 
-  ! int elpa_solve_evp_complex_stage1(int na, int nev, double_complex *a, int lda, double *ev, double_complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+  !c> int elpa_solve_evp_complex_stage1(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
   function solve_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk, &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols)      &
                                   result(success) bind(C,name="elpa_solve_evp_complex_1stage")
@@ -96,6 +99,7 @@
     use, intrinsic :: iso_c_binding
     use elpa1, only : solve_evp_complex
 
+    implicit none
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows
     complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
@@ -113,7 +117,7 @@
 
   end function
 
-  !c> int elpa_solve_evp_real_stage2(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int THIS_REAL_ELPA_KERNEL_API, int useQR);
+  !c> int elpa_solve_evp_real_stage2(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
   function solve_elpa2_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
                                   THIS_REAL_ELPA_KERNEL_API, useQR)           &
@@ -122,6 +126,7 @@
     use, intrinsic :: iso_c_binding
     use elpa2, only : solve_evp_real_2stage
 
+    implicit none
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
                                               mpi_comm_all
@@ -138,7 +143,8 @@
       useQRFortran = .true.
     endif
 
-    successFortran = solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+    successFortran = solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                           mpi_comm_cols, mpi_comm_all,                                  &
                                            THIS_REAL_ELPA_KERNEL_API, useQRFortran)
 
     if (successFortran) then
@@ -149,7 +155,7 @@
 
   end function
 
-  ! int elpa_solve_evp_complex_stage2(int na, int nev, double_complex *a, int lda, double *ev, double_complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+  !c> int elpa_solve_evp_complex_stage2(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
   function solve_elpa2_evp_complex_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
                                   THIS_COMPLEX_ELPA_KERNEL_API)                  &
@@ -158,6 +164,7 @@
     use, intrinsic :: iso_c_binding
     use elpa2, only : solve_evp_complex_2stage
 
+    implicit none
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
                                               mpi_comm_all

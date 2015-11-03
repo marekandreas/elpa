@@ -43,10 +43,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <elpa/elpa.h>
+#include <complex.h>
 
 int call_elpa1_real_solver_from_c(int na, int nev, int ncols, double *a, int lda, double *ev, double *q, int ldq, int nblk, int mpi_comm_rows, int mpi_comm_cols) {
   int result;
   result = elpa_solve_evp_real_1stage(na, nev, ncols, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols);
+  return result;
+}
+
+int call_elpa1_complex_solver_from_c(int na, int nev, int ncols, complex double *a, int lda, double *ev, complex double *q, int ldq, int nblk, int mpi_comm_rows, int mpi_comm_cols) {
+  int result;
+  result = elpa_solve_evp_complex_1stage(na, nev, ncols, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols);
   return result;
 }
 

@@ -101,8 +101,6 @@ if test x"${enable_openmp}" = x"yes"; then
 	FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 fi
 
-
-
 # C++
 AC_LANG([C++])
 AC_PROG_CXX
@@ -340,7 +338,7 @@ else
   AC_MSG_RESULT([${have_blas}])
 
   if test x"${have_blas}" = x"no" ; then
-    AC_MSG_ERROR([could not link with blas: specify path]) 
+    AC_MSG_ERROR([could not link with blas: specify path])
   fi
   dnl now lapack
   AC_SEARCH_LIBS([dlarrv],[lapack],[have_lapack=yes],[have_lapack=no])

@@ -528,7 +528,8 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ! Backtransform stage 2
 
    ttt0 = MPI_Wtime()
-   call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, &
+                                      mpi_comm_rows, mpi_comm_cols)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time trans_ev_band_to_full_complex :',ttt1-ttt0
@@ -847,13 +848,16 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
 
     ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
 
-    call dgemm('T','N',n_cols,n_cols,l_cols,1.d0,umc,ubound(umc,dim=1),umc(1,n_cols+1),ubound(umc,dim=1),0.d0,vav,ubound(vav,dim=1))
-    call dtrmm('Right','Upper','Trans','Nonunit',n_cols,n_cols,1.d0,tmat(1,1,istep),ubound(tmat,dim=1),vav,ubound(vav,dim=1))
+    call dgemm('T','N',n_cols,n_cols,l_cols,1.d0,umc,ubound(umc,dim=1),umc(1,n_cols+1), &
+               ubound(umc,dim=1),0.d0,vav,ubound(vav,dim=1))
+    call dtrmm('Right','Upper','Trans','Nonunit',n_cols,n_cols,1.d0,tmat(1,1,istep),    &
+               ubound(tmat,dim=1),vav,ubound(vav,dim=1))
 
     call symm_matrix_allreduce(n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
     ! U = U - 0.5 * V * VAV
-    call dgemm('N','N',l_cols,n_cols,n_cols,-0.5d0,umc(1,n_cols+1),ubound(umc,dim=1),vav,ubound(vav,dim=1),1.d0,umc,ubound(umc,dim=1))
+    call dgemm('N','N',l_cols,n_cols,n_cols,-0.5d0,umc(1,n_cols+1),ubound(umc,dim=1),vav, &
+                ubound(vav,dim=1),1.d0,umc,ubound(umc,dim=1))
 
     ! Transpose umc -> umr (stored in vmr, second half)
 
@@ -3568,7 +3572,8 @@ end subroutine herm_matrix_allreduce
 
 !-------------------------------------------------------------------------------
 
-subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols)
+subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, matrixCols,  &
+                                         numBlocks, mpi_comm_rows, mpi_comm_cols)
 
 !-------------------------------------------------------------------------------
 !  trans_ev_band_to_full_complex:

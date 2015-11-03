@@ -43,7 +43,7 @@ module mod_prepare_matrix
 
   interface prepare_matrix
     module procedure prepare_matrix_complex
-        module procedure prepare_matrix_real
+    module procedure prepare_matrix_real
   end interface
 
   contains
@@ -52,12 +52,12 @@ module mod_prepare_matrix
 
       implicit none
 
-      integer, intent(in)       :: myid, na, sc_desc(:)
-      integer, intent(inout)    :: iseed(:)
-      real*8, intent(inout)     :: xr(:,:)
-      complex*16, intent(inout) :: z(:,:), a(:,:), as(:,:)
+      integer, intent(in)            :: myid, na, sc_desc(:)
+      integer, intent(inout)         :: iseed(:)
+      real(kind=8), intent(inout)    :: xr(:,:)
+      complex(kind=8), intent(inout) :: z(:,:), a(:,:), as(:,:)
 
-      complex*16, parameter     :: CZERO = (0.d0, 0.d0), CONE = (1.d0, 0.d0)
+      complex(kind=8), parameter     :: CZERO = (0.d0, 0.d0), CONE = (1.d0, 0.d0)
 
       ! for getting a hermitian test matrix A we get a random matrix Z
       ! and calculate A = Z + Z**H
@@ -138,8 +138,23 @@ module mod_prepare_matrix
       real(kind=c_double)           :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                        as(1:na_rows,1:na_cols)
 
-      print *,"in prepare wrapper"
       call prepare_matrix_real(na, myid, sc_desc, iseed, a, z, as)
+    end subroutine
+
+    subroutine prepare_matrix_complex_wrapper(na, myid, na_rows, na_cols, sc_desc, iseed, xr, a, z, as) &
+                                          bind(C, name="prepare_matrix_complex_from_fortran")
+      use iso_c_binding
+
+      implicit none
+
+      integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
+      integer(kind=c_int)           :: sc_desc(1:9)
+      integer(kind=c_int)           :: iseed(1:4096)
+      real(kind=c_double)           :: xr(1:na_rows,1:na_cols)
+      complex(kind=c_double)        :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
+                                       as(1:na_rows,1:na_cols)
+
+      call prepare_matrix_complex(na, myid, sc_desc, iseed, xr, a, z, as)
     end subroutine
 
 end module

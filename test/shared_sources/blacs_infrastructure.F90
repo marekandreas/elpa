@@ -73,13 +73,17 @@ module mod_blacs_infrastructure
                                        np_rows, np_cols, na_rows,  &
                                        na_cols, sc_desc, my_blacs_ctxt, info)
 
+      use elpa_utilities, only : error_unit
+
       implicit none
+      include "mpif.h"
 
       integer, intent(inout)  :: na, nblk, my_prow, my_pcol, np_rows,   &
                                  np_cols, na_rows, na_cols, sc_desc(1:9), &
                                  my_blacs_ctxt, info
 
       integer, external       :: numroc
+      integer                 :: mpierr
 
       ! determine the neccessary size of the distributed matrices,
       ! we use the scalapack tools routine NUMROC
@@ -94,6 +98,17 @@ module mod_blacs_infrastructure
       !   row/col 0/0 (arg 6 and 7)
 
       call descinit(sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info)
+
+      if (info .ne. 0) then
+        write(error_unit,*) 'Error in BLACS descinit! info=',info
+        write(error_unit,*) 'Most likely this happend since you want to use'
+        write(error_unit,*) 'more MPI tasks than are possible for your'
+        write(error_unit,*) 'problem size (matrix size and blocksize)!'
+        write(error_unit,*) 'The blacsgrid can not be set up properly'
+        write(error_unit,*) 'Try reducing the number of MPI tasks...'
+        call MPI_ABORT(mpi_comm_world, 1, mpierr)
+      endif
+
     end subroutine
 
     subroutine set_up_blacs_descriptor_wrapper(na, nblk, my_prow, my_pcol, &

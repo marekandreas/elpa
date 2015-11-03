@@ -9,7 +9,7 @@ Debian, and OpenSuse. More, will hopefully follow in the future.
 
 If you want to build (or have to since no packages are available) ELPA yourself,
 please note that ELPA is shipped with a typical "configure" and "make"
-procedure. This is the only supported way how to build and install ELPA.
+autotools procedure. This is the only supported way how to build and install ELPA.
 
 If you obtained ELPA from the official git repository, you will not find
 the needed configure script! Please look at the "INSTALL_FROM_GIT_VERSION" file
