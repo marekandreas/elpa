@@ -15,7 +15,7 @@
 !    - IBM Deutschland GmbH
 !
 !    This particular source code file contains additions, changes and
-!    enhancements authored by Intel Corporation which is not part of 
+!    enhancements authored by Intel Corporation which is not part of
 !    the ELPA consortium.
 !
 !    More information can be found here:
@@ -1125,7 +1125,7 @@ end subroutine mult_at_b_real
 #define BYTESIZE 16
 #define COMPLEXCASE 1
 #include "elpa_transpose_vectors.X90"
-#include "elpa_reduce_add_vectors.X90"  
+#include "elpa_reduce_add_vectors.X90"
 #undef DATATYPE
 #undef BYTESIZE
 #undef COMPLEXCASE

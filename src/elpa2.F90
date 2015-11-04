@@ -937,7 +937,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
 
             lre = min(l_rows,(i+1)*l_rows_tile)
             call DGEMM('T','N',lce-lcs+1,n_cols,lre,1.d0,a(1,lcs),ubound(a,dim=1), &
-                         vmr,ubound(vmr,dim=1),1.d0,umc(lcs,dim=1),ubound(umc,dim=1))
+                         vmr,ubound(vmr,dim=1),1.d0,umc(lcs,1),ubound(umc,dim=1))
 
             if (i==0) cycle
             lre = min(l_rows,i*l_rows_tile)
@@ -955,9 +955,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
     ! global tile size is smaller than the global remaining matrix
     ! Or if we used the Algorithm 4
     if (tile_size < istep*nbw .or. n_way > 1) then
-    call elpa_reduce_add_vectors  (vmr(1,n_cols+1),ubound(vmr,dim=1),mpi_comm_rows, &
-                                   umc, ubound(umc,dim=11), mpi_comm_cols, &
-                                   istep*nbw, n_cols, nblk)
+    call elpa_reduce_add_vectors_real  (vmr(1,n_cols+1),ubound(vmr,dim=1),mpi_comm_rows, &
+                                        umc, ubound(umc,dim=1), mpi_comm_cols, &
+                                        istep*nbw, n_cols, nblk)
     endif
 
     if (l_cols>0) then

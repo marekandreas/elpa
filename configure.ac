@@ -231,6 +231,43 @@ if test "${can_compile_avx}" = "yes" ; then
   fi
 fi
 
+AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+ #include <x86intrin.h>
+ int main(int argc, char **argv){
+ double* q;
+ __m256d q1 = _mm256_load_pd(q);
+ __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+ return 0;
+ }
+ ])],
+ [can_compile_avx2=yes],
+ [can_compile_avx2=no]
+)
+AC_MSG_RESULT([${can_compile_avx2}])
+if test "${can_compile_avx2}" = "yes" ; then
+  AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
+  AC_LANG_PUSH([C++])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <x86intrin.h>
+   int main(int argc, char **argv){
+   double* q;
+   __m256d q1 = _mm256_load_pd(q);
+   __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+   return 0;
+   }
+   ])],
+   [can_compile_avx2=yes],
+   [can_compile_avx2=no]
+  )
+  AC_LANG_POP([C++])
+  AC_MSG_RESULT([${can_compile_avx2}])
+  if test "${can_compile_avx2}" = "no" ; then
+    AC_MSG_WARN([Cannot compile C++ with AVX2!])
+  fi
+fi
+
+
 if test "${can_compile_avx}" = "yes" ; then
   install_real_avx_block2=yes
   install_real_avx_block4=yes
@@ -685,6 +722,11 @@ grep "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_g
 if test "${can_compile_avx}" = "no" ; then
   if test x"${want_avx}" = x"yes" ; then
     AC_MSG_WARN([Could not compile AVX instructions])
+  fi
+fi
+if test "${can_compile_avx2}" = "no" ; then
+  if test x"${want_avx}" = x"yes" ; then
+    AC_MSG_WARN([Could not compile AVX2 instructions])
   fi
 fi
 
