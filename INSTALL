@@ -108,6 +108,9 @@ The configure installation is best done in four steps
    if the hardware does. If you already included "-mAVX" in the
    flags, you can skip "-march=native".
 
+   If you want to use the newer AVX2 instructions, assuming they are supported on
+   your hardware, please set CFLAGS="-march=avx2 -mfma" and CXXFLAGS="-march=avx2 -mfma".
+
 
    Setting the optimization flags for the AVX kernels can be a hassle. If AVX
    kernels are build for your system, you can set the configure option
@@ -119,6 +122,9 @@ The configure installation is best done in four steps
 
    ./configure CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O2"
 
+   An istallation with AVX2 and best-optimizations could thus look like this:
+
+   ./configure  CFLAGS="-O2 -mavx2 -mfma" CXXFLAGS="-O2 -mavx2 -mfma" FCFLAGS="-O2" --with-avx-optimization
 
 1.4 Installation location
 
@@ -160,6 +166,10 @@ The configure installation is best done in four steps
    ELPA kernels is tested. This is intended as a help to get used to this
    new feature. With the same thought in mind, a binary "elpa2_print_kernels"
    is provided, which is rather self-explanatory.
+
+   Also some of the above mentioned tests are provided as C source files.
+   These should demonstrate, how to call ELPA from a C program (i.e. which headers to include
+   and call the ELPA functions). They are NOT intended as a copy and paste solution!
 
 
 4) run "make install"
