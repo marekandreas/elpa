@@ -14,6 +14,9 @@
 !      and
 !    - IBM Deutschland GmbH
 !
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of 
+!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.rzg.mpg.de/
@@ -4284,15 +4287,3 @@ end subroutine
 ! --------------------------------------------------------------------------------------------------
 
 end module ELPA1
-
-! --------------------------------------------------------------------------------------------------
-! Please note that the following routines are outside of the module ELPA1
-! so that they can be used with real or complex data
-! --------------------------------------------------------------------------------------------------
-
-
-! to do: write interface and put them into module
-
-!-------------------------------------------------------------------------------
-
-!-------------------------------------------------------------------------------

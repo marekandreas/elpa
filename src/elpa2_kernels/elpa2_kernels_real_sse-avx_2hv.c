@@ -1,26 +1,29 @@
 //    This file is part of ELPA.
 //
-//    The ELPA library was originally created by the ELPA consortium, 
+//    The ELPA library was originally created by the ELPA consortium,
 //    consisting of the following organizations:
 //
-//    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), 
+//    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 //    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 //      Informatik,
 //    - Technische Universität München, Lehrstuhl für Informatik mit
-//      Schwerpunkt Wissenschaftliches Rechnen , 
-//    - Fritz-Haber-Institut, Berlin, Abt. Theorie, 
-//    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn, 
-//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition, 
-//      and  
+//      Schwerpunkt Wissenschaftliches Rechnen ,
+//    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+//    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//      and
 //    - IBM Deutschland GmbH
 //
+//    This particular source code file contains additions, changes and
+//    enhancements authored by Intel Corporation which is not part of
+//    the ELPA consortium.
 //
 //    More information can be found here:
 //    http://elpa.rzg.mpg.de/
 //
 //    ELPA is free software: you can redistribute it and/or modify
-//    it under the terms of the version 3 of the license of the 
-//    GNU Lesser General Public License as published by the Free 
+//    it under the terms of the version 3 of the license of the
+//    GNU Lesser General Public License as published by the Free
 //    Software Foundation.
 //
 //    ELPA is distributed in the hope that it will be useful,
@@ -63,6 +66,16 @@
 
 #ifdef __USE_AVX128__
 #undef __AVX__
+#endif
+
+#ifdef __FMA4__
+#define __ELPA_USE_FMA__
+#define _mm256_FMA_pd(a,b,c) _mm256_macc_pd(a,b,c)
+#endif
+
+#ifdef __AVX2__
+#define __ELPA_USE_FMA__
+#define _mm256_FMA_pd(a,b,c) _mm256_fmadd_pd(a,b,c)
 #endif
 
 //Forward declaration
@@ -218,19 +231,19 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	__m256d h1 = _mm256_broadcast_sd(&hh[ldh+1]);
 	__m256d h2;
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	__m256d q1 = _mm256_load_pd(q);
-	__m256d y1 = _mm256_macc_pd(x1, h1, q1);
+	__m256d y1 = _mm256_FMA_pd(x1, h1, q1);
 	__m256d q2 = _mm256_load_pd(&q[4]);
-	__m256d y2 = _mm256_macc_pd(x2, h1, q2);
+	__m256d y2 = _mm256_FMA_pd(x2, h1, q2);
 	__m256d q3 = _mm256_load_pd(&q[8]);
-	__m256d y3 = _mm256_macc_pd(x3, h1, q3);
+	__m256d y3 = _mm256_FMA_pd(x3, h1, q3);
 	__m256d q4 = _mm256_load_pd(&q[12]);
-	__m256d y4 = _mm256_macc_pd(x4, h1, q4);
+	__m256d y4 = _mm256_FMA_pd(x4, h1, q4);
 	__m256d q5 = _mm256_load_pd(&q[16]);
-	__m256d y5 = _mm256_macc_pd(x5, h1, q5);
+	__m256d y5 = _mm256_FMA_pd(x5, h1, q5);
 	__m256d q6 = _mm256_load_pd(&q[20]);
-	__m256d y6 = _mm256_macc_pd(x6, h1, q6);
+	__m256d y6 = _mm256_FMA_pd(x6, h1, q6);
 #else
 	__m256d q1 = _mm256_load_pd(q);
 	__m256d y1 = _mm256_add_pd(q1, _mm256_mul_pd(x1, h1));
@@ -250,25 +263,25 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	{
 		h1 = _mm256_broadcast_sd(&hh[i-1]);
 		h2 = _mm256_broadcast_sd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm256_load_pd(&q[i*ldq]);
-		x1 = _mm256_macc_pd(q1, h1, x1);
-		y1 = _mm256_macc_pd(q1, h2, y1);
+		x1 = _mm256_FMA_pd(q1, h1, x1);
+		y1 = _mm256_FMA_pd(q1, h2, y1);
 		q2 = _mm256_load_pd(&q[(i*ldq)+4]);
-		x2 = _mm256_macc_pd(q2, h1, x2);
-		y2 = _mm256_macc_pd(q2, h2, y2);
+		x2 = _mm256_FMA_pd(q2, h1, x2);
+		y2 = _mm256_FMA_pd(q2, h2, y2);
 		q3 = _mm256_load_pd(&q[(i*ldq)+8]);
-		x3 = _mm256_macc_pd(q3, h1, x3);
-		y3 = _mm256_macc_pd(q3, h2, y3);
+		x3 = _mm256_FMA_pd(q3, h1, x3);
+		y3 = _mm256_FMA_pd(q3, h2, y3);
 		q4 = _mm256_load_pd(&q[(i*ldq)+12]);
-		x4 = _mm256_macc_pd(q4, h1, x4);
-		y4 = _mm256_macc_pd(q4, h2, y4);
+		x4 = _mm256_FMA_pd(q4, h1, x4);
+		y4 = _mm256_FMA_pd(q4, h2, y4);
 		q5 = _mm256_load_pd(&q[(i*ldq)+16]);
-		x5 = _mm256_macc_pd(q5, h1, x5);
-		y5 = _mm256_macc_pd(q5, h2, y5);
+		x5 = _mm256_FMA_pd(q5, h1, x5);
+		y5 = _mm256_FMA_pd(q5, h2, y5);
 		q6 = _mm256_load_pd(&q[(i*ldq)+20]);
-		x6 = _mm256_macc_pd(q6, h1, x6);
-		y6 = _mm256_macc_pd(q6, h2, y6);
+		x6 = _mm256_FMA_pd(q6, h1, x6);
+		y6 = _mm256_FMA_pd(q6, h2, y6);
 #else
 		q1 = _mm256_load_pd(&q[i*ldq]);
 		x1 = _mm256_add_pd(x1, _mm256_mul_pd(q1,h1));
@@ -292,19 +305,19 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm256_broadcast_sd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[nb*ldq]);
-	x1 = _mm256_macc_pd(q1, h1, x1);
+	x1 = _mm256_FMA_pd(q1, h1, x1);
 	q2 = _mm256_load_pd(&q[(nb*ldq)+4]);
-	x2 = _mm256_macc_pd(q2, h1, x2);
+	x2 = _mm256_FMA_pd(q2, h1, x2);
 	q3 = _mm256_load_pd(&q[(nb*ldq)+8]);
-	x3 = _mm256_macc_pd(q3, h1, x3);
+	x3 = _mm256_FMA_pd(q3, h1, x3);
 	q4 = _mm256_load_pd(&q[(nb*ldq)+12]);
-	x4 = _mm256_macc_pd(q4, h1, x4);
+	x4 = _mm256_FMA_pd(q4, h1, x4);
 	q5 = _mm256_load_pd(&q[(nb*ldq)+16]);
-	x5 = _mm256_macc_pd(q5, h1, x5);
+	x5 = _mm256_FMA_pd(q5, h1, x5);
 	q6 = _mm256_load_pd(&q[(nb*ldq)+20]);
-	x6 = _mm256_macc_pd(q6, h1, x6);
+	x6 = _mm256_FMA_pd(q6, h1, x6);
 #else
 	q1 = _mm256_load_pd(&q[nb*ldq]);
 	x1 = _mm256_add_pd(x1, _mm256_mul_pd(q1,h1));
@@ -337,13 +350,13 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	x6 = _mm256_mul_pd(x6, h1);
 	h1 = _mm256_xor_pd(tau2, sign);
 	h2 = _mm256_mul_pd(h1, vs);
-#ifdef __FMA4__
-	y1 = _mm256_macc_pd(y1, h1, _mm256_mul_pd(x1,h2));
-	y2 = _mm256_macc_pd(y2, h1, _mm256_mul_pd(x2,h2));
-	y3 = _mm256_macc_pd(y3, h1, _mm256_mul_pd(x3,h2));
-	y4 = _mm256_macc_pd(y4, h1, _mm256_mul_pd(x4,h2));
-	y5 = _mm256_macc_pd(y5, h1, _mm256_mul_pd(x5,h2));
-	y6 = _mm256_macc_pd(y6, h1, _mm256_mul_pd(x6,h2));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_FMA_pd(y1, h1, _mm256_mul_pd(x1,h2));
+	y2 = _mm256_FMA_pd(y2, h1, _mm256_mul_pd(x2,h2));
+	y3 = _mm256_FMA_pd(y3, h1, _mm256_mul_pd(x3,h2));
+	y4 = _mm256_FMA_pd(y4, h1, _mm256_mul_pd(x4,h2));
+	y5 = _mm256_FMA_pd(y5, h1, _mm256_mul_pd(x5,h2));
+	y6 = _mm256_FMA_pd(y6, h1, _mm256_mul_pd(x6,h2));
 #else
 	y1 = _mm256_add_pd(_mm256_mul_pd(y1,h1), _mm256_mul_pd(x1,h2));
 	y2 = _mm256_add_pd(_mm256_mul_pd(y2,h1), _mm256_mul_pd(x2,h2));
@@ -373,24 +386,24 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	_mm256_store_pd(&q[20],q6);
 
 	h2 = _mm256_broadcast_sd(&hh[ldh+1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[ldq]);
-	q1 = _mm256_add_pd(q1, _mm256_macc_pd(y1, h2, x1));
+	q1 = _mm256_add_pd(q1, _mm256_FMA_pd(y1, h2, x1));
 	_mm256_store_pd(&q[ldq],q1);
 	q2 = _mm256_load_pd(&q[ldq+4]);
-	q2 = _mm256_add_pd(q2, _mm256_macc_pd(y2, h2, x2));
+	q2 = _mm256_add_pd(q2, _mm256_FMA_pd(y2, h2, x2));
 	_mm256_store_pd(&q[ldq+4],q2);
 	q3 = _mm256_load_pd(&q[ldq+8]);
-	q3 = _mm256_add_pd(q3, _mm256_macc_pd(y3, h2, x3));
+	q3 = _mm256_add_pd(q3, _mm256_FMA_pd(y3, h2, x3));
 	_mm256_store_pd(&q[ldq+8],q3);
 	q4 = _mm256_load_pd(&q[ldq+12]);
-	q4 = _mm256_add_pd(q4, _mm256_macc_pd(y4, h2, x4));
+	q4 = _mm256_add_pd(q4, _mm256_FMA_pd(y4, h2, x4));
 	_mm256_store_pd(&q[ldq+12],q4);
 	q5 = _mm256_load_pd(&q[ldq+16]);
-	q5 = _mm256_add_pd(q5, _mm256_macc_pd(y5, h2, x5));
+	q5 = _mm256_add_pd(q5, _mm256_FMA_pd(y5, h2, x5));
 	_mm256_store_pd(&q[ldq+16],q5);
 	q6 = _mm256_load_pd(&q[ldq+20]);
-	q6 = _mm256_add_pd(q6, _mm256_macc_pd(y6, h2, x6));
+	q6 = _mm256_add_pd(q6, _mm256_FMA_pd(y6, h2, x6));
 	_mm256_store_pd(&q[ldq+20],q6);
 #else
 	q1 = _mm256_load_pd(&q[ldq]);
@@ -417,24 +430,30 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	{
 		h1 = _mm256_broadcast_sd(&hh[i-1]);
 		h2 = _mm256_broadcast_sd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm256_load_pd(&q[i*ldq]);
-		q1 = _mm256_add_pd(q1, _mm256_macc_pd(x1, h1, _mm256_mul_pd(y1, h2)));
+		q1 = _mm256_FMA_pd(x1, h1, q1);
+		q1 = _mm256_FMA_pd(y1, h2, q1);
 		_mm256_store_pd(&q[i*ldq],q1);
 		q2 = _mm256_load_pd(&q[(i*ldq)+4]);
-		q2 = _mm256_add_pd(q2, _mm256_macc_pd(x2, h1, _mm256_mul_pd(y2, h2)));
+		q2 = _mm256_FMA_pd(x2, h1, q2);
+		q2 = _mm256_FMA_pd(y2, h2, q2);
 		_mm256_store_pd(&q[(i*ldq)+4],q2);
 		q3 = _mm256_load_pd(&q[(i*ldq)+8]);
-		q3 = _mm256_add_pd(q3, _mm256_macc_pd(x3, h1, _mm256_mul_pd(y3, h2)));
+		q3 = _mm256_FMA_pd(x3, h1, q3);
+		q3 = _mm256_FMA_pd(y3, h2, q3);
 		_mm256_store_pd(&q[(i*ldq)+8],q3);
 		q4 = _mm256_load_pd(&q[(i*ldq)+12]);
-		q4 = _mm256_add_pd(q4, _mm256_macc_pd(x4, h1, _mm256_mul_pd(y4, h2)));
+		q4 = _mm256_FMA_pd(x4, h1, q4);
+		q4 = _mm256_FMA_pd(y4, h2, q4);
 		_mm256_store_pd(&q[(i*ldq)+12],q4);
 		q5 = _mm256_load_pd(&q[(i*ldq)+16]);
-		q5 = _mm256_add_pd(q5, _mm256_macc_pd(x5, h1, _mm256_mul_pd(y5, h2)));
+		q5 = _mm256_FMA_pd(x5, h1, q5);
+		q5 = _mm256_FMA_pd(y5, h2, q5);
 		_mm256_store_pd(&q[(i*ldq)+16],q5);
 		q6 = _mm256_load_pd(&q[(i*ldq)+20]);
-		q6 = _mm256_add_pd(q6, _mm256_macc_pd(x6, h1, _mm256_mul_pd(y6, h2)));
+		q6 = _mm256_FMA_pd(x6, h1, q6);
+		q6 = _mm256_FMA_pd(y6, h2, q6);
 		_mm256_store_pd(&q[(i*ldq)+20],q6);
 #else
 		q1 = _mm256_load_pd(&q[i*ldq]);
@@ -459,24 +478,24 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm256_broadcast_sd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[nb*ldq]);
-	q1 = _mm256_macc_pd(x1, h1, q1);
+	q1 = _mm256_FMA_pd(x1, h1, q1);
 	_mm256_store_pd(&q[nb*ldq],q1);
 	q2 = _mm256_load_pd(&q[(nb*ldq)+4]);
-	q2 = _mm256_macc_pd(x2, h1, q2);
+	q2 = _mm256_FMA_pd(x2, h1, q2);
 	_mm256_store_pd(&q[(nb*ldq)+4],q2);
 	q3 = _mm256_load_pd(&q[(nb*ldq)+8]);
-	q3 = _mm256_macc_pd(x3, h1, q3);
+	q3 = _mm256_FMA_pd(x3, h1, q3);
 	_mm256_store_pd(&q[(nb*ldq)+8],q3);
 	q4 = _mm256_load_pd(&q[(nb*ldq)+12]);
-	q4 = _mm256_macc_pd(x4, h1, q4);
+	q4 = _mm256_FMA_pd(x4, h1, q4);
 	_mm256_store_pd(&q[(nb*ldq)+12],q4);
 	q5 = _mm256_load_pd(&q[(nb*ldq)+16]);
-	q5 = _mm256_macc_pd(x5, h1, q5);
+	q5 = _mm256_FMA_pd(x5, h1, q5);
 	_mm256_store_pd(&q[(nb*ldq)+16],q5);
 	q6 = _mm256_load_pd(&q[(nb*ldq)+20]);
-	q6 = _mm256_macc_pd(x6, h1, q6);
+	q6 = _mm256_FMA_pd(x6, h1, q6);
 	_mm256_store_pd(&q[(nb*ldq)+20],q6);
 #else
 	q1 = _mm256_load_pd(&q[nb*ldq]);
@@ -524,15 +543,15 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	__m256d h1 = _mm256_broadcast_sd(&hh[ldh+1]);
 	__m256d h2;
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	__m256d q1 = _mm256_load_pd(q);
-	__m256d y1 = _mm256_macc_pd(x1, h1, q1);
+	__m256d y1 = _mm256_FMA_pd(x1, h1, q1);
 	__m256d q2 = _mm256_load_pd(&q[4]);
-	__m256d y2 = _mm256_macc_pd(x2, h1, q2);
+	__m256d y2 = _mm256_FMA_pd(x2, h1, q2);
 	__m256d q3 = _mm256_load_pd(&q[8]);
-	__m256d y3 = _mm256_macc_pd(x3, h1, q3);
+	__m256d y3 = _mm256_FMA_pd(x3, h1, q3);
 	__m256d q4 = _mm256_load_pd(&q[12]);
-	__m256d y4 = _mm256_macc_pd(x4, h1, q4);
+	__m256d y4 = _mm256_FMA_pd(x4, h1, q4);
 #else
 	__m256d q1 = _mm256_load_pd(q);
 	__m256d y1 = _mm256_add_pd(q1, _mm256_mul_pd(x1, h1));
@@ -548,19 +567,19 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	{
 		h1 = _mm256_broadcast_sd(&hh[i-1]);
 		h2 = _mm256_broadcast_sd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm256_load_pd(&q[i*ldq]);
-		x1 = _mm256_macc_pd(q1, h1, x1);
-		y1 = _mm256_macc_pd(q1, h2, y1);
+		x1 = _mm256_FMA_pd(q1, h1, x1);
+		y1 = _mm256_FMA_pd(q1, h2, y1);
 		q2 = _mm256_load_pd(&q[(i*ldq)+4]);
-		x2 = _mm256_macc_pd(q2, h1, x2);
-		y2 = _mm256_macc_pd(q2, h2, y2);
+		x2 = _mm256_FMA_pd(q2, h1, x2);
+		y2 = _mm256_FMA_pd(q2, h2, y2);
 		q3 = _mm256_load_pd(&q[(i*ldq)+8]);
-		x3 = _mm256_macc_pd(q3, h1, x3);
-		y3 = _mm256_macc_pd(q3, h2, y3);
+		x3 = _mm256_FMA_pd(q3, h1, x3);
+		y3 = _mm256_FMA_pd(q3, h2, y3);
 		q4 = _mm256_load_pd(&q[(i*ldq)+12]);
-		x4 = _mm256_macc_pd(q4, h1, x4);
-		y4 = _mm256_macc_pd(q4, h2, y4);
+		x4 = _mm256_FMA_pd(q4, h1, x4);
+		y4 = _mm256_FMA_pd(q4, h2, y4);
 #else
 		q1 = _mm256_load_pd(&q[i*ldq]);
 		x1 = _mm256_add_pd(x1, _mm256_mul_pd(q1,h1));
@@ -578,15 +597,15 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm256_broadcast_sd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[nb*ldq]);
-	x1 = _mm256_macc_pd(q1, h1, x1);
+	x1 = _mm256_FMA_pd(q1, h1, x1);
 	q2 = _mm256_load_pd(&q[(nb*ldq)+4]);
-	x2 = _mm256_macc_pd(q2, h1, x2);
+	x2 = _mm256_FMA_pd(q2, h1, x2);
 	q3 = _mm256_load_pd(&q[(nb*ldq)+8]);
-	x3 = _mm256_macc_pd(q3, h1, x3);
+	x3 = _mm256_FMA_pd(q3, h1, x3);
 	q4 = _mm256_load_pd(&q[(nb*ldq)+12]);
-	x4 = _mm256_macc_pd(q4, h1, x4);
+	x4 = _mm256_FMA_pd(q4, h1, x4);
 #else
 	q1 = _mm256_load_pd(&q[nb*ldq]);
 	x1 = _mm256_add_pd(x1, _mm256_mul_pd(q1,h1));
@@ -613,11 +632,11 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	x4 = _mm256_mul_pd(x4, h1);
 	h1 = _mm256_xor_pd(tau2, sign);
 	h2 = _mm256_mul_pd(h1, vs);
-#ifdef __FMA4__
-	y1 = _mm256_macc_pd(y1, h1, _mm256_mul_pd(x1,h2));
-	y2 = _mm256_macc_pd(y2, h1, _mm256_mul_pd(x2,h2));
-	y3 = _mm256_macc_pd(y3, h1, _mm256_mul_pd(x3,h2));
-	y4 = _mm256_macc_pd(y4, h1, _mm256_mul_pd(x4,h2));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_FMA_pd(y1, h1, _mm256_mul_pd(x1,h2));
+	y2 = _mm256_FMA_pd(y2, h1, _mm256_mul_pd(x2,h2));
+	y3 = _mm256_FMA_pd(y3, h1, _mm256_mul_pd(x3,h2));
+	y4 = _mm256_FMA_pd(y4, h1, _mm256_mul_pd(x4,h2));
 #else
 	y1 = _mm256_add_pd(_mm256_mul_pd(y1,h1), _mm256_mul_pd(x1,h2));
 	y2 = _mm256_add_pd(_mm256_mul_pd(y2,h1), _mm256_mul_pd(x2,h2));
@@ -639,18 +658,18 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	_mm256_store_pd(&q[12],q4);
 
 	h2 = _mm256_broadcast_sd(&hh[ldh+1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[ldq]);
-	q1 = _mm256_add_pd(q1, _mm256_macc_pd(y1, h2, x1));
+	q1 = _mm256_add_pd(q1, _mm256_FMA_pd(y1, h2, x1));
 	_mm256_store_pd(&q[ldq],q1);
 	q2 = _mm256_load_pd(&q[ldq+4]);
-	q2 = _mm256_add_pd(q2, _mm256_macc_pd(y2, h2, x2));
+	q2 = _mm256_add_pd(q2, _mm256_FMA_pd(y2, h2, x2));
 	_mm256_store_pd(&q[ldq+4],q2);
 	q3 = _mm256_load_pd(&q[ldq+8]);
-	q3 = _mm256_add_pd(q3, _mm256_macc_pd(y3, h2, x3));
+	q3 = _mm256_add_pd(q3, _mm256_FMA_pd(y3, h2, x3));
 	_mm256_store_pd(&q[ldq+8],q3);
 	q4 = _mm256_load_pd(&q[ldq+12]);
-	q4 = _mm256_add_pd(q4, _mm256_macc_pd(y4, h2, x4));
+	q4 = _mm256_add_pd(q4, _mm256_FMA_pd(y4, h2, x4));
 	_mm256_store_pd(&q[ldq+12],q4);
 #else
 	q1 = _mm256_load_pd(&q[ldq]);
@@ -671,18 +690,22 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	{
 		h1 = _mm256_broadcast_sd(&hh[i-1]);
 		h2 = _mm256_broadcast_sd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm256_load_pd(&q[i*ldq]);
-		q1 = _mm256_add_pd(q1, _mm256_macc_pd(x1, h1, _mm256_mul_pd(y1, h2)));
+		q1 = _mm256_FMA_pd(x1, h1, q1);
+		q1 = _mm256_FMA_pd(y1, h2, q1);
 		_mm256_store_pd(&q[i*ldq],q1);
 		q2 = _mm256_load_pd(&q[(i*ldq)+4]);
-		q2 = _mm256_add_pd(q2, _mm256_macc_pd(x2, h1, _mm256_mul_pd(y2, h2)));
+		q2 = _mm256_FMA_pd(x2, h1, q2);
+		q2 = _mm256_FMA_pd(y2, h2, q2);
 		_mm256_store_pd(&q[(i*ldq)+4],q2);
 		q3 = _mm256_load_pd(&q[(i*ldq)+8]);
-		q3 = _mm256_add_pd(q3, _mm256_macc_pd(x3, h1, _mm256_mul_pd(y3, h2)));
+		q3 = _mm256_FMA_pd(x3, h1, q3);
+		q3 = _mm256_FMA_pd(y3, h2, q3);
 		_mm256_store_pd(&q[(i*ldq)+8],q3);
 		q4 = _mm256_load_pd(&q[(i*ldq)+12]);
-		q4 = _mm256_add_pd(q4, _mm256_macc_pd(x4, h1, _mm256_mul_pd(y4, h2)));
+		q4 = _mm256_FMA_pd(x4, h1, q4);
+		q4 = _mm256_FMA_pd(y4, h2, q4);
 		_mm256_store_pd(&q[(i*ldq)+12],q4);
 #else
 		q1 = _mm256_load_pd(&q[i*ldq]);
@@ -701,18 +724,18 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm256_broadcast_sd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[nb*ldq]);
-	q1 = _mm256_macc_pd(x1, h1, q1);
+	q1 = _mm256_FMA_pd(x1, h1, q1);
 	_mm256_store_pd(&q[nb*ldq],q1);
 	q2 = _mm256_load_pd(&q[(nb*ldq)+4]);
-	q2 = _mm256_macc_pd(x2, h1, q2);
+	q2 = _mm256_FMA_pd(x2, h1, q2);
 	_mm256_store_pd(&q[(nb*ldq)+4],q2);
 	q3 = _mm256_load_pd(&q[(nb*ldq)+8]);
-	q3 = _mm256_macc_pd(x3, h1, q3);
+	q3 = _mm256_FMA_pd(x3, h1, q3);
 	_mm256_store_pd(&q[(nb*ldq)+8],q3);
 	q4 = _mm256_load_pd(&q[(nb*ldq)+12]);
-	q4 = _mm256_macc_pd(x4, h1, q4);
+	q4 = _mm256_FMA_pd(x4, h1, q4);
 	_mm256_store_pd(&q[(nb*ldq)+12],q4);
 #else
 	q1 = _mm256_load_pd(&q[nb*ldq]);
@@ -752,11 +775,11 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	__m256d h1 = _mm256_broadcast_sd(&hh[ldh+1]);
 	__m256d h2;
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	__m256d q1 = _mm256_load_pd(q);
-	__m256d y1 = _mm256_macc_pd(x1, h1, q1);
+	__m256d y1 = _mm256_FMA_pd(x1, h1, q1);
 	__m256d q2 = _mm256_load_pd(&q[4]);
-	__m256d y2 = _mm256_macc_pd(x2, h1, q2);
+	__m256d y2 = _mm256_FMA_pd(x2, h1, q2);
 #else
 	__m256d q1 = _mm256_load_pd(q);
 	__m256d y1 = _mm256_add_pd(q1, _mm256_mul_pd(x1, h1));
@@ -768,13 +791,13 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	{
 		h1 = _mm256_broadcast_sd(&hh[i-1]);
 		h2 = _mm256_broadcast_sd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm256_load_pd(&q[i*ldq]);
-		x1 = _mm256_macc_pd(q1, h1, x1);
-		y1 = _mm256_macc_pd(q1, h2, y1);
+		x1 = _mm256_FMA_pd(q1, h1, x1);
+		y1 = _mm256_FMA_pd(q1, h2, y1);
 		q2 = _mm256_load_pd(&q[(i*ldq)+4]);
-		x2 = _mm256_macc_pd(q2, h1, x2);
-		y2 = _mm256_macc_pd(q2, h2, y2);
+		x2 = _mm256_FMA_pd(q2, h1, x2);
+		y2 = _mm256_FMA_pd(q2, h2, y2);
 #else
 		q1 = _mm256_load_pd(&q[i*ldq]);
 		x1 = _mm256_add_pd(x1, _mm256_mul_pd(q1,h1));
@@ -786,11 +809,11 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm256_broadcast_sd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[nb*ldq]);
-	x1 = _mm256_macc_pd(q1, h1, x1);
+	x1 = _mm256_FMA_pd(q1, h1, x1);
 	q2 = _mm256_load_pd(&q[(nb*ldq)+4]);
-	x2 = _mm256_macc_pd(q2, h1, x2);
+	x2 = _mm256_FMA_pd(q2, h1, x2);
 #else
 	q1 = _mm256_load_pd(&q[nb*ldq]);
 	x1 = _mm256_add_pd(x1, _mm256_mul_pd(q1,h1));
@@ -811,9 +834,9 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	x2 = _mm256_mul_pd(x2, h1);
 	h1 = _mm256_xor_pd(tau2, sign);
 	h2 = _mm256_mul_pd(h1, vs);
-#ifdef __FMA4__
-	y1 = _mm256_macc_pd(y1, h1, _mm256_mul_pd(x1,h2));
-	y2 = _mm256_macc_pd(y2, h1, _mm256_mul_pd(x2,h2));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_FMA_pd(y1, h1, _mm256_mul_pd(x1,h2));
+	y2 = _mm256_FMA_pd(y2, h1, _mm256_mul_pd(x2,h2));
 #else
 	y1 = _mm256_add_pd(_mm256_mul_pd(y1,h1), _mm256_mul_pd(x1,h2));
 	y2 = _mm256_add_pd(_mm256_mul_pd(y2,h1), _mm256_mul_pd(x2,h2));
@@ -827,12 +850,12 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	_mm256_store_pd(&q[4],q2);
 
 	h2 = _mm256_broadcast_sd(&hh[ldh+1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[ldq]);
-	q1 = _mm256_add_pd(q1, _mm256_macc_pd(y1, h2, x1));
+	q1 = _mm256_add_pd(q1, _mm256_FMA_pd(y1, h2, x1));
 	_mm256_store_pd(&q[ldq],q1);
 	q2 = _mm256_load_pd(&q[ldq+4]);
-	q2 = _mm256_add_pd(q2, _mm256_macc_pd(y2, h2, x2));
+	q2 = _mm256_add_pd(q2, _mm256_FMA_pd(y2, h2, x2));
 	_mm256_store_pd(&q[ldq+4],q2);
 #else
 	q1 = _mm256_load_pd(&q[ldq]);
@@ -847,12 +870,14 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	{
 		h1 = _mm256_broadcast_sd(&hh[i-1]);
 		h2 = _mm256_broadcast_sd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm256_load_pd(&q[i*ldq]);
-		q1 = _mm256_add_pd(q1, _mm256_macc_pd(x1, h1, _mm256_mul_pd(y1, h2)));
+		q1 = _mm256_FMA_pd(x1, h1, q1);
+		q1 = _mm256_FMA_pd(y1, h2, q1);
 		_mm256_store_pd(&q[i*ldq],q1);
 		q2 = _mm256_load_pd(&q[(i*ldq)+4]);
-		q2 = _mm256_add_pd(q2, _mm256_macc_pd(x2, h1, _mm256_mul_pd(y2, h2)));
+		q2 = _mm256_FMA_pd(x2, h1, q2);
+		q2 = _mm256_FMA_pd(y2, h2, q2);
 		_mm256_store_pd(&q[(i*ldq)+4],q2);
 #else
 		q1 = _mm256_load_pd(&q[i*ldq]);
@@ -865,12 +890,12 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm256_broadcast_sd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[nb*ldq]);
-	q1 = _mm256_macc_pd(x1, h1, q1);
+	q1 = _mm256_FMA_pd(x1, h1, q1);
 	_mm256_store_pd(&q[nb*ldq],q1);
 	q2 = _mm256_load_pd(&q[(nb*ldq)+4]);
-	q2 = _mm256_macc_pd(x2, h1, q2);
+	q2 = _mm256_FMA_pd(x2, h1, q2);
 	_mm256_store_pd(&q[(nb*ldq)+4],q2);
 #else
 	q1 = _mm256_load_pd(&q[nb*ldq]);
@@ -903,9 +928,9 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	__m256d h1 = _mm256_broadcast_sd(&hh[ldh+1]);
 	__m256d h2;
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	__m256d q1 = _mm256_load_pd(q);
-	__m256d y1 = _mm256_macc_pd(x1, h1, q1);
+	__m256d y1 = _mm256_FMA_pd(x1, h1, q1);
 #else
 	__m256d q1 = _mm256_load_pd(q);
 	__m256d y1 = _mm256_add_pd(q1, _mm256_mul_pd(x1, h1));
@@ -915,10 +940,10 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	{
 		h1 = _mm256_broadcast_sd(&hh[i-1]);
 		h2 = _mm256_broadcast_sd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm256_load_pd(&q[i*ldq]);
-		x1 = _mm256_macc_pd(q1, h1, x1);
-		y1 = _mm256_macc_pd(q1, h2, y1);
+		x1 = _mm256_FMA_pd(q1, h1, x1);
+		y1 = _mm256_FMA_pd(q1, h2, y1);
 #else
 		q1 = _mm256_load_pd(&q[i*ldq]);
 		x1 = _mm256_add_pd(x1, _mm256_mul_pd(q1,h1));
@@ -927,9 +952,9 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm256_broadcast_sd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[nb*ldq]);
-	x1 = _mm256_macc_pd(q1, h1, x1);
+	x1 = _mm256_FMA_pd(q1, h1, x1);
 #else
 	q1 = _mm256_load_pd(&q[nb*ldq]);
 	x1 = _mm256_add_pd(x1, _mm256_mul_pd(q1,h1));
@@ -947,8 +972,8 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	x1 = _mm256_mul_pd(x1, h1);
 	h1 = _mm256_xor_pd(tau2, sign);
 	h2 = _mm256_mul_pd(h1, vs);
-#ifdef __FMA4__
-	y1 = _mm256_macc_pd(y1, h1, _mm256_mul_pd(x1,h2));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_FMA_pd(y1, h1, _mm256_mul_pd(x1,h2));
 #else
 	y1 = _mm256_add_pd(_mm256_mul_pd(y1,h1), _mm256_mul_pd(x1,h2));
 #endif
@@ -958,9 +983,9 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	_mm256_store_pd(q,q1);
 
 	h2 = _mm256_broadcast_sd(&hh[ldh+1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[ldq]);
-	q1 = _mm256_add_pd(q1, _mm256_macc_pd(y1, h2, x1));
+	q1 = _mm256_add_pd(q1, _mm256_FMA_pd(y1, h2, x1));
 	_mm256_store_pd(&q[ldq],q1);
 #else
 	q1 = _mm256_load_pd(&q[ldq]);
@@ -972,9 +997,10 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	{
 		h1 = _mm256_broadcast_sd(&hh[i-1]);
 		h2 = _mm256_broadcast_sd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm256_load_pd(&q[i*ldq]);
-		q1 = _mm256_add_pd(q1, _mm256_macc_pd(x1, h1, _mm256_mul_pd(y1, h2)));
+		q1 = _mm256_FMA_pd(x1, h1, q1);
+		q1 = _mm256_FMA_pd(y1, h2, q1);
 		_mm256_store_pd(&q[i*ldq],q1);
 #else
 		q1 = _mm256_load_pd(&q[i*ldq]);
@@ -984,9 +1010,9 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm256_broadcast_sd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm256_load_pd(&q[nb*ldq]);
-	q1 = _mm256_macc_pd(x1, h1, q1);
+	q1 = _mm256_FMA_pd(x1, h1, q1);
 	_mm256_store_pd(&q[nb*ldq],q1);
 #else
 	q1 = _mm256_load_pd(&q[nb*ldq]);
@@ -1022,7 +1048,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	__m128d h1 = _mm_loaddup_pd(&hh[ldh+1]);
 	__m128d h2;
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	__m128d q1 = _mm_load_pd(q);
 	__m128d y1 = _mm_macc_pd(x1, h1, q1);
 	__m128d q2 = _mm_load_pd(&q[2]);
@@ -1053,7 +1079,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	{
 		h1 = _mm_loaddup_pd(&hh[i-1]);
 		h2 = _mm_loaddup_pd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_load_pd(&q[i*ldq]);
 		x1 = _mm_macc_pd(q1, h1, x1);
 		y1 = _mm_macc_pd(q1, h2, y1);
@@ -1095,7 +1121,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_load_pd(&q[nb*ldq]);
 	x1 = _mm_macc_pd(q1, h1, x1);
 	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
@@ -1140,7 +1166,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	x6 = _mm_mul_pd(x6, h1);
 	h1 = _mm_xor_pd(tau2, sign);
 	h2 = _mm_mul_pd(h1, vs);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_macc_pd(y1, h1, _mm_mul_pd(x1,h2));
 	y2 = _mm_macc_pd(y2, h1, _mm_mul_pd(x2,h2));
 	y3 = _mm_macc_pd(y3, h1, _mm_mul_pd(x3,h2));
@@ -1176,7 +1202,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	_mm_store_pd(&q[10],q6);
 
 	h2 = _mm_loaddup_pd(&hh[ldh+1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_load_pd(&q[ldq]);
 	q1 = _mm_add_pd(q1, _mm_macc_pd(y1, h2, x1));
 	_mm_store_pd(&q[ldq],q1);
@@ -1220,7 +1246,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 		h1 = _mm_loaddup_pd(&hh[i-1]);
 		h2 = _mm_loaddup_pd(&hh[ldh+i]);
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_load_pd(&q[i*ldq]);
 		q1 = _mm_add_pd(q1, _mm_macc_pd(x1, h1, _mm_mul_pd(y1, h2)));
 		_mm_store_pd(&q[i*ldq],q1);
@@ -1262,7 +1288,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	}
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_load_pd(&q[nb*ldq]);
 	q1 = _mm_macc_pd(x1, h1, q1);
 	_mm_store_pd(&q[nb*ldq],q1);
@@ -1328,7 +1354,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv(double* q, double* hh, int nb, int 
 	__m128d h1 = _mm_loaddup_pd(&hh[ldh+1]);
 	__m128d h2;
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	__m128d q1 = _mm_load_pd(q);
 	__m128d y1 = _mm_macc_pd(x1, h1, q1);
 	__m128d q2 = _mm_load_pd(&q[2]);
@@ -1352,7 +1378,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv(double* q, double* hh, int nb, int 
 	{
 		h1 = _mm_loaddup_pd(&hh[i-1]);
 		h2 = _mm_loaddup_pd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_load_pd(&q[i*ldq]);
 		x1 = _mm_macc_pd(q1, h1, x1);
 		y1 = _mm_macc_pd(q1, h2, y1);
@@ -1382,7 +1408,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv(double* q, double* hh, int nb, int 
 	}
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_load_pd(&q[nb*ldq]);
 	x1 = _mm_macc_pd(q1, h1, x1);
 	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
@@ -1417,7 +1443,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv(double* q, double* hh, int nb, int 
 	x4 = _mm_mul_pd(x4, h1);
 	h1 = _mm_xor_pd(tau2, sign);
 	h2 = _mm_mul_pd(h1, vs);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_macc_pd(y1, h1, _mm_mul_pd(x1,h2));
 	y2 = _mm_macc_pd(y2, h1, _mm_mul_pd(x2,h2));
 	y3 = _mm_macc_pd(y3, h1, _mm_mul_pd(x3,h2));
@@ -1443,7 +1469,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv(double* q, double* hh, int nb, int 
 	_mm_store_pd(&q[6],q4);
 
 	h2 = _mm_loaddup_pd(&hh[ldh+1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_load_pd(&q[ldq]);
 	q1 = _mm_add_pd(q1, _mm_macc_pd(y1, h2, x1));
 	_mm_store_pd(&q[ldq],q1);
@@ -1476,7 +1502,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv(double* q, double* hh, int nb, int 
 		h1 = _mm_loaddup_pd(&hh[i-1]);
 		h2 = _mm_loaddup_pd(&hh[ldh+i]);
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_load_pd(&q[i*ldq]);
 		q1 = _mm_add_pd(q1, _mm_macc_pd(x1, h1, _mm_mul_pd(y1, h2)));
 		_mm_store_pd(&q[i*ldq],q1);
@@ -1506,7 +1532,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv(double* q, double* hh, int nb, int 
 	}
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_load_pd(&q[nb*ldq]);
 	q1 = _mm_macc_pd(x1, h1, q1);
 	_mm_store_pd(&q[nb*ldq],q1);
@@ -1558,7 +1584,7 @@ __forceinline void hh_trafo_kernel_4_SSE_2hv(double* q, double* hh, int nb, int 
 	__m128d h1 = _mm_loaddup_pd(&hh[ldh+1]);
 	__m128d h2;
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	__m128d q1 = _mm_load_pd(q);
 	__m128d y1 = _mm_macc_pd(x1, h1, q1);
 	__m128d q2 = _mm_load_pd(&q[2]);
@@ -1574,7 +1600,7 @@ __forceinline void hh_trafo_kernel_4_SSE_2hv(double* q, double* hh, int nb, int 
 	{
 		h1 = _mm_loaddup_pd(&hh[i-1]);
 		h2 = _mm_loaddup_pd(&hh[ldh+i]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_load_pd(&q[i*ldq]);
 		x1 = _mm_macc_pd(q1, h1, x1);
 		y1 = _mm_macc_pd(q1, h2, y1);
@@ -1592,7 +1618,7 @@ __forceinline void hh_trafo_kernel_4_SSE_2hv(double* q, double* hh, int nb, int 
 	}
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_load_pd(&q[nb*ldq]);
 	x1 = _mm_macc_pd(q1, h1, x1);
 	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
@@ -1617,7 +1643,7 @@ __forceinline void hh_trafo_kernel_4_SSE_2hv(double* q, double* hh, int nb, int 
 	x2 = _mm_mul_pd(x2, h1);
 	h1 = _mm_xor_pd(tau2, sign);
 	h2 = _mm_mul_pd(h1, vs);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_macc_pd(y1, h1, _mm_mul_pd(x1,h2));
 	y2 = _mm_macc_pd(y2, h1, _mm_mul_pd(x2,h2));
 #else
@@ -1633,7 +1659,7 @@ __forceinline void hh_trafo_kernel_4_SSE_2hv(double* q, double* hh, int nb, int 
 	_mm_store_pd(&q[2],q2);
 
 	h2 = _mm_loaddup_pd(&hh[ldh+1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_load_pd(&q[ldq]);
 	q1 = _mm_add_pd(q1, _mm_macc_pd(y1, h2, x1));
 	_mm_store_pd(&q[ldq],q1);
@@ -1654,7 +1680,7 @@ __forceinline void hh_trafo_kernel_4_SSE_2hv(double* q, double* hh, int nb, int 
 		h1 = _mm_loaddup_pd(&hh[i-1]);
 		h2 = _mm_loaddup_pd(&hh[ldh+i]);
 
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_load_pd(&q[i*ldq]);
 		q1 = _mm_add_pd(q1, _mm_macc_pd(x1, h1, _mm_mul_pd(y1, h2)));
 		_mm_store_pd(&q[i*ldq],q1);
@@ -1672,7 +1698,7 @@ __forceinline void hh_trafo_kernel_4_SSE_2hv(double* q, double* hh, int nb, int 
 	}
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_load_pd(&q[nb*ldq]);
 	q1 = _mm_macc_pd(x1, h1, q1);
 	_mm_store_pd(&q[nb*ldq],q1);

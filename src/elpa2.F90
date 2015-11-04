@@ -14,6 +14,9 @@
 !      and
 !    - IBM Deutschland GmbH
 !
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of
+!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.rzg.mpg.de/
@@ -254,8 +257,11 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    endif
 
    ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
-
-   nbw = (31/nblk+1)*nblk
+   ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
+   ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
+   ! For IBM Bluegene/Q this is not clear at the moment. We have to keep an eye
+   ! on this and maybe allow a run-time optimization here
+   nbw = (63/nblk+1)*nblk
 
    num_blocks = (na-1)/nbw + 1
 
@@ -580,6 +586,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
+#ifdef WITH_OPENMP
+   use omp_lib
+#endif
    implicit none
 
    integer             :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
@@ -587,8 +596,8 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
 
    integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer             :: l_cols, l_rows
-   integer             :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
-   integer             :: istep, ncol, lch, lcx, nlc
+   integer             :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
+   integer             :: istep, ncol, lch, lcx, nlc, mynlc
    integer             :: tile_size, l_rows_tile, l_cols_tile
 
    real*8              :: vnorm2, xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
@@ -604,6 +613,8 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
    logical, intent(out):: success
 
    logical, intent(in) :: useQR
+
+   integer :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, ii, pp, transformChunkSize
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("bandred_real")
@@ -748,7 +759,55 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
          ! Local dot product
 
          aux1 = 0
+#ifdef WITH_OPENMP
+         !Open up one omp region to avoid paying openmp overhead.
+         !This does not help performance due to the addition of two openmp barriers around the MPI call,
+         !But in the future this may be beneficial if these barriers are replaced with a faster implementation
 
+         !$omp parallel private(mynlc, j, lcx, ii, pp ) shared(aux1)
+         mynlc = 0 ! number of local columns
+
+         !This loop does not have independent iterations,
+         !'mynlc' is incremented each iteration, and it is difficult to remove this dependency 
+         !Thus each thread executes every iteration of the loop, except it only does the work if it 'owns' that iteration
+         !That is, a thread only executes the work associated with an iteration if its thread id is congruent to 
+         !the iteration number modulo the number of threads
+         do j=1,lc-1
+           lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+           if (lcx>0 ) then
+             mynlc = mynlc+1
+             if ( mod((j-1), omp_get_num_threads()) .eq. omp_get_thread_num() ) then
+                 if (lr>0) aux1(mynlc) = dot_product(vr(1:lr),a(1:lr,lcx))
+             endif
+           endif
+         enddo
+         
+         ! Get global dot products
+         !$omp barrier
+         !$omp single 
+         if (mynlc>0) call mpi_allreduce(aux1,aux2,mynlc,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+         !$omp end single 
+         !$omp barrier
+
+         ! Transform
+         transformChunkSize=32
+         mynlc = 0
+         do j=1,lc-1
+           lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+           if (lcx>0) then
+             mynlc = mynlc+1
+             !This loop could be parallelized with an openmp pragma with static scheduling and chunk size 32
+             !However, for some reason this is slower than doing it manually, so it is parallelized as below.
+             do ii=omp_get_thread_num()*transformChunkSize,lr,omp_get_num_threads()*transformChunkSize
+                do pp = 1,transformChunkSize
+                    if (pp + ii > lr) exit
+                        a(ii+pp,lcx) = a(ii+pp,lcx) - tau*aux2(mynlc)*vr(ii+pp)
+                enddo
+             enddo
+           endif
+         enddo
+         !$omp end parallel
+#else
          nlc = 0 ! number of local columns
          do j=1,lc-1
            lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
@@ -771,7 +830,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
              a(1:lr,lcx) = a(1:lr,lcx) - tau*aux2(nlc)*vr(1:lr)
            endif
          enddo
-
+#endif
        enddo
 
        ! Calculate scalar products of stored Householder vectors.
@@ -803,36 +862,102 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
     ! Note that the distributed A has to be transposed
     ! Opposed to direct tridiagonalization there is no need to use the cache locality
     ! of the tiles, so we can use strips of the matrix
+    !Code for Algorithm 4
 
-    umc(1:l_cols,1:n_cols) = 0.d0
-    vmr(1:l_rows,n_cols+1:2*n_cols) = 0
-    if (l_cols>0 .and. l_rows>0) then
-      do i=0,(istep*nbw-1)/tile_size
+    n_way = 1
+#ifdef WITH_OPENMP
+    n_way = omp_get_max_threads()
+#endif
+    !umc(1:l_cols,1:n_cols) = 0.d0
+    !vmr(1:l_rows,n_cols+1:2*n_cols) = 0
+#ifdef WITH_OPENMP
+    !$omp parallel private( i,lcs,lce,lrs,lre)
+#endif
+    if(n_way > 1) then
+        !$omp do
+        do i=1,min(l_cols_tile, l_cols)
+            umc(i,1:n_cols) = 0.d0
+        enddo
+        !$omp do
+        do i=1,l_rows
+            vmr(i,n_cols+1:2*n_cols) = 0.d0
+        enddo
+        if (l_cols>0 .and. l_rows>0) then
 
-        lcs = i*l_cols_tile+1
-        lce = min(l_cols,(i+1)*l_cols_tile)
-        if (lce<lcs) cycle
+          !SYMM variant 4
+          !Partitioned Matrix Expression:
+          ! Ct = Atl Bt + Atr Bb
+          ! Cb = Atr' Bt + Abl Bb
+          !
+          !Loop invariant:
+          ! Ct = Atl Bt + Atr Bb
+          !
+          !Update:
+          ! C1 = A10'B0 + A11B1 + A21 B2
+          !
+          !This algorithm chosen because in this algoirhtm, the loop around the dgemm calls
+          !is easily parallelized, and regardless of choise of algorithm,
+          !the startup cost for parallelizing the dgemms inside the loop is too great
 
-        lre = min(l_rows,(i+1)*l_rows_tile)
-        call DGEMM('T','N',lce-lcs+1,n_cols,lre,1.d0,a(1,lcs),ubound(a,dim=1), &
-                     vmr,ubound(vmr,dim=1),1.d0,umc(lcs,1),ubound(umc,dim=1))
+          !$omp do schedule(static,1)
+          do i=0,(istep*nbw-1)/tile_size
+            lcs = i*l_cols_tile+1                   ! local column start
+            lce = min(l_cols, (i+1)*l_cols_tile)    ! local column end
 
-        if (i==0) cycle
-        lre = min(l_rows,i*l_rows_tile)
-        call DGEMM('N','N',lre,n_cols,lce-lcs+1,1.d0,a(1,lcs),lda, &
-                     umc(lcs,n_cols+1),ubound(umc,dim=1),1.d0,vmr(1,n_cols+1),ubound(vmr,dim=1))
-      enddo
+            lrs = i*l_rows_tile+1                   ! local row start
+            lre = min(l_rows, (i+1)*l_rows_tile)    ! local row end
+
+            !C1 += [A11 A12] [B1
+            !                 B2]
+            if( lre > lrs .and. l_cols > lcs ) then
+            call DGEMM('N','N', lre-lrs+1, n_cols, l_cols-lcs+1,    &
+                       1.d0, a(lrs,lcs), ubound(a,dim=1),           &
+                             umc(lcs,n_cols+1), ubound(umc,dim=1),  &
+                       0.d0, vmr(lrs,n_cols+1), ubound(vmr,dim=1))
+            endif
+
+            ! C1 += A10' B0
+            if( lce > lcs .and. i > 0 ) then
+            call DGEMM('T','N', lce-lcs+1, n_cols, lrs-1,           &
+                       1.d0, a(1,lcs),   ubound(a,dim=1),           &
+                             vmr(1,1),   ubound(vmr,dim=1),         &
+                       0.d0, umc(lcs,1), ubound(umc,dim=1))
+            endif
+          enddo
+        endif
+    else
+        umc(1:l_cols,1:n_cols) = 0.d0
+        vmr(1:l_rows,n_cols+1:2*n_cols) = 0
+        if (l_cols>0 .and. l_rows>0) then
+          do i=0,(istep*nbw-1)/tile_size
+
+            lcs = i*l_cols_tile+1
+            lce = min(l_cols,(i+1)*l_cols_tile)
+            if (lce<lcs) cycle
+
+            lre = min(l_rows,(i+1)*l_rows_tile)
+            call DGEMM('T','N',lce-lcs+1,n_cols,lre,1.d0,a(1,lcs),ubound(a,dim=1), &
+                         vmr,ubound(vmr,dim=1),1.d0,umc(lcs,dim=1),ubound(umc,dim=1))
+
+            if (i==0) cycle
+            lre = min(l_rows,i*l_rows_tile)
+            call DGEMM('N','N',lre,n_cols,lce-lcs+1,1.d0,a(1,lcs),lda, &
+                         umc(lcs,n_cols+1),ubound(umc,dim=1),1.d0,vmr(1,n_cols+1),ubound(vmr,dim=1))
+          enddo
+        endif
     endif
-
+#ifdef WITH_OPENMP
+    !$omp end parallel
+#endif
     ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
     ! on the processors containing the diagonal
     ! This is only necessary if ur has been calculated, i.e. if the
     ! global tile size is smaller than the global remaining matrix
-
-    if (tile_size < istep*nbw) then
-       call elpa_reduce_add_vectors_real  (vmr(1,n_cols+1),ubound(vmr,dim=1),mpi_comm_rows, &
-                                      umc, ubound(umc,dim=1), mpi_comm_cols, &
-                                      istep*nbw, n_cols, nblk)
+    ! Or if we used the Algorithm 4
+    if (tile_size < istep*nbw .or. n_way > 1) then
+    call elpa_reduce_add_vectors  (vmr(1,n_cols+1),ubound(vmr,dim=1),mpi_comm_rows, &
+                                   umc, ubound(umc,dim=11), mpi_comm_cols, &
+                                   istep*nbw, n_cols, nblk)
     endif
 
     if (l_cols>0) then
@@ -866,7 +991,42 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
                                    1, istep*nbw, n_cols, nblk)
 
     ! A = A - V*U**T - U*V**T
+#ifdef WITH_OPENMP
+    !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
+    n_threads = omp_get_num_threads()
+    if(mod(n_threads, 2) == 0) then
+        n_way = 2
+    else
+        n_way = 1
+    endif
 
+    m_way = n_threads / n_way
+
+    m_id = mod(omp_get_thread_num(),  m_way)
+    n_id = omp_get_thread_num() / m_way
+
+    do ii=n_id*tile_size,(istep*nbw-1),tile_size*n_way
+      i = ii / tile_size
+      lcs = i*l_cols_tile+1
+      lce = min(l_cols,(i+1)*l_cols_tile)
+      lre = min(l_rows,(i+1)*l_rows_tile)
+      if (lce<lcs .or. lre<1) cycle
+
+      !Figure out this thread's range
+      work_per_thread = lre / m_way
+      if (work_per_thread * m_way < lre) work_per_thread = work_per_thread + 1
+      mystart = m_id * work_per_thread + 1
+      myend   = mystart + work_per_thread - 1
+      if( myend > lre ) myend = lre
+      if( myend-mystart+1 < 1) cycle
+
+      call dgemm('N','T',myend-mystart+1, lce-lcs+1, 2*n_cols, -1.d0, &
+                  vmr(mystart, 1), ubound(vmr,1), umc(lcs,1), ubound(umc,1), &
+                  1.d0,a(mystart,lcs),ubound(a,1))
+    enddo
+    !$omp end parallel
+
+#else /* WITH_OPENMP */
     do i=0,(istep*nbw-1)/tile_size
       lcs = i*l_cols_tile+1
       lce = min(l_cols,(i+1)*l_cols_tile)
@@ -876,7 +1036,7 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
                   vmr,ubound(vmr,dim=1),umc(lcs,1),ubound(umc,dim=1), &
                   1.d0,a(1,lcs),lda)
     enddo
-
+#endif /* WITH_OPENMP */
     deallocate(vmr, umc, vr)
 
   enddo
@@ -1013,8 +1173,13 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
    max_local_rows = max_blocks_row*nblk
    max_local_cols = max_blocks_col*nblk
 
-   if (useQR) then
-     t_blocking = 2 ! number of matrices T (tmat) which are aggregated into a new (larger) T matrix (tmat_complete) and applied at once
+
+! This conditional was introduced due to an merge error. For better performance this code path should
+! always be used
+!   if (useQR) then
+
+     ! t_blocking was formerly 2; 3 is a better choice
+     t_blocking = 3 ! number of matrices T (tmat) which are aggregated into a new (larger) T matrix (tmat_complete) and applied at once
      cwy_blocking = t_blocking * nbw
 
      allocate(tmp1(max_local_cols*cwy_blocking))
@@ -1024,19 +1189,20 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
      allocate(tmat_complete(cwy_blocking,cwy_blocking))
      allocate(t_tmp(cwy_blocking,nbw))
      allocate(t_tmp2(cwy_blocking,nbw))
-   else
-     allocate(tmp1(max_local_cols*nbw))
-     allocate(tmp2(max_local_cols*nbw))
-     allocate(hvb(max_local_rows*nbw))
-     allocate(hvm(max_local_rows,nbw))
-   endif
+!   else
+!     allocate(tmp1(max_local_cols*nbw))
+!     allocate(tmp2(max_local_cols*nbw))
+!     allocate(hvb(max_local_rows*nbw))
+!     allocate(hvm(max_local_rows,nbw))
+!   endif
 
    hvm = 0   ! Must be set to 0 !!!
    hvb = 0   ! Safety only
 
    l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
-   if (useQR) then
+! This conditional has been introduced by the same merge error. Execute always this code path
+!   if (useQR) then
 
      do istep=1,((na-1)/nbw-1)/t_blocking + 1
        n_cols = MIN(na,istep*cwy_blocking+nbw) - (istep-1)*cwy_blocking - nbw ! Number of columns in current step
@@ -1112,72 +1278,72 @@ subroutine trans_ev_band_to_full_real(na, nqc, nblk, nbw, a, lda, tmat, q, ldq, 
        endif
      enddo
 
-   else !  do not useQR
-
-     do istep=1,(na-1)/nbw
-
-       n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
-
-       ! Broadcast all Householder vectors for current step compressed in hvb
-
-       nb = 0
-       ns = 0
-
-       do lc = 1, n_cols
-         ncol = istep*nbw + lc ! absolute column number of householder vector
-         nrow = ncol - nbw ! absolute number of pivot row
-
-         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
-         l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
-
-         if (my_pcol==pcol(ncol, nblk, np_cols)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
-
-         nb = nb+l_rows
-
-         if (lc==n_cols .or. mod(ncol,nblk)==0) then
-           call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol, nblk, np_cols),mpi_comm_cols,mpierr)
-           ns = nb
-         endif
-       enddo
-
-       ! Expand compressed Householder vectors into matrix hvm
-
-       nb = 0
-       do lc = 1, n_cols
-         nrow = (istep-1)*nbw+lc ! absolute number of pivot row
-         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
-
-         hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-         if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
-
-         nb = nb+l_rows
-       enddo
-
-       l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
-
-       ! Q = Q - V * T**T * V**T * Q
-
-       if (l_rows>0) then
-         call dgemm('T','N',n_cols,l_cols,l_rows,1.d0,hvm,ubound(hvm,dim=1), &
-                    q,ldq,0.d0,tmp1,n_cols)
-       else
-         tmp1(1:l_cols*n_cols) = 0
-       endif
-
-       call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-
-       if (l_rows>0) then
-         call dtrmm('L','U','T','N',n_cols,l_cols,1.0d0,tmat(1,1,istep),ubound(tmat,dim=1),tmp2,n_cols)
-         call dgemm('N','N',l_rows,l_cols,n_cols,-1.d0,hvm,ubound(hvm,dim=1), &
-                    tmp2,n_cols,1.d0,q,ldq)
-       endif
-     enddo
-   endif ! endQR
+!   else !  do not useQR
+!
+!     do istep=1,(na-1)/nbw
+!
+!       n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
+!
+!       ! Broadcast all Householder vectors for current step compressed in hvb
+!
+!       nb = 0
+!       ns = 0
+!
+!       do lc = 1, n_cols
+!         ncol = istep*nbw + lc ! absolute column number of householder vector
+!         nrow = ncol - nbw ! absolute number of pivot row
+!
+!         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+!         l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
+!
+!         if (my_pcol==pcol(ncol, nblk, np_cols)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+!
+!         nb = nb+l_rows
+!
+!         if (lc==n_cols .or. mod(ncol,nblk)==0) then
+!           call MPI_Bcast(hvb(ns+1),nb-ns,MPI_REAL8,pcol(ncol, nblk, np_cols),mpi_comm_cols,mpierr)
+!           ns = nb
+!         endif
+!       enddo
+!
+!       ! Expand compressed Householder vectors into matrix hvm
+!
+!       nb = 0
+!       do lc = 1, n_cols
+!         nrow = (istep-1)*nbw+lc ! absolute number of pivot row
+!         l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
+!
+!         hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
+!         if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
+!
+!         nb = nb+l_rows
+!       enddo
+!
+!       l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
+!
+!       ! Q = Q - V * T**T * V**T * Q
+!
+!       if (l_rows>0) then
+!         call dgemm('T','N',n_cols,l_cols,l_rows,1.d0,hvm,ubound(hvm,dim=1), &
+!                    q,ldq,0.d0,tmp1,n_cols)
+!       else
+!         tmp1(1:l_cols*n_cols) = 0
+!       endif
+!
+!       call mpi_allreduce(tmp1,tmp2,n_cols*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+!
+!       if (l_rows>0) then
+!         call dtrmm('L','U','T','N',n_cols,l_cols,1.0d0,tmat(1,1,istep),ubound(tmat,dim=1),tmp2,n_cols)
+!         call dgemm('N','N',l_rows,l_cols,n_cols,-1.d0,hvm,ubound(hvm,dim=1), &
+!                    tmp2,n_cols,1.d0,q,ldq)
+!       endif
+!     enddo
+!   endif ! endQR
 
    deallocate(tmp1, tmp2, hvb, hvm)
-   if (useQr) then
+!   if (useQr) then
      deallocate(tmat_complete, t_tmp, t_tmp2)
-   endif
+!   endif
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("trans_ev_band_to_full_real")
