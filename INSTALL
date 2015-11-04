@@ -17,9 +17,16 @@ for the documentation how to proceed.
 
 
 If --- against our recommendations --- you do not want to install ELPA as
-library, but to include it in your source code you will have to find a solution
-by yourself. If you do this anyway, please distribute then all files of ELPA
-with your code.
+library, or you do not want to use the autotools you will have to find a solution
+by yourself. This approach is NOT supported by us in any way and we strongly discourage
+this approach.
+
+If you do this, because you want to include ELPA within your code project (i.e. use
+ELPA not as an external library but "assimilate" it in your projects ),
+please distribute then _ALL_ files (as obtained from an official release tar-ball)
+of ELPA with your code. Note, however, that including the ELPA source files in your
+code projects (and not using ELPA as external library) is only allowed under the terms of
+the LGPL license if your code is ALSO under LGPL.
 
 
 (A): Installing ELPA as library with configure
