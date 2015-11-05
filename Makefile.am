@@ -169,8 +169,8 @@ elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_with_c@SUFFIX@_SOURCES = test/fortran_test_programs/test_real_with_c.F90 test/shared_sources/mod_from_c.F90 test/shared_sources/call_elpa1.c $(shared_sources) $(redirect_sources)
 elpa1_test_real_with_c@SUFFIX@_LDADD = $(build_lib)
 
-elpa1_test_complex_with_c@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex_with_c.F90 test/shared_sources/mod_from_c.F90 test/shared_sources/call_elpa1.c $(shared_sources) $(redirect_sources)
-elpa1_test_cpmplex_with_c@SUFFIX@_LDADD = $(build_lib)
+#elpa1_test_complex_with_c@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex_with_c.F90 test/shared_sources/mod_from_c.F90 test/shared_sources/call_elpa1.c $(shared_sources) $(redirect_sources)
+#elpa1_test_complex_with_c@SUFFIX@_LDADD = $(build_lib)
 
 elpa2_test_real@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2.F90 $(shared_sources) $(redirect_sources)
 
