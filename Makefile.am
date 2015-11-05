@@ -234,14 +234,6 @@ elpa1_test_real_with_c.sh:
 	echo 'mpiexec -n 2 ./elpa1_test_real_with_c@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_with_c.sh
 	chmod +x elpa1_test_real_with_c.sh
 
-elpa1_test_real_c_version.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_c_version.sh
-	chmod +x elpa1_test_real_c_version.sh
-
-elpa1_test_complex_c_version.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex_c_version.sh
-	chmod +x elpa1_test_complex_c_version.sh
-
 elpa2_test_real_c_version.sh:
 	echo 'mpiexec -n 2 ./elpa2_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_c_version.sh
 	chmod +x elpa2_test_real_c_version.sh
