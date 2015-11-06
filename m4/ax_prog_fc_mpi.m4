@@ -141,7 +141,6 @@ dnl compiler, while the other one tests whether an MPI program can be
 dnl compiled.
 dnl
 AC_DEFUN([_AX_PROG_FC_MPI], [
-  AC_ARG_VAR(MPIFC,[MPI Fortran compiler command])
   ifelse([$1],,[_ax_prog_fc_mpi_mpi_wanted=yes],[
     AC_MSG_CHECKING([whether to compile using MPI])
     if $1; then
@@ -152,11 +151,7 @@ AC_DEFUN([_AX_PROG_FC_MPI], [
     AC_MSG_RESULT($_ax_prog_fc_mpi_mpi_wanted)
   ])
   if test x"$_ax_prog_fc_mpi_mpi_wanted" = xyes; then
-    if test -z "$FC" && test -n "$MPIFC"; then
-      FC="$MPIFC"
-    else
-      AC_CHECK_TOOLS([FC], [mpiifort mpifort mpif95 mpxlf95_r mpxlf95 ftn mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90 mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 crayftn gfortran lf95 ftn xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90 openf90 sunf90 xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77])
-    fi
+    AC_CHECK_TOOLS([FC], [mpiifort mpifort mpif95 mpxlf95_r mpxlf95 ftn mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90 mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 crayftn gfortran lf95 ftn xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90 openf90 sunf90 xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77])
   fi
   AC_PROG_FC
 ])dnl _AX_PROG_FC_MPI
