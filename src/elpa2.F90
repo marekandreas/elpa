@@ -5566,7 +5566,7 @@ contains
 #if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
       use complex_generic_simple_kernel, only : single_hh_trafo_complex_generic_simple
 #endif
-#if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
+#if defined(WITH_COMPLEX_GENERIC_KERNEL)
       use complex_generic_kernel, only : single_hh_trafo_complex_generic
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
@@ -5655,6 +5655,7 @@ contains
 #endif /* WITH_COMPLEX_GENERIC_SIMPLE_KERNEL */
 
 
+#if defined(WITH_COMPLEX_GENERIC_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC .or. &
             THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGP .or. &
@@ -5673,7 +5674,7 @@ contains
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
         endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-
+#endif /* WITH_COMPLEX_GENERIC_KERNEL */
 
 #if defined(WITH_COMPLEX_SSE_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
