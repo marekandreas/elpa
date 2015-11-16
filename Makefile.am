@@ -311,6 +311,7 @@ distclean-local:
 	-rm -rf ./src/elpa2_kernels/.deps
 	-rm -rf ./src/.deps
 	-rm -rf ./test/.deps
+	-rm -rf ./elpa/elpa_generated.h
 	-rmdir ./src/elpa2_kernels/
 	-rmdir ./src
 	-rmdir ./test
@@ -318,7 +319,12 @@ distclean-local:
 	-rmdir modules/
 	-rmdir .fortran_dependencies/
 
-EXTRA_DIST = fdep/fortran_dependencies.pl fdep/fortran_dependencies.mk
+EXTRA_DIST = \
+  fdep/fortran_dependencies.pl \
+  fdep/fortran_dependencies.mk \
+  src/elpa_reduce_add_vectors.X90 \
+  src/elpa_transpose_vectors.X90 \
+  src/redist_band.X90
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
