@@ -68,7 +68,7 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
    nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
 
    allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
-#ifdef WITH_OPENMO
+#ifdef WITH_OPENMP
    !$omp parallel private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n)
 #endif
    do n = 0, lcm_s_t-1
