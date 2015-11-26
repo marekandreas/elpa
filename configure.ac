@@ -34,7 +34,7 @@ rm -rf config.h config-f90.h
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [3:2:0])
+AC_SUBST([ELPA_SO_VERSION], [4:0:0])
 #
 
 
