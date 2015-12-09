@@ -103,8 +103,8 @@ module ELPA2
   ! trans_ev_tridi_to_band_real.
   ! It must be deallocated by the user after trans_ev_tridi_to_band_real!
 
-  real*8, allocatable :: hh_trans_real(:,:)
-  complex*16, allocatable :: hh_trans_complex(:,:)
+!  real*8, allocatable :: hh_trans_real(:,:)
+!  complex*16, allocatable :: hh_trans_complex(:,:)
 
 !-------------------------------------------------------------------------------
 
@@ -168,6 +168,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
                                     mpi_comm_cols, mpi_comm_all
    integer, intent(in)           :: nblk
    real*8, intent(inout)         :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
+   real*8, allocatable           :: hh_trans_real(:,:)
 
    integer                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer                       :: nbw, num_blocks
@@ -283,8 +284,8 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    allocate(e(na))
 
    ttt0 = MPI_Wtime()
-   call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, matrixCols, mpi_comm_rows, &
-                          mpi_comm_cols, mpi_comm_all)
+   call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans_real, &
+                          mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_real          :',ttt1-ttt0
@@ -313,8 +314,9 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    ! Backtransform stage 1
 
    ttt0 = MPI_Wtime()
-   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, mpi_comm_rows, &
-                                    mpi_comm_cols, wantDebug, success, THIS_REAL_ELPA_KERNEL)
+   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
+                                    mpi_comm_rows, mpi_comm_cols, wantDebug, success,      &
+                                    THIS_REAL_ELPA_KERNEL)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -393,6 +395,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    integer, intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
    complex*16, intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
    real*8, intent(inout)         :: ev(na)
+   complex*16, allocatable       :: hh_trans_complex(:,:)
 
    integer                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
    integer                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
@@ -483,7 +486,8 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    allocate(e(na))
 
    ttt0 = MPI_Wtime()
-   call tridiag_band_complex(na, nbw, nblk, a, lda, ev, e, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+   call tridiag_band_complex(na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans_complex, &
+                             mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_complex          :',ttt1-ttt0
@@ -520,8 +524,9 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ! Backtransform stage 1
 
    ttt0 = MPI_Wtime()
-   call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,  &
-                                       matrixCols, mpi_comm_rows, mpi_comm_cols,&
+   call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,   &
+                                       matrixCols, hh_trans_complex, &
+                                       mpi_comm_rows, mpi_comm_cols, &
                                        wantDebug, success,THIS_COMPLEX_ELPA_KERNEL)
    if (.not.(success)) return
    ttt1 = MPI_Wtime()
@@ -768,9 +773,9 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
          mynlc = 0 ! number of local columns
 
          !This loop does not have independent iterations,
-         !'mynlc' is incremented each iteration, and it is difficult to remove this dependency 
+         !'mynlc' is incremented each iteration, and it is difficult to remove this dependency
          !Thus each thread executes every iteration of the loop, except it only does the work if it 'owns' that iteration
-         !That is, a thread only executes the work associated with an iteration if its thread id is congruent to 
+         !That is, a thread only executes the work associated with an iteration if its thread id is congruent to
          !the iteration number modulo the number of threads
          do j=1,lc-1
            lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
@@ -781,12 +786,12 @@ subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_r
              endif
            endif
          enddo
-         
+
          ! Get global dot products
          !$omp barrier
-         !$omp single 
+         !$omp single
          if (mynlc>0) call mpi_allreduce(aux1,aux2,mynlc,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-         !$omp end single 
+         !$omp end single
          !$omp barrier
 
          ! Transform
@@ -1360,7 +1365,8 @@ end subroutine trans_ev_band_to_full_real
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm)
+subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, matrixCols, hh_trans_real, &
+                             mpi_comm_rows, mpi_comm_cols, mpi_comm)
 
 !-------------------------------------------------------------------------------
 ! tridiag_band_real:
@@ -1392,30 +1398,32 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, matrixCols, mpi_comm_ro
 #endif
    implicit none
 
-   integer, intent(in) ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
-   real*8, intent(in)  :: a(lda,matrixCols)
-   real*8, intent(out) :: d(na), e(na) ! set only on PE 0
+   integer, intent(in)  ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+   real*8, intent(in)   :: a(lda,matrixCols)
+   real*8, intent(out)  :: d(na), e(na) ! set only on PE 0
+   real*8, intent(out), &
+       allocatable      :: hh_trans_real(:,:)
 
 
-   real*8 vnorm2, hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
-   real*8 hd(nb), hs(nb)
+   real*8               :: vnorm2, hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
+   real*8               :: hd(nb), hs(nb)
 
-   integer i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
-   integer my_pe, n_pes, mpierr
-   integer my_prow, np_rows, my_pcol, np_cols
-   integer ireq_ab, ireq_hv
-   integer na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
+   integer              :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
+   integer              :: my_pe, n_pes, mpierr
+   integer              :: my_prow, np_rows, my_pcol, np_cols
+   integer              :: ireq_ab, ireq_hv
+   integer              :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
 #ifdef WITH_OPENMP
-   integer max_threads, my_thread, my_block_s, my_block_e, iter
-   integer mpi_status(MPI_STATUS_SIZE)
+   integer              :: max_threads, my_thread, my_block_s, my_block_e, iter
+   integer              :: mpi_status(MPI_STATUS_SIZE)
    integer, allocatable :: mpi_statuses(:,:), global_id_tmp(:,:)
    integer, allocatable :: omp_block_limits(:)
-   real*8, allocatable :: hv_t(:,:), tau_t(:)
+   real*8, allocatable  :: hv_t(:,:), tau_t(:)
 #endif
    integer, allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
    integer, allocatable :: limits(:), snd_limits(:,:)
    integer, allocatable :: block_limits(:)
-   real*8, allocatable :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
+   real*8, allocatable  :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
 !   ! dummies for calling redist_band
 !   complex*16 :: c_a(1,1), c_ab(1,1)
 
@@ -2031,7 +2039,7 @@ subroutine tridiag_band_real(na, nb, nblk, a, lda, d, e, matrixCols, mpi_comm_ro
 ! --------------------------------------------------------------------------------------------------
 
 
-subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, &
+subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
                                        mpi_comm_rows, mpi_comm_cols, wantDebug, success, &
                                        THIS_REAL_ELPA_KERNEL)
 !-------------------------------------------------------------------------------
@@ -2065,45 +2073,45 @@ subroutine trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, &
 #endif
     implicit none
 
-    integer, intent(in) :: THIS_REAL_ELPA_KERNEL
-    integer, intent(in) :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
-    real*8              :: q(ldq,matrixCols)
+    integer, intent(in)  :: THIS_REAL_ELPA_KERNEL
+    integer, intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+    real*8               :: q(ldq,matrixCols)
+    real*8, intent(out)  :: hh_trans_real(:,:)
+    integer              :: np_rows, my_prow, np_cols, my_pcol
 
-    integer np_rows, my_prow, np_cols, my_pcol
-
-    integer i, j, ip, sweep, nbuf, l_nev, a_dim2
-    integer current_n, current_local_n, current_n_start, current_n_end
-    integer next_n, next_local_n, next_n_start, next_n_end
-    integer bottom_msg_length, top_msg_length, next_top_msg_length
-    integer stripe_width, last_stripe_width, stripe_count
+    integer              :: i, j, ip, sweep, nbuf, l_nev, a_dim2
+    integer              :: current_n, current_local_n, current_n_start, current_n_end
+    integer              :: next_n, next_local_n, next_n_start, next_n_end
+    integer              :: bottom_msg_length, top_msg_length, next_top_msg_length
+    integer              :: stripe_width, last_stripe_width, stripe_count
 #ifdef WITH_OPENMP
-    integer thread_width, csw, b_off, b_len
+    integer              :: thread_width, csw, b_off, b_len
 #endif
-    integer num_result_blocks, num_result_buffers, num_bufs_recvd
-    integer a_off, current_tv_off, max_blk_size
-    integer mpierr, src, src_offset, dst, offset, nfact, num_blk
+    integer              :: num_result_blocks, num_result_buffers, num_bufs_recvd
+    integer              :: a_off, current_tv_off, max_blk_size
+    integer              :: mpierr, src, src_offset, dst, offset, nfact, num_blk
 #ifdef WITH_OPENMP
-    integer mpi_status(MPI_STATUS_SIZE)
+    integer              :: mpi_status(MPI_STATUS_SIZE)
 #endif
-    logical flag
+    logical              :: flag
 
 #ifdef WITH_OPENMP
-    real*8, allocatable :: a(:,:,:,:), row(:)
+    real*8, allocatable  :: a(:,:,:,:), row(:)
 #else
-    real*8, allocatable :: a(:,:,:), row(:)
+    real*8, allocatable  :: a(:,:,:), row(:)
 #endif
 
 #ifdef WITH_OPENMP
-    real*8, allocatable :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
-    real*8, allocatable :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
+    real*8, allocatable  :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
+    real*8, allocatable  :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
 #else
-    real*8, allocatable :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
-    real*8, allocatable :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
+    real*8, allocatable  :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
+    real*8, allocatable  :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
 #endif
-    real*8, allocatable :: result_buffer(:,:,:)
-    real*8, allocatable :: bcast_buffer(:,:)
+    real*8, allocatable  :: result_buffer(:,:,:)
+    real*8, allocatable  :: bcast_buffer(:,:)
 
-    integer n_off
+    integer              :: n_off
     integer, allocatable :: result_send_request(:), result_recv_request(:), limits(:)
     integer, allocatable :: top_send_request(:), bottom_send_request(:)
     integer, allocatable :: top_recv_request(:), bottom_recv_request(:)
@@ -3893,7 +3901,8 @@ subroutine trans_ev_band_to_full_complex(na, nqc, nblk, nbw, a, lda, tmat, q, ld
 
 !---------------------------------------------------------------------------------------------------
 
-subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm)
+subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, matrixCols, hh_trans_complex, &
+                                mpi_comm_rows, mpi_comm_cols, mpi_comm)
 
 !-------------------------------------------------------------------------------
 ! tridiag_band_complex:
@@ -3928,7 +3937,8 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, matrixCols, mpi_comm
    integer, intent(in)      ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
    complex*16, intent(in)   :: a(lda,matrixCols)
    real*8, intent(out)      :: d(na), e(na) ! set only on PE 0
-
+   complex*16, intent(inout), &
+       allocatable          :: hh_trans_complex(:,:)
 
    real*8                   :: vnorm2
    complex*16               :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
@@ -4555,7 +4565,7 @@ subroutine tridiag_band_complex(na, nb, nblk, a, lda, d, e, matrixCols, mpi_comm
 
 
 subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, matrixCols,  &
-                                          mpi_comm_rows, mpi_comm_cols, &
+                                          hh_trans_complex, mpi_comm_rows, mpi_comm_cols, &
                                           wantDebug, success, THIS_COMPLEX_ELPA_KERNEL)
 
 !-------------------------------------------------------------------------------
@@ -4592,7 +4602,7 @@ subroutine trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq, matrixCols
     integer, intent(in)     :: THIS_COMPLEX_ELPA_KERNEL
     integer, intent(in)     :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
     complex*16              :: q(ldq,matrixCols)
-
+    complex*16              :: hh_trans_complex(:,:)
     integer                 :: np_rows, my_prow, np_cols, my_pcol
 
     integer                 :: i, j, ip, sweep, nbuf, l_nev, a_dim2
