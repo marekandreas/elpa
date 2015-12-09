@@ -58,7 +58,7 @@ contains
 ! involved in the qr decomposition
 subroutine local_size_offset_1d(n,nb,baseidx,idx,rev,rank,nprocs, &
                                 lsize,baseoffset,offset)
-    use ELPA1
+    use ELPA1_compute
 
     implicit none
 
