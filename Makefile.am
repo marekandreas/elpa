@@ -13,6 +13,7 @@ libelpa@SUFFIX@_la_SOURCES = src/elpa_utilities.F90 \
 	                     src/elpa1_compute.F90 \
 	                     src/elpa1.F90 \
 			     src/elpa2_utilities.F90 \
+			     src/elpa2_compute.F90 \
 			     src/elpa2.F90 \
 			     src/elpa_c_interface.F90 \
                              src/elpa_qr/qr_utils.f90 \
