@@ -49,6 +49,14 @@
 #include "config-f90.h"
   !c> #include <complex.h>
 
+  !c> /*! \brief C interface to create the MPI communicators for ELPA
+  !c> *
+  !c> * \param mpi_comm_word    MPI global communicator (in)
+  !c> * \param my_prow          Row coordinate of the calling process in the process grid (in)
+  !c> * \param my_pcol          Column coordinate of the calling process in the process grid (in)
+  !c> * \param mpi_comm_rows    Communicator for communicating within rows of processes (out)
+  !c> * \result int             integer error value of mpi_comm_split function
+  !c> */
   !c> int elpa_get_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
   function get_elpa_row_col_comms_wrapper(mpi_comm_world, my_prow, my_pcol, &
                                           mpi_comm_rows, mpi_comm_cols)     &
@@ -65,7 +73,28 @@
                                     mpi_comm_rows, mpi_comm_cols)
 
   end function
-
+  !c>  /*! \brief C interface to solve the real eigenvalue problem with 1-stage solver
+  !c>  *
+  !c> *  \param  na                   Order of matrix a
+  !c> *  \param  nev                  Number of eigenvalues needed.
+  !c> *                               The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                    Distributed matrix for which eigenvalues are to be computed.
+  !c> *                               Distribution is like in Scalapack.
+  !c> *                               The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                   Leading dimension of a
+  !c> *  \param ev(na)                On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                     On output: Eigenvectors of a
+  !c> *                               Distribution is like in Scalapack.
+  !c> *                               Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                               even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                   Leading dimension of q
+  !c> *  \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols           distributed number of matrix columns
+  !c> *  \param mpi_comm_rows        MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols        MPI-Communicator for columns
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c>*/
   !c> int elpa_solve_evp_real_stage1(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
   function solve_elpa1_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk, &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols)      &
@@ -90,7 +119,28 @@
     endif
 
   end function
-
+  !c> /*! \brief C interface to solve the complex eigenvalue problem with 1-stage solver
+  !c> *
+  !c> *  \param  na                   Order of matrix a
+  !c> *  \param  nev                  Number of eigenvalues needed.
+  !c> *                               The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                    Distributed matrix for which eigenvalues are to be computed.
+  !c> *                               Distribution is like in Scalapack.
+  !c> *                               The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                   Leading dimension of a
+  !c> *  \param ev(na)                On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                     On output: Eigenvectors of a
+  !c> *                               Distribution is like in Scalapack.
+  !c> *                               Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                               even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                   Leading dimension of q
+  !c> *  \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols           distributed number of matrix columns
+  !c> *  \param mpi_comm_rows        MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols        MPI-Communicator for columns
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c> */
   !c> int elpa_solve_evp_complex_stage1(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
   function solve_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk, &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols)      &
@@ -116,7 +166,31 @@
     endif
 
   end function
-
+  !c> /*! \brief C interface to solve the real eigenvalue problem with 2-stage solver
+  !c> *
+  !c> *  \param  na                        Order of matrix a
+  !c> *  \param  nev                       Number of eigenvalues needed.
+  !c> *                                    The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                         Distributed matrix for which eigenvalues are to be computed.
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                        Leading dimension of a
+  !c> *  \param ev(na)                     On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                          On output: Eigenvectors of a
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                                    even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                        Leading dimension of q
+  !c> *  \param nblk                       blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols                 distributed number of matrix columns
+  !c> *  \param mpi_comm_rows              MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols              MPI-Communicator for columns
+  !c> *  \param mpi_coll_all               MPI communicator for the total processor set
+  !c> *  \param THIS_REAL_ELPA_KERNEL_API  specify used ELPA2 kernel via API
+  !c> *  \param use_qr                     use QR decomposition 1 = yes, 0 = no
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c> */
   !c> int elpa_solve_evp_real_stage2(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
   function solve_elpa2_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
@@ -155,6 +229,32 @@
 
   end function
 
+
+  !c> /*! \brief C interface to solve the complex eigenvalue problem with 2-stage solver
+  !c> *
+  !c> *  \param  na                        Order of matrix a
+  !c> *  \param  nev                       Number of eigenvalues needed.
+  !c> *                                    The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                         Distributed matrix for which eigenvalues are to be computed.
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                        Leading dimension of a
+  !c> *  \param ev(na)                     On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                          On output: Eigenvectors of a
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                                    even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                        Leading dimension of q
+  !c> *  \param nblk                       blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols                 distributed number of matrix columns
+  !c> *  \param mpi_comm_rows              MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols              MPI-Communicator for columns
+  !c> *  \param mpi_coll_all               MPI communicator for the total processor set
+  !c> *  \param THIS_REAL_ELPA_KERNEL_API  specify used ELPA2 kernel via API
+  !c> *  \param use_qr                     use QR decomposition 1 = yes, 0 = no
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c> */
   !c> int elpa_solve_evp_complex_stage2(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
   function solve_elpa2_evp_complex_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &

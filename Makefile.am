@@ -292,6 +292,8 @@ elpa2.i: $(top_srcdir)/src/elpa2.F90
 elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
 
+include doxygen.am
+
 CLEANFILES = \
   elpa-generated.h \
   elpa1_test_real.sh \

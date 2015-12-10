@@ -56,6 +56,21 @@
 ! distributed along with the original code in the file "COPYING".
 
 #include "config-f90.h"
+
+!> \file print_available_elpa2_kernels.F90
+!> \par
+!> \brief Provide information which ELPA2 kernels are available on this system
+!>
+!> \details
+!> It is possible to configure ELPA2 such, that different compute intensive
+!> "ELPA2 kernels" can be choosen at runtime.
+!> The service binary print_available_elpa2_kernels will query the library and tell
+!> whether ELPA2 has been configured in this way, and if this is the case which kernels can be
+!> choosen at runtime.
+!> It will furthermore detail whether ELPA has been configured with OpenMP support
+!>
+!> Synopsis: print_available_elpa2_kernels
+!>
 program print_available_elpa2_kernels
 
    use ELPA1

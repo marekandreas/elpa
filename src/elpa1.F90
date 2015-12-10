@@ -49,8 +49,37 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 
-#include "config-f90.h"
+!> \mainpage
+!> Eigenvalue SoLvers for Petaflop-Applications (ELPA)
+!> \par
+!> http://elpa.rzg.mpg.de
+!>
+!> \par
+!>    The ELPA library was originally created by the ELPA consortium,
+!>    consisting of the following organizations:
+!>
+!>    - Max Planck Computing and Data Facility (MPCDF) formerly known as
+!>      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!>    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!>      Informatik,
+!>    - Technische Universität München, Lehrstuhl für Informatik mit
+!>      Schwerpunkt Wissenschaftliches Rechnen ,
+!>    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!>    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!>      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!>      and
+!>    - IBM Deutschland GmbH
+!>
+!>   Some parts and enhancements of ELPA have been contributed and authored
+!>   by the Intel Corporation which is not part of the ELPA consortium.
+!>
+!>   Contributions to the ELPA source have been authored by (in alphabetical order):
+!>
+!> \author T. Auckenthaler, Volker Blum, A. Heinecke, L. Huedepohl, R. Johanni, Werner Jürgens, and A. Marek
 
+
+#include "config-f90.h"
+!> \brief Fortran module which provides the routines to use the one-stage ELPA solver
 module ELPA1
 
   use elpa_utilities
@@ -65,20 +94,18 @@ module ELPA1
 
   ! The following routines are public:
 
-  public :: get_elpa_row_col_comms     ! Sets MPI row/col communicators
+  public :: get_elpa_row_col_comms     !< Sets MPI row/col communicators
 
-  public :: solve_evp_real             ! Driver routine for real eigenvalue problem
-  public :: solve_evp_complex          ! Driver routine for complex eigenvalue problem
+  public :: solve_evp_real             !< Driver routine for real eigenvalue problem
+  public :: solve_evp_complex          !< Driver routine for complex eigenvalue problem
 
   ! Timing results, set by every call to solve_evp_xxx
 
-  real*8, public :: time_evp_fwd    ! forward transformations (to tridiagonal form)
-  real*8, public :: time_evp_solve  ! time for solving the tridiagonal system
-  real*8, public :: time_evp_back   ! time for back transformations of eigenvectors
+  real*8, public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
+  real*8, public :: time_evp_solve  !< time for solving the tridiagonal system
+  real*8, public :: time_evp_back   !< time for back transformations of eigenvectors
 
-  ! Set elpa_print_times to .true. for explicit timing outputs
-
-  logical, public :: elpa_print_times = .false.
+  logical, public :: elpa_print_times = .false. !< Set elpa_print_times to .true. for explicit timing outputs
 
   include 'mpif.h'
 
@@ -86,9 +113,7 @@ contains
 
 !-------------------------------------------------------------------------------
 
-function get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
-
-!-------------------------------------------------------------------------------
+!> \brief Fortran function to create the MPI communicators for ELPA
 ! get_elpa_row_col_comms:
 ! All ELPA routines need MPI communicators for communicating within
 ! rows or columns of processes, these are set here.
@@ -96,17 +121,19 @@ function get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows
 !
 !  Parameters
 !
-!  mpi_comm_global   Global communicator for the calculations (in)
-!
-!  my_prow           Row coordinate of the calling process in the process grid (in)
-!
-!  my_pcol           Column coordinate of the calling process in the process grid (in)
-!
-!  mpi_comm_rows     Communicator for communicating within rows of processes (out)
-!
-!  mpi_comm_cols     Communicator for communicating within columns of processes (out)
-!
-!-------------------------------------------------------------------------------
+!> \param  mpi_comm_global   Global communicator for the calculations (in)
+!>
+!> \param  my_prow           Row coordinate of the calling process in the process grid (in)
+!>
+!> \param  my_pcol           Column coordinate of the calling process in the process grid (in)
+!>
+!> \param  mpi_comm_rows     Communicator for communicating within rows of processes (out)
+!>
+!> \param  mpi_comm_cols     Communicator for communicating within columns of processes (out)
+!> \result mpierr            integer error value of mpi_comm_split function
+
+
+function get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
 
    implicit none
 
@@ -125,43 +152,44 @@ function get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows
 
 end function get_elpa_row_col_comms
 
-!-------------------------------------------------------------------------------
+
+! \brief solve_evp_real: Fortran function to solve the real eigenvalue problem with 1-stage solver
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+
 
 function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
 
-!-------------------------------------------------------------------------------
-!  solve_evp_real: Solves the real eigenvalue problem
-!
-!  Parameters
-!
-!  na          Order of matrix a
-!
-!  nev         Number of eigenvalues needed.
-!              The smallest nev eigenvalues/eigenvectors are calculated.
-!
-!  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!              Distribution is like in Scalapack.
-!              The full matrix must be set (not only one half like in scalapack).
-!              Destroyed on exit (upper and lower half).
-!
-!  lda         Leading dimension of a
-!
-!  ev(na)      On output: eigenvalues of a, every processor gets the complete set
-!
-!  q(ldq,matrixCols)    On output: Eigenvectors of a
-!              Distribution is like in Scalapack.
-!              Must be always dimensioned to the full size (corresponding to (na,na))
-!              even if only a part of the eigenvalues is needed.
-!
-!  ldq         Leading dimension of q
-!
-!  nblk        blocksize of cyclic distribution, must be the same in both directions!
-!
-!  mpi_comm_rows
-!  mpi_comm_cols
-!              MPI-Communicators for rows/columns
-!
-!-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
@@ -224,44 +252,42 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_
 
 end function solve_evp_real
 
-!-------------------------------------------------------------------------------
 
-
-function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
-
-!-------------------------------------------------------------------------------
-!  solve_evp_complex: Solves the complex eigenvalue problem
-!
+! \brief solve_evp_real: Fortran function to solve the complex eigenvalue problem with 1-stage solver
+!>
 !  Parameters
 !
-!  na          Order of matrix a
-!
-!  nev         Number of eigenvalues needed
-!              The smallest nev eigenvalues/eigenvectors are calculated.
-!
-!  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!              Distribution is like in Scalapack.
-!              The full matrix must be set (not only one half like in scalapack).
-!              Destroyed on exit (upper and lower half).
-!
-!  lda         Leading dimension of a
-!
-!  ev(na)      On output: eigenvalues of a, every processor gets the complete set
-!
-!  q(ldq,matrixCols)    On output: Eigenvectors of a
-!              Distribution is like in Scalapack.
-!              Must be always dimensioned to the full size (corresponding to (na,na))
-!              even if only a part of the eigenvalues is needed.
-!
-!  ldq         Leading dimension of q
-!
-!  nblk        blocksize of cyclic distribution, must be the same in both directions!
-!
-!  mpi_comm_rows
-!  mpi_comm_cols
-!              MPI-Communicators for rows/columns
-!
-!-------------------------------------------------------------------------------
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+
+function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif

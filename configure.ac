@@ -660,6 +660,12 @@ fi
 
 LT_INIT
 
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
+DX_MAN_FEATURE(ON)
+DX_HTML_FEATURE(ON)
+DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
+
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])
 AC_SUBST([with_amd_bulldozer_kernel])
@@ -669,6 +675,7 @@ AC_SUBST([OPENMP_CFLAGS])
 AC_SUBST([OPENMP_FCFLAGS])
 AC_SUBST([OPENMP_LDFLAGS])
 #AC_SUBST(OPT_FCFLAGS)
+AC_SUBST([DOXYGEN_OUTPUT_DIR], [docs])
 
 rm -rf modules/ .fortran_dependencies/
 mkdir modules
@@ -702,6 +709,7 @@ AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
 
 AC_CONFIG_FILES([
   Makefile
+  Doxyfile
   ${PKG_CONFIG_FILE}:elpa.pc.in
 ])
 
