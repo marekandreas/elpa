@@ -24,3 +24,11 @@ https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 
   The state of release 2015.02.002 defines this interface
 
+- 4
+  Incompatible API change. The Fortran versions of the library functions return
+  a logical indicating success or failure. The C versions of the library functions
+  return an integer {0,1} for success and failure.
+  Some interface need an extra argument, specifying the number of matrix columns
+  (see the documentation)
+
+
