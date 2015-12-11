@@ -3,7 +3,8 @@
 //    The ELPA library was originally created by the ELPA consortium,
 //    consisting of the following organizations:
 //
-//    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 //    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 //      Informatik,
 //    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -56,7 +57,7 @@
 // distributed along with the original code in the file "COPYING".
 //
 // Author: Alexander Heinecke (alexander.heinecke@mytum.de)
-// Adapted for building a shared-library by Andreas Marek, RZG (andreas.marek@rzg.mpg.de)
+// Adapted for building a shared-library by Andreas Marek, MPCDF (andreas.marek@mpcdf.mpg.de)
 // --------------------------------------------------------------------------------------------------
 
 #include <complex>

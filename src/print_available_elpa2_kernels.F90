@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -71,6 +72,7 @@
 !>
 !> Synopsis: print_available_elpa2_kernels
 !>
+!> \author A. Marek (MPCDF)
 program print_available_elpa2_kernels
 
    use ELPA1
