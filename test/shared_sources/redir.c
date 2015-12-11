@@ -17,7 +17,7 @@
 //
 //
 //    More information can be found here:
-//    http://elpa.rzg.mpg.de/
+//    http://elpa.mpcdf.mpg.de/
 //
 //    ELPA is free software: you can redistribute it and/or modify
 //    it under the terms of the version 3 of the license of the

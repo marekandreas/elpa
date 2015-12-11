@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 
-AC_INIT([elpa],[2015.11.001], [elpa-library@rzg.mpg.de])
+AC_INIT([elpa],[2015.11.001], [elpa-library@mpcdf.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
