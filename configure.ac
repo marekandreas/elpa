@@ -34,7 +34,7 @@ rm -rf config.h config-f90.h
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [4:1:0])
+AC_SUBST([ELPA_SO_VERSION], [5:0:1])
 #
 
 
@@ -725,7 +725,11 @@ fi
 
 echo "Generating elpa/elpa_generated.h..."
 mkdir -p elpa
-grep "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
+grep -h "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
+
+echo "Generating test/shared_sources/generated.h..."
+mkdir -p test/shared_sources
+grep -h "^ *!c>" $srcdir/test/shared_sources/*.F90 | sed 's/^ *!c>//;' > test/shared_sources/generated.h || exit 1
 
 if test "${can_compile_avx}" = "no" ; then
   if test x"${want_avx}" = x"yes" ; then

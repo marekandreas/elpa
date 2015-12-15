@@ -244,9 +244,9 @@ program test_real
    my_pcolFromC = my_pcol
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_row_col_comms.
+   ! rows or columns of processes, these are set in get_elpa_communicators.
 
-   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    ! call here a c function, which via the c-interface in turn calls the
@@ -300,11 +300,11 @@ program test_real
    end if
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                           na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_real produced an error! Aborting..."
+      write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif
 

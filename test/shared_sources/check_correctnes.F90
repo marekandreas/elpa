@@ -203,6 +203,10 @@ module mod_check_correctness
       endif
     end function
 
+    !c> int check_correctness_real_from_fortran(int na, int nev, int na_rows, int na_cols,
+    !c>                                         double *as, double *z, double *ev,
+    !c>                                         int sc_desc[9], int myid,
+    !c>                                         double *tmp1, double *tmp2);
     function check_correctness_real_wrapper(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status) &
       bind(C,name="check_correctness_real_from_fortran")
 
@@ -220,7 +224,10 @@ module mod_check_correctness
       status = check_correctness_real(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
     end function
-
+    !c> int check_correctness_complex_from_fortran(int na, int nev, int na_rows, int na_cols,
+    !c>                                         complex double *as, complex double *z, double *ev,
+    !c>                                         int sc_desc[9], int myid,
+    !c>                                         complex double *tmp1, complex double *tmp2);
     function check_correctness_complex_wrapper(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status) &
       bind(C,name="check_correctness_complex_from_fortran")
 

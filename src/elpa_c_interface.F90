@@ -50,7 +50,7 @@
 #include "config-f90.h"
   !c> #include <complex.h>
 
-  !c> /*! \brief C interface to create the MPI communicators for ELPA
+  !c> /*! \brief C old, deprecated interface to create the MPI communicators for ELPA
   !c> *
   !c> * \param mpi_comm_word    MPI global communicator (in)
   !c> * \param my_prow          Row coordinate of the calling process in the process grid (in)
@@ -59,7 +59,7 @@
   !c> * \result int             integer error value of mpi_comm_split function
   !c> */
   !c> int elpa_get_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
-  function get_elpa_row_col_comms_wrapper(mpi_comm_world, my_prow, my_pcol, &
+  function get_elpa_row_col_comms_wrapper_c_name1(mpi_comm_world, my_prow, my_pcol, &
                                           mpi_comm_rows, mpi_comm_cols)     &
                                           result(mpierr) bind(C,name="elpa_get_communicators")
     use, intrinsic :: iso_c_binding
@@ -74,6 +74,35 @@
                                     mpi_comm_rows, mpi_comm_cols)
 
   end function
+  !c> #include <complex.h>
+
+  !c> /*! \brief C interface to create the MPI communicators for ELPA
+  !c> *
+  !c> * \param mpi_comm_word    MPI global communicator (in)
+  !c> * \param my_prow          Row coordinate of the calling process in the process grid (in)
+  !c> * \param my_pcol          Column coordinate of the calling process in the process grid (in)
+  !c> * \param mpi_comm_rows    Communicator for communicating within rows of processes (out)
+  !c> * \result int             integer error value of mpi_comm_split function
+  !c> */
+  !c> int get_elpa_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
+  function get_elpa_row_col_comms_wrapper_c_name2(mpi_comm_world, my_prow, my_pcol, &
+                                          mpi_comm_rows, mpi_comm_cols)     &
+                                          result(mpierr) bind(C,name="get_elpa_communicators")
+    use, intrinsic :: iso_c_binding
+    use elpa1, only : get_elpa_row_col_comms
+
+    implicit none
+    integer(kind=c_int)         :: mpierr
+    integer(kind=c_int), value  :: mpi_comm_world, my_prow, my_pcol
+    integer(kind=c_int)         :: mpi_comm_rows, mpi_comm_cols
+
+    mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+                                    mpi_comm_rows, mpi_comm_cols)
+
+  end function
+
+
+
   !c>  /*! \brief C interface to solve the real eigenvalue problem with 1-stage solver
   !c>  *
   !c> *  \param  na                   Order of matrix a
@@ -96,7 +125,7 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c>*/
-  !c> int elpa_solve_evp_real_stage1(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+  !c> int elpa_solve_evp_real_1stage(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
   function solve_elpa1_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk, &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols)      &
                                   result(success) bind(C,name="elpa_solve_evp_real_1stage")
@@ -120,6 +149,8 @@
     endif
 
   end function
+
+
   !c> /*! \brief C interface to solve the complex eigenvalue problem with 1-stage solver
   !c> *
   !c> *  \param  na                   Order of matrix a
@@ -142,7 +173,7 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-  !c> int elpa_solve_evp_complex_stage1(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+  !c> int elpa_solve_evp_complex_1stage(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
   function solve_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk, &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols)      &
                                   result(success) bind(C,name="elpa_solve_evp_complex_1stage")
@@ -192,7 +223,7 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-  !c> int elpa_solve_evp_real_stage2(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
+  !c> int elpa_solve_evp_real_2stage(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
   function solve_elpa2_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
                                   THIS_REAL_ELPA_KERNEL_API, useQR)           &
@@ -256,7 +287,7 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-  !c> int elpa_solve_evp_complex_stage2(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
+  !c> int elpa_solve_evp_complex_2stage(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
   function solve_elpa2_evp_complex_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
                                   THIS_COMPLEX_ELPA_KERNEL_API)                  &

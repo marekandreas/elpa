@@ -229,9 +229,9 @@ program test_complex
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_row_col_comms.
+   ! rows or columns of processes, these are set in get_elpa_communicators.
 
-   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -277,7 +277,7 @@ program test_complex
    end if
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_complex(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_complex_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then

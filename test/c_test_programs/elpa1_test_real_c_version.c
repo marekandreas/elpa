@@ -50,7 +50,9 @@
 
 #include <elpa/elpa.h>
 
-main(int argc, char** argv) {
+#include "test/shared_sources/generated.h"
+
+int main(int argc, char** argv) {
    int myid;
    int nprocs;
 
@@ -131,7 +133,7 @@ main(int argc, char** argv) {
    /* get the ELPA row and col communicators. */
    /* These are NOT usable in C without calling the MPI_Comm_f2c function on them !! */
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
-   mpierr = elpa_get_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
+   mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
    if (myid == 0) {
      printf("\n");

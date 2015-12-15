@@ -94,10 +94,13 @@ module ELPA1
 
   ! The following routines are public:
 
-  public :: get_elpa_row_col_comms     !< Sets MPI row/col communicators
+  public :: get_elpa_row_col_comms     !< old, deprecated interface: Sets MPI row/col communicators
+  public :: get_elpa_communicators     !< Sets MPI row/col communicators
 
-  public :: solve_evp_real             !< Driver routine for real eigenvalue problem
-  public :: solve_evp_complex          !< Driver routine for complex eigenvalue problem
+  public :: solve_evp_real             !< old, deprecated interface: Driver routine for real eigenvalue problem
+  public :: solve_evp_real_1stage      !< Driver routine for real eigenvalue problem
+  public :: solve_evp_complex          !< old, deprecated interface:  Driver routine for complex eigenvalue problem
+  public :: solve_evp_complex_1stage   !< Driver routine for complex eigenvalue problem
 
   ! Timing results, set by every call to solve_evp_xxx
 
@@ -109,12 +112,110 @@ module ELPA1
 
   include 'mpif.h'
 
+!> \brief get_elpa_row_col_comms:  old, deprecated Fortran function to create the MPI communicators for ELPA. Better use "elpa_get_communicators"
+!> \detail
+!> The interface and variable definition is the same as in "elpa_get_communicators"
+!> \param  mpi_comm_global   Global communicator for the calculations (in)
+!>
+!> \param  my_prow           Row coordinate of the calling process in the process grid (in)
+!>
+!> \param  my_pcol           Column coordinate of the calling process in the process grid (in)
+!>
+!> \param  mpi_comm_rows     Communicator for communicating within rows of processes (out)
+!>
+!> \param  mpi_comm_cols     Communicator for communicating within columns of processes (out)
+!> \result mpierr            integer error value of mpi_comm_split function
+  interface get_elpa_row_col_comms
+    module procedure get_elpa_communicators
+  end interface
+
+!> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Better use "solve_evp_real_1stage"
+!>
+!> \detail
+!>  The interface and variable definition is the same as in "elpa_solve_evp_real_1stage"
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+
+
+  interface solve_evp_real
+    module procedure solve_evp_real_1stage
+  end interface
+
+!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage"
+!>
+!> \detail
+!> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage"
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+
+
+  interface solve_evp_complex
+    module procedure solve_evp_complex_1stage
+  end interface
+
 contains
 
 !-------------------------------------------------------------------------------
 
-!> \brief Fortran function to create the MPI communicators for ELPA
-! get_elpa_row_col_comms:
+!> \brief Fortran function to create the MPI communicators for ELPA.
 ! All ELPA routines need MPI communicators for communicating within
 ! rows or columns of processes, these are set here.
 ! mpi_comm_rows/mpi_comm_cols can be free'd with MPI_Comm_free if not used any more.
@@ -133,7 +234,7 @@ contains
 !> \result mpierr            integer error value of mpi_comm_split function
 
 
-function get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
+function get_elpa_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
 
    implicit none
 
@@ -150,10 +251,10 @@ function get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows
    call mpi_comm_split(mpi_comm_global,my_pcol,my_prow,mpi_comm_rows,mpierr)
    call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols,mpierr)
 
-end function get_elpa_row_col_comms
+end function get_elpa_communicators
 
 
-! \brief solve_evp_real: Fortran function to solve the real eigenvalue problem with 1-stage solver
+!> \brief solve_evp_real_1stage: Fortran function to solve the real eigenvalue problem with 1-stage solver
 !>
 !  Parameters
 !
@@ -188,7 +289,7 @@ end function get_elpa_row_col_comms
 !>  \result                     success
 
 
-function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
+function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
 
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
@@ -206,7 +307,7 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_
    logical              :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("solve_evp_real")
+   call timer%start("solve_evp_real_1stage")
 #endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -247,13 +348,13 @@ function solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_
    deallocate(e, tau)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve_evp_real")
+   call timer%stop("solve_evp_real_1stage")
 #endif
 
-end function solve_evp_real
+end function solve_evp_real_1stage
 
 
-! \brief solve_evp_real: Fortran function to solve the complex eigenvalue problem with 1-stage solver
+!> \brief solve_evp_complex_1stage: Fortran function to solve the complex eigenvalue problem with 1-stage solver
 !>
 !  Parameters
 !
@@ -287,7 +388,7 @@ end function solve_evp_real
 !>
 !>  \result                     success
 
-function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
+function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
@@ -309,7 +410,7 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_co
    logical                 :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("solve_evp_complex")
+   call timer%start("solve_evp_complex_1stage")
 #endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -361,10 +462,10 @@ function solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_co
    deallocate(q_real)
    deallocate(e, tau)
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve_evp_complex")
+   call timer%stop("solve_evp_complex_1stage")
 #endif
 
-end function solve_evp_complex
+end function solve_evp_complex_1stage
 
 
 

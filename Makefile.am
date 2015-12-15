@@ -95,10 +95,13 @@ nobase_elpa_include_HEADERS = $(wildcard modules/*)
 nobase_elpa_include_HEADERS += elpa/elpa.h elpa/elpa_kernel_constants.h elpa/elpa_generated.h
 
 man_MANS = man/solve_evp_real.3 \
+	   man/solve_evp_real_1stage.3 \
 	   man/solve_evp_complex.3 \
+	   man/solve_evp_complex_1stage.3 \
 	   man/solve_evp_real_2stage.3 \
 	   man/solve_evp_complex_2stage.3 \
 	   man/get_elpa_row_col_comms.3 \
+	   man/get_elpa_communicators.3 \
 	   man/print_available_elpa2_kernels.1
 
 # other files to distribute
@@ -341,6 +344,13 @@ EXTRA_DIST = \
   src/elpa_reduce_add_vectors.X90 \
   src/elpa_transpose_vectors.X90 \
   src/redist_band.X90
+
+# Rules to re-generated the headers
+elpa/elpa_generated.h: $(top_srcdir)/src/elpa_c_interface.F90
+	grep -h "^ *!c>" $^ | sed 's/^ *!c>//;' > $@ || { rm $@; exit 1; }
+
+test/shared_sources/generated.h: $(wildcard $(top_srcdir)/test/shared_sources/*.F90)
+	grep -h "^ *!c>" $^ | sed 's/^ *!c>//;' > $@ || { rm $@; exit 1; }
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)

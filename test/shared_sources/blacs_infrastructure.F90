@@ -57,6 +57,9 @@ module mod_blacs_infrastructure
       call BLACS_Gridinfo(my_blacs_ctxt, nprow, npcol, my_prow, my_pcol)
     end subroutine
 
+    !c> void set_up_blacsgrid_from_fortran(int mpi_comm_world, int* my_blacs_ctxt,
+    !c>                                    int *np_rows, int *np_cols, int *nprow, int *npcol,
+    !c>                                    int *my_prow, int *my_pcol);
     subroutine set_up_blacsgrid_wrapper(mpi_comm_world, my_blacs_ctxt, np_rows, &
                                 np_cols, nprow, npcol, my_prow, my_pcol)        &
                                 bind(C, name="set_up_blacsgrid_from_fortran")
@@ -112,6 +115,12 @@ module mod_blacs_infrastructure
 
     end subroutine
 
+    !c> void set_up_blacs_descriptor_from_fortran(int na, int nblk, int my_prow, int my_pcol,
+    !c>                                           int np_rows, int np_cols,
+    !c>                                           int *na_rows, int *na_cols,
+    !c>                                           int sc_desc[9],
+    !c>                                           int my_blacs_ctxt,
+    !c>                                           int *info);
     subroutine set_up_blacs_descriptor_wrapper(na, nblk, my_prow, my_pcol, &
                                                np_rows, np_cols, na_rows,  &
                                                na_cols, sc_desc,           &
