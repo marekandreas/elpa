@@ -47,17 +47,27 @@ define object_extension
 $(if $(filter $1,$(PROGRAMS)),o,lo)
 endef
 
+# $1 source file
+# $2 stem
+# $3 program
+# $4 kind of file ('use' or 'def')
+define modinfo_name
+$(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).$4_mods_$(patsubst .,_,$3).$(call object_extension,$3)
+endef
+
 # $1 source_file
 # $2 stem
 # $3 program
 define module_targets
-$(eval _$(3)_use_mods += $(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).use_mods.$(call object_extension,$3))
-$(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).use_mods.$(call object_extension,$3): $1 $(dir $1)$(am__dirstamp)
-	$(call _f90_verbose,F90 USE  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | grep -i -o '^ *use [^ ,!:]*' | tr '[:upper:]' '[:lower:]' | sort -u > $$@
+$(eval _$(3)_use_mods += $(call modinfo_name,$1,$2,$3,use))
+$(call modinfo_name,$1,$2,$3,use): $1 $(dir $1)$(am__dirstamp)
+	$(call _f90_verbose,F90 USE  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | \
+		grep -i -o '^ *use [^ ,!:]*' | sed 's/^[[:space:]]*//;' | tr '[:upper:]' '[:lower:]' | sort -u > $$@
 
-$(eval _$(3)_def_mods += $(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).def_mods.$(call object_extension,$3))
-$(dir $1)$(2)$(call strip_fortran_ext,$(notdir $1)).def_mods.$(call object_extension,$3): $1 $(dir $1)$(am__dirstamp)
-	$(call _f90_verbose,F90 MOD  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | grep -i -o '^ *module [^!]*' | tr '[:upper:]' '[:lower:]' | grep -v "\<procedure\>\|\<intrinsic\>" > $$@ || true
+$(eval _$(3)_def_mods += $(call modinfo_name,$1,$2,$3,def))
+$(call modinfo_name,$1,$2,$3,def): $1 $(dir $1)$(am__dirstamp)
+	$(call _f90_verbose,F90 MOD  [$3] $$<)$(FORTRAN_CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $($p_CPPFLAGS) $(CPPFLAGS) -o /dev/stdout $$< | \
+		grep -i -o '^ *module [^!]*' | sed 's/^[[:space:]]*//;' | tr '[:upper:]' '[:lower:]' | grep -v "\<procedure\>\|\<intrinsic\>" > $$@ || true
 
 endef
 $(foreach p,$(_f90_targets),$(if $(call is_per_target,$p),$(foreach s,$(call fortran_sources,$p),$(eval $(call module_targets,$s,$p-,$p))),$(foreach s,$(call fortran_sources,$p),$(eval $(call module_targets,$s,,$p)))))

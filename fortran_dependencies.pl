@@ -54,11 +54,11 @@ foreach my $file (@ARGV) {
 	if (defined($ENV{V}) && $ENV{V} ge "2") {
 		print STDERR "fdep: Considering file $file for target $target\n";
 	}
-	if ($file =~ /^(.*)\.def_mods(\..*)$/) {
+	if ($file =~ /^(.*)\.def_mods_[^.]*(\..*)$/) {
 		$re = $def_re;
 		$add = \&add_def;
 		$object = $1 . $2;
-	} elsif ($file =~ /^(.*)\.use_mods(\..*)$/) {
+	} elsif ($file =~ /^(.*)\.use_mods_[^.]*(\..*)$/) {
 		$re = $use_re;
 		$add = \&add_use;
 		$object = $1 . $2;
