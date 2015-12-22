@@ -40,7 +40,7 @@
 !
 !
 module qr_utils_mod
-
+    use elpa1_compute
     implicit none
 
     PRIVATE

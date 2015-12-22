@@ -40,7 +40,7 @@
 !
 !
 module elpa_pdlarfb
-
+    use elpa1_compute
     use elpa1
     use qr_utils_mod
  

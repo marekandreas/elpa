@@ -140,7 +140,7 @@ module ELPA2_utilities
 
 #endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
 
-#else / * WITH_REAL_AVX_BLOCK2_KERNEL */
+#else /* WITH_REAL_AVX_BLOCK2_KERNEL */
 
 #ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
   integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
@@ -176,7 +176,7 @@ module ELPA2_utilities
 
 #endif  /* WITH_ONE_SPECIFIC_REAL_KERNEL */
 
-#endif / * WITH_REAL_AVX_BLOCK2_KERNEL */
+#endif /* WITH_REAL_AVX_BLOCK2_KERNEL */
 
   character(35), parameter, dimension(number_of_real_kernels) :: &
   REAL_ELPA_KERNEL_NAMES =    (/"REAL_ELPA_KERNEL_GENERIC         ", &

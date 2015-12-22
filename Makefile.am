@@ -10,6 +10,8 @@ lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
 libelpa@SUFFIX@_la_SOURCES = src/elpa_utilities.F90 \
+	                     src/elpa1_compute.F90 \
+			     src/elpa2_compute.F90 \
 	                     src/elpa1.F90 \
 			     src/elpa2_utilities.F90 \
 			     src/check_for_gpu.F90 \
