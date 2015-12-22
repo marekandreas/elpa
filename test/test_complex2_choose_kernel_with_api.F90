@@ -79,12 +79,10 @@ program test_complex2
 
    use ELPA1
    use ELPA2
-#ifdef WITH_GPU_VERSION
-   use cuda_routines
-#endif
 
+   use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
-
+   use elpa2_utilities
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
@@ -142,13 +140,14 @@ program test_complex2
 #endif
    logical                 :: write_to_file
 
-  logical                  :: success
-#ifdef WITH_GPU_VERSION
-  character(len=1024)      :: envname
-  integer                  :: istat, devnum
-#endif
+   logical                 :: successELPA, success
+   integer                 :: numberOfDevices
+   logical                 :: gpuAvailable
 
-   success = .true.
+
+
+   successELPA   = .true.
+   gpuAvailable  = .false.
 
    call read_input_parameters(na, nev, nblk, write_to_file)
 
@@ -156,16 +155,7 @@ program test_complex2
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-#ifdef WITH_GPU_VERSION
-   devnum = 0
-   istat = cuda_setdevice(devnum)
-
-   if (istat .ne. 0) then
-     print *,"Cannot set CudaDevice"
-     stop
-   endif
-#endif
-
+   gpuAvailable = check_for_gpu(myid, numberOfDevices)
    STATUS = 0
 
 #ifdef WITH_OPENMP
@@ -239,6 +229,9 @@ program test_complex2
    if(myid==0) then
       print *
       print '(a)','Standard eigenvalue problem - COMPLEX version'
+      if (gpuAvailable) then
+        print *," with GPU version"
+      endif
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
@@ -247,13 +240,49 @@ program test_complex2
       print *, "an api call. Note, however, that setting the kernel via"
       print *, "an environment variable will always take precedence over"
       print *, "everything else! "
+#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+      print *," However, this version of ELPA was build with only one of all the available"
+      print *," kernels, thus it will not be successful to call ELPA with another "
+      print *," kernel than the one specified at compile time!"
+#endif
       print *
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
       print *, " kernel via an environment variable! To change this re-install"
       print *, " the library and have a look at the log files"
 #endif
+#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
       print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE"
+#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+#ifdef WITH_COMPLEX_GENERIC_KERNEL
+      print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC"
+#endif
+
+#ifdef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
+      print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE"
+#endif
+
+#ifdef WITH_COMPLEX_SSE_KERNEL
+      print *, " The settings are: COMPLEX_ELPA_KERNEL_SSE"
+#endif
+
+#ifdef WITH_COMPLEX_AVX_BLOCK1_KERNEL
+      print *, " The settings are: COMPLEX_ELPA_KERNEL_AVX_BLOCK1"
+#endif
+
+#ifdef WITH_COMPLEX_AVX_BLOCK2_KERNEL
+      print *, " The settings are: COMPLEX_ELPA_KERNEL_AVX_BLOCK2"
+#endif
+
+#ifdef WITH_GPU_VERSION
+      print *, " The settings are: COMPLEX_ELPA_KERNEL_GPU"
+#endif
+
+#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+
+
       print *
    endif
 
@@ -329,12 +358,42 @@ program test_complex2
    ! ELPA is called a kernel specification in the API
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   successELPA = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                  na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
+#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
                                  COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
+#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+#ifdef  WITH_COMPLEX_GENERIC_KERNEL
+                                 COMPLEX_ELPA_KERNEL_GENERIC)
+#endif
+
+#ifdef  WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
+                                 COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
+#endif
+
+#ifdef  WITH_COMPLEX_SSE_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE)
+#endif
+
+#ifdef  WITH_COMPLEX_AVX_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK1)
+#endif
+
+#ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK2)
+#endif
+
+#ifdef  WITH_GPU_VERSION
+                                 COMPLEX_ELPA_KERNEL_GPU)
+#endif
+
+#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
 
 
-   if (.not.(success)) then
+
+
+   if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif

@@ -80,9 +80,8 @@ program test_real2
 
    use ELPA1
    use ELPA2
-#ifdef WITH_GPU_VERSION
-   use cuda_routines
-#endif
+
+   use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
    use test_util
@@ -132,14 +131,13 @@ program test_real2
 #endif
    logical                 :: write_to_file
 
-  logical                  :: success
+   logical                  :: successELPA, success
 
-#ifdef WITH_GPU_VERSION
-   character(len=1024)     :: envname
-   integer                 :: istat, devnum, numdevs
-#endif
+   integer                 :: numberOfDevices
+   logical                 :: gpuAvailable
 
-   success = .true.
+   successELPA   = .true.
+   gpuAvailable  = .false.
 
    call read_input_parameters(na, nev, nblk, write_to_file)
 
@@ -147,28 +145,7 @@ program test_real2
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-#ifdef WITH_GPU_VERSION
-   ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
-   istat = cuda_getdevicecount(numdevs)
-   if (istat .ne. 0) then
-     print *,"error in cuda_getdevicecount"
-     stop
-   endif
-
-   if (myid==0) then
-     print *
-     print '(3(a,i0))','Found ', numdevs, ' GPUs'
-   endif
-
-   devnum = mod(myid, numdevs)
-   istat = cuda_setdevice(devnum)
-
-   if (istat .ne. 0) then
-     print *,"Cannot set CudaDevice"
-     stop
-   endif
-   print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', devnum
-#endif
+   gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
 #ifdef WITH_OPENMP
@@ -198,9 +175,9 @@ program test_real2
    if (myid .eq. 0) then
       print *," "
       print *,"This ELPA2 is build with"
-#ifdef WITH_GPU_SUPPORT
-     print *,"GPU support"
-#endif
+      if (gpuAvailable) then
+        print *,"GPU support"
+      endif
 #ifdef WITH_REAL_AVX_BLOCK2_KERNEL
       print *,"AVX optimized kernel (2 blocking) for real matrices"
 #endif
@@ -342,10 +319,10 @@ program test_real2
    end if
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+   successELPA = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
-   if (.not.(success)) then
+   if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif

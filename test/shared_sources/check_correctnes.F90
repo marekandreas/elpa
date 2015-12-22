@@ -173,7 +173,7 @@ module mod_check_correctness
       if (myid==0) print *
       if (myid==0) print *,'Error Residual     :',errmax
 
-      if (errmax .gt. 5e-12) then
+      if (errmax .gt. 9e-9) then
         status = 1
       endif
 
@@ -196,7 +196,7 @@ module mod_check_correctness
       call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
       if (myid==0) print *,'Error Orthogonality:',errmax
 
-      if (errmax .gt. 5e-12) then
+      if (errmax .gt. 9e-9) then
         status = 1
       endif
     end function

@@ -138,8 +138,8 @@
       useQRFortran = .true.
     endif
 
-    successFortran = solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran)
+    successFortran = solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                           mpi_comm_all, THIS_REAL_ELPA_KERNEL_API, useQRFortran)
 
     if (successFortran) then
       success = 1

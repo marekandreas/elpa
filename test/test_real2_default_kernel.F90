@@ -80,12 +80,10 @@ program test_real2
 
    use ELPA1
    use ELPA2
-#ifdef WITH_GPU_VERSION
-   use cuda_routines
-#endif
 
+   use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
-
+   use elpa2_utilities, only : get_actual_real_kernel_name
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
@@ -136,29 +134,20 @@ program test_real2
 #endif
    logical                 :: write_to_file
 
-   logical                 :: success
+   logical                 :: successELPA, success
 
-#ifdef WITH_GPU_VERSION
-   character(len=1024)     :: envname
-   integer                 :: istat, devnum
-#endif
+   integer                 :: numberOfDevices
+   logical                 :: gpuAvailable
 
-   success = .true.
+   successELPA = .true.
+   gpuAvailable  = .false.
 
    call read_input_parameters(na, nev, nblk, write_to_file)
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-#ifdef WITH_GPU_VERSION
-   devnum = 0
-   istat = cuda_setdevice(devnum)
-
-   if (istat .ne. 0) then
-     print *,"Cannot set CudaDevice"
-     stop
-   endif
-#endif
+   gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
 
@@ -184,6 +173,39 @@ program test_real2
      call redirect_stdout(myid)
    endif
 #endif
+
+   if (myid .eq. 0) then
+      print *," "
+      print *,"This ELPA2 is build with"
+      if (gpuAvailable) then
+        print *,"GPU support"
+      endif
+#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
+      print *,"AVX optimized kernel (2 blocking) for real matrices"
+#endif
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+      print *,"AVX optimized kernel (4 blocking) for real matrices"
+#endif
+#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
+      print *,"AVX optimized kernel (6 blocking) for real matrices"
+#endif
+
+#ifdef WITH_REAL_GENERIC_KERNEL
+     print *,"GENERIC kernel for real matrices"
+#endif
+#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
+     print *,"GENERIC SIMPLE kernel for real matrices"
+#endif
+#ifdef WITH_REAL_SSE_KERNEL
+     print *,"SSE ASSEMBLER kernel for real matrices"
+#endif
+#ifdef WITH_REAL_BGP_KERNEL
+     print *,"BGP kernel for real matrices"
+#endif
+#ifdef WITH_REAL_BGQ_KERNEL
+     print *,"BGQ kernel for real matrices"
+#endif
+   endif
 
    if (write_to_file) then
      if (myid .eq. 0) print *,"Writing output files"
@@ -231,6 +253,9 @@ program test_real2
    if(myid==0) then
       print *
       print '(a)','Standard eigenvalue problem - REAL version'
+      if (gpuAvailable) then
+        print *,"with GPU version"
+      endif
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
@@ -243,6 +268,12 @@ program test_real2
       print *
       print *, " The settings are: ",trim(get_actual_real_kernel_name())," as real kernel"
       print *
+#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+      print *," However, this version of ELPA was build with only one of all the available"
+      print *," kernels, thus it will not be successful to call ELPA with another "
+      print *," kernel than the one specified at compile time!"
+#endif
+      print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
       print *, " kernel via an environment variable! To change this re-install"
@@ -318,10 +349,10 @@ program test_real2
    ! environment variable
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   successELPA = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
-   if (.not.(success)) then
+   if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif

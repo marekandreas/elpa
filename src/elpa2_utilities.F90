@@ -105,10 +105,79 @@ module ELPA2_utilities
 
 
 #if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
+
+#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
   integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
-#else
+#else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+#ifdef WITH_REAL_GENERIC_KERNEL
   integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
 #endif
+#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC_SIMPLE
+#endif
+#ifdef WITH_REAL_SSE_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_SSE
+#endif
+#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BLOCK2
+#endif
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BLOCK4
+#endif
+#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BLOCK6
+#endif
+#ifdef WITH_REAL_BGP_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BGP
+#endif
+#ifdef WITH_REAL_BGQ_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BGQ
+#endif
+#ifdef WITH_GPU_VERSION
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GPU
+#endif
+
+#endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+#else / * WITH_REAL_AVX_BLOCK2_KERNEL */
+
+#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
+#else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+#ifdef WITH_REAL_GENERIC_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
+#endif
+#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC_SIMPLE
+#endif
+#ifdef WITH_REAL_SSE_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_SSE
+#endif
+#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BLOCK2
+#endif
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BLOCK4
+#endif
+#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BLOCK6
+#endif
+#ifdef WITH_REAL_BGP_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BGP
+#endif
+#ifdef WITH_REAL_BGQ_KERNEL
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_AVX_BGQ
+#endif
+#ifdef WITH_GPU_VERSION
+  integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GPU
+#endif
+
+#endif  /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+#endif / * WITH_REAL_AVX_BLOCK2_KERNEL */
+
   character(35), parameter, dimension(number_of_real_kernels) :: &
   REAL_ELPA_KERNEL_NAMES =    (/"REAL_ELPA_KERNEL_GENERIC         ", &
                                 "REAL_ELPA_KERNEL_GENERIC_SIMPLE  ", &
@@ -132,10 +201,65 @@ module ELPA2_utilities
 
 
 #if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
+
+#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
   integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
-#else
+
+#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+! go through all kernels and set them
+#ifdef WITH_COMPLEX_GENERIC_KERNEL
   integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
 #endif
+#ifdef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE
+#endif
+#ifdef WITH_COMPLEX_SSE_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_SSE
+#endif
+#ifdef WITH_COMPLEX_AVX1_BLOCK1_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_AVX_BLOCK1
+#endif
+#ifdef WITH_COMPLEX_AVX1_BLOCK2_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_AVX_BLOCK2
+#endif
+#ifdef WITH_GPU_VERSION
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GPU
+#endif
+
+#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+#else /* WITH_COMPLEX_AVX_BLOCK1_KERNEL */
+
+#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
+
+#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+! go through all kernels and set them
+#ifdef WITH_COMPLEX_GENERIC_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
+#endif
+#ifdef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE
+#endif
+#ifdef WITH_COMPLEX_SSE_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_SSE
+#endif
+#ifdef WITH_COMPLEX_AVX1_BLOCK1_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_AVX_BLOCK1
+#endif
+#ifdef WITH_COMPLEX_AVX1_BLOCK2_KERNEL
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_AVX_BLOCK2
+#endif
+#ifdef WITH_GPU_VERSION
+  integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GPU
+#endif
+
+#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL */
+
   character(35), parameter, dimension(number_of_complex_kernels) :: &
   COMPLEX_ELPA_KERNEL_NAMES = (/"COMPLEX_ELPA_KERNEL_GENERIC         ", &
                                 "COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE  ", &
@@ -315,20 +439,20 @@ module ELPA2_utilities
       ! check whether set by environment variable
       actual_kernel = real_kernel_via_environment_variable()
 
-#ifdef WITH_GPU_VERSION
-      actual_kernel = REAL_ELPA_KERNEL_GPU
-#endif
+!#ifdef WITH_GPU_VERSION
+!      actual_kernel = REAL_ELPA_KERNEL_GPU
+!#endif
       if (actual_kernel .eq. 0) then
         ! if not then set default kernel
         actual_kernel = DEFAULT_REAL_ELPA_KERNEL
       endif
 
-#ifdef WITH_GPU_VERSION
-      if (actual_kernel .ne. REAL_ELPA_KERNEL_GPU) then
-        print *,"if build with GPU you cannot choose another real kernel"
-        stop
-      endif
-#endif
+!#ifdef WITH_GPU_VERSION
+!      if (actual_kernel .ne. REAL_ELPA_KERNEL_GPU) then
+!        print *,"if build with GPU you cannot choose another real kernel"
+!        stop
+!      endif
+!#endif
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("get_actual_real_kernel")
@@ -374,20 +498,20 @@ module ELPA2_utilities
      ! check whether set by environment variable
      actual_kernel = complex_kernel_via_environment_variable()
 
-#ifdef WITH_GPU_VERSION
-     actual_kernel = COMPLEX_ELPA_KERNEL_GPU
-#endif
+!#ifdef WITH_GPU_VERSION
+!     actual_kernel = COMPLEX_ELPA_KERNEL_GPU
+!#endif
      if (actual_kernel .eq. 0) then
        ! if not then set default kernel
        actual_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
      endif
 
-#ifdef WITH_GPU_VERSION
-      if (actual_kernel .ne. COMPLEX_ELPA_KERNEL_GPU) then
-        print *,"if build with GPU you cannot choose another complex kernel"
-        stop
-      endif
-#endif
+!#ifdef WITH_GPU_VERSION
+!      if (actual_kernel .ne. COMPLEX_ELPA_KERNEL_GPU) then
+!        print *,"if build with GPU you cannot choose another complex kernel"
+!        stop
+!      endif
+!#endif
 
 
 #ifdef HAVE_DETAILED_TIMINGS

@@ -44,210 +44,500 @@
 
 #include "config-f90.h"
 
-#ifdef WITH_GPU_VERSION
 module cuda_c_kernel
   implicit none
 
   interface
-
-    subroutine launch_dot_product_kernel(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr) bind(c)
-
-      use iso_c_binding
-
-      implicit none
-      integer, value :: nr
-      integer(C_SIZE_T), value :: hs_dev ,hv_new_dev,x_dev,h_dev, hv_dev
-      complex*16,value         :: tau_new
-
-    end subroutine
-
-    subroutine launch_dot_product_kernel_1(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns) bind(c)
+    subroutine launch_dot_product_kernel_c(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr) &
+               bind(c,name="launch_dot_product_kernel")
 
       use iso_c_binding
 
       implicit none
-      integer, value           ::  nb, nr, ns
-      integer(C_SIZE_T), value :: x_dev,h_dev, hv_dev, ab_dev, hs_dev,hv_new_dev
+      integer(kind=c_int), value      :: nr
+      integer(kind=C_intptr_T), value :: hs_dev ,hv_new_dev,x_dev,h_dev, hv_dev
+      complex*16,value                :: tau_new
 
     end subroutine
+  end interface
 
-    subroutine launch_dot_product_kernel_2(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne) bind(c)
+  interface
+    subroutine launch_dot_product_kernel_1_c(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns) &
+               bind(c, name="launch_dot_product_kernel_1")
 
       use iso_c_binding
 
       implicit none
-      integer, value           ::  nb, nr, ne
-      integer(C_SIZE_T), value :: hd_dev,hv_dev, hs_dev, ab_dev
+      integer(kind=c_int), value        ::  nb, nr, ns
+      integer(kind=C_intptr_T), value   :: x_dev,h_dev, hv_dev, ab_dev, hs_dev,hv_new_dev
 
     end subroutine
+  end interface
 
-    subroutine launch_double_hh_transform_1(ab_dev, hs_dev,hv_dev,nb,ns) bind(c)
+  interface
+    subroutine launch_dot_product_kernel_2_c(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne) &
+                bind(c,name="launch_dot_product_kernel_2")
 
       use iso_c_binding
 
       implicit none
-      integer, value           ::  nb, ns
-      integer(C_SIZE_T), value :: hv_dev, ab_dev,hs_dev
+      integer(kind=c_int), value      ::  nb, nr, ne
+      integer(kind=C_intptr_T), value :: hd_dev,hv_dev, hs_dev, ab_dev
+
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_double_hh_transform_1_c(ab_dev, hs_dev,hv_dev,nb,ns) &
+               bind(c,name="launch_double_hh_transform_1")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value      ::  nb, ns
+      integer(kind=C_intptr_T), value :: hv_dev, ab_dev,hs_dev
+
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_double_hh_transform_2_c(ab_dev, hd_dev,hv_dev,nc,ns, nb) &
+               bind(c,name="launch_double_hh_transform_2")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value      ::  nc, ns, nb
+      integer(kind=C_intptr_T), value :: hv_dev, ab_dev,hd_dev
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_compute_kernel_reduce_c(a_dev, lda, n, nbw, h1_dev) &
+               bind(c,name="launch_compute_kernel_reduce")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value      :: n,lda,nbw
+      integer(kind=C_intptr_T), value :: h1_dev ,a_dev
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_compute_kernel_reduce_1_c(a_dev, lda, n, h1_dev) &
+               bind(c,name="launch_compute_kernel_reduce_1")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value      :: n,lda
+      integer(kind=C_intptr_T), value :: h1_dev ,a_dev
+
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_compute_hh_trafo_c_kernel_real_c(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
+               bind(c,name="launch_compute_hh_trafo_c_kernel")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value     :: nev, nb, ldq, off, ncols
+      integer(kind=c_size_t), value  :: q
+      integer(kind=c_size_t), value  :: hh_dot
+      integer(C_SIZE_T), value       :: hh_tau ,hh
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_compute_hh_trafo_c_kernel_complex_c(q, hh, hh_tau, nev, nb,ldq,off, ncols) &
+               bind(c,name="launch_compute_hh_trafo_c_kernel_complex")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
+      integer(kind=c_size_t), value :: q
+      integer(kind=c_size_t), value :: hh_tau ,hh
+    end subroutine
+  end interface
+#if 0
+  interface
+    subroutine launch_compute_hh_trafo_c_kernel_complex_1_c(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
+                bind(c,name="launch_compute_hh_trafo_c_kernel_complex_1")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
+      integer(kind=c_size_t), value :: q
+      integer(kind=c_size_t), value :: hh_tau ,hh, hh_dot
+
+    end subroutine
+  end interface
+#endif
+
+  interface
+    subroutine launch_my_unpack_c_kernel_real_c(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+                                                l_nev,row_group_dev, a_dev) bind(c,name="launch_my_unpack_c_kernel")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value       :: row_count
+      integer(kind=c_int), value       :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
+      integer(kind=c_intptr_t), value  :: a_dev, row_group_dev
+
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_my_pack_c_kernel_real_c(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
+                                              row_group_dev) bind(c,name="launch_my_pack_c_kernel")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value      :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
+      integer(kind=c_intptr_t), value :: a_dev
+      integer(kind=c_intptr_t), value :: row_group_dev
+
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_compute_hh_dotp_c_kernel_real_c(bcast_buffer_dev, hh_dot_dev, nbw, n) &
+               bind(c,name="launch_compute_hh_dotp_c_kernel")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_intptr_t), value :: bcast_buffer_dev
+      integer(kind=c_intptr_t), value :: hh_dot_dev
+      integer(kind=c_int), value      :: nbw, n
+
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_extract_hh_tau_c_kernel_real_c(hh, hh_tau, nb, n, is_zero) &
+               bind(c,NAME="launch_extract_hh_tau_c_kernel")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_size_t), value :: hh
+      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_int), value    :: nb, n
+      integer(kind=c_int), value    :: is_zero
+
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_my_unpack_c_kernel_complex_c(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+                                                 row_group_dev, a_dev) bind(c,name="launch_my_unpack_c_kernel_complex")
+
+      use iso_c_binding
+
+      implicit none
+
+      integer(kind=c_int), value       :: row_count
+      integer(kind=c_int), value       :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
+      integer(kind=c_intptr_t), value  :: a_dev, row_group_dev
+
+    end subroutine
+  end interface
+
+  interface
+    subroutine launch_my_pack_c_kernel_complex_c(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
+                                               row_group_dev) bind(c,name="launch_my_pack_c_kernel_complex")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int), value      :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
+      integer(kind=c_intptr_t), value :: a_dev
+      integer(kind=c_intptr_t), value :: row_group_dev
+
+    end subroutine
+  end interface
+
+  interface
+   subroutine launch_compute_hh_dotp_c_kernel_complex_c(bcast_buffer_dev, hh_dot_dev, nbw,n) &
+              bind(c,name="launch_compute_hh_dotp_c_kernel_complex")
+
+     use iso_c_binding
+
+     implicit none
+     integer(kind=c_intptr_t), value :: bcast_buffer_dev
+     integer(kind=c_intptr_t), value :: hh_dot_dev
+     integer(kind=c_int), value      :: nbw, n
+   end subroutine
+  end interface
+
+  interface
+    subroutine launch_extract_hh_tau_c_kernel_complex_c(hh, hh_tau, nb, n, is_zero) &
+               bind(c,name="launch_extract_hh_tau_c_kernel_complex")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_size_t), value :: hh
+      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_int), value    :: nb, n
+      integer(kind=c_int), value    :: is_zero
+
+    end subroutine
+  end interface
+
+  contains
+
+    subroutine launch_dot_product_kernel(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)      :: nr
+      integer(kind=C_intptr_T) :: hs_dev ,hv_new_dev,x_dev,h_dev, hv_dev
+      complex*16               :: tau_new
+#ifdef WITH_GPU_VERSION
+      call launch_dot_product_kernel_c(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
+#endif
+    end subroutine
+
+    subroutine launch_dot_product_kernel_1(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)      ::  nb, nr, ns
+      integer(kind=C_intptr_T) :: x_dev,h_dev, hv_dev, ab_dev, hs_dev,hv_new_dev
+#ifdef WITH_GPU_VERSION
+      call launch_dot_product_kernel_1_c(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
+#endif
+    end subroutine
+
+    subroutine launch_dot_product_kernel_2(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)      ::  nb, nr, ne
+      integer(kind=C_intptr_T) :: hd_dev,hv_dev, hs_dev, ab_dev
+#ifdef WITH_GPU_VERSION
+      call launch_dot_product_kernel_2_c(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
+#endif
+    end subroutine
+
+    subroutine launch_double_hh_transform_1(ab_dev, hs_dev,hv_dev,nb,ns)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)      ::  nb, ns
+      integer(kind=C_intptr_T) :: hv_dev, ab_dev,hs_dev
+#ifdef WITH_GPU_VERSION
+      call launch_double_hh_transform_1_c(ab_dev, hs_dev,hv_dev,nb,ns)
+#endif
+    end subroutine
+
+    subroutine launch_double_hh_transform_2(ab_dev, hd_dev,hv_dev,nc,ns, nb)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)      ::  nc, ns, nb
+      integer(kind=C_intptr_T) :: hv_dev, ab_dev,hd_dev
+#ifdef WITH_GPU_VERSION
+      call launch_double_hh_transform_2_c(ab_dev, hd_dev,hv_dev,nc,ns, nb)
+#endif
+    end subroutine
+
+    subroutine launch_compute_kernel_reduce(a_dev, lda, n, nbw, h1_dev)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)      :: n,lda,nbw
+      integer(kind=C_intptr_T) :: h1_dev ,a_dev
+#ifdef WITH_GPU_VERSION
+      call launch_compute_kernel_reduce_c(a_dev, lda, n, nbw, h1_dev)
+#endif
+    end subroutine
+
+    subroutine launch_compute_kernel_reduce_1(a_dev, lda, n, h1_dev)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)      :: n,lda
+      integer(kind=C_intptr_T) :: h1_dev ,a_dev
+#ifdef WITH_GPU_VERSION
+      call launch_compute_kernel_reduce_1_c(a_dev, lda, n, h1_dev)
+#endif
+    end subroutine
+
+    subroutine launch_compute_hh_trafo_c_kernel_real(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)     :: nev, nb, ldq, off, ncols
+      integer(kind=c_size_t)  :: q
+      integer(kind=c_size_t)  :: hh_dot
+      integer(C_SIZE_T)       :: hh_tau ,hh
+#ifdef WITH_GPU_VERSION
+      call launch_compute_hh_trafo_c_kernel_real_c(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+#endif
+    end subroutine
+
+    subroutine launch_compute_hh_trafo_c_kernel_complex(q, hh, hh_tau, nev, nb,ldq,off, ncols)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)    :: nev, nb, ldq, off, ncols
+      integer(kind=c_size_t) :: q
+      integer(kind=c_size_t) :: hh_tau ,hh
+#ifdef WITH_GPU_VERSION
+      call launch_compute_hh_trafo_c_kernel_complex_c(q, hh, hh_tau, nev, nb,ldq,off, ncols)
+#endif
+    end subroutine
+
+#if 0
+    subroutine launch_compute_hh_trafo_c_kernel_complex_1(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)    :: nev, nb, ldq, off, ncols
+      integer(kind=c_size_t) :: q
+      integer(kind=c_size_t) :: hh_tau ,hh, hh_dot
+#ifdef WITH_GPU_VERSION
+      call launch_compute_hh_trafo_c_kernel_complex_1_c(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+#endif
+    end subroutine
+#endif
+
+    subroutine launch_my_unpack_c_kernel_real(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+                                              l_nev,row_group_dev, a_dev)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=c_int)       :: row_count
+      integer(kind=c_int)       :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
+      integer(kind=c_intptr_t)  :: a_dev, row_group_dev
+#ifdef WITH_GPU_VERSION
+      call launch_my_unpack_c_kernel_real_c(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+                                            l_nev,row_group_dev, a_dev)
+#endif
 
     end subroutine
 
-   subroutine launch_double_hh_transform_2(ab_dev, hd_dev,hv_dev,nc,ns, nb) bind(c)
+    subroutine launch_my_pack_c_kernel_real(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
+                                       row_group_dev)
 
-     use iso_c_binding
+      use iso_c_binding
 
-     implicit none
-     integer, value           ::  nc, ns, nb
-     integer(C_SIZE_T), value :: hv_dev, ab_dev,hd_dev
-   end subroutine
+      implicit none
+      integer(kind=c_int)      :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
+      integer(kind=c_intptr_t) :: a_dev
+      integer(kind=c_intptr_t) :: row_group_dev
+#ifdef WITH_GPU_VERSION
+      call launch_my_pack_c_kernel_real_c(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
+                                       row_group_dev)
+#endif
 
-   subroutine launch_compute_kernel_reduce(a_dev, lda, n, nbw, h1_dev) bind(c)
+    end subroutine
 
-     use iso_c_binding
+    subroutine launch_compute_hh_dotp_c_kernel_real(bcast_buffer_dev, hh_dot_dev, nbw, n)
 
-     implicit none
-     integer, value           :: n,lda,nbw
-     integer(C_SIZE_T), value :: h1_dev ,a_dev
-   end subroutine
+      use iso_c_binding
 
-   subroutine launch_compute_kernel_reduce_1(a_dev, lda, n, h1_dev) bind(c)
+      implicit none
+      integer(kind=c_intptr_t) :: bcast_buffer_dev
+      integer(kind=c_intptr_t) :: hh_dot_dev
+      integer(kind=c_int)      :: nbw, n
+#ifdef WITH_GPU_VERSION
+      call launch_compute_hh_dotp_c_kernel_real_c(bcast_buffer_dev, hh_dot_dev, nbw, n)
+#endif
+    end subroutine
 
-     use iso_c_binding
+    subroutine launch_extract_hh_tau_c_kernel_real(hh, hh_tau, nb, n, is_zero)
 
-     implicit none
-     integer, value           :: n,lda
-     integer(C_SIZE_T), value :: h1_dev ,a_dev
+      use iso_c_binding
 
-   end subroutine
+      implicit none
+      integer(kind=c_size_t) :: hh
+      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_int)    :: nb, n
+      integer(kind=c_int)    :: is_zero
+#ifdef WITH_GPU_VERSION
+      call launch_extract_hh_tau_c_kernel_real_c(hh, hh_tau, nb, n, is_zero)
+#endif
+    end subroutine
 
-   subroutine launch_compute_hh_trafo_c_kernel(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) bind(c)
+    subroutine launch_my_unpack_c_kernel_complex(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+                                                 row_group_dev, a_dev)
 
-     use iso_c_binding
+      use iso_c_binding
 
-     implicit none
-     integer, value           :: nev, nb, ldq, off, ncols
-     integer*8, value         :: q
-     integer*8, value         :: hh_dot
-     integer(C_SIZE_T), value :: hh_tau ,hh
-   end subroutine
+      implicit none
 
-   subroutine launch_compute_hh_trafo_c_kernel_complex(q, hh, hh_tau, nev, nb,ldq,off, ncols) bind(c)
+      integer(kind=c_int)       :: row_count
+      integer(kind=c_int)       :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
+      integer(kind=c_intptr_t)  :: a_dev, row_group_dev
+#ifdef WITH_GPU_VERSION
+      call launch_my_unpack_c_kernel_complex_c(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+                                                 row_group_dev, a_dev)
+#endif
+    end subroutine
 
-     use iso_c_binding
+    subroutine launch_my_pack_c_kernel_complex(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
+                                               row_group_dev)
 
-     implicit none
-     integer, value   :: nev, nb, ldq, off, ncols
-     integer*8, value :: q
-     integer*8, value :: hh_tau ,hh
-   end subroutine
+      use iso_c_binding
 
-   subroutine launch_compute_hh_trafo_c_kernel_complex_1(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) bind(c)
+      implicit none
+      integer(kind=c_int)      :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
+      integer(kind=c_intptr_t) :: a_dev
+      integer(kind=c_intptr_t) :: row_group_dev
+#ifdef WITH_GPU_VERSION
+      call launch_my_pack_c_kernel_complex_c(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
+                                               row_group_dev)
+#endif
+    end subroutine
 
-     use iso_c_binding
+    subroutine launch_compute_hh_dotp_c_kernel_complex(bcast_buffer_dev, hh_dot_dev, nbw,n)
 
-     implicit none
-     integer, value   :: nev, nb, ldq, off, ncols
-     integer*8, value :: q
-     integer*8, value :: hh_tau ,hh, hh_dot
+      use iso_c_binding
 
-   end subroutine
+      implicit none
+      integer(kind=c_intptr_t) :: bcast_buffer_dev
+      integer(kind=c_intptr_t) :: hh_dot_dev
+      integer(kind=c_int)      :: nbw, n
+#ifdef WITH_GPU_VERSION
+      call launch_compute_hh_dotp_c_kernel_complex_c(bcast_buffer_dev, hh_dot_dev, nbw,n)
+#endif
+    end subroutine
 
-   subroutine launch_my_unpack_c_kernel(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev,row_group_dev, &
-                                        a_dev) bind(c)
+    subroutine launch_extract_hh_tau_c_kernel_complex(hh, hh_tau, nb, n, is_zero)
 
-     use iso_c_binding
+      use iso_c_binding
 
-     implicit none
-     integer, value    :: row_count
-     integer, value    :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
-     integer*8, value  :: a_dev, row_group_dev
-
-   end subroutine
-
-   subroutine launch_my_pack_c_kernel(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-                                      row_group_dev) bind(c)
-
-     use iso_c_binding
-
-     implicit none
-     integer, value   :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
-     integer*8, value :: a_dev
-     integer*8, value :: row_group_dev
-
-   end subroutine
-
-   subroutine launch_compute_hh_dotp_c_kernel(bcast_buffer_dev, hh_dot_dev, nbw, n) bind(c)
-
-     use iso_c_binding
-
-     implicit none
-     integer*8, value :: bcast_buffer_dev
-     integer*8, value :: hh_dot_dev
-     integer, value   :: nbw, n
-
-   end subroutine
-
-   subroutine launch_extract_hh_tau_c_kernel(hh, hh_tau, nb, n, is_zero) bind(c)
-
-     use iso_c_binding
-
-     implicit none
-     integer*8, value :: hh
-     integer*8, value :: hh_tau
-     integer, value   :: nb, n
-     integer, value   :: is_zero
-
-   end subroutine
-
-   subroutine launch_my_unpack_c_kernel_complex(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-                                                row_group_dev, a_dev) bind(c)
-
-     use iso_c_binding
-
-     implicit none
-
-     integer, value    :: row_count
-     integer, value    :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
-     integer*8, value  :: a_dev, row_group_dev
-
-   end subroutine
-
-   subroutine launch_my_pack_c_kernel_complex(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
-                                              row_group_dev) bind(c)
-
-     use iso_c_binding
-
-     implicit none
-     integer, value   :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
-     integer*8, value :: a_dev
-     integer*8, value :: row_group_dev
-
-   end subroutine
-
-   subroutine launch_compute_hh_dotp_c_kernel_complex(bcast_buffer_dev, hh_dot_dev, nbw,n) bind(c)
-
-     use iso_c_binding
-
-     implicit none
-     integer*8, value :: bcast_buffer_dev
-     integer*8, value :: hh_dot_dev
-     integer, value   :: nbw, n
-   end subroutine
-
-   subroutine launch_extract_hh_tau_c_kernel_complex(hh, hh_tau, nb, n, is_zero) bind(c)
-
-     use iso_c_binding
-
-     implicit none
-     integer*8, value :: hh
-     integer*8, value :: hh_tau
-     integer, value   :: nb, n
-     integer, value   :: is_zero
-
-   end subroutine
-
-end interface
+      implicit none
+      integer(kind=c_size_t) :: hh
+      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_int)    :: nb, n
+      integer(kind=c_int)    :: is_zero
+#ifdef WITH_GPU_VERSION
+      call launch_extract_hh_tau_c_kernel_complex_c(hh, hh_tau, nb, n, is_zero)
+#endif
+    end subroutine
 
 end module cuda_c_kernel
-
-#endif /* WITH_GPU_VERSION */
 

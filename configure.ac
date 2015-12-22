@@ -532,6 +532,10 @@ if test x"${fortran_can_check_environment}" = x"yes" ; then
  AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can querry environment variables])
 fi
 
+dnl default value
+use_specific_real_kernel=no
+use_specific_complex_kernel=no
+
 dnl GPU version only
 m4_include([m4/ax_elpa_gpu_version_only.m4])
 DEFINE_OPTION_GPU_SUPPORT_ONLY([gpu-version-only],[gpu-support],[install_gpu])
@@ -540,65 +544,58 @@ dnl last check whether user wants to compile only a specific kernel
 dnl
 m4_include([m4/ax_elpa_specific_kernels.m4])
 
-dnl only do this if GPU support only has not been requested
-if test x"${build_with_gpu_support_only}" = x"no" ; then
-
 dnl real kernels
-  dnl do not remove this variable it is needed in the macros
-  use_specific_real_kernel=no
+dnl do not remove this variable it is needed in the macros
 
-  dnl generic kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-kernel-only],[generic-kernel],[install_real_generic])
+dnl generic kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-kernel-only],[generic-kernel],[install_real_generic])
 
-  dnl generic-simple kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-simple-kernel-only],[generic-simple-kernel],[install_real_generic_simple])
+dnl generic-simple kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-simple-kernel-only],[generic-simple-kernel],[install_real_generic_simple])
 
-  dnl sse kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-kernel-only],[sse-kernel],[install_real_sse])
+dnl sse kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-kernel-only],[sse-kernel],[install_real_sse])
 
-  dnl bgp kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgp-kernel-only],[bgp-kernel],[install_real_bgp])
+dnl bgp kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgp-kernel-only],[bgp-kernel],[install_real_bgp])
 
-  dnl bgq kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgq-kernel-only],[bgq-kernel],[install_real_bgq])
+dnl bgq kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgq-kernel-only],[bgq-kernel],[install_real_bgq])
 
-  dnl real-avx-block2 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block2-kernel-only],[real-avx-block2-kernel],[install_real_avx_block2])
+dnl real-avx-block2 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block2-kernel-only],[real-avx-block2-kernel],[install_real_avx_block2])
 
-  dnl real-avx-block4 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block4-kernel]-only,[real-avx-block4-kernel],[install_real_avx_block4])
+dnl real-avx-block4 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block4-kernel]-only,[real-avx-block4-kernel],[install_real_avx_block4])
 
-  dnl real-avx-block6 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block6-kernel-only],[real-avx-block6-kernel],[install_real_avx_block6])
+dnl real-avx-block6 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block6-kernel-only],[real-avx-block6-kernel],[install_real_avx_block6])
 
 dnl complex kernels
 
-  dnl do not remove this variable it is needed in the macros
-  use_specific_complex_kernel=no
+dnl generic kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-kernel-only],[generic-kernel],[install_complex_generic])
 
-  dnl generic kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-kernel-only],[generic-kernel],[install_complex_generic])
+dnl generic-simple kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-simple-kernel-only],[generic-simple-kernel],[install_complex_generic_simple])
 
-  dnl generic-simple kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-simple-kernel-only],[generic-simple-kernel],[install_complex_generic_simple])
+dnl sse kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-kernel-only],[sse-kernel],[install_complex_sse])
 
-  dnl sse kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-kernel-only],[sse-kernel],[install_complex_sse])
+dnl complex-bqp kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgp-kernel-only],[bgp-kernel],[install_complex_bgp])
 
-  dnl complex-bqp kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgp-kernel-only],[bgp-kernel],[install_complex_bgp])
+dnl complex-bqq kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgq-kernel-only],[bgq-kernel],[install_complex_bgq])
 
-  dnl complex-bqq kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgq-kernel-only],[bgq-kernel],[install_complex_bgq])
+dnl complex-avx-block1 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block1-kernel-only],[complex-avx-block1-kernel],[install_complex_avx_block1])
 
-  dnl complex-avx-block1 kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block1-kernel-only],[complex-avx-block1-kernel],[install_complex_avx_block1])
-
-  dnl complex-avx-block2 kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block2-kernel-only],[complex-avx-block2-kernel],[install_complex_avx_block2])
-fi
+dnl complex-avx-block2 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block2-kernel-only],[complex-avx-block2-kernel],[install_complex_avx_block2])
 
 dnl set the conditionals according to the previous tests
+
 if test x"${can_use_iso_fortran_env}" = x"yes" ; then
  AC_DEFINE([HAVE_ISO_FORTRAN_ENV],[1],[can use module iso_fortran_env])
 fi
@@ -673,12 +670,12 @@ if test x"${install_real_bgq}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_BGQ_KERNEL],[1],[can use real BGQ kernel])
 fi
 
-if test x"${use_specific_complex_kernel}" = x"no" ; then
- AC_DEFINE([WITH_NO_SPECIFIC_COMPLEX_KERNEL],[1],[do not use only one specific complex kernel (set at compile time)])
+if test x"${use_specific_complex_kernel}" = x"yes" ; then
+ AC_DEFINE([WITH_ONE_SPECIFIC_COMPLEX_KERNEL],[1],[use only one specific complex kernel (set at compile time)])
 fi
 
-if test x"${use_specific_real_kernel}" = x"no" ; then
- AC_DEFINE([WITH_NO_SPECIFIC_REAL_KERNEL],[1],[do not use only one specific real kernel (set at compile time)])
+if test x"${use_specific_real_kernel}" = x"yes" ; then
+ AC_DEFINE([WITH_ONE_SPECIFIC_REAL_KERNEL],[1],[use only one specific real kernel (set at compile time)])
 fi
 
 LT_INIT

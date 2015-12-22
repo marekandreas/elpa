@@ -12,6 +12,9 @@ libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSIO
 libelpa@SUFFIX@_la_SOURCES = src/elpa_utilities.F90 \
 	                     src/elpa1.F90 \
 			     src/elpa2_utilities.F90 \
+			     src/check_for_gpu.F90 \
+			     src/mod_cuda.F90 \
+			     src/interface_c_kernel.F90 \
 			     src/elpa2.F90 \
 			     src/elpa_c_interface.F90 \
                              src/elpa_qr/qr_utils.f90 \
@@ -31,7 +34,8 @@ if HAVE_DETAILED_TIMINGS
 endif
 
 if WITH_GPU_VERSION
-  libelpa@SUFFIX@_la_SOURCES +=  src/interface_cuda.F90 src/interface_c_kernel.F90 src/ev_tridi_band_gpu_c_v2.cu src/cuUtils.cu
+  libelpa@SUFFIX@_la_SOURCES +=  src/cudaFunctions.cu src/cuUtils.cu src/ev_tridi_band_gpu_c_v2.cu
+  #src/interface_cuda.F90 src/interface_c_kernel.F90 src/ev_tridi_band_gpu_c_v2.cu src/cuUtils.cu
 endif
 
 if WITH_REAL_GENERIC_KERNEL
@@ -87,7 +91,7 @@ if WITH_COMPLEX_AVX_BLOCK2_KERNEL
 endif
 
 .cu.lo:
-	NVCC="$(NVCC)" libtool --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -c $< -o $@
+	NVCC="$(NVCC)" libtool --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
 
 # install any .mod files in the include/ dir
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
@@ -142,8 +146,12 @@ else
   redirect_sources =
 endif
 
-shared_sources = test/shared_sources/util.F90 test/shared_sources/read_input_parameters.F90  test/shared_sources/check_correctnes.F90 test/shared_sources/setup_mpi.F90 \
-		 test/shared_sources/blacs_infrastructure.F90 test/shared_sources/prepare_matrix.F90
+shared_sources = test/shared_sources/util.F90 \
+		 test/shared_sources/read_input_parameters.F90  \
+		 test/shared_sources/check_correctnes.F90 \
+		 test/shared_sources/setup_mpi.F90 \
+		 test/shared_sources/blacs_infrastructure.F90 \
+		 test/shared_sources/prepare_matrix.F90
 
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/test_real_c_version.c $(shared_sources) $(redirect_sources)
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
