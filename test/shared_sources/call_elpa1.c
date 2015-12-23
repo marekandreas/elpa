@@ -3,7 +3,8 @@
 /*     The ELPA library was originally created by the ELPA consortium, */
 /*     consisting of the following organizations: */
 /*  */
-/*     - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), */
+/*     - Max Planck Computing and Data Facility (MPCDF), formerly known as */
+/*       Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), */
 /*     - Bergische Universität Wuppertal, Lehrstuhl für angewandte */
 /*       Informatik, */
 /*     - Technische Universität München, Lehrstuhl für Informatik mit */
@@ -16,7 +17,7 @@
 /*  */
 /*  */
 /*     More information can be found here: */
-/*     http://elpa.rzg.mpg.de/ */
+/*     http://elpa.mpcdf.mpg.de/ */
 /*  */
 /*     ELPA is free software: you can redistribute it and/or modify */
 /*     it under the terms of the version 3 of the license of the */
@@ -43,18 +44,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <elpa/elpa.h>
+#include <complex.h>
 
-int call_elpa1_real_solver_from_c(int na, int nev, int ncols, double *a, int lda, double *ev, double *q, int ldq, int nblk, int mpi_comm_rows, int mpi_comm_cols) {
-  int result;
-  result = elpa_solve_evp_real_1stage(na, nev, ncols, a, lda, ev, q, ldq, nblk, mpi_comm_rows, mpi_comm_cols);
-  return result;
+int call_elpa1_real_solver_from_c(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int ncols, int mpi_comm_rows, int mpi_comm_cols) {
+  return elpa_solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, ncols, mpi_comm_rows, mpi_comm_cols);
 }
 
-int call_elpa_get_comm_from_c(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols){
-  int mpierr;
-
-  mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols);
-
-  return mpierr;
+int call_elpa1_complex_solver_from_c(int na, int nev, complex double *a, int lda, double *ev, complex double *q, int ldq, int nblk, int ncols, int mpi_comm_rows, int mpi_comm_cols) {
+  return elpa_solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, ncols, mpi_comm_rows, mpi_comm_cols);
 }
 
+int call_elpa_get_comm_from_c(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols) {
+  return elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols);
+}

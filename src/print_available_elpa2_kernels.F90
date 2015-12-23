@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -16,7 +17,7 @@
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -56,6 +57,22 @@
 ! distributed along with the original code in the file "COPYING".
 
 #include "config-f90.h"
+
+!> \file print_available_elpa2_kernels.F90
+!> \par
+!> \brief Provide information which ELPA2 kernels are available on this system
+!>
+!> \details
+!> It is possible to configure ELPA2 such, that different compute intensive
+!> "ELPA2 kernels" can be choosen at runtime.
+!> The service binary print_available_elpa2_kernels will query the library and tell
+!> whether ELPA2 has been configured in this way, and if this is the case which kernels can be
+!> choosen at runtime.
+!> It will furthermore detail whether ELPA has been configured with OpenMP support
+!>
+!> Synopsis: print_available_elpa2_kernels
+!>
+!> \author A. Marek (MPCDF)
 program print_available_elpa2_kernels
 
    use ELPA1

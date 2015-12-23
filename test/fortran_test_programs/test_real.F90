@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -16,7 +17,7 @@
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -235,9 +236,9 @@ program test_real
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_row_col_comms.
+   ! rows or columns of processes, these are set in get_elpa_communicators.
 
-   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -277,11 +278,11 @@ program test_real
    end if
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                             na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_real produced an error! Aborting..."
+      write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif
 

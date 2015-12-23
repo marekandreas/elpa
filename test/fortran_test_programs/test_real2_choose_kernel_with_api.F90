@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -16,7 +17,7 @@
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -58,9 +59,8 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-!> The real ELPA 2 kernel is set as the default kernel.
-!> In this test case the qr_decomposition is used.
-!> However, this can be overriden by setting
+!> The complex ELPA 2 kernel is set in this program via
+!> the API call. However, this can be overriden by setting
 !> the environment variable "REAL_ELPA_KERNEL" to an
 !> appropiate value.
 !>
@@ -83,8 +83,9 @@ program test_real2
    use ELPA2
 
    use mod_check_for_gpu, only : check_for_gpu
+
    use elpa_utilities, only : error_unit
-   use elpa2_utilities, only : get_actual_real_kernel_name
+   use elpa2_utilities
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
@@ -102,6 +103,7 @@ program test_real2
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
+
    implicit none
    include 'mpif.h'
 
@@ -140,20 +142,10 @@ program test_real2
    integer                 :: numberOfDevices
    logical                 :: gpuAvailable
 
-
    successELPA   = .true.
    gpuAvailable  = .false.
 
-   write_to_file = .false.
-
-   if (COMMAND_ARGUMENT_COUNT() /= 0) then
-     write(error_unit,*) "This program does not support any command-line arguments"
-     stop 1
-   endif
-
-   nblk = 2
-   na   = 4000
-   nev  = 1500
+   call read_input_parameters(na, nev, nblk, write_to_file)
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
@@ -185,7 +177,6 @@ program test_real2
      call redirect_stdout(myid)
    endif
 #endif
-
    if (write_to_file) then
      if (myid .eq. 0) print *,"Writing output files"
    endif
@@ -212,9 +203,9 @@ program test_real2
                 print_max_allocated_memory=.true.)
 
 
-   call timer%enable()
+  call timer%enable()
 
-   call timer%start("program")
+  call timer%start("program")
 #endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -233,32 +224,66 @@ program test_real2
       print *
       print '(a)','Standard eigenvalue problem - REAL version'
       if (gpuAvailable) then
-        print *,"with GPU version"
+        print *,"with GPU Version"
       endif
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is an example how ELPA2 chooses a default kernel,"
-#ifdef HAVE_ENVIRONMENT_CHECKING
-      print *, "or takes the kernel defined in the environment variable,"
-#endif
-      print *, "since the ELPA API call does not contain any kernel specification"
-      print *
-      print *, " The settings are: ",trim(get_actual_real_kernel_name())," as real kernel"
+      print *, "This is an example how to determine the ELPA2 kernel with"
+      print *, "an api call. Note, however, that setting the kernel via"
+      print *, "an environment variable will always take precedence over"
+      print *, "everything else! "
       print *
 #ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
       print *," However, this version of ELPA was build with only one of all the available"
       print *," kernels, thus it will not be successful to call ELPA with another "
       print *," kernel than the one specified at compile time!"
 #endif
-      print *," "
+     print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
       print *, " kernel via an environment variable! To change this re-install"
       print *, " the library and have a look at the log files"
 #endif
-      print *, " The qr-decomposition is used via the api call"
+
+#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
+#else /*  WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+#ifdef WITH_REAL_GENERIC_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC"
+#endif
+#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
+#endif
+#ifdef WITH_REAL_GENERIC_SSE_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_SSE"
+#endif
+#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK2"
+#endif
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK4"
+#endif
+#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK6"
+#endif
+#ifdef WITH_REAL_BGP_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_BGP"
+#endif
+#ifdef WITH_REAL_BGQ_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_BGQ"
+#endif
+#ifdef WITH_GPU_VERSION
+      print *, " The settings are: REAL_ELPA_GPU"
+#endif
+
+#endif  /*  WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+      print *
+
+
    endif
 
    !-------------------------------------------------------------------------------
@@ -279,9 +304,9 @@ program test_real2
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_row_col_comms.
+   ! rows or columns of processes, these are set in get_elpa_communicators.
 
-   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -323,15 +348,46 @@ program test_real2
    end if
 
 
-   ! ELPA is called without any kernel specification in the API,
-   ! furthermore, if the environment variable is not set, the
-   ! default kernel is called. Otherwise, the kernel defined in the
-   ! environment variable
+   ! ELPA is called with a kernel specification in the API
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    successELPA = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
-                              useQR=.true.)
+                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
+#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+                             REAL_ELPA_KERNEL_GENERIC_SIMPLE)
+
+#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+#ifdef WITH_REAL_GENERIC_KERNEL
+                              REAL_ELPA_KERNEL_GENERIC)
+#endif
+#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
+                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
+#endif
+#ifdef WITH_REAL_SSE_KERNEL
+                              REAL_ELPA_KERNEL_SSE)
+#endif
+#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK2)
+#endif
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK4)
+#endif
+#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK6)
+#endif
+#ifdef WITH_REAL_BGP_KERNEL
+                              REAL_ELPA_KERNEL_BGP)
+#endif
+#ifdef WITH_REAL_BGQ_KERNEL
+                              REAL_ELPA_KERNEL_BGQ)
+#endif
+#ifdef WITH_GPU_VERSION
+                              REAL_ELPA_KERNEL_GPU)
+#endif
+
+#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+
 
    if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
@@ -359,6 +415,7 @@ program test_real2
    endif
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
+
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 

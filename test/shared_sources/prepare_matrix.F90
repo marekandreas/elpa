@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -16,7 +17,7 @@
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -43,7 +44,7 @@ module mod_prepare_matrix
 
   interface prepare_matrix
     module procedure prepare_matrix_complex
-        module procedure prepare_matrix_real
+    module procedure prepare_matrix_real
   end interface
 
   contains
@@ -52,12 +53,12 @@ module mod_prepare_matrix
 
       implicit none
 
-      integer, intent(in)       :: myid, na, sc_desc(:)
-      integer, intent(inout)    :: iseed(:)
-      real*8, intent(inout)     :: xr(:,:)
-      complex*16, intent(inout) :: z(:,:), a(:,:), as(:,:)
+      integer, intent(in)            :: myid, na, sc_desc(:)
+      integer, intent(inout)         :: iseed(:)
+      real(kind=8), intent(inout)    :: xr(:,:)
+      complex(kind=8), intent(inout) :: z(:,:), a(:,:), as(:,:)
 
-      complex*16, parameter     :: CZERO = (0.d0, 0.d0), CONE = (1.d0, 0.d0)
+      complex(kind=8), parameter     :: CZERO = (0.d0, 0.d0), CONE = (1.d0, 0.d0)
 
       ! for getting a hermitian test matrix A we get a random matrix Z
       ! and calculate A = Z + Z**H
@@ -126,6 +127,9 @@ module mod_prepare_matrix
 
     end subroutine
 
+    !c> void prepare_matrix_real_from_fortran(int na, int myid, int na_rows, int na_cols,
+    !c>                                       int sc_desc[9], int iseed[4096],
+    !c>                                       double *a, double *z, double *as);
     subroutine prepare_matrix_real_wrapper(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as) &
                                           bind(C, name="prepare_matrix_real_from_fortran")
       use iso_c_binding
@@ -138,8 +142,25 @@ module mod_prepare_matrix
       real(kind=c_double)           :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                        as(1:na_rows,1:na_cols)
 
-      print *,"in prepare wrapper"
       call prepare_matrix_real(na, myid, sc_desc, iseed, a, z, as)
+    end subroutine
+    !c> void prepare_matrix_complex_from_fortran(int na, int myid, int na_rows, int na_cols,
+    !c>                                       int sc_desc[9], int iseed[4096],
+    !c>                                       complex double *a, complex double *z, complex double *as);
+    subroutine prepare_matrix_complex_wrapper(na, myid, na_rows, na_cols, sc_desc, iseed, xr, a, z, as) &
+                                          bind(C, name="prepare_matrix_complex_from_fortran")
+      use iso_c_binding
+
+      implicit none
+
+      integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
+      integer(kind=c_int)           :: sc_desc(1:9)
+      integer(kind=c_int)           :: iseed(1:4096)
+      real(kind=c_double)           :: xr(1:na_rows,1:na_cols)
+      complex(kind=c_double)        :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
+                                       as(1:na_rows,1:na_cols)
+
+      call prepare_matrix_complex(na, myid, sc_desc, iseed, xr, a, z, as)
     end subroutine
 
 end module

@@ -1,26 +1,30 @@
 //    This file is part of ELPA.
 //
-//    The ELPA library was originally created by the ELPA consortium, 
+//    The ELPA library was originally created by the ELPA consortium,
 //    consisting of the following organizations:
 //
-//    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), 
+//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 //    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 //      Informatik,
 //    - Technische Universität München, Lehrstuhl für Informatik mit
-//      Schwerpunkt Wissenschaftliches Rechnen , 
-//    - Fritz-Haber-Institut, Berlin, Abt. Theorie, 
-//    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn, 
-//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition, 
-//      and  
+//      Schwerpunkt Wissenschaftliches Rechnen ,
+//    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+//    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//      and
 //    - IBM Deutschland GmbH
 //
+//    This particular source code file contains additions, changes and
+//    enhancements authored by Intel Corporation which is not part of
+//    the ELPA consortium.
 //
 //    More information can be found here:
-//    http://elpa.rzg.mpg.de/
+//    http://elpa.mpcdf.mpg.de/
 //
 //    ELPA is free software: you can redistribute it and/or modify
-//    it under the terms of the version 3 of the license of the 
-//    GNU Lesser General Public License as published by the Free 
+//    it under the terms of the version 3 of the license of the
+//    GNU Lesser General Public License as published by the Free
 //    Software Foundation.
 //
 //    ELPA is distributed in the hope that it will be useful,
@@ -53,7 +57,7 @@
 // distributed along with the original code in the file "COPYING".
 //
 // Author: Alexander Heinecke (alexander.heinecke@mytum.de)
-// Adapted for building a shared-library by Andreas Marek, RZG (andreas.marek@rzg.mpg.de)
+// Adapted for building a shared-library by Andreas Marek, MPCDF (andreas.marek@mpcdf.mpg.de)
 // --------------------------------------------------------------------------------------------------
 
 #include <complex>
@@ -65,6 +69,17 @@
 #undef __AVX__
 #endif
 
+#ifdef __FMA4__
+#define __ELPA_USE_FMA__
+#define _mm256_FMADDSUB_pd(a,b,c) _mm256_maddsub_pd(a,b,c)
+#define _mm256_FMSUBADD_pd(a,b,c) _mm256_msubadd_pd(a,b,c)
+#endif
+
+#ifdef __AVX2__
+#define __ELPA_USE_FMA__
+#define _mm256_FMADDSUB_pd(a,b,c) _mm256_fmaddsub_pd(a,b,c)
+#define _mm256_FMSUBADD_pd(a,b,c) _mm256_fmsubadd_pd(a,b,c)
+#endif
 
 extern "C" {
 
@@ -263,7 +278,7 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 
 	h2_real = _mm256_broadcast_sd(&hh_dbl[(ldh+1)*2]);
 	h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h2_imag = _mm256_xor_pd(h2_imag, sign);
 #endif
@@ -274,26 +289,26 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 	y4 = _mm256_load_pd(&q_dbl[12]);
 
 	tmp1 = _mm256_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
-	y1 = _mm256_add_pd(y1, _mm256_msubadd_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_add_pd(y1, _mm256_FMSUBADD_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
-	y2 = _mm256_add_pd(y2, _mm256_msubadd_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y2 = _mm256_add_pd(y2, _mm256_FMSUBADD_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	y2 = _mm256_add_pd(y2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h2_imag, x3);
-#ifdef __FMA4__
-	y3 = _mm256_add_pd(y3, _mm256_msubadd_pd(h2_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y3 = _mm256_add_pd(y3, _mm256_FMSUBADD_pd(h2_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	y3 = _mm256_add_pd(y3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 	tmp4 = _mm256_mul_pd(h2_imag, x4);
-#ifdef __FMA4__
-	y4 = _mm256_add_pd(y4, _mm256_msubadd_pd(h2_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y4 = _mm256_add_pd(y4, _mm256_FMSUBADD_pd(h2_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #else
 	y4 = _mm256_add_pd(y4, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #endif
@@ -307,64 +322,64 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 
 		h1_real = _mm256_broadcast_sd(&hh_dbl[(i-1)*2]);
 		h1_imag = _mm256_broadcast_sd(&hh_dbl[((i-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h1_imag = _mm256_xor_pd(h1_imag, sign);
 #endif
 
 		tmp1 = _mm256_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
-		x1 = _mm256_add_pd(x1, _mm256_msubadd_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x1 = _mm256_add_pd(x1, _mm256_FMSUBADD_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
-		x2 = _mm256_add_pd(x2, _mm256_msubadd_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x2 = _mm256_add_pd(x2, _mm256_FMSUBADD_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 		tmp3 = _mm256_mul_pd(h1_imag, q3);
-#ifdef __FMA4__
-		x3 = _mm256_add_pd(x3, _mm256_msubadd_pd(h1_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x3 = _mm256_add_pd(x3, _mm256_FMSUBADD_pd(h1_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 		x3 = _mm256_add_pd(x3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 		tmp4 = _mm256_mul_pd(h1_imag, q4);
-#ifdef __FMA4__
-		x4 = _mm256_add_pd(x4, _mm256_msubadd_pd(h1_real, q4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x4 = _mm256_add_pd(x4, _mm256_FMSUBADD_pd(h1_real, q4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #else
 		x4 = _mm256_add_pd(x4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #endif
 
 		h2_real = _mm256_broadcast_sd(&hh_dbl[(ldh+i)*2]);
 		h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+i)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h2_imag = _mm256_xor_pd(h2_imag, sign);
 #endif
 
 		tmp1 = _mm256_mul_pd(h2_imag, q1);
-#ifdef __FMA4__
-		y1 = _mm256_add_pd(y1, _mm256_msubadd_pd(h2_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y1 = _mm256_add_pd(y1, _mm256_FMSUBADD_pd(h2_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h2_imag, q2);
-#ifdef __FMA4__
-		y2 = _mm256_add_pd(y2, _mm256_msubadd_pd(h2_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y2 = _mm256_add_pd(y2, _mm256_FMSUBADD_pd(h2_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		y2 = _mm256_add_pd(y2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 		tmp3 = _mm256_mul_pd(h2_imag, q3);
-#ifdef __FMA4__
-		y3 = _mm256_add_pd(y3, _mm256_msubadd_pd(h2_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y3 = _mm256_add_pd(y3, _mm256_FMSUBADD_pd(h2_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 		y3 = _mm256_add_pd(y3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 		tmp4 = _mm256_mul_pd(h2_imag, q4);
-#ifdef __FMA4__
-		y4 = _mm256_add_pd(y4, _mm256_msubadd_pd(h2_real, q4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y4 = _mm256_add_pd(y4, _mm256_FMSUBADD_pd(h2_real, q4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #else
 		y4 = _mm256_add_pd(y4, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #endif
@@ -372,7 +387,7 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 
 	h1_real = _mm256_broadcast_sd(&hh_dbl[(nb-1)*2]);
 	h1_imag = _mm256_broadcast_sd(&hh_dbl[((nb-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h1_imag = _mm256_xor_pd(h1_imag, sign);
 #endif
@@ -383,26 +398,26 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 	q4 = _mm256_load_pd(&q_dbl[(2*nb*ldq)+12]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
-	x1 = _mm256_add_pd(x1, _mm256_msubadd_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x1 = _mm256_add_pd(x1, _mm256_FMSUBADD_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
-	x2 = _mm256_add_pd(x2, _mm256_msubadd_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x2 = _mm256_add_pd(x2, _mm256_FMSUBADD_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h1_imag, q3);
-#ifdef __FMA4__
-	x3 = _mm256_add_pd(x3, _mm256_msubadd_pd(h1_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x3 = _mm256_add_pd(x3, _mm256_FMSUBADD_pd(h1_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	x3 = _mm256_add_pd(x3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 	tmp4 = _mm256_mul_pd(h1_imag, q4);
-#ifdef __FMA4__
-	x4 = _mm256_add_pd(x4, _mm256_msubadd_pd(h1_real, q4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x4 = _mm256_add_pd(x4, _mm256_FMSUBADD_pd(h1_real, q4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #else
 	x4 = _mm256_add_pd(x4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #endif
@@ -413,26 +428,26 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 	h1_imag = _mm256_xor_pd(h1_imag, sign);
 
 	tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-	x1 = _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x1 = _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	x1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
-	x2 = _mm256_maddsub_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x2 = _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #else
 	x2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #endif
 	tmp3 = _mm256_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
-	x3 = _mm256_maddsub_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x3 = _mm256_FMADDSUB_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5));
 #else
 	x3 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5));
 #endif
 	tmp4 = _mm256_mul_pd(h1_imag, x4);
-#ifdef __FMA4__
-	x4 = _mm256_maddsub_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x4 = _mm256_FMADDSUB_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5));
 #else
 	x4 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5));
 #endif
@@ -450,8 +465,8 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 	__m128d tmp_s_128 = _mm_loadu_pd(s_dbl);
 	tmp2 = _mm256_broadcast_pd(&tmp_s_128);
 	tmp1 = _mm256_mul_pd(h2_imag, tmp2);
-#ifdef __FMA4__
-	tmp2 = _mm256_maddsub_pd(h2_real, tmp2, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	tmp2 = _mm256_FMADDSUB_pd(h2_real, tmp2, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	tmp2 = _mm256_addsub_pd( _mm256_mul_pd(h2_real, tmp2), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
@@ -460,51 +475,51 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 	h2_imag = _mm256_broadcast_sd(&s_dbl[1]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, y1);
-#ifdef __FMA4__
-	y1 = _mm256_maddsub_pd(h1_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_FMADDSUB_pd(h1_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	y1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, y2);
-#ifdef __FMA4__
-	y2 = _mm256_maddsub_pd(h1_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y2 = _mm256_FMADDSUB_pd(h1_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #else
 	y2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #endif
 	tmp3 = _mm256_mul_pd(h1_imag, y3);
-#ifdef __FMA4__
-	y3 = _mm256_maddsub_pd(h1_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y3 = _mm256_FMADDSUB_pd(h1_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5));
 #else
 	y3 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y3), _mm256_shuffle_pd(tmp3, tmp3, 0x5));
 #endif
 	tmp4 = _mm256_mul_pd(h1_imag, y4);
-#ifdef __FMA4__
-	y4 = _mm256_maddsub_pd(h1_real, y4, _mm256_shuffle_pd(tmp4, tmp4, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y4 = _mm256_FMADDSUB_pd(h1_real, y4, _mm256_shuffle_pd(tmp4, tmp4, 0x5));
 #else
 	y4 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y4), _mm256_shuffle_pd(tmp4, tmp4, 0x5));
 #endif
 
 	tmp1 = _mm256_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
-	y1 = _mm256_add_pd(y1, _mm256_maddsub_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_add_pd(y1, _mm256_FMADDSUB_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
-	y2 = _mm256_add_pd(y2, _mm256_maddsub_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y2 = _mm256_add_pd(y2, _mm256_FMADDSUB_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	y2 = _mm256_add_pd(y2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h2_imag, x3);
-#ifdef __FMA4__
-	y3 = _mm256_add_pd(y3, _mm256_maddsub_pd(h2_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y3 = _mm256_add_pd(y3, _mm256_FMADDSUB_pd(h2_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	y3 = _mm256_add_pd(y3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 	tmp4 = _mm256_mul_pd(h2_imag, x4);
-#ifdef __FMA4__
-	y4 = _mm256_add_pd(y4, _mm256_maddsub_pd(h2_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y4 = _mm256_add_pd(y4, _mm256_FMADDSUB_pd(h2_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #else
 	y4 = _mm256_add_pd(y4, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #endif
@@ -538,26 +553,26 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 	q4 = _mm256_add_pd(q4, x4);
 
 	tmp1 = _mm256_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
-	q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, y2);
 #ifdef __FMA4_
-	q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+	q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h2_imag, y3);
-#ifdef __FMA4__
-	q3 = _mm256_add_pd(q3, _mm256_maddsub_pd(h2_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q3 = _mm256_add_pd(q3, _mm256_FMADDSUB_pd(h2_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 	tmp4 = _mm256_mul_pd(h2_imag, y4);
-#ifdef __FMA4__
-	q4 = _mm256_add_pd(q4, _mm256_maddsub_pd(h2_real, y4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q4 = _mm256_add_pd(q4, _mm256_FMADDSUB_pd(h2_real, y4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #else
 	q4 = _mm256_add_pd(q4, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #endif
@@ -578,26 +593,26 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 		h1_imag = _mm256_broadcast_sd(&hh_dbl[((i-1)*2)+1]);
 
 		tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-		q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
-		q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 		tmp3 = _mm256_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
-		q3 = _mm256_add_pd(q3, _mm256_maddsub_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q3 = _mm256_add_pd(q3, _mm256_FMADDSUB_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 		q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 		tmp4 = _mm256_mul_pd(h1_imag, x4);
-#ifdef __FMA4__
-		q4 = _mm256_add_pd(q4, _mm256_maddsub_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q4 = _mm256_add_pd(q4, _mm256_FMADDSUB_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #else
 		q4 = _mm256_add_pd(q4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #endif
@@ -606,26 +621,26 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 		h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+i)*2)+1]);
 
 		tmp1 = _mm256_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
-		q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h2_imag, y2);
-#ifdef __FMA4__
-		q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 		tmp3 = _mm256_mul_pd(h2_imag, y3);
-#ifdef __FMA4__
-		q3 = _mm256_add_pd(q3, _mm256_maddsub_pd(h2_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q3 = _mm256_add_pd(q3, _mm256_FMADDSUB_pd(h2_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 		q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 		tmp4 = _mm256_mul_pd(h2_imag, y4);
-#ifdef __FMA4__
-		q4 = _mm256_add_pd(q4, _mm256_maddsub_pd(h2_real, y4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q4 = _mm256_add_pd(q4, _mm256_FMADDSUB_pd(h2_real, y4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #else
 		q4 = _mm256_add_pd(q4, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #endif
@@ -644,26 +659,26 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv(std::complex<double>
 	q4 = _mm256_load_pd(&q_dbl[(2*nb*ldq)+12]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-	q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
-	q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
-	q3 = _mm256_add_pd(q3, _mm256_maddsub_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q3 = _mm256_add_pd(q3, _mm256_FMADDSUB_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 	tmp4 = _mm256_mul_pd(h1_imag, x4);
-#ifdef __FMA4__
-	q4 = _mm256_add_pd(q4, _mm256_maddsub_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q4 = _mm256_add_pd(q4, _mm256_FMADDSUB_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #else
 	q4 = _mm256_add_pd(q4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
 #endif
@@ -695,7 +710,7 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 
 	h2_real = _mm256_broadcast_sd(&hh_dbl[(ldh+1)*2]);
 	h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h2_imag = _mm256_xor_pd(h2_imag, sign);
 #endif
@@ -705,20 +720,20 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 	y3 = _mm256_load_pd(&q_dbl[8]);
 
 	tmp1 = _mm256_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
-	y1 = _mm256_add_pd(y1, _mm256_msubadd_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_add_pd(y1, _mm256_FMSUBADD_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
-	y2 = _mm256_add_pd(y2, _mm256_msubadd_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y2 = _mm256_add_pd(y2, _mm256_FMSUBADD_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	y2 = _mm256_add_pd(y2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h2_imag, x3);
-#ifdef __FMA4__
-	y3 = _mm256_add_pd(y3, _mm256_msubadd_pd(h2_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y3 = _mm256_add_pd(y3, _mm256_FMSUBADD_pd(h2_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	y3 = _mm256_add_pd(y3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
@@ -731,52 +746,52 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 
 		h1_real = _mm256_broadcast_sd(&hh_dbl[(i-1)*2]);
 		h1_imag = _mm256_broadcast_sd(&hh_dbl[((i-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h1_imag = _mm256_xor_pd(h1_imag, sign);
 #endif
 
 		tmp1 = _mm256_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
-		x1 = _mm256_add_pd(x1, _mm256_msubadd_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x1 = _mm256_add_pd(x1, _mm256_FMSUBADD_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
-		x2 = _mm256_add_pd(x2, _mm256_msubadd_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x2 = _mm256_add_pd(x2, _mm256_FMSUBADD_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 		tmp3 = _mm256_mul_pd(h1_imag, q3);
-#ifdef __FMA4__
-		x3 = _mm256_add_pd(x3, _mm256_msubadd_pd(h1_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x3 = _mm256_add_pd(x3, _mm256_FMSUBADD_pd(h1_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 		x3 = _mm256_add_pd(x3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
 
 		h2_real = _mm256_broadcast_sd(&hh_dbl[(ldh+i)*2]);
 		h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+i)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h2_imag = _mm256_xor_pd(h2_imag, sign);
 #endif
 
 		tmp1 = _mm256_mul_pd(h2_imag, q1);
-#ifdef __FMA4__
-		y1 = _mm256_add_pd(y1, _mm256_msubadd_pd(h2_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y1 = _mm256_add_pd(y1, _mm256_FMSUBADD_pd(h2_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h2_imag, q2);
-#ifdef __FMA4__
-		y2 = _mm256_add_pd(y2, _mm256_msubadd_pd(h2_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y2 = _mm256_add_pd(y2, _mm256_FMSUBADD_pd(h2_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		y2 = _mm256_add_pd(y2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 		tmp3 = _mm256_mul_pd(h2_imag, q3);
-#ifdef __FMA4__
-		y3 = _mm256_add_pd(y3, _mm256_msubadd_pd(h2_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y3 = _mm256_add_pd(y3, _mm256_FMSUBADD_pd(h2_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 		y3 = _mm256_add_pd(y3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
@@ -784,7 +799,7 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 
 	h1_real = _mm256_broadcast_sd(&hh_dbl[(nb-1)*2]);
 	h1_imag = _mm256_broadcast_sd(&hh_dbl[((nb-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h1_imag = _mm256_xor_pd(h1_imag, sign);
 #endif
@@ -794,20 +809,20 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 	q3 = _mm256_load_pd(&q_dbl[(2*nb*ldq)+8]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
-	x1 = _mm256_add_pd(x1, _mm256_msubadd_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x1 = _mm256_add_pd(x1, _mm256_FMSUBADD_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
-	x2 = _mm256_add_pd(x2, _mm256_msubadd_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x2 = _mm256_add_pd(x2, _mm256_FMSUBADD_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h1_imag, q3);
-#ifdef __FMA4__
-	x3 = _mm256_add_pd(x3, _mm256_msubadd_pd(h1_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x3 = _mm256_add_pd(x3, _mm256_FMSUBADD_pd(h1_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	x3 = _mm256_add_pd(x3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
@@ -818,20 +833,20 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 	h1_imag = _mm256_xor_pd(h1_imag, sign);
 
 	tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-	x1 = _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x1 = _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	x1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
-	x2 = _mm256_maddsub_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x2 = _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #else
 	x2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #endif
 	tmp3 = _mm256_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
-	x3 = _mm256_maddsub_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x3 = _mm256_FMADDSUB_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5));
 #else
 	x3 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5));
 #endif
@@ -849,8 +864,8 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 	__m128d tmp_s_128 = _mm_loadu_pd(s_dbl);
 	tmp2 = _mm256_broadcast_pd(&tmp_s_128);
 	tmp1 = _mm256_mul_pd(h2_imag, tmp2);
-#ifdef __FMA4__
-	tmp2 = _mm256_maddsub_pd(h2_real, tmp2, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	tmp2 = _mm256_FMADDSUB_pd(h2_real, tmp2, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	tmp2 = _mm256_addsub_pd( _mm256_mul_pd(h2_real, tmp2), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
@@ -859,39 +874,39 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 	h2_imag = _mm256_broadcast_sd(&s_dbl[1]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, y1);
-#ifdef __FMA4__
-	y1 = _mm256_maddsub_pd(h1_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_FMADDSUB_pd(h1_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	y1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, y2);
-#ifdef __FMA4__
-	y2 = _mm256_maddsub_pd(h1_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y2 = _mm256_FMADDSUB_pd(h1_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #else
 	y2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #endif
 	tmp3 = _mm256_mul_pd(h1_imag, y3);
-#ifdef __FMA4__
-	y3 = _mm256_maddsub_pd(h1_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y3 = _mm256_FMADDSUB_pd(h1_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5));
 #else
 	y3 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y3), _mm256_shuffle_pd(tmp3, tmp3, 0x5));
 #endif
 
 	tmp1 = _mm256_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
-	y1 = _mm256_add_pd(y1, _mm256_maddsub_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_add_pd(y1, _mm256_FMADDSUB_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
-	y2 = _mm256_add_pd(y2, _mm256_maddsub_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y2 = _mm256_add_pd(y2, _mm256_FMADDSUB_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	y2 = _mm256_add_pd(y2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h2_imag, x3);
-#ifdef __FMA4__
-	y3 = _mm256_add_pd(y3, _mm256_maddsub_pd(h2_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y3 = _mm256_add_pd(y3, _mm256_FMADDSUB_pd(h2_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	y3 = _mm256_add_pd(y3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
@@ -920,20 +935,20 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 	q3 = _mm256_add_pd(q3, x3);
 
 	tmp1 = _mm256_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
-	q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, y2);
 #ifdef __FMA4_
-	q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+	q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h2_imag, y3);
-#ifdef __FMA4__
-	q3 = _mm256_add_pd(q3, _mm256_maddsub_pd(h2_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q3 = _mm256_add_pd(q3, _mm256_FMADDSUB_pd(h2_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
@@ -952,20 +967,20 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 		h1_imag = _mm256_broadcast_sd(&hh_dbl[((i-1)*2)+1]);
 
 		tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-		q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
-		q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 		tmp3 = _mm256_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
-		q3 = _mm256_add_pd(q3, _mm256_maddsub_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q3 = _mm256_add_pd(q3, _mm256_FMADDSUB_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 		q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
@@ -974,20 +989,20 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 		h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+i)*2)+1]);
 
 		tmp1 = _mm256_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
-		q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h2_imag, y2);
-#ifdef __FMA4__
-		q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 		tmp3 = _mm256_mul_pd(h2_imag, y3);
-#ifdef __FMA4__
-		q3 = _mm256_add_pd(q3, _mm256_maddsub_pd(h2_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q3 = _mm256_add_pd(q3, _mm256_FMADDSUB_pd(h2_real, y3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 		q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
@@ -1004,20 +1019,20 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv(std::complex<double>
 	q3 = _mm256_load_pd(&q_dbl[(2*nb*ldq)+8]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-	q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
-	q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 	tmp3 = _mm256_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
-	q3 = _mm256_add_pd(q3, _mm256_maddsub_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q3 = _mm256_add_pd(q3, _mm256_FMADDSUB_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #else
 	q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
 #endif
@@ -1047,7 +1062,7 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 
 	h2_real = _mm256_broadcast_sd(&hh_dbl[(ldh+1)*2]);
 	h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h2_imag = _mm256_xor_pd(h2_imag, sign);
 #endif
@@ -1056,14 +1071,14 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 	y2 = _mm256_load_pd(&q_dbl[4]);
 
 	tmp1 = _mm256_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
-	y1 = _mm256_add_pd(y1, _mm256_msubadd_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_add_pd(y1, _mm256_FMSUBADD_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
-	y2 = _mm256_add_pd(y2, _mm256_msubadd_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y2 = _mm256_add_pd(y2, _mm256_FMSUBADD_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	y2 = _mm256_add_pd(y2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
@@ -1075,40 +1090,40 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 
 		h1_real = _mm256_broadcast_sd(&hh_dbl[(i-1)*2]);
 		h1_imag = _mm256_broadcast_sd(&hh_dbl[((i-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h1_imag = _mm256_xor_pd(h1_imag, sign);
 #endif
 
 		tmp1 = _mm256_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
-		x1 = _mm256_add_pd(x1, _mm256_msubadd_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x1 = _mm256_add_pd(x1, _mm256_FMSUBADD_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
-		x2 = _mm256_add_pd(x2, _mm256_msubadd_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x2 = _mm256_add_pd(x2, _mm256_FMSUBADD_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
 
 		h2_real = _mm256_broadcast_sd(&hh_dbl[(ldh+i)*2]);
 		h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+i)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h2_imag = _mm256_xor_pd(h2_imag, sign);
 #endif
 
 		tmp1 = _mm256_mul_pd(h2_imag, q1);
-#ifdef __FMA4__
-		y1 = _mm256_add_pd(y1, _mm256_msubadd_pd(h2_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y1 = _mm256_add_pd(y1, _mm256_FMSUBADD_pd(h2_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h2_imag, q2);
-#ifdef __FMA4__
-		y2 = _mm256_add_pd(y2, _mm256_msubadd_pd(h2_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y2 = _mm256_add_pd(y2, _mm256_FMSUBADD_pd(h2_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		y2 = _mm256_add_pd(y2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
@@ -1116,7 +1131,7 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 
 	h1_real = _mm256_broadcast_sd(&hh_dbl[(nb-1)*2]);
 	h1_imag = _mm256_broadcast_sd(&hh_dbl[((nb-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h1_imag = _mm256_xor_pd(h1_imag, sign);
 #endif
@@ -1125,14 +1140,14 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 	q2 = _mm256_load_pd(&q_dbl[(2*nb*ldq)+4]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
-	x1 = _mm256_add_pd(x1, _mm256_msubadd_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x1 = _mm256_add_pd(x1, _mm256_FMSUBADD_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
-	x2 = _mm256_add_pd(x2, _mm256_msubadd_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x2 = _mm256_add_pd(x2, _mm256_FMSUBADD_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
@@ -1143,14 +1158,14 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 	h1_imag = _mm256_xor_pd(h1_imag, sign);
 
 	tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-	x1 = _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x1 = _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	x1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
-	x2 = _mm256_maddsub_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x2 = _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #else
 	x2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #endif
@@ -1168,8 +1183,8 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 	__m128d tmp_s_128 = _mm_loadu_pd(s_dbl);
 	tmp2 = _mm256_broadcast_pd(&tmp_s_128);
 	tmp1 = _mm256_mul_pd(h2_imag, tmp2);
-#ifdef __FMA4__
-	tmp2 = _mm256_maddsub_pd(h2_real, tmp2, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	tmp2 = _mm256_FMADDSUB_pd(h2_real, tmp2, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	tmp2 = _mm256_addsub_pd( _mm256_mul_pd(h2_real, tmp2), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
@@ -1178,27 +1193,27 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 	h2_imag = _mm256_broadcast_sd(&s_dbl[1]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, y1);
-#ifdef __FMA4__
-	y1 = _mm256_maddsub_pd(h1_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_FMADDSUB_pd(h1_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	y1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, y2);
-#ifdef __FMA4__
-	y2 = _mm256_maddsub_pd(h1_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y2 = _mm256_FMADDSUB_pd(h1_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #else
 	y2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
 #endif
 
 	tmp1 = _mm256_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
-	y1 = _mm256_add_pd(y1, _mm256_maddsub_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_add_pd(y1, _mm256_FMADDSUB_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
-	y2 = _mm256_add_pd(y2, _mm256_maddsub_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y2 = _mm256_add_pd(y2, _mm256_FMADDSUB_pd(h2_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	y2 = _mm256_add_pd(y2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
@@ -1222,14 +1237,14 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 	q2 = _mm256_add_pd(q2, x2);
 
 	tmp1 = _mm256_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
-	q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, y2);
 #ifdef __FMA4_
-	q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+	q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
@@ -1246,14 +1261,14 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 		h1_imag = _mm256_broadcast_sd(&hh_dbl[((i-1)*2)+1]);
 
 		tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-		q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
-		q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
@@ -1262,14 +1277,14 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 		h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+i)*2)+1]);
 
 		tmp1 = _mm256_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
-		q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 		tmp2 = _mm256_mul_pd(h2_imag, y2);
-#ifdef __FMA4__
-		q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
@@ -1284,14 +1299,14 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv(std::complex<double>
 	q2 = _mm256_load_pd(&q_dbl[(2*nb*ldq)+4]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-	q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
-	q2 = _mm256_add_pd(q2, _mm256_maddsub_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #endif
@@ -1319,7 +1334,7 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 
 	h2_real = _mm256_broadcast_sd(&hh_dbl[(ldh+1)*2]);
 	h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h2_imag = _mm256_xor_pd(h2_imag, sign);
 #endif
@@ -1327,8 +1342,8 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 	y1 = _mm256_load_pd(&q_dbl[0]);
 
 	tmp1 = _mm256_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
-	y1 = _mm256_add_pd(y1, _mm256_msubadd_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_add_pd(y1, _mm256_FMSUBADD_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
@@ -1339,28 +1354,28 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 
 		h1_real = _mm256_broadcast_sd(&hh_dbl[(i-1)*2]);
 		h1_imag = _mm256_broadcast_sd(&hh_dbl[((i-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h1_imag = _mm256_xor_pd(h1_imag, sign);
 #endif
 
 		tmp1 = _mm256_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
-		x1 = _mm256_add_pd(x1, _mm256_msubadd_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		x1 = _mm256_add_pd(x1, _mm256_FMSUBADD_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 
 		h2_real = _mm256_broadcast_sd(&hh_dbl[(ldh+i)*2]);
 		h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+i)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h2_imag = _mm256_xor_pd(h2_imag, sign);
 #endif
 
 		tmp1 = _mm256_mul_pd(h2_imag, q1);
-#ifdef __FMA4__
-		y1 = _mm256_add_pd(y1, _mm256_msubadd_pd(h2_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		y1 = _mm256_add_pd(y1, _mm256_FMSUBADD_pd(h2_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
@@ -1368,7 +1383,7 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 
 	h1_real = _mm256_broadcast_sd(&hh_dbl[(nb-1)*2]);
 	h1_imag = _mm256_broadcast_sd(&hh_dbl[((nb-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h1_imag = _mm256_xor_pd(h1_imag, sign);
 #endif
@@ -1376,8 +1391,8 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 	q1 = _mm256_load_pd(&q_dbl[(2*nb*ldq)+0]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
-	x1 = _mm256_add_pd(x1, _mm256_msubadd_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	x1 = _mm256_add_pd(x1, _mm256_FMSUBADD_pd(h1_real, q1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	x1 = _mm256_add_pd(x1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
@@ -1388,8 +1403,8 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 	h1_imag = _mm256_xor_pd(h1_imag, sign);
 
 	tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-	x1 = _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	x1 = _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	x1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
@@ -1407,8 +1422,8 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 	__m128d tmp_s_128 = _mm_loadu_pd(s_dbl);
 	__m256d tmp2 = _mm256_broadcast_pd(&tmp_s_128);
 	tmp1 = _mm256_mul_pd(h2_imag, tmp2);
-#ifdef __FMA4__
-	tmp2 = _mm256_maddsub_pd(h2_real, tmp2, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	tmp2 = _mm256_FMADDSUB_pd(h2_real, tmp2, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	tmp2 = _mm256_addsub_pd( _mm256_mul_pd(h2_real, tmp2), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
@@ -1417,15 +1432,15 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 	h2_imag = _mm256_broadcast_sd(&s_dbl[1]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, y1);
-#ifdef __FMA4__
-	y1 = _mm256_maddsub_pd(h1_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_FMADDSUB_pd(h1_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #else
 	y1 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5));
 #endif
 
 	tmp1 = _mm256_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
-	y1 = _mm256_add_pd(y1, _mm256_maddsub_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	y1 = _mm256_add_pd(y1, _mm256_FMADDSUB_pd(h2_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	y1 = _mm256_add_pd(y1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
@@ -1444,8 +1459,8 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 	q1 = _mm256_add_pd(q1, x1);
 
 	tmp1 = _mm256_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
-	q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
@@ -1460,8 +1475,8 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 		h1_imag = _mm256_broadcast_sd(&hh_dbl[((i-1)*2)+1]);
 
 		tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-		q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
@@ -1470,8 +1485,8 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 		h2_imag = _mm256_broadcast_sd(&hh_dbl[((ldh+i)*2)+1]);
 
 		tmp1 = _mm256_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
-		q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+		q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h2_real, y1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 		q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
@@ -1484,8 +1499,8 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv(std::complex<double>
 	q1 = _mm256_load_pd(&q_dbl[(2*nb*ldq)+0]);
 
 	tmp1 = _mm256_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
-	q1 = _mm256_add_pd(q1, _mm256_maddsub_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
+#ifdef __ELPA_USE_FMA__
+	q1 = _mm256_add_pd(q1, _mm256_FMADDSUB_pd(h1_real, x1, _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #else
 	q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
@@ -1515,7 +1530,7 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 
 	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
 	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h2_imag = _mm_xor_pd(h2_imag, sign);
 #endif
@@ -1526,25 +1541,25 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 	y4 = _mm_load_pd(&q_dbl[6]);
 
 	tmp1 = _mm_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h2_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y3 = _mm_add_pd(y3, _mm_msubadd_pd(h2_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	y3 = _mm_add_pd(y3, _mm_addsub_pd( _mm_mul_pd(h2_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp4 = _mm_mul_pd(h2_imag, x4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y4 = _mm_add_pd(y4, _mm_msubadd_pd(h2_real, x4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
 #else
 	y4 = _mm_add_pd(y4, _mm_addsub_pd( _mm_mul_pd(h2_real, x4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
@@ -1559,31 +1574,31 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 
 		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
 		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h1_imag = _mm_xor_pd(h1_imag, sign);
 #endif
 
 		tmp1 = _mm_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp3 = _mm_mul_pd(h1_imag, q3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x3 = _mm_add_pd(x3, _mm_msubadd_pd(h1_real, q3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 		x3 = _mm_add_pd(x3, _mm_addsub_pd( _mm_mul_pd(h1_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp4 = _mm_mul_pd(h1_imag, q4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x4 = _mm_add_pd(x4, _mm_msubadd_pd(h1_real, q4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
 #else
 		x4 = _mm_add_pd(x4, _mm_addsub_pd( _mm_mul_pd(h1_real, q4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
@@ -1591,31 +1606,31 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 
 		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
 		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h2_imag = _mm_xor_pd(h2_imag, sign);
 #endif
 
 		tmp1 = _mm_mul_pd(h2_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h2_imag, q2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp3 = _mm_mul_pd(h2_imag, q3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y3 = _mm_add_pd(y3, _mm_msubadd_pd(h2_real, q3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 		y3 = _mm_add_pd(y3, _mm_addsub_pd( _mm_mul_pd(h2_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp4 = _mm_mul_pd(h2_imag, q4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y4 = _mm_add_pd(y4, _mm_msubadd_pd(h2_real, q4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
 #else
 		y4 = _mm_add_pd(y4, _mm_addsub_pd( _mm_mul_pd(h2_real, q4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
@@ -1624,7 +1639,7 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 
 	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
 	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h1_imag = _mm_xor_pd(h1_imag, sign);
 #endif
@@ -1635,25 +1650,25 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 	q4 = _mm_load_pd(&q_dbl[(2*nb*ldq)+6]);
 
 	tmp1 = _mm_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h1_imag, q3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x3 = _mm_add_pd(x3, _mm_msubadd_pd(h1_real, q3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	x3 = _mm_add_pd(x3, _mm_addsub_pd( _mm_mul_pd(h1_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp4 = _mm_mul_pd(h1_imag, q4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x4 = _mm_add_pd(x4, _mm_msubadd_pd(h1_real, q4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
 #else
 	x4 = _mm_add_pd(x4, _mm_addsub_pd( _mm_mul_pd(h1_real, q4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
@@ -1665,25 +1680,25 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 	h1_imag = _mm_xor_pd(h1_imag, sign);
 
 	tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x1 = _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x2 = _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #else
 	x2 = _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp3 = _mm_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x3 = _mm_maddsub_pd(h1_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
 #else
 	x3 = _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp4 = _mm_mul_pd(h1_imag, x4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x4 = _mm_maddsub_pd(h1_real, x4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1)));
 #else
 	x4 = _mm_addsub_pd( _mm_mul_pd(h1_real, x4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1)));
@@ -1701,7 +1716,7 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 
 	tmp2 = _mm_loadu_pd(s_dbl);
 	tmp1 = _mm_mul_pd(h2_imag, tmp2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	tmp2 = _mm_addsub_pd( _mm_mul_pd(h2_real, tmp2), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
@@ -1711,50 +1726,50 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 
 	tmp1 = _mm_mul_pd(h1_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_maddsub_pd(h1_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	y1 = _mm_addsub_pd( _mm_mul_pd(h1_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, y2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y2 = _mm_maddsub_pd(h1_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #else
 	y2 = _mm_addsub_pd( _mm_mul_pd(h1_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp3 = _mm_mul_pd(h1_imag, y3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y3 = _mm_maddsub_pd(h1_real, y3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
 #else
 	y3 = _mm_addsub_pd( _mm_mul_pd(h1_real, y3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp4 = _mm_mul_pd(h1_imag, y4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y4 = _mm_maddsub_pd(h1_real, y4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1)));
 #else
 	y4 = _mm_addsub_pd( _mm_mul_pd(h1_real, y4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1)));
 #endif
 
 	tmp1 = _mm_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_add_pd(y1, _mm_maddsub_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y2 = _mm_add_pd(y2, _mm_maddsub_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h2_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y3 = _mm_add_pd(y3, _mm_maddsub_pd(h2_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	y3 = _mm_add_pd(y3, _mm_addsub_pd( _mm_mul_pd(h2_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp4 = _mm_mul_pd(h2_imag, x4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y4 = _mm_add_pd(y4, _mm_maddsub_pd(h2_real, x4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
 #else
 	y4 = _mm_add_pd(y4, _mm_addsub_pd( _mm_mul_pd(h2_real, x4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
@@ -1789,25 +1804,25 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 	q4 = _mm_add_pd(q4, x4);
 
 	tmp1 = _mm_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h2_imag, y2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h2_imag, y3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q3 = _mm_add_pd(q3, _mm_maddsub_pd(h2_real, y3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h2_real, y3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp4 = _mm_mul_pd(h2_imag, y4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q4 = _mm_add_pd(q4, _mm_maddsub_pd(h2_real, y4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
 #else
 	q4 = _mm_add_pd(q4, _mm_addsub_pd( _mm_mul_pd(h2_real, y4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
@@ -1829,25 +1844,25 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 
 		tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp3 = _mm_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q3 = _mm_add_pd(q3, _mm_maddsub_pd(h1_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 		q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp4 = _mm_mul_pd(h1_imag, x4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q4 = _mm_add_pd(q4, _mm_maddsub_pd(h1_real, x4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
 #else
 		q4 = _mm_add_pd(q4, _mm_addsub_pd( _mm_mul_pd(h1_real, x4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
@@ -1857,25 +1872,25 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
 
 		tmp1 = _mm_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h2_imag, y2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp3 = _mm_mul_pd(h2_imag, y3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q3 = _mm_add_pd(q3, _mm_maddsub_pd(h2_real, y3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 		q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h2_real, y3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp4 = _mm_mul_pd(h2_imag, y4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q4 = _mm_add_pd(q4, _mm_maddsub_pd(h2_real, y4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
 #else
 		q4 = _mm_add_pd(q4, _mm_addsub_pd( _mm_mul_pd(h2_real, y4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
@@ -1896,25 +1911,25 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 	q4 = _mm_load_pd(&q_dbl[(2*nb*ldq)+6]);
 
 	tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q3 = _mm_add_pd(q3, _mm_maddsub_pd(h1_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp4 = _mm_mul_pd(h1_imag, x4);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q4 = _mm_add_pd(q4, _mm_maddsub_pd(h1_real, x4, _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
 #else
 	q4 = _mm_add_pd(q4, _mm_addsub_pd( _mm_mul_pd(h1_real, x4), _mm_shuffle_pd(tmp4, tmp4, _MM_SHUFFLE2(0,1))));
@@ -1947,7 +1962,7 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 
 	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
 	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h2_imag = _mm_xor_pd(h2_imag, sign);
 #endif
@@ -1957,19 +1972,19 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 	y3 = _mm_load_pd(&q_dbl[4]);
 
 	tmp1 = _mm_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h2_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y3 = _mm_add_pd(y3, _mm_msubadd_pd(h2_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	y3 = _mm_add_pd(y3, _mm_addsub_pd( _mm_mul_pd(h2_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
@@ -1983,25 +1998,25 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 
 		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
 		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h1_imag = _mm_xor_pd(h1_imag, sign);
 #endif
 
 		tmp1 = _mm_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp3 = _mm_mul_pd(h1_imag, q3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x3 = _mm_add_pd(x3, _mm_msubadd_pd(h1_real, q3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 		x3 = _mm_add_pd(x3, _mm_addsub_pd( _mm_mul_pd(h1_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
@@ -2009,25 +2024,25 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 
 		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
 		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h2_imag = _mm_xor_pd(h2_imag, sign);
 #endif
 
 		tmp1 = _mm_mul_pd(h2_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h2_imag, q2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp3 = _mm_mul_pd(h2_imag, q3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y3 = _mm_add_pd(y3, _mm_msubadd_pd(h2_real, q3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 		y3 = _mm_add_pd(y3, _mm_addsub_pd( _mm_mul_pd(h2_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
@@ -2036,7 +2051,7 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 
 	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
 	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h1_imag = _mm_xor_pd(h1_imag, sign);
 #endif
@@ -2046,19 +2061,19 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 	q3 = _mm_load_pd(&q_dbl[(2*nb*ldq)+4]);
 
 	tmp1 = _mm_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h1_imag, q3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x3 = _mm_add_pd(x3, _mm_msubadd_pd(h1_real, q3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	x3 = _mm_add_pd(x3, _mm_addsub_pd( _mm_mul_pd(h1_real, q3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
@@ -2070,19 +2085,19 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 	h1_imag = _mm_xor_pd(h1_imag, sign);
 
 	tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x1 = _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x2 = _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #else
 	x2 = _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp3 = _mm_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x3 = _mm_maddsub_pd(h1_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
 #else
 	x3 = _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
@@ -2100,7 +2115,7 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 
 	tmp2 = _mm_loadu_pd(s_dbl);
 	tmp1 = _mm_mul_pd(h2_imag, tmp2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	tmp2 = _mm_addsub_pd( _mm_mul_pd(h2_real, tmp2), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
@@ -2110,38 +2125,38 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 
 	tmp1 = _mm_mul_pd(h1_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_maddsub_pd(h1_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	y1 = _mm_addsub_pd( _mm_mul_pd(h1_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, y2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y2 = _mm_maddsub_pd(h1_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #else
 	y2 = _mm_addsub_pd( _mm_mul_pd(h1_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp3 = _mm_mul_pd(h1_imag, y3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y3 = _mm_maddsub_pd(h1_real, y3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
 #else
 	y3 = _mm_addsub_pd( _mm_mul_pd(h1_real, y3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1)));
 #endif
 
 	tmp1 = _mm_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_add_pd(y1, _mm_maddsub_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y2 = _mm_add_pd(y2, _mm_maddsub_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h2_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y3 = _mm_add_pd(y3, _mm_maddsub_pd(h2_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	y3 = _mm_add_pd(y3, _mm_addsub_pd( _mm_mul_pd(h2_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
@@ -2171,19 +2186,19 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 	q3 = _mm_add_pd(q3, x3);
 
 	tmp1 = _mm_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h2_imag, y2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h2_imag, y3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q3 = _mm_add_pd(q3, _mm_maddsub_pd(h2_real, y3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h2_real, y3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
@@ -2203,19 +2218,19 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 
 		tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp3 = _mm_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q3 = _mm_add_pd(q3, _mm_maddsub_pd(h1_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 		q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
@@ -2225,19 +2240,19 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
 
 		tmp1 = _mm_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h2_imag, y2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp3 = _mm_mul_pd(h2_imag, y3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q3 = _mm_add_pd(q3, _mm_maddsub_pd(h2_real, y3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 		q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h2_real, y3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
@@ -2256,19 +2271,19 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 	q3 = _mm_load_pd(&q_dbl[(2*nb*ldq)+4]);
 
 	tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp3 = _mm_mul_pd(h1_imag, x3);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q3 = _mm_add_pd(q3, _mm_maddsub_pd(h1_real, x3, _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
 #else
 	q3 = _mm_add_pd(q3, _mm_addsub_pd( _mm_mul_pd(h1_real, x3), _mm_shuffle_pd(tmp3, tmp3, _MM_SHUFFLE2(0,1))));
@@ -2299,7 +2314,7 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 
 	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
 	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h2_imag = _mm_xor_pd(h2_imag, sign);
 #endif
@@ -2308,13 +2323,13 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 	y2 = _mm_load_pd(&q_dbl[2]);
 
 	tmp1 = _mm_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
@@ -2327,19 +2342,19 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 
 		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
 		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h1_imag = _mm_xor_pd(h1_imag, sign);
 #endif
 
 		tmp1 = _mm_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
@@ -2347,19 +2362,19 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 
 		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
 		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h2_imag = _mm_xor_pd(h2_imag, sign);
 #endif
 
 		tmp1 = _mm_mul_pd(h2_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h2_imag, q2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y2 = _mm_add_pd(y2, _mm_msubadd_pd(h2_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
@@ -2368,7 +2383,7 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 
 	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
 	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h1_imag = _mm_xor_pd(h1_imag, sign);
 #endif
@@ -2377,13 +2392,13 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 	q2 = _mm_load_pd(&q_dbl[(2*nb*ldq)+2]);
 
 	tmp1 = _mm_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, q2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x2 = _mm_add_pd(x2, _mm_msubadd_pd(h1_real, q2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	x2 = _mm_add_pd(x2, _mm_addsub_pd( _mm_mul_pd(h1_real, q2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
@@ -2395,13 +2410,13 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 	h1_imag = _mm_xor_pd(h1_imag, sign);
 
 	tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x1 = _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x2 = _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #else
 	x2 = _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
@@ -2419,7 +2434,7 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 
 	tmp2 = _mm_loadu_pd(s_dbl);
 	tmp1 = _mm_mul_pd(h2_imag, tmp2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	tmp2 = _mm_addsub_pd( _mm_mul_pd(h2_real, tmp2), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
@@ -2429,26 +2444,26 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 
 	tmp1 = _mm_mul_pd(h1_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_maddsub_pd(h1_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	y1 = _mm_addsub_pd( _mm_mul_pd(h1_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, y2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y2 = _mm_maddsub_pd(h1_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #else
 	y2 = _mm_addsub_pd( _mm_mul_pd(h1_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1)));
 #endif
 
 	tmp1 = _mm_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_add_pd(y1, _mm_maddsub_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h2_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y2 = _mm_add_pd(y2, _mm_maddsub_pd(h2_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	y2 = _mm_add_pd(y2, _mm_addsub_pd( _mm_mul_pd(h2_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
@@ -2473,13 +2488,13 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 	q2 = _mm_add_pd(q2, x2);
 
 	tmp1 = _mm_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h2_imag, y2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
@@ -2497,13 +2512,13 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 
 		tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
@@ -2513,13 +2528,13 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
 
 		tmp1 = _mm_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 		tmp2 = _mm_mul_pd(h2_imag, y2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q2 = _mm_add_pd(q2, _mm_maddsub_pd(h2_real, y2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 		q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h2_real, y2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
@@ -2536,13 +2551,13 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 	q2 = _mm_load_pd(&q_dbl[(2*nb*ldq)+2]);
 
 	tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #endif
 	tmp2 = _mm_mul_pd(h1_imag, x2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q2 = _mm_add_pd(q2, _mm_maddsub_pd(h1_real, x2, _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
 #else
 	q2 = _mm_add_pd(q2, _mm_addsub_pd( _mm_mul_pd(h1_real, x2), _mm_shuffle_pd(tmp2, tmp2, _MM_SHUFFLE2(0,1))));
@@ -2571,7 +2586,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 
 	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
 	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h2_imag = _mm_xor_pd(h2_imag, sign);
 #endif
@@ -2579,7 +2594,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 	y1 = _mm_load_pd(&q_dbl[0]);
 
 	tmp1 = _mm_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
@@ -2591,13 +2606,13 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 
 		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
 		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h1_imag = _mm_xor_pd(h1_imag, sign);
 #endif
 
 		tmp1 = _mm_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
@@ -2605,13 +2620,13 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 
 		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
 		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 		// conjugate
 		h2_imag = _mm_xor_pd(h2_imag, sign);
 #endif
 
 		tmp1 = _mm_mul_pd(h2_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		y1 = _mm_add_pd(y1, _mm_msubadd_pd(h2_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
@@ -2620,7 +2635,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 
 	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
 	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
-#ifndef __FMA4__
+#ifndef __ELPA_USE_FMA__
 	// conjugate
 	h1_imag = _mm_xor_pd(h1_imag, sign);
 #endif
@@ -2628,7 +2643,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 	q1 = _mm_load_pd(&q_dbl[(2*nb*ldq)+0]);
 
 	tmp1 = _mm_mul_pd(h1_imag, q1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x1 = _mm_add_pd(x1, _mm_msubadd_pd(h1_real, q1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	x1 = _mm_add_pd(x1, _mm_addsub_pd( _mm_mul_pd(h1_real, q1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
@@ -2640,7 +2655,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 	h1_imag = _mm_xor_pd(h1_imag, sign);
 
 	tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	x1 = _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	x1 = _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
@@ -2658,7 +2673,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 
 	__m128d tmp2 = _mm_loadu_pd(s_dbl);
 	tmp1 = _mm_mul_pd(h2_imag, tmp2);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	tmp2 = _mm_addsub_pd( _mm_mul_pd(h2_real, tmp2), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
@@ -2668,14 +2683,14 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 
 	tmp1 = _mm_mul_pd(h1_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_maddsub_pd(h1_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #else
 	y1 = _mm_addsub_pd( _mm_mul_pd(h1_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1)));
 #endif
 
 	tmp1 = _mm_mul_pd(h2_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	y1 = _mm_add_pd(y1, _mm_maddsub_pd(h2_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	y1 = _mm_add_pd(y1, _mm_addsub_pd( _mm_mul_pd(h2_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
@@ -2695,7 +2710,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 	q1 = _mm_add_pd(q1, x1);
 
 	tmp1 = _mm_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
@@ -2711,7 +2726,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 
 		tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
@@ -2721,7 +2736,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
 
 		tmp1 = _mm_mul_pd(h2_imag, y1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 		q1 = _mm_add_pd(q1, _mm_maddsub_pd(h2_real, y1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 		q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h2_real, y1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
@@ -2736,7 +2751,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 	q1 = _mm_load_pd(&q_dbl[(2*nb*ldq)+0]);
 
 	tmp1 = _mm_mul_pd(h1_imag, x1);
-#ifdef __FMA4__
+#ifdef __ELPA_USE_FMA__
 	q1 = _mm_add_pd(q1, _mm_maddsub_pd(h1_real, x1, _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));
 #else
 	q1 = _mm_add_pd(q1, _mm_addsub_pd( _mm_mul_pd(h1_real, x1), _mm_shuffle_pd(tmp1, tmp1, _MM_SHUFFLE2(0,1))));

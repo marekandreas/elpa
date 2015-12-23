@@ -1,26 +1,27 @@
 !    This file is part of ELPA.
 !
-!    The ELPA library was originally created by the ELPA consortium, 
+!    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), 
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
-!      Schwerpunkt Wissenschaftliches Rechnen , 
-!    - Fritz-Haber-Institut, Berlin, Abt. Theorie, 
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn, 
-!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition, 
-!      and  
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
 !    - IBM Deutschland GmbH
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
-!    it under the terms of the version 3 of the license of the 
-!    GNU Lesser General Public License as published by the Free 
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
 !    Software Foundation.
 !
 !    ELPA is distributed in the hope that it will be useful,

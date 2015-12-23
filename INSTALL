@@ -9,7 +9,7 @@ Debian, and OpenSuse. More, will hopefully follow in the future.
 
 If you want to build (or have to since no packages are available) ELPA yourself,
 please note that ELPA is shipped with a typical "configure" and "make"
-procedure. This is the only supported way how to build and install ELPA.
+autotools procedure. This is the only supported way how to build and install ELPA.
 
 If you obtained ELPA from the official git repository, you will not find
 the needed configure script! Please look at the "INSTALL_FROM_GIT_VERSION" file
@@ -17,9 +17,16 @@ for the documentation how to proceed.
 
 
 If --- against our recommendations --- you do not want to install ELPA as
-library, but to include it in your source code you will have to find a solution
-by yourself. If you do this anyway, please distribute then all files of ELPA
-with your code.
+library, or you do not want to use the autotools you will have to find a solution
+by yourself. This approach is NOT supported by us in any way and we strongly discourage
+this approach.
+
+If you do this, because you want to include ELPA within your code project (i.e. use
+ELPA not as an external library but "assimilate" it in your projects ),
+please distribute then _ALL_ files (as obtained from an official release tar-ball)
+of ELPA with your code. Note, however, that including the ELPA source files in your
+code projects (and not using ELPA as external library) is only allowed under the terms of
+the LGPL license if your code is ALSO under LGPL.
 
 
 (A): Installing ELPA as library with configure
@@ -34,7 +41,31 @@ The configure installation is best done in four steps
    elpa2-kernel, each is optimized and tuned for a different
    architecture.
 
-1.1) Choice of ELPA2 kernels
+1.1) Choice of MPI compiler (wrappers)
+
+   It is mandatory that the C and C++ parts are compiled with the
+   GNU C, C++ compilers. Thus, all ELPA test programs which are written
+   in C must be compiled and linked with the MPI compiler (wrapper) which uses
+   the GNU C compilers.
+
+   The Fortran parts of ELPA can be compiled with any Fortran compiler of
+   your choice. It is for example quite common to compile the Fortran part
+   with the Intel Fortran compiler but the C,C++ parts must be compiled with
+   the GNU compilers.
+
+   Thus special care has to be taken that the correct MPI compiler (wrappers)
+   are found by the autotools! The configure script tries to find the correct
+   wrappers automatically, but sometimes it will fail.
+
+   In these cases it is necessary to set these compilers by hand:
+
+   ../configure FC=fortran_compiler_wrapper_of_your_choice CC=gnu_compiler_wrapper
+
+   will tell autotools which wrappers to take.
+
+
+
+1.2) Choice of ELPA2 kernels
 
    With the release of ELPA (2014.06 or newer) it is _not_
    mandatory any more to define the (real and complex) kernels
@@ -52,7 +83,7 @@ The configure installation is best done in four steps
    file "./src/elpa2_kernels/README_elpa2_kernels.txt".
 
 
-1.2 Setting up Blacs/Scalapack
+1.3) Setting up Blacs/Scalapack
 
    The configure script tries to auto-detect an installed Blacs/Scalapack
    library. If this is successful, you do not have to specify anything
@@ -86,7 +117,7 @@ The configure installation is best done in four steps
    the configure procedure will check whether Blacs/Scalapack is available
    at build-time and try to link with it.
 
-1.3 Setting optimizations
+1.4) Setting optimizations
 
 
    Please set the optimisation that you prefer with the
@@ -108,6 +139,9 @@ The configure installation is best done in four steps
    if the hardware does. If you already included "-mAVX" in the
    flags, you can skip "-march=native".
 
+   If you want to use the newer AVX2 instructions, assuming they are supported on
+   your hardware, please set CFLAGS="-march=avx2 -mfma" and CXXFLAGS="-march=avx2 -mfma".
+
 
    Setting the optimization flags for the AVX kernels can be a hassle. If AVX
    kernels are build for your system, you can set the configure option
@@ -119,19 +153,22 @@ The configure installation is best done in four steps
 
    ./configure CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O2"
 
+   An istallation with AVX2 and best-optimizations could thus look like this:
 
-1.4 Installation location
+   ./configure  CFLAGS="-O2 -mavx2 -mfma" CXXFLAGS="-O2 -mavx2 -mfma" FCFLAGS="-O2" --with-avx-optimization
+
+1.5) Installation location
 
    Set the "--prefix" flag if you wish another installation location than
    the default "/usr/local/".
 
-1.5 Hybrid OpenMP support
+1.6) Hybrid OpenMP support
 
    If you want to use the hybrid MPI/OpenMP version of ELPA please specify
    "--enable-openmp". Note that the ELPA library will then contain a "_mt" in
    it's name to indicate multi threading support.
 
-1.6 Other
+1.7) Other
 
    Note, that at the moment we do not officially support "cross compilation"
    although it should work.
@@ -160,6 +197,10 @@ The configure installation is best done in four steps
    ELPA kernels is tested. This is intended as a help to get used to this
    new feature. With the same thought in mind, a binary "elpa2_print_kernels"
    is provided, which is rather self-explanatory.
+
+   Also some of the above mentioned tests are provided as C source files.
+   These should demonstrate, how to call ELPA from a C program (i.e. which headers to include
+   and call the ELPA functions). They are NOT intended as a copy and paste solution!
 
 
 4) run "make install"

@@ -1,3 +1,54 @@
+#if 0
+!    This file is part of ELPA.
+!
+!    The ELPA library was originally created by the ELPA consortium,
+!    consisting of the following organizations:
+!
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!      Informatik,
+!    - Technische Universität München, Lehrstuhl für Informatik mit
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
+!    - IBM Deutschland GmbH
+!
+!
+!    More information can be found here:
+!    http://elpa.mpcdf.mpg.de/
+!
+!    ELPA is free software: you can redistribute it and/or modify
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
+!    Software Foundation.
+!
+!    ELPA is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU Lesser General Public License for more details.
+!
+!    You should have received a copy of the GNU Lesser General Public License
+!    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+!
+!    ELPA reflects a substantial effort on the part of the original
+!    ELPA consortium, and we ask you to respect the spirit of the
+!    license that we chose: i.e., please contribute any changes you
+!    may have back to the original ELPA library distribution, and keep
+!    any derivatives of ELPA under the same license that we chose for
+!    the original distribution, the GNU Lesser General Public License.
+!
+!
+! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+!
+! Copyright of the original code rests with the authors inside the ELPA
+! consortium. The copyright of any additional modifications shall rest
+! with their original authors, but shall adhere to the licensing terms
+! distributed along with the original code in the file "COPYING".
+#endif
+
 #if REALCASE==1
 subroutine elpa_transpose_vectors_real(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
 #endif
@@ -27,6 +78,9 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
 !-------------------------------------------------------------------------------
 
 !   use ELPA1 ! for least_common_multiple
+#ifdef WITH_OPENMP
+   use omp_lib
+#endif
 
    implicit none
 
@@ -40,6 +94,7 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
    integer                          :: myps, mypt, nps, npt
    integer                          :: n, lc, k, i, ips, ipt, ns, nl, mpierr
    integer                          :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
+   integer                          :: auxstride
 
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)
@@ -64,7 +119,9 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
    nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
 
    allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
-
+#ifdef WITH_OPENMP
+   !$omp parallel private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n)
+#endif
    do n = 0, lcm_s_t-1
 
       ips = mod(n,nps)
@@ -73,20 +130,29 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
       if(mypt == ipt) then
 
          nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
-         if(nblks_comm==0) cycle
-
+         auxstride = nblk * nblks_comm
+!         if(nblks_comm==0) cycle
+         if (nblks_comm .ne. 0) then
          if(myps == ips) then
-            k = 0
+!            k = 0
+#ifdef WITH_OPENMP
+            !$omp do
+#endif
             do lc=1,nvc
                do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+                  k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                   ns = (i/nps)*nblk ! local start of block i
                   nl = min(nvr-i*nblk,nblk) ! length
                   aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
-                  k = k+nblk
+!                  k = k+nblk
                enddo
             enddo
          endif
 
+#ifdef WITH_OPENMP
+         !$omp barrier
+         !$omp master
+#endif
 #if COMPLEXCASE==1
          call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_DOUBLE_COMPLEX,ips,comm_s,mpierr)
 #endif
@@ -94,20 +160,29 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
 #if REALCASE==1
          call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_REAL8,ips,comm_s,mpierr)
 #endif
-         k = 0
+#ifdef WITH_OPENMP
+         !$omp end master
+         !$omp barrier
+
+         !$omp do
+#endif
+!         k = 0
          do lc=1,nvc
             do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+               k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                ns = (i/npt)*nblk ! local start of block i
                nl = min(nvr-i*nblk,nblk) ! length
                vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)
-               k = k+nblk
+!               k = k+nblk
             enddo
          enddo
-
+         endif
       endif
 
    enddo
-
+#ifdef WITH_OPENMP
+   !$omp end parallel
+#endif
    deallocate(aux)
 
 end subroutine

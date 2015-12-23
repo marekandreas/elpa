@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -16,7 +17,7 @@
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -219,9 +220,9 @@ program read_real
    call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_row_col_comms.
+   ! rows or columns of processes, these are set in get_elpa_communicators
 
-   call get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+   call get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                mpi_comm_rows, mpi_comm_cols)
 
    ! Read matrix size
@@ -278,7 +279,7 @@ program read_real
    ! Calculate eigenvalues/eigenvectors
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   call solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   call solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                        mpi_comm_rows, mpi_comm_cols)
 
    if(myid == 0) print *,'Time tridiag_real :',time_evp_fwd

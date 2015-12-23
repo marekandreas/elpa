@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), fomerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -14,9 +15,12 @@
 !      and
 !    - IBM Deutschland GmbH
 !
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of
+!    the ELPA consortium.
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -57,16 +61,16 @@
 
 
 #include "config-f90.h"
-
+!> \brief Fortran module which provides the routines to use the two-stage ELPA solver
 module ELPA2
 
 ! Version 1.1.2, 2011-02-21
 
   use elpa_utilities
-  use elpa1
   use elpa1_compute
-  use elpa2_compute
+  use elpa1, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
   use elpa2_utilities
+  use elpa2_compute
   use elpa_pdgeqrf
 
   use iso_c_binding
@@ -84,25 +88,49 @@ module ELPA2
 
   public :: solve_evp_real_2stage
   public :: solve_evp_complex_2stage
-
-!-------------------------------------------------------------------------------
-
-  ! The following array contains the Householder vectors of the
-  ! transformation band -> tridiagonal.
-  ! It is allocated and set in tridiag_band_real and used in
-  ! trans_ev_tridi_to_band_real.
-  ! It must be deallocated by the user after trans_ev_tridi_to_band_real!
-
-!  real*8, allocatable :: hh_trans_real(:,:)
-!  complex*16, allocatable :: hh_trans_complex(:,:)
-
-!-------------------------------------------------------------------------------
-
   include 'mpif.h'
-
 
 !******
 contains
+!-------------------------------------------------------------------------------
+!>  \brief solve_evp_real_2stage: Fortran function to solve the real eigenvalue problem with a 2 stage approach
+!>
+!>  Parameters
+!>
+!>  \param na                                   Order of matrix a
+!>
+!>  \param nev                                  Number of eigenvalues needed
+!>
+!>  \param a(lda,matrixCols)                    Distributed matrix for which eigenvalues are to be computed.
+!>                                              Distribution is like in Scalapack.
+!>                                              The full matrix must be set (not only one half like in scalapack).
+!>                                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                                  Leading dimension of a
+!>
+!>  \param ev(na)                               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)                    On output: Eigenvectors of a
+!>                                              Distribution is like in Scalapack.
+!>                                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                                  Leading dimension of q
+!>
+!>  \param nblk                                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols                           local columns of matrix a and q
+!>
+!>  \param mpi_comm_rows                        MPI communicator for rows
+!>  \param mpi_comm_cols                        MPI communicator for columns
+!>  \param mpi_comm_all                         MPI communicator for the total processor set
+!>
+!>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
+!>
+!>  \param use_qr (optional)                    use QR decomposition
+!>
+!>  \result success                             logical, false if error occured
+!-------------------------------------------------------------------------------
 
   function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
                                matrixCols,                               &
@@ -110,41 +138,7 @@ contains
                                  mpi_comm_all, THIS_REAL_ELPA_KERNEL_API,&
                                  useQR) result(success)
 
-  !-------------------------------------------------------------------------------
-  !  solve_evp_real_2stage: Solves the real eigenvalue problem with a 2 stage approach
-  !
-  !  Parameters
-  !
-  !  na          Order of matrix a
-  !
-  !  nev         Number of eigenvalues needed
-  !
-  !  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-  !              Distribution is like in Scalapack.
-  !              The full matrix must be set (not only one half like in scalapack).
-  !              Destroyed on exit (upper and lower half).
-  !
-  !  lda         Leading dimension of a
-  !  matrixCols  local columns of matrix a and q
-  !
-  !  ev(na)      On output: eigenvalues of a, every processor gets the complete set
-  !
-  !  q(ldq,matrixCols)    On output: Eigenvectors of a
-  !              Distribution is like in Scalapack.
-  !              Must be always dimensioned to the full size (corresponding to (na,na))
-  !              even if only a part of the eigenvalues is needed.
-  !
-  !  ldq         Leading dimension of q
-  !
-  !  nblk        blocksize of cyclic distribution, must be the same in both directions!
-  !
-  !  mpi_comm_rows
-  !  mpi_comm_cols
-  !              MPI-Communicators for rows/columns
-  !  mpi_comm_all
-  !              MPI-Communicator for the total processor set
-  !
-  !-------------------------------------------------------------------------------
+
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
 #endif
@@ -161,6 +155,7 @@ contains
                                      mpi_comm_cols, mpi_comm_all
     integer, intent(in)           :: nblk
     real*8, intent(inout)         :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
+   real*8, allocatable           :: hh_trans_real(:,:)
 
     integer                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
     integer                       :: nbw, num_blocks
@@ -273,11 +268,14 @@ contains
     endif
 
     ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
-
+    ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
+    ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
+    ! For IBM Bluegene/Q this is not clear at the moment. We have to keep an eye
+    ! on this and maybe allow a run-time optimization here
     if (useGPU) then
       nbw = nblk
     else
-      nbw = (31/nblk+1)*nblk
+      nbw = (63/nblk+1)*nblk
     endif
 
     num_blocks = (na-1)/nbw + 1
@@ -308,8 +306,8 @@ contains
      endif
 
      ttt0 = MPI_Wtime()
-     call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, matrixCols, mpi_comm_rows, &
-                            mpi_comm_cols, mpi_comm_all)
+   call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans_real, &
+                          mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
        write(error_unit,*) 'Time tridiag_band_real          :',ttt1-ttt0
@@ -341,9 +339,9 @@ contains
      ! Backtransform stage 1
 
      ttt0 = MPI_Wtime()
-
-     call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, mpi_comm_rows, &
-                                      mpi_comm_cols, wantDebug, useGPU, success, THIS_REAL_ELPA_KERNEL)
+   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
+                                    mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success,      &
+                                    THIS_REAL_ELPA_KERNEL)
      if (.not.(success)) return
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -380,49 +378,46 @@ contains
 
    end function solve_evp_real_2stage
 
+!>  \brief solve_evp_complex_2stage: Fortran function to solve the complex eigenvalue problem with a 2 stage approach
+!>
+!>  Parameters
+!>
+!>  \param na                                   Order of matrix a
+!>
+!>  \param nev                                  Number of eigenvalues needed
+!>
+!>  \param a(lda,matrixCols)                    Distributed matrix for which eigenvalues are to be computed.
+!>                                              Distribution is like in Scalapack.
+!>                                              The full matrix must be set (not only one half like in scalapack).
+!>                                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                                  Leading dimension of a
+!>
+!>  \param ev(na)                               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)                    On output: Eigenvectors of a
+!>                                              Distribution is like in Scalapack.
+!>                                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                                  Leading dimension of q
+!>
+!>  \param nblk                                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols                           local columns of matrix a and q
+!>
+!>  \param mpi_comm_rows                        MPI communicator for rows
+!>  \param mpi_comm_cols                        MPI communicator for columns
+!>  \param mpi_comm_all                         MPI communicator for the total processor set
+!>
+!>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
+!>
+!>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
-
-!-------------------------------------------------------------------------------
-
-  function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
+function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols,      &
                                     mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API) result(success)
 
-  !-------------------------------------------------------------------------------
-  !  solve_evp_complex_2stage: Solves the complex eigenvalue problem with a 2 stage approach
-  !
-  !  Parameters
-  !
-  !  na          Order of matrix a
-  !
-  !  nev         Number of eigenvalues needed
-  !
-  !  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-  !              Distribution is like in Scalapack.
-  !              The full matrix must be set (not only one half like in scalapack).
-  !              Destroyed on exit (upper and lower half).
-  !
-  !  lda         Leading dimension of a
-  !  matrixCols  local columns of matrix a and q
-  !
-  !  ev(na)      On output: eigenvalues of a, every processor gets the complete set
-  !
-  !  q(ldq,matrixCols)    On output: Eigenvectors of a
-  !              Distribution is like in Scalapack.
-  !              Must be always dimensioned to the full size (corresponding to (na,na))
-  !              even if only a part of the eigenvalues is needed.
-  !
-  !  ldq         Leading dimension of q
-  !
-  !  nblk        blocksize of cyclic distribution, must be the same in both directions!
-  !
-  !  mpi_comm_rows
-  !  mpi_comm_cols
-  !              MPI-Communicators for rows/columns
-  !  mpi_comm_all
-  !              MPI-Communicator for the total processor set
-  !
-  !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
 #endif
@@ -434,6 +429,7 @@ contains
     integer, intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
     complex*16, intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
     real*8, intent(inout)         :: ev(na)
+   complex*16, allocatable       :: hh_trans_complex(:,:)
 
     integer                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
     integer                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
@@ -556,7 +552,8 @@ contains
 
 
     ttt0 = MPI_Wtime()
-    call tridiag_band_complex(na, nbw, nblk, a, lda, ev, e, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+   call tridiag_band_complex(na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans_complex, &
+                             mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
     ttt1 = MPI_Wtime()
     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
        write(error_unit,*) 'Time tridiag_band_complex          :',ttt1-ttt0
@@ -603,8 +600,9 @@ contains
 
     ttt0 = MPI_Wtime()
     call trans_ev_tridi_to_band_complex(na, nev, nblk, nbw, q, ldq,  &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols,&
-                                        wantDebug, useGPU, success,THIS_COMPLEX_ELPA_KERNEL)
+                                       matrixCols, hh_trans_complex, &
+                                       mpi_comm_rows, mpi_comm_cols, &
+                                       wantDebug, useGPU, success,THIS_COMPLEX_ELPA_KERNEL)
     if (.not.(success)) return
     ttt1 = MPI_Wtime()
     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -622,8 +620,8 @@ contains
     ! Backtransform stage 2
 
     ttt0 = MPI_Wtime()
-    call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, mpi_comm_rows, &
-                                       mpi_comm_cols, useGPU)
+   call trans_ev_band_to_full_complex(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, &
+                                      mpi_comm_rows, mpi_comm_cols, useGPU)
     ttt1 = MPI_Wtime()
     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
        write(error_unit,*) 'Time trans_ev_band_to_full_complex :',ttt1-ttt0
@@ -641,8 +639,6 @@ contains
 
 1   format(a,f10.3)
 
-  end function solve_evp_complex_2stage
-
-!-------------------------------------------------------------------------------
+end function solve_evp_complex_2stage
 
 end module ELPA2

@@ -1,3 +1,8 @@
+dnl Copyright 2015 Lorenz Hüdepohl
+dnl
+dnl This file is part of fdep and licensed under the MIT license
+dnl see the file LICENSE for more information
+dnl
 AC_DEFUN([FDEP_F90_GNU_MAKE_DEPS],[
 AC_MSG_CHECKING([for GNU make])
 for a in "$MAKE" make gmake gnumake ; do

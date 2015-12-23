@@ -3,7 +3,8 @@
 /*     The ELPA library was originally created by the ELPA consortium, */
 /*     consisting of the following organizations: */
 /*  */
-/*     - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), */
+/*     - Max Planck Computing and Data Facility (MPCDF), formerly known as */
+/*       Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG), */
 /*     - Bergische Universität Wuppertal, Lehrstuhl für angewandte */
 /*       Informatik, */
 /*     - Technische Universität München, Lehrstuhl für Informatik mit */
@@ -16,7 +17,7 @@
 /*  */
 /*  */
 /*     More information can be found here: */
-/*     http://elpa.rzg.mpg.de/ */
+/*     http://elpa.mpcdf.mpg.de/ */
 /*  */
 /*     ELPA is free software: you can redistribute it and/or modify */
 /*     it under the terms of the version 3 of the license of the */
@@ -49,7 +50,7 @@
 
 #include <elpa/elpa.h>
 
-main(int argc, char** argv) {
+int main(int argc, char** argv) {
    int myid;
    int nprocs;
 
@@ -77,6 +78,8 @@ main(int argc, char** argv) {
 
    int success;
 
+   int useQr, THIS_REAL_ELPA_KERNEL_API;
+
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
@@ -93,7 +96,8 @@ main(int argc, char** argv) {
      printf("and uses a blocksize of %d\n",nblk);
      printf("\n");
      printf("This is an example program with much less functionality\n");
-     printf("as it's Fortran counterpart \n");
+     printf("as it's Fortran counterpart. It's only purpose is to show how \n");
+     printf("to evoke ELPA1 from a c programm\n");
      printf("\n");
 
    }
@@ -129,7 +133,7 @@ main(int argc, char** argv) {
    /* get the ELPA row and col communicators. */
    /* These are NOT usable in C without calling the MPI_Comm_f2c function on them !! */
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
-   mpierr = elpa_get_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
+   mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
    if (myid == 0) {
      printf("\n");
@@ -170,13 +174,15 @@ main(int argc, char** argv) {
 
    if (myid == 0) {
      printf("\n");
-     printf("Entering ELPA 1stage real solver\n");
+     printf("Entering ELPA 2stage real solver\n");
      printf("\n");
    }
 
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
+   useQr = 0;
+   THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
 
-   success = elpa_solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
+   success = elpa_solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr);
 
    if (success != 1) {
      printf("error in ELPA solve \n");
@@ -186,7 +192,7 @@ main(int argc, char** argv) {
 
    if (myid == 0) {
      printf("\n");
-     printf("1stage ELPA real solver complete\n");
+     printf("2stage ELPA real solver complete\n");
      printf("\n");
    }
 
@@ -197,7 +203,9 @@ main(int argc, char** argv) {
      printf("The computed EVs are not correct !\n");
    }
    if (status ==0){
-     printf("All ok!\n");
+     if (myid ==0) {
+       printf("All ok!\n");
+     }
    }
 
    free(sc_desc);

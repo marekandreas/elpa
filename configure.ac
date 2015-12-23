@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 
-AC_INIT([elpa],[2015.05.001], [elpa-library@rzg.mpg.de])
+AC_INIT([elpa],[2015.11.001], [elpa-library@mpcdf.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
@@ -34,7 +34,7 @@ rm -rf config.h config-f90.h
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [3:1:0])
+AC_SUBST([ELPA_SO_VERSION], [5:0:1])
 #
 
 
@@ -100,8 +100,6 @@ if test x"${enable_openmp}" = x"yes"; then
 	fi
 	FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 fi
-
-
 
 # C++
 AC_LANG([C++])
@@ -232,6 +230,43 @@ if test "${can_compile_avx}" = "yes" ; then
     AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
   fi
 fi
+
+AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+ #include <x86intrin.h>
+ int main(int argc, char **argv){
+ double* q;
+ __m256d q1 = _mm256_load_pd(q);
+ __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+ return 0;
+ }
+ ])],
+ [can_compile_avx2=yes],
+ [can_compile_avx2=no]
+)
+AC_MSG_RESULT([${can_compile_avx2}])
+if test "${can_compile_avx2}" = "yes" ; then
+  AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
+  AC_LANG_PUSH([C++])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <x86intrin.h>
+   int main(int argc, char **argv){
+   double* q;
+   __m256d q1 = _mm256_load_pd(q);
+   __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+   return 0;
+   }
+   ])],
+   [can_compile_avx2=yes],
+   [can_compile_avx2=no]
+  )
+  AC_LANG_POP([C++])
+  AC_MSG_RESULT([${can_compile_avx2}])
+  if test "${can_compile_avx2}" = "no" ; then
+    AC_MSG_WARN([Cannot compile C++ with AVX2!])
+  fi
+fi
+
 
 if test "${can_compile_avx}" = "yes" ; then
   install_real_avx_block2=yes
@@ -507,8 +542,8 @@ AC_MSG_CHECKING([whether we can compile with BGQ intrinsics])
 
 AC_LINK_IFELSE([AC_LANG_SOURCE([
   program test_bgq
-    VECTOR(REAL(8))::QPX_x2
-    real*8 :: hh(10,2))
+    VECTOR(REAL(8))::QPX_h2
+    real*8         :: hh(10,2)
     QPX_h2 = VEC_SPLATS(hh(2,2))
 
   end program
@@ -670,15 +705,21 @@ if test x"${install_real_bgq}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_BGQ_KERNEL],[1],[can use real BGQ kernel])
 fi
 
-if test x"${use_specific_complex_kernel}" = x"yes" ; then
- AC_DEFINE([WITH_ONE_SPECIFIC_COMPLEX_KERNEL],[1],[use only one specific complex kernel (set at compile time)])
+if test x"${use_specific_complex_kernel}" = x"no" ; then
+	AC_DEFINE([WITH_NO_SPECIFIC_COMPLEX_KERNEL],[1],[do not use only one specific complex kernel (set at compile time)])
 fi
 
-if test x"${use_specific_real_kernel}" = x"yes" ; then
- AC_DEFINE([WITH_ONE_SPECIFIC_REAL_KERNEL],[1],[use only one specific real kernel (set at compile time)])
+if test x"${use_specific_real_kernel}" = x"no" ; then
+	AC_DEFINE([WITH_NO_SPECIFIC_REAL_KERNEL],[1],[do not use only one specific real kernel (set at compile time)])
 fi
 
 LT_INIT
+
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
+DX_MAN_FEATURE(ON)
+DX_HTML_FEATURE(ON)
+DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])
@@ -689,6 +730,7 @@ AC_SUBST([OPENMP_CFLAGS])
 AC_SUBST([OPENMP_FCFLAGS])
 AC_SUBST([OPENMP_LDFLAGS])
 #AC_SUBST(OPT_FCFLAGS)
+AC_SUBST([DOXYGEN_OUTPUT_DIR], [docs])
 
 rm -rf modules/ .fortran_dependencies/
 mkdir modules
@@ -722,6 +764,7 @@ AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
 
 AC_CONFIG_FILES([
   Makefile
+  Doxyfile
   ${PKG_CONFIG_FILE}:elpa.pc.in
 ])
 
@@ -737,10 +780,19 @@ fi
 
 echo "Generating elpa/elpa_generated.h..."
 mkdir -p elpa
-grep "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
+grep -h "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
+
+echo "Generating test/shared_sources/generated.h..."
+mkdir -p test/shared_sources
+grep -h "^ *!c>" $srcdir/test/shared_sources/*.F90 | sed 's/^ *!c>//;' > test/shared_sources/generated.h || exit 1
 
 if test "${can_compile_avx}" = "no" ; then
   if test x"${want_avx}" = x"yes" ; then
     AC_MSG_WARN([Could not compile AVX instructions])
+  fi
+fi
+if test "${can_compile_avx2}" = "no" ; then
+  if test x"${want_avx}" = x"yes" ; then
+    AC_MSG_WARN([Could not compile AVX2 instructions])
   fi
 fi

@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -16,7 +17,7 @@
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -58,8 +59,8 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-!> The complex ELPA 2 kernel is set in this program via
-!> the API call. However, this can be overriden by setting
+!> The complex ELPA 2 kernel is set as the default kernel.
+!> However, this can be overriden by setting
 !> the environment variable "COMPLEX_ELPA_KERNEL" to an
 !> appropiate value.
 !>
@@ -81,6 +82,7 @@ program test_complex2
    use ELPA2
 
    use mod_check_for_gpu, only : check_for_gpu
+
    use elpa_utilities, only : error_unit
    use elpa2_utilities
    use mod_read_input_parameters
@@ -100,10 +102,8 @@ program test_complex2
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
-
    implicit none
    include 'mpif.h'
-
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
@@ -148,14 +148,12 @@ program test_complex2
 
    successELPA   = .true.
    gpuAvailable  = .false.
-
    call read_input_parameters(na, nev, nblk, write_to_file)
-
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
-
    gpuAvailable = check_for_gpu(myid, numberOfDevices)
+
    STATUS = 0
 
 #ifdef WITH_OPENMP
@@ -165,7 +163,6 @@ program test_complex2
       print *," "
    endif
 #endif
-
 #ifdef HAVE_REDIRECT
    if (check_redirect_environment_variable()) then
      if (myid .eq. 0) then
@@ -181,6 +178,10 @@ program test_complex2
      call redirect_stdout(myid)
    endif
 #endif
+
+   if (write_to_file) then
+     if (myid .eq. 0) print *,"Writing output files"
+   endif
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -209,10 +210,6 @@ program test_complex2
   call timer%start("program")
 #endif
 
-   if (write_to_file) then
-     if (myid .eq. 0) print *,"Writing output files"
-   endif
-
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible
@@ -236,54 +233,27 @@ program test_complex2
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is an example how to determine the ELPA2 kernel with"
-      print *, "an api call. Note, however, that setting the kernel via"
-      print *, "an environment variable will always take precedence over"
-      print *, "everything else! "
+      print *, "This is an example how ELPA2 chooses a default kernel,"
+#ifdef HAVE_ENVIRONMENT_CHECKING
+      print *, "or takes the kernel defined in the environment variable,"
+#endif
+      print *, "since the ELPA API call does not contain any kernel specification"
+      print *
+      print *, " The settings are: ",trim(get_actual_complex_kernel_name())," as complex kernel"
+      print *
 #ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
       print *," However, this version of ELPA was build with only one of all the available"
       print *," kernels, thus it will not be successful to call ELPA with another "
       print *," kernel than the one specified at compile time!"
 #endif
-      print *
+      print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
       print *, " kernel via an environment variable! To change this re-install"
       print *, " the library and have a look at the log files"
 #endif
-#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-      print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE"
-#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
-
-#ifdef WITH_COMPLEX_GENERIC_KERNEL
-      print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC"
-#endif
-
-#ifdef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
-      print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE"
-#endif
-
-#ifdef WITH_COMPLEX_SSE_KERNEL
-      print *, " The settings are: COMPLEX_ELPA_KERNEL_SSE"
-#endif
-
-#ifdef WITH_COMPLEX_AVX_BLOCK1_KERNEL
-      print *, " The settings are: COMPLEX_ELPA_KERNEL_AVX_BLOCK1"
-#endif
-
-#ifdef WITH_COMPLEX_AVX_BLOCK2_KERNEL
-      print *, " The settings are: COMPLEX_ELPA_KERNEL_AVX_BLOCK2"
-#endif
-
-#ifdef WITH_GPU_VERSION
-      print *, " The settings are: COMPLEX_ELPA_KERNEL_GPU"
-#endif
-
-#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
 
 
-
-      print *
    endif
 
    !-------------------------------------------------------------------------------
@@ -304,9 +274,9 @@ program test_complex2
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_row_col_comms.
+   ! rows or columns of processes, these are set in get_elpa_communicators
 
-   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -318,7 +288,6 @@ program test_complex2
 
    call set_up_blacs_descriptor(na ,nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
-
 
    if (myid==0) then
      print '(a)','| Past scalapack descriptor setup.'
@@ -342,7 +311,6 @@ program test_complex2
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-
    ! set print flag in elpa1
    elpa_print_times = .true.
 
@@ -355,43 +323,14 @@ program test_complex2
    end if
 
 
-   ! ELPA is called a kernel specification in the API
+   ! ELPA is called without any kernel specification in the API,
+   ! furthermore, if the environment variable is not set, the
+   ! default kernel is called. Otherwise, the kernel defined in the
+   ! environment variable
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
    successELPA = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                                 na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-                                 COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
-#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
-
-#ifdef  WITH_COMPLEX_GENERIC_KERNEL
-                                 COMPLEX_ELPA_KERNEL_GENERIC)
-#endif
-
-#ifdef  WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
-                                 COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
-#endif
-
-#ifdef  WITH_COMPLEX_SSE_KERNEL
-                                 COMPLEX_ELPA_KERNEL_SSE)
-#endif
-
-#ifdef  WITH_COMPLEX_AVX_BLOCK1_KERNEL
-                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK1)
-#endif
-
-#ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
-                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK2)
-#endif
-
-#ifdef  WITH_GPU_VERSION
-                                 COMPLEX_ELPA_KERNEL_GPU)
-#endif
-
-#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
-
-
-
+                                 na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."
@@ -435,7 +374,6 @@ program test_complex2
    print *," "
    print *,"End timings program"
 #endif
-
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
    call EXIT(STATUS)

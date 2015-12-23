@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -16,7 +17,7 @@
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -42,7 +43,7 @@
 #include "config-f90.h"
 !>
 !> Fortran test programm to demonstrates the use of
-!> ELPA 2 real case library.
+!> ELPA 1 real case library.
 !> If "HAVE_REDIRECT" was defined at build time
 !> the stdout and stderr output of each MPI task
 !> can be redirected to files if the environment
@@ -58,12 +59,7 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-!> The real ELPA 2 kernel is set as the default kernel.
-!> However, this can be overriden by setting
-!> the environment variable "REAL_ELPA_KERNEL" to an
-!> appropiate value.
-!>
-program test_real2
+program test_real
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -79,10 +75,8 @@ program test_real2
 !-------------------------------------------------------------------------------
 
    use ELPA1
-   use ELPA2
-
-   use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
+   use from_c
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -99,6 +93,7 @@ program test_real2
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
+
    implicit none
    include 'mpif.h'
 
@@ -108,36 +103,40 @@ program test_real2
    ! nev:  Number of eigenvectors to be calculated
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
+   integer :: nblk
+   integer na, nev
 
-   integer                 :: nblk
-   integer                 :: na, nev
 
    !-------------------------------------------------------------------------------
    !  Local Variables
 
-   integer                 :: np_rows, np_cols, na_rows, na_cols
+   integer             :: np_rows, np_cols, na_rows, na_cols
 
-   integer                 :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer                 :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer             :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer             :: mpi_comm_rows_fromC, mpi_comm_cols_fromC
+   integer             :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol,j
 
-   integer, external       :: numroc
+   integer             :: my_prowFromC, my_pcolFromC
+   integer, external   :: numroc
 
-   real*8, allocatable     :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
-   integer                 :: iseed(4096) ! Random seed, size should be sufficient for every generator
-   integer                 :: STATUS
+   real*8, allocatable :: aFromC(:,:), evFromC(:), zFromC(:,:)
+
+   integer             :: iseed(4096) ! Random seed, size should be sufficient for every generator
+
+
+   integer             :: STATUS
 #ifdef WITH_OPENMP
-   integer                 :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   integer             :: omp_get_max_threads,  required_mpi_thread_level, &
+                          provided_mpi_thread_level
 #endif
-   logical                 :: write_to_file
+   logical             :: write_to_file
 
-   logical                  :: successELPA, success
+   integer             :: checksWrong, checksWrongRecv
+   logical             :: success
 
-   integer                 :: numberOfDevices
-   logical                 :: gpuAvailable
-
-   successELPA   = .true.
-   gpuAvailable  = .false.
+   success = .true.
 
    call read_input_parameters(na, nev, nblk, write_to_file)
 
@@ -145,65 +144,6 @@ program test_real2
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
-
-   STATUS = 0
-#ifdef WITH_OPENMP
-   if (myid .eq. 0) then
-      print *,"Threaded version of test program"
-      print *,"Using ",omp_get_max_threads()," threads"
-      print *," "
-   endif
-#endif
-
-#ifdef HAVE_REDIRECT
-   if (check_redirect_environment_variable()) then
-     if (myid .eq. 0) then
-       print *," "
-       print *,"Redirection of mpi processes is used"
-       print *," "
-       if (create_directories() .ne. 1) then
-         write(error_unit,*) "Unable to create directory for stdout and stderr!"
-         stop
-       endif
-     endif
-     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-     call redirect_stdout(myid)
-   endif
-#endif
-
-   if (myid .eq. 0) then
-      print *," "
-      print *,"This ELPA2 is build with"
-      if (gpuAvailable) then
-        print *,"GPU support"
-      endif
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-      print *,"AVX optimized kernel (2 blocking) for real matrices"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-      print *,"AVX optimized kernel (4 blocking) for real matrices"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-      print *,"AVX optimized kernel (6 blocking) for real matrices"
-#endif
-
-#ifdef WITH_REAL_GENERIC_KERNEL
-     print *,"GENERIC kernel for real matrices"
-#endif
-#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
-     print *,"GENERIC SIMPLE kernel for real matrices"
-#endif
-#ifdef WITH_REAL_SSE_KERNEL
-     print *,"SSE ASSEMBLER kernel for real matrices"
-#endif
-#ifdef WITH_REAL_BGP_KERNEL
-     print *,"BGP kernel for real matrices"
-#endif
-#ifdef WITH_REAL_BGQ_KERNEL
-     print *,"BGQ kernel for real matrices"
-#endif
-   endif
    if (write_to_file) then
      if (myid .eq. 0) print *,"Writing output files"
    endif
@@ -234,12 +174,38 @@ program test_real2
 
   call timer%start("program")
 #endif
-
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible
    ! divisors of nprocs with a number next to the square root of nprocs
    ! and decrement it until a divisor is found.
+
+
+   STATUS = 0
+#ifdef WITH_OPENMP
+   if (myid .eq. 0) then
+      print *,"Threaded version of test program"
+      print *,"Using ",omp_get_max_threads()," threads"
+      print *," "
+   endif
+#endif
+    call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+
+#ifdef HAVE_REDIRECT
+   if (check_redirect_environment_variable()) then
+     if (myid .eq. 0) then
+       print *," "
+       print *,"Redirection of mpi processes is used"
+       print *," "
+       if (create_directories() .ne. 1) then
+         write(error_unit,*) "Unable to create directory for stdout and stderr!"
+         stop
+       endif
+      endif
+      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+      call redirect_stdout(myid)
+    endif
+#endif
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
@@ -274,11 +240,19 @@ program test_real2
      print '(a)','| Past BLACS_Gridinfo.'
    end if
 
-   ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_row_col_comms.
+   my_prowFromC = my_prow
+   my_pcolFromC = my_pcol
 
-   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+   ! All ELPA routines need MPI communicators for communicating within
+   ! rows or columns of processes, these are set in get_elpa_communicators.
+
+   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
+
+   ! call here a c function, which via the c-interface in turn calls the
+   ! appropiate elpa function
+   mpierr = call_elpa_get_comm_from_c(mpi_comm_world, my_prowFromC, my_pcolFromC, &
+                                      mpi_comm_rows_fromC, mpi_comm_cols_fromC)
 
    if (myid==0) then
      print '(a)','| Past split communicator setup for rows and columns.'
@@ -302,51 +276,122 @@ program test_real2
 
    allocate(ev(na))
 
+   allocate(aFromC (na_rows,na_cols))
+   allocate(zFromC (na_rows,na_cols))
+
+   allocate(evFromC(na))
+
    call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+
+   aFromC = a
+   zFromC = z
+   evFromC = ev
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-   ! set print flag in elpa1
-   elpa_print_times = .true.
 
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
    if (myid==0) then
-     print '(a)','| Entering two-stage ELPA solver ... '
+     print '(a)','| Entering one-step ELPA solver ... '
      print *
    end if
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   successELPA = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                          na_cols, mpi_comm_rows, mpi_comm_cols)
 
-   if (.not.(successELPA)) then
-      write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
+   if (.not.(success)) then
+      write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif
 
+
    if (myid==0) then
-     print '(a)','| Two-step ELPA solver complete.'
+     print '(a)','| One-step ELPA solver complete.'
      print *
    end if
 
-   if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-   if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
-   if(myid == 0) print *,'Time transform back EVs :',time_evp_back
-   if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-
-
+   if(myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
+   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+   if(myid == 0) print *,'Time trans_ev_real    :',time_evp_back
+   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
    if(write_to_file) then
       if (myid == 0) then
-         open(17,file="EVs_real2_out.txt",form='formatted',status='new')
+         open(17,file="EVs_real_out.txt",form='formatted',status='new')
          do i=1,na
             write(17,*) i,ev(i)
          enddo
          close(17)
       endif
    endif
+
+   ! call the c function
+   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+   if (myid==0) then
+     print *," "
+     print '(a)','| Testing with C-interface ... '
+     print *," "
+   end if
+
+   success = solve_elpa1_real_call_from_c(na, nev, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
+                                          na_cols, mpi_comm_rows_fromC, mpi_comm_cols_fromC )
+
+   if (myid==0) then
+     print *," "
+     print '(a)','| C call done... '
+     print *," "
+   end if
+   ! check whether c results are the same
+   checksWrong = 0
+   do j=1,na_cols
+     do i=1,na_rows
+       if (a(i,j) .ne. aFromC(i,j)) then
+         print *,"results for a from Fortran and C are not the same!"
+         print *,i,j,a(i,j),aFromC(i,j)
+         checksWrong = 1
+         cycle
+       endif
+       if (z(i,j) .ne. zFromC(i,j)) then
+         print *,"results for z from Fortran and C are not the same!"
+         print *,i,j,z(i,j),zFromC(i,j)
+         checksWrong = 1
+       endif
+
+     enddo
+   enddo
+
+   ! reduction
+   call mpi_allreduce(checksWrong, checksWrongRecv,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,mpierr)
+   checksWrong = checksWrongRecv
+
+   if (checksWrong == 0) then
+     if (myid == 0) then
+       print *,' Checks for matrix a and z are ok... '
+     endif
+   endif
+
+   checksWrong = 0
+   do i=1,na
+     if (ev(i) .ne. evFromC(i)) then
+       print *,"results for EV from Fortran and C are not the same!"
+       print *,i,ev(i),evFromC(i)
+       checksWrong = 1
+     endif
+   enddo
+
+   ! reduction
+   call mpi_allreduce(checksWrong, checksWrongRecv,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,mpierr)
+   checksWrong = checksWrongRecv
+
+   if (checksWrong == 0) then
+     if (myid == 0) then
+       print *,' Checks for EVs are ok... '
+     endif
+   endif
+
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
    allocate(tmp1(na_rows,na_cols))
@@ -366,13 +411,19 @@ program test_real2
    call timer%stop("program")
    print *," "
    print *,"Timings program:"
+   print *," "
    call timer%print("program")
+   print *," "
+   print *,"End timings program"
    print *," "
    print *,"End timings program"
 #endif
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
+
    call EXIT(STATUS)
+
+
 end
 
 !-------------------------------------------------------------------------------

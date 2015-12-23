@@ -3,20 +3,21 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -42,7 +43,7 @@
 #include "config-f90.h"
 !>
 !> Fortran test programm to demonstrates the use of
-!> ELPA 2 real case library.
+!> ELPA 1 complex case library.
 !> If "HAVE_REDIRECT" was defined at build time
 !> the stdout and stderr output of each MPI task
 !> can be redirected to files if the environment
@@ -58,15 +59,10 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-!> The complex ELPA 2 kernel is set in this program via
-!> the API call. However, this can be overriden by setting
-!> the environment variable "REAL_ELPA_KERNEL" to an
-!> appropiate value.
-!>
-program test_real2
+program test_complex
 
 !-------------------------------------------------------------------------------
-! Standard eigenvalue problem - REAL version
+! Standard eigenvalue problem - COMPLEX version
 !
 ! This program demonstrates the use of the ELPA module
 ! together with standard scalapack routines
@@ -75,34 +71,26 @@ program test_real2
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
-!
 !-------------------------------------------------------------------------------
 
    use ELPA1
-   use ELPA2
-
-   use mod_check_for_gpu, only : check_for_gpu
-
    use elpa_utilities, only : error_unit
-   use elpa2_utilities
+#ifdef WITH_OPENMP
+   use test_util
+#endif
+
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
-
-#ifdef WITH_OPENMP
-   use test_util
-#endif
-
 #ifdef HAVE_REDIRECT
-  use redirect
+   use redirect
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
-
    implicit none
    include 'mpif.h'
 
@@ -113,8 +101,8 @@ program test_real2
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   integer                 :: nblk
-   integer                 :: na, nev
+   integer :: nblk
+   integer na, nev
 
    !-------------------------------------------------------------------------------
    !  Local Variables
@@ -124,36 +112,29 @@ program test_real2
    integer                 :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer                 :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer, external       :: numroc
+   real*8, allocatable     :: ev(:), xr(:,:)
 
-   real*8, allocatable     :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   complex*16, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+
+   complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
    integer                 :: iseed(4096) ! Random seed, size should be sufficient for every generator
    integer                 :: STATUS
 #ifdef WITH_OPENMP
-   integer                 :: omp_get_max_threads,  required_mpi_thread_level, &
-                              provided_mpi_thread_level
+   integer                 :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    logical                 :: write_to_file
+   logical                 :: success
 
-   logical                 :: successELPA, success
-
-   integer                 :: numberOfDevices
-   logical                 :: gpuAvailable
-
-   successELPA   = .true.
-   gpuAvailable  = .false.
-
+   success = .true.
+   ! read input parameters if they are provided
    call read_input_parameters(na, nev, nblk, write_to_file)
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
-
    STATUS = 0
-
 #ifdef WITH_OPENMP
    if (myid .eq. 0) then
       print *,"Threaded version of test program"
@@ -161,6 +142,7 @@ program test_real2
       print *," "
    endif
 #endif
+
 #ifdef HAVE_REDIRECT
    if (check_redirect_environment_variable()) then
      if (myid .eq. 0) then
@@ -206,6 +188,7 @@ program test_real2
 
   call timer%start("program")
 #endif
+
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible
@@ -221,68 +204,11 @@ program test_real2
 
    if(myid==0) then
       print *
-      print '(a)','Standard eigenvalue problem - REAL version'
-      if (gpuAvailable) then
-        print *,"with GPU Version"
-      endif
+      print '(a)','Standard eigenvalue problem - COMPLEX version'
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is an example how to determine the ELPA2 kernel with"
-      print *, "an api call. Note, however, that setting the kernel via"
-      print *, "an environment variable will always take precedence over"
-      print *, "everything else! "
-      print *
-#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-      print *," However, this version of ELPA was build with only one of all the available"
-      print *," kernels, thus it will not be successful to call ELPA with another "
-      print *," kernel than the one specified at compile time!"
-#endif
-     print *," "
-#ifndef HAVE_ENVIRONMENT_CHECKING
-      print *, " Notice that it is not possible with this build to set the "
-      print *, " kernel via an environment variable! To change this re-install"
-      print *, " the library and have a look at the log files"
-#endif
-
-#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
-#else /*  WITH_ONE_SPECIFIC_REAL_KERNEL */
-
-#ifdef WITH_REAL_GENERIC_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC"
-#endif
-#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
-#endif
-#ifdef WITH_REAL_GENERIC_SSE_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_SSE"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK2"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK4"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK6"
-#endif
-#ifdef WITH_REAL_BGP_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_BGP"
-#endif
-#ifdef WITH_REAL_BGQ_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_BGQ"
-#endif
-#ifdef WITH_GPU_VERSION
-      print *, " The settings are: REAL_ELPA_GPU"
-#endif
-
-#endif  /*  WITH_ONE_SPECIFIC_REAL_KERNEL */
-
-      print *
-
-
    endif
 
    !-------------------------------------------------------------------------------
@@ -303,14 +229,17 @@ program test_real2
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_row_col_comms.
+   ! rows or columns of processes, these are set in get_elpa_communicators.
 
-   mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
      print '(a)','| Past split communicator setup for rows and columns.'
    end if
+
+   ! Determine the necessary size of the distributed matrices,
+   ! we use the Scalapack tools routine NUMROC for that.
 
    call set_up_blacs_descriptor(na ,nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
@@ -321,6 +250,7 @@ program test_real2
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("set up matrix")
 #endif
@@ -330,82 +260,44 @@ program test_real2
 
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+   allocate(xr(na_rows,na_cols))
 
+   call prepare_matrix(na, myid, sc_desc, iseed, xr, a, z, as)
+
+   deallocate(xr)
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-   ! set print flag in elpa1
-   elpa_print_times = .true.
-
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
    if (myid==0) then
-     print '(a)','| Entering two-stage ELPA solver ... '
+     print '(a)','| Entering one-step ELPA solver ... '
      print *
    end if
 
-
-   ! ELPA is called with a kernel specification in the API
-
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   successELPA = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-                             REAL_ELPA_KERNEL_GENERIC_SIMPLE)
+   success = solve_evp_complex_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                               na_cols, mpi_comm_rows, mpi_comm_cols)
 
-#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
-#ifdef WITH_REAL_GENERIC_KERNEL
-                              REAL_ELPA_KERNEL_GENERIC)
-#endif
-#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
-                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
-#endif
-#ifdef WITH_REAL_SSE_KERNEL
-                              REAL_ELPA_KERNEL_SSE)
-#endif
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK2)
-#endif
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK4)
-#endif
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK6)
-#endif
-#ifdef WITH_REAL_BGP_KERNEL
-                              REAL_ELPA_KERNEL_BGP)
-#endif
-#ifdef WITH_REAL_BGQ_KERNEL
-                              REAL_ELPA_KERNEL_BGQ)
-#endif
-#ifdef WITH_GPU_VERSION
-                              REAL_ELPA_KERNEL_GPU)
-#endif
-
-#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
-
-
-
-   if (.not.(successELPA)) then
-      write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
+   if (.not.(success)) then
+      write(error_unit,*) "solve_evp_complex produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif
 
    if (myid==0) then
-     print '(a)','| Two-step ELPA solver complete.'
+     print '(a)','| One-step ELPA solver complete.'
      print *
    end if
 
-   if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-   if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
-   if(myid == 0) print *,'Time transform back EVs :',time_evp_back
-   if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
+   if(myid == 0) print *,'Time tridiag_complex  :',time_evp_fwd
+   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+   if(myid == 0) print *,'Time trans_ev_complex :',time_evp_back
+   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
 
    if(write_to_file) then
       if (myid == 0) then
-         open(17,file="EVs_real2_out.txt",form='formatted',status='new')
+         open(17,file="EVs_complex_out.txt",form='formatted',status='new')
          do i=1,na
             write(17,*) i,ev(i)
          enddo
@@ -414,7 +306,6 @@ program test_real2
    endif
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 

@@ -3,7 +3,8 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -16,7 +17,7 @@
 !
 !
 !    More information can be found here:
-!    http://elpa.rzg.mpg.de/
+!    http://elpa.mpcdf.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -71,6 +72,7 @@ module mod_check_correctness
 
       ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
       ! tmp1 =  A * Z
+      ! as is original stored matrix, Z are the EVs
       call pzgemm('N','N',na,nev,na,CONE,as,1,1,sc_desc, &
                   z,1,1,sc_desc,CZERO,tmp1,1,1,sc_desc)
 
@@ -201,6 +203,10 @@ module mod_check_correctness
       endif
     end function
 
+    !c> int check_correctness_real_from_fortran(int na, int nev, int na_rows, int na_cols,
+    !c>                                         double *as, double *z, double *ev,
+    !c>                                         int sc_desc[9], int myid,
+    !c>                                         double *tmp1, double *tmp2);
     function check_correctness_real_wrapper(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status) &
       bind(C,name="check_correctness_real_from_fortran")
 
@@ -218,6 +224,26 @@ module mod_check_correctness
       status = check_correctness_real(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
     end function
+    !c> int check_correctness_complex_from_fortran(int na, int nev, int na_rows, int na_cols,
+    !c>                                         complex double *as, complex double *z, double *ev,
+    !c>                                         int sc_desc[9], int myid,
+    !c>                                         complex double *tmp1, complex double *tmp2);
+    function check_correctness_complex_wrapper(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status) &
+      bind(C,name="check_correctness_complex_from_fortran")
 
+      use iso_c_binding
+
+      implicit none
+
+      integer(kind=c_int)         :: status
+      integer(kind=c_int), value  :: na, nev, myid, na_rows, na_cols
+      complex(kind=c_double)      :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
+      complex(kind=c_double)      :: tmp1(1:na_rows,1:na_cols), tmp2(1:na_rows,1:na_cols)
+      real(kind=c_double)         :: ev(1:na)
+      integer(kind=c_int)         :: sc_desc(1:9)
+
+      status = check_correctness_complex(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+
+    end function
 
 end module mod_check_correctness
