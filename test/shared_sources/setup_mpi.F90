@@ -48,15 +48,16 @@ module mod_setup_mpi
     subroutine setup_mpi(myid, nprocs)
       use test_util
       use ELPA_utilities
+      use precision
       implicit none
       include 'mpif.h'
 
-      integer              :: mpierr
+      integer(kind=ik)              :: mpierr
 
-      integer, intent(out) :: myid, nprocs
+      integer(kind=ik), intent(out) :: myid, nprocs
 #ifdef WITH_OPENMP
-      integer    :: required_mpi_thread_level, &
-                    provided_mpi_thread_level
+      integer(kind=ik)              :: required_mpi_thread_level, &
+                                       provided_mpi_thread_level
 
 #endif
 #ifndef WITH_OPENMP

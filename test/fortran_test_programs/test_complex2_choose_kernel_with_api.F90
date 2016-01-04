@@ -78,6 +78,7 @@ program test_complex2
 ! distributed along with the original code in the file "COPYING".
 !-------------------------------------------------------------------------------
 
+   use precision
    use ELPA1
    use ELPA2
    use elpa_utilities, only : error_unit
@@ -112,33 +113,29 @@ program test_complex2
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   integer :: nblk
-   integer na, nev
+   integer(kind=ik)              :: nblk
+   integer(kind=ik)              :: na, nev
+   integer(kind=ik)              :: np_rows, np_cols, na_rows, na_cols
 
-   !-------------------------------------------------------------------------------
-   !  Local Variables
+   integer(kind=ik)              :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer(kind=ik)              :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer np_rows, np_cols, na_rows, na_cols
+   integer, external             :: numroc
 
-   integer myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   real(kind=rk), allocatable    :: ev(:), xr(:,:)
 
-   integer, external :: numroc
+   complex(kind=ck), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
-   real*8, allocatable :: ev(:), xr(:,:)
+   complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-   complex*16, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+   integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
-   complex*16, parameter :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
-
-   integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
-
-   integer :: STATUS
+   integer(kind=ik)              :: STATUS
 #ifdef WITH_OPENMP
-   integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   integer(kind=ik)              :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
-   logical :: write_to_file
-   logical :: success
+   logical                       :: write_to_file
+   logical                       :: success
 
    success = .true.
 

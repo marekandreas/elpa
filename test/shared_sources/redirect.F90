@@ -74,8 +74,9 @@ module redirect
 !> \param none
 !> \result res integer indicates success or failure
     function create_directories() result(res)
+      use precision
       implicit none
-      integer :: res
+      integer(kind=ik) :: res
       res = int(create_directories_c())
     end function
 !>
@@ -86,8 +87,9 @@ module redirect
 !> \param myproc MPI task id
     subroutine redirect_stdout(myproc)
       use, intrinsic :: iso_c_binding
+      use precision
       implicit none
-      integer, intent(in) :: myproc
+      integer(kind=ik), intent(in) :: myproc
       call redirect_stdout_c(int(myproc, kind=C_INT))
     end subroutine
 !>

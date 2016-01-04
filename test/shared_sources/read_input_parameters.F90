@@ -47,15 +47,16 @@ module mod_read_input_parameters
 
     subroutine read_input_parameters(na, nev, nblk, write_to_file)
       use ELPA_utilities, only : error_unit
+      use precision
       implicit none
       include 'mpif.h'
 
-      integer, intent(out) :: na, nev, nblk
-      logical, intent(out) :: write_to_file
+      integer(kind=ik), intent(out) :: na, nev, nblk
+      logical, intent(out)          :: write_to_file
 
       ! Command line arguments
-      character(len=128)   :: arg1, arg2, arg3, arg4
-      integer :: mpierr
+      character(len=128)            :: arg1, arg2, arg3, arg4
+      integer(kind=ik)              :: mpierr
 
       ! default parameters
       na = 4000

@@ -55,8 +55,10 @@ module test_util
 !> \param level thread-saftiness of the MPI library
 !> \return str human understandable value of thread saftiness
   pure function mpi_thread_level_name(level) result(str)
-    integer, intent(in) :: level
-    character(len=21) :: str
+    use precision
+    implicit none
+    integer(kind=ik), intent(in) :: level
+    character(len=21)            :: str
     select case(level)
       case (MPI_THREAD_SINGLE)
         str = "MPI_THREAD_SINGLE"

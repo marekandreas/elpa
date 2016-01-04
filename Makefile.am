@@ -9,7 +9,8 @@ AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
-libelpa@SUFFIX@_la_SOURCES = src/elpa_utilities.F90 \
+libelpa@SUFFIX@_la_SOURCES = src/mod_precision.f90 \
+                             src/elpa_utilities.F90 \
 	                     src/elpa1_compute.F90 \
 	                     src/elpa1.F90 \
 			     src/elpa2_utilities.F90 \
