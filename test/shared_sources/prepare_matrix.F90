@@ -147,7 +147,7 @@ module mod_prepare_matrix
       call prepare_matrix_real(na, myid, sc_desc, iseed, a, z, as)
     end subroutine
     !c> void prepare_matrix_complex_from_fortran(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9], int iseed[4096],
+    !c>                                       int sc_desc[9], int iseed[4096], double *xr,
     !c>                                       complex double *a, complex double *z, complex double *as);
     subroutine prepare_matrix_complex_wrapper(na, myid, na_rows, na_cols, sc_desc, iseed, xr, a, z, as) &
                                           bind(C, name="prepare_matrix_complex_from_fortran")

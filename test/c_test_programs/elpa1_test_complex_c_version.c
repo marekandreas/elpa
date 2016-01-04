@@ -49,6 +49,7 @@
 #include <math.h>
 
 #include <elpa/elpa.h>
+#include <test/shared_sources/generated.h>
 #include <complex.h>
 
 int main(int argc, char** argv) {
