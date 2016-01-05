@@ -59,14 +59,14 @@ module complex_generic_kernel
   public single_hh_trafo_complex_generic
 contains
   subroutine single_hh_trafo_complex_generic(q, hh, nb, nq, ldq)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, nq, ldq
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(*)
+    integer(kind=ik), intent(in)    :: nb, nq, ldq
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(*)
 
-    integer i
+    integer(kind=ik)                :: i
 
     ! Safety only:
 
@@ -93,15 +93,15 @@ contains
   ! --------------------------------------------------------------------------------------------------
 
   subroutine double_hh_trafo_complex_generic(q, hh, nb, nq, ldq, ldh)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, nq, ldq, ldh
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(ldh,*)
-    complex*16 s
+    integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(ldh,*)
+    complex(kind=ck)                :: s
 
-    integer i
+    integer(kind=ik)                :: i
 
     ! Safety only:
 
@@ -138,16 +138,16 @@ contains
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_complex_kernel_12(q, hh, nb, ldq)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, ldq
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(*)
+    integer(kind=ik), intent(in)    :: nb, ldq
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(*)
 
-    complex*16 x1, x2, x3, x4, x5, x6, x7, x8, x9, xa, xb, xc
-    complex*16 h1, tau1
-    integer i
+    complex(kind=ck)                :: x1, x2, x3, x4, x5, x6, x7, x8, x9, xa, xb, xc
+    complex(kind=ck)                :: h1, tau1
+    integer(kind=ik)                :: i
 
 
     x1 = q(1,1)
@@ -231,16 +231,16 @@ contains
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_complex_kernel_8(q, hh, nb, ldq)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, ldq
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(*)
+    integer(kind=ik), intent(in)    :: nb, ldq
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(*)
 
-    complex*16 x1, x2, x3, x4, x5, x6, x7, x8
-    complex*16 h1, tau1
-    integer i
+    complex(kind=ck)                :: x1, x2, x3, x4, x5, x6, x7, x8
+    complex(kind=ck)                :: h1, tau1
+    integer(kind=ik)                :: i
 
 
     x1 = q(1,1)
@@ -304,16 +304,17 @@ contains
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_complex_kernel_4(q, hh, nb, ldq)
+    use precision
 
     implicit none
 
-    integer, intent(in) :: nb, ldq
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(*)
+    integer(kind=ik), intent(in)    :: nb, ldq
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(*)
 
-    complex*16 x1, x2, x3, x4
-    complex*16 h1, tau1
-    integer i
+    complex(kind=ck)                :: x1, x2, x3, x4
+    complex(kind=ck)                :: h1, tau1
+    integer(kind=ik)                :: i
 
 
     x1 = q(1,1)
@@ -357,17 +358,17 @@ contains
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_complex_kernel_4_2hv(q, hh, nb, ldq, ldh, s)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, ldq, ldh
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(ldh,*)
-    complex*16, intent(in) :: s
+    integer(kind=ik), intent(in)    :: nb, ldq, ldh
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(ldh,*)
+    complex(kind=ck), intent(in)    :: s
 
-    complex*16 x1, x2, x3, x4, y1, y2, y3, y4
-    complex*16 h1, h2, tau1, tau2
-    integer i
+    complex(kind=ck)                :: x1, x2, x3, x4, y1, y2, y3, y4
+    complex(kind=ck)                :: h1, h2, tau1, tau2
+    integer(kind=ik)                :: i
 
     x1 = q(1,2)
     x2 = q(2,2)
@@ -443,17 +444,17 @@ contains
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_complex_kernel_8_2hv(q, hh, nb, ldq, ldh, s)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, ldq, ldh
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(ldh,*)
-    complex*16, intent(in) :: s
+    integer(kind=ik), intent(in)    :: nb, ldq, ldh
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(ldh,*)
+    complex(kind=ck), intent(in)    :: s
 
-    complex*16 x1, x2, x3, x4, x5, x6 ,x7, x8, y1, y2, y3, y4, y5, y6, y7, y8
-    complex*16 h1, h2, tau1, tau2
-    integer i
+    complex(kind=ck)                :: x1, x2, x3, x4, x5, x6 ,x7, x8, y1, y2, y3, y4, y5, y6, y7, y8
+    complex(kind=ck)                :: h1, h2, tau1, tau2
+    integer(kind=ik)                :: i
 
     x1 = q(1,2)
     x2 = q(2,2)
@@ -574,17 +575,18 @@ contains
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_complex_kernel_12_2hv(q, hh, nb, ldq, ldh, s)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, ldq, ldh
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(ldh,*)
-    complex*16, intent(in) :: s
+    integer(kind=ik), intent(in)    :: nb, ldq, ldh
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(ldh,*)
+    complex(kind=ck), intent(in)    :: s
 
-    complex*16 x1, x2, x3, x4, x5, x6 ,x7, x8, x9, x10, x11, x12, y1, y2, y3, y4, y5, y6, y7, y8, y9, y10, y11, y12
-    complex*16 h1, h2, tau1, tau2
-    integer i
+    complex(kind=ck)                :: x1, x2, x3, x4, x5, x6 ,x7, x8, x9, x10, x11, x12, y1, y2, y3, y4, y5, y6, &
+                                       y7, y8, y9, y10, y11, y12
+    complex(kind=ck)                :: h1, h2, tau1, tau2
+    integer(kind=ik)                :: i
 
     x1 = q(1,2)
     x2 = q(2,2)

@@ -63,37 +63,38 @@ subroutine redist_band_complex(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_row
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
+   use precision
    implicit none
 
-   integer, intent(in)     :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+   integer(kind=ik), intent(in)     :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
 #if REALCASE==1
-   real*8, intent(in)      :: r_a(lda, matrixCols)
+   real(kind=rk), intent(in)        :: r_a(lda, matrixCols)
 #endif
 #if COMPLEXCASE==1
-   complex*16, intent(in)  :: c_a(lda, matrixCols)
+   complex(kind=ck), intent(in)     :: c_a(lda, matrixCols)
 #endif
 
 
 #if REALCASE==1
-   real*8, intent(out)     :: r_ab(:,:)
-#endif
-
-#if COMPLEXCASE==1
-   complex*16, intent(out) :: c_ab(:,:)
-#endif
-
-   integer, allocatable    :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), &
-                              global_id(:,:), global_id_tmp(:,:), block_limits(:)
-#if REALCASE==1
-   real*8, allocatable     :: r_sbuf(:,:,:), r_rbuf(:,:,:), r_buf(:,:)
+   real(kind=rk), intent(out)       :: r_ab(:,:)
 #endif
 
 #if COMPLEXCASE==1
-   complex*16, allocatable :: c_sbuf(:,:,:), c_rbuf(:,:,:), c_buf(:,:)
+   complex(kind=ck), intent(out)    :: c_ab(:,:)
 #endif
-   integer                 :: i, j, my_pe, n_pes, my_prow, np_rows, my_pcol, np_cols, &
-                              nfact, np, npr, npc, mpierr, is, js
-   integer                 :: nblocks_total, il, jl, l_rows, l_cols, n_off
+
+   integer(kind=ik), allocatable    :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), &
+                                       global_id(:,:), global_id_tmp(:,:), block_limits(:)
+#if REALCASE==1
+   real(kind=rk), allocatable       :: r_sbuf(:,:,:), r_rbuf(:,:,:), r_buf(:,:)
+#endif
+
+#if COMPLEXCASE==1
+   complex(kind=ck), allocatable    :: c_sbuf(:,:,:), c_rbuf(:,:,:), c_buf(:,:)
+#endif
+   integer(kind=ik)                 :: i, j, my_pe, n_pes, my_prow, np_rows, my_pcol, np_cols, &
+                                       nfact, np, npr, npc, mpierr, is, js
+   integer(kind=ik)                 :: nblocks_total, il, jl, l_rows, l_cols, n_off
 
 #ifdef HAVE_DETAILED_TIMINGS
 #if REALCASE==1

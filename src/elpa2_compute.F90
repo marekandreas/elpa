@@ -66,11 +66,12 @@ module ELPA2_compute
 
 ! Version 1.1.2, 2011-02-21
 
-  use elpa_utilities
+  use ELPA_utilities
   USE ELPA1_compute
   use elpa1, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
   use elpa2_utilities
   use elpa_pdgeqrf
+  use precision
 
   implicit none
 
@@ -89,7 +90,7 @@ module ELPA2_compute
   public :: band_band_real
   public :: divide_band
 
-  integer, public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
+  integer(kind=ik), public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
                                                     ! 0 for unblocked
                                                     ! 1 for blocked (maxrank: nblk)
   include 'mpif.h'
@@ -128,8 +129,8 @@ module ELPA2_compute
   !
   !-------------------------------------------------------------------------------
 
-    use cuda_functions
-    use iso_c_binding
+      use cuda_functions
+      use iso_c_binding
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -137,50 +138,46 @@ module ELPA2_compute
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
+      use precision
       implicit none
 
-      integer             :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-      real*8              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      integer(kind=ik)           :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+      real(kind=rk)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      real(kind=rk)              :: eps
+      logical, intent(in)        :: useGPU
+      integer(kind=ik)           :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)           :: l_cols, l_rows
+      integer(kind=ik)           :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
+      integer(kind=ik)           :: istep, ncol, lch, lcx, nlc, mynlc
+      integer(kind=ik)           :: tile_size, l_rows_tile, l_cols_tile
 
-      real*8              :: eps
+      real(kind=rk)              :: vnorm2, xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
-      logical, intent(in) :: useGPU
-
-      integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer             :: l_cols, l_rows
-      integer             :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
-      integer             :: istep, ncol, lch, lcx, nlc, mynlc
-      integer             :: tile_size, l_rows_tile, l_cols_tile
-
-      real*8              :: vnorm2, xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
-
-      real*8, allocatable :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
-      real*8, allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
-      real*8, allocatable :: vr(:)
-
+      real(kind=rk), allocatable :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
+      real(kind=rk), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
+      real(kind=rk), allocatable :: vr(:)
       ! needed for blocked QR decomposition
-      integer                  :: PQRPARAM(11), work_size
-      real*8                   :: dwork_size(1)
-      real*8, allocatable      :: work_blocked(:), tauvector(:), blockheuristic(:)
+      integer(kind=ik)           :: PQRPARAM(11), work_size
+      real(kind=rk)              :: dwork_size(1)
+      real(kind=rk), allocatable :: work_blocked(:), tauvector(:), blockheuristic(:)
 
-      integer(kind=C_intptr_T) :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
-      integer, external        :: numroc
-      integer                  :: ierr
-      integer                  :: cur_l_rows, cur_l_cols, vmr_size, umc_size
-      integer(kind=c_size_t)   :: lc_start, lc_end
-      integer                  :: lr_end
-      integer                  :: na_rows, na_cols
+      integer(kind=C_intptr_T)   :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
+      integer(kind=ik), external :: numroc
+      integer(kind=ik)           :: ierr
+      integer(kind=ik)           :: cur_l_rows, cur_l_cols, vmr_size, umc_size
+      integer(kind=c_size_t)     :: lc_start, lc_end
+      integer(kind=ik)           :: lr_end
+      integer(kind=ik)           :: na_rows, na_cols
 
+      logical, intent(in)        :: wantDebug
+      logical, intent(out)       :: success
+      logical                    :: successCUDA
+      integer(kind=ik)           :: istat
+      character(200)             :: errorMessage
 
-      logical             :: successCUDA
-      integer             :: istat
-      character(200)      :: errorMessage
-      logical, intent(in) :: wantDebug
-      logical, intent(out):: success
+      logical, intent(in)        :: useQR
 
-      logical, intent(in) :: useQR
-
-      integer :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, ii, pp, transformChunkSize
+      integer(kind=ik)           :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, ii, pp, transformChunkSize
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("bandred_real")
@@ -1162,12 +1159,13 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
-      integer  :: n, lda, ldb, comm
-      real*8   :: a(lda,ldb)
+      integer(kind=ik)  :: n, lda, ldb, comm
+      real(kind=rk)     :: a(lda,ldb)
 
-      integer  :: i, nc, mpierr
-      real*8   :: h1(n*n), h2(n*n)
+      integer(kind=ik)  :: i, nc, mpierr
+      real(kind=rk)     :: h1(n*n), h2(n*n)
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("symm_matrix_allreduce")
@@ -1232,32 +1230,33 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       use cuda_functions
       use iso_c_binding
 
       implicit none
 
-      integer                 :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-      real*8                  :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      integer(kind=ik)            :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+      real(kind=rk)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
 
-      integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer                 :: max_blocks_row, max_blocks_col, max_local_rows, &
-                                 max_local_cols
-      integer                 :: l_cols, l_rows, l_colh, n_cols
-      integer                 :: istep, lc, ncol, nrow, nb, ns
+      integer(kind=ik)            :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)            :: max_blocks_row, max_blocks_col, max_local_rows, &
+                                     max_local_cols
+      integer(kind=ik)            :: l_cols, l_rows, l_colh, n_cols
+      integer(kind=ik)            :: istep, lc, ncol, nrow, nb, ns
 
-      real*8, allocatable     :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+      real(kind=rk), allocatable  :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
 
-      integer(kind=C_intptr_T):: hvm_dev, q_dev, tmp_dev, tmat_dev
+      integer(kind=C_intptr_T)    :: hvm_dev, q_dev, tmp_dev, tmat_dev
 
-      integer                 :: i
+      integer(kind=ik)            :: i
 
-      real*8, allocatable     :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
-      integer                 :: cwy_blocking, t_blocking, t_cols, t_rows
-      logical, intent(in)     :: useQR, useGPU
-      integer                 :: istat
-      character(200)          :: errorMessage
-      logical                 :: successCUDA
+      real(kind=rk), allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
+      integer(kind=ik)            :: cwy_blocking, t_blocking, t_cols, t_rows
+      logical, intent(in)         :: useQR, useGPU
+      integer(kind=ik)            :: istat
+      character(200)              :: errorMessage
+      logical                     :: successCUDA
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_band_to_full_real")
@@ -1685,36 +1684,37 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer, intent(in)  :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
-      real*8, intent(in)   :: a(lda,matrixCols)
-      real*8, intent(out)  :: d(na), e(na) ! set only on PE 0
-      real*8, intent(out), &
-          allocatable      :: hh_trans_real(:,:)
+      integer(kind=ik), intent(in)  ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+      real(kind=rk), intent(in)     :: a(lda,matrixCols)
+      real(kind=rk), intent(out)    :: d(na), e(na) ! set only on PE 0
+      real(kind=rk), intent(out), &
+          allocatable               :: hh_trans_real(:,:)
 
-      real*8               :: vnorm2, hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
-      real*8               :: hd(nb), hs(nb)
+      real(kind=rk)                 :: vnorm2, hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
+      real(kind=rk)                 :: hd(nb), hs(nb)
 
-      integer              :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
-      integer              :: my_pe, n_pes, mpierr
-      integer              :: my_prow, np_rows, my_pcol, np_cols
-      integer              :: ireq_ab, ireq_hv
-      integer              :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
+      integer(kind=ik)              :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
+      integer(kind=ik)              :: my_pe, n_pes, mpierr
+      integer(kind=ik)              :: my_prow, np_rows, my_pcol, np_cols
+      integer(kind=ik)              :: ireq_ab, ireq_hv
+      integer(kind=ik)              :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
 #ifdef WITH_OPENMP
-      integer              :: max_threads, my_thread, my_block_s, my_block_e, iter
-      integer              :: mpi_status(MPI_STATUS_SIZE)
-      integer, allocatable :: mpi_statuses(:,:), global_id_tmp(:,:)
-      integer, allocatable :: omp_block_limits(:)
-      real*8, allocatable  :: hv_t(:,:), tau_t(:)
+      integer(kind=ik)              :: max_threads, my_thread, my_block_s, my_block_e, iter
+      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik), allocatable :: mpi_statuses(:,:), global_id_tmp(:,:)
+      integer(kind=ik), allocatable :: omp_block_limits(:)
+      real(kind=rk), allocatable    :: hv_t(:,:), tau_t(:)
 #endif
-      integer, allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
-      integer, allocatable :: limits(:), snd_limits(:,:)
-      integer, allocatable :: block_limits(:)
-      real*8, allocatable  :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
+      integer(kind=ik), allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
+      integer(kind=ik), allocatable :: limits(:), snd_limits(:,:)
+      integer(kind=ik), allocatable :: block_limits(:)
+      real(kind=rk), allocatable    :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
 
 #ifdef WITH_OPENMP
-      integer              :: omp_get_max_threads
+      integer(kind=ik)              :: omp_get_max_threads
 #endif
       integer              :: istat
       character(200)       :: errorMessage
@@ -2469,50 +2469,50 @@ module ELPA2_compute
       use timings
 #endif
       use cuda_functions
+      use precision
       implicit none
       logical, intent(in) :: useGPU
 
-      integer, intent(in)  :: THIS_REAL_ELPA_KERNEL
-      integer, intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real*8               :: q(ldq,matrixCols)
-      real*8, intent(inout):: hh_trans_real(:,:)
+      integer(kind=ik), intent(in)  :: THIS_REAL_ELPA_KERNEL
+      integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=rk)                 :: q(ldq,matrixCols)
+      real(kind=rk), intent(out)    :: hh_trans_real(:,:)
+      integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
 
-      integer             :: np_rows, my_prow, np_cols, my_pcol
-
-      integer             :: i, j, ip, sweep, nbuf, l_nev, a_dim2
-      integer             :: current_n, current_local_n, current_n_start, current_n_end
-      integer             :: next_n, next_local_n, next_n_start, next_n_end
-      integer             :: bottom_msg_length, top_msg_length, next_top_msg_length
-      integer             :: stripe_width, last_stripe_width, stripe_count
+      integer(kind=ik)              :: i, j, ip, sweep, nbuf, l_nev, a_dim2
+      integer(kind=ik)              :: current_n, current_local_n, current_n_start, current_n_end
+      integer(kind=ik)              :: next_n, next_local_n, next_n_start, next_n_end
+      integer(kind=ik)              :: bottom_msg_length, top_msg_length, next_top_msg_length
+      integer(kind=ik)              :: stripe_width, last_stripe_width, stripe_count
 #ifdef WITH_OPENMP
-      integer             :: thread_width, csw, b_off, b_len
+      integer(kind=ik)              :: thread_width, csw, b_off, b_len
 #endif
-      integer             :: num_result_blocks, num_result_buffers, num_bufs_recvd
-      integer             :: a_off, current_tv_off, max_blk_size
-      integer             :: mpierr, src, src_offset, dst, offset, nfact, num_blk
+      integer(kind=ik)              :: num_result_blocks, num_result_buffers, num_bufs_recvd
+      integer(kind=ik)              :: a_off, current_tv_off, max_blk_size
+      integer(kind=ik)              :: mpierr, src, src_offset, dst, offset, nfact, num_blk
 #ifdef WITH_OPENMP
-      integer             :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
 #endif
-      logical             :: flag
+      logical                       :: flag
 
 #ifdef WITH_OPENMP
-      real*8, allocatable :: a(:,:,:,:), row(:)
+      real(kind=rk), allocatable    :: a(:,:,:,:), row(:)
 #else
-      real*8, allocatable :: a(:,:,:), row(:)
+      real(kind=rk), allocatable    :: a(:,:,:), row(:)
 #endif
 
-      real*8, allocatable :: row_group(:,:)
+      real(kind=rk)   , allocatable :: row_group(:,:)
 
 #ifdef WITH_OPENMP
-      real*8, allocatable :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
-      real*8, allocatable :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
+      real(kind=rk), allocatable    :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
+      real(kind=rk), allocatable    :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
 #else
-      real*8, allocatable :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
-      real*8, allocatable :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
+      real(kind=rk), allocatable    :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
+      real(kind=rk), allocatable    :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
 #endif
-      real*8, allocatable :: result_buffer(:,:,:)
-      real*8, allocatable :: bcast_buffer(:,:)
-      integer             :: tmp
+      real(kind=rk), allocatable    :: result_buffer(:,:,:)
+      real(kind=rk), allocatable    :: bcast_buffer(:,:)
+      integer(kind=ik)              :: tmp
 
 !      real*8, allocatable, device :: a_dev(:,:,:)
 !      real*8, allocatable, device :: bcast_buffer_dev(:,:)
@@ -2521,48 +2521,47 @@ module ELPA2_compute
 !      real*8, allocatable, device :: hh_dot_dev(:)
 !      real*8, allocatable, device :: hh_tau_dev(:)
 
-      integer(kind=c_intptr_t)  :: a_dev
-      integer(kind=c_intptr_t)  :: bcast_buffer_dev
-      integer(kind=c_size_t)    :: num
-      integer(kind=c_size_t)    :: dev_offset, dev_offset_1
+      integer(kind=c_intptr_t)      :: a_dev
+      integer(kind=c_intptr_t)      :: bcast_buffer_dev
+      integer(kind=c_size_t)        :: num
+      integer(kind=c_size_t)        :: dev_offset, dev_offset_1
 
 
-      integer(kind=c_intptr_t)  :: row_dev
-      integer(kind=c_intptr_t)  :: row_group_dev
-      integer(kind=c_intptr_t)  :: hh_dot_dev
-      integer(kind=c_intptr_t)  :: hh_tau_dev
+      integer(kind=c_intptr_t)      :: row_dev
+      integer(kind=c_intptr_t)      :: row_group_dev
+      integer(kind=c_intptr_t)      :: hh_dot_dev
+      integer(kind=c_intptr_t)      :: hh_tau_dev
+      Integer(kind=ik)              :: top, chunk, this_chunk
+      integer(kind=ik)              :: row_group_size, unpack_idx
 
-      Integer                   :: top, chunk, this_chunk
-      integer                   :: row_group_size, unpack_idx
-
-      integer                   :: n_off
-      integer, allocatable      :: result_send_request(:), result_recv_request(:), limits(:)
-      integer, allocatable      :: top_send_request(:), bottom_send_request(:)
-      integer, allocatable      :: top_recv_request(:), bottom_recv_request(:)
+      integer(kind=ik)              :: n_off
+      integer(kind=ik), allocatable :: result_send_request(:), result_recv_request(:), limits(:)
+      integer(kind=ik), allocatable :: top_send_request(:), bottom_send_request(:)
+      integer(kind=ik), allocatable :: top_recv_request(:), bottom_recv_request(:)
 #ifdef WITH_OPENMP
-      integer, allocatable      :: mpi_statuses(:,:)
+      integer(kind=ik), allocatable :: mpi_statuses(:,:)
 #endif
       ! MPI send/recv tags, arbitrary
 
-      integer, parameter        :: bottom_recv_tag = 111
-      integer, parameter        :: top_recv_tag    = 222
-      integer, parameter        :: result_recv_tag = 333
+      integer(kind=ik), parameter  :: bottom_recv_tag = 111
+      integer(kind=ik), parameter  :: top_recv_tag    = 222
+      integer(kind=ik), parameter  :: result_recv_tag = 333
 
       ! Just for measuring the kernel performance
-      real*8                    :: kernel_time
-      integer*8                 :: kernel_flops
+      real(kind=rk)                :: kernel_time
+      ! long integer
+      integer(kind=lik)            :: kernel_flops
 
 #ifdef WITH_OPENMP
-      integer                   :: max_threads, my_thread
-      integer                   :: omp_get_max_threads
+      integer(kind=ik)             :: max_threads, my_thread
+      integer(kind=ik)             :: omp_get_max_threads
 #endif
 
-      logical, intent(in)       :: wantDebug
-      logical                   :: success
-      integer                   :: istat
-      character(200)            :: errorMessage
-      logical                   :: successCUDA
-
+      logical, intent(in)          :: wantDebug
+      logical                      :: success
+      integer(kind=ik)             :: istat
+      character(200)               :: errorMessage
+      logical                      :: successCUDA
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_tridi_to_band_real")
@@ -3946,11 +3945,12 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #endif
+          use precision
           implicit none
-          real*8  :: row(:)
-          integer :: n, i, noff, nl
+          real(kind=rk)    :: row(:)
+          integer(kind=ik) :: n, i, noff, nl
 #ifdef WITH_OPENMP
-          integer :: nt
+          integer(kind=ik) :: nt
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3985,12 +3985,13 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #endif
+          use precision
           implicit none
 
           ! Private variables in OMP regions (my_thread) should better be in the argument list!
-          integer, intent(in) :: n, my_thread
-          real*8, intent(in)  :: row(:)
-          integer             :: i, noff, nl
+          integer(kind=ik), intent(in) :: n, my_thread
+          real(kind=rk), intent(in)    :: row(:)
+          integer(kind=ik)             :: i, noff, nl
 
 #ifdef HAVE_DETAILED_TIMINGS
           call timer%start("unpack_row_real_cpu_openmp")
@@ -4014,10 +4015,11 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #endif
-          implicit none
+         use precision
+         implicit none
 
-          real*8  :: row(:)
-          integer :: n, i, noff, nl
+         real(kind=rk)    :: row(:)
+         integer(kind=ik) :: n, i, noff, nl
 
 #ifdef HAVE_DETAILED_TIMINGS
           call timer%start("unpack_row_real_cpu")
@@ -4038,11 +4040,12 @@ module ELPA2_compute
         ! Pack a filled row group (i.e. an array of consecutive rows)
         subroutine pack_row_group_real_gpu(rows, n_offset, row_count)
           use cuda_c_kernel
+          use precision
           implicit none
-          integer, intent(in) :: n_offset, row_count
-          real*8              :: rows(:,:)
-          integer             :: max_idx
-          logical             :: successCUDA
+          integer(kind=ik), intent(in) :: n_offset, row_count
+          real(kind=rk)                :: rows(:,:)
+          integer(kind=ik)             :: max_idx
+          logical                      :: successCUDA
 
           ! Use many blocks for higher GPU occupancy
           max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
@@ -4071,12 +4074,13 @@ module ELPA2_compute
         ! Unpack a filled row group (i.e. an array of consecutive rows)
         subroutine unpack_row_group_real_gpu(rows, n_offset, row_count)
           use cuda_c_kernel
+          use precision
           implicit none
-          integer, intent(in) :: n_offset, row_count
-          real*8, intent(in)  :: rows(:, :)
-          integer             :: max_idx
-          integer             :: i
-          logical             :: successCUA
+          integer(kind=ik), intent(in) :: n_offset, row_count
+          real(kind=rk), intent(in)    :: rows(:, :)
+          integer(kind=ik)             :: max_idx
+          integer(kind=ik)             :: i
+          logical                      :: successCUA
 
           ! Use many blocks for higher GPU occupancy
           max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
@@ -4107,9 +4111,10 @@ module ELPA2_compute
         ! occurs when the queue is full or when the next row belongs to another group
         subroutine unpack_and_prepare_row_group_real_gpu(next_unpack_idx, force)
 
+          use precision
           implicit none
-          integer, intent(in) :: next_unpack_idx
-          logical, intent(in) :: force
+          integer(kind=ik), intent(in) :: next_unpack_idx
+          logical, intent(in)          :: force
 
           if (row_group_size == 0) then
             ! Nothing to flush, just prepare for the upcoming row
@@ -4131,8 +4136,9 @@ module ELPA2_compute
         ! The host wrapper for computing the dot products between consecutive HH reflectors (see the kernel below)
         subroutine compute_hh_dot_products_real_gpu(nbw, n)
           use cuda_c_kernel
+          use precision
           implicit none
-          integer, value :: nbw, n
+          integer(kind=ik), value :: nbw, n
 
           if (n .le. 1) return
           call launch_compute_hh_dotp_c_kernel_real( bcast_buffer_dev, hh_dot_dev, nbw, n)
@@ -4141,10 +4147,11 @@ module ELPA2_compute
         ! The host wrapper for extracting "tau" from the HH reflectors (see the kernel below)
         subroutine extract_hh_tau_real_gpu(nbw, n, is_zero)
           use cuda_c_kernel
+          use precision
           implicit none
-          integer, value :: nbw, n
-          logical, value :: is_zero
-          integer val_is_zero
+          integer(kind=ik), value :: nbw, n
+          logical, value          :: is_zero
+          integer(kind=ik)        :: val_is_zero
           if (is_zero) then
           val_is_zero = 1
           else
@@ -4196,6 +4203,7 @@ module ELPA2_compute
         subroutine compute_hh_trafo_real(off, ncols, istripe, THIS_REAL_ELPA_KERNEL)
 #endif
 
+         use precision
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
           use real_generic_simple_kernel, only : double_hh_trafo_generic_simple
 #endif
@@ -4217,20 +4225,20 @@ module ELPA2_compute
           use cuda_c_kernel
           implicit none
 
-          integer, intent(in) :: THIS_REAL_ELPA_KERNEL
+         integer(kind=ik), intent(in) :: THIS_REAL_ELPA_KERNEL
 
-          ! Private variables in OMP regions (my_thread) should better be in the argument list!
-          integer             :: off, ncols, istripe
+         ! Private variables in OMP regions (my_thread) should better be in the argument list!
+         integer(kind=ik)             :: off, ncols, istripe
 #ifdef WITH_OPENMP
-          integer             :: my_thread, noff
+         integer(kind=ik)             :: my_thread, noff
 #endif
-          integer             :: j, nl, jj, jjj
-          real*8              :: w(nbw,6), ttt
+         integer(kind=ik)             :: j, nl, jj, jjj
+         real(kind=rk)                :: w(nbw,6), ttt
 
-          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-            ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
-            if (ncols < 1) return
-          endif
+         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
+           ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
+           if (ncols < 1) return
+         endif
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef WITH_OPENMP
@@ -4544,17 +4552,17 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
-
+      use precision
       ! Perform single real Householder transformation.
       ! This routine is not performance critical and thus it is coded here in Fortran
 
       implicit none
-      integer  :: nb, nq, ldq
-      real*8   :: q(ldq,*) ! remove this
-      real*8   :: hh(*) ! carefull hh is in the calling subroutine a MPI bcast_buffer(:,:) !
 
-      integer  :: i
-      real*8   :: v(nq)
+      integer(kind=ik)  :: nb, nq, ldq
+      real(kind=rk)     :: q(ldq, *), hh(*) ! carefull hh is in the calling subroutine a MPI bcast_buffer(:,:) !
+
+      integer(kind=ik)  :: i
+      real(kind=rk)     :: v(nq)
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("single_hh_trafo_real")
@@ -4584,12 +4592,13 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer, intent(in)  :: na, nb, nprocs
-      integer, intent(out) :: limits(0:nprocs)
+      integer(kind=ik), intent(in)  :: na, nb, nprocs
+      integer(kind=ik), intent(out) :: limits(0:nprocs)
 
-      integer              :: i
+      integer(kind=ik)              :: i
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("determine_workload")
@@ -4649,40 +4658,41 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
-
+      use precision
       use cuda_functions
       use iso_c_binding
 
       implicit none
 
-      logical, intent(in)     :: useGPU
-      integer                 :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-      complex*16              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      logical, intent(in)           :: useGPU
 
-      complex*16, parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+      integer(kind=ik)              :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+      complex(kind=ck)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
 
-      integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer                 :: l_cols, l_rows
-      integer                 :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
-      integer                 :: istep, ncol, lch, lcx, nlc
-      integer                 :: tile_size, l_rows_tile, l_cols_tile
+      complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-      real*8                  :: vnorm2
-      complex*16              :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)              :: l_cols, l_rows
+      integer(kind=ik)              :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
+      integer(kind=ik)              :: istep, ncol, lch, lcx, nlc
+      integer(kind=ik)              :: tile_size, l_rows_tile, l_cols_tile
 
-      complex*16, allocatable :: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
-      integer(kind=c_intptr_t):: umc_dev, tmat_dev,vav_dev,vmr_dev,a_dev
-      integer                 :: cur_l_rows, cur_l_cols,vmr_size ,umc_size
-      integer(kind=c_size_t)  :: lc_start, lc_end, lr_end, lce_1, lcs_1,lre_1
-      integer                 :: na_rows, na_cols
-      integer, external       :: numroc
+      real(kind=rk)                 :: vnorm2
+      complex(kind=ck)              :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
-      logical, intent(in)     :: wantDebug
-      logical, intent(out)    :: success
-      character(200)          :: errorMessage
-      integer                 :: istat
-      logical                 :: successCUDA
+      complex(kind=ck), allocatable :: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
+      integer(kind=c_intptr_t)      :: umc_dev, tmat_dev,vav_dev,vmr_dev,a_dev
+      integer(kind=ik)              :: cur_l_rows, cur_l_cols,vmr_size ,umc_size
+      integer(kind=c_size_t)        :: lc_start, lc_end, lr_end, lce_1, lcs_1,lre_1
+      integer(kind=ik)              :: na_rows, na_cols
+      integer(kind=ik), external    :: numroc
 
+
+      logical, intent(in)           :: wantDebug
+      logical, intent(out)          :: success
+      character(200)                :: errorMessage
+      integer(kind=ik)              :: istat
+      logical                       :: successCUDA
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("bandred_complex")
 #endif
@@ -5381,12 +5391,14 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
        use timings
 #endif
-       implicit none
-       integer    :: n, lda, ldb, comm
-       complex*16 :: a(lda,ldb)
 
-       integer    :: i, nc, mpierr
-       complex*16 :: h1(n*n), h2(n*n)
+      use precision
+      implicit none
+      integer(kind=ik) :: n, lda, ldb, comm
+      complex(kind=ck) :: a(lda,ldb)
+
+      integer(kind=ik) :: i, nc, mpierr
+      complex(kind=ck) :: h1(n*n), h2(n*n)
 
 #ifdef HAVE_DETAILED_TIMINGS
        call timer%start("herm_matrix_allreduce")
@@ -5454,26 +5466,30 @@ module ELPA2_compute
 #endif
        use cuda_functions
        use iso_c_binding
+       use precision
 
        implicit none
 
-       logical, intent(in)       :: useGPU
-       integer                   :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-       complex*16                :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+       logical, intent(in)           :: useGPU
+       integer(kind=ik)              :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+       complex(kind=ck)              :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
 
-       complex*16, parameter     :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-       integer                   :: my_prow, my_pcol, np_rows, np_cols, mpierr
-       integer                   :: max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
-       integer                   :: l_cols, l_rows, l_colh, n_cols
-       integer                   :: istep, lc, ncol, nrow, nb, ns
-       integer(kind=C_intptr_T)  :: hvm_dev, q_dev, tmat_dev, tmp_dev
+       complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-       complex*16, allocatable   :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
-       integer                   :: i
-       integer                   :: istat
-       character(200)            :: errorMessage
-       logical                   :: successCUDA
+       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+       integer(kind=ik)              :: max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
+       integer(kind=ik)              :: l_cols, l_rows, l_colh, n_cols
+       integer(kind=ik)              :: istep, lc, ncol, nrow, nb, ns
+
+       complex(kind=ck), allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+
+       integer(kind=ik)              :: i
+       integer(kind=C_intptr_T)      :: hvm_dev, q_dev, tmat_dev, tmp_dev
+
+       integer(kind=ik)              :: istat
+       character(200)                :: errorMessage
+       logical                       :: successCUDA
 
 #ifdef HAVE_DETAILED_TIMINGS
        call timer%start("trans_ev_band_to_full_complex")
@@ -5788,44 +5804,44 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
-
-      integer, intent(in)      ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
-      complex*16, intent(in)   :: a(lda,matrixCols)
-      real*8, intent(out)      :: d(na), e(na) ! set only on PE 0
-
-      integer                  :: mpierr
-      complex*16, intent(inout), &
-          allocatable          :: hh_trans_complex(:,:)
-
-      real*8                   :: vnorm2
-      complex*16               :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
-      complex*16               :: hd(nb), hs(nb)
 
       !#ifdef WITH_GPU_VERSION
       !   integer(C_SIZE_T)        :: h_dev, hv_new_dev ,ab_dev,x_dev,hs_dev,tau_new_dev,hv_dev,hd_dev
       !   complex*16, allocatable  :: ab_temp(:,:)
       !#endif
 
-      integer                  :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
-      integer                  :: my_pe, n_pes, mpier
-      integer                  :: my_prow, np_rows, my_pcol, np_cols
-      integer                  :: ireq_ab, ireq_hv
-      integer                  :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
+      integer(kind=ik), intent(in)   ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+      complex(kind=ck), intent(in)   :: a(lda,matrixCols)
+      real(kind=rk), intent(out)     :: d(na), e(na) ! set only on PE 0
+      complex(kind=ck), intent(inout), &
+          allocatable                :: hh_trans_complex(:,:)
+
+      real(kind=rk)                  :: vnorm2
+      complex(kind=ck)               :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
+      complex(kind=ck)               :: hd(nb), hs(nb)
+
+      integer(kind=ik)               :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
+      integer(kind=ik)               :: my_pe, n_pes, mpierr
+      integer(kind=ik)               :: my_prow, np_rows, my_pcol, np_cols
+      integer(kind=ik)               :: ireq_ab, ireq_hv
+      integer(kind=ik)               :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
 #ifdef WITH_OPENMP
-      integer, allocatable    :: mpi_statuses(:,:)
-      integer, allocatable    :: omp_block_limits(:)
-      integer                 :: max_threads, my_thread, my_block_s, my_block_e, iter
-      integer                 :: omp_get_max_threads
-      integer                 :: mpi_status(MPI_STATUS_SIZE)
-      complex*16, allocatable :: hv_t(:,:), tau_t(:)
+      integer(kind=ik), allocatable  :: mpi_statuses(:,:)
+      integer(kind=ik), allocatable  :: omp_block_limits(:)
+      integer(kind=ik)               :: max_threads, my_thread, my_block_s, my_block_e, iter
+      integer(kind=ik)               :: omp_get_max_threads
+      integer(kind=ik)               :: mpi_status(MPI_STATUS_SIZE)
+      complex(kind=ck), allocatable  :: hv_t(:,:), tau_t(:)
 #endif
-      integer, allocatable     :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
-      integer, allocatable     :: limits(:), snd_limits(:,:)
-      integer, allocatable     :: block_limits(:)
-      complex*16, allocatable  :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
-      integer                  :: istat
-      character(200)           :: errorMessage
+      integer(kind=ik), allocatable  :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
+      integer(kind=ik), allocatable  :: limits(:), snd_limits(:,:)
+      integer(kind=ik), allocatable  :: block_limits(:)
+      complex(kind=ck), allocatable  :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
+      integer(kind=ik)               :: istat
+      character(200)                 :: errorMessage
+
 !   ! dummies for calling redist_band
 !   real*8                   :: r_a(1,1), r_ab(1,1)
 
@@ -6772,77 +6788,73 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       use cuda_functions
       implicit none
 
-      logical, intent(in)     :: useGPU
-      integer, intent(in)     :: THIS_COMPLEX_ELPA_KERNEL
-      integer, intent(in)     :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
-      complex*16              :: q(ldq,matrixCols)
+      logical, intent(in)           :: useGPU
+      integer(kind=ik), intent(in)  :: THIS_COMPLEX_ELPA_KERNEL
+      integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+      complex(kind=ck)              :: q(ldq,matrixCols)
+      complex(kind=ck)              :: hh_trans_complex(:,:)
+      integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
+      integer(kind=ik)              :: tmp
 
-      integer                 :: np_rows, my_prow, np_cols, my_pcol
-      integer                 :: tmp
-
-      complex*16              :: hh_trans_complex(:,:)
-
-      integer                 :: i, j, ip, sweep, nbuf, l_nev, a_dim2
-      integer                 :: current_n, current_local_n, current_n_start, current_n_end
-      integer                 :: next_n, next_local_n, next_n_start, next_n_end
-      integer                 :: bottom_msg_length, top_msg_length, next_top_msg_length
-      integer                 :: stripe_width, last_stripe_width, stripe_count
+      integer(kind=ik)              :: i, j, ip, sweep, nbuf, l_nev, a_dim2
+      integer(kind=ik)              :: current_n, current_local_n, current_n_start, current_n_end
+      integer(kind=ik)              :: next_n, next_local_n, next_n_start, next_n_end
+      integer(kind=ik)              :: bottom_msg_length, top_msg_length, next_top_msg_length
+      integer(kind=ik)              :: stripe_width, last_stripe_width, stripe_count
 #ifdef WITH_OPENMP
-      integer                 :: thread_width, csw, b_off, b_len
+      integer(kind=ik)              :: thread_width, csw, b_off, b_len
 #endif
-      integer                 :: num_result_blocks, num_result_buffers, num_bufs_recvd
-      integer                 :: a_off, current_tv_off, max_blk_size
-      integer                 :: mpierr, src, src_offset, dst, offset, nfact, num_blk
-      logical                 :: flag
-      integer                 :: n_times
+      integer(kind=ik)              :: num_result_blocks, num_result_buffers, num_bufs_recvd
+      integer(kind=ik)              :: a_off, current_tv_off, max_blk_size
+      integer(kind=ik)              :: mpierr, src, src_offset, dst, offset, nfact, num_blk
+      logical                       :: flag
 
 #ifdef WITH_OPENMP
-      complex*16, allocatable :: a(:,:,:,:)
+      complex(kind=ck), allocatable :: a(:,:,:,:), row(:)
 #else
-      complex*16, allocatable :: a(:,:,:)
+      complex(kind=ck), allocatable :: a(:,:,:), row(:)
 #endif
 
-
-      complex*16, allocatable :: row(:)
-
-      complex*16, allocatable :: row_group(:,:)
+      complex(kind=ck), allocatable :: row_group(:,:)
 
 #ifdef WITH_OPENMP
-      complex*16, allocatable :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
-      complex*16, allocatable :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
+      complex(kind=ck), allocatable :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
+      complex(kind=ck), allocatable :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
 #else
-      complex*16, allocatable :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
-      complex*16, allocatable :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
+      complex(kind=ck), allocatable :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
+      complex(kind=ck), allocatable :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
 #endif
-      complex*16, allocatable :: result_buffer(:,:,:)
-      complex*16, allocatable :: bcast_buffer(:,:)
-      integer(kind=c_intptr_t):: a_dev
-      integer(kind=c_intptr_t):: bcast_buffer_dev
-      integer(kind=c_size_t)  :: num
-      integer(kind=c_size_t)  :: dev_offset, dev_offset_1, dev_offset_2
+      integer(kind=c_intptr_t)      :: a_dev
+      integer(kind=c_intptr_t)      :: bcast_buffer_dev
+      integer(kind=c_size_t)        :: num
+      integer(kind=c_size_t)        :: dev_offset, dev_offset_1, dev_offset_2
 
 
-      integer(kind=c_intptr_t):: row_dev
-      integer(kind=c_intptr_t):: row_group_dev
-      integer(kind=c_intptr_t):: hh_tau_dev
-      integer(kind=c_intptr_t):: hh_dot_dev
-      integer                 :: row_group_size, unpack_idx
+      integer(kind=c_intptr_t)      :: row_dev
+      integer(kind=c_intptr_t)      :: row_group_dev
+      integer(kind=c_intptr_t)      :: hh_tau_dev
+      integer(kind=c_intptr_t)      :: hh_dot_dev
+      integer(kind=ik)              :: row_group_size, unpack_idx
+      integer(kind=ik)              :: n_times
 
-      integer                 :: top, chunk, this_chunk
+      integer(kind=ik)              :: top, chunk, this_chunk
+      complex(kind=ck), allocatable :: result_buffer(:,:,:)
+      complex(kind=ck), allocatable :: bcast_buffer(:,:)
 
-      integer                 :: n_off
-      integer, allocatable    :: result_send_request(:), result_recv_request(:), limits(:)
-      integer, allocatable    :: top_send_request(:), bottom_send_request(:)
-      integer, allocatable    :: top_recv_request(:), bottom_recv_request(:)
+      integer(kind=ik)              :: n_off
+      integer(kind=ik), allocatable :: result_send_request(:), result_recv_request(:), limits(:)
+      integer(kind=ik), allocatable :: top_send_request(:), bottom_send_request(:)
+      integer(kind=ik), allocatable :: top_recv_request(:), bottom_recv_request(:)
 #ifdef WITH_OPENMP
-      integer, allocatable    :: mpi_statuses(:,:)
-      integer                 :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik), allocatable :: mpi_statuses(:,:)
+      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
 #endif
-      integer, external       :: numroc
-      integer                 :: na_rows, na_cols
+      integer(kind=ik), external    :: numroc
+      integer(kind=ik)              :: na_rows, na_cols
 !    real*8                  :: ttt0, ttt1, ttt2, t2_compute_kernel, t0_compute_kernel,t1_compute_kernel, &
 !                               t0_mpi_time, t1_mpi_time,t2_mpi_time
 !    real*8                  :: t0_cpu_code,t1_cpu_code,t2_cpu_code,t0_block_time,t1_block_time,t2_block_time,t0_cuda_memcpy
@@ -6857,24 +6869,25 @@ module ELPA2_compute
 
     ! MPI send/recv tags, arbitrary
 
-      integer, parameter      :: bottom_recv_tag = 111
-      integer, parameter      :: top_recv_tag    = 222
-      integer, parameter      :: result_recv_tag = 333
+      integer(kind=ik), parameter   :: bottom_recv_tag = 111
+      integer(kind=ik), parameter   :: top_recv_tag    = 222
+      integer(kind=ik), parameter   :: result_recv_tag = 333
 
 #ifdef WITH_OPENMP
-      integer                 :: max_threads, my_thread
-      integer                 :: omp_get_max_threads
+      integer(kind=ik)              :: max_threads, my_thread
+      integer(kind=ik)              :: omp_get_max_threads
 #endif
 
       ! Just for measuring the kernel performance
-      real*8                  :: kernel_time
-      integer*8               :: kernel_flops
+      real(kind=rk)                 :: kernel_time
+      ! long integer
+      integer(kind=lik)             :: kernel_flops
 
-      logical, intent(in)     :: wantDebug
-      logical                 :: success
-      integer                 :: istat
-      character(200)          :: errorMessage
-      logical                 :: successCUDA
+      logical, intent(in)           :: wantDebug
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
+      logical                       :: successCUDA
+      logical                       :: success
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_tridi_to_band_complex")
@@ -7131,7 +7144,6 @@ module ELPA2_compute
             src = mod((i-1)/nblk, np_rows)
             if (src < my_prow) then
 #ifdef WITH_OPENMP
-<<<<<<< HEAD
               if (useGPU) then
                 print *,"trans_ev_tridi_to_band_complex: not yet implemented"
                 stop
@@ -7831,7 +7843,6 @@ module ELPA2_compute
                           reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
                   call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, &
                                      top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
-<<<<<<< HEAD
 #else /* WITH_OPENMP */
 
                   if (useGPU) then
@@ -8513,9 +8524,10 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
            use timings
 #endif
+           use precision
            implicit none
-           complex*16 :: row(:)
-           integer    :: n, i, noff, nl, nt
+           complex(kind=ck) :: row(:)
+           integer(kind=ik) :: n, i, noff, nl, nt
 
 #ifdef HAVE_DETAILED_TIMINGS
            call timer%start("pack_row_complex_openmp")
@@ -8542,8 +8554,8 @@ module ELPA2_compute
            use timings
 #endif
            implicit none
-           complex*16 :: row(:)
-           integer    :: n, i, noff, nl
+           complex(kind=ck) :: row(:)
+           integer(kind=ik) :: n, i, noff, nl
 
 #ifdef HAVE_DETAILED_TIMINGS
            call timer%start("unpack_row_complex_cpu")
@@ -8566,13 +8578,13 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
            use timings
 #endif
-
+           use precision
            implicit none
 
            ! Private variables in OMP regions (my_thread) should better be in the argument list!
-           integer, intent(in)     :: n, my_thread
-           complex*16, intent(in)  :: row(:)
-           integer                 :: i, noff, nl
+           integer(kind=ik), intent(in)  :: n, my_thread
+           complex(kind=ck), intent(in)  :: row(:)
+           integer(kind=ik)              :: i, noff, nl
 
 #ifdef HAVE_DETAILED_TIMINGS
            call timer%start("unpack_row_complex_cpu_openmp")
@@ -8595,11 +8607,11 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
            use timings
 #endif
-
+           use precision
            implicit none
 
-           complex*16 :: row(:)
-           integer    :: n, i, noff, nl
+           complex(kind=ck) :: row(:)
+           integer(kind=ik) :: n, i, noff, nl
 
 #ifdef HAVE_DETAILED_TIMINGS
            call timer%start("unpack_row_complex_cpu")
@@ -8622,7 +8634,7 @@ module ELPA2_compute
 #else
          subroutine compute_hh_trafo_complex_cpu(off, ncols, istripe, THIS_COMPLEX_ELPA_KERNEL)
 #endif
-
+           use precision
 #if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
            use complex_generic_simple_kernel, only : single_hh_trafo_complex_generic_simple
 #endif
@@ -8633,21 +8645,21 @@ module ELPA2_compute
            use timings
 #endif
            implicit none
-           integer, intent(in) :: THIS_COMPLEX_ELPA_KERNEL
+           integer(kind=ik), intent(in) :: THIS_COMPLEX_ELPA_KERNEL
 
            ! Private variables in OMP regions (my_thread) should better be in the argument list!
 
-           integer           :: off, ncols, istripe, j, nl, jj
+           integer(kind=ik)             :: off, ncols, istripe, j, nl, jj
 #ifdef WITH_OPENMP
-           integer           :: my_thread, noff
+           integer(kind=ik)             :: my_thread, noff
 #endif
-           real*8            :: ttt
+           real(kind=rk)                :: ttt
 
            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
            !        Currently (on Sandy Bridge), single is faster than double
            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-           complex*16        :: w(nbw,2)
+           complex(kind=ck)             :: w(nbw,2)
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef WITH_OPENMP
@@ -8811,10 +8823,11 @@ module ELPA2_compute
     ! kernel below)
     subroutine extract_hh_tau_complex_gpu(nbw, n, is_zero)
       use cuda_c_kernel
+      use precision
       implicit none
-      integer, value :: nbw, n
-      logical, value :: is_zero
-      integer        :: val_is_zero
+      integer(kind=ik), value :: nbw, n
+      logical, value          :: is_zero
+      integer(kind=ik)        :: val_is_zero
 
       if (is_zero) then
         val_is_zero = 1
@@ -8826,8 +8839,9 @@ module ELPA2_compute
 
     subroutine compute_hh_dot_products_complex_gpu(nbw, n)
       use cuda_c_kernel
+      use precision
       implicit none
-      integer, value :: nbw, n
+      integer(kind=ik), value :: nbw, n
 
       if (n .le. 1) return
       call launch_compute_hh_dotp_c_kernel_complex( bcast_buffer_dev, hh_dot_dev, nbw,n)
@@ -8835,11 +8849,12 @@ module ELPA2_compute
 
      subroutine pack_row_group_complex_gpu(rows, n_offset, row_count)
        use cuda_c_kernel
+       use precision
        implicit none
-       integer, intent(in) :: n_offset, row_count
-       complex*16          :: rows(:,:)
-       integer             :: max_idx
-       logical             :: successCUDA
+       integer(kind=ik), intent(in) :: n_offset, row_count
+       complex(kind=ck)             :: rows(:,:)
+       integer(kind=ik)             :: max_idx
+       logical                      :: successCUDA
 
        max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
        call launch_my_pack_c_kernel_complex(row_count, n_offset, max_idx, stripe_width,a_dim2, stripe_count, &
@@ -8855,12 +8870,13 @@ module ELPA2_compute
 
      subroutine unpack_row_group_complex_gpu(rows, n_offset, row_count)
        use cuda_c_kernel
+       use precision
        implicit none
-       integer, intent(in)    :: n_offset, row_count
-       complex*16, intent(in) :: rows(:, :)
-       integer                :: max_idx
-       integer                :: i
-       logical                :: successCUDA
+       integer(kind=ik), intent(in)    :: n_offset, row_count
+       complex(kind=ck), intent(in)    :: rows(:, :)
+       integer(kind=ik)                :: max_idx
+       integer(kind=ik)                :: i
+       logical                         :: successCUDA
 
        max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
        successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev* size_of_complex_datatype , &
@@ -8876,9 +8892,10 @@ module ELPA2_compute
 
      subroutine unpack_and_prepare_row_group_complex_gpu(next_unpack_idx, force)
 
+       use precision
        implicit none
-       integer, intent(in) :: next_unpack_idx
-       logical, intent(in) :: force
+       integer(kind=ik), intent(in) :: next_unpack_idx
+       logical, intent(in)          :: force
 
        if (row_group_size == 0) then
          ! Nothing to flush, just prepare for the upcoming row
@@ -8902,13 +8919,14 @@ module ELPA2_compute
 
       use iso_c_binding
       use cuda_c_kernel
+      use precision
       implicit none
-      integer, intent(in) :: off, ncols, istripe
-      integer             :: nl
-      real*8              :: ttt
+      integer(kind=ik), intent(in) :: off, ncols, istripe
+      integer(kind=ik)             :: nl
+      real(kind=rk)                :: ttt
 
-      integer             :: a_off
-      integer(kind=c_size_t)   :: dev_offset, dev_offset_1, dev_offset_2
+      integer(kind=ik)             :: a_off
+      integer(kind=c_size_t)       :: dev_offset, dev_offset_1, dev_offset_2
 
       if (ncols < 1) return
       ttt = mpi_wtime()
@@ -8933,7 +8951,7 @@ module ELPA2_compute
 
 end subroutine
 
-#define DATATYPE REAL
+#define DATATYPE REAL(kind=rk)
 #define BYTESIZE 8
 #define REALCASE 1
 #include "redist_band.X90"
@@ -8941,7 +8959,7 @@ end subroutine
 #undef BYTESIZE
 #undef REALCASE
 
-#define DATATYPE COMPLEX
+#define DATATYPE COMPLEX(kind=ck)
 #define BYTESIZE 16
 #define COMPLEXCASE 1
 #include "redist_band.X90"
@@ -8957,12 +8975,13 @@ end subroutine
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
-      integer, intent(in)  :: nblocks_total ! total number of blocks in band
-      integer, intent(in)  :: n_pes         ! number of PEs for division
-      integer, intent(out) :: block_limits(0:n_pes)
+      integer(kind=ik), intent(in)  :: nblocks_total ! total number of blocks in band
+      integer(kind=ik), intent(in)  :: n_pes         ! number of PEs for division
+      integer(kind=ik), intent(out) :: block_limits(0:n_pes)
 
-      integer              :: n, nblocks, nblocks_left
+      integer(kind=ik)              :: n, nblocks, nblocks_left
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("divide_band")
@@ -9027,34 +9046,33 @@ end subroutine
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer, intent(in)    ::  na, nb, nb2, mpi_comm
-      real*8, intent(inout)  :: ab(2*nb,*)
-      real*8, intent(inout)  :: ab2(2*nb2,*)
-      real*8, intent(out)    :: d(na), e(na) ! set only on PE 0
+      integer(kind=ik), intent(in)  :: na, nb, nb2, mpi_comm
+      real(kind=rk), intent(inout)  :: ab(2*nb,*)
+      real(kind=rk), intent(inout)  :: ab2(2*nb2,*)
+      real(kind=rk), intent(out)    :: d(na), e(na) ! set only on PE 0
 
+      real(kind=rk)                 :: hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), &
+                                       tau_new(nb2), ab_s(1+nb,nb2), ab_r(1+nb,nb2), ab_s2(2*nb2,nb2), hv_s(nb,nb2)
 
-      real*8                 :: hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), &
-                                tau_new(nb2), ab_s(1+nb,nb2), ab_r(1+nb,nb2), ab_s2(2*nb2,nb2), hv_s(nb,nb2)
+      real(kind=rk)                 :: work(nb*nb2), work2(nb2*nb2)
+      integer(kind=ik)              :: lwork, info
 
-      real*8                 :: work(nb*nb2), work2(nb2*nb2)
-      integer                :: lwork, info
+      integer(kind=ik)              :: istep, i, n, dest
+      integer(kind=ik)              :: n_off, na_s
+      integer(kind=ik)              :: my_pe, n_pes, mpierr
+      integer(kind=ik)              :: nblocks_total, nblocks
+      integer(kind=ik)              :: nblocks_total2, nblocks2
+      integer(kind=ik)              :: ireq_ab, ireq_hv
+      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik), allocatable :: mpi_statuses(:,:)
+      integer(kind=ik), allocatable :: block_limits(:), block_limits2(:), ireq_ab2(:)
 
-      integer                :: istep, i, n, dest
-      integer                :: n_off, na_s
-      integer                :: my_pe, n_pes, mpierr
-      integer                :: nblocks_total, nblocks
-      integer                :: nblocks_total2, nblocks2
-      integer                :: ireq_ab, ireq_hv
-      integer                :: mpi_status(MPI_STATUS_SIZE)
-      integer, allocatable   :: mpi_statuses(:,:)
-      integer, allocatable   :: block_limits(:), block_limits2(:), ireq_ab2(:)
-
-
-      integer                :: j, nc, nr, ns, ne, iblk
-      integer                :: istat
-      character(200)         :: errorMessage
+      integer(kind=ik)              :: j, nc, nr, ns, ne, iblk
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("band_band_real")
@@ -9292,16 +9310,17 @@ end subroutine
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
-   implicit none
-   integer, intent(in) :: n		!length of householder-vectors
-   integer, intent(in) :: nb		!number of householder-vectors
-   integer, intent(in) :: lda		!leading dimension of Y and W
-   real*8, intent(in)  :: Y(lda,nb)	!matrix containing nb householder-vectors of length b
-   real*8, intent(in)  :: tau(nb)	!tau values
-   real*8, intent(out) :: W(lda,nb)	!output matrix W
-   real*8, intent(in)  :: mem(nb)	!memory for a temporary matrix of size nb
+      use precision
+      implicit none
+      integer(kind=ik), intent(in) :: n		!length of householder-vectors
+      integer(kind=ik), intent(in) :: nb		!number of householder-vectors
+      integer(kind=ik), intent(in) :: lda		!leading dimension of Y and W
+      real(kind=rk), intent(in)    :: Y(lda,nb)	!matrix containing nb householder-vectors of length b
+      real(kind=rk), intent(in)    :: tau(nb)	!tau values
+      real(kind=rk), intent(out)   :: W(lda,nb)	!output matrix W
+      real(kind=rk), intent(in)    :: mem(nb)	!memory for a temporary matrix of size nb
 
-   integer             :: i
+      integer(kind=ik)             :: i
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("wy_gen")
@@ -9322,18 +9341,19 @@ end subroutine
 
     subroutine wy_left(n, m, nb, A, lda, W, Y, mem, lda2)
 #ifdef HAVE_DETAILED_TIMINGS
-   use timings
+      use timings
 #endif
-   implicit none
-   integer, intent(in)   :: n		!width of the matrix A
-   integer, intent(in)   :: m		!length of matrix W and Y
-   integer, intent(in)   :: nb		!width of matrix W and Y
-   integer, intent(in)   :: lda		!leading dimension of A
-   integer, intent(in)   :: lda2		!leading dimension of W and Y
-   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
-   real*8, intent(in)    :: W(m,nb)	!blocked transformation matrix W
-   real*8, intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
-   real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
+      use precision
+      implicit none
+      integer(kind=ik), intent(in) :: n		!width of the matrix A
+      integer(kind=ik), intent(in) :: m		!length of matrix W and Y
+      integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
+      integer(kind=ik), intent(in) :: lda		!leading dimension of A
+      integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
+      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed
+      real(kind=rk), intent(in)    :: W(m,nb)	!blocked transformation matrix W
+      real(kind=rk), intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
+      real(kind=rk), intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("wy_left")
@@ -9350,18 +9370,19 @@ end subroutine
 
     subroutine wy_right(n, m, nb, A, lda, W, Y, mem, lda2)
 #ifdef HAVE_DETAILED_TIMINGS
-   use timings
+      use timings
 #endif
-   implicit none
-   integer, intent(in)   :: n		!height of the matrix A
-   integer, intent(in)   :: m		!length of matrix W and Y
-   integer, intent(in)   :: nb		!width of matrix W and Y
-   integer, intent(in)   :: lda		!leading dimension of A
-   integer, intent(in)   :: lda2		!leading dimension of W and Y
-   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
-   real*8, intent(in)    :: W(m,nb)	!blocked transformation matrix W
-   real*8, intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
-   real*8, intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
+      use precision
+      implicit none
+      integer(kind=ik), intent(in) :: n		!height of the matrix A
+      integer(kind=ik), intent(in) :: m		!length of matrix W and Y
+      integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
+      integer(kind=ik), intent(in) :: lda		!leading dimension of A
+      integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
+      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed
+      real(kind=rk), intent(in)    :: W(m,nb)	!blocked transformation matrix W
+      real(kind=rk), intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
+      real(kind=rk), intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("wy_right")
@@ -9378,18 +9399,19 @@ end subroutine
 
     subroutine wy_symm(n, nb, A, lda, W, Y, mem, mem2, lda2)
 #ifdef HAVE_DETAILED_TIMINGS
-   use timings
+      use timings
 #endif
-   implicit none
-   integer, intent(in)   :: n		!width/heigth of the matrix A; length of matrix W and Y
-   integer, intent(in)   :: nb		!width of matrix W and Y
-   integer, intent(in)   :: lda		!leading dimension of A
-   integer, intent(in)   :: lda2		!leading dimension of W and Y
-   real*8, intent(inout) :: A(lda,*)	!matrix to be transformed
-   real*8, intent(in)    :: W(n,nb)	!blocked transformation matrix W
-   real*8, intent(in)    :: Y(n,nb)	!blocked transformation matrix Y
-   real*8                :: mem(n,nb)	!memory for a temporary matrix of size n x nb
-   real*8                :: mem2(nb,nb)	!memory for a temporary matrix of size nb x nb
+      use precision
+      implicit none
+      integer(kind=ik), intent(in) :: n		!width/heigth of the matrix A; length of matrix W and Y
+      integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
+      integer(kind=ik), intent(in) :: lda		!leading dimension of A
+      integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
+      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed
+      real(kind=rk), intent(in)    :: W(n,nb)	!blocked transformation matrix W
+      real(kind=rk), intent(in)    :: Y(n,nb)	!blocked transformation matrix Y
+      real(kind=rk)                :: mem(n,nb)	!memory for a temporary matrix of size n x nb
+      real(kind=rk)                :: mem2(nb,nb)	!memory for a temporary matrix of size nb x nb
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("wy_symm")

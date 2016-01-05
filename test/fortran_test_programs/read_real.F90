@@ -61,6 +61,7 @@ program read_real
 ! together with standard scalapack routines
 !-------------------------------------------------------------------------------
 
+   use precision
    use ELPA1
    use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
@@ -80,26 +81,26 @@ program read_real
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   integer, parameter :: nblk = 16
+   integer(kind=ik), parameter :: nblk = 16
 
    !-------------------------------------------------------------------------------
    !  Local Variables
 
-   integer na, nev
+   integer(kind=ik)            :: na, nev
 
-   integer np_rows, np_cols, na_rows, na_cols
+   integer(kind=ik)            :: np_rows, np_cols, na_rows, na_cols
 
-   integer myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol, lenarg
+   integer(kind=ik)            :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer(kind=ik)            :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol, lenarg
 
-   integer, external :: numroc
+   integer(kind=ik), external  :: numroc
 
-   real*8 err, errmax
-   real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real(kind=rk)               :: err, errmax
+   real(kind=rk), allocatable  :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
-   character*256 filename
+   character*256               :: filename
 #ifdef WITH_OPENMP
-   integer :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   integer(kind=iK)            :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    !-------------------------------------------------------------------------------
    !  MPI Initialization
@@ -367,17 +368,17 @@ end
 
 !-------------------------------------------------------------------------------
 subroutine read_matrix(iunit, na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols)
-
+   use precision
    implicit none
    include 'mpif.h'
 
-   integer, intent(in) :: iunit, na, lda, nblk, my_prow, my_pcol, np_rows, np_cols
-   real*8, intent(out) :: a(lda, *)
+   integer(kind=ik), intent(in)  :: iunit, na, lda, nblk, my_prow, my_pcol, np_rows, np_cols
+   real(kind=rk), intent(out)    :: a(lda, *)
 
-   integer i, j, lr, lc, myid, mpierr
-   integer, allocatable :: l_row(:), l_col(:)
+   integer(kind=ik)              :: i, j, lr, lc, myid, mpierr
+   integer(kind=ik), allocatable :: l_row(:), l_col(:)
 
-   real*8, allocatable :: col(:)
+   real(kind=rk), allocatable    :: col(:)
 
    ! allocate and set index arrays
 

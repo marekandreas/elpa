@@ -73,7 +73,7 @@ program test_real
 ! distributed along with the original code in the file "COPYING".
 !
 !-------------------------------------------------------------------------------
-
+   use precision
    use ELPA1
    use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
@@ -102,32 +102,27 @@ program test_real
    ! nev:  Number of eigenvectors to be calculated
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
-   integer :: nblk
-   integer na, nev
+   integer(kind=ik)           :: nblk
+   integer(kind=ik)           :: na, nev
 
+   integer(kind=ik)           :: np_rows, np_cols, na_rows, na_cols
 
-   !-------------------------------------------------------------------------------
-   !  Local Variables
+   integer(kind=ik)           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer             :: np_rows, np_cols, na_rows, na_cols
+   integer(kind=ik), external :: numroc
 
-   integer             :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer             :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
-   integer, external   :: numroc
+   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
-   real*8, allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
-
-   integer             :: iseed(4096) ! Random seed, size should be sufficient for every generator
-
-
-   integer             :: STATUS
+   integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
-   integer             :: omp_get_max_threads,  required_mpi_thread_level, &
-                          provided_mpi_thread_level
+   integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
+                                 provided_mpi_thread_level
 #endif
-   logical             :: write_to_file
-   logical             :: success
+   logical                    :: write_to_file
+   logical                    :: success
    !-------------------------------------------------------------------------------
 
    success = .true.

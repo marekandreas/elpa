@@ -60,44 +60,44 @@ contains
 
 subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,colidx,rev,trans,PQRPARAM, &
                              mpicomm_rows,mpicomm_cols,blockheuristic)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! parameter setup
-    INTEGER     gmode_,rank_,eps_
-    PARAMETER   (gmode_ = 1,rank_ = 2,eps_=3)
+    INTEGER(kind=ik), parameter   :: gmode_ = 1, rank_ = 2, eps_ = 3
 
     ! input variables (local)
-    integer lda,lwork,ldv,ldt
-    double precision a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
+    integer(kind=ik)              :: lda,lwork,ldv,ldt
+    real(kind=rk)                 :: a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
 
     ! input variables (global)
-    integer m,n,mb,nb,rowidx,colidx,rev,trans,mpicomm_cols,mpicomm_rows
-    integer PQRPARAM(*)
+    integer(kind=ik)              :: m,n,mb,nb,rowidx,colidx,rev,trans,mpicomm_cols,mpicomm_rows
+    integer(kind=ik)              :: PQRPARAM(*)
 
     ! output variables (global)
-    double precision blockheuristic(*)
+    real(kind=rk)                 :: blockheuristic(*)
 
     ! input variables derived from PQRPARAM
-    integer updatemode,tmerge,size2d
+    integer(kind=ik)              :: updatemode,tmerge,size2d
 
     ! local scalars
-    integer mpierr,mpirank_cols,broadcast_size,mpirank_rows
-    integer mpirank_cols_qr,mpiprocs_cols
-    integer lcols_temp,lcols,icol,lastcol
-    integer baseoffset,offset,idx,voffset
-    integer update_voffset,update_tauoffset
-    integer update_lcols
-    integer work_offset
+    integer(kind=ik)              :: mpierr,mpirank_cols,broadcast_size,mpirank_rows
+    integer(kind=ik)              :: mpirank_cols_qr,mpiprocs_cols
+    integer(kind=ik)              :: lcols_temp,lcols,icol,lastcol
+    integer(kind=ik)              :: baseoffset,offset,idx,voffset
+    integer(kind=ik)              :: update_voffset,update_tauoffset
+    integer(kind=ik)              :: update_lcols
+    integer(kind=ik)              :: work_offset
 
-    double precision dbroadcast_size(1),dtmat_bcast_size(1)
-    double precision pdgeqrf_size(1),pdlarft_size(1),pdlarfb_size(1),tmerge_pdlarfb_size(1)
-    integer temptau_offset,temptau_size,broadcast_offset,tmat_bcast_size
-    integer remaining_cols
-    integer total_cols
-    integer incremental_update_size ! needed for incremental update mode
+    real(kind=rk)                 :: dbroadcast_size(1),dtmat_bcast_size(1)
+    real(kind=rk)                 :: pdgeqrf_size(1),pdlarft_size(1),pdlarfb_size(1),tmerge_pdlarfb_size(1)
+    integer(kind=ik)              :: temptau_offset,temptau_size,broadcast_offset,tmat_bcast_size
+    integer(kind=ik)              :: remaining_cols
+    integer(kind=ik)              :: total_cols
+    integer(kind=ik)              :: incremental_update_size ! needed for incremental update mode
 
     size2d = PQRPARAM(1)
     updatemode = PQRPARAM(2)
@@ -315,33 +315,33 @@ subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,c
 end subroutine qr_pdgeqrf_2dcomm
 
 subroutine qr_pdgeqrf_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
+    use precision
     use ELPA1
 
     implicit none
 
     ! parameter setup
-    INTEGER     gmode_,rank_,eps_
-    PARAMETER   (gmode_ = 1,rank_ = 2,eps_=3)
+    INTEGER(kind=ik), parameter  :: gmode_ = 1,rank_ = 2,eps_ = 3
 
     ! input variables (local)
-    integer lda,lwork,ldv,ldt
-    double precision a(lda,*),v(ldv,*),tau(*),t(ldt,*),work(*)
+    integer(kind=ik)             :: lda,lwork,ldv,ldt
+    real(kind=rk)                :: a(lda,*),v(ldv,*),tau(*),t(ldt,*),work(*)
 
     ! input variables (global)
-    integer m,n,mb,baseidx,rowidx,rev,trans,mpicomm
-    integer PQRPARAM(*)
+    integer(kind=ik)             :: m,n,mb,baseidx,rowidx,rev,trans,mpicomm
+    integer(kind=ik)             :: PQRPARAM(*)
 
     ! derived input variables
 
     ! derived further input variables from QR_PQRPARAM
-    integer size1d,updatemode,tmerge
+    integer(kind=ik)             :: size1d,updatemode,tmerge
 
     ! output variables (global)
-    double precision blockheuristic(*)
+    real(kind=rk)                :: blockheuristic(*)
 
     ! local scalars
-    integer nr_blocks,remainder,current_block,aoffset,idx,updatesize
-    double precision pdgeqr2_size(1),pdlarfb_size(1),tmerge_tree_size(1)
+    integer(kind=ik)             :: nr_blocks,remainder,current_block,aoffset,idx,updatesize
+    real(kind=rk)                :: pdgeqr2_size(1),pdlarfb_size(1),tmerge_tree_size(1)
 
     size1d = max(min(PQRPARAM(1),n),1)
     updatemode = PQRPARAM(2)
@@ -427,37 +427,37 @@ end subroutine qr_pdgeqrf_1dcomm
 ! TODO: if local amount of data turns to zero the algorithm might produce wrong
 ! results (probably due to old buffer contents)
 subroutine qr_pdgeqr2_1dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
+    use precision
     use ELPA1
 
     implicit none
 
     ! parameter setup
-    INTEGER     gmode_,rank_,eps_,upmode1_
-    PARAMETER   (gmode_ = 1,rank_ = 2,eps_=3, upmode1_=4)
+    INTEGER(kind=ik), parameter   :: gmode_ = 1,rank_ = 2 ,eps_ = 3, upmode1_ = 4
 
     ! input variables (local)
-    integer lda,lwork,ldv,ldt
-    double precision a(lda,*),v(ldv,*),tau(*),t(ldt,*),work(*)
+    integer(kind=ik)              :: lda,lwork,ldv,ldt
+    real(kind=rk)                 :: a(lda,*),v(ldv,*),tau(*),t(ldt,*),work(*)
 
     ! input variables (global)
-    integer m,n,mb,baseidx,rowidx,rev,trans,mpicomm
-    integer PQRPARAM(*)
+    integer(kind=ik)              :: m,n,mb,baseidx,rowidx,rev,trans,mpicomm
+    integer(kind=ik)              :: PQRPARAM(*)
 
     ! output variables (global)
-    double precision blockheuristic(*)
+    real(kind=rk)                 :: blockheuristic(*)
 
     ! derived further input variables from QR_PQRPARAM
-    integer maxrank,hgmode,updatemode
+    integer(kind=ik)              ::  maxrank,hgmode,updatemode
 
     ! local scalars
-    integer icol,incx,idx
-    double precision pdlarfg_size(1),pdlarf_size(1),total_size
-    double precision pdlarfg2_size(1),pdlarfgk_size(1),pdlarfl2_size(1)
-    double precision pdlarft_size(1),pdlarfb_size(1),pdlarft_pdlarfb_size(1),tmerge_pdlarfb_size(1)
-    integer mpirank,mpiprocs,mpierr
-    integer rank,lastcol,actualrank,nextrank
-    integer update_cols,decomposition_cols
-    integer current_column
+    integer(kind=ik)              :: icol,incx,idx
+    real(kind=rk)                 :: pdlarfg_size(1),pdlarf_size(1),total_size
+    real(kind=rk)                 :: pdlarfg2_size(1),pdlarfgk_size(1),pdlarfl2_size(1)
+    real(kind=rk)                 :: pdlarft_size(1),pdlarfb_size(1),pdlarft_pdlarfb_size(1),tmerge_pdlarfb_size(1)
+    integer(kind=ik)              :: mpirank,mpiprocs,mpierr
+    integer(kind=ik)              :: rank,lastcol,actualrank,nextrank
+    integer(kind=ik)              :: update_cols,decomposition_cols
+    integer(kind=ik)              :: current_column
 
     maxrank = min(PQRPARAM(1),n)
     updatemode = PQRPARAM(2)
@@ -572,38 +572,39 @@ end subroutine qr_pdgeqr2_1dcomm
 ! incx == 1: column major
 ! incx != 1: row major
 subroutine qr_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm)
+
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
- 
+
     ! parameter setup
-    INTEGER     gmode_,rank_,eps_
-    PARAMETER   (gmode_ = 1,rank_ = 2,eps_=3)
+    INTEGER(kind=ik), parameter    :: gmode_ = 1,rank_ = 2, eps_ = 3
 
     ! input variables (local)
-    integer incx,lwork,hgmode
-    double precision x(*),work(*)
+    integer(kind=ik)               :: incx,lwork,hgmode
+    real(kind=rk)                  :: x(*),work(*)
 
     ! input variables (global)
-    integer mpi_comm,nb,idx,n,rev
+    integer(kind=ik)               :: mpi_comm,nb,idx,n,rev
 
     ! output variables (global)
-    double precision tau
+    real(kind=rk)                  :: tau
 
     ! local scalars
-    integer mpierr,mpirank,mpiprocs,mpirank_top
-    integer sendsize,recvsize
-    integer local_size,local_offset,baseoffset
-    integer topidx,top,iproc
-    double precision alpha,xnorm,dot,xf
+    integer(kind=ik)               :: mpierr,mpirank,mpiprocs,mpirank_top
+    integer(kind=ik)               :: sendsize,recvsize
+    integer(kind=ik)               :: local_size,local_offset,baseoffset
+    integer(kind=ik)               :: topidx,top,iproc
+    real(kind=rk)                  :: alpha,xnorm,dot,xf
 
     ! external functions
-    double precision ddot,dlapy2,dnrm2
-    external ddot,dscal,dlapy2,dnrm2
+    real(kind=rk), external        :: ddot,dlapy2,dnrm2
+    external                       :: dscal
 
     ! intrinsic
-    intrinsic sign
+!    intrinsic sign
 
 	if (idx .le. 1) then
 		tau = 0.0d0
@@ -715,7 +716,7 @@ subroutine qr_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm)
 
         ! extract alpha value
         alpha = work(sendsize+1+mpirank_top*2)
- 
+
         ! copy norm parts of buffer to beginning
         do iproc=0,mpiprocs-1
             work(iproc+1) = work(sendsize+1+2*iproc+1)
@@ -768,31 +769,30 @@ subroutine qr_pdlarfg_1dcomm(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm)
 end subroutine qr_pdlarfg_1dcomm
 
 subroutine qr_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,idx,mb,PQRPARAM,rev,mpicomm,actualk)
+    use precision
     implicit none
 
     ! parameter setup
-    INTEGER     gmode_,rank_,eps_,upmode1_
-    PARAMETER   (gmode_ = 1,rank_ = 2,eps_=3, upmode1_=4)
-
+    INTEGER(kind=ik), parameter    :: gmode_ = 1,rank_ = 2,eps_ = 3, upmode1_ = 4
     ! input variables (local)
-    integer lda,lwork,ldv,ldt
-    double precision a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
+    integer(kind=ik)               :: lda,lwork,ldv,ldt
+    real(kind=rk)                  :: a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
 
     ! input variables (global)
-    integer m,idx,baseidx,mb,rev,mpicomm
-    integer PQRPARAM(*)
+    integer(kind=ik)               :: m,idx,baseidx,mb,rev,mpicomm
+    integer(kind=ik)               :: PQRPARAM(*)
 
     ! output variables (global)
-    integer actualk
+    integer(kind=ik)               :: actualk
 
     ! derived input variables from QR_PQRPARAM
-    integer eps
+    integer(kind=ik)               :: eps
 
     ! local scalars
-    double precision dseedwork_size(1)
-    integer seedwork_size,seed_size
-    integer seedwork_offset,seed_offset
-    logical accurate
+    real(kind=rk)                  :: dseedwork_size(1)
+    integer(kind=ik)               :: seedwork_size,seed_size
+    integer(kind=ik)               :: seedwork_offset,seed_offset
+    logical                        :: accurate
 
     call qr_pdlarfg2_1dcomm_seed(a,lda,dseedwork_size(1),-1,work,m,mb,idx,rev,mpicomm)
     seedwork_size = dseedwork_size(1)
@@ -871,33 +871,33 @@ subroutine qr_pdlarfg2_1dcomm_ref(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,idx
 end subroutine qr_pdlarfg2_1dcomm_ref
 
 subroutine qr_pdlarfg2_1dcomm_seed(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer lda,lwork
-    double precision a(lda,*),work(*),seed(*)
+    integer(kind=ik)        :: lda,lwork
+    real(kind=rk)           :: a(lda,*),work(*),seed(*)
 
     ! input variables (global)
-    integer n,nb,idx,rev,mpicomm
+    integer(kind=ik)        :: n,nb,idx,rev,mpicomm
 
     ! output variables (global)
 
     ! external functions
-    double precision ddot
-    external ddot
+    real(kind=rk), external :: ddot
 
     ! local scalars
-    double precision top11,top21,top12,top22
-    double precision dot11,dot12,dot22
-    integer mpirank,mpiprocs,mpierr
-    integer mpirank_top11,mpirank_top21
-    integer top11_offset,top21_offset
-    integer baseoffset
-    integer local_offset1,local_size1
-    integer local_offset2,local_size2
+    real(kind=rk)           :: top11,top21,top12,top22
+    real(kind=rk)           :: dot11,dot12,dot22
+    integer(kind=ik)        :: mpirank,mpiprocs,mpierr
+    integer(kind=ik)        :: mpirank_top11,mpirank_top21
+    integer(kind=ik)        :: top11_offset,top21_offset
+    integer(kind=ik)        :: baseoffset
+    integer(kind=ik)        :: local_offset1,local_size1
+    integer(kind=ik)        :: local_offset2,local_size2
 
     if (lwork .eq. -1) then
         work(1) = DBLE(8)
@@ -956,17 +956,18 @@ subroutine qr_pdlarfg2_1dcomm_seed(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
 end subroutine qr_pdlarfg2_1dcomm_seed
 
 logical function qr_pdlarfg2_1dcomm_check(seed,eps)
+    use precision
     implicit none
 
     ! input variables
-    double precision seed(*)
-    integer eps
+    real(kind=rk)    ::  seed(*)
+    integer(kind=ik) :: eps
 
     ! local scalars
-    double precision epsd,first,second,first_second,estimate
-    logical accurate
-    double precision dot11,dot12,dot22
-    double precision top11,top12,top21,top22
+    real(kind=rk)    :: epsd,first,second,first_second,estimate
+    logical          :: accurate
+    real(kind=rk)    :: dot11,dot12,dot22
+    real(kind=rk)    :: top11,top12,top21,top22
 
     EPSD = EPS
 
@@ -1004,28 +1005,29 @@ end function qr_pdlarfg2_1dcomm_check
 ! id=0: first vector
 ! id=1: second vector
 subroutine qr_pdlarfg2_1dcomm_vector(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer incx
-    double precision x(*),seed(*),tau
+    integer(kind=ik)        :: incx
+    real(kind=rk)           :: x(*),seed(*),tau
 
     ! input variables (global)
-    integer n,nb,idx,id,rev,mpicomm
+    integer(kind=ik)        :: n,nb,idx,id,rev,mpicomm
 
     ! output variables (global)
 
     ! external functions
-    double precision dlapy2
-    external dlapy2,dscal
+    real(kind=rk), external :: dlapy2
+    external                :: dscal
 
     ! local scalars
-    integer mpirank,mpirank_top,mpiprocs,mpierr
-    double precision alpha,dot,beta,xnorm
-    integer local_size,baseoffset,local_offset,top,topidx
+    integer(kind=ik)        :: mpirank,mpirank_top,mpiprocs,mpierr
+    real(kind=rk)           :: alpha,dot,beta,xnorm
+    integer(kind=ik)        :: local_size,baseoffset,local_offset,top,topidx
 
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -1074,17 +1076,18 @@ subroutine qr_pdlarfg2_1dcomm_vector(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
 end subroutine qr_pdlarfg2_1dcomm_vector
 
 subroutine qr_pdlarfg2_1dcomm_update(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer incv,lda
-    double precision v(*),a(lda,*),seed(*)
+    integer(kind=ik)   :: incv,lda
+    real(kind=rk)      :: v(*),a(lda,*),seed(*)
 
     ! input variables (global)
-    integer n,baseidx,idx,nb,rev,mpicomm
+    integer(kind=ik)   :: n,baseidx,idx,nb,rev,mpicomm
 
     ! output variables (global)
 
@@ -1092,11 +1095,11 @@ subroutine qr_pdlarfg2_1dcomm_update(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpic
     external daxpy
 
     ! local scalars
-    integer mpirank,mpiprocs,mpierr
-    integer local_size,local_offset,baseoffset
-    double precision z,coeff,beta
-    double precision dot11,dot12,dot22
-    double precision top11,top12,top21,top22
+    integer(kind=ik)   :: mpirank,mpiprocs,mpierr
+    integer(kind=ik)   :: local_size,local_offset,baseoffset
+    real(kind=rk)      :: z,coeff,beta
+    real(kind=rk)      :: dot11,dot12,dot22
+    real(kind=rk)      :: top11,top12,top21,top22
 
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -1159,11 +1162,12 @@ end subroutine qr_pdlarfg2_1dcomm_update
 
 ! run this function after second vector
 subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix(seed,tau,t,ldt)
+    use precision
     implicit none
 
-    integer ldt
-    double precision seed(*),t(ldt,*),tau(*)
-    double precision dot12,beta1,top21,beta2
+    integer(kind=ik)  :: ldt
+    real(kind=rk)     :: seed(*),t(ldt,*),tau(*)
+    real(kind=rk)     :: dot12,beta1,top21,beta2
 
     beta1 = seed(1)
     dot12 = seed(4)
@@ -1181,30 +1185,30 @@ subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix(seed,tau,t,ldt)
 end subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix
 
 subroutine qr_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,mb,PQRPARAM,rev,mpicomm,actualk)
-
+    use precision
     implicit none
 
     ! parameter setup
 
     ! input variables (local)
-    integer lda,lwork,ldv,ldt
-    double precision a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
+    integer(kind=ik)    :: lda,lwork,ldv,ldt
+    real(kind=rk)       :: a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
 
     ! input variables (global)
-    integer m,k,idx,baseidx,mb,rev,mpicomm
-    integer PQRPARAM(*)
+    integer(kind=ik)    :: m,k,idx,baseidx,mb,rev,mpicomm
+    integer(kind=ik)    :: PQRPARAM(*)
 
     ! output variables (global)
-    integer actualk
+    integer(kind=ik)    :: actualk
 
     ! local scalars
-    integer ivector
-    double precision pdlarfg_size(1),pdlarf_size(1)
-    double precision pdlarfgk_1dcomm_seed_size(1),pdlarfgk_1dcomm_check_size(1)
-    double precision pdlarfgk_1dcomm_update_size(1)
-    integer seedC_size,seedC_offset
-    integer seedD_size,seedD_offset
-    integer work_offset
+    integer(kind=ik)    :: ivector
+    real(kind=rk)       :: pdlarfg_size(1),pdlarf_size(1)
+    real(kind=rk)       :: pdlarfgk_1dcomm_seed_size(1),pdlarfgk_1dcomm_check_size(1)
+    real(kind=rk)       :: pdlarfgk_1dcomm_update_size(1)
+    integer(kind=ik)    :: seedC_size,seedC_offset
+    integer(kind=ik)    :: seedD_size,seedD_offset
+    integer(kind=ik)    :: work_offset
 
     seedC_size = k*k
     seedC_offset = 1
@@ -1254,6 +1258,7 @@ subroutine qr_pdlarfgk_1dcomm(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,m
 end subroutine qr_pdlarfgk_1dcomm
 
 subroutine qr_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
@@ -1262,24 +1267,24 @@ subroutine qr_pdlarfgk_1dcomm_seed(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,m
     ! parameter setup
 
     ! input variables (local)
-    integer lda,lwork
-    double precision a(lda,*), work(*)
+    integer(kind=ik)   :: lda,lwork
+    real(kind=rk)      :: a(lda,*), work(*)
 
     ! input variables (global)
-    integer m,k,baseidx,mb,mpicomm
-    double precision seedC(k,*),seedD(k,*)
+    integer(kind=ik)   :: m,k,baseidx,mb,mpicomm
+    real(kind=rk)      :: seedC(k,*),seedD(k,*)
 
     ! output variables (global)
 
     ! derived input variables from QR_PQRPARAM
 
     ! local scalars
-    integer mpierr,mpirank,mpiprocs,mpirank_top
-    integer icol,irow,lidx,remsize
-    integer remaining_rank
+    integer(kind=ik)   :: mpierr,mpirank,mpiprocs,mpirank_top
+    integer(kind=ik)   :: icol,irow,lidx,remsize
+    integer(kind=ik)   :: remaining_rank
 
-    integer C_size,D_size,sendoffset,recvoffset,sendrecv_size
-    integer localoffset,localsize,baseoffset
+    integer(kind=ik)   :: C_size,D_size,sendoffset,recvoffset,sendrecv_size
+    integer(kind=ik)   :: localoffset,localsize,baseoffset
 
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -1366,27 +1371,28 @@ end subroutine qr_pdlarfgk_1dcomm_seed
 
 ! k is assumed to be larger than two
 subroutine qr_pdlarfgk_1dcomm_check_improved(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
+    use precision
     implicit none
 
     ! input variables (global)
-    integer k,lwork
-    integer PQRPARAM(*)
-    double precision seedC(k,*),seedD(k,*),work(k,*)
+    integer(kind=ik)   :: k,lwork
+    integer(kind=ik)   :: PQRPARAM(*)
+    real(kind=rk)      :: seedC(k,*),seedD(k,*),work(k,*)
 
     ! output variables (global)
-    integer possiblerank
+    integer(kind=ik)   :: possiblerank
 
     ! derived input variables from QR_PQRPARAM
-    integer eps
+    integer(kind=ik)   :: eps
 
     ! local variables
-    integer i,j,l
-    double precision sum_squares,diagonal_square,relative_error,epsd,diagonal_root
-    double precision dreverse_matrix_work(1)
+    integer(kind=ik)   :: i,j,l
+    real(kind=rk)      :: sum_squares,diagonal_square,relative_error,epsd,diagonal_root
+    real(kind=rk)      :: dreverse_matrix_work(1)
 
     ! external functions
-    double precision ddot,dlapy2,dnrm2
-    external ddot,dscal,dlapy2,dnrm2
+    real(kind=rk), external :: ddot,dlapy2,dnrm2
+    external                :: dscal
 
     if (lwork .eq. -1) then
         call reverse_matrix_local(1,k,k,work,k,dreverse_matrix_work,-1)
@@ -1473,6 +1479,7 @@ end subroutine qr_pdlarfgk_1dcomm_check_improved
 ! TODO: zero Householder vector (zero norm) case
 ! - check alpha values as well (from seedC)
 subroutine qr_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
+    use precision
     use qr_utils_mod
 
     implicit none
@@ -1482,20 +1489,20 @@ subroutine qr_pdlarfgk_1dcomm_check(seedC,seedD,k,PQRPARAM,work,lwork,possiblera
     ! input variables (local)
 
     ! input variables (global)
-    integer k,lwork
-    integer PQRPARAM(*)
-    double precision seedC(k,*),seedD(k,*),work(k,*)
+    integer(kind=ik)   :: k,lwork
+    integer(kind=ik)   :: PQRPARAM(*)
+    real(kind=rk)      :: seedC(k,*),seedD(k,*),work(k,*)
 
     ! output variables (global)
-    integer possiblerank
+    integer(kind=ik)   :: possiblerank
 
     ! derived input variables from QR_PQRPARAM
-    integer eps
+    integer(kind=ik)   :: eps
 
     ! local scalars
-    integer icol,isqr,iprod
-    double precision epsd,sum_sqr,sum_products,diff,temp,ortho,ortho_sum
-    double precision dreverse_matrix_work(1)
+    integer(kind=ik)   :: icol,isqr,iprod
+    real(kind=rk)      :: epsd,sum_sqr,sum_products,diff,temp,ortho,ortho_sum
+    real(kind=rk)      :: dreverse_matrix_work(1)
 
     if (lwork .eq. -1) then
         call reverse_matrix_local(1,k,k,work,k,dreverse_matrix_work,-1)
@@ -1603,30 +1610,31 @@ end subroutine qr_pdlarfgk_1dcomm_check
 !k: max rank used during seed phase
 !rank: actual rank (k >= rank)
 subroutine qr_pdlarfgk_1dcomm_vector(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer incx
-    double precision x(*),tau
+    integer(kind=ik)  :: incx
+    real(kind=rk)     :: x(*),tau
 
     ! input variables (global)
-    integer n,nb,baseidx,rev,mpicomm,k,sidx
-    double precision seedC(k,*),seedD(k,*)
+    integer(kind=ik)  :: n,nb,baseidx,rev,mpicomm,k,sidx
+    real(kind=rk)     :: seedC(k,*),seedD(k,*)
 
     ! output variables (global)
 
     ! external functions
-    double precision dlapy2,dnrm2
-    external dlapy2,dscal,dnrm2
+    real(kind=rk), external :: dlapy2,dnrm2
+    external                :: dscal
 
     ! local scalars
-    integer mpirank,mpirank_top,mpiprocs,mpierr
-    double precision alpha,dot,beta,xnorm
-    integer local_size,baseoffset,local_offset,top,topidx
-    integer lidx
+    integer(kind=ik)   :: mpirank,mpirank_top,mpiprocs,mpierr
+    real(kind=rk)      :: alpha,dot,beta,xnorm
+    integer(kind=ik)   :: local_size,baseoffset,local_offset,top,topidx
+    integer(kind=ik)   :: lidx
 
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -1681,34 +1689,34 @@ end subroutine qr_pdlarfgk_1dcomm_vector
 ! that only the required entries for the next pdlarfg steps are
 ! computed
 subroutine qr_pdlarfgk_1dcomm_update(a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! parameter setup
-    INTEGER     gmode_,rank_,eps_,upmode1_
-    PARAMETER   (gmode_ = 1,rank_ = 2,eps_=3, upmode1_=4)
+    INTEGER(kind=ik), parameter :: gmode_ = 1,rank_ = 2,eps_ = 3, upmode1_ = 4
 
     ! input variables (local)
-    integer lda,lwork
-    double precision a(lda,*),work(*)
+    integer(kind=ik)            :: lda,lwork
+    real(kind=rk)               :: a(lda,*),work(*)
 
     ! input variables (global)
-    integer k,rank,sidx,n,baseidx,nb,rev,mpicomm
-    double precision beta
+    integer(kind=ik)            :: k,rank,sidx,n,baseidx,nb,rev,mpicomm
+    real(kind=rk)               :: beta
 
     ! output variables (global)
-    double precision seedC(k,*),seedD(k,*),tau(*)
+    real(kind=rk)               :: seedC(k,*),seedD(k,*),tau(*)
 
     ! derived input variables from QR_PQRPARAM
 
     ! local scalars
-    double precision alpha
-    integer coffset,zoffset,yoffset,voffset,buffersize
-    integer mpirank,mpierr,mpiprocs,mpirank_top
-    integer localsize,baseoffset,localoffset,topidx
-    integer lidx
+    real(kind=rk)               :: alpha
+    integer(kind=ik)            :: coffset,zoffset,yoffset,voffset,buffersize
+    integer(kind=ik)            :: mpirank,mpierr,mpiprocs,mpirank_top
+    integer(kind=ik)            :: localsize,baseoffset,localoffset,topidx
+    integer(kind=ik)            :: lidx
 
     if (lwork .eq. -1) then
         ! buffer for c,z,y,v
@@ -1800,13 +1808,14 @@ end subroutine qr_pdlarfgk_1dcomm_update
 
 
 subroutine qr_pdlarfgk_1dcomm_generateT(seedC,seedD,k,actualk,tau,t,ldt)
+    use precision
     implicit none
 
-    integer k,actualk,ldt
-    double precision seedC(k,*),seedD(k,*),tau(*),t(ldt,*)
+    integer(kind=ik)  :: k,actualk,ldt
+    real(kind=rk)     :: seedC(k,*),seedD(k,*),tau(*),t(ldt,*)
 
-    integer irow,icol
-    double precision column_coefficient
+    integer(kind=ik)  :: irow,icol
+    real(kind=rk)     :: column_coefficient
 
         !print *,'reversed on the fly T generation NYI'
 
@@ -1830,24 +1839,25 @@ end subroutine qr_pdlarfgk_1dcomm_generateT
 !direction=0: pack into work buffer
 !direction=1: unpack from work buffer
 subroutine qr_pdgeqrf_pack_unpack(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer ldv,lwork
-    double precision v(ldv,*), work(*)
+    integer(kind=ik)   :: ldv,lwork
+    real(kind=rk)      :: v(ldv,*), work(*)
 
     ! input variables (global)
-    integer m,n,mb,baseidx,rowidx,rev,direction,mpicomm
+    integer(kind=ik)   :: m,n,mb,baseidx,rowidx,rev,direction,mpicomm
 
     ! output variables (global)
 
     ! local scalars
-    integer mpierr,mpirank,mpiprocs
-    integer buffersize,icol
-    integer local_size,baseoffset,offset
+    integer(kind=ik)   :: mpierr,mpirank,mpiprocs
+    integer(kind=ik)   :: buffersize,icol
+    integer(kind=ik)   :: local_size,baseoffset,offset
 
     ! external functions
 
@@ -1885,22 +1895,23 @@ end subroutine qr_pdgeqrf_pack_unpack
 !direction=0: pack into work buffer
 !direction=1: unpack from work buffer
 subroutine qr_pdgeqrf_pack_unpack_tmatrix(tau,t,ldt,work,lwork,n,direction)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer ldt,lwork
-    double precision work(*), t(ldt,*),tau(*)
+    integer(kind=ik)  :: ldt,lwork
+    real(kind=rk)     :: work(*), t(ldt,*),tau(*)
 
     ! input variables (global)
-    integer n,direction
+    integer(kind=ik)  :: n,direction
 
     ! output variables (global)
 
     ! local scalars
-    integer icol
+    integer(kind=ik)  :: icol
 
     ! external functions
 
@@ -1969,15 +1980,16 @@ end subroutine qr_pdgeqrf_pack_unpack_tmatrix
 ! tmerge*: 0: do not merge, 1: incremental merge, >1: recursive merge
 !               only matters if update* == full
 subroutine qr_pqrparam_init(pqrparam,size2d,update2d,tmerge2d,size1d,update1d,tmerge1d,maxrank,update,eps,hgmode)
+    use precision
 
     implicit none
 
     ! input
-    CHARACTER   update2d,update1d,update,hgmode
-    INTEGER     size2d,size1d,maxrank,eps,tmerge2d,tmerge1d
+    CHARACTER         :: update2d,update1d,update,hgmode
+    INTEGER(kind=ik)  :: size2d,size1d,maxrank,eps,tmerge2d,tmerge1d
 
     ! output
-    INTEGER     PQRPARAM(*)
+    INTEGER(kind=ik)  :: PQRPARAM(*)
 
     PQRPARAM(1) = size2d
     PQRPARAM(2) = ichar(update2d)
@@ -1997,26 +2009,27 @@ end subroutine qr_pqrparam_init
 
 
 subroutine qr_pdlarfg_copy_1dcomm(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer incx,incv
-    double precision x(*), v(*)
+    integer(kind=ik)  :: incx,incv
+    real(kind=rk)     :: x(*), v(*)
 
     ! input variables (global)
-    integer baseidx,idx,rev,nb,n
-    integer mpicomm
+    integer(kind=ik)  :: baseidx,idx,rev,nb,n
+    integer(kind=ik)  :: mpicomm
 
     ! output variables (global)
 
     ! local scalars
-    integer mpierr,mpiprocs
-    integer mpirank,mpirank_top
-    integer irow,x_offset
-    integer v_offset,local_size
+    integer(kind=ik)  :: mpierr,mpiprocs
+    integer(kind=ik)  :: mpirank,mpirank_top
+    integer(kind=ik)  :: irow,x_offset
+    integer(kind=ik)  :: v_offset,local_size
 
 
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)

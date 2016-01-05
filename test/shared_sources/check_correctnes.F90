@@ -55,18 +55,19 @@ module mod_check_correctness
     function check_correctness_complex(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status)
 
 !      use mpi
+      use precision
       implicit none
       include 'mpif.h'
-      integer                   :: status
-      integer, intent(in)       :: na, nev, myid
-      complex*16, intent(in)    :: as(:,:), z(:,:)
-      complex*16, intent(inout) :: tmp1(:,:), tmp2(:,:)
-      real*8                    :: ev(:)
-      complex*16                :: xc
-      integer                   :: sc_desc(:), mpierr
-      complex*16, parameter     :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
-      integer                   :: i
-      real*8                    :: err, errmax
+      integer(kind=ik)                 :: status
+      integer(kind=ik), intent(in)     :: na, nev, myid
+      complex(kind=ck), intent(in)     :: as(:,:), z(:,:)
+      complex(kind=ck), intent(inout)  :: tmp1(:,:), tmp2(:,:)
+      real(kind=rk)                    :: ev(:)
+      complex(kind=ck)                 :: xc
+      integer(kind=ik)                 :: sc_desc(:), mpierr
+      complex(kind=ck), parameter      :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+      integer(kind=ik)                 :: i
+      real(kind=rk)                    :: err, errmax
 
       status = 0
 
@@ -132,17 +133,18 @@ module mod_check_correctness
     function check_correctness_real(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status)
 
 !      use mpi
+      use precision
       implicit none
       include 'mpif.h'
-      integer                   :: status
-      integer, intent(in)       :: na, nev, myid
-      real*8, intent(in)        :: as(:,:), z(:,:)
-      real*8, intent(inout)     :: tmp1(:,:), tmp2(:,:)
-      real*8                    :: ev(:)
-      integer                   :: sc_desc(:), mpierr
+      integer(kind=ik)               :: status
+      integer(kind=ik), intent(in)   :: na, nev, myid
+      real(kind=rk), intent(in)      :: as(:,:), z(:,:)
+      real(kind=rk), intent(inout)   :: tmp1(:,:), tmp2(:,:)
+      real(kind=rk)                  :: ev(:)
+      integer(kind=ik)               :: sc_desc(:), mpierr
 
-      integer                   :: i
-      real*8                    :: err, errmax
+      integer(kind=ik)               :: i
+      real(kind=rk)                  :: err, errmax
 
       status = 0
 

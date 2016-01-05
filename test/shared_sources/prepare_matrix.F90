@@ -51,14 +51,15 @@ module mod_prepare_matrix
 
     subroutine prepare_matrix_complex(na, myid, sc_desc, iseed, xr, a, z, as)
 
+      use precision
       implicit none
 
-      integer, intent(in)            :: myid, na, sc_desc(:)
-      integer, intent(inout)         :: iseed(:)
-      real(kind=8), intent(inout)    :: xr(:,:)
-      complex(kind=8), intent(inout) :: z(:,:), a(:,:), as(:,:)
+      integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
+      integer(kind=ik), intent(inout) :: iseed(:)
+      real(kind=rk), intent(inout)    :: xr(:,:)
+      complex(kind=ck), intent(inout) :: z(:,:), a(:,:), as(:,:)
 
-      complex(kind=8), parameter     :: CZERO = (0.d0, 0.d0), CONE = (1.d0, 0.d0)
+      complex(kind=ck), parameter     :: CZERO = (0.d0, 0.d0), CONE = (1.d0, 0.d0)
 
       ! for getting a hermitian test matrix A we get a random matrix Z
       ! and calculate A = Z + Z**H
@@ -93,11 +94,12 @@ module mod_prepare_matrix
 
     subroutine prepare_matrix_real(na, myid, sc_desc, iseed, a, z, as)
 
+      use precision
       implicit none
 
-      integer, intent(in)       :: myid, na, sc_desc(:)
-      integer, intent(inout)    :: iseed(:)
-      real*8, intent(inout)     :: z(:,:), a(:,:), as(:,:)
+      integer(kind=ik), intent(in)     :: myid, na, sc_desc(:)
+      integer(kind=ik), intent(inout)  :: iseed(:)
+      real(kind=ck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
 
       ! for getting a hermitian test matrix A we get a random matrix Z
       ! and calculate A = Z + Z**H
@@ -145,7 +147,7 @@ module mod_prepare_matrix
       call prepare_matrix_real(na, myid, sc_desc, iseed, a, z, as)
     end subroutine
     !c> void prepare_matrix_complex_from_fortran(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9], int iseed[4096],
+    !c>                                       int sc_desc[9], int iseed[4096], double *xr,
     !c>                                       complex double *a, complex double *z, complex double *as);
     subroutine prepare_matrix_complex_wrapper(na, myid, na_rows, na_cols, sc_desc, iseed, xr, a, z, as) &
                                           bind(C, name="prepare_matrix_complex_from_fortran")

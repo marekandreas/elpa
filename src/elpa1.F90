@@ -81,7 +81,7 @@
 #include "config-f90.h"
 !> \brief Fortran module which provides the routines to use the one-stage ELPA solver
 module ELPA1
-  use elpa1_compute
+  use precision
   use elpa_utilities
   use elpa1_compute
 
@@ -104,9 +104,9 @@ module ELPA1
 
   ! Timing results, set by every call to solve_evp_xxx
 
-  real*8, public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
-  real*8, public :: time_evp_solve  !< time for solving the tridiagonal system
-  real*8, public :: time_evp_back   !< time for back transformations of eigenvectors
+  real(kind=rk), public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
+  real(kind=rk), public :: time_evp_solve  !< time for solving the tridiagonal system
+  real(kind=rk), public :: time_evp_back   !< time for back transformations of eigenvectors
 
   logical, public :: elpa_print_times = .false. !< Set elpa_print_times to .true. for explicit timing outputs
 
@@ -235,13 +235,13 @@ contains
 
 
 function get_elpa_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
-
+   use precision
    implicit none
 
-   integer, intent(in)  :: mpi_comm_global, my_prow, my_pcol
-   integer, intent(out) :: mpi_comm_rows, mpi_comm_cols
+   integer(kind=ik), intent(in)  :: mpi_comm_global, my_prow, my_pcol
+   integer(kind=ik), intent(out) :: mpi_comm_rows, mpi_comm_cols
 
-   integer :: mpierr
+   integer(kind=ik)              :: mpierr
 
    ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
    ! having the same column coordinate share one mpi_comm_rows.
@@ -290,21 +290,21 @@ end function get_elpa_communicators
 
 
 function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
-
+   use precision
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+   use timings
 #endif
    implicit none
 
-   integer, intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   real*8               :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
+   integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real(kind=rk)                 :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
 
-   integer              :: my_prow, my_pcol, mpierr
-   real*8, allocatable  :: e(:), tau(:)
-   real*8               :: ttt0, ttt1
-   logical              :: success
-   logical, save        :: firstCall = .true.
-   logical              :: wantDebug
+   integer(kind=ik)              :: my_prow, my_pcol, mpierr
+   real(kind=rk), allocatable    :: e(:), tau(:)
+   real(kind=rk)                 :: ttt0, ttt1
+   logical                       :: success
+   logical, save                 :: firstCall = .true.
+   logical                       :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_real_1stage")
@@ -390,24 +390,24 @@ end function solve_evp_real_1stage
 
 function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+   use timings
 #endif
-
+   use precision
    implicit none
 
-   integer, intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   complex*16              :: a(lda,matrixCols), q(ldq,matrixCols)
-   real*8                  :: ev(na)
+   integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   complex(kind=ck)                 :: a(lda,matrixCols), q(ldq,matrixCols)
+   real(kind=rk)                    :: ev(na)
 
-   integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer                 :: l_rows, l_cols, l_cols_nev
-   real*8, allocatable     :: q_real(:,:), e(:)
-   complex*16, allocatable :: tau(:)
-   real*8 ttt0, ttt1
+   integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=ik)                 :: l_rows, l_cols, l_cols_nev
+   real(kind=rk), allocatable       :: q_real(:,:), e(:)
+   complex(kind=ck), allocatable    :: tau(:)
+   real(kind=rk)                    :: ttt0, ttt1
 
-   logical                 :: success
-   logical, save           :: firstCall = .true.
-   logical                 :: wantDebug
+   logical                          :: success
+   logical, save                    :: firstCall = .true.
+   logical                          :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex_1stage")

@@ -142,34 +142,34 @@ contains
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
 #endif
-    use cuda_functions
-    use mod_check_for_gpu
 
-    implicit none
-    logical, intent(in), optional :: useQR
-    logical                       :: useQRActual, useQREnvironment
-    integer, intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
-    integer                       :: THIS_REAL_ELPA_KERNEL
+   use precision
+   use cuda_functions
+   use mod_check_for_gpu
+   implicit none
+   logical, intent(in), optional          :: useQR
+   logical                                :: useQRActual, useQREnvironment
+   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
 
-    integer, intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
-                                     mpi_comm_cols, mpi_comm_all
-    integer, intent(in)           :: nblk
-    real*8, intent(inout)         :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
-   real*8, allocatable           :: hh_trans_real(:,:)
+   integer(kind=ik), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
+                                             mpi_comm_cols, mpi_comm_all
+   integer(kind=ik), intent(in)           :: nblk
+   real(kind=rk), intent(inout)           :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
+   real(kind=rk), allocatable             :: hh_trans_real(:,:)
 
-    integer                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
-    integer                       :: nbw, num_blocks
-    real*8, allocatable           :: tmat(:,:,:), e(:)
-    real*8                        :: ttt0, ttt1, ttts
-    integer                       :: i
-    logical                       :: success
-    logical, save                 :: firstCall = .true.
-    logical                       :: wantDebug
-    integer                       :: istat
-    character(200)                :: errorMessage
-    logical                       :: useGPU
-    integer                       :: numberOfGPUDevices
-
+   integer(kind=ik)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=ik)                       :: nbw, num_blocks
+   real(kind=rk), allocatable             :: tmat(:,:,:), e(:)
+   real(kind=rk)                          :: ttt0, ttt1, ttts
+   integer(kind=ik)                       :: i
+   logical                                :: success
+   logical, save                          :: firstCall = .true.
+   logical                                :: wantDebug
+   integer(kind=ik)                       :: istat
+   character(200)                         :: errorMessage
+   logical                                :: useGPU
+   integer(kind=ik)                       :: numberOfGPUDevices
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("solve_evp_real_2stage")
@@ -339,7 +339,7 @@ contains
      ! Backtransform stage 1
 
      ttt0 = MPI_Wtime()
-   call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
+     call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
                                     mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success,      &
                                     THIS_REAL_ELPA_KERNEL)
      if (.not.(success)) return
@@ -419,32 +419,32 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
                                     mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API) result(success)
 
 #ifdef HAVE_DETAILED_TIMINGS
-    use timings
+   use timings
 #endif
-    use cuda_functions
-    use mod_check_for_gpu
-    implicit none
-    integer, intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
-    integer                       :: THIS_COMPLEX_ELPA_KERNEL
-    integer, intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-    complex*16, intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
-    real*8, intent(inout)         :: ev(na)
-   complex*16, allocatable       :: hh_trans_complex(:,:)
+   use precision
+   use cuda_functions
+   use mod_check_for_gpu
+   implicit none
+   integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
+   integer(kind=ik)                       :: THIS_COMPLEX_ELPA_KERNEL
+   integer(kind=ik), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   complex(kind=ck), intent(inout)        :: a(lda,matrixCols), q(ldq,matrixCols)
+   real(kind=rk), intent(inout)           :: ev(na)
+   complex(kind=ck), allocatable          :: hh_trans_complex(:,:)
 
-    integer                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
-    integer                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
-    complex*16, allocatable       :: tmat(:,:,:)
-    real*8, allocatable           :: q_real(:,:), e(:)
-    real*8                        :: ttt0, ttt1, ttts
-    integer                       :: i
+   integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
+   integer(kind=ik)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
+   complex(kind=ck), allocatable          :: tmat(:,:,:)
+   real(kind=rk), allocatable             :: q_real(:,:), e(:)
+   real(kind=rk)                          :: ttt0, ttt1, ttts
+   integer(kind=ik)                       :: i
 
-    logical                       :: success, wantDebug
-    logical, save                 :: firstCall = .true.
-    integer                       :: istat
-    character(200)                :: errorMessage
-    logical                       :: useGPU
-    integer                       :: numberOfGPUDevices
-
+   logical                                :: success, wantDebug
+   logical, save                          :: firstCall = .true.
+   integer(kind=ik)                       :: istat
+   character(200)                         :: errorMessage
+   logical                                :: useGPU
+   integer(kind=ik)                       :: numberOfGPUDevices
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("solve_evp_complex_2stage")

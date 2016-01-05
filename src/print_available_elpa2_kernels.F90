@@ -75,6 +75,7 @@
 !> \author A. Marek (MPCDF)
 program print_available_elpa2_kernels
 
+   use precision
    use ELPA1
    use ELPA2
 
@@ -82,7 +83,7 @@ program print_available_elpa2_kernels
 
    implicit none
 
-   integer :: i
+   integer(kind=ik) :: i
 
    print *, "This program will give information on the ELPA2 kernels, "
    print *, "which are available with this library and it will give "

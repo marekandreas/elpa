@@ -94,13 +94,13 @@ module from_c
   function solve_elpa1_real_call_from_c(na, nev, a, lda, ev, q, ldq,         &
                       nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols ) &
                       result(success)
-
+    use precision
     use iso_c_binding
     implicit none
 
-    integer :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-    logical :: success
-    integer :: successC
+    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+    logical          :: success
+    integer(kind=ik) :: successC
 
     real(kind=c_double)  :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
 
@@ -119,12 +119,13 @@ module from_c
                       nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols ) &
                       result(success)
 
+    use precision
     use iso_c_binding
     implicit none
 
-    integer :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-    logical :: success
-    integer :: successC
+    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+    logical          :: success
+    integer(kind=ik) :: successC
 
     real(kind=c_double)    :: ev(1:na)
     complex(kind=c_double) :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
@@ -145,12 +146,13 @@ module from_c
   function call_elpa_get_comm_from_c(mpi_comm_world, my_prow, my_pcol, &
                                      mpi_comm_rows, mpi_comm_cols) result(mpierr)
 
+      use precision
       use iso_c_binding
       implicit none
 
-      integer :: mpierr
-      integer :: mpi_comm_world, my_prow, my_pcol, &
-                 mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik) :: mpierr
+      integer(kind=ik) :: mpi_comm_world, my_prow, my_pcol, &
+                          mpi_comm_rows, mpi_comm_cols
 
       mpierr = elpa_get_comm_c(mpi_comm_world, my_prow, my_pcol, &
                                     mpi_comm_rows, mpi_comm_cols)

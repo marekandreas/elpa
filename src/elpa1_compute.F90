@@ -90,7 +90,7 @@ module ELPA1_compute
 
   contains
 
-#define DATATYPE REAL
+#define DATATYPE REAL(kind=rk)
 #define BYTESIZE 8
 #define REALCASE 1
 #include "elpa_transpose_vectors.X90"
@@ -133,29 +133,30 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real*8 a(lda,matrixCols), d(na), e(na), tau(na)
+      integer(kind=ik)            :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=rk)               :: a(lda,matrixCols), d(na), e(na), tau(na)
 
-      integer, parameter :: max_stored_rows = 32
+      integer(kind=ik), parameter :: max_stored_rows = 32
 
-      integer my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
-      integer l_cols, l_rows, nstor
-      integer istep, i, j, lcs, lce, lrs, lre
-      integer tile_size, l_rows_tile, l_cols_tile
+      integer(kind=ik)            :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)            :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
+      integer(kind=ik)            :: l_cols, l_rows, nstor
+      integer(kind=ik)            :: istep, i, j, lcs, lce, lrs, lre
+      integer(kind=ik)            :: tile_size, l_rows_tile, l_cols_tile
 
 #ifdef WITH_OPENMP
-      integer my_thread, n_threads, max_threads, n_iter
-      integer omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
+      integer(kind=ik)            :: my_thread, n_threads, max_threads, n_iter
+      integer(kind=ik)            :: omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
 #endif
 
-      real*8 vav, vnorm2, x, aux(2*max_stored_rows), aux1(2), aux2(2), vrl, xf
+      real(kind=rk)               :: vav, vnorm2, x, aux(2*max_stored_rows), aux1(2), aux2(2), vrl, xf
 
-      real*8, allocatable:: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
+      real(kind=rk), allocatable  :: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
 #ifdef WITH_OPENMP
-      real*8, allocatable:: ur_p(:,:), uc_p(:,:)
+      real(kind=rk), allocatable  :: ur_p(:,:), uc_p(:,:)
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -473,20 +474,21 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real*8 a(lda,matrixCols), q(ldq,matrixCols), tau(na)
+      integer(kind=ik)           :: na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=rk)              :: a(lda,matrixCols), q(ldq,matrixCols), tau(na)
 
-      integer :: max_stored_rows
+      integer(kind=ik)           :: max_stored_rows
 
-      integer my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
-      integer l_cols, l_rows, l_colh, nstor
-      integer istep, i, n, nc, ic, ics, ice, nb, cur_pcol
+      integer(kind=ik)           :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)           :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
+      integer(kind=ik)           :: l_cols, l_rows, l_colh, nstor
+      integer(kind=ik)           :: istep, i, n, nc, ic, ics, ice, nb, cur_pcol
 
-      real*8, allocatable:: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
-      real*8, allocatable:: tmat(:,:), h1(:), h2(:)
+      real(kind=rk), allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+      real(kind=rk), allocatable :: tmat(:,:), h1(:), h2(:)
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_real")
@@ -666,23 +668,24 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      character*1 uplo_a, uplo_c
+      character*1                   :: uplo_a, uplo_c
 
-      integer na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-      real*8 a(lda,*), b(ldb,*), c(ldc,*)
+      integer(kind=ik)              :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
+      real(kind=rk)                 :: a(lda,*), b(ldb,*), c(ldc,*)
 
-      integer my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer l_cols, l_rows, l_rows_np
-      integer np, n, nb, nblk_mult, lrs, lre, lcs, lce
-      integer gcol_min, gcol, goff
-      integer nstor, nr_done, noff, np_bc, n_aux_bc, nvals
-      integer, allocatable :: lrs_save(:), lre_save(:)
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)              :: l_cols, l_rows, l_rows_np
+      integer(kind=ik)              :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
+      integer(kind=ik)              :: gcol_min, gcol, goff
+      integer(kind=ik)              :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
+      integer(kind=ik), allocatable :: lrs_save(:), lre_save(:)
 
-      logical a_lower, a_upper, c_lower, c_upper
+      logical                       :: a_lower, a_upper, c_lower, c_upper
 
-      real*8, allocatable:: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
+      real(kind=rk), allocatable    :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mult_at_b_real")
@@ -832,7 +835,7 @@ module ELPA1_compute
 
     end subroutine mult_at_b_real
 
-#define DATATYPE COMPLEX
+#define DATATYPE COMPLEX(kind=ck)
 #define BYTESIZE 16
 #define COMPLEXCASE 1
 #include "elpa_transpose_vectors.X90"
@@ -875,35 +878,36 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      complex*16 a(lda,matrixCols), tau(na)
-      real*8 d(na), e(na)
+      integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      complex(kind=ck)              :: a(lda,matrixCols), tau(na)
+      real(kind=rk)                 :: d(na), e(na)
 
-      integer, parameter :: max_stored_rows = 32
+      integer(kind=ik), parameter   :: max_stored_rows = 32
 
-      complex*16, parameter :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+      complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-      integer my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
-      integer l_cols, l_rows, nstor
-      integer istep, i, j, lcs, lce, lrs, lre
-      integer tile_size, l_rows_tile, l_cols_tile
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)              :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
+      integer(kind=ik)              :: l_cols, l_rows, nstor
+      integer(kind=ik)              :: istep, i, j, lcs, lce, lrs, lre
+      integer(kind=ik)              :: tile_size, l_rows_tile, l_cols_tile
 
 #ifdef WITH_OPENMP
-      integer my_thread, n_threads, max_threads, n_iter
-      integer omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
+      integer(kind=ik)              :: my_thread, n_threads, max_threads, n_iter
+      integer(kind=ik)              :: omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
 #endif
 
-      real*8 vnorm2
-      complex*16 vav, xc, aux(2*max_stored_rows),  aux1(2), aux2(2), vrl, xf
+      real(kind=rk)                 :: vnorm2
+      complex(kind=ck)              :: vav, xc, aux(2*max_stored_rows),  aux1(2), aux2(2), vrl, xf
 
-      complex*16, allocatable:: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
+      complex(kind=ck), allocatable :: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
 #ifdef WITH_OPENMP
-      complex*16, allocatable:: ur_p(:,:), uc_p(:,:)
+      complex(kind=ck), allocatable :: ur_p(:,:), uc_p(:,:)
 #endif
-      real*8, allocatable:: tmpr(:)
+      real(kind=rk), allocatable    :: tmpr(:)
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("tridiag_complex")
@@ -1241,22 +1245,23 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      complex*16 a(lda,matrixCols), q(ldq,matrixCols), tau(na)
+      integer(kind=ik)              ::  na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      complex(kind=ck)              ::  a(lda,matrixCols), q(ldq,matrixCols), tau(na)
 
-      integer :: max_stored_rows
+      integer(kind=ik)              :: max_stored_rows
 
-      complex*16, parameter :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+      complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
-      integer my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
-      integer l_cols, l_rows, l_colh, nstor
-      integer istep, i, n, nc, ic, ics, ice, nb, cur_pcol
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)              :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
+      integer(kind=ik)              :: l_cols, l_rows, l_colh, nstor
+      integer(kind=ik)              :: istep, i, n, nc, ic, ics, ice, nb, cur_pcol
 
-      complex*16, allocatable:: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
-      complex*16, allocatable:: tmat(:,:), h1(:), h2(:)
+      complex(kind=ck), allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+      complex(kind=ck), allocatable :: tmat(:,:), h1(:), h2(:)
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_complex")
@@ -1440,23 +1445,24 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      character*1 uplo_a, uplo_c
+      character*1                   :: uplo_a, uplo_c
 
-      integer na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-      complex*16 a(lda,*), b(ldb,*), c(ldc,*)
+      integer(kind=ik)              :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
+      complex(kind=ck)              :: a(lda,*), b(ldb,*), c(ldc,*)
 
-      integer my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer l_cols, l_rows, l_rows_np
-      integer np, n, nb, nblk_mult, lrs, lre, lcs, lce
-      integer gcol_min, gcol, goff
-      integer nstor, nr_done, noff, np_bc, n_aux_bc, nvals
-      integer, allocatable :: lrs_save(:), lre_save(:)
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)              :: l_cols, l_rows, l_rows_np
+      integer(kind=ik)              :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
+      integer(kind=ik)              :: gcol_min, gcol, goff
+      integer(kind=ik)              :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
+      integer(kind=ik), allocatable :: lrs_save(:), lre_save(:)
 
-      logical a_lower, a_upper, c_lower, c_upper
+      logical                       :: a_lower, a_upper, c_lower, c_upper
 
-      complex*16, allocatable:: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
+      complex(kind=ck), allocatable :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mult_ah_b_complex")
@@ -1610,18 +1616,19 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer  na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real*8 d(na), e(na), q(ldq,matrixCols)
+      integer(kind=ik)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=rk)                 :: d(na), e(na), q(ldq,matrixCols)
 
-      integer i, j, n, np, nc, nev1, l_cols, l_rows
-      integer my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)              :: i, j, n, np, nc, nev1, l_cols, l_rows
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
 
-      integer, allocatable :: limits(:), l_col(:), p_col(:), l_col_bc(:), p_col_bc(:)
+      integer(kind=ik), allocatable :: limits(:), l_col(:), p_col(:), l_col_bc(:), p_col_bc(:)
 
-      logical, intent(in)  :: wantDebug
-      logical, intent(out) :: success
+      logical, intent(in)           :: wantDebug
+      logical, intent(out)          :: success
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("solve_tridi")
 #endif
@@ -1751,14 +1758,14 @@ module ELPA1_compute
 
       contains
         recursive subroutine merge_recursive(np_off, nprocs, wantDebug, success)
-
+           use precision
            implicit none
 
            ! noff is always a multiple of nblk_ev
            ! nlen-noff is always > nblk_ev
 
-           integer              :: np_off, nprocs
-           integer              :: np1, np2, noff, nlen, nmid, n, &
+           integer(kind=ik)     :: np_off, nprocs
+           integer(kind=ik)     :: np1, np2, noff, nlen, nmid, n, &
                                    mpi_status(mpi_status_size)
            logical, intent(in)  :: wantDebug
            logical, intent(out) :: success
@@ -1833,21 +1840,22 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer              :: na, nev, nqoff, ldq, nblk, matrixCols, mpi_comm_rows
-      real*8               :: d(na), e(na), q(ldq,matrixCols)
+      integer(kind=ik)              :: na, nev, nqoff, ldq, nblk, matrixCols, mpi_comm_rows
+      real(kind=rk)                 :: d(na), e(na), q(ldq,matrixCols)
 
-      integer, parameter   :: min_submatrix_size = 16 ! Minimum size of the submatrices to be used
+      integer(kind=ik), parameter   :: min_submatrix_size = 16 ! Minimum size of the submatrices to be used
 
-      real*8, allocatable  :: qmat1(:,:), qmat2(:,:)
-      integer              :: i, n, np
-      integer              :: ndiv, noff, nmid, nlen, max_size
-      integer              :: my_prow, np_rows, mpierr
+      real(kind=rk), allocatable    :: qmat1(:,:), qmat2(:,:)
+      integer(kind=ik)              :: i, n, np
+      integer(kind=ik)              :: ndiv, noff, nmid, nlen, max_size
+      integer(kind=ik)              :: my_prow, np_rows, mpierr
 
-      integer, allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
-      logical, intent(in)  :: wantDebug
-      logical, intent(out) :: success
+      integer(kind=ik), allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
+      logical, intent(in)           :: wantDebug
+      logical, intent(out)          :: success
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("solve_tridi_col")
 #endif
@@ -2007,19 +2015,20 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
      use timings
 #endif
+     use precision
      implicit none
 
-     integer              :: nlen, ldq
-     real*8               :: d(nlen), e(nlen), q(ldq,nlen)
+     integer(kind=ik)              :: nlen, ldq
+     real(kind=rk)                 :: d(nlen), e(nlen), q(ldq,nlen)
 
-     real*8, allocatable  :: work(:), qtmp(:), ds(:), es(:)
-     real*8               :: dtmp
+     real(kind=rk), allocatable    :: work(:), qtmp(:), ds(:), es(:)
+     real(kind=rk)                 :: dtmp
 
-     integer              :: i, j, lwork, liwork, info, mpierr
-     integer, allocatable :: iwork(:)
+     integer(kind=ik)              :: i, j, lwork, liwork, info, mpierr
+     integer(kind=ik), allocatable :: iwork(:)
 
-     logical, intent(in)  :: wantDebug
-     logical, intent(out) :: success
+     logical, intent(in)           :: wantDebug
+     logical, intent(out)          :: success
 
 #ifdef HAVE_DETAILED_TIMINGS
      call timer%start("solve_tridi_single")
@@ -2102,40 +2111,41 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer              :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
-                              mpi_comm_cols, npc_0, npc_n
-      integer              :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
-      real*8               :: d(na), e, q(ldq,matrixCols)
+      integer(kind=ik)              :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
+                                       mpi_comm_cols, npc_0, npc_n
+      integer(kind=ik)              :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
+      real(kind=rk)                 :: d(na), e, q(ldq,matrixCols)
 
-      integer, parameter   :: max_strip=128
+      integer(kind=ik), parameter   :: max_strip=128
 
-      real*8               :: beta, sig, s, c, t, tau, rho, eps, tol, dlamch, &
-                              dlapy2, qtrans(2,2), dmax, zmax, d1new, d2new
-      real*8               :: z(na), d1(na), d2(na), z1(na), delta(na),  &
-                              dbase(na), ddiff(na), ev_scale(na), tmp(na)
-      real*8               :: d1u(na), zu(na), d1l(na), zl(na)
-      real*8, allocatable  :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
+      real(kind=rk)                 :: beta, sig, s, c, t, tau, rho, eps, tol, dlamch, &
+                                       dlapy2, qtrans(2,2), dmax, zmax, d1new, d2new
+      real(kind=rk)                 :: z(na), d1(na), d2(na), z1(na), delta(na),  &
+                                       dbase(na), ddiff(na), ev_scale(na), tmp(na)
+      real(kind=rk)                 :: d1u(na), zu(na), d1l(na), zl(na)
+      real(kind=rk), allocatable    :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
 #ifdef WITH_OPENMP
-      real*8, allocatable  :: z_p(:,:)
+      real(kind=rk), allocatable    :: z_p(:,:)
 #endif
 
-      integer              :: i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
-                              l_rqm, ns, info
-      integer              :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
-                              l_cols_qreorg, np, l_idx, nqcols1, nqcols2
-      integer              :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
-                              np_cols, mpierr, mpi_status(mpi_status_size)
-      integer              :: np_next, np_prev, np_rem
-      integer              :: idx(na), idx1(na), idx2(na)
-      integer              :: coltyp(na), idxq1(na), idxq2(na)
+      integer(kind=ik)              :: i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
+                                       l_rqm, ns, info
+      integer(kind=ik)              :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
+                                       l_cols_qreorg, np, l_idx, nqcols1, nqcols2
+      integer(kind=ik)              :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
+                                       np_cols, mpierr, mpi_status(mpi_status_size)
+      integer(kind=ik)              :: np_next, np_prev, np_rem
+      integer(kind=ik)              :: idx(na), idx1(na), idx2(na)
+      integer(kind=ik)              :: coltyp(na), idxq1(na), idxq2(na)
 
-      logical, intent(in)  :: wantDebug
-      logical, intent(out) :: success
+      logical, intent(in)           :: wantDebug
+      logical, intent(out)          :: success
 #ifdef WITH_OPENMP
-      integer              :: max_threads, my_thread
-      integer              :: omp_get_max_threads, omp_get_thread_num
+      integer(kind=ik)              :: max_threads, my_thread
+      integer(kind=ik)              :: omp_get_max_threads, omp_get_thread_num
 
       max_threads = omp_get_max_threads()
 
@@ -2736,14 +2746,14 @@ module ELPA1_compute
 
       contains
         subroutine add_tmp(d1, dbase, ddiff, z, ev_scale_value, na1,i)
-
+          use precision
           implicit none
 
-          integer, intent(in) :: na1, i
+          integer(kind=ik), intent(in) :: na1, i
 
-          real*8, intent(in)  :: d1(:), dbase(:), ddiff(:), z(:)
-          real*8, intent(inout) :: ev_scale_value
-          real*8  :: tmp(1:na1)
+          real(kind=rk), intent(in)    :: d1(:), dbase(:), ddiff(:), z(:)
+          real(kind=rk), intent(inout) :: ev_scale_value
+          real(kind=rk)                :: tmp(1:na1)
 
                ! tmp(1:na1) = z(1:na1) / delta(1:na1,i)  ! original code
                ! tmp(1:na1) = z(1:na1) / (d1(1:na1)-d(i))! bad results
@@ -2761,14 +2771,14 @@ module ELPA1_compute
         end subroutine add_tmp
 
         subroutine resort_ev(idx_ev, nLength)
-
+          use precision
           implicit none
 
-          integer, intent(in) :: nLength
-          integer             :: idx_ev(nLength)
-          integer             :: i, nc, pc1, pc2, lc1, lc2, l_cols_out
+          integer(kind=ik), intent(in) :: nLength
+          integer(kind=ik)             :: idx_ev(nLength)
+          integer(kind=ik)             :: i, nc, pc1, pc2, lc1, lc2, l_cols_out
 
-          real*8, allocatable :: qtmp(:,:)
+          real(kind=rk), allocatable   :: qtmp(:,:)
 
           if (l_rows==0) return ! My processor column has no work to do
 
@@ -2821,11 +2831,11 @@ module ELPA1_compute
         end subroutine resort_ev
 
         subroutine transform_columns(col1, col2)
-
+          use precision
           implicit none
 
-          integer :: col1, col2
-          integer :: pc1, pc2, lc1, lc2
+          integer(kind=ik) :: col1, col2
+          integer(kind=ik) :: pc1, pc2, lc1, lc2
 
           if (l_rows==0) return ! My processor column has no work to do
 
@@ -2861,12 +2871,12 @@ module ELPA1_compute
           ! It should only be used for gathering distributed results,
           ! i.e. z(i) should be nonzero on exactly 1 processor column,
           ! otherways the results may be numerically different on different columns
-
+          use precision
           implicit none
 
-          integer :: n
-          real*8  :: z(n)
-          real*8  :: tmp(n)
+          integer(kind=ik) :: n
+          real(kind=rk)    :: z(n)
+          real(kind=rk)    :: tmp(n)
 
           if (npc_n==1 .and. np_rows==1) return ! nothing to do
 
@@ -2899,13 +2909,13 @@ module ELPA1_compute
         subroutine global_product(z, n)
 
           ! This routine calculates the global product of z.
-
+          use precision
           implicit none
 
-          integer :: n
-          real*8  :: z(n)
+          integer(kind=ik) :: n
+          real(kind=rk)    :: z(n)
 
-          real*8  :: tmp(n)
+          real(kind=rk)    :: tmp(n)
 
           if (npc_n==1 .and. np_rows==1) return ! nothing to do
 
@@ -2948,16 +2958,16 @@ module ELPA1_compute
 
         ! This is a test routine for checking if the eigenvalues are monotonically increasing.
         ! It is for debug purposes only, an error should never be triggered!
-
+          use precision
           implicit none
 
-          integer              :: n
-          real*8               :: d(n)
-          character*(*)        :: text
+          integer(kind=ik)              :: n
+          real(kind=rk)                 :: d(n)
+          character*(*)                 :: text
 
-          integer              :: i
-          logical, intent(in)  :: wantDebug
-          logical, intent(out) :: success
+          integer(kind=ik)              :: i
+          logical, intent(in)           :: wantDebug
+          logical, intent(out)          :: success
 
           success = .true.
           do i=1,n-1
@@ -2972,21 +2982,22 @@ module ELPA1_compute
     end subroutine merge_systems
 
     subroutine v_add_s(v,n,s)
+      use precision
       implicit none
-      integer :: n
-      real*8  :: v(n),s
+      integer(kind=ik) :: n
+      real(kind=rk)    :: v(n),s
 
       v(:) = v(:) + s
     end subroutine v_add_s
 
     subroutine distribute_global_column(g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
-
+      use precision
       implicit none
 
-      real*8   :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching
-      integer  :: noff, nlen, my_prow, np_rows, nblk
+      real(kind=rk)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching
+      integer(kind=ik)  :: noff, nlen, my_prow, np_rows, nblk
 
-      integer  :: nbs, nbe, jb, g_off, l_off, js, je
+      integer(kind=ik)  :: nbs, nbe, jb, g_off, l_off, js, je
 
       nbs = noff/(nblk*np_rows)
       nbe = (noff+nlen-1)/(nblk*np_rows)
@@ -3061,13 +3072,14 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer   :: n, i
-      real*8    :: d(n), z(n), delta(n), rho, dlam
+      integer(kind=ik)   :: n, i
+      real(kind=rk)      :: d(n), z(n), delta(n), rho, dlam
 
-      integer   :: iter
-      real*8    :: a, b, x, y, dshift
+      integer(kind=ik)   :: iter
+      real(kind=rk)      :: a, b, x, y, dshift
 
       ! In order to obtain sufficient numerical accuracy we have to shift the problem
       ! either by d(i) or d(i+1), whichever is closer to the solution
@@ -3172,12 +3184,12 @@ module ELPA1_compute
     !              iflag==0 : Return 0
     !              iflag> 0 : Return next local index after that row/col
     !-------------------------------------------------------------------------------
-
+      use precision
       implicit none
 
-      integer :: idx, my_proc, num_procs, nblk, iflag
+      integer(kind=ik) :: idx, my_proc, num_procs, nblk, iflag
 
-      integer :: iblk
+      integer(kind=ik) :: iblk
 
       iblk = (idx-1)/nblk  ! global block number, 0 based
 
@@ -3235,21 +3247,22 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real*8               :: a(lda,matrixCols)
+      integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=rk)                 :: a(lda,matrixCols)
 
-      integer              :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-      integer              :: n, nc, i, info
-      integer              :: lcs, lce, lrs, lre
-      integer              :: tile_size, l_rows_tile, l_cols_tile
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+      integer(kind=ik)              :: n, nc, i, info
+      integer(kind=ik)              :: lcs, lce, lrs, lre
+      integer(kind=ik)              :: tile_size, l_rows_tile, l_cols_tile
 
-      real*8, allocatable  :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
+      real(kind=rk), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
 
-      logical, intent(in)  :: wantDebug
-      logical, intent(out) :: success
+      logical, intent(in)           :: wantDebug
+      logical, intent(out)          :: success
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("cholesky_real")
@@ -3415,20 +3428,20 @@ module ELPA1_compute
     !              MPI-Communicators for rows/columns
     !
     !-------------------------------------------------------------------------------
-
+       use precision
        implicit none
 
-       integer             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-       real*8              :: a(lda,matrixCols)
+       integer(kind=ik)             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+       real(kind=rk)                :: a(lda,matrixCols)
 
-       integer             :: my_prow, my_pcol, np_rows, np_cols, mpierr
-       integer             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-       integer             :: n, nc, i, info, ns, nb
+       integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
+       integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+       integer(kind=ik)             :: n, nc, i, info, ns, nb
 
-       real*8, allocatable :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
+       real(kind=rk), allocatable   :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 
-       logical, intent(in)  :: wantDebug
-       logical, intent(out) :: success
+       logical, intent(in)          :: wantDebug
+       logical, intent(out)         :: success
 
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -3551,21 +3564,22 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use precision
       implicit none
 
-      integer                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      complex*16              :: a(lda,matrixCols)
+      integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      complex(kind=ck)                 :: a(lda,matrixCols)
 
-      integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-      integer                 :: n, nc, i, info
-      integer                 :: lcs, lce, lrs, lre
-      integer                 :: tile_size, l_rows_tile, l_cols_tile
+      integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+      integer(kind=ik)                 :: n, nc, i, info
+      integer(kind=ik)                 :: lcs, lce, lrs, lre
+      integer(kind=ik)                 :: tile_size, l_rows_tile, l_cols_tile
 
-      complex*16, allocatable :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
+      complex(kind=ck), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
 
-      logical, intent(in)     :: wantDebug
-      logical, intent(out)    :: success
+      logical, intent(in)              :: wantDebug
+      logical, intent(out)             :: success
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("cholesky_complex")
 #endif
@@ -3727,20 +3741,20 @@ module ELPA1_compute
     !              MPI-Communicators for rows/columns
     !
     !-------------------------------------------------------------------------------
-
+       use precision
        implicit none
 
-       integer                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-       complex*16              :: a(lda,matrixCols)
+       integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+       complex(kind=ck)                 :: a(lda,matrixCols)
 
-       integer                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
-       integer                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-       integer                 :: n, nc, i, info, ns, nb
+       integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
+       integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+       integer(kind=ik)                 :: n, nc, i, info, ns, nb
 
-       complex*16, allocatable :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
+       complex(kind=ck), allocatable    :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 
-       logical, intent(in)     :: wantDebug
-       logical, intent(out)    :: success
+       logical, intent(in)              :: wantDebug
+       logical, intent(out)             :: success
 
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -3838,9 +3852,9 @@ module ELPA1_compute
 
       ! Returns the least common multiple of a and b
       ! There may be more efficient ways to do this, we use the most simple approach
-
+      use precision
       implicit none
-      integer, intent(in) :: a, b
+      integer(kind=ik), intent(in) :: a, b
 
       do least_common_multiple = a, a*(b-1), a
         if(mod(least_common_multiple,b)==0) exit
@@ -3854,12 +3868,13 @@ module ELPA1_compute
       ! and returns the factor xf by which x has to be scaled.
       ! It also hasn't the special handling for numbers < 1.d-300 or > 1.d150
       ! since this would be expensive for the parallel implementation.
+      use precision
       implicit none
-      real*8, intent(inout) :: alpha
-      real*8, intent(in)    :: xnorm_sq
-      real*8, intent(out)   :: xf, tau
+      real(kind=rk), intent(inout) :: alpha
+      real(kind=rk), intent(in)    :: xnorm_sq
+      real(kind=rk), intent(out)   :: xf, tau
 
-      real*8 BETA
+      real(kind=rk)                :: BETA
 
       if ( XNORM_SQ==0. ) then
 
@@ -3895,13 +3910,14 @@ module ELPA1_compute
       ! and returns the factor xf by which x has to be scaled.
       ! It also hasn't the special handling for numbers < 1.d-300 or > 1.d150
       ! since this would be expensive for the parallel implementation.
-
+      use precision
+      use precision
       implicit none
-      complex*16, intent(inout) :: alpha
-      real*8, intent(in)        :: xnorm_sq
-      complex*16, intent(out)   :: xf, tau
+      complex(kind=ck), intent(inout) :: alpha
+      real(kind=rk), intent(in)       :: xnorm_sq
+      complex(kind=ck), intent(out)   :: xf, tau
 
-      real*8 ALPHR, ALPHI, BETA
+      real(kind=rk)                   :: ALPHR, ALPHI, BETA
 
       ALPHR = DBLE( ALPHA )
       ALPHI = DIMAG( ALPHA )

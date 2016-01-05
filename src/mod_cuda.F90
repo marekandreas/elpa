@@ -1,15 +1,16 @@
 #include "config-f90.h"
 module cuda_functions
   use iso_c_binding
+  use precision
   implicit none
 
   public
 
-  integer :: cudaMemcpyHostToDevice
-  integer :: cudaMemcpyDeviceToHost
-  integer :: cudaHostRegisterPortable
-  integer :: cudaHostRegisterMapped
-  integer :: cudaMemcpyDeviceToDevice
+  integer(kind=ik) :: cudaMemcpyHostToDevice
+  integer(kind=ik) :: cudaMemcpyDeviceToHost
+  integer(kind=ik) :: cudaHostRegisterPortable
+  integer(kind=ik) :: cudaHostRegisterMapped
+  integer(kind=ik) :: cudaMemcpyDeviceToDevice
 
   integer(kind=c_size_t), parameter :: size_of_real_datatype    = 8_8
   integer(kind=c_size_t), parameter :: size_of_complex_datatype = 16_8
@@ -245,8 +246,8 @@ module cuda_functions
 
       implicit none
 
-      integer, intent(in)  :: n
-      logical              :: success
+      integer(kind=ik), intent(in)  :: n
+      logical                       :: success
 #ifdef WITH_GPU_VERSION
       success = cuda_setdevice_c(int(n,kind=c_int)) /= 0
 #else
@@ -258,7 +259,7 @@ module cuda_functions
       use iso_c_binding
       implicit none
 
-      integer              :: n
+      integer(kind=ik)     :: n
       integer(kind=c_int)  :: nCasted
       logical              :: success
 #ifdef WITH_GPU_VERSION
@@ -320,7 +321,7 @@ module cuda_functions
    implicit none
 
    integer(kind=c_intptr_t)                :: a
-   integer                                 :: val
+   integer(kind=ik)                        :: val
    integer(kind=c_size_t), intent(in)      :: size
    integer(kind=C_INT)                     :: istat
 
@@ -337,7 +338,7 @@ module cuda_functions
  function cuda_memcpyDeviceToDevice() result(flag)
    use iso_c_binding
    implicit none
-   integer :: flag
+   integer(kind=ik) :: flag
 #ifdef WITH_GPU_VERSION
    flag = int(cuda_memcpyDeviceToDevice_c())
 #else
@@ -347,8 +348,9 @@ module cuda_functions
 
  function cuda_memcpyHostToDevice() result(flag)
    use iso_c_binding
+   use precision
    implicit none
-   integer :: flag
+   integer(kind=ik) :: flag
 #ifdef WITH_GPU_VERSION
    flag = int(cuda_memcpyHostToDevice_c())
 #else
@@ -358,8 +360,9 @@ module cuda_functions
 
  function cuda_memcpyDeviceToHost() result(flag)
    use iso_c_binding
+   use precision
    implicit none
-   integer :: flag
+   integer(kind=ik) :: flag
 #ifdef WITH_GPU_VERSION
    flag = int( cuda_memcpyDeviceToHost_c())
 #else
@@ -369,8 +372,9 @@ module cuda_functions
 
  function cuda_hostRegisterPortable() result(flag)
    use iso_c_binding
+   use precision
    implicit none
-   integer :: flag
+   integer(kind=ik) :: flag
 #ifdef WITH_GPU_VERSION
    flag = int(cuda_hostRegisterPortable_c())
 #else
@@ -380,8 +384,9 @@ module cuda_functions
 
  function cuda_hostRegisterMapped() result(flag)
    use iso_c_binding
+   use precision
    implicit none
-   integer :: flag
+   integer(kind=ik) :: flag
 #ifdef WITH_GPU_VERSION
    flag = int(cuda_hostRegisterMapped_c())
 #else

@@ -47,10 +47,12 @@ module mod_blacs_infrastructure
     subroutine set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, &
                                 np_cols, nprow, npcol, my_prow, my_pcol)
 
+      use precision
+
       implicit none
-      integer, intent(in)     :: mpi_comm_world
-      integer, intent(inout)  :: my_blacs_ctxt, np_rows, &
-                                 np_cols, nprow, npcol, my_prow, my_pcol
+      integer(kind=ik), intent(in)     :: mpi_comm_world
+      integer(kind=ik), intent(inout)  :: my_blacs_ctxt, np_rows, &
+                                          np_cols, nprow, npcol, my_prow, my_pcol
 
       my_blacs_ctxt = mpi_comm_world
       call BLACS_Gridinit(my_blacs_ctxt, 'C', np_rows, np_cols)
@@ -78,16 +80,17 @@ module mod_blacs_infrastructure
                                        na_cols, sc_desc, my_blacs_ctxt, info)
 
       use elpa_utilities, only : error_unit
+      use precision
 
       implicit none
       include "mpif.h"
 
-      integer, intent(inout)  :: na, nblk, my_prow, my_pcol, np_rows,   &
-                                 np_cols, na_rows, na_cols, sc_desc(1:9), &
-                                 my_blacs_ctxt, info
+      integer(kind=ik), intent(inout)  :: na, nblk, my_prow, my_pcol, np_rows,   &
+                                          np_cols, na_rows, na_cols, sc_desc(1:9), &
+                                          my_blacs_ctxt, info
 
-      integer, external       :: numroc
-      integer                 :: mpierr
+      integer(kind=ik), external       :: numroc
+      integer(kind=ik)                 :: mpierr
 
       ! determine the neccessary size of the distributed matrices,
       ! we use the scalapack tools routine NUMROC

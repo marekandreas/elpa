@@ -45,15 +45,17 @@
 #include "config-f90.h"
 
 module cuda_routines
+
   implicit none
 
   public
 
-  integer, parameter :: cudaMemcpyHostToDevice  = 1
-  integer, parameter :: cudaMemcpyDeviceToHost  = 2
-  integer, parameter :: cudaHostRegisterPortable  = 3
-  integer, parameter :: cudaHostRegisterMapped  = 4
-  integer, parameter :: cudaMemcpyDeviceToDevice = 5
+  ! TODO: take these values from the definition header files of CUDA !!
+  integer(kind=ik), parameter :: cudaMemcpyHostToDevice  = 1
+  integer(kind=ik), parameter :: cudaMemcpyDeviceToHost  = 2
+  integer(kind=ik), parameter :: cudaHostRegisterPortable  = 3
+  integer(kind=ik), parameter :: cudaHostRegisterMapped  = 4
+  integer(kind=ik), parameter :: cudaMemcpyDeviceToDevice = 5
 
   interface
     function cuda_setdevice_c(n) result(istat) &
@@ -477,11 +479,11 @@ module cuda_routines
 contains
   function cuda_setdevice(n) result(success)
     use iso_c_binding
-
+    use precision
     implicit none
 
-    integer, intent(in)  :: n
-    logical              :: success
+    integer(kind=ik), intent(in)  :: n
+    logical                       :: success
 
 #ifdef WITH_GPU_VERSION
     success = cuda_setdevice_c(int(n,kind=c_int)) /= 0
@@ -492,10 +494,11 @@ contains
 
   function cuda_getdevicecount(n) result(success)
     use iso_c_binding
+    use precision
     implicit none
 
-    integer, intent(out) :: n
-    logical              :: success
+    integer(kind=ik), intent(out) :: n
+    logical                       :: success
 
 #ifdef WITH_GPU_VERSION
     success = cuda_getdevicecount_c(int(n, kind=c_int)) /=0

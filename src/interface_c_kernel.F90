@@ -50,13 +50,13 @@ module cuda_c_kernel
   interface
     subroutine launch_dot_product_kernel_c(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr) &
                bind(c,name="launch_dot_product_kernel")
-
+      use precision
       use iso_c_binding
 
       implicit none
       integer(kind=c_int), value      :: nr
       integer(kind=C_intptr_T), value :: hs_dev ,hv_new_dev,x_dev,h_dev, hv_dev
-      complex*16,value                :: tau_new
+      complex(kind=ck),value          :: tau_new
 
     end subroutine
   end interface
@@ -298,11 +298,11 @@ module cuda_c_kernel
     subroutine launch_dot_product_kernel(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
 
       use iso_c_binding
-
+      use precision
       implicit none
       integer(kind=c_int)      :: nr
       integer(kind=C_intptr_T) :: hs_dev ,hv_new_dev,x_dev,h_dev, hv_dev
-      complex*16               :: tau_new
+      complex(kind=ck)         :: tau_new
 #ifdef WITH_GPU_VERSION
       call launch_dot_product_kernel_c(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
 #endif
