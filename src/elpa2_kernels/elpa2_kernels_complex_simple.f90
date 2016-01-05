@@ -61,15 +61,16 @@ module complex_generic_simple_kernel
   public single_hh_trafo_complex_generic_simple
 contains
   subroutine single_hh_trafo_complex_generic_simple(q, hh, nb, nq, ldq)
+    use precision
 
     implicit none
 
-    integer, intent(in) :: nb, nq, ldq
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(*)
+    integer(kind=ik), intent(in)    :: nb, nq, ldq
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(*)
 
-    integer i
-    complex*16 h1, tau1, x(nq)
+    integer(kind=ik)                :: i
+    complex(kind=ck)                :: h1, tau1, x(nq)
 
     ! Just one Householder transformation
 
@@ -92,15 +93,15 @@ contains
 
   ! --------------------------------------------------------------------------------------------------
   subroutine double_hh_trafo_complex_generic_simple(q, hh, nb, nq, ldq, ldh)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, nq, ldq, ldh
-    complex*16, intent(inout) :: q(ldq,*)
-    complex*16, intent(in) :: hh(ldh,*)
+    integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
+    complex(kind=ck), intent(inout) :: q(ldq,*)
+    complex(kind=ck), intent(in)    :: hh(ldh,*)
 
-    complex*16 s, h1, h2, tau1, tau2, x(nq), y(nq)
-    integer i
+    complex(kind=ck)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
+    integer(kind=ik)                :: i
 
     ! Calculate dot product of the two Householder vectors
 

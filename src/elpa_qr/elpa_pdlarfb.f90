@@ -62,25 +62,25 @@ module elpa_pdlarfb
 contains
 
 subroutine qr_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpicomm,work,lwork)
-
+    use precision
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer lda,ldv,ldt,lwork
-    double precision a(lda,*),v(ldv,*),tau(*),t(ldt,*),work(k,*)
+    integer(kind=ik)  :: lda,ldv,ldt,lwork
+    real(kind=rk)     :: a(lda,*),v(ldv,*),tau(*),t(ldt,*),work(k,*)
 
     ! input variables (global)
-    integer m,mb,n,k,baseidx,idx,rev,mpicomm
+    integer(kind=ik)  :: m,mb,n,k,baseidx,idx,rev,mpicomm
 
     ! output variables (global)
 
     ! derived input variables from QR_PQRPARAM
 
     ! local scalars
-    integer localsize,offset,baseoffset
-    integer mpirank,mpiprocs,mpierr
+    integer(kind=ik)  :: localsize,offset,baseoffset
+    integer(kind=ik)  :: mpirank,mpiprocs,mpierr
 
         if (idx .le. 1) return
 
@@ -127,27 +127,28 @@ end subroutine qr_pdlarfb_1dcomm
 ! generalized pdlarfl2 version
 ! TODO: include T merge here (seperate by "old" and "new" index)
 subroutine qr_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx,rev,mpicomm,work,lwork)
+    use precision
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer ldv,ldt,lda,lwork
-    double precision v(ldv,*),tau(*),t(ldt,*),work(k,*),a(lda,*)
+    integer(kind=ik)  :: ldv,ldt,lda,lwork
+    real(kind=rk)     :: v(ldv,*),tau(*),t(ldt,*),work(k,*),a(lda,*)
 
     ! input variables (global)
-    integer m,mb,n,k,oldk,baseidx,rev,mpicomm
+    integer(kind=ik)  :: m,mb,n,k,oldk,baseidx,rev,mpicomm
 
     ! output variables (global)
 
     ! derived input variables from QR_PQRPARAM
 
     ! local scalars
-    integer localsize,offset,baseoffset
-    integer mpirank,mpiprocs,mpierr
-    integer icol
+    integer(kind=ik)  :: localsize,offset,baseoffset
+    integer(kind=ik)  :: mpirank,mpiprocs,mpierr
+    integer(kind=ik)  :: icol
 
-    integer sendoffset,recvoffset,sendsize
+    integer(kind=ik)  :: sendoffset,recvoffset,sendsize
 
     sendoffset = 1
     sendsize = k*(k+n+oldk)
@@ -206,24 +207,25 @@ subroutine qr_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
 end subroutine qr_pdlarft_pdlarfb_1dcomm
 
 subroutine qr_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
+    use precision
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer ldv,ldt,lwork
-    double precision v(ldv,*),t(ldt,*),work(n,*)
+    integer(kind=ik)  :: ldv,ldt,lwork
+    real(kind=rk)     :: v(ldv,*),t(ldt,*),work(n,*)
 
     ! input variables (global)
-    integer m,mb,n,blocksize,baseidx,rev,mpicomm
+    integer(kind=ik)  :: m,mb,n,blocksize,baseidx,rev,mpicomm
 
     ! output variables (global)
 
     ! derived input variables from QR_PQRPARAM
 
     ! local scalars
-    integer localsize,offset,baseoffset
-    integer mpirank,mpiprocs,mpierr
+    integer(kind=ik)  :: localsize,offset,baseoffset
+    integer(kind=ik)  :: mpirank,mpiprocs,mpierr
 
     if (lwork .eq. -1) then
         work(1,1) = DBLE(2*n*n)
@@ -252,24 +254,25 @@ subroutine qr_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,t,ldt,baseidx,rev,
 end subroutine qr_pdlarft_set_merge_1dcomm
 
 subroutine qr_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
+    use precision
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer ldv,ldt,lwork
-    double precision v(ldv,*),t(ldt,*),work(n,*)
+    integer(kind=ik) :: ldv,ldt,lwork
+    real(kind=rk)    :: v(ldv,*),t(ldt,*),work(n,*)
 
     ! input variables (global)
-    integer m,mb,n,blocksize,treeorder,baseidx,rev,mpicomm
+    integer(kind=ik) :: m,mb,n,blocksize,treeorder,baseidx,rev,mpicomm
 
     ! output variables (global)
 
     ! derived input variables from QR_PQRPARAM
 
     ! local scalars
-    integer localsize,offset,baseoffset
-    integer mpirank,mpiprocs,mpierr
+    integer(kind=ik) :: localsize,offset,baseoffset
+    integer(kind=ik) :: mpirank,mpiprocs,mpierr
 
     if (lwork .eq. -1) then
         work(1,1) = DBLE(2*n*n)
@@ -303,30 +306,30 @@ end subroutine qr_pdlarft_tree_merge_1dcomm
 ! - assume unitary matrix
 ! - assume right positions for v
 subroutine qr_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer incv,lda,lwork,baseidx
-    double precision v(*),a(lda,*),work(*)
+    integer(kind=ik) :: incv,lda,lwork,baseidx
+    real(kind=rk)    :: v(*),a(lda,*),work(*)
 
     ! input variables (global)
-    integer m,n,mb,rev,idx,mpicomm
-    double precision tau
+    integer(kind=ik) :: m,n,mb,rev,idx,mpicomm
+    real(kind=rk)    :: tau
 
     ! output variables (global)
 
     ! local scalars
-    integer mpierr,mpirank,mpiprocs
-    integer sendsize,recvsize,icol
-    integer local_size,local_offset
-    integer v_local_offset
+    integer(kind=ik) :: mpierr,mpirank,mpiprocs
+    integer(kind=ik) :: sendsize,recvsize,icol
+    integer(kind=ik) :: local_size,local_offset
+    integer(kind=ik) :: v_local_offset
 
     ! external functions
-    double precision ddot
-    external dgemv,dger,ddot
+    real(kind=rk), external :: ddot
 
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -374,35 +377,35 @@ subroutine qr_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,
 end subroutine qr_pdlarfl_1dcomm
 
 subroutine qr_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,idx,mb,rev,mpicomm)
+    use precision
     use ELPA1
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer ldv,lda,lwork,baseidx,ldt
-    double precision v(ldv,*),a(lda,*),work(*),t(ldt,*)
+    integer(kind=ik) :: ldv,lda,lwork,baseidx,ldt
+    real(kind=rk)    :: v(ldv,*),a(lda,*),work(*),t(ldt,*)
 
     ! input variables (global)
-    integer m,n,mb,rev,idx,mpicomm
+    integer(kind=ik) :: m,n,mb,rev,idx,mpicomm
 
     ! output variables (global)
 
     ! local scalars
-    integer mpierr,mpirank,mpiprocs,mpirank_top1,mpirank_top2
-    integer dgemv1_offset,dgemv2_offset
-    integer sendsize, recvsize
-    integer local_size1,local_offset1
-    integer local_size2,local_offset2
-    integer local_size_dger,local_offset_dger
-    integer v1_local_offset,v2_local_offset
-    integer v_local_offset_dger
-    double precision hvdot
-    integer irow,icol,v1col,v2col
+    integer(kind=ik) :: mpierr,mpirank,mpiprocs,mpirank_top1,mpirank_top2
+    integer(kind=ik) :: dgemv1_offset,dgemv2_offset
+    integer(kind=ik) :: sendsize, recvsize
+    integer(kind=ik) :: local_size1,local_offset1
+    integer(kind=ik) :: local_size2,local_offset2
+    integer(kind=ik) :: local_size_dger,local_offset_dger
+    integer(kind=ik) :: v1_local_offset,v2_local_offset
+    integer(kind=ik) :: v_local_offset_dger
+    real(kind=rk)    :: hvdot
+    integer(kind=ik) :: irow,icol,v1col,v2col
 
     ! external functions
-    double precision ddot
-    external dgemv,dger,ddot,daxpy
+    real(kind=rk), external :: ddot
 
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -488,29 +491,30 @@ end subroutine qr_pdlarfl2_tmatrix_1dcomm
 ! generalized pdlarfl2 version
 ! TODO: include T merge here (seperate by "old" and "new" index)
 subroutine qr_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev,updatemode,mpicomm,work,lwork)
+    use precision
     use qr_utils_mod
 
     implicit none
 
     ! input variables (local)
-    integer ldv,ldt,lda,lwork
-    double precision v(ldv,*),t(ldt,*),work(*),a(lda,*)
+    integer(kind=ik) :: ldv,ldt,lda,lwork
+    real(kind=rk)    :: v(ldv,*),t(ldt,*),work(*),a(lda,*)
 
     ! input variables (global)
-    integer m,mb,n,k,oldk,baseidx,rev,updatemode,mpicomm
+    integer(kind=ik) :: m,mb,n,k,oldk,baseidx,rev,updatemode,mpicomm
 
     ! output variables (global)
 
     ! derived input variables from QR_PQRPARAM
 
     ! local scalars
-    integer localsize,offset,baseoffset
-    integer mpirank,mpiprocs,mpierr
+    integer(kind=ik) :: localsize,offset,baseoffset
+    integer(kind=ik) :: mpirank,mpiprocs,mpierr
 
-    integer sendoffset,recvoffset,sendsize
-    integer updateoffset,updatelda,updatesize
-    integer mergeoffset,mergelda,mergesize
-    integer tgenoffset,tgenlda,tgensize
+    integer(kind=ik) :: sendoffset,recvoffset,sendsize
+    integer(kind=ik) :: updateoffset,updatelda,updatesize
+    integer(kind=ik) :: mergeoffset,mergelda,mergesize
+    integer(kind=ik) :: tgenoffset,tgenlda,tgensize
 
         if (updatemode .eq. ichar('I')) then
             updatelda = oldk+k

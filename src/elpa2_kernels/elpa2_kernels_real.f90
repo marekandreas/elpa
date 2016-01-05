@@ -59,15 +59,15 @@
 !  public double_hh_trafo_generic
 !contains
   subroutine double_hh_trafo_generic(q, hh, nb, nq, ldq, ldh)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, nq, ldq, ldh
-    real*8, intent(inout) :: q(ldq,*)
-    real*8, intent(in) :: hh(ldh,*)
+    integer(kind=ik), intent(in) :: nb, nq, ldq, ldh
+    real(kind=rk), intent(inout) :: q(ldq,*)
+    real(kind=rk), intent(in)    :: hh(ldh,*)
 
-    real*8 s
-    integer i
+    real(kind=rk)                :: s
+    integer(kind=ik)             :: i
 
 !    equivalence(q(1,1),q_complex(1,1))
 
@@ -97,7 +97,7 @@
     else if(nq-i+1 > 0) then
        call hh_trafo_kernel_4_generic(q(i,1),hh, nb, ldq, ldh, s)
     endif
- 
+
   end subroutine double_hh_trafo_generic
 
   ! --------------------------------------------------------------------------------------------------
@@ -108,16 +108,16 @@
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_kernel_12_generic(q, hh, nb, ldq, ldh, s)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, ldq, ldh
-    complex*16, intent(inout) :: q(ldq/2,*)
-    real*8, intent(in) :: hh(ldh,*), s
+    integer(kind=ik), intent(in)    :: nb, ldq, ldh
+    complex(kind=ck), intent(inout) :: q(ldq/2,*)
+    real(kind=rk), intent(in)       :: hh(ldh,*), s
 
-    complex*16 x1, x2, x3, x4, x5, x6, y1, y2, y3, y4, y5, y6
-    real*8 h1, h2, tau1, tau2
-    integer i
+    complex(kind=ck)                :: x1, x2, x3, x4, x5, x6, y1, y2, y3, y4, y5, y6
+    real(kind=rk)                   :: h1, h2, tau1, tau2
+    integer(kind=ik)                :: i
 
 
     x1 = q(1,2)
@@ -215,16 +215,16 @@
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_kernel_8_generic(q, hh, nb, ldq, ldh, s)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, ldq, ldh
-    complex*16, intent(inout) :: q(ldq/2,*)
-    real*8, intent(in) :: hh(ldh,*), s
+    integer(kind=ik), intent(in)    :: nb, ldq, ldh
+    complex(kind=ck), intent(inout) :: q(ldq/2,*)
+    real(kind=rk), intent(in)       :: hh(ldh,*), s
 
-    complex*16 x1, x2, x3, x4, y1, y2, y3, y4
-    real*8 h1, h2, tau1, tau2
-    integer i
+    complex(kind=ck)                :: x1, x2, x3, x4, y1, y2, y3, y4
+    real(kind=rk)                   :: h1, h2, tau1, tau2
+    integer(kind=ik)                :: i
 
 
     x1 = q(1,2)
@@ -300,16 +300,16 @@
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_kernel_4_generic(q, hh, nb, ldq, ldh, s)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, ldq, ldh
-    complex*16, intent(inout) :: q(ldq/2,*)
-    real*8, intent(in) :: hh(ldh,*), s
+    integer(kind=ik), intent(in)    :: nb, ldq, ldh
+    complex(kind=ck), intent(inout) :: q(ldq/2,*)
+    real(kind=rk), intent(in)       :: hh(ldh,*), s
 
-    complex*16 x1, x2, y1, y2
-    real*8 h1, h2, tau1, tau2
-    integer i
+    complex(kind=ck)                :: x1, x2, y1, y2
+    real(kind=rk)                   :: h1, h2, tau1, tau2
+    integer(kind=ik)                :: i
 
 
     x1 = q(1,2)

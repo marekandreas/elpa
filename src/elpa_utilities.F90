@@ -64,14 +64,14 @@ module ELPA_utilities
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
 #endif
-
+  use precision
   implicit none
 
   private ! By default, all routines contained are private
 
   public :: debug_messages_via_environment_variable, pcol, prow, error_unit
 #ifndef HAVE_ISO_FORTRAN_ENV
-  integer, parameter :: error_unit = 0
+  integer(kind=ik), parameter :: error_unit = 0
 #endif
 
 
@@ -82,6 +82,7 @@ module ELPA_utilities
 #ifdef HAVE_DETAILED_TIMINGS
      use timings
 #endif
+     use precision
      implicit none
      logical              :: isSet
      CHARACTER(len=255)   :: ELPA_DEBUG_MESSAGES
@@ -112,8 +113,10 @@ module ELPA_utilities
 
   !Processor col for global col number
   pure function pcol(i, nblk, np_cols) result(col)
-    integer, intent(in) :: i, nblk, np_cols
-    integer :: col
+    use precision
+    implicit none
+    integer(kind=ik), intent(in) :: i, nblk, np_cols
+    integer(kind=ik)             :: col
     col = MOD((i-1)/nblk,np_cols)
   end function
 
@@ -121,8 +124,10 @@ module ELPA_utilities
 
   !Processor row for global row number
   pure function prow(i, nblk, np_rows) result(row)
-    integer, intent(in) :: i, nblk, np_rows
-    integer :: row
+    use precision
+    implicit none
+    integer(kind=ik), intent(in) :: i, nblk, np_rows
+    integer(kind=ik)             :: row
     row = MOD((i-1)/nblk,np_rows)
   end function
 

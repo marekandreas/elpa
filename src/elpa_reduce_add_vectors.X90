@@ -77,6 +77,7 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
 !
 !-------------------------------------------------------------------------------
 
+   use precision
 !   use ELPA1 ! for least_common_multiple
 #ifdef WITH_OPENMP
    use omp_lib
@@ -85,15 +86,15 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
 
    include 'mpif.h'
 
-   integer, intent(in)              :: ld_s, comm_s, ld_t, comm_t, nvr, nvc, nblk
-   DATATYPE*BYTESIZE, intent(in)    :: vmat_s(ld_s,nvc)
-   DATATYPE*BYTESIZE, intent(inout) :: vmat_t(ld_t,nvc)
+   integer(kind=ik), intent(in)              :: ld_s, comm_s, ld_t, comm_t, nvr, nvc, nblk
+   DATATYPE, intent(in)                      :: vmat_s(ld_s,nvc)
+   DATATYPE, intent(inout)                   :: vmat_t(ld_t,nvc)
 
-   DATATYPE*BYTESIZE, allocatable   :: aux1(:), aux2(:)
-   integer                          :: myps, mypt, nps, npt
-   integer                          :: n, lc, k, i, ips, ipt, ns, nl, mpierr
-   integer                          :: lcm_s_t, nblks_tot
-   integer                          :: auxstride, tylerk, error_unit
+   DATATYPE, allocatable                     :: aux1(:), aux2(:)
+   integer(kind=ik)                          :: myps, mypt, nps, npt
+   integer(kind=ik)                          :: n, lc, k, i, ips, ipt, ns, nl, mpierr
+   integer(kind=ik)                          :: lcm_s_t, nblks_tot
+   integer(kind=ik)                          :: auxstride, tylerk, error_unit
 
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)

@@ -61,15 +61,15 @@ module real_generic_simple_kernel
   public double_hh_trafo_generic_simple
 contains
   subroutine double_hh_trafo_generic_simple(q, hh, nb, nq, ldq, ldh)
-
+    use precision
     implicit none
 
-    integer, intent(in) :: nb, nq, ldq, ldh
-    real*8, intent(inout) :: q(ldq,*)
-    real*8, intent(in) :: hh(ldh,*)
+    integer(kind=ik), intent(in) :: nb, nq, ldq, ldh
+    real(kind=rk), intent(inout) :: q(ldq,*)
+    real(kind=rk), intent(in)    :: hh(ldh,*)
 
-    real*8 s, h1, h2, tau1, tau2, x(nq), y(nq)
-    integer i
+    real(kind=rk)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
+    integer(kind=ik)             :: i
 
     ! Calculate dot product of the two Householder vectors
 
