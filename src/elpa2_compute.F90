@@ -9013,7 +9013,7 @@ end subroutine
 
     end subroutine
 
-    subroutine band_band_real(na, nb, nb2, ab, ab2, d, e, mpi_comm)
+    subroutine band_band_real(na, nb, nbCol, nb2, nb2Col, ab, ab2, d, e, mpi_comm)
 
     !-------------------------------------------------------------------------------
     ! band_band_real:
@@ -9049,9 +9049,9 @@ end subroutine
       use precision
       implicit none
 
-      integer(kind=ik), intent(in)  :: na, nb, nb2, mpi_comm
-      real(kind=rk), intent(inout)  :: ab(2*nb,*)
-      real(kind=rk), intent(inout)  :: ab2(2*nb2,*)
+      integer(kind=ik), intent(in)  :: na, nb, nbCol, nb2, nb2Col, mpi_comm
+      real(kind=rk), intent(inout)  :: ab(2*nb,nbCol)
+      real(kind=rk), intent(inout)  :: ab2(2*nb2,nb2Col)
       real(kind=rk), intent(out)    :: d(na), e(na) ! set only on PE 0
 
       real(kind=rk)                 :: hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), &
@@ -9077,6 +9077,23 @@ end subroutine
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("band_band_real")
 #endif
+      if (na .lt. 2*nb) then
+        print *,"na lt 2*nb ",na,2*nb
+        stop
+      endif
+      if (na .lt. 2*nb2) then
+        print *,"na lt 2*nb2 ",na,2*nb2
+        stop
+      endif
+      if (na .lt. nbCol) then
+        print *,"na lt nbCol ",na,nbCol
+        stop
+      endif
+      if (na .lt. nb2Col) then
+        print *,"na lt nb2Col ",na,nb2Col
+        stop
+      endif
+
       call mpi_comm_rank(mpi_comm,my_pe,mpierr)
       call mpi_comm_size(mpi_comm,n_pes,mpierr)
 

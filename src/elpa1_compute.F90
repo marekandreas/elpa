@@ -616,7 +616,8 @@ module ELPA1_compute
 
     end subroutine trans_ev_real
 
-    subroutine mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
+    subroutine mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
+                              mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
 
     !-------------------------------------------------------------------------------
     !  mult_at_b_real:  Performs C := A**T * B
@@ -649,8 +650,10 @@ module ELPA1_compute
     !  a           Matrix A
     !
     !  lda         Leading dimension of a
+    !  ldaCols     Columns of Matrix a
     !
     !  b           Matrix B
+    !  ldbCol      Columns of Matrix b
     !
     !  ldb         Leading dimension of b
     !
@@ -663,7 +666,7 @@ module ELPA1_compute
     !  c           Matrix C
     !
     !  ldc         Leading dimension of c
-    !
+    !  ldcCol      Columns of Matrix c
     !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -673,8 +676,9 @@ module ELPA1_compute
 
       character*1                   :: uplo_a, uplo_c
 
-      integer(kind=ik)              :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-      real(kind=rk)                 :: a(lda,*), b(ldb,*), c(ldc,*)
+      integer(kind=ik), intent(in)  :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, nblk
+      integer(kind=ik)              :: ncb, mpi_comm_rows, mpi_comm_cols
+      real(kind=rk)                 :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_rows_np
@@ -690,6 +694,30 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mult_at_b_real")
 #endif
+      if (na .lt. lda) then
+        print *,"na lt lda ",na,lda
+        stop
+      endif
+      if (na .lt. ldb) then
+        print *,"na lt ldb ",na,ldb
+        stop
+      endif
+      if (na .lt. ldc) then
+        print *,"na lt ldc ",na,ldc
+        stop
+      endif
+      if (na .lt. ldaCols) then
+        print *,"na lt ldaCols ",na,ldaCols
+        stop
+      endif
+      if (na .lt. ldbCols) then
+        print *,"na lt ldbCols ",na,ldbCols
+        stop
+      endif
+      if (na .lt. ldcCols) then
+        print *,"na lt ldcCols ",na,ldcCols
+        stop
+      endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -1393,7 +1421,8 @@ module ELPA1_compute
 
     end subroutine trans_ev_complex
 
-    subroutine mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
+    subroutine mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
+                                 mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
 
     !-------------------------------------------------------------------------------
     !  mult_ah_b_complex:  Performs C := A**H * B
@@ -1426,10 +1455,12 @@ module ELPA1_compute
     !  a           Matrix A
     !
     !  lda         Leading dimension of a
+    !  ldaCols     Columns of Matrix a
     !
     !  b           Matrix B
     !
     !  ldb         Leading dimension of b
+    !  ldbCols     Columns of Matrix b
     !
     !  nblk        blocksize of cyclic distribution, must be the same in both directions!
     !
@@ -1440,6 +1471,7 @@ module ELPA1_compute
     !  c           Matrix C
     !
     !  ldc         Leading dimension of c
+    !  ldcCols     Columns of Matrix C
     !
     !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1449,9 +1481,9 @@ module ELPA1_compute
       implicit none
 
       character*1                   :: uplo_a, uplo_c
-
-      integer(kind=ik)              :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-      complex(kind=ck)              :: a(lda,*), b(ldb,*), c(ldc,*)
+      integer(kind=ik), intent(in)  :: lda, ldaCols, ldb, ldbCols, ldc, ldcCols
+      integer(kind=ik)              :: na, ncb, nblk, mpi_comm_rows, mpi_comm_cols
+      complex(kind=ck)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_rows_np
@@ -1467,6 +1499,31 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mult_ah_b_complex")
 #endif
+      if (na .lt. lda) then
+        print *,"na lt lda ",na,lda
+        stop
+      endif
+      if (na .lt. ldb) then
+        print *,"na lt ldb ",na,ldb
+        stop
+      endif
+      if (na .lt. ldc) then
+        print *,"na lt ldc ",na,ldc
+        stop
+      endif
+      if (na .lt. ldaCols) then
+        print *,"na lt ldaCols ",na,ldaCols
+        stop
+      endif
+      if (na .lt. ldbCols) then
+        print *,"na lt ldbCols ",na,ldbCols
+        stop
+      endif
+      if (na .lt. ldcCols) then
+        print *,"na lt ldcCols ",na,ldcCols
+        stop
+      endif
+
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
