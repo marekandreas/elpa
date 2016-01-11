@@ -1599,6 +1599,7 @@ module ELPA2_compute
       use timings
 #endif
       use precision
+      use pack_unpack_real
       implicit none
 
       integer(kind=ik), intent(in)  :: THIS_REAL_ELPA_KERNEL
@@ -1789,7 +1790,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row(row,i-limits(ip),my_thread)
+                call unpack_row_real_cpu_openmp(a, row,i-limits(ip),my_thread, stripe_count, &
+                                                thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1798,7 +1800,7 @@ module ELPA2_compute
 
 #else
               call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              call unpack_row(row,i-limits(ip))
+              call unpack_row_real_cpu(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
 #endif
             elseif (src==my_prow) then
               src_offset = src_offset+1
@@ -1810,7 +1812,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row(row,i-limits(ip),my_thread)
+                call unpack_row_real_cpu_openmp(a, row,i-limits(ip),my_thread, &
+                                                stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1818,7 +1821,7 @@ module ELPA2_compute
 #endif
 
 #else
-              call unpack_row(row,i-limits(ip))
+              call unpack_row_real_cpu(a, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
 #endif
             endif
           enddo
@@ -1856,7 +1859,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row(row,i-limits(my_prow),my_thread)
+                call unpack_row_real_cpu_openmp(a, row,i-limits(my_prow),my_thread, &
+                                                stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1865,7 +1869,7 @@ module ELPA2_compute
 
 #else
               call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              call unpack_row(row,i-limits(my_prow))
+              call unpack_row_real_cpu(a, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
 #endif
             endif
           enddo
@@ -2288,12 +2292,24 @@ module ELPA2_compute
 
              if (dst == 0) then
                do i = 1, min(na - num_blk*nblk, nblk)
-                 call pack_row(row, j*nblk+i+a_off)
+#ifdef  WITH_OPENMP
+                 call pack_row_real_cpu_openmp(a, row, j*nblk+i+a_off, stripe_width, &
+                                               stripe_count, max_threads, thread_width, l_nev)
+#else
+                 call pack_row_real_cpu(a, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+
+#endif
                  q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
                enddo
              else
                do i = 1, nblk
-                call pack_row(result_buffer(:,i,nbuf),j*nblk+i+a_off)
+#ifdef WITH_OPENMP
+                call pack_row_real_cpu_openmp(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, &
+                                              stripe_width, stripe_count, max_threads, thread_width, l_nev)
+#else
+                call pack_row_real_cpu(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+
+#endif
                enddo
                call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL8, dst, &
                                     result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
@@ -2429,100 +2445,6 @@ module ELPA2_compute
       return
 
       contains
-
-        subroutine pack_row(row, n)
-#ifdef HAVE_DETAILED_TIMINGS
-          use timings
-#endif
-          use precision
-          implicit none
-          real(kind=rk)    :: row(:)
-          integer(kind=ik) :: n, i, noff, nl
-#ifdef WITH_OPENMP
-          integer(kind=ik) :: nt
-#endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%start("pack_row")
-#endif
-
-#ifdef WITH_OPENMP
-          do nt = 1, max_threads
-            do i = 1, stripe_count
-              noff = (nt-1)*thread_width + (i-1)*stripe_width
-              nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-              if (nl<=0) exit
-              row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-            enddo
-          enddo
-#else
-          do i=1,stripe_count
-            nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-            noff = (i-1)*stripe_width
-            row(noff+1:noff+nl) = a(1:nl,n,i)
-          enddo
-#endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%stop("pack_row")
-#endif
-
-        end subroutine pack_row
-
-#ifdef WITH_OPENMP
-        subroutine unpack_row(row, n, my_thread)
-#ifdef HAVE_DETAILED_TIMINGS
-          use timings
-#endif
-          use precision
-          implicit none
-
-          ! Private variables in OMP regions (my_thread) should better be in the argument list!
-          integer(kind=ik), intent(in) :: n, my_thread
-          real(kind=rk), intent(in)    :: row(:)
-          integer(kind=ik)             :: i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%start("unpack_row")
-#endif
-          do i=1,stripe_count
-            noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-            nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-            if(nl<=0) exit
-            a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
-          enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-         call timer%stop("unpack_row")
-#endif
-
-       end subroutine unpack_row
-#else
-       subroutine unpack_row(row, n)
-#ifdef HAVE_DETAILED_TIMINGS
-         use timings
-#endif
-         use precision
-         implicit none
-
-         real(kind=rk)    :: row(:)
-         integer(kind=ik) :: n, i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-         call timer%start("unpack_row")
-#endif
-
-         do i=1,stripe_count
-           nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-           noff = (i-1)*stripe_width
-           a(1:nl,n,i) = row(noff+1:noff+nl)
-         enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-         call timer%stop("unpack_row")
-#endif
-       end subroutine unpack_row
-#endif
 
 #ifdef WITH_OPENMP
        subroutine compute_hh_trafo(off, ncols, istripe, my_thread, THIS_REAL_ELPA_KERNEL)
@@ -4115,6 +4037,7 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use pack_unpack_complex
       use precision
       implicit none
 
@@ -4315,7 +4238,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row(row,i-limits(ip),my_thread)
+                call unpack_row_complex_cpu_openmp(a, row,i-limits(ip),my_thread, &
+                                                   stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4323,7 +4247,7 @@ module ELPA2_compute
 #endif
 
 #else
-              call unpack_row(row,i-limits(ip))
+              call unpack_row_complex_cpu(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
 #endif
             elseif (src==my_prow) then
               src_offset = src_offset+1
@@ -4335,7 +4259,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row(row,i-limits(ip),my_thread)
+                call unpack_row_complex_cpu_openmp(a, row,i-limits(ip),my_thread, &
+                                                   stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4343,7 +4268,7 @@ module ELPA2_compute
 #endif
 
 #else
-              call unpack_row(row,i-limits(ip))
+              call unpack_row_complex_cpu(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
 #endif
             endif
           enddo
@@ -4385,7 +4310,8 @@ module ELPA2_compute
 #endif
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row(row,i-limits(my_prow),my_thread)
+                call unpack_row_complex_cpu_openmp(a, row,i-limits(my_prow),my_thread, &
+                                                   stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4393,7 +4319,7 @@ module ELPA2_compute
 #endif
 
 #else
-              call unpack_row(row,i-limits(my_prow))
+              call unpack_row_complex_cpu(a, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
 #endif
             endif
           enddo
@@ -4838,12 +4764,24 @@ module ELPA2_compute
 
              if (dst == 0) then
                do i = 1, min(na - num_blk*nblk, nblk)
-                 call pack_row(row, j*nblk+i+a_off)
+#ifdef WITH_OPENMP
+                 call pack_row_complex_cpu_openmp(a, row, j*nblk+i+a_off, &
+                                                  stripe_width, stripe_count, max_threads, thread_width, l_nev)
+#else
+                 call pack_row_complex_cpu(a, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+
+#endif
                  q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
                enddo
              else
                do i = 1, nblk
-                 call pack_row(result_buffer(:,i,nbuf),j*nblk+i+a_off)
+#ifdef WITH_OPENMP
+                 call pack_row_complex_cpu_openmp(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, &
+                                                  stripe_width, stripe_count, max_threads, thread_width, l_nev)
+#else
+                 call pack_row_complex_cpu(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+
+#endif
                enddo
                call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX16, dst, &
                                      result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
@@ -4982,115 +4920,6 @@ module ELPA2_compute
 #endif
        return
        contains
-
-#ifdef WITH_OPENMP
-         subroutine pack_row(row, n)
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#endif
-           use precision
-           implicit none
-           complex(kind=ck) :: row(:)
-           integer(kind=ik) :: n, i, noff, nl, nt
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%start("pack_row")
-#endif
-           do nt = 1, max_threads
-             do i = 1, stripe_count
-               noff = (nt-1)*thread_width + (i-1)*stripe_width
-               nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-               if (nl<=0) exit
-               row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-             enddo
-           enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("pack_row")
-#endif
-
-         end subroutine pack_row
-#else
-         subroutine pack_row(row, n)
-
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#endif
-           implicit none
-           complex(kind=ck) :: row(:)
-           integer(kind=ik) :: n, i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%start("unpack_row")
-#endif
-
-           do i=1,stripe_count
-             nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-             noff = (i-1)*stripe_width
-             row(noff+1:noff+nl) = a(1:nl,n,i)
-           enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("unpack_row")
-#endif
-
-         end subroutine pack_row
-#endif
-
-#ifdef WITH_OPENMP
-         subroutine unpack_row(row, n, my_thread)
-
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#endif
-           use precision
-           implicit none
-
-           ! Private variables in OMP regions (my_thread) should better be in the argument list!
-           integer(kind=ik), intent(in)  :: n, my_thread
-           complex(kind=ck), intent(in)  :: row(:)
-           integer(kind=ik)              :: i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%start("unpack_row")
-#endif
-
-           do i=1,stripe_count
-             noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-             nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-             if (nl<=0) exit
-             a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
-           enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("unpack_row")
-#endif
-         end subroutine unpack_row
-#else
-         subroutine unpack_row(row, n)
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#endif
-           use precision
-           implicit none
-
-           complex(kind=ck) :: row(:)
-           integer(kind=ik) :: n, i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%start("unpack_row")
-#endif
-           do i=1,stripe_count
-             nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-             noff = (i-1)*stripe_width
-             a(1:nl,n,i) = row(noff+1:noff+nl)
-           enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("unpack_row")
-#endif
-         end  subroutine unpack_row
-#endif
 
 #ifdef WITH_OPENMP
          subroutine compute_hh_trafo_complex(off, ncols, istripe, my_thread, THIS_COMPLEX_ELPA_KERNEL)

@@ -14,6 +14,8 @@ libelpa@SUFFIX@_la_SOURCES = src/mod_precision.f90 \
 	                     src/elpa1_compute.F90 \
 	                     src/elpa1.F90 \
 			     src/elpa2_utilities.F90 \
+			     src/mod_pack_unpack_real.F90 \
+			     src/mod_pack_unpack_complex.F90 \
 			     src/elpa2_compute.F90 \
 			     src/elpa2.F90 \
 			     src/elpa_c_interface.F90 \
