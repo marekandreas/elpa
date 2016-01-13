@@ -138,6 +138,8 @@ module ELPA1_compute
 
       integer(kind=ik)            :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)               :: a(lda,matrixCols), d(na), e(na), tau(na)
+      ! was
+      ! real a(lda,*)
 
       integer(kind=ik), parameter :: max_stored_rows = 32
 
@@ -479,6 +481,8 @@ module ELPA1_compute
 
       integer(kind=ik)           :: na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)              :: a(lda,matrixCols), q(ldq,matrixCols), tau(na)
+      ! was
+      ! real a(lda,*), q(ldq,*)
 
       integer(kind=ik)           :: max_stored_rows
 
@@ -883,6 +887,8 @@ module ELPA1_compute
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)              :: a(lda,matrixCols), tau(na)
+      ! was
+      ! complex a(lda,*)
       real(kind=rk)                 :: d(na), e(na)
 
       integer(kind=ik), parameter   :: max_stored_rows = 32
@@ -1250,6 +1256,8 @@ module ELPA1_compute
 
       integer(kind=ik)              ::  na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)              ::  a(lda,matrixCols), q(ldq,matrixCols), tau(na)
+      ! was
+      ! complex a(lda,*), q(ldq,*)
 
       integer(kind=ik)              :: max_stored_rows
 
@@ -1621,6 +1629,8 @@ module ELPA1_compute
 
       integer(kind=ik)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)                 :: d(na), e(na), q(ldq,matrixCols)
+      ! was
+      ! real q(ldq,*)
 
       integer(kind=ik)              :: i, j, n, np, nc, nev1, l_cols, l_rows
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -1845,6 +1855,8 @@ module ELPA1_compute
 
       integer(kind=ik)              :: na, nev, nqoff, ldq, nblk, matrixCols, mpi_comm_rows
       real(kind=rk)                 :: d(na), e(na), q(ldq,matrixCols)
+      ! was
+      ! real q(ldq,*)
 
       integer(kind=ik), parameter   :: min_submatrix_size = 16 ! Minimum size of the submatrices to be used
 
@@ -2118,6 +2130,8 @@ module ELPA1_compute
                                        mpi_comm_cols, npc_0, npc_n
       integer(kind=ik)              :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
       real(kind=rk)                 :: d(na), e, q(ldq,matrixCols)
+      ! was
+      ! real q(ldq,*)
 
       integer(kind=ik), parameter   :: max_strip=128
 
@@ -3252,6 +3266,8 @@ module ELPA1_compute
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)                 :: a(lda,matrixCols)
+      ! was
+      ! real a(lda, *)
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -3433,6 +3449,8 @@ module ELPA1_compute
 
        integer(kind=ik)             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
        real(kind=rk)                :: a(lda,matrixCols)
+       ! was 
+       ! real a(lda,*)
 
        integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -3569,6 +3587,8 @@ module ELPA1_compute
 
       integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)                 :: a(lda,matrixCols)
+      !was
+      ! complex a(lda,*)
 
       integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -3746,6 +3766,8 @@ module ELPA1_compute
 
        integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
        complex(kind=ck)                 :: a(lda,matrixCols)
+       ! was
+       ! complex a(lda,*)
 
        integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx

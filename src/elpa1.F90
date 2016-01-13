@@ -298,6 +298,8 @@ function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mp
 
    integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
    real(kind=rk)                 :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
+   ! was
+   ! real a(lda,*), q(ldq,*)
 
    integer(kind=ik)              :: my_prow, my_pcol, mpierr
    real(kind=rk), allocatable    :: e(:), tau(:)
@@ -397,6 +399,8 @@ function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols,
 
    integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
    complex(kind=ck)                 :: a(lda,matrixCols), q(ldq,matrixCols)
+   ! was
+   ! complex a(lda,*), q(ldq,*)
    real(kind=rk)                    :: ev(na)
 
    integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr

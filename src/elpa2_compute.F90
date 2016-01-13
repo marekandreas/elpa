@@ -138,6 +138,8 @@ module ELPA2_compute
 
       integer(kind=ik)           :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      ! was
+      ! real a(lda,*), tmat(nbw,nbw,*)
 
       integer(kind=ik)           :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)           :: l_cols, l_rows
@@ -612,6 +614,8 @@ module ELPA2_compute
       implicit none
       integer(kind=ik)  :: n, lda, ldb, comm
       real(kind=rk)     :: a(lda,ldb)
+      ! was 
+      ! real a(lda,*)
 
       integer(kind=ik)  :: i, nc, mpierr
       real(kind=rk)     :: h1(n*n), h2(n*n)
@@ -684,6 +688,8 @@ module ELPA2_compute
 
       integer(kind=ik)            :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      ! was
+      ! real a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 
       integer(kind=ik)            :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)            :: max_blocks_row, max_blocks_col, max_local_rows, &
@@ -934,6 +940,8 @@ module ELPA2_compute
 
       integer(kind=ik), intent(in)  ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
       real(kind=rk), intent(in)     :: a(lda,matrixCols)
+      ! was
+      ! real a(lda,*)
       real(kind=rk), intent(out)    :: d(na), e(na) ! set only on PE 0
       real(kind=rk), intent(out), &
           allocatable               :: hh_trans_real(:,:)
@@ -1605,6 +1613,8 @@ module ELPA2_compute
       integer(kind=ik), intent(in)  :: THIS_REAL_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)                 :: q(ldq,matrixCols)
+      ! was
+      ! real q(ldq,*)
       real(kind=rk), intent(out)    :: hh_trans_real(:,:)
       integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
 
@@ -2886,6 +2896,8 @@ module ELPA2_compute
 
       integer(kind=ik)              :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      ! was
+      ! complex a(lda,*), tmat(nbw,nbw,*)
 
       complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
@@ -3242,6 +3254,8 @@ module ELPA2_compute
 
       integer(kind=ik)              :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)              :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      ! was
+      ! complex a(lda,*),q(ldq,*),tmat(nbw,nbw,*)
 
       complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
@@ -3381,6 +3395,8 @@ module ELPA2_compute
 
       integer(kind=ik), intent(in)   ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
       complex(kind=ck), intent(in)   :: a(lda,matrixCols)
+      ! was
+      ! complex a(lda,*)
       real(kind=rk), intent(out)     :: d(na), e(na) ! set only on PE 0
       complex(kind=ck), intent(inout), &
           allocatable                :: hh_trans_complex(:,:)
@@ -4044,6 +4060,8 @@ module ELPA2_compute
       integer(kind=ik), intent(in)  :: THIS_COMPLEX_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)              :: q(ldq,matrixCols)
+      ! was
+      ! complex q(ldq,*)
       complex(kind=ck)              :: hh_trans_complex(:,:)
       integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
 
