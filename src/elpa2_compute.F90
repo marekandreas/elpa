@@ -2463,6 +2463,7 @@ module ELPA2_compute
 #endif
 
          use precision
+         use single_hh_trafo_real
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
          use real_generic_simple_kernel, only : double_hh_trafo_generic_simple
 #endif
@@ -2652,12 +2653,12 @@ module ELPA2_compute
 !#endif
 
 #ifdef WITH_OPENMP
-           if (j==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
-                                      bcast_buffer(1,off+1), nbw, nl,     &
+           if (j==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off_a_off+nbw-1,istripe,my_thread), &
+                                      bcast_buffer(1:nbw,off+1), nbw, nl,     &
                                       stripe_width)
 #else
-           if (j==1) call single_hh_trafo(a(1,1+off+a_off,istripe),           &
-                                      bcast_buffer(1,off+1), nbw, nl,     &
+           if (j==1) call single_hh_trafo_real_cpu(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe),           &
+                                      bcast_buffer(1:nbw,off+1), nbw, nl,     &
                                       stripe_width)
 #endif
 
@@ -2698,11 +2699,11 @@ module ELPA2_compute
 #endif
            enddo
 #ifdef WITH_OPENMP
-           if (jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
-                                          bcast_buffer(1,off+1), nbw, nl, stripe_width)
+           if (jj==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
+                                          bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
-           if (jj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
-                                          bcast_buffer(1,off+1), nbw, nl, stripe_width)
+           if (jj==1) call single_hh_trafo_real_cpu(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
+                                          bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
          endif
@@ -2755,11 +2756,11 @@ module ELPA2_compute
 #endif
            enddo
 #ifdef WITH_OPENMP
-           if (jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe,my_thread), &
-                                           bcast_buffer(1,off+1), nbw, nl, stripe_width)
+           if (jjj==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
+                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
-           if (jjj==1) call single_hh_trafo(a(1,1+off+a_off,istripe), &
-                                           bcast_buffer(1,off+1), nbw, nl, stripe_width)
+           if (jjj==1) call single_hh_trafo_real_cpu(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
+                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
          endif
