@@ -1,5 +1,5 @@
 module pack_unpack_real
-
+#include "config-f90.h"
   implicit none
 
 #ifdef WITH_OPENMP
