@@ -143,6 +143,8 @@ module ELPA2_compute
 
       integer(kind=ik)           :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      ! was
+      ! real a(lda,*), tmat(nbw,nbw,*)
       real(kind=rk)              :: eps
       logical, intent(in)        :: useGPU
       integer(kind=ik)           :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -625,9 +627,7 @@ module ELPA2_compute
          else
            if (l_rows>0) &
              call dsyrk('U','T',n_cols,l_rows,1.d0,vmrCPU,ubound(vmrCPU,dim=1),0.d0,vav,ubound(vav,dim=1))
-
          endif
-
          call symm_matrix_allreduce(n_cols,vav, nbw, nbw,mpi_comm_rows)
 
          ! Calculate triangular matrix T for block Householder Transformation
@@ -1238,6 +1238,8 @@ module ELPA2_compute
 
       integer(kind=ik)            :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      ! was
+      ! real a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 
       integer(kind=ik)            :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)            :: max_blocks_row, max_blocks_col, max_local_rows, &
@@ -1689,6 +1691,8 @@ module ELPA2_compute
 
       integer(kind=ik), intent(in)  ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
       real(kind=rk), intent(in)     :: a(lda,matrixCols)
+      ! was
+      ! real a(lda,*)
       real(kind=rk), intent(out)    :: d(na), e(na) ! set only on PE 0
       real(kind=rk), intent(out), &
           allocatable               :: hh_trans_real(:,:)
@@ -2470,12 +2474,16 @@ module ELPA2_compute
 #endif
       use cuda_functions
       use precision
+      use pack_unpack_real
+      use compute_hh_trafo_real
       implicit none
       logical, intent(in) :: useGPU
 
       integer(kind=ik), intent(in)  :: THIS_REAL_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)                 :: q(ldq,matrixCols)
+      ! was
+      ! real q(ldq,*)
       real(kind=rk), intent(out)    :: hh_trans_real(:,:)
       integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
 
@@ -2776,7 +2784,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row_real_cpu_openmp(row,i-limits(ip),my_thread)
+                call unpack_row_real_cpu_openmp(a, row,i-limits(ip),my_thread, stripe_count, &
+                                                thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -2791,7 +2800,7 @@ module ELPA2_compute
                 call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
               else
                 call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-                call unpack_row_real_cpu(row,i-limits(ip))
+                call unpack_row_real_cpu(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
               endif
 
 #endif /* WITH_OPENMP */
@@ -2812,7 +2821,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row_real_cpu_openmp(row,i-limits(ip),my_thread)
+                call unpack_row_real_cpu_openmp(a, row,i-limits(ip),my_thread, &
+                                                stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -2820,13 +2830,12 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
                 call unpack_and_prepare_row_group_real_gpu(i - limits(ip), .false.)
                 row_group(:, row_group_size) = q(src_offset, 1:l_nev)
               else
-                call unpack_row_real_cpu(row,i-limits(ip))
+                call unpack_row_real_cpu(a, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
               endif
 #endif /* WITH_OPENMP */
             endif
@@ -2869,7 +2878,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row_real_cpu_openmp(row,i-limits(my_prow),my_thread)
+                call unpack_row_real_cpu_openmp(a, row,i-limits(my_prow),my_thread, &
+                                                stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -2877,14 +2887,13 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
                 call unpack_and_prepare_row_group_real_gpu(i - limits(my_prow), .false.)
                 call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
               else
                 call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-                call unpack_row_real_cpu(row,i-limits(my_prow))
+                call unpack_row_real_cpu(a, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
               endif
 
 #endif /* WITH_OPENMP */
@@ -3083,7 +3092,6 @@ module ELPA2_compute
       endif ! useGPU
 
       current_tv_off = 0 ! Offset of next row to be broadcast
-
 
        ! ------------------- start of work loop -------------------
 
@@ -3300,8 +3308,10 @@ module ELPA2_compute
                a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
              endif
-             call compute_hh_trafo_real(0, current_local_n, i, my_thread, &
-                                      THIS_REAL_ELPA_KERNEL)
+                call compute_hh_trafo_real_cpu_openmp(a,stripe_width,a_dim2,stripe_count, max_threads,                    &
+                                                      a_off, nbw, max_blk_size, bcast_buffer,  kernel_flops, kernel_time, &
+                                                      0, current_local_n, i, my_thread,                                   &
+                                                      THIS_REAL_ELPA_KERNEL)
            enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3309,8 +3319,10 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-           call compute_hh_trafo_real(0, current_local_n, i, &
-                                      THIS_REAL_ELPA_KERNEL)
+           call compute_hh_trafo_real_cpu(a, stripe_width,a_dim2,stripe_count,                                 &
+                                          a_off,  nbw, max_blk_size, bcast_buffer,  kernel_flops, kernel_time, &
+                                          0, current_local_n, i,                                               &
+                                          last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #endif /* WITH_OPENMP */
 
            !send_b
@@ -3365,8 +3377,10 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
-          call compute_hh_trafo_real(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
-                                     THIS_REAL_ELPA_KERNEL)
+          call compute_hh_trafo_real_cpu_openmp(a, stripe_width,a_dim2,stripe_count, max_threads,                     &
+                                                a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time,   &
+                                                current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
+                                                THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3384,8 +3398,10 @@ module ELPA2_compute
                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
         endif
 #else /* WITH_OPENMP */
-        call compute_hh_trafo_real(current_local_n - bottom_msg_length, bottom_msg_length, i, &
-                                      THIS_REAL_ELPA_KERNEL)
+        call compute_hh_trafo_real_cpu(a, stripe_width,a_dim2,stripe_count,                                &
+                                       a_off,  nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
+                                       current_local_n - bottom_msg_length, bottom_msg_length, i,          &
+                                       last_stripe_width, THIS_REAL_ELPA_KERNEL)
 
         !send_b
         call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
@@ -3421,8 +3437,10 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
         do my_thread = 1, max_threads
-          call compute_hh_trafo_real(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
-                                THIS_REAL_ELPA_KERNEL)
+          call compute_hh_trafo_real_cpu_openmp(a,stripe_width,a_dim2,stripe_count, max_threads,                                &
+                                                a_off,  nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,             &
+                                                top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
+                                                THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3430,9 +3448,10 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-        call compute_hh_trafo_real(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
-                              THIS_REAL_ELPA_KERNEL)
-
+        call compute_hh_trafo_real_cpu(a, stripe_width,a_dim2,stripe_count,                                 &
+                                       a_off,  nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
+                                       top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
+                                       last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #endif /* WITH_OPENMP */
 
         !wait_t
@@ -3480,7 +3499,9 @@ module ELPA2_compute
             a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
               reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
           endif
-          call compute_hh_trafo_real(0, top_msg_length, i, my_thread, THIS_REAL_ELPA_KERNEL)
+          call compute_hh_trafo_real_cpu_openmp(a, stripe_width,a_dim2,stripe_count, max_threads,                   &
+                                                a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time, &
+                                                0, top_msg_length, i, my_thread, THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3488,7 +3509,10 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-        call compute_hh_trafo_real(0, top_msg_length, i, THIS_REAL_ELPA_KERNEL)
+        call compute_hh_trafo_real_cpu(a, stripe_width,a_dim2,stripe_count,                                 &
+                                       a_off, nbw, max_blk_size,  bcast_buffer,  kernel_flops, kernel_time, &
+                                       0, top_msg_length, i,                                                &
+                                       last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #endif /* WITH_OPENMP */
       endif
 
@@ -3637,7 +3661,7 @@ module ELPA2_compute
               call pack_row_group_real_gpu(result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
             else
               do i = 1, nblk
-                call pack_row_real_cpu(result_buffer(:,i,nbuf),j*nblk+i+a_off)
+                call pack_row_real_cpu(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
               enddo
             endif
             call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL8, dst, &
@@ -3941,102 +3965,6 @@ module ELPA2_compute
    return
       contains
 
-        subroutine pack_row_real_cpu(row, n)
-#ifdef HAVE_DETAILED_TIMINGS
-          use timings
-#endif
-          use precision
-          implicit none
-          real(kind=rk)    :: row(:)
-          integer(kind=ik) :: n, i, noff, nl
-#ifdef WITH_OPENMP
-          integer(kind=ik) :: nt
-#endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%start("pack_row_real_cpu")
-#endif
-
-#ifdef WITH_OPENMP
-          do nt = 1, max_threads
-            do i = 1, stripe_count
-              noff = (nt-1)*thread_width + (i-1)*stripe_width
-              nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-              if (nl<=0) exit
-              row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-            enddo
-          enddo
-#else
-          do i=1,stripe_count
-            nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-            noff = (i-1)*stripe_width
-            row(noff+1:noff+nl) = a(1:nl,n,i)
-          enddo
-#endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%stop("pack_row_real_cpu")
-#endif
-
-        end subroutine pack_row_real_cpu
-
-#ifdef WITH_OPENMP
-        subroutine unpack_row_real_cpu_openmp(row, n, my_thread)
-#ifdef HAVE_DETAILED_TIMINGS
-          use timings
-#endif
-          use precision
-          implicit none
-
-          ! Private variables in OMP regions (my_thread) should better be in the argument list!
-          integer(kind=ik), intent(in) :: n, my_thread
-          real(kind=rk), intent(in)    :: row(:)
-          integer(kind=ik)             :: i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%start("unpack_row_real_cpu_openmp")
-#endif
-          do i=1,stripe_count
-            noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-            nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-            if(nl<=0) exit
-            a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
-          enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%stop("unpack_row_real_cpu_openmp")
-#endif
-
-        end subroutine unpack_row_real_cpu_openmp
-
-#else /* WITH_OPENMP */
-
-        subroutine unpack_row_real_cpu(row, n)
-#ifdef HAVE_DETAILED_TIMINGS
-          use timings
-#endif
-         use precision
-         implicit none
-
-         real(kind=rk)    :: row(:)
-         integer(kind=ik) :: n, i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%start("unpack_row_real_cpu")
-#endif
-
-          do i=1,stripe_count
-            nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-            noff = (i-1)*stripe_width
-            a(1:nl,n,i) = row(noff+1:noff+nl)
-          enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%stop("unpack_row_real_cpu")
-#endif
-        end subroutine unpack_row_real_cpu
-#endif /* WITH_OPENMP */
-
         ! Pack a filled row group (i.e. an array of consecutive rows)
         subroutine pack_row_group_real_gpu(rows, n_offset, row_count)
           use cuda_c_kernel
@@ -4197,396 +4125,7 @@ module ELPA2_compute
             ! - "compute_hh_trafo_kernel" is the Fortran equivalent of the C kernel
             ! - "compute_hh_trafo_single_kernel" is the reference Fortran kernel
 
-#ifdef WITH_OPENMP
-        subroutine compute_hh_trafo_real_openmp(off, ncols, istripe, my_thread, THIS_REAL_ELPA_KERNEL)
-#else
-        subroutine compute_hh_trafo_real(off, ncols, istripe, THIS_REAL_ELPA_KERNEL)
-#endif
-
-         use precision
-#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
-          use real_generic_simple_kernel, only : double_hh_trafo_generic_simple
-#endif
-
-!#if defined(WITH_REAL_GENERIC_KERNEL)
-!         use real_generic_kernel, only : double_hh_trafo_generic
-!#endif
-
-#if defined(WITH_REAL_BGP_KERNEL)
-          use real_bgp_kernel, only : double_hh_trafo_bgp
-#endif
-
-#if defined(WITH_REAL_BGQ_KERNEL)
-          use real_bgq_kernel, only : double_hh_trafo_bgq
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
-          use timings
-#endif
-          use cuda_c_kernel
-          implicit none
-
-         integer(kind=ik), intent(in) :: THIS_REAL_ELPA_KERNEL
-
-         ! Private variables in OMP regions (my_thread) should better be in the argument list!
-         integer(kind=ik)             :: off, ncols, istripe
-#ifdef WITH_OPENMP
-         integer(kind=ik)             :: my_thread, noff
-#endif
-         integer(kind=ik)             :: j, nl, jj, jjj
-         real(kind=rk)                :: w(nbw,6), ttt
-
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-           ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
-           if (ncols < 1) return
-         endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
-          call timer%start("compute_hh_trafo_real_openmp")
-#else
-          call timer%start("compute_hh_trafo_real")
-#endif
-#endif
-
-          ttt = mpi_wtime()
-
-#ifndef WITH_OPENMP
-          nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
-#else
-          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-            print *,"compute_hh_trafo_real: not yet implemented"
-            stop
-          endif
-
-          if (istripe<stripe_count) then
-            nl = stripe_width
-          else
-            noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
-            nl = min(my_thread*thread_width-noff, l_nev-noff)
-            if (nl<=0) return
-          endif
-#endif
-          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-            dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_real_datatype
-            call launch_compute_hh_trafo_c_kernel_real(a_dev + dev_offset, bcast_buffer_dev, hh_dot_dev, &
-                                                  hh_tau_dev, nl, nbw, stripe_width, off, ncols)
-          else ! not CUDA kernel
-
-
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
-              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
-              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
-              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE .or.        &
-              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP .or.        &
-              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-
-              !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
-#if defined(WITH_REAL_GENERIC_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-                do j = ncols, 2, -2
-                  w(:,1) = bcast_buffer(1:nbw,j+off)
-                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-                  call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe,my_thread), w, &
-                                               nbw, nl, stripe_width, nbw)
-#else
-                  call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe),           w, &
-                                               nbw, nl, stripe_width, nbw)
-#endif
-                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_GENERIC_KERNEL */
-
-
-#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-                do j = ncols, 2, -2
-                  w(:,1) = bcast_buffer(1:nbw,j+off)
-                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-                  call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe,my_thread), &
-                                                          w, nbw, nl, stripe_width, nbw)
-#else
-                  call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe), &
-                                                          w, nbw, nl, stripe_width, nbw)
-#endif
-                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_GENERIC_SIMPLE_KERNEL */
-
-
-#if defined(WITH_REAL_SSE_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-                do j = ncols, 2, -2
-                  w(:,1) = bcast_buffer(1:nbw,j+off)
-                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-                  call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
-                                      stripe_width, nbw)
-#else
-                  call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
-                                           stripe_width, nbw)
-#endif
-                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_SSE_KERNEL */
-
-
-#if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-                do j = ncols, 2, -2
-                  w(:,1) = bcast_buffer(1:nbw,j+off)
-                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-                  call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
-                                                        w, nbw, nl, stripe_width, nbw)
-#else
-                  call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
-                                                        w, nbw, nl, stripe_width, nbw)
-#endif
-                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_AVX_BLOCK2_KERNEL */
-
-#if defined(WITH_REAL_BGP_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-                do j = ncols, 2, -2
-                  w(:,1) = bcast_buffer(1:nbw,j+off)
-                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-                  call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
-                                      stripe_width, nbw)
-#else
-                  call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
-                                      stripe_width, nbw)
-#endif
-                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_BGP_KERNEL */
-
-#if defined(WITH_REAL_BGQ_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-                do j = ncols, 2, -2
-                  w(:,1) = bcast_buffer(1:nbw,j+off)
-                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-                  call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
-                                           stripe_width, nbw)
-#else
-                  call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
-                                           stripe_width, nbw)
-#endif
-                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_BGQ_KERNEL */
-
-
-!#if defined(WITH_AVX_SANDYBRIDGE)
-!             call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
-!#endif
-
-#ifdef WITH_OPENMP
-              if (j==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe,my_thread), &
-                                            bcast_buffer(1,off+1), nbw, nl,     &
-                                            stripe_width)
-#else
-              if (j==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe),           &
-                                            bcast_buffer(1,off+1), nbw, nl,     &
-                                            stripe_width)
-#endif
-
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-            endif !
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-
-
-
-#if defined(WITH_REAL_AVX_BLOCK4_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-              ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
-              do j = ncols, 4, -4
-                w(:,1) = bcast_buffer(1:nbw,j+off)
-                w(:,2) = bcast_buffer(1:nbw,j+off-1)
-                w(:,3) = bcast_buffer(1:nbw,j+off-2)
-                w(:,4) = bcast_buffer(1:nbw,j+off-3)
-#ifdef WITH_OPENMP
-                call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe,my_thread), w, &
-                                                    nbw, nl, stripe_width, nbw)
-#else
-                call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe), w, &
-                                                    nbw, nl, stripe_width, nbw)
-#endif
-             enddo
-             do jj = j, 2, -2
-               w(:,1) = bcast_buffer(1:nbw,jj+off)
-               w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-#ifdef WITH_OPENMP
-               call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe,my_thread), &
-                                                 w, nbw, nl, stripe_width, nbw)
-#else
-               call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe), &
-                                                 w, nbw, nl, stripe_width, nbw)
-#endif
-             enddo
-#ifdef WITH_OPENMP
-             if (jj==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe,my_thread), &
-                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
-#else
-             if (jj==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe), &
-                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
-#endif
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
-
-
-#if defined(WITH_REAL_AVX_BLOCK6_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-             ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
-             do j = ncols, 6, -6
-               w(:,1) = bcast_buffer(1:nbw,j+off)
-               w(:,2) = bcast_buffer(1:nbw,j+off-1)
-               w(:,3) = bcast_buffer(1:nbw,j+off-2)
-               w(:,4) = bcast_buffer(1:nbw,j+off-3)
-               w(:,5) = bcast_buffer(1:nbw,j+off-4)
-               w(:,6) = bcast_buffer(1:nbw,j+off-5)
-#ifdef WITH_OPENMP
-               call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe,my_thread), w, &
-                                               nbw, nl, stripe_width, nbw)
-#else
-               call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe), w, &
-                                               nbw, nl, stripe_width, nbw)
-#endif
-             enddo
-             do jj = j, 4, -4
-               w(:,1) = bcast_buffer(1:nbw,jj+off)
-               w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-               w(:,3) = bcast_buffer(1:nbw,jj+off-2)
-               w(:,4) = bcast_buffer(1:nbw,jj+off-3)
-#ifdef WITH_OPENMP
-               call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe,my_thread), w, &
-                                               nbw, nl, stripe_width, nbw)
-#else
-               call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe), w, &
-                                               nbw, nl, stripe_width, nbw)
-#endif
-             enddo
-             do jjj = jj, 2, -2
-               w(:,1) = bcast_buffer(1:nbw,jjj+off)
-               w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
-#ifdef WITH_OPENMP
-               call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe,my_thread), &
-                                                w, nbw, nl, stripe_width, nbw)
-#else
-               call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe), &
-                                               w, nbw, nl, stripe_width, nbw)
-#endif
-             enddo
-#ifdef WITH_OPENMP
-             if (jjj==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe,my_thread), &
-                                             bcast_buffer(1,off+1), nbw, nl, stripe_width)
-#else
-             if (jjj==1) call single_hh_trafo_real(a(1,1+off+a_off,istripe), &
-                                             bcast_buffer(1,off+1), nbw, nl, stripe_width)
-#endif
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
-
-         endif ! GPU
-
-#ifdef WITH_OPENMP
-         if (my_thread==1) then
-#endif
-           kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
-           kernel_time = kernel_time + mpi_wtime()-ttt
-#ifdef WITH_OPENMP
-        endif
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
-        call timer%stop("compute_hh_trafo_real")
-#else
-        call timer%stop("compute_hh_trafo_real_openmp")
-#endif
-#endif
-
-      end subroutine
-
     end subroutine  trans_ev_tridi_to_band_real
-
-
-    subroutine single_hh_trafo_real(q, hh, nb, nq, ldq)
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
-      use precision
-      ! Perform single real Householder transformation.
-      ! This routine is not performance critical and thus it is coded here in Fortran
-
-      implicit none
-
-      integer(kind=ik)  :: nb, nq, ldq
-      real(kind=rk)     :: q(ldq, *), hh(*) ! carefull hh is in the calling subroutine a MPI bcast_buffer(:,:) !
-
-      integer(kind=ik)  :: i
-      real(kind=rk)     :: v(nq)
-
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("single_hh_trafo_real")
-#endif
-
-      ! v = q * hh
-      v(:) = q(1:nq,1)
-      do i=2,nb
-        v(:) = v(:) + q(1:nq,i) * hh(i)
-      enddo
-
-      ! v = v * tau
-      v(:) = v(:) * hh(1)
-
-      ! q = q - v * hh**T
-      q(1:nq,1) = q(1:nq,1) - v(:)
-      do i=2,nb
-        q(1:nq,i) = q(1:nq,i) - v(:) * hh(i)
-      enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("single_hh_trafo_real")
-#endif
-    end subroutine
 
     subroutine determine_workload(na, nb, nprocs, limits)
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4668,6 +4207,8 @@ module ELPA2_compute
 
       integer(kind=ik)              :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      ! was
+      ! complex a(lda,*), tmat(nbw,nbw,*)
 
       complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
@@ -5473,7 +5014,8 @@ module ELPA2_compute
        logical, intent(in)           :: useGPU
        integer(kind=ik)              :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
        complex(kind=ck)              :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
-
+      ! was
+      ! complex a(lda,*),q(ldq,*),tmat(nbw,nbw,*)
 
        complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
@@ -5814,6 +5356,8 @@ module ELPA2_compute
 
       integer(kind=ik), intent(in)   ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
       complex(kind=ck), intent(in)   :: a(lda,matrixCols)
+      ! was
+      ! complex a(lda,*)
       real(kind=rk), intent(out)     :: d(na), e(na) ! set only on PE 0
       complex(kind=ck), intent(inout), &
           allocatable                :: hh_trans_complex(:,:)
@@ -6788,6 +6332,8 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+      use pack_unpack_complex
+      use compute_hh_trafo_complex
       use precision
       use cuda_functions
       implicit none
@@ -6796,6 +6342,8 @@ module ELPA2_compute
       integer(kind=ik), intent(in)  :: THIS_COMPLEX_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)              :: q(ldq,matrixCols)
+      ! was
+      ! complex q(ldq,*)
       complex(kind=ck)              :: hh_trans_complex(:,:)
       integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
       integer(kind=ik)              :: tmp
@@ -7175,7 +6723,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row_complex_cpu_openmp(row,i-limits(ip),my_thread)
+                call unpack_row_complex_cpu_openmp(a, row,i-limits(ip),my_thread, &
+                                                   stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -7185,7 +6734,7 @@ module ELPA2_compute
 #else /* WITH_OPENMP */
 
               if (.not.(useGPU)) then
-                call unpack_row_complex_cpu(row,i-limits(ip))
+                call unpack_row_complex_cpu(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
               endif
 
 #endif /* WITH_OPENMP */
@@ -7206,7 +6755,8 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row_complex_cpu_openmp(row,i-limits(ip),my_thread)
+                call unpack_row_complex_cpu_openmp(a, row,i-limits(ip),my_thread, &
+                                                   stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -7216,7 +6766,7 @@ module ELPA2_compute
 #else /* WITH_OPENMP */
 
               if (.not.(useGPU)) then
-                call unpack_row_complex_cpu(row,i-limits(ip))
+                call unpack_row_complex_cpu(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
               endif
 
 #endif /* WITH_OPENMP */
@@ -7278,7 +6828,8 @@ module ELPA2_compute
 #endif
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row_complex_cpu_openmp(row,i-limits(my_prow),my_thread)
+                call unpack_row_complex_cpu_openmp(a, row,i-limits(my_prow),my_thread, &
+                                                   stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -7288,7 +6839,7 @@ module ELPA2_compute
 #else /* WITH_OPENMP */
 
               if (.not.(useGPU)) then
-                call unpack_row_complex_cpu(row,i-limits(my_prow))
+                call unpack_row_complex_cpu(a, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
               endif
 
 #endif /* WITH_OPENMP */
@@ -7788,8 +7339,10 @@ module ELPA2_compute
                     a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                              reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                   endif
-                  call compute_hh_trafo_complex_cpu_openmp(0, current_local_n, i, my_thread, &
-                                       THIS_COMPLEX_ELPA_KERNEL)
+                  call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,                &
+                                                           a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
+                                                           0, current_local_n, i, my_thread,                                  &
+                                                           THIS_COMPLEX_ELPA_KERNEL)
                 enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -7802,8 +7355,10 @@ module ELPA2_compute
                   call compute_hh_trafo_complex_gpu(0, current_local_n, i, a_off, dev_offset, dev_offset_1, dev_offset_2)
 !                call compute_hh_trafo_complex_gpu(0, current_local_n, i)
                 else
-                  call compute_hh_trafo_complex_cpu(0, current_local_n, i, &
-                                                THIS_COMPLEX_ELPA_KERNEL)
+                  call compute_hh_trafo_complex_cpu(a, stripe_width, a_dim2, stripe_count,                             &
+                                                    a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
+                                                    0, current_local_n, i, last_stripe_width,                          &
+                                                    THIS_COMPLEX_ELPA_KERNEL)
                 endif
 
 #endif /* WITH_OPENMP */
@@ -7880,8 +7435,10 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
               do my_thread = 1, max_threads
-                call compute_hh_trafo_complex_cpu_openmp(current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
-                                      THIS_COMPLEX_ELPA_KERNEL)
+                call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,                   &
+                                                         a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,    &
+                                                         current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
+                                                         THIS_COMPLEX_ELPA_KERNEL)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -7895,8 +7452,10 @@ module ELPA2_compute
                                                   dev_offset, dev_offset_1, dev_offset_2)
 !              call compute_hh_trafo_complex_gpu(current_local_n -bottom_msg_length, bottom_msg_length, i)
               else
-                call compute_hh_trafo_complex_cpu(current_local_n - bottom_msg_length, bottom_msg_length, i, &
-                                              THIS_COMPLEX_ELPA_KERNEL)
+                call compute_hh_trafo_complex_cpu(a, stripe_width, a_dim2, stripe_count,                             &
+                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
+                                                  current_local_n - bottom_msg_length, bottom_msg_length, i,         &
+                                                  last_stripe_width, THIS_COMPLEX_ELPA_KERNEL)
 
               endif
 
@@ -7972,8 +7531,11 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call compute_hh_trafo_complex_cpu_openmp(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
-                                      THIS_COMPLEX_ELPA_KERNEL)
+                call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,    &
+                                                         a_off, nbw, max_blk_size, bcast_buffer, kernel_flops,  &
+                                                         kernel_time, top_msg_length,                           &
+                                                         current_local_n-top_msg_length-bottom_msg_length, i,   &
+                                                         my_thread,  THIS_COMPLEX_ELPA_KERNEL)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -7988,8 +7550,10 @@ module ELPA2_compute
                 call compute_hh_trafo_complex_gpu(top_msg_length,current_local_n-top_msg_length-bottom_msg_length, i, a_off, &
                                                   dev_offset, dev_offset_1, dev_offset_2)
               else
-                call compute_hh_trafo_complex_cpu(top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
-                                              THIS_COMPLEX_ELPA_KERNEL)
+               call compute_hh_trafo_complex_cpu(a, stripe_width, a_dim2, stripe_count,                               &
+                                                 a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,   &
+                                                 top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
+                                                 last_stripe_width, THIS_COMPLEX_ELPA_KERNEL)
               endif
 
 #endif /* WITH_OPENMP */
@@ -8042,8 +7606,10 @@ module ELPA2_compute
                   a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                 endif
-                call compute_hh_trafo_complex_cpu_openmp(0, top_msg_length, i, my_thread, &
-                                      THIS_COMPLEX_ELPA_KERNEL)
+                call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,                &
+                                                         a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
+                                                         0, top_msg_length, i, my_thread,                                   &
+                                                         THIS_COMPLEX_ELPA_KERNEL)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -8056,7 +7622,9 @@ module ELPA2_compute
                 call compute_hh_trafo_complex_gpu(0, top_msg_length, i, a_off, dev_offset, dev_offset_1, dev_offset_2)
 !              call compute_hh_trafo_complex_gpu(0, top_msg_length, i)
               else
-                call compute_hh_trafo_complex_cpu(0, top_msg_length, i, &
+                call compute_hh_trafo_complex_cpu(a, stripe_width, a_dim2, stripe_count,                              &
+                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
+                                                  0, top_msg_length, i, last_stripe_width,                            &
                                                   THIS_COMPLEX_ELPA_KERNEL)
               endif
 
@@ -8216,7 +7784,7 @@ module ELPA2_compute
                 call pack_row_group_complex_gpu(result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
               else
                 do i = 1, nblk
-                  call pack_row_complex_cpu(result_buffer(:,i,nbuf),j*nblk+i+a_off)
+                  call pack_row_complex_cpu(a, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
                 enddo
               endif
 
@@ -8516,308 +8084,7 @@ module ELPA2_compute
         call timer%stop("trans_ev_tridi_to_band_complex")
 #endif
        return
-
        contains
-
-#ifdef WITH_OPENMP
-         subroutine pack_row_complex_cpu_openmp(row, n)
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#endif
-           use precision
-           implicit none
-           complex(kind=ck) :: row(:)
-           integer(kind=ik) :: n, i, noff, nl, nt
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%start("pack_row_complex_openmp")
-#endif
-           do nt = 1, max_threads
-             do i = 1, stripe_count
-               noff = (nt-1)*thread_width + (i-1)*stripe_width
-               nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-               if (nl<=0) exit
-               row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-             enddo
-           enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("pack_row_complex_openmp")
-#endif
-
-         end subroutine pack_row_complex_cpu_openmp
-#else /* WITH_OPENMP */
-
-         subroutine pack_row_complex_cpu(row, n)
-
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#endif
-           implicit none
-           complex(kind=ck) :: row(:)
-           integer(kind=ik) :: n, i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%start("unpack_row_complex_cpu")
-#endif
-
-           do i=1,stripe_count
-             nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-             noff = (i-1)*stripe_width
-             row(noff+1:noff+nl) = a(1:nl,n,i)
-           enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("unpack_row_complex_cpu")
-#endif
-         end subroutine pack_row_complex_cpu
-#endif /* WITH_OPENMP */
-
-#ifdef WITH_OPENMP
-         subroutine unpack_row_complex_cpu_openmp(row, n, my_thread)
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#endif
-           use precision
-           implicit none
-
-           ! Private variables in OMP regions (my_thread) should better be in the argument list!
-           integer(kind=ik), intent(in)  :: n, my_thread
-           complex(kind=ck), intent(in)  :: row(:)
-           integer(kind=ik)              :: i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%start("unpack_row_complex_cpu_openmp")
-#endif
-
-           do i=1,stripe_count
-             noff = (my_thread-1)*thread_width + (i-1)*stripe_width
-             nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
-             if (nl<=0) exit
-             a(1:nl,n,i,my_thread) = row(noff+1:noff+nl)
-           enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("unpack_row_complex_cpu_openmp")
-#endif
-         end subroutine unpack_row_complex_cpu_openmp
-#else /* WITH_OPENMP */
-
-         subroutine unpack_row_complex_cpu(row, n)
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#endif
-           use precision
-           implicit none
-
-           complex(kind=ck) :: row(:)
-           integer(kind=ik) :: n, i, noff, nl
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%start("unpack_row_complex_cpu")
-#endif
-           do i=1,stripe_count
-             nl = merge(stripe_width, last_stripe_width, i<stripe_count)
-             noff = (i-1)*stripe_width
-             a(1:nl,n,i) = row(noff+1:noff+nl)
-           enddo
-
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("unpack_row_complex_cpu")
-#endif
-
-         end  subroutine unpack_row_complex_cpu
-#endif /* WITH_OPENMP */
-
-#ifdef WITH_OPENMP
-         subroutine compute_hh_trafo_complex_cpu_openmp(off, ncols, istripe, my_thread, THIS_COMPLEX_ELPA_KERNEL)
-#else
-         subroutine compute_hh_trafo_complex_cpu(off, ncols, istripe, THIS_COMPLEX_ELPA_KERNEL)
-#endif
-           use precision
-#if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
-           use complex_generic_simple_kernel, only : single_hh_trafo_complex_generic_simple
-#endif
-#if defined(WITH_COMPLEX_GENERIC_KERNEL)
-           use complex_generic_kernel, only : single_hh_trafo_complex_generic
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#endif
-           implicit none
-           integer(kind=ik), intent(in) :: THIS_COMPLEX_ELPA_KERNEL
-
-           ! Private variables in OMP regions (my_thread) should better be in the argument list!
-
-           integer(kind=ik)             :: off, ncols, istripe, j, nl, jj
-#ifdef WITH_OPENMP
-           integer(kind=ik)             :: my_thread, noff
-#endif
-           real(kind=rk)                :: ttt
-
-           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-           !        Currently (on Sandy Bridge), single is faster than double
-           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-           complex(kind=ck)             :: w(nbw,2)
-
-#ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
-          call timer%start("compute_hh_trafo_complex_cpu_openmp")
-#else
-          call timer%start("compute_hh_trafo_complex_cpu")
-
-#endif
-#endif
-
-#ifdef WITH_OPENMP
-           if (istripe<stripe_count) then
-             nl = stripe_width
-           else
-             noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
-             nl = min(my_thread*thread_width-noff, l_nev-noff)
-             if(nl<=0) return
-           endif
-#else
-           nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
-#endif
-
-#if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) then
-#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-             ttt = mpi_wtime()
-             do j = ncols, 2, -2
-               w(:,1) = bcast_buffer(1:nbw,j+off)
-               w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
-               call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
-                                                       w, nbw, nl, stripe_width, nbw)
-#else
-               call double_hh_trafo_complex_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
-                                                       w, nbw, nl, stripe_width, nbw)
-#endif
-             enddo
-#ifdef WITH_OPENMP
-             if (j==1) call single_hh_trafo_complex_sse_avx_1hv(a(1,1+off+a_off,istripe,my_thread), &
-                                                             bcast_buffer(1,off+1), nbw, nl, stripe_width)
-#else
-             if (j==1) call single_hh_trafo_complex_sse_avx_1hv(a(1,1+off+a_off,istripe), &
-                                                             bcast_buffer(1,off+1), nbw, nl, stripe_width)
-#endif
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif
-#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL */
-
-
-#if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-          ttt = mpi_wtime()
-          do j = ncols, 1, -1
-#ifdef WITH_OPENMP
-            call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe,my_thread), &
-                                                          bcast_buffer(1,j+off),nbw,nl,stripe_width)
-#else
-            call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe), &
-                                                          bcast_buffer(1,j+off),nbw,nl,stripe_width)
-#endif
-          enddo
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-        endif
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_GENERIC_SIMPLE_KERNEL */
-
-#if defined(WITH_COMPLEX_GENERIC_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC .or. &
-            THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGP .or. &
-            THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGQ ) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-          ttt = mpi_wtime()
-          do j = ncols, 1, -1
-#ifdef WITH_OPENMP
-            call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe,my_thread), &
-                                                   bcast_buffer(1,j+off),nbw,nl,stripe_width)
-#else
-            call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe), &
-                                                   bcast_buffer(1,j+off),nbw,nl,stripe_width)
-#endif
-          enddo
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-        endif
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_GENERIC_KERNEL */
-
-
-#if defined(WITH_COMPLEX_SSE_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-          ttt = mpi_wtime()
-          do j = ncols, 1, -1
-#ifdef WITH_OPENMP
-            call single_hh_trafo_complex(a(1,j+off+a_off,istripe,my_thread), &
-                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
-#else
-            call single_hh_trafo_complex(a(1,j+off+a_off,istripe), &
-                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
-#endif
-          enddo
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-        endif
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_SSE_KERNEL */
-
-
-!#if defined(WITH_AVX_SANDYBRIDGE)
-!              call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe),bcast_buffer(1,j+off),nbw,nl,stripe_width)
-!#endif
-
-!#if defined(WITH_AMD_BULLDOZER)
-!              call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe),bcast_buffer(1,j+off),nbw,nl,stripe_width)
-!#endif
-
-#if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-        if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-          ttt = mpi_wtime()
-          do j = ncols, 1, -1
-#ifdef WITH_OPENMP
-            call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe,my_thread), &
-                                                       bcast_buffer(1,j+off),nbw,nl,stripe_width)
-#else
-            call single_hh_trafo_complex_sse_avx_1hv(a(1,j+off+a_off,istripe), &
-                                                       bcast_buffer(1,j+off),nbw,nl,stripe_width)
-#endif
-          enddo
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-        endif
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNE */
-
-#ifdef WITH_OPENMP
-        if (my_thread==1) then
-#endif
-          kernel_flops = kernel_flops + 4*4*int(nl,8)*int(ncols,8)*int(nbw,8)
-          kernel_time  = kernel_time + mpi_wtime()-ttt
-#ifdef WITH_OPENMP
-        endif
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_GPU_VERSION
-        call timer%stop("compute_hh_trafo_complex_cpu_openmp")
-#else
-        call timer%stop("compute_hh_trafo_complex_cpu")
-#endif
-#endif
-
-
-    end subroutine
-
 
     ! The host wrapper for extracting "tau" from the HH reflectors (see the
     ! kernel below)

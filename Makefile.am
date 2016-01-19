@@ -17,7 +17,12 @@ libelpa@SUFFIX@_la_SOURCES = src/mod_precision.f90 \
 			     src/check_for_gpu.F90 \
 			     src/mod_cuda.F90 \
 			     src/interface_c_kernel.F90 \
-                             src/elpa2_compute.F90 \
+			     src/mod_pack_unpack_real.F90 \
+			     src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
+			     src/mod_compute_hh_trafo_real.F90 \
+			     src/mod_compute_hh_trafo_complex.F90 \
+			     src/mod_pack_unpack_complex.F90 \
+			     src/elpa2_compute.F90 \
 			     src/elpa2.F90 \
 			     src/elpa_c_interface.F90 \
                              src/elpa_qr/qr_utils.f90 \
@@ -313,6 +318,9 @@ elpa2.i: $(top_srcdir)/src/elpa2.F90
 
 elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
+
+mod_compute_hh_trafo_real.i: $(top_srcdir)/src/mod_compute_hh_trafo_real.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo_real.F90 -o $@
 
 include doxygen.am
 
