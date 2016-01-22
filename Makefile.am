@@ -18,6 +18,7 @@ libelpa@SUFFIX@_la_SOURCES = src/mod_precision.f90 \
 			     src/mod_cuda.F90 \
 			     src/interface_c_kernel.F90 \
 			     src/mod_pack_unpack_real.F90 \
+			     src/mod_pack_unpack_real_gpu.F90 \
 			     src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
 			     src/mod_compute_hh_trafo_real.F90 \
 			     src/mod_compute_hh_trafo_complex.F90 \
