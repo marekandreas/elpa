@@ -65,6 +65,9 @@ module real_generic_simple_kernel
 contains
   subroutine double_hh_trafo_generic_simple(q, hh, nb, nq, ldq, ldh)
     use precision
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in) :: nb, nq, ldq, ldh
@@ -74,6 +77,9 @@ contains
     real(kind=rk)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
     integer(kind=ik)             :: i
 
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("kernel generic simple: double_hh_trafo_generic_simple")
+#endif
     ! Calculate dot product of the two Householder vectors
 
     s = hh(2,2)*1
@@ -115,6 +121,10 @@ contains
     enddo
 
     q(1:nq,nb+1) = q(1:nq,nb+1) + x(1:nq)*hh(nb,1)
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("kernel generic simple: double_hh_trafo_generic_simple")
+#endif
 
   end subroutine double_hh_trafo_generic_simple
 end module real_generic_simple_kernel
