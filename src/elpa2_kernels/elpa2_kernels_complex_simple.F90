@@ -71,9 +71,13 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(*)
-
+#else
+    complex(kind=ck), intent(inout) :: q(1:ldq,1:nb)
+    complex(kind=ck), intent(in)    :: hh(1:nb)
+#endif
     integer(kind=ik)                :: i
     complex(kind=ck)                :: h1, tau1, x(nq)
 
@@ -110,9 +114,13 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(ldh,*)
-
+#else
+    complex(kind=ck), intent(inout) :: q(1:ldq,1:nb+1)
+    complex(kind=ck), intent(in)    :: hh(1:ldh,1:2)
+#endif
     complex(kind=ck)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
     integer(kind=ik)                :: i
 
