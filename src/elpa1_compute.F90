@@ -2177,8 +2177,12 @@ module ELPA1_compute
 
       ! If my processor column isn't in the requested set, do nothing
 
-      if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) return
-
+      if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
       ! Determine number of "next" and "prev" column for ring sends
 
       if (my_pcol == npc_0+npc_n-1) then
@@ -2194,11 +2198,19 @@ module ELPA1_compute
       endif
 
       call check_monotony(nm,d,'Input1',wantDebug, success)
-      if (.not.(success)) return
-
+      if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
       call check_monotony(na-nm,d(nm+1),'Input2',wantDebug, success)
-      if (.not.(success)) return
-
+      if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
       ! Get global number of processors and my processor number.
       ! Please note that my_proc does not need to match any real processor number,
       ! it is just used for load balancing some loops.
@@ -2401,9 +2413,19 @@ module ELPA1_compute
 
       enddo
       call check_monotony(na1,d1,'Sorted1', wantDebug, success)
-      if (.not.(success)) return
+      if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
       call check_monotony(na2,d2,'Sorted2', wantDebug, success)
-      if (.not.(success)) return
+      if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
 
       if (na1==1 .or. na1==2) then
         ! if(my_proc==0) print *,'--- Remark solve_tridi: na1==',na1,' proc==',myid
@@ -2574,8 +2596,12 @@ module ELPA1_compute
           d(i) = tmp(idx(i))
         enddo
         call check_monotony(na,d,'Output', wantDebug, success)
-        if (.not.(success)) return
-
+        if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("merge_systems")
+#endif
+          return
+        endif
         ! Eigenvector calculations
 
 
