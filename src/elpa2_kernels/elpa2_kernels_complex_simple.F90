@@ -48,13 +48,16 @@
 ! compilers this performs better than a sophisticated version with transformed and unrolled loops.
 !
 ! It should be compiled with the highest possible optimization level.
-! 
+!
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !
 ! --------------------------------------------------------------------------------------------------
+
+#include "config-f90.h"
+
 module complex_generic_simple_kernel
 
   private
@@ -62,7 +65,9 @@ module complex_generic_simple_kernel
 contains
   subroutine single_hh_trafo_complex_generic_simple(q, hh, nb, nq, ldq)
     use precision
-
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq
@@ -72,6 +77,9 @@ contains
     integer(kind=ik)                :: i
     complex(kind=ck)                :: h1, tau1, x(nq)
 
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("kernel complex generic simple: single_hh_trafo_complex_generic_simple")
+#endif
     ! Just one Householder transformation
 
     x(1:nq) = q(1:nq,1)
@@ -88,12 +96,17 @@ contains
     do i=2,nb
        q(1:nq,i) = q(1:nq,i) + x(1:nq)*hh(i)
     enddo
-
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("kernel complex generic simple: single_hh_trafo_complex_generic_simple")
+#endif
   end subroutine single_hh_trafo_complex_generic_simple
 
   ! --------------------------------------------------------------------------------------------------
   subroutine double_hh_trafo_complex_generic_simple(q, hh, nb, nq, ldq, ldh)
     use precision
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
@@ -103,6 +116,9 @@ contains
     complex(kind=ck)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
     integer(kind=ik)                :: i
 
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("kernel complex generic simple: double_hh_trafo_complex_generic_simple")
+#endif
     ! Calculate dot product of the two Householder vectors
 
     s = conjg(hh(2,2))*1
@@ -145,6 +161,9 @@ contains
 
     q(1:nq,nb+1) = q(1:nq,nb+1) + x(1:nq)*hh(nb,1)
 
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("kernel complex generic simple: double_hh_trafo_complex_generic_simple")
+#endif
   end subroutine double_hh_trafo_complex_generic_simple
 end module complex_generic_simple_kernel
 ! --------------------------------------------------------------------------------------------------
