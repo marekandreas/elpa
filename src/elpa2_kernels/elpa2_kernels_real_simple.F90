@@ -55,6 +55,9 @@
 ! distributed along with the original code in the file "COPYING".
 !
 ! --------------------------------------------------------------------------------------------------
+
+#include "config-f90.h"
+
 module real_generic_simple_kernel
 
   private
