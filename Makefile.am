@@ -43,7 +43,7 @@ if WITH_REAL_GENERIC_KERNEL
 endif
 
 if WITH_COMPLEX_GENERIC_KERNEL
-  libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.f90
+  libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.F90
 endif
 
 if WITH_REAL_GENERIC_SIMPLE_KERNEL

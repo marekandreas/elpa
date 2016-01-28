@@ -53,6 +53,9 @@
 ! distributed along with the original code in the file "COPYING".
 !
 ! --------------------------------------------------------------------------------------------------
+
+#include "config-f90.h"
+
 module complex_generic_kernel
 
   private
