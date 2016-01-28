@@ -131,7 +131,7 @@ module compute_hh_trafo_real
 #else
                call double_hh_trafo_generic(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1, &
                                               istripe,my_thread), w(1:nbw,1:6), &
-                                            nbw, nl, stripe_width, nbw)
+                                              nbw, nl, stripe_width, nbw)
 #endif
 
 #else /* WITH_OPENMP */
@@ -141,8 +141,8 @@ module compute_hh_trafo_real
                                             nbw, nl, stripe_width, nbw)
 
 #else
-               call double_hh_trafo_generic(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw+1,istripe),w(1:nbw,1:6), &
-                                      nbw, nl, stripe_width, nbw)
+               call double_hh_trafo_generic(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1,istripe),w(1:nbw,1:6), &
+                                            nbw, nl, stripe_width, nbw)
 #endif
 #endif /* WITH_OPENMP */
 
