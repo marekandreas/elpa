@@ -2529,6 +2529,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 
       if (na <= 0) then
         limits(:) = 0
+        call timer%stop("determine_workload")
         return
       endif
 
