@@ -32,9 +32,9 @@ module compute_hh_trafo_real
          use real_generic_simple_kernel, only : double_hh_trafo_generic_simple
 #endif
 
-!#if defined(WITH_REAL_GENERIC_KERNEL)
-!        use real_generic_kernel, only : double_hh_trafo_generic
-!#endif
+#if defined(WITH_REAL_GENERIC_KERNEL) && !(defined(DESPERATELY_WANT_ASSUMED_SIZE))
+        use real_generic_kernel, only : double_hh_trafo_generic
+#endif
 
 #if defined(WITH_REAL_BGP_KERNEL)
          use real_bgp_kernel, only : double_hh_trafo_bgp
@@ -124,12 +124,28 @@ module compute_hh_trafo_real
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
 
 #ifdef WITH_OPENMP
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
                call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe,my_thread), w, &
-                                      nbw, nl, stripe_width, nbw)
+                                            nbw, nl, stripe_width, nbw)
+
 #else
-               call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe),           w, &
+               call double_hh_trafo_generic(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1, &
+                                              istripe,my_thread), w(1:nbw,1:6), &
+                                            nbw, nl, stripe_width, nbw)
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+               call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe),w, &
+                                            nbw, nl, stripe_width, nbw)
+
+#else
+               call double_hh_trafo_generic(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw+1,istripe),w(1:nbw,1:6), &
                                       nbw, nl, stripe_width, nbw)
 #endif
+#endif /* WITH_OPENMP */
+
              enddo
 
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)

@@ -666,6 +666,11 @@ DX_MAN_FEATURE(ON)
 DX_HTML_FEATURE(ON)
 DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
+DESPERATELY_WANT_ASSUMED_SIZE=0
+if text x"${DESPERATELY_WANT_ASSUMED_SIZE}" = x"yes" ; then
+  AC_DEFINE([DESPERATELY_WANT_ASSUMED_SIZE],[1],[use assumed size arrays, even if not debuggable])
+fi
+
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])
 AC_SUBST([with_amd_bulldozer_kernel])
