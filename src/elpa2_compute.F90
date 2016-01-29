@@ -196,14 +196,14 @@ module ELPA2_compute
 
       if (useQR) then
         if (which_qr_decomposition == 1) then
-          call qr_pqrparam_init(pqrparam,    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
+          call qr_pqrparam_init(pqrparam(1:11),    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
           allocate(tauvector(na))
           allocate(blockheuristic(nblk))
           l_rows = local_index(na, my_prow, np_rows, nblk, -1)
           allocate(vmr(max(l_rows,1),na))
 
           call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,1), nbw, dwork_size(1), -1, na, &
-                                nbw, nblk, nblk, na, na, 1, 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols, blockheuristic)
+                                nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), mpi_comm_rows, mpi_comm_cols, blockheuristic)
           work_size = dwork_size(1)
           allocate(work_blocked(work_size))
 
@@ -239,7 +239,7 @@ module ELPA2_compute
                                      tmat(1,1,istep), nbw, work_blocked,       &
                                      work_size, na, n_cols, nblk, nblk,        &
                                      istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
-                                     0, PQRPARAM, mpi_comm_rows, mpi_comm_cols,&
+                                     0, PQRPARAM(1:11), mpi_comm_rows, mpi_comm_cols,&
                                      blockheuristic)
           endif
         else
