@@ -25,7 +25,7 @@ libelpa@SUFFIX@_la_SOURCES = src/mod_precision.f90 \
                              src/elpa_qr/qr_utils.f90 \
                              src/elpa_qr/elpa_qrkernels.f90 \
                              src/elpa_qr/elpa_pdlarfb.f90 \
-                             src/elpa_qr/elpa_pdgeqrf.f90
+                             src/elpa_qr/elpa_pdgeqrf.F90
 if HAVE_DETAILED_TIMINGS
   libelpa@SUFFIX@_la_SOURCES += src/timer.F90 \
                                 src/ftimings/ftimings.F90 \
