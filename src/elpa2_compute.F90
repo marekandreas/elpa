@@ -137,10 +137,11 @@ module ELPA2_compute
       implicit none
 
       integer(kind=ik)           :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)              :: a(lda,*), tmat(nbw,nbw,*)
+#else
       real(kind=rk)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
-      ! was
-      ! real a(lda,*), tmat(nbw,nbw,*)
-
+#endif
       integer(kind=ik)           :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)           :: l_cols, l_rows
       integer(kind=ik)           :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
@@ -613,10 +614,11 @@ module ELPA2_compute
       use precision
       implicit none
       integer(kind=ik)  :: n, lda, ldb, comm
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)     :: a(lda,*)
+#else
       real(kind=rk)     :: a(lda,ldb)
-      ! was 
-      ! real a(lda,*)
-
+#endif
       integer(kind=ik)  :: i, nc, mpierr
       real(kind=rk)     :: h1(n*n), h2(n*n)
 
@@ -687,10 +689,11 @@ module ELPA2_compute
       implicit none
 
       integer(kind=ik)            :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+#else
       real(kind=rk)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
-      ! was
-      ! real a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
-
+#endif
       integer(kind=ik)            :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)            :: max_blocks_row, max_blocks_col, max_local_rows, &
                                      max_local_cols
@@ -939,9 +942,11 @@ module ELPA2_compute
       implicit none
 
       integer(kind=ik), intent(in)  ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk), intent(in)     :: a(lda,*)
+#else
       real(kind=rk), intent(in)     :: a(lda,matrixCols)
-      ! was
-      ! real a(lda,*)
+#endif
       real(kind=rk), intent(out)    :: d(na), e(na) ! set only on PE 0
       real(kind=rk), intent(out), &
           allocatable               :: hh_trans_real(:,:)
@@ -1613,9 +1618,11 @@ module ELPA2_compute
 
       integer(kind=ik), intent(in)  :: THIS_REAL_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)                 :: q(ldq,*)
+#else
       real(kind=rk)                 :: q(ldq,matrixCols)
-      ! was
-      ! real q(ldq,*)
+#endif
       real(kind=rk), intent(out)    :: hh_trans_real(:,:)
       integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
 
@@ -2586,10 +2593,11 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       implicit none
 
       integer(kind=ik)              :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck)              :: a(lda,*), tmat(nbw,nbw,*)
+#else
       complex(kind=ck)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
-      ! was
-      ! complex a(lda,*), tmat(nbw,nbw,*)
-
+#endif
       complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -2944,10 +2952,11 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       implicit none
 
       integer(kind=ik)              :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck)              :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+#else
       complex(kind=ck)              :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
-      ! was
-      ! complex a(lda,*),q(ldq,*),tmat(nbw,nbw,*)
-
+#endif
       complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -3085,9 +3094,11 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       implicit none
 
       integer(kind=ik), intent(in)   ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck),intent(in)    :: a(lda,*)
+#else
       complex(kind=ck), intent(in)   :: a(lda,matrixCols)
-      ! was
-      ! complex a(lda,*)
+#endif
       real(kind=rk), intent(out)     :: d(na), e(na) ! set only on PE 0
       complex(kind=ck), intent(inout), &
           allocatable                :: hh_trans_complex(:,:)
@@ -3751,9 +3762,11 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 
       integer(kind=ik), intent(in)  :: THIS_COMPLEX_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck)              :: q(ldq,*)
+#else
       complex(kind=ck)              :: q(ldq,matrixCols)
-      ! was
-      ! complex q(ldq,*)
+#endif
       complex(kind=ck)              :: hh_trans_complex(:,:)
       integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
 
@@ -4929,8 +4942,8 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       implicit none
 
       integer(kind=ik), intent(in)  :: na, nb, nb2, mpi_comm
-      real(kind=rk), intent(inout)  :: ab(2*nb,*)
-      real(kind=rk), intent(inout)  :: ab2(2*nb2,*)
+      real(kind=rk), intent(inout)  :: ab(2*nb,*)   ! remove assumed size
+      real(kind=rk), intent(inout)  :: ab2(2*nb2,*) ! remove assumed size
       real(kind=rk), intent(out)    :: d(na), e(na) ! set only on PE 0
 
       real(kind=rk)                 :: hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), &
@@ -5188,7 +5201,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
       integer(kind=ik), intent(in) :: lda		!leading dimension of A
       integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
-      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed
+      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed   ! remove assumed size
       real(kind=rk), intent(in)    :: W(m,nb)	!blocked transformation matrix W
       real(kind=rk), intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
       real(kind=rk), intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
@@ -5217,7 +5230,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
       integer(kind=ik), intent(in) :: lda		!leading dimension of A
       integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
-      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed
+      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed  ! remove assumed size
       real(kind=rk), intent(in)    :: W(m,nb)	!blocked transformation matrix W
       real(kind=rk), intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
       real(kind=rk), intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
@@ -5245,7 +5258,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
       integer(kind=ik), intent(in) :: lda		!leading dimension of A
       integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
-      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed
+      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed  ! remove assumed size
       real(kind=rk), intent(in)    :: W(n,nb)	!blocked transformation matrix W
       real(kind=rk), intent(in)    :: Y(n,nb)	!blocked transformation matrix Y
       real(kind=rk)                :: mem(n,nb)	!memory for a temporary matrix of size n x nb

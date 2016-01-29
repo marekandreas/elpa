@@ -162,11 +162,12 @@ contains
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq/2,*)
-    real(kind=rk), intent(in)       :: h(ldh,*)
+    real(kind=rk), intent(in)       :: hh(ldh,*)
 #else
     real(kind=rk), intent(inout)    :: q(:,:)
+    real(kind=rk), intent(in)       :: hh(ldh,2)
 #endif
-    real(kind=rk), intent(in)       :: hh(ldh,2), s
+    real(kind=rk), intent(in)       :: s
 
 #ifdef PACK_REAL_TO_COMPLEX
     complex(kind=ck)                :: x1, x2, x3, x4, x5, x6, y1, y2, y3, y4, y5, y6
@@ -376,12 +377,12 @@ contains
     integer(kind=ik), intent(in)     :: nb, ldq, ldh
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout)  :: q(ldq/2,*)
-    real(kind=rk), intent(in)        :: h(ldh,*)
-
+    real(kind=rk), intent(in)        :: hh(ldh,*)
 #else
-     real(kind=rk),   intent(inout)  :: q(:,:)
+    real(kind=rk),   intent(inout)   :: q(:,:)
+    real(kind=rk), intent(in)        :: hh(ldh,2)
 #endif
-    real(kind=rk), intent(in)        :: hh(ldh,2), s
+    real(kind=rk), intent(in)        :: s
 #ifdef PACK_REAL_TO_COMPLEX
     complex(kind=ck)                 :: x1, x2, x3, x4, y1, y2, y3, y4
 #else
@@ -544,12 +545,12 @@ contains
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq/2,*)
-    real(kind=rk), intent(in)       :: h(ldh,*)
-
+    real(kind=rk), intent(in)       :: hh(ldh,*)
 #else
     real(kind=rk), intent(inout)    :: q(:,:) !q(1:ldq/2,1:nb+1)
+    real(kind=rk), intent(in)       :: hh(ldh,2)
 #endif
-    real(kind=rk), intent(in)       :: hh(ldh,2), s
+    real(kind=rk), intent(in)       :: s
 
 #ifdef PACK_REAL_TO_COMPLEX
     complex(kind=ck)                :: x1, x2, y1, y2
