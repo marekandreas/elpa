@@ -61,8 +61,9 @@ module elpa_pdgeqrf
 
   contains
 
-    subroutine qr_pdgeqrf_2dcomm(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,nb,rowidx,colidx,rev,trans,PQRPARAM, &
-                                 mpicomm_rows,mpicomm_cols,blockheuristic)
+     subroutine qr_pdgeqrf_2dcomm(a, lda, matrixCols, v, ldv, vmrCols, tau, lengthTau, t, ldt, colsT, &
+                                  work, workLength, lwork, m, n, mb, nb, rowidx, colidx, &
+                                  rev, trans, PQRPARAM, mpicomm_rows, mpicomm_cols, blockheuristic)
       use precision
       use ELPA1
       use qr_utils_mod
@@ -75,15 +76,18 @@ module elpa_pdgeqrf
       INTEGER(kind=ik), parameter   :: gmode_ = 1, rank_ = 2, eps_ = 3
 
       ! input variables (local)
-      integer(kind=ik)              :: lda,lwork,ldv,ldt
-      real(kind=rk)                 :: a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
+      integer(kind=ik), intent(in)  :: lda, lwork, ldv, ldt, matrixCols, m, vmrCols, lengthTau, &
+                                       colsT, workLength
 
       ! input variables (global)
-      integer(kind=ik)              :: m,n,mb,nb,rowidx,colidx,rev,trans,mpicomm_cols,mpicomm_rows
+      integer(kind=ik)              :: n, mb, nb, rowidx, colidx, rev, trans, mpicomm_cols, mpicomm_rows
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
       integer(kind=ik)              :: PQRPARAM(*)
+      real(kind=rk)                 :: a(lda,*), v(ldv,*), tau(*), t(ldt,*), work(*)
 #else
       integer(kind=ik)              :: PQRPARAM(1:11)
+      real(kind=rk)                 :: a(1:lda,1:matrixCols), v(1:ldv,1:vmrCols), tau(1:lengthTau), &
+                                       t(1:ldt,1:colsT), work(1:workLength)
 #endif
       ! output variables (global)
       real(kind=rk)                 :: blockheuristic(*)

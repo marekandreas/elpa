@@ -143,7 +143,7 @@ module ELPA2_compute
       real(kind=rk)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
 #endif
       integer(kind=ik)           :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer(kind=ik)           :: l_cols, l_rows
+      integer(kind=ik)           :: l_cols, l_rows, vmrCols
       integer(kind=ik)           :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
       integer(kind=ik)           :: istep, ncol, lch, lcx, nlc, mynlc
       integer(kind=ik)           :: tile_size, l_rows_tile, l_cols_tile
@@ -202,8 +202,18 @@ module ELPA2_compute
           l_rows = local_index(na, my_prow, np_rows, nblk, -1)
           allocate(vmr(max(l_rows,1),na))
 
-          call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), tmat(1,1,1), nbw, dwork_size(1), -1, na, &
-                                nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), mpi_comm_rows, mpi_comm_cols, blockheuristic)
+          vmrCols = na
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+          call qr_pdgeqrf_2dcomm(a, lda, matrixCols, vmr, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
+                                 nbw, nbw, dwork_size, 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
+                                 mpi_comm_rows, mpi_comm_cols, blockheuristic)
+
+#else
+          call qr_pdgeqrf_2dcomm(a(1:lda,1:matrixCols), matrixCols, lda, vmr(1:max(l_rows,1),1:vmrCols), max(l_rows,1), &
+                                 vmrCols, tauvector(1:na), na, tmat(1:nbw,1:nbw,1), nbw, &
+                                 nbw, dwork_size(1:1), 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
+                                 mpi_comm_rows, mpi_comm_cols, blockheuristic)
+#endif
           work_size = dwork_size(1)
           allocate(work_blocked(work_size))
 
@@ -235,12 +245,25 @@ module ELPA2_compute
 
         if (useQR) then
           if (which_qr_decomposition == 1) then
-            call qr_pdgeqrf_2dcomm(a, lda, vmr, max(l_rows,1), tauvector(1), &
-                                     tmat(1,1,istep), nbw, work_blocked,       &
+
+            vmrCols = 2*n_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+            call qr_pdgeqrf_2dcomm(a, lda, matrixCols, vmr, max(l_rows,1), vmrCols, tauvector(1), &
+                                   na, tmat(1,1,istep), nbw, nbw, work_blocked, work_size,        &
                                      work_size, na, n_cols, nblk, nblk,        &
                                      istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
                                      0, PQRPARAM(1:11), mpi_comm_rows, mpi_comm_cols,&
                                      blockheuristic)
+
+#else
+            call qr_pdgeqrf_2dcomm(a(1:lda,1:matrixCols), lda, matrixCols, vmr(1:max(l_rows,1),1:vmrCols) ,   &
+                                    max(l_rows,1), vmrCols, tauvector(1:na), na, &
+                                     tmat(1:nbw,1:nbw,istep), nbw, nbw, work_blocked(1:work_size), work_size, &
+                                     work_size, na, n_cols, nblk, nblk,        &
+                                     istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
+                                     0, PQRPARAM(1:11), mpi_comm_rows, mpi_comm_cols,&
+                                     blockheuristic)
+#endif
           endif
         else
 
