@@ -137,9 +137,12 @@ module ELPA1_compute
       implicit none
 
       integer(kind=ik)            :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=rk)               :: a(lda,matrixCols), d(na), e(na), tau(na)
-      ! was
-      ! real a(lda,*)
+      real(kind=rk)               :: d(na), e(na), tau(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)               :: a(lda,*)
+#else
+      real(kind=rk)               :: a(lda,matrixCols)
+#endif
 
       integer(kind=ik), parameter :: max_stored_rows = 32
 
@@ -480,9 +483,12 @@ module ELPA1_compute
       implicit none
 
       integer(kind=ik)           :: na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=rk)              :: a(lda,matrixCols), q(ldq,matrixCols), tau(na)
-      ! was
-      ! real a(lda,*), q(ldq,*)
+      real(kind=rk)              :: tau(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)              :: a(lda,*), q(ldq,*)
+#else
+      real(kind=rk)              :: a(lda,matrixCols), q(ldq,matrixCols)
+#endif
 
       integer(kind=ik)           :: max_stored_rows
 
@@ -914,9 +920,12 @@ module ELPA1_compute
       implicit none
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      complex(kind=ck)              :: a(lda,matrixCols), tau(na)
-      ! was
-      ! complex a(lda,*)
+      complex(kind=ck)              :: tau(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck)              :: a(lda,*)
+#else
+      complex(kind=ck)              :: a(lda,matrixCols)
+#endif
       real(kind=rk)                 :: d(na), e(na)
 
       integer(kind=ik), parameter   :: max_stored_rows = 32
@@ -1283,10 +1292,12 @@ module ELPA1_compute
       implicit none
 
       integer(kind=ik)              ::  na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      complex(kind=ck)              ::  a(lda,matrixCols), q(ldq,matrixCols), tau(na)
-      ! was
-      ! complex a(lda,*), q(ldq,*)
-
+      complex(kind=ck)              ::  tau(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck)              :: a(lda,*), q(ldq,*)
+#else
+      complex(kind=ck)              ::  a(lda,matrixCols), q(ldq,matrixCols)
+#endif
       integer(kind=ik)              :: max_stored_rows
 
       complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
@@ -1491,7 +1502,7 @@ module ELPA1_compute
       character*1                   :: uplo_a, uplo_c
       integer(kind=ik), intent(in)  :: lda, ldaCols, ldb, ldbCols, ldc, ldcCols
       integer(kind=ik)              :: na, ncb, nblk, mpi_comm_rows, mpi_comm_cols
-      complex(kind=ck)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      complex(kind=ck)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols) ! removed assumed_size
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_rows_np
@@ -1685,9 +1696,12 @@ module ELPA1_compute
       implicit none
 
       integer(kind=ik)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=rk)                 :: d(na), e(na), q(ldq,matrixCols)
-      ! was
-      ! real q(ldq,*)
+      real(kind=rk)                 :: d(na), e(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)                 :: q(ldq,*)
+#else
+      real(kind=rk)                 :: q(ldq,matrixCols)
+#endif
 
       integer(kind=ik)              :: i, j, n, np, nc, nev1, l_cols, l_rows
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -1911,9 +1925,12 @@ module ELPA1_compute
       implicit none
 
       integer(kind=ik)              :: na, nev, nqoff, ldq, nblk, matrixCols, mpi_comm_rows
-      real(kind=rk)                 :: d(na), e(na), q(ldq,matrixCols)
-      ! was
-      ! real q(ldq,*)
+      real(kind=rk)                 :: d(na), e(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)                 :: q(ldq,*)
+#else
+      real(kind=rk)                 :: q(ldq,matrixCols)
+#endif
 
       integer(kind=ik), parameter   :: min_submatrix_size = 16 ! Minimum size of the submatrices to be used
 
@@ -2186,9 +2203,12 @@ module ELPA1_compute
       integer(kind=ik)              :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
                                        mpi_comm_cols, npc_0, npc_n
       integer(kind=ik)              :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
-      real(kind=rk)                 :: d(na), e, q(ldq,matrixCols)
-      ! was
-      ! real q(ldq,*)
+      real(kind=rk)                 :: d(na), e
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)                 :: q(ldq,*)
+#else
+      real(kind=rk)                 :: q(ldq,matrixCols)
+#endif
 
       integer(kind=ik), parameter   :: max_strip=128
 
@@ -2234,8 +2254,12 @@ module ELPA1_compute
 
       ! If my processor column isn't in the requested set, do nothing
 
-      if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) return
-
+      if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
       ! Determine number of "next" and "prev" column for ring sends
 
       if (my_pcol == npc_0+npc_n-1) then
@@ -2251,11 +2275,19 @@ module ELPA1_compute
       endif
 
       call check_monotony(nm,d,'Input1',wantDebug, success)
-      if (.not.(success)) return
-
+      if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
       call check_monotony(na-nm,d(nm+1),'Input2',wantDebug, success)
-      if (.not.(success)) return
-
+      if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
       ! Get global number of processors and my processor number.
       ! Please note that my_proc does not need to match any real processor number,
       ! it is just used for load balancing some loops.
@@ -2458,9 +2490,19 @@ module ELPA1_compute
 
       enddo
       call check_monotony(na1,d1,'Sorted1', wantDebug, success)
-      if (.not.(success)) return
+      if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
       call check_monotony(na2,d2,'Sorted2', wantDebug, success)
-      if (.not.(success)) return
+      if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("merge_systems")
+#endif
+        return
+      endif
 
       if (na1==1 .or. na1==2) then
         ! if(my_proc==0) print *,'--- Remark solve_tridi: na1==',na1,' proc==',myid
@@ -2631,8 +2673,12 @@ module ELPA1_compute
           d(i) = tmp(idx(i))
         enddo
         call check_monotony(na,d,'Output', wantDebug, success)
-        if (.not.(success)) return
-
+        if (.not.(success)) then
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("merge_systems")
+#endif
+          return
+        endif
         ! Eigenvector calculations
 
 
@@ -3505,10 +3551,11 @@ module ELPA1_compute
        implicit none
 
        integer(kind=ik)             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+       real(kind=rk)                :: a(lda,*)
+#else
        real(kind=rk)                :: a(lda,matrixCols)
-       ! was 
-       ! real a(lda,*)
-
+#endif
        integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
        integer(kind=ik)             :: n, nc, i, info, ns, nb
@@ -3643,10 +3690,11 @@ module ELPA1_compute
       implicit none
 
       integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck)                 :: a(lda,*)
+#else
       complex(kind=ck)                 :: a(lda,matrixCols)
-      !was
-      ! complex a(lda,*)
-
+#endif
       integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
       integer(kind=ik)                 :: n, nc, i, info
@@ -3822,10 +3870,11 @@ module ELPA1_compute
        implicit none
 
        integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+       complex(kind=ck)                 :: a(lda,*)
+#else
        complex(kind=ck)                 :: a(lda,matrixCols)
-       ! was
-       ! complex a(lda,*)
-
+#endif
        integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
        integer(kind=ik)                 :: n, nc, i, info, ns, nb

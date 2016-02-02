@@ -53,6 +53,9 @@
 ! distributed along with the original code in the file "COPYING".
 !
 ! --------------------------------------------------------------------------------------------------
+
+#include "config-f90.h"
+
 module complex_generic_kernel
 
   private
@@ -60,13 +63,24 @@ module complex_generic_kernel
 contains
   subroutine single_hh_trafo_complex_generic(q, hh, nb, nq, ldq)
     use precision
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(*)
+#else
+    complex(kind=ck), intent(inout) :: q(1:ldq,1:nb)
+    complex(kind=ck), intent(in)    :: hh(1:nb)
+#endif
 
     integer(kind=ik)                :: i
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("kernel generic: single_hh_trafo_complex_generic")
+#endif
 
     ! Safety only:
 
@@ -77,33 +91,58 @@ contains
     ! Always a multiple of 4 Q-rows is transformed, even if nq is smaller
 
     do i=1,nq-8,12
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
        call hh_trafo_complex_kernel_12(q(i,1),hh, nb, ldq)
+#else
+       call hh_trafo_complex_kernel_12(q(i:ldq,1:nb),hh(1:nb), nb, ldq)
+#endif
     enddo
 
     ! i > nq-8 now, i.e. at most 8 rows remain
 
     if(nq-i+1 > 4) then
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
        call hh_trafo_complex_kernel_8(q(i,1),hh, nb, ldq)
+#else
+       call hh_trafo_complex_kernel_8(q(i:ldq,1:nb),hh(1:nb), nb, ldq)
+#endif
     else if(nq-i+1 > 0) then
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
        call hh_trafo_complex_kernel_4(q(i,1),hh, nb, ldq)
+#else
+       call hh_trafo_complex_kernel_4(q(i:ldq,1:nb),hh(1:nb), nb, ldq)
+#endif
     endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("kernel generic: single_hh_trafo_complex_generic")
+#endif
   end subroutine single_hh_trafo_complex_generic
 
   ! --------------------------------------------------------------------------------------------------
 
   subroutine double_hh_trafo_complex_generic(q, hh, nb, nq, ldq, ldh)
     use precision
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(ldh,*)
+#else
+    complex(kind=ck), intent(inout) :: q(1:ldq,1:nb+1)
+    complex(kind=ck), intent(in)    :: hh(1:ldh,1:2)
+#endif
     complex(kind=ck)                :: s
 
     integer(kind=ik)                :: i
 
     ! Safety only:
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("kernel generic: double_hh_trafo_complex_generic")
+#endif
 
     if(mod(ldq,4) /= 0) STOP 'double_hh_trafo: ldq not divisible by 4!'
 
@@ -119,36 +158,66 @@ contains
     ! Always a multiple of 4 Q-rows is transformed, even if nq is smaller
 
     do i=1,nq,4
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
        call hh_trafo_complex_kernel_4_2hv(q(i,1),hh, nb, ldq, ldh, s)
+#else
+       call hh_trafo_complex_kernel_4_2hv(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
+#endif
     enddo
 
     !do i=1,nq-8,12
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     !   call hh_trafo_complex_kernel_12_2hv(q(i,1),hh, nb, ldq, ldh, s)
+#else
+    !   call hh_trafo_complex_kernel_12_2hv(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
+#endif
     !enddo
 
     ! i > nq-8 now, i.e. at most 8 rows remain
 
     !if(nq-i+1 > 4) then
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     !   call hh_trafo_complex_kernel_8_2hv(q(i,1),hh, nb, ldq, ldh, s)
+#else
+    !   call hh_trafo_complex_kernel_8_2hv(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
+#endif
     !else if(nq-i+1 > 0) then
-    !   call hh_trafo_complex_kernel_4_2hv(q(i,1),hh, nb, ldq, ldh, s)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    !   call hh_trafo_complex_kernel_4_2hv(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
+#else
+
+#endif
     !endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("kernel generic: double_hh_trafo_complex_generic")
+#endif
+
   end subroutine double_hh_trafo_complex_generic
 
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_complex_kernel_12(q, hh, nb, ldq)
     use precision
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(*)
-
+#else
+    complex(kind=ck), intent(inout) :: q(:,:)
+    complex(kind=ck), intent(in)    :: hh(1:nb)
+#endif
     complex(kind=ck)                :: x1, x2, x3, x4, x5, x6, x7, x8, x9, xa, xb, xc
     complex(kind=ck)                :: h1, tau1
     integer(kind=ik)                :: i
 
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("kernel generic: hh_trafo_complex_kernel_12")
+#endif
 
     x1 = q(1,1)
     x2 = q(2,1)
@@ -226,22 +295,36 @@ contains
        q(12,i) = q(12,i) + xc*h1
     enddo
 
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("kernel generic: hh_trafo_complex_kernel_12")
+#endif
+
   end subroutine hh_trafo_complex_kernel_12
 
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_complex_kernel_8(q, hh, nb, ldq)
     use precision
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(*)
-
+#else
+    complex(kind=ck), intent(inout) :: q(:,:)
+    complex(kind=ck), intent(in)    :: hh(1:nb)
+#endif
     complex(kind=ck)                :: x1, x2, x3, x4, x5, x6, x7, x8
     complex(kind=ck)                :: h1, tau1
     integer(kind=ik)                :: i
 
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("kernel generic: hh_trafo_complex_kernel_8")
+#endif
 
     x1 = q(1,1)
     x2 = q(2,1)
@@ -299,24 +382,35 @@ contains
        q(8,i) = q(8,i) + x8*h1
     enddo
 
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("kernel generic: hh_trafo_complex_kernel_8")
+#endif
   end subroutine hh_trafo_complex_kernel_8
 
   ! --------------------------------------------------------------------------------------------------
 
   subroutine hh_trafo_complex_kernel_4(q, hh, nb, ldq)
     use precision
-
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(*)
-
+#else
+    complex(kind=ck), intent(inout) :: q(:,:)
+    complex(kind=ck), intent(in)    :: hh(1:nb)
+#endif
     complex(kind=ck)                :: x1, x2, x3, x4
     complex(kind=ck)                :: h1, tau1
     integer(kind=ik)                :: i
 
-
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("kernel generic: hh_trafo_complex_kernel_4")
+#endif
     x1 = q(1,1)
     x2 = q(2,1)
     x3 = q(3,1)
@@ -352,6 +446,9 @@ contains
        q(3,i) = q(3,i) + x3*h1
        q(4,i) = q(4,i) + x4*h1
     enddo
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("kernel generic: hh_trafo_complex_kernel_4")
+#endif
 
   end subroutine hh_trafo_complex_kernel_4
 
@@ -359,17 +456,27 @@ contains
 
   subroutine hh_trafo_complex_kernel_4_2hv(q, hh, nb, ldq, ldh, s)
     use precision
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(ldh,*)
+#else
+    complex(kind=ck), intent(inout) :: q(:,:)
+    complex(kind=ck), intent(in)    :: hh(1:ldh,1:2)
+#endif
     complex(kind=ck), intent(in)    :: s
 
     complex(kind=ck)                :: x1, x2, x3, x4, y1, y2, y3, y4
     complex(kind=ck)                :: h1, h2, tau1, tau2
     integer(kind=ik)                :: i
-
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("kernel generic: hh_trafo_complex_kernel_4_2hv")
+#endif
     x1 = q(1,2)
     x2 = q(2,2)
     x3 = q(3,2)
@@ -438,6 +545,9 @@ contains
     q(2,nb+1) = q(2,nb+1) + x2*hh(nb,1)
     q(3,nb+1) = q(3,nb+1) + x3*hh(nb,1)
     q(4,nb+1) = q(4,nb+1) + x4*hh(nb,1)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("kernel generic: hh_trafo_complex_kernel_4_2hv")
+#endif
 
   end subroutine hh_trafo_complex_kernel_4_2hv
 
@@ -445,16 +555,28 @@ contains
 
   subroutine hh_trafo_complex_kernel_8_2hv(q, hh, nb, ldq, ldh, s)
     use precision
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(ldh,*)
+#else
+    complex(kind=ck), intent(inout) :: q(:,:)
+    complex(kind=ck), intent(in)    :: hh(1:ldh,1:2)
+#endif
     complex(kind=ck), intent(in)    :: s
 
     complex(kind=ck)                :: x1, x2, x3, x4, x5, x6 ,x7, x8, y1, y2, y3, y4, y5, y6, y7, y8
     complex(kind=ck)                :: h1, h2, tau1, tau2
     integer(kind=ik)                :: i
+
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("kernel generic: hh_trafo_complex_kernel_8_2hv")
+#endif
 
     x1 = q(1,2)
     x2 = q(2,2)
@@ -569,6 +691,9 @@ contains
     q(6,nb+1) = q(6,nb+1) + x6*hh(nb,1)
     q(7,nb+1) = q(7,nb+1) + x7*hh(nb,1)
     q(8,nb+1) = q(8,nb+1) + x8*hh(nb,1)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("kernel generic: hh_trafo_complex_kernel_8_2hv")
+#endif
 
   end subroutine hh_trafo_complex_kernel_8_2hv
 
@@ -576,18 +701,28 @@ contains
 
   subroutine hh_trafo_complex_kernel_12_2hv(q, hh, nb, ldq, ldh, s)
     use precision
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(ldh,*)
+#else
+    complex(kind=ck), intent(inout) :: q(:,:)
+    complex(kind=ck), intent(in)    :: hh(1:ldh,1:2)
+#endif
     complex(kind=ck), intent(in)    :: s
 
     complex(kind=ck)                :: x1, x2, x3, x4, x5, x6 ,x7, x8, x9, x10, x11, x12, y1, y2, y3, y4, y5, y6, &
                                        y7, y8, y9, y10, y11, y12
     complex(kind=ck)                :: h1, h2, tau1, tau2
     integer(kind=ik)                :: i
-
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("kernel generic: hh_trafo_complex_kernel_12_2hv")
+#endif
     x1 = q(1,2)
     x2 = q(2,2)
     x3 = q(3,2)
@@ -744,6 +879,9 @@ contains
     q(10,nb+1) = q(10,nb+1) + x10*hh(nb,1)
     q(11,nb+1) = q(11,nb+1) + x11*hh(nb,1)
     q(12,nb+1) = q(12,nb+1) + x12*hh(nb,1)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("kernel generic: hh_trafo_complex_kernel_12_2hv")
+#endif
 
   end subroutine hh_trafo_complex_kernel_12_2hv
 end module complex_generic_kernel

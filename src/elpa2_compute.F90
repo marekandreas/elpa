@@ -142,13 +142,16 @@ module ELPA2_compute
       implicit none
 
       integer(kind=ik)           :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)              :: a(lda,*), tmat(nbw,nbw,*)
+#else
       real(kind=rk)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
-      ! was
-      ! real a(lda,*), tmat(nbw,nbw,*)
+#endif
       real(kind=rk)              :: eps
       logical, intent(in)        :: useGPU
+
       integer(kind=ik)           :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer(kind=ik)           :: l_cols, l_rows
+      integer(kind=ik)           :: l_cols, l_rows, vmrCols
       integer(kind=ik)           :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
       integer(kind=ik)           :: istep, ncol, lch, lcx, nlc, mynlc
       integer(kind=ik)           :: tile_size, l_rows_tile, l_cols_tile
@@ -224,7 +227,7 @@ module ELPA2_compute
         endif
 
         if (which_qr_decomposition == 1) then
-          call qr_pqrparam_init(pqrparam,    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
+          call qr_pqrparam_init(pqrparam(1:11),    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
           allocate(tauvector(na), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_real: error when allocating tauvector "//errorMessage
@@ -244,8 +247,18 @@ module ELPA2_compute
             stop
           endif
 
-          call qr_pdgeqrf_2dcomm(a, lda, vmrCPU, max(l_rows,1), tauvector, tmat(1,1,1), nbw, dwork_size(1), -1, na, &
-                                nbw, nblk, nblk, na, na, 1, 0, PQRPARAM, mpi_comm_rows, mpi_comm_cols, blockheuristic)
+          vmrCols = na
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+          call qr_pdgeqrf_2dcomm(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
+                                 nbw, nbw, dwork_size, 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
+                                 mpi_comm_rows, mpi_comm_cols, blockheuristic)
+
+#else
+          call qr_pdgeqrf_2dcomm(a(1:lda,1:matrixCols), matrixCols, lda, vmrCPU(1:max(l_rows,1),1:vmrCols), max(l_rows,1), &
+                                 vmrCols, tauvector(1:na), na, tmat(1:nbw,1:nbw,1), nbw, &
+                                 nbw, dwork_size(1:1), 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
+                                 mpi_comm_rows, mpi_comm_cols, blockheuristic)
+#endif
           work_size = dwork_size(1)
           allocate(work_blocked(work_size), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
@@ -447,12 +460,24 @@ module ELPA2_compute
 
         if (useQR) then
           if (which_qr_decomposition == 1) then
-            call qr_pdgeqrf_2dcomm(a, lda, vmrCPU, max(l_rows,1), tauvector(1), &
-                                  tmat(1,1,istep), nbw, work_blocked,       &
-                                  work_size, na, n_cols, nblk, nblk,        &
-                                  istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
-                                  0, PQRPARAM, mpi_comm_rows, mpi_comm_cols,&
-                                  blockheuristic)
+            vmrCols = 2*n_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+            call qr_pdgeqrf_2dcomm(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), &
+                                   na, tmat(1,1,istep), nbw, nbw, work_blocked, work_size,        &
+                                     work_size, na, n_cols, nblk, nblk,        &
+                                     istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
+                                     0, PQRPARAM(1:11), mpi_comm_rows, mpi_comm_cols,&
+                                     blockheuristic)
+
+#else
+            call qr_pdgeqrf_2dcomm(a(1:lda,1:matrixCols), lda, matrixCols, vmrCPU(1:max(l_rows,1),1:vmrCols) ,   &
+                                    max(l_rows,1), vmrCols, tauvector(1:na), na, &
+                                     tmat(1:nbw,1:nbw,istep), nbw, nbw, work_blocked(1:work_size), work_size, &
+                                     work_size, na, n_cols, nblk, nblk,        &
+                                     istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
+                                     0, PQRPARAM(1:11), mpi_comm_rows, mpi_comm_cols,&
+                                     blockheuristic)
+#endif
           endif
        else !useQR
 
@@ -1162,8 +1187,11 @@ module ELPA2_compute
       use precision
       implicit none
       integer(kind=ik)  :: n, lda, ldb, comm
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)     :: a(lda,*)
+#else
       real(kind=rk)     :: a(lda,ldb)
-
+#endif
       integer(kind=ik)  :: i, nc, mpierr
       real(kind=rk)     :: h1(n*n), h2(n*n)
 
@@ -1237,10 +1265,11 @@ module ELPA2_compute
       implicit none
 
       integer(kind=ik)            :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+#else
       real(kind=rk)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
-      ! was
-      ! real a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
-
+#endif
       integer(kind=ik)            :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)            :: max_blocks_row, max_blocks_col, max_local_rows, &
                                      max_local_cols
@@ -1690,9 +1719,11 @@ module ELPA2_compute
       implicit none
 
       integer(kind=ik), intent(in)  ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk), intent(in)     :: a(lda,*)
+#else
       real(kind=rk), intent(in)     :: a(lda,matrixCols)
-      ! was
-      ! real a(lda,*)
+#endif
       real(kind=rk), intent(out)    :: d(na), e(na) ! set only on PE 0
       real(kind=rk), intent(out), &
           allocatable               :: hh_trans_real(:,:)
@@ -2482,9 +2513,11 @@ module ELPA2_compute
 
       integer(kind=ik), intent(in)  :: THIS_REAL_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)                 :: q(ldq,*)
+#else
       real(kind=rk)                 :: q(ldq,matrixCols)
-      ! was
-      ! real q(ldq,*)
+#endif
       real(kind=rk), intent(out)    :: hh_trans_real(:,:)
       integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
 
@@ -3994,6 +4027,7 @@ module ELPA2_compute
 
       if (na <= 0) then
         limits(:) = 0
+        call timer%stop("determine_workload")
         return
       endif
 
@@ -4055,10 +4089,11 @@ module ELPA2_compute
       logical, intent(in)           :: useGPU
 
       integer(kind=ik)              :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck)              :: a(lda,*), tmat(nbw,nbw,*)
+#else
       complex(kind=ck)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
-      ! was
-      ! complex a(lda,*), tmat(nbw,nbw,*)
-
+#endif
       complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -4862,9 +4897,11 @@ module ELPA2_compute
 
        logical, intent(in)           :: useGPU
        integer(kind=ik)              :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-       complex(kind=ck)              :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
-      ! was
-      ! complex a(lda,*),q(ldq,*),tmat(nbw,nbw,*)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+#else
+      complex(kind=ck)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+#endif
 
        complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
@@ -5204,9 +5241,11 @@ module ELPA2_compute
       !#endif
 
       integer(kind=ik), intent(in)   ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck),intent(in)    :: a(lda,*)
+#else
       complex(kind=ck), intent(in)   :: a(lda,matrixCols)
-      ! was
-      ! complex a(lda,*)
+#endif
       real(kind=rk), intent(out)     :: d(na), e(na) ! set only on PE 0
       complex(kind=ck), intent(inout), &
           allocatable                :: hh_trans_complex(:,:)
@@ -6190,9 +6229,11 @@ module ELPA2_compute
       logical, intent(in)           :: useGPU
       integer(kind=ik), intent(in)  :: THIS_COMPLEX_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=ck)              :: q(ldq,*)
+#else
       complex(kind=ck)              :: q(ldq,matrixCols)
-      ! was
-      ! complex q(ldq,*)
+#endif
       complex(kind=ck)              :: hh_trans_complex(:,:)
       integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
       integer(kind=ik)              :: tmp
@@ -8177,8 +8218,8 @@ end subroutine
       implicit none
 
       integer(kind=ik), intent(in)  :: na, nb, nbCol, nb2, nb2Col, mpi_comm
-      real(kind=rk), intent(inout)  :: ab(2*nb,nbCol)
-      real(kind=rk), intent(inout)  :: ab2(2*nb2,nb2Col)
+      real(kind=rk), intent(inout)  :: ab(2*nb,nbCol) ! removed assumed size
+      real(kind=rk), intent(inout)  :: ab2(2*nb2,nb2Col) ! removed assumed size
       real(kind=rk), intent(out)    :: d(na), e(na) ! set only on PE 0
 
       real(kind=rk)                 :: hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), &
@@ -8494,7 +8535,7 @@ end subroutine
       integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
       integer(kind=ik), intent(in) :: lda		!leading dimension of A
       integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
-      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed
+      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed   ! remove assumed size
       real(kind=rk), intent(in)    :: W(m,nb)	!blocked transformation matrix W
       real(kind=rk), intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
       real(kind=rk), intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
@@ -8523,7 +8564,7 @@ end subroutine
       integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
       integer(kind=ik), intent(in) :: lda		!leading dimension of A
       integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
-      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed
+      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed  ! remove assumed size
       real(kind=rk), intent(in)    :: W(m,nb)	!blocked transformation matrix W
       real(kind=rk), intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
       real(kind=rk), intent(inout) :: mem(n,nb)	!memory for a temporary matrix of size n x nb
@@ -8551,7 +8592,7 @@ end subroutine
       integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
       integer(kind=ik), intent(in) :: lda		!leading dimension of A
       integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
-      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed
+      real(kind=rk), intent(inout) :: A(lda,*)	!matrix to be transformed  ! remove assumed size
       real(kind=rk), intent(in)    :: W(n,nb)	!blocked transformation matrix W
       real(kind=rk), intent(in)    :: Y(n,nb)	!blocked transformation matrix Y
       real(kind=rk)                :: mem(n,nb)	!memory for a temporary matrix of size n x nb

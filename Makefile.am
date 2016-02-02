@@ -29,7 +29,7 @@ libelpa@SUFFIX@_la_SOURCES = src/mod_precision.f90 \
                              src/elpa_qr/qr_utils.f90 \
                              src/elpa_qr/elpa_qrkernels.f90 \
                              src/elpa_qr/elpa_pdlarfb.f90 \
-                             src/elpa_qr/elpa_pdgeqrf.f90
+                             src/elpa_qr/elpa_pdgeqrf.F90
 if HAVE_DETAILED_TIMINGS
   libelpa@SUFFIX@_la_SOURCES += src/timer.F90 \
                                 src/ftimings/ftimings.F90 \
@@ -48,19 +48,19 @@ if WITH_GPU_VERSION
 endif
 
 if WITH_REAL_GENERIC_KERNEL
-  libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.f90
+  libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.F90
 endif
 
 if WITH_COMPLEX_GENERIC_KERNEL
-  libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.f90
+  libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.F90
 endif
 
 if WITH_REAL_GENERIC_SIMPLE_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.f90
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.F90
 endif
 
 if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.f90
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.F90
 endif
 
 if WITH_REAL_BGP_KERNEL
@@ -319,6 +319,9 @@ elpa2.i: $(top_srcdir)/src/elpa2.F90
 
 elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
+
+elpa2_kernels_real.i: $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90 -o $@
 
 mod_compute_hh_trafo_real.i: $(top_srcdir)/src/mod_compute_hh_trafo_real.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo_real.F90 -o $@
