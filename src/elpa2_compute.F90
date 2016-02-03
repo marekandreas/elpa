@@ -2559,7 +2559,9 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 
       if (na <= 0) then
         limits(:) = 0
+#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("determine_workload")
+#endif
         return
       endif
 
