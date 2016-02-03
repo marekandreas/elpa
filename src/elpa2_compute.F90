@@ -1646,7 +1646,7 @@ module ELPA2_compute
 #else
       real(kind=rk)                 :: q(ldq,matrixCols)
 #endif
-      real(kind=rk), intent(out)    :: hh_trans_real(:,:)
+      real(kind=rk), intent(in)     :: hh_trans_real(:,:)
       integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
 
       integer(kind=ik)              :: i, j, ip, sweep, nbuf, l_nev, a_dim2
