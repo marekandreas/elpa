@@ -4027,7 +4027,9 @@ module ELPA2_compute
 
       if (na <= 0) then
         limits(:) = 0
+#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("determine_workload")
+#endif
         return
       endif
 
