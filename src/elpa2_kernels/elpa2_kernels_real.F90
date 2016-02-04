@@ -69,7 +69,8 @@ module real_generic_kernel
 contains
 #endif
 
-
+  ! the intel compiler creates a temp copy of array q!
+  ! this should be prevented if possible without using assumed size arrays
   subroutine double_hh_trafo_generic(q, hh, nb, nq, ldq, ldh)
     use precision
 #ifdef HAVE_DETAILED_TIMINGS

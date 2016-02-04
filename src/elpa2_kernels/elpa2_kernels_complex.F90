@@ -61,6 +61,8 @@ module complex_generic_kernel
   private
   public single_hh_trafo_complex_generic
 contains
+  ! the Intel compiler creates a temp array copy of array q!
+  ! this should be prevented, if possible without using assumed size arrays
   subroutine single_hh_trafo_complex_generic(q, hh, nb, nq, ldq)
     use precision
 #ifdef HAVE_DETAILED_TIMINGS
