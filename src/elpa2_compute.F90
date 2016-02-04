@@ -3349,10 +3349,10 @@ module ELPA2_compute
                a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
              endif
-                call compute_hh_trafo_real_cpu_openmp(a,stripe_width,a_dim2,stripe_count, max_threads,                    &
-                                                      a_off, nbw, max_blk_size, bcast_buffer,  kernel_flops, kernel_time, &
-                                                      0, current_local_n, i, my_thread,                                   &
-                                                      THIS_REAL_ELPA_KERNEL)
+                call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count,  max_threads            &
+                                                      a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
+                                                      hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,         &
+                                                      my_thread, THIS_REAL_ELPA_KERNEL)
            enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3360,9 +3360,9 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-           call compute_hh_trafo_real_cpu(a, stripe_width,a_dim2,stripe_count,                                 &
-                                          a_off,  nbw, max_blk_size, bcast_buffer,  kernel_flops, kernel_time, &
-                                          0, current_local_n, i,                                               &
+           call compute_hh_trafo_real_cpu(a, a_dev, stripe_width, a_dim2, stripe_count,                          &
+                                          a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
+                                          hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,          &
                                           last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #endif /* WITH_OPENMP */
 
@@ -3418,9 +3418,10 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
-          call compute_hh_trafo_real_cpu_openmp(a, stripe_width,a_dim2,stripe_count, max_threads,                     &
-                                                a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time,   &
-                                                current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
+          call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads,             &
+                                                a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
+                                                hh_tau_dev, kernel_flops, kernel_time,                                 &
+                                                current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread,  &
                                                 THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
@@ -3439,9 +3440,10 @@ module ELPA2_compute
                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
         endif
 #else /* WITH_OPENMP */
-        call compute_hh_trafo_real_cpu(a, stripe_width,a_dim2,stripe_count,                                &
-                                       a_off,  nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
-                                       current_local_n - bottom_msg_length, bottom_msg_length, i,          &
+        call compute_hh_trafo_real_cpu(a, a_dev, stripe_width, a_dim2, stripe_count,                          &
+                                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
+                                       hh_tau_dev, kernel_flops, kernel_time,                                 &
+                                       current_local_n - bottom_msg_length, bottom_msg_length, i,             &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 
         !send_b
@@ -3478,10 +3480,11 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
         do my_thread = 1, max_threads
-          call compute_hh_trafo_real_cpu_openmp(a,stripe_width,a_dim2,stripe_count, max_threads,                                &
-                                                a_off,  nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,             &
-                                                top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, &
-                                                THIS_REAL_ELPA_KERNEL)
+          call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width ,a_dim2, stripe_count, max_threads,              &
+                                                a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,  &
+                                                hh_tau_dev, kernel_flops, kernel_time,                                  &
+                                                top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i,    &
+                                                my_thread, THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3489,9 +3492,10 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-        call compute_hh_trafo_real_cpu(a, stripe_width,a_dim2,stripe_count,                                 &
-                                       a_off,  nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
-                                       top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
+        call compute_hh_trafo_real_cpu(a, a_dev, stripe_width, a_dim2, stripe_count,                              &
+                                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
+                                       hh_tau_dev, kernel_flops, kernel_time,  top_msg_length,                    &
+                                       current_local_n-top_msg_length-bottom_msg_length, i,                       &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #endif /* WITH_OPENMP */
 
@@ -3540,8 +3544,9 @@ module ELPA2_compute
             a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
               reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
           endif
-          call compute_hh_trafo_real_cpu_openmp(a, stripe_width,a_dim2,stripe_count, max_threads,                   &
-                                                a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time, &
+          call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads,             &
+                                                a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
+                                                h_tau_dev, kernel_flops, kernel_time,                                  &
                                                 0, top_msg_length, i, my_thread, THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
@@ -3550,9 +3555,9 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-        call compute_hh_trafo_real_cpu(a, stripe_width,a_dim2,stripe_count,                                 &
-                                       a_off, nbw, max_blk_size,  bcast_buffer,  kernel_flops, kernel_time, &
-                                       0, top_msg_length, i,                                                &
+        call compute_hh_trafo_real_cpu(a, a_dev, stripe_width, a_dim2, stripe_count,                              &
+                                       a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
+                                       hh_tau_dev, kernel_flops, kernel_time, 0, top_msg_length, i,               &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #endif /* WITH_OPENMP */
       endif

@@ -13,21 +13,25 @@ module compute_hh_trafo_real
   contains
 
 #ifdef WITH_OPENMP
-       subroutine compute_hh_trafo_real_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,                &
-                                                   a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
-                                                   off, ncols, istripe,                                               &
+       subroutine compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads,                &
+                                                   a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
+                                                   hh_tau_dev, kernel_flops, kernel_time, off, ncols, istripe,              &
                                                    my_thread, THIS_REAL_ELPA_KERNEL)
 #else
-       subroutine compute_hh_trafo_real_cpu       (a, stripe_width,a_dim2,stripe_count,                                &
-                                                   a_off, nbw, max_blk_size, bcast_buffer,  kernel_flops, kernel_time, &
-                                                   off, ncols, istripe, last_stripe_width,                             &
-                                                   THIS_REAL_ELPA_KERNEL)
+       subroutine compute_hh_trafo_real_cpu       (a, a_dev, stripe_width, a_dim2, stripe_count,                              &
+                                                   a_off, nbw, max_blk_size, bcast_buffer,  bcast_buffer_dev, hh_dot_dev,     &
+                                                   hh_tau_dev, kernel_flops, kernel_time, off, ncols, istripe,                &
+                                                   last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #endif
 
 
          use precision
+         use iso_c_binding
          use elpa2_utilities
          use single_hh_trafo_real
+         use cuda_c_kernel
+         use cuda_functions
+
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
          use real_generic_simple_kernel, only : double_hh_trafo_generic_simple
 #endif
@@ -58,13 +62,20 @@ module compute_hh_trafo_real
 
 #ifndef WITH_OPENMP
          integer(kind=ik), intent(in) :: last_stripe_width
-         real(kind=rk)                :: a(stripe_width,a_dim2,stripe_count)
+!         real(kind=rk)                :: a(stripe_width,a_dim2,stripe_count)
+         real(kind=rk), allocatable   :: a(:,:,:)
 #else
          integer(kind=ik), intent(in) :: max_threads
-         real(kind=rk)                :: a(stripe_width,a_dim2,stripe_count,max_threads)
+!         real(kind=rk)                :: a(stripe_width,a_dim2,stripe_count,max_threads)
+         real(kind=rk), allocatable   :: a(:,:,:,:)
 #endif
          integer(kind=ik), intent(in) :: THIS_REAL_ELPA_KERNEL
 
+         integer(kind=c_intptr_t)     :: a_dev
+         integer(kind=c_intptr_t)     :: bcast_buffer_dev
+         integer(kind=c_size_t)       :: dev_offset
+         integer(kind=c_intptr_t)     :: hh_dot_dev
+         integer(kind=c_intptr_t)     :: hh_tau_dev
          ! Private variables in OMP regions (my_thread) should better be in the argument list!
          integer(kind=ik)             :: off, ncols, istripe
 #ifdef WITH_OPENMP
@@ -72,6 +83,11 @@ module compute_hh_trafo_real
 #endif
          integer(kind=ik)             :: j, nl, jj, jjj
          real(kind=rk)                :: w(nbw,6), ttt
+
+         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
+           ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
+           if (ncols < 1) return
+         endif
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef WITH_OPENMP
@@ -85,6 +101,10 @@ module compute_hh_trafo_real
 #ifndef WITH_OPENMP
          nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
 #else
+         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
+           print *,"compute_hh_trafo_real GPU OPENMP: not yet implemented"
+           stop
+         endif
 
          if (istripe<stripe_count) then
            nl = stripe_width
@@ -102,34 +122,40 @@ module compute_hh_trafo_real
              return
            endif
          endif
-#endif
+#endif /* not WITH_OPENMP */
+
+         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
+           dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_real_datatype
+           call launch_compute_hh_trafo_c_kernel_real(a_dev + dev_offset, bcast_buffer_dev, hh_dot_dev, &
+                                                      hh_tau_dev, nl, nbw, stripe_width, off, ncols)
+         else ! not CUDA kernel
 
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE .or.        &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP .or.        &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
+           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
+               THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
+               THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
+               THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE .or.        &
+               THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP .or.        &
+               THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 
-           !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
+             !FORTRAN CODE / X86 INRINISIC CODE / BG ASSEMBLER USING 2 HOUSEHOLDER VECTORS
 #if defined(WITH_REAL_GENERIC_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) then
+             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 
-             do j = ncols, 2, -2
-               w(:,1) = bcast_buffer(1:nbw,j+off)
-               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
 
 #ifdef WITH_OPENMP
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
-               call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe,my_thread), w, &
+                 call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe,my_thread), w, &
                                             nbw, nl, stripe_width, nbw)
 
 #else
-               call double_hh_trafo_generic(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1, &
+                 call double_hh_trafo_generic(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1, &
                                               istripe,my_thread), w(1:nbw,1:6), &
                                               nbw, nl, stripe_width, nbw)
 #endif
@@ -137,138 +163,138 @@ module compute_hh_trafo_real
 #else /* WITH_OPENMP */
 
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
-               call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe),w, &
+                 call double_hh_trafo_generic(a(1,j+off+a_off-1,istripe),w, &
                                             nbw, nl, stripe_width, nbw)
 
 #else
-               call double_hh_trafo_generic(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1,istripe),w(1:nbw,1:6), &
+                 call double_hh_trafo_generic(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1,istripe),w(1:nbw,1:6), &
                                             nbw, nl, stripe_width, nbw)
 #endif
 #endif /* WITH_OPENMP */
 
-             enddo
+               enddo
 
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+             endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_GENERIC_KERNEL */
 
 
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) then
+             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-             do j = ncols, 2, -2
-               w(:,1) = bcast_buffer(1:nbw,j+off)
-               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
-               call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe,my_thread), &
-                                                     w, nbw, nl, stripe_width, nbw)
+                 call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe,my_thread), &
+                                                       w, nbw, nl, stripe_width, nbw)
 #else
-               call double_hh_trafo_generic_simple(a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe,my_thread), &
+                 call double_hh_trafo_generic_simple(a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe,my_thread), &
                                                      w, nbw, nl, stripe_width, nbw)
 
 #endif
 
 #else /* WITH_OPENMP */
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
-               call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe), &
-                                                     w, nbw, nl, stripe_width, nbw)
+                 call double_hh_trafo_generic_simple(a(1,j+off+a_off-1,istripe), &
+                                                       w, nbw, nl, stripe_width, nbw)
 #else
-               call double_hh_trafo_generic_simple(a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe), &
+                 call double_hh_trafo_generic_simple(a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe), &
                                                      w, nbw, nl, stripe_width, nbw)
 
 #endif
 
 #endif /* WITH_OPENMP */
 
-             enddo
+               enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+             endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_GENERIC_SIMPLE_KERNEL */
 
 
 #if defined(WITH_REAL_SSE_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) then
+             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-             do j = ncols, 2, -2
-               w(:,1) = bcast_buffer(1:nbw,j+off)
-               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-               call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
+                 call double_hh_trafo(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                       stripe_width, nbw)
 #else
-               call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
+                 call double_hh_trafo(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
                                       stripe_width, nbw)
 #endif
-             enddo
+               enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+             endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_KERNEL */
 
 
 #if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) then
+             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-             do j = ncols, 2, -2
-               w(:,1) = bcast_buffer(1:nbw,j+off)
-               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-               call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
+                 call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
-               call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
+                 call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
-             enddo
+               enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+             endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK2_KERNEL */
 
 #if defined(WITH_REAL_BGP_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP) then
+             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-             do j = ncols, 2, -2
-               w(:,1) = bcast_buffer(1:nbw,j+off)
-               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-               call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
+                 call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                           stripe_width, nbw)
 #else
-               call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
+                 call double_hh_trafo_bgp(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
                                           stripe_width, nbw)
 #endif
-             enddo
+               enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+             endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_BGP_KERNEL */
 
 
 #if defined(WITH_REAL_BGQ_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
+             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-             do j = ncols, 2, -2
-               w(:,1) = bcast_buffer(1:nbw,j+off)
-               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-               call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
+                 call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                           stripe_width, nbw)
 #else
-               call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
+                 call double_hh_trafo_bgq(a(1,j+off+a_off-1,istripe), w, nbw, nl, &
                                           stripe_width, nbw)
 #endif
-             enddo
+               enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           endif
+             endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_BGQ_KERNEL */
 
@@ -278,119 +304,119 @@ module compute_hh_trafo_real
 !#endif
 
 #ifdef WITH_OPENMP
-           if (j==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off_a_off+nbw-1,istripe,my_thread), &
+             if (j==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off_a_off+nbw-1,istripe,my_thread), &
                                       bcast_buffer(1:nbw,off+1), nbw, nl,     &
                                       stripe_width)
 #else
-           if (j==1) call single_hh_trafo_real_cpu(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe),           &
+             if (j==1) call single_hh_trafo_real_cpu(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe),           &
                                       bcast_buffer(1:nbw,off+1), nbw, nl,     &
                                       stripe_width)
 #endif
 
 
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-         endif !
+           endif !
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-
-
 
 #if defined(WITH_REAL_AVX_BLOCK4_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) then
+           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-           ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
-           do j = ncols, 4, -4
-             w(:,1) = bcast_buffer(1:nbw,j+off)
-             w(:,2) = bcast_buffer(1:nbw,j+off-1)
-             w(:,3) = bcast_buffer(1:nbw,j+off-2)
-             w(:,4) = bcast_buffer(1:nbw,j+off-3)
+             ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
+             do j = ncols, 4, -4
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               w(:,3) = bcast_buffer(1:nbw,j+off-2)
+               w(:,4) = bcast_buffer(1:nbw,j+off-3)
 #ifdef WITH_OPENMP
-             call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe,my_thread), w, &
+               call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe,my_thread), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
-             call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe), w, &
+               call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
-           enddo
-           do jj = j, 2, -2
-             w(:,1) = bcast_buffer(1:nbw,jj+off)
-             w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+             enddo
+             do jj = j, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,jj+off)
+               w(:,2) = bcast_buffer(1:nbw,jj+off-1)
 #ifdef WITH_OPENMP
-             call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe,my_thread), &
+               call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe,my_thread), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
-             call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe), &
+               call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe), &
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
-           enddo
+             enddo
 #ifdef WITH_OPENMP
-           if (jj==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
+             if (jj==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
-           if (jj==1) call single_hh_trafo_real_cpu(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
+             if (jj==1) call single_hh_trafo_real_cpu(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-         endif
+           endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
 
 
 #if defined(WITH_REAL_AVX_BLOCK6_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) then
+           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-           ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
-           do j = ncols, 6, -6
-             w(:,1) = bcast_buffer(1:nbw,j+off)
-             w(:,2) = bcast_buffer(1:nbw,j+off-1)
-             w(:,3) = bcast_buffer(1:nbw,j+off-2)
-             w(:,4) = bcast_buffer(1:nbw,j+off-3)
-             w(:,5) = bcast_buffer(1:nbw,j+off-4)
-             w(:,6) = bcast_buffer(1:nbw,j+off-5)
+             ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
+             do j = ncols, 6, -6
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               w(:,3) = bcast_buffer(1:nbw,j+off-2)
+               w(:,4) = bcast_buffer(1:nbw,j+off-3)
+               w(:,5) = bcast_buffer(1:nbw,j+off-4)
+               w(:,6) = bcast_buffer(1:nbw,j+off-5)
 #ifdef WITH_OPENMP
-             call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe,my_thread), w, &
+               call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe,my_thread), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
-             call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe), w, &
+               call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
-           enddo
-           do jj = j, 4, -4
-             w(:,1) = bcast_buffer(1:nbw,jj+off)
-             w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-             w(:,3) = bcast_buffer(1:nbw,jj+off-2)
-             w(:,4) = bcast_buffer(1:nbw,jj+off-3)
+             enddo
+             do jj = j, 4, -4
+               w(:,1) = bcast_buffer(1:nbw,jj+off)
+               w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+               w(:,3) = bcast_buffer(1:nbw,jj+off-2)
+               w(:,4) = bcast_buffer(1:nbw,jj+off-3)
 #ifdef WITH_OPENMP
-             call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe,my_thread), w, &
+               call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe,my_thread), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
-             call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe), w, &
+               call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
-           enddo
-           do jjj = jj, 2, -2
-             w(:,1) = bcast_buffer(1:nbw,jjj+off)
-             w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
+             enddo
+             do jjj = jj, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,jjj+off)
+               w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
 #ifdef WITH_OPENMP
-             call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe,my_thread), &
+               call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe,my_thread), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
-             call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe), &
+               call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe), &
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
-           enddo
+             enddo
 #ifdef WITH_OPENMP
-           if (jjj==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
+             if (jjj==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
-           if (jjj==1) call single_hh_trafo_real_cpu(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
+             if (jjj==1) call single_hh_trafo_real_cpu(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-         endif
+           endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
+
+         endif ! GPU_KERNEL
 
 #ifdef WITH_OPENMP
          if (my_thread==1) then
