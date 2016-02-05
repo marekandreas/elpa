@@ -253,7 +253,7 @@ contains
     endif
 
     if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-      if (check_for_gpu(my_pe,numberOfGPUDevices)) then
+      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
         useGPU = .true.
       endif
       if (nblk .ne. 128) then
@@ -503,7 +503,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
     endif
 
     if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GPU) then
-      if (check_for_gpu(my_pe, numberOfGPUDevices)) then
+      if (check_for_gpu(my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
         useGPU=.true.
       endif
       if (nblk .ne. 128) then

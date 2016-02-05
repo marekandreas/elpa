@@ -45,19 +45,30 @@ module mod_check_for_gpu
 
   contains
 
-    function check_for_gpu(myid, numberOfDevices) result(gpuAvailable)
+    function check_for_gpu(myid, numberOfDevices, wantDebug) result(gpuAvailable)
       use cuda_functions
       use precision
       implicit none
       include 'mpif.h'
       integer(kind=ik), intent(in)  :: myid
-      logical                       :: success
+      logical, optional, intent(in) :: wantDebug
+      logical                       :: success, wantDebugMessage
       integer(kind=ik), intent(out) :: numberOfDevices
       integer(kind=ik)              :: deviceNumber, mpierr, maxNumberOfDevices
       logical                       :: gpuAvailable
       character(len=1024)           :: envname
 
       gpuAvailable = .false.
+
+      if (.not.(present(wantDebug))) then
+        wantDebugMessage = .false.
+      else
+        if (wantDebug) then
+          wantDebugMessage=.true.
+        else
+          wantDebugMessage=.false.
+        endif
+      endif
 
       ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
       success = cuda_getdevicecount(numberOfDevices)
@@ -83,8 +94,10 @@ module mod_check_for_gpu
         ! Usage of GPU is possible since devices have been detected
 
         if (myid==0) then
-          print *
-          print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
+          if (wantDebugMessage) then
+            print *
+            print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
+          endif
         endif
 
         deviceNumber = mod(myid, numberOfDevices)
@@ -94,7 +107,9 @@ module mod_check_for_gpu
           print *,"Cannot set CudaDevice"
           stop
         endif
-        print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
+        if (wantDebugMessage) then
+          print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
+        endif
       endif
 
     end function
