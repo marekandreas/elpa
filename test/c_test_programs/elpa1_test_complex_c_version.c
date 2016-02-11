@@ -72,11 +72,19 @@ int main(int argc, char** argv) {
    int info, *sc_desc;
 
    int na_rows, na_cols;
+
    double startVal;
+#ifdef DOUBLE_PRECISION_COMPLEX
 
    complex double *a, *z, *as, *tmp1, *tmp2;
 
    double *ev, *xr;
+#else
+
+   complex *a, *z, *as, *tmp1, *tmp2;
+
+   float *ev, *xr;
+#endif
 
    int *iseed;
 
@@ -103,6 +111,12 @@ int main(int argc, char** argv) {
 
      printf("\n");
 
+#ifdef DOUBLE_PRECISION_COMPLEX
+     printf("The double precision version of ELPA1 is used\n");
+#else
+     printf("The single precision version of ELPA1 is used\n");
+#endif
+     printf("\n");
    }
 
    status = 0;
@@ -161,6 +175,7 @@ int main(int argc, char** argv) {
      printf("\n");
    }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
    a  = malloc(na_rows*na_cols*sizeof(complex double));
    z  = malloc(na_rows*na_cols*sizeof(complex double));
    as = malloc(na_rows*na_cols*sizeof(complex double));
@@ -172,10 +187,26 @@ int main(int argc, char** argv) {
 
    tmp1  = malloc(na_rows*na_cols*sizeof(complex double));
    tmp2 = malloc(na_rows*na_cols*sizeof(complex double));
+#else
+   a  = malloc(na_rows*na_cols*sizeof(complex));
+   z  = malloc(na_rows*na_cols*sizeof(complex));
+   as = malloc(na_rows*na_cols*sizeof(complex));
+
+   xr = malloc(na_rows*na_cols*sizeof(float));
+
+
+   ev = malloc(na*sizeof(float));
+
+   tmp1  = malloc(na_rows*na_cols*sizeof(complex));
+   tmp2 = malloc(na_rows*na_cols*sizeof(complex));
+#endif
 
    iseed = malloc(4096*sizeof(int));
-
-   prepare_matrix_complex_from_fortran(na, myid, na_rows, na_cols, sc_desc, iseed, xr, a, z, as);
+#ifdef DOUBLE_PRECISION_COMPLEX
+   prepare_matrix_complex_from_fortran_double_precision(na, myid, na_rows, na_cols, sc_desc, iseed, xr, a, z, as);
+#else
+   prepare_matrix_complex_from_fortran_single_precision(na, myid, na_rows, na_cols, sc_desc, iseed, xr, a, z, as);
+#endif
 
    free(xr);
 
@@ -187,8 +218,11 @@ int main(int argc, char** argv) {
 
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 
-   success = elpa_solve_evp_complex_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+   success = elpa_solve_evp_complex_1stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
+#else
+   success = elpa_solve_evp_complex_1stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
+#endif
    if (success != 1) {
      printf("error in ELPA solve \n");
      mpierr = MPI_Abort(MPI_COMM_WORLD, 99);
@@ -202,7 +236,11 @@ int main(int argc, char** argv) {
    }
 
    /* check the results */
-   status = check_correctness_complex_from_fortran(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+#ifdef DOUBLE_PRECISION_COMPLEX
+   status = check_correctness_complex_from_fortran_double_precision(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+#else
+   status = check_correctness_complex_from_fortran_single_precision(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+#endif
 
    if (status !=0){
      printf("The computed EVs are not correct !\n");

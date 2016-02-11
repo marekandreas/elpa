@@ -9,7 +9,7 @@ AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
-libelpa@SUFFIX@_la_SOURCES = src/mod_precision.f90 \
+libelpa@SUFFIX@_la_SOURCES = src/mod_precision.F90 \
                              src/elpa_utilities.F90 \
 	                     src/elpa1_compute.F90 \
 	                     src/elpa1.F90 \
@@ -310,6 +310,8 @@ elpa2_test_complex_default_kernel.sh:
 elpa2_test_complex_choose_kernel_with_api.sh:
 	echo 'mpiexec -n 2 ./elpa2_test_complex_choose_kernel_with_api@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_choose_kernel_with_api.sh
 	chmod +x elpa2_test_complex_choose_kernel_with_api.sh
+mod_precision.i: $(top_srcdir)/src/mod_precision.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/mod_precision.F90 -o $@
 
 elpa2_utilities.i: $(top_srcdir)/src/elpa2_utilities.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa2_utilities.F90 -o $@
@@ -319,6 +321,9 @@ elpa2.i: $(top_srcdir)/src/elpa2.F90
 
 elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
+
+elpa1_compute.i: $(top_srcdir)/src/elpa1_compute.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa1_compute.F90 -o $@
 
 elpa2_kernels_real.i: $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90 -o $@

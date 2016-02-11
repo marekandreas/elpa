@@ -89,6 +89,7 @@ module ELPA1_compute
   include 'mpif.h'
 
   contains
+#ifdef DOUBLE_PRECISION_REAL
 
 #define DATATYPE REAL(kind=rk)
 #define BYTESIZE 8
@@ -98,6 +99,19 @@ module ELPA1_compute
 #undef DATATYPE
 #undef BYTESIZE
 #undef REALCASE
+
+#else
+
+#define DATATYPE REAL(kind=rk)
+#define BYTESIZE 4
+#define REALCASE 1
+#include "elpa_transpose_vectors.X90"
+#include "elpa_reduce_add_vectors.X90"
+#undef DATATYPE
+#undef BYTESIZE
+#undef REALCASE
+
+#endif /* DOUBLE_PRECISION_REAL */
 
     subroutine tridiag_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau)
 
@@ -239,8 +253,14 @@ module ELPA1_compute
 
             vr(1:l_rows) = a(1:l_rows,l_cols+1)
             if(nstor>0 .and. l_rows>0) then
-               call DGEMV('N',l_rows,2*nstor,1.d0,vur,ubound(vur,dim=1), &
-                          uvc(l_cols+1,1),ubound(uvc,dim=1),1.d0,vr,1)
+#ifdef DOUBLE_PRECISION_REAL
+               call DGEMV('N', l_rows, 2*nstor, 1.0_rk, vur, ubound(vur,dim=1), &
+                          uvc(l_cols+1,1), ubound(uvc,dim=1), 1.0_rk, vr, 1)
+#else
+               call SGEMV('N', l_rows, 2*nstor, 1.0_rk, vur, ubound(vur,dim=1), &
+                          uvc(l_cols+1,1), ubound(uvc,dim=1), 1.0_rk, vr, 1)
+
+#endif
             endif
 
             if(my_prow==prow(istep-1, nblk, np_rows)) then
@@ -251,8 +271,11 @@ module ELPA1_compute
                aux1(2) = 0.
             endif
 
-            call mpi_allreduce(aux1,aux2,2,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-
+#if DOUBLE_PRECISION_REAL
+            call mpi_allreduce(aux1, aux2, 2, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
+#else
+            call mpi_allreduce(aux1, aux2, 2, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
             vnorm2 = aux2(1)
             vrl    = aux2(2)
 
@@ -274,7 +297,11 @@ module ELPA1_compute
          ! Broadcast the Householder vector (and tau) along columns
 
          if(my_pcol==pcol(istep, nblk, np_cols)) vr(l_rows+1) = tau(istep)
-         call MPI_Bcast(vr,l_rows+1,MPI_REAL8,pcol(istep, nblk, np_cols),mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+         call MPI_Bcast(vr, l_rows+1, MPI_REAL8, pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+#else
+         call MPI_Bcast(vr, l_rows+1, MPI_REAL4, pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
          tau(istep) =  vr(l_rows+1)
 
          ! Transpose Householder vector vr -> vc
@@ -319,15 +346,33 @@ module ELPA1_compute
                if (lre<lrs) cycle
 #ifdef WITH_OPENMP
                if (mod(n_iter,n_threads) == my_thread) then
-                 call DGEMV('T',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vr(lrs),1,1.d0,uc_p(lcs,my_thread),1)
-                 if (i/=j) call DGEMV('N',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vc(lcs),1,1.d0,ur_p(lrs,my_thread),1)
+#ifdef DOUBLE_PRECISION_REAL
+                 call DGEMV('T', lre-lrs+1, lce-lcs+1, 1.0_rk, a(lrs,lcs), lda, vr(lrs), 1, 1.0_rk, uc_p(lcs,my_thread), 1)
+                 if (i/=j) then
+                   call DGEMV('N', lre-lrs+1, lce-lcs+1, 1.0_rk, a(lrs,lcs), lda, vc(lcs), 1, 1.0_rk, ur_p(lrs,my_thread), 1)
+                 endif
+#else
+                 call SGEMV('T', lre-lrs+1, lce-lcs+1, 1.0_rk, a(lrs,lcs), lda, vr(lrs), 1, 1.0_rk, uc_p(lcs,my_thread), 1)
+                 if (i/=j) then
+                   call SGEMV('N', lre-lrs+1, lce-lcs+1, 1.0_rk, a(lrs,lcs), lda, vc(lcs), 1, 1.0_rk, ur_p(lrs,my_thread), 1)
+                 endif
+#endif
                endif
                n_iter = n_iter+1
-#else
-               call DGEMV('T',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vr(lrs),1,1.d0,uc(lcs),1)
-               if (i/=j) call DGEMV('N',lre-lrs+1,lce-lcs+1,1.d0,a(lrs,lcs),lda,vc(lcs),1,1.d0,ur(lrs),1)
+#else /* WITH_OPENMP */
 
+#ifdef DOUBLE_PRECISION_REAL
+               call DGEMV('T', lre-lrs+1, lce-lcs+1, 1.0_rk, a(lrs,lcs), lda, vr(lrs), 1, 1.0_rk, uc(lcs), 1)
+               if (i/=j) then
+                 call DGEMV('N', lre-lrs+1, lce-lcs+1, 1.0_rk, a(lrs,lcs), lda, vc(lcs), 1, 1.0_rk, ur(lrs), 1)
+               endif
+#else
+               call SGEMV('T', lre-lrs+1, lce-lcs+1, 1.0_rk, a(lrs,lcs), lda, vr(lrs), 1, 1.0_rk, uc(lcs), 1)
+               if (i/=j) then
+                 call SGEMV('N', lre-lrs+1, lce-lcs+1, 1.0_rk, a(lrs,lcs), lda, vc(lcs), 1, 1.0_rk, ur(lrs), 1)
+               endif
 #endif
+#endif /* WITH_OPENMP */
              enddo
            enddo
 #ifdef WITH_OPENMP
@@ -342,8 +387,13 @@ module ELPA1_compute
            enddo
 #endif
            if (nstor>0) then
-             call DGEMV('T',l_rows,2*nstor,1.d0,vur,ubound(vur,dim=1),vr,1,0.d0,aux,1)
-             call DGEMV('N',l_cols,2*nstor,1.d0,uvc,ubound(uvc,dim=1),aux,1,1.d0,uc,1)
+#ifdef DOUBLE_PRECISION_REAL
+             call DGEMV('T', l_rows, 2*nstor, 1.0_rk, vur, ubound(vur,dim=1), vr,  1, 0.0_rk, aux, 1)
+             call DGEMV('N', l_cols, 2*nstor, 1.0_rk, uvc, ubound(uvc,dim=1), aux, 1, 1.0_rk, uc,  1)
+#else
+             call SGEMV('T', l_rows, 2*nstor, 1.0_rk, vur, ubound(vur,dim=1), vr,  1, 0.0_rk, aux, 1)
+             call SGEMV('N', l_cols, 2*nstor, 1.0_rk, uvc, ubound(uvc,dim=1), aux, 1, 1.0_rk, uc,  1)
+#endif
            endif
 
          endif
@@ -363,7 +413,12 @@ module ELPA1_compute
 
         if (l_cols>0) then
           tmp(1:l_cols) = uc(1:l_cols)
-          call mpi_allreduce(tmp,uc,l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+          call mpi_allreduce(tmp, uc, l_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
+#else
+          call mpi_allreduce(tmp, uc, l_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
+
         endif
 
         call elpa_transpose_vectors_real  (uc, ubound(uc,dim=1), mpi_comm_cols, &
@@ -374,8 +429,11 @@ module ELPA1_compute
 
         x = 0
         if (l_cols>0) x = dot_product(vc(1:l_cols),uc(1:l_cols))
-        call mpi_allreduce(x,vav,1,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
-
+#ifdef DOUBLE_PRECISION_REAL
+        call mpi_allreduce(x, vav, 1, MPI_REAL8, MPI_SUM, mpi_comm_cols, mpierr)
+#else
+        call mpi_allreduce(x, vav, 1, MPI_REAL4, MPI_SUM, mpi_comm_cols, mpierr)
+#endif
         ! store u and v in the matrices U and V
         ! these matrices are stored combined in one here
 
@@ -400,9 +458,16 @@ module ELPA1_compute
            lrs = 1
             lre = min(l_rows,(i+1)*l_rows_tile)
             if (lce<lcs .or. lre<lrs) cycle
-            call dgemm('N','T',lre-lrs+1,lce-lcs+1,2*nstor,1.d0, &
-                       vur(lrs,1),ubound(vur,dim=1),uvc(lcs,1),ubound(uvc,dim=1), &
-                       1.d0,a(lrs,lcs),lda)
+#ifdef DOUBLE_PRECISION_REAL
+            call dgemm('N', 'T', lre-lrs+1, lce-lcs+1, 2*nstor, 1.0_rk, &
+                       vur(lrs,1), ubound(vur,dim=1), uvc(lcs,1), ubound(uvc,dim=1), &
+                       1.0_rk, a(lrs,lcs), lda)
+#else
+            call sgemm('N', 'T', lre-lrs+1, lce-lcs+1, 2*nstor, 1.0_rk, &
+                       vur(lrs,1), ubound(vur,dim=1), uvc(lcs,1), ubound(uvc,dim=1), &
+                       1.0_rk, a(lrs,lcs), lda)
+#endif
+
           enddo
 
           nstor = 0
@@ -427,14 +492,25 @@ module ELPA1_compute
       ! distribute the arrays d and e to all processors
 
       allocate(tmp(na))
+#ifdef DOUBLE_PRECISION_REAL
       tmp = d
-      call mpi_allreduce(tmp,d,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+      call mpi_allreduce(tmp, d, na, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
       tmp = d
-      call mpi_allreduce(tmp,d,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
+      call mpi_allreduce(tmp, d, na, MPI_REAL8, MPI_SUM, mpi_comm_cols, mpierr)
       tmp = e
-      call mpi_allreduce(tmp,e,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+      call mpi_allreduce(tmp, e, na, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
       tmp = e
-      call mpi_allreduce(tmp,e,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
+      call mpi_allreduce(tmp, e, na, MPI_REAL8, MPI_SUM, mpi_comm_cols, mpierr)
+#else
+      tmp = d
+      call mpi_allreduce(tmp, d, na, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+      tmp = d
+      call mpi_allreduce(tmp, d, na, MPI_REAL4, MPI_SUM, mpi_comm_cols, mpierr)
+      tmp = e
+      call mpi_allreduce(tmp, e, na, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+      tmp = e
+      call mpi_allreduce(tmp, e, na, MPI_REAL4, MPI_SUM, mpi_comm_cols, mpierr)
+#endif
       deallocate(tmp)
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("tridiag_real")
@@ -560,8 +636,11 @@ module ELPA1_compute
         enddo
 
         if (nb>0) &
-            call MPI_Bcast(hvb,nb,MPI_REAL8,cur_pcol,mpi_comm_cols,mpierr)
-
+#ifdef DOUBLE_PRECISION_REAL
+            call MPI_Bcast(hvb, nb, MPI_REAL8, cur_pcol, mpi_comm_cols, mpierr)
+#else
+            call MPI_Bcast(hvb, nb, MPI_REAL4, cur_pcol, mpi_comm_cols, mpierr)
+#endif
         nb = 0
         do ic=ics,ice
           l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder vector
@@ -578,7 +657,12 @@ module ELPA1_compute
 
           tmat = 0
           if (l_rows>0) &
-               call dsyrk('U','T',nstor,l_rows,1.d0,hvm,ubound(hvm,dim=1),0.d0,tmat,max_stored_rows)
+#ifdef DOUBLE_PRECISION_REAL
+               call dsyrk('U', 'T', nstor, l_rows, 1.0_rk, hvm, ubound(hvm,dim=1), 0.0_rk, tmat, max_stored_rows)
+#else
+               call ssyrk('U', 'T', nstor, l_rows, 1.0_rk, hvm, ubound(hvm,dim=1), 0.0_rk, tmat, max_stored_rows)
+#endif
+
 
           nc = 0
           do n=1,nstor-1
@@ -586,14 +670,22 @@ module ELPA1_compute
             nc = nc+n
           enddo
 
-          if (nc>0) call mpi_allreduce(h1,h2,nc,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+          if (nc>0) call mpi_allreduce( h1, h2, nc, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
+#else
+          if (nc>0) call mpi_allreduce( h1, h2, nc, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
 
           ! Calculate triangular matrix T
 
           nc = 0
           tmat(1,1) = tau(ice-nstor+1)
           do n=1,nstor-1
-            call dtrmv('L','T','N',n,tmat,max_stored_rows,h2(nc+1),1)
+#ifdef DOUBLE_PRECISION_REAL
+            call dtrmv('L', 'T', 'N', n, tmat, max_stored_rows, h2(nc+1), 1)
+#else
+            call strmv('L', 'T', 'N', n, tmat, max_stored_rows, h2(nc+1), 1)
+#endif
             tmat(n+1,1:n) = -h2(nc+1:nc+n)*tau(ice-nstor+n+1)
             tmat(n+1,n+1) = tau(ice-nstor+n+1)
             nc = nc+n
@@ -602,17 +694,32 @@ module ELPA1_compute
           ! Q = Q - V * T * V**T * Q
 
           if (l_rows>0) then
-            call dgemm('T','N',nstor,l_cols,l_rows,1.d0,hvm,ubound(hvm,dim=1), &
-                          q,ldq,0.d0,tmp1,nstor)
+#ifdef DOUBLE_PRECISION_REAL
+            call dgemm('T', 'N', nstor, l_cols, l_rows, 1.0_rk, hvm, ubound(hvm,dim=1), &
+                          q, ldq, 0.0_rk, tmp1, nstor)
+#else
+            call sgemm('T', 'N', nstor, l_cols, l_rows, 1.0_rk, hvm, ubound(hvm,dim=1), &
+                          q, ldq, 0.0_rk, tmp1, nstor)
+#endif
+
           else
             tmp1(1:l_cols*nstor) = 0
           endif
-          call mpi_allreduce(tmp1,tmp2,nstor*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+          call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
           if (l_rows>0) then
-            call dtrmm('L','L','N','N',nstor,l_cols,1.0d0,tmat,max_stored_rows,tmp2,nstor)
-            call dgemm('N','N',l_rows,l_cols,nstor,-1.d0,hvm,ubound(hvm,dim=1), &
-                          tmp2,nstor,1.d0,q,ldq)
+            call dtrmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk, tmat, max_stored_rows, tmp2, nstor)
+            call dgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk, hvm, ubound(hvm,dim=1), &
+                          tmp2, nstor, 1.0_rk, q, ldq)
           endif
+#else
+          call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+          if (l_rows>0) then
+            call strmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk, tmat, max_stored_rows, tmp2, nstor)
+            call sgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk, hvm, ubound(hvm,dim=1), &
+                          tmp2, nstor, 1.0_rk, q, ldq)
+          endif
+#endif
           nstor = 0
         endif
 
@@ -809,8 +916,11 @@ module ELPA1_compute
           enddo
 
           ! Broadcast block column
-
-          call MPI_Bcast(aux_bc,n_aux_bc,MPI_REAL8,np_bc,mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+          call MPI_Bcast(aux_bc, n_aux_bc, MPI_REAL8, np_bc, mpi_comm_cols, mpierr)
+#else
+          call MPI_Bcast(aux_bc, n_aux_bc, MPI_REAL4, np_bc, mpi_comm_cols, mpierr)
+#endif
 
           ! Insert what we got in aux_mat
 
@@ -844,15 +954,24 @@ module ELPA1_compute
             if (lcs<=lce) then
               allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce))
               if (lrs<=lre) then
-                call dgemm('T','N',nstor,lce-lcs+1,lre-lrs+1,1.d0,aux_mat(lrs,1),ubound(aux_mat,dim=1), &
-                             b(lrs,lcs),ldb,0.d0,tmp1,nstor)
+#ifdef DOUBLE_PRECISION_REAL
+                call dgemm('T', 'N', nstor, lce-lcs+1, lre-lrs+1, 1.0_rk, aux_mat(lrs,1), ubound(aux_mat,dim=1), &
+                             b(lrs,lcs), ldb, 0.0_rk, tmp1, nstor)
+#else
+                call sgemm('T', 'N', nstor, lce-lcs+1, lre-lrs+1, 1.0_rk, aux_mat(lrs,1), ubound(aux_mat,dim=1), &
+                             b(lrs,lcs), ldb, 0.0_rk, tmp1, nstor)
+#endif
+
               else
                 tmp1 = 0
               endif
 
               ! Sum up the results and send to processor row np
-              call mpi_reduce(tmp1,tmp2,nstor*(lce-lcs+1),MPI_REAL8,MPI_SUM,np,mpi_comm_rows,mpierr)
-
+#ifdef DOUBLE_PRECISION_REAL
+              call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_REAL8, MPI_SUM, np, mpi_comm_rows, mpierr)
+#else
+              call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_REAL4, MPI_SUM, np, mpi_comm_rows, mpierr)
+#endif
               ! Put the result into C
               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
@@ -873,6 +992,8 @@ module ELPA1_compute
 
     end subroutine mult_at_b_real
 
+#ifdef DOUBLE_PRECISION_COMPLEX
+
 #define DATATYPE COMPLEX(kind=ck)
 #define BYTESIZE 16
 #define COMPLEXCASE 1
@@ -882,6 +1003,18 @@ module ELPA1_compute
 #undef BYTESIZE
 #undef COMPLEXCASE
 
+#else /* DOUBLE_PRECISION_COMPLEX */
+
+#define DATATYPE COMPLEX(kind=ck)
+#define BYTESIZE 8
+#define COMPLEXCASE 1
+#include "elpa_transpose_vectors.X90"
+#include "elpa_reduce_add_vectors.X90"
+#undef DATATYPE
+#undef BYTESIZE
+#undef COMPLEXCASE
+
+#endif /* DOUBLE_PRECISION_COMPLEX */
     subroutine tridiag_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau)
 
     !-------------------------------------------------------------------------------
@@ -930,7 +1063,7 @@ module ELPA1_compute
 
       integer(kind=ik), parameter   :: max_stored_rows = 32
 
-      complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+      complex(kind=ck), parameter   :: CZERO = (0.0_rk,0.0_rk), CONE = (1.0_rk,0.0_rk)
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
@@ -1028,8 +1161,13 @@ module ELPA1_compute
           vr(1:l_rows) = a(1:l_rows,l_cols+1)
           if (nstor>0 .and. l_rows>0) then
             aux(1:2*nstor) = conjg(uvc(l_cols+1,1:2*nstor))
-            call ZGEMV('N',l_rows,2*nstor,CONE,vur,ubound(vur,dim=1), &
-                        aux,1,CONE,vr,1)
+#ifdef DOUBLE_PRECISION_COMPLEX
+            call ZGEMV('N', l_rows, 2*nstor, CONE, vur, ubound(vur,dim=1), &
+                        aux, 1, CONE, vr, 1)
+#else
+            call CGEMV('N', l_rows, 2*nstor, CONE, vur, ubound(vur,dim=1), &
+                        aux, 1, CONE, vr, 1)
+#endif
           endif
 
           if (my_prow==prow(istep-1, nblk, np_rows)) then
@@ -1039,9 +1177,11 @@ module ELPA1_compute
             aux1(1) = dot_product(vr(1:l_rows),vr(1:l_rows))
             aux1(2) = 0.
           endif
-
-          call mpi_allreduce(aux1,aux2,2,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+          call mpi_allreduce(aux1, aux2, 2, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
+#else
+          call mpi_allreduce(aux1, aux2, 2, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
           vnorm2 = aux2(1)
           vrl    = aux2(2)
 
@@ -1063,7 +1203,11 @@ module ELPA1_compute
         ! Broadcast the Householder vector (and tau) along columns
 
         if (my_pcol==pcol(istep, nblk, np_cols)) vr(l_rows+1) = tau(istep)
-        call MPI_Bcast(vr,l_rows+1,MPI_DOUBLE_COMPLEX,pcol(istep, nblk, np_cols),mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_COMPLEX
+        call MPI_Bcast(vr, l_rows+1, MPI_DOUBLE_COMPLEX, pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+#else
+        call MPI_Bcast(vr, l_rows+1, MPI_COMPLEX, pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
         tau(istep) =  vr(l_rows+1)
 
         ! Transpose Householder vector vr -> vc
@@ -1111,14 +1255,34 @@ module ELPA1_compute
               if (lre<lrs) cycle
 #ifdef WITH_OPENMP
               if (mod(n_iter,n_threads) == my_thread) then
-                call ZGEMV('C',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vr(lrs),1,CONE,uc_p(lcs,my_thread),1)
-                if (i/=j) call ZGEMV('N',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vc(lcs),1,CONE,ur_p(lrs,my_thread),1)
+#ifdef DOUBLE_PRECISION_COMPLEX
+                call ZGEMV('C', lre-lrs+1 ,lce-lcs+1, CONE, a(lrs,lcs), lda, vr(lrs), 1, CONE, uc_p(lcs,my_thread), 1)
+                if (i/=j) then
+                  call ZGEMV('N', lre-lrs+1, lce-lcs+1, CONE, a(lrs,lcs), lda, vc(lcs), 1, CONE, ur_p(lrs,my_thread), 1)
+                endif
+#else
+                call CGEMV('C', lre-lrs+1 ,lce-lcs+1, CONE, a(lrs,lcs), lda, vr(lrs), 1, CONE, uc_p(lcs,my_thread), 1)
+                if (i/=j) then
+                  call CGEMV('N', lre-lrs+1, lce-lcs+1, CONE, a(lrs,lcs), lda, vc(lcs), 1, CONE, ur_p(lrs,my_thread), 1)
+                endif
+#endif
               endif
               n_iter = n_iter+1
+#else /* WITH_OPENMP */
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+              call ZGEMV('C', lre-lrs+1, lce-lcs+1, CONE, a(lrs,lcs), lda, vr(lrs), 1, CONE, uc(lcs), 1)
+              if (i/=j) then
+                call ZGEMV('N', lre-lrs+1, lce-lcs+1, CONE, a(lrs,lcs), lda, vc(lcs), 1, CONE, ur(lrs), 1)
+              endif
 #else
-              call ZGEMV('C',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vr(lrs),1,CONE,uc(lcs),1)
-              if (i/=j) call ZGEMV('N',lre-lrs+1,lce-lcs+1,CONE,a(lrs,lcs),lda,vc(lcs),1,CONE,ur(lrs),1)
+              call CGEMV('C', lre-lrs+1, lce-lcs+1, CONE, a(lrs,lcs), lda, vr(lrs), 1, CONE, uc(lcs), 1)
+              if (i/=j) then
+                call CGEMV('N', lre-lrs+1, lce-lcs+1, CONE, a(lrs,lcs), lda, vc(lcs), 1, CONE, ur(lrs), 1)
+              endif
 #endif
+
+#endif /* WITH_OPENMP */
             enddo
           enddo
 
@@ -1135,8 +1299,13 @@ module ELPA1_compute
 #endif
 
           if (nstor>0) then
-            call ZGEMV('C',l_rows,2*nstor,CONE,vur,ubound(vur,dim=1),vr,1,CZERO,aux,1)
-            call ZGEMV('N',l_cols,2*nstor,CONE,uvc,ubound(uvc,dim=1),aux,1,CONE,uc,1)
+#ifdef DOUBLE_PRECISION_COMPLEX
+            call ZGEMV('C', l_rows, 2*nstor, CONE, vur, ubound(vur,dim=1), vr,  1, CZERO, aux, 1)
+            call ZGEMV('N', l_cols, 2*nstor, CONE, uvc, ubound(uvc,dim=1), aux, 1, CONE, uc, 1)
+#else
+            call CGEMV('C', l_rows, 2*nstor, CONE, vur, ubound(vur,dim=1), vr,  1, CZERO, aux, 1)
+            call CGEMV('N', l_cols, 2*nstor, CONE, uvc, ubound(uvc,dim=1), aux, 1, CONE, uc, 1)
+#endif
           endif
 
         endif
@@ -1156,7 +1325,12 @@ module ELPA1_compute
 
         if (l_cols>0) then
           tmp(1:l_cols) = uc(1:l_cols)
-          call mpi_allreduce(tmp,uc,l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
+#ifdef DOUBLE_PRECISION_COMPLEX
+          call mpi_allreduce(tmp, uc, l_cols, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
+#else
+          call mpi_allreduce(tmp, uc, l_cols, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
+
         endif
 
 !        call elpa_transpose_vectors  (uc, 2*ubound(uc,dim=1), mpi_comm_cols, &
@@ -1173,7 +1347,11 @@ module ELPA1_compute
 
         xc = 0
         if (l_cols>0) xc = dot_product(vc(1:l_cols),uc(1:l_cols))
-        call mpi_allreduce(xc,vav,1,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_COMPLEX
+        call mpi_allreduce(xc, vav, 1 , MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_cols, mpierr)
+#else
+        call mpi_allreduce(xc, vav, 1 , MPI_COMPLEX, MPI_SUM, mpi_comm_cols, mpierr)
+#endif
 
         ! store u and v in the matrices U and V
         ! these matrices are stored combined in one here
@@ -1199,9 +1377,15 @@ module ELPA1_compute
             lrs = 1
             lre = min(l_rows,(i+1)*l_rows_tile)
             if (lce<lcs .or. lre<lrs) cycle
-            call ZGEMM('N','C',lre-lrs+1,lce-lcs+1,2*nstor,CONE, &
-                         vur(lrs,1),ubound(vur,dim=1),uvc(lcs,1),ubound(uvc,dim=1), &
-                         CONE,a(lrs,lcs),lda)
+#ifdef DOUBLE_PRECISION_COMPLEX
+            call ZGEMM('N', 'C', lre-lrs+1, lce-lcs+1, 2*nstor, CONE, &
+                         vur(lrs,1), ubound(vur,dim=1), uvc(lcs,1), ubound(uvc,dim=1), &
+                         CONE, a(lrs,lcs), lda)
+#else
+            call CGEMM('N', 'C', lre-lrs+1, lce-lcs+1, 2*nstor, CONE, &
+                         vur(lrs,1), ubound(vur,dim=1), uvc(lcs,1), ubound(uvc,dim=1), &
+                         CONE, a(lrs,lcs), lda)
+#endif
           enddo
 
           nstor = 0
@@ -1222,13 +1406,21 @@ module ELPA1_compute
         if (my_prow==prow(1, nblk, np_rows)) then
           ! We use last l_cols value of loop above
           vrl = a(1,l_cols)
-          call hh_transform_complex(vrl, 0.d0, xf, tau(2))
+          call hh_transform_complex(vrl, 0.0_rk, xf, tau(2))
           e(1) = vrl
           a(1,l_cols) = 1. ! for consistency only
         endif
-        call mpi_bcast(tau(2),1,MPI_DOUBLE_COMPLEX,prow(1, nblk, np_rows),mpi_comm_rows,mpierr)
+#ifdef DOUBLE_PRECISION_COMPLEX
+        call mpi_bcast(tau(2), 1, MPI_DOUBLE_COMPLEX, prow(1, nblk, np_rows), mpi_comm_rows, mpierr)
+#else
+        call mpi_bcast(tau(2), 1, MPI_COMPLEX, prow(1, nblk, np_rows), mpi_comm_rows, mpierr)
+#endif
       endif
-      call mpi_bcast(tau(2),1,MPI_DOUBLE_COMPLEX,pcol(2, nblk, np_cols),mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_COMPLEX
+      call mpi_bcast(tau(2), 1, MPI_DOUBLE_COMPLEX, pcol(2, nblk, np_cols), mpi_comm_cols, mpierr)
+#else
+      call mpi_bcast(tau(2), 1, MPI_COMPLEX, pcol(2, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) d(1) = a(1,1)
 
@@ -1237,14 +1429,26 @@ module ELPA1_compute
       ! distribute the arrays d and e to all processors
 
       allocate(tmpr(na))
+#ifdef DOUBLE_PRECISION_COMPLEX
       tmpr = d
-      call mpi_allreduce(tmpr,d,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+      call mpi_allreduce(tmpr, d, na, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
       tmpr = d
-      call mpi_allreduce(tmpr,d,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
+      call mpi_allreduce(tmpr, d, na, MPI_REAL8 ,MPI_SUM, mpi_comm_cols, mpierr)
       tmpr = e
-      call mpi_allreduce(tmpr,e,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+      call mpi_allreduce(tmpr, e, na, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
       tmpr = e
-      call mpi_allreduce(tmpr,e,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
+      call mpi_allreduce(tmpr, e, na, MPI_REAL8, MPI_SUM, mpi_comm_cols, mpierr)
+#else
+      tmpr = d
+      call mpi_allreduce(tmpr, d, na, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+      tmpr = d
+      call mpi_allreduce(tmpr, d, na, MPI_REAL4 ,MPI_SUM, mpi_comm_cols, mpierr)
+      tmpr = e
+      call mpi_allreduce(tmpr, e, na, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+      tmpr = e
+      call mpi_allreduce(tmpr, e, na, MPI_REAL4, MPI_SUM, mpi_comm_cols, mpierr)
+#endif
+
       deallocate(tmpr)
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("tridiag_complex")
@@ -1300,7 +1504,7 @@ module ELPA1_compute
 #endif
       integer(kind=ik)              :: max_stored_rows
 
-      complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+      complex(kind=ck), parameter   :: CZERO = (0.0_rk,0.0_rk), CONE = (1.0_rk,0.0_rk)
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
@@ -1345,7 +1549,7 @@ module ELPA1_compute
 
       ! In the complex case tau(2) /= 0
       if (my_prow == prow(1, nblk, np_rows)) then
-        q(1,1:l_cols) = q(1,1:l_cols)*((1.d0,0.d0)-tau(2))
+        q(1,1:l_cols) = q(1,1:l_cols)*((1.0_rk,0.0_rk)-tau(2))
       endif
 
       do istep=1,na,nblk
@@ -1374,8 +1578,11 @@ module ELPA1_compute
         enddo
 
         if (nb>0) &
-           call MPI_Bcast(hvb,nb,MPI_DOUBLE_COMPLEX,cur_pcol,mpi_comm_cols,mpierr)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+           call MPI_Bcast(hvb, nb, MPI_DOUBLE_COMPLEX, cur_pcol, mpi_comm_cols, mpierr)
+#else
+           call MPI_Bcast(hvb, nb, MPI_COMPLEX, cur_pcol, mpi_comm_cols, mpierr)
+#endif
         nb = 0
         do ic=ics,ice
           l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder vector
@@ -1392,22 +1599,32 @@ module ELPA1_compute
 
           tmat = 0
           if (l_rows>0) &
-             call zherk('U','C',nstor,l_rows,CONE,hvm,ubound(hvm,dim=1),CZERO,tmat,max_stored_rows)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+             call zherk('U', 'C', nstor, l_rows, CONE, hvm, ubound(hvm,dim=1), CZERO, tmat, max_stored_rows)
+#else
+             call cherk('U', 'C', nstor, l_rows, CONE, hvm, ubound(hvm,dim=1), CZERO, tmat, max_stored_rows)
+#endif
           nc = 0
           do n=1,nstor-1
             h1(nc+1:nc+n) = tmat(1:n,n+1)
             nc = nc+n
           enddo
-
-          if (nc>0) call mpi_allreduce(h1,h2,nc,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
+#ifdef DOUBLE_PRECISION_COMPLEX
+          if (nc>0) call mpi_allreduce(h1, h2, nc, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
+#else
+          if (nc>0) call mpi_allreduce(h1, h2, nc, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
 
           ! Calculate triangular matrix T
 
           nc = 0
           tmat(1,1) = tau(ice-nstor+1)
           do n=1,nstor-1
-            call ztrmv('L','C','N',n,tmat,max_stored_rows,h2(nc+1),1)
+#ifdef DOUBLE_PRECISION_COMPLEX
+            call ztrmv('L', 'C', 'N', n, tmat, max_stored_rows, h2(nc+1),1)
+#else
+            call ctrmv('L', 'C', 'N', n, tmat, max_stored_rows, h2(nc+1),1)
+#endif
             tmat(n+1,1:n) = -conjg(h2(nc+1:nc+n))*tau(ice-nstor+n+1)
             tmat(n+1,n+1) = tau(ice-nstor+n+1)
             nc = nc+n
@@ -1416,17 +1633,31 @@ module ELPA1_compute
           ! Q = Q - V * T * V**T * Q
 
           if (l_rows>0) then
-            call zgemm('C','N',nstor,l_cols,l_rows,CONE,hvm,ubound(hvm,dim=1), &
-                        q,ldq,CZERO,tmp1,nstor)
+#ifdef DOUBLE_PRECISION_COMPLEX
+            call zgemm('C', 'N', nstor, l_cols, l_rows, CONE, hvm, ubound(hvm,dim=1), &
+                        q, ldq, CZERO, tmp1 ,nstor)
+#else
+            call cgemm('C', 'N', nstor, l_cols, l_rows, CONE, hvm, ubound(hvm,dim=1), &
+                        q, ldq, CZERO, tmp1 ,nstor)
+#endif
           else
             tmp1(1:l_cols*nstor) = 0
           endif
-          call mpi_allreduce(tmp1,tmp2,nstor*l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
+#ifdef DOUBLE_PRECISION_COMPLEX
+          call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
           if (l_rows>0) then
-            call ztrmm('L','L','N','N',nstor,l_cols,CONE,tmat,max_stored_rows,tmp2,nstor)
-            call zgemm('N','N',l_rows,l_cols,nstor,-CONE,hvm,ubound(hvm,dim=1), &
-                        tmp2,nstor,CONE,q,ldq)
+            call ztrmm('L', 'L', 'N', 'N', nstor, l_cols, CONE, tmat, max_stored_rows, tmp2, nstor)
+            call zgemm('N', 'N', l_rows, l_cols, nstor, -CONE, hvm, ubound(hvm,dim=1), &
+                        tmp2, nstor, CONE, q, ldq)
           endif
+#else
+          call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
+          if (l_rows>0) then
+            call ctrmm('L', 'L', 'N', 'N', nstor, l_cols, CONE, tmat, max_stored_rows, tmp2, nstor)
+            call cgemm('N', 'N', l_rows, l_cols, nstor, -CONE, hvm, ubound(hvm,dim=1), &
+                        tmp2, nstor, CONE, q, ldq)
+          endif
+#endif
           nstor = 0
         endif
 
@@ -1624,8 +1855,11 @@ module ELPA1_compute
           enddo
 
           ! Broadcast block column
-
-          call MPI_Bcast(aux_bc,n_aux_bc,MPI_DOUBLE_COMPLEX,np_bc,mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_COMPLEX
+          call MPI_Bcast(aux_bc, n_aux_bc, MPI_DOUBLE_COMPLEX, np_bc, mpi_comm_cols, mpierr)
+#else
+          call MPI_Bcast(aux_bc, n_aux_bc, MPI_COMPLEX, np_bc, mpi_comm_cols, mpierr)
+#endif
 
           ! Insert what we got in aux_mat
 
@@ -1659,15 +1893,23 @@ module ELPA1_compute
             if (lcs<=lce) then
               allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce))
               if (lrs<=lre) then
-                call zgemm('C','N',nstor,lce-lcs+1,lre-lrs+1,(1.d0,0.d0),aux_mat(lrs,1),ubound(aux_mat,dim=1), &
-                             b(lrs,lcs),ldb,(0.d0,0.d0),tmp1,nstor)
+#ifdef DOUBLE_PRECISION_COMPLEX
+                call zgemm('C', 'N', nstor, lce-lcs+1, lre-lrs+1, (1.0_rk,0.0_rk), aux_mat(lrs,1), ubound(aux_mat,dim=1), &
+                             b(lrs,lcs), ldb, (0.0_rk,0.0_rk), tmp1, nstor)
+#else
+                call cgemm('C', 'N', nstor, lce-lcs+1, lre-lrs+1, (1.0_rk,0.0_rk), aux_mat(lrs,1), ubound(aux_mat,dim=1), &
+                             b(lrs,lcs), ldb, (0.0_rk,0.0_rk), tmp1, nstor)
+#endif
                else
                  tmp1 = 0
                endif
 
                ! Sum up the results and send to processor row np
-               call mpi_reduce(tmp1,tmp2,nstor*(lce-lcs+1),MPI_DOUBLE_COMPLEX,MPI_SUM,np,mpi_comm_rows,mpierr)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+               call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_DOUBLE_COMPLEX, MPI_SUM, np, mpi_comm_rows, mpierr)
+#else
+               call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_COMPLEX, MPI_SUM, np, mpi_comm_rows, mpierr)
+#endif
                ! Put the result into C
                if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
@@ -1768,8 +2010,10 @@ module ELPA1_compute
       else
         nev1 = MIN(nev,l_cols)
       endif
+
       call solve_tridi_col(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         matrixCols, mpi_comm_rows, wantDebug, success)
+
       if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("solve_tridi")
@@ -1875,20 +2119,37 @@ module ELPA1_compute
 
            if (my_pcol==np_off) then
              do n=np_off+np1,np_off+nprocs-1
-               call mpi_send(d(noff+1),nmid,MPI_REAL8,n,1,mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+               call mpi_send(d(noff+1), nmid, MPI_REAL8, n, 1, mpi_comm_cols, mpierr)
+#else
+               call mpi_send(d(noff+1), nmid, MPI_REAL4, n, 1, mpi_comm_cols, mpierr)
+#endif
              enddo
            endif
            if (my_pcol>=np_off+np1 .and. my_pcol<np_off+nprocs) then
-             call mpi_recv(d(noff+1),nmid,MPI_REAL8,np_off,1,mpi_comm_cols,mpi_status,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+             call mpi_recv(d(noff+1), nmid, MPI_REAL8, np_off, 1, mpi_comm_cols, mpi_status, mpierr)
+#else
+             call mpi_recv(d(noff+1), nmid, MPI_REAL4, np_off, 1, mpi_comm_cols, mpi_status, mpierr)
+#endif
            endif
 
            if (my_pcol==np_off+np1) then
              do n=np_off,np_off+np1-1
-               call mpi_send(d(noff+nmid+1),nlen-nmid,MPI_REAL8,n,1,mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+               call mpi_send(d(noff+nmid+1), nlen-nmid, MPI_REAL8, n, 1, mpi_comm_cols, mpierr)
+#else
+               call mpi_send(d(noff+nmid+1), nlen-nmid, MPI_REAL4, n, 1, mpi_comm_cols, mpierr)
+
+#endif
              enddo
            endif
            if (my_pcol>=np_off .and. my_pcol<np_off+np1) then
-             call mpi_recv(d(noff+nmid+1),nlen-nmid,MPI_REAL8,np_off+np1,1,mpi_comm_cols,mpi_status,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+             call mpi_recv(d(noff+nmid+1), nlen-nmid, MPI_REAL8, np_off+np1, 1,mpi_comm_cols, mpi_status, mpierr)
+#else
+             call mpi_recv(d(noff+nmid+1), nlen-nmid, MPI_REAL4, np_off+np1, 1,mpi_comm_cols, mpi_status, mpierr)
+#endif
            endif
 
            if (nprocs == np_cols) then
@@ -1998,7 +2259,6 @@ module ELPA1_compute
       if (np_rows==1)    then
 
         ! For 1 processor row there may be 1 or 2 subdivisions
-
         do n=0,ndiv-1
           noff = limits(n)        ! Start of subproblem
           nlen = limits(n+1)-noff ! Size of subproblem
@@ -2036,10 +2296,16 @@ module ELPA1_compute
           noff = limits(np)
           nlen = limits(np+1)-noff
 
-          call MPI_Bcast(d(noff+1),nlen,MPI_REAL8,np,mpi_comm_rows,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+          call MPI_Bcast(d(noff+1), nlen, MPI_REAL8, np, mpi_comm_rows, mpierr)
           qmat2 = qmat1
-          call MPI_Bcast(qmat2,max_size*max_size,MPI_REAL8,np,mpi_comm_rows,mpierr)
+          call MPI_Bcast(qmat2, max_size*max_size, MPI_REAL8, np, mpi_comm_rows, mpierr)
+#else
 
+          call MPI_Bcast(d(noff+1), nlen, MPI_REAL4, np, mpi_comm_rows, mpierr)
+          qmat2 = qmat1
+          call MPI_Bcast(qmat2, max_size*max_size, MPI_REAL4, np, mpi_comm_rows, mpierr)
+#endif
           do i=1,nlen
             call distribute_global_column(qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
           enddo
@@ -2079,6 +2345,7 @@ module ELPA1_compute
           call merge_systems(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                                matrixCols, mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
                                l_col(noff+1), p_col_o(noff+1), 0, 1, wantDebug, success)
+
           if (.not.(success)) return
 
         enddo
@@ -2133,7 +2400,11 @@ module ELPA1_compute
      lwork = 1 + 4*nlen + nlen**2
      liwork =  3 + 5*nlen
      allocate(work(lwork), iwork(liwork))
-     call dstedc('I',nlen,d,e,q,ldq,work,lwork,iwork,liwork,info)
+#ifdef DOUBLE_PRECISION_REAL
+     call dstedc('I', nlen, d, e, q, ldq, work, lwork, iwork, liwork, info)
+#else
+     call sstedc('I', nlen, d, e, q, ldq, work, lwork, iwork, liwork, info)
+#endif
 
      if (info /= 0) then
 
@@ -2143,8 +2414,11 @@ module ELPA1_compute
 
        d(:) = ds(:)
        e(:) = es(:)
-       call dsteqr('I',nlen,d,e,q,ldq,work,info)
-
+#ifdef DOUBLE_PRECISION_REAL
+       call dsteqr('I', nlen, d, e, q, ldq, work, info)
+#else
+       call ssteqr('I', nlen, d, e, q, ldq, work, info)
+#endif
        ! If DSTEQR fails also, we don't know what to do further ...
 
        if (info /= 0) then
@@ -2162,7 +2436,7 @@ module ELPA1_compute
 
       do i=1,nlen-1
         if (d(i+1)<d(i)) then
-          if (abs(d(i+1) - d(i)) / abs(d(i+1) + d(i)) > 1d-14) then
+          if (abs(d(i+1) - d(i)) / abs(d(i+1) + d(i)) > 1e-14_rk) then
             write(error_unit,'(a,i8,2g25.16)') '***WARNING: Monotony error dste**:',i+1,d(i),d(i+1)
           else
             write(error_unit,'(a,i8,2g25.16)') 'Info: Monotony error dste{dc,qr}:',i+1,d(i),d(i+1)
@@ -2320,7 +2594,7 @@ module ELPA1_compute
       ! Calculations start here
 
       beta = abs(e)
-      sig  = sign(1.d0,e)
+      sig  = sign(1.0_rk,e)
 
       ! Calculate rank-1 modifier z
 
@@ -2345,14 +2619,17 @@ module ELPA1_compute
       ! Normalize z so that norm(z) = 1.  Since z is the concatenation of
       ! two normalized vectors, norm2(z) = sqrt(2).
 
-      z = z/sqrt(2.0d0)
+      z = z/sqrt(2.0_rk)
       rho = 2.*beta
 
       ! Calculate index for merging both systems by ascending eigenvalues
-
+#ifdef DOUBLE_PRECISION_REAL
       call DLAMRG( nm, na-nm, d, 1, 1, idx )
+#else
+      call SLAMRG( nm, na-nm, d, 1, 1, idx )
+#endif
 
-      ! Calculate the allowable deflation tolerance
+! Calculate the allowable deflation tolerance
 
       zmax = maxval(abs(z))
       dmax = maxval(abs(d))
@@ -2510,9 +2787,13 @@ module ELPA1_compute
         if (na1==1) then
           d(1) = d1(1) + rho*z1(1)**2 ! solve secular equation
         else ! na1==2
+#ifdef DOUBLE_PRECISION_REAL
           call DLAED5(1, d1, z1, qtrans(1,1), rho, d(1))
           call DLAED5(2, d1, z1, qtrans(1,2), rho, d(2))
-
+#else
+          call SLAED5(1, d1, z1, qtrans(1,1), rho, d(1))
+          call SLAED5(2, d1, z1, qtrans(1,2), rho, d(2))
+#endif
           call transform_columns(idx1(1), idx1(2))
         endif
 
@@ -2520,9 +2801,11 @@ module ELPA1_compute
         d(na1+1:na) = d2(1:na2)
 
         ! Calculate arrangement of all eigenvalues  in output
-
+#ifdef DOUBLE_PRECISION_REAL
         call DLAMRG( na1, na-na1, d, 1, 1, idx )
-
+#else
+        call SLAMRG( na1, na-na1, d, 1, 1, idx )
+#endif
         ! Rearrange eigenvalues
 
         tmp = d
@@ -2565,9 +2848,11 @@ module ELPA1_compute
 !$OMP DO
 #endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
-
+#ifdef DOUBLE_PRECISION_REAL
           call DLAED4(na1, i, d1, z1, delta, rho, s, info) ! s is not used!
-
+#else
+          call SLAED4(na1, i, d1, z1, delta, rho, s, info) ! s is not used!
+#endif
           if (info/=0) then
             ! If DLAED4 fails (may happen especially for LAPACK versions before 3.2)
             ! use the more stable bisection algorithm in solve_secular_equation
@@ -2624,7 +2909,7 @@ module ELPA1_compute
 
         ! Calculate scale factors for eigenvectors
 
-        ev_scale(:) = 0.
+        ev_scale(:) = 0._rk
 
 #ifdef WITH_OPENMP
 
@@ -2663,9 +2948,11 @@ module ELPA1_compute
         d(na1+1:na) = d2(1:na2)
 
         ! Calculate arrangement of all eigenvalues  in output
-
+#ifdef DOUBLE_PRECISION_REAL
         call DLAMRG( na1, na-na1, d, 1, 1, idx )
-
+#else
+        call SLAMRG( na1, na-na1, d, 1, 1, idx )
+#endif
         ! Rearrange eigenvalues
 
         tmp = d
@@ -2758,10 +3045,15 @@ module ELPA1_compute
             else
               np_rem = np_rem-1
             endif
-
+#ifdef DOUBLE_PRECISION_REAL
             call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, MPI_REAL8, &
                                         np_next, 1111, np_prev, 1111, &
                                         mpi_comm_cols, mpi_status, mpierr)
+#else
+            call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, MPI_REAL4, &
+                                        np_next, 1111, np_prev, 1111, &
+                                        mpi_comm_cols, mpi_status, mpierr)
+#endif
           endif
 
           ! Gather the parts in d1 and z which are fitting to qtmp1.
@@ -2823,9 +3115,13 @@ module ELPA1_compute
             ! Multiply old Q with eigenvectors (upper half)
 
             if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) &
-                call dgemm('N','N',l_rnm,ncnt,nnzu,1.d0,qtmp1,ubound(qtmp1,dim=1),ev,ubound(ev,dim=1), &
-                           1.d0,qtmp2(1,1),ubound(qtmp2,dim=1))
-
+#ifdef DOUBLE_PRECISION_REAL
+                call dgemm('N', 'N', l_rnm, ncnt, nnzu, 1.0_rk, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
+                           1.0_rk, qtmp2(1,1), ubound(qtmp2,dim=1))
+#else
+                call sgemm('N', 'N', l_rnm, ncnt, nnzu, 1.0_rk, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
+                           1.0_rk, qtmp2(1,1), ubound(qtmp2,dim=1))
+#endif
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
 
@@ -2841,8 +3137,13 @@ module ELPA1_compute
             ! Multiply old Q with eigenvectors (lower half)
 
              if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
-                call dgemm('N','N',l_rows-l_rnm,ncnt,nnzl,1.d0,qtmp1(l_rnm+1,1),ubound(qtmp1,dim=1),ev,ubound(ev,dim=1), &
-                           1.d0,qtmp2(l_rnm+1,1),ubound(qtmp2,dim=1))
+#ifdef DOUBLE_PRECISION_REAL
+                call dgemm('N', 'N', l_rows-l_rnm, ncnt, nnzl, 1.0_rk, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
+                           ubound(ev,dim=1), 1.0_rk, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+#else
+                call sgemm('N', 'N', l_rows-l_rnm, ncnt, nnzl, 1.0_rk, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
+                           ubound(ev,dim=1), 1.0_rk, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+#endif
 
              ! Put partial result into (output) Q
 
@@ -2883,7 +3184,7 @@ module ELPA1_compute
 
           tmp(1:na1) = z(1:na1) / tmp(1:na1)
 
-          ev_scale_value = 1.0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
+          ev_scale_value = 1.0_rk/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
 
         end subroutine add_tmp
 
@@ -2921,10 +3222,18 @@ module ELPA1_compute
                 ! send and recieve column are local
                 qtmp(1:l_rows,nc) = q(l_rqs:l_rqe,lc1)
               else
-                call mpi_send(q(l_rqs,lc1),l_rows,MPI_REAL8,pc2,mod(i,4096),mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+                call mpi_send(q(l_rqs,lc1), l_rows, MPI_REAL8, pc2, mod(i,4096), mpi_comm_cols, mpierr)
+#else
+                call mpi_send(q(l_rqs,lc1), l_rows, MPI_REAL4, pc2, mod(i,4096), mpi_comm_cols, mpierr)
+#endif
               endif
             else if (pc2==my_pcol) then
-              call mpi_recv(qtmp(1,nc),l_rows,MPI_REAL8,pc1,mod(i,4096),mpi_comm_cols,mpi_status,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+              call mpi_recv(qtmp(1,nc), l_rows, MPI_REAL8, pc1, mod(i,4096), mpi_comm_cols, mpi_status, mpierr)
+#else
+              call mpi_recv(qtmp(1,nc), l_rows, MPI_REAL4, pc1, mod(i,4096), mpi_comm_cols, mpi_status, mpierr)
+#endif
             endif
           enddo
 
@@ -2968,15 +3277,27 @@ module ELPA1_compute
               q(l_rqs:l_rqe,lc2) = q(l_rqs:l_rqe,lc1)*qtrans(1,2) + q(l_rqs:l_rqe,lc2)*qtrans(2,2)
               q(l_rqs:l_rqe,lc1) = tmp(1:l_rows)
             else
-              call mpi_sendrecv(q(l_rqs,lc1),l_rows,MPI_REAL8,pc2,1, &
-                                  tmp,l_rows,MPI_REAL8,pc2,1, &
-                                  mpi_comm_cols,mpi_status,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+              call mpi_sendrecv(q(l_rqs,lc1), l_rows, MPI_REAL8, pc2, 1, &
+                                tmp, l_rows, MPI_REAL8, pc2, 1,          &
+                                mpi_comm_cols, mpi_status, mpierr)
+#else
+              call mpi_sendrecv(q(l_rqs,lc1), l_rows, MPI_REAL4, pc2, 1, &
+                                tmp, l_rows, MPI_REAL4, pc2, 1,          &
+                                mpi_comm_cols, mpi_status, mpierr)
+#endif
               q(l_rqs:l_rqe,lc1) = q(l_rqs:l_rqe,lc1)*qtrans(1,1) + tmp(1:l_rows)*qtrans(2,1)
             endif
           else if (pc2==my_pcol) then
-            call mpi_sendrecv(q(l_rqs,lc2),l_rows,MPI_REAL8,pc1,1, &
-                               tmp,l_rows,MPI_REAL8,pc1,1, &
-                               mpi_comm_cols,mpi_status,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+            call mpi_sendrecv(q(l_rqs,lc2), l_rows, MPI_REAL8, pc1, 1, &
+                               tmp, l_rows, MPI_REAL8, pc1, 1,         &
+                               mpi_comm_cols, mpi_status, mpierr)
+#else
+            call mpi_sendrecv(q(l_rqs,lc2), l_rows, MPI_REAL4, pc1, 1, &
+                               tmp, l_rows, MPI_REAL4, pc1, 1,         &
+                               mpi_comm_cols, mpi_status, mpierr)
+#endif
             q(l_rqs:l_rqe,lc2) = tmp(1:l_rows)*qtrans(1,2) + q(l_rqs:l_rqe,lc2)*qtrans(2,2)
           endif
 
@@ -2998,9 +3319,11 @@ module ELPA1_compute
           if (npc_n==1 .and. np_rows==1) return ! nothing to do
 
           ! Do an mpi_allreduce over processor rows
-
+#ifdef DOUBLE_PRECISION_REAL
           call mpi_allreduce(z, tmp, n, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
-
+#else
+          call mpi_allreduce(z, tmp, n, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
           ! If only 1 processor column, we are done
           if (npc_n==1) then
             z(:) = tmp(:)
@@ -3009,7 +3332,11 @@ module ELPA1_compute
 
           ! If all processor columns are involved, we can use mpi_allreduce
           if (npc_n==np_cols) then
+#ifdef DOUBLE_PRECISION_REAL
             call mpi_allreduce(tmp, z, n, MPI_REAL8, MPI_SUM, mpi_comm_cols, mpierr)
+#else
+            call mpi_allreduce(tmp, z, n, MPI_REAL4, MPI_SUM, mpi_comm_cols, mpierr)
+#endif
             return
           endif
 
@@ -3017,8 +3344,13 @@ module ELPA1_compute
           z(:) = 0
           do np = 1, npc_n
             z(:) = z(:) + tmp(:)
+#ifdef DOUBLE_PRECISION_REAL
             call MPI_Sendrecv_replace(z, n, MPI_REAL8, np_next, 1111, np_prev, 1111, &
                                        mpi_comm_cols, mpi_status, mpierr)
+#else
+            call MPI_Sendrecv_replace(z, n, MPI_REAL4, np_next, 1111, np_prev, 1111, &
+                                       mpi_comm_cols, mpi_status, mpierr)
+#endif
           enddo
 
         end subroutine global_gather
@@ -3037,9 +3369,11 @@ module ELPA1_compute
           if (npc_n==1 .and. np_rows==1) return ! nothing to do
 
           ! Do an mpi_allreduce over processor rows
-
+#ifdef DOUBLE_PRECISION_REAL
           call mpi_allreduce(z, tmp, n, MPI_REAL8, MPI_PROD, mpi_comm_rows, mpierr)
-
+#else
+          call mpi_allreduce(z, tmp, n, MPI_REAL4, MPI_PROD, mpi_comm_rows, mpierr)
+#endif
           ! If only 1 processor column, we are done
           if (npc_n==1) then
             z(:) = tmp(:)
@@ -3048,7 +3382,11 @@ module ELPA1_compute
 
           ! If all processor columns are involved, we can use mpi_allreduce
           if (npc_n==np_cols) then
+#ifdef DOUBLE_PRECISION_REAL
             call mpi_allreduce(tmp, z, n, MPI_REAL8, MPI_PROD, mpi_comm_cols, mpierr)
+#else
+            call mpi_allreduce(tmp, z, n, MPI_REAL4, MPI_PROD, mpi_comm_cols, mpierr)
+#endif
             return
           endif
 
@@ -3058,15 +3396,28 @@ module ELPA1_compute
           if (my_pcol == npc_0) then
             z(1:n) = tmp(1:n)
             do np = npc_0+1, npc_0+npc_n-1
-              call mpi_recv(tmp,n,MPI_REAL8,np,1111,mpi_comm_cols,mpi_status,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+              call mpi_recv(tmp, n, MPI_REAL8, np, 1111, mpi_comm_cols, mpi_status, mpierr)
+#else
+              call mpi_recv(tmp, n, MPI_REAL4, np, 1111, mpi_comm_cols, mpi_status, mpierr)
+#endif
               z(1:n) = z(1:n)*tmp(1:n)
             enddo
             do np = npc_0+1, npc_0+npc_n-1
-              call mpi_send(z,n,MPI_REAL8,np,1111,mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+              call mpi_send(z, n, MPI_REAL8, np, 1111, mpi_comm_cols, mpierr)
+#else
+              call mpi_send(z, n, MPI_REAL4, np, 1111, mpi_comm_cols, mpierr)
+#endif
             enddo
           else
-            call mpi_send(tmp,n,MPI_REAL8,npc_0,1111,mpi_comm_cols,mpierr)
-            call mpi_recv(z  ,n,MPI_REAL8,npc_0,1111,mpi_comm_cols,mpi_status,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+            call mpi_send(tmp, n, MPI_REAL8, npc_0, 1111, mpi_comm_cols, mpierr)
+            call mpi_recv(z  ,n, MPI_REAL8, npc_0, 1111, mpi_comm_cols, mpi_status, mpierr)
+#else
+            call mpi_send(tmp, n, MPI_REAL4, npc_0, 1111, mpi_comm_cols, mpierr)
+            call mpi_recv(z  ,n, MPI_REAL4, npc_0, 1111, mpi_comm_cols, mpi_status, mpierr)
+#endif
           endif
 
         end subroutine global_product
@@ -3111,7 +3462,7 @@ module ELPA1_compute
       use precision
       implicit none
 
-      real(kind=rk)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching
+      real(kind=rk)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching ! remove assumed size
       integer(kind=ik)  :: noff, nlen, my_prow, np_rows, nblk
 
       integer(kind=ik)  :: nbs, nbe, jb, g_off, l_off, js, je
@@ -3216,7 +3567,7 @@ module ELPA1_compute
        delta(:) = d(:) - dshift
 
        a = 0. ! delta(n)
-       b = rho*SUM(z(:)**2) + 1. ! rho*SUM(z(:)**2) is the lower bound for the guess
+       b = rho*SUM(z(:)**2) + 1._rk ! rho*SUM(z(:)**2) is the lower bound for the guess
 
       else
 
@@ -3224,8 +3575,8 @@ module ELPA1_compute
         ! We check the sign of the function in the midpoint of the interval
         ! in order to determine if eigenvalue is more close to d(i) or d(i+1)
 
-        x = 0.5*(d(i)+d(i+1))
-        y = 1. + rho*SUM(z(:)**2/(d(:)-x))
+        x = 0.5_rk*(d(i)+d(i+1))
+        y = 1._rk + rho*SUM(z(:)**2/(d(:)-x))
 
         if (y>0) then
           ! solution is next to d(i)
@@ -3247,11 +3598,14 @@ module ELPA1_compute
 
         ! Interval subdivision
 
-        x = 0.5*(a+b)
+        x = 0.5_rk*(a+b)
 
         if (x==a .or. x==b) exit   ! No further interval subdivisions possible
-        if (abs(x) < 1.d-200) exit ! x next to pole
-
+#ifdef DOUBLE_PRECISION_REAL
+        if (abs(x) < 1.e-200_rk) exit ! x next to pole
+#else
+        if (abs(x) < 1.e-20_rk) exit ! x next to pole
+#endif
         ! evaluate value at x
 
         y = 1. + rho*SUM(z(:)**2/(delta(:)-x))
@@ -3432,8 +3786,11 @@ module ELPA1_compute
           ! of the remaining block
 
           if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
-
-            call dpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
+#ifdef DOUBLE_PRECISION_REAL
+            call dpotrf('U', na-n+1, a(l_row1,l_col1), lda, info)
+#else
+            call spotrf('U', na-n+1, a(l_row1,l_col1), lda, info)
+#endif
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
               success = .false.
@@ -3452,8 +3809,11 @@ module ELPA1_compute
 
             ! The process owning the upper left remaining block does the
             ! Cholesky-Factorization of this block
-
-            call dpotrf('U',nblk,a(l_row1,l_col1),lda,info)
+#ifdef DOUBLE_PRECISION_REAL
+            call dpotrf('U', nblk, a(l_row1,l_col1), lda, info)
+#else
+            call spotrf('U', nblk, a(l_row1,l_col1), lda, info)
+#endif
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
               success = .false.
@@ -3466,9 +3826,11 @@ module ELPA1_compute
               nc = nc+i
             enddo
           endif
-
-          call MPI_Bcast(tmp1,nblk*(nblk+1)/2,MPI_REAL8,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
-
+#ifdef DOUBLE_PRECISION_REAL
+          call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#else
+          call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
           nc = 0
           do i=1,nblk
             tmp2(1:i,i) = tmp1(nc+1:nc+i)
@@ -3476,15 +3838,22 @@ module ELPA1_compute
           enddo
 
           if (l_cols-l_colx+1>0) &
-              call dtrsm('L','U','T','N',nblk,l_cols-l_colx+1,1.d0,tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
-
+#ifdef DOUBLE_PRECISION_REAL
+              call dtrsm('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, 1.0_rk, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+#else
+              call strsm('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, 1.0_rk, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+#endif
         endif
 
         do i=1,nblk
 
           if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = a(l_row1+i-1,l_colx:l_cols)
           if (l_cols-l_colx+1>0) &
-              call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_REAL8,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+              call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL8, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+#else
+              call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL4, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+#endif
 
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
@@ -3498,9 +3867,15 @@ module ELPA1_compute
           lrs = l_rowx
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
-          call DGEMM('N','T',lre-lrs+1,lce-lcs+1,nblk,-1.d0, &
-                      tmatr(lrs,1),ubound(tmatr,dim=1),tmatc(lcs,1),ubound(tmatc,dim=1), &
-                      1.d0,a(lrs,lcs),lda)
+#ifdef DOUBLE_PRECISION_REAL
+          call DGEMM('N', 'T', lre-lrs+1, lce-lcs+1, nblk, -1.0_rk,                        &
+                     tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
+                     1.0_rk, a(lrs,lcs), lda)
+#else
+          call SGEMM('N', 'T', lre-lrs+1, lce-lcs+1, nblk, -1.0_rk,                        &
+                     tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
+                     1.0_rk, a(lrs,lcs), lda)
+#endif
         enddo
 
       enddo
@@ -3602,8 +3977,11 @@ module ELPA1_compute
          if (my_prow==prow(n, nblk, np_rows)) then
 
            if (my_pcol==pcol(n, nblk, np_cols)) then
-
-             call DTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
+#ifdef DOUBLE_PRECISION_REAL
+             call DTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
+#else
+             call STRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
+#endif
              if (info/=0) then
                if (wantDebug) write(error_unit,*) "ELPA1_invert_trm_real: Error in DTRTRI"
                success = .false.
@@ -3616,9 +3994,11 @@ module ELPA1_compute
                nc = nc+i
              enddo
            endif
-
-           call MPI_Bcast(tmp1,nb*(nb+1)/2,MPI_REAL8,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
-
+#ifdef DOUBLE_PRECISION_REAL
+           call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#else
+           call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
            nc = 0
            do i=1,nb
              tmp2(1:i,i) = tmp1(nc+1:nc+i)
@@ -3626,8 +4006,11 @@ module ELPA1_compute
            enddo
 
            if (l_cols-l_colx+1>0) &
-               call DTRMM('L','U','N','N',nb,l_cols-l_colx+1,1.d0,tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
-
+#ifdef DOUBLE_PRECISION_REAL
+               call DTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+#else
+               call STRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+#endif
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 
@@ -3640,18 +4023,30 @@ module ELPA1_compute
            endif
 
            do i=1,nb
-             call MPI_Bcast(tmat1(1,i),l_row1-1,MPI_REAL8,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_REAL
+             call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#else
+             call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
            enddo
          endif
 
          if (l_cols-l_col1+1>0) &
-            call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_REAL8,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
-
+#ifdef DOUBLE_PRECISION_REAL
+            call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_REAL8, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+#else
+            call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_REAL4, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+#endif
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
-            call dgemm('N','N',l_row1-1,l_cols-l_col1+1,nb, -1.d0, &
-                       tmat1,ubound(tmat1,dim=1),tmat2(1,l_col1),ubound(tmat2,dim=1), &
-                       1.d0, a(1,l_col1),lda)
-
+#ifdef DOUBLE_PRECISION_REAL
+            call dgemm('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -1.0_rk,                 &
+                       tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
+                       1.0_rk, a(1,l_col1), lda)
+#else
+            call sgemm('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -1.0_rk,                 &
+                       tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
+                       1.0_rk, a(1,l_col1), lda)
+#endif
        enddo
 
        deallocate(tmp1, tmp2, tmat1, tmat2)
@@ -3753,8 +4148,11 @@ module ELPA1_compute
           ! of the remaining block
 
           if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
-
-            call zpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
+#ifdef DOUBLE_PRECISION_COMPLEX
+            call zpotrf('U', na-n+1, a(l_row1,l_col1),lda, info)
+#else
+            call cpotrf('U', na-n+1, a(l_row1,l_col1),lda, info)
+#endif
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "ELPA1_cholesky_complex: Error in zpotrf"
               success = .false.
@@ -3772,8 +4170,11 @@ module ELPA1_compute
 
             ! The process owning the upper left remaining block does the
             ! Cholesky-Factorization of this block
-
-            call zpotrf('U',nblk,a(l_row1,l_col1),lda,info)
+#ifdef DOUBLE_PRECISION_COMPLEX
+            call zpotrf('U', nblk, a(l_row1,l_col1),lda, info)
+#else
+            call cpotrf('U', nblk, a(l_row1,l_col1),lda, info)
+#endif
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "ELPA1_cholesky_complex: Error in zpotrf"
               success = .false.
@@ -3786,9 +4187,11 @@ module ELPA1_compute
               nc = nc+i
             enddo
           endif
-
-          call MPI_Bcast(tmp1,nblk*(nblk+1)/2,MPI_DOUBLE_COMPLEX,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+          call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_DOUBLE_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#else
+          call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
           nc = 0
           do i=1,nblk
             tmp2(1:i,i) = tmp1(nc+1:nc+i)
@@ -3796,16 +4199,26 @@ module ELPA1_compute
           enddo
 
           if (l_cols-l_colx+1>0) &
-                call ztrsm('L','U','C','N',nblk,l_cols-l_colx+1,(1.d0,0.d0),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+                call ztrsm('L', 'U', 'C', 'N', nblk, l_cols-l_colx+1, (1.0_rk,0.0_rk), tmp2, ubound(tmp2,dim=1), &
+                           a(l_row1,l_colx), lda)
+#else
+                call ctrsm('L', 'U', 'C', 'N', nblk, l_cols-l_colx+1, (1.0_rk,0.0_rk), tmp2, ubound(tmp2,dim=1), &
+                           a(l_row1,l_colx), lda)
+#endif
         endif
 
         do i=1,nblk
 
           if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = conjg(a(l_row1+i-1,l_colx:l_cols))
           if (l_cols-l_colx+1>0) &
-                call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_DOUBLE_COMPLEX,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+                call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_DOUBLE_COMPLEX, prow(n, nblk, np_rows), &
+                               mpi_comm_rows, mpierr)
+#else
+                call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_COMPLEX, prow(n, nblk, np_rows), &
+                               mpi_comm_rows, mpierr)
+#endif
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
         call elpa_transpose_vectors_complex  (tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
@@ -3817,9 +4230,15 @@ module ELPA1_compute
           lrs = l_rowx
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
-          call ZGEMM('N','C',lre-lrs+1,lce-lcs+1,nblk,(-1.d0,0.d0), &
-                        tmatr(lrs,1),ubound(tmatr,dim=1),tmatc(lcs,1),ubound(tmatc,dim=1), &
-                        (1.d0,0.d0),a(lrs,lcs),lda)
+#ifdef DOUBLE_PRECISION_COMPLEX
+          call ZGEMM('N', 'C', lre-lrs+1, lce-lcs+1, nblk, (-1.0_rk,0.0_rk),               &
+                     tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
+                     (1.0_rk,0.0_rk), a(lrs,lcs), lda)
+#else
+          call CGEMM('N', 'C', lre-lrs+1, lce-lcs+1, nblk, (-1.0_rk,0.0_rk),               &
+                     tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
+                     (1.0_rk,0.0_rk), a(lrs,lcs), lda)
+#endif
         enddo
 
       enddo
@@ -3920,8 +4339,11 @@ module ELPA1_compute
          if (my_prow==prow(n, nblk, np_rows)) then
 
            if (my_pcol==pcol(n, nblk, np_cols)) then
-
-             call ZTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
+#ifdef DOUBLE_PRECISION_COMPLEX
+             call ZTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
+#else
+             call CTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
+#endif
              if (info/=0) then
                if (wantDebug) write(error_unit,*) "ELPA1_invert_trm_complex: Error in ZTRTRI"
                success = .false.
@@ -3934,9 +4356,11 @@ module ELPA1_compute
                nc = nc+i
              enddo
            endif
-
-           call MPI_Bcast(tmp1,nb*(nb+1)/2,MPI_DOUBLE_COMPLEX,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+           call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_DOUBLE_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#else
+           call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
            nc = 0
            do i=1,nb
              tmp2(1:i,i) = tmp1(nc+1:nc+i)
@@ -3944,8 +4368,11 @@ module ELPA1_compute
            enddo
 
            if (l_cols-l_colx+1>0) &
-             call ZTRMM('L','U','N','N',nb,l_cols-l_colx+1,(1.d0,0.d0),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+             call ZTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, (1.0_rk,0.0_rk), tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+#else
+             call CTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, (1.0_rk,0.0_rk), tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+#endif
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 
@@ -3958,18 +4385,32 @@ module ELPA1_compute
            endif
 
            do i=1,nb
-             call MPI_Bcast(tmat1(1,i),l_row1-1,MPI_DOUBLE_COMPLEX,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
+#ifdef DOUBLE_PRECISION_COMPLEX
+             call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_DOUBLE_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#else
+             call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
            enddo
          endif
 
          if (l_cols-l_col1+1>0) &
-           call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_DOUBLE_COMPLEX,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+           call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_DOUBLE_COMPLEX, prow(n, nblk, np_rows), &
+                          mpi_comm_rows, mpierr)
+#else
+           call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_COMPLEX, prow(n, nblk, np_rows), &
+                          mpi_comm_rows, mpierr)
+#endif
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
-           call ZGEMM('N','N',l_row1-1,l_cols-l_col1+1,nb, (-1.d0,0.d0), &
-                        tmat1,ubound(tmat1,dim=1),tmat2(1,l_col1),ubound(tmat2,dim=1), &
-                        (1.d0,0.d0), a(1,l_col1),lda)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+           call ZGEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, (-1.0_rk,0.0_rk),        &
+                      tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
+                      (1.0_rk,0.0_rk), a(1,l_col1), lda)
+#else
+           call CGEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, (-1.0_rk,0.0_rk),        &
+                      tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
+                      (1.0_rk,0.0_rk), a(1,l_col1), lda)
+#endif
        enddo
 
        deallocate(tmp1, tmp2, tmat1, tmat2)
@@ -4047,9 +4488,12 @@ module ELPA1_compute
 
       real(kind=rk)                   :: ALPHR, ALPHI, BETA
 
-      ALPHR = DBLE( ALPHA )
+      ALPHR = real( ALPHA, kind=rk )
+#ifdef DOUBLE_PRECISION_COMPLEX
       ALPHI = DIMAG( ALPHA )
-
+#else
+      ALPHI = AIMAG( ALPHA )
+#endif
       if ( XNORM_SQ==0. .AND. ALPHI==0. ) then
 
         if ( ALPHR>=0. ) then
@@ -4068,10 +4512,15 @@ module ELPA1_compute
           BETA = -BETA
           TAU = -ALPHA / BETA
         ELSE
-          ALPHR = ALPHI * (ALPHI/DBLE( ALPHA ))
-          ALPHR = ALPHR + XNORM_SQ/DBLE( ALPHA )
+          ALPHR = ALPHI * (ALPHI/real( ALPHA , kind=rk))
+          ALPHR = ALPHR + XNORM_SQ/real( ALPHA, kind=rk )
+#ifdef DOUBLE_PRECISION_COMPLEX
           TAU = DCMPLX( ALPHR/BETA, -ALPHI/BETA )
           ALPHA = DCMPLX( -ALPHR, ALPHI )
+#else
+          TAU = CMPLX( ALPHR/BETA, -ALPHI/BETA )
+          ALPHA = CMPLX( -ALPHR, ALPHI )
+#endif
         END IF
         XF = 1./ALPHA
         ALPHA = BETA

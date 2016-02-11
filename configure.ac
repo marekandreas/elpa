@@ -509,6 +509,14 @@ if test x"${want_gpu}" = x"yes" ; then
   can_compile_gpu=yes
 fi
 
+dnl check whether single precision is requested
+AC_MSG_CHECKING(whether single precision calculations are requested)
+AC_ARG_ENABLE(single-precision,[AS_HELP_STRING([--enable-single-precision],
+	                                   [build with single precision])],
+              want_single_precision="yes", want_single_precision="no")
+AC_MSG_RESULT([${want_single_precision}])
+
+
 dnl now check which kernels can be compiled
 
 dnl the checks for SSE were already done before
@@ -722,8 +730,13 @@ DX_HTML_FEATURE(ON)
 DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
 DESPERATELY_WANT_ASSUMED_SIZE=0
-if text x"${DESPERATELY_WANT_ASSUMED_SIZE}" = x"yes" ; then
+if test x"${DESPERATELY_WANT_ASSUMED_SIZE}" = x"yes" ; then
   AC_DEFINE([DESPERATELY_WANT_ASSUMED_SIZE],[1],[use assumed size arrays, even if not debuggable])
+fi
+
+if test x"${want_single_precision}" = x"no" ; then
+  AC_DEFINE([DOUBLE_PRECISION_REAL],[1],[use double precision for real calculation])
+  AC_DEFINE([DOUBLE_PRECISION_COMPLEX],[1],[use double precision for complex calculation])
 fi
 
 AC_SUBST([WITH_MKL])

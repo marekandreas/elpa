@@ -40,6 +40,8 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
+
 module mod_prepare_matrix
 
   interface prepare_matrix
@@ -59,7 +61,7 @@ module mod_prepare_matrix
       real(kind=rk), intent(inout)    :: xr(:,:)
       complex(kind=ck), intent(inout) :: z(:,:), a(:,:), as(:,:)
 
-      complex(kind=ck), parameter     :: CZERO = (0.d0, 0.d0), CONE = (1.d0, 0.d0)
+      complex(kind=ck), parameter     :: CZERO = (0.0_rk, 0.0_rk), CONE = (1.0_rk, 0.0_rk)
 
       ! for getting a hermitian test matrix A we get a random matrix Z
       ! and calculate A = Z + Z**H
@@ -72,7 +74,7 @@ module mod_prepare_matrix
       call RANDOM_NUMBER(xr)
       z(:,:) = xr(:,:)
       call RANDOM_NUMBER(xr)
-      z(:,:) = z(:,:) + (0.d0,1.d0)*xr(:,:)
+      z(:,:) = z(:,:) + (0.0_rk,1.0_rk)*xr(:,:)
 
       a(:,:) = z(:,:)
 
@@ -80,8 +82,11 @@ module mod_prepare_matrix
         print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
       endif
 
+#ifdef DOUBLE_PRECISION_COMPLEX
       call pztranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
-
+#else
+      call pctranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
+#endif
       if (myid == 0) then
         print '(a)','| Random matrix block has been symmetrized'
       endif
@@ -117,8 +122,11 @@ module mod_prepare_matrix
         print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
       endif
 
-      call pdtran(na, na, 1.d0, z, 1, 1, sc_desc, 1.d0, a, 1, 1, sc_desc) ! A = A + Z**T
-
+#ifdef DOUBLE_PRECISION_REAL
+      call pdtran(na, na, 1.0_rk, z, 1, 1, sc_desc, 1.0_rk, a, 1, 1, sc_desc) ! A = A + Z**T
+#else
+      call pstran(na, na, 1.0_rk, z, 1, 1, sc_desc, 1.0_rk, a, 1, 1, sc_desc) ! A = A + Z**T
+#endif
       if (myid == 0) then
         print '(a)','| Random matrix block has been symmetrized'
       endif
@@ -128,12 +136,21 @@ module mod_prepare_matrix
       as = a
 
     end subroutine
-
-    !c> void prepare_matrix_real_from_fortran(int na, int myid, int na_rows, int na_cols,
+#ifdef DOUBLE_PRECISION_REAL
+    !c> void prepare_matrix_real_from_fortran_double_precision(int na, int myid, int na_rows, int na_cols,
     !c>                                       int sc_desc[9], int iseed[4096],
     !c>                                       double *a, double *z, double *as);
+#else
+    !c> void prepare_matrix_real_from_fortran_single_precision(int na, int myid, int na_rows, int na_cols,
+    !c>                                       int sc_desc[9], int iseed[4096],
+    !c>                                       float *a, float *z, float *as);
+#endif
     subroutine prepare_matrix_real_wrapper(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as) &
-                                          bind(C, name="prepare_matrix_real_from_fortran")
+#ifdef DOUBLE_PRECISION_REAL
+                                          bind(C, name="prepare_matrix_real_from_fortran_double_precision")
+#else
+                                          bind(C, name="prepare_matrix_real_from_fortran_single_precision")
+#endif
       use iso_c_binding
 
       implicit none
@@ -141,16 +158,31 @@ module mod_prepare_matrix
       integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
       integer(kind=c_int)           :: sc_desc(1:9)
       integer(kind=c_int)           :: iseed(1:4096)
+#ifdef DOUBLE_PRECISION_REAL
       real(kind=c_double)           :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                        as(1:na_rows,1:na_cols)
-
+#else
+      real(kind=c_float)            :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
+                                       as(1:na_rows,1:na_cols)
+#endif
       call prepare_matrix_real(na, myid, sc_desc, iseed, a, z, as)
     end subroutine
-    !c> void prepare_matrix_complex_from_fortran(int na, int myid, int na_rows, int na_cols,
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> void prepare_matrix_complex_from_fortran_double_precision(int na, int myid, int na_rows, int na_cols,
     !c>                                       int sc_desc[9], int iseed[4096], double *xr,
     !c>                                       complex double *a, complex double *z, complex double *as);
+#else
+    !c> void prepare_matrix_complex_from_fortran_single_precision(int na, int myid, int na_rows, int na_cols,
+    !c>                                       int sc_desc[9], int iseed[4096], float *xr,
+    !c>                                       complex *a, complex *z, complex *as);
+#endif
     subroutine prepare_matrix_complex_wrapper(na, myid, na_rows, na_cols, sc_desc, iseed, xr, a, z, as) &
-                                          bind(C, name="prepare_matrix_complex_from_fortran")
+#ifdef DOUBLE_PRECISION_COMPLEX
+                                          bind(C, name="prepare_matrix_complex_from_fortran_double_precision")
+#else
+                                          bind(C, name="prepare_matrix_complex_from_fortran_single_precision")
+#endif
       use iso_c_binding
 
       implicit none
@@ -158,9 +190,15 @@ module mod_prepare_matrix
       integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
       integer(kind=c_int)           :: sc_desc(1:9)
       integer(kind=c_int)           :: iseed(1:4096)
+#ifdef DOUBLE_PRECISION_COMPLEX
       real(kind=c_double)           :: xr(1:na_rows,1:na_cols)
       complex(kind=c_double)        :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                        as(1:na_rows,1:na_cols)
+#else
+      real(kind=c_float)            :: xr(1:na_rows,1:na_cols)
+      complex(kind=c_float)         :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
+                                       as(1:na_rows,1:na_cols)
+#endif
 
       call prepare_matrix_complex(na, myid, sc_desc, iseed, xr, a, z, as)
     end subroutine

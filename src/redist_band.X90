@@ -50,6 +50,9 @@
 #endif
 ! --------------------------------------------------------------------------------------------------
 ! redist_band: redistributes band from 2D block cyclic form to 1D band
+
+#include "config-f90.h"
+
 #if REALCASE==1
 subroutine redist_band_real(r_a, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab)
 #endif
@@ -248,11 +251,24 @@ subroutine redist_band_complex(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_row
    ! Exchange all data with MPI_Alltoallv
 
 #if REALCASE==1
-    call MPI_Alltoallv(r_sbuf,ncnt_s,nstart_s,MPI_REAL8,r_rbuf,ncnt_r,nstart_r,MPI_REAL8,mpi_comm,mpierr)
+
+#ifdef DOUBLE_PRECISION_REAL
+    call MPI_Alltoallv(r_sbuf, ncnt_s, nstart_s, MPI_REAL8, r_rbuf, ncnt_r, nstart_r, MPI_REAL8, mpi_comm, mpierr)
+#else
+    call MPI_Alltoallv(r_sbuf, ncnt_s, nstart_s, MPI_REAL4, r_rbuf, ncnt_r, nstart_r, MPI_REAL4, mpi_comm, mpierr)
 #endif
+
+#endif /* REALCASE==1 */
+
 #if COMPLEXCASE==1
-    call MPI_Alltoallv(c_sbuf,ncnt_s,nstart_s,MPI_COMPLEX16,c_rbuf,ncnt_r,nstart_r,MPI_COMPLEX16,mpi_comm,mpierr)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+    call MPI_Alltoallv(c_sbuf, ncnt_s, nstart_s, MPI_COMPLEX16, c_rbuf, ncnt_r, nstart_r, MPI_COMPLEX16, mpi_comm, mpierr)
+#else
+    call MPI_Alltoallv(c_sbuf, ncnt_s, nstart_s, MPI_COMPLEX, c_rbuf, ncnt_r, nstart_r, MPI_COMPLEX, mpi_comm, mpierr)
 #endif
+
+#endif /* COMPLEXCASE==1 */
 
    ! set band from receive buffer
 

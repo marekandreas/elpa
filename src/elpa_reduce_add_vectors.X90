@@ -49,6 +49,8 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
+#include "config-f90.h"
+
 #if REALCASE==1
 subroutine elpa_reduce_add_vectors_real(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
 #endif
@@ -146,12 +148,24 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
          !$omp master
 #endif
 #if REALCASE==1
-         if(k>0) call mpi_reduce(aux1,aux2,k,MPI_REAL8,MPI_SUM,ipt,comm_t,mpierr)
+
+#ifdef DOUBLE_PRECISION_REAL
+         if(k>0) call mpi_reduce(aux1, aux2, k, MPI_REAL8, MPI_SUM, ipt, comm_t, mpierr)
+#else
+         if(k>0) call mpi_reduce(aux1, aux2, k, MPI_REAL4, MPI_SUM, ipt, comm_t, mpierr)
 #endif
 
+#endif /* REALCASE==1 */
+
 #if COMPLEXCASE==1
-         if(k>0) call mpi_reduce(aux1,aux2,k,MPI_DOUBLE_COMPLEX,MPI_SUM,ipt,comm_t,mpierr)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+         if(k>0) call mpi_reduce(aux1, aux2, k, MPI_DOUBLE_COMPLEX, MPI_SUM, ipt, comm_t, mpierr)
+#else
+         if(k>0) call mpi_reduce(aux1, aux2, k, MPI_COMPLEX, MPI_SUM, ipt, comm_t, mpierr)
 #endif
+
+#endif /* COMPLEXCASE == 1 */
 
 #ifdef WITH_OPENMP
          !$omp end master

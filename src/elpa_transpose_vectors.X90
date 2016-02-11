@@ -49,6 +49,8 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
+#include "config-f90.h"
+
 #if REALCASE==1
 subroutine elpa_transpose_vectors_real(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
 #endif
@@ -155,12 +157,25 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
          !$omp master
 #endif
 #if COMPLEXCASE==1
-         call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_DOUBLE_COMPLEX,ips,comm_s,mpierr)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+         call MPI_Bcast(aux, nblks_comm*nblk*nvc, MPI_DOUBLE_COMPLEX, ips, comm_s, mpierr)
+#else
+         call MPI_Bcast(aux, nblks_comm*nblk*nvc, MPI_COMPLEX, ips, comm_s, mpierr)
 #endif
 
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
 #if REALCASE==1
-         call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_REAL8,ips,comm_s,mpierr)
+
+#ifdef DOUBLE_PRECISION_REAL
+         call MPI_Bcast(aux, nblks_comm*nblk*nvc, MPI_REAL8, ips, comm_s, mpierr)
+#else
+         call MPI_Bcast(aux, nblks_comm*nblk*nvc, MPI_REAL4, ips, comm_s, mpierr)
 #endif
+
+#endif /* REALCASE == 1 */
+
 #ifdef WITH_OPENMP
          !$omp end master
          !$omp barrier

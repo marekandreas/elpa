@@ -40,6 +40,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 module from_c
   implicit none
 
@@ -54,7 +55,11 @@ module from_c
       implicit none
 
       integer(kind=c_int), value :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DOUBLE_PRECISION_REAL
       real(kind=c_double)        :: a(1:lda,1:matrixCOls), ev(1:na), q(1:ldq,1:matrixCols)
+#else
+      real(kind=c_float)         :: a(1:lda,1:matrixCOls), ev(1:na), q(1:ldq,1:matrixCols)
+#endif
     end function elpa1_real_c
 
 
@@ -69,9 +74,13 @@ module from_c
       implicit none
 
       integer(kind=c_int), value  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DOUBLE_PRECISION_COMPLEX
       real(kind=c_double)         :: ev(1:na)
       complex(kind=c_double)      :: a(1:lda,1:matrixCOls), q(1:ldq,1:matrixCols)
-
+#else
+      real(kind=c_float)          :: ev(1:na)
+      complex(kind=c_float)      :: a(1:lda,1:matrixCOls), q(1:ldq,1:matrixCols)
+#endif
     end function elpa1_complex_c
 
 
@@ -101,9 +110,11 @@ module from_c
     integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
     logical          :: success
     integer(kind=ik) :: successC
-
+#ifdef DOUBLE_PRECISION_REAL
     real(kind=c_double)  :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
-
+#else
+    real(kind=c_float)   :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+#endif
     successC = elpa1_real_c(na, nev, a, lda, ev, q, ldq, nblk, &
                             matrixCols, mpi_comm_rows, mpi_comm_cols)
 
@@ -126,10 +137,13 @@ module from_c
     integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
     logical          :: success
     integer(kind=ik) :: successC
-
+#ifdef DOUBLE_PRECISION_COMPLEX
     real(kind=c_double)    :: ev(1:na)
     complex(kind=c_double) :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-
+#else
+    real(kind=c_float)     :: ev(1:na)
+    complex(kind=c_float)  :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
 
     successC = elpa1_complex_c(na, nev, a, lda, ev, q, ldq, nblk, &
                             matrixCols, mpi_comm_rows, mpi_comm_cols)

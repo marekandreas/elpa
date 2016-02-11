@@ -140,6 +140,22 @@ program test_complex
    endif
 #endif
 
+#ifdef DOUBLE_PRECISION_COMPLEX
+   if (myid .eq. 0) then
+     print *," "
+     print *,"Double precision version of ELPA1 is used"
+     print *," "
+   endif
+#else
+   if (myid .eq. 0) then
+     print *," "
+     print *,"Single precision version of ELPA1 is used"
+     print *," "
+   endif
+#endif
+
+   call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+
 #ifdef HAVE_REDIRECT
    if (check_redirect_environment_variable()) then
      if (myid .eq. 0) then

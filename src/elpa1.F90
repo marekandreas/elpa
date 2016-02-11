@@ -88,6 +88,7 @@ module ELPA1
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
+  use iso_c_binding
   implicit none
 
   PRIVATE ! By default, all routines contained are private
@@ -104,9 +105,9 @@ module ELPA1
 
   ! Timing results, set by every call to solve_evp_xxx
 
-  real(kind=rk), public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
-  real(kind=rk), public :: time_evp_solve  !< time for solving the tridiagonal system
-  real(kind=rk), public :: time_evp_back   !< time for back transformations of eigenvectors
+  real(kind=c_double), public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
+  real(kind=c_double), public :: time_evp_solve  !< time for solving the tridiagonal system
+  real(kind=c_double), public :: time_evp_back   !< time for back transformations of eigenvectors
 
   logical, public :: elpa_print_times = .false. !< Set elpa_print_times to .true. for explicit timing outputs
 
@@ -294,6 +295,7 @@ function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mp
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
+   use iso_c_binding
    implicit none
 
    integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
@@ -303,7 +305,7 @@ function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mp
 
    integer(kind=ik)              :: my_prow, my_pcol, mpierr
    real(kind=rk), allocatable    :: e(:), tau(:)
-   real(kind=rk)                 :: ttt0, ttt1
+   real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
    logical                       :: success
    logical, save                 :: firstCall = .true.
    logical                       :: wantDebug
@@ -395,6 +397,7 @@ function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols,
    use timings
 #endif
    use precision
+   use iso_c_binding
    implicit none
 
    integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
@@ -407,7 +410,7 @@ function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols,
    integer(kind=ik)                 :: l_rows, l_cols, l_cols_nev
    real(kind=rk), allocatable       :: q_real(:,:), e(:)
    complex(kind=ck), allocatable    :: tau(:)
-   real(kind=rk)                    :: ttt0, ttt1
+   real(kind=c_double)              :: ttt0, ttt1  ! MPI_WTIME always needs double
 
    logical                          :: success
    logical, save                    :: firstCall = .true.
