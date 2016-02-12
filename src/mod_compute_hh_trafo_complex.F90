@@ -34,8 +34,9 @@ module compute_hh_trafo_complex
 #ifdef HAVE_DETAILED_TIMINGS
            use timings
 #endif
+           use iso_c_binding
            implicit none
-           real(kind=rk), intent(inout) :: kernel_time
+           real(kind=c_double), intent(inout) :: kernel_time ! MPI_WTIME always needs double
            integer(kind=lik)            :: kernel_flops
            integer(kind=ik), intent(in) :: nbw, max_blk_size
            complex(kind=ck)             :: bcast_buffer(nbw,max_blk_size)
@@ -57,7 +58,7 @@ module compute_hh_trafo_complex
 #ifdef WITH_OPENMP
            integer(kind=ik)             :: my_thread, noff
 #endif
-           real(kind=rk)                :: ttt
+           real(kind=c_double)          :: ttt  ! MPI_WTIME always needs double
 
            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
            !        Currently (on Sandy Bridge), single is faster than double
