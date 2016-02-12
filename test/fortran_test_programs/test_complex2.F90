@@ -157,6 +157,21 @@ program test_complex2
       print *," "
    endif
 #endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+   if (myid .eq. 0) then
+     print *," "
+     print *,"Double precision version of ELPA2 is used"
+     print *," "
+   endif
+#else
+   if (myid .eq. 0) then
+     print *," "
+     print *,"Single precision version of ELPA2 is used"
+     print *," "
+   endif
+#endif
+
 #ifdef HAVE_REDIRECT
    if (check_redirect_environment_variable()) then
      if (myid .eq. 0) then

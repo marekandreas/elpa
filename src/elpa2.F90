@@ -146,6 +146,7 @@ contains
    use precision
    use cuda_functions
    use mod_check_for_gpu
+   use iso_c_binding
    implicit none
    logical, intent(in), optional          :: useQR
    logical                                :: useQRActual, useQREnvironment
@@ -163,7 +164,7 @@ contains
    integer(kind=ik)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=ik)                       :: nbw, num_blocks
    real(kind=rk), allocatable             :: tmat(:,:,:), e(:)
-   real(kind=rk)                          :: ttt0, ttt1, ttts
+   real(kind=c_double)                    :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
    integer(kind=ik)                       :: i
    logical                                :: success
    logical, save                          :: firstCall = .true.
@@ -294,6 +295,7 @@ contains
     ttts = ttt0
     call bandred_real(na, a, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
                       tmat, wantDebug, useGPU, success, useQRActual)
+
     if (.not.(success)) return
     ttt1 = MPI_Wtime()
     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -308,14 +310,19 @@ contains
      endif
 
      ttt0 = MPI_Wtime()
-   call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans_real, &
+     call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans_real, &
                           mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
        write(error_unit,*) 'Time tridiag_band_real          :',ttt1-ttt0
 
+#ifdef DOUBLE_PRECISION_REAL
      call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
      call mpi_bcast(e,na,MPI_REAL8,0,mpi_comm_all,mpierr)
+#else
+     call mpi_bcast(ev,na,MPI_REAL4,0,mpi_comm_all,mpierr)
+     call mpi_bcast(e,na,MPI_REAL4,0,mpi_comm_all,mpierr)
+#endif
 
      ttt1 = MPI_Wtime()
      time_evp_fwd = ttt1-ttts
@@ -426,6 +433,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    use precision
    use cuda_functions
    use mod_check_for_gpu
+   use iso_c_binding
    implicit none
    integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
    integer(kind=ik)                       :: THIS_COMPLEX_ELPA_KERNEL
@@ -440,7 +448,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    integer(kind=ik)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
    complex(kind=ck), allocatable          :: tmat(:,:,:)
    real(kind=rk), allocatable             :: q_real(:,:), e(:)
-   real(kind=rk)                          :: ttt0, ttt1, ttts
+   real(kind=c_double)                    :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
    integer(kind=ik)                       :: i
 
    logical                                :: success, wantDebug
@@ -562,9 +570,13 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
        write(error_unit,*) 'Time tridiag_band_complex          :',ttt1-ttt0
 
-    call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
-    call mpi_bcast(e,na,MPI_REAL8,0,mpi_comm_all,mpierr)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+    call mpi_bcast(ev, na, mpi_real8, 0, mpi_comm_all, mpierr)
+    call mpi_bcast(e, na, mpi_real8, 0, mpi_comm_all, mpierr)
+#else
+    call mpi_bcast(ev, na, mpi_real4, 0, mpi_comm_all, mpierr)
+    call mpi_bcast(e, na, mpi_real4, 0, mpi_comm_all, mpierr)
+#endif
     ttt1 = MPI_Wtime()
     time_evp_fwd = ttt1-ttts
 

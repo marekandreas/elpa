@@ -120,7 +120,7 @@ module mod_check_correctness
 #ifdef DOUBLE_PRECISION_COMPLEX
       if (errmax .gt. 5e-12_rk) then
 #else
-      if (errmax .gt. 7e-4_rk) then
+      if (errmax .gt. 8e-4_rk) then
 #endif
         status = 1
       endif
@@ -227,7 +227,7 @@ module mod_check_correctness
 #ifdef DOUBLE_PRECISION_REAL
       if (errmax .gt. 9e-12_rk) then
 #else
-      if (errmax .gt. 7e-4_rk) then
+      if (errmax .gt. 8e-4_rk) then
 #endif
         status = 1
       endif

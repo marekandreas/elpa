@@ -669,7 +669,6 @@ module ELPA1_compute
             h1(nc+1:nc+n) = tmat(1:n,n+1)
             nc = nc+n
           enddo
-
 #ifdef DOUBLE_PRECISION_REAL
           if (nc>0) call mpi_allreduce( h1, h2, nc, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
@@ -2485,9 +2484,13 @@ module ELPA1_compute
 #endif
 
       integer(kind=ik), parameter   :: max_strip=128
-
-      real(kind=rk)                 :: beta, sig, s, c, t, tau, rho, eps, tol, dlamch, &
-                                       dlapy2, qtrans(2,2), dmax, zmax, d1new, d2new
+#ifdef DOUBLE_PRECISION_REAL
+      real(kind=rk)                 :: dlamch, dlapy2
+#else
+      real(kind=rk)                 :: slamch, slapy2
+#endif
+      real(kind=rk)                 :: beta, sig, s, c, t, tau, rho, eps, tol, &
+                                       qtrans(2,2), dmax, zmax, d1new, d2new
       real(kind=rk)                 :: z(na), d1(na), d2(na), z1(na), delta(na),  &
                                        dbase(na), ddiff(na), ev_scale(na), tmp(na)
       real(kind=rk)                 :: d1u(na), zu(na), d1l(na), zl(na)
@@ -2633,7 +2636,11 @@ module ELPA1_compute
 
       zmax = maxval(abs(z))
       dmax = maxval(abs(d))
+#ifdef DOUBLE_PRECISION_REAL
       EPS = DLAMCH( 'Epsilon' )
+#else
+      EPS = SLAMCH( 'Epsilon' )
+#endif
       TOL = 8.*EPS*MAX(dmax,zmax)
 
       ! If the rank-1 modifier is small enough, no more needs to be done
@@ -2692,8 +2699,11 @@ module ELPA1_compute
 
           ! Find sqrt(a**2+b**2) without overflow or
           ! destructive underflow.
-
+#ifdef DOUBLE_PRECISION_REAL
           TAU = DLAPY2( C, S )
+#else
+          TAU = SLAPY2( C, S )
+#endif
           T = D1(na1) - D(idx(i))
           C = C / TAU
           S = -S / TAU

@@ -52,7 +52,7 @@ module compute_hh_trafo_real
 #endif
          implicit none
          include "mpif.h"
-         real(kind=rk), intent(inout) :: kernel_time
+         real(kind=c_double), intent(inout) :: kernel_time  ! MPI_WTIME always needs double
          integer(kind=lik)            :: kernel_flops
          integer(kind=ik), intent(in) :: nbw, max_blk_size
          real(kind=rk)                :: bcast_buffer(nbw,max_blk_size)
@@ -82,7 +82,8 @@ module compute_hh_trafo_real
          integer(kind=ik)             :: my_thread, noff
 #endif
          integer(kind=ik)             :: j, nl, jj, jjj
-         real(kind=rk)                :: w(nbw,6), ttt
+         real(kind=rk)                :: w(nbw,6)
+         real(kind=c_double)          :: ttt ! MPI_WTIME always needs double
 
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
            ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
