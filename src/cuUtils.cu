@@ -2,10 +2,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cuComplex.h>
+#include "config-f90.h"
 
 // Reset a reduction block
 // Limitation: the thread-block size must be a divider of the reduction block's size
+#ifdef DOUBLE_PRECISION_REAL
 __device__ void reset_shared_block_c ( double * s_block, int b_size)
+#else
+__device__ void reset_shared_block_c ( float * s_block, int b_size)
+#endif
 {
     int i, t_idx, s_chunk ;
     t_idx = threadIdx.x;
@@ -17,7 +22,11 @@ __device__ void reset_shared_block_c ( double * s_block, int b_size)
 
 // Reset 2 reduction blocks without an explicit synchronization at the end
 // Limitation: : the thread-block size must be a divider of the reduction block's size
+#ifdef DOUBLE_PRECISION_REAL
 __device__ void reset_shared_block_pair_c( double *s_block_1, double *s_block_2, int b_size)
+#else
+__device__ void reset_shared_block_pair_c( float *s_block_1, float *s_block_2, int b_size)
+#endif
 {
     int i, t_idx, s_chunk;
 
@@ -30,7 +39,11 @@ __device__ void reset_shared_block_pair_c( double *s_block_1, double *s_block_2,
 }
 // Reset a reduction block
 // Limitation: the thread-block size must be a divider of the reduction block's size
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ void reset_shared_block_c_complex ( cuDoubleComplex * s_block, int b_size)
+#else
+__device__ void reset_shared_block_c_complex ( cuFloatComplex * s_block, int b_size)
+#endif
 {
     int i, t_idx, s_chunk ;
     t_idx = threadIdx.x;
@@ -43,7 +56,11 @@ __device__ void reset_shared_block_c_complex ( cuDoubleComplex * s_block, int b_
 
 // Reset 2 reduction blocks without an explicit synchronization at the end
 // Limitation: : the thread-block size must be a divider of the reduction block's size
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ void reset_shared_block_pair_c_complex( cuDoubleComplex *s_block_1, cuDoubleComplex *s_block_2, int b_size)
+#else
+__device__ void reset_shared_block_pair_c_complex( cuFloatComplex *s_block_1, cuFloatComplex *s_block_2, int b_size)
+#endif
 {
     int i, t_idx, s_chunk;
 
@@ -56,8 +73,11 @@ __device__ void reset_shared_block_pair_c_complex( cuDoubleComplex *s_block_1, c
         s_block_2[i].y= 0.0 ;
     }
 }
-
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ void warp_reduce_complex( cuDoubleComplex *s_block)
+#else
+__device__ void warp_reduce_complex( cuFloatComplex *s_block)
+#endif
 {
     int t_idx ;
     t_idx = threadIdx.x;
@@ -84,7 +104,11 @@ __device__ void warp_reduce_complex( cuDoubleComplex *s_block)
 
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void my_pack_c_kernel_complex(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex* src, cuDoubleComplex* dst)
+#else
+__global__ void my_pack_c_kernel_complex(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex* src, cuFloatComplex* dst)
+#endif
 {
     int b_id, t_id ;
     int dst_ind ;
@@ -101,7 +125,12 @@ __global__ void my_pack_c_kernel_complex(const int n_offset, const int max_idx, 
      }
 
 }
+
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  my_unpack_c_kernel_complex( const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex* src, cuDoubleComplex* dst)
+#else
+__global__ void  my_unpack_c_kernel_complex( const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex* src, cuFloatComplex* dst)
+#endif
 {
     int b_id, t_id ;
     int src_ind;
@@ -116,8 +145,11 @@ __global__ void  my_unpack_c_kernel_complex( const int n_offset, const int max_i
 }
 }
 
-
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void extract_hh_tau_c_kernel_complex(cuDoubleComplex* hh, cuDoubleComplex* hh_tau, const int nbw, const int n, int val)
+#else
+__global__ void extract_hh_tau_c_kernel_complex(cuFloatComplex* hh, cuFloatComplex* hh_tau, const int nbw, const int n, int val)
+#endif
 {
     int h_idx ;
 
@@ -142,9 +174,15 @@ __global__ void extract_hh_tau_c_kernel_complex(cuDoubleComplex* hh, cuDoubleCom
      }
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  compute_hh_dotp_c_kernel_complex(cuDoubleComplex* hh, cuDoubleComplex* v_dot, const int nbw, const int n)
 {
    __shared__ cuDoubleComplex hh_s[128] ;
+#else
+__global__ void  compute_hh_dotp_c_kernel_complex(cuFloatComplex* hh, cuFloatComplex* v_dot, const int nbw, const int n)
+{
+   __shared__ cuFloatComplex hh_s[128] ;
+#endif
 
     int t_idx, v_idx;
 
@@ -176,7 +214,11 @@ __global__ void  compute_hh_dotp_c_kernel_complex(cuDoubleComplex* hh, cuDoubleC
 
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_my_pack_c_kernel_complex(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex* a_dev, cuDoubleComplex* row_group_dev)
+#else
+extern "C" void launch_my_pack_c_kernel_complex(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex* a_dev, cuFloatComplex* row_group_dev)
+#endif
 {
 
         dim3  grid_size;
@@ -192,7 +234,11 @@ extern "C" void launch_my_pack_c_kernel_complex(const int row_count, const int n
         }
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_compute_hh_dotp_c_kernel_complex(cuDoubleComplex* bcast_buffer_dev, cuDoubleComplex* hh_dot_dev,const int nbw,const int n)
+#else
+extern "C" void launch_compute_hh_dotp_c_kernel_complex(cuFloatComplex* bcast_buffer_dev, cuFloatComplex* hh_dot_dev,const int nbw,const int n)
+#endif
 {
         cudaDeviceSynchronize();
         cudaError_t err = cudaGetLastError();
@@ -206,7 +252,11 @@ extern "C" void launch_compute_hh_dotp_c_kernel_complex(cuDoubleComplex* bcast_b
         }
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_extract_hh_tau_c_kernel_complex(cuDoubleComplex* bcast_buffer_dev, cuDoubleComplex* hh_tau_dev, const int nbw, const int n , const int is_zero)
+#else
+extern "C" void launch_extract_hh_tau_c_kernel_complex(cuFloatComplex* bcast_buffer_dev, cuFloatComplex* hh_tau_dev, const int nbw, const int n , const int is_zero)
+#endif
 {
         int grid_size;
         grid_size = 1 + (n - 1) / 256;
@@ -222,7 +272,11 @@ extern "C" void launch_extract_hh_tau_c_kernel_complex(cuDoubleComplex* bcast_bu
 
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_my_unpack_c_kernel_complex( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex* row_group_dev, cuDoubleComplex* a_dev)
+#else\
+extern "C" void launch_my_unpack_c_kernel_complex( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex* row_group_dev, cuFloatComplex* a_dev)
+#endif
 {
 
         dim3  grid_size;
@@ -238,7 +292,11 @@ extern "C" void launch_my_unpack_c_kernel_complex( const int row_count, const in
         }
 }
 
+#ifdef DOUBLE_PRECISION_REAL
 __device__ void warp_reduce_c( double *s_block)
+#else
+__device__ void warp_reduce_c( float *s_block)
+#endif
 {
     int t_idx ;
     t_idx = threadIdx.x;
@@ -256,7 +314,11 @@ __device__ void warp_reduce_c( double *s_block)
 	}
 }
 
+#ifdef DOUBLE_PRECISION_REAL
 __global__ void my_pack_c_kernel(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double* src, double* dst)
+#else
+__global__ void my_pack_c_kernel(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float* src, float* dst)
+#endif
 {
     int b_id, t_id ;
     int dst_ind ;
@@ -273,7 +335,11 @@ __global__ void my_pack_c_kernel(const int n_offset, const int max_idx, const in
 
 }
 
+#ifdef DOUBLE_PRECISION_REAL
 __global__ void  my_unpack_c_kernel( const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double* src, double* dst)
+#else
+__global__ void  my_unpack_c_kernel( const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float* src, float* dst)
+#endif
 {
     int b_id, t_id ;
     int src_ind;
@@ -286,7 +352,11 @@ __global__ void  my_unpack_c_kernel( const int n_offset, const int max_idx, cons
 	*(dst + (t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2 ))) = *(src + src_ind  + (blockIdx.x) *l_nev );
 
 }
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void compute_kernel_reduce( cuDoubleComplex* a_dev, int lda , int n ,int nbw ,  cuDoubleComplex *h1_dev )
+#else
+__global__ void compute_kernel_reduce( cuFloatComplex* a_dev, int lda , int n ,int nbw ,  cuFloatComplex *h1_dev )
+#endif
 {
     int  t_id ;
     int st_ind;
@@ -305,7 +375,12 @@ __global__ void compute_kernel_reduce( cuDoubleComplex* a_dev, int lda , int n ,
 
 
 }
+
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void compute_kernel_reduce_1( cuDoubleComplex* a_dev, int lda , int n, cuDoubleComplex *h1_dev )
+#else
+__global__ void compute_kernel_reduce_1( cuFloatComplex* a_dev, int lda , int n, cuFloatComplex *h1_dev )
+#endif
 {
     int  t_id ;
     int st_ind;
@@ -325,14 +400,22 @@ __global__ void compute_kernel_reduce_1( cuDoubleComplex* a_dev, int lda , int n
 
 
 }
-
+_
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  dot_product_c_kernel( cuDoubleComplex* hs_dev, cuDoubleComplex* hv_new_dev, cuDoubleComplex tau_new_dev, cuDoubleComplex*  x_dev, cuDoubleComplex *h_dev, cuDoubleComplex *hv_dev, int nr)
+#else
+__global__ void  dot_product_c_kernel( cuFloatComplex* hs_dev, cuFloatComplex* hv_new_dev, cuFloatComplex tau_new_dev, cuFloatComplex*  x_dev, cuFloatComplex *h_dev, cuFloatComplex *hv_dev, int nr)
+#endif
 {
     int t_id ;
 
+#ifdef DOUBLE_PRECISION_COMPLEX
     __shared__ cuDoubleComplex x_dev_temp[128];
     __shared__ cuDoubleComplex x_val;
-
+#else
+    __shared__ cuFloatComplex x_dev_temp[128];
+    __shared__ cuFloatComplex x_val;
+#endif
     //b_id = blockIdx.y;
     t_id = threadIdx.x;
 
@@ -354,8 +437,11 @@ __global__ void  dot_product_c_kernel( cuDoubleComplex* hs_dev, cuDoubleComplex*
 	__syncthreads();
 }
 
-
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  dot_product_c_kernel_1(   cuDoubleComplex*  ab_dev, cuDoubleComplex *hs_dev,  cuDoubleComplex*  hv_new_dev, cuDoubleComplex*  x_dev, cuDoubleComplex *h_dev, cuDoubleComplex *hv_dev,  int nb, int nr , int ns )
+#else
+__global__ void  dot_product_c_kernel_1(   cuFloatComplex*  ab_dev, cuFloatComplex *hs_dev,  cuFloatComplex*  hv_new_dev, cuFloatComplex*  x_dev, cuFloatComplex *h_dev, cuFloatComplex *hv_dev,  int nb, int nr , int ns )
+#endif
 {
     int t_id = threadIdx.x;
         int i;
@@ -372,7 +458,12 @@ __global__ void  dot_product_c_kernel_1(   cuDoubleComplex*  ab_dev, cuDoubleCom
    __syncthreads();
 
 }
+
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  double_hh_transform_kernel( cuDoubleComplex*  ab_dev, cuDoubleComplex *hs_dev, cuDoubleComplex *hv_dev,  int nb,  int ns )
+#else
+__global__ void  double_hh_transform_kernel( cuFloatComplex*  ab_dev, cuFloatComplex *hs_dev, cuFloatComplex *hv_dev,  int nb,  int ns )
+#endif
 {
     int t_id = threadIdx.x;
     if((t_id>0 )&& (t_id < nb))
@@ -383,7 +474,12 @@ __global__ void  double_hh_transform_kernel( cuDoubleComplex*  ab_dev, cuDoubleC
    __syncthreads();
 
 }
+
+#ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  double_hh_transform_kernel_2( cuDoubleComplex*  ab_dev, cuDoubleComplex *hd_dev, cuDoubleComplex *hv_dev,  int nc,  int ns , int nb )
+#else
+__global__ void  double_hh_transform_kernel_2( cuFloatComplex*  ab_dev, cuFloatComplex *hd_dev, cuFloatComplex *hv_dev,  int nc,  int ns , int nb )
+#endif
 {
     int t_id = threadIdx.x;
     if(t_id < nc)
@@ -397,12 +493,11 @@ __global__ void  double_hh_transform_kernel_2( cuDoubleComplex*  ab_dev, cuDoubl
 
 }
 
-
-
-
-
-
+#ifdef DOUBLE_PRECISION_REAL
 __global__ void extract_hh_tau_c_kernel(double* hh, double* hh_tau, const int nbw, const int n, int val)
+#else
+__global__ void extract_hh_tau_c_kernel(float* hh, float* hh_tau, const int nbw, const int n, int val)
+#endif
 {
     int h_idx ;
     h_idx = (blockIdx.x) * blockDim.x + threadIdx.x;
@@ -420,11 +515,17 @@ __global__ void extract_hh_tau_c_kernel(double* hh, double* hh_tau, const int nb
      }
 }
 
+#ifdef DOUBLE_PRECISION_REAL
 __global__ void  compute_hh_dotp_c_kernel(double* hh, double* v_dot, const int nbw, const int n)
 {
 
    __shared__ double hh_s[128] ;
+#else
+__global__ void  compute_hh_dotp_c_kernel(float* hh, float* v_dot, const int nbw, const int n)
+{
 
+   __shared__ float hh_s[128] ;
+#endif
     int t_idx, v_idx;
 
     //  The vector index (v_idx) identifies the pair of HH reflectors from which the dot product is computed
@@ -450,7 +551,11 @@ __global__ void  compute_hh_dotp_c_kernel(double* hh, double* v_dot, const int n
 
 }
 
+#ifdef DOUBLE_PRECISION_REAL
 extern "C" void launch_my_pack_c_kernel(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double* a_dev, double* row_group_dev)
+#else
+extern "C" void launch_my_pack_c_kernel(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float* a_dev, float* row_group_dev)
+#endif
 {
 
 	dim3  grid_size;
@@ -467,8 +572,11 @@ extern "C" void launch_my_pack_c_kernel(const int row_count, const int n_offset,
         }
 
 }
-
+#ifdef DOUBLE_PRECISION_REAL
 extern "C" void launch_compute_hh_dotp_c_kernel(double* bcast_buffer_dev, double* hh_dot_dev,const int nbw,const int n)
+#else
+extern "C" void launch_compute_hh_dotp_c_kernel(float* bcast_buffer_dev, float* hh_dot_dev,const int nbw,const int n)
+#endif
 {
 	cudaDeviceSynchronize();
         cudaError_t err = cudaGetLastError();
@@ -481,8 +589,11 @@ extern "C" void launch_compute_hh_dotp_c_kernel(double* bcast_buffer_dev, double
         }
 
 }
-
+#ifdef DOUBLE_PRECISION_REAL
 extern "C" void launch_extract_hh_tau_c_kernel(double* bcast_buffer_dev, double* hh_tau_dev, const int nbw, const int n , const int is_zero)
+#else
+extern "C" void launch_extract_hh_tau_c_kernel(float* bcast_buffer_dev, float* hh_tau_dev, const int nbw, const int n , const int is_zero)
+#endif
 {
 	int grid_size;
 	grid_size = 1 + (n - 1) / 256;
@@ -498,7 +609,11 @@ extern "C" void launch_extract_hh_tau_c_kernel(double* bcast_buffer_dev, double*
 
 }
 
+#ifdef DOUBLE_PRECISION_REAL
 extern "C" void launch_my_unpack_c_kernel( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, double* row_group_dev, double* a_dev)
+#else
+extern "C" void launch_my_unpack_c_kernel( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, float* row_group_dev, float* a_dev)
+#endif
 {
 
         dim3  grid_size;
@@ -513,7 +628,12 @@ extern "C" void launch_my_unpack_c_kernel( const int row_count, const int n_offs
 	    printf("\n  my_unpack_c_kernel failed  %s \n",cudaGetErrorString(err) );
         }
 }
+
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_dot_product_kernel( cuDoubleComplex* hs_dev, cuDoubleComplex* hv_new_dev, cuDoubleComplex tau_new_dev, cuDoubleComplex*  x_dev, cuDoubleComplex*  h_dev ,cuDoubleComplex*  hv_dev,int nr )
+#else
+extern "C" void launch_dot_product_kernel( cuFloatComplex* hs_dev, cuFloatComplex* hv_new_dev, cuFloatComplex tau_new_dev, cuFloatComplex*  x_dev, cuFloatComplex*  h_dev ,cuFloatComplex*  hv_dev,int nr )
+#endif
 {
 
         dim3  grid_size;
@@ -531,7 +651,11 @@ extern "C" void launch_dot_product_kernel( cuDoubleComplex* hs_dev, cuDoubleComp
 
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_dot_product_kernel_1(  cuDoubleComplex*  ab_dev, cuDoubleComplex *hs_dev,  cuDoubleComplex*  hv_new_dev,cuDoubleComplex*  x_dev, cuDoubleComplex*  h_dev ,cuDoubleComplex*  hv_dev, int nb ,int nr , int ns)
+#else
+extern "C" void launch_dot_product_kernel_1(  cuFloatComplex*  ab_dev, cuFloatComplex *hs_dev,  cuFloatComplex*  hv_new_dev,cuFloatComplex*  x_dev, cuFloatComplex*  h_dev ,cuFloatComplex*  hv_dev, int nb ,int nr , int ns)
+#endif
 {
         dim3  grid_size;
         grid_size = dim3(1,1, 1);
@@ -548,8 +672,11 @@ extern "C" void launch_dot_product_kernel_1(  cuDoubleComplex*  ab_dev, cuDouble
 
 }
 
-
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_dot_product_kernel_2(  cuDoubleComplex*  ab_dev, cuDoubleComplex *hs_dev,  cuDoubleComplex*  hv_dev,cuDoubleComplex*  hd_dev, int nb ,int nr , int ne)
+#else
+extern "C" void launch_dot_product_kernel_2(  cuFloatComplex*  ab_dev, cuFloatComplex *hs_dev,  cuFloatComplex*  hv_dev,cuFloatComplex*  hd_dev, int nb ,int nr , int ne)
+#endif
 {
         dim3  grid_size;
         grid_size = dim3(1,1, 1);
@@ -565,7 +692,11 @@ extern "C" void launch_dot_product_kernel_2(  cuDoubleComplex*  ab_dev, cuDouble
 
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_double_hh_transform_1( cuDoubleComplex*  ab_dev, cuDoubleComplex *hs_dev,cuDoubleComplex*  hv_dev, int nb , int ns)
+#else
+extern "C" void launch_double_hh_transform_1( cuFloatComplex*  ab_dev, cuFloatComplex *hs_dev,cuFloatComplex*  hv_dev, int nb , int ns)
+#endif
 {
         dim3  grid_size;
         grid_size = dim3(1,1, 1);
@@ -582,7 +713,11 @@ extern "C" void launch_double_hh_transform_1( cuDoubleComplex*  ab_dev, cuDouble
 
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_double_hh_transform_2( cuDoubleComplex*  ab_dev, cuDoubleComplex *hd_dev,cuDoubleComplex*  hv_dev, int nc , int ns , int nb )
+#else
+extern "C" void launch_double_hh_transform_2( cuFloatComplex*  ab_dev, cuFloatComplex *hd_dev,cuFloatComplex*  hv_dev, int nc , int ns , int nb )
+#endif
 {
         dim3  grid_size;
         grid_size = dim3(1,1, 1);
@@ -599,9 +734,11 @@ extern "C" void launch_double_hh_transform_2( cuDoubleComplex*  ab_dev, cuDouble
 
 }
 
-
-
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_compute_kernel_reduce( cuDoubleComplex* a_dev, int lda, int n,int nbw, cuDoubleComplex* h_dev)
+#else
+extern "C" void launch_compute_kernel_reduce( cuFloatComplex* a_dev, int lda, int n,int nbw, cuFloatComplex* h_dev)
+#endif
 {
 
         dim3  grid_size;
@@ -620,7 +757,11 @@ extern "C" void launch_compute_kernel_reduce( cuDoubleComplex* a_dev, int lda, i
 
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_compute_kernel_reduce_1( cuDoubleComplex* a_dev, int lda, int n , cuDoubleComplex* h_dev)
+#else
+extern "C" void launch_compute_kernel_reduce_1( cuFloatComplex* a_dev, int lda, int n , cuFloatComplex* h_dev)
+#endif
 {
 
         dim3  grid_size;
