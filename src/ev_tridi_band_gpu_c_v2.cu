@@ -2,18 +2,30 @@
 #include <cuda_runtime.h>
 #include <stdlib.h>
 #include <cuComplex.h>
+#include "config-f90.h"
 // ===========================================================================================================
 // Important:   due to the use of warp shuffling, the C version of the backtransformation kernel only works on
 //              devices with compute capability 3.x; for older devices, please use the Fortran kernel version
 // ===========================================================================================================
 
 // Perform the equivalent of "__shfl_xor" on an 8-byte value
+#ifdef DOUBLE_PRECISION_COMPLEX
 static __device__ __forceinline__ double shfl_xor(double r, int mask)
+#else
+static __device__ __forceinline__ float shfl_xor(float r, int mask)
+#endif
 {
+#ifdef DOUBLE_PRECISION_COMPLEX
     int hi = __shfl_xor(__double2hiint(r), mask);
     int lo = __shfl_xor(__double2loint(r), mask);
 
     return __hiloint2double(hi, lo);
+#else
+    int hi = __shfl_xor(__float2hiint(r), mask);
+    int lo = __shfl_xor(__float2loint(r), mask);
+
+    return __hiloint2float(hi, lo);
+#endif
 }
 
 #if 0
@@ -40,16 +52,31 @@ static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComp
 
 
 // Perform the equivalent of "__shfl_down" on an 8-byte value
+#ifdef DOUBLE_PRECISION_COMPLEX
 static __device__ __forceinline__ double shfl_down(double r, int offset)
+#else
+static __device__ __forceinline__ float shfl_down(float r, int offset)
+#endif
 {
+#ifdef DOUBLE_PRECISION_COMPLEX
     int hi = __shfl_down(__double2hiint(r), offset);
     int lo = __shfl_down(__double2loint(r), offset);
 
     return __hiloint2double(hi, lo);
+#else
+    int hi = __shfl_down(__float2hiint(r), offset);
+    int lo = __shfl_down(__float2loint(r), offset);
+
+    return __hiloint2float(hi, lo);
+#endif
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ void warp_reduce_complex_1( cuDoubleComplex *s_block)
 {
+#else
+__device__ void warp_reduce_complex_1( cuFloatComplex *s_block)
+#endif
     int t_idx ;
     t_idx = threadIdx.x;
     __syncthreads();
@@ -73,7 +100,12 @@ __device__ void warp_reduce_complex_1( cuDoubleComplex *s_block)
         }
         }
 }
+
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ void warp_reduce_complex_2( cuDoubleComplex *s_block)
+#else
+__device__ void warp_reduce_complex_2( cuFloatComplex *s_block)
+#endif
 {
     int t_idx ;
     t_idx = threadIdx.x;
@@ -105,7 +137,11 @@ __device__ void warp_reduce_complex_2( cuDoubleComplex *s_block)
 
 // Perform a reduction on a warp or the first part of it
 template <unsigned int REDUCE_START_OFFSET>
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ __forceinline__ double warp_reduce(double r)
+#else
+__device__ __forceinline__ float warp_reduce(float r)
+#endif
 {
 #pragma unroll
     for (int i = REDUCE_START_OFFSET; i >= 1; i >>= 1)
@@ -116,11 +152,21 @@ __device__ __forceinline__ double warp_reduce(double r)
     return r;
 }
 template <unsigned int REDUCE_START_OFFSET>
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ __forceinline__ cuDoubleComplex warp_reduce_c( cuDoubleComplex r)
+#else
+__device__ __forceinline__ cuFloatComplex warp_reduce_c( cuFloatComplex r)
+#endif
 {
 
+#ifdef DOUBLE_PRECISION_COMPLEX
      double real = cuCreal(r);
      double imag = cuCimag(r);
+#else
+     float real = cuCreal(r);
+     float imag = cuCimag(r);
+#endif
+
 #pragma unroll
     for (int i = REDUCE_START_OFFSET; i >= 1; i >>= 1)
     {
@@ -132,14 +178,21 @@ __device__ __forceinline__ cuDoubleComplex warp_reduce_c( cuDoubleComplex r)
         imag += shfl_down(imag, i);
     }
 
-
+#ifdef DOUBLE_PRECISION_COMPLEX
     return make_cuDoubleComplex(real,imag);
+#else
+    return make_cuFloatComplex(real,imag);
+#endif
 }
 
 
 // Perform 2 reductions, using either 1 or 2 warps
 template <unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ __forceinline__ void double_warp_reduce(double * dotp_s, int w_off)
+#else
+__device__ __forceinline__ void float_warp_reduce(float * dotp_s, int w_off)
+#endif
 {
     int t_idx = threadIdx.x;
 
@@ -163,7 +216,11 @@ __device__ __forceinline__ void double_warp_reduce(double * dotp_s, int w_off)
 }
 
 template <unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ __forceinline__ void double_warp_reduce_complex(cuDoubleComplex * dotp_s, int w_off)
+#else
+__device__ __forceinline__ void float_warp_reduce_complex(cuFloatComplex * dotp_s, int w_off)
+#endif
 {
     int t_idx = threadIdx.x;
 
@@ -198,7 +255,11 @@ __device__ __forceinline__ void sync_threads()
 }
 
 // Reset the entire contents of a shared reduction block; the thread block size must be a power-of-2
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__ __forceinline__ void reset_dotp_buffers(double * const __restrict__ s_block)
+#else
+__device__ __forceinline__ void reset_dotp_buffers(float * const __restrict__ s_block)
+#endif
 {
     if (blockDim.x >= 64)
     {
@@ -212,14 +273,21 @@ __device__ __forceinline__ void reset_dotp_buffers(double * const __restrict__ s
     else
     {
         int s_chunk = 128 / blockDim.x;
+#ifdef DOUBLE_PRECISION_COMPLEX
         int s_chunk_size = s_chunk * sizeof(double);
-
+#else
+        int s_chunk_size = s_chunk * sizeof(float);
+#endif
         // Each thread resets an equally-sized, contiguous portion of the buffer
         memset(s_block + threadIdx.x * s_chunk, 0, s_chunk_size);
     }
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__  void reset_dotp_buffers_complex( cuDoubleComplex  * const __restrict__ s_block)
+#else
+__device__  void reset_dotp_buffers_complex( cuFloatComplex  * const __restrict__ s_block)
+#endif
 {
     if (blockDim.x >= 64)
     {
@@ -235,7 +303,11 @@ __device__  void reset_dotp_buffers_complex( cuDoubleComplex  * const __restrict
     else
     {
         int s_chunk = 128 / blockDim.x;
+#ifdef DOUBLE_PRECISION_COMPLEX
         int s_chunk_size = s_chunk * sizeof(cuDoubleComplex);
+#else
+        int s_chunk_size = s_chunk * sizeof(cuFloatComplex);
+#endif
 
         // Each thread resets an equally-sized, contiguous portion of the buffer
         memset(&(s_block[ threadIdx.x * s_chunk].x), 0, s_chunk_size);
@@ -243,7 +315,11 @@ __device__  void reset_dotp_buffers_complex( cuDoubleComplex  * const __restrict
 
     }
 }
+#ifdef DOUBLE_PRECISION_COMPLEX
 __device__  void reset_dotp_buffers_complex_2( cuDoubleComplex  * const __restrict__ s_block)
+#else
+__device__  void reset_dotp_buffers_complex_2( cuFloatComplex  * const __restrict__ s_block)
+#endif
 {
     if (blockDim.x >= 128)
     {
@@ -259,8 +335,11 @@ __device__  void reset_dotp_buffers_complex_2( cuDoubleComplex  * const __restri
     else
     {
         int s_chunk = 256 / blockDim.x;
+#ifdef DOUBLE_PRECISION_COMPLEX
         int s_chunk_size = s_chunk * sizeof(cuDoubleComplex);
-
+#else
+        int s_chunk_size = s_chunk * sizeof(cuFloatComplex);
+#endif
         // Each thread resets an equally-sized, contiguous portion of the buffer
         memset(&(s_block[ threadIdx.x * s_chunk].x), 0, s_chunk_size);
         memset( & (s_block[ threadIdx.x * s_chunk].y), 0, s_chunk_size);
@@ -275,16 +354,29 @@ __device__  void reset_dotp_buffers_complex_2( cuDoubleComplex  * const __restri
 
 // We use templates here to avoid additional branching based on the actual size of the thread-block
 template<unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
+#ifdef DOUBLE_PRECISION_REAL
 __global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel(double * const __restrict__ q, const double * const __restrict__ hh, const double * const __restrict__ hh_dot,
     const double * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+#else
+__global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel(float * const __restrict__ q, const float * const __restrict__ hh, const float * const __restrict__ hh_dot,
+    const float * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+#endif
 
 {
+#ifdef DOUBLE_PRECISION_REAL
     __shared__ double dotp_s[128];
     __shared__ double q_s[129];
+#else
+    __shared__ float dotp_s[128];
+    __shared__ float q_s[129];
+#endif
 
     int b_idx, t_idx, q_off, h_off, w_off, j, t_s, q_delta, hh_delta;
+#ifdef DOUBLE_PRECISION_REAL
     double q_v_1, q_v_2, hh_v_1, hh_v_2, tau_1, tau_2, s_1, s_2, dot_p, hh_v_3, my_r1, my_r2;
-
+#else
+    float q_v_1, q_v_2, hh_v_1, hh_v_2, tau_1, tau_2, s_1, s_2, dot_p, hh_v_3, my_r1, my_r2;
+#endif
     // The block index selects the eigenvector (EV) which the current block is responsible for
     b_idx = blockIdx.x;
 
@@ -356,8 +448,11 @@ __global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel(double * const 
         sync_threads<HAVE_2_WARPS>();
 
         // Perform the 2 reductions using only the first warp (we assume the warp size is 32, valid up to CC 3.x)
+#ifdef DOUBLE_PRECISION_REAL
         double_warp_reduce<REDUCE_START_OFFSET, HAVE_2_WARPS>(dotp_s, w_off);
-
+#else
+        float_warp_reduce<REDUCE_START_OFFSET, HAVE_2_WARPS>(dotp_s, w_off);
+#endif
         // Ensure every thread will have access to the reduction results
         sync_threads<HAVE_2_WARPS>();
 
@@ -432,12 +527,23 @@ __global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel(double * const 
     }
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_kernel_complex_2_2(cuDoubleComplex * const __restrict__  q, const cuDoubleComplex  * const __restrict__   hh,   const cuDoubleComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+#else
+template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_kernel_complex_2_2(cuFloatComplex * const __restrict__  q, const cuFloatComplex  * const __restrict__   hh,   const cuFloatComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+#endif
 {
+#ifdef DOUBLE_PRECISION_COMPLEX
     __shared__ cuDoubleComplex q_s[128];
     __shared__ cuDoubleComplex dotp_s[128];
 
      cuDoubleComplex q_v2, tau ;
+#else
+    __shared__ cuFloatComplex q_s[128];
+    __shared__ cuFloatComplex dotp_s[128];
+
+     cuFloatComplex q_v2, tau ;
+#endif
 
     int  t_idx,q_off, h_off, j , b_idx;
 
@@ -501,7 +607,11 @@ template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_ker
 }
 
 // This is a host wrapper for calling the appropriate back-transformation kernel, based on the SCALAPACK block size
+#ifdef DOUBLE_PRECISION_REAL
  extern "C" void launch_compute_hh_trafo_c_kernel(double * const q, const double * const hh, const double * const hh_dot,  const double * const hh_tau, const int nev, const int nb, const int ldq, const int off, const int ncols)
+#else
+ extern "C" void launch_compute_hh_trafo_c_kernel(float * const q, const float * const hh, const float * const hh_dot,  const float * const hh_tau, const int nev, const int nb, const int ldq, const int off, const int ncols)
+#endif
 {
     switch (nb)
     {
@@ -536,7 +646,11 @@ template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_ker
     }
 }
 
+#ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_compute_hh_trafo_c_kernel_complex( cuDoubleComplex* q, cuDoubleComplex * hh, cuDoubleComplex * hh_tau, const int nev, const int nb, const int ldq, const int off, const int ncols)
+#else
+extern "C" void launch_compute_hh_trafo_c_kernel_complex( cuFloatComplex* q, cuFloatComplex * hh, cuFloatComplex * hh_tau, const int nev, const int nb, const int ldq, const int off, const int ncols)
+#endif
 {
 
 	cudaDeviceSynchronize();
