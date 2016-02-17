@@ -163,6 +163,8 @@ module ELPA1_compute
 #ifdef WITH_OPENMP
       real(kind=rk), allocatable  :: ur_p(:,:), uc_p(:,:)
 #endif
+      integer(kind=ik)            :: istat
+      character(200)              :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("tridiag_real")
@@ -189,17 +191,51 @@ module ELPA1_compute
       max_local_rows = max_blocks_row*nblk
       max_local_cols = max_blocks_col*nblk
 
-      allocate(tmp(MAX(max_local_rows,max_local_cols)))
-      allocate(vr(max_local_rows+1))
-      allocate(ur(max_local_rows))
-      allocate(vc(max_local_cols))
-      allocate(uc(max_local_cols))
+      allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating tmp "//errorMessage
+        stop
+      endif
+
+      allocate(vr(max_local_rows+1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating vr "//errorMessage
+        stop
+      endif
+
+      allocate(ur(max_local_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating ur "//errorMessage
+        stop
+      endif
+
+      allocate(vc(max_local_cols), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating vc "//errorMessage
+        stop
+      endif
+
+      allocate(uc(max_local_cols), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating uc "//errorMessage
+        stop
+      endif
 
 #ifdef WITH_OPENMP
       max_threads = omp_get_max_threads()
 
-      allocate(ur_p(max_local_rows,0:max_threads-1))
-      allocate(uc_p(max_local_cols,0:max_threads-1))
+      allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating ur_p "//errorMessage
+        stop
+      endif
+
+      allocate(uc_p(max_local_cols,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating uc_p "//errorMessage
+        stop
+      endif
+
 #endif
 
       tmp = 0
@@ -208,8 +244,17 @@ module ELPA1_compute
       vc = 0
       uc = 0
 
-      allocate(vur(max_local_rows,2*max_stored_rows))
-      allocate(uvc(max_local_cols,2*max_stored_rows))
+      allocate(vur(max_local_rows,2*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating vur "//errorMessage
+        stop
+      endif
+
+      allocate(uvc(max_local_cols,2*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating uvc "//errorMessage
+        stop
+      endif
 
       d(:) = 0
       e(:) = 0
@@ -422,11 +467,21 @@ module ELPA1_compute
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) e(1) = a(1,l_cols) ! use last l_cols value of loop above
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) d(1) = a(1,1)
 
-      deallocate(tmp, vr, ur, vc, uc, vur, uvc)
+      deallocate(tmp, vr, ur, vc, uc, vur, uvc, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when deallocating uvc "//errorMessage
+        stop
+      endif
+
 
       ! distribute the arrays d and e to all processors
 
-      allocate(tmp(na))
+      allocate(tmp(na),  stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating tmp "//errorMessage
+        stop
+      endif
+
       tmp = d
       call mpi_allreduce(tmp,d,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       tmp = d
@@ -435,7 +490,12 @@ module ELPA1_compute
       call mpi_allreduce(tmp,e,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       tmp = e
       call mpi_allreduce(tmp,e,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
-      deallocate(tmp)
+      deallocate(tmp,  stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when deallocating tmp "//errorMessage
+        stop
+      endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("tridiag_real")
 #endif
@@ -499,7 +559,8 @@ module ELPA1_compute
 
       real(kind=rk), allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
       real(kind=rk), allocatable :: tmat(:,:), h1(:), h2(:)
-
+      integer(kind=ik)           :: istat
+      character(200)             :: errorMessage
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_real")
 #endif
@@ -519,13 +580,47 @@ module ELPA1_compute
 
       max_stored_rows = (63/nblk+1)*nblk
 
-      allocate(tmat(max_stored_rows,max_stored_rows))
-      allocate(h1(max_stored_rows*max_stored_rows))
-      allocate(h2(max_stored_rows*max_stored_rows))
-      allocate(tmp1(max_local_cols*max_stored_rows))
-      allocate(tmp2(max_local_cols*max_stored_rows))
-      allocate(hvb(max_local_rows*nblk))
-      allocate(hvm(max_local_rows,max_stored_rows))
+      allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_real: error when allocating tmat "//errorMessage
+        stop
+      endif
+
+      allocate(h1(max_stored_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_real: error when allocating h1 "//errorMessage
+        stop
+      endif
+
+      allocate(h2(max_stored_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_real: error when allocating h2 "//errorMessage
+        stop
+      endif
+
+      allocate(tmp1(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_real: error when allocating tmp1 "//errorMessage
+        stop
+      endif
+
+      allocate(tmp2(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_real: error when allocating tmp2 "//errorMessage
+        stop
+      endif
+
+      allocate(hvb(max_local_rows*nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_real: error when allocating hvn "//errorMessage
+        stop
+      endif
+
+      allocate(hvm(max_local_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_real: error when allocating hvm "//errorMessage
+        stop
+      endif
 
       hvm = 0   ! Must be set to 0 !!!
       hvb = 0   ! Safety only
@@ -618,7 +713,11 @@ module ELPA1_compute
 
       enddo
 
-      deallocate(tmat, h1, h2, tmp1, tmp2, hvb, hvm)
+      deallocate(tmat, h1, h2, tmp1, tmp2, hvb, hvm, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_real: error when deallocating hvm "//errorMessage
+        stop
+      endif
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("trans_ev_real")
@@ -696,7 +795,8 @@ module ELPA1_compute
       logical                       :: a_lower, a_upper, c_lower, c_upper
 
       real(kind=rk), allocatable    :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
-
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mult_at_b_real")
 #endif
@@ -716,10 +816,29 @@ module ELPA1_compute
          nblk_mult = (63/nblk+1)*nblk
       endif
 
-      allocate(aux_mat(l_rows,nblk_mult))
-      allocate(aux_bc(l_rows*nblk))
-      allocate(lrs_save(nblk))
-      allocate(lre_save(nblk))
+      allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"mult_at_b_real: error when allocating aux_mat "//errorMessage
+        stop
+      endif
+
+      allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"mult_at_b_real: error when allocating aux_bc "//errorMessage
+        stop
+      endif
+
+      allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"mult_at_b_real: error when allocating lrs_save "//errorMessage
+        stop
+      endif
+
+      allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"mult_at_b_real: error when allocating lre_save "//errorMessage
+        stop
+      endif
 
       a_lower = .false.
       a_upper = .false.
@@ -814,7 +933,12 @@ module ELPA1_compute
             if (c_lower) lce = MIN(local_index(gcol, my_pcol, np_cols, nblk, -1),l_cols)
 
             if (lcs<=lce) then
-              allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce))
+              allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
+              if (istat .ne. 0) then
+               print *,"mult_at_b_real: error when allocating tmp1 "//errorMessage
+               stop
+              endif
+
               if (lrs<=lre) then
                 call dgemm('T','N',nstor,lce-lcs+1,lre-lrs+1,1.d0,aux_mat(lrs,1),ubound(aux_mat,dim=1), &
                              b(lrs,lcs),ldb,0.d0,tmp1,nstor)
@@ -828,7 +952,12 @@ module ELPA1_compute
               ! Put the result into C
               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
-              deallocate(tmp1,tmp2)
+              deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
+              if (istat .ne. 0) then
+               print *,"mult_at_b_real: error when deallocating tmp1 "//errorMessage
+               stop
+              endif
+
             endif
 
             nr_done = nr_done+nstor
@@ -838,7 +967,12 @@ module ELPA1_compute
         enddo
       enddo
 
-      deallocate(aux_mat, aux_bc, lrs_save, lre_save)
+      deallocate(aux_mat, aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"mult_at_b_real: error when deallocating aux_mat "//errorMessage
+       stop
+      endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mult_at_b_real")
 #endif
@@ -923,6 +1057,8 @@ module ELPA1_compute
       complex(kind=ck), allocatable :: ur_p(:,:), uc_p(:,:)
 #endif
       real(kind=rk), allocatable    :: tmpr(:)
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("tridiag_complex")
@@ -949,17 +1085,50 @@ module ELPA1_compute
       max_local_rows = max_blocks_row*nblk
       max_local_cols = max_blocks_col*nblk
 
-      allocate(tmp(MAX(max_local_rows,max_local_cols)))
-      allocate(vr(max_local_rows+1))
-      allocate(ur(max_local_rows))
-      allocate(vc(max_local_cols))
-      allocate(uc(max_local_cols))
+      allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating tmp "//errorMessage
+       stop
+      endif
+
+      allocate(vr(max_local_rows+1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating vr "//errorMessage
+       stop
+      endif
+
+      allocate(ur(max_local_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating ur "//errorMessage
+       stop
+      endif
+
+      allocate(vc(max_local_cols), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating vc "//errorMessage
+       stop
+      endif
+
+      allocate(uc(max_local_cols), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating uc "//errorMessage
+       stop
+      endif
 
 #ifdef WITH_OPENMP
       max_threads = omp_get_max_threads()
 
-      allocate(ur_p(max_local_rows,0:max_threads-1))
-      allocate(uc_p(max_local_cols,0:max_threads-1))
+      allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating ur_p "//errorMessage
+       stop
+      endif
+
+      allocate(uc_p(max_local_cols,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating uc_p "//errorMessage
+       stop
+      endif
 #endif
 
       tmp = 0
@@ -968,8 +1137,17 @@ module ELPA1_compute
       vc = 0
       uc = 0
 
-      allocate(vur(max_local_rows,2*max_stored_rows))
-      allocate(uvc(max_local_cols,2*max_stored_rows))
+      allocate(vur(max_local_rows,2*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating vur "//errorMessage
+       stop
+      endif
+
+      allocate(uvc(max_local_cols,2*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating uvc "//errorMessage
+       stop
+      endif
 
       d(:) = 0
       e(:) = 0
@@ -1204,11 +1382,19 @@ module ELPA1_compute
 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) d(1) = a(1,1)
 
-      deallocate(tmp, vr, ur, vc, uc, vur, uvc)
-
+      deallocate(tmp, vr, ur, vc, uc, vur, uvc, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when deallocating tmp "//errorMessage
+       stop
+      endif
       ! distribute the arrays d and e to all processors
 
-      allocate(tmpr(na))
+      allocate(tmpr(na), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating tmpr "//errorMessage
+       stop
+      endif
+
       tmpr = d
       call mpi_allreduce(tmpr,d,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       tmpr = d
@@ -1217,7 +1403,12 @@ module ELPA1_compute
       call mpi_allreduce(tmpr,e,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       tmpr = e
       call mpi_allreduce(tmpr,e,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
-      deallocate(tmpr)
+      deallocate(tmpr, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when deallocating tmpr "//errorMessage
+       stop
+      endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("tridiag_complex")
 #endif
@@ -1281,7 +1472,8 @@ module ELPA1_compute
 
       complex(kind=ck), allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
       complex(kind=ck), allocatable :: tmat(:,:), h1(:), h2(:)
-
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_complex")
 #endif
@@ -1300,13 +1492,47 @@ module ELPA1_compute
 
       max_stored_rows = (63/nblk+1)*nblk
 
-      allocate(tmat(max_stored_rows,max_stored_rows))
-      allocate(h1(max_stored_rows*max_stored_rows))
-      allocate(h2(max_stored_rows*max_stored_rows))
-      allocate(tmp1(max_local_cols*max_stored_rows))
-      allocate(tmp2(max_local_cols*max_stored_rows))
-      allocate(hvb(max_local_rows*nblk))
-      allocate(hvm(max_local_rows,max_stored_rows))
+      allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"trans_ev_complex: error when allocating tmat "//errorMessage
+       stop
+      endif
+
+      allocate(h1(max_stored_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"trans_ev_complex: error when allocating h1 "//errorMessage
+       stop
+      endif
+
+      allocate(h2(max_stored_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"trans_ev_complex: error when allocating h2 "//errorMessage
+       stop
+      endif
+
+      allocate(tmp1(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"trans_ev_complex: error when allocating tmp1 "//errorMessage
+       stop
+      endif
+
+      allocate(tmp2(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"trans_ev_complex: error when allocating tmp2 "//errorMessage
+       stop
+      endif
+
+      allocate(hvb(max_local_rows*nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"trans_ev_complex: error when allocating hvb "//errorMessage
+       stop
+      endif
+
+      allocate(hvm(max_local_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"trans_ev_complex: error when allocating hvm "//errorMessage
+       stop
+      endif
 
       hvm = 0   ! Must be set to 0 !!!
       hvb = 0   ! Safety only
@@ -1404,7 +1630,11 @@ module ELPA1_compute
 
       enddo
 
-      deallocate(tmat, h1, h2, tmp1, tmp2, hvb, hvm)
+      deallocate(tmat, h1, h2, tmp1, tmp2, hvb, hvm, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"trans_ev_complex: error when deallocating hvb "//errorMessage
+       stop
+      endif
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("trans_ev_complex")
@@ -1482,6 +1712,8 @@ module ELPA1_compute
       logical                       :: a_lower, a_upper, c_lower, c_upper
 
       complex(kind=ck), allocatable :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mult_ah_b_complex")
@@ -1502,10 +1734,29 @@ module ELPA1_compute
         nblk_mult = (63/nblk+1)*nblk
       endif
 
-      allocate(aux_mat(l_rows,nblk_mult))
-      allocate(aux_bc(l_rows*nblk))
-      allocate(lrs_save(nblk))
-      allocate(lre_save(nblk))
+      allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"mult_ah_b_complex: error when allocating aux_mat "//errorMessage
+       stop
+      endif
+
+      allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"mult_ah_b_complex: error when allocating aux_bc "//errorMessage
+       stop
+      endif
+
+      allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"mult_ah_b_complex: error when allocating lrs_save "//errorMessage
+       stop
+      endif
+
+      allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"mult_ah_b_complex: error when allocating lre_save "//errorMessage
+       stop
+      endif
 
       a_lower = .false.
       a_upper = .false.
@@ -1600,7 +1851,12 @@ module ELPA1_compute
             if (c_lower) lce = MIN(local_index(gcol, my_pcol, np_cols, nblk, -1),l_cols)
 
             if (lcs<=lce) then
-              allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce))
+              allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
+              if (istat .ne. 0) then
+                print *,"mult_ah_b_complex: error when allocating tmp1 "//errorMessage
+                stop
+              endif
+
               if (lrs<=lre) then
                 call zgemm('C','N',nstor,lce-lcs+1,lre-lrs+1,(1.d0,0.d0),aux_mat(lrs,1),ubound(aux_mat,dim=1), &
                              b(lrs,lcs),ldb,(0.d0,0.d0),tmp1,nstor)
@@ -1614,7 +1870,12 @@ module ELPA1_compute
                ! Put the result into C
                if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
-               deallocate(tmp1,tmp2)
+               deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
+               if (istat .ne. 0) then
+                 print *,"mult_ah_b_complex: error when deallocating tmp1 "//errorMessage
+                 stop
+               endif
+
             endif
 
             nr_done = nr_done+nstor
@@ -1624,7 +1885,12 @@ module ELPA1_compute
         enddo
       enddo
 
-      deallocate(aux_mat, aux_bc, lrs_save, lre_save)
+      deallocate(aux_mat, aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"mult_ah_b_complex: error when deallocating aux_mat "//errorMessage
+        stop
+      endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mult_ah_b_complex")
 #endif
@@ -1653,6 +1919,9 @@ module ELPA1_compute
 
       logical, intent(in)           :: wantDebug
       logical, intent(out)          :: success
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("solve_tridi")
 #endif
@@ -1673,7 +1942,11 @@ module ELPA1_compute
       ! Get the limits of the subdivisons, each subdivison has as many cols
       ! as fit on the respective processor column
 
-      allocate(limits(0:np_cols))
+      allocate(limits(0:np_cols), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"solve_tridi: error when allocating limits "//errorMessage
+        stop
+      endif
 
       limits(0) = 0
       do np=0,np_cols-1
@@ -1722,7 +1995,12 @@ module ELPA1_compute
       ! If there is only 1 processor column, we are done
 
       if (np_cols==1) then
-        deallocate(limits)
+        deallocate(limits, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"solve_tridi: error when deallocating limits "//errorMessage
+          stop
+        endif
+
 #ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("solve_tridi")
 #endif
@@ -1733,8 +2011,17 @@ module ELPA1_compute
 
       ! Dense distribution scheme:
 
-      allocate(l_col(na))
-      allocate(p_col(na))
+      allocate(l_col(na), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"solve_tridi: error when allocating l_col "//errorMessage
+        stop
+      endif
+
+      allocate(p_col(na), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"solve_tridi: error when allocating p_col "//errorMessage
+        stop
+      endif
 
       n = 0
       do np=0,np_cols-1
@@ -1748,8 +2035,18 @@ module ELPA1_compute
 
       ! Block cyclic distribution scheme, only nev columns are set:
 
-      allocate(l_col_bc(na))
-      allocate(p_col_bc(na))
+      allocate(l_col_bc(na), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"solve_tridi: error when allocating l_col_bc "//errorMessage
+        stop
+      endif
+
+      allocate(p_col_bc(na), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"solve_tridi: error when allocating p_col_bc "//errorMessage
+        stop
+      endif
+
       p_col_bc(:) = -1
       l_col_bc(:) = -1
 
@@ -1774,7 +2071,12 @@ module ELPA1_compute
         return
       endif
 
-      deallocate(limits,l_col,p_col,l_col_bc,p_col_bc)
+      deallocate(limits,l_col,p_col,l_col_bc,p_col_bc, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"solve_tridi: error when deallocating l_col "//errorMessage
+        stop
+      endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("solve_tridi")
 #endif
@@ -1885,6 +2187,9 @@ module ELPA1_compute
       integer(kind=ik), allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
       logical, intent(in)           :: wantDebug
       logical, intent(out)          :: success
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("solve_tridi_col")
 #endif
@@ -1909,7 +2214,11 @@ module ELPA1_compute
 
       if (np_rows==1 .and. nev<na .and. na>2*min_submatrix_size) ndiv = 2
 
-      allocate(limits(0:ndiv))
+      allocate(limits(0:ndiv), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"solve_tridi_col: error when allocating limits "//errorMessage
+        stop
+      endif
 
       limits(0) = 0
       limits(ndiv) = na
@@ -1956,8 +2265,17 @@ module ELPA1_compute
         ! Solve sub problems in parallel with solve_tridi_single
         ! There is at maximum 1 subproblem per processor
 
-        allocate(qmat1(max_size,max_size))
-        allocate(qmat2(max_size,max_size))
+        allocate(qmat1(max_size,max_size), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"solve_tridi_col: error when allocating qmat1 "//errorMessage
+          stop
+        endif
+
+        allocate(qmat2(max_size,max_size), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"solve_tridi_col: error when allocating qmat2 "//errorMessage
+          stop
+        endif
 
         qmat1 = 0 ! Make sure that all elements are defined
 
@@ -1989,13 +2307,21 @@ module ELPA1_compute
 
         enddo
 
-        deallocate(qmat1, qmat2)
+        deallocate(qmat1, qmat2, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"solve_tridi_col: error when deallocating qmat2 "//errorMessage
+          stop
+        endif
 
       endif
 
       ! Allocate and set index arrays l_col and p_col
 
-      allocate(l_col(na), p_col_i(na),  p_col_o(na))
+      allocate(l_col(na), p_col_i(na),  p_col_o(na), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"solve_tridi_col: error when allocating l_col "//errorMessage
+        stop
+      endif
 
       do i=1,na
         l_col(i) = i
@@ -2030,7 +2356,12 @@ module ELPA1_compute
 
       enddo
 
-      deallocate(limits, l_col, p_col_i, p_col_o)
+      deallocate(limits, l_col, p_col_i, p_col_o, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"solve_tridi_col: error when deallocating l_col "//errorMessage
+        stop
+      endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("solve_tridi_col")
 #endif
@@ -2058,13 +2389,19 @@ module ELPA1_compute
 
      logical, intent(in)           :: wantDebug
      logical, intent(out)          :: success
+      integer(kind=ik)             :: istat
+      character(200)               :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
      call timer%start("solve_tridi_single")
 #endif
 
      success = .true.
-     allocate(ds(nlen), es(nlen))
+     allocate(ds(nlen), es(nlen), stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"solve_tridi_single: error when allocating ds "//errorMessage
+       stop
+     endif
 
      ! Save d and e for the case that dstedc fails
 
@@ -2075,7 +2412,11 @@ module ELPA1_compute
 
      lwork = 1 + 4*nlen + nlen**2
      liwork =  3 + 5*nlen
-     allocate(work(lwork), iwork(liwork))
+     allocate(work(lwork), iwork(liwork), stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"solve_tridi_single: error when allocating work "//errorMessage
+       stop
+     endif
      call dstedc('I',nlen,d,e,q,ldq,work,lwork,iwork,liwork,info)
 
      if (info /= 0) then
@@ -2098,7 +2439,11 @@ module ELPA1_compute
          endif
        end if
 
-       deallocate(work,iwork,ds,es)
+       deallocate(work,iwork,ds,es, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"solve_tridi_single: error when deallocating ds "//errorMessage
+         stop
+       endif
 
       ! Check if eigenvalues are monotonically increasing
       ! This seems to be not always the case  (in the IBM implementation of dstedc ???)
@@ -2113,7 +2458,12 @@ module ELPA1_compute
             write(error_unit,'(a)') 'In this extent, this is completely harmless.'
             write(error_unit,'(a)') 'Still, we keep this info message just in case.'
           end if
-          allocate(qtmp(nlen))
+          allocate(qtmp(nlen), stat=istat, errmsg=errorMessage)
+          if (istat .ne. 0) then
+            print *,"solve_tridi_single: error when allocating qtmp "//errorMessage
+            stop
+          endif
+
           dtmp = d(i+1)
           qtmp(1:nlen) = q(1:nlen,i+1)
           do j=i,1,-1
@@ -2126,7 +2476,12 @@ module ELPA1_compute
           enddo
           d(j+1)        = dtmp
           q(1:nlen,j+1) = qtmp(1:nlen)
-          deallocate(qtmp)
+          deallocate(qtmp, stat=istat, errmsg=errorMessage)
+          if (istat .ne. 0) then
+            print *,"solve_tridi_single: error when deallocating qtmp "//errorMessage
+            stop
+          endif
+
        endif
      enddo
 #ifdef HAVE_DETAILED_TIMINGS
@@ -2180,11 +2535,18 @@ module ELPA1_compute
 #ifdef WITH_OPENMP
       integer(kind=ik)              :: max_threads, my_thread
       integer(kind=ik)              :: omp_get_max_threads, omp_get_thread_num
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
 
       max_threads = omp_get_max_threads()
 
-      allocate(z_p(na,0:max_threads-1))
+      allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"merge_systems: error when allocating z_p "//errorMessage
+        stop
+      endif
 #endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("merge_systems")
 #endif
@@ -2643,9 +3005,23 @@ module ELPA1_compute
           endif
         enddo
 
-        allocate(ev(max_local_cols,MIN(max_strip,MAX(1,nqcols1))))
-        allocate(qtmp1(MAX(1,l_rows),max_local_cols))
-        allocate(qtmp2(MAX(1,l_rows),MIN(max_strip,MAX(1,nqcols1))))
+        allocate(ev(max_local_cols,MIN(max_strip,MAX(1,nqcols1))), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"merge_systems: error when allocating ev "//errorMessage
+          stop
+        endif
+
+        allocate(qtmp1(MAX(1,l_rows),max_local_cols), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"merge_systems: error when allocating qtmp1 "//errorMessage
+          stop
+        endif
+
+        allocate(qtmp2(MAX(1,l_rows),MIN(max_strip,MAX(1,nqcols1))), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"merge_systems: error when allocating qtmp2 "//errorMessage
+          stop
+        endif
 
         ! Gather nonzero upper/lower components of old matrix Q
         ! which are needed for multiplication with new eigenvectors
@@ -2796,12 +3172,26 @@ module ELPA1_compute
            enddo
         enddo
 
-        deallocate(ev, qtmp1, qtmp2)
-
+        deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"merge_systems: error when deallocating ev "//errorMessage
+          stop
+        endif
       endif
+
+#ifdef WITH_OPENMP
+      deallocate(z_p, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"merge_systems: error when deallocating z_p "//errorMessage
+        stop
+      endif
+#endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("merge_systems")
 #endif
+
+
       return
 
       contains
@@ -2839,13 +3229,19 @@ module ELPA1_compute
           integer(kind=ik)             :: i, nc, pc1, pc2, lc1, lc2, l_cols_out
 
           real(kind=rk), allocatable   :: qtmp(:,:)
+          integer(kind=ik)             :: istat
+          character(200)               :: errorMessage
 
           if (l_rows==0) return ! My processor column has no work to do
 
           ! Resorts eigenvectors so that q_new(:,i) = q_old(:,idx_ev(i))
 
           l_cols_out = COUNT(p_col_out(1:na)==my_pcol)
-          allocate(qtmp(l_rows,l_cols_out))
+          allocate(qtmp(l_rows,l_cols_out), stat=istat, errmsg=errorMessage)
+          if (istat .ne. 0) then
+            print *,"resort_ev: error when allocating qtmp "//errorMessage
+            stop
+          endif
 
           nc = 0
 
@@ -2886,8 +3282,11 @@ module ELPA1_compute
             endif
           enddo
 
-          deallocate(qtmp)
-
+          deallocate(qtmp, stat=istat, errmsg=errorMessage)
+          if (istat .ne. 0) then
+            print *,"resort_ev: error when deallocating qtmp "//errorMessage
+            stop
+          endif
         end subroutine resort_ev
 
         subroutine transform_columns(col1, col2)
@@ -3325,6 +3724,8 @@ module ELPA1_compute
 
       logical, intent(in)           :: wantDebug
       logical, intent(out)          :: success
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("cholesky_real")
@@ -3348,13 +3749,33 @@ module ELPA1_compute
       l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
       l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
-      allocate(tmp1(nblk*nblk))
-      allocate(tmp2(nblk,nblk))
+      allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_real: error when allocating tmp1 "//errorMessage
+        stop
+      endif
+
+      allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_real: error when allocating tmp2 "//errorMessage
+        stop
+      endif
+
       tmp1 = 0
       tmp2 = 0
 
-      allocate(tmatr(l_rows,nblk))
-      allocate(tmatc(l_cols,nblk))
+      allocate(tmatr(l_rows,nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_real: error when allocating tmatr "//errorMessage
+        stop
+      endif
+
+      allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_real: error when allocating tmatc "//errorMessage
+        stop
+      endif
+
       tmatr = 0
       tmatc = 0
 
@@ -3448,7 +3869,11 @@ module ELPA1_compute
 
       enddo
 
-      deallocate(tmp1, tmp2, tmatr, tmatc)
+      deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_real: error when deallocating tmp1 "//errorMessage
+        stop
+      endif
 
       ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)
 
@@ -3507,6 +3932,8 @@ module ELPA1_compute
 
        logical, intent(in)          :: wantDebug
        logical, intent(out)         :: success
+       integer(kind=ik)             :: istat
+       character(200)               :: errorMessage
 
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -3518,13 +3945,33 @@ module ELPA1_compute
        l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
        l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
-       allocate(tmp1(nblk*nblk))
-       allocate(tmp2(nblk,nblk))
+       allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_real: error when allocating tmp1 "//errorMessage
+         stop
+       endif
+
+       allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_real: error when allocating tmp2 "//errorMessage
+         stop
+       endif
+
        tmp1 = 0
        tmp2 = 0
 
-       allocate(tmat1(l_rows,nblk))
-       allocate(tmat2(nblk,l_cols))
+       allocate(tmat1(l_rows,nblk), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_real: error when allocating tmat1 "//errorMessage
+         stop
+       endif
+
+       allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_real: error when allocating tmat2 "//errorMessage
+         stop
+       endif
+
        tmat1 = 0
        tmat2 = 0
 
@@ -3597,7 +4044,11 @@ module ELPA1_compute
 
        enddo
 
-       deallocate(tmp1, tmp2, tmat1, tmat2)
+       deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_real: error when deallocating tmp1 "//errorMessage
+         stop
+       endif
 
     end subroutine invert_trm_real
 
@@ -3648,6 +4099,9 @@ module ELPA1_compute
 
       logical, intent(in)              :: wantDebug
       logical, intent(out)             :: success
+      integer(kind=ik)                 :: istat
+      character(200)                   :: errorMessage
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("cholesky_complex")
 #endif
@@ -3669,13 +4123,33 @@ module ELPA1_compute
       l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
       l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
-      allocate(tmp1(nblk*nblk))
-      allocate(tmp2(nblk,nblk))
+      allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_complex: error when allocating tmp1 "//errorMessage
+        stop
+      endif
+
+      allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_complex: error when allocating tmp2 "//errorMessage
+        stop
+      endif
+
       tmp1 = 0
       tmp2 = 0
 
-      allocate(tmatr(l_rows,nblk))
-      allocate(tmatc(l_cols,nblk))
+      allocate(tmatr(l_rows,nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_complex: error when allocating tmatr "//errorMessage
+        stop
+      endif
+
+      allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_complex: error when allocating tmatc "//errorMessage
+        stop
+      endif
+
       tmatr = 0
       tmatc = 0
 
@@ -3767,7 +4241,11 @@ module ELPA1_compute
 
       enddo
 
-      deallocate(tmp1, tmp2, tmatr, tmatc)
+      deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"cholesky_complex: error when deallocating tmatr "//errorMessage
+        stop
+      endif
 
       ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)
 
@@ -3826,6 +4304,8 @@ module ELPA1_compute
 
        logical, intent(in)              :: wantDebug
        logical, intent(out)             :: success
+       integer(kind=ik)                 :: istat
+       character(200)                   :: errorMessage
 
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -3837,13 +4317,33 @@ module ELPA1_compute
        l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
        l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
-       allocate(tmp1(nblk*nblk))
-       allocate(tmp2(nblk,nblk))
+       allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_complex: error when allocating tmp1 "//errorMessage
+         stop
+       endif
+
+       allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_complex: error when allocating tmp2 "//errorMessage
+         stop
+       endif
+
        tmp1 = 0
        tmp2 = 0
 
-       allocate(tmat1(l_rows,nblk))
-       allocate(tmat2(nblk,l_cols))
+       allocate(tmat1(l_rows,nblk), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_complex: error when allocating tmat1 "//errorMessage
+         stop
+       endif
+
+       allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_complex: error when allocating tmat2 "//errorMessage
+         stop
+       endif
+
        tmat1 = 0
        tmat2 = 0
 
@@ -3915,8 +4415,11 @@ module ELPA1_compute
 
        enddo
 
-       deallocate(tmp1, tmp2, tmat1, tmat2)
-
+       deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"invert_trm_complex: error when deallocating tmp1 "//errorMessage
+         stop
+       endif
     end subroutine invert_trm_complex
 
     integer function least_common_multiple(a, b)
