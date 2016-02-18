@@ -2538,6 +2538,8 @@ module ELPA1_compute
 #ifdef WITH_OPENMP
       integer(kind=ik)              :: max_threads, my_thread
       integer(kind=ik)              :: omp_get_max_threads, omp_get_thread_num
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
 
       max_threads = omp_get_max_threads()
 
