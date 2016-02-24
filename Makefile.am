@@ -362,6 +362,7 @@ distclean-local:
 EXTRA_DIST = \
   fdep/fortran_dependencies.pl \
   fdep/fortran_dependencies.mk \
+  test/fortran_test_programs/elpa_test_programs_print_headers.X90 \
   src/elpa_reduce_add_vectors.X90 \
   src/elpa_transpose_vectors.X90 \
   src/redist_band.X90

@@ -139,47 +139,8 @@ program test_real2
 
    STATUS = 0
 
-#ifdef WITH_OPENMP
-   if (myid .eq. 0) then
-      print *,"Threaded version of test program"
-      print *,"Using ",omp_get_max_threads()," threads"
-      print *," "
-   endif
-#endif
-#ifndef WITH_MPI
-   if (myid .eq. 0) then
-     print *,"This version of ELPA does not support MPI parallelisation"
-     print *,"For MPI support re-build ELPA with appropiate flags"
-     print *," "
-   endif
-#endif
-
-#ifdef WITH_MPI
-    call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-#endif
-
-
-#ifdef HAVE_REDIRECT
-   if (check_redirect_environment_variable()) then
-     if (myid .eq. 0) then
-       print *," "
-       print *,"Redirection of mpi processes is used"
-       print *," "
-       if (create_directories() .ne. 1) then
-         write(error_unit,*) "Unable to create directory for stdout and stderr!"
-         stop
-       endif
-     endif
-#ifdef WITH_MPI
-     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-#endif
-     call redirect_stdout(myid)
-   endif
-#endif
-
-   if (write_to_file) then
-     if (myid .eq. 0) print *,"Writing output files"
-   endif
+#define DATATYPE REAL
+#include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
