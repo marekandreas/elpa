@@ -110,9 +110,9 @@
   subroutine hh_trafo_kernel_10_bgp(q, hh, nb, ldq, ldh, s)
 
     use precision
+    use elpa_mpi
     implicit none
 
-    include 'mpif.h'
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
     complex(kind=ck), intent(inout) :: q(ldq/2,*)
@@ -387,9 +387,9 @@
   subroutine hh_trafo_kernel_8_bgp(q, hh, nb, ldq, ldh, s)
 
     use precision
+    use elpa_mpi
     implicit none
 
-    include 'mpif.h'
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
     complex(kind=ck), intent(inout) :: q(ldq/2,*)
@@ -629,9 +629,9 @@
   subroutine hh_trafo_kernel_4_bgp(q, hh, nb, ldq, ldh, s)
 
     use precision
+    use elpa_mpi
     implicit none
 
-    include 'mpif.h'
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
     complex(kind=ck), intent(inout) :: q(ldq/2,*)

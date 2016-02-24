@@ -83,9 +83,11 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
    use omp_lib
 #endif
 
+   use elpa_mpi
+
    implicit none
 
-   include 'mpif.h'
+
 
    integer(kind=ik), intent(in)              :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
    DATATYPE, intent(in)                      :: vmat_s(ld_s,nvc)
@@ -154,6 +156,8 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
          !$omp barrier
          !$omp master
 #endif
+#ifdef WITH_MPI
+
 #if COMPLEXCASE==1
          call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_DOUBLE_COMPLEX,ips,comm_s,mpierr)
 #endif
@@ -161,6 +165,9 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
 #if REALCASE==1
          call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_REAL8,ips,comm_s,mpierr)
 #endif
+
+#endif /* WITH_MPI */
+
 #ifdef WITH_OPENMP
          !$omp end master
          !$omp barrier

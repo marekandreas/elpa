@@ -40,6 +40,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 module mod_prepare_matrix
 
   interface prepare_matrix
@@ -79,9 +80,11 @@ module mod_prepare_matrix
       if (myid == 0) then
         print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
       endif
-
+#ifdef WITH_MPI
       call pztranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
-
+#else
+      a = a + transpose(conjg(z))
+#endif
       if (myid == 0) then
         print '(a)','| Random matrix block has been symmetrized'
       endif
@@ -116,9 +119,11 @@ module mod_prepare_matrix
       if (myid == 0) then
         print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
       endif
-
+#ifdef WITH_MPI
       call pdtran(na, na, 1.d0, z, 1, 1, sc_desc, 1.d0, a, 1, 1, sc_desc) ! A = A + Z**T
-
+#else
+      a = a + transpose(z)
+#endif
       if (myid == 0) then
         print '(a)','| Random matrix block has been symmetrized'
       endif

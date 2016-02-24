@@ -1,5 +1,6 @@
 module compute_hh_trafo_complex
 #include "config-f90.h"
+  use elpa_mpi
   implicit none
 
 #ifdef WITH_OPENMP
@@ -8,15 +9,14 @@ module compute_hh_trafo_complex
   public compute_hh_trafo_complex_cpu
 #endif
 
-  include 'mpif.h'
 
   contains
 
 #ifdef WITH_OPENMP
-         subroutine compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,                &
+         subroutine compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,         &
                                                         a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                         off, ncols, istripe,                                               &
-                                                        my_thread, THIS_COMPLEX_ELPA_KERNEL)
+                                                        my_thread, thread_width, THIS_COMPLEX_ELPA_KERNEL)
 #else
          subroutine compute_hh_trafo_complex_cpu       (a, stripe_width, a_dim2, stripe_count,                             &
                                                         a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
@@ -46,7 +46,7 @@ module compute_hh_trafo_complex
            integer(kind=ik), intent(in) :: last_stripe_width
            complex(kind=ck)             :: a(stripe_width,a_dim2,stripe_count)
 #else
-           integer(kind=ik), intent(in) :: max_threads
+           integer(kind=ik), intent(in) :: max_threads, l_nev, thread_width
            complex(kind=ck)             :: a(stripe_width,a_dim2,stripe_count,max_threads)
 #endif
            integer(kind=ik), intent(in) :: THIS_COMPLEX_ELPA_KERNEL
@@ -80,10 +80,8 @@ module compute_hh_trafo_complex
              noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
              nl = min(my_thread*thread_width-noff, l_nev-noff)
              if(nl<=0) then
-#ifdef WITH_OPENMP
+#ifdef HAVE_DETAILED_TIMINGS
                call timer%stop("compute_hh_trafo_complex_cpu_openmp")
-#else
-               call timer%stop("compute_hh_trafo_complex_cpu")
 #endif
                return
              endif
@@ -132,7 +130,7 @@ module compute_hh_trafo_complex
                call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe,my_thread), &
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
-               call single_hh_trafo_complex_generic_simple(a(1:stripe_width,j+off+a_off:j+off_a_off+nbw-1,istripe,my_thread), &
+               call single_hh_trafo_complex_generic_simple(a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe,my_thread), &
                                                            bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
@@ -250,7 +248,7 @@ module compute_hh_trafo_complex
 #endif
 #endif
 
-#ifdef WITH_OPENM
+#ifdef WITH_OPENMP
         end subroutine compute_hh_trafo_complex_cpu_openmp
 #else
         end subroutine compute_hh_trafo_complex_cpu

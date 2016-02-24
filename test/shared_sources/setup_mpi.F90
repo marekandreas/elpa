@@ -49,8 +49,8 @@ module mod_setup_mpi
       use test_util
       use ELPA_utilities
       use precision
+      use elpa_mpi
       implicit none
-      include 'mpif.h'
 
       integer(kind=ik)              :: mpierr
 
@@ -60,6 +60,8 @@ module mod_setup_mpi
                                        provided_mpi_thread_level
 
 #endif
+#ifdef WITH_MPI
+
 #ifndef WITH_OPENMP
       call mpi_init(mpierr)
 #else
@@ -75,10 +77,9 @@ module mod_setup_mpi
       endif
 
 #endif
+#endif /* WITH_MPI */
       call mpi_comm_rank(mpi_comm_world,myid,mpierr)
       call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
-
-
 
     end subroutine
 

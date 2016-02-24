@@ -40,11 +40,12 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 module test_util
+  use elpa_mpi
   implicit none
   private
   public mpi_thread_level_name
-  include 'mpif.h'
 
   contains
 !>
@@ -59,6 +60,7 @@ module test_util
     implicit none
     integer(kind=ik), intent(in) :: level
     character(len=21)            :: str
+#ifdef WITH_MPI
     select case(level)
       case (MPI_THREAD_SINGLE)
         str = "MPI_THREAD_SINGLE"
@@ -71,6 +73,7 @@ module test_util
       case default
         write(str,'(i0,1x,a)') level, "(Unknown level)"
     end select
+#endif
   end function
 
 end module

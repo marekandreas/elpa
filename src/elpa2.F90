@@ -73,6 +73,7 @@ module ELPA2
   use elpa2_compute
   use elpa_pdgeqrf
 
+  use elpa_mpi
   implicit none
 
   PRIVATE ! By default, all routines contained are private
@@ -82,7 +83,6 @@ module ELPA2
   public :: solve_evp_real_2stage
   public :: solve_evp_complex_2stage
 
-  include 'mpif.h'
 
 !******
 contains
@@ -169,7 +169,6 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
 
    wantDebug = .false.
    if (firstCall) then
@@ -269,10 +268,10 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_real          :',ttt1-ttt0
-
+#ifdef WITH_MPI
    call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
    call mpi_bcast(e,na,MPI_REAL8,0,mpi_comm_all,mpierr)
-
+#endif
    ttt1 = MPI_Wtime()
    time_evp_fwd = ttt1-ttts
 
@@ -399,7 +398,6 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
    wantDebug = .false.
    if (firstCall) then
      ! are debug messages desired?
@@ -473,10 +471,10 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    ttt1 = MPI_Wtime()
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_complex          :',ttt1-ttt0
-
+#ifdef WITH_MPI
    call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
    call mpi_bcast(e,na,MPI_REAL8,0,mpi_comm_all,mpierr)
-
+#endif
    ttt1 = MPI_Wtime()
    time_evp_fwd = ttt1-ttts
 

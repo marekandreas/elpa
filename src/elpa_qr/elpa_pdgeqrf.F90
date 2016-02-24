@@ -48,7 +48,7 @@ module elpa_pdgeqrf
   use elpa1_compute
   use elpa_pdlarfb
   use qr_utils_mod
-
+  use elpa_mpi
   implicit none
 
   PRIVATE
@@ -57,7 +57,6 @@ module elpa_pdgeqrf
   public :: qr_pqrparam_init
   public :: qr_pdlarfg2_1dcomm_check
 
-  include 'mpif.h'
 
   contains
 
@@ -120,7 +119,6 @@ module elpa_pdgeqrf
 
       ! copy value before we are going to filter it
       total_cols = n
-
       call mpi_comm_rank(mpicomm_cols,mpirank_cols,mpierr)
       call mpi_comm_rank(mpicomm_rows,mpirank_rows,mpierr)
       call mpi_comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
@@ -235,9 +233,10 @@ module elpa_pdgeqrf
           !end if
 
           ! initiate broadcast (send part)
+#ifdef WITH_MPI
           call MPI_Bcast(work(broadcast_offset),broadcast_size,mpi_real8, &
                          mpirank_cols_qr,mpicomm_cols,mpierr)
-
+#endif
           ! copy tau parts into temporary tau buffer
           work(temptau_offset+voffset-1:temptau_offset+(voffset-1)+lcols-1) = tau(offset:offset+lcols-1)
 
@@ -257,9 +256,10 @@ module elpa_pdgeqrf
           broadcast_size = dbroadcast_size(1) + dtmat_bcast_size(1)
 
           ! initiate broadcast (recv part)
+#ifdef WITH_MPI
           call MPI_Bcast(work(broadcast_offset),broadcast_size,mpi_real8, &
                          mpirank_cols_qr,mpicomm_cols,mpierr)
-
+#endif
           ! last n*n elements in buffer are (still empty) T matrix elements
           ! fetch from first process in each column
 
@@ -530,10 +530,8 @@ module elpa_pdgeqrf
       maxrank    = min(PQRPARAM(1),n)
       updatemode = PQRPARAM(2)
       hgmode     = PQRPARAM(4)
-
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
       if (trans .eq. 1) then
         incx = lda
       else
@@ -713,10 +711,8 @@ module elpa_pdgeqrf
 #endif
         return
        end if
-
       call MPI_Comm_rank(mpi_comm, mpirank, mpierr)
       call MPI_Comm_size(mpi_comm, mpiprocs, mpierr)
-
       ! calculate expected work size and store in work(1)
       if (hgmode .eq. ichar('s')) then
         ! allreduce (MPI_SUM)
@@ -770,11 +766,13 @@ module elpa_pdgeqrf
 
         work(1) = alpha
         work(2) = dot
-
+#ifdef WITH_MPI
         call mpi_allreduce(work(1),work(sendsize+1), &
                              sendsize,mpi_real8,mpi_sum, &
                              mpi_comm,mpierr)
-
+#else
+        work(sendsize+1:sendsize+1+sendsize-1) = work(1:sendsize)
+#endif
         alpha = work(sendsize+1)
         xnorm = sqrt(work(sendsize+2))
       else if (hgmode .eq. ichar('x')) then
@@ -790,11 +788,13 @@ module elpa_pdgeqrf
           work(2*iproc+1) = alpha
           work(2*iproc+2) = xnorm
         end do
-
+#ifdef WITH_MPI
         call mpi_alltoall(work(1),2,mpi_real8, &
                             work(sendsize+1),2,mpi_real8, &
                             mpi_comm,mpierr)
-
+#else 
+        work(sendsize+1:sendsize+1+2-1) = work(1:2)
+#endif
         ! extract alpha value
         alpha = work(sendsize+1+mpirank_top*2)
 
@@ -816,10 +816,13 @@ module elpa_pdgeqrf
         work(2) = xnorm
 
         ! allgather
+#ifdef WITH_MPI
         call mpi_allgather(work(1),sendsize,mpi_real8, &
                             work(sendsize+1),sendsize,mpi_real8, &
                             mpi_comm,mpierr)
-
+#else
+       work(sendsize+1:sendsize+1+sendsize-1) = work(1:sendsize)
+#endif
         ! extract alpha value
         alpha = work(sendsize+1+mpirank_top*2)
 
@@ -1040,10 +1043,8 @@ module elpa_pdgeqrf
 #endif
         return
       end if
-
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
       call local_size_offset_1d(n,nb,idx,idx-1,rev,mpirank,mpiprocs, &
                                 local_size1,baseoffset,local_offset1)
 
@@ -1088,8 +1089,13 @@ module elpa_pdgeqrf
       work(8) = 0.0d0 ! fill up buffer
 
       ! exchange partial results
+#ifdef WITH_MPI
       call mpi_allreduce(work, seed, 8, mpi_real8, mpi_sum, &
                          mpicomm, mpierr)
+#else
+      seed(1:8) = work(1:8)
+#endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("qr_pdlarfg2_1dcomm_seed")
 #endif
@@ -1188,10 +1194,8 @@ module elpa_pdgeqrf
       call timer%start("qr_pdlarfg2_1dcomm_vector")
 #endif
 
-
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
       call local_size_offset_1d(n,nb,idx,idx-1,rev,mpirank,mpiprocs, &
                                     local_size,baseoffset,local_offset)
 
@@ -1269,9 +1273,9 @@ module elpa_pdgeqrf
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("qr_pdlarfg2_1dcomm_update")
 #endif
+
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
 
       ! seed should be updated by previous householder generation
       ! Update inner product of this column and next column vector
@@ -1503,9 +1507,9 @@ module elpa_pdgeqrf
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("qr_pdlarfgk_1dcomm_seed")
 #endif
+
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
       C_size = k*k
       D_size = k*k
       sendoffset = 1
@@ -1571,9 +1575,12 @@ module elpa_pdgeqrf
       ! TODO: store symmetric part more efficiently
 
       ! allreduce operation on results
+#ifdef WITH_MPI
       call mpi_allreduce(work(sendoffset),work(recvoffset),sendrecv_size, &
                          mpi_real8,mpi_sum,mpicomm,mpierr)
-
+#else
+      work(recvoffset:recvoffset+sendrecv_size-1) = work(sendoffset:sendoffset+sendrecv_size-1)
+#endif
       ! unpack result from buffer into seedC and seedD
       seedC(1:k,1:k) = 0.0d0
       do icol=1,k
@@ -1918,7 +1925,6 @@ module elpa_pdgeqrf
 #endif
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
       lidx = baseidx-sidx+1
       call local_size_offset_1d(n,nb,baseidx,lidx-1,rev,mpirank,mpiprocs, &
           						  local_size,baseoffset,local_offset)
@@ -2024,7 +2030,6 @@ module elpa_pdgeqrf
       endif
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
       lidx = baseidx-sidx
       if (lidx .lt. 1) then
 #ifdef HAVE_DETAILED_TIMINGS
@@ -2180,7 +2185,6 @@ module elpa_pdgeqrf
 #endif
       call mpi_comm_rank(mpicomm,mpirank,mpierr)
       call mpi_comm_size(mpicomm,mpiprocs,mpierr)
-
       call local_size_offset_1d(m,mb,baseidx,rowidx,rev,mpirank,mpiprocs, &
                                     local_size,baseoffset,offset)
 
@@ -2385,7 +2389,6 @@ module elpa_pdgeqrf
 #endif
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
       call local_size_offset_1d(n,nb,baseidx,idx,rev,mpirank,mpiprocs, &
                                 local_size,v_offset,x_offset)
       v_offset = v_offset * incv

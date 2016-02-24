@@ -40,11 +40,13 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
+
 module elpa_pdlarfb
 
     use elpa1_compute
     use qr_utils_mod
-
+    use elpa_mpi
     implicit none
 
     PRIVATE
@@ -56,8 +58,6 @@ module elpa_pdlarfb
     public :: qr_pdlarfl_1dcomm
     public :: qr_pdlarfl2_tmatrix_1dcomm
     public :: qr_tmerge_pdlarfb_1dcomm
-
-    include 'mpif.h'
 
 contains
 
@@ -102,10 +102,8 @@ subroutine qr_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpic
     end if
 
     !print *,'updating trailing matrix with k=',k
-
     call MPI_Comm_rank(mpicomm,mpirank,mpierr)
     call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
-
     ! use baseidx as idx here, otherwise the upper triangle part will be lost
     ! during the calculation, especially in the reversed case
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
@@ -119,8 +117,11 @@ subroutine qr_pdlarfb_1dcomm(m,mb,n,k,a,lda,v,ldv,tau,t,ldt,baseidx,idx,rev,mpic
     end if
 
     ! data exchange
+#ifdef WITH_MPI
     call mpi_allreduce(work(1,1),work(1,n+1),k*n,mpi_real8,mpi_sum,mpicomm,mpierr)
-
+#else
+    work(1:k*n,n+1) = work(1:k*n,1)
+#endif
     call qr_pdlarfb_kernel_local(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t,ldt,work(1,n+1),k)
 end subroutine qr_pdlarfb_1dcomm
 
@@ -158,10 +159,8 @@ subroutine qr_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
         work(1,1) = DBLE(2*(k*k+k*n+oldk))
         return
     end if
-
     call MPI_Comm_rank(mpicomm,mpirank,mpierr)
     call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
-
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
                                 localsize,baseoffset,offset)
 
@@ -180,8 +179,11 @@ subroutine qr_pdlarft_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,tau,t,ldt,a,lda,baseidx
     end if
 
     ! exchange data
+#ifdef WITH_MPI
     call mpi_allreduce(work(1,sendoffset),work(1,recvoffset),sendsize,mpi_real8,mpi_sum,mpicomm,mpierr)
-
+#else
+    work(1:sendsize,recvoffset) = work(1:sendsize,sendoffset)
+#endif
         ! generate T matrix (pdlarft)
         t(1:k,1:k) = 0.0d0 ! DEBUG: clear buffer first
 
@@ -231,10 +233,8 @@ subroutine qr_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,t,ldt,baseidx,rev,
         work(1,1) = DBLE(2*n*n)
         return
     end if
-
     call MPI_Comm_rank(mpicomm,mpirank,mpierr)
     call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
-
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
                                 localsize,baseoffset,offset)
 
@@ -243,9 +243,11 @@ subroutine qr_pdlarft_set_merge_1dcomm(m,mb,n,blocksize,v,ldv,t,ldt,baseidx,rev,
     else
         work(1:n,1:n) = 0.0d0
     end if
-
+#ifdef WITH_MPI
     call mpi_allreduce(work(1,1),work(1,n+1),n*n,mpi_real8,mpi_sum,mpicomm,mpierr)
-
+#else
+    work(1:n,n+1:n+1+n-1) = work(1:n,1:n)
+#endif
         ! skip Y4'*Y4 part
         offset = mod(n,blocksize)
         if (offset .eq. 0) offset=blocksize
@@ -280,10 +282,8 @@ subroutine qr_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,t,ldt,b
     end if
 
     if (n .le. blocksize) return ! nothing to do
-
     call MPI_Comm_rank(mpicomm,mpirank,mpierr)
     call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
-
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
                                 localsize,baseoffset,offset)
 
@@ -292,9 +292,11 @@ subroutine qr_pdlarft_tree_merge_1dcomm(m,mb,n,blocksize,treeorder,v,ldv,t,ldt,b
     else
         work(1:n,1:n) = 0.0d0
     end if
-
+#ifdef WITH_MPI
     call mpi_allreduce(work(1,1),work(1,n+1),n*n,mpi_real8,mpi_sum,mpicomm,mpierr)
-
+#else
+    work(1:n,n+1:n+1+n-1) = work(1:n,1:n)
+#endif
         ! skip Y4'*Y4 part
         offset = mod(n,blocksize)
         if (offset .eq. 0) offset=blocksize
@@ -330,10 +332,8 @@ subroutine qr_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,
 
     ! external functions
     real(kind=rk), external :: ddot
-
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
     sendsize = n
     recvsize = sendsize
 
@@ -362,9 +362,11 @@ subroutine qr_pdlarfl_1dcomm(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,
     else
         work(1:n) = 0.0d0
     end if
-
+#ifdef WITH_MPI
     call mpi_allreduce(work, work(sendsize+1), sendsize, mpi_real8, mpi_sum, mpicomm, mpierr)
-
+#else
+    work(sendsize+1:sendsize+1+sendsize+1+sendsize-1) = work(1:sendsize)
+#endif
     if (local_size > 0) then
 
          do icol=1,n
@@ -406,10 +408,8 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,i
 
     ! external functions
     real(kind=rk), external :: ddot
-
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
     sendsize = 2*n
     recvsize = sendsize
 
@@ -445,9 +445,11 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,i
         call dgemv("Trans",local_size1,n,1.0d0,a(local_offset1,1),lda,v(v1_local_offset,v1col),1,0.0d0,work(dgemv1_offset),1)
         call dgemv("Trans",local_size2,n,t(v2col,v2col),a(local_offset2,1),lda,v(v2_local_offset,v2col),1,0.0d0, &
                    work(dgemv2_offset),1)
-
+#ifdef WITH_MPI
         call mpi_allreduce(work, work(sendsize+1), sendsize, mpi_real8, mpi_sum, mpicomm, mpierr)
-
+#else
+        work(sendsize+1:sendsize+1+sendsize-1) = work(1:sendsize)
+#endif
         ! update second vector
         call daxpy(n,t(1,2),work(sendsize+dgemv1_offset),1,work(sendsize+dgemv2_offset),1)
 
@@ -536,10 +538,8 @@ subroutine qr_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev,
         work(1) = DBLE(2*sendsize)
         return
     end if
-
     call MPI_Comm_rank(mpicomm,mpirank,mpierr)
     call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
-
     ! use baseidx as idx here, otherwise the upper triangle part will be lost
     ! during the calculation, especially in the reversed case
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
@@ -605,8 +605,11 @@ subroutine qr_tmerge_pdlarfb_1dcomm(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,baseidx,rev,
     if (sendsize .le. 0) return ! nothing to do
 
     ! exchange data
+#ifdef WITH_MPI
     call mpi_allreduce(work(sendoffset),work(recvoffset),sendsize,mpi_real8,mpi_sum,mpicomm,mpierr)
-
+#else
+    work(recvoffset:recvoffset+sendsize-1) = work(sendoffset:sendoffset+sendsize-1)
+#endif
     updateoffset = recvoffset+updateoffset
     mergeoffset = recvoffset+mergeoffset
     tgenoffset = recvoffset+tgenoffset

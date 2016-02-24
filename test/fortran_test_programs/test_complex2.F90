@@ -90,7 +90,7 @@ program test_complex2
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
-
+   use elpa_mpi
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
@@ -99,7 +99,6 @@ program test_complex2
  use timings
 #endif
    implicit none
-   include 'mpif.h'
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
@@ -149,6 +148,18 @@ program test_complex2
       print *," "
    endif
 #endif
+#ifndef WITH_MPI
+   if (myid .eq. 0) then
+     print *,"This version of ELPA does not support MPI parallelisation"
+     print *,"For MPI support re-build ELPA with appropiate flags"
+     print *," "
+   endif
+#endif
+
+#ifdef WITH_MPI
+    call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+#endif
+
 #ifdef HAVE_REDIRECT
    if (check_redirect_environment_variable()) then
      if (myid .eq. 0) then
@@ -160,7 +171,9 @@ program test_complex2
          stop
        endif
      endif
+#ifdef WITH_MPI
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+#endif
      call redirect_stdout(myid)
    endif
 #endif
@@ -303,15 +316,18 @@ program test_complex2
 
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
-
+#ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
    success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                  na_cols, &
                                  mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."
+#ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
    endif
 
    if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
@@ -351,10 +367,11 @@ program test_complex2
    print *," "
    print *,"End timings program"
 #endif
-
+#ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
-!   call EXIT(STATUS)
+#endif
+   call EXIT(STATUS)
 end
 
 !-------------------------------------------------------------------------------

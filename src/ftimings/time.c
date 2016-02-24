@@ -38,3 +38,14 @@ int64_t ftimings_microseconds_since_epoch(void) {
 	}
 	return (int64_t) (tv.tv_sec) * ((int64_t) 1000000) + (int64_t)(tv.tv_usec);
 }
+
+#ifndef WITH_MPI
+int64_t t0 = 0;
+void __attribute__((constructor)) init_time(void) {
+	t0 = ftimings_microseconds_since_epoch();
+}
+
+double seconds(void) {
+    return (ftimings_microseconds_since_epoch() - t0) / 1e6;
+}
+#endif

@@ -57,6 +57,7 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
   use timings
 #endif
+  use elpa_mpi
   implicit none
 
   PRIVATE ! set default to private
@@ -85,8 +86,6 @@ module ELPA1_compute
 
   public :: elpa_reduce_add_vectors_complex, elpa_reduce_add_vectors_real
   public :: elpa_transpose_vectors_complex, elpa_transpose_vectors_real
-
-  include 'mpif.h'
 
   contains
 
@@ -174,7 +173,6 @@ module ELPA1_compute
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
       tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
@@ -296,7 +294,11 @@ module ELPA1_compute
                aux1(2) = 0.
             endif
 
+#ifdef WITH_MPI
             call mpi_allreduce(aux1,aux2,2,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+#else
+            aux2 = aux1
+#endif
 
             vnorm2 = aux2(1)
             vrl    = aux2(2)
@@ -319,7 +321,9 @@ module ELPA1_compute
          ! Broadcast the Householder vector (and tau) along columns
 
          if(my_pcol==pcol(istep, nblk, np_cols)) vr(l_rows+1) = tau(istep)
+#ifdef WITH_MPI
          call MPI_Bcast(vr,l_rows+1,MPI_REAL8,pcol(istep, nblk, np_cols),mpi_comm_cols,mpierr)
+#endif
          tau(istep) =  vr(l_rows+1)
 
          ! Transpose Householder vector vr -> vc
@@ -408,7 +412,11 @@ module ELPA1_compute
 
         if (l_cols>0) then
           tmp(1:l_cols) = uc(1:l_cols)
+#ifdef WITH_MPI
           call mpi_allreduce(tmp,uc,l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+#else
+          uc = tmp
+#endif
         endif
 
         call elpa_transpose_vectors_real  (uc, ubound(uc,dim=1), mpi_comm_cols, &
@@ -419,8 +427,11 @@ module ELPA1_compute
 
         x = 0
         if (l_cols>0) x = dot_product(vc(1:l_cols),uc(1:l_cols))
+#ifdef WITH_MPI
         call mpi_allreduce(x,vav,1,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
-
+#else
+        vav = x
+#endif
         ! store u and v in the matrices U and V
         ! these matrices are stored combined in one here
 
@@ -481,7 +492,7 @@ module ELPA1_compute
         print *,"tridiag_real: error when allocating tmp "//errorMessage
         stop
       endif
-
+#ifdef WITH_MPI
       tmp = d
       call mpi_allreduce(tmp,d,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       tmp = d
@@ -490,6 +501,7 @@ module ELPA1_compute
       call mpi_allreduce(tmp,e,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       tmp = e
       call mpi_allreduce(tmp,e,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
+#endif
       deallocate(tmp,  stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_real: error when deallocating tmp "//errorMessage
@@ -569,7 +581,6 @@ module ELPA1_compute
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
 
       totalblocks = (na-1)/nblk + 1
       max_blocks_row = (totalblocks-1)/np_rows + 1
@@ -654,9 +665,10 @@ module ELPA1_compute
           nb = nb+l_rows
         enddo
 
+#ifdef WITH_MPI
         if (nb>0) &
             call MPI_Bcast(hvb,nb,MPI_REAL8,cur_pcol,mpi_comm_cols,mpierr)
-
+#endif
         nb = 0
         do ic=ics,ice
           l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder vector
@@ -680,9 +692,11 @@ module ELPA1_compute
             h1(nc+1:nc+n) = tmat(1:n,n+1)
             nc = nc+n
           enddo
-
+#ifdef WITH_MPI
           if (nc>0) call mpi_allreduce(h1,h2,nc,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
-
+#else
+          if (nc>0) h2 = h1
+#endif
           ! Calculate triangular matrix T
 
           nc = 0
@@ -702,7 +716,11 @@ module ELPA1_compute
           else
             tmp1(1:l_cols*nstor) = 0
           endif
+#ifdef WITH_MPI
           call mpi_allreduce(tmp1,tmp2,nstor*l_cols,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
+#else
+          tmp2 = tmp1
+#endif
           if (l_rows>0) then
             call dtrmm('L','L','N','N',nstor,l_cols,1.0d0,tmat,max_stored_rows,tmp2,nstor)
             call dgemm('N','N',l_rows,l_cols,nstor,-1.d0,hvm,ubound(hvm,dim=1), &
@@ -800,6 +818,7 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mult_at_b_real")
 #endif
+
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -900,9 +919,9 @@ module ELPA1_compute
           enddo
 
           ! Broadcast block column
-
+#ifdef WITH_MPI
           call MPI_Bcast(aux_bc,n_aux_bc,MPI_REAL8,np_bc,mpi_comm_cols,mpierr)
-
+#endif
           ! Insert what we got in aux_mat
 
           n_aux_bc = 0
@@ -947,8 +966,11 @@ module ELPA1_compute
               endif
 
               ! Sum up the results and send to processor row np
+#ifdef WITH_MPI
               call mpi_reduce(tmp1,tmp2,nstor*(lce-lcs+1),MPI_REAL8,MPI_SUM,np,mpi_comm_rows,mpierr)
-
+#else
+              tmp2 = tmp1
+#endif
               ! Put the result into C
               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
@@ -1189,9 +1211,11 @@ module ELPA1_compute
             aux1(1) = dot_product(vr(1:l_rows),vr(1:l_rows))
             aux1(2) = 0.
           endif
-
+#ifdef WITH_MPI
           call mpi_allreduce(aux1,aux2,2,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
-
+#else
+          aux2 = aux1
+#endif
           vnorm2 = aux2(1)
           vrl    = aux2(2)
 
@@ -1213,7 +1237,9 @@ module ELPA1_compute
         ! Broadcast the Householder vector (and tau) along columns
 
         if (my_pcol==pcol(istep, nblk, np_cols)) vr(l_rows+1) = tau(istep)
+#ifdef WITH_MPI
         call MPI_Bcast(vr,l_rows+1,MPI_DOUBLE_COMPLEX,pcol(istep, nblk, np_cols),mpi_comm_cols,mpierr)
+#endif
         tau(istep) =  vr(l_rows+1)
 
         ! Transpose Householder vector vr -> vc
@@ -1306,7 +1332,11 @@ module ELPA1_compute
 
         if (l_cols>0) then
           tmp(1:l_cols) = uc(1:l_cols)
+#ifdef WITH_MPI
           call mpi_allreduce(tmp,uc,l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
+#else
+          uc = tmp
+#endif
         endif
 
 !        call elpa_transpose_vectors  (uc, 2*ubound(uc,dim=1), mpi_comm_cols, &
@@ -1323,8 +1353,11 @@ module ELPA1_compute
 
         xc = 0
         if (l_cols>0) xc = dot_product(vc(1:l_cols),uc(1:l_cols))
+#ifdef WITH_MPI
         call mpi_allreduce(xc,vav,1,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_cols,mpierr)
-
+#else
+        vav = xc
+#endif
         ! store u and v in the matrices U and V
         ! these matrices are stored combined in one here
 
@@ -1376,9 +1409,13 @@ module ELPA1_compute
           e(1) = vrl
           a(1,l_cols) = 1. ! for consistency only
         endif
+#ifdef WITH_MPI
         call mpi_bcast(tau(2),1,MPI_DOUBLE_COMPLEX,prow(1, nblk, np_rows),mpi_comm_rows,mpierr)
+#endif
       endif
+#ifdef WITH_MPI
       call mpi_bcast(tau(2),1,MPI_DOUBLE_COMPLEX,pcol(2, nblk, np_cols),mpi_comm_cols,mpierr)
+#endif
 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) d(1) = a(1,1)
 
@@ -1394,7 +1431,7 @@ module ELPA1_compute
        print *,"tridiag_complex: error when allocating tmpr "//errorMessage
        stop
       endif
-
+#ifdef WITH_MPI
       tmpr = d
       call mpi_allreduce(tmpr,d,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       tmpr = d
@@ -1403,6 +1440,7 @@ module ELPA1_compute
       call mpi_allreduce(tmpr,e,na,MPI_REAL8,MPI_SUM,mpi_comm_rows,mpierr)
       tmpr = e
       call mpi_allreduce(tmpr,e,na,MPI_REAL8,MPI_SUM,mpi_comm_cols,mpierr)
+#endif
       deallocate(tmpr, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
        print *,"tridiag_complex: error when deallocating tmpr "//errorMessage
@@ -1477,11 +1515,11 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_complex")
 #endif
+
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
 
       totalblocks = (na-1)/nblk + 1
       max_blocks_row = (totalblocks-1)/np_rows + 1
@@ -1571,9 +1609,10 @@ module ELPA1_compute
           nb = nb+l_rows
         enddo
 
+#ifdef WITH_MPI
         if (nb>0) &
            call MPI_Bcast(hvb,nb,MPI_DOUBLE_COMPLEX,cur_pcol,mpi_comm_cols,mpierr)
-
+#endif
         nb = 0
         do ic=ics,ice
           l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder vector
@@ -1597,9 +1636,11 @@ module ELPA1_compute
             h1(nc+1:nc+n) = tmat(1:n,n+1)
             nc = nc+n
           enddo
-
+#ifdef WITH_MPI
           if (nc>0) call mpi_allreduce(h1,h2,nc,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
-
+#else
+          if (nc>0) h2=h1
+#endif
           ! Calculate triangular matrix T
 
           nc = 0
@@ -1619,7 +1660,11 @@ module ELPA1_compute
           else
             tmp1(1:l_cols*nstor) = 0
           endif
+#ifdef WITH_MPI
           call mpi_allreduce(tmp1,tmp2,nstor*l_cols,MPI_DOUBLE_COMPLEX,MPI_SUM,mpi_comm_rows,mpierr)
+#else
+          tmp2 = tmp1
+#endif
           if (l_rows>0) then
             call ztrmm('L','L','N','N',nstor,l_cols,CONE,tmat,max_stored_rows,tmp2,nstor)
             call zgemm('N','N',l_rows,l_cols,nstor,-CONE,hvm,ubound(hvm,dim=1), &
@@ -1718,11 +1763,11 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mult_ah_b_complex")
 #endif
+
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
       l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
       l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
 
@@ -1818,9 +1863,9 @@ module ELPA1_compute
           enddo
 
           ! Broadcast block column
-
+#ifdef WITH_MPI
           call MPI_Bcast(aux_bc,n_aux_bc,MPI_DOUBLE_COMPLEX,np_bc,mpi_comm_cols,mpierr)
-
+#endif
           ! Insert what we got in aux_mat
 
           n_aux_bc = 0
@@ -1865,8 +1910,11 @@ module ELPA1_compute
                endif
 
                ! Sum up the results and send to processor row np
+#ifdef WITH_MPI
                call mpi_reduce(tmp1,tmp2,nstor*(lce-lcs+1),MPI_DOUBLE_COMPLEX,MPI_SUM,np,mpi_comm_rows,mpierr)
-
+#else
+               tmp2 = tmp1
+#endif
                ! Put the result into C
                if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
@@ -1925,11 +1973,11 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("solve_tridi")
 #endif
+
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
       success = .true.
 
       l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
@@ -2091,8 +2139,10 @@ module ELPA1_compute
            ! nlen-noff is always > nblk_ev
 
            integer(kind=ik)     :: np_off, nprocs
-           integer(kind=ik)     :: np1, np2, noff, nlen, nmid, n, &
-                                   mpi_status(mpi_status_size)
+           integer(kind=ik)     :: np1, np2, noff, nlen, nmid, n
+#ifdef WITH_MPI
+           integer(kind=ik)     :: mpi_status(mpi_status_size)
+#endif
            logical, intent(in)  :: wantDebug
            logical, intent(out) :: success
 
@@ -2118,24 +2168,36 @@ module ELPA1_compute
            nmid = limits(np_off+np1) - noff
            nlen = limits(np_off+nprocs) - noff
 
+#ifdef WITH_MPI
            if (my_pcol==np_off) then
              do n=np_off+np1,np_off+nprocs-1
                call mpi_send(d(noff+1),nmid,MPI_REAL8,n,1,mpi_comm_cols,mpierr)
              enddo
            endif
+#endif
+
            if (my_pcol>=np_off+np1 .and. my_pcol<np_off+nprocs) then
+#ifdef WITH_MPI
              call mpi_recv(d(noff+1),nmid,MPI_REAL8,np_off,1,mpi_comm_cols,mpi_status,mpierr)
+#else
+             d(noff+1:noff+1+nmid-1) = d(noff+1:noff+1+nmid-1)
+#endif
            endif
 
            if (my_pcol==np_off+np1) then
              do n=np_off,np_off+np1-1
+#ifdef WITH_MPI
                call mpi_send(d(noff+nmid+1),nlen-nmid,MPI_REAL8,n,1,mpi_comm_cols,mpierr)
+#endif
              enddo
            endif
            if (my_pcol>=np_off .and. my_pcol<np_off+np1) then
+#ifdef WITH_MPI
              call mpi_recv(d(noff+nmid+1),nlen-nmid,MPI_REAL8,np_off+np1,1,mpi_comm_cols,mpi_status,mpierr)
+#else
+             d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) = d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) 
+#endif
            endif
-
            if (nprocs == np_cols) then
 
              ! Last merge, result distribution must be block cyclic, noff==0,
@@ -2196,7 +2258,6 @@ module ELPA1_compute
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-
       success = .true.
       ! Calculate the number of subdivisions needed.
 
@@ -2296,11 +2357,13 @@ module ELPA1_compute
 
           noff = limits(np)
           nlen = limits(np+1)-noff
-
+#ifdef WITH_MPI
           call MPI_Bcast(d(noff+1),nlen,MPI_REAL8,np,mpi_comm_rows,mpierr)
+#endif
           qmat2 = qmat1
+#ifdef WITH_MPI
           call MPI_Bcast(qmat2,max_size*max_size,MPI_REAL8,np,mpi_comm_rows,mpierr)
-
+#endif
           do i=1,nlen
             call distribute_global_column(qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
           enddo
@@ -2525,7 +2588,10 @@ module ELPA1_compute
       integer(kind=ik)              :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
                                        l_cols_qreorg, np, l_idx, nqcols1, nqcols2
       integer(kind=ik)              :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
-                                       np_cols, mpierr, mpi_status(mpi_status_size)
+                                       np_cols, mpierr
+#ifdef WITH_MPI
+      integer(kind=ik)              :: mpi_status(mpi_status_size)
+#endif
       integer(kind=ik)              :: np_next, np_prev, np_rem
       integer(kind=ik)              :: idx(na), idx1(na), idx2(na)
       integer(kind=ik)              :: coltyp(na), idxq1(na), idxq2(na)
@@ -2538,8 +2604,7 @@ module ELPA1_compute
 #ifdef WITH_OPENMP
       integer(kind=ik)              :: max_threads, my_thread
       integer(kind=ik)              :: omp_get_max_threads, omp_get_thread_num
-      integer(kind=ik)              :: istat
-      character(200)                :: errorMessage
+
 
       max_threads = omp_get_max_threads()
 
@@ -2559,7 +2624,6 @@ module ELPA1_compute
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
       ! If my processor column isn't in the requested set, do nothing
 
       if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
@@ -3080,10 +3144,11 @@ module ELPA1_compute
             else
               np_rem = np_rem-1
             endif
-
+#ifdef WITH_MPI
             call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, MPI_REAL8, &
                                         np_next, 1111, np_prev, 1111, &
                                         mpi_comm_cols, mpi_status, mpierr)
+#endif
           endif
 
           ! Gather the parts in d1 and z which are fitting to qtmp1.
@@ -3263,10 +3328,16 @@ module ELPA1_compute
                 ! send and recieve column are local
                 qtmp(1:l_rows,nc) = q(l_rqs:l_rqe,lc1)
               else
+#ifdef WITH_MPI
                 call mpi_send(q(l_rqs,lc1),l_rows,MPI_REAL8,pc2,mod(i,4096),mpi_comm_cols,mpierr)
+#endif
               endif
             else if (pc2==my_pcol) then
+#ifdef WITH_MPI
               call mpi_recv(qtmp(1,nc),l_rows,MPI_REAL8,pc1,mod(i,4096),mpi_comm_cols,mpi_status,mpierr)
+#else
+              qtmp(1:l_rows,nc) = q(l_rqs:l_rqe,nc)
+#endif
             endif
           enddo
 
@@ -3313,15 +3384,23 @@ module ELPA1_compute
               q(l_rqs:l_rqe,lc2) = q(l_rqs:l_rqe,lc1)*qtrans(1,2) + q(l_rqs:l_rqe,lc2)*qtrans(2,2)
               q(l_rqs:l_rqe,lc1) = tmp(1:l_rows)
             else
+#ifdef WITH_MPI
               call mpi_sendrecv(q(l_rqs,lc1),l_rows,MPI_REAL8,pc2,1, &
                                   tmp,l_rows,MPI_REAL8,pc2,1, &
                                   mpi_comm_cols,mpi_status,mpierr)
+#else
+              tmp(1:l_rows) = q(l_rqs:l_rqe,lc1)
+#endif
               q(l_rqs:l_rqe,lc1) = q(l_rqs:l_rqe,lc1)*qtrans(1,1) + tmp(1:l_rows)*qtrans(2,1)
             endif
           else if (pc2==my_pcol) then
+#ifdef WITH_MPI
             call mpi_sendrecv(q(l_rqs,lc2),l_rows,MPI_REAL8,pc1,1, &
                                tmp,l_rows,MPI_REAL8,pc1,1, &
                                mpi_comm_cols,mpi_status,mpierr)
+#else
+            tmp(1:l_rows) = q(l_rqs:l_rqe,lc2)
+#endif
             q(l_rqs:l_rqe,lc2) = tmp(1:l_rows)*qtrans(1,2) + q(l_rqs:l_rqe,lc2)*qtrans(2,2)
           endif
 
@@ -3343,9 +3422,11 @@ module ELPA1_compute
           if (npc_n==1 .and. np_rows==1) return ! nothing to do
 
           ! Do an mpi_allreduce over processor rows
-
+#ifdef WITH_MPI
           call mpi_allreduce(z, tmp, n, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
-
+#else
+          tmp = z
+#endif
           ! If only 1 processor column, we are done
           if (npc_n==1) then
             z(:) = tmp(:)
@@ -3354,7 +3435,11 @@ module ELPA1_compute
 
           ! If all processor columns are involved, we can use mpi_allreduce
           if (npc_n==np_cols) then
+#ifdef WITH_MPI
             call mpi_allreduce(tmp, z, n, MPI_REAL8, MPI_SUM, mpi_comm_cols, mpierr)
+#else
+            tmp = z
+#endif
             return
           endif
 
@@ -3362,8 +3447,10 @@ module ELPA1_compute
           z(:) = 0
           do np = 1, npc_n
             z(:) = z(:) + tmp(:)
+#ifdef WITH_MPI
             call MPI_Sendrecv_replace(z, n, MPI_REAL8, np_next, 1111, np_prev, 1111, &
                                        mpi_comm_cols, mpi_status, mpierr)
+#endif
           enddo
 
         end subroutine global_gather
@@ -3382,9 +3469,11 @@ module ELPA1_compute
           if (npc_n==1 .and. np_rows==1) return ! nothing to do
 
           ! Do an mpi_allreduce over processor rows
-
+#ifdef WITH_MPI
           call mpi_allreduce(z, tmp, n, MPI_REAL8, MPI_PROD, mpi_comm_rows, mpierr)
-
+#else
+          tmp = z
+#endif
           ! If only 1 processor column, we are done
           if (npc_n==1) then
             z(:) = tmp(:)
@@ -3393,7 +3482,11 @@ module ELPA1_compute
 
           ! If all processor columns are involved, we can use mpi_allreduce
           if (npc_n==np_cols) then
+#ifdef WITH_MPI
             call mpi_allreduce(tmp, z, n, MPI_REAL8, MPI_PROD, mpi_comm_cols, mpierr)
+#else
+            z = tmp
+#endif
             return
           endif
 
@@ -3403,15 +3496,25 @@ module ELPA1_compute
           if (my_pcol == npc_0) then
             z(1:n) = tmp(1:n)
             do np = npc_0+1, npc_0+npc_n-1
+#ifdef WITH_MPI
               call mpi_recv(tmp,n,MPI_REAL8,np,1111,mpi_comm_cols,mpi_status,mpierr)
+#else
+              tmp(1:n) = z(1:n)
+#endif
               z(1:n) = z(1:n)*tmp(1:n)
             enddo
             do np = npc_0+1, npc_0+npc_n-1
+#ifdef WITH_MPI
               call mpi_send(z,n,MPI_REAL8,np,1111,mpi_comm_cols,mpierr)
+#endif
             enddo
           else
+#ifdef WITH_MPI
             call mpi_send(tmp,n,MPI_REAL8,npc_0,1111,mpi_comm_cols,mpierr)
             call mpi_recv(z  ,n,MPI_REAL8,npc_0,1111,mpi_comm_cols,mpi_status,mpierr)
+#else
+            z(1:n) = tmp(1:n)
+#endif
           endif
 
         end subroutine global_product
@@ -3733,12 +3836,10 @@ module ELPA1_compute
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("cholesky_real")
 #endif
-
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
       success = .true.
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
@@ -3833,9 +3934,9 @@ module ELPA1_compute
               nc = nc+i
             enddo
           endif
-
+#ifdef WITH_MPI
           call MPI_Bcast(tmp1,nblk*(nblk+1)/2,MPI_REAL8,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
-
+#endif
           nc = 0
           do i=1,nblk
             tmp2(1:i,i) = tmp1(nc+1:nc+i)
@@ -3850,9 +3951,10 @@ module ELPA1_compute
         do i=1,nblk
 
           if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = a(l_row1+i-1,l_colx:l_cols)
+#ifdef WITH_MPI
           if (l_cols-l_colx+1>0) &
               call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_REAL8,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
-
+#endif
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
         call elpa_transpose_vectors_real  (tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
@@ -3937,12 +4039,10 @@ module ELPA1_compute
        logical, intent(out)         :: success
        integer(kind=ik)             :: istat
        character(200)               :: errorMessage
-
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
        call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
        call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
        success = .true.
 
        l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
@@ -4009,9 +4109,9 @@ module ELPA1_compute
                nc = nc+i
              enddo
            endif
-
+#ifdef WITH_MPI
            call MPI_Bcast(tmp1,nb*(nb+1)/2,MPI_REAL8,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
-
+#endif
            nc = 0
            do i=1,nb
              tmp2(1:i,i) = tmp1(nc+1:nc+i)
@@ -4033,13 +4133,15 @@ module ELPA1_compute
            endif
 
            do i=1,nb
+#ifdef WITH_MPI
              call MPI_Bcast(tmat1(1,i),l_row1-1,MPI_REAL8,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
+#endif
            enddo
          endif
-
+#ifdef WITH_MPI
          if (l_cols-l_col1+1>0) &
             call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_REAL8,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
-
+#endif
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
             call dgemm('N','N',l_row1-1,l_cols-l_col1+1,nb, -1.d0, &
                        tmat1,ubound(tmat1,dim=1),tmat2(1,l_col1),ubound(tmat2,dim=1), &
@@ -4109,12 +4211,10 @@ module ELPA1_compute
       call timer%start("cholesky_complex")
 #endif
       success = .true.
-
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
       tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
@@ -4206,9 +4306,9 @@ module ELPA1_compute
               nc = nc+i
             enddo
           endif
-
+#ifdef WITH_MPI
           call MPI_Bcast(tmp1,nblk*(nblk+1)/2,MPI_DOUBLE_COMPLEX,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
-
+#endif
           nc = 0
           do i=1,nblk
             tmp2(1:i,i) = tmp1(nc+1:nc+i)
@@ -4223,9 +4323,10 @@ module ELPA1_compute
         do i=1,nblk
 
           if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = conjg(a(l_row1+i-1,l_colx:l_cols))
+#ifdef WITH_MPI
           if (l_cols-l_colx+1>0) &
                 call MPI_Bcast(tmatc(l_colx,i),l_cols-l_colx+1,MPI_DOUBLE_COMPLEX,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
-
+#endif
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
         call elpa_transpose_vectors_complex  (tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
@@ -4309,12 +4410,10 @@ module ELPA1_compute
        logical, intent(out)             :: success
        integer(kind=ik)                 :: istat
        character(200)                   :: errorMessage
-
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
        call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
        call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
        success = .true.
 
        l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
@@ -4381,8 +4480,9 @@ module ELPA1_compute
              enddo
            endif
 
+#ifdef WITH_MPI
            call MPI_Bcast(tmp1,nb*(nb+1)/2,MPI_DOUBLE_COMPLEX,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
-
+#endif
            nc = 0
            do i=1,nb
              tmp2(1:i,i) = tmp1(nc+1:nc+i)
@@ -4404,13 +4504,15 @@ module ELPA1_compute
            endif
 
            do i=1,nb
+#ifdef WITH_MPI
              call MPI_Bcast(tmat1(1,i),l_row1-1,MPI_DOUBLE_COMPLEX,pcol(n, nblk, np_cols),mpi_comm_cols,mpierr)
+#endif
            enddo
          endif
-
+#ifdef WITH_MPI
          if (l_cols-l_col1+1>0) &
            call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_DOUBLE_COMPLEX,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
-
+#endif
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
            call ZGEMM('N','N',l_row1-1,l_cols-l_col1+1,nb, (-1.d0,0.d0), &
                         tmat1,ubound(tmat1,dim=1),tmat2(1,l_col1),ubound(tmat2,dim=1), &
@@ -4528,4 +4630,3 @@ module ELPA1_compute
     end subroutine
 
 end module ELPA1_compute
-

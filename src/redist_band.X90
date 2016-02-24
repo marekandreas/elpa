@@ -105,7 +105,6 @@ subroutine redist_band_complex(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_row
 #endif
 
 #endif
-
    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
    call mpi_comm_size(mpi_comm,n_pes,mpierr)
 
@@ -113,7 +112,6 @@ subroutine redist_band_complex(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_row
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
    ! Get global_id mapping 2D procssor coordinates to global id
 
    allocate(global_id(0:np_rows-1,0:np_cols-1))
@@ -122,6 +120,7 @@ subroutine redist_band_complex(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_row
 #endif
    global_id(:,:) = 0
    global_id(my_prow, my_pcol) = my_pe
+#ifdef WITH_MPI
 #ifdef WITH_OPENMP
    global_id_tmp(:,:) = global_id(:,:)
    call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
@@ -129,7 +128,7 @@ subroutine redist_band_complex(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_row
 #else
    call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
 #endif
-
+#endif
    ! Set work distribution
 
    nblocks_total = (na-1)/nbw + 1
@@ -246,6 +245,7 @@ subroutine redist_band_complex(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_row
    enddo
 
    ! Exchange all data with MPI_Alltoallv
+#ifdef WITH_MPI
 
 #if REALCASE==1
     call MPI_Alltoallv(r_sbuf,ncnt_s,nstart_s,MPI_REAL8,r_rbuf,ncnt_r,nstart_r,MPI_REAL8,mpi_comm,mpierr)
@@ -254,6 +254,16 @@ subroutine redist_band_complex(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_row
     call MPI_Alltoallv(c_sbuf,ncnt_s,nstart_s,MPI_COMPLEX16,c_rbuf,ncnt_r,nstart_r,MPI_COMPLEX16,mpi_comm,mpierr)
 #endif
 
+#else /* WITH_MPI */
+
+#if REALCASE==1
+    r_rbuf = r_sbuf
+#endif
+
+#if COMPLEXCASE==1
+    c_rbuf = c_sbuf
+#endif
+#endif /* WITH_MPI */
    ! set band from receive buffer
 
    ncnt_r(:) = ncnt_r(:)/(nblk*nblk)

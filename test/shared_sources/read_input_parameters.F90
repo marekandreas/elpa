@@ -48,8 +48,8 @@ module mod_read_input_parameters
     subroutine read_input_parameters(na, nev, nblk, write_to_file)
       use ELPA_utilities, only : error_unit
       use precision
+      use elpa_mpi
       implicit none
-      include 'mpif.h'
 
       integer(kind=ik), intent(out) :: na, nev, nblk
       logical, intent(out)          :: write_to_file
