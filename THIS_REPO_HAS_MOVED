@@ -1,0 +1,14 @@
+Dear user,
+
+this git repo has been moved to
+
+  https://gitlab.mpcdf.mpg.de/elpa/elpa.git
+
+To update your working copies to use the new location, do
+
+  git remote set-url origin https://gitlab.mpcdf.mpg.de/elpa/elpa.git
+  git pull
+
+Please note that this commit is only meant to notify you, the previous history
+of the project is still contained in this repository up to the point of the
+migration.

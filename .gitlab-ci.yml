@@ -1,2 +1,0 @@
-jobs:
-  script: ./autogen.sh && ./configure && make && make check TEST_FLAGS='1500 50 16'
