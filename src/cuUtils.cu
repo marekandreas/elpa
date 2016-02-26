@@ -274,7 +274,7 @@ extern "C" void launch_extract_hh_tau_c_kernel_complex(cuFloatComplex* bcast_buf
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_my_unpack_c_kernel_complex( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex* row_group_dev, cuDoubleComplex* a_dev)
-#else\
+#else 
 extern "C" void launch_my_unpack_c_kernel_complex( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex* row_group_dev, cuFloatComplex* a_dev)
 #endif
 {
@@ -400,7 +400,7 @@ __global__ void compute_kernel_reduce_1( cuFloatComplex* a_dev, int lda , int n,
 
 
 }
-_
+
 #ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  dot_product_c_kernel( cuDoubleComplex* hs_dev, cuDoubleComplex* hv_new_dev, cuDoubleComplex tau_new_dev, cuDoubleComplex*  x_dev, cuDoubleComplex *h_dev, cuDoubleComplex *hv_dev, int nr)
 #else
