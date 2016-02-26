@@ -93,7 +93,7 @@ program test_real2
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
-
+   use elpa_mpi
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
@@ -101,7 +101,6 @@ program test_real2
  use timings
 #endif
    implicit none
-   include 'mpif.h'
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
@@ -144,79 +143,9 @@ program test_real2
    gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
-#ifdef WITH_OPENMP
-   if (myid .eq. 0) then
-      print *,"Threaded version of test program"
-      print *,"Using ",omp_get_max_threads()," threads"
-      print *," "
-   endif
-#endif
 
-#ifdef DOUBLE_PRECISION_REAL
-   if (myid .eq. 0) then
-     print *," "
-     print *,"Double precision version of ELPA2 is used"
-     print *," "
-   endif
-#else
-   if (myid .eq. 0) then
-     print *," "
-     print *,"Single precision version of ELPA2 is used"
-     print *," "
-   endif
-#endif
-
-#ifdef HAVE_REDIRECT
-   if (check_redirect_environment_variable()) then
-     if (myid .eq. 0) then
-       print *," "
-       print *,"Redirection of mpi processes is used"
-       print *," "
-       if (create_directories() .ne. 1) then
-         write(error_unit,*) "Unable to create directory for stdout and stderr!"
-         stop
-       endif
-     endif
-     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-     call redirect_stdout(myid)
-   endif
-#endif
-
-   if (myid .eq. 0) then
-      print *," "
-      print *,"This ELPA2 is build with"
-      if (gpuAvailable) then
-        print *,"GPU support"
-      endif
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-      print *,"AVX optimized kernel (2 blocking) for real matrices"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-      print *,"AVX optimized kernel (4 blocking) for real matrices"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-      print *,"AVX optimized kernel (6 blocking) for real matrices"
-#endif
-
-#ifdef WITH_REAL_GENERIC_KERNEL
-     print *,"GENERIC kernel for real matrices"
-#endif
-#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
-     print *,"GENERIC SIMPLE kernel for real matrices"
-#endif
-#ifdef WITH_REAL_SSE_KERNEL
-     print *,"SSE ASSEMBLER kernel for real matrices"
-#endif
-#ifdef WITH_REAL_BGP_KERNEL
-     print *,"BGP kernel for real matrices"
-#endif
-#ifdef WITH_REAL_BGQ_KERNEL
-     print *,"BGQ kernel for real matrices"
-#endif
-   endif
-   if (write_to_file) then
-     if (myid .eq. 0) print *,"Writing output files"
-   endif
+#define DATATYPE REAL
+#include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -327,14 +256,18 @@ program test_real2
      print '(a)','| Entering two-stage ELPA solver ... '
      print *
    end if
-
+#ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
    successELPA = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
                                        mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
+                                   print *," here ", z(10,10)
    if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
+#ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
    endif
 
    if (myid==0) then
@@ -380,8 +313,10 @@ program test_real2
    print *," "
    print *,"End timings program"
 #endif
+#ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
+#endif
    call EXIT(STATUS)
 end
 

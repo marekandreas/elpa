@@ -81,12 +81,18 @@ module mod_prepare_matrix
       if (myid == 0) then
         print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
       endif
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
       call pztranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
 #else
       call pctranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
 #endif
+
+#else /* WITH_MPI */
+      a = a + transpose(conjg(z))
+#endif /* WITH_MPI */
+
       if (myid == 0) then
         print '(a)','| Random matrix block has been symmetrized'
       endif
@@ -121,12 +127,18 @@ module mod_prepare_matrix
       if (myid == 0) then
         print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
       endif
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
       call pdtran(na, na, 1.0_rk, z, 1, 1, sc_desc, 1.0_rk, a, 1, 1, sc_desc) ! A = A + Z**T
 #else
       call pstran(na, na, 1.0_rk, z, 1, 1, sc_desc, 1.0_rk, a, 1, 1, sc_desc) ! A = A + Z**T
 #endif
+
+#else /* WITH_MPI */
+      a = a + transpose(z)
+#endif /* WITH_MPI */
+
       if (myid == 0) then
         print '(a)','| Random matrix block has been symmetrized'
       endif

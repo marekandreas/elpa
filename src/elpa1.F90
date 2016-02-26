@@ -86,9 +86,11 @@ module ELPA1
   use elpa1_compute
 
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+  use timings
 #endif
   use iso_c_binding
+  use elpa_mpi
+
   implicit none
 
   PRIVATE ! By default, all routines contained are private
@@ -111,7 +113,6 @@ module ELPA1
 
   logical, public :: elpa_print_times = .false. !< Set elpa_print_times to .true. for explicit timing outputs
 
-  include 'mpif.h'
 
 !> \brief get_elpa_row_col_comms:  old, deprecated Fortran function to create the MPI communicators for ELPA. Better use "elpa_get_communicators"
 !> \detail
@@ -330,6 +331,7 @@ function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mp
 
    ttt0 = MPI_Wtime()
    call tridiag_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
    time_evp_fwd = ttt1-ttt0

@@ -84,9 +84,10 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
 #ifdef WITH_OPENMP
    use omp_lib
 #endif
+   use elpa_mpi
+
    implicit none
 
-   include 'mpif.h'
 
    integer(kind=ik), intent(in)              :: ld_s, comm_s, ld_t, comm_t, nvr, nvc, nblk
    DATATYPE, intent(in)                      :: vmat_s(ld_s,nvc)
@@ -147,6 +148,9 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
          !$omp barrier
          !$omp master
 #endif
+
+#ifdef WITH_MPI
+
 #if REALCASE==1
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -166,6 +170,10 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
 #endif
 
 #endif /* COMPLEXCASE == 1 */
+
+#else /* WITH_MPI */
+         if(k>0) aux2 = aux1
+#endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP
          !$omp end master

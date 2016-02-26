@@ -92,7 +92,7 @@ program test_complex2
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
-
+   use elpa_mpi
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
@@ -101,7 +101,6 @@ program test_complex2
  use timings
 #endif
    implicit none
-   include 'mpif.h'
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
@@ -117,9 +116,9 @@ program test_complex2
 
    integer(kind=ik)              :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer(kind=ik)              :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
-
+#ifdef WITH_MPI
    integer(kind=ik), external    :: numroc
-
+#endif
    complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
    real(kind=rk), allocatable    :: ev(:), xr(:,:)
 
@@ -150,72 +149,8 @@ program test_complex2
 
    STATUS = 0
 
-#ifdef WITH_OPENMP
-   if (myid .eq. 0) then
-      print *,"Threaded version of test program"
-      print *,"Using ",omp_get_max_threads()," threads"
-      print *," "
-   endif
-#endif
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-   if (myid .eq. 0) then
-     print *," "
-     print *,"Double precision version of ELPA2 is used"
-     print *," "
-   endif
-#else
-   if (myid .eq. 0) then
-     print *," "
-     print *,"Single precision version of ELPA2 is used"
-     print *," "
-   endif
-#endif
-
-#ifdef HAVE_REDIRECT
-   if (check_redirect_environment_variable()) then
-     if (myid .eq. 0) then
-       print *," "
-       print *,"Redirection of mpi processes is used"
-       print *," "
-       if (create_directories() .ne. 1) then
-         write(error_unit,*) "Unable to create directory for stdout and stderr!"
-         stop
-       endif
-     endif
-     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-     call redirect_stdout(myid)
-   endif
-#endif
-
-   if (myid .eq. 0) then
-      print *," "
-      print *,"This ELPA2 is build with"
-      if (gpuAvailable) then
-        print *,"GPU support"
-      endif
-
-#ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
-      print *,"AVX optimized kernel (2 blocking) for complex matrices"
-#endif
-#ifdef WITH_COMPLEX_AVX_BLOCK1_KERNEL
-      print *,"AVX optimized kernel (1 blocking) for complex matrices"
-#endif
-
-#ifdef WITH_COMPLEX_GENERIC_KERNEL
-     print *,"GENERIC kernel for complex matrices"
-#endif
-#ifdef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
-     print *,"GENERIC SIMPLE kernel for complex matrices"
-#endif
-#ifdef WITH_COMPLEX_SSE_KERNEL
-     print *,"SSE ASSEMBLER kernel for complex matrices"
-#endif
-   endif
-
-   if (write_to_file) then
-     if (myid .eq. 0) print *,"Writing output files"
-   endif
+#define DATATYPE COMPLEX
+#include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -329,15 +264,17 @@ program test_complex2
 
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
-
+#ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-
+#endif
    successELPA = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                       na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."
+#ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
    endif
 
    if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
@@ -377,10 +314,11 @@ program test_complex2
    print *," "
    print *,"End timings program"
 #endif
-
+#ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
-!   call EXIT(STATUS)
+#endif
+   call EXIT(STATUS)
 end
 
 !-------------------------------------------------------------------------------

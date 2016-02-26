@@ -72,6 +72,7 @@ module ELPA2_compute
   use elpa2_utilities
   use elpa_pdgeqrf
   use precision
+  use elpa_mpi
 
   implicit none
 
@@ -93,8 +94,6 @@ module ELPA2_compute
   integer(kind=ik), public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
                                                     ! 0 for unblocked
                                                     ! 1 for blocked (maxrank: nblk)
-  include 'mpif.h'
-
   contains
 
     subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, &
@@ -167,7 +166,9 @@ module ELPA2_compute
       real(kind=rk), allocatable :: work_blocked(:), tauvector(:), blockheuristic(:)
 
       integer(kind=C_intptr_T)   :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
+#ifdef WITH_MPI
       integer(kind=ik), external :: numroc
+#endif
       integer(kind=ik)           :: ierr
       integer(kind=ik)           :: cur_l_rows, cur_l_cols, vmr_size, umc_size
       integer(kind=c_size_t)     :: lc_start, lc_end
@@ -207,8 +208,13 @@ module ELPA2_compute
       endif
 
       if (useGPU) then
+#ifdef WITH_MPI
         na_rows = numroc(na, nblk, my_prow, 0, np_rows)
         na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
+#else
+        na_rows = na
+        na_cols = na
+#endif
       endif
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
@@ -510,12 +516,17 @@ module ELPA2_compute
                aux1(2) = 0._rk
              endif
 
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
              call mpi_allreduce(aux1, aux2, 2, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
              call mpi_allreduce(aux1, aux2, 2, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
 
+#else /* WITH_MPI */
+              aux2 = aux1 ! this should be optimized
+#endif /* WITH_MPI */
 
              vnorm2 = aux2(1)
              vrl    = aux2(2)
@@ -540,12 +551,15 @@ module ELPA2_compute
            ! Broadcast Householder vector and tau along columns
 
            vr(lr+1) = tau
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
            call MPI_Bcast(vr, lr+1, MPI_REAL8, cur_pcol, mpi_comm_cols, mpierr)
 #else
            call MPI_Bcast(vr, lr+1, MPI_REAL4, cur_pcol, mpi_comm_cols, mpierr)
 #endif
 
+#endif /* WITH_MPI */
            if (useGPU) then
              vmrCUDA(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
            else
@@ -584,13 +598,21 @@ module ELPA2_compute
            enddo
 
            ! Get global dot products
+
            !$omp barrier
            !$omp single
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
            if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
-           if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
+           if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
+
+#else /* WITH_MPI */
+           if (mynlc>0) aux2 = aux1
+
+#endif /* WITH_MPI */
            !$omp end single
            !$omp barrier
 
@@ -623,11 +645,17 @@ module ELPA2_compute
            enddo
 
            ! Get global dot products
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
            if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
            if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
+
+#else /* WITH_MPI */
+           if (nlc>0) aux2=aux1
+#endif /* WITH_MPI */
            ! Transform
 
            nlc = 0
@@ -795,6 +823,7 @@ module ELPA2_compute
            do i=1,min(l_cols_tile, l_cols)
              umcCPU(i,1:n_cols) = 0.0_rk
            enddo
+
            !$omp do
            do i=1,l_rows
              vmrCPU(i,n_cols+1:2*n_cols) = 0.0_rk
@@ -915,11 +944,17 @@ module ELPA2_compute
              stop
            endif
 
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
            call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, ierr)
 #else
            call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, ierr)
 #endif
+
+#else /* WITH_MPI */
+           tmpCUDA(1 : l_cols * n_cols) = umcCUDA(1 : l_cols * n_cols)
+#endif /* WITH_MPI */
            umcCUDA(1 : l_cols * n_cols) = tmpCUDA(1 : l_cols * n_cols)
 
            if (allocated(tmpCUDA)) then
@@ -1052,11 +1087,18 @@ module ELPA2_compute
              print *,"bandred_real: error when allocating tmpCPU "//errorMessage
              stop
            endif
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
            call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
            call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
+
+#else /* WITH_MPI */
+           tmpCPU(1:l_cols,1:n_cols) = umcCPU(1:l_cols,1:n_cols)
+#endif /* WITH_MPI */
            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
 
            deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
@@ -1148,7 +1190,6 @@ module ELPA2_compute
 #endif
          enddo
          !$omp end parallel
-
 #else /* WITH_OPENMP */
          do i=0,(istep*nbw-1)/tile_size
            lcs = i*l_cols_tile+1
@@ -1329,11 +1370,18 @@ module ELPA2_compute
         h1(nc+1:nc+i) = a(1:i,i)
         nc = nc+i
       enddo
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
       call mpi_allreduce(h1, h2, nc, MPI_REAL8, MPI_SUM, comm, mpierr)
 #else
       call mpi_allreduce(h1, h2, nc, MPI_REAL4, MPI_SUM, comm, mpierr)
 #endif
+
+#else /* WITH_MPI */
+      h2=h1
+#endif /* WITH_MPI */
       nc = 0
       do i=1,n
         a(1:i,i) = h2(nc+1:nc+i)
@@ -1419,12 +1467,10 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_band_to_full_real")
 #endif
-
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
       max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of A
       max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q!
 
@@ -1523,11 +1569,15 @@ module ELPA2_compute
             nb = nb+l_rows
 
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL8, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
               call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL4, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               ns = nb
             endif
           enddo
@@ -1549,6 +1599,7 @@ module ELPA2_compute
           if (.not.(successCUDA)) then
             print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
             stop
+
           endif
 
           l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
@@ -1589,11 +1640,17 @@ module ELPA2_compute
           !         stop
           !       endif
           !#endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
+
+#else /* WITH_MPI */
+          tmp2(1:n_cols*l_cols) = tmp1(n_cols*l_cols)
+#endif /* WITH_MPI */
           !#ifdef WITH_GPU_VERSION
           !       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*size_of_real_datatype,cudaMemcpyHostToDevice)
           !       if (istat .ne. 0) then
@@ -1699,11 +1756,15 @@ module ELPA2_compute
             nb = nb+l_rows
 
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL8, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
               call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL4, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               ns = nb
             endif
           enddo
@@ -1734,18 +1795,27 @@ module ELPA2_compute
 #ifdef DOUBLE_PRECISION_REAL
               call dgemm('T', 'N', t_rows, t_cols, l_rows, 1.0_rk, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                         max_local_rows, 0.0_rk, t_tmp, cwy_blocking)
+#ifdef WITH_MPI
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
+#else
+              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
+#endif
               call dtrmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call dtrmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp2, cwy_blocking)
-#else
+#else /* DOUBLE_PRECISION_REAL */
               call sgemm('T', 'N', t_rows, t_cols, l_rows, 1.0_rk, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                         max_local_rows, 0.0_rk, t_tmp, cwy_blocking)
+#ifdef WITH_MPI
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+#else
+              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
+#endif
               call strmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call strmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk, tmat_complete(t_rows+1,t_rows+1), &
                           cwy_blocking, t_tmp2, cwy_blocking)
-#endif
+#endif /* DOUBLE_PRECISION_REAL */
+
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
              endif
           enddo
@@ -1764,11 +1834,18 @@ module ELPA2_compute
           else
             tmp1(1:l_cols*n_cols) = 0
           endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows ,mpierr)
 #else
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows ,mpierr)
 #endif
+
+#else /* WITH_MPI */
+          tmp2 = tmp1
+
+#endif /* WITH_MPI */
 
           if (l_rows>0) then
 #ifdef DOUBLE_PRECISION_REAL
@@ -1778,6 +1855,7 @@ module ELPA2_compute
             call strmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk, tmat_complete, cwy_blocking, tmp2, n_cols)
             call sgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk, hvm, ubound(hvm,dim=1), tmp2, n_cols, 1.0_rk, q, ldq)
 #endif
+
           endif
         enddo ! istep
 
@@ -1909,7 +1987,9 @@ module ELPA2_compute
       integer(kind=ik)              :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
 #ifdef WITH_OPENMP
       integer(kind=ik)              :: max_threads, my_thread, my_block_s, my_block_e, iter
+#ifdef WITH_MPI
       integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+#endif
       integer(kind=ik), allocatable :: mpi_statuses(:,:), global_id_tmp(:,:)
       integer(kind=ik), allocatable :: omp_block_limits(:)
       real(kind=rk), allocatable    :: hv_t(:,:), tau_t(:)
@@ -1922,13 +2002,16 @@ module ELPA2_compute
 #ifdef WITH_OPENMP
       integer(kind=ik)              :: omp_get_max_threads
 #endif
-      integer              :: istat
-      character(200)       :: errorMessage
+      integer                       :: istat
+      character(200)                :: errorMessage
+
+#ifndef WITH_MPI
+      integer(kind=ik)              :: startAddr
+#endif
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("tridiag_band_real")
 #endif
-
       call mpi_comm_rank(mpi_comm,my_pe,mpierr)
       call mpi_comm_size(mpi_comm,n_pes,mpierr)
 
@@ -1936,7 +2019,6 @@ module ELPA2_compute
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
       ! Get global_id mapping 2D procssor coordinates to global id
 
       allocate(global_id(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
@@ -1956,6 +2038,8 @@ module ELPA2_compute
       endif
 #endif
 
+#ifdef WITH_MPI
+
 #ifndef WITH_OPENMP
       call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
 #else
@@ -1966,8 +2050,9 @@ module ELPA2_compute
         print *,"tridiag_band_real: error when deallocating global_id_tmp "//errorMessage
         stop
       endif
-#endif
+#endif /* WITH_OPENMP */
 
+#endif /* WITH_MPI */
       ! Total number of blocks in the band:
 
       nblocks_total = (na-1)/nb + 1
@@ -2059,6 +2144,8 @@ module ELPA2_compute
         local_size = limits(my_prow+1) - limits(my_prow)
         if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
           num_chunks  = num_chunks+1
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, mpi_real8, nt, &
                            10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
@@ -2066,6 +2153,11 @@ module ELPA2_compute
           call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, mpi_real4, nt, &
                            10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
 #endif
+
+#else /* WITH_MPI */
+          ! carefull non-block recv data copy must be done at wait or send
+          ! hh_trans_real(1:nb*local_size,num_hh_vecs+1) = hh_send(1:nb*hh_cnt(iblk),1,iblk)
+#endif /* WITH_MPI */
           num_hh_vecs = num_hh_vecs + local_size
         endif
         nx = nx - nb
@@ -2073,9 +2165,9 @@ module ELPA2_compute
           nt = nt + 1
         endif
       enddo
-
+#ifdef WITH_MPI
       ireq_hhs(:) = MPI_REQUEST_NULL
-
+#endif
       ! Buffers for gathering/sending the HH vectors
 
       allocate(hh_gath(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! gathers HH vectors
@@ -2108,10 +2200,10 @@ module ELPA2_compute
 
       hh_cnt(:) = 1 ! The first transfomation vector is always 0 and not calculated at all
       hh_dst(:) = 0 ! PE number for receive
-
+#ifdef WITH_MPI
       ireq_ab = MPI_REQUEST_NULL
       ireq_hv = MPI_REQUEST_NULL
-
+#endif
       ! Limits for sending
 
       allocate(snd_limits(0:np_rows,nblocks), stat=istat, errmsg=errorMessage)
@@ -2128,7 +2220,6 @@ module ELPA2_compute
 
       max_threads = 1
       max_threads = omp_get_max_threads()
-
       ! For OpenMP we need at least 2 blocks for every thread
       max_threads = MIN(max_threads, nblocks/2)
       if (max_threads==0) max_threads = 1
@@ -2160,12 +2251,21 @@ module ELPA2_compute
         ! send first column to previous PE
         ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
         ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_isend(ab_s, nb+1, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
         call mpi_isend(ab_s, nb+1, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #endif
+
+#endif /* WITH_MPI */
       endif
+
+
+#ifndef WITH_MPI
+          startAddr   = ubound(hh_trans_real,dim=2)
+#endif
 
 #ifdef WITH_OPENMP
       do istep=1,na-1-block_limits(my_pe)*nb
@@ -2195,7 +2295,10 @@ module ELPA2_compute
         else
           if (na>na_s) then
             ! Receive Householder vector from previous task, from PE owning subdiagonal
+
 #ifdef WITH_OPENMP
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_recv(hv, nb, mpi_real8, my_pe-1, 2, mpi_comm, MPI_STATUS, mpierr)
@@ -2203,13 +2306,25 @@ module ELPA2_compute
             call mpi_recv(hv, nb, mpi_real4, my_pe-1, 2, mpi_comm, MPI_STATUS, mpierr)
 #endif
 
+#else /* WITH_MPI */
+
+            hv(1:nb) = hv_s(1:nb)
+
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_recv(hv, nb, mpi_real8, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
             call mpi_recv(hv, nb, mpi_real4, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+            hv(1:nb) = hv_s(1:nb)
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
             tau = hv(1)
@@ -2354,6 +2469,7 @@ module ELPA2_compute
 
             enddo ! my_thread
 !$omp end parallel do
+
 #ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("OpenMP parallel")
 #endif
@@ -2363,17 +2479,24 @@ module ELPA2_compute
 
               ! Send our first column to previous PE
               if (my_pe>0 .and. na_s <= na) then
+#ifdef WITH_MPI
                 call mpi_wait(ireq_ab, mpi_status, mpierr)
+#endif
                 ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_isend(ab_s, nb+1, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
                 call mpi_isend(ab_s, nb+1, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               endif
 
               ! Request last column from next PE
               ne = na_s + nblocks*nb - (max_threads-1) - 1
+#ifdef WITH_MPI
               if (istep>=max_threads .and. ne <= na) then
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
@@ -2381,21 +2504,32 @@ module ELPA2_compute
                 call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
 #endif
               endif
-
+#else /* WITH_MPI */
+              if (istep>=max_threads .and. ne <= na) then
+                ab(1:nb+1,ne-n_off) = ab_s(1:nb+1)
+              endif
+#endif /* WITH_MPI */
             else
               ! We are at the end of all blocks
 
               ! Send last HH vector and TAU to next PE if it has been calculated above
               ne = na_s + nblocks*nb - (max_threads-1) - 1
               if (istep>=max_threads .and. ne < na) then
+#ifdef WITH_MPI
                 call mpi_wait(ireq_hv, mpi_status, mpierr)
+#endif
                 hv_s(1) = tau_t(max_threads)
                 hv_s(2:) = hv_t(2:,max_threads)
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_isend(hv_s, nb, mpi_real8, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #else
                 call mpi_isend(hv_s, nb, mpi_real4, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               endif
 
               ! "Send" HH vector and TAU to next OpenMP thread
@@ -2420,7 +2554,6 @@ module ELPA2_compute
 #endif /* WITH_OPENMP */
 
           do iblk=1,nblocks
-
             ns = na_s + (iblk-1)*nb - n_off ! first column in block
             ne = ns+nb-1                    ! last column in block
 
@@ -2436,12 +2569,15 @@ module ELPA2_compute
 #ifndef WITH_OPENMP
             if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
               ! Wait for last transfer to finish
-
+#ifdef WITH_MPI
               call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
-
+#endif
               ! Copy vectors into send buffer
               hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
               ! Send to destination
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
               call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
                            global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
@@ -2451,6 +2587,13 @@ module ELPA2_compute
                            global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
                            10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
 #endif
+
+#else /* WITH_MPI */
+             ! do the post-poned irecv here
+             startAddr = startAddr - hh_cnt(iblk)
+             hh_trans_real(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
+#endif /* WITH_MPI */
+
             ! Reset counter and increase destination row
               hh_cnt(iblk) = 0
               hh_dst(iblk) = hh_dst(iblk)+1
@@ -2482,11 +2625,19 @@ module ELPA2_compute
               if (nr>0) call DGEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1, 0.0_rk, hs, 1)
 
               ! ... then request last column ...
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
               call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS, mpierr)
 #else
               call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+
+              ab(1:nb+1,ne) = ab_s(1:nb+1)
+
+#endif /* WITH_MPI */
 
 #else /* DOUBLE_PRECISION_REAL */
               call SSYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, 0.0_rk, hd, 1)
@@ -2495,11 +2646,19 @@ module ELPA2_compute
               if (nr>0) call SGEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1, 0.0_rk, hs, 1)
 
               ! ... then request last column ...
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
               call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS, mpierr)
 #else
               call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+
+              ab(1:nb+1,ne) = ab_s(1:nb+1)
+
+#endif /* WITH_MPI */
 
 #endif /* DOUBLE_PRECISION_REAL */
 
@@ -2543,18 +2702,27 @@ module ELPA2_compute
               ! ... and send it away immediatly if this is the last block
 
               if (iblk==nblocks) then
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
                 call mpi_wait(ireq_hv,MPI_STATUS,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
+
+#endif /* WITH_MPI */
                 hv_s(1) = tau_new
                 hv_s(2:) = hv_new(2:)
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_isend(hv_s, nb, mpi_real8, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #else
                 call mpi_isend(hv_s, nb, mpi_real4, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               endif
 
             endif
@@ -2571,32 +2739,41 @@ module ELPA2_compute
               ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
 
               ! ... send it away ...
+#ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
               call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
 #else
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
-              ab_s(1:nb+1) = ab(1:nb+1,ns)
-#ifdef DOUBLE_PRECISION_REAL
-              call mpi_isend(ab_s, nb+1, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 
+#endif /* WITH_MPI */
+              ab_s(1:nb+1) = ab(1:nb+1,ns)
+
+#ifdef DOUBLE_PRECISION_REAL
+
+#ifdef WITH_MPI
+              call mpi_isend(ab_s, nb+1, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+#endif
               ! ... and calculate remaining columns with rank-2 update
               if (nc>1) call DSYR2('L', nc-1, -1.0_rk, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
             else
               ! No need to  send, just a rank-2 update
               call DSYR2('L', nc, -1.0_rk, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
             endif
-#else
-              call mpi_isend(ab_s, nb+1, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+#else /* DOUBLE_PRECISION_REAL */
 
+#ifdef WITH_MPI
+              call mpi_isend(ab_s, nb+1, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+#endif
               ! ... and calculate remaining columns with rank-2 update
               if (nc>1) call SSYR2('L', nc-1, -1.0_rk, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
             else
               ! No need to  send, just a rank-2 update
               call SSYR2('L', nc, -1.0_rk, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
             endif
-#endif
+#endif /* DOUBLE_PRECISION_REAL */
+
 
             ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
@@ -2637,11 +2814,17 @@ module ELPA2_compute
 
           if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
+#ifdef WITH_MPI
             call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+#endif
             ! Copy vectors into send buffer
             hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
             ! Send to destination
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
+
             call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
                   global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
                   10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
@@ -2650,6 +2833,13 @@ module ELPA2_compute
                   global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
                   10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
 #endif
+
+#else /* WITH_MPI */
+            ! do the post-poned irecv here
+            startAddr = startAddr - hh_cnt(iblk)
+            hh_trans_real(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
+#endif /* WITH_MPI */
+
             ! Reset counter and increase destination row
             hh_cnt(iblk) = 0
             hh_dst(iblk) = hh_dst(iblk)+1
@@ -2660,7 +2850,10 @@ module ELPA2_compute
       enddo ! istep
 
       ! Finish the last outstanding requests
+
 #ifdef WITH_OPENMP
+
+#ifdef WITH_MPI
       call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
       call mpi_wait(ireq_hv,MPI_STATUS,mpierr)
 
@@ -2677,7 +2870,11 @@ module ELPA2_compute
         print *,"tridiag_band_real: error when deallocating mpi_statuses"//errorMessage
         stop
       endif
-#else
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
       call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
       call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 
@@ -2685,8 +2882,11 @@ module ELPA2_compute
       call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
 #endif
 
-      call mpi_barrier(mpi_comm,mpierr)
+#endif /* WITH_OPENMP */
 
+#ifdef  WITH_MPI
+      call mpi_barrier(mpi_comm,mpierr)
+#endif
       deallocate(ab, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_real: error when deallocating ab"//errorMessage
@@ -2798,7 +2998,9 @@ module ELPA2_compute
       integer(kind=ik)              :: a_off, current_tv_off, max_blk_size
       integer(kind=ik)              :: mpierr, src, src_offset, dst, offset, nfact, num_blk
 #ifdef WITH_OPENMP
+#ifdef WITH_MPI
       integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+#endif
 #endif
       logical                       :: flag
 
@@ -2869,6 +3071,9 @@ module ELPA2_compute
       integer(kind=ik)             :: istat
       character(200)               :: errorMessage
       logical                      :: successCUDA
+#ifndef WITH_MPI
+      integer(kind=ik)             :: j1
+#endif
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_tridi_to_band_real")
@@ -2886,12 +3091,10 @@ module ELPA2_compute
       max_threads = 1
       max_threads = omp_get_max_threads()
 #endif
-
       call MPI_Comm_rank(mpi_comm_rows, my_prow, mpierr)
       call MPI_Comm_size(mpi_comm_rows, np_rows, mpierr)
       call MPI_Comm_rank(mpi_comm_cols, my_pcol, mpierr)
       call MPI_Comm_size(mpi_comm_cols, np_cols, mpierr)
-
       if (mod(nbw,nblk)/=0) then
         if (my_prow==0 .and. my_pcol==0) then
           if (wantDebug) then
@@ -3052,12 +3255,12 @@ module ELPA2_compute
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("OpenMP parallel")
 #endif
-
       !$omp parallel do private(my_thread), schedule(static, 1)
       do my_thread = 1, max_threads
         a(:,:,:,my_thread) = 0.0_rk ! if possible, do first touch allocation!
       enddo
       !$omp end parallel do
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("OpenMP parallel")
 #endif
@@ -3075,21 +3278,29 @@ module ELPA2_compute
                print *,"trans_ev_tridi_to_band_real: not yet implemented"
                stop
               endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
 #else
               call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
 #endif
+
+#else /* WITH_MPI */
+              row(1:l_nev) = row(1:l_nev)
+#endif /* WITH_MPI */
+
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%start("OpenMP parallel")
 #endif
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row_real_cpu_openmp(a, row,i-limits(ip),my_thread, stripe_count, &
+                call unpack_row_real_cpu_openmp(a, row, i-limits(ip), my_thread, stripe_count, &
                                                 thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
+
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("OpenMP parallel")
 #endif
@@ -3101,17 +3312,30 @@ module ELPA2_compute
                 call unpack_and_prepare_row_group_real_gpu(row_group, row_group_dev, a_dev, stripe_count, &
                                                            stripe_width, last_stripe_width, a_dim2, l_nev,&
                                                            row_group_size, nblk, unpack_idx, i - limits(ip), .false.)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
                 call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
                 call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+                row_group(1:l_nev, row_group_size) = row(1:l_nev) ! is this correct?
+#endif /* WITH_MPI */
+
               else
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
                 call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
                 call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+                row(1:l_nev) = row(1:l_nev)
+#endif /* WITH_MPI */
                 call unpack_row_real_cpu(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
               endif
 
@@ -3130,13 +3354,13 @@ module ELPA2_compute
                 print *,"trans_ev_tridi_to_band_real: not yet implemented"
                 stop
               endif
-
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row_real_cpu_openmp(a, row,i-limits(ip),my_thread, &
+                call unpack_row_real_cpu_openmp(a, row, i-limits(ip), my_thread, &
                                                 stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
+
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("OpenMP parallel")
 #endif
@@ -3161,14 +3385,19 @@ module ELPA2_compute
               if (mod((i-1)/nblk, np_rows) == my_prow) then
                 src_offset = src_offset+1
                 row(:) = q(src_offset, 1:l_nev)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
                 call MPI_Send(row, l_nev, MPI_REAL8, dst, 0, mpi_comm_rows, mpierr)
 #else
                 call MPI_Send(row, l_nev, MPI_REAL4, dst, 0, mpi_comm_rows, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               endif
             enddo
           enddo
+
         else if (my_prow < ip) then
           ! Send all rows going to PE ip
           src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
@@ -3177,11 +3406,15 @@ module ELPA2_compute
             if (src == my_prow) then
               src_offset = src_offset+1
               row(:) = q(src_offset, 1:l_nev)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Send(row, l_nev, MPI_REAL8, ip, 0, mpi_comm_rows, mpierr)
 #else
               call MPI_Send(row, l_nev, MPI_REAL4, ip, 0, mpi_comm_rows, mpierr)
 #endif
+
+#endif /* WITH_MPI */
             endif
           enddo
           ! Receive all rows from PE ip
@@ -3194,11 +3427,18 @@ module ELPA2_compute
                 stop
               endif
 
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
 #else
               call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
 #endif
+
+#else /* WITH_MPI */
+              row(1:l_nev) = row(1:l_nev)
+
+#endif /* WITH_MPI */
 
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%start("OpenMP parallel")
@@ -3206,7 +3446,7 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call unpack_row_real_cpu_openmp(a, row,i-limits(my_prow),my_thread, &
+                call unpack_row_real_cpu_openmp(a, row, i-limits(my_prow), my_thread, &
                                                 stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
@@ -3220,17 +3460,30 @@ module ELPA2_compute
                 call unpack_and_prepare_row_group_real_gpu(row_group, row_group_dev, a_dev, stripe_count, stripe_width, &
                                                            last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
                                                            unpack_idx, i - limits(my_prow), .false.)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
-              call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+               call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
-              call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+               call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+               row_group(1:l_nev,row_group_size) = row(1:l_nev) ! is this correct ?
+#endif /* WITH_MPI */
               else
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
                 call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
                 call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+                row(1:l_nev) = row(1:l_nev)
+
+#endif /* WITH_MPI */
                 call unpack_row_real_cpu(a, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
               endif
 
@@ -3276,20 +3529,31 @@ module ELPA2_compute
         stop
       endif
 
+#ifdef WITH_MPI
       result_send_request(:) = MPI_REQUEST_NULL
       result_recv_request(:) = MPI_REQUEST_NULL
-
+#endif
       ! Queue up buffers
 
       if (my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
         do j = 1, min(num_result_buffers, num_result_blocks)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_REAL8, 0, result_recv_tag, &
                               mpi_comm_rows, result_recv_request(j), mpierr)
 #else
           call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_REAL4, 0, result_recv_tag, &
                               mpi_comm_rows, result_recv_request(j), mpierr)
+
 #endif
+
+#else /* WITH_MPI */
+
+          ! carefull the "recv" has to be done at the corresponding wait or send
+          ! result_buffer(1: l_nev*nblk,1,j) =result_buffer(1:l_nev*nblk,1,nbuf)
+
+#endif /* WITH_MPI */
         enddo
       endif
 
@@ -3321,10 +3585,12 @@ module ELPA2_compute
          stop
        endif
 
+#ifdef WITH_MPI
       top_send_request(:) = MPI_REQUEST_NULL
       top_recv_request(:) = MPI_REQUEST_NULL
       bottom_send_request(:) = MPI_REQUEST_NULL
       bottom_recv_request(:) = MPI_REQUEST_NULL
+#endif
 
 #ifdef WITH_OPENMP
       allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
@@ -3480,6 +3746,8 @@ module ELPA2_compute
 
             csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
             b_len = csw*nbw*max_threads
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
             call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow+1, bottom_recv_tag, &
                               mpi_comm_rows, bottom_recv_request(i), mpierr)
@@ -3488,7 +3756,14 @@ module ELPA2_compute
                               mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
 
+#else /* WITH_MPI */
+!            carefull the "recieve" has to be done at the corresponding wait or send
+!            bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
@@ -3497,6 +3772,11 @@ module ELPA2_compute
             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL4, my_prow+1, bottom_recv_tag, &
                         mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
+
+#else  /* WITH_MPI */
+!            carefull the recieve has to be done at the corresponding wait or send
+!            bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
           enddo
@@ -3507,11 +3787,15 @@ module ELPA2_compute
             bcast_buffer(:,1:current_local_n) = hh_trans_real(:,current_tv_off+1:current_tv_off+current_local_n)
             current_tv_off = current_tv_off + current_local_n
           endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_REAL8, mod(sweep,np_cols), mpi_comm_cols, mpierr)
 #else
           call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_REAL4, mod(sweep,np_cols), mpi_comm_cols, mpierr)
 #endif
+
+#endif /* WITH_MPI */
 
           if (useGPU) then
             successCUDA =  cuda_memcpy(bcast_buffer_dev, loc(bcast_buffer(1,1)),  &
@@ -3567,7 +3851,10 @@ module ELPA2_compute
                 stop
               endif
 
+#ifdef WITH_MPI
               call MPI_Wait(bottom_recv_request(i), MPI_STATUS, mpierr)
+#endif
+
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%start("OpenMP parallel")
 #endif
@@ -3586,7 +3873,10 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
               call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
               n_off = current_local_n+a_off
 
               if (useGPU) then
@@ -3605,12 +3895,15 @@ module ELPA2_compute
 #endif /* WITH_OPENMP */
 
            if (next_n_end < next_n) then
+
 #ifdef WITH_OPENMP
 
              if (useGPU) then
                print *,"trans_ev_tridi_to_band_real: not yet implemented"
                stop
              endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
                                    MPI_REAL8, my_prow+1, bottom_recv_tag, &
@@ -3621,15 +3914,32 @@ module ELPA2_compute
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
 
+#else /* WTIH_MPI */
+!                carefull the recieve has to be done at the corresponding wait or send
+!                bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
+
 #else
              call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL4, my_prow+1, bottom_recv_tag, &
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
+
 #endif
+
+#else /* WITH_MPI */
+
+!!                carefull the recieve has to be done at the corresponding wait or send
+!!                bottom_border_recv_buffer(1:stripe_width,1:nbw,i) =  top_border_send_buffer(1:stripe_width,1:nbw,i)
+
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
            endif
@@ -3644,10 +3954,15 @@ module ELPA2_compute
                print *,"trans_ev_tridi_to_band_real: not yet implemented"
                stop
              endif
-
+#ifdef WITH_MPI
              call MPI_Wait(top_recv_request(i), MPI_STATUS, mpierr)
+#endif
+
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
              call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
 
              if (useGPU) then
                dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_real_datatype
@@ -3682,10 +3997,15 @@ module ELPA2_compute
                a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
              endif
-                call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count,  max_threads            &
+                call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count,  max_threads, l_nev,    &
                                                       a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                                       hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,         &
-                                                      my_thread, THIS_REAL_ELPA_KERNEL)
+                                                      my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+
+!                call compute_hh_trafo_real_cpu_openmp(a,stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
+!                    a_off, nbw, max_blk_size, bcast_buffer,  kernel_flops, kernel_time, &
+!0, current_local_n, i, my_thread, thread_width, &
+!                                         THIS_REAL_ELPA_KERNEL)
            enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3706,13 +4026,16 @@ module ELPA2_compute
              print *,"trans_ev_tridi_to_band_real: not yet implemented"
             stop
            endif
-
+#ifdef WITH_MPI
            call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+#endif
            if (bottom_msg_length>0) then
              n_off = current_local_n+nbw-bottom_msg_length+a_off
              b_len = csw*bottom_msg_length*max_threads
              bottom_border_send_buffer(1:b_len,i) = &
                  reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -3720,9 +4043,20 @@ module ELPA2_compute
              call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL4, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+                if (next_top_msg_length > 0) then
+                  top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
+                      bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+                endif
+
+#endif /* WITH_MPI */
            endif
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
            call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
            if (bottom_msg_length>0) then
              n_off = current_local_n+nbw-bottom_msg_length+a_off
 
@@ -3734,10 +4068,11 @@ module ELPA2_compute
                  print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
                  stop
                endif
-
              else
                bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
              endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -3745,6 +4080,14 @@ module ELPA2_compute
              call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL4, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+                if (next_top_msg_length > 0) then
+                  top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
+                  bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
+                endif
+
+#endif /* WITH_MPI */
            endif
 #endif /* WITH_OPENMP */
          else ! current_local_n <= bottom_msg_length + top_msg_length
@@ -3761,11 +4104,15 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
-          call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads,             &
+          call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev,      &
                                                 a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                                 hh_tau_dev, kernel_flops, kernel_time,                                 &
                                                 current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread,  &
-                                                THIS_REAL_ELPA_KERNEL)
+                                                thread_width, THIS_REAL_ELPA_KERNEL)
+!                call compute_hh_trafo_real_cpu_openmp(a, stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
+!                    a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time, &
+!current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, thread_width, &
+!                                    THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3773,12 +4120,16 @@ module ELPA2_compute
 #endif
 
         !send_b
+#ifdef WITH_MPI
         call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+#endif
         if (bottom_msg_length > 0) then
           n_off = current_local_n+nbw-bottom_msg_length+a_off
           b_len = csw*bottom_msg_length*max_threads
           bottom_border_send_buffer(1:b_len,i) = &
               reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -3786,6 +4137,14 @@ module ELPA2_compute
           call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL4, my_prow+1, &
                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+                if (next_top_msg_length > 0) then
+                  top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
+                      bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+                endif
+
+#endif /* WITH_MPI */
         endif
 #else /* WITH_OPENMP */
         call compute_hh_trafo_real_cpu(a, a_dev, stripe_width, a_dim2, stripe_count,                          &
@@ -3795,7 +4154,9 @@ module ELPA2_compute
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 
         !send_b
+#ifdef WITH_MPI
         call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
         if (bottom_msg_length > 0) then
           n_off = current_local_n+nbw-bottom_msg_length+a_off
 
@@ -3810,6 +4171,8 @@ module ELPA2_compute
           else
             bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
           endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
                          top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -3817,6 +4180,14 @@ module ELPA2_compute
           call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL4, my_prow+1, &
                          top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+                if (next_top_msg_length > 0) then
+                  top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
+                  bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
+                endif
+
+#endif /* WITH_MPI */
         endif
 #endif /* WITH_OPENMP */
 
@@ -3833,11 +4204,15 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
         do my_thread = 1, max_threads
-          call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width ,a_dim2, stripe_count, max_threads,              &
+          call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev,       &
                                                 a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,  &
                                                 hh_tau_dev, kernel_flops, kernel_time,                                  &
                                                 top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i,    &
-                                                my_thread, THIS_REAL_ELPA_KERNEL)
+                                                my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+!                call compute_hh_trafo_real_cpu_openmp(a,stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
+!                    a_off,  nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
+!                    top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
+!                                      THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3859,11 +4234,15 @@ module ELPA2_compute
             print *,"trans_ev_tridi_to_band_real: not yet implemented"
             stop
           endif
-
+#ifdef WITH_MPI
           call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
-#else /* WITH_OPENMP */
-          call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
 
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+          call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
           if (useGPU) then
             dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_real_datatype
             successCUDA =  cuda_memcpy( a_dev + dev_offset , loc( top_border_recv_buffer(:,1,i)),  &
@@ -3897,10 +4276,13 @@ module ELPA2_compute
             a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
               reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
           endif
-          call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads,             &
+          call compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev,      &
                                                 a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
-                                                h_tau_dev, kernel_flops, kernel_time,                                  &
-                                                0, top_msg_length, i, my_thread, THIS_REAL_ELPA_KERNEL)
+                                                hh_tau_dev, kernel_flops, kernel_time,                                  &
+                                                0, top_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+!                call compute_hh_trafo_real_cpu_openmp(a, stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
+!                    a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time, &
+!                                                      0, top_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3924,6 +4306,8 @@ module ELPA2_compute
           endif
 
         b_len = csw*next_top_msg_length*max_threads
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
         call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow-1, &
                        top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
@@ -3932,7 +4316,14 @@ module ELPA2_compute
                        top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #endif
 
+#else /* WITH_MPI */
+!             carefull the "recieve" has to be done at the corresponding wait or send
+!              top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
         call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_REAL8, my_prow-1, &
@@ -3941,6 +4332,12 @@ module ELPA2_compute
         call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_REAL4, my_prow-1, &
                        top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+!             carefull the "recieve" has to be done at the corresponding wait or send
+!              top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
+!               bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
 
@@ -3953,10 +4350,14 @@ module ELPA2_compute
           print *,"trans_ev_tridi_to_band_real: not yet implemented"
           stop
         endif
-
+#ifdef WITH_MPI
         call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+#endif
         b_len = csw*nbw*max_threads
         top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
         call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_REAL8, &
                        my_prow-1, bottom_recv_tag, &
@@ -3967,10 +4368,20 @@ module ELPA2_compute
                        mpi_comm_rows, top_send_request(i), mpierr)
 #endif
 
+#else /* WITH_MPI */
+              if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+                bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+              endif
+              if (next_n_end < next_n) then
+                bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+              endif
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
 
+#ifdef WITH_MPI
         call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
-
+#endif
         if (useGPU) then
           dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_real_datatype
           successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), a_dev + dev_offset, &
@@ -3983,6 +4394,8 @@ module ELPA2_compute
         else
           top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
         endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
         call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow-1, bottom_recv_tag, &
                        mpi_comm_rows, top_send_request(i), mpierr)
@@ -3991,33 +4404,56 @@ module ELPA2_compute
                        mpi_comm_rows, top_send_request(i), mpierr)
 #endif
 
+#else /* WITH_MPI */
+            if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+               bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
+             endif
+             if (next_n_end < next_n) then
+               bottom_border_recv_buffer(1:stripe_width,1:nbw,i) =  top_border_send_buffer(1:stripe_width,1:nbw,i)
+             endif
+#endif /* WITH_MPI */
+
 #endif /* WITH_OPENMP */
       endif
 
       ! Care that there are not too many outstanding top_recv_request's
       if (stripe_count > 1) then
         if (i>1) then
+
 #ifdef WITH_OPENMP
           if (useGPU) then
             print *,"trans_ev_tridi_to_band_real: not yet implemented"
            stop
           endif
-
+#ifdef WITH_MPI
           call MPI_Wait(top_recv_request(i-1), MPI_STATUS, mpierr)
-#else
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
           call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_OPENMP */
         else
+
 #ifdef WITH_OPENMP
           if (useGPU) then
             print *,"trans_ev_tridi_to_band_real: not yet implemented"
            stop
           endif
-
+#ifdef WITH_MPI
           call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS, mpierr)
-#else
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
           call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_OPENMP */
         endif
       endif
 
@@ -4033,11 +4469,17 @@ module ELPA2_compute
            print *,"trans_ev_tridi_to_band_real: not yet implemented"
            stop
          endif
-
+#ifdef WITH_MPI
       call MPI_Wait(top_send_request(i), MPI_STATUS, mpierr)
-#else
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
       call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_OPENMP */
       enddo
     endif
 
@@ -4058,11 +4500,17 @@ module ELPA2_compute
             print *,"trans_ev_tridi_to_band_real: not yet implemented"
             stop
           endif
-
+#ifdef WITH_MPI
           call MPI_Wait(result_send_request(nbuf), MPI_STATUS, mpierr)
-#else
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
           call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_OPENMP */
           dst = mod(num_blk, np_rows)
 
           if (dst == 0) then
@@ -4077,7 +4525,12 @@ module ELPA2_compute
             else
 
               do i = 1, min(na - num_blk*nblk, nblk)
+#ifdef WITH_OPENMP
+                call pack_row_real_cpu_openmp(a, row, j*nblk+i+a_off, stripe_width, &
+                                               stripe_count, max_threads, thread_width, l_nev)
+#else
                 call pack_row_real_cpu(a, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+#endif
                 q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
               enddo
             endif
@@ -4087,9 +4540,16 @@ module ELPA2_compute
                                            result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
             else
               do i = 1, nblk
+#ifdef WITH_OPENMP
+                call pack_row_real_cpu_openmp(a, result_buffer(:,i,nbuf), j*nblk+i+a_off, &
+                                              stripe_width, stripe_count, max_threads, thread_width, l_nev)
+#else
                 call pack_row_real_cpu(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+#endif
               enddo
-            endif
+            endif ! useGPU
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
             call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL8, dst, &
                                     result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
@@ -4097,7 +4557,18 @@ module ELPA2_compute
             call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL4, dst, &
                                     result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
 #endif
-          endif
+
+#else /* WITH_MPI */
+            if (j+num_result_buffers < num_result_blocks) &
+                   result_buffer(1:l_nev,1:nblk,nbuf) = result_buffer(1:l_nev,1:nblk,nbuf)
+            if (my_prow > 0 .and. l_nev>0) then
+              do j1 = 1, min(num_result_buffers, num_result_blocks)
+                result_buffer(1:l_nev,1:nblk,j1) = result_buffer(1:l_nev,1:nblk,nbuf)
+              enddo
+            endif
+
+#endif /* WITH_MPI */
+          endif ! else
         enddo
 
       else
@@ -4118,43 +4589,70 @@ module ELPA2_compute
               print *,"trans_ev_tridi_to_band_real: not yet implemented"
               stop
             endif
-
+#ifdef WITH_MPI
             call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS, mpierr)
-#else
-            call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
-
+#else /* WITH_MPI */
+            flag = .true.
 #endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+            call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
+#else /* WITH_MPI */
+            flag = .true.
+#endif
+
+#endif /* WITH_OPENMP */
+
             if (.not.flag) exit
           else
+
 #ifdef WITH_OPENMP
             if (useGPU) then
               print *,"trans_ev_tridi_to_band_real: not yet implemented"
               stop
             endif
-
+#ifdef WITH_MPI
             call MPI_Wait(result_recv_request(nbuf), MPI_STATUS, mpierr)
-#else
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
             call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_OPENMP */
+
           endif
 
           ! Fill result buffer into q
-           num_blk = j*np_rows + my_prow ! global number of current block, 0 based
-           do i = 1, min(na - num_blk*nblk, nblk)
-             q(j*nblk+i, 1:l_nev) = result_buffer(1:l_nev, i, nbuf)
-           enddo
+          num_blk = j*np_rows + my_prow ! global number of current block, 0 based
+          do i = 1, min(na - num_blk*nblk, nblk)
+            q(j*nblk+i, 1:l_nev) = result_buffer(1:l_nev, i, nbuf)
+          enddo
 
-           ! Queue result buffer again if there are outstanding blocks left
-           if (j+num_result_buffers < num_result_blocks) &
+          ! Queue result buffer again if there are outstanding blocks left
+#ifdef WITH_MPI
+          if (j+num_result_buffers < num_result_blocks) &
+
 #ifdef DOUBLE_PRECISION_REAL
-                     call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL8, 0, result_recv_tag, &
-                                    mpi_comm_rows, result_recv_request(nbuf), mpierr)
+          call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL8, 0, result_recv_tag, &
+                         mpi_comm_rows, result_recv_request(nbuf), mpierr)
 #else
-                     call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL4, 0, result_recv_tag, &
-                                    mpi_comm_rows, result_recv_request(nbuf), mpierr)
+          call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL4, 0, result_recv_tag, &
+                         mpi_comm_rows, result_recv_request(nbuf), mpierr)
 #endif
-         enddo
-         num_bufs_recvd = j
+          ! carefull the "recieve" has to be done at the corresponding wait or send
+!         if (j+num_result_buffers < num_result_blocks) &
+!                result_buffer(1:l_nev*nblk,1,nbuf) =  result_buffer(1:l_nev*nblk,1,nbuf)
+
+#else /* WITH_MPI */
+
+#endif /* WITH_MPI */
+        enddo
+        num_bufs_recvd = j
 
        endif
 
@@ -4226,18 +4724,20 @@ module ELPA2_compute
      enddo
 
      ! Just for safety:
+#ifdef WITH_MPI
      if (ANY(top_send_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_send_request ***',my_prow,my_pcol
      if (ANY(bottom_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_send_request ***',my_prow,my_pcol
      if (ANY(top_recv_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_recv_request ***',my_prow,my_pcol
      if (ANY(bottom_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_recv_request ***',my_prow,my_pcol
-
+#endif
      if (my_prow == 0) then
+
 #ifdef WITH_OPENMP
        if (useGPU) then
          print *,"trans_ev_tridi_to_band_real: not yet implemented"
          stop
        endif
-
+#ifdef WITH_MPI
        allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"trans_ev_tridi_to_band_real: error when allocating mpi_statuses"//errorMessage
@@ -4250,14 +4750,20 @@ module ELPA2_compute
          print *,"trans_ev_tridi_to_band_real: error when deallocating mpi_statuses"//errorMessage
          stop
        endif
+#endif
 
-#else
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
        call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
 #endif
-     endif
 
+#endif /* WITH_OPENMP */
+     endif
+#ifdef WITH_MPI
      if (ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
      if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
+#endif
 
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
          write(error_unit,'(" Kernel time:",f10.3," MFlops: ",es12.5)')  kernel_time, kernel_flops/kernel_time*1.d-6
@@ -4504,8 +5010,9 @@ module ELPA2_compute
       integer(kind=ik)              :: cur_l_rows, cur_l_cols,vmr_size ,umc_size
       integer(kind=c_size_t)        :: lc_start, lc_end, lr_end, lce_1, lcs_1,lre_1
       integer(kind=ik)              :: na_rows, na_cols
+#ifdef WITH_MPI
       integer(kind=ik), external    :: numroc
-
+#endif
 
       logical, intent(in)           :: wantDebug
       logical, intent(out)          :: success
@@ -4519,7 +5026,6 @@ module ELPA2_compute
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
       success = .true.
 
       ! Semibandwith nbw must be a multiple of blocksize nblk
@@ -4535,15 +5041,13 @@ module ELPA2_compute
         endif
       endif
       if (useGPU) then
+#ifdef WITH_MPI
         na_rows = numroc(na, nblk, my_prow, 0, np_rows)
-        !   if (na_rows .ne. na_rows2) then
-        !     print *,"bandred_complex: Why is na_rows not equal? ",na_rows,na_rows2
-        !   endif
         na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
-        !   if (na_cols .ne. na_cols2) then
-        !     print *,"bandred_complex: Why is na_cols not equal? ",na_cols,na_cols2
-        !   endif
-
+#else
+        na_rows = na
+        na_cols = na
+#endif
         successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_complex_datatype)
         if (.not.(successCUDA)) then
           print *, " bandred_complex: cuda malloc failed tmat_dev ", istat
@@ -4753,11 +5257,17 @@ module ELPA2_compute
               aux1(1) = dot_product(vr(1:lr),vr(1:lr))
               aux1(2) = 0.
             endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
             call mpi_allreduce(aux1, aux2, 2, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #else
             call mpi_allreduce(aux1, aux2, 2, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
+
+#else /* WITH_MPI */
+            aux2 = aux1
+#endif /* WITH_MPI */
             vnorm2 = aux2(1)
             vrl    = aux2(2)
 
@@ -4781,11 +5291,15 @@ module ELPA2_compute
           ! Broadcast Householder vector and tau along columns
 
           vr(lr+1) = tau
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
           call MPI_Bcast(vr, lr+1, MPI_DOUBLE_COMPLEX, cur_pcol, mpi_comm_cols, mpierr)
 #else
           call MPI_Bcast(vr, lr+1, MPI_COMPLEX, cur_pcol, mpi_comm_cols, mpierr)
 #endif
+
+#endif /* WITH_MPI */
           vmr(1:lr,lc) = vr(1:lr)
           tau = vr(lr+1)
           tmat(lc,lc,istep) = conjg(tau) ! Store tau in diagonal of tmat
@@ -4806,11 +5320,17 @@ module ELPA2_compute
           enddo
 
           ! Get global dot products
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
           if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #else
           if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
+
+#else /* WITH_MPI */
+          if (nlc>0) aux2=aux1
+#endif /* WITH_MPI */
           ! Transform
 
           nlc = 0
@@ -4984,7 +5504,7 @@ module ELPA2_compute
                                           umc, ubound(umc,dim=1), mpi_comm_cols, &
                                           istep*nbw, n_cols, nblk)
         endif
-
+#ifdef WITH_MPI
         if (l_cols>0) then
           allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
@@ -5003,7 +5523,24 @@ module ELPA2_compute
             stop
           endif
         endif
+#else /* WITH_MPI */
+        if (l_cols>0) then
+          allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
+          if (istat .ne. 0) then
+            print *,"bandred_complex: error when allocating tmp "//errorMessage
+            stop
+          endif
+          tmp(1:l_cols,1:n_cols) = umc(1:l_cols,1:n_cols)
 
+          umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
+          deallocate(tmp, stat=istat, errmsg=errorMessage)
+          if (istat .ne. 0) then
+            print *,"bandred_complex: error when deallocating tmp "//errorMessage
+            stop
+          endif
+        endif
+
+#endif /* WITH_MPI */
         ! U = U * Tmat**T
         if (useGPU) then
           if (size(umc,dim=1)*size(umc,dim=2) .gt. umc_size) then
@@ -5306,11 +5843,17 @@ module ELPA2_compute
          h1(nc+1:nc+i) = a(1:i,i)
          nc = nc+i
        enddo
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
        call mpi_allreduce(h1, h2, nc, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, mpierr)
 #else
        call mpi_allreduce(h1, h2, nc, MPI_COMPLEX, MPI_SUM, comm, mpierr)
 #endif
+
+#else /* WITH_MPI */
+       h2(1:nc) = h1(1:nc)
+#endif /* WITH_MPI */
        nc = 0
        do i=1,n
          a(1:i,i) = h2(nc+1:nc+i)
@@ -5517,11 +6060,16 @@ module ELPA2_compute
            nb = nb+l_rows
 
            if (lc==n_cols .or. mod(ncol,nblk)==0) then
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_DOUBLE_COMPLEX, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_COMPLEX, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
+
+#endif /* WITH_MPI */
              ns = nb
            endif
          enddo
@@ -5592,11 +6140,17 @@ module ELPA2_compute
            tmp1(1:l_cols*n_cols) = 0
 
          endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #else
          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
+
+#else /* WITH_MPI */
+         tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
+#endif /* WITH_MPI */
          if (l_rows>0) then
 
            if (useGPU) then
@@ -5764,7 +6318,9 @@ module ELPA2_compute
       integer(kind=ik), allocatable  :: omp_block_limits(:)
       integer(kind=ik)               :: max_threads, my_thread, my_block_s, my_block_e, iter
       integer(kind=ik)               :: omp_get_max_threads
+#ifdef WITH_MPI
       integer(kind=ik)               :: mpi_status(MPI_STATUS_SIZE)
+#endif
       complex(kind=ck), allocatable  :: hv_t(:,:), tau_t(:)
 #endif
       integer(kind=ik), allocatable  :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
@@ -5773,6 +6329,9 @@ module ELPA2_compute
       complex(kind=ck), allocatable  :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
       integer(kind=ik)               :: istat
       character(200)                 :: errorMessage
+#ifndef WITH_MPI
+      integer(kind=ik)               :: startAddr
+#endif
 
 !   ! dummies for calling redist_band
 !   real*8                   :: r_a(1,1), r_ab(1,1)
@@ -5801,9 +6360,9 @@ module ELPA2_compute
       endif
       global_id(:,:) = 0
       global_id(my_prow, my_pcol) = my_pe
-
+#ifdef WITH_MPI
       call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
-
+#endif
 
       ! Total number of blocks in the band:
 
@@ -5933,6 +6492,8 @@ module ELPA2_compute
         local_size = limits(my_prow+1) - limits(my_prow)
         if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
           num_chunks  = num_chunks+1
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
           call mpi_irecv(hh_trans_complex(1,num_hh_vecs+1), nb*local_size, MPI_COMPLEX16, nt, &
                            10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
@@ -5940,6 +6501,12 @@ module ELPA2_compute
           call mpi_irecv(hh_trans_complex(1,num_hh_vecs+1), nb*local_size, MPI_COMPLEX8, nt, &
                            10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
 #endif
+
+#else /* WITH_MPI */
+          ! carefull non-block recv data copy must be done at wait or send
+          ! hh_trans_complex(1:nb*local_size,num_hh_vecs+1) = hh_send(1:nb*hh_cnt(iblk),1,iblk)
+
+#endif /* WITH_MPI */
           num_hh_vecs = num_hh_vecs + local_size
         endif
         nx = nx - nb
@@ -5947,9 +6514,9 @@ module ELPA2_compute
           nt = nt + 1
         endif
       enddo
-
+#ifdef WITH_MPI
       ireq_hhs(:) = MPI_REQUEST_NULL
-
+#endif
       ! Buffers for gathering/sending the HH vectors
 
       allocate(hh_gath(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! gathers HH vectors
@@ -5982,10 +6549,10 @@ module ELPA2_compute
 
       hh_cnt(:) = 1 ! The first transfomation vector is always 0 and not calculated at all
       hh_dst(:) = 0 ! PE number for receive
-
+#ifdef WITH_MPI
       ireq_ab = MPI_REQUEST_NULL
       ireq_hv = MPI_REQUEST_NULL
-
+#endif
       ! Limits for sending
 
       allocate(snd_limits(0:np_rows,nblocks), stat=istat, errmsg=errorMessage)
@@ -6036,12 +6603,20 @@ module ELPA2_compute
         ! send first column to previous PE
         ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
         ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
         call mpi_isend(ab_s, nb+1, MPI_COMPLEX16, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
         call mpi_isend(ab_s, nb+1, MPI_COMPLEX8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #endif
+
+#endif /* WITH_MPI */
       endif
+
+#ifndef WITH_MPI
+       startAddr = ubound(hh_trans_complex,dim=2)
+#endif
 
 #ifdef WITH_OPENMP
       do istep=1,na-1-block_limits(my_pe)*nb
@@ -6062,7 +6637,6 @@ module ELPA2_compute
 #endif
         if (n<2) vnorm2 = 0. ! Safety only
         call hh_transform_complex(ab(2,na_s-n_off),vnorm2,hf,tau)
-
         hv(1) = 1
         hv(2:n) = ab(3:n+1,na_s-n_off)*hf
 
@@ -6077,19 +6651,31 @@ module ELPA2_compute
           ! Receive Householder vector from previous task, from PE owning subdiagonal
 #ifdef WITH_OPENMP
 
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
           call mpi_recv(hv, nb, MPI_COMPLEX16, my_pe-1, 2, mpi_comm, mpi_status, mpierr)
 #else
           call mpi_recv(hv, nb, MPI_COMPLEX8, my_pe-1, 2, mpi_comm, mpi_status, mpierr)
 #endif
 
+#else /* WITH_MPI */
+             hv(1:nb) = hv_s(1:nb)
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
           call mpi_recv(hv, nb, MPI_COMPLEX16, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
           call mpi_recv(hv, nb, MPI_COMPLEX8, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+             hv(1:nb) = hv_s(1:nb)
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
           tau = hv(1)
@@ -6250,23 +6836,37 @@ module ELPA2_compute
 
             ! Send our first column to previous PE
             if (my_pe>0 .and. na_s <= na) then
+#ifdef WITH_MPI
               call mpi_wait(ireq_ab,mpi_status,mpierr)
+#endif
               ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
               call mpi_isend(ab_s, nb+1, MPI_COMPLEX16, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
               call mpi_isend(ab_s, nb+1, MPI_COMPLEX8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #endif
+
+#endif /* WITH_MPI */
             endif
 
             ! Request last column from next PE
             ne = na_s + nblocks*nb - (max_threads-1) - 1
             if (istep>=max_threads .and. ne <= na) then
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
               call mpi_recv(ab(1,ne-n_off), nb+1, MPI_COMPLEX16, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
 #else
               call mpi_recv(ab(1,ne-n_off), nb+1, MPI_COMPLEX8, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
 #endif
+
+#else /* WITH_MPI */
+                 ab(1:nb+1,ne-n_off) = ab_s(1:nb+1)
+
+#endif /* WITH_MPI */
             endif
 
           else
@@ -6275,14 +6875,21 @@ module ELPA2_compute
             ! Send last HH vector and TAU to next PE if it has been calculated above
             ne = na_s + nblocks*nb - (max_threads-1) - 1
             if (istep>=max_threads .and. ne < na) then
+
+#ifdef WITH_MPI
               call mpi_wait(ireq_hv,mpi_status,mpierr)
+#endif
               hv_s(1) = tau_t(max_threads)
               hv_s(2:) = hv_t(2:,max_threads)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
               call mpi_isend(hv_s, nb, MPI_COMPLEX16, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #else
               call mpi_isend(hv_s, nb, MPI_COMPLEX8, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #endif
+
+#endif /* WITH_MPI */
             endif
 
             ! "Send" HH vector and TAU to next OpenMP thread
@@ -6327,10 +6934,14 @@ module ELPA2_compute
 #ifndef WITH_OPENMP
           if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
+#ifdef WITH_MPI
             call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
+#endif
             ! Copy vectors into send buffer
             hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
             ! Send to destination
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
             call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_COMPLEX16, &
                             global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
@@ -6340,11 +6951,14 @@ module ELPA2_compute
                             global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
                             10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
 #endif
+#else /* WITH_MPI */
+               startAddr = startAddr - hh_cnt(iblk)
+               hh_trans_complex(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
+#endif /* WITH_MPI */
             ! Reset counter and increase destination row
             hh_cnt(iblk) = 0
             hh_dst(iblk) = hh_dst(iblk)+1
           endif
-
 
           ! The following code is structured in a way to keep waiting times for
           ! other PEs at a minimum, especially if there is only one block.
@@ -6374,12 +6988,20 @@ module ELPA2_compute
             if (nr>0) call ZGEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1,(0.0_rk,0.0_rk),hs,1)
 
             ! ... then request last column ...
+               ! ... then request last column ...
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
             call mpi_recv(ab(1,ne), nb+1, MPI_COMPLEX16, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
 
 #else
             call mpi_recv(ab(1,ne), nb+1, MPI_COMPLEX16, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+            ab(1:nb+1,ne) = ab_s(1:nb+1)
+#endif /* WITH_MPI */
+
             ! ... and complete the result
             hs(1:nr) = hs(1:nr) + ab(2:nr+1,ne)*tau*hv(nb)
             hd(nb) = hd(nb) + ab(1,ne)*hv(nb)*tau
@@ -6447,18 +7069,26 @@ module ELPA2_compute
               ! ... and send it away immediatly if this is the last block
 
               if (iblk==nblocks) then
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
                 call mpi_wait(ireq_hv,mpi_status,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
+
+#endif /* WITH_MPI */
                 hv_s(1) = tau_new
                 hv_s(2:) = hv_new(2:)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call mpi_isend(hv_s, nb, MPI_COMPLEX16, my_pe+1, 2 ,mpi_comm, ireq_hv, mpierr)
 #else
                 call mpi_isend(hv_s, nb, MPI_COMPLEX8, my_pe+1, 2 ,mpi_comm, ireq_hv, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               endif
 
             endif
@@ -6492,17 +7122,27 @@ module ELPA2_compute
              !#endif
 
              ! ... send it away ...
+
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
              call mpi_wait(ireq_ab,mpi_status,mpierr)
 #else
              call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
+
+#endif /* WITH_MPI */
              ab_s(1:nb+1) = ab(1:nb+1,ns)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
              call mpi_isend(ab_s, nb+1, MPI_COMPLEX16, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
              call mpi_isend(ab_s, nb+1, MPI_COMPLEX8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #endif
+
+#endif /* WITH_MPI */
+
              ! ... and calculate remaining columns with rank-2 update
              if (nc>1) then
 
@@ -6612,10 +7252,14 @@ module ELPA2_compute
 
          if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
            ! Wait for last transfer to finish
+#ifdef WITH_MPI
            call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+#endif
            ! Copy vectors into send buffer
            hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
            ! Send to destination
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_complex16, &
                          global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
@@ -6625,6 +7269,11 @@ module ELPA2_compute
                          global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
                          10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
 #endif
+
+#else /* WITH_MPI */
+            startAddr = startAddr - hh_cnt(iblk)
+            hh_trans_complex(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
+#endif /* WITH_MPI */
            ! Reset counter and increase destination row
            hh_cnt(iblk) = 0
            hh_dst(iblk) = hh_dst(iblk)+1
@@ -6640,6 +7289,8 @@ module ELPA2_compute
 
      ! Finish the last outstanding requests
 #ifdef WITH_OPENMP
+
+#ifdef WITH_MPI
      call mpi_wait(ireq_ab,mpi_status,mpierr)
      call mpi_wait(ireq_hv,mpi_status,mpierr)
 
@@ -6655,16 +7306,23 @@ module ELPA2_compute
        print *,"tridiag_band_complex: error when deallocating mpi_statuses "//errorMessage
        stop
      endif
-#else
+#endif /* WITH_MPI */
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
      call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
      call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 
      call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
      call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+#endif
 
 #endif /* WITH_OPENMP */
-     call mpi_barrier(mpi_comm,mpierr)
 
+#ifdef WITH_MPI
+     call mpi_barrier(mpi_comm,mpierr)
+#endif
      deallocate(ab, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"tridiag_band_complex: error when deallocating ab "//errorMessage
@@ -6898,14 +7556,18 @@ module ELPA2_compute
       integer(kind=ik), allocatable :: top_recv_request(:), bottom_recv_request(:)
 #ifdef WITH_OPENMP
       integer(kind=ik), allocatable :: mpi_statuses(:,:)
+#ifdef WITH_MPI
       integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
 #endif
+#endif
+
+#ifdef WITH_MPI
       integer(kind=ik), external    :: numroc
+#endif
       integer(kind=ik)              :: na_rows, na_cols
 !    real*8                  :: ttt0, ttt1, ttt2, t2_compute_kernel, t0_compute_kernel,t1_compute_kernel, &
 !                               t0_mpi_time, t1_mpi_time,t2_mpi_time
 !    real*8                  :: t0_cpu_code,t1_cpu_code,t2_cpu_code,t0_block_time,t1_block_time,t2_block_time,t0_cuda_memcpy
-
 !    real*8                  :: t0_inner_do_time, t1_inner_do_time , t2_inner_do_time,t0_outer_do_time ,t1_outer_do_time , &
 !                               t2_outer_do_time ,t0_result_time ,t1_result_time, t2_result_time,t0_mpi_recv_time,         &
 !                               t1_mpi_recv_time,t2_mpi_recv_time
@@ -6935,6 +7597,9 @@ module ELPA2_compute
       character(200)                :: errorMessage
       logical                       :: successCUDA
       logical                       :: success
+#ifndef WITH_MPI
+      integer(kind=ik)              :: j1
+#endif
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_tridi_to_band_complex")
@@ -6956,15 +7621,19 @@ module ELPA2_compute
       max_threads = 1
       max_threads = omp_get_max_threads()
 #endif
-
       call MPI_Comm_rank(mpi_comm_rows, my_prow, mpierr)
       call MPI_Comm_size(mpi_comm_rows, np_rows, mpierr)
       call MPI_Comm_rank(mpi_comm_cols, my_pcol, mpierr)
       call MPI_Comm_size(mpi_comm_cols, np_cols, mpierr)
 
       if (useGPU) then
+#ifdef WITH_MPI
         na_rows = numroc(na, nblk, my_prow, 0, np_rows)
         na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
+#else
+        na_rows = na
+        na_cols = na
+#endif
       endif
 
       success = .true.
@@ -7063,7 +7732,7 @@ module ELPA2_compute
         stop
       endif
 
-      if (.not.(useGPU) then
+      if (.not.(useGPU)) then
         allocate(a(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
@@ -7190,37 +7859,61 @@ module ELPA2_compute
           do i=limits(ip)+1,limits(ip+1)
             src = mod((i-1)/nblk, np_rows)
             if (src < my_prow) then
+
 #ifdef WITH_OPENMP
               if (useGPU) then
                 print *,"trans_ev_tridi_to_band_complex: not yet implemented"
                 stop
               endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
               call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
 #else
               call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, mpi_status, mpierr)
 #endif
 
+#else /* WITH_MPI */
+              row(1:l_nev) = row(1:l_nev)
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
               if (useGPU) then
                 call unpack_and_prepare_row_group_complex_gpu(i - limits(ip), .false.)
+#ifdef WITH_MPI
                 call MPI_Recv(row_group(:, row_group_size), l_nev,MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              else
-                call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              endif
 #else
+                row_group(1:l_nev, row_group_size) = row(1:l_nev) ! is this correct?
+#endif
+              else
+#ifdef WITH_MPI
+                call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+#else
+                row(1:l_nev) = row(1:l_nev)
+#endif
+              endif
+#else /* DOUBLE_PRECISION_COMPLEX */
+
               if (useGPU) then
                 call unpack_and_prepare_row_group_complex_gpu(i - limits(ip), .false.)
+#ifdef WITH_MPI
                 call MPI_Recv(row_group(:, row_group_size), l_nev,MPI_COMPLEX8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              else
-                call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              endif
+#else
+                row_group(1:l_nev, row_group_size) = row(1:l_nev) ! is this correct?
 #endif
+              else
+#ifdef WITH_MPI
+                call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+#else
+                row(1:l_nev) = row(1:l_nev)
+
+#endif
+              endif
+#endif /* DOUBLE_PRECISION_COMPLEX */
 
 #endif /* WITH_OPENMP */
-
 
 #ifdef WITH_OPENMP
               if (useGPU) then
@@ -7291,11 +7984,16 @@ module ELPA2_compute
               if(mod((i-1)/nblk, np_rows) == my_prow) then
                   src_offset = src_offset+1
                   row(:) = q(src_offset, 1:l_nev)
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
                   call MPI_Send(row, l_nev, MPI_COMPLEX16, dst, 0, mpi_comm_rows, mpierr)
 #else
                   call MPI_Send(row, l_nev, MPI_COMPLEX8, dst, 0, mpi_comm_rows, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               endif
             enddo
           enddo
@@ -7307,45 +8005,72 @@ module ELPA2_compute
             if (src == my_prow) then
               src_offset = src_offset+1
               row(:) = q(src_offset, 1:l_nev)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
               call MPI_Send(row, l_nev, MPI_COMPLEX16, ip, 0, mpi_comm_rows, mpierr)
 #else
               call MPI_Send(row, l_nev, MPI_COMPLEX8, ip, 0, mpi_comm_rows, mpierr)
 #endif
+
+#endif /* WITH_MPI */
             endif
           enddo
           ! Receive all rows from PE ip
           do i=limits(my_prow)+1,limits(my_prow+1)
             src = mod((i-1)/nblk, np_rows)
             if (src == ip) then
+
 #ifdef WITH_OPENMP
               if (useGPU) then
                 print *,"trans_ev_tridi_to_band_complex: not yet implemented"
                 stop
               endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
               call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
 #else
               call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, mpi_status, mpierr)
 #endif
 
+#else /* WITH_MPI */
+              row(1:l_nev) = row(1:l_nev)
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
               if (useGPU) then
                 call unpack_and_prepare_row_group_complex_gpu(i - limits(my_prow), .false.)
+#ifdef WITH_MPI
                 call MPI_Recv(row_group(:, row_group_size), l_nev,MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              else
-                call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              endif
 #else
+                row_group(1:l_nev,row_group_size) = row(1:l_nev) ! is this correct ?
+#endif
+              else
+#ifdef WITH_MPI
+                call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+#else
+                row(1:l_nev) = row(1:l_nev)
+#endif
+              endif
+#else /* DOUBLE_PRECISION_COMPLEX */
               if (useGPU) then
                 call unpack_and_prepare_row_group_complex_gpu(i - limits(my_prow), .false.)
+#ifdef WITH_MPI
                 call MPI_Recv(row_group(:, row_group_size), l_nev,MPI_COMPLEX8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              else
-                call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
-              endif
+#else
+                row_group(1:l_nev,row_group_size) =
 #endif
+              else
+#ifdef WITH_MPI
+                call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+#else
+                row(1:l_nev) = row(1:l_nev)
+#endif
+              endif
+#endif /* DOUBLE_PRECISION_COMPLEX */
 
 #endif /* WITH_OPENMP */
 
@@ -7413,11 +8138,13 @@ module ELPA2_compute
         stop
       endif
 
+#ifdef WITH_MPI
       result_send_request(:) = MPI_REQUEST_NULL
       result_recv_request(:) = MPI_REQUEST_NULL
+#endif
 
       ! Queue up buffers
-
+#ifdef WITH_MPI
       if (my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
         do j = 1, min(num_result_buffers, num_result_blocks)
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -7429,7 +8156,15 @@ module ELPA2_compute
 #endif
         enddo
       endif
+#else /* WITH_MPI */
+      ! carefull the "recieve" has to be done at the corresponding wait or send
+      !if (my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
+      !  do j = 1, min(num_result_buffers, num_result_blocks)
+      !    result_buffer(1:l_nev*nblk,1,j) = result_buffer(1:l_nev*nblk,1,nbuf)
+      !  enddo
+      !endif
 
+#endif /* WITH_MPI */
       num_bufs_recvd = 0 ! No buffers received yet
 
       ! Initialize top/bottom requests
@@ -7458,11 +8193,12 @@ module ELPA2_compute
         stop
       endif
 
-
+#ifdef WITH_MPI
       top_send_request(:) = MPI_REQUEST_NULL
       top_recv_request(:) = MPI_REQUEST_NULL
       bottom_send_request(:) = MPI_REQUEST_NULL
       bottom_recv_request(:) = MPI_REQUEST_NULL
+#endif
 
 #ifdef WITH_OPENMP
 
@@ -7652,6 +8388,9 @@ module ELPA2_compute
 
             csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
             b_len = csw*nbw*max_threads
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
             call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
                        mpi_comm_rows, bottom_recv_request(i), mpierr)
@@ -7660,7 +8399,14 @@ module ELPA2_compute
                        mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
 
+#else /* WITH_MPI */
+!            carefull the "recieve" has to be do done at the corresponding wait or send
+!            bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
@@ -7669,6 +8415,11 @@ module ELPA2_compute
             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX8, my_prow+1, bottom_recv_tag, &
                            mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+!            carefull the "recieve" has to be do done at the corresponding wait or send
+!            bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
 
@@ -7683,11 +8434,15 @@ module ELPA2_compute
             bcast_buffer(:,1:current_local_n) = hh_trans_complex(:,current_tv_off+1:current_tv_off+current_local_n)
             current_tv_off = current_tv_off + current_local_n
           endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
           call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_COMPLEX16, mod(sweep,np_cols), mpi_comm_cols, mpierr)
 #else
           call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_COMPLEX8, mod(sweep,np_cols), mpi_comm_cols, mpierr)
 #endif
+
+#endif /* WITH_MPI */
           if (useGPU) then
             successCUDA =  cuda_memcpy(bcast_buffer_dev, loc(bcast_buffer(1,1)), nbw * &
                                        current_local_n * size_of_complex_datatype , &
@@ -7731,7 +8486,6 @@ module ELPA2_compute
             !          t1_inner_do_time =MPI_Wtime()
 #endif
 
-
             do i = 1, stripe_count
 
 #ifdef WITH_OPENMP
@@ -7754,14 +8508,19 @@ module ELPA2_compute
                   print *,"trans_ev_tridi_to_band_complex: not yet implemented"
                   stop
                 endif
-
+#ifdef WITH_MPI
                 call MPI_Wait(bottom_recv_request(i), mpi_status, mpierr)
+#endif
+
 #else /* WITH_OPENMP */
 
 #ifdef WITH_GPU_VERSION
                 !              t1_mpi_wait_time =MPI_Wtime()
 #endif
+
+#ifdef WITH_MPI
                 call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
 
 #ifdef WITH_GPU_VERSION
                 !              t2_mpi_wait_time =MPI_Wtime()
@@ -7816,11 +8575,13 @@ module ELPA2_compute
 #endif /* WITH_OPENMP */
 
                 if (next_n_end < next_n) then
+
 #ifdef WITH_OPENMP
                   if (useGPU) then
                     print *,"not yet implemented"
                     stop
                   endif
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
                   call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
@@ -7832,7 +8593,14 @@ module ELPA2_compute
                                      mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
 
+#else /* WITH_MPI */
+!            carefull the "recieve" has to be do done at the corresponding wait or send
+!                 bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+#endif
+
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
                   call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow+1, bottom_recv_tag, &
@@ -7841,6 +8609,11 @@ module ELPA2_compute
                   call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX8, my_prow+1, bottom_recv_tag, &
                                      mpi_comm_rows, bottom_recv_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+!            carefull the "recieve" has to be do done at the corresponding wait or send
+!                 bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
                 endif
@@ -7855,15 +8628,19 @@ module ELPA2_compute
                     print *,"trans_ev_tridi_to_band_complex: not yet implemented"
                     stop
                   endif
-
+#ifdef WITH_MPI
                   call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+#endif
+
 #else /* WITH_OPENMP */
 
 #ifdef WITH_GPU_VERSION
                   !                t1_mpi_wait_time =MPI_Wtime()
 #endif
-                  call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 
+#ifdef WITH_MPI
+                  call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
                   if (useGPU) then
                   !                t2_mpi_wait_time =MPI_Wtime()
                   !                t0_mpi_wait_time = t0_mpi_wait_time + ( t2_mpi_wait_time -t1_mpi_wait_time)
@@ -7905,9 +8682,9 @@ module ELPA2_compute
                     a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                              reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                   endif
-                  call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,                &
+                  call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,         &
                                                            a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
-                                                           0, current_local_n, i, my_thread,                                  &
+                                                           0, current_local_n, i, my_thread, thread_width,                    &
                                                            THIS_COMPLEX_ELPA_KERNEL)
                 enddo
 !$omp end parallel do
@@ -7916,7 +8693,6 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-
                 if (useGPU) then
                   call compute_hh_trafo_complex_gpu(0, current_local_n, i, a_off, dev_offset, dev_offset_1, dev_offset_2)
 !                call compute_hh_trafo_complex_gpu(0, current_local_n, i)
@@ -7935,14 +8711,19 @@ module ELPA2_compute
                   print *,"trans_ev_tridi_to_band_complex: not yet implemented"
                   stop
                 endif
-
+#ifdef WITH_MPI
                 call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+#endif
+
 #else /* WITH_OPENMP */
 
 #ifdef WITH_GPU_VERSION
 !                t1_mpi_wait_time =MPI_Wtime()
 #endif
+
+#ifdef WITH_MPI
                 call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
 
 #ifdef WITH_GPU_VERSION
 !                t2_mpi_wait_time =MPI_Wtime()
@@ -7953,6 +8734,7 @@ module ELPA2_compute
 
                 if (bottom_msg_length>0) then
                   n_off = current_local_n+nbw-bottom_msg_length+a_off
+
 #ifdef WITH_OPENMP
                   if (useGPU) then
                     print *,"trans_ev_tridi_to_band_complex: not yet implemented"
@@ -7962,6 +8744,8 @@ module ELPA2_compute
                   b_len = csw*bottom_msg_length*max_threads
                   bottom_border_send_buffer(1:b_len,i) = &
                           reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
                   call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, &
                                      top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -7969,6 +8753,13 @@ module ELPA2_compute
                   call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX8, my_prow+1, &
                                      top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+                 if (next_top_msg_length > 0) then
+                   top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
+                       bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+                 endif
+#endif /* WITH_MPI  */
 
 #else /* WITH_OPENMP */
 
@@ -7987,6 +8778,8 @@ module ELPA2_compute
                   else
                     bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
                   endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
                   call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX16, my_prow+1, &
                               top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -7994,6 +8787,14 @@ module ELPA2_compute
                   call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX16, my_prow+1, &
                               top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+                 if (next_top_msg_length > 0) then
+                   top_border_recv_buffer(1:next_top_msg_length*stripe_width,1,i) = &
+                   bottom_border_send_buffer(1:bottom_msg_length*stripe_width,1,i)
+                 endif
+
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
                 endif
@@ -8012,10 +8813,10 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
               do my_thread = 1, max_threads
-                call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,                   &
+                call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,            &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,    &
                                                          current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
-                                                         THIS_COMPLEX_ELPA_KERNEL)
+                                                          thread_width, THIS_COMPLEX_ELPA_KERNEL)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -8039,20 +8840,25 @@ module ELPA2_compute
 #endif /* WITH_OPENMP */
 
               !send_b
+
 #ifdef WITH_OPENMP
               if (useGPU) then
                 print *,"trans_ev_tridi_to_band_complex: not yet implemented"
                 stop
               endif
-
+#ifdef WITH_MPI
               call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+#endif
+
 #else /* WITH_OPENMP */
 
 #ifdef WITH_GPU_VERSION
 !              t1_mpi_wait_time =MPI_Wtime()
 #endif
 
+#ifdef WITH_MPI
               call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
 
 #ifdef WITH_GPU_VERSION
 !              t2_mpi_wait_time =MPI_Wtime()
@@ -8071,6 +8877,8 @@ module ELPA2_compute
                 b_len = csw*bottom_msg_length*max_threads
                 bottom_border_send_buffer(1:b_len,i) = &
                       reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX16, my_prow+1, &
                                    top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -8078,6 +8886,13 @@ module ELPA2_compute
                 call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_COMPLEX8, my_prow+1, &
                                    top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+                 if (next_top_msg_length > 0) then
+                   top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
+                       bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+                 endif
+#endif /* WITH_MPI */
 
 #else /* WITH_OPENMP */
 
@@ -8096,6 +8911,9 @@ module ELPA2_compute
                 else
                   bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
                 endif
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX16, my_prow+1, &
                               top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -8103,6 +8921,14 @@ module ELPA2_compute
                 call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_COMPLEX8, my_prow+1, &
                               top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+                 if (next_top_msg_length > 0) then
+                   top_border_recv_buffer(1:next_top_msg_length*stripe_width,1,i) = &
+                   bottom_border_send_buffer(1:bottom_msg_length*stripe_width,1,i)
+                 endif
+
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
               endif
@@ -8120,11 +8946,11 @@ module ELPA2_compute
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,    &
+                call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,    &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops,  &
                                                          kernel_time, top_msg_length,                           &
                                                          current_local_n-top_msg_length-bottom_msg_length, i,   &
-                                                         my_thread,  THIS_COMPLEX_ELPA_KERNEL)
+                                                         my_thread,  thread_width,  THIS_COMPLEX_ELPA_KERNEL)
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
@@ -8132,7 +8958,6 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-
               if (useGPU) then
 !              call compute_hh_trafo_complex_gpu(top_msg_length,current_local_n-top_msg_length-bottom_msg_length, i)
 
@@ -8144,20 +8969,25 @@ module ELPA2_compute
                                                  top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                                                  last_stripe_width, THIS_COMPLEX_ELPA_KERNEL)
               endif
-
 #endif /* WITH_OPENMP */
 
               !wait_t
               if (top_msg_length>0) then
 #ifdef WITH_OPENMP
+
+#ifdef WITH_MPI
                 call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+#endif
+
 #else /* WITH_OPENMP */
 
 #ifdef WITH_GPU_VERSION
 !                t1_mpi_wait_time =MPI_Wtime()
 #endif
-                call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 
+#ifdef WITH_MPI
+                call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
                 if (useGPU) then
 !                t2_mpi_wait_time =MPI_Wtime()
 !                t0_mpi_wait_time = t0_mpi_wait_time +(t2_mpi_wait_time-t1_mpi_wait_time)
@@ -8183,6 +9013,7 @@ module ELPA2_compute
 
               !compute
 #ifdef WITH_OPENMP
+
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%start("OpenMP parallel")
 #endif
@@ -8195,9 +9026,9 @@ module ELPA2_compute
                   a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                 endif
-                call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,                &
+                call compute_hh_trafo_complex_cpu_openmp(a, stripe_width, a_dim2, stripe_count, max_threads,  l_nev,        &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
-                                                         0, top_msg_length, i, my_thread,                                   &
+                                                         0, top_msg_length, i, my_thread, thread_width,                     &
                                                          THIS_COMPLEX_ELPA_KERNEL)
               enddo
 !$omp end parallel do
@@ -8206,7 +9037,6 @@ module ELPA2_compute
 #endif
 
 #else /* WITH_OPENMP */
-
               if (useGPU) then
                 call compute_hh_trafo_complex_gpu(0, top_msg_length, i, a_off, dev_offset, dev_offset_1, dev_offset_2)
 !              call compute_hh_trafo_complex_gpu(0, top_msg_length, i)
@@ -8224,6 +9054,8 @@ module ELPA2_compute
               !request top_border data
 #ifdef WITH_OPENMP
               b_len = csw*next_top_msg_length*max_threads
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
               call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_COMPLEX16, my_prow-1, &
                                top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
@@ -8232,7 +9064,15 @@ module ELPA2_compute
                                top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #endif
 
+#else /* WITH_MPI */
+!              carefull the "recieve" has to be done at the corresponding send or wait
+!               top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
               call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_COMPLEX16, my_prow-1, &
@@ -8242,19 +9082,32 @@ module ELPA2_compute
                                top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #endif
 
+#else /* WITH_MPI */
+!              carefull the "recieve" has to be done at the corresponding send or wait
+!               top_border_recv_buffer(1:next_top_msg_length*stripe_width,1,i) = &
+!                    bottom_border_send_buffer(1:bottom_msg_length*stripe_width,1,i)
+#endif /* WITH_MPI */
+
 #endif /* WITH_OPENMP */
             endif
 
             !send_t
             if (my_prow > 0) then
 #ifdef WITH_OPENMP
+
+#ifdef WITH_MPI
               call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+#endif
+
 #else /* WITH_OPENMP */
 
 #ifdef WITH_GPU_VERSION
 !              t1_mpi_wait_time =MPI_Wtime()
 #endif
+
+#ifdef WITH_MPI
               call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#endif
 
 #ifdef WITH_GPU_VERSION
 !              t2_mpi_wait_time =MPI_Wtime()
@@ -8266,9 +9119,27 @@ module ELPA2_compute
 #ifdef WITH_OPENMP
               b_len = csw*nbw*max_threads
               top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
+#ifdef WITH_MPI
+
+#ifdef WITH_DOUBLE_PRECISION_COMPLEX
               call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_COMPLEX16, &
                                my_prow-1, bottom_recv_tag, &
                                mpi_comm_rows, top_send_request(i), mpierr)
+#else
+              call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_COMPLEX8, &
+                               my_prow-1, bottom_recv_tag, &
+                               mpi_comm_rows, top_send_request(i), mpierr)
+#endif
+
+#else /* WITH_MPI */
+               if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+                 bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+               endif
+               if (next_n_end < next_n) then
+                 bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+               endif
+#endif /* WITH_MPI */
+
 #else /* WITH_OPENMP */
 
               if (useGPU) then
@@ -8287,6 +9158,8 @@ module ELPA2_compute
               else
                 top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
               endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
               call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX16, my_prow-1, bottom_recv_tag, &
                                mpi_comm_rows, top_send_request(i), mpierr)
@@ -8294,6 +9167,15 @@ module ELPA2_compute
               call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_COMPLEX8, my_prow-1, bottom_recv_tag, &
                                mpi_comm_rows, top_send_request(i), mpierr)
 #endif
+
+#else /* WITH_MPI */
+               if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+                 bottom_border_recv_buffer(1:nbw,1:stripe_width,i) = top_border_send_buffer(1:nbw,1:stripe_width,i)
+               endif
+               if (next_n_end < next_n) then
+                 bottom_border_recv_buffer(1:nbw,1:stripe_width,i) = top_border_send_buffer(1:nbw,1:stripe_width,i)
+               endif
+#endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
             endif
@@ -8304,17 +9186,25 @@ module ELPA2_compute
 #endif
             if (stripe_count > 1) then
               if (i>1) then
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
                 call MPI_Wait(top_recv_request(i-1), mpi_status, mpierr)
 #else
                 call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               else
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
                 call MPI_Wait(top_recv_request(stripe_count), mpi_status, mpierr)
 #else
                 call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_MPI */
               endif
             endif
 #ifdef WITH_GPU_VERSION
@@ -8337,11 +9227,15 @@ module ELPA2_compute
 #endif
 
           do i = 1, stripe_count
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
             call MPI_Wait(top_send_request(i), mpi_status, mpierr)
 #else
             call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_MPI */
           enddo
 #ifdef WITH_GPU_VERSION
 !          t2_mpi_outer_wait_time =MPI_Wtime()
@@ -8365,11 +9259,15 @@ module ELPA2_compute
 
             nbuf = mod(num_blk, num_result_buffers) + 1 ! buffer number to get this block
 
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
             call MPI_Wait(result_send_request(nbuf), mpi_status, mpierr)
 #else
             call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_MPI */
 
             dst = mod(num_blk, np_rows)
 
@@ -8406,6 +9304,8 @@ module ELPA2_compute
                 enddo
               endif
 
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
               call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX16, dst, &
                                    result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
@@ -8413,6 +9313,15 @@ module ELPA2_compute
               call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX8, dst, &
                                    result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
 #endif
+#else /* WITH_MPI */
+               if (j+num_result_buffers < num_result_blocks) &
+                   result_buffer(1:l_nev,1:nblk,nbuf) = result_buffer(1:l_nev,1:nblk,nbuf)
+               if (my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
+                 do j1 = 1, min(num_result_buffers, num_result_blocks)
+                   result_buffer(1:l_nev,1:nblk,j1) = result_buffer(1:l_nev,1:nblk,nbuf)
+                 enddo
+               endif
+#endif /* WITH_MPI */
             endif
           enddo
 
@@ -8429,21 +9338,32 @@ module ELPA2_compute
             ! outstanding requests
 
             if (next_local_n > 0) then
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
               call MPI_Test(result_recv_request(nbuf), flag, mpi_status, mpierr)
 
 #else
               call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+              flag = .true.
+#endif /* WITH_MPI */
               if (.not.flag) exit
             else
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
               call MPI_Wait(result_recv_request(nbuf), mpi_status, mpierr)
-
 #else
-
               call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
+
+#else /* WITH_MPI */
+
+#endif  /* WITH_MPI */
+
             endif
 
               ! Fill result buffer into q
@@ -8453,15 +9373,22 @@ module ELPA2_compute
               enddo
 
               ! Queue result buffer again if there are outstanding blocks left
+#ifdef WITH_MPI
               if (j+num_result_buffers < num_result_blocks) &
+
 #ifdef DOUBLE_PRECISION_COMPLEX
-                    call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX16, 0, result_recv_tag, &
-                                   mpi_comm_rows, result_recv_request(nbuf), mpierr)
+               call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX16, 0, result_recv_tag, &
+                              mpi_comm_rows, result_recv_request(nbuf), mpierr)
 #else
-                    call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX8, 0, result_recv_tag, &
-                                   mpi_comm_rows, result_recv_request(nbuf), mpierr)
+              call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_COMPLEX8, 0, result_recv_tag, &
+                             mpi_comm_rows, result_recv_request(nbuf), mpierr)
 #endif
 
+#else /* WITH_MPI */
+!              carefull "recieve" has to be done at corresponding wait or send
+!               if (j+num_result_buffers < num_result_blocks) &
+!                 result_buffer(1:l_nev*nblk,1,nbuf) = result_buffer(1:l_nev*nblk,1,nbuf)
+#endif /* WITH_MPI */
             enddo
             num_bufs_recvd = j
 
@@ -8486,6 +9413,7 @@ module ELPA2_compute
           a_off = a_off + offset
           if (a_off + next_local_n + nbw > a_dim2) then
 #ifdef WITH_OPENMP
+
 #ifdef HAVE_DETAILED_TIMINGS
             call timer%start("OpenMP parallel")
 #endif
@@ -8540,12 +9468,17 @@ module ELPA2_compute
 #endif
 
         ! Just for safety:
+#ifdef WITH_MPI
         if (ANY(top_send_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_send_request ***',my_prow,my_pcol
         if (ANY(bottom_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_send_request ***',my_prow,my_pcol
         if (ANY(top_recv_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_recv_request ***',my_prow,my_pcol
         if (ANY(bottom_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_recv_request ***',my_prow,my_pcol
+#endif
 
         if (my_prow == 0) then
+
+#ifdef WITH_MPI
+
 #ifdef WITH_OPENMP
           allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
@@ -8562,11 +9495,14 @@ module ELPA2_compute
 #else
           call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
 #endif
+
+#endif /* WITH_MPI */
         endif
 
+#ifdef WITH_MPI
         if (ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
         if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
-
+#endif
         if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
           write(error_unit,'(" Kernel time:",f10.3," MFlops: ",es12.5)') kernel_time, kernel_flops/kernel_time*1.d-6
 
@@ -8988,7 +9924,9 @@ end subroutine
       integer(kind=ik)              :: nblocks_total, nblocks
       integer(kind=ik)              :: nblocks_total2, nblocks2
       integer(kind=ik)              :: ireq_ab, ireq_hv
+#ifdef WITH_MPI
       integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+#endif
       integer(kind=ik), allocatable :: mpi_statuses(:,:)
       integer(kind=ik), allocatable :: block_limits(:), block_limits2(:), ireq_ab2(:)
 
@@ -9018,7 +9956,6 @@ end subroutine
 
       call mpi_comm_rank(mpi_comm,my_pe,mpierr)
       call mpi_comm_size(mpi_comm,n_pes,mpierr)
-
       ! Total number of blocks in the band:
       nblocks_total = (na-1)/nb + 1
       nblocks_total2 = (na-1)/nb2 + 1
@@ -9049,10 +9986,12 @@ end subroutine
         stop
       endif
 
-
+#ifdef WITH_MPI
       ireq_ab2 = MPI_REQUEST_NULL
+
       if (nb2>1) then
         do i=0,nblocks2-1
+
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_irecv(ab2(1,i*nb2+1), 2*nb2*nb2, mpi_real8, 0, 3, mpi_comm, ireq_ab2(i+1), mpierr)
 #else
@@ -9060,15 +9999,23 @@ end subroutine
 #endif
         enddo
       endif
+#else /* WITH_MPI */
+      ! carefull the "recieve" has to be done at the corresponding send or wait
+!      if (nb2>1) then
+!        do i=0,nblocks2-1
+!          ab2(1:2*nb2*nb2,i*nb2+1:i*nb2+1+nb2-1) = ab_s2(1:2*nb2,i*nb2+1:nb2)
+!        enddo
+!      endif
 
+#endif /* WITH_MPI */
       ! n_off: Offset of ab within band
       n_off = block_limits(my_pe)*nb
       lwork = nb*nb2
       dest = 0
-
+#ifdef WITH_MPI
       ireq_ab = MPI_REQUEST_NULL
       ireq_hv = MPI_REQUEST_NULL
-
+#endif
       ! ---------------------------------------------------------------------------
       ! Start of calculations
 
@@ -9080,11 +10027,15 @@ end subroutine
         do i=1,nb2
           ab_s(1:nb+1,i) = ab(1:nb+1,na_s-n_off+i-1)
         enddo
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_isend(ab_s, (nb+1)*nb2, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
         call mpi_isend(ab_s, (nb+1)*nb2, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #endif
+
+#endif /* WITH_MPI */
       endif
 
       do istep=1,na/nb2
@@ -9126,21 +10077,40 @@ end subroutine
             if (block_limits2(dest+1)<istep) then
               dest = dest+1
             endif
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_send(ab_s2, 2*nb2*nb2, mpi_real8, dest, 3, mpi_comm, mpierr)
 #else
             call mpi_send(ab_s2, 2*nb2*nb2, mpi_real4, dest, 3, mpi_comm, mpierr)
 #endif
+
+#else /* WITH_MPI */
+            ! do irecv here
+            if (nb2>1) then
+              do i= 0,nblocks2-1
+                ab2(1:2*nb2*nb2,i*nb2+1:i+nb2+1+nb2-1) = ab_s2(1:2*nb2,1:nb2)
+              enddo
+            endif
+
+#endif /* WITH_MPI */
+
           endif
 
         else
           if (na>na_s+nb2-1) then
             ! Receive Householder vectors from previous task, from PE owning subdiagonal
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_recv(hv, nb*nb2, mpi_real8, my_pe-1, 2, mpi_comm, mpi_status, mpierr)
 #else
             call mpi_recv(hv, nb*nb2, mpi_real4, my_pe-1, 2, mpi_comm, mpi_status, mpierr)
 #endif
+
+#else /* WITH_MPI */
+           hv(1:nb,1:nb2) = hv_s(1:nb,1:nb2)
+#endif /* WITH_MPI */
 
             do i=1,nb2
               tau(i) = hv(i,i)
@@ -9170,11 +10140,17 @@ end subroutine
 
             if (iblk==nblocks .and. nc==nb) then
               !request last nb2 columns
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
               call mpi_recv(ab_r,(nb+1)*nb2, mpi_real8, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
 #else
               call mpi_recv(ab_r,(nb+1)*nb2, mpi_real4, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
 #endif
+
+#else /* WITH_MPI */
+             ab_r(1:nb+1,1:nb2) = ab_s(1:nb+1,1:nb2)
+#endif /* WITH_MPI */
               do i=1,nb2
                 ab(1:nb+1,ne+i-1) = ab_r(:,i)
               enddo
@@ -9198,33 +10174,48 @@ end subroutine
 
               !send hh-vector
               if (iblk==nblocks) then
+#ifdef WITH_MPI
                 call mpi_wait(ireq_hv,mpi_status,mpierr)
+#endif
                 hv_s = hv_new
                 do i=1,nb2
                   hv_s(i,i) = tau_new(i)
                 enddo
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_isend(hv_s,nb*nb2, mpi_real8, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #else
                 call mpi_isend(hv_s,nb*nb2, mpi_real4, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #endif
-              endif
 
+#else /* WITH_MPI */
+
+#endif /* WITH_MPI */
+              endif
             endif
 
             call wy_symm(nc,nb2,ab(1,ns),2*nb-1,w,hv,work,work2,nb)
 
             if (my_pe>0 .and. iblk==1) then
               !send first nb2 columns to previous PE
+#ifdef WITH_MPI
               call mpi_wait(ireq_ab,mpi_status,mpierr)
+#endif
               do i=1,nb2
                 ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
               enddo
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
               call mpi_isend(ab_s,(nb+1)*nb2, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
               call mpi_isend(ab_s,(nb+1)*nb2, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #endif
+
+#else /* WITH_MPI */
+
+#endif /* WITH_MPI */
             endif
 
             if (nr>0) then
@@ -9239,6 +10230,7 @@ end subroutine
         enddo
 
         ! Finish the last outstanding requests
+#ifdef WITH_MPI
         call mpi_wait(ireq_ab,mpi_status,mpierr)
         call mpi_wait(ireq_hv,mpi_status,mpierr)
         allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2), stat=istat, errmsg=errorMessage)
@@ -9255,6 +10247,7 @@ end subroutine
         endif
 
         call mpi_barrier(mpi_comm,mpierr)
+#endif /* WITH_MPI */
 
         deallocate(block_limits, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then

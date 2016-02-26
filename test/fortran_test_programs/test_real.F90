@@ -86,15 +86,15 @@ program test_real
    use mod_blacs_infrastructure
    use mod_prepare_matrix
 
+   use elpa_mpi
 #ifdef HAVE_REDIRECT
-  use redirect
+   use redirect
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+  use timings
 #endif
 
    implicit none
-   include 'mpif.h'
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
@@ -123,6 +123,9 @@ program test_real
 #endif
    logical                    :: write_to_file
    logical                    :: success
+
+   integer :: j
+
    !-------------------------------------------------------------------------------
 
    success = .true.
@@ -133,9 +136,11 @@ program test_real
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   if (write_to_file) then
-     if (myid .eq. 0) print *,"Writing output files"
-   endif
+   STATUS = 0
+
+#define DATATYPE REAL
+#define ELPA1
+#include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -162,53 +167,6 @@ program test_real
   call timer%enable()
 
   call timer%start("program")
-#endif
-   !-------------------------------------------------------------------------------
-   ! Selection of number of processor rows/columns
-   ! We try to set up the grid square-like, i.e. start the search for possible
-   ! divisors of nprocs with a number next to the square root of nprocs
-   ! and decrement it until a divisor is found.
-
-
-   STATUS = 0
-#ifdef WITH_OPENMP
-   if (myid .eq. 0) then
-      print *,"Threaded version of test program"
-      print *,"Using ",omp_get_max_threads()," threads"
-      print *," "
-   endif
-#endif
-
-#ifdef DOUBLE_PRECISION_REAL
-   if (myid .eq. 0) then
-     print *," "
-     print *,"Double precision version of ELPA1 is used"
-     print *," "
-   endif
-#else
-   if (myid .eq. 0) then
-     print *," "
-     print *,"Single precision version of ELPA1 is used"
-     print *," "
-   endif
-#endif
-
-    call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-
-#ifdef HAVE_REDIRECT
-   if (check_redirect_environment_variable()) then
-     if (myid .eq. 0) then
-       print *," "
-       print *,"Redirection of mpi processes is used"
-       print *," "
-       if (create_directories() .ne. 1) then
-         write(error_unit,*) "Unable to create directory for stdout and stderr!"
-         stop
-       endif
-      endif
-      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-      call redirect_stdout(myid)
-    endif
 #endif
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
@@ -286,14 +244,17 @@ program test_real
      print '(a)','| Entering one-step ELPA solver ... '
      print *
    end if
-
+#ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
    success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                             na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
+#ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
    endif
 
 
@@ -340,10 +301,12 @@ program test_real
    print *," "
    print *,"End timings program"
    print *," "
-   print *,"End timings program"
 #endif
+
+#ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
+#endif
 
    call EXIT(STATUS)
 

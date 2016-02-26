@@ -48,8 +48,9 @@ module mod_check_for_gpu
     function check_for_gpu(myid, numberOfDevices, wantDebug) result(gpuAvailable)
       use cuda_functions
       use precision
+      use elpa_mpi
       implicit none
-      include 'mpif.h'
+
       integer(kind=ik), intent(in)  :: myid
       logical, optional, intent(in) :: wantDebug
       logical                       :: success, wantDebugMessage
@@ -80,6 +81,7 @@ module mod_check_for_gpu
 
       ! make sure that all nodes have the same number of GPU's, otherwise
       ! we run into loadbalancing trouble
+#ifdef WITH_MPI
       call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, mpierr)
 
       if (maxNumberOfDevices .ne. numberOfDevices) then
@@ -88,7 +90,7 @@ module mod_check_for_gpu
         gpuAvailable = .false.
         return
       endif
-
+#endif
       if (numberOfDevices .ne. 0) then
         gpuAvailable = .true.
         ! Usage of GPU is possible since devices have been detected

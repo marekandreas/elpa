@@ -54,10 +54,9 @@ module mod_check_correctness
 
     function check_correctness_complex(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status)
 
-!      use mpi
+      use elpa_mpi
       use precision
       implicit none
-      include 'mpif.h'
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, nev, myid
       complex(kind=ck), intent(in)     :: as(:,:), z(:,:)
@@ -68,12 +67,17 @@ module mod_check_correctness
       complex(kind=ck), parameter      :: CZERO = (0.0_rk,0.0_rk), CONE = (1.0_rk,0.0_rk)
       integer(kind=ik)                 :: i
       real(kind=rk)                    :: err, errmax
+#ifndef WITH_MPI
+      complex(kind=ck)                 :: zdotc, cdotc
+#endif
 
       status = 0
 
       ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
       ! tmp1 =  A * Z
       ! as is original stored matrix, Z are the EVs
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
       call pzgemm('N', 'N', na, nev, na, CONE, as, 1, 1, sc_desc, &
                   z, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
@@ -82,39 +86,79 @@ module mod_check_correctness
                   z, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
 #endif
 
+#else /* WITH_MPI */
+
+#ifdef WITH_DOUBLE_PRECISION_COMPLEX
+      call zgemm('N','N',na,nev,na,CONE,as,na,z,na,CZERO,tmp1,na)
+#else
+      call cgemm('N','N',na,nev,na,CONE,as,na,z,na,CZERO,tmp1,na)
+#endif
+
+#endif /* WITH_MPI */
       ! tmp2 = Zi*EVi
       tmp2(:,:) = z(:,:)
       do i=1,nev
         xc = ev(i)
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
         call pzscal(na, xc, tmp2, 1, i, sc_desc, 1)
 #else
         call pcscal(na, xc, tmp2, 1, i, sc_desc, 1)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+        call zscal(na,xc,tmp2(1,i),1)
+#else
+        call cscal(na,xc,tmp2(1,i),1)
+#endif
+
+#endif /* WITH_MPI */
       enddo
 
       !  tmp1 = A*Zi - Zi*EVi
       tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
 
       ! Get maximum norm of columns of tmp1
-      errmax = 0.0_rk
+      errmax = 0.0
       do i=1,nev
         xc = 0
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
         call pzdotc(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
 #else
         call pcdotc(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef WITH_DOUBLE_PRECISION
+        xc = zdotc(na,tmp1,1,tmp1,1)
+#else
+        xc = cdotc(na,tmp1,1,tmp1,1)
+#endif
+
+#endif /* WITH_MPI */
         errmax = max(errmax, sqrt(real(xc,kind=rk)))
       enddo
 
       ! Get maximum error norm over all processors
       err = errmax
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
       call mpi_allreduce(err, errmax, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else
       call mpi_allreduce(err, errmax, 1, MPI_REAL4, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #endif
+
+#else /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
+
       if (myid==0) print *
       if (myid==0) print *,'Error Residual     :',errmax
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -129,6 +173,8 @@ module mod_check_correctness
 
       ! tmp1 = Z**T * Z
       tmp1 = 0
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
       call pzgemm('C', 'N', nev, nev, na, CONE, z, 1, 1, sc_desc, &
                   z, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
@@ -136,23 +182,55 @@ module mod_check_correctness
       call pcgemm('C', 'N', nev, nev, na, CONE, z, 1, 1, sc_desc, &
                   z, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+      call zgemm('C','N',nev,nev,na,CONE,z,na,z,na,CZERO,tmp1,na)
+#else
+      call cgemm('C','N',nev,nev,na,CONE,z,na,z,na,CZERO,tmp1,na)
+#endif
+
+#endif /* WITH_MPI */
+
       ! Initialize tmp2 to unit matrix
       tmp2 = 0
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
       call pzlaset('A', nev, nev, CZERO, CONE, tmp2, 1, 1, sc_desc)
 #else
       call pclaset('A', nev, nev, CZERO, CONE, tmp2, 1, 1, sc_desc)
 #endif
-      ! tmp1 = Z**T * Z - Unit Matrix
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+      call zlaset('A',nev,nev,CZERO,CONE,tmp2,na)
+#else
+      call claset('A',nev,nev,CZERO,CONE,tmp2,na)
+#endif
+
+#endif /* WITH_MPI */
+
+      !      ! tmp1 = Z**T * Z - Unit Matrix
       tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
 
       ! Get maximum error (max abs value in tmp1)
       err = maxval(abs(tmp1))
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
       call mpi_allreduce(err, errmax, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else
       call mpi_allreduce(err, errmax, 1, MPI_REAL4, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #endif
+
+#else /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
+
       if (myid==0) print *,'Error Orthogonality:',errmax
 #ifdef DOUBLE_PRECISION_COMPLEX
       if (errmax .gt. 5e-12_rk) then
@@ -165,10 +243,9 @@ module mod_check_correctness
 
     function check_correctness_real(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status)
 
-!      use mpi
+      use elpa_mpi
       use precision
       implicit none
-      include 'mpif.h'
       integer(kind=ik)               :: status
       integer(kind=ik), intent(in)   :: na, nev, myid
       real(kind=rk), intent(in)      :: as(:,:), z(:,:)
@@ -178,11 +255,16 @@ module mod_check_correctness
 
       integer(kind=ik)               :: i
       real(kind=rk)                  :: err, errmax
+#ifndef WITH_MPI
+      real(kind=rk)                  :: dnrm2
+#endif
 
       status = 0
 
       ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
       ! tmp1 =  A * Z
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
       call pdgemm('N', 'N', na, nev, na, 1.0_rk, as, 1, 1, sc_desc, &
                   z, 1, 1, sc_desc, 0.0_rk, tmp1, 1, 1, sc_desc)
@@ -190,14 +272,36 @@ module mod_check_correctness
       call psgemm('N', 'N', na, nev, na, 1.0_rk, as, 1, 1, sc_desc, &
                   z, 1, 1, sc_desc, 0.0_rk, tmp1, 1, 1, sc_desc)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_REAL
+     call dgemm('N','N',na,nev,na,1.0_rk,as,na,z,na,0.0_rk,tmp1,na)
+#else
+     call zgemm('N','N',na,nev,na,1.0_rk,as,na,z,na,0.0_rk,tmp1,na)
+#endif
+
+#endif /* WITH_MPI */
       ! tmp2 = Zi*EVi
       tmp2(:,:) = z(:,:)
       do i=1,nev
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
         call pdscal(na, ev(i), tmp2, 1, i, sc_desc, 1)
 #else
         call psscal(na, ev(i), tmp2, 1, i, sc_desc, 1)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_REAL
+        call dscal(na,ev(i),tmp2(:,i),1)
+#else
+        call sscal(na,ev(i),tmp2(:,i),1)
+#endif
+
+#endif /* WITH_MPI */
       enddo
 
       !  tmp1 = A*Zi - Zi*EVi
@@ -207,21 +311,41 @@ module mod_check_correctness
       errmax = 0.0_rk
       do i=1,nev
         err = 0.0_rk
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
         call pdnrm2(na, err, tmp1, 1, i, sc_desc, 1)
 #else
         call psnrm2(na, err, tmp1, 1, i, sc_desc, 1)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_REAL
+!        call dnrm2(na,err,tmp1,1,i,sc_desc,1)
+        err = dnrm2(na,tmp1(1,i),1)
+#else
+        err = snrm2(na,tmp1(1,i),1)
+#endif
+
+#endif /* WITH_MPI */
         errmax = max(errmax, err)
       enddo
 
       ! Get maximum error norm over all processors
       err = errmax
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
       call mpi_allreduce(err, errmax, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else
       call mpi_allreduce(err, errmax, 1, MPI_REAL4, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #endif
+
+#else /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
+
       if (myid==0) print *
       if (myid==0) print *,'Error Residual     :',errmax
 #ifdef DOUBLE_PRECISION_REAL
@@ -236,6 +360,8 @@ module mod_check_correctness
 
       ! tmp1 = Z**T * Z
       tmp1 = 0
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
       call pdgemm('T', 'N', nev, nev, na, 1.0_rk, z, 1, 1, sc_desc, &
                   z, 1, 1, sc_desc, 0.0_rk, tmp1, 1, 1, sc_desc)
@@ -244,23 +370,53 @@ module mod_check_correctness
                   z, 1, 1, sc_desc, 0.0_rk, tmp1, 1, 1, sc_desc)
 #endif
 
+#else  /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_REAL
+      call dgemm('T','N',nev,nev,na,1.0_rk,z,na, &
+                  z,na,0.0_rk,tmp1,na)
+#else
+      call sgemm('T','N',nev,nev,na,1.0_rk,z,na, &
+                  z,na,0.0_rk,tmp1,na)
+#endif
+
+#endif /* WITH_MPI */
+
       ! Initialize tmp2 to unit matrix
       tmp2 = 0
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
       call pdlaset('A', nev, nev, 0.0_rk, 1.0_rk, tmp2, 1, 1, sc_desc)
 #else
       call pslaset('A', nev, nev, 0.0_rk, 1.0_rk, tmp2, 1, 1, sc_desc)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_REAL
+      call dlaset('A',nev,nev,0.0_rk,1.0_rk,tmp2,na)
+#else
+      call slaset('A',nev,nev,0.0_rk,1.0_rk,tmp2,na)
+#endif
+
+#endif /* WITH_MPI */
       ! tmp1 = Z**T * Z - Unit Matrix
       tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
 
       ! Get maximum error (max abs value in tmp1)
       err = maxval(abs(tmp1))
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
       call mpi_allreduce(err, errmax, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else
       call mpi_allreduce(err, errmax, 1, MPI_REAL4, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #endif
+
+#else  /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
       if (myid==0) print *,'Error Orthogonality:',errmax
 #ifdef DOUBLE_PRECISION_REAL
       if (errmax .gt. 9e-12) then

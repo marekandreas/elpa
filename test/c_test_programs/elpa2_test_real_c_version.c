@@ -45,7 +45,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef WITH_MPI
 #include <mpi.h>
+#endif
 #include <math.h>
 
 #include <elpa/elpa.h>
@@ -54,7 +56,9 @@
 int main(int argc, char** argv) {
    int myid;
    int nprocs;
-
+#ifndef WITH_MPI
+   int MPI_COMM_WORLD;
+#endif
    int na, nev, nblk;
 
    int status;
@@ -82,11 +86,15 @@ int main(int argc, char** argv) {
    int success;
 
    int useQr, THIS_REAL_ELPA_KERNEL_API;
-
+#ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-
+#else
+   nprocs = 1;
+   myid=0;
+   MPI_COMM_WORLD=1;
+#endif
    na = 1000;
    nev = 500;
    nblk = 16;
@@ -128,7 +136,11 @@ int main(int argc, char** argv) {
 
    /* set up blacs */
    /* convert communicators before */
+#ifdef WITH_MPI
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
+#else
+  my_mpi_comm_world = 1;
+#endif
    set_up_blacsgrid_from_fortran(my_mpi_comm_world, &my_blacs_ctxt, &np_rows, &np_cols, &nprow, &npcol, &my_prow, &my_pcol);
 
    if (myid == 0) {
@@ -139,7 +151,9 @@ int main(int argc, char** argv) {
 
    /* get the ELPA row and col communicators. */
    /* These are NOT usable in C without calling the MPI_Comm_f2c function on them !! */
+#ifdef WITH_MPI
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
+#endif
    mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
    if (myid == 0) {
@@ -196,8 +210,9 @@ int main(int argc, char** argv) {
      printf("Entering ELPA 2stage real solver\n");
      printf("\n");
    }
-
+#ifdef WITH_MPI
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
+#endif
    useQr = 0;
    THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
 #ifdef DOUBLE_PRECISION_REAL
@@ -207,7 +222,9 @@ int main(int argc, char** argv) {
 #endif
    if (success != 1) {
      printf("error in ELPA solve \n");
+#ifdef WITH_MPI
      mpierr = MPI_Abort(MPI_COMM_WORLD, 99);
+#endif
    }
 
 
@@ -240,8 +257,8 @@ int main(int argc, char** argv) {
 
    free(tmp1);
    free(tmp2);
-
+#ifdef WITH_MPI
    MPI_Finalize();
-
+#endif
    return 0;
 }

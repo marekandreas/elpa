@@ -80,6 +80,8 @@ module ELPA2
 !  use cuda_c_kernel
 !  use iso_c_binding
 #endif
+  use elpa_mpi
+
   implicit none
 
   PRIVATE ! By default, all routines contained are private
@@ -88,7 +90,6 @@ module ELPA2
 
   public :: solve_evp_real_2stage
   public :: solve_evp_complex_2stage
-  include 'mpif.h'
 
 !******
 contains
@@ -177,6 +178,7 @@ contains
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("solve_evp_real_2stage")
 #endif
+
     call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
     call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
 
@@ -295,7 +297,7 @@ contains
     ttts = ttt0
     call bandred_real(na, a, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
                       tmat, wantDebug, useGPU, success, useQRActual)
-
+    print *, "hier 1:", q(10,10)
     if (.not.(success)) return
     ttt1 = MPI_Wtime()
     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -312,9 +314,13 @@ contains
      ttt0 = MPI_Wtime()
      call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans_real, &
                           mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+                          print *, "hier 2:", q(10,10)
+
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
        write(error_unit,*) 'Time tridiag_band_real          :',ttt1-ttt0
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
      call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
@@ -324,6 +330,7 @@ contains
      call mpi_bcast(e,na,MPI_REAL4,0,mpi_comm_all,mpierr)
 #endif
 
+#endif /* WITH_MPI */
      ttt1 = MPI_Wtime()
      time_evp_fwd = ttt1-ttts
 
@@ -332,6 +339,8 @@ contains
      ttt0 = MPI_Wtime()
      call solve_tridi(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows,  &
                       mpi_comm_cols, wantDebug, success)
+                      print *, "hier 3:", q(10,10)
+
      if (.not.(success)) return
 
      ttt1 = MPI_Wtime()
@@ -348,9 +357,12 @@ contains
      ! Backtransform stage 1
 
      ttt0 = MPI_Wtime()
+        print *, "hier 4a:", q(10,10)
      call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
                                     mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success,      &
                                     THIS_REAL_ELPA_KERNEL)
+                                    print *, "hier 4:", q(10,10)
+
      if (.not.(success)) return
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -369,6 +381,8 @@ contains
      ttt0 = MPI_Wtime()
      call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, mpi_comm_rows, &
                                      mpi_comm_cols, useGPU, useQRActual)
+                                     print *, "hier 5:", q(10,10)
+
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
        write(error_unit,*) 'Time trans_ev_band_to_full_real :',ttt1-ttt0
@@ -461,6 +475,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("solve_evp_complex_2stage")
 #endif
+
     call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
     call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
 
@@ -545,6 +560,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
     call bandred_complex(na, a, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
                          tmat, wantDebug, useGPU, success)
     if (.not.(success)) then
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop()
 #endif
@@ -566,9 +582,12 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
     ttt0 = MPI_Wtime()
    call tridiag_band_complex(na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans_complex, &
                              mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+
     ttt1 = MPI_Wtime()
     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
        write(error_unit,*) 'Time tridiag_band_complex          :',ttt1-ttt0
+
+#ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
     call mpi_bcast(ev, na, mpi_real8, 0, mpi_comm_all, mpierr)
@@ -577,6 +596,8 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
     call mpi_bcast(ev, na, mpi_real4, 0, mpi_comm_all, mpierr)
     call mpi_bcast(e, na, mpi_real4, 0, mpi_comm_all, mpierr)
 #endif
+
+#endif /* WITH_MPI */
     ttt1 = MPI_Wtime()
     time_evp_fwd = ttt1-ttts
 
@@ -630,8 +651,6 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
       print *,"solve_evp_complex_2stage: error when deallocating hh_trans_complex"//errorMessage
       stop
     endif
-
-
 
     ! Backtransform stage 2
 

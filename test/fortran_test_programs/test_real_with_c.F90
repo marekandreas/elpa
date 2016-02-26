@@ -86,7 +86,7 @@ program test_real
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
-
+   use elpa_mpi
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
@@ -95,7 +95,6 @@ program test_real
 #endif
 
    implicit none
-   include 'mpif.h'
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
@@ -184,7 +183,18 @@ program test_real
       print *," "
    endif
 #endif
+#ifndef WITH_MPI
+   if (myid .eq. 0) then
+     print *,"This version of ELPA does not support MPI parallelisation"
+     print *,"For MPI support re-build ELPA with appropiate flags"
+     print *," "
+   endif
+#endif
+
+#ifdef WITH_MPI
     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+#endif
+
 
 #ifdef HAVE_REDIRECT
    if (check_redirect_environment_variable()) then
@@ -197,7 +207,9 @@ program test_real
          stop
        endif
       endif
+#ifdef WITH_MPI
       call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+#endif
       call redirect_stdout(myid)
     endif
 #endif
@@ -293,14 +305,17 @@ program test_real
      print '(a)','| Entering one-step ELPA solver ... '
      print *
    end if
-
+#ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
    success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                           na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
+#ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
    endif
 
 
@@ -324,7 +339,9 @@ program test_real
    endif
 
    ! call the c function
+#ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
    if (myid==0) then
      print *," "
      print '(a)','| Testing with C-interface ... '
@@ -359,9 +376,10 @@ program test_real
    enddo
 
    ! reduction
+#ifdef WITH_MPI
    call mpi_allreduce(checksWrong, checksWrongRecv,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,mpierr)
    checksWrong = checksWrongRecv
-
+#endif
    if (checksWrong == 0) then
      if (myid == 0) then
        print *,' Checks for matrix a and z are ok... '
@@ -378,9 +396,10 @@ program test_real
    enddo
 
    ! reduction
+#ifdef WITH_MPI
    call mpi_allreduce(checksWrong, checksWrongRecv,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,mpierr)
    checksWrong = checksWrongRecv
-
+#endif
    if (checksWrong == 0) then
      if (myid == 0) then
        print *,' Checks for EVs are ok... '
@@ -413,9 +432,10 @@ program test_real
    print *," "
    print *,"End timings program"
 #endif
+#ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
-
+#endif
    call EXIT(STATUS)
 
 

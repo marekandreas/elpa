@@ -40,24 +40,27 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
+
 module qr_utils_mod
-    use elpa1_compute
-    implicit none
+  use elpa_mpi
+  use elpa1_compute
+  implicit none
 
-    PRIVATE
+  PRIVATE
 
-    public :: local_size_offset_1d
-    public :: reverse_vector_local
-    public :: reverse_matrix_local
-    public :: reverse_matrix_1dcomm
-    public :: reverse_matrix_2dcomm_ref
+  public :: local_size_offset_1d
+  public :: reverse_vector_local
+  public :: reverse_matrix_local
+  public :: reverse_matrix_1dcomm
+  public :: reverse_matrix_2dcomm_ref
 
-contains
+  contains
 
-! rev parameter is critical, even in rev only mode!
-! pdgeqrf_2dcomm uses rev=0 version to determine the process columns
-! involved in the qr decomposition
-subroutine local_size_offset_1d(n,nb,baseidx,idx,rev,rank,nprocs, &
+  ! rev parameter is critical, even in rev only mode!
+  ! pdgeqrf_2dcomm uses rev=0 version to determine the process columns
+  ! involved in the qr decomposition
+  subroutine local_size_offset_1d(n,nb,baseidx,idx,rev,rank,nprocs, &
                                 lsize,baseoffset,offset)
 
     use precision
@@ -185,12 +188,10 @@ subroutine reverse_matrix_2dcomm_ref(m,n,mb,nb,a,lda,work,lwork,mpicomm_cols,mpi
     integer(kind=ik) :: mpiprocs_cols,mpiprocs_rows
     integer(kind=ik) :: mpierr
     integer(kind=ik) :: lrows,lcols,offset,baseoffset
-
     call MPI_Comm_rank(mpicomm_cols,mpirank_cols,mpierr)
     call MPI_Comm_rank(mpicomm_rows,mpirank_rows,mpierr)
     call MPI_Comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
     call MPI_Comm_size(mpicomm_rows,mpiprocs_rows,mpierr)
-
     call local_size_offset_1d(m,mb,1,1,0,mpirank_cols,mpiprocs_cols, &
                                   lrows,baseoffset,offset)
 
@@ -212,7 +213,7 @@ end subroutine reverse_matrix_2dcomm_ref
 ! b: if trans = 'T': b is size of block distribution between columns
 subroutine reverse_matrix_1dcomm(trans,m,n,b,a,lda,work,lwork,mpicomm)
     use precision
-    use mpi
+    use elpa_mpi
 
     implicit none
 
@@ -222,7 +223,10 @@ subroutine reverse_matrix_1dcomm(trans,m,n,b,a,lda,work,lwork,mpicomm)
     real(kind=rk)    :: a(lda,*),work(*)
 
     ! local scalars
-    integer(kind=ik) :: mpirank,mpiprocs,mpierr,mpistatus(MPI_STATUS_SIZE)
+    integer(kind=ik) :: mpirank,mpiprocs,mpierr
+#ifdef WITH_MPI
+    integer(kind=ik) :: mpistatus(MPI_STATUS_SIZE)
+#endif
     integer(kind=ik) :: nr_blocks,dest_process,src_process,step
     integer(kind=ik) :: lsize,baseoffset,offset
     integer(kind=ik) :: current_index,destblk,srcblk,icol,next_index
@@ -231,10 +235,8 @@ subroutine reverse_matrix_1dcomm(trans,m,n,b,a,lda,work,lwork,mpicomm)
     integer(kind=ik) :: newmatrix_offset,work_offset
     integer(kind=ik) :: lcols,lrows,lroffset,lcoffset,dimsize,fixedsize
     real(kind=rk)    :: dworksize(1)
-
     call MPI_Comm_rank(mpicomm, mpirank, mpierr)
     call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
-
     if (trans .eq. 1) then
         call local_size_offset_1d(n,b,1,1,0,mpirank,mpiprocs, &
                                   lcols,baseoffset,lcoffset)
@@ -335,9 +337,12 @@ subroutine reverse_matrix_1dcomm(trans,m,n,b,a,lda,work,lwork,mpicomm)
 
             if (dest_process .eq. mpirank) then
                 ! 6b. call MPI_Recv
+#ifdef WITH_MPI
                 call MPI_Recv(work(recvoffset), recvcount, mpi_real8, &
                               src_process, current_index, mpicomm, mpistatus, mpierr)
-
+#else
+                work(recvoffset:recvoffset+recvcount-1) = work(sendoffset:sendoffset+sendcount-1)
+#endif
                 ! 7. reverse data
                 if (trans .eq. 1) then
                     call reverse_matrix_local(1,lrows,lsize,work(recvoffset),lrows,work(work_offset),lwork)
@@ -378,8 +383,10 @@ subroutine reverse_matrix_1dcomm(trans,m,n,b,a,lda,work,lwork,mpicomm)
                 end if
 
                 ! 6a. call MPI_Send
+#ifdef WITH_MPI
                 call MPI_Send(work(sendoffset), sendcount, mpi_real8, &
                                   dest_process, current_index, mpicomm, mpierr)
+#endif
             end if
         end if
 

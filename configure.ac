@@ -68,37 +68,48 @@ if test x"${enable_openmp}" = x"yes"; then
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
 fi
 
+AC_MSG_CHECKING(whether --enable-shared-memory-only is specified)
+AC_ARG_ENABLE([shared-memory-only],
+		AS_HELP_STRING([--enable-shared-memory-only],
+			       [do not use MPI; ELPA will be build for one node shared-memory runs only]),
+	      [],
+	      [enable_shared_memory_only=no])
+AC_MSG_RESULT([${enable_shared_memory_only}])
+AM_CONDITIONAL([WITH_MPI],[test x"$enable_shared_memory_only" = x"no"])
+if test x"${enable_shared_memory_only}" = x"no"; then
+	AC_DEFINE([WITH_MPI], [1], [use MPI])
+fi
+
 dnl check whether mpi compilers are available;
 dnl if not abort since it is mandatory
 
+
 # C
 AC_LANG([C])
-m4_include([m4/ax_prog_cc_mpi.m4])
-AX_PROG_CC_MPI([true],[],[AC_MSG_ERROR([no MPI C wrapper found])])
+AX_PROG_CC_MPI([test x"$enable_shared_memory_only" = xno],[use_mpi=yes],[use_mpi=no])
+
 if test x"${enable_openmp}" = x"yes"; then
-	AX_ELPA_OPENMP
-	if test "$ac_cv_prog_cc_openmp" = unsupported; then
-	  AC_MSG_ERROR([Could not compile a C program with OpenMP, adjust CFLAGS])
-	fi
-	CFLAGS="$OPENMP_CFLAGS $CFLAGS"
+  AX_ELPA_OPENMP
+  if test "$ac_cv_prog_cc_openmp" = unsupported; then
+    AC_MSG_ERROR([Could not compile a C program with OpenMP, adjust CFLAGS])
+  fi
+  CFLAGS="$OPENMP_CFLAGS $CFLAGS"
 fi
 
 AC_PROG_INSTALL
 AM_PROG_AR
 AM_PROG_AS
 
-
 # Fortran
 AC_LANG([Fortran])
 m4_include([m4/ax_prog_fc_mpi.m4])
-AX_PROG_FC_MPI([],[],[AC_MSG_ERROR([no MPI Fortran wrapper found])])
-
+AX_PROG_FC_MPI([test x"$enable_shared_memory_only" = xno],[use_mpi=yes],[use_mpi=no])
 if test x"${enable_openmp}" = x"yes"; then
-	AX_ELPA_OPENMP
-	if test "$ac_cv_prog_fc_openmp" = unsupported; then
-	  AC_MSG_ERROR([Could not compile a Fortran program with OpenMP, adjust FCFLAGS])
-	fi
-	FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
+  AX_ELPA_OPENMP
+  if test "$ac_cv_prog_fc_openmp" = unsupported; then
+    AC_MSG_ERROR([Could not compile a Fortran program with OpenMP, adjust FCFLAGS])
+  fi
+  FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 fi
 
 # C++
@@ -106,11 +117,11 @@ AC_LANG([C++])
 AC_PROG_CXX
 
 if test x"${enable_openmp}" = x"yes"; then
-	AX_ELPA_OPENMP
-	if test "$ac_cv_prog_cxx_openmp" = unsupported; then
-	  AC_MSG_ERROR([Could not compile a C++ program with OpenMP, adjust CXXFLAGS])
-	fi
-	CXXFLAGS="$OPENMP_CXXFLAGS $CXXFLAGS"
+  AX_ELPA_OPENMP
+  if test "$ac_cv_prog_cxx_openmp" = unsupported; then
+    AC_MSG_ERROR([Could not compile a C++ program with OpenMP, adjust CXXFLAGS])
+  fi
+  CXXFLAGS="$OPENMP_CXXFLAGS $CXXFLAGS"
 fi
 
 
@@ -386,35 +397,37 @@ else
     AC_MSG_ERROR([could not link with lapack: specify path])
   fi
 
-  dnl test whether scalapack already contains blacs
-  scalapack_libs="mpiscalapack scalapack"
-  old_LIBS="$LIBS"
-  for lib in ${scalapack_libs}; do
-    LIBS="-l${lib} ${old_LIBS}"
-    AC_MSG_CHECKING([whether -l${lib} already contains a BLACS implementation])
-    AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY([blacs_gridinit])],[blacs_in_scalapack=yes],[blacs_in_scalapack=no])
-    AC_MSG_RESULT([${blacs_in_scalapack}])
-    if test x"${blacs_in_scalapack}" = x"yes"; then
-      break
+  if test x"${enable_shared_memory_only}" = x"no"; then
+    dnl test whether scalapack already contains blacs
+    scalapack_libs="mpiscalapack scalapack"
+    old_LIBS="$LIBS"
+    for lib in ${scalapack_libs}; do
+      LIBS="-l${lib} ${old_LIBS}"
+      AC_MSG_CHECKING([whether -l${lib} already contains a BLACS implementation])
+      AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY([blacs_gridinit])],[blacs_in_scalapack=yes],[blacs_in_scalapack=no])
+      AC_MSG_RESULT([${blacs_in_scalapack}])
+      if test x"${blacs_in_scalapack}" = x"yes"; then
+        break
+      fi
+    done
+
+    if test x"${blacs_in_scalapack}" = x"no"; then
+      LIBS="${old_LIBS}"
+
+      dnl Test for stand-alone blacs
+      AC_SEARCH_LIBS([bi_f77_init],[mpiblacsF77init],[],[],[-lmpiblacs])
+      AC_SEARCH_LIBS([blacs_gridinit],[mpiblacs blacs],[have_blacs=yes],[have_blacs=no])
+
+      if test x"${have_blacs}" = x"no"; then
+        AC_MSG_ERROR([No usable BLACS found. If installed in a non-standard place, please specify suitable LDFLAGS and FCFLAGS as arguments to configure])
+      fi
     fi
-  done
 
-  if test x"${blacs_in_scalapack}" = x"no"; then
-    LIBS="${old_LIBS}"
+    AC_SEARCH_LIBS([pdtran],[$scalapack_libs],[have_scalapack=yes],[have_scalapack=no])
 
-    dnl Test for stand-alone blacs
-    AC_SEARCH_LIBS([bi_f77_init],[mpiblacsF77init],[],[],[-lmpiblacs])
-    AC_SEARCH_LIBS([blacs_gridinit],[mpiblacs blacs],[have_blacs=yes],[have_blacs=no])
-
-    if test x"${have_blacs}" = x"no"; then
-      AC_MSG_ERROR([No usable BLACS found. If installed in a non-standard place, please specify suitable LDFLAGS and FCFLAGS as arguments to configure])
+    if test x"${have_scalapack}" = x"no" ; then
+      AC_MSG_ERROR([could not link with scalapack: specify path])
     fi
-  fi
-
-  AC_SEARCH_LIBS([pdtran],[$scalapack_libs],[have_scalapack=yes],[have_scalapack=no])
-
-  if test x"${have_scalapack}" = x"no" ; then
-    AC_MSG_ERROR([could not link with scalapack: specify path])
   fi
 
   dnl check whether we can link alltogehter
@@ -718,7 +731,7 @@ if test x"${use_specific_complex_kernel}" = x"no" ; then
 fi
 
 if test x"${use_specific_real_kernel}" = x"no" ; then
-	AC_DEFINE([WITH_NO_SPECIFIC_REAL_KERNEL],[1],[do not use only one specific real kernel (set at compile time)])
+  AC_DEFINE([WITH_NO_SPECIFIC_REAL_KERNEL],[1],[do not use only one specific real kernel (set at compile time)])
 fi
 
 LT_INIT

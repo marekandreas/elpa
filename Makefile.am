@@ -10,6 +10,8 @@ lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
 libelpa@SUFFIX@_la_SOURCES = src/mod_precision.F90 \
+                             src/mod_mpi.F90 \
+			     src/mod_mpi_stubs.F90 \
                              src/elpa_utilities.F90 \
 	                     src/elpa1_compute.F90 \
 	                     src/elpa1.F90 \
@@ -26,9 +28,9 @@ libelpa@SUFFIX@_la_SOURCES = src/mod_precision.F90 \
 			     src/elpa2_compute.F90 \
 			     src/elpa2.F90 \
 			     src/elpa_c_interface.F90 \
-                             src/elpa_qr/qr_utils.f90 \
+                             src/elpa_qr/qr_utils.F90 \
                              src/elpa_qr/elpa_qrkernels.f90 \
-                             src/elpa_qr/elpa_pdlarfb.f90 \
+                             src/elpa_qr/elpa_pdlarfb.F90 \
                              src/elpa_qr/elpa_pdgeqrf.F90
 if HAVE_DETAILED_TIMINGS
   libelpa@SUFFIX@_la_SOURCES += src/timer.F90 \
@@ -45,6 +47,13 @@ endif
 if WITH_GPU_VERSION
   libelpa@SUFFIX@_la_SOURCES +=  src/cudaFunctions.cu src/cuUtils.cu src/ev_tridi_band_gpu_c_v2.cu
   #src/interface_cuda.F90 src/interface_c_kernel.F90 src/ev_tridi_band_gpu_c_v2.cu src/cuUtils.cu
+endif
+
+if !WITH_MPI
+  libelpa@SUFFIX@_la_SOURCES += src/mod_time_c.F90
+if !HAVE_DETAILED_TIMINGS
+  libelpa@SUFFIX@_la_SOURCES += src/ftimings/time.c
+endif
 endif
 
 if WITH_REAL_GENERIC_KERNEL
@@ -370,6 +379,7 @@ distclean-local:
 EXTRA_DIST = \
   fdep/fortran_dependencies.pl \
   fdep/fortran_dependencies.mk \
+  test/fortran_test_programs/elpa_test_programs_print_headers.X90 \
   src/elpa_reduce_add_vectors.X90 \
   src/elpa_transpose_vectors.X90 \
   src/redist_band.X90 \

@@ -1,5 +1,6 @@
 module compute_hh_trafo_real
 #include "config-f90.h"
+  use elpa_mpi
   implicit none
 
 #ifdef WITH_OPENMP
@@ -8,15 +9,13 @@ module compute_hh_trafo_real
   public compute_hh_trafo_real_cpu
 #endif
 
-  include 'mpif.h'
-
   contains
 
 #ifdef WITH_OPENMP
-       subroutine compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads,                &
-                                                   a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
+       subroutine compute_hh_trafo_real_cpu_openmp(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev,        &
+                                                   a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,    &
                                                    hh_tau_dev, kernel_flops, kernel_time, off, ncols, istripe,              &
-                                                   my_thread, THIS_REAL_ELPA_KERNEL)
+                                                   my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
 #else
        subroutine compute_hh_trafo_real_cpu       (a, a_dev, stripe_width, a_dim2, stripe_count,                              &
                                                    a_off, nbw, max_blk_size, bcast_buffer,  bcast_buffer_dev, hh_dot_dev,     &
@@ -51,7 +50,6 @@ module compute_hh_trafo_real
          use timings
 #endif
          implicit none
-         include "mpif.h"
          real(kind=c_double), intent(inout) :: kernel_time  ! MPI_WTIME always needs double
          integer(kind=lik)            :: kernel_flops
          integer(kind=ik), intent(in) :: nbw, max_blk_size
@@ -65,7 +63,7 @@ module compute_hh_trafo_real
 !         real(kind=rk)                :: a(stripe_width,a_dim2,stripe_count)
          real(kind=rk), allocatable   :: a(:,:,:)
 #else
-         integer(kind=ik), intent(in) :: max_threads
+         integer(kind=ik), intent(in) :: max_threads, l_nev, thread_width
 !         real(kind=rk)                :: a(stripe_width,a_dim2,stripe_count,max_threads)
          real(kind=rk), allocatable   :: a(:,:,:,:)
 #endif
@@ -305,7 +303,7 @@ module compute_hh_trafo_real
 !#endif
 
 #ifdef WITH_OPENMP
-             if (j==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off_a_off+nbw-1,istripe,my_thread), &
+             if (j==1) call single_hh_trafo_real_cpu_openmp(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
                                       bcast_buffer(1:nbw,off+1), nbw, nl,     &
                                       stripe_width)
 #else

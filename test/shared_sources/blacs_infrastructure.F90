@@ -40,6 +40,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
+#include "config-f90.h"
 module mod_blacs_infrastructure
 
   contains
@@ -55,8 +56,15 @@ module mod_blacs_infrastructure
                                           np_cols, nprow, npcol, my_prow, my_pcol
 
       my_blacs_ctxt = mpi_comm_world
+#ifdef WITH_MPI
       call BLACS_Gridinit(my_blacs_ctxt, 'C', np_rows, np_cols)
       call BLACS_Gridinfo(my_blacs_ctxt, nprow, npcol, my_prow, my_pcol)
+#else
+      np_rows = 1
+      np_cols = 1
+      my_prow = 0
+      my_pcol = 0
+#endif
     end subroutine
 
     !c> void set_up_blacsgrid_from_fortran(int mpi_comm_world, int* my_blacs_ctxt,
@@ -81,14 +89,13 @@ module mod_blacs_infrastructure
 
       use elpa_utilities, only : error_unit
       use precision
-
+      use elpa_mpi
       implicit none
-      include "mpif.h"
 
       integer(kind=ik), intent(inout)  :: na, nblk, my_prow, my_pcol, np_rows,   &
                                           np_cols, na_rows, na_cols, sc_desc(1:9), &
                                           my_blacs_ctxt, info
-
+#ifdef WITH_MPI
       integer(kind=ik), external       :: numroc
       integer(kind=ik)                 :: mpierr
 
@@ -115,6 +122,10 @@ module mod_blacs_infrastructure
         write(error_unit,*) 'Try reducing the number of MPI tasks...'
         call MPI_ABORT(mpi_comm_world, 1, mpierr)
       endif
+#else /* WITH_MPI */
+      na_rows = na
+      na_cols = na
+#endif /* WITH_MPI */
 
     end subroutine
 
