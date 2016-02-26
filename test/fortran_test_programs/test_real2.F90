@@ -262,7 +262,6 @@ program test_real2
    successELPA = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
                                        mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
-                                   print *," here ", z(10,10)
    if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
 #ifdef WITH_MPI

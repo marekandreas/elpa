@@ -297,7 +297,6 @@ contains
     ttts = ttt0
     call bandred_real(na, a, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
                       tmat, wantDebug, useGPU, success, useQRActual)
-    print *, "hier 1:", q(10,10)
     if (.not.(success)) return
     ttt1 = MPI_Wtime()
     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -314,7 +313,6 @@ contains
      ttt0 = MPI_Wtime()
      call tridiag_band_real(na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans_real, &
                           mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
-                          print *, "hier 2:", q(10,10)
 
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -339,7 +337,6 @@ contains
      ttt0 = MPI_Wtime()
      call solve_tridi(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows,  &
                       mpi_comm_cols, wantDebug, success)
-                      print *, "hier 3:", q(10,10)
 
      if (.not.(success)) return
 
@@ -357,11 +354,9 @@ contains
      ! Backtransform stage 1
 
      ttt0 = MPI_Wtime()
-        print *, "hier 4a:", q(10,10)
      call trans_ev_tridi_to_band_real(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
                                     mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success,      &
                                     THIS_REAL_ELPA_KERNEL)
-                                    print *, "hier 4:", q(10,10)
 
      if (.not.(success)) return
      ttt1 = MPI_Wtime()
@@ -381,7 +376,6 @@ contains
      ttt0 = MPI_Wtime()
      call trans_ev_band_to_full_real(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, mpi_comm_rows, &
                                      mpi_comm_cols, useGPU, useQRActual)
-                                     print *, "hier 5:", q(10,10)
 
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
