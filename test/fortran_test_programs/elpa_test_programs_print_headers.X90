@@ -143,8 +143,12 @@
    endif
 #endif /* ELPA1 */
 
-   if (write_to_file) then
-     if (myid .eq. 0) print *,"Writing output files"
+   if (write_to_file%eigenvectors) then
+     if (myid .eq. 0) print *,"Writing Eigenvectors to files"
+   endif
+
+   if (write_to_file%eigenvalues) then
+     if (myid .eq. 0) print *,"Writing Eigenvalues to files"
    endif
 
 

@@ -100,6 +100,7 @@ program test_complex2
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
+ use output_types
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -131,7 +132,7 @@ program test_complex2
 #ifdef WITH_OPENMP
    integer(kind=ik)              :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
-   logical                       :: write_to_file
+   type(output_t)                :: write_to_file
    logical                       :: success
 
    success = .true.
@@ -300,7 +301,7 @@ program test_complex2
    if(myid == 0) print *,'Time transform back EVs :',time_evp_back
    if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
 
-   if(write_to_file) then
+   if(write_to_file%eigenvectors) then
       if (myid == 0) then
          open(17,file="EVs_complex2_out.txt",form='formatted',status='new')
          do i=1,na
@@ -309,6 +310,18 @@ program test_complex2
          close(17)
       endif
    endif
+
+   if(write_to_file%eigenvalues) then
+      if (myid == 0) then
+         open(17,file="Eigenvalues_complex2_out.txt",form='formatted',status='new')
+         do i=1,na
+            write(17,*) i,ev(i)
+         enddo
+         close(17)
+      endif
+   endif
+
+
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
    allocate(tmp1(na_rows,na_cols))

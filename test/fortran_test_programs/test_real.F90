@@ -93,6 +93,7 @@ program test_real
 #ifdef HAVE_DETAILED_TIMINGS
   use timings
 #endif
+  use output_types
 
    implicit none
 
@@ -121,7 +122,7 @@ program test_real
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
                                  provided_mpi_thread_level
 #endif
-   logical                    :: write_to_file
+   type(output_t)             :: write_to_file
    logical                    :: success
 
    integer :: j
@@ -279,7 +280,7 @@ program test_real
    if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
    if(myid == 0) print *,'Time trans_ev_real    :',time_evp_back
    if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
-   if(write_to_file) then
+   if(write_to_file%eigenvectors) then
       if (myid == 0) then
          open(17,file="EVs_real_out.txt",form='formatted',status='new')
          do i=1,na
@@ -288,6 +289,16 @@ program test_real
          close(17)
       endif
    endif
+   if(write_to_file%eigenvalues) then
+      if (myid == 0) then
+         open(17,file="Eigenvalues_real_out.txt",form='formatted',status='new')
+         do i=1,na
+            write(17,*) i,ev(i)
+         enddo
+         close(17)
+      endif
+   endif
+
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
