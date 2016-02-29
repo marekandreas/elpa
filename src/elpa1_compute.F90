@@ -3017,7 +3017,6 @@ module ELPA1_compute
       integer(kind=ik)              :: max_threads, my_thread
       integer(kind=ik)              :: omp_get_max_threads, omp_get_thread_num
 
-
       max_threads = omp_get_max_threads()
 
       allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
