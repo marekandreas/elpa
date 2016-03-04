@@ -132,6 +132,8 @@ program test_complex2
 #endif
    type(output_t)                :: write_to_file
    logical                       :: success
+   character(len=8)              :: task_suffix
+   integer(kind=ik)              :: j
 
    success = .true.
 
@@ -277,13 +279,16 @@ program test_complex2
    if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
 
    if(write_to_file%eigenvectors) then
-      if (myid == 0) then
-         open(17,file="EVs_complex2_out.txt",form='formatted',status='new')
-         do i=1,na
-            write(17,*) i,ev(i)
-         enddo
-         close(17)
-      endif
+     write(unit = task_suffix, fmt = '(i8.8)') myid
+     open(17,file="EVs_complex2_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
+     write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
+
+     do i=1,na_rows
+       do j=1,na_cols
+         write(17,*) "row=",i," col=",j," element of eigenvector=",z(i,j)
+       enddo
+     enddo
+     close(17)
    endif
    if(write_to_file%eigenvalues) then
       if (myid == 0) then
