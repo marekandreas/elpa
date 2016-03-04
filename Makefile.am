@@ -182,6 +182,7 @@ shared_sources = test/shared_sources/util.F90 \
 		 test/shared_sources/check_correctnes.F90 \
 		 test/shared_sources/setup_mpi.F90 \
 		 test/shared_sources/blacs_infrastructure.F90 \
+		 test/shared_sources/mod_output_types.F90 \
 		 test/shared_sources/prepare_matrix.F90
 
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_real_c_version.c $(shared_sources) $(redirect_sources)

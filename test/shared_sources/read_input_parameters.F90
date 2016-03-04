@@ -49,24 +49,28 @@ module mod_read_input_parameters
       use ELPA_utilities, only : error_unit
       use precision
       use elpa_mpi
+      use output_types
       implicit none
 
       integer(kind=ik), intent(out) :: na, nev, nblk
-      logical, intent(out)          :: write_to_file
+
+      type(output_t), intent(out)   :: write_to_file
 
       ! Command line arguments
-      character(len=128)            :: arg1, arg2, arg3, arg4
+      character(len=128)            :: arg1, arg2, arg3, arg4, arg5
       integer(kind=ik)              :: mpierr
 
       ! default parameters
       na = 4000
       nev = 1500
       nblk = 16
-      write_to_file = .false.
+      write_to_file%eigenvectors = .false.
+      write_to_file%eigenvalues  = .false.
 
-      if (.not. any(COMMAND_ARGUMENT_COUNT() == [0, 3, 4])) then
+      if (.not. any(COMMAND_ARGUMENT_COUNT() == [0, 3, 4, 5])) then
         write(error_unit, '(a,i0,a)') "Invalid number (", COMMAND_ARGUMENT_COUNT(), ") of command line arguments!"
-        write(error_unit, *) "Expected: program [ [matrix_size num_eigenvalues block_size] ""output""]"
+        write(error_unit, *) "Expected: program [ [matrix_size num_eigenvalues block_size] &
+            ""output_eigenvalues"" ""output_eigenvectors""]"
         stop 1
       endif
 
@@ -89,15 +93,40 @@ module mod_read_input_parameters
         read(arg2, *) nev
         read(arg3, *) nblk
 
-        if (arg4 .eq. "output") then
-          write_to_file = .true.
+        if (arg4 .eq. "output_eigenvalues") then
+          write_to_file%eigenvectors = .true.
         else
-          write(error_unit, *) "Invalid value for output flag! Must be ""output"" or omitted"
+          write(error_unit, *) "Invalid value for output flag! Must be ""output_eigenvalues"" or omitted"
           stop 1
         endif
 
       endif
 
+      if (COMMAND_ARGUMENT_COUNT() == 5) then
+        call GET_COMMAND_ARGUMENT(1, arg1)
+        call GET_COMMAND_ARGUMENT(2, arg2)
+        call GET_COMMAND_ARGUMENT(3, arg3)
+        call GET_COMMAND_ARGUMENT(4, arg4)
+        call GET_COMMAND_ARGUMENT(5, arg5)
+        read(arg1, *) na
+        read(arg2, *) nev
+        read(arg3, *) nblk
+
+        if (arg4 .eq. "output_eigenvalues") then
+          write_to_file%eigenvalues = .true.
+        else
+          write(error_unit, *) "Invalid value for output flag! Must be ""output_eigenvalues"" or omitted"
+          stop 1
+        endif
+
+        if (arg5 .eq. "output_eigenvectors") then
+          write_to_file%eigenvectors = .true.
+        else
+          write(error_unit, *) "Invalid value for output flag! Must be ""output_eigenvectors"" or omitted"
+          stop 1
+        endif
+
+      endif
     end subroutine
 
 end module
