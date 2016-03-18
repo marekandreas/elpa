@@ -547,7 +547,7 @@ module cuda_functions
       use iso_c_binding
 
       implicit none
-      character(1,C_CHAR)             :: cta, ctb
+      character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_DOUBLE)             :: alpha,beta
@@ -561,7 +561,7 @@ module cuda_functions
       use iso_c_binding
 
       implicit none
-      character(1,C_CHAR)             :: cta, ctb
+      character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_FLOAT)              :: alpha,beta
@@ -576,7 +576,7 @@ module cuda_functions
       use iso_c_binding
 
       implicit none
-      character(1,C_CHAR)             :: side, uplo, trans, diag
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
@@ -591,7 +591,7 @@ module cuda_functions
       use iso_c_binding
 
       implicit none
-      character(1,C_CHAR)             :: side, uplo, trans, diag
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
@@ -606,7 +606,7 @@ module cuda_functions
       use iso_c_binding
 
       implicit none
-      character(1,C_CHAR)             :: cta, ctb
+      character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_DOUBLE)          :: alpha,beta
@@ -621,7 +621,7 @@ module cuda_functions
       use iso_c_binding
 
       implicit none
-      character(1,C_CHAR)             :: cta, ctb
+      character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT)           :: alpha,beta
@@ -636,7 +636,7 @@ module cuda_functions
       use iso_c_binding
 
       implicit none
-      character(1,C_CHAR)             :: side, uplo, trans, diag
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE)          :: alpha
@@ -651,7 +651,7 @@ module cuda_functions
       use iso_c_binding
 
       implicit none
-      character(1,C_CHAR)             :: side, uplo, trans, diag
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT)           :: alpha

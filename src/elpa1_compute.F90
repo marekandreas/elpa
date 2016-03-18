@@ -316,8 +316,4 @@ module ELPA1_compute
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-
-
-
-
 end module ELPA1_compute
