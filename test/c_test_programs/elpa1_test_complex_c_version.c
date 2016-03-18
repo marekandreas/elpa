@@ -54,6 +54,8 @@
 #include <test/shared_sources/generated.h>
 #include <complex.h>
 
+#define DOUBLE_PRECISION_COMPLEX 1
+
 int main(int argc, char** argv) {
    int myid;
    int nprocs;

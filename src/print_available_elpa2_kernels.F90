@@ -55,6 +55,8 @@
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+!
+! This file was written by A. Marek, MPCDF
 
 #include "config-f90.h"
 

@@ -38,7 +38,8 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-!
+! This file was written by A. Marek, MPCDF
+
 #include "config-f90.h"
 
 module mod_check_for_gpu

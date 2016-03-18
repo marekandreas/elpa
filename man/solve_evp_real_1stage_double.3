@@ -1,0 +1,86 @@
+.TH "solve_evp_real_1stage_double" 3 "Thu Mar 17 2016" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+solve_evp_real_1stage_double \- solve the double-precision real eigenvalue problem with the 1-stage ELPA solver
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa1
+.br
+.br
+.RI  "success = \fBsolve_evp_real_1stage_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.RI "integer, intent(in)    \fBna\fP:            global dimension of quadratic matrix \fBa\fP to solve"
+.br
+.RI "integer, intent(in)    \fBnev\fP:           number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
+.br
+.RI "real*8,  intent(inout) \fBa\fP:             locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.br
+.RI "integer, intent(in)    \fBlda\fP:           leading dimension of locally distributed matrix \fBa\fP"
+.br
+.RI "real*8,  intent(inout) \fBev\fP:            on output the first \fBnev\fP computed eigenvalues"
+.br
+.RI "real*8,  intent(inout) \fBq\fP:             on output the first \fBnev\fP computed eigenvectors"
+.br
+.RI "integer, intent(in)    \fBldq\fP:           leading dimension of matrix \fBq\fP which stores the eigenvectors"
+.br
+.RI "integer, intent(in)    \fBnblk\fP:          blocksize of block cyclic distributin, must be the same in both directions"
+.br
+.RI "integer, intent(in)    \fBmatrixCols\fP:    number of columns of locally distributed matrices \fBa\fP and \fBq\fP"
+.br
+.RI "integer, intent(in)    \fBmpi_comm_rows\fP: communicator for communication in rows. Constructed with \fBget_elpa_communicators\fP(3)"
+.br
+.RI "integer, intent(in)    \fBmpi_comm_cols\fP: communicator for communication in colums. Constructed with \fBget_elpa_communicators\fP(3)"
+.br
+
+.RI "logical                \fBsuccess\fP:       return value indicating success or failure"
+.br
+.SS C INTERFACE
+#include "elpa.h"
+
+.br
+.RI "success = \fBsolve_evp_real_1stage_double_precision\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols);"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.RI "int     \fBna\fP:            global dimension of quadratic matrix \fBa\fP to solve"
+.br
+.RI "int     \fBnev\fP:           number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
+.br
+.RI "double *\fBa\fP:             pointer to locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.br
+.RI "int     \fBlda\fP:           leading dimension of locally distributed matrix \fBa\fP"
+.br
+.RI "double *\fBev\fP:            pointer to memory containing on output the first \fBnev\fP computed eigenvalues"
+.br
+.RI "double *\fBq\fP:             pointer to memory containing on output the first \fBnev\fP computed eigenvectors"
+.br
+.RI "int     \fBldq\fP:           leading dimension of matrix \fBq\fP which stores the eigenvectors"
+.br
+.RI "int     \fBnblk\fP:          blocksize of block cyclic distributin, must be the same in both directions"
+.br
+.RI "int     \fBmatrixCols\fP:    number of columns of locally distributed matrices \fBa\fP and \fBq\fP"
+.br
+.RI "int     \fBmpi_comm_rows\fP: communicator for communication in rows. Constructed with \fBget_elpa_communicators\fP(3)"
+.br
+.RI "int     \fBmpi_comm_cols\fP: communicator for communication in colums. Constructed with \fBget_elpa_communicators\fP(3)"
+.br
+
+.RI "int     \fBsuccess\fP:       return value indicating success (1) or failure (0)
+
+.SH DESCRIPTION
+Solve the real eigenvalue problem with the 1-stage solver. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBget_elpa_communicators\fP(3) function. The distributed quadratic marix \fBa\fP has global dimensions \fBna\fP x \fBna\fP, and a local size \fBlda\fP x \fBmatrixCols\fP. The solver will compute the first \fBnev\fP eigenvalues, which will be stored on exit in \fBev\fP. The eigenvectors corresponding to the eigenvalues will be stored in \fBq\fP. All memory of the arguments must be allocated outside the call to the solver.
+.br
+.SH "SEE ALSO"
+\fBget_elpa_communicators\fP(3) \fBsolve_evp_real_1stage_single\fP(3) \fBsolve_evp_complex_1stage_double\fP(3) \fBsolve_evp_complex_1stage_single\fP(3)  \fBsolve_evp_real_2stage_double\fP(3)  \fBsolve_evp_real_2stage_single\fP(3) \fBsolve_evp_complex_2stage_double\fP(3) \fBsolve_evp_complex_2stage_single\fP(3) \fBprint_available_elpa2_kernels\fP(1)

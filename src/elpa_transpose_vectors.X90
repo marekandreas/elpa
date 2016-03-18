@@ -52,11 +52,24 @@
 #include "config-f90.h"
 
 #if REALCASE==1
-subroutine elpa_transpose_vectors_real(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
+
+#ifdef DOUBLE_PRECISION_REAL
+subroutine elpa_transpose_vectors_real_double(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
+#else
+subroutine elpa_transpose_vectors_real_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
 #endif
+
+#endif /* REALCASE == 1 */
+
 #if COMPLEXCASE==1
-subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+subroutine elpa_transpose_vectors_complex_double(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
+#else
+subroutine elpa_transpose_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
 #endif
+
+#endif /* COMPLEXCASE == 1 */
 
 !-------------------------------------------------------------------------------
 ! This routine transposes an array of vectors which are distributed in
@@ -79,7 +92,9 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
 !
 !-------------------------------------------------------------------------------
     use precision
-
+#ifdef HAVE_DETAILED_TIMINGS
+    use timings
+#endif
 !   use ELPA1 ! for least_common_multiple
 #ifdef WITH_OPENMP
    use omp_lib
@@ -101,6 +116,23 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
    integer(kind=ik)                          :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
    integer(kind=ik)                          :: auxstride
 
+#ifdef HAVE_DETAILED_TIMINGS
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call timer%start("elpa_transpose_vectors_complex_double")
+#else
+   call timer%start("elpa_transpose_vectors_complex_single")
+#endif
+
+#else
+#ifdef DOUBLE_PRECISION_REAL
+   call timer%start("elpa_transpose_vectors_real_double")
+#else
+   call timer%start("elpa_transpose_vectors_real_single")
+#endif
+
+#endif
+#endif
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)
    call mpi_comm_rank(comm_t,mypt,mpierr)
@@ -208,6 +240,22 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
    !$omp end parallel
 #endif
    deallocate(aux)
+#ifdef HAVE_DETAILED_TIMINGS
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call timer%stop("elpa_transpose_vectors_complex_double")
+#else
+   call timer%stop("elpa_transpose_vectors_complex_single")
+#endif
 
+#else
+#ifdef DOUBLE_PRECISION_REAL
+   call timer%stop("elpa_transpose_vectors_real_double")
+#else
+   call timer%stop("elpa_transpose_vectors_real_single")
+#endif
+#endif
+
+#endif
 end subroutine
 

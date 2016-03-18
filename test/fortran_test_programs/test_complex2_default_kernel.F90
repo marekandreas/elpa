@@ -64,7 +64,7 @@
 !> the environment variable "COMPLEX_ELPA_KERNEL" to an
 !> appropiate value.
 !>
-program test_complex2
+program test_complex2_default_kernel_double_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - COMPLEX version
@@ -122,11 +122,11 @@ program test_complex2
 
    integer(kind=ik), external    :: numroc
 
-   real(kind=rk), allocatable    :: ev(:), xr(:,:)
+   real(kind=rk8), allocatable    :: ev(:), xr(:,:)
 
-   complex(kind=ck), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+   complex(kind=ck8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
-   complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+   complex(kind=ck8), parameter   :: CZERO = (0._rk8,0._rk8), CONE = (1._rk8,0._rk8)
 
    integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -140,6 +140,8 @@ program test_complex2
    type(output_t)                :: write_to_file
    character(len=8)              :: task_suffix
    integer(kind=ik)              :: j
+
+#define DOUBLE_PRECISION_COMPLEX 1
 
    success = .true.
 
@@ -180,7 +182,7 @@ program test_complex2
 
   call timer%enable()
 
-  call timer%start("program")
+  call timer%start("program: test_complex2_default_kernel_double_precision")
 #endif
 
    !-------------------------------------------------------------------------------
@@ -277,7 +279,7 @@ program test_complex2
    allocate(ev(na))
    allocate(xr(na_rows,na_cols))
 
-   call prepare_matrix(na, myid, sc_desc, iseed, xr, a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed, xr, a, z, as)
 
    deallocate(xr)
 
@@ -303,7 +305,7 @@ program test_complex2
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   successELPA = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   successELPA = solve_evp_complex_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                  na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(successELPA)) then
@@ -347,7 +349,7 @@ program test_complex2
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
    deallocate(a)
    deallocate(as)
@@ -358,12 +360,12 @@ program test_complex2
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
+   call timer%stop("program: test_complex2_default_kernel_double_precision")
    print *," "
-   print *,"Timings program:"
-   call timer%print("program")
+   print *,"Timings program: test_complex2_default_kernel_double_precision"
+   call timer%print("program: test_complex2_default_kernel_double_precision")
    print *," "
-   print *,"End timings program"
+   print *,"End timings program: test_complex2_default_kernel_double_precision"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

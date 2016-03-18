@@ -114,9 +114,9 @@ program test_real
    integer(kind=ik)           :: my_prowFromC, my_pcolFromC
    integer(kind=ik), external :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real(kind=rk8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
-   real(kind=rk), allocatable :: aFromC(:,:), evFromC(:), zFromC(:,:)
+   real(kind=rk8), allocatable :: aFromC(:,:), evFromC(:), zFromC(:,:)
 
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -284,7 +284,7 @@ program test_real
 
    allocate(evFromC(na))
 
-   call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed,  a, z, as)
 
    aFromC = a
    zFromC = z
@@ -304,7 +304,7 @@ program test_real
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                           na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
@@ -335,7 +335,7 @@ program test_real
      print *," "
    end if
 
-   success = solve_elpa1_real_call_from_c(na, nev, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
+   success = solve_elpa1_real_call_from_c_double(na, nev, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
                                           na_cols, mpi_comm_rows_fromC, mpi_comm_cols_fromC )
 
    if (myid==0) then
@@ -398,7 +398,7 @@ program test_real
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
    deallocate(a)
    deallocate(as)

@@ -79,6 +79,7 @@
 
 
 #include "config-f90.h"
+
 !> \brief Fortran module which provides the routines to use the one-stage ELPA solver
 module ELPA1
   use precision
@@ -97,14 +98,21 @@ module ELPA1
 
   ! The following routines are public:
 
-  public :: get_elpa_row_col_comms     !< old, deprecated interface: Sets MPI row/col communicators
-  public :: get_elpa_communicators     !< Sets MPI row/col communicators
+  public :: get_elpa_row_col_comms           !< old, deprecated interface: Sets MPI row/col communicators
+  public :: get_elpa_communicators           !< Sets MPI row/col communicators
 
-  public :: solve_evp_real             !< old, deprecated interface: Driver routine for real eigenvalue problem
-  public :: solve_evp_real_1stage      !< Driver routine for real eigenvalue problem
-  public :: solve_evp_complex          !< old, deprecated interface:  Driver routine for complex eigenvalue problem
-  public :: solve_evp_complex_1stage   !< Driver routine for complex eigenvalue problem
-
+  public :: solve_evp_real                   !< old, deprecated interface: Driver routine for real double-precision eigenvalue problem
+  public :: solve_evp_real_1stage            !< Driver routine for real double-precision eigenvalue problem
+  public :: solve_evp_real_1stage_double     !< Driver routine for real double-precision eigenvalue problem
+#ifdef WANT_SINGLE_PRECISION_REAL
+  public :: solve_evp_real_1stage_single     !< Driver routine for real single-precision eigenvalue problem
+#endif
+  public :: solve_evp_complex                !< old, deprecated interface:  Driver routine for complex double-precision eigenvalue problem
+  public :: solve_evp_complex_1stage         !< Driver routine for complex double-precision eigenvalue problem
+  public :: solve_evp_complex_1stage_double  !< Driver routine for complex double-precision eigenvalue problem
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  public :: solve_evp_complex_1stage_single  !< Driver routine for complex single-precision eigenvalue problem
+#endif
   ! Timing results, set by every call to solve_evp_xxx
 
   real(kind=c_double), public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
@@ -169,7 +177,11 @@ module ELPA1
 
 
   interface solve_evp_real
-    module procedure solve_evp_real_1stage
+    module procedure solve_evp_real_1stage_double
+  end interface
+
+  interface solve_evp_real_1stage
+    module procedure solve_evp_real_1stage_double
   end interface
 
 !> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage"
@@ -210,7 +222,11 @@ module ELPA1
 
 
   interface solve_evp_complex
-    module procedure solve_evp_complex_1stage
+    module procedure solve_evp_complex_1stage_double
+  end interface
+
+  interface solve_evp_complex_1stage
+    module procedure solve_evp_complex_1stage_double
   end interface
 
 contains
@@ -256,7 +272,7 @@ function get_elpa_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows
 end function get_elpa_communicators
 
 
-!> \brief solve_evp_real_1stage: Fortran function to solve the real eigenvalue problem with 1-stage solver
+!> \brief solve_evp_real_1stage_double: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
 !
@@ -290,8 +306,13 @@ end function get_elpa_communicators
 !>
 !>  \result                     success
 
+#define DOUBLE_PRECISION_REAL 1
+#define DOUBLE_PRECISION_COMPLEX 1
+#define REAL_DATATYPE rk8
+#define COMPLEX_DATATYPE ck4
 
-function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
+function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
+                                      matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
    use precision
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
@@ -300,19 +321,19 @@ function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mp
    implicit none
 
    integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   real(kind=rk)                 :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
+   real(kind=REAL_DATATYPE)                 :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
    ! was
    ! real a(lda,*), q(ldq,*)
 
    integer(kind=ik)              :: my_prow, my_pcol, mpierr
-   real(kind=rk), allocatable    :: e(:), tau(:)
+   real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
    real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
    logical                       :: success
    logical, save                 :: firstCall = .true.
    logical                       :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("solve_evp_real_1stage")
+   call timer%start("solve_evp_real_1stage_double")
 #endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -330,15 +351,23 @@ function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mp
    allocate(e(na), tau(na))
 
    ttt0 = MPI_Wtime()
-   call tridiag_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
-
+#ifdef DOUBLE_PRECISION_REAL
+   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+#else
+   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+#endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
    time_evp_fwd = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
-   call solve_tridi(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+#ifdef DOUBLE_PRECISION_REAL
+   call solve_tridi_double(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                     mpi_comm_cols, wantDebug, success)
+#else
+   call solve_tridi_single(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#endif
    if (.not.(success)) return
 
    ttt1 = MPI_Wtime()
@@ -346,7 +375,11 @@ function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mp
    time_evp_solve = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
-   call trans_ev_real(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#ifdef DOUBLE_PRECISION_REAL
+   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#else
+   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
    time_evp_back = ttt1-ttt0
@@ -354,13 +387,22 @@ function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mp
    deallocate(e, tau)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve_evp_real_1stage")
+   call timer%stop("solve_evp_real_1stage_double")
 #endif
 
-end function solve_evp_real_1stage
+end function solve_evp_real_1stage_double
 
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#undef REAL_DATATYPE
+#undef COMPLEX_DATATYPE
 
-!> \brief solve_evp_complex_1stage: Fortran function to solve the complex eigenvalue problem with 1-stage solver
+#ifdef WANT_SINGLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#define REAL_DATATYPE rk4
+#define COMPLEX_DATATYPE CK4
+!> \brief solve_evp_real_1stage_single: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
 !
@@ -394,7 +436,134 @@ end function solve_evp_real_1stage
 !>
 !>  \result                     success
 
-function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
+
+function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                      mpi_comm_rows, mpi_comm_cols) result(success)
+   use precision
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   use iso_c_binding
+   implicit none
+
+   integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real(kind=REAL_DATATYPE)                 :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
+   ! was
+   ! real a(lda,*), q(ldq,*)
+
+   integer(kind=ik)              :: my_prow, my_pcol, mpierr
+   real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
+   real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
+   logical                       :: success
+   logical, save                 :: firstCall = .true.
+   logical                       :: wantDebug
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve_evp_real_1stage_single")
+#endif
+
+   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+
+   success = .true.
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
+
+   allocate(e(na), tau(na))
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_REAL
+   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+#else
+   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
+   time_evp_fwd = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_REAL
+   call solve_tridi_double(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#else
+   call solve_tridi_single(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#endif
+   if (.not.(success)) return
+
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi  :',ttt1-ttt0
+   time_evp_solve = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_REAL
+   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#else
+   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
+   time_evp_back = ttt1-ttt0
+
+   deallocate(e, tau)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_evp_real_1stage_single")
+#endif
+
+end function solve_evp_real_1stage_single
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#undef REAL_DATATYPE
+#undef COMPLEX_DATATYPE
+
+#endif /* WANT_SINGLE_PRECISION_REAL */
+
+#define DOUBLE_PRECISION_REAL 1
+#define DOUBLE_PRECISION_COMPLEX 1
+#define REAL_DATATYPE rk8
+#define COMPLEX_DATATYPE ck8
+!> \brief solve_evp_complex_1stage_double: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+
+function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                         mpi_comm_rows, mpi_comm_cols) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
@@ -403,15 +572,15 @@ function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols,
    implicit none
 
    integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   complex(kind=ck)                 :: a(lda,matrixCols), q(ldq,matrixCols)
+   complex(kind=COMPLEX_DATATYPE)                 :: a(lda,matrixCols), q(ldq,matrixCols)
    ! was
    ! complex a(lda,*), q(ldq,*)
-   real(kind=rk)                    :: ev(na)
+   real(kind=REAL_DATATYPE)                    :: ev(na)
 
    integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=ik)                 :: l_rows, l_cols, l_cols_nev
-   real(kind=rk), allocatable       :: q_real(:,:), e(:)
-   complex(kind=ck), allocatable    :: tau(:)
+   real(kind=REAL_DATATYPE), allocatable       :: q_real(:,:), e(:)
+   complex(kind=COMPLEX_DATATYPE), allocatable    :: tau(:)
    real(kind=c_double)              :: ttt0, ttt1  ! MPI_WTIME always needs double
 
    logical                          :: success
@@ -419,7 +588,7 @@ function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols,
    logical                          :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("solve_evp_complex_1stage")
+   call timer%start("solve_evp_complex_1stage_double")
 #endif
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -446,14 +615,23 @@ function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols,
    allocate(q_real(l_rows,l_cols))
 
    ttt0 = MPI_Wtime()
-   call tridiag_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call tridiag_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+#else
+   call tridiag_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+#endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_complex :',ttt1-ttt0
    time_evp_fwd = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
-   call solve_tridi(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call solve_tridi_double(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
                     mpi_comm_cols, wantDebug, success)
+#else
+   call solve_tridi_single(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#endif
    if (.not.(success)) return
 
    ttt1 = MPI_Wtime()
@@ -462,8 +640,11 @@ function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols,
 
    ttt0 = MPI_Wtime()
    q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
-
-   call trans_ev_complex(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call trans_ev_complex_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#else
+   call trans_ev_complex_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_complex:',ttt1-ttt0
    time_evp_back = ttt1-ttt0
@@ -471,9 +652,156 @@ function solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols,
    deallocate(q_real)
    deallocate(e, tau)
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve_evp_complex_1stage")
+   call timer%stop("solve_evp_complex_1stage_double")
 #endif
 
-end function solve_evp_complex_1stage
+end function solve_evp_complex_1stage_double
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#undef REAL_DATATYPE
+#undef COMPLEX_DATATYPE
+
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#define COMPLEX_DATATYPE ck4
+#define REAL_DATATYPE rk4
+
+!> \brief solve_evp_complex_1stage_single: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+
+
+function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                         mpi_comm_rows, mpi_comm_cols) result(success)
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   use precision
+   use iso_c_binding
+   implicit none
+
+   integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   complex(kind=COMPLEX_DATATYPE)                 :: a(lda,matrixCols), q(ldq,matrixCols)
+   ! was
+   ! complex a(lda,*), q(ldq,*)
+   real(kind=REAL_DATATYPE)                    :: ev(na)
+
+   integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=ik)                 :: l_rows, l_cols, l_cols_nev
+   real(kind=REAL_DATATYPE), allocatable       :: q_real(:,:), e(:)
+   complex(kind=COMPLEX_DATATYPE), allocatable    :: tau(:)
+   real(kind=c_double)              :: ttt0, ttt1  ! MPI_WTIME always needs double
+
+   logical                          :: success
+   logical, save                    :: firstCall = .true.
+   logical                          :: wantDebug
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve_evp_complex_1stage_single")
+#endif
+
+   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+   call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+   call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+   success = .true.
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
+
+
+   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
+   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
+
+   l_cols_nev = local_index(nev, my_pcol, np_cols, nblk, -1) ! Local columns corresponding to nev
+
+   allocate(e(na), tau(na))
+   allocate(q_real(l_rows,l_cols))
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call tridiag_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+#else
+   call tridiag_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_complex :',ttt1-ttt0
+   time_evp_fwd = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call solve_tridi_double(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#else
+   call solve_tridi_single(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#endif
+   if (.not.(success)) return
+
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi     :',ttt1-ttt0
+   time_evp_solve = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+   q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call trans_ev_complex_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#else
+   call trans_ev_complex_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_complex:',ttt1-ttt0
+   time_evp_back = ttt1-ttt0
+
+   deallocate(q_real)
+   deallocate(e, tau)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve_evp_complex_1stage_single")
+#endif
+
+end function solve_evp_complex_1stage_single
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#undef COMPLEX_DATATYPE
+#undef REAL_DATATYPE
+
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 end module ELPA1

@@ -64,7 +64,7 @@
 !> the environment variable "COMPLEX_ELPA_KERNEL" to an
 !> appropiate value.
 !>
-program test_complex2
+program test_complex2_double_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - COMPLEX version
@@ -120,10 +120,10 @@ program test_complex2
 #ifdef WITH_MPI
    integer(kind=ik), external    :: numroc
 #endif
-   complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
-   real(kind=rk), allocatable    :: ev(:), xr(:,:)
+   complex(kind=ck8), parameter   :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
+   real(kind=rk8), allocatable    :: ev(:), xr(:,:)
 
-   complex(kind=ck), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+   complex(kind=ck8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
    integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -136,10 +136,12 @@ program test_complex2
    character(len=8)              :: task_suffix
    integer(kind=ik)              :: j
 
-   logical                       :: successELPA, success
+   logical                       :: successELPA
 
    integer(kind=ik)              :: numberOfDevices
    logical                       :: gpuAvailable
+
+#define DOUBLE_PRECISION_COMPLEX 1
 
    successELPA   = .true.
    gpuAvailable  = .false.
@@ -180,7 +182,7 @@ program test_complex2
 
   call timer%enable()
 
-  call timer%start("program")
+  call timer%start("program: test_complex2_double_precision")
 #endif
 
    !-------------------------------------------------------------------------------
@@ -271,7 +273,7 @@ program test_complex2
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   successELPA = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   successELPA = solve_evp_complex_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                       na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(successELPA)) then
@@ -324,12 +326,12 @@ program test_complex2
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
+   call timer%stop("program: test_complex2_double_precision")
    print *," "
-   print *,"Timings program:"
-   call timer%print("program")
+   print *,"Timings program: test_complex2_double_precision"
+   call timer%print("program: test_complex2_double_precision")
    print *," "
-   print *,"End timings program"
+   print *,"End timings program: test_complex2_double_precision"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

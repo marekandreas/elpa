@@ -54,6 +54,8 @@
 
 #include "test/shared_sources/generated.h"
 
+#define DOUBLE_PRECISION_REAL 1
+
 int main(int argc, char** argv) {
    int myid;
    int nprocs;

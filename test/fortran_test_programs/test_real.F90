@@ -59,7 +59,7 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-program test_real
+program test_real_double_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -113,7 +113,7 @@ program test_real
 
    integer(kind=ik), external :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real(kind=rk8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -127,6 +127,8 @@ program test_real
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
    !-------------------------------------------------------------------------------
+
+#define DOUBLE_PRECISION_REAL 1
 
    success = .true.
 
@@ -166,7 +168,7 @@ program test_real
 
   call timer%enable()
 
-  call timer%start("program")
+  call timer%start("program: test_real_double_precision")
 #endif
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
@@ -247,7 +249,7 @@ program test_real
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                             na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
@@ -308,13 +310,13 @@ program test_real
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
+   call timer%stop("program: test_real_double_precision")
    print *," "
-   print *,"Timings program:"
+   print *,"Timings program: test_real_double_precision"
    print *," "
-   call timer%print("program")
+   call timer%print("program: test_real_double_precision")
    print *," "
-   print *,"End timings program"
+   print *,"End timings program: test_real_double_precision"
    print *," "
 #endif
 

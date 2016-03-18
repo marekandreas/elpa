@@ -52,11 +52,24 @@
 #include "config-f90.h"
 
 #if REALCASE==1
-subroutine elpa_reduce_add_vectors_real(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
+
+#ifdef DOUBLE_PRECISION_REAL
+subroutine elpa_reduce_add_vectors_real_double(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
+#else
+subroutine elpa_reduce_add_vectors_real_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
 #endif
+
+#endif /* REALCASE == 1 */
+
 #if COMPLEXCASE==1
-subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+subroutine elpa_reduce_add_vectors_complex_double(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
+#else
+subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
 #endif
+
+#endif /* COMPLEXCASE == 1 */
 
 !-------------------------------------------------------------------------------
 ! This routine does a reduce of all vectors in vmat_s over the communicator comm_t.
@@ -85,7 +98,9 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
    use omp_lib
 #endif
    use elpa_mpi
-
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
    implicit none
 
 
@@ -98,7 +113,23 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
    integer(kind=ik)                          :: n, lc, k, i, ips, ipt, ns, nl, mpierr
    integer(kind=ik)                          :: lcm_s_t, nblks_tot
    integer(kind=ik)                          :: auxstride, tylerk, error_unit
+#ifdef HAVE_DETAILED_TIMINGS
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call timer%start("elpa_reduce_add_vectors_complex_double")
+#else
+   call timer%start("elpa_reduce_add_vectors_complex_single")
+#endif
 
+#else
+#ifdef DOUBLE_PRECISION_REAL
+   call timer%start("elpa_reduce_add_vectors_double")
+#else
+   call timer%start("elpa_reduce_add_vectors_single")
+#endif
+
+#endif
+#endif
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)
    call mpi_comm_rank(comm_t,mypt,mpierr)
@@ -204,6 +235,23 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
 
    deallocate(aux1)
    deallocate(aux2)
+#ifdef HAVE_DETAILED_TIMINGS
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call timer%stop("elpa_reduce_add_vectors_complex_double")
+#else
+   call timer%stop("elpa_reduce_add_vectors_complex_single")
+#endif
+
+#else
+#ifdef DOUBLE_PRECISION_REAL
+   call timer%stop("elpa_reduce_add_vectors_double")
+#else
+   call timer%stop("elpa_reduce_add_vectors_single")
+#endif
+
+#endif
+#endif
 
 end subroutine
 

@@ -523,7 +523,7 @@ if test x"${want_gpu}" = x"yes" ; then
 fi
 
 dnl check whether single precision is requested
-AC_MSG_CHECKING(whether single precision calculations are requested)
+AC_MSG_CHECKING(whether ELPA library should contain also single precision functions)
 AC_ARG_ENABLE(single-precision,[AS_HELP_STRING([--enable-single-precision],
 	                                   [build with single precision])],
               want_single_precision="yes", want_single_precision="no")
@@ -747,10 +747,12 @@ if test x"${DESPERATELY_WANT_ASSUMED_SIZE}" = x"yes" ; then
   AC_DEFINE([DESPERATELY_WANT_ASSUMED_SIZE],[1],[use assumed size arrays, even if not debuggable])
 fi
 
-if test x"${want_single_precision}" = x"no" ; then
-  AC_DEFINE([DOUBLE_PRECISION_REAL],[1],[use double precision for real calculation])
-  AC_DEFINE([DOUBLE_PRECISION_COMPLEX],[1],[use double precision for complex calculation])
+if test x"${want_single_precision}" = x"yes" ; then
+  AC_DEFINE([WANT_SINGLE_PRECISION_REAL],[1],[build also single-precision for real calculation])
+  AC_DEFINE([WANT_SINGLE_PRECISION_COMPLEX],[1],[build also single-precision for complex calculation])
 fi
+AM_CONDITIONAL([WANT_SINGLE_PRECISION_REAL],[test x"$want_single_precision" = x"yes"])
+AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" = x"yes"])
 
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])

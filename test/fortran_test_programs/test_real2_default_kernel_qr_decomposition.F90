@@ -65,7 +65,7 @@
 !> the environment variable "REAL_ELPA_KERNEL" to an
 !> appropiate value.
 !>
-program test_real2
+program test_real2_default_kernel_qr_decomposition_double_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -123,7 +123,7 @@ program test_real2
 
    integer, external          :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real(kind=rk8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
    integer(kind=ik)           :: STATUS
@@ -137,6 +137,7 @@ program test_real2
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
 
+#define DOUBLE_PRECISION_REAL 1
 
    successELPA   = .true.
    gpuAvailable  = .false.
@@ -185,7 +186,7 @@ program test_real2
 
    call timer%enable()
 
-   call timer%start("program")
+   call timer%start("program: test_real2_default_kernel_qr_decomposition_double_precision")
 #endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -277,7 +278,7 @@ program test_real2
 
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed,  a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -302,7 +303,7 @@ program test_real2
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-   successELPA = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   successELPA = solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
                               useQR=.true.)
 
@@ -352,7 +353,7 @@ program test_real2
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
    deallocate(a)
    deallocate(as)
@@ -363,12 +364,12 @@ program test_real2
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
+   call timer%stop("program: test_real2_default_kernel_qr_decomposition_double_precision")
    print *," "
-   print *,"Timings program:"
-   call timer%print("program")
+   print *,"Timings program: test_real2_default_kernel_qr_decomposition_double_precision"
+   call timer%print("program: test_real2_default_kernel_qr_decomposition_double_precision")
    print *," "
-   print *,"End timings program"
+   print *,"End timings program: test_real2_default_kernel_qr_decomposition_double_precision"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

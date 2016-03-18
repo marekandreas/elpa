@@ -41,7 +41,8 @@
 !This is a module contains all CUDA C Calls
 ! it was provided by NVIDIA with their ELPA GPU port and
 ! adapted for an ELPA release by A.Marek, RZG
-
+!
+! The file was written by A. Marek, MPCDF
 #include "config-f90.h"
 
 module cuda_routines
@@ -275,7 +276,8 @@ module cuda_routines
 
   !***************Initialise memory***********************************************
 
-  interface 
+  interface
+
  function cuda_memset_c(a, val, size) result(istat) &
           bind(C, name="cudaMemsetFromC")
 

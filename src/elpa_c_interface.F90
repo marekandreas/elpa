@@ -103,7 +103,74 @@
 
 
 
-  !c>  /*! \brief C interface to solve the real eigenvalue problem with 1-stage solver
+  !c>  /*! \brief C interface to solve the double-precision real eigenvalue problem with 1-stage solver
+  !c>  *
+  !c> *  \param  na                   Order of matrix a
+  !c> *  \param  nev                  Number of eigenvalues needed.
+  !c> *                               The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                    Distributed matrix for which eigenvalues are to be computed.
+  !c> *                               Distribution is like in Scalapack.
+  !c> *                               The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                   Leading dimension of a
+  !c> *  \param ev(na)                On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                     On output: Eigenvectors of a
+  !c> *                               Distribution is like in Scalapack.
+  !c> *                               Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                               even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                   Leading dimension of q
+  !c> *  \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols           distributed number of matrix columns
+  !c> *  \param mpi_comm_rows        MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols        MPI-Communicator for columns
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c>*/
+#define DOUBLE_PRECISION_REAL 1
+#ifdef DOUBLE_PRECISION_REAL
+  !c> int elpa_solve_evp_real_1stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+#else
+  !c> int elpa_solve_evp_real_1stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+#endif
+
+#ifdef DOUBLE_PRECISION_REAL
+  function solve_elpa1_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk, &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
+                                  result(success) bind(C,name="elpa_solve_evp_real_1stage_double_precision")
+#else
+  function solve_elpa1_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk, &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
+                                  result(success) bind(C,name="elpa_solve_evp_real_1stage_single_precision")
+#endif
+
+    use, intrinsic :: iso_c_binding
+    use elpa1
+
+    implicit none
+    integer(kind=c_int)                    :: success
+    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows
+#ifdef DOUBLE_PRECISION_REAL
+    real(kind=c_double)                    :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+#else
+    real(kind=c_float)                     :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+#endif
+    logical                                :: successFortran
+
+#ifdef DOUBLE_PRECISION_REAL
+    successFortran = solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#else
+    successFortran = solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#endif
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+
+  end function
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_REAL
+  !c>  /*! \brief C interface to solve the single-precision real eigenvalue problem with 1-stage solver
   !c>  *
   !c> *  \param  na                   Order of matrix a
   !c> *  \param  nev                  Number of eigenvalues needed.
@@ -130,15 +197,18 @@
 #else
   !c> int elpa_solve_evp_real_1stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
 #endif
-  function solve_elpa1_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
+
 #ifdef DOUBLE_PRECISION_REAL
+  function solve_elpa1_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk, &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
                                   result(success) bind(C,name="elpa_solve_evp_real_1stage_double_precision")
 #else
+  function solve_elpa1_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk, &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
                                   result(success) bind(C,name="elpa_solve_evp_real_1stage_single_precision")
 #endif
     use, intrinsic :: iso_c_binding
-    use elpa1, only : solve_evp_real
+    use elpa1
 
     implicit none
     integer(kind=c_int)                    :: success
@@ -150,8 +220,11 @@
 #endif
     logical                                :: successFortran
 
-    successFortran = solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
-
+#ifdef DOUBLE_PRECISION_REAL
+    successFortran = solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#else
+    successFortran = solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#endif
     if (successFortran) then
       success = 1
     else
@@ -160,8 +233,11 @@
 
   end function
 
+#endif /* WANT_SINGLE_PRECISION_REAL */
 
-  !c> /*! \brief C interface to solve the complex eigenvalue problem with 1-stage solver
+
+
+  !c> /*! \brief C interface to solve the double-precision complex eigenvalue problem with 1-stage solver
   !c> *
   !c> *  \param  na                   Order of matrix a
   !c> *  \param  nev                  Number of eigenvalues needed.
@@ -183,21 +259,24 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
+#define DOUBLE_PRECISION_COMPLEX 1
 #ifdef DOUBLE_PRECISION_COMPLEX
   !c> int elpa_solve_evp_complex_1stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
 #else
   !c> int elpa_solve_evp_complex_1stage_single_precision(int na, int nev,  complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
 #endif
 
-  function solve_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
 #ifdef DOUBLE_PRECISION_COMPLEX
+  function solve_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk, &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
                                   result(success) bind(C,name="elpa_solve_evp_complex_1stage_double_precision")
 #else
+  function solve_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk, &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
                                   result(success) bind(C,name="elpa_solve_evp_complex_1stage_single_precision")
 #endif
     use, intrinsic :: iso_c_binding
-    use elpa1, only : solve_evp_complex
+    use elpa1
 
     implicit none
     integer(kind=c_int)                    :: success
@@ -212,8 +291,11 @@
 
     logical                                :: successFortran
 
-    successFortran = solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
-
+#ifdef DOUBLE_PRECISION_COMPLEX
+    successFortran = solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#else
+    successFortran = solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#endif
     if (successFortran) then
       success = 1
     else
@@ -221,7 +303,80 @@
     endif
 
   end function
-  !c> /*! \brief C interface to solve the real eigenvalue problem with 2-stage solver
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+
+  !c> /*! \brief C interface to solve the single-precision complex eigenvalue problem with 1-stage solver
+  !c> *
+  !c> *  \param  na                   Order of matrix a
+  !c> *  \param  nev                  Number of eigenvalues needed.
+  !c> *                               The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                    Distributed matrix for which eigenvalues are to be computed.
+  !c> *                               Distribution is like in Scalapack.
+  !c> *                               The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                   Leading dimension of a
+  !c> *  \param ev(na)                On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                     On output: Eigenvectors of a
+  !c> *                               Distribution is like in Scalapack.
+  !c> *                               Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                               even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                   Leading dimension of q
+  !c> *  \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols           distributed number of matrix columns
+  !c> *  \param mpi_comm_rows        MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols        MPI-Communicator for columns
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c> */
+#undef DOUBLE_PRECISION_COMPLEX
+#ifdef DOUBLE_PRECISION_COMPLEX
+  !c> int elpa_solve_evp_complex_1stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+#else
+  !c> int elpa_solve_evp_complex_1stage_single_precision(int na, int nev,  complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+  function solve_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk, &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
+                                  result(success) bind(C,name="elpa_solve_evp_complex_1stage_double_precision")
+#else
+  function solve_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk, &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols)      &
+                                  result(success) bind(C,name="elpa_solve_evp_complex_1stage_single_precision")
+#endif
+    use, intrinsic :: iso_c_binding
+    use elpa1
+
+    implicit none
+    integer(kind=c_int)                    :: success
+    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows
+#ifdef DOUBLE_PRECISION_COMPLEX
+    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+    real(kind=c_double)                    :: ev(1:na)
+#else
+    complex(kind=c_float_complex)          :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+    real(kind=c_float)                     :: ev(1:na)
+#endif
+
+    logical                                :: successFortran
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+    successFortran = solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#else
+    successFortran = solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+#endif
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+
+  end function
+
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
+
+
+  !c> /*! \brief C interface to solve the double-precision real eigenvalue problem with 2-stage solver
   !c> *
   !c> *  \param  na                        Order of matrix a
   !c> *  \param  nev                       Number of eigenvalues needed.
@@ -246,22 +401,28 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
+#define DOUBLE_PRECISION_REAL 1
 #ifdef DOUBLE_PRECISION_REAL
   !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
 #else
   !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
 #endif
 
-  function solve_elpa2_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
+#ifdef DOUBLE_PRECISION_REAL
+  function solve_elpa2_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,    &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
                                   THIS_REAL_ELPA_KERNEL_API, useQR)           &
-#ifdef DOUBLE_PRECISION_REAL
                                   result(success) bind(C,name="elpa_solve_evp_real_2stage_double_precision")
 #else
+  function solve_elpa2_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,    &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                  THIS_REAL_ELPA_KERNEL_API, useQR)           &
+                                  result(success) bind(C,name="elpa_solve_evp_real_2stage_double_precision")
+
                                   result(success) bind(C,name="elpa_solve_evp_real_2stage_single_precision")
 #endif
     use, intrinsic :: iso_c_binding
-    use elpa2, only : solve_evp_real_2stage
+    use elpa2
 
     implicit none
     integer(kind=c_int)                    :: success
@@ -282,10 +443,15 @@
       useQRFortran = .true.
     endif
 
-    successFortran = solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+#ifdef DOUBLE_PRECISION_REAL
+    successFortran = solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, mpi_comm_all,                                  &
                                            THIS_REAL_ELPA_KERNEL_API, useQRFortran)
-
+#else
+    successFortran = solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                           mpi_comm_cols, mpi_comm_all,                                  &
+                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran)
+#endif
     if (successFortran) then
       success = 1
     else
@@ -294,8 +460,9 @@
 
   end function
 
+#ifdef WANT_SINGLE_PRECISION_REAL
 
-  !c> /*! \brief C interface to solve the complex eigenvalue problem with 2-stage solver
+  !c> /*! \brief C interface to solve the single-precision real eigenvalue problem with 2-stage solver
   !c> *
   !c> *  \param  na                        Order of matrix a
   !c> *  \param  nev                       Number of eigenvalues needed.
@@ -320,22 +487,112 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
+#undef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_REAL
+  !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
+#else
+  !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
+#endif
+
+#ifdef DOUBLE_PRECISION_REAL
+  function solve_elpa2_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,    &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                  THIS_REAL_ELPA_KERNEL_API, useQR)           &
+                                  result(success) bind(C,name="elpa_solve_evp_real_2stage_double_precision")
+#else
+  function solve_elpa2_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,    &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                  THIS_REAL_ELPA_KERNEL_API, useQR)           &
+                                  result(success) bind(C,name="elpa_solve_evp_real_2stage_single_precision")
+#endif
+    use, intrinsic :: iso_c_binding
+    use elpa2
+
+    implicit none
+    integer(kind=c_int)                    :: success
+    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
+                                              mpi_comm_all
+    integer(kind=c_int), value, intent(in) :: THIS_REAL_ELPA_KERNEL_API, useQR
+#ifdef DOUBLE_PRECISION_REAL
+    real(kind=c_double)                    :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+#else
+    real(kind=c_float)                     :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+#endif
+
+    logical                                :: successFortran, useQRFortran
+
+    if (useQR .eq. 0) then
+      useQRFortran =.false.
+    else
+      useQRFortran = .true.
+    endif
+
+#ifdef DOUBLE_PRECISION_REAL
+    successFortran = solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                           mpi_comm_cols, mpi_comm_all,                                  &
+                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran)
+#else
+    successFortran = solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                           mpi_comm_cols, mpi_comm_all,                                  &
+                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran)
+#endif
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+
+  end function
+
+#endif /* WANT_SINGLE_PRECISION_REAL */
+
+  !c> /*! \brief C interface to solve the double-precision complex eigenvalue problem with 2-stage solver
+  !c> *
+  !c> *  \param  na                        Order of matrix a
+  !c> *  \param  nev                       Number of eigenvalues needed.
+  !c> *                                    The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                         Distributed matrix for which eigenvalues are to be computed.
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                        Leading dimension of a
+  !c> *  \param ev(na)                     On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                          On output: Eigenvectors of a
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                                    even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                        Leading dimension of q
+  !c> *  \param nblk                       blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols                 distributed number of matrix columns
+  !c> *  \param mpi_comm_rows              MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols              MPI-Communicator for columns
+  !c> *  \param mpi_coll_all               MPI communicator for the total processor set
+  !c> *  \param THIS_REAL_ELPA_KERNEL_API  specify used ELPA2 kernel via API
+  !c> *  \param use_qr                     use QR decomposition 1 = yes, 0 = no
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c> */
+#define DOUBLE_PRECISION_COMPLEX 1
+
 #ifdef DOUBLE_PRECISION_COMPLEX
   !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
 #else
   !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
 #endif
-  function solve_elpa2_evp_complex_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+  function solve_elpa2_evp_complex_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,    &
                                   matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
                                   THIS_COMPLEX_ELPA_KERNEL_API)                  &
-#ifdef DOUBLE_PRECISION_COMPLEX
                                   result(success) bind(C,name="elpa_solve_evp_complex_2stage_double_precision")
 #else
+  function solve_elpa2_evp_complex_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,    &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
+                                  THIS_COMPLEX_ELPA_KERNEL_API)                  &
                                   result(success) bind(C,name="elpa_solve_evp_complex_2stage_single_precision")
 #endif
 
     use, intrinsic :: iso_c_binding
-    use elpa2, only : solve_evp_complex_2stage
+    use elpa2
 
     implicit none
     integer(kind=c_int)                    :: success
@@ -351,9 +608,13 @@
 #endif
     logical                                :: successFortran
 
-    successFortran = solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+#ifdef DOUBLE_PRECISION_COMPLEX
+    successFortran = solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                               mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
-
+#else
+    successFortran = solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                              mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
+#endif
     if (successFortran) then
       success = 1
     else
@@ -361,4 +622,86 @@
     endif
 
   end function
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+
+  !c> /*! \brief C interface to solve the single-precision complex eigenvalue problem with 2-stage solver
+  !c> *
+  !c> *  \param  na                        Order of matrix a
+  !c> *  \param  nev                       Number of eigenvalues needed.
+  !c> *                                    The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                         Distributed matrix for which eigenvalues are to be computed.
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                        Leading dimension of a
+  !c> *  \param ev(na)                     On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                          On output: Eigenvectors of a
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                                    even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                        Leading dimension of q
+  !c> *  \param nblk                       blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols                 distributed number of matrix columns
+  !c> *  \param mpi_comm_rows              MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols              MPI-Communicator for columns
+  !c> *  \param mpi_coll_all               MPI communicator for the total processor set
+  !c> *  \param THIS_REAL_ELPA_KERNEL_API  specify used ELPA2 kernel via API
+  !c> *  \param use_qr                     use QR decomposition 1 = yes, 0 = no
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c> */
+#undef DOUBLE_PRECISION_COMPLEX
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+  !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
+#else
+  !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+  function solve_elpa2_evp_complex_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,    &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
+                                  THIS_COMPLEX_ELPA_KERNEL_API)                  &
+                                  result(success) bind(C,name="elpa_solve_evp_complex_2stage_double_precision")
+#else
+  function solve_elpa2_evp_complex_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,    &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
+                                  THIS_COMPLEX_ELPA_KERNEL_API)                  &
+                                  result(success) bind(C,name="elpa_solve_evp_complex_2stage_single_precision")
+#endif
+
+    use, intrinsic :: iso_c_binding
+    use elpa2
+
+    implicit none
+    integer(kind=c_int)                    :: success
+    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
+                                              mpi_comm_all
+    integer(kind=c_int), value, intent(in) :: THIS_COMPLEX_ELPA_KERNEL_API
+#ifdef DOUBLE_PRECISION_COMPLEX
+    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+    real(kind=c_double)                    :: ev(1:na)
+#else
+    complex(kind=c_float_complex)          :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+    real(kind=c_float)                     :: ev(1:na)
+#endif
+    logical                                :: successFortran
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+    successFortran = solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                              mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
+#else
+    successFortran = solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                              mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
+#endif
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+
+  end function
+
+
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
 

@@ -59,7 +59,7 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-program test_complex
+program test_complex_double_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - COMPLEX version
@@ -110,11 +110,11 @@ program test_complex
    integer(kind=ik)              :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer(kind=ik)              :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   real(kind=rk), allocatable    :: ev(:), xr(:,:)
+   real(kind=rk8), allocatable    :: ev(:), xr(:,:)
 
-   complex(kind=ck), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+   complex(kind=ck8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
-   complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+   complex(kind=ck8), parameter   :: CZERO = (0._rk8,0.0_rk8), CONE = (1._rk8,0._rk8)
 
    integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
    integer(kind=ik)              :: STATUS
@@ -125,6 +125,8 @@ program test_complex
    logical                       :: success
    character(len=8)              :: task_suffix
    integer(kind=ik)              :: j
+
+#define DOUBLE_PRECISION_COMPLEX 1
 
    success = .true.
    ! read input parameters if they are provided
@@ -164,7 +166,7 @@ program test_complex
 
   call timer%enable()
 
-  call timer%start("program")
+  call timer%start("program: test_complex_double_precision")
 #endif
 
    !-------------------------------------------------------------------------------
@@ -256,7 +258,7 @@ program test_complex
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_complex_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_complex_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then
@@ -316,12 +318,12 @@ program test_complex
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
+   call timer%stop("program: test_complex_double_precision")
    print *," "
-   print *,"Timings program:"
-   call timer%print("program")
+   print *,"Timings program: test_complex_double_precision"
+   call timer%print("program: test_complex_double_precision")
    print *," "
-   print *,"End timings program"
+   print *,"End timings program: test_complex_double_precision"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

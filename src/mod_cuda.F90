@@ -1,3 +1,46 @@
+!    This file is part of ELPA.
+!
+!    The ELPA library was originally created by the ELPA consortium,
+!    consisting of the following organizations:
+!
+!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!      Informatik,
+!    - Technische Universität München, Lehrstuhl für Informatik mit
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
+!    - IBM Deutschland GmbH
+!
+!
+!    More information can be found here:
+!    http://elpa.rzg.mpg.de/
+!
+!    ELPA is free software: you can redistribute it and/or modify
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
+!    Software Foundation.
+!
+!    ELPA is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU Lesser General Public License for more details.
+!
+!    You should have received a copy of the GNU Lesser General Public License
+!    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+!
+!    ELPA reflects a substantial effort on the part of the original
+!    ELPA consortium, and we ask you to respect the spirit of the
+!    license that we chose: i.e., please contribute any changes you
+!    may have back to the original ELPA library distribution, and keep
+!    any derivatives of ELPA under the same license that we chose for
+!    the original distribution, the GNU Lesser General Public License.
+!
+! This file was written by A. Marek, MPCDF
+
+
 #include "config-f90.h"
 module cuda_functions
   use iso_c_binding
@@ -12,16 +55,14 @@ module cuda_functions
   integer(kind=ik) :: cudaHostRegisterMapped
   integer(kind=ik) :: cudaMemcpyDeviceToDevice
 
-#ifdef DOUBLE_PRECISION_REAL
-  integer(kind=c_size_t), parameter :: size_of_real_datatype    = 8_rk
-#else
-  integer(kind=c_size_t), parameter :: size_of_real_datatype    = 4_rk
+  integer(kind=c_size_t), parameter :: size_of_double_real_datatype    = 8_rk8
+#ifdef WANT_SINGLE_PRECISION_REAL
+  integer(kind=c_size_t), parameter :: size_of_single_real_datatype    = 4_rk4
 #endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-  integer(kind=c_size_t), parameter :: size_of_complex_datatype = 16_ck
-#else
-  integer(kind=c_size_t), parameter :: size_of_complex_datatype = 8_ck
+  integer(kind=c_size_t), parameter :: size_of_double_complex_datatype = 16_ck8
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  integer(kind=c_size_t), parameter :: size_of_single_complex_datatype = 8_ck4
 #endif
 
   ! functions to set and query the CUDA devices

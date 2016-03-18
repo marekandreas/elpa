@@ -63,10 +63,10 @@
     implicit none
 
     integer(kind=ik), intent(in) :: nb, nq, ldq, ldh
-    real(kind=rk), intent(inout) :: q(ldq,*)
-    real(kind=rk), intent(in)    :: hh(ldh,*)
+    real(kind=rk8), intent(inout) :: q(ldq,*)
+    real(kind=rk8), intent(in)    :: hh(ldh,*)
 
-    real(kind=rk)                :: s
+    real(kind=rk8)                :: s
     integer(kind=ik)             :: i
 
     ! Safety only:
@@ -116,10 +116,10 @@
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
     complex(kind=ck), intent(inout) :: q(ldq/2,*)
-    real(kind=rk), intent(in)       :: hh(ldh,*), s
+    real(kind=rk8), intent(in)       :: hh(ldh,*), s
 
     complex(kind=ck)                :: x1, x2, x3, x4, x5, y1, y2, y3, y4, y5, q1, q2, q3, q4, q5, p1, p2, p3, p4, p5
-    real(kind=rk)                   :: h1, h2
+    real(kind=rk8)                   :: h1, h2
     integer(kind=ik)                :: i
 
     !   complex*16 loadfp, fxcpmadd, fxpmul, fpadd, a, b
@@ -393,10 +393,10 @@
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
     complex(kind=ck), intent(inout) :: q(ldq/2,*)
-    real(kind=rk), intent(in)       :: hh(ldh,*), s
+    real(kind=rk8), intent(in)       :: hh(ldh,*), s
 
     complex(kind=ck)                :: x1, x2, x3, x4, y1, y2, y3, y4, q1, q2, q3, q4, p1, p2, p3, p4
-    real(kind=rk)                   :: h1, h2
+    real(kind=rk8)                   :: h1, h2
     integer(kind=ik)                :: i
 
     !   complex*16 loadfp, fxcpmadd, fxpmul, fpadd, a, b
@@ -635,10 +635,10 @@
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
     complex(kind=ck), intent(inout) :: q(ldq/2,*)
-    real(kind=rk), intent(in)       :: hh(ldh,*), s
+    real(kind=rk8), intent(in)       :: hh(ldh,*), s
 
     complex(kind=ck)                :: x1, x2, y1, y2, q1, q2, p1, p2
-    real(kind=rk)                   :: h1, h2
+    real(kind=rk8)                   :: h1, h2
     integer(kind=ik)                :: i
 
     !   complex*16 loadfp, fxcpmadd, fxpmul, fpadd, a, b

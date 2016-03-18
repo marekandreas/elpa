@@ -4,15 +4,15 @@
 # coded in x86_64 assembler and using SSE2/SSE3 instructions.
 #
 # It must be assembled with GNU assembler (just "as" on most Linux machines)
-# 
+#
 # Copyright of the original code rests with the authors inside the ELPA
 # consortium. The copyright of any additional modifications shall rest
 # with their original authors, but shall adhere to the licensing terms
 # distributed along with the original code in the file "COPYING".
 #
 # --------------------------------------------------------------------------------------------------
-        .globl double_hh_trafo_
-        .globl single_hh_trafo_complex_
+        .globl double_hh_trafo_double_
+        .globl single_hh_trafo_complex_double_
         .text
 
 #-------------------------------------------------------------------------------
@@ -340,7 +340,7 @@
 #
 #-------------------------------------------------------------------------------
         .align    16,0x90
-double_hh_trafo_:
+double_hh_trafo_double_:
 
         # Get integer parameters into corresponding registers
 
@@ -656,7 +656,7 @@ return1:
 #
 #-------------------------------------------------------------------------------
         .align    16,0x90
-single_hh_trafo_complex_:
+single_hh_trafo_complex_double_:
 
         # Get integer parameters into corresponding registers
 
