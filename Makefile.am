@@ -81,10 +81,17 @@ if WITH_REAL_BGQ_KERNEL
 endif
 
 if WITH_REAL_SSE_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64_double_precision.s
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64_single_precision.s
+endif
 else
 if WITH_COMPLEX_SSE_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64_double_precision.s
+if WANT_SINGLE_PRECISION_COMPLEX
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64_single_precision.s
+endif
+
 endif
 endif
 
@@ -332,6 +339,7 @@ elpa2_test_real_single_precision@SUFFIX@_LDADD = $(build_lib)
 
 elpa2_test_real_default_kernel_single_precision@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_default_kernel_single_precision.F90 $(shared_sources) $(redirect_sources)
 elpa2_test_real_default_kernel_single_precision@SUFFIX@_LDADD = $(build_lib)
+#elpa2_test_real_default_kernel_single_precision@SUFFIX@_LDFLAGS = -static
 
 elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_default_kernel_qr_decomposition_single_precision.F90 $(shared_sources) $(redirect_sources)
 elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@_LDADD = $(build_lib)
@@ -349,6 +357,7 @@ elpa2_test_complex_single_precision@SUFFIX@_LDADD = $(build_lib)
 
 elpa2_test_complex_default_kernel_single_precision@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex2_default_kernel_single_precision.F90 $(shared_sources) $(redirect_sources)
 elpa2_test_complex_default_kernel_single_precision@SUFFIX@_LDADD = $(build_lib)
+#elpa2_test_complex_default_kernel_single_precision@SUFFIX@_LDFLAGS = -static
 
 elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex2_choose_kernel_with_api_single_precision.F90 $(shared_sources) $(redirect_sources)
 elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@_LDADD = $(build_lib)

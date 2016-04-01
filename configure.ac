@@ -101,6 +101,14 @@ AM_PROG_AR
 AM_PROG_AS
 
 # Fortran
+
+dnl check whether single precision is requested
+AC_MSG_CHECKING(whether ELPA library should contain also single precision functions)
+AC_ARG_ENABLE(single-precision,[AS_HELP_STRING([--enable-single-precision],
+	                                   [build with single precision])],
+              want_single_precision="yes", want_single_precision="no")
+AC_MSG_RESULT([${want_single_precision}])
+
 AC_LANG([Fortran])
 m4_include([m4/ax_prog_fc_mpi.m4])
 AX_PROG_FC_MPI([test x"$enable_shared_memory_only" = xno],[use_mpi=yes],[use_mpi=no])
@@ -190,9 +198,9 @@ if test x"${with_ftimings}" = x"yes"; then
 fi
 AM_CONDITIONAL([HAVE_DETAILED_TIMINGS],[test x"$with_ftimings" = x"yes"])
 
-AC_MSG_CHECKING(whether SSE assembler kernel can be compiled)
+AC_MSG_CHECKING(whether double-precision SSE assembler kernel can be compiled)
 
-$CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64.s -o test.o 2>/dev/null
+$CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64_double_precision.s -o test.o 2>/dev/null
 if test "$?" == 0; then
   can_compile_sse=yes
   install_real_sse=yes
@@ -204,6 +212,26 @@ else
 fi
 rm -f ./test.o
 AC_MSG_RESULT([${can_compile_sse}])
+
+if test x"${want_single_precision}" = x"yes" ; then
+  AC_MSG_CHECKING(whether single-precision SSE assembler kernel can be compiled)
+
+  $CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64_double_precision.s -o test.o 2>/dev/null
+  if test "$?" == 0; then
+    can_compile_sse=yes
+    install_real_sse=yes
+    install_complex_sse=yes
+  else
+    can_compile_sse=no
+    install_real_sse=no
+    install_complex_sse=no
+  fi
+  rm -f ./test.o
+  AC_MSG_RESULT([${can_compile_sse}])
+  if test x"${can_compile_sse}" = x"no" ; then
+    AC_MSG_WARN([Cannot compile single-precision SSE kernel: disabling SSE kernels alltogether])
+  fi
+fi
 
 dnl check whether one can compile with avx - gcc intrinsics
 
@@ -522,14 +550,6 @@ if test x"${want_gpu}" = x"yes" ; then
   can_compile_gpu=yes
 fi
 
-dnl check whether single precision is requested
-AC_MSG_CHECKING(whether ELPA library should contain also single precision functions)
-AC_ARG_ENABLE(single-precision,[AS_HELP_STRING([--enable-single-precision],
-	                                   [build with single precision])],
-              want_single_precision="yes", want_single_precision="no")
-AC_MSG_RESULT([${want_single_precision}])
-
-
 dnl now check which kernels can be compiled
 
 dnl the checks for SSE were already done before
@@ -828,4 +848,8 @@ if test "${can_compile_avx2}" = "no" ; then
   if test x"${want_avx}" = x"yes" ; then
     AC_MSG_WARN([Could not compile AVX2 instructions])
   fi
+fi
+
+if test "${can_compile_sse}" = "no" ; then
+  AC_MSG_WARN([Could not compile SSE instructions])
 fi

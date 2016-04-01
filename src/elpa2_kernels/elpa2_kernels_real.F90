@@ -770,8 +770,8 @@ module real_generic_kernel
     real(kind=rk4)                   :: x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, &
                                        y1, y2, y3, y4, y5, y6, y7, y8, y9, y10, y11, y12
 #endif
-    real(kind=rk8)                   :: h1, h2, tau1, tau2
-    integer(kind=ik)                :: i
+    real(kind=rk4)                   :: h1, h2, tau1, tau2
+    integer(kind=ik)                 :: i
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("kernel generic: hh_trafo_kernel_12_generic_single")
@@ -984,8 +984,8 @@ module real_generic_kernel
     real(kind=rk4)                    :: x1, x2, x3, x4, x5, x6, x7, x8, &
                                         y1, y2, y3, y4, y5, y6, y7, y8
 #endif
-    real(kind=rk8)                    :: h1, h2, tau1, tau2
-    integer(kind=ik)                 :: i
+    real(kind=rk4)                    :: h1, h2, tau1, tau2
+    integer(kind=ik)                  :: i
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("kernel generic: hh_trafo_kernel_8_generic_single")
@@ -1153,7 +1153,7 @@ module real_generic_kernel
     real(kind=rk4)                   :: x1, x2, x3, x4, y1, y2, y3, y4
 #endif
     real(kind=rk4)                   :: h1, h2, tau1, tau2
-    integer(kind=ik)                :: i
+    integer(kind=ik)                 :: i
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("kernel generic: hh_trafo_kernel_4_generic_single")

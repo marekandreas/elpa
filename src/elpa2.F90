@@ -301,12 +301,14 @@ contains
 
     ! some temporarilly checks until single precision works with all kernels
 #ifndef DOUBLE_PRECISION_REAL
-    if ( (THIS_REAL_ELPA_KERNEL .ne. REAL_ELPA_KERNEL_GENERIC) .or. &
-         (THIS_REAL_ELPA_KERNEL .ne. REAL_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
-         (THIS_REAL_ELPA_KERNEL .ne. REAL_ELPA_KERNEL_GPU) ) then
-       print *,"At the moment single precision only works with the generic kernels"
-       stop
-     endif
+    if ( (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) .or. &
+         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
+         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) .or. &
+         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) ) then
+    else
+      print *,"At the moment single precision only works with the generic kernels"
+      stop
+    endif
 #endif
 
     ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
@@ -564,7 +566,6 @@ contains
     call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
     call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
-
     wantDebug = .false.
     if (firstCall) then
       ! are debug messages desired?
@@ -641,14 +642,7 @@ contains
         stop
       endif
     ! some temporarilly checks until single precision works with all kernels
-#ifndef DOUBLE_PRECISION_REAL
-    if ( (THIS_REAL_ELPA_KERNEL .ne. REAL_ELPA_KERNEL_GENERIC) .or. &
-         (THIS_REAL_ELPA_KERNEL .ne. REAL_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
-         (THIS_REAL_ELPA_KERNEL .ne. REAL_ELPA_KERNEL_GPU) ) then
-       print *,"At the moment single precision only works with the generic kernels"
-       stop
-     endif
-#endif
+
       ! set the neccessary parameters
       cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
       cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
@@ -657,6 +651,16 @@ contains
       cudaHostRegisterMapped   = cuda_hostRegisterMapped()
     endif
 
+#ifndef DOUBLE_PRECISION_REAL
+    if ( (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) .or. &
+         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
+         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) .or. &
+         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) ) then
+    else
+      print *,"At the moment single precision only works with the generic kernels"
+      stop
+    endif
+#endif
     ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
     ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
     ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
@@ -943,12 +947,15 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
       endif
       THIS_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
     endif
+
 #ifndef DOUBLE_PRECISION_COMPLEX
-    if ( (THIS_COMPLEX_ELPA_KERNEL .ne. COMPLEX_ELPA_KERNEL_GENERIC) .or. &
-         (THIS_COMPLEX_ELPA_KERNEL .ne. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) ) then
-       print *,"At the moment single precision only works with the generic kernels"
-       stop
-     endif
+    if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC) .or. &
+         (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
+         (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) ) then
+    else
+      print *,"At the moment single precision only works with the generic kernels"
+      stop
+    endif
 #endif
     if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GPU) then
       if (check_for_gpu(my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
@@ -1266,11 +1273,13 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
       THIS_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
     endif
 #ifndef DOUBLE_PRECISION_COMPLEX
-    if ( (THIS_COMPLEX_ELPA_KERNEL .ne. COMPLEX_ELPA_KERNEL_GENERIC) .or. &
-         (THIS_COMPLEX_ELPA_KERNEL .ne. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) ) then
-       print *,"At the moment single precision only works with the generic kernels"
-       stop
-     endif
+    if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC) .or. &
+        (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)  .or. &
+        (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) ) then
+    else
+      print *,"At the moment single precision only works with the generic kernels"
+      stop
+    endif
 #endif
     if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GPU) then
       if (check_for_gpu(my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then

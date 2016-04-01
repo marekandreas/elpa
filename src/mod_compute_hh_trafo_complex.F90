@@ -492,13 +492,11 @@ module compute_hh_trafo_complex
              ttt = mpi_wtime()
              do j = ncols, 1, -1
 #ifdef WITH_OPENMP
- print *,"at the moment no sse single-precision kernel"
- stop
-!              call single_hh_trafo_complex_single(a(1,j+off+a_off,istripe,my_thread), &
-!                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
+              call single_hh_trafo_complex_single(a(1,j+off+a_off,istripe,my_thread), &
+                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
-!              call single_hh_trafo_complex_single(a(1,j+off+a_off,istripe), &
-!                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
+              call single_hh_trafo_complex_single(a(1,j+off+a_off,istripe), &
+                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
