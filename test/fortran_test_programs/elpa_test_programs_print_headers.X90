@@ -91,16 +91,36 @@
       print *," "
       print *,"This ELPA2 is build with"
 #if DATATYPE == REAL
+#ifdef HAVE_AVX2
 
 #ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-      print *,"AVX optimized kernel (2 blocking) for real matrices"
+      print *,"AVX2 optimized kernel (2 blocking) for real matrices"
 #endif
 #ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-      print *,"AVX optimized kernel (4 blocking) for real matrices"
+      print *,"AVX2 optimized kernel (4 blocking) for real matrices"
 #endif
 #ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-      print *,"AVX optimized kernel (6 blocking) for real matrices"
+      print *,"AVX2 optimized kernel (6 blocking) for real matrices"
 #endif
+
+#else
+
+#ifdef HAVE_AVX
+
+#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
+      print *,"AVX2 optimized kernel (2 blocking) for real matrices"
+#endif
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+      print *,"AVX2 optimized kernel (4 blocking) for real matrices"
+#endif
+#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
+      print *,"AVX2 optimized kernel (6 blocking) for real matrices"
+#endif
+
+#endif
+
+#endif /* HAVE_AVX2 */
+
 
 #ifdef WITH_REAL_GENERIC_KERNEL
      print *,"GENERIC kernel for real matrices"
@@ -121,12 +141,31 @@
 #endif /* DATATYPE == REAL */
 
 #if DATATYPE == COMPLEX
+
+#ifdef HAVE_AVX2
+
+#ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
+      print *,"AVX2 optimized kernel (2 blocking) for complex matrices"
+#endif
+#ifdef WITH_COMPLEX_AVX_BLOCK1_KERNEL
+      print *,"AVX2 optimized kernel (1 blocking) for complex matrices"
+#endif
+
+#else
+
+#ifdef HAVE_AVX
+
 #ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
       print *,"AVX optimized kernel (2 blocking) for complex matrices"
 #endif
 #ifdef WITH_COMPLEX_AVX_BLOCK1_KERNEL
       print *,"AVX optimized kernel (1 blocking) for complex matrices"
 #endif
+
+#endif
+
+#endif /* HAVE_AVX2 */
+
 
 #ifdef WITH_COMPLEX_GENERIC_KERNEL
      print *,"GENERIC kernel for complex matrices"

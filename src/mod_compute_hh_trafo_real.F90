@@ -217,10 +217,10 @@ module compute_hh_trafo_real
                w(:,1) = bcast_buffer(1:nbw,j+off)
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-               call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
+               call double_hh_trafo_real_avx_avx2_2hv(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
-               call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), &
+               call double_hh_trafo_real_avx_avx2_2hv(a(1,j+off+a_off-1,istripe), &
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
@@ -272,7 +272,7 @@ module compute_hh_trafo_real
 
 
 !#if defined(WITH_AVX_SANDYBRIDGE)
-!              call double_hh_trafo_real_sse_avx_2hv(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+!              call double_hh_trafo_real_avx_avx2_2hv(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
 !#endif
 
 #ifdef WITH_OPENMP
@@ -303,10 +303,10 @@ module compute_hh_trafo_real
              w(:,3) = bcast_buffer(1:nbw,j+off-2)
              w(:,4) = bcast_buffer(1:nbw,j+off-3)
 #ifdef WITH_OPENMP
-             call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe,my_thread), w, &
+             call quad_hh_trafo_real_avx_avx2_4hv(a(1,j+off+a_off-3,istripe,my_thread), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
-             call quad_hh_trafo_real_sse_avx_4hv(a(1,j+off+a_off-3,istripe), w, &
+             call quad_hh_trafo_real_avx_avx2_4hv(a(1,j+off+a_off-3,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
            enddo
@@ -314,10 +314,10 @@ module compute_hh_trafo_real
              w(:,1) = bcast_buffer(1:nbw,jj+off)
              w(:,2) = bcast_buffer(1:nbw,jj+off-1)
 #ifdef WITH_OPENMP
-             call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe,my_thread), &
+             call double_hh_trafo_real_avx_avx2_2hv(a(1,jj+off+a_off-1,istripe,my_thread), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
-             call double_hh_trafo_real_sse_avx_2hv(a(1,jj+off+a_off-1,istripe), &
+             call double_hh_trafo_real_avx_avx2_2hv(a(1,jj+off+a_off-1,istripe), &
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
            enddo
@@ -347,10 +347,10 @@ module compute_hh_trafo_real
              w(:,5) = bcast_buffer(1:nbw,j+off-4)
              w(:,6) = bcast_buffer(1:nbw,j+off-5)
 #ifdef WITH_OPENMP
-             call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe,my_thread), w, &
+             call hexa_hh_trafo_real_avx_avx2_6hv(a(1,j+off+a_off-5,istripe,my_thread), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
-             call hexa_hh_trafo_real_sse_avx_6hv(a(1,j+off+a_off-5,istripe), w, &
+             call hexa_hh_trafo_real_avx_avx2_6hv(a(1,j+off+a_off-5,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
            enddo
@@ -360,10 +360,10 @@ module compute_hh_trafo_real
              w(:,3) = bcast_buffer(1:nbw,jj+off-2)
              w(:,4) = bcast_buffer(1:nbw,jj+off-3)
 #ifdef WITH_OPENMP
-             call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe,my_thread), w, &
+             call quad_hh_trafo_real_avx_avx2_4hv(a(1,jj+off+a_off-3,istripe,my_thread), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
-             call quad_hh_trafo_real_sse_avx_4hv(a(1,jj+off+a_off-3,istripe), w, &
+             call quad_hh_trafo_real_avx_avx2_4hv(a(1,jj+off+a_off-3,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
            enddo
@@ -371,10 +371,10 @@ module compute_hh_trafo_real
              w(:,1) = bcast_buffer(1:nbw,jjj+off)
              w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
 #ifdef WITH_OPENMP
-             call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe,my_thread), &
+             call double_hh_trafo_real_avx_avx2_2hv(a(1,jjj+off+a_off-1,istripe,my_thread), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
-             call double_hh_trafo_real_sse_avx_2hv(a(1,jjj+off+a_off-1,istripe), &
+             call double_hh_trafo_real_avx_avx2_2hv(a(1,jjj+off+a_off-1,istripe), &
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
            enddo

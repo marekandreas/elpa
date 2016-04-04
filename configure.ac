@@ -221,6 +221,7 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  [can_compile_avx=no]
 )
 AC_MSG_RESULT([${can_compile_avx}])
+
 if test "${can_compile_avx}" = "yes" ; then
   AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
   AC_LANG_PUSH([C++])
@@ -278,7 +279,6 @@ if test "${can_compile_avx2}" = "yes" ; then
   fi
 fi
 
-
 if test "${can_compile_avx}" = "yes" ; then
   install_real_avx_block2=yes
   install_real_avx_block4=yes
@@ -297,6 +297,19 @@ else
   install_complex_avx_block2=no
 
   want_avx=yes
+fi
+
+AM_CONDITIONAL([HAVE_SSE],[test x"$can_compile_sse" = x"yes"])
+if test x"${can_compile_sse}" = x"yes" ; then
+  AC_DEFINE([HAVE_SSE],[1],[SSE is supported on this CPU])
+fi
+AM_CONDITIONAL([HAVE_AVX],[test x"$can_compile_avx" = x"yes"])
+if test x"${can_compile_avx}" = x"yes" ; then
+  AC_DEFINE([HAVE_AVX],[1],[AVX is supported on this CPU])
+fi
+AM_CONDITIONAL([HAVE_AVX2],[test x"$can_compile_avx2" = x"yes"])
+if test x"${can_compile_avx2}" = x"yes" ; then
+  AC_DEFINE([HAVE_AVX2],[1],[AVX2 is supported on this CPU])
 fi
 
 dnl set the AVX optimization flags if this option is specified
@@ -464,7 +477,7 @@ AC_MSG_CHECKING([whether we can use the intrinsic Fortran function "get_environm
 
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   program test_get_environment
-
+nn
     character(len=256) :: homedir
     call get_environment_variable("HOME",homedir)
   end program
