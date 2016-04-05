@@ -94,7 +94,7 @@ module mod_read_input_parameters
         read(arg3, *) nblk
 
         if (arg4 .eq. "output_eigenvalues") then
-          write_to_file%eigenvectors = .true.
+          write_to_file%eigenvalues = .true.
         else
           write(error_unit, *) "Invalid value for output flag! Must be ""output_eigenvalues"" or omitted"
           stop 1
