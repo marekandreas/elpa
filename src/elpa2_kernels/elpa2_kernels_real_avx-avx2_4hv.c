@@ -59,10 +59,13 @@
 // Author: Alexander Heinecke (alexander.heinecke@mytum.de)
 // Adapted for building a shared-library by Andreas Marek, MPCDF (andreas.marek@mpcdf.mpg.de)
 // --------------------------------------------------------------------------------------------------
+#include "config-f90.h"
 
 #include <x86intrin.h>
 
 #define __forceinline __attribute__((always_inline)) static
+
+#ifdef HAVE_AVX2
 
 #ifdef __FMA4__
 #define __ELPA_USE_FMA__
@@ -76,6 +79,8 @@
 #define _mm256_FMA_pd(a,b,c) _mm256_fmadd_pd(a,b,c)
 #define _mm256_NFMA_pd(a,b,c) _mm256_fnmadd_pd(a,b,c)
 #define _mm256_FMSUB_pd(a,b,c) _mm256_fmsub_pd(a,b,c)
+#endif
+
 #endif
 
 //Forward declaration
