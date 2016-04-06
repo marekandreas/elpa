@@ -72,15 +72,18 @@ module ELPA2_utilities
   public :: REAL_ELPA_KERNEL_GENERIC, REAL_ELPA_KERNEL_GENERIC_SIMPLE, &
             REAL_ELPA_KERNEL_BGP, REAL_ELPA_KERNEL_BGQ,                &
             REAL_ELPA_KERNEL_SSE, REAL_ELPA_KERNEL_SSE_BLOCK2,         &
-            REAL_ELPA_KERNEL_AVX_BLOCK2,                               &
             REAL_ELPA_KERNEL_SSE_BLOCK4, REAL_ELPA_KERNEL_SSE_BLOCK6,  &
-            REAL_ELPA_KERNEL_AVX_BLOCK4, REAL_ELPA_KERNEL_AVX_BLOCK6
+            REAL_ELPA_KERNEL_AVX_BLOCK2,                               &
+            REAL_ELPA_KERNEL_AVX_BLOCK4, REAL_ELPA_KERNEL_AVX_BLOCK6,  &
+            REAL_ELPA_KERNEL_AVX2_BLOCK2,                              &
+            REAL_ELPA_KERNEL_AVX2_BLOCK4, REAL_ELPA_KERNEL_AVX2_BLOCK6
 
   public :: COMPLEX_ELPA_KERNEL_GENERIC, COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE, &
             COMPLEX_ELPA_KERNEL_BGP, COMPLEX_ELPA_KERNEL_BGQ,                &
             COMPLEX_ELPA_KERNEL_SSE, COMPLEX_ELPA_KERNEL_SSE_BLOCK1,         &
             COMPLEX_ELPA_KERNEL_SSE_BLOCK2,                                  &
-            COMPLEX_ELPA_KERNEL_AVX_BLOCK1,COMPLEX_ELPA_KERNEL_AVX_BLOCK2
+            COMPLEX_ELPA_KERNEL_AVX_BLOCK1,COMPLEX_ELPA_KERNEL_AVX_BLOCK2,   &
+            COMPLEX_ELPA_KERNEL_AVX2_BLOCK1,COMPLEX_ELPA_KERNEL_AVX2_BLOCK2
 
   public :: REAL_ELPA_KERNEL_NAMES, COMPLEX_ELPA_KERNEL_NAMES
 
@@ -106,6 +109,9 @@ module ELPA2_utilities
   integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK2      = ELPA2_REAL_KERNEL_AVX_BLOCK2
   integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK4      = ELPA2_REAL_KERNEL_AVX_BLOCK4
   integer, parameter :: REAL_ELPA_KERNEL_AVX_BLOCK6      = ELPA2_REAL_KERNEL_AVX_BLOCK6
+  integer, parameter :: REAL_ELPA_KERNEL_AVX2_BLOCK2     = ELPA2_REAL_KERNEL_AVX2_BLOCK2
+  integer, parameter :: REAL_ELPA_KERNEL_AVX2_BLOCK4     = ELPA2_REAL_KERNEL_AVX2_BLOCK4
+  integer, parameter :: REAL_ELPA_KERNEL_AVX2_BLOCK6     = ELPA2_REAL_KERNEL_AVX2_BLOCK6
 
 #if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
   integer, parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
@@ -123,7 +129,10 @@ module ELPA2_utilities
                                 "REAL_ELPA_KERNEL_SSE_BLOCK6      ", &
                                 "REAL_ELPA_KERNEL_AVX_BLOCK2      ", &
                                 "REAL_ELPA_KERNEL_AVX_BLOCK4      ", &
-                                "REAL_ELPA_KERNEL_AVX_BLOCK6      "/)
+                                "REAL_ELPA_KERNEL_AVX_BLOCK6      ", &
+                                "REAL_ELPA_KERNEL_AVX2_BLOCK2     ", &
+                                "REAL_ELPA_KERNEL_AVX2_BLOCK4     ", &
+                                "REAL_ELPA_KERNEL_AVX2_BLOCK6     "/)
 
   integer, parameter :: number_of_complex_kernels           = ELPA2_NUMBER_OF_COMPLEX_KERNELS
   integer, parameter :: COMPLEX_ELPA_KERNEL_GENERIC         = ELPA2_COMPLEX_KERNEL_GENERIC
@@ -135,6 +144,8 @@ module ELPA2_utilities
   integer, parameter :: COMPLEX_ELPA_KERNEL_SSE_BLOCK2      = ELPA2_COMPLEX_KERNEL_SSE_BLOCK2
   integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK1      = ELPA2_COMPLEX_KERNEL_AVX_BLOCK1
   integer, parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK2      = ELPA2_COMPLEX_KERNEL_AVX_BLOCK2
+  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX2_BLOCK1     = ELPA2_COMPLEX_KERNEL_AVX2_BLOCK1
+  integer, parameter :: COMPLEX_ELPA_KERNEL_AVX2_BLOCK2     = ELPA2_COMPLEX_KERNEL_AVX2_BLOCK2
 
 #if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
   integer, parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
@@ -150,7 +161,9 @@ module ELPA2_utilities
                                 "COMPLEX_ELPA_KERNEL_SSE_BLOCK1      ", &
                                 "COMPLEX_ELPA_KERNEL_SSE_BLOCK2      ", &
                                 "COMPLEX_ELPA_KERNEL_AVX_BLOCK1      ", &
-                                "COMPLEX_ELPA_KERNEL_AVX_BLOCK2      "/)
+                                "COMPLEX_ELPA_KERNEL_AVX_BLOCK2      ", &
+                                "COMPLEX_ELPA_KERNEL_AVX2_BLOCK1     ", &
+                                "COMPLEX_ELPA_KERNEL_AVX2_BLOCK2     "/)
 
   integer, parameter                                    ::             &
            AVAILABLE_REAL_ELPA_KERNELS(number_of_real_kernels) =       &
@@ -211,6 +224,23 @@ module ELPA2_utilities
 #else
                                                             ,0         &
 #endif
+#if WITH_REAL_AVX2_BLOCK2_KERNEL
+                                                              ,1       &
+#else
+                                                              ,0       &
+#endif
+#if WITH_REAL_AVX2_BLOCK4_KERNEL
+                                                               ,1      &
+#else
+                                                               ,0      &
+#endif
+#if WITH_REAL_AVX2_BLOCK6_KERNEL
+                                                               ,1      &
+#else
+                                                               ,0      &
+#endif
+
+
                                                        /)
 
   integer, parameter ::                                                   &
@@ -262,6 +292,17 @@ module ELPA2_utilities
 #else
                                                         ,0                &
 #endif
+#if WITH_COMPLEX_AVX2_BLOCK1_KERNEL
+                                                         ,1               &
+#else
+                                                         ,0               &
+#endif
+#if WITH_COMPLEX_AVX2_BLOCK2_KERNEL
+                                                           ,1             &
+#else
+                                                           ,0             &
+#endif
+
                                                    /)
 
 !******

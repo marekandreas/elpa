@@ -104,6 +104,7 @@ module compute_hh_trafo_real
 
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
+             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK2 .or. &
              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK2 .or. &
              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
@@ -229,9 +230,10 @@ module compute_hh_trafo_real
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_BLOCK2_KERNEL */
 
-#if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
+#if defined(WITH_REAL_AVX_BLOCK2_KERNEL) || defined(WITH_REAL_AVX2_BLOCK2_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) then
+           if ((THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) .or. &
+               (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK2))  then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -353,9 +355,10 @@ module compute_hh_trafo_real
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_BLOCK4_KERNEL */
 
-#if defined(WITH_REAL_AVX_BLOCK4_KERNEL)
+#if defined(WITH_REAL_AVX_BLOCK4_KERNEL) || defined(WITH_REAL_AVX2_BLOCK4_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) then
+         if ((THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) .or. &
+             (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK4)) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
            ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
            do j = ncols, 4, -4
@@ -450,9 +453,10 @@ module compute_hh_trafo_real
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_BLOCK4_KERNEL */
 
-#if defined(WITH_REAL_AVX_BLOCK6_KERNEL)
+#if defined(WITH_REAL_AVX_BLOCK6_KERNEL) || defined(WITH_REAL_AVX2_BLOCK6_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) then
+         if ((THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) .or. &
+             (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK6)) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
            ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
            do j = ncols, 6, -6

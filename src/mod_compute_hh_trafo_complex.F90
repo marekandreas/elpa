@@ -118,9 +118,10 @@ module compute_hh_trafo_complex
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK2_KERNEL */
 
-#if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL)
+#if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) then
+           if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) .or. &
+                (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK2) ) then
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 2, -2
@@ -260,9 +261,10 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK1_KERNE */
 
-#if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
+#if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK1_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) then
+          if ((THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. &
+              (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK1)) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
             ttt = mpi_wtime()
             do j = ncols, 1, -1
@@ -277,7 +279,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNE */
+#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL */
 
 #ifdef WITH_OPENMP
           if (my_thread==1) then
