@@ -477,7 +477,7 @@ AC_MSG_CHECKING([whether we can use the intrinsic Fortran function "get_environm
 
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   program test_get_environment
-nn
+
     character(len=256) :: homedir
     call get_environment_variable("HOME",homedir)
   end program
