@@ -95,24 +95,44 @@ endif
 endif
 endif
 
+if WITH_REAL_SSE_BLOCK2_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_2hv.c
+endif
+
 if WITH_REAL_AVX_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_2hv.c
+endif
+
+if WITH_REAL_SSE_BLOCK4_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_4hv.c
 endif
 
 if WITH_REAL_AVX_BLOCK4_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_4hv.c
+endif
+
+if WITH_REAL_SSE_BLOCK6_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_6hv.c
 endif
 
 if WITH_REAL_AVX_BLOCK6_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_6hv.c
+endif
+
+if WITH_COMPLEX_SSE_BLOCK1_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_1hv.cpp
 endif
 
 if WITH_COMPLEX_AVX_BLOCK1_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv.cpp
+endif
+
+if WITH_COMPLEX_SSE_BLOCK2_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_2hv.cpp
 endif
 
 if WITH_COMPLEX_AVX_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv.cpp
 endif
 
 .cu.lo:

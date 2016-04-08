@@ -105,10 +105,13 @@ program print_available_elpa2_kernels
    print *, " choice via environment variable: yes"
    print *, " environment variable name      : REAL_ELPA_KERNEL"
 #else
-   print *  " choice via environment variable: no"
+   print *, " choice via environment variable: no"
 #endif
    print *
    print *, " Available real kernels are: "
+#ifdef HAVE_AVX2
+   print *, " AVX kernels are optimized for FMA (AVX2)"
+#endif
    call print_available_real_kernels()
 
    print *
@@ -119,10 +122,13 @@ program print_available_elpa2_kernels
    print *, " choice via environment variable: yes"
    print *, " environment variable name      : COMPLEX_ELPA_KERNEL"
 #else
-   print *  " choice via environment variable: no"
+   print *,  " choice via environment variable: no"
 #endif
    print *
    print *, " Available complex kernels are: "
+#ifdef HAVE_AVX2
+   print *, " AVX kernels are optimized for FMA (AVX2)"
+#endif
    call print_available_complex_kernels()
 
 end program print_available_elpa2_kernels
