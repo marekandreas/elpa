@@ -238,15 +238,6 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	__m128d h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
 	__m128d h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
 
-#ifdef __ELPA_USE_FMA__
-	register __m128d w1 = _mm_macc_pd(a3_1, h_4_3, a4_1);
-	w1 = _mm_macc_pd(a2_1, h_4_2, w1);
-	w1 = _mm_macc_pd(a1_1, h_4_1, w1);
-	register __m128d z1 = _mm_macc_pd(a2_1, h_3_2, a3_1);
-	z1 = _mm_macc_pd(a1_1, h_3_1, z1);
-	register __m128d y1 = _mm_macc_pd(a1_1, h_2_1, a2_1);
-	register __m128d x1 = a1_1;
-#else
 	register __m128d w1 = _mm_add_pd(a4_1, _mm_mul_pd(a3_1, h_4_3));
 	w1 = _mm_add_pd(w1, _mm_mul_pd(a2_1, h_4_2));
 	w1 = _mm_add_pd(w1, _mm_mul_pd(a1_1, h_4_1));
@@ -254,22 +245,12 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	z1 = _mm_add_pd(z1, _mm_mul_pd(a1_1, h_3_1));
 	register __m128d y1 = _mm_add_pd(a2_1, _mm_mul_pd(a1_1, h_2_1));
 	register __m128d x1 = a1_1;
-#endif
 
 	__m128d a1_2 = _mm_load_pd(&q[(ldq*3)+2]);
 	__m128d a2_2 = _mm_load_pd(&q[(ldq*2)+2]);
 	__m128d a3_2 = _mm_load_pd(&q[ldq+2]);
 	__m128d a4_2 = _mm_load_pd(&q[0+2]);
 
-#ifdef __ELPA_USE_FMA__
-	register __m128d w2 = _mm_macc_pd(a3_2, h_4_3, a4_2);
-	w2 = _mm_macc_pd(a2_2, h_4_2, w2);
-	w2 = _mm_macc_pd(a1_2, h_4_1, w2);
-	register __m128d z2 = _mm_macc_pd(a2_2, h_3_2, a3_2);
-	z2 = _mm_macc_pd(a1_2, h_3_1, z2);
-	register __m128d y2 = _mm_macc_pd(a1_2, h_2_1, a2_2);
-	register __m128d x2 = a1_2;
-#else
 	register __m128d w2 = _mm_add_pd(a4_2, _mm_mul_pd(a3_2, h_4_3));
 	w2 = _mm_add_pd(w2, _mm_mul_pd(a2_2, h_4_2));
 	w2 = _mm_add_pd(w2, _mm_mul_pd(a1_2, h_4_1));
@@ -277,22 +258,12 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	z2 = _mm_add_pd(z2, _mm_mul_pd(a1_2, h_3_1));
 	register __m128d y2 = _mm_add_pd(a2_2, _mm_mul_pd(a1_2, h_2_1));
 	register __m128d x2 = a1_2;
-#endif
 
 	__m128d a1_3 = _mm_load_pd(&q[(ldq*3)+4]);
 	__m128d a2_3 = _mm_load_pd(&q[(ldq*2)+4]);
 	__m128d a3_3 = _mm_load_pd(&q[ldq+4]);
 	__m128d a4_3 = _mm_load_pd(&q[0+4]);
 
-#ifdef __ELPA_USE_FMA__
-	register __m128d w3 = _mm_macc_pd(a3_3, h_4_3, a4_3);
-	w3 = _mm_macc_pd(a2_3, h_4_2, w3);
-	w3 = _mm_macc_pd(a1_3, h_4_1, w3);
-	register __m128d z3 = _mm_macc_pd(a2_3, h_3_2, a3_3);
-	z3 = _mm_macc_pd(a1_3, h_3_1, z3);
-	register __m128d y3 = _mm_macc_pd(a1_3, h_2_1, a2_3);
-	register __m128d x3 = a1_3;
-#else
 	register __m128d w3 = _mm_add_pd(a4_3, _mm_mul_pd(a3_3, h_4_3));
 	w3 = _mm_add_pd(w3, _mm_mul_pd(a2_3, h_4_2));
 	w3 = _mm_add_pd(w3, _mm_mul_pd(a1_3, h_4_1));
@@ -300,7 +271,6 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	z3 = _mm_add_pd(z3, _mm_mul_pd(a1_3, h_3_1));
 	register __m128d y3 = _mm_add_pd(a2_3, _mm_mul_pd(a1_3, h_2_1));
 	register __m128d x3 = a1_3;
-#endif
 
 	__m128d q1;
 	__m128d q2;
@@ -318,48 +288,27 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 		q2 = _mm_load_pd(&q[(i*ldq)+2]);
 		q3 = _mm_load_pd(&q[(i*ldq)+4]);
 
-#ifdef __ELPA_USE_FMA__
-		x1 = _mm_macc_pd(q1, h1, x1);
-		x2 = _mm_macc_pd(q2, h1, x2);
-		x3 = _mm_macc_pd(q3, h1, x3);
-#else
 		x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 		x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
 		x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
-#endif
 
 		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
-#ifdef __ELPA_USE_FMA__
-		y1 = _mm_macc_pd(q1, h2, y1);
-		y2 = _mm_macc_pd(q2, h2, y2);
-		y3 = _mm_macc_pd(q3, h2, y3);
-#else
+
 		y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
 		y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
 		y3 = _mm_add_pd(y3, _mm_mul_pd(q3,h2));
-#endif
 
 		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
-#ifdef __ELPA_USE_FMA__
-		z1 = _mm_macc_pd(q1, h3, z1);
-		z2 = _mm_macc_pd(q2, h3, z2);
-		z3 = _mm_macc_pd(q3, h3, z3);
-#else
+
 		z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
 		z2 = _mm_add_pd(z2, _mm_mul_pd(q2,h3));
 		z3 = _mm_add_pd(z3, _mm_mul_pd(q3,h3));
-#endif
 
 		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
-#ifdef __ELPA_USE_FMA__
-		w1 = _mm_macc_pd(q1, h4, w1);
-		w2 = _mm_macc_pd(q2, h4, w2);
-		w3 = _mm_macc_pd(q3, h4, w3);
-#else
+
 		w1 = _mm_add_pd(w1, _mm_mul_pd(q1,h4));
 		w2 = _mm_add_pd(w2, _mm_mul_pd(q2,h4));
 		w3 = _mm_add_pd(w3, _mm_mul_pd(q3,h4));
-#endif
 	}
 
 	h1 = _mm_loaddup_pd(&hh[nb-3]);
@@ -368,78 +317,47 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
 	q3 = _mm_load_pd(&q[(nb*ldq)+4]);
 
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_macc_pd(q1, h1, x1);
-	x2 = _mm_macc_pd(q2, h1, x2);
-	x3 = _mm_macc_pd(q3, h1, x3);
-#else
 	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
 	x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
-#endif
 
 	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
-#ifdef __ELPA_USE_FMA__
-	y1 = _mm_macc_pd(q1, h2, y1);
-	y2 = _mm_macc_pd(q2, h2, y2);
-	y3 = _mm_macc_pd(q3, h2, y3);
-#else
+
 	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
 	y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
 	y3 = _mm_add_pd(y3, _mm_mul_pd(q3,h2));
-#endif
 
 	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
-#ifdef __ELPA_USE_FMA__
-	z1 = _mm_macc_pd(q1, h3, z1);
-	z2 = _mm_macc_pd(q2, h3, z2);
-	z3 = _mm_macc_pd(q3, h3, z3);
-#else
+
 	z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
 	z2 = _mm_add_pd(z2, _mm_mul_pd(q2,h3));
 	z3 = _mm_add_pd(z3, _mm_mul_pd(q3,h3));
-#endif
 
 	h1 = _mm_loaddup_pd(&hh[nb-2]);
 
 	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
 	q2 = _mm_load_pd(&q[((nb+1)*ldq)+2]);
 	q3 = _mm_load_pd(&q[((nb+1)*ldq)+4]);
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_macc_pd(q1, h1, x1);
-	x2 = _mm_macc_pd(q2, h1, x2);
-	x3 = _mm_macc_pd(q3, h1, x3);
-#else
+
 	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
 	x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
-#endif
 
 	h2 = _mm_loaddup_pd(&hh[(ldh*1)+nb-1]);
-#ifdef __ELPA_USE_FMA__
-	y1 = _mm_macc_pd(q1, h2, y1);
-	y2 = _mm_macc_pd(q2, h2, y2);
-	y3 = _mm_macc_pd(q3, h2, y3);
-#else
+
 	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
 	y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
 	y3 = _mm_add_pd(y3, _mm_mul_pd(q3,h2));
-#endif
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
 
 	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
 	q2 = _mm_load_pd(&q[((nb+2)*ldq)+2]);
 	q3 = _mm_load_pd(&q[((nb+2)*ldq)+4]);
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_macc_pd(q1, h1, x1);
-	x2 = _mm_macc_pd(q2, h1, x2);
-	x3 = _mm_macc_pd(q3, h1, x3);
-#else
+
 	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
 	x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
-#endif
 
 	/////////////////////////////////////////////////////
 	// Rank-1 update of Q [6 x nb+3]
@@ -457,15 +375,10 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 
 	h1 = tau2;
 	h2 = _mm_mul_pd(h1, vs_1_2);
-#ifdef __ELPA_USE_FMA__
-	y1 = _mm_msub_pd(y1, h1, _mm_mul_pd(x1,h2));
-	y2 = _mm_msub_pd(y2, h1, _mm_mul_pd(x2,h2));
-	y3 = _mm_msub_pd(y3, h1, _mm_mul_pd(x3,h2));
-#else
+
 	y1 = _mm_sub_pd(_mm_mul_pd(y1,h1), _mm_mul_pd(x1,h2));
 	y2 = _mm_sub_pd(_mm_mul_pd(y2,h1), _mm_mul_pd(x2,h2));
 	y3 = _mm_sub_pd(_mm_mul_pd(y3,h1), _mm_mul_pd(x3,h2));
-#endif
 
 	__m128d tau3 = _mm_loaddup_pd(&hh[ldh*2]);
 	__m128d vs_1_3 = _mm_loaddup_pd(&s_1_3);
@@ -474,15 +387,10 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	h1 = tau3;
 	h2 = _mm_mul_pd(h1, vs_1_3);
 	h3 = _mm_mul_pd(h1, vs_2_3);
-#ifdef __ELPA_USE_FMA__
-	z1 = _mm_msub_pd(z1, h1, _mm_macc_pd(y1, h3, _mm_mul_pd(x1,h2)));
-	z2 = _mm_msub_pd(z2, h1, _mm_macc_pd(y2, h3, _mm_mul_pd(x2,h2)));
-	z3 = _mm_msub_pd(z3, h1, _mm_macc_pd(y3, h3, _mm_mul_pd(x3,h2)));
-#else
+
 	z1 = _mm_sub_pd(_mm_mul_pd(z1,h1), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2)));
 	z2 = _mm_sub_pd(_mm_mul_pd(z2,h1), _mm_add_pd(_mm_mul_pd(y2,h3), _mm_mul_pd(x2,h2)));
 	z3 = _mm_sub_pd(_mm_mul_pd(z3,h1), _mm_add_pd(_mm_mul_pd(y3,h3), _mm_mul_pd(x3,h2)));
-#endif
 
 	__m128d tau4 = _mm_loaddup_pd(&hh[ldh*3]);
 	__m128d vs_1_4 = _mm_loaddup_pd(&s_1_4);
@@ -493,15 +401,10 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	h2 = _mm_mul_pd(h1, vs_1_4);
 	h3 = _mm_mul_pd(h1, vs_2_4);
 	h4 = _mm_mul_pd(h1, vs_3_4);
-#ifdef __ELPA_USE_FMA__
-	w1 = _mm_msub_pd(w1, h1, _mm_macc_pd(z1, h4, _mm_macc_pd(y1, h3, _mm_mul_pd(x1,h2))));
-	w2 = _mm_msub_pd(w2, h1, _mm_macc_pd(z2, h4, _mm_macc_pd(y2, h3, _mm_mul_pd(x2,h2))));
-	w3 = _mm_msub_pd(w3, h1, _mm_macc_pd(z3, h4, _mm_macc_pd(y3, h3, _mm_mul_pd(x3,h2))));
-#else
+
 	w1 = _mm_sub_pd(_mm_mul_pd(w1,h1), _mm_add_pd(_mm_mul_pd(z1,h4), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2))));
 	w2 = _mm_sub_pd(_mm_mul_pd(w2,h1), _mm_add_pd(_mm_mul_pd(z2,h4), _mm_add_pd(_mm_mul_pd(y2,h3), _mm_mul_pd(x2,h2))));
 	w3 = _mm_sub_pd(_mm_mul_pd(w3,h1), _mm_add_pd(_mm_mul_pd(z3,h4), _mm_add_pd(_mm_mul_pd(y3,h3), _mm_mul_pd(x3,h2))));
-#endif
 
 	q1 = _mm_load_pd(&q[0]);
 	q2 = _mm_load_pd(&q[2]);
@@ -517,15 +420,11 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	q1 = _mm_load_pd(&q[ldq]);
 	q2 = _mm_load_pd(&q[ldq+2]);
 	q3 = _mm_load_pd(&q[ldq+4]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_macc_pd(w1, h4, z1));
-	q2 = _mm_sub_pd(q2, _mm_macc_pd(w2, h4, z2));
-	q3 = _mm_sub_pd(q3, _mm_macc_pd(w3, h4, z3));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd(z1, _mm_mul_pd(w1, h4)));
 	q2 = _mm_sub_pd(q2, _mm_add_pd(z2, _mm_mul_pd(w2, h4)));
 	q3 = _mm_sub_pd(q3, _mm_add_pd(z3, _mm_mul_pd(w3, h4)));
-#endif
+
 	_mm_store_pd(&q[ldq],q1);
 	_mm_store_pd(&q[ldq+2],q2);
 	_mm_store_pd(&q[ldq+4],q3);
@@ -537,25 +436,16 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	q1 = _mm_sub_pd(q1, y1);
 	q2 = _mm_sub_pd(q2, y2);
 	q3 = _mm_sub_pd(q3, y3);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(w1, h4, q1);
-	q2 = _mm_nmacc_pd(w2, h4, q2);
-	q3 = _mm_nmacc_pd(w3, h4, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(w1, h4));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(w2, h4));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(w3, h4));
-#endif
 	h3 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(z1, h3, q1);
-	q2 = _mm_nmacc_pd(z2, h3, q2);
-	q3 = _mm_nmacc_pd(z3, h3, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(z1, h3));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(z2, h3));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(z3, h3));
-#endif
+
 	_mm_store_pd(&q[ldq*2],q1);
 	_mm_store_pd(&q[(ldq*2)+2],q2);
 	_mm_store_pd(&q[(ldq*2)+4],q3);
@@ -567,35 +457,22 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	q1 = _mm_sub_pd(q1, x1);
 	q2 = _mm_sub_pd(q2, x2);
 	q3 = _mm_sub_pd(q3, x3);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(w1, h4, q1);
-	q2 = _mm_nmacc_pd(w2, h4, q2);
-	q3 = _mm_nmacc_pd(w3, h4, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(w1, h4));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(w2, h4));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(w3, h4));
-#endif
+
 	h2 = _mm_loaddup_pd(&hh[ldh+1]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(y1, h2, q1);
-	q2 = _mm_nmacc_pd(y2, h2, q2);
-	q3 = _mm_nmacc_pd(y3, h2, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(y1, h2));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(y2, h2));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(y3, h2));
-#endif
+
 	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(z1, h3, q1);
-	q2 = _mm_nmacc_pd(z2, h3, q2);
-	q3 = _mm_nmacc_pd(z3, h3, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(z1, h3));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(z2, h3));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(z3, h3));
-#endif
 	_mm_store_pd(&q[ldq*3], q1);
 	_mm_store_pd(&q[(ldq*3)+2], q2);
 	_mm_store_pd(&q[(ldq*3)+4], q3);
@@ -608,48 +485,27 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 		q2 = _mm_load_pd(&q[(i*ldq)+2]);
 		q3 = _mm_load_pd(&q[(i*ldq)+4]);
 
-#ifdef __ELPA_USE_FMA__
-		q1 = _mm_nmacc_pd(x1, h1, q1);
-		q2 = _mm_nmacc_pd(x2, h1, q2);
-		q3 = _mm_nmacc_pd(x3, h1, q3);
-#else
 		q1 = _mm_sub_pd(q1, _mm_mul_pd(x1,h1));
 		q2 = _mm_sub_pd(q2, _mm_mul_pd(x2,h1));
 		q3 = _mm_sub_pd(q3, _mm_mul_pd(x3,h1));
-#endif
 
 		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
-#ifdef __ELPA_USE_FMA__
-		q1 = _mm_nmacc_pd(y1, h2, q1);
-		q2 = _mm_nmacc_pd(y2, h2, q2);
-		q3 = _mm_nmacc_pd(y3, h2, q3);
-#else
+
 		q1 = _mm_sub_pd(q1, _mm_mul_pd(y1,h2));
 		q2 = _mm_sub_pd(q2, _mm_mul_pd(y2,h2));
 		q3 = _mm_sub_pd(q3, _mm_mul_pd(y3,h2));
-#endif
 
 		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
-#ifdef __ELPA_USE_FMA__
-		q1 = _mm_nmacc_pd(z1, h3, q1);
-		q2 = _mm_nmacc_pd(z2, h3, q2);
-		q3 = _mm_nmacc_pd(z3, h3, q3);
-#else
+
 		q1 = _mm_sub_pd(q1, _mm_mul_pd(z1,h3));
 		q2 = _mm_sub_pd(q2, _mm_mul_pd(z2,h3));
 		q3 = _mm_sub_pd(q3, _mm_mul_pd(z3,h3));
-#endif
 
 		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
-#ifdef __ELPA_USE_FMA__
-		q1 = _mm_nmacc_pd(w1, h4, q1);
-		q2 = _mm_nmacc_pd(w2, h4, q2);
-		q3 = _mm_nmacc_pd(w3, h4, q3);
-#else
+
 		q1 = _mm_sub_pd(q1, _mm_mul_pd(w1,h4));
 		q2 = _mm_sub_pd(q2, _mm_mul_pd(w2,h4));
 		q3 = _mm_sub_pd(q3, _mm_mul_pd(w3,h4));
-#endif
 
 		_mm_store_pd(&q[i*ldq],q1);
 		_mm_store_pd(&q[(i*ldq)+2],q2);
@@ -660,35 +516,23 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	q1 = _mm_load_pd(&q[nb*ldq]);
 	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
 	q3 = _mm_load_pd(&q[(nb*ldq)+4]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(x1, h1, q1);
-	q2 = _mm_nmacc_pd(x2, h1, q2);
-	q3 = _mm_nmacc_pd(x3, h1, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(x2, h1));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(x3, h1));
-#endif
+
 	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(y1, h2, q1);
-	q2 = _mm_nmacc_pd(y2, h2, q2);
-	q3 = _mm_nmacc_pd(y3, h2, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(y1, h2));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(y2, h2));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(y3, h2));
-#endif
+
 	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(z1, h3, q1);
-	q2 = _mm_nmacc_pd(z2, h3, q2);
-	q3 = _mm_nmacc_pd(z3, h3, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(z1, h3));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(z2, h3));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(z3, h3));
-#endif
+
 	_mm_store_pd(&q[nb*ldq],q1);
 	_mm_store_pd(&q[(nb*ldq)+2],q2);
 	_mm_store_pd(&q[(nb*ldq)+4],q3);
@@ -697,25 +541,17 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
 	q2 = _mm_load_pd(&q[((nb+1)*ldq)+2]);
 	q3 = _mm_load_pd(&q[((nb+1)*ldq)+4]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(x1, h1, q1);
-	q2 = _mm_nmacc_pd(x2, h1, q2);
-	q3 = _mm_nmacc_pd(x3, h1, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(x2, h1));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(x3, h1));
-#endif
+
 	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(y1, h2, q1);
-	q2 = _mm_nmacc_pd(y2, h2, q2);
-	q3 = _mm_nmacc_pd(y3, h2, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(y1, h2));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(y2, h2));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(y3, h2));
-#endif
+
 	_mm_store_pd(&q[(nb+1)*ldq],q1);
 	_mm_store_pd(&q[((nb+1)*ldq)+2],q2);
 	_mm_store_pd(&q[((nb+1)*ldq)+4],q3);
@@ -724,15 +560,11 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv(double* q, double* hh, int nb, int 
 	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
 	q2 = _mm_load_pd(&q[((nb+2)*ldq)+2]);
 	q3 = _mm_load_pd(&q[((nb+2)*ldq)+4]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(x1, h1, q1);
-	q2 = _mm_nmacc_pd(x2, h1, q2);
-	q3 = _mm_nmacc_pd(x3, h1, q3);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(x2, h1));
 	q3 = _mm_sub_pd(q3, _mm_mul_pd(x3, h1));
-#endif
+
 	_mm_store_pd(&q[(nb+2)*ldq],q1);
 	_mm_store_pd(&q[((nb+2)*ldq)+2],q2);
 	_mm_store_pd(&q[((nb+2)*ldq)+4],q3);
@@ -764,15 +596,6 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	__m128d h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
 	__m128d h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
 
-#ifdef __ELPA_USE_FMA__
-	__m128d w1 = _mm_macc_pd(a3_1, h_4_3, a4_1);
-	w1 = _mm_macc_pd(a2_1, h_4_2, w1);
-	w1 = _mm_macc_pd(a1_1, h_4_1, w1);
-	__m128d z1 = _mm_macc_pd(a2_1, h_3_2, a3_1);
-	z1 = _mm_macc_pd(a1_1, h_3_1, z1);
-	__m128d y1 = _mm_macc_pd(a1_1, h_2_1, a2_1);
-	__m128d x1 = a1_1;
-#else
 	__m128d w1 = _mm_add_pd(a4_1, _mm_mul_pd(a3_1, h_4_3));
 	w1 = _mm_add_pd(w1, _mm_mul_pd(a2_1, h_4_2));
 	w1 = _mm_add_pd(w1, _mm_mul_pd(a1_1, h_4_1));
@@ -780,22 +603,12 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	z1 = _mm_add_pd(z1, _mm_mul_pd(a1_1, h_3_1));
 	__m128d y1 = _mm_add_pd(a2_1, _mm_mul_pd(a1_1, h_2_1));
 	__m128d x1 = a1_1;
-#endif
 
 	__m128d a1_2 = _mm_load_pd(&q[(ldq*3)+2]);
 	__m128d a2_2 = _mm_load_pd(&q[(ldq*2)+2]);
 	__m128d a3_2 = _mm_load_pd(&q[ldq+2]);
 	__m128d a4_2 = _mm_load_pd(&q[0+2]);
 
-#ifdef __ELPA_USE_FMA__
-	__m128d w2 = _mm_macc_pd(a3_2, h_4_3, a4_2);
-	w2 = _mm_macc_pd(a2_2, h_4_2, w2);
-	w2 = _mm_macc_pd(a1_2, h_4_1, w2);
-	__m128d z2 = _mm_macc_pd(a2_2, h_3_2, a3_2);
-	z2 = _mm_macc_pd(a1_2, h_3_1, z2);
-	__m128d y2 = _mm_macc_pd(a1_2, h_2_1, a2_2);
-	__m128d x2 = a1_2;
-#else
 	__m128d w2 = _mm_add_pd(a4_2, _mm_mul_pd(a3_2, h_4_3));
 	w2 = _mm_add_pd(w2, _mm_mul_pd(a2_2, h_4_2));
 	w2 = _mm_add_pd(w2, _mm_mul_pd(a1_2, h_4_1));
@@ -803,7 +616,6 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	z2 = _mm_add_pd(z2, _mm_mul_pd(a1_2, h_3_1));
 	__m128d y2 = _mm_add_pd(a2_2, _mm_mul_pd(a1_2, h_2_1));
 	__m128d x2 = a1_2;
-#endif
 
 	__m128d q1;
 	__m128d q2;
@@ -821,30 +633,18 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
 		q1 = _mm_load_pd(&q[i*ldq]);
-#ifdef __ELPA_USE_FMA__
-		x1 = _mm_macc_pd(q1, h1, x1);
-		y1 = _mm_macc_pd(q1, h2, y1);
-		z1 = _mm_macc_pd(q1, h3, z1);
-		w1 = _mm_macc_pd(q1, h4, w1);
-#else
+
 		x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 		y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
 		z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
 		w1 = _mm_add_pd(w1, _mm_mul_pd(q1,h4));
-#endif
 
 		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-#ifdef __ELPA_USE_FMA__
-		x2 = _mm_macc_pd(q2, h1, x2);
-		y2 = _mm_macc_pd(q2, h2, y2);
-		z2 = _mm_macc_pd(q2, h3, z2);
-		w2 = _mm_macc_pd(q2, h4, w2);
-#else
+
 		x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
 		y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
 		z2 = _mm_add_pd(z2, _mm_mul_pd(q2,h3));
 		w2 = _mm_add_pd(w2, _mm_mul_pd(q2,h4));
-#endif
 	}
 
 	h1 = _mm_loaddup_pd(&hh[nb-3]);
@@ -854,21 +654,12 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	q1 = _mm_load_pd(&q[nb*ldq]);
 	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
 
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_macc_pd(q1, h1, x1);
-	x2 = _mm_macc_pd(q2, h1, x2);
-	y1 = _mm_macc_pd(q1, h2, y1);
-	y2 = _mm_macc_pd(q2, h2, y2);
-	z1 = _mm_macc_pd(q1, h3, z1);
-	z2 = _mm_macc_pd(q2, h3, z2);
-#else
 	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
 	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
 	y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
 	z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
 	z2 = _mm_add_pd(z2, _mm_mul_pd(q2,h3));
-#endif
 
 	h1 = _mm_loaddup_pd(&hh[nb-2]);
 	h2 = _mm_loaddup_pd(&hh[(ldh*1)+nb-1]);
@@ -876,30 +667,18 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
 	q2 = _mm_load_pd(&q[((nb+1)*ldq)+2]);
 
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_macc_pd(q1, h1, x1);
-	x2 = _mm_macc_pd(q2, h1, x2);
-	y1 = _mm_macc_pd(q1, h2, y1);
-	y2 = _mm_macc_pd(q2, h2, y2);
-#else
 	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
 	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
 	y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
-#endif
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
 
 	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
 	q2 = _mm_load_pd(&q[((nb+2)*ldq)+2]);
 
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_macc_pd(q1, h1, x1);
-	x2 = _mm_macc_pd(q2, h1, x2);
-#else
 	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-#endif
 
 	/////////////////////////////////////////////////////
 	// Rank-1 update of Q [4 x nb+3]
@@ -923,36 +702,24 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 
 	h1 = tau2;
 	h2 = _mm_mul_pd(h1, vs_1_2);
-#ifdef __ELPA_USE_FMA__
-	y1 = _mm_msub_pd(y1, h1, _mm_mul_pd(x1,h2));
-	y2 = _mm_msub_pd(y2, h1, _mm_mul_pd(x2,h2));
-#else
+
 	y1 = _mm_sub_pd(_mm_mul_pd(y1,h1), _mm_mul_pd(x1,h2));
 	y2 = _mm_sub_pd(_mm_mul_pd(y2,h1), _mm_mul_pd(x2,h2));
-#endif
 
 	h1 = tau3;
 	h2 = _mm_mul_pd(h1, vs_1_3);
 	h3 = _mm_mul_pd(h1, vs_2_3);
-#ifdef __ELPA_USE_FMA__
-	z1 = _mm_msub_pd(z1, h1, _mm_macc_pd(y1, h3, _mm_mul_pd(x1,h2)));
-	z2 = _mm_msub_pd(z2, h1, _mm_macc_pd(y2, h3, _mm_mul_pd(x2,h2)));
-#else
+
 	z1 = _mm_sub_pd(_mm_mul_pd(z1,h1), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2)));
 	z2 = _mm_sub_pd(_mm_mul_pd(z2,h1), _mm_add_pd(_mm_mul_pd(y2,h3), _mm_mul_pd(x2,h2)));
-#endif
 
 	h1 = tau4;
 	h2 = _mm_mul_pd(h1, vs_1_4);
 	h3 = _mm_mul_pd(h1, vs_2_4);
 	h4 = _mm_mul_pd(h1, vs_3_4);
-#ifdef __ELPA_USE_FMA__
-	w1 = _mm_msub_pd(w1, h1, _mm_macc_pd(z1, h4, _mm_macc_pd(y1, h3, _mm_mul_pd(x1,h2))));
-	w2 = _mm_msub_pd(w2, h1, _mm_macc_pd(z2, h4, _mm_macc_pd(y2, h3, _mm_mul_pd(x2,h2))));
-#else
+
 	w1 = _mm_sub_pd(_mm_mul_pd(w1,h1), _mm_add_pd(_mm_mul_pd(z1,h4), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2))));
 	w2 = _mm_sub_pd(_mm_mul_pd(w2,h1), _mm_add_pd(_mm_mul_pd(z2,h4), _mm_add_pd(_mm_mul_pd(y2,h3), _mm_mul_pd(x2,h2))));
-#endif
 
 	q1 = _mm_load_pd(&q[0]);
 	q2 = _mm_load_pd(&q[2]);
@@ -964,13 +731,10 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
 	q1 = _mm_load_pd(&q[ldq]);
 	q2 = _mm_load_pd(&q[ldq+2]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_macc_pd(w1, h4, z1));
-	q2 = _mm_sub_pd(q2, _mm_macc_pd(w2, h4, z2));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd(z1, _mm_mul_pd(w1, h4)));
 	q2 = _mm_sub_pd(q2, _mm_add_pd(z2, _mm_mul_pd(w2, h4)));
-#endif
+
 	_mm_store_pd(&q[ldq],q1);
 	_mm_store_pd(&q[ldq+2],q2);
 
@@ -978,13 +742,9 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	h4 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
 	q1 = _mm_load_pd(&q[ldq*2]);
 	q2 = _mm_load_pd(&q[(ldq*2)+2]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_add_pd(y1, _mm_macc_pd(z1, h3, _mm_mul_pd(w1, h4))));
-	q2 = _mm_sub_pd(q2, _mm_add_pd(y2, _mm_macc_pd(z2, h3, _mm_mul_pd(w2, h4))));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd(y1, _mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(w1, h4))));
 	q2 = _mm_sub_pd(q2, _mm_add_pd(y2, _mm_add_pd(_mm_mul_pd(z2, h3), _mm_mul_pd(w2, h4))));
-#endif
 	_mm_store_pd(&q[ldq*2],q1);
 	_mm_store_pd(&q[(ldq*2)+2],q2);
 
@@ -993,13 +753,10 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
 	q1 = _mm_load_pd(&q[ldq*3]);
 	q2 = _mm_load_pd(&q[(ldq*3)+2]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_add_pd(x1, _mm_macc_pd(y1, h2, _mm_macc_pd(z1, h3, _mm_mul_pd(w1, h4)))));
-	q2 = _mm_sub_pd(q2, _mm_add_pd(x2, _mm_macc_pd(y2, h2, _mm_macc_pd(z2, h3, _mm_mul_pd(w2, h4)))));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd(x1, _mm_add_pd(_mm_mul_pd(y1, h2), _mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(w1, h4)))));
 	q2 = _mm_sub_pd(q2, _mm_add_pd(x2, _mm_add_pd(_mm_mul_pd(y2, h2), _mm_add_pd(_mm_mul_pd(z2, h3), _mm_mul_pd(w2, h4)))));
-#endif
+
 	_mm_store_pd(&q[ldq*3], q1);
 	_mm_store_pd(&q[(ldq*3)+2], q2);
 
@@ -1011,19 +768,15 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
 		q1 = _mm_load_pd(&q[i*ldq]);
-#ifdef __ELPA_USE_FMA__
-		q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_macc_pd(w1, h4, _mm_mul_pd(z1, h3)), _mm_macc_pd(x1, h1, _mm_mul_pd(y1, h2))));
-#else
+
 		q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_add_pd(_mm_mul_pd(w1, h4), _mm_mul_pd(z1, h3)), _mm_add_pd(_mm_mul_pd(x1,h1), _mm_mul_pd(y1, h2))));
-#endif
+
 		_mm_store_pd(&q[i*ldq],q1);
 
 		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-#ifdef __ELPA_USE_FMA__
-		q2 = _mm_sub_pd(q2, _mm_add_pd(_mm_macc_pd(w2, h4, _mm_mul_pd(z2, h3)), _mm_macc_pd(x2, h1, _mm_mul_pd(y2, h2))));
-#else
+
 		q2 = _mm_sub_pd(q2, _mm_add_pd(_mm_add_pd(_mm_mul_pd(w2, h4), _mm_mul_pd(z2, h3)), _mm_add_pd(_mm_mul_pd(x2,h1), _mm_mul_pd(y2, h2))));
-#endif
+
 		_mm_store_pd(&q[(i*ldq)+2],q2);
 	}
 
@@ -1032,13 +785,10 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
 	q1 = _mm_load_pd(&q[nb*ldq]);
 	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_macc_pd(x1, h1, _mm_macc_pd(z1, h3, _mm_mul_pd(y1, h2))));
-	q2 = _mm_sub_pd(q2, _mm_macc_pd(x2, h1, _mm_macc_pd(z2, h3, _mm_mul_pd(y2, h2))));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(y1, h2)) , _mm_mul_pd(x1, h1)));
 	q2 = _mm_sub_pd(q2, _mm_add_pd(_mm_add_pd(_mm_mul_pd(z2, h3), _mm_mul_pd(y2, h2)) , _mm_mul_pd(x2, h1)));
-#endif
+
 	_mm_store_pd(&q[nb*ldq],q1);
 	_mm_store_pd(&q[(nb*ldq)+2],q2);
 
@@ -1046,26 +796,20 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv(double* q, double* hh, int nb, int 
 	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
 	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
 	q2 = _mm_load_pd(&q[((nb+1)*ldq)+2]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_macc_pd(y1, h2, _mm_mul_pd(x1, h1)));
-	q2 = _mm_sub_pd(q2, _mm_macc_pd(y2, h2, _mm_mul_pd(x2, h1)));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd( _mm_mul_pd(y1, h2) , _mm_mul_pd(x1, h1)));
 	q2 = _mm_sub_pd(q2, _mm_add_pd( _mm_mul_pd(y2, h2) , _mm_mul_pd(x2, h1)));
-#endif
+
 	_mm_store_pd(&q[(nb+1)*ldq],q1);
 	_mm_store_pd(&q[((nb+1)*ldq)+2],q2);
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
 	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
 	q2 = _mm_load_pd(&q[((nb+2)*ldq)+2]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(x1, h1, q1);
-	q2 = _mm_nmacc_pd(x2, h1, q2);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
 	q2 = _mm_sub_pd(q2, _mm_mul_pd(x2, h1));
-#endif
+
 	_mm_store_pd(&q[(nb+2)*ldq],q1);
 	_mm_store_pd(&q[((nb+2)*ldq)+2],q2);
 }
@@ -1096,15 +840,6 @@ __forceinline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int 
 	__m128d h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
 	__m128d h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
 
-#ifdef __ELPA_USE_FMA__
-	__m128d w1 = _mm_macc_pd(a3_1, h_4_3, a4_1);
-	w1 = _mm_macc_pd(a2_1, h_4_2, w1);
-	w1 = _mm_macc_pd(a1_1, h_4_1, w1);
-	__m128d z1 = _mm_macc_pd(a2_1, h_3_2, a3_1);
-	z1 = _mm_macc_pd(a1_1, h_3_1, z1);
-	__m128d y1 = _mm_macc_pd(a1_1, h_2_1, a2_1);
-	__m128d x1 = a1_1;
-#else
 	__m128d w1 = _mm_add_pd(a4_1, _mm_mul_pd(a3_1, h_4_3));
 	w1 = _mm_add_pd(w1, _mm_mul_pd(a2_1, h_4_2));
 	w1 = _mm_add_pd(w1, _mm_mul_pd(a1_1, h_4_1));
@@ -1112,7 +847,6 @@ __forceinline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int 
 	z1 = _mm_add_pd(z1, _mm_mul_pd(a1_1, h_3_1));
 	__m128d y1 = _mm_add_pd(a2_1, _mm_mul_pd(a1_1, h_2_1));
 	__m128d x1 = a1_1;
-#endif
 
 	__m128d q1;
 
@@ -1129,51 +863,33 @@ __forceinline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int 
 		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
 		q1 = _mm_load_pd(&q[i*ldq]);
-#ifdef __ELPA_USE_FMA__
-		x1 = _mm_macc_pd(q1, h1, x1);
-		y1 = _mm_macc_pd(q1, h2, y1);
-		z1 = _mm_macc_pd(q1, h3, z1);
-		w1 = _mm_macc_pd(q1, h4, w1);
-#else
+
 		x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 		y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
 		z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
 		w1 = _mm_add_pd(w1, _mm_mul_pd(q1,h4));
-#endif
 	}
 
 	h1 = _mm_loaddup_pd(&hh[nb-3]);
 	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
 	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
 	q1 = _mm_load_pd(&q[nb*ldq]);
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_macc_pd(q1, h1, x1);
-	y1 = _mm_macc_pd(q1, h2, y1);
-	z1 = _mm_macc_pd(q1, h3, z1);
-#else
+
 	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
 	z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
-#endif
 
 	h1 = _mm_loaddup_pd(&hh[nb-2]);
 	h2 = _mm_loaddup_pd(&hh[(ldh*1)+nb-1]);
 	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_macc_pd(q1, h1, x1);
-	y1 = _mm_macc_pd(q1, h2, y1);
-#else
+
 	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
 	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-#endif
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
 	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_macc_pd(q1, h1, x1);
-#else
+
 	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-#endif
 	/////////////////////////////////////////////////////
 	// Rank-1 update of Q [2 x nb+3]
 	/////////////////////////////////////////////////////
@@ -1195,30 +911,21 @@ __forceinline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int 
 
 	h1 = tau2;
 	h2 = _mm_mul_pd(h1, vs_1_2);
-#ifdef __ELPA_USE_FMA__
-	y1 = _mm_msub_pd(y1, h1, _mm_mul_pd(x1,h2));
-#else
+
 	y1 = _mm_sub_pd(_mm_mul_pd(y1,h1), _mm_mul_pd(x1,h2));
-#endif
 
 	h1 = tau3;
 	h2 = _mm_mul_pd(h1, vs_1_3);
 	h3 = _mm_mul_pd(h1, vs_2_3);
-#ifdef __ELPA_USE_FMA__
-	z1 = _mm_msub_pd(z1, h1, _mm_macc_pd(y1, h3, _mm_mul_pd(x1,h2)));
-#else
+
 	z1 = _mm_sub_pd(_mm_mul_pd(z1,h1), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2)));
-#endif
 
 	h1 = tau4;
 	h2 = _mm_mul_pd(h1, vs_1_4);
 	h3 = _mm_mul_pd(h1, vs_2_4);
 	h4 = _mm_mul_pd(h1, vs_3_4);
-#ifdef __ELPA_USE_FMA__
-	w1 = _mm_msub_pd(w1, h1, _mm_macc_pd(z1, h4, _mm_macc_pd(y1, h3, _mm_mul_pd(x1,h2))));
-#else
+
 	w1 = _mm_sub_pd(_mm_mul_pd(w1,h1), _mm_add_pd(_mm_mul_pd(z1,h4), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2))));
-#endif
 
 	q1 = _mm_load_pd(&q[0]);
 	q1 = _mm_sub_pd(q1, w1);
@@ -1226,32 +933,26 @@ __forceinline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int 
 
 	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
 	q1 = _mm_load_pd(&q[ldq]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_macc_pd(w1, h4, z1));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd(z1, _mm_mul_pd(w1, h4)));
-#endif
+
 	_mm_store_pd(&q[ldq],q1);
 
 	h3 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
 	h4 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
 	q1 = _mm_load_pd(&q[ldq*2]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_add_pd(y1, _mm_macc_pd(z1, h3, _mm_mul_pd(w1, h4))));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd(y1, _mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(w1, h4))));
-#endif
+
 	_mm_store_pd(&q[ldq*2],q1);
 
 	h2 = _mm_loaddup_pd(&hh[ldh+1]);
 	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
 	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
 	q1 = _mm_load_pd(&q[ldq*3]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_add_pd(x1, _mm_macc_pd(y1, h2, _mm_macc_pd(z1, h3, _mm_mul_pd(w1, h4)))));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd(x1, _mm_add_pd(_mm_mul_pd(y1, h2), _mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(w1, h4)))));
-#endif
+
 	_mm_store_pd(&q[ldq*3], q1);
 
 	for (i = 4; i < nb; i++)
@@ -1262,11 +963,9 @@ __forceinline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int 
 		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
 		q1 = _mm_load_pd(&q[i*ldq]);
-#ifdef __ELPA_USE_FMA__
-		q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_macc_pd(w1, h4, _mm_mul_pd(z1, h3)), _mm_macc_pd(x1, h1, _mm_mul_pd(y1, h2))));
-#else
+
 		q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_add_pd(_mm_mul_pd(w1, h4), _mm_mul_pd(z1, h3)), _mm_add_pd(_mm_mul_pd(x1,h1), _mm_mul_pd(y1, h2))));
-#endif
+
 		_mm_store_pd(&q[i*ldq],q1);
 	}
 
@@ -1274,29 +973,23 @@ __forceinline void hh_trafo_kernel_2_SSE_4hv(double* q, double* hh, int nb, int 
 	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
 	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
 	q1 = _mm_load_pd(&q[nb*ldq]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_macc_pd(x1, h1, _mm_macc_pd(z1, h3, _mm_mul_pd(y1, h2))));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(y1, h2)) , _mm_mul_pd(x1, h1)));
-#endif
+
 	_mm_store_pd(&q[nb*ldq],q1);
 
 	h1 = _mm_loaddup_pd(&hh[nb-2]);
 	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
 	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_sub_pd(q1, _mm_macc_pd(y1, h2, _mm_mul_pd(x1, h1)));
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_add_pd( _mm_mul_pd(y1, h2) , _mm_mul_pd(x1, h1)));
-#endif
+
 	_mm_store_pd(&q[(nb+1)*ldq],q1);
 
 	h1 = _mm_loaddup_pd(&hh[nb-1]);
 	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
-#ifdef __ELPA_USE_FMA__
-	q1 = _mm_nmacc_pd(x1, h1, q1);
-#else
+
 	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
-#endif
+
 	_mm_store_pd(&q[(nb+2)*ldq],q1);
 }
