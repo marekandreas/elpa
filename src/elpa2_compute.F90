@@ -72,6 +72,7 @@ module ELPA2_compute
   use elpa2_utilities
   use elpa_pdgeqrf
   use elpa_mpi
+  use aligned_mem
 
   implicit none
 
@@ -93,6 +94,7 @@ module ELPA2_compute
   integer, public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
                                                     ! 0 for unblocked
                                                     ! 1 for blocked (maxrank: nblk)
+
   contains
 
     subroutine bandred_real(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, &
@@ -1776,10 +1778,12 @@ module ELPA2_compute
       logical                       :: flag
 
 #ifdef WITH_OPENMP
-      real(kind=rk), allocatable    :: a(:,:,:,:), row(:)
+      real(kind=rk), pointer        :: a(:,:,:,:)
 #else
-      real(kind=rk), allocatable    :: a(:,:,:), row(:)
+      real(kind=rk), pointer        :: a(:,:,:)
 #endif
+      type(c_ptr)                   :: a_ptr
+      real(kind=rk), allocatable    :: row(:)
 
 #ifdef WITH_OPENMP
       real(kind=rk), allocatable    :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
@@ -1891,13 +1895,28 @@ module ELPA2_compute
 
       a_dim2 = max_blk_size + nbw
 
-!DEC$ ATTRIBUTES ALIGN: 64:: a
 #ifdef WITH_OPENMP
-      allocate(a(stripe_width,a_dim2,stripe_count,max_threads))
-      ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
+      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a(1,1,1,1))) /= 0) then
 #else
-      allocate(a(stripe_width,a_dim2,stripe_count))
+      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a(1,1,1))) /= 0) then
+#endif
+        write(error_unit,*) "Cannot allocate memory"
+        success = .false.
+        return
+      endif
+
+      call c_f_pointer(a_ptr, a, &
+#ifdef WITH_OPENMP
+          [stripe_width,a_dim2,stripe_count,max_threads] &
+#else
+          [stripe_width,a_dim2,stripe_count] &
+#endif
+        )
+
+#ifndef WITH_OPENMP
       a(:,:,:) = 0
+#else
+      ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
 #endif
 
       allocate(row(l_nev))
@@ -2766,7 +2785,8 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 
       ! deallocate all working space
 
-      deallocate(a)
+      nullify(a)
+      call free(a_ptr)
       deallocate(row)
       deallocate(limits)
       deallocate(result_send_request)
@@ -4182,10 +4202,13 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       logical                       :: flag
 
 #ifdef WITH_OPENMP
-      complex(kind=ck), allocatable :: a(:,:,:,:), row(:)
+      complex(kind=ck), pointer     :: a(:,:,:,:)
 #else
-      complex(kind=ck), allocatable :: a(:,:,:), row(:)
+      complex(kind=ck), pointer     :: a(:,:,:)
 #endif
+      complex(kind=ck), allocatable :: row(:)
+      type(c_ptr)                   :: a_ptr
+
 #ifdef WITH_OPENMP
       complex(kind=ck), allocatable :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
       complex(kind=ck), allocatable :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
@@ -4305,12 +4328,25 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 
       a_dim2 = max_blk_size + nbw
 
-!DEC$ ATTRIBUTES ALIGN: 64:: a
 #ifdef WITH_OPENMP
-      allocate(a(stripe_width,a_dim2,stripe_count,max_threads))
-      ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
+      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a(1,1,1,1))) /= 0) then
 #else
-      allocate(a(stripe_width,a_dim2,stripe_count))
+      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a(1,1,1))) /= 0) then
+#endif
+        write(error_unit,*) "Cannot allocate memory"
+        success = .false.
+        return
+      endif
+
+      call c_f_pointer(a_ptr, a, &
+#ifdef WITH_OPENMP
+          [stripe_width,a_dim2,stripe_count,max_threads] &
+#else
+          [stripe_width,a_dim2,stripe_count] &
+#endif
+        )
+
+#ifndef WITH_OPENMP
       a(:,:,:) = 0
 #endif
 
@@ -4339,8 +4375,8 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("OpenMP parallel")
 #endif
-
 #endif
+
       do ip = np_rows-1, 0, -1
         if (my_prow == ip) then
           ! Receive my rows which have not yet been received
@@ -5240,7 +5276,8 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 
        ! deallocate all working space
 
-       deallocate(a)
+       nullify(a)
+       call free(a_ptr)
        deallocate(row)
        deallocate(limits)
        deallocate(result_send_request)
