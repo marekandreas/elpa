@@ -80,30 +80,45 @@ if WITH_COMPLEX_SSE_KERNEL
 endif
 endif
 
+if WITH_REAL_SSE_BLOCK2_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_2hv.c
+endif
+
 if WITH_REAL_AVX_BLOCK2_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_2hv.c
+endif
+
+if WITH_REAL_SSE_BLOCK4_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_4hv.c
 endif
 
 if WITH_REAL_AVX_BLOCK4_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_4hv.c
 endif
 
+if WITH_REAL_SSE_BLOCK6_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_6hv.c
+endif
+
 if WITH_REAL_AVX_BLOCK6_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_6hv.c
+endif
+
+if WITH_COMPLEX_SSE_BLOCK1_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_1hv.cpp
 endif
 
 if WITH_COMPLEX_AVX_BLOCK1_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv.cpp
 endif
 
+if WITH_COMPLEX_SSE_BLOCK2_KERNEL
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_2hv.cpp
+endif
+
 if WITH_COMPLEX_AVX_BLOCK2_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv.cpp
 endif
-
-#if WITH_AVX_SANDYBRIDGE
-#  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_2hv.c \
-#                                           src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv.cpp
-#endif
 
 # install any .mod files in the include/ dir
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@

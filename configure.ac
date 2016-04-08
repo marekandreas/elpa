@@ -143,6 +143,10 @@ install_real_generic_simple=yes
 install_complex_generic=yes
 install_complex_generic_simple=yes
 
+#want_avx=yes
+#want_avx2=yes
+#want_sse=yes
+
 AC_LANG([C])
 
 dnl build with ftimings support
@@ -196,12 +200,26 @@ $CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64.s -o test.o 2>/dev/nul
 if test "$?" == 0; then
   can_compile_sse=yes
   install_real_sse=yes
+  install_real_sse_block2=yes
+  install_real_sse_block4=yes
+  install_real_sse_block6=yes
+
   install_complex_sse=yes
+  install_complex_sse_block1=yes
+  install_complex_sse_block2=yes
+
 else
   can_compile_sse=no
   install_real_sse=no
+  install_real_sse_block2=no
+  install_real_sse_block4=no
+  install_real_sse_block6=no
+
   install_complex_sse=no
+  install_complex_sse_block1=no
+  install_complex_sse_block2=no
 fi
+
 rm -f ./test.o
 AC_MSG_RESULT([${can_compile_sse}])
 
@@ -286,8 +304,6 @@ if test "${can_compile_avx}" = "yes" ; then
 
   install_complex_avx_block1=yes
   install_complex_avx_block2=yes
-
-  want_avx=yes
 else
   install_real_avx_block2=no
   install_real_avx_block4=no
@@ -295,10 +311,23 @@ else
 
   install_complex_avx_block1=no
   install_complex_avx_block2=no
-
-  want_avx=yes
 fi
 
+if test "${can_compile_avx2}" = "yes" ; then
+  install_real_avx2_block2=yes
+  install_real_avx2_block4=yes
+  install_real_avx2_block6=yes
+
+  install_complex_avx2_block1=yes
+  install_complex_avx2_block2=yes
+else
+  install_real_avx2_block2=no
+  install_real_avx2_block4=no
+  install_real_avx2_block6=no
+
+  install_complex_avx2_block1=no
+  install_complex_avx2_block2=no
+fi
 AM_CONDITIONAL([HAVE_SSE],[test x"$can_compile_sse" = x"yes"])
 if test x"${can_compile_sse}" = x"yes" ; then
   AC_DEFINE([HAVE_SSE],[1],[SSE is supported on this CPU])
@@ -477,7 +506,6 @@ AC_MSG_CHECKING([whether we can use the intrinsic Fortran function "get_environm
 
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   program test_get_environment
-
     character(len=256) :: homedir
     call get_environment_variable("HOME",homedir)
   end program
@@ -570,6 +598,15 @@ dnl real kernels
   dnl bgq kernel
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgq-kernel-only],[bgq-kernel],[install_real_bgq])
 
+  dnl real-sse-block2 kernel
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block2-kernel-only],[real-sse-block2-kernel],[install_real_sse_block2])
+
+  dnl real-sse-block4 kernel
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block4-kernel]-only,[real-sse-block4-kernel],[install_real_sse_block4])
+
+  dnl real-sse-block6 kernel
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block6-kernel-only],[real-sse-block6-kernel],[install_real_sse_block6])
+
   dnl real-avx-block2 kernel
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block2-kernel-only],[real-avx-block2-kernel],[install_real_avx_block2])
 
@@ -600,6 +637,12 @@ dnl complex kernels
   dnl complex-bqq kernel
   DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgq-kernel-only],[bgq-kernel],[install_complex_bgq])
 
+  dnl complex-sse-block1 kernel
+  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-block1-kernel-only],[complex-sse-block1-kernel],[install_complex_sse_block1])
+
+  dnl complex-avx-block2 kernel
+  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-block2-kernel-only],[complex-sse-block2-kernel],[install_complex_sse_block2])
+
   dnl complex-avx-block1 kernel
   DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block1-kernel-only],[complex-avx-block1-kernel],[install_complex_avx_block1])
 
@@ -607,6 +650,7 @@ dnl complex kernels
   DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block2-kernel-only],[complex-avx-block2-kernel],[install_complex_avx_block2])
 
 dnl set the conditionals according to the previous tests
+
 if test x"${can_use_iso_fortran_env}" = x"yes" ; then
  AC_DEFINE([HAVE_ISO_FORTRAN_ENV],[1],[can use module iso_fortran_env])
 fi
@@ -641,6 +685,21 @@ if test x"${install_complex_sse}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_SSE_KERNEL],[1],[can use complex SSE kernel])
 fi
 
+AM_CONDITIONAL([WITH_REAL_SSE_BLOCK2_KERNEL],[test x"$install_real_sse_block2" = x"yes"])
+if test x"${install_real_sse_block2}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_SSE_BLOCK2_KERNEL],[1],[can use real_sse_block2 kernel])
+fi
+
+AM_CONDITIONAL([WITH_REAL_SSE_BLOCK4_KERNEL],[test x"$install_real_sse_block4" = x"yes"])
+if test x"${install_real_sse_block4}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_SSE_BLOCK4_KERNEL],[1],[can use real_sse_block4 kernel])
+fi
+
+AM_CONDITIONAL([WITH_REAL_SSE_BLOCK6_KERNEL],[test x"$install_real_sse_block6" = x"yes"])
+if test x"${install_real_sse_block6}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_SSE_BLOCK6_KERNEL],[1],[can use real_sse_block6 kernel])
+fi
+
 AM_CONDITIONAL([WITH_REAL_AVX_BLOCK2_KERNEL],[test x"$install_real_avx_block2" = x"yes"])
 if test x"${install_real_avx_block2}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_AVX_BLOCK2_KERNEL],[1],[can use real_avx_block2 kernel])
@@ -656,6 +715,31 @@ if test x"${install_real_avx_block6}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_AVX_BLOCK6_KERNEL],[1],[can use real_avx_block6 kernel])
 fi
 
+AM_CONDITIONAL([WITH_REAL_AVX2_BLOCK2_KERNEL],[test x"$install_real_avx2_block2" = x"yes"])
+if test x"${install_real_avx2_block2}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_AVX2_BLOCK2_KERNEL],[1],[can use real_avx2_block2 kernel])
+fi
+
+AM_CONDITIONAL([WITH_REAL_AVX2_BLOCK4_KERNEL],[test x"$install_real_avx2_block4" = x"yes"])
+if test x"${install_real_avx2_block4}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_AVX2_BLOCK4_KERNEL],[1],[can use real_avx2_block4 kernel])
+fi
+
+AM_CONDITIONAL([WITH_REAL_AVX2_BLOCK6_KERNEL],[test x"$install_real_avx2_block6" = x"yes"])
+if test x"${install_real_avx2_block6}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_AVX2_BLOCK6_KERNEL],[1],[can use real_avx2_block6 kernel])
+fi
+
+AM_CONDITIONAL([WITH_COMPLEX_SSE_BLOCK1_KERNEL],[test x"$install_complex_sse_block1" = x"yes"])
+if test x"${install_complex_sse_block1}" = x"yes" ; then
+ AC_DEFINE([WITH_COMPLEX_SSE_BLOCK1_KERNEL],[1],[can use complex_sse_block1 kernel])
+fi
+
+AM_CONDITIONAL([WITH_COMPLEX_SSE_BLOCK2_KERNEL],[test x"$install_complex_sse_block2" = x"yes"])
+if test x"${install_complex_sse_block2}" = x"yes" ; then
+ AC_DEFINE([WITH_COMPLEX_SSE_BLOCK2_KERNEL],[1],[can use complex_sse_block2 kernel])
+fi
+
 AM_CONDITIONAL([WITH_COMPLEX_AVX_BLOCK1_KERNEL],[test x"$install_complex_avx_block1" = x"yes"])
 if test x"${install_complex_avx_block1}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_AVX_BLOCK1_KERNEL],[1],[can use complex_avx_block1 kernel])
@@ -664,6 +748,16 @@ fi
 AM_CONDITIONAL([WITH_COMPLEX_AVX_BLOCK2_KERNEL],[test x"$install_complex_avx_block2" = x"yes"])
 if test x"${install_complex_avx_block2}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_AVX_BLOCK2_KERNEL],[1],[can use complex_avx_block2 kernel])
+fi
+
+AM_CONDITIONAL([WITH_COMPLEX_AVX2_BLOCK1_KERNEL],[test x"$install_complex_avx2_block1" = x"yes"])
+if test x"${install_complex_avx2_block1}" = x"yes" ; then
+ AC_DEFINE([WITH_COMPLEX_AVX2_BLOCK1_KERNEL],[1],[can use complex_avx2_block1 kernel])
+fi
+
+AM_CONDITIONAL([WITH_COMPLEX_AVX2_BLOCK2_KERNEL],[test x"$install_complex_avx2_block2" = x"yes"])
+if test x"${install_complex_avx2_block2}" = x"yes" ; then
+ AC_DEFINE([WITH_COMPLEX_AVX2_BLOCK2_KERNEL],[1],[can use complex_avx2_block2 kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_BGP_KERNEL],[test x"$install_real_bgp" = x"yes"])
@@ -763,13 +857,13 @@ mkdir -p test/shared_sources
 grep -h "^ *!c>" $srcdir/test/shared_sources/*.F90 | sed 's/^ *!c>//;' > test/shared_sources/generated.h || exit 1
 
 if test "${can_compile_avx}" = "no" ; then
-  if test x"${want_avx}" = x"yes" ; then
+#  if test x"${want_avx}" = x"yes" ; then
     AC_MSG_WARN([Could not compile AVX instructions])
-  fi
+#  fi
 fi
 if test "${can_compile_avx2}" = "no" ; then
-  if test x"${want_avx}" = x"yes" ; then
+#  if test x"${want_avx2}" = x"yes" ; then
     AC_MSG_WARN([Could not compile AVX2 instructions])
-  fi
+#  fi
 fi
 
