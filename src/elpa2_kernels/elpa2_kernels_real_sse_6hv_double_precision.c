@@ -71,15 +71,15 @@
 #endif
 
 //Forward declaration
-static void hh_trafo_kernel_2_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
-static void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
+static void hh_trafo_kernel_2_SSE_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
+static void hh_trafo_kernel_4_SSE_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 
-void hexa_hh_trafo_real_sse_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void hexa_hh_trafo_real_sse_6hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #if 0
 void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #endif
 
-void hexa_hh_trafo_real_sse_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void hexa_hh_trafo_real_sse_6hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -221,7 +221,7 @@ void hexa_hh_trafo_real_sse_6hv_(double* q, double* hh, int* pnb, int* pnq, int*
 	// Production level kernel calls with padding
 	for (i = 0; i < nq-2; i+=4)
 	{
-		hh_trafo_kernel_4_SSE_6hv(&q[i], hh, nb, ldq, ldh, scalarprods);
+		hh_trafo_kernel_4_SSE_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
 	}
 	if (nq == i)
 	{
@@ -229,7 +229,7 @@ void hexa_hh_trafo_real_sse_6hv_(double* q, double* hh, int* pnb, int* pnq, int*
 	}
 	else
 	{
-		hh_trafo_kernel_2_SSE_6hv(&q[i], hh, nb, ldq, ldh, scalarprods);
+		hh_trafo_kernel_2_SSE_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
 	}
 }
 
@@ -377,12 +377,12 @@ void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, i
 #ifdef __AVX__
 	for (i = 0; i < nq; i+=8)
 	{
-		hh_trafo_kernel_8_AVX_6hv(&q[i], hh, nb, ldq, ldh, scalarprods);
+		hh_trafo_kernel_8_AVX_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
 	}
 #else
 	for (i = 0; i < nq; i+=4)
 	{
-		hh_trafo_kernel_4_SSE_6hv(&q[i], hh, nb, ldq, ldh, scalarprods);
+		hh_trafo_kernel_4_SSE_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
 	}
 #endif
 }
@@ -394,7 +394,7 @@ void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, i
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-__forceinline void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
+__forceinline void hh_trafo_kernel_4_SSE_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
@@ -932,7 +932,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int 
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-__forceinline void hh_trafo_kernel_2_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
+__forceinline void hh_trafo_kernel_2_SSE_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [2 x nb+3] * hh

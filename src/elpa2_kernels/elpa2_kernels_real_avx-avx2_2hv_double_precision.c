@@ -81,17 +81,17 @@
 #endif
 
 //Forward declaration
-__forceinline void hh_trafo_kernel_4_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s);
-__forceinline void hh_trafo_kernel_8_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s);
-__forceinline void hh_trafo_kernel_16_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s);
-__forceinline void hh_trafo_kernel_24_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_4_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_8_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_16_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_24_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
 
-void double_hh_trafo_real_avx_avx2_2hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void double_hh_trafo_real_avx_avx2_2hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #if 0
 void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #endif
 
-void double_hh_trafo_real_avx_avx2_2hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void double_hh_trafo_real_avx_avx2_2hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -112,7 +112,7 @@ void double_hh_trafo_real_avx_avx2_2hv_(double* q, double* hh, int* pnb, int* pn
 	// Production level kernel calls with padding
 	for (i = 0; i < nq-20; i+=24)
 	{
-		hh_trafo_kernel_24_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_24_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
 
 	if (nq == i)
@@ -122,25 +122,25 @@ void double_hh_trafo_real_avx_avx2_2hv_(double* q, double* hh, int* pnb, int* pn
 
 	if (nq-i == 20)
 	{
-		hh_trafo_kernel_16_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
-		hh_trafo_kernel_4_AVX_2hv(&q[i+16], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_16_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_4_AVX_2hv_double(&q[i+16], hh, nb, ldq, ldh, s);
 	}
 	else if (nq-i == 16)
 	{
-		hh_trafo_kernel_16_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_16_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
 	else if (nq-i == 12)
 	{
-		hh_trafo_kernel_8_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
-		hh_trafo_kernel_4_AVX_2hv(&q[i+8], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_8_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_4_AVX_2hv_double(&q[i+8], hh, nb, ldq, ldh, s);
 	}
 	else if (nq-i == 8)
 	{
-		hh_trafo_kernel_8_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_8_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
 	else
 	{
-		hh_trafo_kernel_4_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_4_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
 }
 
@@ -167,12 +167,12 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 #ifdef __AVX__
 	for (i = 0; i < nq; i+=24)
 	{
-		hh_trafo_kernel_24_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_24_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
 #else
 	for (i = 0; i < nq; i+=12)
 	{
-		hh_trafo_kernel_12_SSE_2hv(&q[i], hh, nb, ldq, ldh, s);
+		hh_trafo_kernel_12_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
 #endif
 }
@@ -184,7 +184,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
  * matrix vector product with two householder
  * vectors + a rank 2 update is performed
  */
- __forceinline void hh_trafo_kernel_24_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s)
+ __forceinline void hh_trafo_kernel_24_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [24 x nb+1] * hh
@@ -498,7 +498,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
  * matrix vector product with two householder
  * vectors + a rank 2 update is performed
  */
- __forceinline void hh_trafo_kernel_16_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s)
+ __forceinline void hh_trafo_kernel_16_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [16 x nb+1] * hh
@@ -732,7 +732,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
  * matrix vector product with two householder
  * vectors + a rank 2 update is performed
  */
- __forceinline void hh_trafo_kernel_8_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s)
+ __forceinline void hh_trafo_kernel_8_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [8 x nb+1] * hh
@@ -886,7 +886,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
  * matrix vector product with two householder
  * vectors + a rank 2 update is performed
  */
- __forceinline void hh_trafo_kernel_4_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s)
+ __forceinline void hh_trafo_kernel_4_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+1] * hh

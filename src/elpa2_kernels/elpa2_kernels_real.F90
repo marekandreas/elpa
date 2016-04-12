@@ -106,7 +106,7 @@ module real_generic_kernel
 
     ! Calculate dot product of the two Householder vectors
 
-    s = hh(2,2)*1
+    s = hh(2,2)*1.0
     do i=3,nb
        s = s+hh(i,2)*hh(i-1,1)
     enddo
