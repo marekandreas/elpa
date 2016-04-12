@@ -953,8 +953,6 @@ void double_hh_trafo_fast_single(float* q, float* hh, int* pnb, int* pnq, int* p
 	__m256 tau2 = _mm256_broadcast_ss(&hh[ldh]);
 	__m256 vs = _mm256_broadcast_ss(&s);
 
-//carefull
-
 	h1 = _mm256_xor_ps(tau1, sign);
 	x1 = _mm256_mul_ps(x1, h1);
 	h1 = _mm256_xor_ps(tau2, sign);
@@ -967,17 +965,21 @@ void double_hh_trafo_fast_single(float* q, float* hh, int* pnb, int* pnq, int* p
 
 	q1 = _mm256_castps128_ps256(_mm_load_ps(q));
 	q1 = _mm256_add_ps(q1, y1);
-	_mm256_store_ps(q,q1);
+	_mm_store_ps(q, _mm256_castps256_ps128(q1));
+//	_mm256_store_ps(q,q1);
 
 	h2 = _mm256_broadcast_ss(&hh[ldh+1]);
 #ifdef __ELPA_USE_FMA__
 	q1 = _mm256_castps128_ps256(_mm_load_ps(&q[ldq]));
 	q1 = _mm256_add_ps(q1, _mm256_FMA_ps(y1, h2, x1));
-	_mm256_store_ps(&q[ldq],q1);
+	_mm_store_ps(&q[ldq], _mm256_castps256_ps128(q1));
+//	_mm256_store_ps(&q[ldq],q1);
 #else
 	q1 = _mm256_castps128_ps256(_mm_load_ps(&q[ldq]));
 	q1 = _mm256_add_ps(q1, _mm256_add_ps(x1, _mm256_mul_ps(y1, h2)));
-	_mm256_store_ps(&q[ldq],q1);
+	_mm_store_ps(&q[ldq], _mm256_castps256_ps128(q1));
+
+//	_mm256_store_ps(&q[ldq],q1);
 #endif
 
 	for (i = 2; i < nb; i++)
@@ -988,11 +990,13 @@ void double_hh_trafo_fast_single(float* q, float* hh, int* pnb, int* pnq, int* p
 		q1 = _mm256_castps128_ps256(_mm_load_ps(&q[i*ldq]));
 		q1 = _mm256_FMA_ps(x1, h1, q1);
 		q1 = _mm256_FMA_ps(y1, h2, q1);
-		_mm256_store_ps(&q[i*ldq],q1);
+		_mm_store_ps(&q[i*ldq], _mm256_castps256_ps128(q1));
+//		_mm256_store_ps(&q[i*ldq],q1);
 #else
 		q1 = _mm256_castps128_ps256(_mm_load_ps(&q[i*ldq]));
 		q1 = _mm256_add_ps(q1, _mm256_add_ps(_mm256_mul_ps(x1,h1), _mm256_mul_ps(y1, h2)));
-		_mm256_store_ps(&q[i*ldq],q1);
+		_mm_store_ps(&q[i*ldq], _mm256_castps256_ps128(q1));
+//		_mm256_store_ps(&q[i*ldq],q1);
 #endif
 	}
 
@@ -1000,11 +1004,13 @@ void double_hh_trafo_fast_single(float* q, float* hh, int* pnb, int* pnq, int* p
 #ifdef __ELPA_USE_FMA__
 	q1 = _mm256_castps128_ps256(_mm_load_ps(&q[nb*ldq]));
 	q1 = _mm256_FMA_ps(x1, h1, q1);
-	_mm256_store_ps(&q[nb*ldq],q1);
+	_mm_store_ps(&q[nb*ldq], _mm256_castps256_ps128(q1));
+//	_mm256_store_ps(&q[nb*ldq],q1);
 #else
 	q1 = _mm256_castps128_ps256(_mm_load_ps(&q[nb*ldq]));
 	q1 = _mm256_add_ps(q1, _mm256_mul_ps(x1, h1));
-	_mm256_store_ps(&q[nb*ldq],q1);
+	_mm_store_ps(&q[nb*ldq], _mm256_castps256_ps128(q1));
+//	_mm256_store_ps(&q[nb*ldq],q1);
 #endif
 }
 

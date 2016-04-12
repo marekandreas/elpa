@@ -71,6 +71,7 @@
 #define __ELPA_USE_FMA__
 #define _mm256_FMA_pd(a,b,c) _mm256_macc_pd(a,b,c)
 #define _mm256_NFMA_pd(a,b,c) _mm256_nmacc_pd(a,b,c)
+#error "This should be prop _mm256_msub_pd instead of _mm256_msub"
 #define _mm256_FMSUB_pd(a,b,c) _mm256_msub(a,b,c)
 #endif
 
