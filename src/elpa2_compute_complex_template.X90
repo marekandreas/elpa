@@ -2995,11 +2995,12 @@
       logical                       :: flag
 
 #ifdef WITH_OPENMP
-      complex(kind=COMPLEX_DATATYPE), allocatable :: a(:,:,:,:), row(:)
+      complex(kind=COMPLEX_DATATYPE), pointer     :: a(:,:,:,:)
 #else
-      complex(kind=COMPLEX_DATATYPE), allocatable :: a(:,:,:), row(:)
+      complex(kind=COMPLEX_DATATYPE), pointer     :: a(:,:,:)
 #endif
-
+      type(c_ptr)                                 :: a_ptr
+      complex(kind=COMPLEX_DATATYPE), allocatable :: row(:)
       complex(kind=COMPLEX_DATATYPE), allocatable :: row_group(:,:)
 
 #ifdef WITH_OPENMP
@@ -3213,11 +3214,13 @@
       endif
 
       if (.not.(useGPU)) then
-        allocate(a(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
+         if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a(1,1,1,1))) /= 0) then
           print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
           stop
         endif
+
+        call c_f_pointer(a_ptr, a, [stripe_width,a_dim2,stripe_count,max_threads] )
+!        allocate(a(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
 
         ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
       endif
@@ -3225,11 +3228,14 @@
 #else /* OpenMP */
 
       if (.not.(useGPU)) then
-        allocate(a(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
+        if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a(1,1,1))) /= 0) then
           print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
           stop
         endif
+
+        call c_f_pointer(a_ptr, a, [stripe_width,a_dim2,stripe_count] )
+
+!        allocate(a(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
 
         a(:,:,:) = 0
       endif
@@ -5368,11 +5374,13 @@
         ! deallocate all working space
 
         if (.not.(useGPU)) then
-          deallocate(a, stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"trans_ev_tridi_to_band_complex: error deallocating a "//errorMessage
-            stop
-          endif
+	  nullify(a)
+	  call free(a_ptr)
+!          deallocate(a, stat=istat, errmsg=errorMessage)
+!          if (istat .ne. 0) then
+!            print *,"trans_ev_tridi_to_band_complex: error deallocating a "//errorMessage
+!            stop
+!          endif
         endif
 
         deallocate(row, stat=istat, errmsg=errorMessage)

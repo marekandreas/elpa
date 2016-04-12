@@ -25,6 +25,7 @@ libelpa@SUFFIX@_la_SOURCES = src/mod_precision.F90 \
 			     src/mod_compute_hh_trafo_real.F90 \
 			     src/mod_compute_hh_trafo_complex.F90 \
 			     src/mod_pack_unpack_complex.F90 \
+			     src/aligned_mem.F90 \
 			     src/elpa2_compute.F90 \
 			     src/elpa2.F90 \
 			     src/elpa_c_interface.F90 \

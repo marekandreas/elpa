@@ -73,6 +73,7 @@ module ELPA2_compute
   use elpa_pdgeqrf
   use precision
   use elpa_mpi
+  use aligned_mem
 
   implicit none
 
