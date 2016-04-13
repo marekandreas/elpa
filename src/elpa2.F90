@@ -304,7 +304,9 @@ contains
     if ( (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) .or. &
          (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
          (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) .or. &
+!         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK2) .or. &
          (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) .or. &
+         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) .or. &
          (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) ) then
     else
       print *,"At the moment single precision only works with the generic kernels"
@@ -656,7 +658,9 @@ contains
     if ( (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) .or. &
          (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
          (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) .or. &
+!         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK2) .or. &
          (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) .or. &
+         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) .or. &
          (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) ) then
     else
       print *,"At the moment single precision only works with the generic kernels"

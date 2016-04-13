@@ -641,6 +641,7 @@ module compute_hh_trafo_real
 
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
+               THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK2 .or. &
                THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
                THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
                THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE .or.        &
@@ -745,6 +746,28 @@ module compute_hh_trafo_real
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_KERNEL */
 
+
+
+#if defined(WITH_REAL_SSE_BLOCK2_KERNEL)
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK2) then
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+               do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+                 print *,"calling sse block2"
+#ifdef WITH_OPENMP
+                 call double_hh_trafo_real_sse_2hv_single(a(1,j+off+a_off-1,istripe,my_thread), &
+                                                       w, nbw, nl, stripe_width, nbw)
+#else
+                 call double_hh_trafo_real_sse_2hv_single(a(1,j+off+a_off-1,istripe), &
+                                                       w, nbw, nl, stripe_width, nbw)
+#endif
+               enddo
+#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+             endif
+#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_REAL_SSE_BLOCK2_KERNEL */
 
 #if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
