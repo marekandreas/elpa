@@ -168,8 +168,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	/////////////////////////////////////////////////////
 	int i;
 	// Needed bit mask for floating point sign flip
-	__m64 smallsign = _mm_set_pi32(0x80000000, 0x00000000);
-	__m128d sign = (__m128d)_mm_set1_epi64(smallsign);
+	__m128d sign = (__m128d)_mm_set1_epi64x(0x8000000000000000LL);
 
 	__m128d x1 = _mm_load_pd(&q[ldq]);
 	__m128d x2 = _mm_load_pd(&q[ldq+2]);
@@ -360,8 +359,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv_double(double* q, double* hh, int n
 	/////////////////////////////////////////////////////
 	int i;
 	// Needed bit mask for floating point sign flip
-	__m64 smallsign = _mm_set_pi32(0x80000000, 0x00000000);
-	__m128d sign = (__m128d)_mm_set1_epi64(smallsign);
+	__m128d sign = (__m128d)_mm_set1_epi64x(0x8000000000000000LL);
 
 	__m128d x1 = _mm_load_pd(&q[ldq]);
 	__m128d x2 = _mm_load_pd(&q[ldq+2]);
@@ -508,8 +506,7 @@ __forceinline void hh_trafo_kernel_4_SSE_2hv_double(double* q, double* hh, int n
 	/////////////////////////////////////////////////////
 	int i;
 	// Needed bit mask for floating point sign flip
-	__m64 smallsign = _mm_set_pi32(0x80000000, 0x00000000);
-	__m128d sign = (__m128d)_mm_set1_epi64(smallsign);
+	__m128d sign = (__m128d)_mm_set1_epi64x(0x8000000000000000LL);
 
 	__m128d x1 = _mm_load_pd(&q[ldq]);
 	__m128d x2 = _mm_load_pd(&q[ldq+2]);
