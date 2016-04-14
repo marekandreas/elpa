@@ -72,16 +72,16 @@
 #endif
 
 //Forward declaration
-__forceinline void hh_trafo_kernel_4_SSE_2hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s);
-__forceinline void hh_trafo_kernel_8_SSE_2hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s);
-__forceinline void hh_trafo_kernel_12_SSE_2hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_4_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
+__forceinline void hh_trafo_kernel_8_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
+__forceinline void hh_trafo_kernel_12_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
 
-void double_hh_trafo_real_sse_2hv_single_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void double_hh_trafo_real_sse_2hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #if 0
-void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void double_hh_trafo_fast_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #endif
 
-void double_hh_trafo_real_sse_2hv_single_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void double_hh_trafo_real_sse_2hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -91,7 +91,7 @@ void double_hh_trafo_real_sse_2hv_single_(double* q, double* hh, int* pnb, int* 
 
 	// calculating scalar product to compute
 	// 2 householder vectors simultaneously
-	double s = hh[(ldh)+1]*1.0;
+	float s = hh[(ldh)+1]*1.0;
 
 	#pragma ivdep
 	for (i = 2; i < nb; i++)
@@ -102,27 +102,26 @@ void double_hh_trafo_real_sse_2hv_single_(double* q, double* hh, int* pnb, int* 
 	// Production level kernel calls with padding
 	for (i = 0; i < nq-8; i+=12)
 	{
-		hh_trafo_kernel_12_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+	hh_trafo_kernel_12_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+
 	}
 	if (nq == i)
 	{
 		return;
 	}
+	if (nq-i == 8)
+	{
+		hh_trafo_kernel_8_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+	}
 	else
 	{
-		if (nq-i > 4)
-		{
-			hh_trafo_kernel_8_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
-		}
-		else if (nq-i > 0)
-		{
-			hh_trafo_kernel_4_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
-		}
+		hh_trafo_kernel_4_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
 	}
+
 }
 
 #if 0
-void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void double_hh_trafo_fast_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -132,7 +131,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 
 	// calculating scalar product to compute
 	// 2 householder vectors simultaneously
-	double s = hh[(ldh)+1]*1.0;
+	float s = hh[(ldh)+1]*1.0;
 
 	#pragma ivdep
 	for (i = 2; i < nb; i++)
@@ -160,7 +159,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
  * matrix vector product with two householder
  * vectors + a rank 2 update is performed
  */
- __forceinline void hh_trafo_kernel_12_SSE_2hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s)
+ __forceinline void hh_trafo_kernel_12_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [12 x nb+1] * hh
@@ -168,182 +167,151 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
 	/////////////////////////////////////////////////////
 	int i;
 	// Needed bit mask for floating point sign flip
-	__m64 smallsign = _mm_set_pi32(0x80000000, 0x00000000);
-	__m128d sign = (__m128d)_mm_set1_epi64(smallsign);
+	//
+	// carefull here
+	__m128 sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 
-	__m128d x1 = _mm_load_pd(&q[ldq]);
-	__m128d x2 = _mm_load_pd(&q[ldq+2]);
-	__m128d x3 = _mm_load_pd(&q[ldq+4]);
-	__m128d x4 = _mm_load_pd(&q[ldq+6]);
-	__m128d x5 = _mm_load_pd(&q[ldq+8]);
-	__m128d x6 = _mm_load_pd(&q[ldq+10]);
+	__m128 x1 = _mm_load_ps(&q[ldq]);       // load | q(1,2) | q(2,2) | q(3,2) | q(4,2)
+	__m128 x2 = _mm_load_ps(&q[ldq+4]);     // load | q(5,2) ..... | q(8,2)
+	__m128 x3 = _mm_load_ps(&q[ldq+8]);     // load | q(9,2) ... | q(12,2)
 
-	__m128d h1 = _mm_loaddup_pd(&hh[ldh+1]);
-	__m128d h2;
+	__m128 h1 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+1])));     // x4 contains 4 times hh(2,2)
+	__m128 h2;
 
-	__m128d q1 = _mm_load_pd(q);
-	__m128d y1 = _mm_add_pd(q1, _mm_mul_pd(x1, h1));
-	__m128d q2 = _mm_load_pd(&q[2]);
-	__m128d y2 = _mm_add_pd(q2, _mm_mul_pd(x2, h1));
-	__m128d q3 = _mm_load_pd(&q[4]);
-	__m128d y3 = _mm_add_pd(q3, _mm_mul_pd(x3, h1));
-	__m128d q4 = _mm_load_pd(&q[6]);
-	__m128d y4 = _mm_add_pd(q4, _mm_mul_pd(x4, h1));
-	__m128d q5 = _mm_load_pd(&q[8]);
-	__m128d y5 = _mm_add_pd(q5, _mm_mul_pd(x5, h1));
-	__m128d q6 = _mm_load_pd(&q[10]);
-	__m128d y6 = _mm_add_pd(q6, _mm_mul_pd(x6, h1));
+	__m128 q1 = _mm_load_ps(q);
+	__m128 y1 = _mm_add_ps(q1, _mm_mul_ps(x1, h1));
+	__m128 q2 = _mm_load_ps(&q[4]);
+	__m128 y2 = _mm_add_ps(q2, _mm_mul_ps(x2, h1));
+	__m128 q3 = _mm_load_ps(&q[8]);
+	__m128 y3 = _mm_add_ps(q3, _mm_mul_ps(x3, h1));
 
 	for(i = 2; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-1]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i]);
+		h1 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[i-1])));
+		h2 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+i])));
 
-		q1 = _mm_load_pd(&q[i*ldq]);
-		x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-		y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-		x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-		y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
-		q3 = _mm_load_pd(&q[(i*ldq)+4]);
-		x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
-		y3 = _mm_add_pd(y3, _mm_mul_pd(q3,h2));
-		q4 = _mm_load_pd(&q[(i*ldq)+6]);
-		x4 = _mm_add_pd(x4, _mm_mul_pd(q4,h1));
-		y4 = _mm_add_pd(y4, _mm_mul_pd(q4,h2));
-		q5 = _mm_load_pd(&q[(i*ldq)+8]);
-		x5 = _mm_add_pd(x5, _mm_mul_pd(q5,h1));
-		y5 = _mm_add_pd(y5, _mm_mul_pd(q5,h2));
-		q6 = _mm_load_pd(&q[(i*ldq)+10]);
-		x6 = _mm_add_pd(x6, _mm_mul_pd(q6,h1));
-		y6 = _mm_add_pd(y6, _mm_mul_pd(q6,h2));
+		q1 = _mm_load_ps(&q[i*ldq]);
+		x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+		y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+		q2 = _mm_load_ps(&q[(i*ldq)+4]);
+		x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+		y2 = _mm_add_ps(y2, _mm_mul_ps(q2,h2));
+		q3 = _mm_load_ps(&q[(i*ldq)+8]);
+		x3 = _mm_add_ps(x3, _mm_mul_ps(q3,h1));
+		y3 = _mm_add_ps(y3, _mm_mul_ps(q3,h2));
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	h1 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[nb-1])));
 
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
-	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-	q3 = _mm_load_pd(&q[(nb*ldq)+4]);
-	x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
-	q4 = _mm_load_pd(&q[(nb*ldq)+6]);
-	x4 = _mm_add_pd(x4, _mm_mul_pd(q4,h1));
-	q5 = _mm_load_pd(&q[(nb*ldq)+8]);
-	x5 = _mm_add_pd(x5, _mm_mul_pd(q5,h1));
-	q6 = _mm_load_pd(&q[(nb*ldq)+10]);
-	x6 = _mm_add_pd(x6, _mm_mul_pd(q6,h1));
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	q2 = _mm_load_ps(&q[(nb*ldq)+4]);
+	x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+	q3 = _mm_load_ps(&q[(nb*ldq)+8]);
+	x3 = _mm_add_ps(x3, _mm_mul_ps(q3,h1));
 
 	/////////////////////////////////////////////////////
 	// Rank-2 update of Q [12 x nb+1]
 	/////////////////////////////////////////////////////
 
-	__m128d tau1 = _mm_loaddup_pd(hh);
-	__m128d tau2 = _mm_loaddup_pd(&hh[ldh]);
-	__m128d vs = _mm_loaddup_pd(&s);
+	__m128 tau1 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) hh)));
+        __m128 tau2 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh])));
 
-	h1 = _mm_xor_pd(tau1, sign);
-	x1 = _mm_mul_pd(x1, h1);
-	x2 = _mm_mul_pd(x2, h1);
-	x3 = _mm_mul_pd(x3, h1);
-	x4 = _mm_mul_pd(x4, h1);
-	x5 = _mm_mul_pd(x5, h1);
-	x6 = _mm_mul_pd(x6, h1);
-	h1 = _mm_xor_pd(tau2, sign);
-	h2 = _mm_mul_pd(h1, vs);
+	__m128 vs = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd((double*) &s)));
 
-	y1 = _mm_add_pd(_mm_mul_pd(y1,h1), _mm_mul_pd(x1,h2));
-	y2 = _mm_add_pd(_mm_mul_pd(y2,h1), _mm_mul_pd(x2,h2));
-	y3 = _mm_add_pd(_mm_mul_pd(y3,h1), _mm_mul_pd(x3,h2));
-	y4 = _mm_add_pd(_mm_mul_pd(y4,h1), _mm_mul_pd(x4,h2));
-	y5 = _mm_add_pd(_mm_mul_pd(y5,h1), _mm_mul_pd(x5,h2));
-	y6 = _mm_add_pd(_mm_mul_pd(y6,h1), _mm_mul_pd(x6,h2));
+	h1 = _mm_xor_ps(tau1, sign);
+	x1 = _mm_mul_ps(x1, h1);
+	x2 = _mm_mul_ps(x2, h1);
+	x3 = _mm_mul_ps(x3, h1);
 
-	q1 = _mm_load_pd(q);
-	q1 = _mm_add_pd(q1, y1);
-	_mm_store_pd(q,q1);
-	q2 = _mm_load_pd(&q[2]);
-	q2 = _mm_add_pd(q2, y2);
-	_mm_store_pd(&q[2],q2);
-	q3 = _mm_load_pd(&q[4]);
-	q3 = _mm_add_pd(q3, y3);
-	_mm_store_pd(&q[4],q3);
-	q4 = _mm_load_pd(&q[6]);
-	q4 = _mm_add_pd(q4, y4);
-	_mm_store_pd(&q[6],q4);
-	q5 = _mm_load_pd(&q[8]);
-	q5 = _mm_add_pd(q5, y5);
-	_mm_store_pd(&q[8],q5);
-	q6 = _mm_load_pd(&q[10]);
-	q6 = _mm_add_pd(q6, y6);
-	_mm_store_pd(&q[10],q6);
+	h1 = _mm_xor_ps(tau2, sign);
+	h2 = _mm_mul_ps(h1, vs);
 
-	h2 = _mm_loaddup_pd(&hh[ldh+1]);
+	y1 = _mm_add_ps(_mm_mul_ps(y1,h1), _mm_mul_ps(x1,h2));
+	y2 = _mm_add_ps(_mm_mul_ps(y2,h1), _mm_mul_ps(x2,h2));
+	y3 = _mm_add_ps(_mm_mul_ps(y3,h1), _mm_mul_ps(x3,h2));
 
-	q1 = _mm_load_pd(&q[ldq]);
-	q1 = _mm_add_pd(q1, _mm_add_pd(x1, _mm_mul_pd(y1, h2)));
-	_mm_store_pd(&q[ldq],q1);
-	q2 = _mm_load_pd(&q[ldq+2]);
-	q2 = _mm_add_pd(q2, _mm_add_pd(x2, _mm_mul_pd(y2, h2)));
-	_mm_store_pd(&q[ldq+2],q2);
-	q3 = _mm_load_pd(&q[ldq+4]);
-	q3 = _mm_add_pd(q3, _mm_add_pd(x3, _mm_mul_pd(y3, h2)));
-	_mm_store_pd(&q[ldq+4],q3);
-	q4 = _mm_load_pd(&q[ldq+6]);
-	q4 = _mm_add_pd(q4, _mm_add_pd(x4, _mm_mul_pd(y4, h2)));
-	_mm_store_pd(&q[ldq+6],q4);
-	q5 = _mm_load_pd(&q[ldq+8]);
-	q5 = _mm_add_pd(q5, _mm_add_pd(x5, _mm_mul_pd(y5, h2)));
-	_mm_store_pd(&q[ldq+8],q5);
-	q6 = _mm_load_pd(&q[ldq+10]);
-	q6 = _mm_add_pd(q6, _mm_add_pd(x6, _mm_mul_pd(y6, h2)));
-	_mm_store_pd(&q[ldq+10],q6);
+	q1 = _mm_load_ps(q);
+	q1 = _mm_add_ps(q1, y1);
+	_mm_store_ps(q,q1);
+	q2 = _mm_load_ps(&q[4]);
+	q2 = _mm_add_ps(q2, y2);
+	_mm_store_ps(&q[4],q2);
+	q3 = _mm_load_ps(&q[8]);
+	q3 = _mm_add_ps(q3, y3);
+	_mm_store_ps(&q[8],q3);
+
+        h2 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+1])));
+//	h2 = _mm_castpd_ps(_mm_loaddup_pd(&hh[ldh+1]));
+
+	q1 = _mm_load_ps(&q[ldq]);
+	q1 = _mm_add_ps(q1, _mm_add_ps(x1, _mm_mul_ps(y1, h2)));
+	_mm_store_ps(&q[ldq],q1);
+	q2 = _mm_load_ps(&q[ldq+4]);
+	q2 = _mm_add_ps(q2, _mm_add_ps(x2, _mm_mul_ps(y2, h2)));
+	_mm_store_ps(&q[ldq+4],q2);
+	q3 = _mm_load_ps(&q[ldq+8]);
+	q3 = _mm_add_ps(q3, _mm_add_ps(x3, _mm_mul_ps(y3, h2)));
+	_mm_store_ps(&q[ldq+8],q3);
+//	q4 = _mm_load_pd(&q[ldq+6]);
+//	q4 = _mm_add_pd(q4, _mm_add_pd(x4, _mm_mul_pd(y4, h2)));
+//	_mm_store_pd(&q[ldq+6],q4);
+//	q5 = _mm_load_pd(&q[ldq+8]);
+//	q5 = _mm_add_pd(q5, _mm_add_pd(x5, _mm_mul_pd(y5, h2)));
+//	_mm_store_pd(&q[ldq+8],q5);
+//	q6 = _mm_load_pd(&q[ldq+10]);
+//	q6 = _mm_add_pd(q6, _mm_add_pd(x6, _mm_mul_pd(y6, h2)));
+//	_mm_store_pd(&q[ldq+10],q6);
 
 	for (i = 2; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-1]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i]);
+		h1 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[i-1])));
+//		h1 = _mm_castpd_ps(_mm_loaddup_pd(&hh[i-1]));
 
-		q1 = _mm_load_pd(&q[i*ldq]);
-		q1 = _mm_add_pd(q1, _mm_add_pd(_mm_mul_pd(x1,h1), _mm_mul_pd(y1, h2)));
-		_mm_store_pd(&q[i*ldq],q1);
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-		q2 = _mm_add_pd(q2, _mm_add_pd(_mm_mul_pd(x2,h1), _mm_mul_pd(y2, h2)));
-		_mm_store_pd(&q[(i*ldq)+2],q2);
-		q3 = _mm_load_pd(&q[(i*ldq)+4]);
-		q3 = _mm_add_pd(q3, _mm_add_pd(_mm_mul_pd(x3,h1), _mm_mul_pd(y3, h2)));
-		_mm_store_pd(&q[(i*ldq)+4],q3);
-		q4 = _mm_load_pd(&q[(i*ldq)+6]);
-		q4 = _mm_add_pd(q4, _mm_add_pd(_mm_mul_pd(x4,h1), _mm_mul_pd(y4, h2)));
-		_mm_store_pd(&q[(i*ldq)+6],q4);
-		q5 = _mm_load_pd(&q[(i*ldq)+8]);
-		q5 = _mm_add_pd(q5, _mm_add_pd(_mm_mul_pd(x5,h1), _mm_mul_pd(y5, h2)));
-		_mm_store_pd(&q[(i*ldq)+8],q5);
-		q6 = _mm_load_pd(&q[(i*ldq)+10]);
-		q6 = _mm_add_pd(q6, _mm_add_pd(_mm_mul_pd(x6,h1), _mm_mul_pd(y6, h2)));
-		_mm_store_pd(&q[(i*ldq)+10],q6);
+		h2 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+i])));
+//		h2 = _mm_castpd_ps(_mm_loaddup_pd(&hh[ldh+i]));
+
+		q1 = _mm_load_ps(&q[i*ldq]);
+		q1 = _mm_add_ps(q1, _mm_add_ps(_mm_mul_ps(x1,h1), _mm_mul_ps(y1, h2)));
+		_mm_store_ps(&q[i*ldq],q1);
+		q2 = _mm_load_ps(&q[(i*ldq)+4]);
+		q2 = _mm_add_ps(q2, _mm_add_ps(_mm_mul_ps(x2,h1), _mm_mul_ps(y2, h2)));
+		_mm_store_ps(&q[(i*ldq)+4],q2);
+		q3 = _mm_load_ps(&q[(i*ldq)+8]);
+		q3 = _mm_add_ps(q3, _mm_add_ps(_mm_mul_ps(x3,h1), _mm_mul_ps(y3, h2)));
+		_mm_store_ps(&q[(i*ldq)+8],q3);
+//		q4 = _mm_load_pd(&q[(i*ldq)+6]);
+//		q4 = _mm_add_pd(q4, _mm_add_pd(_mm_mul_pd(x4,h1), _mm_mul_pd(y4, h2)));
+//		_mm_store_pd(&q[(i*ldq)+6],q4);
+//		q5 = _mm_load_pd(&q[(i*ldq)+8]);
+//		q5 = _mm_add_pd(q5, _mm_add_pd(_mm_mul_pd(x5,h1), _mm_mul_pd(y5, h2)));
+//		_mm_store_pd(&q[(i*ldq)+8],q5);
+//		q6 = _mm_load_pd(&q[(i*ldq)+10]);
+//		q6 = _mm_add_pd(q6, _mm_add_pd(_mm_mul_pd(x6,h1), _mm_mul_pd(y6, h2)));
+//		_mm_store_pd(&q[(i*ldq)+10],q6);
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	h1 = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[nb-1])));
+//	h1 = _mm_castpd_ps(_mm_loaddup_pd(&hh[nb-1]));
 
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	q1 = _mm_add_pd(q1, _mm_mul_pd(x1, h1));
-	_mm_store_pd(&q[nb*ldq],q1);
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
-	q2 = _mm_add_pd(q2, _mm_mul_pd(x2, h1));
-	_mm_store_pd(&q[(nb*ldq)+2],q2);
-	q3 = _mm_load_pd(&q[(nb*ldq)+4]);
-	q3 = _mm_add_pd(q3, _mm_mul_pd(x3, h1));
-	_mm_store_pd(&q[(nb*ldq)+4],q3);
-	q4 = _mm_load_pd(&q[(nb*ldq)+6]);
-	q4 = _mm_add_pd(q4, _mm_mul_pd(x4, h1));
-	_mm_store_pd(&q[(nb*ldq)+6],q4);
-	q5 = _mm_load_pd(&q[(nb*ldq)+8]);
-	q5 = _mm_add_pd(q5, _mm_mul_pd(x5, h1));
-	_mm_store_pd(&q[(nb*ldq)+8],q5);
-	q6 = _mm_load_pd(&q[(nb*ldq)+10]);
-	q6 = _mm_add_pd(q6, _mm_mul_pd(x6, h1));
-	_mm_store_pd(&q[(nb*ldq)+10],q6);
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	q1 = _mm_add_ps(q1, _mm_mul_ps(x1, h1));
+	_mm_store_ps(&q[nb*ldq],q1);
+	q2 = _mm_load_ps(&q[(nb*ldq)+4]);
+	q2 = _mm_add_ps(q2, _mm_mul_ps(x2, h1));
+	_mm_store_ps(&q[(nb*ldq)+4],q2);
+	q3 = _mm_load_ps(&q[(nb*ldq)+8]);
+	q3 = _mm_add_ps(q3, _mm_mul_ps(x3, h1));
+	_mm_store_ps(&q[(nb*ldq)+8],q3);
+//	q4 = _mm_load_pd(&q[(nb*ldq)+6]);
+//	q4 = _mm_add_pd(q4, _mm_mul_pd(x4, h1));
+//	_mm_store_pd(&q[(nb*ldq)+6],q4);
+//	q5 = _mm_load_pd(&q[(nb*ldq)+8]);
+//	q5 = _mm_add_pd(q5, _mm_mul_pd(x5, h1));
+//	_mm_store_pd(&q[(nb*ldq)+8],q5);
+//	q6 = _mm_load_pd(&q[(nb*ldq)+10]);
+//	q6 = _mm_add_pd(q6, _mm_mul_pd(x6, h1));
+//	_mm_store_pd(&q[(nb*ldq)+10],q6);
 }
 
 /**
@@ -352,7 +320,7 @@ void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq,
  * matrix vector product with two householder
  * vectors + a rank 2 update is performed
  */
-__forceinline void hh_trafo_kernel_8_SSE_2hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s)
+__forceinline void hh_trafo_kernel_8_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [8 x nb+1] * hh
@@ -360,138 +328,109 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv_single(double* q, double* hh, int n
 	/////////////////////////////////////////////////////
 	int i;
 	// Needed bit mask for floating point sign flip
-	__m64 smallsign = _mm_set_pi32(0x80000000, 0x00000000);
-	__m128d sign = (__m128d)_mm_set1_epi64(smallsign);
+	// carefull here
+	__m128 sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 
-	__m128d x1 = _mm_load_pd(&q[ldq]);
-	__m128d x2 = _mm_load_pd(&q[ldq+2]);
-	__m128d x3 = _mm_load_pd(&q[ldq+4]);
-	__m128d x4 = _mm_load_pd(&q[ldq+6]);
+	__m128 x1 = _mm_load_ps(&q[ldq]);
+	__m128 x2 = _mm_load_ps(&q[ldq+4]);
 
-	__m128d h1 = _mm_loaddup_pd(&hh[ldh+1]);
-	__m128d h2;
+	__m128 x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+1]));
+	__m128 x4 ;
+        __m128 h1 = _mm_moveldup_ps(x3);
+	__m128 h2;
 
-	__m128d q1 = _mm_load_pd(q);
-	__m128d y1 = _mm_add_pd(q1, _mm_mul_pd(x1, h1));
-	__m128d q2 = _mm_load_pd(&q[2]);
-	__m128d y2 = _mm_add_pd(q2, _mm_mul_pd(x2, h1));
-	__m128d q3 = _mm_load_pd(&q[4]);
-	__m128d y3 = _mm_add_pd(q3, _mm_mul_pd(x3, h1));
-	__m128d q4 = _mm_load_pd(&q[6]);
-	__m128d y4 = _mm_add_pd(q4, _mm_mul_pd(x4, h1));
+	__m128 q1 = _mm_load_ps(q);
+	__m128 y1 = _mm_add_ps(q1, _mm_mul_ps(x1, h1));
+	__m128 q2 = _mm_load_ps(&q[4]);
+	__m128 y2 = _mm_add_ps(q2, _mm_mul_ps(x2, h1));
 
 	for(i = 2; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-1]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i]);
+		x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[i-1]));
+		h1 = _mm_moveldup_ps(x3);
 
-		q1 = _mm_load_pd(&q[i*ldq]);
-		x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-		y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-		x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-		y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
-		q3 = _mm_load_pd(&q[(i*ldq)+4]);
-		x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
-		y3 = _mm_add_pd(y3, _mm_mul_pd(q3,h2));
-		q4 = _mm_load_pd(&q[(i*ldq)+6]);
-		x4 = _mm_add_pd(x4, _mm_mul_pd(q4,h1));
-		y4 = _mm_add_pd(y4, _mm_mul_pd(q4,h2));
+		x4 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+i]));
+                h2 = _mm_moveldup_ps(x4);
+
+		q1 = _mm_load_ps(&q[i*ldq]);
+		x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+		y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+		q2 = _mm_load_ps(&q[(i*ldq)+4]);
+		x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+		y2 = _mm_add_ps(y2, _mm_mul_ps(q2,h2));
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[nb-1]));
+	h1 = _mm_moveldup_ps(x3);
 
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
-	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-	q3 = _mm_load_pd(&q[(nb*ldq)+4]);
-	x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
-	q4 = _mm_load_pd(&q[(nb*ldq)+6]);
-	x4 = _mm_add_pd(x4, _mm_mul_pd(q4,h1));
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	q2 = _mm_load_ps(&q[(nb*ldq)+4]);
+	x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
 
 	/////////////////////////////////////////////////////
 	// Rank-2 update of Q [8 x nb+1]
 	/////////////////////////////////////////////////////
 
-	__m128d tau1 = _mm_loaddup_pd(hh);
-	__m128d tau2 = _mm_loaddup_pd(&hh[ldh]);
-	__m128d vs = _mm_loaddup_pd(&s);
+	x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) hh));
+        __m128 tau1 = _mm_moveldup_ps(x3);
 
-	h1 = _mm_xor_pd(tau1, sign);
-	x1 = _mm_mul_pd(x1, h1);
-	x2 = _mm_mul_pd(x2, h1);
-	x3 = _mm_mul_pd(x3, h1);
-	x4 = _mm_mul_pd(x4, h1);
-	h1 = _mm_xor_pd(tau2, sign);
-	h2 = _mm_mul_pd(h1, vs);
+	x4 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh]));
+  	__m128 tau2 = _mm_moveldup_ps(x4);
+        __m128 x5 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &s));
+        __m128 vs = _mm_moveldup_ps(x5);
 
-	y1 = _mm_add_pd(_mm_mul_pd(y1,h1), _mm_mul_pd(x1,h2));
-	y2 = _mm_add_pd(_mm_mul_pd(y2,h1), _mm_mul_pd(x2,h2));
-	y3 = _mm_add_pd(_mm_mul_pd(y3,h1), _mm_mul_pd(x3,h2));
-	y4 = _mm_add_pd(_mm_mul_pd(y4,h1), _mm_mul_pd(x4,h2));
+	h1 = _mm_xor_ps(tau1, sign);
+	x1 = _mm_mul_ps(x1, h1);
+	x2 = _mm_mul_ps(x2, h1);
+	h1 = _mm_xor_ps(tau2, sign);
+	h2 = _mm_mul_ps(h1, vs);
 
-	q1 = _mm_load_pd(q);
-	q1 = _mm_add_pd(q1, y1);
-	_mm_store_pd(q,q1);
-	q2 = _mm_load_pd(&q[2]);
-	q2 = _mm_add_pd(q2, y2);
-	_mm_store_pd(&q[2],q2);
-	q3 = _mm_load_pd(&q[4]);
-	q3 = _mm_add_pd(q3, y3);
-	_mm_store_pd(&q[4],q3);
-	q4 = _mm_load_pd(&q[6]);
-	q4 = _mm_add_pd(q4, y4);
-	_mm_store_pd(&q[6],q4);
+	y1 = _mm_add_ps(_mm_mul_ps(y1,h1), _mm_mul_ps(x1,h2));
+	y2 = _mm_add_ps(_mm_mul_ps(y2,h1), _mm_mul_ps(x2,h2));
 
-	h2 = _mm_loaddup_pd(&hh[ldh+1]);
+	q1 = _mm_load_ps(q);
+	q1 = _mm_add_ps(q1, y1);
+	_mm_store_ps(q,q1);
+	q2 = _mm_load_ps(&q[4]);
+	q2 = _mm_add_ps(q2, y2);
+	_mm_store_ps(&q[4],q2);
 
-	q1 = _mm_load_pd(&q[ldq]);
-	q1 = _mm_add_pd(q1, _mm_add_pd(x1, _mm_mul_pd(y1, h2)));
-	_mm_store_pd(&q[ldq],q1);
-	q2 = _mm_load_pd(&q[ldq+2]);
-	q2 = _mm_add_pd(q2, _mm_add_pd(x2, _mm_mul_pd(y2, h2)));
-	_mm_store_pd(&q[ldq+2],q2);
-	q3 = _mm_load_pd(&q[ldq+4]);
-	q3 = _mm_add_pd(q3, _mm_add_pd(x3, _mm_mul_pd(y3, h2)));
-	_mm_store_pd(&q[ldq+4],q3);
-	q4 = _mm_load_pd(&q[ldq+6]);
-	q4 = _mm_add_pd(q4, _mm_add_pd(x4, _mm_mul_pd(y4, h2)));
-	_mm_store_pd(&q[ldq+6],q4);
+        x4 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+1]));
+        h2 = _mm_moveldup_ps(x4);
+
+	q1 = _mm_load_ps(&q[ldq]);
+	q1 = _mm_add_ps(q1, _mm_add_ps(x1, _mm_mul_ps(y1, h2)));
+	_mm_store_ps(&q[ldq],q1);
+	q2 = _mm_load_ps(&q[ldq+4]);
+	q2 = _mm_add_ps(q2, _mm_add_ps(x2, _mm_mul_ps(y2, h2)));
+	_mm_store_ps(&q[ldq+4],q2);
 
 	for (i = 2; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-1]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i]);
+                x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[i-1]));
+                h1 = _mm_moveldup_ps(x3);
 
-		q1 = _mm_load_pd(&q[i*ldq]);
-		q1 = _mm_add_pd(q1, _mm_add_pd(_mm_mul_pd(x1,h1), _mm_mul_pd(y1, h2)));
-		_mm_store_pd(&q[i*ldq],q1);
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-		q2 = _mm_add_pd(q2, _mm_add_pd(_mm_mul_pd(x2,h1), _mm_mul_pd(y2, h2)));
-		_mm_store_pd(&q[(i*ldq)+2],q2);
-		q3 = _mm_load_pd(&q[(i*ldq)+4]);
-		q3 = _mm_add_pd(q3, _mm_add_pd(_mm_mul_pd(x3,h1), _mm_mul_pd(y3, h2)));
-		_mm_store_pd(&q[(i*ldq)+4],q3);
-		q4 = _mm_load_pd(&q[(i*ldq)+6]);
-		q4 = _mm_add_pd(q4, _mm_add_pd(_mm_mul_pd(x4,h1), _mm_mul_pd(y4, h2)));
-		_mm_store_pd(&q[(i*ldq)+6],q4);
+		x4 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+i]));
+                h2 = _mm_moveldup_ps(x4);
+
+		q1 = _mm_load_ps(&q[i*ldq]);
+		q1 = _mm_add_ps(q1, _mm_add_ps(_mm_mul_ps(x1,h1), _mm_mul_ps(y1, h2)));
+		_mm_store_ps(&q[i*ldq],q1);
+		q2 = _mm_load_ps(&q[(i*ldq)+4]);
+		q2 = _mm_add_ps(q2, _mm_add_ps(_mm_mul_ps(x2,h1), _mm_mul_ps(y2, h2)));
+		_mm_store_ps(&q[(i*ldq)+4],q2);
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[nb-1]));
+        h1 = _mm_moveldup_ps(x3);
 
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	q1 = _mm_add_pd(q1, _mm_mul_pd(x1, h1));
-	_mm_store_pd(&q[nb*ldq],q1);
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
-	q2 = _mm_add_pd(q2, _mm_mul_pd(x2, h1));
-	_mm_store_pd(&q[(nb*ldq)+2],q2);
-	q3 = _mm_load_pd(&q[(nb*ldq)+4]);
-	q3 = _mm_add_pd(q3, _mm_mul_pd(x3, h1));
-	_mm_store_pd(&q[(nb*ldq)+4],q3);
-	q4 = _mm_load_pd(&q[(nb*ldq)+6]);
-	q4 = _mm_add_pd(q4, _mm_mul_pd(x4, h1));
-	_mm_store_pd(&q[(nb*ldq)+6],q4);
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	q1 = _mm_add_ps(q1, _mm_mul_ps(x1, h1));
+	_mm_store_ps(&q[nb*ldq],q1);
+	q2 = _mm_load_ps(&q[(nb*ldq)+4]);
+	q2 = _mm_add_ps(q2, _mm_mul_ps(x2, h1));
+	_mm_store_ps(&q[(nb*ldq)+4],q2);
 }
 
 /**
@@ -500,7 +439,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv_single(double* q, double* hh, int n
  * matrix vector product with two householder
  * vectors + a rank 2 update is performed
  */
-__forceinline void hh_trafo_kernel_4_SSE_2hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s)
+__forceinline void hh_trafo_kernel_4_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+1] * hh
@@ -508,92 +447,88 @@ __forceinline void hh_trafo_kernel_4_SSE_2hv_single(double* q, double* hh, int n
 	/////////////////////////////////////////////////////
 	int i;
 	// Needed bit mask for floating point sign flip
-	__m64 smallsign = _mm_set_pi32(0x80000000, 0x00000000);
-	__m128d sign = (__m128d)_mm_set1_epi64(smallsign);
+	// carefull here
+	__m128 sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 
-	__m128d x1 = _mm_load_pd(&q[ldq]);
-	__m128d x2 = _mm_load_pd(&q[ldq+2]);
+	__m128 x1 = _mm_load_ps(&q[ldq]);
 
-	__m128d h1 = _mm_loaddup_pd(&hh[ldh+1]);
-	__m128d h2;
+        __m128 x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+1]));
+	__m128 x3 ;
+        __m128 h1 = _mm_moveldup_ps(x2);
+	__m128 h2;
 
-	__m128d q1 = _mm_load_pd(q);
-	__m128d y1 = _mm_add_pd(q1, _mm_mul_pd(x1, h1));
-	__m128d q2 = _mm_load_pd(&q[2]);
-	__m128d y2 = _mm_add_pd(q2, _mm_mul_pd(x2, h1));
+	__m128 q1 = _mm_load_ps(q);
+	__m128 y1 = _mm_add_ps(q1, _mm_mul_ps(x1, h1));
 
 	for(i = 2; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-1]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i]);
 
-		q1 = _mm_load_pd(&q[i*ldq]);
-		x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-		y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-		x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-		y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
+		x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[i-1]));
+                h1 = _mm_moveldup_ps(x2);
+
+		x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+i]));
+                h2 = _mm_moveldup_ps(x3);
+
+		q1 = _mm_load_ps(&q[i*ldq]);
+		x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+		y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[nb-1]));
+        h1 = _mm_moveldup_ps(x2);
 
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
-	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
 
 	/////////////////////////////////////////////////////
 	// Rank-2 update of Q [12 x nb+1]
 	/////////////////////////////////////////////////////
 
-	__m128d tau1 = _mm_loaddup_pd(hh);
-	__m128d tau2 = _mm_loaddup_pd(&hh[ldh]);
-	__m128d vs = _mm_loaddup_pd(&s);
+	x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) hh));
+        __m128 tau1 = _mm_moveldup_ps(x2);
 
-	h1 = _mm_xor_pd(tau1, sign);
-	x1 = _mm_mul_pd(x1, h1);
-	x2 = _mm_mul_pd(x2, h1);
-	h1 = _mm_xor_pd(tau2, sign);
-	h2 = _mm_mul_pd(h1, vs);
+	x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh]));
+        __m128 tau2 = _mm_moveldup_ps(x3);
 
-	y1 = _mm_add_pd(_mm_mul_pd(y1,h1), _mm_mul_pd(x1,h2));
-	y2 = _mm_add_pd(_mm_mul_pd(y2,h1), _mm_mul_pd(x2,h2));
+	__m128 x4 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &s));
+        __m128 vs = _mm_moveldup_ps(x4);
 
-	q1 = _mm_load_pd(q);
-	q1 = _mm_add_pd(q1, y1);
-	_mm_store_pd(q,q1);
-	q2 = _mm_load_pd(&q[2]);
-	q2 = _mm_add_pd(q2, y2);
-	_mm_store_pd(&q[2],q2);
+	h1 = _mm_xor_ps(tau1, sign);
+	x1 = _mm_mul_ps(x1, h1);
+	h1 = _mm_xor_ps(tau2, sign);
+	h2 = _mm_mul_ps(h1, vs);
 
-	h2 = _mm_loaddup_pd(&hh[ldh+1]);
+	y1 = _mm_add_ps(_mm_mul_ps(y1,h1), _mm_mul_ps(x1,h2));
 
-	q1 = _mm_load_pd(&q[ldq]);
-	q1 = _mm_add_pd(q1, _mm_add_pd(x1, _mm_mul_pd(y1, h2)));
-	_mm_store_pd(&q[ldq],q1);
-	q2 = _mm_load_pd(&q[ldq+2]);
-	q2 = _mm_add_pd(q2, _mm_add_pd(x2, _mm_mul_pd(y2, h2)));
-	_mm_store_pd(&q[ldq+2],q2);
+	q1 = _mm_load_ps(q);
+	q1 = _mm_add_ps(q1, y1);
+	_mm_store_ps(q,q1);
+
+	x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+1]));
+        h2 = _mm_moveldup_ps(x2);
+
+	q1 = _mm_load_ps(&q[ldq]);
+	q1 = _mm_add_ps(q1, _mm_add_ps(x1, _mm_mul_ps(y1, h2)));
+	_mm_store_ps(&q[ldq],q1);
 
 	for (i = 2; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-1]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i]);
+                x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[i-1]));
+                h1 = _mm_moveldup_ps(x2);
 
-		q1 = _mm_load_pd(&q[i*ldq]);
-		q1 = _mm_add_pd(q1, _mm_add_pd(_mm_mul_pd(x1,h1), _mm_mul_pd(y1, h2)));
-		_mm_store_pd(&q[i*ldq],q1);
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-		q2 = _mm_add_pd(q2, _mm_add_pd(_mm_mul_pd(x2,h1), _mm_mul_pd(y2, h2)));
-		_mm_store_pd(&q[(i*ldq)+2],q2);
+		x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+i]));
+		h2 = _mm_moveldup_ps(x3);
+
+		q1 = _mm_load_ps(&q[i*ldq]);
+		q1 = _mm_add_ps(q1, _mm_add_ps(_mm_mul_ps(x1,h1), _mm_mul_ps(y1, h2)));
+		_mm_store_ps(&q[i*ldq],q1);
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+        x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[nb-1]));
+        h1 = _mm_moveldup_ps(x2);
 
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	q1 = _mm_add_pd(q1, _mm_mul_pd(x1, h1));
-	_mm_store_pd(&q[nb*ldq],q1);
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
-	q2 = _mm_add_pd(q2, _mm_mul_pd(x2, h1));
-	_mm_store_pd(&q[(nb*ldq)+2],q2);
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	q1 = _mm_add_ps(q1, _mm_mul_ps(x1, h1));
+	_mm_store_ps(&q[nb*ldq],q1);
 }
+
