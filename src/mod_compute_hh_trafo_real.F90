@@ -850,7 +850,6 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-                 print *,"calling sse block2"
 #ifdef WITH_OPENMP
                  call double_hh_trafo_real_sse_2hv_single(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
@@ -953,7 +952,6 @@ module compute_hh_trafo_real
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
            ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
            do j = ncols, 4, -4
-             print *,"calling 4"
              w(:,1) = bcast_buffer(1:nbw,j+off)
              w(:,2) = bcast_buffer(1:nbw,j+off-1)
              w(:,3) = bcast_buffer(1:nbw,j+off-2)

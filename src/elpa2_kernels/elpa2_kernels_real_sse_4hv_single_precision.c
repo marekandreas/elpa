@@ -69,18 +69,16 @@
 #ifdef HAVE_SSE
 #undef __AVX__
 #endif
+__forceinline void hh_trafo_kernel_4_SSE_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
+__forceinline void hh_trafo_kernel_8_SSE_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
+__forceinline void hh_trafo_kernel_12_SSE_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
 
-//Forward declaration
-__forceinline void hh_trafo_kernel_2_SSE_4hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
-__forceinline void hh_trafo_kernel_4_SSE_4hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
-__forceinline void hh_trafo_kernel_6_SSE_4hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
-
-void quad_hh_trafo_real_sse_4hv_single_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void quad_hh_trafo_real_sse_4hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #if 0
-void quad_hh_trafo_fast_single_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void quad_hh_trafo_fast_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #endif
 
-void quad_hh_trafo_real_sse_4hv_single_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void quad_hh_trafo_real_sse_4hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -90,12 +88,12 @@ void quad_hh_trafo_real_sse_4hv_single_(double* q, double* hh, int* pnb, int* pn
 
 	// calculating scalar products to compute
 	// 4 householder vectors simultaneously
-	double s_1_2 = hh[(ldh)+1];
-	double s_1_3 = hh[(ldh*2)+2];
-	double s_2_3 = hh[(ldh*2)+1];
-	double s_1_4 = hh[(ldh*3)+3];
-	double s_2_4 = hh[(ldh*3)+2];
-	double s_3_4 = hh[(ldh*3)+1];
+	float s_1_2 = hh[(ldh)+1];
+	float s_1_3 = hh[(ldh*2)+2];
+	float s_2_3 = hh[(ldh*2)+1];
+	float s_1_4 = hh[(ldh*3)+3];
+	float s_2_4 = hh[(ldh*3)+2];
+	float s_3_4 = hh[(ldh*3)+1];
 
 	// calculate scalar product of first and fourth householder vector
 	// loop counter = 2
@@ -132,9 +130,10 @@ void quad_hh_trafo_real_sse_4hv_single_(double* q, double* hh, int* pnb, int* pn
 //	printf("s_3_4: %f\n", s_3_4);
 
 	// Production level kernel calls with padding
-	for (i = 0; i < nq-4; i+=6)
+	for (i = 0; i < nq-8; i+=12)
 	{
-		hh_trafo_kernel_6_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		hh_trafo_kernel_12_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+
 	}
 	if (nq == i)
 	{
@@ -142,83 +141,23 @@ void quad_hh_trafo_real_sse_4hv_single_(double* q, double* hh, int* pnb, int* pn
 	}
 	else
 	{
-		if (nq-i > 2)
+		if (nq-i > 4)
 		{
-			hh_trafo_kernel_4_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+			hh_trafo_kernel_8_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 		}
 		else
 		{
-			hh_trafo_kernel_2_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+			hh_trafo_kernel_4_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 		}
 	}
 }
-
-#if 0
-void quad_hh_trafo_fast_single_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
-{
-	int i;
-	int nb = *pnb;
-	int nq = *pldq;
-	int ldq = *pldq;
-	int ldh = *pldh;
-
-	// calculating scalar products to compute
-	// 4 householder vectors simultaneously
-	double s_1_2 = hh[(ldh)+1];
-	double s_1_3 = hh[(ldh*2)+2];
-	double s_2_3 = hh[(ldh*2)+1];
-	double s_1_4 = hh[(ldh*3)+3];
-	double s_2_4 = hh[(ldh*3)+2];
-	double s_3_4 = hh[(ldh*3)+1];
-
-	// calculate scalar product of first and fourth householder vector
-	// loop counter = 2
-	s_1_2 += hh[2-1] * hh[(2+ldh)];
-	s_2_3 += hh[(ldh)+2-1] * hh[2+(ldh*2)];
-	s_3_4 += hh[(ldh*2)+2-1] * hh[2+(ldh*3)];
-
-	// loop counter = 3
-	s_1_2 += hh[3-1] * hh[(3+ldh)];
-	s_2_3 += hh[(ldh)+3-1] * hh[3+(ldh*2)];
-	s_3_4 += hh[(ldh*2)+3-1] * hh[3+(ldh*3)];
-
-	s_1_3 += hh[3-2] * hh[3+(ldh*2)];
-	s_2_4 += hh[(ldh*1)+3-2] * hh[3+(ldh*3)];
-
-	#pragma ivdep
-	for (i = 4; i < nb; i++)
-	{
-		s_1_2 += hh[i-1] * hh[(i+ldh)];
-		s_2_3 += hh[(ldh)+i-1] * hh[i+(ldh*2)];
-		s_3_4 += hh[(ldh*2)+i-1] * hh[i+(ldh*3)];
-
-		s_1_3 += hh[i-2] * hh[i+(ldh*2)];
-		s_2_4 += hh[(ldh*1)+i-2] * hh[i+(ldh*3)];
-
-		s_1_4 += hh[i-3] * hh[i+(ldh*3)];
-	}
-
-	// Production level kernel calls with padding
-#ifdef __AVX__
-	for (i = 0; i < nq; i+=12)
-	{
-		hh_trafo_kernel_12_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-#else
-	for (i = 0; i < nq; i+=6)
-	{
-		hh_trafo_kernel_6_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-#endif
-}
-#endif
 /**
  * Unrolled kernel that computes
- * 6 rows of Q simultaneously, a
+ * 12 rows of Q simultaneously, a
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-__forceinline void hh_trafo_kernel_6_SSE_4hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
+__forceinline void hh_trafo_kernel_12_SSE_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [6 x nb+3] * hh
@@ -226,357 +165,387 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv_single(double* q, double* hh, int n
 	/////////////////////////////////////////////////////
 	int i;
 
-	__m128d a1_1 = _mm_load_pd(&q[ldq*3]);
-	__m128d a2_1 = _mm_load_pd(&q[ldq*2]);
-	__m128d a3_1 = _mm_load_pd(&q[ldq]);
-	__m128d a4_1 = _mm_load_pd(&q[0]);
+	__m128 a1_1 = _mm_load_ps(&q[ldq*3]);
+	__m128 a2_1 = _mm_load_ps(&q[ldq*2]);
+	__m128 a3_1 = _mm_load_ps(&q[ldq]);
+	__m128 a4_1 = _mm_load_ps(&q[0]);      // q(1,1) | q(2,1) | q(3,1) q(4,1)
 
-	__m128d h_2_1 = _mm_loaddup_pd(&hh[ldh+1]);
-	__m128d h_3_2 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
-	__m128d h_3_1 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
-	__m128d h_4_3 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
-	__m128d h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
-	__m128d h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
+	//careful here
+//	__m128 h_2_1 = _mm_loaddup_pd(&hh[ldh+1]);      // hh(2,2) and duplicate
+//        __m128 x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+1]));        // load hh(2,2) , hh(3,2) | hh(2,2) , hh(3,2) in double precision representations
+        __m128 h_2_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+1])) ); // h_2_1 contains four times hh[ldh+1]
+	__m128 h_3_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+1])));
+	__m128 h_3_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+2])));
+	__m128 h_4_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+1])));
+	__m128 h_4_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+2])));
+	__m128 h_4_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+3])));
 
-	register __m128d w1 = _mm_add_pd(a4_1, _mm_mul_pd(a3_1, h_4_3));
-	w1 = _mm_add_pd(w1, _mm_mul_pd(a2_1, h_4_2));
-	w1 = _mm_add_pd(w1, _mm_mul_pd(a1_1, h_4_1));
-	register __m128d z1 = _mm_add_pd(a3_1, _mm_mul_pd(a2_1, h_3_2));
-	z1 = _mm_add_pd(z1, _mm_mul_pd(a1_1, h_3_1));
-	register __m128d y1 = _mm_add_pd(a2_1, _mm_mul_pd(a1_1, h_2_1));
-	register __m128d x1 = a1_1;
+//	__m128 h_3_2 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
+//	__m128 h_3_1 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+//	__m128 h_4_3 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
+//	__m128 h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
+//	__m128 h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
 
-	__m128d a1_2 = _mm_load_pd(&q[(ldq*3)+2]);
-	__m128d a2_2 = _mm_load_pd(&q[(ldq*2)+2]);
-	__m128d a3_2 = _mm_load_pd(&q[ldq+2]);
-	__m128d a4_2 = _mm_load_pd(&q[0+2]);
+	register __m128 w1 = _mm_add_ps(a4_1, _mm_mul_ps(a3_1, h_4_3));
+	w1 = _mm_add_ps(w1, _mm_mul_ps(a2_1, h_4_2));
+	w1 = _mm_add_ps(w1, _mm_mul_ps(a1_1, h_4_1));
+	register __m128 z1 = _mm_add_ps(a3_1, _mm_mul_ps(a2_1, h_3_2));
+	z1 = _mm_add_ps(z1, _mm_mul_ps(a1_1, h_3_1));
+	register __m128 y1 = _mm_add_ps(a2_1, _mm_mul_ps(a1_1, h_2_1));
+	register __m128 x1 = a1_1;
 
-	register __m128d w2 = _mm_add_pd(a4_2, _mm_mul_pd(a3_2, h_4_3));
-	w2 = _mm_add_pd(w2, _mm_mul_pd(a2_2, h_4_2));
-	w2 = _mm_add_pd(w2, _mm_mul_pd(a1_2, h_4_1));
-	register __m128d z2 = _mm_add_pd(a3_2, _mm_mul_pd(a2_2, h_3_2));
-	z2 = _mm_add_pd(z2, _mm_mul_pd(a1_2, h_3_1));
-	register __m128d y2 = _mm_add_pd(a2_2, _mm_mul_pd(a1_2, h_2_1));
-	register __m128d x2 = a1_2;
+	__m128 a1_2 = _mm_load_ps(&q[(ldq*3)+4]);
+	__m128 a2_2 = _mm_load_ps(&q[(ldq*2)+4]);
+	__m128 a3_2 = _mm_load_ps(&q[ldq+4]);
+	__m128 a4_2 = _mm_load_ps(&q[0+4]);       // q(5,1) | ... q(8,1)
 
-	__m128d a1_3 = _mm_load_pd(&q[(ldq*3)+4]);
-	__m128d a2_3 = _mm_load_pd(&q[(ldq*2)+4]);
-	__m128d a3_3 = _mm_load_pd(&q[ldq+4]);
-	__m128d a4_3 = _mm_load_pd(&q[0+4]);
+	register __m128 w2 = _mm_add_ps(a4_2, _mm_mul_ps(a3_2, h_4_3));
+	w2 = _mm_add_ps(w2, _mm_mul_ps(a2_2, h_4_2));
+	w2 = _mm_add_ps(w2, _mm_mul_ps(a1_2, h_4_1));
+	register __m128 z2 = _mm_add_ps(a3_2, _mm_mul_ps(a2_2, h_3_2));
+	z2 = _mm_add_ps(z2, _mm_mul_ps(a1_2, h_3_1));
+	register __m128 y2 = _mm_add_ps(a2_2, _mm_mul_ps(a1_2, h_2_1));
+	register __m128 x2 = a1_2;
 
-	register __m128d w3 = _mm_add_pd(a4_3, _mm_mul_pd(a3_3, h_4_3));
-	w3 = _mm_add_pd(w3, _mm_mul_pd(a2_3, h_4_2));
-	w3 = _mm_add_pd(w3, _mm_mul_pd(a1_3, h_4_1));
-	register __m128d z3 = _mm_add_pd(a3_3, _mm_mul_pd(a2_3, h_3_2));
-	z3 = _mm_add_pd(z3, _mm_mul_pd(a1_3, h_3_1));
-	register __m128d y3 = _mm_add_pd(a2_3, _mm_mul_pd(a1_3, h_2_1));
-	register __m128d x3 = a1_3;
+	__m128 a1_3 = _mm_load_ps(&q[(ldq*3)+8]);
+	__m128 a2_3 = _mm_load_ps(&q[(ldq*2)+8]);
+	__m128 a3_3 = _mm_load_ps(&q[ldq+8]);
+	__m128 a4_3 = _mm_load_ps(&q[0+8]);    // q(9,1) | .. | q(12,1)
 
-	__m128d q1;
-	__m128d q2;
-	__m128d q3;
+	register __m128 w3 = _mm_add_ps(a4_3, _mm_mul_ps(a3_3, h_4_3));
+	w3 = _mm_add_ps(w3, _mm_mul_ps(a2_3, h_4_2));
+	w3 = _mm_add_ps(w3, _mm_mul_ps(a1_3, h_4_1));
+	register __m128 z3 = _mm_add_ps(a3_3, _mm_mul_ps(a2_3, h_3_2));
+	z3 = _mm_add_ps(z3, _mm_mul_ps(a1_3, h_3_1));
+	register __m128 y3 = _mm_add_ps(a2_3, _mm_mul_ps(a1_3, h_2_1));
+	register __m128 x3 = a1_3;
 
-	__m128d h1;
-	__m128d h2;
-	__m128d h3;
-	__m128d h4;
+	__m128 q1;
+	__m128 q2;
+	__m128 q3;
+
+	__m128 h1;
+	__m128 h2;
+	__m128 h3;
+	__m128 h4;
 
 	for(i = 4; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-3]);
-		q1 = _mm_load_pd(&q[i*ldq]);
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-		q3 = _mm_load_pd(&q[(i*ldq)+4]);
+	        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[i-3])));
+//		h1 = _mm_loaddup_pd(&hh[i-3]);
+		q1 = _mm_load_ps(&q[i*ldq]);
+		q2 = _mm_load_ps(&q[(i*ldq)+4]);
+		q3 = _mm_load_ps(&q[(i*ldq)+8]);
 
-		x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-		x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-		x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
+		x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+		x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+		x3 = _mm_add_ps(x3, _mm_mul_ps(q3,h1));
+	        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+i-2])));
+//		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
 
-		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
+		y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+		y2 = _mm_add_ps(y2, _mm_mul_ps(q2,h2));
+		y3 = _mm_add_ps(y3, _mm_mul_ps(q3,h2));
+	        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+i-1])));
+//		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
 
-		y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-		y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
-		y3 = _mm_add_pd(y3, _mm_mul_pd(q3,h2));
+		z1 = _mm_add_ps(z1, _mm_mul_ps(q1,h3));
+		z2 = _mm_add_ps(z2, _mm_mul_ps(q2,h3));
+		z3 = _mm_add_ps(z3, _mm_mul_ps(q3,h3));
+	        h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+i])));
+//		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
-
-		z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
-		z2 = _mm_add_pd(z2, _mm_mul_pd(q2,h3));
-		z3 = _mm_add_pd(z3, _mm_mul_pd(q3,h3));
-
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
-
-		w1 = _mm_add_pd(w1, _mm_mul_pd(q1,h4));
-		w2 = _mm_add_pd(w2, _mm_mul_pd(q2,h4));
-		w3 = _mm_add_pd(w3, _mm_mul_pd(q3,h4));
+		w1 = _mm_add_ps(w1, _mm_mul_ps(q1,h4));
+		w2 = _mm_add_ps(w2, _mm_mul_ps(q2,h4));
+		w3 = _mm_add_ps(w3, _mm_mul_ps(q3,h4));
 	}
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-3])));
+//	h1 = _mm_loaddup_pd(&hh[nb-3]);
 
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	q2 = _mm_load_ps(&q[(nb*ldq)+4]);
+	q3 = _mm_load_ps(&q[(nb*ldq)+8]);
 
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
-	q3 = _mm_load_pd(&q[(nb*ldq)+4]);
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+	x3 = _mm_add_ps(x3, _mm_mul_ps(q3,h1));
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-2])));
+//	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
 
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-	x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
+	y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+	y2 = _mm_add_ps(y2, _mm_mul_ps(q2,h2));
+	y3 = _mm_add_ps(y3, _mm_mul_ps(q3,h2));
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-1])));
+//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
 
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+	z1 = _mm_add_ps(z1, _mm_mul_ps(q1,h3));
+	z2 = _mm_add_ps(z2, _mm_mul_ps(q2,h3));
+	z3 = _mm_add_ps(z3, _mm_mul_ps(q3,h3));
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-2])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-2]);
 
-	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-	y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
-	y3 = _mm_add_pd(y3, _mm_mul_pd(q3,h2));
+	q1 = _mm_load_ps(&q[(nb+1)*ldq]);
+	q2 = _mm_load_ps(&q[((nb+1)*ldq)+4]);
+	q3 = _mm_load_ps(&q[((nb+1)*ldq)+8]);
 
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+	x3 = _mm_add_ps(x3, _mm_mul_ps(q3,h1));
+        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*1)+nb-1])));
+//	h2 = _mm_loaddup_pd(&hh[(ldh*1)+nb-1]);
 
-	z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
-	z2 = _mm_add_pd(z2, _mm_mul_pd(q2,h3));
-	z3 = _mm_add_pd(z3, _mm_mul_pd(q3,h3));
+	y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+	y2 = _mm_add_ps(y2, _mm_mul_ps(q2,h2));
+	y3 = _mm_add_ps(y3, _mm_mul_ps(q3,h2));
+        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-1])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-1]);
 
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
+	q1 = _mm_load_ps(&q[(nb+2)*ldq]);
+	q2 = _mm_load_ps(&q[((nb+2)*ldq)+4]);
+	q3 = _mm_load_ps(&q[((nb+2)*ldq)+8]);
 
-	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
-	q2 = _mm_load_pd(&q[((nb+1)*ldq)+2]);
-	q3 = _mm_load_pd(&q[((nb+1)*ldq)+4]);
-
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-	x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
-
-	h2 = _mm_loaddup_pd(&hh[(ldh*1)+nb-1]);
-
-	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-	y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
-	y3 = _mm_add_pd(y3, _mm_mul_pd(q3,h2));
-
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
-
-	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
-	q2 = _mm_load_pd(&q[((nb+2)*ldq)+2]);
-	q3 = _mm_load_pd(&q[((nb+2)*ldq)+4]);
-
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-	x3 = _mm_add_pd(x3, _mm_mul_pd(q3,h1));
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+	x3 = _mm_add_ps(x3, _mm_mul_ps(q3,h1));
 
 	/////////////////////////////////////////////////////
 	// Rank-1 update of Q [6 x nb+3]
 	/////////////////////////////////////////////////////
-
-	__m128d tau1 = _mm_loaddup_pd(&hh[0]);
+        __m128 tau1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[0])));
+//	__m128 tau1 = _mm_loaddup_pd(&hh[0]);
 
 	h1 = tau1;
-	x1 = _mm_mul_pd(x1, h1);
-	x2 = _mm_mul_pd(x2, h1);
-	x3 = _mm_mul_pd(x3, h1);
+	x1 = _mm_mul_ps(x1, h1);
+	x2 = _mm_mul_ps(x2, h1);
+	x3 = _mm_mul_ps(x3, h1);
+        __m128 tau2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh])));
+        __m128 vs_1_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_1_2)));
 
-	__m128d tau2 = _mm_loaddup_pd(&hh[ldh]);
-	__m128d vs_1_2 = _mm_loaddup_pd(&s_1_2);
+//	__m128 tau2 = _mm_loaddup_pd(&hh[ldh]);
+//	__m128 vs_1_2 = _mm_loaddup_pd(&s_1_2);
 
 	h1 = tau2;
-	h2 = _mm_mul_pd(h1, vs_1_2);
+	h2 = _mm_mul_ps(h1, vs_1_2);
 
-	y1 = _mm_sub_pd(_mm_mul_pd(y1,h1), _mm_mul_pd(x1,h2));
-	y2 = _mm_sub_pd(_mm_mul_pd(y2,h1), _mm_mul_pd(x2,h2));
-	y3 = _mm_sub_pd(_mm_mul_pd(y3,h1), _mm_mul_pd(x3,h2));
-
-	__m128d tau3 = _mm_loaddup_pd(&hh[ldh*2]);
-	__m128d vs_1_3 = _mm_loaddup_pd(&s_1_3);
-	__m128d vs_2_3 = _mm_loaddup_pd(&s_2_3);
+	y1 = _mm_sub_ps(_mm_mul_ps(y1,h1), _mm_mul_ps(x1,h2));
+	y2 = _mm_sub_ps(_mm_mul_ps(y2,h1), _mm_mul_ps(x2,h2));
+	y3 = _mm_sub_ps(_mm_mul_ps(y3,h1), _mm_mul_ps(x3,h2));
+        __m128 tau3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*2])));
+	//	__m128 tau3 = _mm_loaddup_pd(&hh[ldh*2]);
+        __m128 vs_1_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_1_3)));
+//	__m128 vs_1_3 = _mm_loaddup_pd(&s_1_3);
+        __m128 vs_2_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_2_3)));
+//	__m128 vs_2_3 = _mm_loaddup_pd(&s_2_3);
 
 	h1 = tau3;
-	h2 = _mm_mul_pd(h1, vs_1_3);
-	h3 = _mm_mul_pd(h1, vs_2_3);
+	h2 = _mm_mul_ps(h1, vs_1_3);
+	h3 = _mm_mul_ps(h1, vs_2_3);
 
-	z1 = _mm_sub_pd(_mm_mul_pd(z1,h1), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2)));
-	z2 = _mm_sub_pd(_mm_mul_pd(z2,h1), _mm_add_pd(_mm_mul_pd(y2,h3), _mm_mul_pd(x2,h2)));
-	z3 = _mm_sub_pd(_mm_mul_pd(z3,h1), _mm_add_pd(_mm_mul_pd(y3,h3), _mm_mul_pd(x3,h2)));
-
-	__m128d tau4 = _mm_loaddup_pd(&hh[ldh*3]);
-	__m128d vs_1_4 = _mm_loaddup_pd(&s_1_4);
-	__m128d vs_2_4 = _mm_loaddup_pd(&s_2_4);
-	__m128d vs_3_4 = _mm_loaddup_pd(&s_3_4);
+	z1 = _mm_sub_ps(_mm_mul_ps(z1,h1), _mm_add_ps(_mm_mul_ps(y1,h3), _mm_mul_ps(x1,h2)));
+	z2 = _mm_sub_ps(_mm_mul_ps(z2,h1), _mm_add_ps(_mm_mul_ps(y2,h3), _mm_mul_ps(x2,h2)));
+	z3 = _mm_sub_ps(_mm_mul_ps(z3,h1), _mm_add_ps(_mm_mul_ps(y3,h3), _mm_mul_ps(x3,h2)));
+        __m128 tau4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*3])));
+//	__m128 tau4 = _mm_loaddup_pd(&hh[ldh*3]);
+        __m128 vs_1_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_1_4)));
+//	__m128 vs_1_4 = _mm_loaddup_pd(&s_1_4);
+        __m128 vs_2_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_2_4)));
+//	__m128 vs_2_4 = _mm_loaddup_pd(&s_2_4);
+        __m128 vs_3_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_3_4)));
+//	__m128 vs_3_4 = _mm_loaddup_pd(&s_3_4);
 
 	h1 = tau4;
-	h2 = _mm_mul_pd(h1, vs_1_4);
-	h3 = _mm_mul_pd(h1, vs_2_4);
-	h4 = _mm_mul_pd(h1, vs_3_4);
+	h2 = _mm_mul_ps(h1, vs_1_4);
+	h3 = _mm_mul_ps(h1, vs_2_4);
+	h4 = _mm_mul_ps(h1, vs_3_4);
 
-	w1 = _mm_sub_pd(_mm_mul_pd(w1,h1), _mm_add_pd(_mm_mul_pd(z1,h4), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2))));
-	w2 = _mm_sub_pd(_mm_mul_pd(w2,h1), _mm_add_pd(_mm_mul_pd(z2,h4), _mm_add_pd(_mm_mul_pd(y2,h3), _mm_mul_pd(x2,h2))));
-	w3 = _mm_sub_pd(_mm_mul_pd(w3,h1), _mm_add_pd(_mm_mul_pd(z3,h4), _mm_add_pd(_mm_mul_pd(y3,h3), _mm_mul_pd(x3,h2))));
+	w1 = _mm_sub_ps(_mm_mul_ps(w1,h1), _mm_add_ps(_mm_mul_ps(z1,h4), _mm_add_ps(_mm_mul_ps(y1,h3), _mm_mul_ps(x1,h2))));
+	w2 = _mm_sub_ps(_mm_mul_ps(w2,h1), _mm_add_ps(_mm_mul_ps(z2,h4), _mm_add_ps(_mm_mul_ps(y2,h3), _mm_mul_ps(x2,h2))));
+	w3 = _mm_sub_ps(_mm_mul_ps(w3,h1), _mm_add_ps(_mm_mul_ps(z3,h4), _mm_add_ps(_mm_mul_ps(y3,h3), _mm_mul_ps(x3,h2))));
 
-	q1 = _mm_load_pd(&q[0]);
-	q2 = _mm_load_pd(&q[2]);
-	q3 = _mm_load_pd(&q[4]);
-	q1 = _mm_sub_pd(q1, w1);
-	q2 = _mm_sub_pd(q2, w2);
-	q3 = _mm_sub_pd(q3, w3);
-	_mm_store_pd(&q[0],q1);
-	_mm_store_pd(&q[2],q2);
-	_mm_store_pd(&q[4],q3);
+	q1 = _mm_load_ps(&q[0]);
+	q2 = _mm_load_ps(&q[4]);
+	q3 = _mm_load_ps(&q[8]);
+	q1 = _mm_sub_ps(q1, w1);
+	q2 = _mm_sub_ps(q2, w2);
+	q3 = _mm_sub_ps(q3, w3);
+	_mm_store_ps(&q[0],q1);
+	_mm_store_ps(&q[4],q2);
+	_mm_store_ps(&q[8],q3);
 
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
-	q1 = _mm_load_pd(&q[ldq]);
-	q2 = _mm_load_pd(&q[ldq+2]);
-	q3 = _mm_load_pd(&q[ldq+4]);
+	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+1])));
+//	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
+	q1 = _mm_load_ps(&q[ldq]);
+	q2 = _mm_load_ps(&q[ldq+4]);
+	q3 = _mm_load_ps(&q[ldq+8]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd(z1, _mm_mul_pd(w1, h4)));
-	q2 = _mm_sub_pd(q2, _mm_add_pd(z2, _mm_mul_pd(w2, h4)));
-	q3 = _mm_sub_pd(q3, _mm_add_pd(z3, _mm_mul_pd(w3, h4)));
+	q1 = _mm_sub_ps(q1, _mm_add_ps(z1, _mm_mul_ps(w1, h4)));
+	q2 = _mm_sub_ps(q2, _mm_add_ps(z2, _mm_mul_ps(w2, h4)));
+	q3 = _mm_sub_ps(q3, _mm_add_ps(z3, _mm_mul_ps(w3, h4)));
 
-	_mm_store_pd(&q[ldq],q1);
-	_mm_store_pd(&q[ldq+2],q2);
-	_mm_store_pd(&q[ldq+4],q3);
+	_mm_store_ps(&q[ldq],q1);
+	_mm_store_ps(&q[ldq+4],q2);
+	_mm_store_ps(&q[ldq+8],q3);
 
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
-	q1 = _mm_load_pd(&q[ldq*2]);
-	q2 = _mm_load_pd(&q[(ldq*2)+2]);
-	q3 = _mm_load_pd(&q[(ldq*2)+4]);
-	q1 = _mm_sub_pd(q1, y1);
-	q2 = _mm_sub_pd(q2, y2);
-	q3 = _mm_sub_pd(q3, y3);
+	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+2])));
+//	h4 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
+	q1 = _mm_load_ps(&q[ldq*2]);
+	q2 = _mm_load_ps(&q[(ldq*2)+4]);
+	q3 = _mm_load_ps(&q[(ldq*2)+8]);
+	q1 = _mm_sub_ps(q1, y1);
+	q2 = _mm_sub_ps(q2, y2);
+	q3 = _mm_sub_ps(q3, y3);
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(w1, h4));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(w2, h4));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(w3, h4));
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(w1, h4));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(w2, h4));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(w3, h4));
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(z1, h3));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(z2, h3));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(z3, h3));
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+1])));
+//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
 
-	_mm_store_pd(&q[ldq*2],q1);
-	_mm_store_pd(&q[(ldq*2)+2],q2);
-	_mm_store_pd(&q[(ldq*2)+4],q3);
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(z1, h3));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(z2, h3));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(z3, h3));
 
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
-	q1 = _mm_load_pd(&q[ldq*3]);
-	q2 = _mm_load_pd(&q[(ldq*3)+2]);
-	q3 = _mm_load_pd(&q[(ldq*3)+4]);
-	q1 = _mm_sub_pd(q1, x1);
-	q2 = _mm_sub_pd(q2, x2);
-	q3 = _mm_sub_pd(q3, x3);
+	_mm_store_ps(&q[ldq*2],q1);
+	_mm_store_ps(&q[(ldq*2)+4],q2);
+	_mm_store_ps(&q[(ldq*2)+8],q3);
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(w1, h4));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(w2, h4));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(w3, h4));
+	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+3])));
+//	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
+	q1 = _mm_load_ps(&q[ldq*3]);
+	q2 = _mm_load_ps(&q[(ldq*3)+4]);
+	q3 = _mm_load_ps(&q[(ldq*3)+8]);
+	q1 = _mm_sub_ps(q1, x1);
+	q2 = _mm_sub_ps(q2, x2);
+	q3 = _mm_sub_ps(q3, x3);
 
-	h2 = _mm_loaddup_pd(&hh[ldh+1]);
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(w1, h4));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(w2, h4));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(w3, h4));
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(y1, h2));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(y2, h2));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(y3, h2));
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+1])));
+//	h2 = _mm_loaddup_pd(&hh[ldh+1]);
 
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(y1, h2));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(y2, h2));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(y3, h2));
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(z1, h3));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(z2, h3));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(z3, h3));
-	_mm_store_pd(&q[ldq*3], q1);
-	_mm_store_pd(&q[(ldq*3)+2], q2);
-	_mm_store_pd(&q[(ldq*3)+4], q3);
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+2])));
+	//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(z1, h3));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(z2, h3));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(z3, h3));
+	_mm_store_ps(&q[ldq*3], q1);
+	_mm_store_ps(&q[(ldq*3)+4], q2);
+	_mm_store_ps(&q[(ldq*3)+8], q3);
 
 	for (i = 4; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-3]);
+	        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[i-3])));
+//		h1 = _mm_loaddup_pd(&hh[i-3]);
 
-		q1 = _mm_load_pd(&q[i*ldq]);
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
-		q3 = _mm_load_pd(&q[(i*ldq)+4]);
+		q1 = _mm_load_ps(&q[i*ldq]);
+		q2 = _mm_load_ps(&q[(i*ldq)+4]);
+		q3 = _mm_load_ps(&q[(i*ldq)+8]);
 
-		q1 = _mm_sub_pd(q1, _mm_mul_pd(x1,h1));
-		q2 = _mm_sub_pd(q2, _mm_mul_pd(x2,h1));
-		q3 = _mm_sub_pd(q3, _mm_mul_pd(x3,h1));
+		q1 = _mm_sub_ps(q1, _mm_mul_ps(x1,h1));
+		q2 = _mm_sub_ps(q2, _mm_mul_ps(x2,h1));
+		q3 = _mm_sub_ps(q3, _mm_mul_ps(x3,h1));
 
-		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
+		h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+i-2])));
+//		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
 
-		q1 = _mm_sub_pd(q1, _mm_mul_pd(y1,h2));
-		q2 = _mm_sub_pd(q2, _mm_mul_pd(y2,h2));
-		q3 = _mm_sub_pd(q3, _mm_mul_pd(y3,h2));
+		q1 = _mm_sub_ps(q1, _mm_mul_ps(y1,h2));
+		q2 = _mm_sub_ps(q2, _mm_mul_ps(y2,h2));
+		q3 = _mm_sub_ps(q3, _mm_mul_ps(y3,h2));
 
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
+		h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+i-1])));
+//		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
 
-		q1 = _mm_sub_pd(q1, _mm_mul_pd(z1,h3));
-		q2 = _mm_sub_pd(q2, _mm_mul_pd(z2,h3));
-		q3 = _mm_sub_pd(q3, _mm_mul_pd(z3,h3));
+		q1 = _mm_sub_ps(q1, _mm_mul_ps(z1,h3));
+		q2 = _mm_sub_ps(q2, _mm_mul_ps(z2,h3));
+		q3 = _mm_sub_ps(q3, _mm_mul_ps(z3,h3));
 
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
+		h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+i])));
+//		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
-		q1 = _mm_sub_pd(q1, _mm_mul_pd(w1,h4));
-		q2 = _mm_sub_pd(q2, _mm_mul_pd(w2,h4));
-		q3 = _mm_sub_pd(q3, _mm_mul_pd(w3,h4));
+		q1 = _mm_sub_ps(q1, _mm_mul_ps(w1,h4));
+		q2 = _mm_sub_ps(q2, _mm_mul_ps(w2,h4));
+		q3 = _mm_sub_ps(q3, _mm_mul_ps(w3,h4));
 
-		_mm_store_pd(&q[i*ldq],q1);
-		_mm_store_pd(&q[(i*ldq)+2],q2);
-		_mm_store_pd(&q[(i*ldq)+4],q3);
+		_mm_store_ps(&q[i*ldq],q1);
+		_mm_store_ps(&q[(i*ldq)+4],q2);
+		_mm_store_ps(&q[(i*ldq)+8],q3);
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
-	q3 = _mm_load_pd(&q[(nb*ldq)+4]);
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-3])));
+//	h1 = _mm_loaddup_pd(&hh[nb-3]);
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	q2 = _mm_load_ps(&q[(nb*ldq)+4]);
+	q3 = _mm_load_ps(&q[(nb*ldq)+8]);
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(x2, h1));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(x3, h1));
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(x1, h1));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(x2, h1));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(x3, h1));
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-2])));
+//	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
 
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(y1, h2));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(y2, h2));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(y3, h2));
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-1])));
+//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(y1, h2));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(y2, h2));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(y3, h2));
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(z1, h3));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(z2, h3));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(z3, h3));
 
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	_mm_store_ps(&q[nb*ldq],q1);
+	_mm_store_ps(&q[(nb*ldq)+4],q2);
+	_mm_store_ps(&q[(nb*ldq)+8],q3);
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-2])));
+//	h1 = _mm_loaddup_pd(&hh[nb-2]);
+	q1 = _mm_load_ps(&q[(nb+1)*ldq]);
+	q2 = _mm_load_ps(&q[((nb+1)*ldq)+4]);
+	q3 = _mm_load_ps(&q[((nb+1)*ldq)+8]);
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(z1, h3));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(z2, h3));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(z3, h3));
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(x1, h1));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(x2, h1));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(x3, h1));
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-1])));
+//	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
 
-	_mm_store_pd(&q[nb*ldq],q1);
-	_mm_store_pd(&q[(nb*ldq)+2],q2);
-	_mm_store_pd(&q[(nb*ldq)+4],q3);
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(y1, h2));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(y2, h2));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(y3, h2));
 
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
-	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
-	q2 = _mm_load_pd(&q[((nb+1)*ldq)+2]);
-	q3 = _mm_load_pd(&q[((nb+1)*ldq)+4]);
+	_mm_store_ps(&q[(nb+1)*ldq],q1);
+	_mm_store_ps(&q[((nb+1)*ldq)+4],q2);
+	_mm_store_ps(&q[((nb+1)*ldq)+8],q3);
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(x2, h1));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(x3, h1));
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-1])));
+//	h1 = _mm_loaddup_ps(&hh[nb-1]);
+	q1 = _mm_load_ps(&q[(nb+2)*ldq]);
+	q2 = _mm_load_ps(&q[((nb+2)*ldq)+4]);
+	q3 = _mm_load_ps(&q[((nb+2)*ldq)+8]);
 
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(x1, h1));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(x2, h1));
+	q3 = _mm_sub_ps(q3, _mm_mul_ps(x3, h1));
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(y1, h2));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(y2, h2));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(y3, h2));
-
-	_mm_store_pd(&q[(nb+1)*ldq],q1);
-	_mm_store_pd(&q[((nb+1)*ldq)+2],q2);
-	_mm_store_pd(&q[((nb+1)*ldq)+4],q3);
-
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
-	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
-	q2 = _mm_load_pd(&q[((nb+2)*ldq)+2]);
-	q3 = _mm_load_pd(&q[((nb+2)*ldq)+4]);
-
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(x2, h1));
-	q3 = _mm_sub_pd(q3, _mm_mul_pd(x3, h1));
-
-	_mm_store_pd(&q[(nb+2)*ldq],q1);
-	_mm_store_pd(&q[((nb+2)*ldq)+2],q2);
-	_mm_store_pd(&q[((nb+2)*ldq)+4],q3);
+	_mm_store_ps(&q[(nb+2)*ldq],q1);
+	_mm_store_ps(&q[((nb+2)*ldq)+4],q2);
+	_mm_store_ps(&q[((nb+2)*ldq)+8],q3);
 }
 
 /**
  * Unrolled kernel that computes
- * 4 rows of Q simultaneously, a
+ * 8 rows of Q simultaneously, a
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-__forceinline void hh_trafo_kernel_4_SSE_4hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
+__forceinline void hh_trafo_kernel_8_SSE_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
@@ -584,234 +553,277 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv_single(double* q, double* hh, int n
 	/////////////////////////////////////////////////////
 	int i;
 
-	__m128d a1_1 = _mm_load_pd(&q[ldq*3]);
-	__m128d a2_1 = _mm_load_pd(&q[ldq*2]);
-	__m128d a3_1 = _mm_load_pd(&q[ldq]);
-	__m128d a4_1 = _mm_load_pd(&q[0]);
+	__m128 a1_1 = _mm_load_ps(&q[ldq*3]);
+	__m128 a2_1 = _mm_load_ps(&q[ldq*2]);
+	__m128 a3_1 = _mm_load_ps(&q[ldq]);
+	__m128 a4_1 = _mm_load_ps(&q[0]);      // q(1,1) | q(2,1) | q(3,1) | q(4,1)
 
-	__m128d h_2_1 = _mm_loaddup_pd(&hh[ldh+1]);
-	__m128d h_3_2 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
-	__m128d h_3_1 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
-	__m128d h_4_3 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
-	__m128d h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
-	__m128d h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
+	// carefull
+        __m128 h_2_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+1])));
+//	__m128 h_2_1 = _mm_loaddup_pd(&hh[ldh+1]);
+        __m128 h_3_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+1])));
+//	__m128 h_3_2 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
+        __m128 h_3_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+2])));
+//	__m128 h_3_1 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+        __m128 h_4_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+1])));
+//	__m128 h_4_3 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
+        __m128 h_4_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+2])));
+//	__m128 h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
+        __m128 h_4_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+3])));
+//	__m128 h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
 
-	__m128d w1 = _mm_add_pd(a4_1, _mm_mul_pd(a3_1, h_4_3));
-	w1 = _mm_add_pd(w1, _mm_mul_pd(a2_1, h_4_2));
-	w1 = _mm_add_pd(w1, _mm_mul_pd(a1_1, h_4_1));
-	__m128d z1 = _mm_add_pd(a3_1, _mm_mul_pd(a2_1, h_3_2));
-	z1 = _mm_add_pd(z1, _mm_mul_pd(a1_1, h_3_1));
-	__m128d y1 = _mm_add_pd(a2_1, _mm_mul_pd(a1_1, h_2_1));
-	__m128d x1 = a1_1;
+	__m128 w1 = _mm_add_ps(a4_1, _mm_mul_ps(a3_1, h_4_3));
+	w1 = _mm_add_ps(w1, _mm_mul_ps(a2_1, h_4_2));
+	w1 = _mm_add_ps(w1, _mm_mul_ps(a1_1, h_4_1));
+	__m128 z1 = _mm_add_ps(a3_1, _mm_mul_ps(a2_1, h_3_2));
+	z1 = _mm_add_ps(z1, _mm_mul_ps(a1_1, h_3_1));
+	__m128 y1 = _mm_add_ps(a2_1, _mm_mul_ps(a1_1, h_2_1));
+	__m128 x1 = a1_1;
 
-	__m128d a1_2 = _mm_load_pd(&q[(ldq*3)+2]);
-	__m128d a2_2 = _mm_load_pd(&q[(ldq*2)+2]);
-	__m128d a3_2 = _mm_load_pd(&q[ldq+2]);
-	__m128d a4_2 = _mm_load_pd(&q[0+2]);
+	__m128 a1_2 = _mm_load_ps(&q[(ldq*3)+4]);
+	__m128 a2_2 = _mm_load_ps(&q[(ldq*2)+4]);
+	__m128 a3_2 = _mm_load_ps(&q[ldq+4]);
+	__m128 a4_2 = _mm_load_ps(&q[0+4]);
 
-	__m128d w2 = _mm_add_pd(a4_2, _mm_mul_pd(a3_2, h_4_3));
-	w2 = _mm_add_pd(w2, _mm_mul_pd(a2_2, h_4_2));
-	w2 = _mm_add_pd(w2, _mm_mul_pd(a1_2, h_4_1));
-	__m128d z2 = _mm_add_pd(a3_2, _mm_mul_pd(a2_2, h_3_2));
-	z2 = _mm_add_pd(z2, _mm_mul_pd(a1_2, h_3_1));
-	__m128d y2 = _mm_add_pd(a2_2, _mm_mul_pd(a1_2, h_2_1));
-	__m128d x2 = a1_2;
+	__m128 w2 = _mm_add_ps(a4_2, _mm_mul_ps(a3_2, h_4_3));
+	w2 = _mm_add_ps(w2, _mm_mul_ps(a2_2, h_4_2));
+	w2 = _mm_add_ps(w2, _mm_mul_ps(a1_2, h_4_1));
+	__m128 z2 = _mm_add_ps(a3_2, _mm_mul_ps(a2_2, h_3_2));
+	z2 = _mm_add_ps(z2, _mm_mul_ps(a1_2, h_3_1));
+	__m128 y2 = _mm_add_ps(a2_2, _mm_mul_ps(a1_2, h_2_1));
+	__m128 x2 = a1_2;
 
-	__m128d q1;
-	__m128d q2;
+	__m128 q1;
+	__m128 q2;
 
-	__m128d h1;
-	__m128d h2;
-	__m128d h3;
-	__m128d h4;
+	__m128 h1;
+	__m128 h2;
+	__m128 h3;
+	__m128 h4;
 
 	for(i = 4; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-3]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
+		h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[i-3])));
+//		h1 = _mm_loaddup_pd(&hh[i-3]);
+		h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+i-2])));
+//		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
+		h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+i-1])));
+//		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
+		h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+i])));
+//		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
-		q1 = _mm_load_pd(&q[i*ldq]);
+		q1 = _mm_load_ps(&q[i*ldq]);
 
-		x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-		y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-		z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
-		w1 = _mm_add_pd(w1, _mm_mul_pd(q1,h4));
+		x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+		y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+		z1 = _mm_add_ps(z1, _mm_mul_ps(q1,h3));
+		w1 = _mm_add_ps(w1, _mm_mul_ps(q1,h4));
 
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
+		q2 = _mm_load_ps(&q[(i*ldq)+4]);
 
-		x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-		y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
-		z2 = _mm_add_pd(z2, _mm_mul_pd(q2,h3));
-		w2 = _mm_add_pd(w2, _mm_mul_pd(q2,h4));
+		x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+		y2 = _mm_add_ps(y2, _mm_mul_ps(q2,h2));
+		z2 = _mm_add_ps(z2, _mm_mul_ps(q2,h3));
+		w2 = _mm_add_ps(w2, _mm_mul_ps(q2,h4));
 	}
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-3])));
+//	h1 = _mm_loaddup_pd(&hh[nb-3]);
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-2])));
+//	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-1])));
+//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
 
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	q2 = _mm_load_ps(&q[(nb*ldq)+4]);
 
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+	y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+	y2 = _mm_add_ps(y2, _mm_mul_ps(q2,h2));
+	z1 = _mm_add_ps(z1, _mm_mul_ps(q1,h3));
+	z2 = _mm_add_ps(z2, _mm_mul_ps(q2,h3));
 
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-	y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
-	z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
-	z2 = _mm_add_pd(z2, _mm_mul_pd(q2,h3));
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-2])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-2]);
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*1)+nb-1])));
+	//	h2 = _mm_loaddup_pd(&hh[(ldh*1)+nb-1]);
 
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
-	h2 = _mm_loaddup_pd(&hh[(ldh*1)+nb-1]);
+	q1 = _mm_load_ps(&q[(nb+1)*ldq]);
+	q2 = _mm_load_ps(&q[((nb+1)*ldq)+2]);
 
-	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
-	q2 = _mm_load_pd(&q[((nb+1)*ldq)+2]);
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
+	y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+	y2 = _mm_add_ps(y2, _mm_mul_ps(q2,h2));
 
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
-	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-	y2 = _mm_add_pd(y2, _mm_mul_pd(q2,h2));
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-1])));
+//	h1 = _mm_loaddup_pd(&hh[nb-1]);
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	q1 = _mm_load_ps(&q[(nb+2)*ldq]);
+	q2 = _mm_load_ps(&q[((nb+2)*ldq)+4]);
 
-	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
-	q2 = _mm_load_pd(&q[((nb+2)*ldq)+2]);
-
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	x2 = _mm_add_pd(x2, _mm_mul_pd(q2,h1));
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	x2 = _mm_add_ps(x2, _mm_mul_ps(q2,h1));
 
 	/////////////////////////////////////////////////////
 	// Rank-1 update of Q [4 x nb+3]
 	/////////////////////////////////////////////////////
 
-	__m128d tau1 = _mm_loaddup_pd(&hh[0]);
-	__m128d tau2 = _mm_loaddup_pd(&hh[ldh]);
-	__m128d tau3 = _mm_loaddup_pd(&hh[ldh*2]);
-	__m128d tau4 = _mm_loaddup_pd(&hh[ldh*3]);
+	__m128 tau1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[0])));
+//	__m128 tau1 = _mm_loaddup_pd(&hh[0]);
+	__m128 tau2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh])));
+//	__m128 tau2 = _mm_loaddup_pd(&hh[ldh]);
+	__m128 tau3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*2])));
+//	__m128 tau3 = _mm_loaddup_pd(&hh[ldh*2]);
+	__m128 tau4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*3])));
+//	__m128 tau4 = _mm_loaddup_pd(&hh[ldh*3]);
 
-	__m128d vs_1_2 = _mm_loaddup_pd(&s_1_2);
-	__m128d vs_1_3 = _mm_loaddup_pd(&s_1_3);
-	__m128d vs_2_3 = _mm_loaddup_pd(&s_2_3);
-	__m128d vs_1_4 = _mm_loaddup_pd(&s_1_4);
-	__m128d vs_2_4 = _mm_loaddup_pd(&s_2_4);
-	__m128d vs_3_4 = _mm_loaddup_pd(&s_3_4);
+	__m128 vs_1_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_1_2)));
+//	__m128 vs_1_2 = _mm_loaddup_pd(&s_1_2);
+	__m128 vs_1_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_1_3)));
+//	__m128 vs_1_3 = _mm_loaddup_pd(&s_1_3);
+	__m128 vs_2_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_2_3)));
+//	__m128 vs_2_3 = _mm_loaddup_pd(&s_2_3);
+	__m128 vs_1_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_1_4)));
+//	__m128 vs_1_4 = _mm_loaddup_pd(&s_1_4);
+	__m128 vs_2_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_2_4)));
+//	__m128 vs_2_4 = _mm_loaddup_pd(&s_2_4);
+	__m128 vs_3_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_3_4)));
+//	__m128 vs_3_4 = _mm_loaddup_pd(&s_3_4);
 
 	h1 = tau1;
-	x1 = _mm_mul_pd(x1, h1);
-	x2 = _mm_mul_pd(x2, h1);
+	x1 = _mm_mul_ps(x1, h1);
+	x2 = _mm_mul_ps(x2, h1);
 
 	h1 = tau2;
-	h2 = _mm_mul_pd(h1, vs_1_2);
+	h2 = _mm_mul_ps(h1, vs_1_2);
 
-	y1 = _mm_sub_pd(_mm_mul_pd(y1,h1), _mm_mul_pd(x1,h2));
-	y2 = _mm_sub_pd(_mm_mul_pd(y2,h1), _mm_mul_pd(x2,h2));
+	y1 = _mm_sub_ps(_mm_mul_ps(y1,h1), _mm_mul_ps(x1,h2));
+	y2 = _mm_sub_ps(_mm_mul_ps(y2,h1), _mm_mul_ps(x2,h2));
 
 	h1 = tau3;
-	h2 = _mm_mul_pd(h1, vs_1_3);
-	h3 = _mm_mul_pd(h1, vs_2_3);
+	h2 = _mm_mul_ps(h1, vs_1_3);
+	h3 = _mm_mul_ps(h1, vs_2_3);
 
-	z1 = _mm_sub_pd(_mm_mul_pd(z1,h1), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2)));
-	z2 = _mm_sub_pd(_mm_mul_pd(z2,h1), _mm_add_pd(_mm_mul_pd(y2,h3), _mm_mul_pd(x2,h2)));
+	z1 = _mm_sub_ps(_mm_mul_ps(z1,h1), _mm_add_ps(_mm_mul_ps(y1,h3), _mm_mul_ps(x1,h2)));
+	z2 = _mm_sub_ps(_mm_mul_ps(z2,h1), _mm_add_ps(_mm_mul_ps(y2,h3), _mm_mul_ps(x2,h2)));
 
 	h1 = tau4;
-	h2 = _mm_mul_pd(h1, vs_1_4);
-	h3 = _mm_mul_pd(h1, vs_2_4);
-	h4 = _mm_mul_pd(h1, vs_3_4);
+	h2 = _mm_mul_ps(h1, vs_1_4);
+	h3 = _mm_mul_ps(h1, vs_2_4);
+	h4 = _mm_mul_ps(h1, vs_3_4);
 
-	w1 = _mm_sub_pd(_mm_mul_pd(w1,h1), _mm_add_pd(_mm_mul_pd(z1,h4), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2))));
-	w2 = _mm_sub_pd(_mm_mul_pd(w2,h1), _mm_add_pd(_mm_mul_pd(z2,h4), _mm_add_pd(_mm_mul_pd(y2,h3), _mm_mul_pd(x2,h2))));
+	w1 = _mm_sub_ps(_mm_mul_ps(w1,h1), _mm_add_ps(_mm_mul_ps(z1,h4), _mm_add_ps(_mm_mul_ps(y1,h3), _mm_mul_ps(x1,h2))));
+	w2 = _mm_sub_ps(_mm_mul_ps(w2,h1), _mm_add_ps(_mm_mul_ps(z2,h4), _mm_add_ps(_mm_mul_ps(y2,h3), _mm_mul_ps(x2,h2))));
 
-	q1 = _mm_load_pd(&q[0]);
-	q2 = _mm_load_pd(&q[2]);
-	q1 = _mm_sub_pd(q1, w1);
-	q2 = _mm_sub_pd(q2, w2);
-	_mm_store_pd(&q[0],q1);
-	_mm_store_pd(&q[2],q2);
+	q1 = _mm_load_ps(&q[0]);
+	q2 = _mm_load_ps(&q[4]);
+	q1 = _mm_sub_ps(q1, w1);
+	q2 = _mm_sub_ps(q2, w2);
+	_mm_store_ps(&q[0],q1);
+	_mm_store_ps(&q[4],q2);
 
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
-	q1 = _mm_load_pd(&q[ldq]);
-	q2 = _mm_load_pd(&q[ldq+2]);
+	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+1])));
+	//	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
+	q1 = _mm_load_ps(&q[ldq]);
+	q2 = _mm_load_ps(&q[ldq+4]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd(z1, _mm_mul_pd(w1, h4)));
-	q2 = _mm_sub_pd(q2, _mm_add_pd(z2, _mm_mul_pd(w2, h4)));
+	q1 = _mm_sub_ps(q1, _mm_add_ps(z1, _mm_mul_ps(w1, h4)));
+	q2 = _mm_sub_ps(q2, _mm_add_ps(z2, _mm_mul_ps(w2, h4)));
 
-	_mm_store_pd(&q[ldq],q1);
-	_mm_store_pd(&q[ldq+2],q2);
+	_mm_store_ps(&q[ldq],q1);
+	_mm_store_ps(&q[ldq+4],q2);
 
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
-	q1 = _mm_load_pd(&q[ldq*2]);
-	q2 = _mm_load_pd(&q[(ldq*2)+2]);
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+1])));
+	//	h3 = _mm_loaddup_ps(&hh[(ldh*2)+1]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd(y1, _mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(w1, h4))));
-	q2 = _mm_sub_pd(q2, _mm_add_pd(y2, _mm_add_pd(_mm_mul_pd(z2, h3), _mm_mul_pd(w2, h4))));
-	_mm_store_pd(&q[ldq*2],q1);
-	_mm_store_pd(&q[(ldq*2)+2],q2);
+	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+2])));
+//	h4 = _mm_loaddup_ps(&hh[(ldh*3)+2]);
+	q1 = _mm_load_ps(&q[ldq*4]);
+	q2 = _mm_load_ps(&q[(ldq*2)+4]);
 
-	h2 = _mm_loaddup_pd(&hh[ldh+1]);
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
-	q1 = _mm_load_pd(&q[ldq*3]);
-	q2 = _mm_load_pd(&q[(ldq*3)+2]);
+	q1 = _mm_sub_ps(q1, _mm_add_ps(y1, _mm_add_ps(_mm_mul_ps(z1, h3), _mm_mul_ps(w1, h4))));
+	q2 = _mm_sub_ps(q2, _mm_add_ps(y2, _mm_add_ps(_mm_mul_ps(z2, h3), _mm_mul_ps(w2, h4))));
+	_mm_store_ps(&q[ldq*2],q1);
+	_mm_store_ps(&q[(ldq*2)+4],q2);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd(x1, _mm_add_pd(_mm_mul_pd(y1, h2), _mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(w1, h4)))));
-	q2 = _mm_sub_pd(q2, _mm_add_pd(x2, _mm_add_pd(_mm_mul_pd(y2, h2), _mm_add_pd(_mm_mul_pd(z2, h3), _mm_mul_pd(w2, h4)))));
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+1])));
+	//	h2 = _mm_loaddup_pd(&hh[ldh+1]);
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+2])));
+	//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+3])));
+	//	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
+	q1 = _mm_load_ps(&q[ldq*3]);
+	q2 = _mm_load_ps(&q[(ldq*3)+4]);
 
-	_mm_store_pd(&q[ldq*3], q1);
-	_mm_store_pd(&q[(ldq*3)+2], q2);
+	q1 = _mm_sub_ps(q1, _mm_add_ps(x1, _mm_add_ps(_mm_mul_ps(y1, h2), _mm_add_ps(_mm_mul_ps(z1, h3), _mm_mul_ps(w1, h4)))));
+	q2 = _mm_sub_ps(q2, _mm_add_ps(x2, _mm_add_ps(_mm_mul_ps(y2, h2), _mm_add_ps(_mm_mul_ps(z2, h3), _mm_mul_ps(w2, h4)))));
+
+	_mm_store_ps(&q[ldq*3], q1);
+	_mm_store_ps(&q[(ldq*3)+4], q2);
 
 	for (i = 4; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-3]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
+         	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[i-3])));
+//		h1 = _mm_loaddup_pd(&hh[i-3]);
+        	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+i-2])));
+//		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
+        	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+i-1])));
+//		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
+        	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+i])));
+//		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
-		q1 = _mm_load_pd(&q[i*ldq]);
+		q1 = _mm_load_ps(&q[i*ldq]);
 
-		q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_add_pd(_mm_mul_pd(w1, h4), _mm_mul_pd(z1, h3)), _mm_add_pd(_mm_mul_pd(x1,h1), _mm_mul_pd(y1, h2))));
+		q1 = _mm_sub_ps(q1, _mm_add_ps(_mm_add_ps(_mm_mul_ps(w1, h4), _mm_mul_ps(z1, h3)), _mm_add_ps(_mm_mul_ps(x1,h1), _mm_mul_ps(y1, h2))));
 
-		_mm_store_pd(&q[i*ldq],q1);
+		_mm_store_ps(&q[i*ldq],q1);
 
-		q2 = _mm_load_pd(&q[(i*ldq)+2]);
+		q2 = _mm_load_ps(&q[(i*ldq)+4]);
 
-		q2 = _mm_sub_pd(q2, _mm_add_pd(_mm_add_pd(_mm_mul_pd(w2, h4), _mm_mul_pd(z2, h3)), _mm_add_pd(_mm_mul_pd(x2,h1), _mm_mul_pd(y2, h2))));
+		q2 = _mm_sub_ps(q2, _mm_add_ps(_mm_add_ps(_mm_mul_ps(w2, h4), _mm_mul_ps(z2, h3)), _mm_add_ps(_mm_mul_ps(x2,h1), _mm_mul_ps(y2, h2))));
 
-		_mm_store_pd(&q[(i*ldq)+2],q2);
+		_mm_store_ps(&q[(i*ldq)+4],q2);
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
-	q1 = _mm_load_pd(&q[nb*ldq]);
-	q2 = _mm_load_pd(&q[(nb*ldq)+2]);
+       	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-3])));
+//	h1 = _mm_loaddup_pd(&hh[nb-3]);
+       	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-2])));
+//	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+       	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-1])));
+//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	q2 = _mm_load_ps(&q[(nb*ldq)+4]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(y1, h2)) , _mm_mul_pd(x1, h1)));
-	q2 = _mm_sub_pd(q2, _mm_add_pd(_mm_add_pd(_mm_mul_pd(z2, h3), _mm_mul_pd(y2, h2)) , _mm_mul_pd(x2, h1)));
+	q1 = _mm_sub_ps(q1, _mm_add_ps(_mm_add_ps(_mm_mul_ps(z1, h3), _mm_mul_ps(y1, h2)) , _mm_mul_ps(x1, h1)));
+	q2 = _mm_sub_ps(q2, _mm_add_ps(_mm_add_ps(_mm_mul_ps(z2, h3), _mm_mul_ps(y2, h2)) , _mm_mul_ps(x2, h1)));
 
-	_mm_store_pd(&q[nb*ldq],q1);
-	_mm_store_pd(&q[(nb*ldq)+2],q2);
+	_mm_store_ps(&q[nb*ldq],q1);
+	_mm_store_ps(&q[(nb*ldq)+4],q2);
 
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
-	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
-	q2 = _mm_load_pd(&q[((nb+1)*ldq)+2]);
+       	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-2])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-2]);
+       	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-1])));
+	//	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
+	q1 = _mm_load_ps(&q[(nb+1)*ldq]);
+	q2 = _mm_load_ps(&q[((nb+1)*ldq)+4]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd( _mm_mul_pd(y1, h2) , _mm_mul_pd(x1, h1)));
-	q2 = _mm_sub_pd(q2, _mm_add_pd( _mm_mul_pd(y2, h2) , _mm_mul_pd(x2, h1)));
+	q1 = _mm_sub_ps(q1, _mm_add_ps( _mm_mul_ps(y1, h2) , _mm_mul_ps(x1, h1)));
+	q2 = _mm_sub_ps(q2, _mm_add_ps( _mm_mul_ps(y2, h2) , _mm_mul_ps(x2, h1)));
 
-	_mm_store_pd(&q[(nb+1)*ldq],q1);
-	_mm_store_pd(&q[((nb+1)*ldq)+2],q2);
+	_mm_store_ps(&q[(nb+1)*ldq],q1);
+	_mm_store_ps(&q[((nb+1)*ldq)+4],q2);
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
-	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
-	q2 = _mm_load_pd(&q[((nb+2)*ldq)+2]);
+  	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-1])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	q1 = _mm_load_ps(&q[(nb+2)*ldq]);
+	q2 = _mm_load_ps(&q[((nb+2)*ldq)+4]);
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
-	q2 = _mm_sub_pd(q2, _mm_mul_pd(x2, h1));
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(x1, h1));
+	q2 = _mm_sub_ps(q2, _mm_mul_ps(x2, h1));
 
-	_mm_store_pd(&q[(nb+2)*ldq],q1);
-	_mm_store_pd(&q[((nb+2)*ldq)+2],q2);
+	_mm_store_ps(&q[(nb+2)*ldq],q1);
+	_mm_store_ps(&q[((nb+2)*ldq)+4],q2);
 }
 
 /**
@@ -820,7 +832,7 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv_single(double* q, double* hh, int n
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-__forceinline void hh_trafo_kernel_2_SSE_4hv_single(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
+__forceinline void hh_trafo_kernel_4_SSE_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [2 x nb+3] * hh
@@ -828,168 +840,215 @@ __forceinline void hh_trafo_kernel_2_SSE_4hv_single(double* q, double* hh, int n
 	/////////////////////////////////////////////////////
 	int i;
 
-	__m128d a1_1 = _mm_load_pd(&q[ldq*3]);
-	__m128d a2_1 = _mm_load_pd(&q[ldq*2]);
-	__m128d a3_1 = _mm_load_pd(&q[ldq]);
-	__m128d a4_1 = _mm_load_pd(&q[0]);
+	__m128 a1_1 = _mm_load_ps(&q[ldq*3]);
+	__m128 a2_1 = _mm_load_ps(&q[ldq*2]);
+	__m128 a3_1 = _mm_load_ps(&q[ldq]);
+	__m128 a4_1 = _mm_load_ps(&q[0]);      // q(1,1) || .. | q(4,1)
 
-	__m128d h_2_1 = _mm_loaddup_pd(&hh[ldh+1]);
-	__m128d h_3_2 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
-	__m128d h_3_1 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
-	__m128d h_4_3 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
-	__m128d h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
-	__m128d h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
 
-	__m128d w1 = _mm_add_pd(a4_1, _mm_mul_pd(a3_1, h_4_3));
-	w1 = _mm_add_pd(w1, _mm_mul_pd(a2_1, h_4_2));
-	w1 = _mm_add_pd(w1, _mm_mul_pd(a1_1, h_4_1));
-	__m128d z1 = _mm_add_pd(a3_1, _mm_mul_pd(a2_1, h_3_2));
-	z1 = _mm_add_pd(z1, _mm_mul_pd(a1_1, h_3_1));
-	__m128d y1 = _mm_add_pd(a2_1, _mm_mul_pd(a1_1, h_2_1));
-	__m128d x1 = a1_1;
+	__m128 h_2_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+1])));
+//	__m128 h_2_1 = _mm_loaddup_pd(&hh[ldh+1]);
+	__m128 h_3_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+1])));
+//	__m128 h_3_2 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
+	__m128 h_3_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+2])));
+//	__m128 h_3_1 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+	__m128 h_4_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+1])));
+//	__m128 h_4_3 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
+	__m128 h_4_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+2])));
+//	__m128 h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
+	__m128 h_4_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+3])));
+//	__m128 h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
 
-	__m128d q1;
+	__m128 w1 = _mm_add_ps(a4_1, _mm_mul_ps(a3_1, h_4_3));
+	w1 = _mm_add_ps(w1, _mm_mul_ps(a2_1, h_4_2));
+	w1 = _mm_add_ps(w1, _mm_mul_ps(a1_1, h_4_1));
+	__m128 z1 = _mm_add_ps(a3_1, _mm_mul_ps(a2_1, h_3_2));
+	z1 = _mm_add_ps(z1, _mm_mul_ps(a1_1, h_3_1));
+	__m128 y1 = _mm_add_ps(a2_1, _mm_mul_ps(a1_1, h_2_1));
+	__m128 x1 = a1_1;
 
-	__m128d h1;
-	__m128d h2;
-	__m128d h3;
-	__m128d h4;
+	__m128 q1;
+
+	__m128 h1;
+	__m128 h2;
+	__m128 h3;
+	__m128 h4;
 
 	for(i = 4; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-3]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
+	        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[i-3])));
+		//		h1 = _mm_loaddup_pd(&hh[i-3]);
+	        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+i-2])));
+		//		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
+	        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+i-1])));
+		//		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
+	        h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+i])));
+		//		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
-		q1 = _mm_load_pd(&q[i*ldq]);
+		q1 = _mm_load_ps(&q[i*ldq]);
 
-		x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-		y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-		z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
-		w1 = _mm_add_pd(w1, _mm_mul_pd(q1,h4));
+		x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+		y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+		z1 = _mm_add_ps(z1, _mm_mul_ps(q1,h3));
+		w1 = _mm_add_ps(w1, _mm_mul_ps(q1,h4));
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
-	q1 = _mm_load_pd(&q[nb*ldq]);
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-3])));
+//	h1 = _mm_loaddup_pd(&hh[nb-3]);
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-2])));
+//	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-1])));
+//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	q1 = _mm_load_ps(&q[nb*ldq]);
 
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
-	z1 = _mm_add_pd(z1, _mm_mul_pd(q1,h3));
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+	z1 = _mm_add_ps(z1, _mm_mul_ps(q1,h3));
 
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
-	h2 = _mm_loaddup_pd(&hh[(ldh*1)+nb-1]);
-	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-2])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-2]);
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*1)-1])));
+	//	h2 = _mm_loaddup_pd(&hh[(ldh*1)+nb-1]);
+	q1 = _mm_load_ps(&q[(nb+1)*ldq]);
 
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
-	y1 = _mm_add_pd(y1, _mm_mul_pd(q1,h2));
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+	y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
-	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-1])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	q1 = _mm_load_ps(&q[(nb+2)*ldq]);
 
-	x1 = _mm_add_pd(x1, _mm_mul_pd(q1,h1));
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
 	/////////////////////////////////////////////////////
 	// Rank-1 update of Q [2 x nb+3]
 	/////////////////////////////////////////////////////
 
-	__m128d tau1 = _mm_loaddup_pd(&hh[0]);
-	__m128d tau2 = _mm_loaddup_pd(&hh[ldh]);
-	__m128d tau3 = _mm_loaddup_pd(&hh[ldh*2]);
-	__m128d tau4 = _mm_loaddup_pd(&hh[ldh*3]);
 
-	__m128d vs_1_2 = _mm_loaddup_pd(&s_1_2);
-	__m128d vs_1_3 = _mm_loaddup_pd(&s_1_3);
-	__m128d vs_2_3 = _mm_loaddup_pd(&s_2_3);
-	__m128d vs_1_4 = _mm_loaddup_pd(&s_1_4);
-	__m128d vs_2_4 = _mm_loaddup_pd(&s_2_4);
-	__m128d vs_3_4 = _mm_loaddup_pd(&s_3_4);
+	__m128 tau1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[0])));
+	//	__m128d tau1 = _mm_loaddup_pd(&hh[0]);
+	__m128 tau2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh])));
+	//	__m128 tau2 = _mm_loaddup_pd(&hh[ldh]);
+	__m128 tau3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*2])));
+	//	__m128 tau3 = _mm_loaddup_pd(&hh[ldh*2]);
+	__m128 tau4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*3])));
+	//__m128d tau4 = _mm_loaddup_pd(&hh[ldh*3]);
+
+	__m128 vs_1_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_1_2)));
+//	__m128d vs_1_2 = _mm_loaddup_pd(&s_1_2);
+	__m128 vs_1_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_1_3)));
+//	__m128d vs_1_3 = _mm_loaddup_pd(&s_1_3);
+	__m128 vs_2_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_2_3)));
+//	__m128d vs_2_3 = _mm_loaddup_pd(&s_2_3);
+	__m128 vs_1_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_1_4)));
+//	__m128d vs_1_4 = _mm_loaddup_pd(&s_1_4);
+	__m128 vs_2_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_2_4)));
+//	__m128d vs_2_4 = _mm_loaddup_pd(&s_2_4);
+	__m128 vs_3_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&s_3_4)));
+//	__m128d vs_3_4 = _mm_loaddup_pd(&s_3_4);
 
 	h1 = tau1;
-	x1 = _mm_mul_pd(x1, h1);
+	x1 = _mm_mul_ps(x1, h1);
 
 	h1 = tau2;
-	h2 = _mm_mul_pd(h1, vs_1_2);
+	h2 = _mm_mul_ps(h1, vs_1_2);
 
-	y1 = _mm_sub_pd(_mm_mul_pd(y1,h1), _mm_mul_pd(x1,h2));
+	y1 = _mm_sub_ps(_mm_mul_ps(y1,h1), _mm_mul_ps(x1,h2));
 
 	h1 = tau3;
-	h2 = _mm_mul_pd(h1, vs_1_3);
-	h3 = _mm_mul_pd(h1, vs_2_3);
+	h2 = _mm_mul_ps(h1, vs_1_3);
+	h3 = _mm_mul_ps(h1, vs_2_3);
 
-	z1 = _mm_sub_pd(_mm_mul_pd(z1,h1), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2)));
+	z1 = _mm_sub_ps(_mm_mul_ps(z1,h1), _mm_add_ps(_mm_mul_ps(y1,h3), _mm_mul_ps(x1,h2)));
 
 	h1 = tau4;
-	h2 = _mm_mul_pd(h1, vs_1_4);
-	h3 = _mm_mul_pd(h1, vs_2_4);
-	h4 = _mm_mul_pd(h1, vs_3_4);
+	h2 = _mm_mul_ps(h1, vs_1_4);
+	h3 = _mm_mul_ps(h1, vs_2_4);
+	h4 = _mm_mul_ps(h1, vs_3_4);
 
-	w1 = _mm_sub_pd(_mm_mul_pd(w1,h1), _mm_add_pd(_mm_mul_pd(z1,h4), _mm_add_pd(_mm_mul_pd(y1,h3), _mm_mul_pd(x1,h2))));
+	w1 = _mm_sub_ps(_mm_mul_ps(w1,h1), _mm_add_ps(_mm_mul_ps(z1,h4), _mm_add_ps(_mm_mul_ps(y1,h3), _mm_mul_ps(x1,h2))));
 
-	q1 = _mm_load_pd(&q[0]);
-	q1 = _mm_sub_pd(q1, w1);
-	_mm_store_pd(&q[0],q1);
+	q1 = _mm_load_ps(&q[0]);
+	q1 = _mm_sub_ps(q1, w1);
+	_mm_store_ps(&q[0],q1);
 
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
-	q1 = _mm_load_pd(&q[ldq]);
+	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+1])));
+	//	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
+	q1 = _mm_load_ps(&q[ldq]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd(z1, _mm_mul_pd(w1, h4)));
+	q1 = _mm_sub_ps(q1, _mm_add_ps(z1, _mm_mul_ps(w1, h4)));
 
-	_mm_store_pd(&q[ldq],q1);
+	_mm_store_ps(&q[ldq],q1);
 
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
-	q1 = _mm_load_pd(&q[ldq*2]);
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+1])));
+	//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
+	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+2])));
+	//	h4 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
+	q1 = _mm_load_ps(&q[ldq*2]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd(y1, _mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(w1, h4))));
+	q1 = _mm_sub_ps(q1, _mm_add_ps(y1, _mm_add_ps(_mm_mul_ps(z1, h3), _mm_mul_ps(w1, h4))));
 
-	_mm_store_pd(&q[ldq*2],q1);
+	_mm_store_ps(&q[ldq*2],q1);
 
-	h2 = _mm_loaddup_pd(&hh[ldh+1]);
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
-	q1 = _mm_load_pd(&q[ldq*3]);
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+1])));
+	//	h2 = _mm_loaddup_pd(&hh[ldh+1]);
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+2])));
+	//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+3])));
+	//	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
+	q1 = _mm_load_ps(&q[ldq*3]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd(x1, _mm_add_pd(_mm_mul_pd(y1, h2), _mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(w1, h4)))));
+	q1 = _mm_sub_ps(q1, _mm_add_ps(x1, _mm_add_ps(_mm_mul_ps(y1, h2), _mm_add_ps(_mm_mul_ps(z1, h3), _mm_mul_ps(w1, h4)))));
 
-	_mm_store_pd(&q[ldq*3], q1);
+	_mm_store_ps(&q[ldq*3], q1);
 
 	for (i = 4; i < nb; i++)
 	{
-		h1 = _mm_loaddup_pd(&hh[i-3]);
-		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
-		q1 = _mm_load_pd(&q[i*ldq]);
+		h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[i-3])));
+		//		h1 = _mm_loaddup_pd(&hh[i-3]);
+		h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+i-2])));
+		//		h2 = _mm_loaddup_pd(&hh[ldh+i-2]);
+		h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+i-1])));
+		//		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-1]);
+		h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+i])));
+		//		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i]);
 
-		q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_add_pd(_mm_mul_pd(w1, h4), _mm_mul_pd(z1, h3)), _mm_add_pd(_mm_mul_pd(x1,h1), _mm_mul_pd(y1, h2))));
+		q1 = _mm_load_ps(&q[i*ldq]);
 
-		_mm_store_pd(&q[i*ldq],q1);
+		q1 = _mm_sub_ps(q1, _mm_add_ps(_mm_add_ps(_mm_mul_ps(w1, h4), _mm_mul_ps(z1, h3)), _mm_add_ps(_mm_mul_ps(x1,h1), _mm_mul_ps(y1, h2))));
+
+		_mm_store_ps(&q[i*ldq],q1);
 	}
 
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
-	q1 = _mm_load_pd(&q[nb*ldq]);
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-3])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-3]);
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-2])));
+	//	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-1])));
+	//	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	q1 = _mm_load_ps(&q[nb*ldq]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd(_mm_add_pd(_mm_mul_pd(z1, h3), _mm_mul_pd(y1, h2)) , _mm_mul_pd(x1, h1)));
+	q1 = _mm_sub_ps(q1, _mm_add_ps(_mm_add_ps(_mm_mul_ps(z1, h3), _mm_mul_ps(y1, h2)) , _mm_mul_ps(x1, h1)));
 
-	_mm_store_pd(&q[nb*ldq],q1);
+	_mm_store_ps(&q[nb*ldq],q1);
 
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
-	q1 = _mm_load_pd(&q[(nb+1)*ldq]);
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-2])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-2]);
+	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-1])));
+	//	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
+	q1 = _mm_load_ps(&q[(nb+1)*ldq]);
 
-	q1 = _mm_sub_pd(q1, _mm_add_pd( _mm_mul_pd(y1, h2) , _mm_mul_pd(x1, h1)));
+	q1 = _mm_sub_ps(q1, _mm_add_ps( _mm_mul_ps(y1, h2) , _mm_mul_ps(x1, h1)));
 
-	_mm_store_pd(&q[(nb+1)*ldq],q1);
+	_mm_store_ps(&q[(nb+1)*ldq],q1);
 
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
-	q1 = _mm_load_pd(&q[(nb+2)*ldq]);
+	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-1])));
+	//	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	q1 = _mm_load_ps(&q[(nb+2)*ldq]);
 
-	q1 = _mm_sub_pd(q1, _mm_mul_pd(x1, h1));
+	q1 = _mm_sub_ps(q1, _mm_mul_ps(x1, h1));
 
-	_mm_store_pd(&q[(nb+2)*ldq],q1);
+	_mm_store_ps(&q[(nb+2)*ldq],q1);
 }
+
+
