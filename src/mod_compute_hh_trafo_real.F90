@@ -1085,7 +1085,7 @@ module compute_hh_trafo_real
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
          endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_SSE_BLOCK4_KERNEL */
+#endif /* WITH_REAL_SSE_BLOCK6_KERNEL */
 
 #if defined(WITH_REAL_AVX_BLOCK6_KERNEL) || defined(WITH_REAL_AVX2_BLOCK6_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
