@@ -299,24 +299,6 @@ contains
       cudaHostRegisterMapped   = cuda_hostRegisterMapped()
     endif
 
-    ! some temporarilly checks until single precision works with all kernels
-#ifndef DOUBLE_PRECISION_REAL
-    if ( (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK2) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK4) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK6) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) ) then
-    else
-      print *,"At the moment single precision only works with the generic kernels"
-      stop
-    endif
-#endif
-
     ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
     ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
     ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
@@ -657,22 +639,6 @@ contains
       cudaHostRegisterMapped   = cuda_hostRegisterMapped()
     endif
 
-#ifndef DOUBLE_PRECISION_REAL
-    if ( (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK2) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK4) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK6) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) .or. &
-         (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) ) then
-    else
-      print *,"At the moment single precision only works with the generic kernels"
-      stop
-    endif
-#endif
     ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
     ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
     ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
@@ -963,6 +929,7 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
 #ifndef DOUBLE_PRECISION_COMPLEX
     if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC) .or. &
          (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) .or. &
+         (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. &
          (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) ) then
     else
       print *,"At the moment single precision only works with the generic kernels"
@@ -1287,6 +1254,7 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
 #ifndef DOUBLE_PRECISION_COMPLEX
     if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC) .or. &
         (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)  .or. &
+        (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1)  .or. &
         (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) ) then
     else
       print *,"At the moment single precision only works with the generic kernels"
