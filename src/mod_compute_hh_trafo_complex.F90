@@ -90,7 +90,7 @@ module compute_hh_trafo_complex
            real(kind=c_double), intent(inout) :: kernel_time ! MPI_WTIME always needs double
            integer(kind=lik)            :: kernel_flops
            integer(kind=ik), intent(in) :: nbw, max_blk_size
-           complex(kind=ck8)             :: bcast_buffer(nbw,max_blk_size)
+           complex(kind=ck8)            :: bcast_buffer(nbw,max_blk_size)
            integer(kind=ik), intent(in) :: a_off
 
            integer(kind=ik), intent(in) :: stripe_width, a_dim2, stripe_count
@@ -99,7 +99,7 @@ module compute_hh_trafo_complex
            complex(kind=ck8)             :: a(stripe_width,a_dim2,stripe_count)
 #else
            integer(kind=ik), intent(in) :: max_threads, l_nev, thread_width
-           complex(kind=ck8)             :: a(stripe_width,a_dim2,stripe_count,max_threads)
+           complex(kind=ck8)            :: a(stripe_width,a_dim2,stripe_count,max_threads)
 #endif
            integer(kind=ik), intent(in) :: THIS_COMPLEX_ELPA_KERNEL
 
@@ -115,7 +115,7 @@ module compute_hh_trafo_complex
            !        Currently (on Sandy Bridge), single is faster than double
            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-           complex(kind=ck8)             :: w(nbw,2)
+           complex(kind=ck8)            :: w(nbw,2)
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef WITH_OPENMP
@@ -386,16 +386,16 @@ module compute_hh_trafo_complex
            real(kind=c_double), intent(inout) :: kernel_time ! MPI_WTIME always needs double
            integer(kind=lik)            :: kernel_flops
            integer(kind=ik), intent(in) :: nbw, max_blk_size
-           complex(kind=ck4)             :: bcast_buffer(nbw,max_blk_size)
+           complex(kind=ck4)            :: bcast_buffer(nbw,max_blk_size)
            integer(kind=ik), intent(in) :: a_off
 
            integer(kind=ik), intent(in) :: stripe_width, a_dim2, stripe_count
 #ifndef WITH_OPENMP
            integer(kind=ik), intent(in) :: last_stripe_width
-           complex(kind=ck4)             :: a(stripe_width,a_dim2,stripe_count)
+           complex(kind=ck4)            :: a(stripe_width,a_dim2,stripe_count)
 #else
            integer(kind=ik), intent(in) :: max_threads, l_nev, thread_width
-           complex(kind=ck4)             :: a(stripe_width,a_dim2,stripe_count,max_threads)
+           complex(kind=ck4)            :: a(stripe_width,a_dim2,stripe_count,max_threads)
 #endif
            integer(kind=ik), intent(in) :: THIS_COMPLEX_ELPA_KERNEL
 
@@ -411,7 +411,7 @@ module compute_hh_trafo_complex
            !        Currently (on Sandy Bridge), single is faster than double
            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-           complex(kind=ck8)             :: w(nbw,2)
+           complex(kind=ck4)            :: w(nbw,2)
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef WITH_OPENMP
