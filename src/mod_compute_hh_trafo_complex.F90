@@ -312,7 +312,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_SSE_BLOCK1_KERNE */
+#endif /* WITH_COMPLEX_SSE_BLOCK1_KERNEL */
 
 #if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK1_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
@@ -437,6 +437,33 @@ module compute_hh_trafo_complex
 #else
            nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
 #endif
+#if defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
+           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK2) then
+#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+             ttt = mpi_wtime()
+             do j = ncols, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+               call double_hh_trafo_complex_sse_2hv_single(a(1,j+off+a_off-1,istripe,my_thread), &
+                                                       w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_complex_sse_2hv_single(a(1,j+off+a_off-1,istripe), &
+                                                       w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+#ifdef WITH_OPENMP
+             if (j==1) call single_hh_trafo_complex_sse_1hv_single(a(1,1+off+a_off,istripe,my_thread), &
+                                                             bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#else
+             if (j==1) call single_hh_trafo_complex_sse_1hv_single(a(1,1+off+a_off,istripe), &
+                                                             bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#endif
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
+           endif
+#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL */
 
 #if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
@@ -562,6 +589,25 @@ module compute_hh_trafo_complex
 !              call single_hh_trafo_complex_avx_avx2_1hv_single(a(1,j+off+a_off,istripe),bcast_buffer(1,j+off),nbw,nl,stripe_width)
 !#endif
 
+#if defined(WITH_COMPLEX_SSE_BLOCK1_KERNEL)
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
+          if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK1) then
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+            ttt = mpi_wtime()
+            do j = ncols, 1, -1
+#ifdef WITH_OPENMP
+              call single_hh_trafo_complex_sse_1hv_double_single(a(1,j+off+a_off,istripe,my_thread), &
+                                                       bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#else
+              call single_hh_trafo_complex_sse_1hv_single(a(1,j+off+a_off,istripe), &
+                                                       bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#endif
+            enddo
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
+          endif
+#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_COMPLEX_SSE_BLOCK1_KERNEL */
+
 #if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) then
@@ -579,7 +625,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNE */
+#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL */
 
 #ifdef WITH_OPENMP
           if (my_thread==1) then
