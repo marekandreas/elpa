@@ -61,7 +61,7 @@
 // --------------------------------------------------------------------------------------------------
 #include "config-f90.h"
 
-#include <complex>
+#include <complex.h>
 #include <x86intrin.h>
 
 #define __forceinline __attribute__((always_inline))
@@ -70,13 +70,12 @@
 #undef __AVX__
 #endif
 
-extern "C" {
 
 //Forward declaration
-static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s);
-static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s);
-static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s);
-static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s);
+static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s);
+static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s);
+static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s);
+static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s);
 
 /*
 !f>#ifdef HAVE_SSE
@@ -91,7 +90,7 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 !f>#endif
 */
 
-void double_hh_trafo_complex_sse_2hv(std::complex<double>* q, std::complex<double>* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void double_hh_trafo_complex_sse_2hv(double complex* q, double complex* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -99,7 +98,7 @@ void double_hh_trafo_complex_sse_2hv(std::complex<double>* q, std::complex<doubl
 	int ldq = *pldq;
 	int ldh = *pldh;
 
-	std::complex<double> s = conj(hh[(ldh)+1])*1.0;
+	double complex s = conj(hh[(ldh)+1])*1.0;
 	for (i = 2; i < nb; i++)
 	{
 		s += hh[i-1] * conj(hh[(i+ldh)]);
@@ -126,7 +125,7 @@ void double_hh_trafo_complex_sse_2hv(std::complex<double>* q, std::complex<doubl
 #endif
 }
 
-static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s)
+static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -559,7 +558,7 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv(std::complex<double>
 	_mm_store_pd(&q_dbl[(2*nb*ldq)+6], q4);
 }
 
-static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s)
+static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -912,7 +911,7 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv(std::complex<double>
 	_mm_store_pd(&q_dbl[(2*nb*ldq)+4], q3);
 }
 
-static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s)
+static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -1185,7 +1184,7 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv(std::complex<double>
 	_mm_store_pd(&q_dbl[(2*nb*ldq)+2], q2);
 }
 
-static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq, int ldh, std::complex<double> s)
+static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
 {
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
@@ -1377,4 +1376,3 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv(std::complex<double>
 
 	_mm_store_pd(&q_dbl[(2*nb*ldq)+0], q1);
 }
-} // extern C
