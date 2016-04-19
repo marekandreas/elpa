@@ -89,57 +89,20 @@ static  __forceinline void hh_trafo_complex_kernel_12_AVX_1hv(std::complex<doubl
 static  __forceinline void hh_trafo_complex_kernel_8_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
 static  __forceinline void hh_trafo_complex_kernel_4_AVX_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq);
 
-#if 0
-static __forceinline void hh_trafo_complex_kernel_4_C_1hv(std::complex<double>* q, std::complex<double>* hh, int nb, int ldq)
-{
-	std::complex<double> x0;
-	std::complex<double> x1;
-	std::complex<double> x2;
-	std::complex<double> x3;
-	std::complex<double> h0;
-	std::complex<double> tau0;
-	int i=0;
+/*
+!f>#ifdef HAVE_AVX
+!f> interface
+!f>   subroutine single_hh_trafo_complex_avx_avx2_1hv(q, hh, pnb, pnq, pldq) bind(C, name="single_hh_trafo_complex_avx_avx2_1hv")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     complex(kind=c_double)     :: q(*)
+!f>     complex(kind=c_double)     :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
 
-	x0 = q[0];
-	x1 = q[1];
-	x2 = q[2];
-	x3 = q[3];
-
-	for (i = 1; i < nb; i++)
-	{
-		h0 = conj(hh[i]);
-		x0 += (q[(i*ldq)+0] * h0);
-		x1 += (q[(i*ldq)+1] * h0);
-		x2 += (q[(i*ldq)+2] * h0);
-		x3 += (q[(i*ldq)+3] * h0);
-	}
-
-	tau0 = hh[0];
-
-	h0 = (-1.0)*tau0;
-
-	x0 *= h0;
-	x1 *= h0;
-	x2 *= h0;
-	x3 *= h0;
-
-	q[0] += x0;
-	q[1] += x1;
-	q[2] += x2;
-	q[3] += x3;
-
-	for (i = 1; i < nb; i++)
-	{
-		h0 = hh[i];
-		q[(i*ldq)+0] += (x0*h0);
-		q[(i*ldq)+1] += (x1*h0);
-		q[(i*ldq)+2] += (x2*h0);
-		q[(i*ldq)+3] += (x3*h0);
-	}
-}
-#endif // if 0
-
-void single_hh_trafo_complex_avx_avx2_1hv_(std::complex<double>* q, std::complex<double>* hh, int* pnb, int* pnq, int* pldq)
+void single_hh_trafo_complex_avx_avx2_1hv(std::complex<double>* q, std::complex<double>* hh, int* pnb, int* pnq, int* pldq)
 {
 	int i;
 	int nb = *pnb;

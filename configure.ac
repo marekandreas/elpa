@@ -852,6 +852,10 @@ echo "Generating elpa/elpa_generated.h..."
 mkdir -p elpa
 grep -h "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
 
+echo "Generating Fortran interfaces for C kernels"
+grep -h "^ *!f>" $srcdir/src/elpa2_kernels/*.c | sed 's/^ *!f>//;' > elpa/elpa_generated_fortran_interfaces.h || exit 1
+grep -h "^ *!f>" $srcdir/src/elpa2_kernels/*.cpp | sed 's/^ *!f>//;' >> elpa/elpa_generated_fortran_interfaces.h || exit 1
+
 echo "Generating test/shared_sources/generated.h..."
 mkdir -p test/shared_sources
 grep -h "^ *!c>" $srcdir/test/shared_sources/*.F90 | sed 's/^ *!c>//;' > test/shared_sources/generated.h || exit 1

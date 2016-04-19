@@ -45,6 +45,10 @@ module compute_hh_trafo_real
 #ifdef HAVE_DETAILED_TIMINGS
          use timings
 #endif
+
+#if defined(HAVE_AVX) || defined(HAVE_SSE)
+         use kernel_interfaces
+#endif
          implicit none
          real(kind=rk), intent(inout) :: kernel_time
          integer(kind=lik)            :: kernel_flops

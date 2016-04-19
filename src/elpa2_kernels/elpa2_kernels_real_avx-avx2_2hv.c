@@ -86,12 +86,22 @@ __forceinline void hh_trafo_kernel_8_AVX_2hv(double* q, double* hh, int nb, int 
 __forceinline void hh_trafo_kernel_16_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s);
 __forceinline void hh_trafo_kernel_24_AVX_2hv(double* q, double* hh, int nb, int ldq, int ldh, double s);
 
-void double_hh_trafo_real_avx_avx2_2hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#if 0
-void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#endif
+/*
+!f>#ifdef HAVE_AVX
+!f> interface
+!f>   subroutine double_hh_trafo_real_avx_avx2_2hv(q, hh, pnb, pnq, pldq, pldh) bind(C, name="double_hh_trafo_real_avx_avx2_2hv")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     real(kind=c_double)     :: q(*)
+!f>     real(kind=c_double)     :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
 
-void double_hh_trafo_real_avx_avx2_2hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void double_hh_trafo_real_avx_avx2_2hv(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+
+void double_hh_trafo_real_avx_avx2_2hv(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -143,41 +153,6 @@ void double_hh_trafo_real_avx_avx2_2hv_(double* q, double* hh, int* pnb, int* pn
 		hh_trafo_kernel_4_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
 	}
 }
-
-#if 0
-void double_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
-{
-	int i;
-	int nb = *pnb;
-	int nq = *pldq;
-	int ldq = *pldq;
-	int ldh = *pldh;
-
-	// calculating scalar product to compute
-	// 2 householder vectors simultaneously
-	double s = hh[(ldh)+1]*1.0;
-
-	#pragma ivdep
-	for (i = 2; i < nb; i++)
-	{
-		s += hh[i-1] * hh[(i+ldh)];
-	}
-
-	// Production level kernel calls with padding
-#ifdef __AVX__
-	for (i = 0; i < nq; i+=24)
-	{
-		hh_trafo_kernel_24_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
-	}
-#else
-	for (i = 0; i < nq; i+=12)
-	{
-		hh_trafo_kernel_12_SSE_2hv(&q[i], hh, nb, ldq, ldh, s);
-	}
-#endif
-}
-#endif
-
 /**
  * Unrolled kernel that computes
  * 24 rows of Q simultaneously, a

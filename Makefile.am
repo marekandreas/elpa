@@ -12,6 +12,7 @@ libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSIO
 libelpa@SUFFIX@_la_SOURCES = src/mod_precision.f90 \
                              src/mod_mpi.F90 \
 			     src/mod_mpi_stubs.F90 \
+			     src/elpa2_kernels/mod_fortran_interfaces.F90 \
                              src/elpa_utilities.F90 \
 	                     src/elpa1_compute.F90 \
 	                     src/elpa1.F90 \

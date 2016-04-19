@@ -74,12 +74,22 @@
 static void hh_trafo_kernel_2_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 static void hh_trafo_kernel_4_SSE_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 
-void hexa_hh_trafo_real_sse_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#if 0
-void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#endif
+/*
+!f>#ifdef HAVE_SSE
+!f> interface
+!f>   subroutine hexa_hh_trafo_real_sse_6hv(q, hh, pnb, pnq, pldq, pldh) bind(C, name="hexa_hh_trafo_real_sse_6hv")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     real(kind=c_double)     :: q(*)
+!f>     real(kind=c_double)     :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
 
-void hexa_hh_trafo_real_sse_6hv_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void hexa_hh_trafo_real_sse_6hv(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+
+void hexa_hh_trafo_real_sse_6hv(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
