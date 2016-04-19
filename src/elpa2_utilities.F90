@@ -94,6 +94,7 @@ module ELPA2_utilities
   public :: AVAILABLE_COMPLEX_ELPA_KERNELS, AVAILABLE_REAL_ELPA_KERNELS
 
   public :: print_available_real_kernels, print_available_complex_kernels
+  public :: query_available_real_kernels, query_available_complex_kernels
 
   public :: qr_decomposition_via_environment_variable
 
@@ -307,7 +308,6 @@ module ELPA2_utilities
 
 !******
   contains
-
     subroutine print_available_real_kernels
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -322,6 +322,33 @@ module ELPA2_utilities
 
       do i=1, number_of_real_kernels
         if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
+          write(*,*) REAL_ELPA_KERNEL_NAMES(i)
+        endif
+      enddo
+      write(*,*) " "
+      write(*,*) " At the moment the following kernel would be choosen:"
+      write(*,*) get_actual_real_kernel_name()
+
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("print_available_real_kernels")
+#endif
+
+    end subroutine print_available_real_kernels
+
+    subroutine query_available_real_kernels
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#endif
+      implicit none
+
+      integer :: i
+
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("query_available_real_kernels")
+#endif
+
+      do i=1, number_of_real_kernels
+        if (AVAILABLE_REAL_ELPA_KERNELS(i) .eq. 1) then
           write(error_unit,*) REAL_ELPA_KERNEL_NAMES(i)
         endif
       enddo
@@ -330,10 +357,10 @@ module ELPA2_utilities
       write(error_unit,*) get_actual_real_kernel_name()
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("print_available_real_kernels")
+      call timer%stop("query_available_real_kernels")
 #endif
 
-    end subroutine print_available_real_kernels
+    end subroutine query_available_real_kernels
 
     subroutine print_available_complex_kernels
 #ifdef HAVE_DETAILED_TIMINGS
@@ -349,6 +376,33 @@ module ELPA2_utilities
 
       do i=1, number_of_complex_kernels
         if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .eq. 1) then
+           write(*,*) COMPLEX_ELPA_KERNEL_NAMES(i)
+        endif
+      enddo
+      write(*,*) " "
+      write(*,*) " At the moment the following kernel would be choosen:"
+      write(*,*) get_actual_complex_kernel_name()
+
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("print_available_complex_kernels")
+#endif
+
+    end subroutine print_available_complex_kernels
+
+    subroutine query_available_complex_kernels
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#endif
+
+      implicit none
+
+      integer :: i
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("query_available_complex_kernels")
+#endif
+
+      do i=1, number_of_complex_kernels
+        if (AVAILABLE_COMPLEX_ELPA_KERNELS(i) .eq. 1) then
            write(error_unit,*) COMPLEX_ELPA_KERNEL_NAMES(i)
         endif
       enddo
@@ -357,10 +411,10 @@ module ELPA2_utilities
       write(error_unit,*) get_actual_complex_kernel_name()
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("print_available_complex_kernels")
+      call timer%stop("query_available_complex_kernels")
 #endif
 
-    end subroutine print_available_complex_kernels
+    end subroutine query_available_complex_kernels
 
     function get_actual_real_kernel() result(actual_kernel)
 #ifdef HAVE_DETAILED_TIMINGS
