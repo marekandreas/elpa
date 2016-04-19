@@ -249,23 +249,7 @@ pkgconfig_DATA = @PKG_CONFIG_FILE@
 
 # programs
 bin_PROGRAMS = \
-  elpa1_test_real@SUFFIX@ \
-  elpa1_test_complex@SUFFIX@ \
-  elpa2_test_real@SUFFIX@ \
-  elpa2_test_complex@SUFFIX@ \
   elpa2_print_kernels@SUFFIX@
-
-if WANT_SINGLE_PRECISION_COMPLEX
-bin_PROGRAMS += \
-  elpa1_test_complex_single_precision@SUFFIX@ \
-  elpa2_test_complex_single_precision@SUFFIX@
-endif
-
-if WANT_SINGLE_PRECISION_REAL
-bin_PROGRAMS += \
-  elpa1_test_real_single_precision@SUFFIX@ \
-  elpa2_test_real_single_precision@SUFFIX@
-endif
 
 noinst_PROGRAMS = \
   elpa2_test_real_default_kernel@SUFFIX@ \
@@ -277,16 +261,24 @@ noinst_PROGRAMS = \
   elpa1_test_complex_c_version@SUFFIX@ \
   elpa2_test_real_c_version@SUFFIX@ \
   elpa2_test_complex_c_version@SUFFIX@ \
-  elpa1_test_real_with_c@SUFFIX@
+  elpa1_test_real_with_c@SUFFIX@ \
+  elpa1_test_complex@SUFFIX@ \
+  elpa1_test_real@SUFFIX@ \
+  elpa2_test_complex@SUFFIX@ \
+  elpa2_test_real@SUFFIX@
 
 if WANT_SINGLE_PRECISION_COMPLEX
 noinst_PROGRAMS += \
+  elpa1_test_complex_single_precision@SUFFIX@ \
+  elpa2_test_complex_single_precision@SUFFIX@ \
   elpa2_test_complex_default_kernel_single_precision@SUFFIX@ \
   elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@
 endif
 
 if WANT_SINGLE_PRECISION_REAL
 noinst_PROGRAMS += \
+  elpa1_test_real_single_precision@SUFFIX@ \
+  elpa2_test_real_single_precision@SUFFIX@ \
   elpa2_test_real_default_kernel_single_precision@SUFFIX@ \
   elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@ \
   elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@
