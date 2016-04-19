@@ -159,13 +159,13 @@ pkgconfig_DATA = @PKG_CONFIG_FILE@
 
 # programs
 bin_PROGRAMS = \
+  elpa2_print_kernels@SUFFIX@
+
+noinst_PROGRAMS = \
   elpa1_test_real@SUFFIX@ \
   elpa1_test_complex@SUFFIX@ \
   elpa2_test_real@SUFFIX@ \
   elpa2_test_complex@SUFFIX@ \
-  elpa2_print_kernels@SUFFIX@
-
-noinst_PROGRAMS = \
   elpa2_test_real_default_kernel@SUFFIX@ \
   elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@ \
   elpa2_test_complex_default_kernel@SUFFIX@ \
