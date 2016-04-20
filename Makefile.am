@@ -12,6 +12,7 @@ libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSIO
 libelpa@SUFFIX@_la_SOURCES = src/mod_precision.F90 \
                              src/mod_mpi.F90 \
 			     src/mod_mpi_stubs.F90 \
+			     src/elpa2_kernels/mod_fortran_interfaces.F90 \
                              src/elpa_utilities.F90 \
 	                     src/elpa1_compute.F90 \
 	                     src/elpa1.F90 \
@@ -139,30 +140,30 @@ endif
 endif
 
 if WITH_COMPLEX_SSE_BLOCK1_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_1hv_double_precision.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_1hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_1hv_single_precision.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_1hv_single_precision.c
 endif
 endif
 
 if WITH_COMPLEX_AVX_BLOCK1_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv_double_precision.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv_single_precision.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv_single_precision.c
 endif
 endif
 
 if WITH_COMPLEX_SSE_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_2hv_double_precision.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_2hv_single_precision.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_2hv_single_precision.c
 endif
 endif
 
 if WITH_COMPLEX_AVX_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv_double_precision.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv_single_precision.cpp
+  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv_single_precision.c
 endif
 endif
 

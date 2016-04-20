@@ -91,11 +91,22 @@ __forceinline void hh_trafo_kernel_16_AVX_4hv_single(float* q, float* hh, int nb
 __forceinline void hh_trafo_kernel_24_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
 
 void quad_hh_trafo_real_avx_avx2_4hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#if 0
-void quad_hh_trafo_fast_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#endif
 
-void quad_hh_trafo_real_avx_avx2_4hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+/*
+!f>#ifdef HAVE_AVX
+!f> interface
+!f>   subroutine quad_hh_trafo_real_avx_avx2_4hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="quad_hh_trafo_real_avx_avx2_4hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_float)      :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -138,13 +149,6 @@ void quad_hh_trafo_real_avx_avx2_4hv_single_(float* q, float* hh, int* pnb, int*
 
 		s_1_4 += hh[i-3] * hh[i+(ldh*3)];
 	}
-
-//	printf("s_1_2: %f\n", s_1_2);
-//	printf("s_1_3: %f\n", s_1_3);
-//	printf("s_2_3: %f\n", s_2_3);
-//	printf("s_1_4: %f\n", s_1_4);
-//	printf("s_2_4: %f\n", s_2_4);
-//	printf("s_3_4: %f\n", s_3_4);
 
 	// Production level kernel calls with padding
 	for (i = 0; i < nq-20; i+=24)

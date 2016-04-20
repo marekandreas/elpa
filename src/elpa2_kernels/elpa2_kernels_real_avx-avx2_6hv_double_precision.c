@@ -88,12 +88,22 @@
 static void hh_trafo_kernel_4_AVX_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 static void hh_trafo_kernel_8_AVX_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 
-void hexa_hh_trafo_real_avx_avx2_6hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#if 0
-void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#endif
+void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+/*
+!f>#ifdef HAVE_AVX
+!f> interface
+!f>   subroutine hexa_hh_trafo_real_avx_avx2_6hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="hexa_hh_trafo_real_avx_avx2_6hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_double)     :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
 
-void hexa_hh_trafo_real_avx_avx2_6hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;

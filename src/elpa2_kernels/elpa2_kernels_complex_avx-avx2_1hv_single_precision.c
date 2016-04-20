@@ -61,7 +61,7 @@
 // --------------------------------------------------------------------------------------------------
 #include "config-f90.h"
 
-#include <complex>
+#include <complex.h>
 #include <x86intrin.h>
 
 #define __forceinline __attribute__((always_inline))
@@ -82,14 +82,26 @@
 
 #endif
 
-extern "C" {
-
 //Forward declaration
-static  __forceinline void hh_trafo_complex_kernel_12_AVX_1hv_single(std::complex<float>* q, std::complex<float>* hh, int nb, int ldq);
-static  __forceinline void hh_trafo_complex_kernel_8_AVX_1hv_single(std::complex<float>* q, std::complex<float>* hh, int nb, int ldq);
-static  __forceinline void hh_trafo_complex_kernel_4_AVX_1hv_single(std::complex<float>* q, std::complex<float>* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_12_AVX_1hv_single(complex* q, complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_8_AVX_1hv_single(complex* q, complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_4_AVX_1hv_single(complex* q, complex* hh, int nb, int ldq);
 
-void single_hh_trafo_complex_avx_avx2_1hv_single_(std::complex<float>* q, std::complex<float>* hh, int* pnb, int* pnq, int* pldq)
+/*
+!f>#ifdef HAVE_AVX
+!f> interface
+!f>   subroutine single_hh_trafo_complex_avx_avx2_1hv_single(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_avx_avx2_1hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     complex(kind=c_float)   :: q(*)
+!f>     complex(kind=c_float)   :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+void single_hh_trafo_complex_avx_avx2_1hv_single(complex* q, complex* hh, int* pnb, int* pnq, int* pldq)
 {
 	int i;
 	int nb = *pnb;
@@ -130,7 +142,7 @@ void single_hh_trafo_complex_avx_avx2_1hv_single_(std::complex<float>* q, std::c
 	}
 }
 
- static __forceinline void hh_trafo_complex_kernel_12_AVX_1hv_single(std::complex<float>* q, std::complex<float>* hh, int nb, int ldq)
+ static __forceinline void hh_trafo_complex_kernel_12_AVX_1hv_single(complex* q, complex* hh, int nb, int ldq)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
@@ -331,7 +343,7 @@ void single_hh_trafo_complex_avx_avx2_1hv_single_(std::complex<float>* q, std::c
 	}
 }
 
-static __forceinline void hh_trafo_complex_kernel_8_AVX_1hv_single(std::complex<float>* q, std::complex<float>* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_8_AVX_1hv_single(complex* q, complex* hh, int nb, int ldq)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
@@ -482,7 +494,7 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_1hv_single(std::complex<
 	}
 }
 
-static __forceinline void hh_trafo_complex_kernel_4_AVX_1hv_single(std::complex<float>* q, std::complex<float>* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_4_AVX_1hv_single(complex* q, complex* hh, int nb, int ldq)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
@@ -580,4 +592,3 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_1hv_single(std::complex<
 //		_mm256_store_pd(&q_dbl[(2*i*ldq)+4], q2);
 	}
 }
-} // extern C

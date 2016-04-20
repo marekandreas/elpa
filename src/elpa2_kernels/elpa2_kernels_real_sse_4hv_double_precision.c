@@ -75,12 +75,23 @@ __forceinline void hh_trafo_kernel_2_SSE_4hv_double(double* q, double* hh, int n
 __forceinline void hh_trafo_kernel_4_SSE_4hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
 __forceinline void hh_trafo_kernel_6_SSE_4hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
 
-void quad_hh_trafo_real_sse_4hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#if 0
-void quad_hh_trafo_fast_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#endif
+void quad_hh_trafo_real_sse_4hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 
-void quad_hh_trafo_real_sse_4hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+/*
+!f>#ifdef HAVE_SSE
+!f> interface
+!f>   subroutine quad_hh_trafo_real_sse_4hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="quad_hh_trafo_real_sse_4hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_double)     :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+void quad_hh_trafo_real_sse_4hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+
 {
 	int i;
 	int nb = *pnb;

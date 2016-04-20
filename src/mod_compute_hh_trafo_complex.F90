@@ -86,6 +86,10 @@ module compute_hh_trafo_complex
            use timings
 #endif
            use iso_c_binding
+
+#if defined(HAVE_AVX) || defined(HAVE_SSE)
+         use kernel_interfaces
+#endif
            implicit none
            real(kind=c_double), intent(inout) :: kernel_time ! MPI_WTIME always needs double
            integer(kind=lik)            :: kernel_flops
@@ -380,6 +384,10 @@ module compute_hh_trafo_complex
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
            use timings
+#endif
+
+#if defined(HAVE_AVX) || defined(HAVE_SSE)
+           use kernel_interfaces
 #endif
            use iso_c_binding
            implicit none

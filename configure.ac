@@ -43,10 +43,10 @@ if test x$_cv_gnu_make_command = x ; then
         AC_MSG_ERROR([Need GNU Make])
 fi
 
-AC_CHECK_PROG(CPP_FOUND,cpp,yes,no)
-if test x"${CPP_FOUND}" = xno; then
-  AC_MSG_ERROR([no cpp found])
-fi
+#AC_CHECK_PROG(CPP_FOUND,cpp,yes,no)
+#if test x"${CPP_FOUND}" = xno; then
+#  AC_MSG_ERROR([no cpp found])
+#fi
 
 # gnu-make fortran module dependencies
 m4_include([fdep/fortran_dependencies.m4])
@@ -120,17 +120,17 @@ if test x"${enable_openmp}" = x"yes"; then
   FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 fi
 
-# C++
-AC_LANG([C++])
-AC_PROG_CXX
-
-if test x"${enable_openmp}" = x"yes"; then
-  AX_ELPA_OPENMP
-  if test "$ac_cv_prog_cxx_openmp" = unsupported; then
-    AC_MSG_ERROR([Could not compile a C++ program with OpenMP, adjust CXXFLAGS])
-  fi
-  CXXFLAGS="$OPENMP_CXXFLAGS $CXXFLAGS"
-fi
+## C++
+#AC_LANG([C++])
+#AC_PROG_CXX
+#
+#if test x"${enable_openmp}" = x"yes"; then
+#  AX_ELPA_OPENMP
+#  if test "$ac_cv_prog_cxx_openmp" = unsupported; then
+#    AC_MSG_ERROR([Could not compile a C++ program with OpenMP, adjust CXXFLAGS])
+#  fi
+#  CXXFLAGS="$OPENMP_CXXFLAGS $CXXFLAGS"
+#fi
 
 
 
@@ -268,26 +268,26 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 )
 AC_MSG_RESULT([${can_compile_avx}])
 
-if test "${can_compile_avx}" = "yes" ; then
-  AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
-  AC_LANG_PUSH([C++])
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-   #include <x86intrin.h>
-   int main(int argc, char **argv){
-   double* q;
-   __m256d a1_1 = _mm256_load_pd(q);
-   return 0;
-   }
-   ])],
-   [can_compile_avx=yes],
-   [can_compile_avx=no]
-  )
-  AC_LANG_POP([C++])
-  AC_MSG_RESULT([${can_compile_avx}])
-  if test "${can_compile_avx}" = "no" ; then
-    AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
-  fi
-fi
+#if test "${can_compile_avx}" = "yes" ; then
+#  AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
+#  AC_LANG_PUSH([C++])
+#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#   #include <x86intrin.h>
+#   int main(int argc, char **argv){
+#   double* q;
+#   __m256d a1_1 = _mm256_load_pd(q);
+#   return 0;
+#   }
+#   ])],
+#   [can_compile_avx=yes],
+#   [can_compile_avx=no]
+#  )
+#  AC_LANG_POP([C++])
+#  AC_MSG_RESULT([${can_compile_avx}])
+#  if test "${can_compile_avx}" = "no" ; then
+#    AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
+#  fi
+#fi
 
 AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
@@ -303,27 +303,27 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  [can_compile_avx2=no]
 )
 AC_MSG_RESULT([${can_compile_avx2}])
-if test "${can_compile_avx2}" = "yes" ; then
-  AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
-  AC_LANG_PUSH([C++])
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-   #include <x86intrin.h>
-   int main(int argc, char **argv){
-   double* q;
-   __m256d q1 = _mm256_load_pd(q);
-   __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
-   return 0;
-   }
-   ])],
-   [can_compile_avx2=yes],
-   [can_compile_avx2=no]
-  )
-  AC_LANG_POP([C++])
-  AC_MSG_RESULT([${can_compile_avx2}])
-  if test "${can_compile_avx2}" = "no" ; then
-    AC_MSG_WARN([Cannot compile C++ with AVX2!])
-  fi
-fi
+#if test "${can_compile_avx2}" = "yes" ; then
+#  AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
+#  AC_LANG_PUSH([C++])
+#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#   #include <x86intrin.h>
+#   int main(int argc, char **argv){
+#   double* q;
+#   __m256d q1 = _mm256_load_pd(q);
+#   __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+#   return 0;
+#   }
+#   ])],
+#   [can_compile_avx2=yes],
+#   [can_compile_avx2=no]
+#  )
+#  AC_LANG_POP([C++])
+#  AC_MSG_RESULT([${can_compile_avx2}])
+#  if test "${can_compile_avx2}" = "no" ; then
+#    AC_MSG_WARN([Cannot compile C++ with AVX2!])
+#  fi
+#fi
 
 if test "${can_compile_avx}" = "yes" ; then
   install_real_avx_block2=yes
@@ -940,6 +940,10 @@ fi
 echo "Generating elpa/elpa_generated.h..."
 mkdir -p elpa
 grep -h "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
+
+echo "Generating Fortran interfaces for C kernels"
+grep -h "^ *!f>" $srcdir/src/elpa2_kernels/*.c | sed 's/^ *!f>//;' > elpa/elpa_generated_fortran_interfaces.h || exit 1
+#grep -h "^ *!f>" $srcdir/src/elpa2_kernels/*.cpp | sed 's/^ *!f>//;' >> elpa/elpa_generated_fortran_interfaces.h || exit 1
 
 echo "Generating test/shared_sources/generated.h..."
 mkdir -p test/shared_sources

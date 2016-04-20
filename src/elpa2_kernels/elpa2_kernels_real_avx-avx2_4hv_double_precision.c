@@ -89,12 +89,23 @@ __forceinline void hh_trafo_kernel_4_AVX_4hv_double(double* q, double* hh, int n
 __forceinline void hh_trafo_kernel_8_AVX_4hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
 __forceinline void hh_trafo_kernel_12_AVX_4hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
 
-void quad_hh_trafo_real_avx_avx2_4hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#if 0
-void quad_hh_trafo_fast_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#endif
+void quad_hh_trafo_real_avx_avx2_4hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+/*
+!f>#ifdef HAVE_AVX
+!f> interface
+!f>   subroutine quad_hh_trafo_real_avx_avx2_4hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="quad_hh_trafo_real_avx_avx2_4hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_double)     :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
 
-void quad_hh_trafo_real_avx_avx2_4hv_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+
+void quad_hh_trafo_real_avx_avx2_4hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -137,13 +148,6 @@ void quad_hh_trafo_real_avx_avx2_4hv_double_(double* q, double* hh, int* pnb, in
 
 		s_1_4 += hh[i-3] * hh[i+(ldh*3)];
 	}
-
-//	printf("s_1_2: %f\n", s_1_2);
-//	printf("s_1_3: %f\n", s_1_3);
-//	printf("s_2_3: %f\n", s_2_3);
-//	printf("s_1_4: %f\n", s_1_4);
-//	printf("s_2_4: %f\n", s_2_4);
-//	printf("s_3_4: %f\n", s_3_4);
 
 	// Production level kernel calls with padding
 #ifdef __AVX__
@@ -188,67 +192,6 @@ void quad_hh_trafo_real_avx_avx2_4hv_double_(double* q, double* hh, int* pnb, in
 	}
 #endif
 }
-
-#if 0
-void quad_hh_trafo_fast_double_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
-{
-	int i;
-	int nb = *pnb;
-	int nq = *pldq;
-	int ldq = *pldq;
-	int ldh = *pldh;
-
-	// calculating scalar products to compute
-	// 4 householder vectors simultaneously
-	double s_1_2 = hh[(ldh)+1];
-	double s_1_3 = hh[(ldh*2)+2];
-	double s_2_3 = hh[(ldh*2)+1];
-	double s_1_4 = hh[(ldh*3)+3];
-	double s_2_4 = hh[(ldh*3)+2];
-	double s_3_4 = hh[(ldh*3)+1];
-
-	// calculate scalar product of first and fourth householder vector
-	// loop counter = 2
-	s_1_2 += hh[2-1] * hh[(2+ldh)];
-	s_2_3 += hh[(ldh)+2-1] * hh[2+(ldh*2)];
-	s_3_4 += hh[(ldh*2)+2-1] * hh[2+(ldh*3)];
-
-	// loop counter = 3
-	s_1_2 += hh[3-1] * hh[(3+ldh)];
-	s_2_3 += hh[(ldh)+3-1] * hh[3+(ldh*2)];
-	s_3_4 += hh[(ldh*2)+3-1] * hh[3+(ldh*3)];
-
-	s_1_3 += hh[3-2] * hh[3+(ldh*2)];
-	s_2_4 += hh[(ldh*1)+3-2] * hh[3+(ldh*3)];
-
-	#pragma ivdep
-	for (i = 4; i < nb; i++)
-	{
-		s_1_2 += hh[i-1] * hh[(i+ldh)];
-		s_2_3 += hh[(ldh)+i-1] * hh[i+(ldh*2)];
-		s_3_4 += hh[(ldh*2)+i-1] * hh[i+(ldh*3)];
-
-		s_1_3 += hh[i-2] * hh[i+(ldh*2)];
-		s_2_4 += hh[(ldh*1)+i-2] * hh[i+(ldh*3)];
-
-		s_1_4 += hh[i-3] * hh[i+(ldh*3)];
-	}
-
-	// Production level kernel calls with padding
-#ifdef __AVX__
-	for (i = 0; i < nq; i+=12)
-	{
-		hh_trafo_kernel_12_AVX_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-#else
-	for (i = 0; i < nq; i+=6)
-	{
-		hh_trafo_kernel_6_SSE_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-#endif
-}
-#endif
-
 /**
  * Unrolled kernel that computes
  * 12 rows of Q simultaneously, a

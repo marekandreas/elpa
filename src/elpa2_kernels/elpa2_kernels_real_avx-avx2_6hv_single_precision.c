@@ -89,11 +89,22 @@ static void hh_trafo_kernel_4_AVX_6hv_single(float* q, float* hh, int nb, int ld
 static void hh_trafo_kernel_8_AVX_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
 
 void hexa_hh_trafo_real_avx_avx2_6hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#if 0
-void hexa_hh_trafo_fast_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
-#endif
 
-void hexa_hh_trafo_real_avx_avx2_6hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+/*
+!f>#ifdef HAVE_AVX
+!f> interface
+!f>   subroutine hexa_hh_trafo_real_avx_avx2_6hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="hexa_hh_trafo_real_avx_avx2_6hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_float)      :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+void hexa_hh_trafo_real_avx_avx2_6hv_single(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -104,22 +115,6 @@ void hexa_hh_trafo_real_avx_avx2_6hv_single_(float* q, float* hh, int* pnb, int*
 	// calculating scalar products to compute
 	// 6 householder vectors simultaneously
 	float scalarprods[15];
-
-//	scalarprods[0] = s_1_2;
-//	scalarprods[1] = s_1_3;
-//	scalarprods[2] = s_2_3;
-//	scalarprods[3] = s_1_4;
-//	scalarprods[4] = s_2_4;
-//	scalarprods[5] = s_3_4;
-//	scalarprods[6] = s_1_5;
-//	scalarprods[7] = s_2_5;
-//	scalarprods[8] = s_3_5;
-//	scalarprods[9] = s_4_5;
-//	scalarprods[10] = s_1_6;
-//	scalarprods[11] = s_2_6;
-//	scalarprods[12] = s_3_6;
-//	scalarprods[13] = s_4_6;
-//	scalarprods[14] = s_5_6;
 
 	scalarprods[0] = hh[(ldh+1)];
 	scalarprods[1] = hh[(ldh*2)+2];
@@ -215,22 +210,6 @@ void hexa_hh_trafo_real_avx_avx2_6hv_single_(float* q, float* hh, int* pnb, int*
 
 		scalarprods[10] += hh[i-5] * hh[i+(ldh*5)];
 	}
-
-//	printf("s_1_2: %f\n", scalarprods[0]);
-//	printf("s_1_3: %f\n", scalarprods[1]);
-//	printf("s_2_3: %f\n", scalarprods[2]);
-//	printf("s_1_4: %f\n", scalarprods[3]);
-//	printf("s_2_4: %f\n", scalarprods[4]);
-//	printf("s_3_4: %f\n", scalarprods[5]);
-//	printf("s_1_5: %f\n", scalarprods[6]);
-//	printf("s_2_5: %f\n", scalarprods[7]);
-//	printf("s_3_5: %f\n", scalarprods[8]);
-//	printf("s_4_5: %f\n", scalarprods[9]);
-//	printf("s_1_6: %f\n", scalarprods[10]);
-//	printf("s_2_6: %f\n", scalarprods[11]);
-//	printf("s_3_6: %f\n", scalarprods[12]);
-//	printf("s_4_6: %f\n", scalarprods[13]);
-//	printf("s_5_6: %f\n", scalarprods[14]);
 
 	// Production level kernel calls with padding
 #ifdef __AVX__
