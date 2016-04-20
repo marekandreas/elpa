@@ -202,53 +202,75 @@ if test x"${with_ftimings}" = x"yes"; then
 fi
 AM_CONDITIONAL([HAVE_DETAILED_TIMINGS],[test x"$with_ftimings" = x"yes"])
 
-AC_MSG_CHECKING(whether double-precision SSE assembler kernel can be compiled)
+AC_MSG_CHECKING(whether double-precision SSE assembly kernel can be compiled)
 
 $CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64_double_precision.s -o test.o 2>/dev/null
 if test "$?" == 0; then
-  can_compile_sse=yes
-  install_real_sse=yes
+  can_compile_sse_assembly=yes
+  install_real_sse_assembly=yes
+  install_complex_sse_assembly=yes
+else
+  can_compile_sse_assembly=no
+  install_real_sse_assembly=no
+  install_complex_sse_assembly=no
+fi
+
+rm -f ./test.o
+AC_MSG_RESULT([${can_compile_sse_assembly}])
+
+if test x"${want_single_precision}" = x"yes" ; then
+  AC_MSG_CHECKING(whether single-precision SSE assembly kernel can be compiled)
+
+  $CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64_single_precision.s -o test.o 2>/dev/null
+  if test "$?" == 0; then
+    can_compile_sse_assembly=yes
+    install_real_sse_assembly=yes
+    install_complex_sse_assembly=yes
+  else
+    can_compile_sse_assembly=no
+    install_real_sse_assembly=no
+    install_complex_sse_assembly=no
+  fi
+  rm -f ./test.o
+  AC_MSG_RESULT([${can_compile_sse_assembly}])
+  if test x"${can_compile_sse_assembly}" = x"no" ; then
+    AC_MSG_WARN([Cannot compile single-precision SSE assembly kernel: disabling SSE assembly kernels alltogether])
+  fi
+fi
+
+dnl check whether on can compile with sse-gcc intrinsics
+AC_MSG_CHECKING(whether we can compile SSE with gcc intrinsics in C)
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+ #include <x86intrin.h>
+ int main(int argc, char **argv){
+ double* q;
+ __m128d h1 = _mm_loaddup_pd(q);
+ return 0;
+ }
+ ])],
+ [can_compile_sse_intrinsics=yes],
+ [can_compile_sse_intrinsics=no]
+)
+AC_MSG_RESULT([${can_compile_sse_intrinsics}])
+
+if test "${can_compile_sse_intrinsics}" = "yes"; then
+  install_real_sse_intrinsics=yes
   install_real_sse_block2=yes
   install_real_sse_block4=yes
   install_real_sse_block6=yes
 
-  install_complex_sse=yes
+  install_complex_sse_intrinsics=yes
   install_complex_sse_block1=yes
   install_complex_sse_block2=yes
-
 else
-  can_compile_sse=no
-  install_real_sse=no
+  install_real_sse_intrinsics=no
   install_real_sse_block2=no
   install_real_sse_block4=no
   install_real_sse_block6=no
 
-  install_complex_sse=no
+  install_complex_sse_intrinsics=no
   install_complex_sse_block1=no
   install_complex_sse_block2=no
-fi
-
-rm -f ./test.o
-AC_MSG_RESULT([${can_compile_sse}])
-
-if test x"${want_single_precision}" = x"yes" ; then
-  AC_MSG_CHECKING(whether single-precision SSE assembler kernel can be compiled)
-
-  $CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64_double_precision.s -o test.o 2>/dev/null
-  if test "$?" == 0; then
-    can_compile_sse=yes
-    install_real_sse=yes
-    install_complex_sse=yes
-  else
-    can_compile_sse=no
-    install_real_sse=no
-    install_complex_sse=no
-  fi
-  rm -f ./test.o
-  AC_MSG_RESULT([${can_compile_sse}])
-  if test x"${can_compile_sse}" = x"no" ; then
-    AC_MSG_WARN([Cannot compile single-precision SSE kernel: disabling SSE kernels alltogether])
-  fi
 fi
 
 dnl check whether one can compile with avx - gcc intrinsics
@@ -356,10 +378,16 @@ else
   install_complex_avx2_block1=no
   install_complex_avx2_block2=no
 fi
-AM_CONDITIONAL([HAVE_SSE],[test x"$can_compile_sse" = x"yes"])
-if test x"${can_compile_sse}" = x"yes" ; then
-  AC_DEFINE([HAVE_SSE],[1],[SSE is supported on this CPU])
+
+AM_CONDITIONAL([HAVE_SSE_ASSEMBLY],[test x"$can_compile_sse_assembly" = x"yes"])
+if test x"${can_compile_sse_assembly}" = x"yes" ; then
+  AC_DEFINE([HAVE_SSE_ASSEMBLY],[1],[assembly SSE is supported on this CPU])
 fi
+AM_CONDITIONAL([HAVE_SSE_INTRINSICS],[test x"$can_compile_sse_intrinsics" = x"yes"])
+if test x"${can_compile_sse_intrinsics}" = x"yes" ; then
+  AC_DEFINE([HAVE_SSE_INTRINSICS],[1],[gcc intrinsics SSE is supported on this CPU])
+fi
+
 AM_CONDITIONAL([HAVE_AVX],[test x"$can_compile_avx" = x"yes"])
 if test x"${can_compile_avx}" = x"yes" ; then
   AC_DEFINE([HAVE_AVX],[1],[AVX is supported on this CPU])
@@ -671,7 +699,7 @@ dnl generic-simple kernel
 DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-simple-kernel-only],[generic-simple-kernel],[install_real_generic_simple])
 
 dnl sse kernel
-DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-kernel-only],[sse-kernel],[install_real_sse])
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-assembly-kernel-only],[sse-assembly-kernel],[install_real_sse_assembly])
 
 dnl bgp kernel
 DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgp-kernel-only],[bgp-kernel],[install_real_bgp])
@@ -706,7 +734,7 @@ dnl generic-simple kernel
 DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-simple-kernel-only],[generic-simple-kernel],[install_complex_generic_simple])
 
 dnl sse kernel
-DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-kernel-only],[sse-kernel],[install_complex_sse])
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-assembly-kernel-only],[sse-assembly-kernel],[install_complex_sse_assembly])
 
 dnl complex-bqp kernel
 DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgp-kernel-only],[bgp-kernel],[install_complex_bgp])
@@ -757,14 +785,14 @@ if test x"${install_complex_generic_simple}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_GENERIC_SIMPLE_KERNEL],[1],[can use complex generic-simple kernel])
 fi
 
-AM_CONDITIONAL([WITH_REAL_SSE_KERNEL],[test x"$install_real_sse" = x"yes"])
-if test x"${install_real_sse}" = x"yes" ; then
- AC_DEFINE([WITH_REAL_SSE_KERNEL],[1],[can use real SSE kernel])
+AM_CONDITIONAL([WITH_REAL_SSE_ASSEMBLY_KERNEL],[test x"$install_real_sse_assembly" = x"yes"])
+if test x"${install_real_sse_assembly}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_SSE_ASSEMBLY_KERNEL],[1],[can use real SSE assembly kernel])
 fi
 
-AM_CONDITIONAL([WITH_COMPLEX_SSE_KERNEL],[test x"$install_complex_sse" = x"yes"])
-if test x"${install_complex_sse}" = x"yes" ; then
- AC_DEFINE([WITH_COMPLEX_SSE_KERNEL],[1],[can use complex SSE kernel])
+AM_CONDITIONAL([WITH_COMPLEX_SSE_ASSEMBLY_KERNEL],[test x"$install_complex_sse_assembly" = x"yes"])
+if test x"${install_complex_sse_assembly}" = x"yes" ; then
+ AC_DEFINE([WITH_COMPLEX_SSE_ASSEMBLY_KERNEL],[1],[can use complex SSE assembly kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_SSE_BLOCK2_KERNEL],[test x"$install_real_sse_block2" = x"yes"])

@@ -132,7 +132,7 @@ module ELPA2_utilities
 #ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
   integer(kind=ik), parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC_SIMPLE
 #endif
-#ifdef WITH_REAL_SSE_KERNEL
+#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
   integer(kind=ik), parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_SSE
 #endif
 #ifdef WITH_REAL_AVX_BLOCK2_KERNEL
@@ -168,7 +168,7 @@ module ELPA2_utilities
 #ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
   integer(kind=ik), parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC_SIMPLE
 #endif
-#ifdef WITH_REAL_SSE_KERNEL
+#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
   integer(kind=ik), parameter :: DEFAULT_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_SSE
 #endif
 #ifdef WITH_REAL_AVX_BLOCK2_KERNEL
@@ -238,7 +238,7 @@ module ELPA2_utilities
 #ifdef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
   integer(kind=ik), parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE
 #endif
-#ifdef WITH_COMPLEX_SSE_KERNEL
+#ifdef WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
   integer(kind=ik), parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_SSE
 #endif
 #ifdef WITH_COMPLEX_AVX1_BLOCK1_KERNEL
@@ -267,7 +267,7 @@ module ELPA2_utilities
 #ifdef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
   integer(kind=ik), parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE
 #endif
-#ifdef WITH_COMPLEX_SSE_KERNEL
+#ifdef WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
   integer(kind=ik), parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_SSE
 #endif
 #ifdef WITH_COMPLEX_AVX1_BLOCK1_KERNEL
@@ -321,7 +321,7 @@ module ELPA2_utilities
 #else
                                               ,0                       &
 #endif
-#if WITH_REAL_SSE_KERNEL
+#if WITH_REAL_SSE_ASSEMBLY_KERNEL
                                                 ,1                     &
 #else
                                                 ,0                     &
@@ -402,7 +402,7 @@ module ELPA2_utilities
 #else
                                               ,0                          &
 #endif
-#if WITH_COMPLEX_SSE_KERNEL
+#if WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
                                                 ,1                        &
 #else
                                                 ,0                        &

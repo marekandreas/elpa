@@ -87,7 +87,7 @@ module compute_hh_trafo_complex
 #endif
            use iso_c_binding
 
-#if defined(HAVE_AVX) || defined(HAVE_SSE)
+#if defined(HAVE_AVX) || defined(HAVE_SSE_INTRINSICS) || defined(HAVE_SSE_ASSEMBLY)
          use kernel_interfaces
 #endif
            implicit none
@@ -271,7 +271,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_GENERIC_KERNEL */
 
-#if defined(WITH_COMPLEX_SSE_KERNEL)
+#if defined(WITH_COMPLEX_SSE_ASSEMBLY_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
            if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
@@ -288,7 +288,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_SSE_KERNEL */
+#endif /* WITH_COMPLEX_SSE_ASSEMBLY_KERNEL */
 
 
 !#if defined(WITH_AVX_SANDYBRIDGE)
@@ -386,7 +386,7 @@ module compute_hh_trafo_complex
            use timings
 #endif
 
-#if defined(HAVE_AVX) || defined(HAVE_SSE)
+#if defined(HAVE_AVX) || defined(HAVE_SSE_INTRINSICS) || defined(HAVE_SSE_ASSEMBLY)
            use kernel_interfaces
 #endif
            use iso_c_binding
@@ -569,7 +569,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_GENERIC_KERNEL */
 
-#if defined(WITH_COMPLEX_SSE_KERNEL)
+#if defined(WITH_COMPLEX_SSE_ASSEMBLY_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
            if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
@@ -586,7 +586,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_SSE_KERNEL */
+#endif /* WITH_COMPLEX_SSE_ASSEMBLY_KERNEL */
 
 
 !#if defined(WITH_AVX_SANDYBRIDGE)

@@ -82,18 +82,18 @@ if WITH_REAL_BGQ_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90
 endif
 
-if WITH_REAL_SSE_KERNEL
+if WITH_REAL_SSE_ASSEMBLY_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64_double_precision.s
 if WANT_SINGLE_PRECISION_REAL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64_single_precision.s
 endif
+
 else
-if WITH_COMPLEX_SSE_KERNEL
+if WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64_double_precision.s
 if WANT_SINGLE_PRECISION_COMPLEX
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64_single_precision.s
 endif
-
 endif
 endif
 

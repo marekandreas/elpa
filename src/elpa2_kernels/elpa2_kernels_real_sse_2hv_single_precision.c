@@ -67,7 +67,7 @@
 #define __forceinline __attribute__((always_inline)) static
 
 
-#ifdef HAVE_SSE
+#ifdef HAVE_SSE_INTRINSICS
 #undef __AVX__
 #endif
 
@@ -79,7 +79,7 @@ __forceinline void hh_trafo_kernel_12_SSE_2hv_single(float* q, float* hh, int nb
 void double_hh_trafo_real_sse_2hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 
 /*
-!f>#ifdef HAVE_SSE
+!f>#ifdef HAVE_SSE_INTRINSICS
 !f> interface
 !f>   subroutine double_hh_trafo_real_sse_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
 !f>                             bind(C, name="double_hh_trafo_real_sse_2hv_single")
