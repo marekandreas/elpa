@@ -429,7 +429,8 @@ module mod_check_correctness
 #ifdef DOUBLE_PRECISION_COMPLEX
       if (errmax .gt. 5e-12_rk8) then
 #else
-      if (errmax .gt. 8e-4_rk4) then
+!      if (errmax .gt. 8e-4_rk4) then
+      if (errmax .gt. 8e-2_rk4) then
 #endif
         status = 1
       endif
@@ -500,7 +501,8 @@ module mod_check_correctness
 #ifdef DOUBLE_PRECISION_COMPLEX
       if (errmax .gt. 5e-12_rk8) then
 #else
-      if (errmax .gt. 6e-5_rk4) then
+!      if (errmax .gt. 6e-5_rk4) then
+      if (errmax .gt. 8e-2_rk4) then
 #endif
         status = 1
       endif
@@ -926,7 +928,8 @@ module mod_check_correctness
 #ifdef DOUBLE_PRECISION_REAL
       if (errmax .gt. 9e-12_rk8) then
 #else
-      if (errmax .gt. 8e-4_rk4) then
+!      if (errmax .gt. 8e-4_rk4) then
+      if (errmax .gt. 8e-2_rk4) then
 #endif
         status = 1
       endif
@@ -1007,7 +1010,8 @@ module mod_check_correctness
 #ifdef DOUBLE_PRECISION_REAL
       if (errmax .gt. 9e-12_rk8) then
 #else
-      if (errmax .gt. 6e-5_rk4) then
+!     if (errmax .gt. 6e-5_rk4) then
+    if (errmax .gt. 8e-2_rk4) then
 #endif
         status = 1
       endif
