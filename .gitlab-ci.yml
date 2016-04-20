@@ -38,3 +38,14 @@ single-precision-nompi-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
+double-precision-mpi-openmpi-jobs:
+  script:
+    - export LANG=C
+    - module load impi intel gcc mkl autotools
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="-L/afs/@cell/common/soft/intel/ics2015/15.0/mkl/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKL_HOME/lib/intel64" SCALAPACK_FCFLAGS="-L/afs/@cell/common/soft/intel/ics2015/15.0/mkl/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" --enable-openmp
+    - make -j 8
+    - export OMP_NUJM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+
