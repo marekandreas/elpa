@@ -189,7 +189,7 @@ module ELPA2_utilities
 #else
                                               ,0                       &
 #endif
-#if WITH_REAL_SSE_KERNEL
+#if WITH_REAL_SSE_ASSEMBLY_KERNEL
                                                 ,1                     &
 #else
                                                 ,0                     &
@@ -267,7 +267,7 @@ module ELPA2_utilities
 #else
                                               ,0                          &
 #endif
-#if WITH_COMPLEX_SSE_KERNEL
+#if WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
                                                 ,1                        &
 #else
                                                 ,0                        &

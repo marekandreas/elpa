@@ -46,7 +46,7 @@ module compute_hh_trafo_real
          use timings
 #endif
 
-#if defined(HAVE_AVX) || defined(HAVE_SSE)
+#if defined(HAVE_AVX) || defined(HAVE_SSE_INTRINSICS) || defined(HAVE_SSE_ASSEMBLY)
          use kernel_interfaces
 #endif
          implicit none
@@ -194,7 +194,7 @@ module compute_hh_trafo_real
 #endif /* WITH_REAL_GENERIC_SIMPLE_KERNEL */
 
 
-#if defined(WITH_REAL_SSE_KERNEL)
+#if defined(WITH_REAL_SSE_ASSEMBLY_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
@@ -212,7 +212,7 @@ module compute_hh_trafo_real
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_SSE_KERNEL */
+#endif /* WITH_REAL_SSE_ASSEMBLY_KERNEL */
 
 #if defined(WITH_REAL_SSE_BLOCK2_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)

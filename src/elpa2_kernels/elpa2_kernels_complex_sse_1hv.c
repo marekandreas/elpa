@@ -67,7 +67,7 @@
 
 #define __forceinline __attribute__((always_inline))
 
-#ifdef HAVE_SSE
+#ifdef HAVE_SSE_INTRINSICS
 #undef __AVX__
 #endif
 
@@ -78,7 +78,7 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_1hv(double complex* q, d
 static __forceinline void hh_trafo_complex_kernel_2_SSE_1hv(double complex* q, double complex* hh, int nb, int ldq);
 
 /*
-!f>#ifdef HAVE_SSE
+!f>#ifdef HAVE_SSE_INTRINSICS
 !f> interface
 !f>   subroutine single_hh_trafo_complex_sse_1hv(q, hh, pnb, pnq, pldq) bind(C, name="single_hh_trafo_complex_sse_1hv")
 !f>     use, intrinsic :: iso_c_binding
