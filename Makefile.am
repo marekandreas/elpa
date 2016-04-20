@@ -258,15 +258,31 @@ noinst_PROGRAMS = \
   elpa2_test_complex_default_kernel@SUFFIX@ \
   elpa2_test_real_choose_kernel_with_api@SUFFIX@ \
   elpa2_test_complex_choose_kernel_with_api@SUFFIX@ \
-  elpa1_test_real_c_version@SUFFIX@ \
-  elpa1_test_complex_c_version@SUFFIX@ \
-  elpa2_test_real_c_version@SUFFIX@ \
-  elpa2_test_complex_c_version@SUFFIX@ \
   elpa1_test_real_with_c@SUFFIX@ \
   elpa1_test_complex@SUFFIX@ \
   elpa1_test_real@SUFFIX@ \
   elpa2_test_complex@SUFFIX@ \
   elpa2_test_real@SUFFIX@
+
+if WITH_OPENMP
+noinst_PROGRAMS = \
+  elpa2_test_real_default_kernel@SUFFIX@ \
+  elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@ \
+  elpa2_test_complex_default_kernel@SUFFIX@ \
+  elpa2_test_real_choose_kernel_with_api@SUFFIX@ \
+  elpa2_test_complex_choose_kernel_with_api@SUFFIX@ \
+  elpa1_test_real_with_c@SUFFIX@ \
+  elpa1_test_complex@SUFFIX@ \
+  elpa1_test_real@SUFFIX@ \
+  elpa2_test_complex@SUFFIX@ \
+  elpa2_test_real@SUFFIX@
+else
+noinst_PROGRAMS += \
+  elpa1_test_real_c_version@SUFFIX@ \
+  elpa1_test_complex_c_version@SUFFIX@ \
+  elpa2_test_real_c_version@SUFFIX@ \
+  elpa2_test_complex_c_version@SUFFIX@
+endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 noinst_PROGRAMS += \
