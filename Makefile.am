@@ -335,6 +335,7 @@ shared_sources = test/shared_sources/util.F90 \
 		 test/shared_sources/mod_output_types.F90 \
 		 test/shared_sources/prepare_matrix.F90
 
+if !WITH_OPENMP
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_real_c_version.c $(shared_sources) $(redirect_sources)
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
@@ -350,7 +351,7 @@ elpa2_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 elpa2_test_complex_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa2_test_complex_c_version.c $(shared_sources) $(redirect_sources)
 elpa2_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
-
+endif
 
 elpa1_test_real@SUFFIX@_SOURCES = test/fortran_test_programs/test_real.F90 $(shared_sources) $(redirect_sources)
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
@@ -445,10 +446,6 @@ endif
 check_SCRIPTS = \
   elpa1_test_real.sh \
   elpa1_test_real_with_c.sh \
-  elpa1_test_real_c_version.sh \
-  elpa1_test_complex_c_version.sh \
-  elpa2_test_real_c_version.sh \
-  elpa2_test_complex_c_version.sh \
   elpa2_test_real.sh \
   elpa2_test_real_default_kernel.sh \
   elpa1_test_complex.sh \
@@ -458,6 +455,14 @@ check_SCRIPTS = \
   elpa2_test_real_choose_kernel_with_api.sh \
   elpa2_test_complex_choose_kernel_with_api.sh \
   elpa2_print_kernels@SUFFIX@
+
+if !WITH_OPENMP
+check_SCRIPTS += \
+  elpa1_test_real_c_version.sh \
+  elpa1_test_complex_c_version.sh \
+  elpa2_test_real_c_version.sh \
+  elpa2_test_complex_c_version.sh
+endif
 
 if WANT_SINGLE_PRECISION_REAL
 check_SCRIPTS += \
