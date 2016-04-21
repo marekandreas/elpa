@@ -1,0 +1,30 @@
+This license can also be found in the sub-directory "COPYING"
+
+Licensing and copyright terms for the ELPA library:
+ELPA Consortium (2011)
+
+****
+
+Copyright of the original code rests with the authors inside the ELPA
+consortium. The copyright of any additional modifications shall rest
+with their original authors, but shall adhere to the licensing terms
+set forth below.
+
+****
+
+The code is distributed under the terms of the GNU Lesser General Public
+License version 3 (LGPL). The full text can be found in the file "lgpl.txt"
+in this repository. "COPYING/lgpl.txt" makes reference to the GPL v3, which can also
+be found in this repository ("COPYING/vi gpl.txt").
+
+****
+ELPA reflects a substantial effort on the part of the original
+ELPA consortium, and we ask you to respect the spirit of the
+license that we chose: i.e., please contribute any changes you
+may have back to the original ELPA library distribution, and keep
+any derivatives of ELPA under the same license that we chose for
+the original distribution, the GNU Lesser General Public License.
+
+When in doubt, talk to us. What we would like to ensure is that the ELPA
+code can be used as needed, while providing a strong incentive for
+others to contribute their modifications back to the original development.
