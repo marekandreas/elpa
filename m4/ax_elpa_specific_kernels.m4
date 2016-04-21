@@ -16,13 +16,18 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_REAL_KERNEL],[
     dnl make sure that all the other kernels are unset
     install_real_generic=no
     install_real_generic_simple=no
-    install_real_sse=no
+    install_real_sse_assembly=no
     install_real_bgp=no
     install_real_bgq=no
+    install_real_sse_block2=no
+    install_real_sse_block4=no
+    install_real_sse_block6=no
     install_real_avx_block2=no
     install_real_avx_block4=no
     install_real_avx_block6=no
+    want_sse=no
     want_avx=no
+    want_avx2=no
     install_gpu=no
 
     use_specific_real_kernel=yes
@@ -30,9 +35,33 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_REAL_KERNEL],[
     $3=yes
 
     dnl in case of SSE or AVX make sure that we can compile the choosen kernel
-    if test x"${install_real_sse}" = x"yes" ; then
-     if test x"${can_compile_sse}" = x"no" ; then
+    if test x"${install_real_sse_assembly}" = x"yes" ; then
+     if test x"${can_compile_sse_assembly}" = x"no" ; then
        AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     fi
+    fi
+
+    if test x"${install_real_sse_block2}" = x"yes" ; then
+     if test x"${can_compile_sse_intrinsics}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_sse=yes
+     fi
+    fi
+
+    if test x"${install_real_sse_block4}" = x"yes" ; then
+     if test x"${can_compile_sse_intrinsics}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_sse=yes
+     fi
+    fi
+
+    if test x"${install_real_sse_block6}" = x"yes" ; then
+     if test x"${can_compile_sse_inrinsics}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_sse=yes
      fi
     fi
 
@@ -84,12 +113,16 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL],[
     dnl make sure that all the other kernels are unset
     install_complex_generic=no
     install_complex_generic_simple=no
-    install_complex_sse=no
+    install_complex_sse_assembly=no
     install_complex_bgp=no
     install_complex_bgq=no
+    install_complex_sse_block1=no
+    install_complex_sse_block2=no
     install_complex_avx_block1=no
     install_complex_avx_block2=no
+    want_sse=no
     want_avx=no
+    want_avx2=no
 
     install_gpu=no
     use_specific_complex_kernel=yes
@@ -97,12 +130,27 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL],[
     $3=yes
 
     dnl in case of SSE or AVX make sure that we can compile the choosen kernel
-    if test x"${install_complex_sse}" = x"yes" ; then
-     if test x"${can_compile_sse}" = x"no" ; then
+    if test x"${install_complex_sse_assembly}" = x"yes" ; then
+     if test x"${can_compile_sse_assembly}" = x"no" ; then
        AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
      fi
     fi
 
+    if test x"${install_complex_sse_block1}" = x"yes" ; then
+     if test x"${can_compile_sse_intrinsics}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_sse=yes
+     fi
+    fi
+
+    if test x"${install_complex_sse_block2}" = x"yes" ; then
+     if test x"${can_compile_sse_intrinsics}" = x"no" ; then
+       AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
+     else
+       want_sse=yes
+     fi
+    fi
     if test x"${install_complex_avx_block1}" = x"yes" ; then
      if test x"${can_compile_avx}" = x"no" ; then
        AC_MSG_ERROR([$2 kernel was set, but cannot be compiled!])
