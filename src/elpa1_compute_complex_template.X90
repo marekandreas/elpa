@@ -1534,10 +1534,10 @@
     !
     !-------------------------------------------------------------------------------
        use precision
-       implicit none
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
+       implicit none
        integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
        complex(kind=COMPLEX_DATATYPE)                 :: a(lda,*)
