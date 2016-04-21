@@ -983,7 +983,8 @@ module compute_hh_trafo_real
 #endif
            enddo
 #ifdef WITH_OPENMP
-           if (jj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
+           if (jj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
+                                                                    istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
            if (jj==1) call single_hh_trafo_real_cpu_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
@@ -1027,7 +1028,8 @@ module compute_hh_trafo_real
 #endif
              enddo
 #ifdef WITH_OPENMP
-             if (jj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
+             if (jj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
+                                                                      istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
              if (jj==1) call single_hh_trafo_real_cpu_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
@@ -1083,7 +1085,8 @@ module compute_hh_trafo_real
 #endif
            enddo
 #ifdef WITH_OPENMP
-           if (jjj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
+           if (jjj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
+                                                                     istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
            if (jjj==1) call single_hh_trafo_real_cpu_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
@@ -1144,7 +1147,8 @@ module compute_hh_trafo_real
 #endif
              enddo
 #ifdef WITH_OPENMP
-             if (jjj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
+             if (jjj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
+                                                                       istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
              if (jjj==1) call single_hh_trafo_real_cpu_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &

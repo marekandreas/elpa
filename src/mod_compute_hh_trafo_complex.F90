@@ -604,7 +604,7 @@ module compute_hh_trafo_complex
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-              call single_hh_trafo_complex_sse_1hv_double_single(a(1,j+off+a_off,istripe,my_thread), &
+              call single_hh_trafo_complex_sse_1hv_single(a(1,j+off+a_off,istripe,my_thread), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_complex_sse_1hv_single(a(1,j+off+a_off,istripe), &
@@ -623,7 +623,7 @@ module compute_hh_trafo_complex
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-              call single_hh_trafo_complex_avx_avx2_1hv_double_single(a(1,j+off+a_off,istripe,my_thread), &
+              call single_hh_trafo_complex_avx_avx2_1hv_single(a(1,j+off+a_off,istripe,my_thread), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_complex_avx_avx2_1hv_single(a(1,j+off+a_off,istripe), &
