@@ -789,20 +789,29 @@ include doxygen.am
 
 CLEANFILES = \
   elpa/elpa-generated.h \
-  elpa1_test_real.sh \
+  elpa/elpa_generated_fortran_interfaces.h \
   elpa1_test_complex.sh \
+  elpa1_test_complex_c_version.sh \
+  elpa1_test_complex_single_precision.sh \
+  elpa1_test_real.sh \
+  elpa1_test_real_c_version.sh \
+  elpa1_test_real_single_precision.sh \
+  elpa1_test_real_with_c.sh \
+  elpa2_test_complex.sh \
+  elpa2_test_complex_c_version.sh \
+  elpa2_test_complex_choose_kernel_with_api.sh \
+  elpa2_test_complex_default_kernel.sh \
+  elpa2_test_complex_default_kernel_single_precision.sh \
   elpa2_test_real.sh \
+  elpa2_test_real_single_precision.sh \
+  elpa2_test_real_c_version.sh \
+  elpa2_test_real_choose_kernel_with_api.sh \
+  elpa2_test_real_choose_kernel_with_api_single_precision.sh \
   elpa2_test_real_default_kernel.sh \
   elpa2_test_real_default_kernel_qr_decomposition.sh \
-  elpa2_test_complex.sh \
-  elpa2_test_complex_default_kernel.sh \
-  elpa2_test_real_choose_kernel_with_api.sh \
-  elpa2_test_complex_choose_kernel_with_api.sh \
-  elpa1_test_real_with_c.sh \
-  elpa1_test_real_c_version.sh \
-  elpa1_test_complex_c_version.sh \
-  elpa2_test_real_c_version.sh \
-  elpa2_test_complex_c_version.sh \
+  elpa2_test_real_default_kernel_qr_decomposition_single_precision.sh \
+  elpa2_test* \
+  elpa1_test* \
   *.i
 
 clean-local:
