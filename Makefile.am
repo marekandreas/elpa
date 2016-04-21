@@ -172,12 +172,14 @@ noinst_PROGRAMS = \
   elpa2_test_complex_default_kernel@SUFFIX@ \
   elpa2_test_real_choose_kernel_with_api@SUFFIX@ \
   elpa2_test_complex_choose_kernel_with_api@SUFFIX@ \
+  elpa1_test_real_with_c@SUFFIX@
+if !WITH_OPENMP
+noinst_PROGRAMS += \
   elpa1_test_real_c_version@SUFFIX@ \
   elpa1_test_complex_c_version@SUFFIX@ \
   elpa2_test_real_c_version@SUFFIX@ \
-  elpa2_test_complex_c_version@SUFFIX@ \
-  elpa1_test_real_with_c@SUFFIX@
-
+  elpa2_test_complex_c_version@SUFFIX@
+endif
 
 build_lib = libelpa@SUFFIX@.la
 
@@ -190,6 +192,7 @@ endif
 shared_sources = test/shared_sources/util.F90 test/shared_sources/read_input_parameters.F90  test/shared_sources/check_correctnes.F90 test/shared_sources/setup_mpi.F90 \
 		 test/shared_sources/blacs_infrastructure.F90 test/shared_sources/prepare_matrix.F90 test/shared_sources/mod_output_types.F90
 
+if !WITH_OPENMP
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_real_c_version.c $(shared_sources) $(redirect_sources)
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
@@ -205,7 +208,7 @@ elpa2_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 elpa2_test_complex_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa2_test_complex_c_version.c $(shared_sources) $(redirect_sources)
 elpa2_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
-
+endif
 
 elpa1_test_real@SUFFIX@_SOURCES = test/fortran_test_programs/test_real.F90 $(shared_sources) $(redirect_sources)
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
@@ -255,10 +258,6 @@ elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 check_SCRIPTS = \
   elpa1_test_real.sh \
   elpa1_test_real_with_c.sh \
-  elpa1_test_real_c_version.sh \
-  elpa1_test_complex_c_version.sh \
-  elpa2_test_real_c_version.sh \
-  elpa2_test_complex_c_version.sh \
   elpa2_test_real.sh \
   elpa2_test_real_default_kernel.sh \
   elpa1_test_complex.sh \
@@ -269,6 +268,13 @@ check_SCRIPTS = \
   elpa2_test_complex_choose_kernel_with_api.sh \
   elpa2_print_kernels@SUFFIX@
 
+if !WITH_OPENMP
+check_SCRIPTS += \
+  elpa1_test_real_c_version.sh \
+  elpa1_test_complex_c_version.sh \
+  elpa2_test_real_c_version.sh \
+  elpa2_test_complex_c_version.sh
+endif
 TESTS = $(check_SCRIPTS)
 elpa1_test_real.sh:
 	echo 'mpiexec -n 2 ./elpa1_test_real@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real.sh
