@@ -35,16 +35,22 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_REAL_KERNEL],[
     $3=yes
     dnl take care of some dependencies
     if test x"${install_real_sse_block4}" = x"yes" ; then
+      AC_MSG_NOTICE([$1 set. Also sse_block2 is needed])
       install_real_sse_block2=yes
     fi
     if test x"${install_real_avx_block4}" = x"yes" ; then
+      AC_MSG_NOTICE([$1 set. Also avx_block2 is needed])
       install_real_avx_block2=yes
     fi
     if test x"${install_real_sse_block6}" = x"yes" ; then
+      AC_MSG_NOTICE([$1 set. Also sse_block2 is needed])
+      AC_MSG_NOTICE([$1 set. Also sse_block4 is needed])
       install_real_sse_block4=yes
       install_real_sse_block2=yes
     fi
     if test x"${install_real_avx_block6}" = x"yes" ; then
+      AC_MSG_NOTICE([$1 set. Also avx_block2 is needed])
+      AC_MSG_NOTICE([$1 set. Also avx_block4 is needed])
       install_real_avx_block4=yes
       install_real_avx_block2=yes
     fi
@@ -189,13 +195,13 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL],[
      fi
     fi
 
-    AC_MSG_NOTICE([$1 will be the only compiled kernel for real case])
+    AC_MSG_NOTICE([$1 will be the only compiled kernel for complex case])
     if test x"${want_gpu}" = x"yes" ; then
       AC_MSG_WARN([At the moment this disables GPU support!])
       AC_MSG_WARN([IF GPU support is wanted do NOT specify a specific complex kernel])
     fi
    else
-    AC_MSG_FAILURE([$1 failed; A specific kernel for real case has already been defined before!])
+    AC_MSG_FAILURE([$1 failed; A specific kernel for complex case has already been defined before!])
    fi
   fi
 ])
