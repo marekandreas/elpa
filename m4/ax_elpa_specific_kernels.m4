@@ -33,6 +33,21 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_REAL_KERNEL],[
     use_specific_real_kernel=yes
     dnl now set the specific kernel
     $3=yes
+    dnl take care of some dependencies
+    if test x"${install_real_sse_block4}" = x"yes" ; then
+      install_real_sse_block2=yes
+    fi
+    if test x"${install_real_avx_block4}" = x"yes" ; then
+      install_real_avx_block2=yes
+    fi
+    if test x"${install_real_sse_block6}" = x"yes" ; then
+      install_real_sse_block4=yes
+      install_real_sse_block2=yes
+    fi
+    if test x"${install_real_avx_block6}" = x"yes" ; then
+      install_real_avx_block4=yes
+      install_real_avx_block2=yes
+    fi
 
     dnl in case of SSE or AVX make sure that we can compile the choosen kernel
     if test x"${install_real_sse_assembly}" = x"yes" ; then
@@ -128,6 +143,13 @@ AC_DEFUN([DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL],[
     use_specific_complex_kernel=yes
     dnl now set the specific kernel
     $3=yes
+    dnl take care of some dependencies
+    if test x"${install_complex_sse_block2}" = x"yes" ; then
+      install_complex_sse_block1=yes
+    fi
+    if test x"${install_complex_avx_block2}" = x"yes" ; then
+      install_complex_avx_block1=yes
+    fi
 
     dnl in case of SSE or AVX make sure that we can compile the choosen kernel
     if test x"${install_complex_sse_assembly}" = x"yes" ; then
