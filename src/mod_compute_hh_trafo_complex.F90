@@ -123,9 +123,9 @@ module compute_hh_trafo_complex
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef WITH_OPENMP
-          call timer%stop("compute_hh_trafo_complex_cpu_openmp_double")
+          call timer%start("compute_hh_trafo_complex_cpu_openmp_double")
 #else
-          call timer%stop("compute_hh_trafo_complex_cpu_double")
+          call timer%start("compute_hh_trafo_complex_cpu_double")
 #endif
 #endif
 
@@ -433,9 +433,9 @@ module compute_hh_trafo_complex
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef WITH_OPENMP
-          call timer%stop("compute_hh_trafo_complex_cpu_openmp_single")
+          call timer%start("compute_hh_trafo_complex_cpu_openmp_single")
 #else
-          call timer%stop("compute_hh_trafo_complex_cpu_single")
+          call timer%start("compute_hh_trafo_complex_cpu_single")
 #endif
 #endif
 
