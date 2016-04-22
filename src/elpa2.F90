@@ -260,7 +260,7 @@ contains
       THIS_REAL_ELPA_KERNEL = get_actual_real_kernel()
     endif
 
-    ! check whether choosen kernel is allowed
+    ! check whether choosen kernel is allowed: function returns true if NOT allowed! change this
     if (check_allowed_real_kernels(THIS_REAL_ELPA_KERNEL)) then
 
       if (my_pe == 0) then
@@ -276,10 +276,18 @@ contains
         enddo
 
         write(error_unit,*) " "
-        write(error_unit,*) "The defaul kernel REAL_ELPA_KERNEL_GENERIC will be used !"
+        ! check whether generic kernel is defined
+         if (AVAILABLE_REAL_ELPA_KERNELS(REAL_ELPA_KERNEL_GENERIC) .eq. 1) then
+           write(error_unit,*) "The default kernel REAL_ELPA_KERNEL_GENERIC will be used !"
+         else
+           write(error_unit,*) "As default kernel ",REAL_ELPA_KERNEL_NAMES(DEFAULT_REAL_ELPA_KERNEL)," will be used"
+         endif
+      endif  ! my_pe == 0
+      if (AVAILABLE_REAL_ELPA_KERNELS(REAL_ELPA_KERNEL_GENERIC) .eq. 1) then
+        THIS_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
+      else
+        THIS_REAL_ELPA_KERNEL = DEFAULT_REAL_ELPA_KERNEL
       endif
-      THIS_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
-
     endif
 
     if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
@@ -588,7 +596,6 @@ contains
       endif
     endif
 
-
     if (present(THIS_REAL_ELPA_KERNEL_API)) then
       ! user defined kernel via the optional argument in the API call
       THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
@@ -615,10 +622,18 @@ contains
         enddo
 
         write(error_unit,*) " "
-        write(error_unit,*) "The defaul kernel REAL_ELPA_KERNEL_GENERIC will be used !"
+        ! check whether generic kernel is defined
+         if (AVAILABLE_REAL_ELPA_KERNELS(REAL_ELPA_KERNEL_GENERIC) .eq. 1) then
+           write(error_unit,*) "The default kernel REAL_ELPA_KERNEL_GENERIC will be used !"
+         else
+           write(error_unit,*) "As default kernel ",REAL_ELPA_KERNEL_NAMES(DEFAULT_REAL_ELPA_KERNEL)," will be used"
+         endif
+      endif  ! my_pe == 0
+      if (AVAILABLE_REAL_ELPA_KERNELS(REAL_ELPA_KERNEL_GENERIC) .eq. 1) then
+        THIS_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
+      else
+        THIS_REAL_ELPA_KERNEL = DEFAULT_REAL_ELPA_KERNEL
       endif
-      THIS_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
-
     endif
 
     if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then

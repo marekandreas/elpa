@@ -882,10 +882,14 @@ fi
 
 if test x"${use_specific_complex_kernel}" = x"no" ; then
 	AC_DEFINE([WITH_NO_SPECIFIC_COMPLEX_KERNEL],[1],[do not use only one specific complex kernel (set at compile time)])
+else
+	AC_DEFINE([WITH_ONE_SPECIFIC_COMPLEX_KERNEL],[1],[use only one specific complex kernel (set at compile time)])
 fi
 
 if test x"${use_specific_real_kernel}" = x"no" ; then
   AC_DEFINE([WITH_NO_SPECIFIC_REAL_KERNEL],[1],[do not use only one specific real kernel (set at compile time)])
+else
+  AC_DEFINE([WITH_ONE_SPECIFIC_REAL_KERNEL],[1],[use only one specific real kernel (set at compile time)])
 fi
 
 LT_INIT

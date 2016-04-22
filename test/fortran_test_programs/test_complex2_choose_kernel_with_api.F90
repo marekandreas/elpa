@@ -235,7 +235,7 @@ program test_complex2_choose_kernel_with_api_double_precision
       print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE"
 #endif
 
-#ifdef WITH_COMPLEX_SSE_KERNEL
+#ifdef WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
       print *, " The settings are: COMPLEX_ELPA_KERNEL_SSE"
 #endif
 
@@ -345,8 +345,36 @@ program test_complex2_choose_kernel_with_api_double_precision
                                  COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
 #endif
 
-#ifdef  WITH_COMPLEX_SSE_KERNEL
+#ifdef  WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
                                  COMPLEX_ELPA_KERNEL_SSE)
+#endif
+
+#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+
+#ifdef  WITH_COMPLEX_SSE_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK2)
+#else
+#ifdef  WITH_COMPLEX_SSE_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK1)
+#endif
+#endif
+
+#ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK2)
+#else
+#ifdef  WITH_COMPLEX_AVX_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK1)
+#endif
+#endif
+
+#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+#ifdef  WITH_COMPLEX_SSE_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK1)
+#endif
+
+#ifdef  WITH_COMPLEX_SSE_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK2)
 #endif
 
 #ifdef  WITH_COMPLEX_AVX_BLOCK1_KERNEL
@@ -356,6 +384,8 @@ program test_complex2_choose_kernel_with_api_double_precision
 #ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
                                  COMPLEX_ELPA_KERNEL_AVX_BLOCK2)
 #endif
+
+#endif  /*   WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
 
 #ifdef  WITH_GPU_VERSION
                                  COMPLEX_ELPA_KERNEL_GPU)

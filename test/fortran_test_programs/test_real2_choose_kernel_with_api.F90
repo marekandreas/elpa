@@ -231,7 +231,7 @@ program test_real2_choose_kernel_with_api_double_precision
 #ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
       print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
 #endif
-#ifdef WITH_REAL_GENERIC_SSE_KERNEL
+#ifdef WITH_REAL_GENERIC_SSE_ASSEMBLY_KERNEL
       print *, " The settings are: REAL_ELPA_KERNEL_SSE"
 #endif
 #ifdef WITH_REAL_AVX_BLOCK2_KERNEL
@@ -340,8 +340,46 @@ program test_real2_choose_kernel_with_api_double_precision
                               REAL_ELPA_KERNEL_GENERIC_SIMPLE)
 #endif
 
-#ifdef WITH_REAL_SSE_KERNEL
+#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
                               REAL_ELPA_KERNEL_SSE)
+#endif
+#ifdef WITH_ONE_SPECIFIC_REAL_KERNEL
+
+#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK6)
+#else
+#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK4)
+#else
+#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK2)
+#endif
+#endif
+#endif
+#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK6)
+#else
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK4)
+#else
+#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK2)
+#endif
+#endif
+#endif
+
+#else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK2)
+#endif
+
+#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK4)
+#endif
+
+#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK6)
 #endif
 
 #ifdef WITH_REAL_AVX_BLOCK2_KERNEL
@@ -355,6 +393,9 @@ program test_real2_choose_kernel_with_api_double_precision
 #ifdef WITH_REAL_AVX_BLOCK6_KERNEL
                               REAL_ELPA_KERNEL_AVX_BLOCK6)
 #endif
+
+
+#endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
 
 #ifdef WITH_REAL_BGP_KERNEL
                               REAL_ELPA_KERNEL_BGP)

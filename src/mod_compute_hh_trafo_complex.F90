@@ -150,6 +150,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
            if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK2) then
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+
              ttt = mpi_wtime()
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -303,6 +304,8 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK1) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(COMPLEX_ELPA_KERNEL_SSE_BLOCK2))
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -313,6 +316,8 @@ module compute_hh_trafo_complex
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
+#endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(COMPLEX_ELPA_KERNEL_SSE_BLOCK2)) */
+
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
@@ -323,6 +328,9 @@ module compute_hh_trafo_complex
           if ((THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. &
               (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK1)) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(COMPLEX_ELPA_KERNEL_AVX_BLOCK2) && !defined(COMPLEX_ELPA_KERNEL_AVX2_BLOCK2))
+
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -333,6 +341,8 @@ module compute_hh_trafo_complex
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
+#endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(COMPLEX_ELPA_KERNEL_AVX_BLOCK2) && !defined(COMPLEX_ELPA_KERNEL_AVX2_BLOCK2)) */
+
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
