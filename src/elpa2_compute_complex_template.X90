@@ -1703,7 +1703,7 @@
 !   real*8                   :: r_a(1,1), r_ab(1,1)
 
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef DOUBLE_PRECSISION_COMPLEX
+#ifdef DOUBLE_PRECISION_COMPLEX
       call timer%start("tridiag_band_complex_double")
 #else
       call timer%start("tridiag_band_complex_single")
