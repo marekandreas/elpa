@@ -767,6 +767,9 @@ elpa2_kernels_real.i: $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90
 mod_compute_hh_trafo_real.i: $(top_srcdir)/src/mod_compute_hh_trafo_real.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo_real.F90 -o $@
 
+mod_compute_hh_trafo_complex.i: $(top_srcdir)/src/mod_compute_hh_trafo_complex.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo_complex.F90 -o $@
+
 test_real.i: $(top_srcdir)/test/fortran_test_programs/test_real.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/test/fortran_test_programs/test_real.F90 -o $@
 
