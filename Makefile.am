@@ -758,6 +758,9 @@ elpa1.i: $(top_srcdir)/src/elpa1.F90
 elpa1_compute.i: $(top_srcdir)/src/elpa1_compute.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa1_compute.F90 -o $@
 
+elpa2_compute.i: $(top_srcdir)/src/elpa2_compute.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa2_compute.F90 -o $@
+
 elpa2_kernels_real.i: $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90 -o $@
 
