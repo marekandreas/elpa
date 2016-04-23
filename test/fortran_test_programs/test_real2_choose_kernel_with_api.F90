@@ -278,9 +278,85 @@ program test_real2
    success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               na_cols, &
                               mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
+#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
+                             REAL_ELPA_KERNEL_GENERIC_SIMPLE)
+#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
 
-   if (.not.(success)) then
+#ifdef WITH_REAL_GENERIC_KERNEL
+                              REAL_ELPA_KERNEL_GENERIC)
+#endif
+
+#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
+                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
+#endif
+
+#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
+                              REAL_ELPA_KERNEL_SSE)
+#endif
+#ifdef WITH_ONE_SPECIFIC_REAL_KERNEL
+
+#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK6)
+#else
+#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK4)
+#else
+#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK2)
+#endif
+#endif
+#endif
+#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK6)
+#else
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK4)
+#else
+#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK2)
+#endif
+#endif
+#endif
+
+#else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK2)
+#endif
+
+#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK4)
+#endif
+
+#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_SSE_BLOCK6)
+#endif
+
+#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK2)
+#endif
+
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK4)
+#endif
+
+#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_AVX_BLOCK6)
+#endif
+
+#endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+#ifdef WITH_REAL_BGP_KERNEL
+                              REAL_ELPA_KERNEL_BGP)
+#endif
+
+#ifdef WITH_REAL_BGQ_KERNEL
+                              REAL_ELPA_KERNEL_BGQ)
+#endif
+
+#endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+
+    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)

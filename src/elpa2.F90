@@ -214,7 +214,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
      THIS_REAL_ELPA_KERNEL = get_actual_real_kernel()
    endif
 
-   ! check whether choosen kernel is allowed
+   ! check whether choosen kernel is allowed: function returns true if NOT allowed! change this
    if (check_allowed_real_kernels(THIS_REAL_ELPA_KERNEL)) then
 
      if (my_pe == 0) then
@@ -230,10 +230,18 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
        enddo
 
        write(error_unit,*) " "
-       write(error_unit,*) "The defaul kernel REAL_ELPA_KERNEL_GENERIC will be used !"
+       ! check whether generic kernel is defined
+       if (AVAILABLE_REAL_ELPA_KERNELS(REAL_ELPA_KERNEL_GENERIC) .eq. 1) then
+         write(error_unit,*) "The default kernel REAL_ELPA_KERNEL_GENERIC will be used !"
+       else
+         write(error_unit,*) "As default kernel ",REAL_ELPA_KERNEL_NAMES(DEFAULT_REAL_ELPA_KERNEL)," will be used"
+       endif
+     endif  ! my_pe == 0
+     if (AVAILABLE_REAL_ELPA_KERNELS(REAL_ELPA_KERNEL_GENERIC) .eq. 1) then
+       THIS_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
+     else
+       THIS_REAL_ELPA_KERNEL = DEFAULT_REAL_ELPA_KERNEL
      endif
-     THIS_REAL_ELPA_KERNEL = REAL_ELPA_KERNEL_GENERIC
-
    endif
 
    ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
@@ -433,9 +441,18 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
        enddo
 
        write(error_unit,*) " "
-       write(error_unit,*) "The defaul kernel COMPLEX_ELPA_KERNEL_GENERIC will be used !"
+       ! check whether generic kernel is defined
+       if (AVAILABLE_COMPLEX_ELPA_KERNELS(COMPLEX_ELPA_KERNEL_GENERIC) .eq. 1) then
+         write(error_unit,*) "The default kernel COMPLEX_ELPA_KERNEL_GENERIC will be used !"
+       else
+         write(error_unit,*) "As default kernel ",COMPLEX_ELPA_KERNEL_NAMES(DEFAULT_COMPLEX_ELPA_KERNEL)," will be used"
+       endif
+     endif  ! my_pe == 0
+     if (AVAILABLE_COMPLEX_ELPA_KERNELS(COMPLEX_ELPA_KERNEL_GENERIC) .eq. 1) then
+       THIS_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
+     else
+       THIS_COMPLEX_ELPA_KERNEL = DEFAULT_COMPLEX_ELPA_KERNEL
      endif
-     THIS_COMPLEX_ELPA_KERNEL = COMPLEX_ELPA_KERNEL_GENERIC
    endif
    ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
 

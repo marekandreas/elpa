@@ -287,8 +287,61 @@ program test_complex2
    success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                  na_cols, &
                                  mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
+#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
                                  COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
+#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
 
+#ifdef  WITH_COMPLEX_GENERIC_KERNEL
+                                 COMPLEX_ELPA_KERNEL_GENERIC)
+#endif
+
+#ifdef  WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
+                                 COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
+#endif
+
+#ifdef  WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE)
+#endif
+
+#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+
+#ifdef  WITH_COMPLEX_SSE_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK2)
+#else
+#ifdef  WITH_COMPLEX_SSE_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK1)
+#endif
+#endif
+
+#ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK2)
+#else
+#ifdef  WITH_COMPLEX_AVX_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK1)
+#endif
+#endif
+
+#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+#ifdef  WITH_COMPLEX_SSE_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK1)
+#endif
+
+#ifdef  WITH_COMPLEX_SSE_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK2)
+#endif
+
+#ifdef  WITH_COMPLEX_AVX_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK1)
+#endif
+
+#ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK2)
+#endif
+
+#endif  /*   WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+
+#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."
