@@ -71,9 +71,9 @@ module compute_hh_trafo_complex
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef WITH_OPENMP
-          call timer%stop("compute_hh_trafo_complex_cpu_openmp")
+          call timer%start("compute_hh_trafo_complex_cpu_openmp")
 #else
-          call timer%stop("compute_hh_trafo_complex_cpu")
+          call timer%start("compute_hh_trafo_complex_cpu")
 #endif
 #endif
 
