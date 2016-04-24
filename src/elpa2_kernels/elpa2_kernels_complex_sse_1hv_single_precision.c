@@ -73,9 +73,9 @@
 
 
 //Forward declaration
-static __forceinline void hh_trafo_complex_kernel_6_SSE_1hv_single(complex* q, complex* hh, int nb, int ldq);
-static __forceinline void hh_trafo_complex_kernel_4_SSE_1hv_single(complex* q, complex* hh, int nb, int ldq);
-static __forceinline void hh_trafo_complex_kernel_2_SSE_1hv_single(complex* q, complex* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_6_SSE_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_4_SSE_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_2_SSE_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
 
 /*
 !f>#ifdef HAVE_SSE_INTRINSICS
@@ -91,7 +91,7 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_1hv_single(complex* q, c
 !f>#endif
 */
 
-void single_hh_trafo_complex_sse_1hv_single(complex* q, complex* hh, int* pnb, int* pnq, int* pldq)
+void single_hh_trafo_complex_sse_1hv_single(float complex* q, float complex* hh, int* pnb, int* pnq, int* pldq)
 {
 	int i;
 	int nb = *pnb;
@@ -113,7 +113,7 @@ void single_hh_trafo_complex_sse_1hv_single(complex* q, complex* hh, int* pnb, i
 	}
 }
 
-static __forceinline void hh_trafo_complex_kernel_6_SSE_1hv_single(complex* q, complex* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_6_SSE_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
@@ -312,7 +312,7 @@ static __forceinline void hh_trafo_complex_kernel_6_SSE_1hv_single(complex* q, c
 	}
 }
 
-static __forceinline void hh_trafo_complex_kernel_4_SSE_1hv_single(complex* q, complex* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_4_SSE_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
@@ -464,7 +464,7 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_1hv_single(complex* q, c
 	}
 }
 
-static __forceinline void hh_trafo_complex_kernel_2_SSE_1hv_single(complex* q, complex* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_2_SSE_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;

@@ -71,7 +71,7 @@
 #endif
 
 //Forward declaration
-static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv_single(complex* q, complex* hh, int nb, int ldq, int ldh, complex s, complex s1);
+static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv_single(float complex* q, float complex* hh, int nb, int ldq, int ldh, float complex s, float complex s1);
 
 /*
 !f>#ifdef HAVE_SSE_INTRINSICS
@@ -86,7 +86,7 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv_single(complex* q, c
 !f> end interface
 !f>#endif
 */
-void double_hh_trafo_complex_sse_2hv_single(complex* q, complex* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+void double_hh_trafo_complex_sse_2hv_single(float complex* q, float complex* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
 	int i;
 	int nb = *pnb;
@@ -94,7 +94,7 @@ void double_hh_trafo_complex_sse_2hv_single(complex* q, complex* hh, int* pnb, i
 	int ldq = *pldq;
 	int ldh = *pldh;
 
-	complex s = conj(hh[(ldh)+1])*1.0f;
+	float complex s = conj(hh[(ldh)+1])*1.0f;
 	for (i = 2; i < nb; i++)
 	{
 		s += hh[i-1] * conj(hh[(i+ldh)]);
@@ -106,7 +106,7 @@ void double_hh_trafo_complex_sse_2hv_single(complex* q, complex* hh, int* pnb, i
 	}
 }
 
-static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv_single(complex* q, complex* hh, int nb, int ldq, int ldh, complex s, complex s1)
+static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv_single(float complex* q, float complex* hh, int nb, int ldq, int ldh, float complex s, float complex s1)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
