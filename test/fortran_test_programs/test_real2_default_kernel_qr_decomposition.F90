@@ -159,7 +159,7 @@ program test_real2_default_kernel_qr_decomposition_double_precision
    gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
-#define DATATYPE REAL
+#define REALCASE
 #include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS

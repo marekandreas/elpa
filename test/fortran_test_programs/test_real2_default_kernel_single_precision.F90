@@ -150,7 +150,7 @@ program test_real2_default_kernel_single_precision
 
    STATUS = 0
 
-#define DATATYPE REAL
+#define REALCASE
 #include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS

@@ -141,6 +141,7 @@ program test_complex2_double_precision
    integer(kind=ik)              :: numberOfDevices
    logical                       :: gpuAvailable
 
+#define COMPLEXCASE
 #define DOUBLE_PRECISION_COMPLEX 1
 
    successELPA   = .true.
@@ -155,7 +156,6 @@ program test_complex2_double_precision
 
    STATUS = 0
 
-#define DATATYPE COMPLEX
 #include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS

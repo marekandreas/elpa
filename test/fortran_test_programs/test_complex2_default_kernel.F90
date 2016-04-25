@@ -155,7 +155,7 @@ program test_complex2_default_kernel_double_precision
 
    STATUS = 0
 
-#define DATATYPE COMPLEX
+#define COMPLEXCASE
 #include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS

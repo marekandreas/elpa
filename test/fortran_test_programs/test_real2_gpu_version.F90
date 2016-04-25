@@ -152,7 +152,7 @@ program test_real2_gpu_version_double_precision
 
    STATUS = 0
 
-#define DATATYPE REAL
+#define REALCASE
 #include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS

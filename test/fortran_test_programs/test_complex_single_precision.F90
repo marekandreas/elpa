@@ -138,7 +138,7 @@ program test_complex_single_precision
 
    STATUS = 0
 
-#define DATATYPE COMPLEX
+#define COMPLEXCASE
 #define ELPA1
 #include "elpa_test_programs_print_headers.X90"
 

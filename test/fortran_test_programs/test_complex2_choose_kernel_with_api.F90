@@ -155,7 +155,7 @@ program test_complex2_choose_kernel_with_api_double_precision
    gpuAvailable = check_for_gpu(myid, numberOfDevices)
    STATUS = 0
 
-#define DATATYPE COMPLEX
+#define COMPLEXCASE
 #include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS

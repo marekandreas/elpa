@@ -152,7 +152,7 @@ program test_real2_choose_kernel_with_api_double_precision
 
    STATUS = 0
 
-#define DATATYPE REAL
+#define REALCASE
 #include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS

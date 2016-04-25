@@ -140,7 +140,7 @@ program test_real_single_precision
 
    STATUS = 0
 
-#define DATATYPE REAL
+#define REALCASE
 #define ELPA1
 #include "elpa_test_programs_print_headers.X90"
 
