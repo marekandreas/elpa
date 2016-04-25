@@ -129,7 +129,7 @@
 #ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
      print *,"GENERIC SIMPLE kernel for real matrices"
 #endif
-#ifdef WITH_REAL_SSE_KERNEL
+#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
      print *,"SSE ASSEMBLER kernel for real matrices"
 #endif
 #ifdef WITH_REAL_BGP_KERNEL
@@ -174,7 +174,7 @@
 #ifdef WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
      print *,"GENERIC SIMPLE kernel for complex matrices"
 #endif
-#ifdef WITH_COMPLEX_SSE_KERNEL
+#ifdef WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
      print *,"SSE ASSEMBLER kernel for complex matrices"
 #endif
 

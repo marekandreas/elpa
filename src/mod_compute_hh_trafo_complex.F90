@@ -71,9 +71,9 @@ module compute_hh_trafo_complex
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef WITH_OPENMP
-          call timer%stop("compute_hh_trafo_complex_cpu_openmp")
+          call timer%start("compute_hh_trafo_complex_cpu_openmp")
 #else
-          call timer%stop("compute_hh_trafo_complex_cpu")
+          call timer%start("compute_hh_trafo_complex_cpu")
 #endif
 #endif
 
@@ -250,6 +250,8 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK1) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL))
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -260,16 +262,20 @@ module compute_hh_trafo_complex
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
+#endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)) */
+
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_SSE_BLOCK1_KERNE */
+#endif /* WITH_COMPLEX_SSE_BLOCK1_KERNEL */
 
 #if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK1_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           if ((THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. &
               (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK1)) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+
+#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL))
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -280,6 +286,8 @@ module compute_hh_trafo_complex
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
+#endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)) */
+
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
