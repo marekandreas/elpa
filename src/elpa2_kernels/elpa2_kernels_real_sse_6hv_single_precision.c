@@ -61,7 +61,6 @@
 // --------------------------------------------------------------------------------------------------
 
 #include "config-f90.h"
-
 #include <x86intrin.h>
 
 #define __forceinline __attribute__((always_inline)) static
