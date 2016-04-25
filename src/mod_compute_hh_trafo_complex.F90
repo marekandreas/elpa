@@ -333,7 +333,6 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL))
-
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP

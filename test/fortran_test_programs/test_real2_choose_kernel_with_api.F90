@@ -394,7 +394,6 @@ program test_real2_choose_kernel_with_api_double_precision
                               REAL_ELPA_KERNEL_AVX_BLOCK6)
 #endif
 
-
 #endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
 
 #ifdef WITH_REAL_BGP_KERNEL
