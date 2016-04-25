@@ -61,7 +61,6 @@
 // --------------------------------------------------------------------------------------------------
 
 #include "config-f90.h"
-
 #include <x86intrin.h>
 
 #define __forceinline __attribute__((always_inline)) static
@@ -81,7 +80,9 @@
 #endif
 
 //Forward declaration
+// 4 rows single presision does not work in AVX since it cannot be 32 aligned use sse instead
 __forceinline void hh_trafo_kernel_4_AVX_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
+//__forceinline void hh_trafo_kernel_4_sse_instead_of_avx_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
 __forceinline void hh_trafo_kernel_8_AVX_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
 __forceinline void hh_trafo_kernel_16_AVX_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
 __forceinline void hh_trafo_kernel_24_AVX_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
@@ -139,6 +140,8 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 	{
 		hh_trafo_kernel_16_AVX_2hv_single(&q[i], hh, nb, ldq, ldh, s);
 		hh_trafo_kernel_4_AVX_2hv_single(&q[i+16], hh, nb, ldq, ldh, s);
+// 		hh_trafo_kernel_4_sse_instead_of_avx_2hv_single(&q[i+8], hh, nb, ldq, ldh, s);
+
 	}
 	else if (nq-i == 16)
 	{
@@ -148,6 +151,7 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 	{
 		hh_trafo_kernel_8_AVX_2hv_single(&q[i], hh, nb, ldq, ldh, s);
 		hh_trafo_kernel_4_AVX_2hv_single(&q[i+8], hh, nb, ldq, ldh, s);
+// 		hh_trafo_kernel_4_sse_instead_of_avx_2hv_single(&q[i+8], hh, nb, ldq, ldh, s);
 	}
 	else if (nq-i == 8)
 	{
@@ -156,6 +160,8 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 	else
 	{
 		hh_trafo_kernel_4_AVX_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+//		hh_trafo_kernel_4_sse_instead_of_avx_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+
 	}
 }
 
@@ -868,6 +874,105 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 //	q2 = _mm256_add_ps(q2, _mm256_mul_ps(x2, h1));
 //	_mm256_store_ps(&q[(nb*ldq)+4],q2);
 #endif
+}
+
+/**
+ * Unrolled kernel that computes
+ * 4 rows of Q simultaneously, a
+ * matrix vector product with two householder
+ * vectors + a rank 2 update is performed
+ */
+__forceinline void hh_trafo_kernel_4_sse_instead_of_avx_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+{
+	/////////////////////////////////////////////////////
+	// Matrix Vector Multiplication, Q [4 x nb+1] * hh
+	// hh contains two householder vectors, with offset 1
+	/////////////////////////////////////////////////////
+	int i;
+	// Needed bit mask for floating point sign flip
+	// carefull here
+	__m128 sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+
+	__m128 x1 = _mm_load_ps(&q[ldq]);
+
+        __m128 x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+1]));
+	__m128 x3 ;
+        __m128 h1 = _mm_moveldup_ps(x2);
+	__m128 h2;
+
+	__m128 q1 = _mm_load_ps(q);
+	__m128 y1 = _mm_add_ps(q1, _mm_mul_ps(x1, h1));
+
+	for(i = 2; i < nb; i++)
+	{
+
+		x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[i-1]));
+                h1 = _mm_moveldup_ps(x2);
+
+		x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+i]));
+                h2 = _mm_moveldup_ps(x3);
+
+		q1 = _mm_load_ps(&q[i*ldq]);
+		x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+		y1 = _mm_add_ps(y1, _mm_mul_ps(q1,h2));
+	}
+
+	x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[nb-1]));
+        h1 = _mm_moveldup_ps(x2);
+
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	x1 = _mm_add_ps(x1, _mm_mul_ps(q1,h1));
+
+	/////////////////////////////////////////////////////
+	// Rank-2 update of Q [12 x nb+1]
+	/////////////////////////////////////////////////////
+
+	x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) hh));
+        __m128 tau1 = _mm_moveldup_ps(x2);
+
+	x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh]));
+        __m128 tau2 = _mm_moveldup_ps(x3);
+
+	__m128 x4 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &s));
+        __m128 vs = _mm_moveldup_ps(x4);
+
+	h1 = _mm_xor_ps(tau1, sign);
+	x1 = _mm_mul_ps(x1, h1);
+	h1 = _mm_xor_ps(tau2, sign);
+	h2 = _mm_mul_ps(h1, vs);
+
+	y1 = _mm_add_ps(_mm_mul_ps(y1,h1), _mm_mul_ps(x1,h2));
+
+	q1 = _mm_load_ps(q);
+	q1 = _mm_add_ps(q1, y1);
+	_mm_store_ps(q,q1);
+
+	x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+1]));
+        h2 = _mm_moveldup_ps(x2);
+
+	q1 = _mm_load_ps(&q[ldq]);
+	q1 = _mm_add_ps(q1, _mm_add_ps(x1, _mm_mul_ps(y1, h2)));
+	_mm_store_ps(&q[ldq],q1);
+
+	for (i = 2; i < nb; i++)
+	{
+                x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[i-1]));
+                h1 = _mm_moveldup_ps(x2);
+
+		x3 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+i]));
+		h2 = _mm_moveldup_ps(x3);
+
+		q1 = _mm_load_ps(&q[i*ldq]);
+		q1 = _mm_add_ps(q1, _mm_add_ps(_mm_mul_ps(x1,h1), _mm_mul_ps(y1, h2)));
+		_mm_store_ps(&q[i*ldq],q1);
+	}
+
+        x2 = _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[nb-1]));
+        h1 = _mm_moveldup_ps(x2);
+
+	q1 = _mm_load_ps(&q[nb*ldq]);
+	q1 = _mm_add_ps(q1, _mm_mul_ps(x1, h1));
+	_mm_store_ps(&q[nb*ldq],q1);
 }
 
 /**

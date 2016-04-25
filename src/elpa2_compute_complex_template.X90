@@ -3155,7 +3155,11 @@
         if (useGPU) then
           stripe_width = 256
         else
+#ifdef DOUBLE_PRECISION_REAL
+          stripe_width = 48 ! Must be a multiple of 2
+#else
           stripe_width = 48 ! Must be a multiple of 4
+#endif
         endif
 
 #ifdef WITH_OPENMP
@@ -3185,7 +3189,13 @@
 
 #endif /* WITH_OPENMP */
         if (.not.(useGPU)) then
-          stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
+#ifdef DOUBLE_PRECISION_REAL
+          stripe_width = ((stripe_width+1)/2)*2 ! Must be a multiple of 2 because of AVX/SSE memory alignment of 32 bytes
+	  					! (2 * sizeof(double complex) == 32)
+#else
+          stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX/SSE memory alignment of 32 bytes
+	  					! (4 * sizeof(float complex) == 32)
+#endif
         endif
 #ifndef WITH_OPENMP
         last_stripe_width = l_nev - (stripe_count-1)*stripe_width

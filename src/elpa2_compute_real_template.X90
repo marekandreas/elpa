@@ -3539,7 +3539,11 @@
 #ifdef WITH_OPENMP
           thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
 #endif
+#ifdef DOUBLE_PRECISION_REAL
           stripe_width = 48 ! Must be a multiple of 4
+#else
+          stripe_width = 96 ! Must be a multiple of 8
+#endif
 #ifdef WITH_OPENMP
           stripe_count = (thread_width-1)/stripe_width + 1
 #else
@@ -3551,7 +3555,13 @@
 #else
           stripe_width = (l_nev-1)/stripe_count + 1
 #endif
-          stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 !!!
+#ifdef DOUBLE_PRECISION_REAL
+          stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX/SSE memory alignment of 32 bytes
+	  					! (4 * sizeof(double) == 32)
+#else
+          stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX/SSE memory alignment of 32 bytes
+	  					! (8 * sizeof(float) == 32)
+#endif
         else ! GPUs are used
           stripe_width = 256 ! Must be a multiple of 4
           stripe_count = (l_nev - 1) / stripe_width + 1
