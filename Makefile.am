@@ -378,7 +378,7 @@ elpa2_test_complex_default_kernel@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex2_choose_kernel_with_api.F90 $(shared_sources) $(redirect_sources)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 $(shared_sources) $(redirect_sources)
+elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 src/mod_precisionF90 $(shared_sources) $(redirect_sources)
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 
 if WANT_SINGLE_PRECISION_REAL
