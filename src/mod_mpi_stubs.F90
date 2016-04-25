@@ -60,6 +60,6 @@ module elpa_mpi_stubs
       new_comm = mpi_communicator
       mpierr = 0
       return
-    end
+    end subroutine mpi_comm_split
 
 end module
