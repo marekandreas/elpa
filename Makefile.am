@@ -251,7 +251,7 @@ elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran_test_pr
 
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 $(shared_sources) $(redirect_sources)
+elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 src/mod_precision.f90 $(shared_sources) $(redirect_sources)
 
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 
