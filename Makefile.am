@@ -37,7 +37,11 @@ libelpa@SUFFIX@_la_SOURCES = src/mod_precision.F90 \
 
 EXTRA_libelpa@SUFFIX@_la_DEPENDENCIES = src/elpa_reduce_add_vectors.X90 \
 					src/elpa_transpose_vectors.X90 \
-					src/redist_band.X90
+					src/redist_band.X90 \
+					src/elpa1_compute_complex_template.X90 \
+					src/elpa1_compute_real_template.X90 \
+					src/elpa2_compute_real_template.X90 \
+					src/elpa2_compute_complex_template.X90
 
 if HAVE_DETAILED_TIMINGS
   libelpa@SUFFIX@_la_SOURCES += src/timer.F90 \
@@ -54,6 +58,7 @@ endif
 if WITH_GPU_VERSION
   libelpa@SUFFIX@_la_SOURCES +=  src/cudaFunctions.cu src/cuUtils.cu src/ev_tridi_band_gpu_c_v2.cu
   #src/interface_cuda.F90 src/interface_c_kernel.F90 src/ev_tridi_band_gpu_c_v2.cu src/cuUtils.cu
+  EXTRA_libelpa@SUFFIX@_la_DEPENDENCIES +=   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu src/ev_tridi_band_gpu_c_v2_real_template.Xcu
 endif
 
 if !WITH_MPI
