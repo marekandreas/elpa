@@ -189,8 +189,13 @@ else
   redirect_sources =
 endif
 
-shared_sources = test/shared_sources/util.F90 test/shared_sources/read_input_parameters.F90  test/shared_sources/check_correctnes.F90 test/shared_sources/setup_mpi.F90 \
-		 test/shared_sources/blacs_infrastructure.F90 test/shared_sources/prepare_matrix.F90 test/shared_sources/mod_output_types.F90
+#test/shared_sources/mod_precision_created.f90: src/mod_precision.f90
+#	cp $(top_srcdir)/src/mod_precision.f90 $(top_srcdir)/test/shared_sources/mod_precision_created.f90
+
+shared_sources = test/shared_sources/util.F90 test/shared_sources/read_input_parameters.F90  \
+		 test/shared_sources/check_correctnes.F90 test/shared_sources/setup_mpi.F90 \
+		 test/shared_sources/blacs_infrastructure.F90 test/shared_sources/prepare_matrix.F90 \
+		 test/shared_sources/mod_output_types.F90
 
 if !WITH_OPENMP
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_real_c_version.c $(shared_sources) $(redirect_sources)
@@ -251,8 +256,7 @@ elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran_test_pr
 
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 
-elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 src/mod_precision.f90 $(shared_sources) $(redirect_sources)
-
+elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 $(shared_sources) $(redirect_sources)
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 
 check_SCRIPTS = \
