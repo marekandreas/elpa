@@ -51,7 +51,7 @@ gfortran-double-precision-mpi-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-jobs:
   script:
@@ -68,7 +68,7 @@ gfortran-single-precision-mpi-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-double-precision-nompi-jobs:
   script:
@@ -85,7 +85,7 @@ gfortran-double-precision-nompi-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-nompi-jobs:
   script:
@@ -102,7 +102,7 @@ gfortran-single-precision-nompi-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-double-precision-mpi-openmp-jobs:
   script:
@@ -121,7 +121,7 @@ gfortran-double-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-jobs:
   script:
@@ -140,7 +140,7 @@ gfortran-single-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-double-precision-nompi-openmp-jobs:
   script:
@@ -159,7 +159,7 @@ gfortran-double-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-nompi-openmp-jobs:
   script:
@@ -178,7 +178,7 @@ gfortran-single-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-double-precision-mpi-ftimings-jobs:
   script:
@@ -197,7 +197,7 @@ gfortran-double-precision-mpi-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-jobs:
   script:
@@ -216,7 +216,7 @@ gfortran-single-precision-mpi-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-double-precision-nompi-ftimings-jobs:
   script:
@@ -235,7 +235,7 @@ gfortran-double-precision-nompi-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-nompi-ftimings-jobs:
   script:
@@ -254,7 +254,7 @@ gfortran-single-precision-nompi-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-double-precision-nompi-openmp-ftimings-jobs:
   script:
@@ -273,7 +273,7 @@ gfortran-double-precision-nompi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-nompi-openmp-ftimings-jobs:
   script:
@@ -292,7 +292,7 @@ gfortran-single-precision-nompi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-double-precision-mpi-openmp-ftimings-jobs:
   script:
@@ -309,7 +309,7 @@ gfortran-double-precision-mpi-openmp-ftimings-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-jobs:
   script:
@@ -328,7 +328,7 @@ gfortran-single-precision-mpi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-jobs:
   script:
@@ -345,7 +345,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   script:
@@ -364,7 +364,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-gene
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   script:
@@ -381,7 +381,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-generic-complex-generic-ker
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   script:
@@ -400,7 +400,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-compl
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   script:
@@ -417,7 +417,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-generic-simple-complex-gene
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   script:
@@ -436,7 +436,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   script:
@@ -453,7 +453,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-sse_assembly-complex-sse_as
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   script:
@@ -472,7 +472,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-s
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   script:
@@ -489,7 +489,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-sse_block2-complex-sse_bloc
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   script:
@@ -508,7 +508,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-s
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   script:
@@ -525,7 +525,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-sse_block4-complex-sse_bloc
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   script:
@@ -544,7 +544,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-a
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   script:
@@ -561,7 +561,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-sse_block6-complex-avx_bloc
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   script:
@@ -580,7 +580,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   script:
@@ -597,7 +597,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-avx_block2-complex-avx_bloc
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-jobs:
   script:
@@ -616,7 +616,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-redirect-real-avx_block4-jobs:
   script:
@@ -633,7 +633,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-avx_block4-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-jobs:
   script:
@@ -652,7 +652,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-single-precision-mpi-ftimings-redirect-real-avx_block6-jobs:
   script:
@@ -669,7 +669,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-avx_block6-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
 intel-set-kernel-via-environment-variable-job:
   script:
@@ -690,5 +690,5 @@ gfortran-set-kernel-via-environment-variable-job:
    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
    - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -r coverage_all.info /usr/lib64/\* -o coverage_all_cleaned.info
+   - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
