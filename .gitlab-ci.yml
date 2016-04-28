@@ -1,42 +1,42 @@
 before_script:
-- export LANG=C
-- module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools
-- export MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
-- export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
-- export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
+  - export LANG=C
+  - module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools
+  - export MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
+  - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
+  - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
-- export MKL_INTEL_SCALAPACK_MPI_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
-- export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP="$MKL_INTEL_SCALAPACK_MPI_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
-- export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP="$MKL_INTEL_SCALAPACK_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
+  - export MKL_INTEL_SCALAPACK_MPI_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
+  - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP="$MKL_INTEL_SCALAPACK_MPI_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
+  - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP="$MKL_INTEL_SCALAPACK_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
-- export MKL_INTEL_SCALAPACK_NO_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
-- export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_NO_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
-- export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_NO_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
+  - export MKL_INTEL_SCALAPACK_NO_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
+  - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_NO_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
+  - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_NO_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
-- export MKL_INTEL_SCALAPACK_NO_MPI_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
-- export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="$MKL_INTEL_SCALAPACK_NO_MPI_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
-- export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP="$MKL_INTEL_SCALAPACK_NO_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
+  - export MKL_INTEL_SCALAPACK_NO_MPI_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
+  - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="$MKL_INTEL_SCALAPACK_NO_MPI_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
+  - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP="$MKL_INTEL_SCALAPACK_NO_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
-- export MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
-- export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
-- export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
+  - export MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
+  - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
+  - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
-- export MKL_GFORTRAN_SCALAPACK_MPI_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
-- export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_MPI_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
-- export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
+  - export MKL_GFORTRAN_SCALAPACK_MPI_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
+  - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_MPI_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
+  - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
-- export MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
-- export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
-- export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
+  - export MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
+  - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
+  - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
-- export MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
-- export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
-- export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
-
-
+  - export MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
+  - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
+  - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
 
-intel-double-precision-mpi-jobs:
+
+
+intel-double-precision-mpi-noomp-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"
@@ -44,7 +44,7 @@ intel-double-precision-mpi-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-double-precision-mpi-jobs:
+gfortran-double-precision-mpi-noomp-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90
@@ -53,7 +53,7 @@ gfortran-double-precision-mpi-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-jobs:
+intel-single-precision-mpi-noomp-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision
@@ -61,7 +61,7 @@ intel-single-precision-mpi-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-jobs:
+gfortran-single-precision-mpi-noomp-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision FC=mpif90
@@ -70,7 +70,7 @@ gfortran-single-precision-mpi-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-double-precision-nompi-jobs:
+intel-double-precision-nompi-noomp-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only FC=ifort
@@ -78,7 +78,7 @@ intel-double-precision-nompi-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-double-precision-nompi-jobs:
+gfortran-double-precision-nompi-noomp-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only
@@ -87,7 +87,7 @@ gfortran-double-precision-nompi-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-nompi-jobs:
+intel-single-precision-nompi-noomp-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only --enable-single-precision FC=ifort
@@ -95,7 +95,7 @@ intel-single-precision-nompi-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-nompi-jobs:
+gfortran-single-precision-nompi-noomp-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only --enable-single-precision
@@ -116,9 +116,18 @@ intel-double-precision-mpi-openmp-jobs:
 gfortran-double-precision-mpi-openmp-jobs:
   script:
     - ./autogen.sh
-    - ./configure  FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
+    - ./configure  FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
     - make -j 8
     - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-double-precision-mpi-openmp-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure  FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
+    - make -j 8
+    - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
@@ -135,9 +144,18 @@ intel-single-precision-mpi-openmp-jobs:
 gfortran-single-precision-mpi-openmp-jobs:
   script:
     - ./autogen.sh
-    - ./configure  FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision
+    - ./configure  FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure  FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision
+    - make -j 8
+    - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
@@ -154,9 +172,18 @@ intel-double-precision-nompi-openmp-jobs:
 gfortran-double-precision-nompi-openmp-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --enable-openmp
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --enable-openmp
     - make -j 8
     - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-double-precision-nompi-openmp-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --enable-openmp
+    - make -j 8
+    - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
@@ -173,85 +200,86 @@ intel-single-precision-nompi-openmp-jobs:
 gfortran-single-precision-nompi-openmp-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --enable-single-precision --enable-openmp
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --enable-single-precision --enable-openmp
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-nompi-openmp-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --enable-single-precision --enable-openmp
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-double-precision-mpi-ftimings-jobs:
+intel-double-precision-mpi-noopenmp-ftimings-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings
     - make -j 8
-    - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-double-precision-mpi-ftimings-jobs:
+gfortran-double-precision-mpi-noopenmp-ftimings-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings
     - make -j 8
-    - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings
     - make -j 8
-    - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-jobs:
+gfortran-single-precision-mpi-noopenmp-ftimings-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings
     - make -j 8
-    - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-double-precision-nompi-ftimings-jobs:
+intel-double-precision-nompi-noopenmp-ftimings-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only --with-ftimings FC=ifort
     - make -j 8
-    - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-double-precision-nompi-ftimings-jobs:
+gfortran-double-precision-nompi-noopenmp-ftimings-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only --with-ftimings
     - make -j 8
-    - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-nompi-ftimings-jobs:
+intel-single-precision-nompi-noopenmp-ftimings-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only --enable-single-precision --with-ftimings FC=ifort
     - make -j 8
-    - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-nompi-ftimings-jobs:
+gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only --enable-single-precision --with-ftimings
     - make -j 8
-    - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
@@ -268,9 +296,18 @@ intel-double-precision-nompi-openmp-ftimings-jobs:
 gfortran-double-precision-nompi-openmp-ftimings-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --with-ftimings --enable-openmp
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --with-ftimings --enable-openmp
     - make -j 8
     - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --with-ftimings --enable-openmp
+    - make -j 8
+    - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
@@ -287,29 +324,51 @@ intel-single-precision-nompi-openmp-ftimings-jobs:
 gfortran-single-precision-nompi-openmp-ftimings-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --enable-single-precision --enable-openmp --with-ftimings
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --enable-single-precision --enable-openmp --with-ftimings
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-nompi-openmp-ftimings-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-shared-memory-only --enable-single-precision --enable-openmp --with-ftimings
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+
 
 intel-double-precision-mpi-openmp-ftimings-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
     - make -j 8
+    - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
 gfortran-double-precision-mpi-openmp-ftimings-jobs:
   script:
     - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=2
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-double-precision-mpi-openmp-ftimings-special-gcov-jobs:
+  script:
+    - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=1
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+
 
 intel-single-precision-mpi-openmp-ftimings-jobs:
   script:
@@ -323,9 +382,36 @@ intel-single-precision-mpi-openmp-ftimings-jobs:
 gfortran-single-precision-mpi-openmp-ftimings-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
+    - ./configure FC=mpif90 CFLAGS=" -O3 -mavx" CXXFLAGS=" -O3 -mavx" FCFLAGS=" -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
     - make -j 8
     - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+
+
+intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-single-precision --with-ftimings --with-redirect
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-single-precision --with-ftimings --with-redirect
+    - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
@@ -336,14 +422,25 @@ intel-single-precision-mpi-openmp-ftimings-redirect-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='1500 50 16'
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-jobs:
   script:
     - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=2
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
+  script:
+    - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=1
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
@@ -359,14 +456,23 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -374,7 +480,7 @@ intel-single-precision-mpi-ftimings-redirect-real-generic-complex-generic-kernel
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
+gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -395,14 +501,23 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -410,7 +525,7 @@ intel-single-precision-mpi-ftimings-redirect-real-generic-simple-complex-generic
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
+gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -431,14 +546,23 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-ss
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -446,7 +570,7 @@ intel-single-precision-mpi-ftimings-redirect-real-sse_assembly-complex-sse_assem
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
+gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -467,14 +591,23 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block2-kernel-only --with-complex-sse_block1-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block2-kernel-only --with-complex-sse_block1-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--covergae -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block2-kernel-only --with-complex-sse_block1-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block2-kernel-only --with-complex-sse_block1-kernel-only
@@ -482,7 +615,7 @@ intel-single-precision-mpi-ftimings-redirect-real-sse_block2-complex-sse_block1-
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
+gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block2-kernel-only --with-complex-sse_block1-kernel-only
@@ -503,14 +636,23 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block4-kernel-only --with-complex-sse_block2-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block4-kernel-only --with-complex-sse_block2-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block4-kernel-only --with-complex-sse_block2-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block4-kernel-only --with-complex-sse_block2-kernel-only
@@ -518,7 +660,7 @@ intel-single-precision-mpi-ftimings-redirect-real-sse_block4-complex-sse_block2-
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
+gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block4-kernel-only --with-complex-sse_block2-kernel-only
@@ -539,14 +681,23 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block6-kernel-only --with-complex-avx_block1-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block6-kernel-only --with-complex-avx_block1-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block6-kernel-only --with-complex-avx_block1-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block6-kernel-only --with-complex-avx_block1-kernel-only
@@ -554,7 +705,7 @@ intel-single-precision-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
+gfortran-single-precision-noopenmp-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block6-kernel-only --with-complex-avx_block1-kernel-only
@@ -575,14 +726,23 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block2-kernel-only --with-complex-avx_block2-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block2-kernel-only --with-complex-avx_block2-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block2-kernel-only --with-complex-avx_block2-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block2-kernel-only --with-complex-avx_block2-kernel-only
@@ -590,7 +750,7 @@ intel-single-precision-mpi-ftimings-redirect-real-avx_block2-complex-avx_block2-
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
+gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block2-kernel-only --with-complex-avx_block2-kernel-only
@@ -611,14 +771,23 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-jobs:
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block4-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block4-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block4-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-redirect-real-avx_block4-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block4-kernel-only
@@ -626,7 +795,7 @@ intel-single-precision-mpi-ftimings-redirect-real-avx_block4-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-redirect-real-avx_block4-jobs:
+gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block4-kernel-only
@@ -647,14 +816,23 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-jobs:
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block6-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block6-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-special-gcov-jobs:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block6-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-single-precision-mpi-ftimings-redirect-real-avx_block6-jobs:
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-jobs:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block6-kernel-only
@@ -662,7 +840,7 @@ intel-single-precision-mpi-ftimings-redirect-real-avx_block6-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-single-precision-mpi-ftimings-redirect-real-avx_block6-jobs:
+gfortran-single-precision-mpi-nopenmp-ftimings-redirect-real-avx_block6-jobs:
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx_block6-kernel-only
@@ -671,7 +849,7 @@ gfortran-single-precision-mpi-ftimings-redirect-real-avx_block6-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
-intel-set-kernel-via-environment-variable-job:
+intel-set-kernel-via-environment-variable-mpi-openmp-job:
   script:
     - ./autogen.sh
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
@@ -679,16 +857,106 @@ intel-set-kernel-via-environment-variable-job:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-set-kernel-via-environment-variable-job:
- script:
-   - ./autogen.sh
-   - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
-   - make -j 8
-   - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-   - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
-   - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
-   - make check TEST_FLAGS='1500 50 16'
-   - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+gfortran-set-kernel-via-environment-variable-mpi-openmp-job:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
+    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - export OMP_NUM_THREADS=2
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-set-kernel-via-environment-variable-mpi-openmp-special-gcov-job:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
+    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - export OMP_NUM_THREADS=1
+    - make check TEST_FLAGS='1500 50 16'
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+
+intel-set-kernel-via-environment-variable-mpi-noopenmp-job:
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP"
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
+    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP"
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
+    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - make check TEST_FLAGS='1500 50 16'
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+
+intel-set-kernel-via-environment-variable-nompi-openmp-job:
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision-only FC=ifort
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
+    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - export OMP_NUM_THREADS=2
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-set-kernel-via-environment-variable-nompi-openmp-job:
+  script:
+    - ./autogen.sh
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-shared-memory-only
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
+    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - export OMP_NUM_THREADS=2
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
+  script:
+    - ./autogen.sh
+    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-shared-memory-only
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
+    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - export OMP_NUM_THREADS=1
+    - make check TEST_FLAGS='1500 50 16'
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+
+
+intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-single-precision-only FC=ifort
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
+    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - make check TEST_FLAGS='1500 50 16'
+
+gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
+  script:
+    - ./autogen.sh
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-shared-memory-only
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
+    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
+    - make check TEST_FLAGS='1500 50 16'
+    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
 
