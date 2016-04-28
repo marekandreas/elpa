@@ -51,7 +51,11 @@ gfortran-double-precision-mpi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+    - mkdir -p /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
+    - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
+    - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
+    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - lcov --summary info.out
 
 intel-single-precision-mpi-noomp-jobs:
   script:
@@ -68,7 +72,11 @@ gfortran-single-precision-mpi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+    - mkdir -p /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
+    - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
+    - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
+    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - lcov --summary info.out
 
 intel-double-precision-nompi-noomp-jobs:
   script:
@@ -85,7 +93,10 @@ gfortran-double-precision-nompi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+    - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
+    - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
+    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - lcov --summary info.out
 
 intel-single-precision-nompi-noomp-jobs:
   script:
@@ -102,7 +113,10 @@ gfortran-single-precision-nompi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - lcov  --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned.info
+    - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
+    - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
+    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - lcov --summary info.out
 
 intel-double-precision-mpi-openmp-jobs:
   script:
@@ -600,7 +614,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-s
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-special-gcov-jobs:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--covergae -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block2-kernel-only --with-complex-sse_block1-kernel-only
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse_block2-kernel-only --with-complex-sse_block1-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -886,7 +900,7 @@ gfortran-set-kernel-via-environment-variable-mpi-openmp-special-gcov-job:
 intel-set-kernel-via-environment-variable-mpi-noopenmp-job:
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP"
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
@@ -896,7 +910,7 @@ intel-set-kernel-via-environment-variable-mpi-noopenmp-job:
 gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP"
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
@@ -907,7 +921,7 @@ gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
 intel-set-kernel-via-environment-variable-nompi-openmp-job:
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision-only FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --enable-single-precision-only FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
@@ -918,7 +932,7 @@ intel-set-kernel-via-environment-variable-nompi-openmp-job:
 gfortran-set-kernel-via-environment-variable-nompi-openmp-job:
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-shared-memory-only
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --enable-shared-memory-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
@@ -929,7 +943,7 @@ gfortran-set-kernel-via-environment-variable-nompi-openmp-job:
 gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-shared-memory-only
+    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --enable-shared-memory-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
@@ -942,7 +956,7 @@ gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
 intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-single-precision-only FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision-only FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
@@ -952,7 +966,7 @@ intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
 gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-shared-memory-only
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
