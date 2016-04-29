@@ -1057,7 +1057,7 @@ gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
 intel-set-kernel-via-environment-variable-nompi-openmp-job:
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --enable-single-precision-only FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --enable-shared-memory-only FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
@@ -1091,12 +1091,10 @@ gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
     - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
 
-
-
 intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision-only FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
@@ -1106,7 +1104,7 @@ intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
 gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only
+    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-shared-memory-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
