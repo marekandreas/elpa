@@ -97,7 +97,7 @@ sugest the [Intel Math Kernel Library Link Line Advisor] (https://software.intel
 
 In the default the configure script tries to configure and build all ELPA2 compute kernels which are available for
 the architecture. Then the specific kernel can be chosen at run-time via the api or an environment variable (see
-the **USERS GUIDE** for details).
+the **USERS_GUIDE** for details).
 
 It this is not desired, it is possible to build *ELPA* with only one (not necessary the same) kernel for the
 real and complex valued case, respectively. This can be done with the "--with-real-..-kernel-only" and

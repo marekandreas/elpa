@@ -86,7 +86,7 @@ the possible configure options.
 
 ## Using *ELPA*
 
-Please have a look at the "**Users Guide**" file, to get a documentation or at the [online]
+Please have a look at the "**USERS_GUIDE**" file, to get a documentation or at the [online]
 (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2015.11.001/html/index.html) doygen
 documentation, where you find the definition of the interfaces.
 
