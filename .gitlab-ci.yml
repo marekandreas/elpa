@@ -54,7 +54,7 @@ gfortran-double-precision-mpi-noomp-jobs:
     - mkdir -p /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
 
 intel-single-precision-mpi-noomp-jobs:
@@ -75,7 +75,7 @@ gfortran-single-precision-mpi-noomp-jobs:
     - mkdir -p /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
 
 intel-double-precision-nompi-noomp-jobs:
@@ -95,7 +95,7 @@ gfortran-double-precision-nompi-noomp-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
 
 intel-single-precision-nompi-noomp-jobs:
@@ -115,7 +115,7 @@ gfortran-single-precision-nompi-noomp-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
 
 intel-double-precision-mpi-openmp-jobs:
@@ -146,9 +146,8 @@ gfortran-double-precision-mpi-openmp-special-gcov-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-jobs:
   script:
@@ -178,9 +177,8 @@ gfortran-single-precision-mpi-openmp-special-gcov-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-double-precision-nompi-openmp-jobs:
   script:
@@ -210,9 +208,8 @@ gfortran-double-precision-nompi-openmp-special-gcov-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-nompi-openmp-jobs:
   script:
@@ -242,9 +239,8 @@ gfortran-single-precision-nompi-openmp-special-gcov-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-double-precision-mpi-noopenmp-ftimings-jobs:
   script:
@@ -263,9 +259,8 @@ gfortran-double-precision-mpi-noopenmp-ftimings-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-jobs:
   script:
@@ -284,9 +279,8 @@ gfortran-single-precision-mpi-noopenmp-ftimings-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-double-precision-nompi-noopenmp-ftimings-jobs:
   script:
@@ -305,9 +299,8 @@ gfortran-double-precision-nompi-noopenmp-ftimings-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-nompi-noopenmp-ftimings-jobs:
   script:
@@ -326,9 +319,8 @@ gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-double-precision-nompi-openmp-ftimings-jobs:
   script:
@@ -358,9 +350,8 @@ gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-nompi-openmp-ftimings-jobs:
   script:
@@ -390,9 +381,8 @@ gfortran-single-precision-nompi-openmp-ftimings-special-gcov-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 
 intel-double-precision-mpi-openmp-ftimings-jobs:
@@ -423,9 +413,8 @@ gfortran-double-precision-mpi-openmp-ftimings-special-gcov-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 
 intel-single-precision-mpi-openmp-ftimings-jobs:
@@ -456,9 +445,8 @@ gfortran-single-precision-mpi-openmp-ftimings-special-gcov-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
@@ -478,9 +466,8 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-jobs:
   script:
@@ -510,9 +497,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   script:
@@ -542,9 +528,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-gene
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   script:
@@ -563,9 +548,8 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-ge
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   script:
@@ -595,9 +579,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-compl
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   script:
@@ -616,9 +599,8 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-com
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   script:
@@ -648,9 +630,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   script:
@@ -669,9 +650,8 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-compl
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   script:
@@ -701,9 +681,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-s
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   script:
@@ -722,9 +701,8 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   script:
@@ -754,9 +732,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-s
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   script:
@@ -775,9 +752,8 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   script:
@@ -807,9 +783,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-a
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   script:
@@ -828,9 +803,8 @@ gfortran-single-precision-noopenmp-mpi-ftimings-redirect-real-sse_block6-complex
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   script:
@@ -860,9 +834,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   script:
@@ -881,9 +854,8 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-jobs:
   script:
@@ -913,9 +885,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-special-g
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-jobs:
   script:
@@ -934,9 +905,8 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-jobs:
   script:
@@ -966,9 +936,8 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-special-g
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-jobs:
   script:
@@ -987,9 +956,8 @@ gfortran-single-precision-mpi-nopenmp-ftimings-redirect-real-avx_block6-jobs:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-set-kernel-via-environment-variable-mpi-openmp-job:
   script:
@@ -1025,9 +993,8 @@ gfortran-set-kernel-via-environment-variable-mpi-openmp-special-gcov-job:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-set-kernel-via-environment-variable-mpi-noopenmp-job:
   script:
@@ -1050,9 +1017,8 @@ gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 
 intel-set-kernel-via-environment-variable-nompi-openmp-job:
   script:
@@ -1088,9 +1054,8 @@ gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
 intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
   script:
     - ./autogen.sh
@@ -1112,6 +1077,5 @@ gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
     - make check TEST_FLAGS='1500 50 16'
     - lcov  -q --capture --directory src/.libs  --directory src/elpa2_kernels --output-file coverage_all.info && lcov -q ./coverage_all.info /usr/lib64/\* -r ./coverage_all.info /afs/ipp-garching.mpg.de/common/soft/gcc/4.9.3/@sys/lib/gcc/x86_64-unknown-linux-gnu/4.9.3/include/* > ./coverage_all_cleaned_$(git log | head -n 1 | sed -r s/commit\ // | cut -c1-8)_"$(pidof pidof)".info
     - mv coverage_all_cleaned_*  /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`
-    - for file in /data/elpa/gitlab/coverage/4e15c0d6/*; do lcov -q -a $file -o info.out; done
+    - for file in /data/elpa/gitlab/coverage/`git log | head -n 1 | sed -r s/commit\ // | cut -c1-8`/*; do lcov -q -a $file -o info.out; done
     - lcov --summary info.out
-
