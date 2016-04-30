@@ -67,7 +67,19 @@ no MPI will be used.
 
 Still the **same** call sequence as in the MPI case can be used (see above).
 
+### List of ELPA functions ###
 
+*ELPA* provides the following functions (see man pages or [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2015.11.001/html/index.html)
+for details):
+
+- get_elpa_communicators   : set the row / column communicators for *ELPA*
+- solve_evp_complex_1stage : solve a complex valued eigenvale proplem with the *ELPA 1stage* solver
+- solve_evp_real_1stage    : solve a real valued eigenvale proplem with the *ELPA 1stage* solver
+- solve_evp_complex_2stage : solve a complex valued eigenvale proplem with the *ELPA 2stage* solver
+- solve_evp_real_2stage    : solve a real valued eigenvale proplem with the *ELPA 2stage* solver
+
+Furthermore *ELPA* provides the utility binary "print_available_elpa2_kernels": it tells the user
+which *ELPA 2stage* compute kernels have been installed and which default kernels are set
 
 
 
