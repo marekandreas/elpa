@@ -139,7 +139,7 @@ man_MANS = man/solve_evp_real.3 \
 	   man/solve_evp_complex_2stage.3 \
 	   man/get_elpa_row_col_comms.3 \
 	   man/get_elpa_communicators.3 \
-	   man/print_available_elpa2_kernels.1
+	   man/elpa2_print_kernels.1
 
 # other files to distribute
 filesdir = $(docdir)/examples
@@ -155,7 +155,7 @@ dist_files_DATA = \
   test/fortran_test_programs/test_real2_choose_kernel_with_api.F90 \
   test/fortran_test_programs/test_real.F90 \
   test/fortran_test_programs/test_real_with_c.F90 \
-  src/print_available_elpa2_kernels.F90
+  src/elpa2_print_kernels.F90
 
 dist_doc_DATA = README.md INSTALL.md CONTRIBUTING.md LICENSE COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 
@@ -200,7 +200,7 @@ endif
 shared_sources = test/shared_sources/util.F90 test/shared_sources/read_input_parameters.F90  \
 		 test/shared_sources/check_correctnes.F90 test/shared_sources/setup_mpi.F90 \
 		 test/shared_sources/blacs_infrastructure.F90 test/shared_sources/prepare_matrix.F90 \
-		 test/shared_sources/mod_output_types.F90 
+		 test/shared_sources/mod_output_types.F90
 if !WITH_OPENMP
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_real_c_version.c $(shared_sources) $(redirect_sources)
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
@@ -273,7 +273,7 @@ elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran_test_pr
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 EXTRA_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
 
-elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 $(shared_sources) $(redirect_sources)
+elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2_print_kernels.F90 $(shared_sources) $(redirect_sources)
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 
 check_SCRIPTS = \
