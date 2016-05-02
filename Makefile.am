@@ -193,7 +193,7 @@ man_MANS = man/solve_evp_real.3 \
 	   man/solve_evp_complex_2stage_double.3 \
 	   man/get_elpa_row_col_comms.3 \
 	   man/get_elpa_communicators.3 \
-	   man/print_available_elpa2_kernels.1
+	   man/elpa2_print_kernels.1
 
 if WANT_SINGLE_PRECISION_REAL
 
@@ -222,7 +222,7 @@ dist_files_DATA = \
   test/fortran_test_programs/test_real2_choose_kernel_with_api.F90 \
   test/fortran_test_programs/test_real.F90 \
   test/fortran_test_programs/test_real_with_c.F90 \
-  src/print_available_elpa2_kernels.F90
+  src/elpa2_print_kernels.F90
 
 if WANT_SINGLE_PRECISION_COMPLEX
 dist_files_DATA += test/fortran_test_programs/test_complex2_single_precision.F90 \
@@ -252,7 +252,7 @@ dist_files_DATA += test/fortran_test_programs/test_complex2_gpu_version_single_p
 endif
 
 endif
-dist_doc_DATA = README COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
+dist_doc_DATA = README.md INSTALL.md CONTRIBUTING.md LICENSE COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
@@ -408,7 +408,7 @@ elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran_test_pr
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 EXTRA_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
 
-elpa2_print_kernels@SUFFIX@_SOURCES = src/print_available_elpa2_kernels.F90 src/mod_precisionF90 $(shared_sources) $(redirect_sources)
+elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2_print_kernels.F90 src/mod_precisionF90 $(shared_sources) $(redirect_sources)
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 
 if WANT_SINGLE_PRECISION_REAL

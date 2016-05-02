@@ -1,0 +1,9 @@
+The changes since release ELPA_2015.11.001
+
+- doxygen and man pages documentation for ELPA
+- cleanup of documentation
+- introduction of SSE gcc intrinsic kernels
+- Remove errors due to unaligned memory
+- removal of Fortran "contains functions"
+
+
