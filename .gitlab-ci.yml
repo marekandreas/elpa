@@ -51,7 +51,7 @@ gfortran-double-precision-mpi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-nompi-noomp-jobs:
   script:
@@ -68,7 +68,7 @@ gfortran-double-precision-nompi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-jobs:
   script:
@@ -96,7 +96,7 @@ gfortran-double-precision-mpi-openmp-special-gcov-jobs:
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-nompi-openmp-jobs:
   script:
@@ -124,7 +124,7 @@ gfortran-double-precision-nompi-openmp-special-gcov-jobs:
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-jobs:
   script:
@@ -141,7 +141,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-nompi-noopenmp-ftimings-jobs:
   script:
@@ -158,7 +158,7 @@ gfortran-double-precision-nompi-noopenmp-ftimings-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-nompi-openmp-ftimings-jobs:
   script:
@@ -186,7 +186,7 @@ gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-jobs:
   script:
@@ -214,7 +214,7 @@ gfortran-double-precision-mpi-openmp-ftimings-special-gcov-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-jobs:
   script:
@@ -242,7 +242,7 @@ gfortran-double-precision-mpi-openmp-ftimings-special-gcov-jobs:
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
   script:
@@ -259,7 +259,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-jobs:
   script:
@@ -287,7 +287,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   script:
@@ -315,7 +315,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-generic-complex-gene
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   script:
@@ -332,7 +332,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-ge
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   script:
@@ -360,7 +360,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-generic-simple-compl
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   script:
@@ -377,7 +377,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-com
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   script:
@@ -405,7 +405,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   script:
@@ -422,7 +422,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-compl
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   script:
@@ -450,7 +450,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-s
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   script:
@@ -467,7 +467,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   script:
@@ -495,7 +495,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-s
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   script:
@@ -512,7 +512,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   script:
@@ -540,7 +540,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-a
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   script:
@@ -557,7 +557,7 @@ gfortran-double-precision-noopenmp-mpi-ftimings-redirect-real-sse_block6-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   script:
@@ -585,7 +585,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   script:
@@ -602,7 +602,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-avx_block4-jobs:
   script:
@@ -630,7 +630,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-avx_block4-special-g
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-jobs:
   script:
@@ -647,7 +647,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-avx_block6-jobs:
   script:
@@ -675,7 +675,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-avx_block6-special-g
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scipts/get_coverage_summary.sh
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-jobs:
   script:
@@ -692,7 +692,7 @@ gfortran-double-precision-mpi-nopenmp-ftimings-redirect-real-avx_block6-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-set-kernel-via-environment-variable-mpi-openmp-job:
   script:
@@ -726,7 +726,7 @@ gfortran-set-kernel-via-environment-variable-mpi-openmp-special-gcov-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=1
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-set-kernel-via-environment-variable-mpi-noopenmp-job:
   script:
@@ -747,7 +747,7 @@ gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-set-kernel-via-environment-variable-nompi-openmp-job:
   script:
@@ -781,7 +781,7 @@ gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=1
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
 intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
   script:
@@ -802,5 +802,5 @@ gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - make check TEST_FLAGS='1500 50 16'
-    - ./get_coverage_summary.sh
+    - ./test_scripts/get_coverage_summary.sh
 
