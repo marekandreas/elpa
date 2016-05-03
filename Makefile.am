@@ -157,7 +157,7 @@ dist_files_DATA = \
   test/fortran_test_programs/test_real_with_c.F90 \
   src/elpa2_print_kernels.F90
 
-dist_doc_DATA = README.md INSTALL.md CONTRIBUTING.md LICENSE COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
+dist_doc_DATA = README.md USERS_GUIDE.md INSTALL.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
