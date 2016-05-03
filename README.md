@@ -1,8 +1,8 @@
 # [Eigenvalue SoLvers for Petaflop-Applications (ELPA)] (http://elpa.mpcdf.mpg.de)
 
-## Current Realse ##
+## Current Release ##
 
-The cuurent release is ELPA 2015.11.001
+The current release is ELPA 2015.11.001
 
 ## About *ELPA*
 
