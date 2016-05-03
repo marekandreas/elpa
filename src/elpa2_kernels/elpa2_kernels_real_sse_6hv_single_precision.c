@@ -56,10 +56,8 @@
 // with their original authors, but shall adhere to the licensing terms
 // distributed along with the original code in the file "COPYING".
 //
-// Author: Alexander Heinecke (alexander.heinecke@mytum.de)
-// Adapted for building a shared-library by Andreas Marek, MPCDF (andreas.marek@mpcdf.mpg.de)
-// --------------------------------------------------------------------------------------------------
-
+// Author: Andreas Marek, MPCDF, based on the double precision case of A. Heinecke
+//
 #include "config-f90.h"
 #include <x86intrin.h>
 
