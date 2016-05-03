@@ -1,12 +1,12 @@
-#Installation guide#
+# Installation guide #
 
-##Preamle##
+## Preamle ##
 
 This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.001**.
 Although most of the documentation is generic to any *ELPA* release, some configure options
 described in this document might be specific to the above mentioned version of *ELPA*.
 
-##How to install ELPA##
+## How to install ELPA ##
 
 First of all, if you do not want to build *ELPA* yourself, and you run Linux,
 it is worth having a look at the [*ELPA* webpage*] (http://elpa.mpcdf.mpg.de)
@@ -23,7 +23,7 @@ the needed configure script! Please look at the "**INSTALL_FROM_GIT_VERSION**" f
 for the documentation how to proceed.
 
 
-##(A): Installing ELPA as library with configure##
+## (A): Installing ELPA as library with configure ##
 
 *ELPA* can be installed with the build steps
 - configure
@@ -93,7 +93,7 @@ Please, for the correct link-line refer to the documentation of the correspondig
 sugest the [Intel Math Kernel Library Link Line Advisor] (https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor).
 
 
-###Choice of ELPA2 compute kernels###
+### Choice of ELPA2 compute kernels ###
 
 In the default the configure script tries to configure and build all ELPA2 compute kernels which are available for
 the architecture. Then the specific kernel can be chosen at run-time via the api or an environment variable (see

@@ -252,7 +252,7 @@ dist_files_DATA += test/fortran_test_programs/test_complex2_gpu_version_single_p
 endif
 
 endif
-dist_doc_DATA = README.md INSTALL.md CONTRIBUTING.md LICENSE COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
+dist_doc_DATA = README.md USERS_GUIDE.md INSTALL.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
