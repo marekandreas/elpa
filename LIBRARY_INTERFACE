@@ -31,4 +31,7 @@ https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
   Some interface need an extra argument, specifying the number of matrix columns
   (see the documentation)
 
+- 5
+  Compatible API change w.r.t. previous version: Interfaces have been added to unify
+  the naming conventions. The old interface are still available
 
