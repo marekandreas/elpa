@@ -806,6 +806,15 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = @top_srcdir@/src/elpa1_compute.F90 \
+                         @top_srcdir@/src/mod_precision.f90 \
+                         @top_srcdir@/src/aligned_mem.F90 \
+                         @top_srcdir@/src/mod_compute_hh_trafo_real.F90 \
+                         @top_srcdir@/src/mod_compute_hh_trafo_complex.F90 \
+                         @top_srcdir@/src/mod_mpi.F90 \
+                         @top_srcdir@/src/mod_mpi_stubs.F90 \
+                         @top_srcdir@/src/mod_time_c.F90 \
+                         @top_srcdir@/src/mod_pack_unpack_complex.F90 \
+                         @top_srcdir@/src/mod_pack_unpack_real.F90 \
                          @top_srcdir@/src/elpa2_compute.F90 \
 			 @top_srcdir@/src/elpa2_utilities.F90 \
 			 @top_srcdir@/src/elpa_c_interface.F90 \
@@ -815,21 +824,28 @@ EXCLUDE                = @top_srcdir@/src/elpa1_compute.F90 \
 			 @top_srcdir@/src/timer.F90 \
 			 @top_srcdir@/src/redist_band.X90 \
 			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_asm_x86_64.s \
-			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex.f90 \
-			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex_simple.f90 \
-			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex_sse-avx_1hv.cpp \
-			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex_sse-avx_2hv.cpp \
+			 @top_srcdir@/src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
+			 @top_srcdir@/src/elpa2_kernels/mod_fortran_interfaces.F90 \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real.F90 \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_simple.F90 \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex.F90 \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex_simple.F90 \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex_sse_1hv.c \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex_sse_2hv.c \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv.c \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv.c \
 			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_bgp.f90 \
 			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_bgq.f90 \
-			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real.f90 \
-			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_simple.f90 \
-			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_sse-avx_2hv.c \
-			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_sse-avx_4hv.c \
-			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_sse-avx_6hv.c \
-			 @top_srcdir@/src/elpa_qr/elpa_pdgeqrf.f90 \
-			 @top_srcdir@/src/elpa_qr/elpa_pdlarfb.f90 \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_sse_2hv.c \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_sse_4hv.c \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_sse_6hv.c \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_avx-avx2_2hv.c \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_avx-avx2_4hv.c \
+			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_real_avx-avx2_6hv.c \
+			 @top_srcdir@/src/elpa_qr/elpa_pdgeqrf.F90 \
+			 @top_srcdir@/src/elpa_qr/elpa_pdlarfb.F90 \
 			 @top_srcdir@/src/elpa_qr/elpa_qrkernels.f90 \
-			 @top_srcdir@/src/elpa_qr/qr_utils.f90 \
+			 @top_srcdir@/src/elpa_qr/qr_utils.F90 \
 			 @top_srcdir@/src/ftimings/ftimings.F90 \
 			 @top_srcdir@/src/ftimings/ftimings_type.F90 \
 			 @top_srcdir@/src/ftimings/ftimings_value.F90 \
@@ -838,6 +854,7 @@ EXCLUDE                = @top_srcdir@/src/elpa1_compute.F90 \
 			 @top_srcdir@/src/ftimings/resident_set_size.c \
 			 @top_srcdir@/src/ftimings/time.c \
 			 @top_srcdir@/src/ftimings/virtual_memory.c \
+			 @top_srcdir@/test/shared_sources/mod_output_types.F90 \
 			 @top_srcdir@/test/c_test_programs/elpa1_test_complex_c_version.c \
 			 @top_srcdir@/test/c_test_programs/elpa1_test_real_c_version.c \
 			 @top_srcdir@/test/c_test_programs/elpa2_test_complex_c_version.c \
