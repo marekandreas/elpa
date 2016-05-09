@@ -469,7 +469,7 @@ else
 
   if test x"${enable_shared_memory_only}" = x"no"; then
     dnl test whether scalapack already contains blacs
-    scalapack_libs="mpiscalapack scalapack"
+    scalapack_libs="mpiscalapack scalapack scalapack-openmpi"
     old_LIBS="$LIBS"
     for lib in ${scalapack_libs}; do
       LIBS="-l${lib} ${old_LIBS}"
@@ -486,6 +486,12 @@ else
 
       dnl Test for stand-alone blacs
       AC_SEARCH_LIBS([bi_f77_init],[mpiblacsF77init],[],[],[-lmpiblacs])
+
+      dnl for debian
+      AC_SEARCH_LIBS([blacs_gridinit],[blacs-openmpi],[have_blacs=yes],[have_blacs=no],[-lblacsCinit-openmpi -lscalapack-openmpi])
+      if test x"${have_blacs}" = x"no"; then
+        unset ac_cv_search_blacs_gridinit
+      fi
       AC_SEARCH_LIBS([blacs_gridinit],[mpiblacs blacs],[have_blacs=yes],[have_blacs=no])
 
       if test x"${have_blacs}" = x"no"; then
