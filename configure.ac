@@ -68,25 +68,21 @@ if test x"${enable_openmp}" = x"yes"; then
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
 fi
 
-AC_MSG_CHECKING(whether --enable-shared-memory-only is specified)
-AC_ARG_ENABLE([shared-memory-only],
-		AS_HELP_STRING([--enable-shared-memory-only],
-			       [do not use MPI; ELPA will be build for one node shared-memory runs only]),
-	      [],
-	      [enable_shared_memory_only=no])
-AC_MSG_RESULT([${enable_shared_memory_only}])
-AM_CONDITIONAL([WITH_MPI],[test x"$enable_shared_memory_only" = x"no"])
-if test x"${enable_shared_memory_only}" = x"no"; then
-	AC_DEFINE([WITH_MPI], [1], [use MPI])
+dnl mpi
+AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi=[[yes|no]]], [compile with MPI. Default: yes])],,[with_mpi=yes])
+AM_CONDITIONAL([WITH_MPI],[test x"with_mpi" = x"yes"])
+if test x"${with_mpi}" = x"yes"; then
+       AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
-
-dnl check whether mpi compilers are available;
-dnl if not abort since it is mandatory
-
 
 # C
 AC_LANG([C])
-AX_PROG_CC_MPI([test x"$enable_shared_memory_only" = xno],[use_mpi=yes],[use_mpi=no])
+AX_PROG_CC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_c=yes],[found_mpi_c=no])
+if test x"$with_mpi" = x"yes"; then
+  if test x"$found_mpi_c" = x"no"; then
+    AC_MSG_ERROR([Could not compile an MPI C program])
+  fi
+fi
 
 if test x"${enable_openmp}" = x"yes"; then
   AX_ELPA_OPENMP
@@ -103,7 +99,12 @@ AM_PROG_AS
 # Fortran
 AC_LANG([Fortran])
 m4_include([m4/ax_prog_fc_mpi.m4])
-AX_PROG_FC_MPI([test x"$enable_shared_memory_only" = xno],[use_mpi=yes],[use_mpi=no])
+AX_PROG_FC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_f=yes],[found_mpi_f=no])
+if test x"$with_mpi" = x"yes"; then
+  if test x"$found_mpi_f" = x"no"; then
+    AC_MSG_ERROR([Could not compile an MPI Fortran program])
+  fi
+fi
 if test x"${enable_openmp}" = x"yes"; then
   AX_ELPA_OPENMP
   if test "$ac_cv_prog_fc_openmp" = unsupported; then
@@ -467,7 +468,7 @@ else
     AC_MSG_ERROR([could not link with lapack: specify path])
   fi
 
-  if test x"${enable_shared_memory_only}" = x"no"; then
+  if test x"${with_mpi}" = x"yes"; then
     dnl test whether scalapack already contains blacs
     scalapack_libs="mpiscalapack scalapack scalapack-openmpi"
     old_LIBS="$LIBS"
