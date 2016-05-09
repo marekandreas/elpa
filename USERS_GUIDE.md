@@ -85,7 +85,7 @@ please have a look at the man pages and/or the online documentation (see above)
 
 #### Shared-memory version of *ELPA* ####
 
-If the *ELPA* library has been compiled with the configure option "--enable-shared-memory-only",
+If the *ELPA* library has been compiled with the configure option "--with-mpi=0",
 no MPI will be used.
 
 Still the **same** call sequence as in the MPI case can be used (see above).

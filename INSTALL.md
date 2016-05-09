@@ -103,11 +103,11 @@ It this is not desired, it is possible to build *ELPA* with only one (not necess
 real and complex valued case, respectively. This can be done with the "--with-real-..-kernel-only" and
 "--with-complex-..-kernel-only" configure options. For details please do a "configure --help"
 
-### Non MPI one node shared-memory version of ELPA ###
+### No MPI, one node shared-memory version of ELPA ###
 
 Since release 2016.05.001 it is possible to build *ELPA* without any MPI support. This version can be used
 by applications, which do not have any MPI parallelisation. To set this version, use the
-"--enable-shared-memory-only" configure flag. It is strongly recommmended to also set the "--enable-openmp"
+"--with-mpi=0" configure flag. It is strongly recommmended to also set the "--enable-openmp"
 option, otherwise no parallelisation whatsoever will be present.
 
 ### Doxygen documentation ###
