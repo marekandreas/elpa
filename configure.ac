@@ -19,8 +19,6 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
 
-rm -rf config.h config-f90.h
-
 # Set the libtool library version, see LIBRARY_INTERFACE
 #
 # See http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
@@ -879,26 +877,6 @@ AC_CONFIG_FILES([
 
 AC_OUTPUT
 
-
-if test -e config.h ; then
-  grep "^#define" config.h > config-f90.h
-else
-  echo "Warning! No config.h was generated, check for errors and re-run configure!"
-  exit 1
-fi
-
-echo "Generating elpa/elpa_generated.h..."
-mkdir -p elpa
-grep -h "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
-
-echo "Generating Fortran interfaces for C kernels"
-grep -h "^ *!f>" $srcdir/src/elpa2_kernels/*.c | sed 's/^ *!f>//;' > elpa/elpa_generated_fortran_interfaces.h || exit 1
-#grep -h "^ *!f>" $srcdir/src/elpa2_kernels/*.cpp | sed 's/^ *!f>//;' >> elpa/elpa_generated_fortran_interfaces.h || exit 1
-
-echo "Generating test/shared_sources/generated.h..."
-mkdir -p test/shared_sources
-grep -h "^ *!c>" $srcdir/test/shared_sources/*.F90 | sed 's/^ *!c>//;' > test/shared_sources/generated.h || exit 1
-
 if test "${can_compile_avx}" = "no" ; then
 #  if test x"${want_avx}" = x"yes" ; then
     AC_MSG_WARN([Could not compile AVX instructions])
@@ -910,3 +888,4 @@ if test "${can_compile_avx2}" = "no" ; then
 #  fi
 fi
 
+make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"
