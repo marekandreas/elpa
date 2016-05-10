@@ -131,7 +131,8 @@ elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = $(wildcard modules/*)
 nobase_elpa_include_HEADERS += elpa/elpa.h elpa/elpa_kernel_constants.h elpa/elpa_generated.h
 
-man_MANS = man/solve_evp_real.3 \
+dist_man_MANS = \
+	   man/solve_evp_real.3 \
 	   man/solve_evp_real_1stage.3 \
 	   man/solve_evp_complex.3 \
 	   man/solve_evp_complex_1stage.3 \
