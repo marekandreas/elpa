@@ -298,62 +298,25 @@ check_SCRIPTS += \
   elpa2_test_complex_c_version@SUFFIX@.sh
 endif
 
+
+# test scripts
+if WITH_MPI
+  wrapper="mpiexec -n 2 "
+else
+  wrapper=""
+endif
 TESTS = $(check_SCRIPTS)
-elpa1_test_real@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_real@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real@SUFFIX@.sh
-	chmod +x elpa1_test_real@SUFFIX@.sh
+%.sh: %
+	echo '$(wrapper)./$^ $$TEST_FLAGS' > $@
+	chmod +x $@
 
-elpa1_test_real_with_c@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_real_with_c@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_with_c@SUFFIX@.sh
-	chmod +x elpa1_test_real_with_c@SUFFIX@.sh
+# this one does not want any arguments
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh: 
+	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
+	chmod +x $@
 
-elpa2_test_real_c_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_c_version@SUFFIX@.sh
-	chmod +x elpa2_test_real_c_version@SUFFIX@.sh
 
-elpa2_test_complex_c_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_c_version@SUFFIX@.sh
-	chmod +x elpa2_test_complex_c_version@SUFFIX@.sh
-
-elpa1_test_real_c_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_c_version@SUFFIX@.sh
-	chmod +x elpa1_test_real_c_version@SUFFIX@.sh
-
-elpa1_test_complex_c_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex_c_version@SUFFIX@.sh
-	chmod +x elpa1_test_complex_c_version@SUFFIX@.sh
-elpa2_test_real@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real@SUFFIX@.sh
-	chmod +x elpa2_test_real@SUFFIX@.sh
-
-elpa2_test_real_default_kernel@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel@SUFFIX@.sh
-
-elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh
-
-elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_choose_kernel_with_api@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh
-	chmod +x elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh
-
-elpa1_test_complex@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_complex@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex@SUFFIX@.sh
-	chmod +x elpa1_test_complex@SUFFIX@.sh
-
-elpa2_test_complex@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex@SUFFIX@.sh
-	chmod +x elpa2_test_complex@SUFFIX@.sh
-
-elpa2_test_complex_default_kernel@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_default_kernel@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_default_kernel@SUFFIX@.sh
-	chmod +x elpa2_test_complex_default_kernel@SUFFIX@.sh
-
-elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_choose_kernel_with_api@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh
-	chmod +x elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh
-
+# Preprocessed files (just used for manual inspection)
 elpa2_utilities.i: $(top_srcdir)/src/elpa2_utilities.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2_utilities.F90 -o $@
 
