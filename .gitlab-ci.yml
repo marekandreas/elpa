@@ -970,3 +970,10 @@ gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
     - make check TEST_FLAGS='1500 50 16'
     - ./test_scripts/get_coverage_summary.sh
 
+distcheck:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure --with-mpi=no
+    - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no" TEST_FLAGS='1500 50 16'
