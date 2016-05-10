@@ -9,42 +9,45 @@ AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
-libelpa@SUFFIX@_la_SOURCES = src/mod_precision.f90 \
-                             src/mod_mpi.F90 \
-			     src/mod_mpi_stubs.F90 \
-			     src/elpa2_kernels/mod_fortran_interfaces.F90 \
-                             src/elpa_utilities.F90 \
-	                     src/elpa1_compute.F90 \
-	                     src/elpa1.F90 \
-			     src/elpa2_utilities.F90 \
-			     src/mod_pack_unpack_real.F90 \
-			     src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
-			     src/mod_compute_hh_trafo_real.F90 \
-			     src/mod_compute_hh_trafo_complex.F90 \
-			     src/mod_pack_unpack_complex.F90 \
-			     src/aligned_mem.F90 \
-			     src/elpa2_compute.F90 \
-			     src/elpa2.F90 \
-			     src/elpa_c_interface.F90 \
-                             src/elpa_qr/qr_utils.F90 \
-                             src/elpa_qr/elpa_qrkernels.f90 \
-                             src/elpa_qr/elpa_pdlarfb.F90 \
-                             src/elpa_qr/elpa_pdgeqrf.F90
+libelpa@SUFFIX@_la_SOURCES = \
+        src/mod_precision.f90 \
+        src/mod_mpi.F90 \
+        src/mod_mpi_stubs.F90 \
+        src/elpa2_kernels/mod_fortran_interfaces.F90 \
+        src/elpa_utilities.F90 \
+        src/elpa1_compute.F90 \
+        src/elpa1.F90 \
+        src/elpa2_utilities.F90 \
+        src/mod_pack_unpack_real.F90 \
+        src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
+        src/mod_compute_hh_trafo_real.F90 \
+        src/mod_compute_hh_trafo_complex.F90 \
+        src/mod_pack_unpack_complex.F90 \
+        src/aligned_mem.F90 \
+        src/elpa2_compute.F90 \
+        src/elpa2.F90 \
+        src/elpa_c_interface.F90 \
+        src/elpa_qr/qr_utils.F90 \
+        src/elpa_qr/elpa_qrkernels.f90 \
+        src/elpa_qr/elpa_pdlarfb.F90 \
+        src/elpa_qr/elpa_pdgeqrf.F90
 
-EXTRA_libelpa@SUFFIX@_la_DEPENDENCIES = src/elpa_reduce_add_vectors.X90 \
-					src/elpa_transpose_vectors.X90 \
-					src/redist_band.X90
+EXTRA_libelpa@SUFFIX@_la_DEPENDENCIES = \
+        src/elpa_reduce_add_vectors.X90 \
+        src/elpa_transpose_vectors.X90 \
+        src/redist_band.X90
 
 if HAVE_DETAILED_TIMINGS
-  libelpa@SUFFIX@_la_SOURCES += src/timer.F90 \
-                                src/ftimings/ftimings.F90 \
-                                src/ftimings/ftimings_type.F90 \
-                                src/ftimings/ftimings_value.F90 \
-                                src/ftimings/highwater_mark.c \
-                                src/ftimings/resident_set_size.c \
-                                src/ftimings/time.c \
-                                src/ftimings/virtual_memory.c \
-                                src/ftimings/papi.c
+  libelpa@SUFFIX@_la_SOURCES += \
+        src/timer.F90 \
+        src/ftimings/ftimings.F90 \
+        src/ftimings/ftimings_type.F90 \
+        src/ftimings/ftimings_value.F90 \
+        src/ftimings/highwater_mark.c \
+        src/ftimings/resident_set_size.c \
+        src/ftimings/time.c \
+        src/ftimings/virtual_memory.c \
+        src/ftimings/papi.c
 endif
 
 if !WITH_MPI
@@ -125,6 +128,9 @@ endif
 if WITH_COMPLEX_AVX_BLOCK2_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv.c
 endif
+
+include generated_headers.am
+BUILT_SOURCES = $(generated_headers)
 
 # install any .mod files in the include/ dir
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
@@ -346,13 +352,13 @@ CLEANFILES = \
 
 clean-local:
 	-rm -rf modules/* .fortran_dependencies/*
+	-rm -rf $(generated_headers)
 
 distclean-local:
 	-rm config-f90.h
 	-rm -rf ./src/elpa2_kernels/.deps
 	-rm -rf ./src/.deps
 	-rm -rf ./test/.deps
-	-rm -rf ./elpa/elpa_generated.h
 	-rmdir ./src/elpa2_kernels/
 	-rmdir ./src
 	-rmdir ./test
@@ -367,13 +373,6 @@ EXTRA_DIST = \
   src/elpa_reduce_add_vectors.X90 \
   src/elpa_transpose_vectors.X90 \
   src/redist_band.X90
-
-# Rules to re-generated the headers
-elpa/elpa_generated.h: $(top_srcdir)/src/elpa_c_interface.F90
-	grep -h "^ *!c>" $^ | sed 's/^ *!c>//;' > $@ || { rm $@; exit 1; }
-
-test/shared_sources/generated.h: $(wildcard $(top_srcdir)/test/shared_sources/*.F90)
-	grep -h "^ *!c>" $^ | sed 's/^ *!c>//;' > $@ || { rm $@; exit 1; }
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
