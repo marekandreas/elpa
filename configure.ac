@@ -1,6 +1,8 @@
 AC_PREREQ([2.69])
 
+# Remember to change the version also in elpa.spec
 AC_INIT([elpa],[2016.05.001], [elpa-library@mpcdf.mpg.de])
+
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])

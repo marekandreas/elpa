@@ -372,7 +372,8 @@ EXTRA_DIST = \
   test/fortran_test_programs/elpa_test_programs_print_headers.X90 \
   src/elpa_reduce_add_vectors.X90 \
   src/elpa_transpose_vectors.X90 \
-  src/redist_band.X90
+  src/redist_band.X90 \
+  elpa.spec
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
