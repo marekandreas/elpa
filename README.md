@@ -2,7 +2,7 @@
 
 ## Current Release ##
 
-The current release is ELPA 2015.11.001
+The current release is ELPA 2016.05.001
 
 ## About *ELPA*
 
