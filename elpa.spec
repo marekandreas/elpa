@@ -198,12 +198,12 @@ module load mpi/openmpi-%{_arch}
 %endif
 
 pushd build
-#make check TEST_FLAGS="1500 50 16" || { echo "Tests failed: Content of ./test-suite.log:"; cat ./test-suite.log; echo; exit 1; }
+make check TEST_FLAGS="1500 50 16" || { echo "Tests failed: Content of ./test-suite.log:"; cat ./test-suite.log; echo; exit 1; }
 popd
 
 %if %{defined with_openmp}
 pushd build_openmp
-#make check TEST_FLAGS="1500 50 16" || { echo "Tests failed: Content of ./test-suite.log:"; cat ./test-suite.log; echo; exit 1; }
+make check TEST_FLAGS="1500 50 16" || { echo "Tests failed: Content of ./test-suite.log:"; cat ./test-suite.log; echo; exit 1; }
 popd
 %endif
 
@@ -278,3 +278,5 @@ popd
 %{_libdir}/lib%{name}_openmp.a
 
 %endif
+
+%changelog
