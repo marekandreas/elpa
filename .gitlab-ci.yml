@@ -44,6 +44,18 @@ intel-double-precision-mpi-noomp-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
+intel-double-precision-mpi-noomp-cuda-jobs:
+  tags:
+    - gpu
+  script:
+    - module load cuda
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"
+    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O3" --enable-gpu-support --with-cuda-path=/afs/ipp/.cs/cuda/6.5/amd64_sles11/
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 500 128'
+
 gfortran-double-precision-mpi-noomp-jobs:
   tags:
     - cpu
