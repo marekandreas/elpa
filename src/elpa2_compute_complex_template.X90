@@ -2999,6 +2999,7 @@
 #else
       complex(kind=COMPLEX_DATATYPE), pointer     :: a(:,:,:)
 #endif
+      complex(kind=COMPLEX_DATATYPE)              :: a_complex
       type(c_ptr)                                 :: a_ptr
       complex(kind=COMPLEX_DATATYPE), allocatable :: row(:)
       complex(kind=COMPLEX_DATATYPE), allocatable :: row_group(:,:)
@@ -3224,7 +3225,7 @@
       endif
 
       if (.not.(useGPU)) then
-         if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a(1,1,1,1))) /= 0) then
+         if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a_complex)) /= 0) then
           print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
           stop
         endif
@@ -3238,7 +3239,7 @@
 #else /* OpenMP */
 
       if (.not.(useGPU)) then
-        if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a(1,1,1))) /= 0) then
+        if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a_complex)) /= 0) then
           print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
           stop
         endif

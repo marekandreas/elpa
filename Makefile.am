@@ -549,6 +549,11 @@ elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh:
 	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
 	chmod +x $@
 
+if WANT_SINGLE_PRECISION_REAL
+elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh:
+	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@' > $@
+	chmod +x $@
+endif
 # Preprocessed files (just used for manual inspection)
 mod_precision.i: $(top_srcdir)/src/mod_precision.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/mod_precision.F90 -o $@

@@ -3414,6 +3414,7 @@
 #else
       real(kind=REAL_DATATYPE), pointer        :: a(:,:,:)
 #endif
+      real(kind=REAL_DATATYPE)                 :: a_real
       type(c_ptr)                              :: a_ptr
       real(kind=REAL_DATATYPE)   , allocatable :: row(:)
       real(kind=REAL_DATATYPE)   , allocatable :: row_group(:,:)
@@ -3608,7 +3609,7 @@
 #endif
 
 #ifdef WITH_OPENMP
-        if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a(1,1,1,1))) /= 0) then
+        if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a_real)) /= 0) then
           print *,"trans_ev_tridi_to_band_real: error when allocating a"//errorMessage
           stop
         endif
@@ -3618,7 +3619,7 @@
 
         ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
 #else
-        if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a(1,1,1))) /= 0) then
+        if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a_real)) /= 0) then
           print *,"trans_ev_tridi_to_band_real: error when allocating a"//errorMessage
           stop
         endif
