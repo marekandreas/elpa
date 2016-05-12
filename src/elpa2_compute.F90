@@ -1782,6 +1782,8 @@ module ELPA2_compute
 #else
       real(kind=rk), pointer        :: a(:,:,:)
 #endif
+      real(kind=rk)                 :: a_real
+
       type(c_ptr)                   :: a_ptr
       real(kind=rk), allocatable    :: row(:)
 
@@ -1896,9 +1898,9 @@ module ELPA2_compute
       a_dim2 = max_blk_size + nbw
 
 #ifdef WITH_OPENMP
-      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a(1,1,1,1))) /= 0) then
+      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a_real)) /= 0) then
 #else
-      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a(1,1,1))) /= 0) then
+      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a_real)) /= 0) then
 #endif
         write(error_unit,*) "Cannot allocate memory"
         success = .false.
@@ -4206,6 +4208,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #else
       complex(kind=ck), pointer     :: a(:,:,:)
 #endif
+      complex(kind=ck)              :: a_complex
       complex(kind=ck), allocatable :: row(:)
       type(c_ptr)                   :: a_ptr
 
@@ -4329,9 +4332,9 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       a_dim2 = max_blk_size + nbw
 
 #ifdef WITH_OPENMP
-      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a(1,1,1,1))) /= 0) then
+      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a_complex)) /= 0) then
 #else
-      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a(1,1,1))) /= 0) then
+      if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a_complex)) /= 0) then
 #endif
         write(error_unit,*) "Cannot allocate memory"
         success = .false.
