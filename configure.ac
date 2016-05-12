@@ -1,6 +1,8 @@
 AC_PREREQ([2.69])
 
+# Remember to change the version also in elpa.spec
 AC_INIT([elpa],[2016.05.001], [elpa-library@mpcdf.mpg.de])
+
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
@@ -18,8 +20,6 @@ AM_MAINTAINER_MODE([disable])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
-
-rm -rf config.h config-f90.h
 
 # Set the libtool library version, see LIBRARY_INTERFACE
 #
@@ -68,25 +68,21 @@ if test x"${enable_openmp}" = x"yes"; then
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
 fi
 
-AC_MSG_CHECKING(whether --enable-shared-memory-only is specified)
-AC_ARG_ENABLE([shared-memory-only],
-		AS_HELP_STRING([--enable-shared-memory-only],
-			       [do not use MPI; ELPA will be build for one node shared-memory runs only]),
-	      [],
-	      [enable_shared_memory_only=no])
-AC_MSG_RESULT([${enable_shared_memory_only}])
-AM_CONDITIONAL([WITH_MPI],[test x"$enable_shared_memory_only" = x"no"])
-if test x"${enable_shared_memory_only}" = x"no"; then
-	AC_DEFINE([WITH_MPI], [1], [use MPI])
+dnl mpi
+AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi=[[yes|no]]], [compile with MPI. Default: yes])],,[with_mpi=yes])
+AM_CONDITIONAL([WITH_MPI],[test x"with_mpi" = x"yes"])
+if test x"${with_mpi}" = x"yes"; then
+       AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
-
-dnl check whether mpi compilers are available;
-dnl if not abort since it is mandatory
-
 
 # C
 AC_LANG([C])
-AX_PROG_CC_MPI([test x"$enable_shared_memory_only" = xno],[use_mpi=yes],[use_mpi=no])
+AX_PROG_CC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_c=yes],[found_mpi_c=no])
+if test x"$with_mpi" = x"yes"; then
+  if test x"$found_mpi_c" = x"no"; then
+    AC_MSG_ERROR([Could not compile an MPI C program])
+  fi
+fi
 
 if test x"${enable_openmp}" = x"yes"; then
   AX_ELPA_OPENMP
@@ -111,7 +107,12 @@ AC_MSG_RESULT([${want_single_precision}])
 
 AC_LANG([Fortran])
 m4_include([m4/ax_prog_fc_mpi.m4])
-AX_PROG_FC_MPI([test x"$enable_shared_memory_only" = xno],[use_mpi=yes],[use_mpi=no])
+AX_PROG_FC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_f=yes],[found_mpi_f=no])
+if test x"$with_mpi" = x"yes"; then
+  if test x"$found_mpi_f" = x"no"; then
+    AC_MSG_ERROR([Could not compile an MPI Fortran program])
+  fi
+fi
 if test x"${enable_openmp}" = x"yes"; then
   AX_ELPA_OPENMP
   if test "$ac_cv_prog_fc_openmp" = unsupported; then
@@ -495,9 +496,9 @@ else
     AC_MSG_ERROR([could not link with lapack: specify path])
   fi
 
-  if test x"${enable_shared_memory_only}" = x"no"; then
+  if test x"${with_mpi}" = x"yes"; then
     dnl test whether scalapack already contains blacs
-    scalapack_libs="mpiscalapack scalapack"
+    scalapack_libs="mpiscalapack scalapack scalapack-openmpi"
     old_LIBS="$LIBS"
     for lib in ${scalapack_libs}; do
       LIBS="-l${lib} ${old_LIBS}"
@@ -514,6 +515,12 @@ else
 
       dnl Test for stand-alone blacs
       AC_SEARCH_LIBS([bi_f77_init],[mpiblacsF77init],[],[],[-lmpiblacs])
+
+      dnl for debian
+      AC_SEARCH_LIBS([blacs_gridinit],[blacs-openmpi],[have_blacs=yes],[have_blacs=no],[-lblacsCinit-openmpi -lscalapack-openmpi])
+      if test x"${have_blacs}" = x"no"; then
+        unset ac_cv_search_blacs_gridinit
+      fi
       AC_SEARCH_LIBS([blacs_gridinit],[mpiblacs blacs],[have_blacs=yes],[have_blacs=no])
 
       if test x"${have_blacs}" = x"no"; then
@@ -961,26 +968,6 @@ AC_CONFIG_FILES([
 
 AC_OUTPUT
 
-
-if test -e config.h ; then
-  grep "^#define" config.h > config-f90.h
-else
-  echo "Warning! No config.h was generated, check for errors and re-run configure!"
-  exit 1
-fi
-
-echo "Generating elpa/elpa_generated.h..."
-mkdir -p elpa
-grep -h "^ *!c>" $srcdir/src/elpa_c_interface.F90 | sed 's/^ *!c>//;' > elpa/elpa_generated.h || exit 1
-
-echo "Generating Fortran interfaces for C kernels"
-grep -h "^ *!f>" $srcdir/src/elpa2_kernels/*.c | sed 's/^ *!f>//;' > elpa/elpa_generated_fortran_interfaces.h || exit 1
-#grep -h "^ *!f>" $srcdir/src/elpa2_kernels/*.cpp | sed 's/^ *!f>//;' >> elpa/elpa_generated_fortran_interfaces.h || exit 1
-
-echo "Generating test/shared_sources/generated.h..."
-mkdir -p test/shared_sources
-grep -h "^ *!c>" $srcdir/test/shared_sources/*.F90 | sed 's/^ *!c>//;' > test/shared_sources/generated.h || exit 1
-
 if test "${can_compile_avx}" = "no" ; then
 #  if test x"${want_avx}" = x"yes" ; then
     AC_MSG_WARN([Could not compile AVX instructions])
@@ -995,3 +982,5 @@ fi
 if test "${can_compile_sse}" = "no" ; then
   AC_MSG_WARN([Could not compile SSE instructions])
 fi
+
+make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"

@@ -44,15 +44,16 @@ EXTRA_libelpa@SUFFIX@_la_DEPENDENCIES = src/elpa_reduce_add_vectors.X90 \
 					src/elpa2_compute_complex_template.X90
 
 if HAVE_DETAILED_TIMINGS
-  libelpa@SUFFIX@_la_SOURCES += src/timer.F90 \
-                                src/ftimings/ftimings.F90 \
-                                src/ftimings/ftimings_type.F90 \
-                                src/ftimings/ftimings_value.F90 \
-                                src/ftimings/highwater_mark.c \
-                                src/ftimings/resident_set_size.c \
-                                src/ftimings/time.c \
-                                src/ftimings/virtual_memory.c \
-                                src/ftimings/papi.c
+  libelpa@SUFFIX@_la_SOURCES += \
+        src/timer.F90 \
+        src/ftimings/ftimings.F90 \
+        src/ftimings/ftimings_type.F90 \
+        src/ftimings/ftimings_value.F90 \
+        src/ftimings/highwater_mark.c \
+        src/ftimings/resident_set_size.c \
+        src/ftimings/time.c \
+        src/ftimings/virtual_memory.c \
+        src/ftimings/papi.c
 endif
 
 if WITH_GPU_VERSION
@@ -185,7 +186,8 @@ elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = $(wildcard modules/*)
 nobase_elpa_include_HEADERS += elpa/elpa.h elpa/elpa_kernel_constants.h elpa/elpa_generated.h
 
-man_MANS = man/solve_evp_real.3 \
+dist_man_MANS = \
+           man/solve_evp_real.3 \
 	   man/solve_evp_real_1stage_double.3 \
 	   man/solve_evp_complex.3 \
 	   man/solve_evp_complex_1stage_double.3 \
@@ -197,13 +199,13 @@ man_MANS = man/solve_evp_real.3 \
 
 if WANT_SINGLE_PRECISION_REAL
 
-man_MANS += man/solve_evp_real_1stage_single.3 \
+dist_man_MANS += man/solve_evp_real_1stage_single.3 \
 	    man/solve_evp_real_2stage_single.3
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 
-man_MANS += man/solve_evp_complex_1stage_single.3 \
+dist_man_MANS += man/solve_evp_complex_1stage_single.3 \
 	    man/solve_evp_complex_2stage_single.3
 endif
 
@@ -366,7 +368,7 @@ endif
 
 elpa1_test_real@SUFFIX@_SOURCES = test/fortran_test_programs/test_real.F90 $(shared_sources) $(redirect_sources)
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
-EXTRA_elpa2_test_real@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa1_test_real@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
 
 #elpa1_test_complex_with_c@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex_with_c.F90 test/shared_sources/mod_from_c.F90 test/shared_sources/call_elpa1.c $(shared_sources) $(redirect_sources)
 #elpa1_test_complex_with_c@SUFFIX@_LDADD = $(build_lib)
@@ -531,254 +533,23 @@ endif
 
 endif
 
-TESTS = $(check_SCRIPTS)
+# test scripts
 if WITH_MPI
-elpa1_test_real@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_real@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real@SUFFIX@.sh
-	chmod +x elpa1_test_real@SUFFIX@.sh
-
-elpa1_test_real_with_c@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_real_with_c@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_with_c@SUFFIX@.sh
-	chmod +x elpa1_test_real_with_c@SUFFIX@.sh
-
-elpa2_test_real_c_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_c_version@SUFFIX@.sh
-	chmod +x elpa2_test_real_c_version@SUFFIX@.sh
-
-elpa2_test_complex_c_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_c_version@SUFFIX@.sh
-	chmod +x elpa2_test_complex_c_version@SUFFIX@.sh
-
-elpa1_test_real_c_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_c_version@SUFFIX@.sh
-	chmod +x elpa1_test_real_c_version@SUFFIX@.sh
-
-elpa1_test_complex_c_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex_c_version@SUFFIX@.sh
-	chmod +x elpa1_test_complex_c_version@SUFFIX@.sh
-
-elpa2_test_real@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real@SUFFIX@.sh
-	chmod +x elpa2_test_real@SUFFIX@.sh
-
-elpa2_test_real_default_kernel@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel@SUFFIX@.sh
-
-elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh
-
-elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_choose_kernel_with_api@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh
-	chmod +x elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh
-
-elpa1_test_complex@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_complex@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex@SUFFIX@.sh
-	chmod +x elpa1_test_complex@SUFFIX@.sh
-
-elpa2_test_complex@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex@SUFFIX@.sh
-	chmod +x elpa2_test_complex@SUFFIX@.sh
-
-elpa2_test_complex_default_kernel@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_default_kernel@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_default_kernel@SUFFIX@.sh
-	chmod +x elpa2_test_complex_default_kernel@SUFFIX@.sh
-
-elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_choose_kernel_with_api@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh
-	chmod +x elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh
-
-if WANT_SINGLE_PRECISION_REAL
-elpa1_test_real_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_real_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_single_precision@SUFFIX@.sh
-	chmod +x elpa1_test_real_single_precision@SUFFIX@.sh
-
-elpa2_test_real_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_single_precision@SUFFIX@.sh
-
-elpa2_test_real_default_kernel_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel_single_precision@SUFFIX@.sh
-
-elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@' > elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh
-
-elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@.sh
-endif
-
-if WANT_SINGLE_PRECISION_COMPLEX
-elpa1_test_complex_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa1_test_complex_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex_single_precision@SUFFIX@.sh
-	chmod +x elpa1_test_complex_single_precision@SUFFIX@.sh
-
-elpa2_test_complex_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_complex_single_precision@SUFFIX@.sh
-
-elpa2_test_complex_default_kernel_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_default_kernel_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_default_kernel_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_complex_default_kernel_single_precision@SUFFIX@.sh
-
-elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@.sh
-endif
-
-if WITH_GPU_VERSION
-elpa2_test_real_gpu_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_gpu_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_gpu_version@SUFFIX@.sh
-	chmod +x elpa2_test_real_gpu_version@SUFFIX@.sh
-
-elpa2_test_complex_gpu_version@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_gpu_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_gpu_version@SUFFIX@.sh
-	chmod +x elpa2_test_complex_gpu_version@SUFFIX@.sh
-
-if WANT_SINGLE_PRECISION_REAL
-elpa2_test_real_gpu_version_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_real_gpu_version_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_gpu_version_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_gpu_version_single_precision@SUFFIX@.sh
-endif
-
-if WANT_SINGLE_PRECISION_COMPLEX
-elpa2_test_complex_gpu_version_single_precision@SUFFIX@.sh:
-	echo 'mpiexec -n 2 ./elpa2_test_complex_gpu_version_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_gpu_version_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_complex_gpu_version_single_precision@SUFFIX@.sh
-endif
-# GPU_VERSION
-endif
-
+  wrapper="mpiexec -n 2 "
 else
-# build tests without mpi support
+  wrapper=""
+endif
+TESTS = $(check_SCRIPTS)
+%.sh: %
+	echo '$(wrapper)./$^ $$TEST_FLAGS' > $@
+	chmod +x $@
 
-elpa1_test_real@SUFFIX@.sh:
-	echo './elpa1_test_real@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real@SUFFIX@.sh
-	chmod +x elpa1_test_real@SUFFIX@.sh
-
-elpa1_test_real_with_c@SUFFIX@.sh:
-	echo './elpa1_test_real_with_c@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_with_c@SUFFIX@.sh
-	chmod +x elpa1_test_real_with_c@SUFFIX@.sh
-
-elpa2_test_real_c_version@SUFFIX@.sh:
-	echo './elpa2_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_c_version@SUFFIX@.sh
-	chmod +x elpa2_test_real_c_version@SUFFIX@.sh
-
-elpa2_test_complex_c_version@SUFFIX@.sh:
-	echo './elpa2_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_c_version@SUFFIX@.sh
-	chmod +x elpa2_test_complex_c_version@SUFFIX@.sh
-
-elpa1_test_real_c_version@SUFFIX@.sh:
-	echo './elpa1_test_real_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_c_version@SUFFIX@.sh
-	chmod +x elpa1_test_real_c_version@SUFFIX@.sh
-
-elpa1_test_complex_c_version@SUFFIX@.sh:
-	echo './elpa1_test_complex_c_version@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex_c_version@SUFFIX@.sh
-	chmod +x elpa1_test_complex_c_version@SUFFIX@.sh
-
-elpa2_test_real@SUFFIX@.sh:
-	echo './elpa2_test_real@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real@SUFFIX@.sh
-	chmod +x elpa2_test_real@SUFFIX@.sh
-
-elpa2_test_real_default_kernel@SUFFIX@.sh:
-	echo './elpa2_test_real_default_kernel@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel@SUFFIX@.sh
-
+# this one does not want any arguments
 elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh:
-	echo './elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh
+	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
+	chmod +x $@
 
-elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh:
-	echo './elpa2_test_real_choose_kernel_with_api@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh
-	chmod +x elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh
-
-elpa1_test_complex@SUFFIX@.sh:
-	echo './elpa1_test_complex@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex@SUFFIX@.sh
-	chmod +x elpa1_test_complex@SUFFIX@.sh
-
-elpa2_test_complex@SUFFIX@.sh:
-	echo './elpa2_test_complex@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex@SUFFIX@.sh
-	chmod +x elpa2_test_complex@SUFFIX@.sh
-
-elpa2_test_complex_default_kernel@SUFFIX@.sh:
-	echo './elpa2_test_complex_default_kernel@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_default_kernel@SUFFIX@.sh
-	chmod +x elpa2_test_complex_default_kernel@SUFFIX@.sh
-
-elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh:
-	echo './elpa2_test_complex_choose_kernel_with_api@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh
-	chmod +x elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh
-
-if WANT_SINGLE_PRECISION_REAL
-elpa1_test_real_single_precision@SUFFIX@.sh:
-	echo './elpa1_test_real_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa1_test_real_single_precision@SUFFIX@.sh
-	chmod +x elpa1_test_real_single_precision@SUFFIX@.sh
-
-elpa2_test_real_single_precision@SUFFIX@.sh:
-	echo './elpa2_test_real_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_single_precision@SUFFIX@.sh
-
-elpa2_test_real_default_kernel_single_precision@SUFFIX@.sh:
-	echo './elpa2_test_real_default_kernel_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_default_kernel_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel_single_precision@SUFFIX@.sh
-
-elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh:
-	echo './elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@' > elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh
-
-elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@.sh:
-	echo './elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@.sh
-endif
-
-if WANT_SINGLE_PRECISION_COMPLEX
-elpa1_test_complex_single_precision@SUFFIX@.sh:
-	echo './elpa1_test_complex_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa1_test_complex_single_precision@SUFFIX@.sh
-	chmod +x elpa1_test_complex_single_precision@SUFFIX@.sh
-
-elpa2_test_complex_single_precision@SUFFIX@.sh:
-	echo './elpa2_test_complex_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_complex_single_precision@SUFFIX@.sh
-
-elpa2_test_complex_default_kernel_single_precision@SUFFIX@.sh:
-	echo './elpa2_test_complex_default_kernel_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_default_kernel_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_complex_default_kernel_single_precision@SUFFIX@.sh
-
-elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@.sh:
-	echo './elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@.sh
-endif
-
-if WITH_GPU_VERSION
-elpa2_test_real_gpu_version@SUFFIX@.sh:
-	echo './elpa2_test_real_gpu_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_gpu_version@SUFFIX@.sh
-	chmod +x elpa2_test_real_gpu_version@SUFFIX@.sh
-
-elpa2_test_complex_gpu_version@SUFFIX@.sh:
-	echo './elpa2_test_complex_gpu_version@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_gpu_version@SUFFIX@.sh
-	chmod +x elpa2_test_complex_gpu_version@SUFFIX@.sh
-
-if WANT_SINGLE_PRECISION_REAL
-elpa2_test_real_gpu_version_single_precision@SUFFIX@.sh:
-	echo './elpa2_test_real_gpu_version_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_real_gpu_version_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_real_gpu_version_single_precision@SUFFIX@.sh
-endif
-
-if WANT_SINGLE_PRECISION_COMPLEX
-elpa2_test_complex_gpu_version_single_precision@SUFFIX@.sh:
-	echo './elpa2_test_complex_gpu_version_single_precision@SUFFIX@ $$TEST_FLAGS' > elpa2_test_complex_gpu_version_single_precision@SUFFIX@.sh
-	chmod +x elpa2_test_complex_gpu_version_single_precision@SUFFIX@.sh
-endif
-# GPU_VERSION
-endif
-
-
-
-# use mpi
-endif
-
+# Preprocessed files (just used for manual inspection)
 mod_precision.i: $(top_srcdir)/src/mod_precision.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/mod_precision.F90 -o $@
 
@@ -828,6 +599,8 @@ cuUtils.i: $(top_srcdir)/src/cuUtils.cu
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/cuUtils.cu -o $@
 
 include doxygen.am
+include generated_headers.am
+BUILT_SOURCES = $(generated_headers)
 
 CLEANFILES = \
   elpa1_test* \
@@ -836,13 +609,13 @@ CLEANFILES = \
 
 clean-local:
 	-rm -rf modules/* .fortran_dependencies/*
+	-rm -rf $(generated_headers)
 
 distclean-local:
 	-rm config-f90.h
 	-rm -rf ./src/elpa2_kernels/.deps
 	-rm -rf ./src/.deps
 	-rm -rf ./test/.deps
-	-rm -rf ./elpa/elpa_generated.h
 	-rmdir ./src/elpa2_kernels/
 	-rmdir ./src
 	-rmdir ./test
@@ -866,7 +639,8 @@ EXTRA_DIST = \
   src/ev_tridi_band_gpu_c_v2_real_template.Xcu \
   src/cuUtils_complex_template.Xcu \
   src/cuUtils_real_template.Xcu \
-  nvcc_wrap
+  nvcc_wrap \
+  elpa.spec
 
 # Rules to re-generated the headers
 elpa/elpa_generated.h: $(top_srcdir)/src/elpa_c_interface.F90
