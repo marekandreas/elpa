@@ -122,11 +122,11 @@ program test_complex2_gpu_version_single_precision
 
    integer(kind=ik), external    :: numroc
 
-   real(kind=rk8), allocatable    :: ev(:), xr(:,:)
+   real(kind=rk4), allocatable    :: ev(:), xr(:,:)
 
-   complex(kind=ck8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+   complex(kind=ck4), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
-   complex(kind=ck8), parameter   :: CZERO = (0._rk8,0._rk8), CONE = (1._rk8,0._rk8)
+   complex(kind=ck4), parameter   :: CZERO = (0._rk4,0._rk4), CONE = (1._rk4,0._rk4)
 
    integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
