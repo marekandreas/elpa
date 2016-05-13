@@ -1,6 +1,7 @@
 before_script:
   - export LANG=C
   - module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools
+  - module list
   - export MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
   - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
   - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
@@ -50,9 +51,9 @@ intel-double-precision-mpi-noomp-cuda-jobs:
   script:
     - module unload gcc
     - module load gcc/4.8 cuda
+    - module list
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"
-    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O3" --enable-gpu-support --with-cuda-path=/afs/ipp/.cs/cuda/6.5/amd64_sles11/
+    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=/afs/ipp/.cs/cuda/6.5/amd64_sles11/
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 500 128'
