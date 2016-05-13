@@ -123,7 +123,7 @@ program test_real2_gpu_version_single_precision
 
    integer(kind=ik), external :: numroc
 
-   real(kind=rk8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real(kind=rk4), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
    integer(kind=ik)           :: STATUS
