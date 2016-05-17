@@ -316,11 +316,10 @@ TESTS = $(check_SCRIPTS)
 	echo '$(wrapper)./$^ $$TEST_FLAGS' > $@
 	chmod +x $@
 
-# this one does not want any arguments
-elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh: 
-	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
-	chmod +x $@
-
+## this one does not want any arguments
+#elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh:
+#	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
+#	chmod +x $@
 
 # Preprocessed files (just used for manual inspection)
 elpa2_utilities.i: $(top_srcdir)/src/elpa2_utilities.F90
