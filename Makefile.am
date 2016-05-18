@@ -317,9 +317,9 @@ TESTS = $(check_SCRIPTS)
 	chmod +x $@
 
 ## this one does not want any arguments
-elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh:
-	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
-	chmod +x $@
+#elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh:
+#	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
+#	chmod +x $@
 
 #elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh:
 #	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@' > $@

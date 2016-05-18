@@ -136,19 +136,26 @@ program test_real2
 
    success = .true.
    !write_to_file = .false.
+   call read_input_parameters(na, nev, nblk, write_to_file)
 
-   if (COMMAND_ARGUMENT_COUNT() /= 0) then
-     write(error_unit,*) "This program does not support any command-line arguments"
-     stop 1
-   endif
+   !if (COMMAND_ARGUMENT_COUNT() /= 0) then
+   !  write(error_unit,*) "This program does not support any command-line arguments"
+   !  stop 1
+   !endif
 
    ! override nblk
-   nblk = 2
-   na   = 4000
-   nev  = 1500
+   !   nblk = 2
+   !   na   = 4000
+   !   nev  = 1500
+
+   ! make sure na, nbl is even
+   if (mod(nblk,2 ) .ne. 0) then
+     nblk = nblk - 1
+   endif
+
 
    ! make sure na is even
-   if (mod(na,nblk) .ne. 0) then
+   if (mod(na,2) .ne. 0) then
      na = na - 1
    endif
    ! make sure na is at least 34
