@@ -977,3 +977,25 @@ distcheck:
     - ./autogen.sh
     - ./configure --with-mpi=no
     - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no" TEST_FLAGS='1500 50 16'
+
+test_project:
+  tags:
+    - cpu
+  script:
+    - mkdir build
+    - pushd build
+    - ../autogen.sh
+    - ../configure SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest
+    - make -j 8
+    - make install
+    - popd
+    - mkdir test_project/build
+    - pushd test_project/build
+    - ../autogen.sh
+    - ../configure PKG_CONFIG_PATH=../../build/installdest/lib64/pkgconfig
+    - make -j 8
+    - ./test_real
+    - make distclean
+    - popd
+    - make distclean
+    - rm -rf installdest
