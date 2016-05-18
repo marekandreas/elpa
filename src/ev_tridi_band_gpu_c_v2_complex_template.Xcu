@@ -66,19 +66,19 @@ static __device__ __forceinline__ double shfl_xor_double(double r, int mask)
 static __device__ __forceinline__ float shfl_xor_single(float r, int mask)
 #endif
 {
-#ifdef DOUBLE_PRECISION_COMPLEX
+//#ifdef DOUBLE_PRECISION_COMPLEX
     int hi = __shfl_xor(__double2hiint(r), mask);
     int lo = __shfl_xor(__double2loint(r), mask);
 
     return __hiloint2double(hi, lo);
-#else
+//#else
 //    int hi = __shfl_xor(__float2hiint(r), mask);
 //    int lo = __shfl_xor(__float2loint(r), mask);
-    int hi;
-    int lo;
+//    int hi;
+//    int lo;
     //exit(1);
     //return __hiloint2float(hi, lo);
-#endif
+//#endif
 }
 
 #if 0
@@ -111,20 +111,20 @@ static __device__ __forceinline__ double shfl_down_double(double r, int offset)
 static __device__ __forceinline__ float shfl_down_single(float r, int offset)
 #endif
 {
-#ifdef DOUBLE_PRECISION_COMPLEX
+//#ifdef DOUBLE_PRECISION_COMPLEX
     int hi = __shfl_down(__double2hiint(r), offset);
     int lo = __shfl_down(__double2loint(r), offset);
 
     return __hiloint2double(hi, lo);
-#else
-    //int hi = __shfl_down(__float2hiint(r), offset);
-    //int lo = __shfl_down(__float2loint(r), offset);
+//#else
+//    //int hi = __shfl_down(__float2hiint(r), offset);
+  //  //int lo = __shfl_down(__float2loint(r), offset);
 
-    //return __hiloint2float(hi, lo);
-    int hi;
-    int lo;
-    //exit(1);
-#endif
+   // //return __hiloint2float(hi, lo);
+   // int hi;
+   // int lo;
+   // //exit(1);
+//#endif
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -373,6 +373,19 @@ __device__ __forceinline__ void float_warp_reduce_complex_single(cuFloatComplex 
         }
     }
 }
+
+#ifndef ALREADY_DEFINED_SYNC
+// Synchronization wrapper, removing explicit synchronization when the thread-block is at most 32 threads (1 warp) in size
+template <bool MUST_SYNC>
+__device__ __forceinline__ void sync_threads()
+{
+    if (MUST_SYNC)
+    {
+        __syncthreads();
+    }
+}
+#define ALREADY_DEFINED_SYNC 1
+#endif
 
 // Reset the entire contents of a shared reduction block; the thread block size must be a power-of-2
 #ifdef DOUBLE_PRECISION_COMPLEX

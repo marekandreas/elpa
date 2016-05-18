@@ -76,18 +76,18 @@ static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComp
 }
 #endif
 
-#ifndef ALREADY_DEFINED_SYNC
-// Synchronization wrapper, removing explicit synchronization when the thread-block is at most 32 threads (1 warp) in size
-template <bool MUST_SYNC>
-__device__ __forceinline__ void sync_threads()
-{
-    if (MUST_SYNC)
-    {
-        __syncthreads();
-    }
-}
-#define ALREADY_DEFINED_SYNC 1
-#endif
+//#ifndef ALREADY_DEFINED_SYNC
+//// Synchronization wrapper, removing explicit synchronization when the thread-block is at most 32 threads (1 warp) in size
+//template <bool MUST_SYNC>
+//__device__ __forceinline__ void sync_threads()
+//{
+//    if (MUST_SYNC)
+//    {
+//        __syncthreads();
+//    }
+//}
+//#define ALREADY_DEFINED_SYNC 1
+//#endif
 
 // =========================
 // Backtransformation kernel
