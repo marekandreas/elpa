@@ -1,5 +1,6 @@
 AC_PREREQ([2.69])
-AC_INIT([elpa_test_project],[2014.06.000], elpa-library@rzg.mpg.de)
+AC_INIT([elpa_test_project],[2016.05.001], elpa-library@rzg.mpg.de)
+elpaversion="2016.05.001"
 AC_CONFIG_SRCDIR([src/test_real.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
@@ -67,9 +68,9 @@ AC_ARG_WITH([openmp],
   if test x"${with_openmp}" = x"yes"; then
 	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
         AX_ELPA_OPENMP
-	elpa="elpa_openmp-2014.06.001"
+	elpa="elpa_openmp-$elpaversion"
   else
-	elpa="elpa-2014.06.001"
+	elpa="elpa-$elpaversion"
   fi
 
 # Here comes the ELPA specific part
