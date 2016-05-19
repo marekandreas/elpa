@@ -992,7 +992,7 @@ test_project:
     - mkdir test_project/build
     - pushd test_project/build
     - ../autogen.sh
-    - ../configure PKG_CONFIG_PATH=../../build/installdest/lib64/pkgconfig
+    - ../configure PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig
     - make -j 8
     - ./test_real
     - make distclean
