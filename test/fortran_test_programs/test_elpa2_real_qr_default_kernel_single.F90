@@ -152,9 +152,9 @@ program test_real2_default_kernel_qr_decomposition_single_precision
    !endif
 
    ! override nblk
-   !   nblk = 2
-   !   na   = 4000
-   !   nev  = 1500
+      nblk = 2
+      na   = 4000
+      nev  = 1500
 
    ! make sure na, nbl is even
    if (mod(nblk,2 ) .ne. 0) then

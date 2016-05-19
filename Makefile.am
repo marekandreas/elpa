@@ -132,7 +132,6 @@ endif
 if WITH_REAL_AVX_BLOCK4_KERNEL
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-    e ./configure SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKL_HOME/lib/intel64 -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" SCALAPACK_FCFLAGS="-L$MKLROOT/mkl/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -I$MKLROOT/include/intel64/lp64 -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include"  --prefix=/home/amarek/ELPA_GPU CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O0" --enable-gpu-support --with-cuda-path=/afs/ipp/.cs/cuda/6.5/amd64_sles11/
   libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_4hv_single_precision.c
 endif
 endif
@@ -507,11 +506,12 @@ TESTS = $(check_SCRIPTS)
 #	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
 #	chmod +x $@
 
-if WANT_SINGLE_PRECISION_REAL
+#if WANT_SINGLE_PRECISION_REAL
 #elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh:
 #	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@' > $@
 #	chmod +x $@
-endif
+#endif
+
 # Preprocessed files (just used for manual inspection)
 mod_precision.i: $(top_srcdir)/src/mod_precision.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/mod_precision.F90 -o $@
