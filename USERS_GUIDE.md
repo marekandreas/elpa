@@ -47,7 +47,8 @@ To solve a Eigenvalue problem of this matrix with *ELPA*, one has
 3. to call *ELPA 1stage* or *ELPA 2stage* for the matrix.
 
 Here is a very simple MPI code snippet for using *ELPA 1stage*: For the definition of all variables
-please have a look at the man pages and/or the online documentation (see above)
+please have a look at the man pages and/or the online documentation (see above).  A full version
+of a simple example program can be found in ./test_project/src.
 
 
    ! All ELPA routines need MPI communicators for communicating within
