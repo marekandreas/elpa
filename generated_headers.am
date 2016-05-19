@@ -1,6 +1,6 @@
 define extract_interface
 	@echo "Generating $@...";
-	@grep -h "^ *$1" $^ | sed 's/^ *$1//;' > $@ || { rm $@; exit 1; }
+	@grep -h "^ *$1" $^ | sed 's/^ *$1//;' >> $@ || { rm $@; exit 1; }
 endef
 
 elpa test:
@@ -19,8 +19,9 @@ elpa/elpa_generated.h: $(top_srcdir)/src/elpa_c_interface.F90 | elpa
 test/shared_sources/generated.h: $(wildcard $(top_srcdir)/test/shared_sources/*.F90) | test/shared_sources
 	$(call extract_interface,!c>)
 
-elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2_kernels/*.c) | elpa
+elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2_kernels/*.c) $(wildcard $(top_srcdir)/src/elpa2_kernels/*.s) | elpa
 	$(call extract_interface,!f>)
+	$(call extract_interface,#!f>)
 
 generated_headers= config-f90.h elpa/elpa_generated.h test/shared_sources/generated.h elpa/elpa_generated_fortran_interfaces.h
 generated-headers: $(generated_headers)

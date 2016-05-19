@@ -88,7 +88,7 @@ module compute_hh_trafo_complex
 #endif
            use iso_c_binding
 
-#if defined(HAVE_AVX) || defined(HAVE_SSE_INTRINSICS) || defined(HAVE_SSE_ASSEMBLY)
+#if defined(HAVE_AVX) || defined(HAVE_AVX2) || defined(HAVE_SSE_INTRINSICS) || defined(HAVE_SSE_ASSEMBLY)
          use kernel_interfaces
 #endif
            implicit none
@@ -399,7 +399,7 @@ module compute_hh_trafo_complex
            use timings
 #endif
 
-#if defined(HAVE_AVX) || defined(HAVE_SSE_INTRINSICS) || defined(HAVE_SSE_ASSEMBLY)
+#if defined(HAVE_AVX) || defined(HAVE_AVX2) || defined(HAVE_SSE_INTRINSICS) || defined(HAVE_SSE_ASSEMBLY)
            use kernel_interfaces
 #endif
            use iso_c_binding

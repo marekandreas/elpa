@@ -41,8 +41,8 @@
 #
 # Author: Andreas Marek, MPCDF
 
-        .globl double_hh_trafo_single_
-        .globl single_hh_trafo_complex_single_
+        .globl double_hh_trafo_single
+        .globl single_hh_trafo_complex_single
 
 	.text
 #-------------------------------------------------------------------------------
@@ -391,8 +391,20 @@
 #   parameter 6: %r9  : ldh
 #
 #-------------------------------------------------------------------------------
+#!f>#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
+#!f>#ifdef WANT_SINGLE_PRECISION_REAL
+#!f>  interface
+#!f>    subroutine double_hh_trafo_single(q, hh, nb, nq, ldq, ldh) bind(C,name="double_hh_trafo_single")
+#!f>      use, intrinsic :: iso_c_binding
+#!f>      integer(kind=c_int) :: nb, nq, ldq, ldh
+#!f>      type(c_ptr), value  :: q
+#!f>      real(kind=c_float)  :: hh(nb,6)
+#!f>    end subroutine
+#!f>  end interface
+#!f>#endif
+#!f>#endif
         .align    16,0x90
-double_hh_trafo_single_:
+double_hh_trafo_single:
 
         # Get integer parameters into corresponding registers
 
@@ -716,8 +728,21 @@ return1:
 #   parameter 5: %r8  : ldq
 #
 #-------------------------------------------------------------------------------
+#!f>#ifdef WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
+#!f>#ifdef WANT_SINGLE_PRECISION_COMPLEX
+#!f>  interface
+#!f>    subroutine single_hh_trafo_complex_single(q, hh, nb, nq, ldq) bind(C,name="single_hh_trafo_complex_single")
+#!f>      use, intrinsic :: iso_c_binding
+#!f>      integer(kind=c_int)   :: nb, nq, ldq
+#!f>      complex(kind=c_float) :: q(*)
+#!f>      complex(kind=c_float) :: hh(nb,2)
+#!f>    end subroutine
+#!f>  end interface
+#!f>#endif
+#!f>#endif
+
         .align    16,0x90
-single_hh_trafo_complex_single_:
+single_hh_trafo_complex_single:
 
         # Get integer parameters into corresponding registers
 

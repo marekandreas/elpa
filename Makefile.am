@@ -501,15 +501,16 @@ TESTS = $(check_SCRIPTS)
 	echo '$(wrapper)./$^ $$TEST_FLAGS' > $@
 	chmod +x $@
 
-# this one does not want any arguments
-elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh:
-	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
-	chmod +x $@
+
+## this one does not want any arguments
+#elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh:
+#	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@' > $@
+#	chmod +x $@
 
 if WANT_SINGLE_PRECISION_REAL
-elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh:
-	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@' > $@
-	chmod +x $@
+#elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh:
+#	echo '$(wrapper)./elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@' > $@
+#	chmod +x $@
 endif
 # Preprocessed files (just used for manual inspection)
 mod_precision.i: $(top_srcdir)/src/mod_precision.F90

@@ -748,6 +748,7 @@ subroutine qr_tmerge_pdlarfb_1dcomm_double(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,basei
         else
             ! do not calculate parts for T merge as there is nothing to merge
 
+            mergeoffset  = 0
             updateoffset = 0
 
             tgenoffset = updateoffset + updatesize

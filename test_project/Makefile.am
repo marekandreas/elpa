@@ -8,3 +8,6 @@ AM_LDFLAGS = $(ELPA_LIBS)
 #bindir = $(abs_top_builddir)
 bin_PROGRAMS = test_real
 test_real_SOURCES = src/test_real.F90
+
+distclean-local:
+	-rm config-f90.h
