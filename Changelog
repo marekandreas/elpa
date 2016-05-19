@@ -1,9 +1,11 @@
-The changes since release ELPA_2015.11.001
+Changelog for release ELPA 2016.05.001
 
+- support building without MPI for one node usage
 - doxygen and man pages documentation for ELPA
 - cleanup of documentation
 - introduction of SSE gcc intrinsic kernels
 - Remove errors due to unaligned memory
 - removal of Fortran "contains functions"
+- Fortran interfaces for assembly and C kernels
 
 
