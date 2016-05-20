@@ -994,6 +994,7 @@ test_project:
     - ../autogen.sh
     - ../configure PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90
     - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - ./test_real
     - make distclean
     - popd

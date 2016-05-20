@@ -1,32 +1,26 @@
-This file contains the release notes for the ELPA 2015.11.001 version
-
-
+This file contains the release notes for the ELPA 2016.05.001 version
 
 What is new?
 -------------
+For changes since release ELPA 2015.11.011 please have a loog at the Changelog file
+
 
 a) ABI change
 ---------------------
 
-Most importantly, the ABI of the ELPA libray changed!
-A rebuild/relink of the user code using the ELPA library is mandatory!
-Hopefully, this will be the last ABI change for some time.
+Most importantly, the ABI of the ELPA library changed!
+New interfaces have been added, the old ones still exists, thus a rebuild
+of your code (build with ELPA 2015.11.001) should not be necessary. However,
+it is not guaranteed whether your Fortran compiler produces compatible
+Fortran modules if content is added to this modules. To be on the safe sight,
+re-compiling your application with the new ELPA version is not a bad idea.
 
-b) C interface
-----------------------
+For details of the ABI changes (including the history of changes) please have a
+look at the "LIBRARY_INTERFACE" file
 
-ELPA now is shipped with a C interface to directly call the ELPA library (written in Fortran)
-from C code. Header files are provided to declare the c functions.
-Since ELPA is still a Fortran library it might be necessary to link it together with the needed
-Fortran runtime libraries in your C code.
-
-
-
-Any incompatibles to previous version?
+Any incompatibilities to previous version?
 ---------------------------------------
 
-As mentioned before, the ABI of ELPA has changed! It will be necessary
-to rebuild the programs using ELPA, if this new version should be used.
-Beware, using the new library with code which was build with an older verion
-should not even run. If it does, the results will be wrong !
-
+As mentioned before, the ABI of ELPA was changed such, that there should be no
+incompatibility with the previous version ELPA 2015.11.001. There is an
+incompatibility with older versions than ELPA 2015.11.001 !
