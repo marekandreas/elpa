@@ -585,7 +585,7 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 	h2 = _mm256_mul_ps(h1, vs);
 #ifdef __ELPA_USE_FMA__
 	y1 = _mm256_FMA_ps(y1, h1, _mm256_mul_ps(x1,h2));
-	y2 = _mm256_FMA_ps(ys, h1, _mm256_mul_ps(x2,h2));
+	y2 = _mm256_FMA_ps(y2, h1, _mm256_mul_ps(x2,h2));
 //	y3 = _mm256_FMA_ps(y3, h1, _mm256_mul_ps(x3,h2));
 //	y4 = _mm256_FMA_ps(y4, h1, _mm256_mul_ps(x4,h2));
 #else

@@ -54,16 +54,16 @@
 
 #ifdef __FMA4__
 #define __ELPA_USE_FMA__
-#define _mm256_FMA_pd(a,b,c) _mm256_macc_pd(a,b,c)
-#define _mm256_NFMA_pd(a,b,c) _mm256_nmacc_pd(a,b,c)
-#define _mm256_FMSUB_pd(a,b,c) _mm256_msub(a,b,c)
+#define _mm256_FMA_ps(a,b,c) _mm256_macc_ps(a,b,c)
+#define _mm256_NFMA_ps(a,b,c) _mm256_nmacc_ps(a,b,c)
+#define _mm256_FMSUB_ps(a,b,c) _mm256_msub_ps(a,b,c)
 #endif
 
 #ifdef __AVX2__
 #define __ELPA_USE_FMA__
-#define _mm256_FMA_pd(a,b,c) _mm256_fmadd_pd(a,b,c)
-#define _mm256_NFMA_pd(a,b,c) _mm256_fnmadd_pd(a,b,c)
-#define _mm256_FMSUB_pd(a,b,c) _mm256_fmsub_pd(a,b,c)
+#define _mm256_FMA_ps(a,b,c) _mm256_fmadd_ps(a,b,c)
+#define _mm256_NFMA_ps(a,b,c) _mm256_fnmadd_ps(a,b,c)
+#define _mm256_FMSUB_ps(a,b,c) _mm256_fmsub_ps(a,b,c)
 #endif
 
 #endif
@@ -1511,7 +1511,7 @@ __forceinline void hh_trafo_kernel_4_AVX_6hv_single(float* q, float* hh, int nb,
 #endif
 	h3 = _mm256_broadcast_ss(&hh[(ldh*2)+nb-2]);
 #ifdef __ELPA_USE_FMA__
-	q1 = _mm256_NFMA_pd(z1, h3, q1);
+	q1 = _mm256_NFMA_ps(z1, h3, q1);
 #else
 	q1 = _mm256_sub_ps(q1, _mm256_mul_ps(z1, h3));
 #endif
