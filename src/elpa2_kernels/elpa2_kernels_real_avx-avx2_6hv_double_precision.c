@@ -90,7 +90,7 @@ static void hh_trafo_kernel_8_AVX_6hv_double(double* q, double* hh, int nb, int 
 
 void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 /*
-!f>#ifdef HAVE_AVX
+!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
 !f> interface
 !f>   subroutine hexa_hh_trafo_real_avx_avx2_6hv_double(q, hh, pnb, pnq, pldq, pldh) &
 !f>                             bind(C, name="hexa_hh_trafo_real_avx_avx2_6hv_double")

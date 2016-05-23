@@ -368,6 +368,15 @@ program test_complex2_choose_kernel_with_api_single_precision
 #endif
 #endif
 
+#ifdef  WITH_COMPLEX_AVX2_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX2_BLOCK2)
+#else
+#ifdef  WITH_COMPLEX_AVX2_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX2_BLOCK1)
+#endif
+#endif
+
+
 #else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
 
 #ifdef  WITH_COMPLEX_SSE_BLOCK1_KERNEL
@@ -385,6 +394,15 @@ program test_complex2_choose_kernel_with_api_single_precision
 #ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
                                  COMPLEX_ELPA_KERNEL_AVX_BLOCK2)
 #endif
+
+#ifdef  WITH_COMPLEX_AVX2_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX2_BLOCK1)
+#endif
+
+#ifdef  WITH_COMPLEX_AVX2_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX2_BLOCK2)
+#endif
+
 
 #endif  /*   WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
 

@@ -91,7 +91,7 @@ __forceinline void hh_trafo_kernel_12_AVX_4hv_double(double* q, double* hh, int 
 
 void quad_hh_trafo_real_avx_avx2_4hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 /*
-!f>#ifdef HAVE_AVX
+!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
 !f> interface
 !f>   subroutine quad_hh_trafo_real_avx_avx2_4hv_double(q, hh, pnb, pnq, pldq, pldh) &
 !f>                             bind(C, name="quad_hh_trafo_real_avx_avx2_4hv_double")

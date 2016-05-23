@@ -89,7 +89,7 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv_double(double comple
 static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv_double(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s);
 
 /*
-!f>#ifdef HAVE_AVX
+!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
 !f> interface
 !f>   subroutine double_hh_trafo_complex_avx_avx2_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
 !f>                             bind(C, name="double_hh_trafo_complex_avx_avx2_2hv_double")

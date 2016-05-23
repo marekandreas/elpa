@@ -732,6 +732,15 @@ DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block4-kernel]-only,[real-avx-block
 dnl real-avx-block6 kernel
 DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block6-kernel-only],[real-avx-block6-kernel],[install_real_avx_block6])
 
+dnl real-avx2-block2 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block2-kernel-only],[real-avx2-block2-kernel],[install_real_avx2_block2])
+
+dnl real-avx2-block4 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block4-kernel]-only,[real-avx2-block4-kernel],[install_real_avx2_block4])
+
+dnl real-avx2-block6 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block6-kernel-only],[real-avx2-block6-kernel],[install_real_avx2_block6])
+
 dnl complex kernels
 
 dnl generic kernel
@@ -760,6 +769,13 @@ DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block1-kernel-only],[complex-
 
 dnl complex-avx-block2 kernel
 DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block2-kernel-only],[complex-avx-block2-kernel],[install_complex_avx_block2])
+
+dnl complex-avx2-block1 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx2-block1-kernel-only],[complex-avx2-block1-kernel],[install_complex_avx2_block1])
+
+dnl complex-avx2-block2 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx2-block2-kernel-only],[complex-avx2-block2-kernel],[install_complex_avx2_block2])
+
 
 dnl set the conditionals according to the previous tests
 

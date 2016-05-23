@@ -69,6 +69,7 @@ AC_DEFUN([AX_ELPA_OPENMP],
 	  dnl   GCC >= 4.2           -fopenmp
 	  dnl   SunPRO C             -xopenmp
 	  dnl   Intel C              -openmp
+	  dnl   Intel > 14.0         -qopenmp
 	  dnl   SGI C, PGI C         -mp
 	  dnl   Tru64 Compaq C       -omp
 	  dnl   IBM C (AIX, Linux)   -qsmp=omp
@@ -77,7 +78,7 @@ AC_DEFUN([AX_ELPA_OPENMP],
 	  dnl will fail (since we know that it failed without the option),
 	  dnl therefore the loop will continue searching for an option, and
 	  dnl no output file called 'penmp' or 'mp' is created.
-	  for ac_option in -openmp -fopenmp -xopenmp -mp -omp -qsmp=omp; do
+	  for ac_option in -qopenmp -openmp -fopenmp -xopenmp -mp -omp -qsmp=omp; do
 	    ac_save_[]_AC_LANG_PREFIX[]FLAGS=$[]_AC_LANG_PREFIX[]FLAGS
 	    _AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS $ac_option"
 	    AC_LINK_IFELSE([AC_LANG_SOURCE([_AX_ELPA_LANG_OPENMP])],
