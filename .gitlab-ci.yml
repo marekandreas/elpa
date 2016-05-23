@@ -1282,7 +1282,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block1-complex-avx2_block1-kernel-jobs:
   tags:
@@ -1293,7 +1293,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block1-complex-
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx2_block1-kernel-special-gcov-jobs:
   tags:
@@ -1304,7 +1304,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
     - ./test_scripts/get_coverage_summary.sh
 
 
@@ -1318,7 +1318,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-complex-a
     - ./configure CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2_block2-kernel-only --with-complex-avx2_block1-kernel-only --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
 
 gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-complex-avx2_block1-kernel-jobs:
   tags:
@@ -1328,7 +1328,7 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-comple
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2_block2-kernel-only --with-complex-avx2_block1-kernel-only --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
     - ./test_scripts/get_coverage_summary.sh
 
 
@@ -1343,7 +1343,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
   tags:
@@ -1354,7 +1354,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-special-gcov-jobs:
   tags:
@@ -1365,7 +1365,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
     - ./test_scripts/get_coverage_summary.sh
 
 
@@ -1379,7 +1379,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-a
     - ./configure CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2_block4-kernel-only --with-complex-avx2_block2-kernel-only --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
 
 gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
   tags:
@@ -1389,7 +1389,7 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-comple
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2_block4-kernel-only --with-complex-avx2_block2-kernel-only --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
     - ./test_scripts/get_coverage_summary.sh
 
 
@@ -1404,7 +1404,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-jobs:
   tags:
@@ -1415,7 +1415,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-special-gcov-jobs:
   tags:
@@ -1426,7 +1426,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
     - ./test_scripts/get_coverage_summary.sh
 
 
@@ -1440,7 +1440,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block6-complex-a
     - ./configure CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2_block6-kernel-only --with-complex-avx2_block2-kernel-only --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
 
 gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-jobs:
   tags:
@@ -1450,7 +1450,7 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block6-comple
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2_block6-kernel-only --with-complex-avx2_block2-kernel-only --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
     - ./test_scripts/get_coverage_summary.sh
 
 
