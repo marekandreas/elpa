@@ -89,7 +89,7 @@ static void hh_trafo_kernel_4_AVX_6hv(double* q, double* hh, int nb, int ldq, in
 static void hh_trafo_kernel_8_AVX_6hv(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 
 /*
-!f>#ifdef HAVE_AVX
+!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
 !f> interface
 !f>   subroutine hexa_hh_trafo_real_avx_avx2_6hv(q, hh, pnb, pnq, pldq, pldh) bind(C, name="hexa_hh_trafo_real_avx_avx2_6hv")
 !f>     use, intrinsic :: iso_c_binding

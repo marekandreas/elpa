@@ -306,6 +306,7 @@ program test_real2
 #endif
 #endif
 #endif
+
 #ifdef WITH_REAL_AVX_BLOCK6_KERNEL
                               REAL_ELPA_KERNEL_AVX_BLOCK6)
 #else
@@ -314,6 +315,18 @@ program test_real2
 #else
 #ifdef WITH_REAL_AVX_BLOCK2_KERNEL
                               REAL_ELPA_KERNEL_AVX_BLOCK2)
+#endif
+#endif
+#endif
+
+#ifdef WITH_REAL_AVX2_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_AVX2_BLOCK6)
+#else
+#ifdef WITH_REAL_AVX2_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_AVX2_BLOCK4)
+#else
+#ifdef WITH_REAL_AVX2_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_AVX2_BLOCK2)
 #endif
 #endif
 #endif
@@ -342,6 +355,18 @@ program test_real2
 
 #ifdef WITH_REAL_AVX_BLOCK6_KERNEL
                               REAL_ELPA_KERNEL_AVX_BLOCK6)
+#endif
+
+#ifdef WITH_REAL_AVX2_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_AVX2_BLOCK2)
+#endif
+
+#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_AVX2_BLOCK4)
+#endif
+
+#ifdef WITH_REAL_AVX2_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_AVX2_BLOCK6)
 #endif
 
 #endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
