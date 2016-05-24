@@ -231,6 +231,7 @@ contains
 
 function get_elpa_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
    use precision
+   use elpa_mpi
    implicit none
 
    integer(kind=ik), intent(in)  :: mpi_comm_global, my_prow, my_pcol
