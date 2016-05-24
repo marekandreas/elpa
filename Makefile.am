@@ -392,7 +392,7 @@ CLEANFILES = \
   *.i
 
 clean-local:
-	-rm -rf modules/* .fortran_dependencies/*
+	-rm -rf modules/* private_modules/* .fortran_dependencies/*
 	-rm -rf $(generated_headers)
 
 distclean-local:
