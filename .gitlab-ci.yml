@@ -1233,4 +1233,5 @@ test_project:
     - pushd build
     - make distclean
     - rm -rf installdest
+    - popd
 
