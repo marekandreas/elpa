@@ -2,43 +2,55 @@
 
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules @FC_MODOUT@modules
+AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules @FC_MODINC@private_modules
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 
 # libelpa
-lib_LTLIBRARIES = libelpa@SUFFIX@.la
-libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
 
-libelpa@SUFFIX@_la_SOURCES = \
+# parts with public interface
+noinst_LTLIBRARIES = libelpa@SUFFIX@_public.la
+libelpa@SUFFIX@_public_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@modules
+libelpa@SUFFIX@_public_la_SOURCES = \
+        src/elpa1.F90 \
+        src/elpa2.F90 \
+        src/elpa2_utilities.F90 \
+        src/elpa_utilities.F90
+
+# internal parts
+noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
+libelpa@SUFFIX@_private_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules
+libelpa@SUFFIX@_private_la_SOURCES = \
         src/mod_precision.f90 \
         src/mod_mpi.F90 \
         src/mod_mpi_stubs.F90 \
-        src/elpa2_kernels/mod_fortran_interfaces.F90 \
-        src/elpa_utilities.F90 \
-        src/elpa1_compute.F90 \
-        src/elpa1.F90 \
-        src/elpa2_utilities.F90 \
         src/mod_pack_unpack_real.F90 \
-        src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
         src/mod_compute_hh_trafo_real.F90 \
         src/mod_compute_hh_trafo_complex.F90 \
         src/mod_pack_unpack_complex.F90 \
         src/aligned_mem.F90 \
+        src/elpa1_compute.F90 \
         src/elpa2_compute.F90 \
-        src/elpa2.F90 \
+        src/elpa2_kernels/mod_fortran_interfaces.F90 \
+        src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
         src/elpa_c_interface.F90 \
         src/elpa_qr/qr_utils.F90 \
         src/elpa_qr/elpa_qrkernels.f90 \
         src/elpa_qr/elpa_pdlarfb.F90 \
         src/elpa_qr/elpa_pdgeqrf.F90
 
-EXTRA_libelpa@SUFFIX@_la_DEPENDENCIES = \
+EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa_reduce_add_vectors.X90 \
         src/elpa_transpose_vectors.X90 \
         src/redist_band.X90
 
+lib_LTLIBRARIES = libelpa@SUFFIX@.la
+libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
+libelpa@SUFFIX@_la_LIBADD = libelpa@SUFFIX@_public.la libelpa@SUFFIX@_private.la
+libelpa@SUFFIX@_la_SOURCES =
+
+
 if HAVE_DETAILED_TIMINGS
-  libelpa@SUFFIX@_la_SOURCES += \
+  libelpa@SUFFIX@_private_la_SOURCES += \
         src/timer.F90 \
         src/ftimings/ftimings.F90 \
         src/ftimings/ftimings_type.F90 \
@@ -51,101 +63,101 @@ if HAVE_DETAILED_TIMINGS
 endif
 
 if !WITH_MPI
-  libelpa@SUFFIX@_la_SOURCES += src/mod_time_c.F90
+  libelpa@SUFFIX@_private_la_SOURCES += src/mod_time_c.F90
 if !HAVE_DETAILED_TIMINGS
-  libelpa@SUFFIX@_la_SOURCES += src/ftimings/time.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/ftimings/time.c
 endif
 endif
 
 if WITH_REAL_GENERIC_KERNEL
-  libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.F90
+  libelpa@SUFFIX@_private_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_real.F90
 endif
 
 if WITH_COMPLEX_GENERIC_KERNEL
-  libelpa@SUFFIX@_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.F90
+  libelpa@SUFFIX@_private_la_SOURCES +=  src/elpa2_kernels/elpa2_kernels_complex.F90
 endif
 
 if WITH_REAL_GENERIC_SIMPLE_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.F90
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_simple.F90
 endif
 
 if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.F90
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_simple.F90
 endif
 
 if WITH_REAL_BGP_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgp.f90
 endif
 
 if WITH_REAL_BGQ_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_bgq.f90
 endif
 
 if WITH_REAL_SSE_ASSEMBLY_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 else
 if WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_asm_x86_64.s
 endif
 endif
 
 if WITH_REAL_SSE_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_2hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_2hv.c
 endif
 
 if WITH_REAL_AVX_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_2hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_2hv.c
 else
 if WITH_REAL_AVX2_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_2hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_2hv.c
 endif
 endif
 
 if WITH_REAL_SSE_BLOCK4_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_4hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_4hv.c
 endif
 
 if WITH_REAL_AVX_BLOCK4_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_4hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_4hv.c
 else
 if WITH_REAL_AVX2_BLOCK4_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_4hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_4hv.c
 endif
 endif
 
 if WITH_REAL_SSE_BLOCK6_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_6hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_6hv.c
 endif
 
 if WITH_REAL_AVX_BLOCK6_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_6hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_6hv.c
 else
 if WITH_REAL_AVX2_BLOCK6_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_6hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx-avx2_6hv.c
 endif
 endif
 
 if WITH_COMPLEX_SSE_BLOCK1_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_1hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_1hv.c
 endif
 
 if WITH_COMPLEX_AVX_BLOCK1_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv.c
 else
 if WITH_COMPLEX_AVX2_BLOCK1_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_1hv.c
 endif
 endif
 
 if WITH_COMPLEX_SSE_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_2hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_2hv.c
 endif
 
 if WITH_COMPLEX_AVX_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv.c
 else
 if WITH_COMPLEX_AVX2_BLOCK2_KERNEL
-  libelpa@SUFFIX@_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv.c
 endif
 endif
 

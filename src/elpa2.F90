@@ -67,13 +67,9 @@ module ELPA2
 ! Version 1.1.2, 2011-02-21
 
   use elpa_utilities
-  use elpa1_compute
   use elpa1, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
   use elpa2_utilities
-  use elpa2_compute
-  use elpa_pdgeqrf
 
-  use elpa_mpi
   implicit none
 
   PRIVATE ! By default, all routines contained are private
@@ -135,6 +131,9 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
+   use elpa1_compute
+   use elpa2_compute
+   use elpa_mpi
    use precision
    implicit none
    logical, intent(in), optional          :: useQR
@@ -375,6 +374,9 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
+   use elpa1_compute
+   use elpa2_compute
+   use elpa_mpi
    use precision
    implicit none
    integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
