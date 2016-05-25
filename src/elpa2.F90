@@ -287,7 +287,7 @@ contains
       endif
       if (nblk .ne. 128) then
         print *,"At the moment GPU version needs blocksize 128"
-        stop
+        error stop
       endif
 
       ! set the neccessary parameters
@@ -636,7 +636,7 @@ contains
       endif
       if (nblk .ne. 128) then
         print *,"At the moment GPU version needs blocksize 128"
-        stop
+        error stop
       endif
     ! some temporarilly checks until single precision works with all kernels
 
@@ -944,7 +944,7 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
       endif
       if (nblk .ne. 128) then
         print *,"At the moment GPU version needs blocksize 128"
-        stop
+        error stop
       endif
 
       ! set the neccessary parameters
@@ -1263,7 +1263,7 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
       endif
       if (nblk .ne. 128) then
         print *,"At the moment GPU version needs blocksize 128"
-        stop
+        error stop
       endif
 
       ! set the neccessary parameters
