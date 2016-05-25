@@ -67,20 +67,8 @@ module ELPA2
 ! Version 1.1.2, 2011-02-21
 
   use elpa_utilities
-  use elpa1_compute
   use elpa1, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
   use elpa2_utilities
-  use elpa2_compute
-  use elpa_pdgeqrf
-
-  use iso_c_binding
-
-#ifdef WITH_GPU_VERSION
-!  use cuda_routines
-!  use cuda_c_kernel
-!  use iso_c_binding
-#endif
-  use elpa_mpi
 
   implicit none
 
@@ -171,6 +159,9 @@ contains
     use timings
 #endif
 
+   use elpa1_compute
+   use elpa2_compute
+   use elpa_mpi
    use precision
    use cuda_functions
    use mod_check_for_gpu
@@ -860,6 +851,9 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
+   use elpa1_compute
+   use elpa2_compute
+   use elpa_mpi
    use precision
    use cuda_functions
    use mod_check_for_gpu

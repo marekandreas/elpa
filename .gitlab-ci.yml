@@ -1618,6 +1618,8 @@ test_project:
     - ./test_real
     - make distclean
     - popd
+    - pushd build
     - make distclean
     - rm -rf installdest
+    - popd
 

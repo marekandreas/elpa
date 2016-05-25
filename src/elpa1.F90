@@ -84,13 +84,6 @@
 module ELPA1
   use precision
   use elpa_utilities
-  use elpa1_compute
-
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  use iso_c_binding
-  use elpa_mpi
 
   implicit none
 
@@ -254,6 +247,7 @@ contains
 
 function get_elpa_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
    use precision
+   use elpa_mpi
    implicit none
 
    integer(kind=ik), intent(in)  :: mpi_comm_global, my_prow, my_pcol
@@ -318,6 +312,8 @@ function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
    use timings
 #endif
    use iso_c_binding
+   use elpa_mpi
+   use elpa1_compute
    implicit none
 
    integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
@@ -569,6 +565,8 @@ function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matr
 #endif
    use precision
    use iso_c_binding
+   use elpa_mpi
+   use elpa1_compute
    implicit none
 
    integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols

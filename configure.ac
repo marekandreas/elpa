@@ -943,11 +943,10 @@ AC_SUBST([FC_MODOUT])
 AC_SUBST([OPENMP_CFLAGS])
 AC_SUBST([OPENMP_FCFLAGS])
 AC_SUBST([OPENMP_LDFLAGS])
-#AC_SUBST(OPT_FCFLAGS)
 AC_SUBST([DOXYGEN_OUTPUT_DIR], [docs])
 
-rm -rf modules/ .fortran_dependencies/
-mkdir modules
+rm -rf modules/ private_modules/ .fortran_dependencies/
+mkdir modules private_modules
 
 #gl_VISIBILITY
 #AH_BOTTOM([#if HAVE_VISIBILITY
