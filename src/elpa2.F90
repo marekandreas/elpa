@@ -514,6 +514,9 @@ contains
    use cuda_functions
    use mod_check_for_gpu
    use iso_c_binding
+   use elpa1_compute
+   use elpa2_compute
+   use elpa_mpi
    implicit none
    logical, intent(in), optional          :: useQR
    logical                                :: useQRActual, useQREnvironment
@@ -1173,6 +1176,9 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
    use precision
    use cuda_functions
    use mod_check_for_gpu
+   use elpa1_compute
+   use elpa2_compute
+   use elpa_mpi
    use iso_c_binding
    implicit none
    integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API

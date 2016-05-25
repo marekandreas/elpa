@@ -440,6 +440,8 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
    use timings
 #endif
    use iso_c_binding
+   use elpa_mpi
+   use elpa1_compute
    implicit none
 
    integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
@@ -708,6 +710,8 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
 #endif
    use precision
    use iso_c_binding
+   use elpa_mpi
+   use elpa1_compute
    implicit none
 
    integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
