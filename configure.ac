@@ -843,9 +843,9 @@ DX_HTML_FEATURE(ON)
 DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
 DESPERATELY_WANT_ASSUMED_SIZE=no
-AC_MSG_CHECKING(whether --enable-assumed-size is specified)
+AC_MSG_CHECKING(whether --enable-assumed-size-arrays is specified)
 AC_ARG_ENABLE([assumed-size],
-                AS_HELP_STRING([--enable-assumded-size],
+                AS_HELP_STRING([--enable-assumded-size-arrays],
                                [use assumed-size Fortran arrays]),
               [],
               [DESPERATELY_WANT_ASSUMED_SIZE=no])
