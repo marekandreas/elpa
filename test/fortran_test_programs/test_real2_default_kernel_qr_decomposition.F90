@@ -144,7 +144,7 @@ program test_real2
    !endif
 
    ! override nblk
-   !   nblk = 2
+       nblk = 32
    !   na   = 4000
    !   nev  = 1500
 

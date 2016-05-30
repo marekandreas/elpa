@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 
 # Remember to change the version also in elpa.spec
-AC_INIT([elpa],[2016.05.001], [elpa-library@mpcdf.mpg.de])
+AC_INIT([elpa],[2016.05.002], [elpa-library@mpcdf.mpg.de])
 
 AC_SUBST([PACKAGE_VERSION])
 
@@ -34,7 +34,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [5:0:1])
+AC_SUBST([ELPA_SO_VERSION], [5:1:1])
 #
 
 
@@ -70,7 +70,7 @@ fi
 
 dnl mpi
 AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi=[[yes|no]]], [compile with MPI. Default: yes])],,[with_mpi=yes])
-AM_CONDITIONAL([WITH_MPI],[test x"with_mpi" = x"yes"])
+AM_CONDITIONAL([WITH_MPI],[test x"$with_mpi" = x"yes"])
 if test x"${with_mpi}" = x"yes"; then
        AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
@@ -838,11 +838,10 @@ AC_SUBST([FC_MODOUT])
 AC_SUBST([OPENMP_CFLAGS])
 AC_SUBST([OPENMP_FCFLAGS])
 AC_SUBST([OPENMP_LDFLAGS])
-#AC_SUBST(OPT_FCFLAGS)
 AC_SUBST([DOXYGEN_OUTPUT_DIR], [docs])
 
-rm -rf modules/ .fortran_dependencies/
-mkdir modules
+rm -rf modules/ private_modules/ .fortran_dependencies/
+mkdir modules private_modules
 
 #gl_VISIBILITY
 #AH_BOTTOM([#if HAVE_VISIBILITY
@@ -863,11 +862,20 @@ mkdir modules
 # into "postdeps_FC" and causes linking errors later on.
 postdeps_FC=$(echo $postdeps_FC | sed 's/-l //g')
 
-if test x"${enable_openmp}" = x"yes"; then
+if test x"${with_mpi}" = x"yes"; then
+  if test x"${enable_openmp}" = x"yes"; then
 	SUFFIX="_openmp"
-else
+  else
 	SUFFIX=""
+  fi
+else
+  if test x"${enable_openmp}" = x"yes"; then
+	SUFFIX="_onnode_openmp"
+  else
+	SUFFIX="_onenode"
+  fi
 fi
+
 AC_SUBST([SUFFIX])
 AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
 

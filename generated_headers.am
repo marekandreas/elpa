@@ -4,10 +4,10 @@ define extract_interface
 endef
 
 elpa test:
-	mkdir $@
+	@mkdir $@
 
 test/shared_sources: | test
-	mkdir $@
+	@mkdir $@
 
 config-f90.h: config.h
 	@echo "Generating $@...";
