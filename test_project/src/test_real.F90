@@ -74,9 +74,9 @@ program test_real_example
 !-------------------------------------------------------------------------------
    use ELPA1
    use elpa_utilities, only : error_unit
-   use elpa_mpi
    use iso_c_binding
    implicit none
+   include "mpif.h"
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
