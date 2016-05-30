@@ -895,7 +895,7 @@ if test x"${with_mpi}" = x"yes"; then
   fi
 else
   if test x"${enable_openmp}" = x"yes"; then
-	SUFFIX="_onnode_openmp"
+	SUFFIX="_onenode_openmp"
   else
 	SUFFIX="_onenode"
   fi
