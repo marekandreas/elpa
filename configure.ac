@@ -863,11 +863,20 @@ mkdir modules
 # into "postdeps_FC" and causes linking errors later on.
 postdeps_FC=$(echo $postdeps_FC | sed 's/-l //g')
 
-if test x"${enable_openmp}" = x"yes"; then
+if test x"${with_mpi}" = x"yes"; then
+  if test x"${enable_openmp}" = x"yes"; then
 	SUFFIX="_openmp"
-else
+  else
 	SUFFIX=""
+  fi
+else
+  if test x"${enable_openmp}" = x"yes"; then
+	SUFFIX="_onnode_openmp"
+  else
+	SUFFIX="_onenode"
+  fi
 fi
+
 AC_SUBST([SUFFIX])
 AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
 
