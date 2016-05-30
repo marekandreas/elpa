@@ -306,14 +306,15 @@ endif
 
 
 # test scripts
+MPIEXEC ?= mpiexec -n 2
 if WITH_MPI
-  wrapper="mpiexec -n 2 "
+  wrapper=$(MPIEXEC)
 else
-  wrapper=""
+  wrapper=
 endif
 TESTS = $(check_SCRIPTS)
 %.sh: %
-	echo '$(wrapper)./$^ $$TEST_FLAGS' > $@
+	echo '$(wrapper) ./$^ $$TEST_FLAGS' > $@
 	chmod +x $@
 
 ## this one does not want any arguments
