@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 
 # Remember to change the version also in elpa.spec
-AC_INIT([elpa],[2016.05.001], [elpa-library@mpcdf.mpg.de])
+AC_INIT([elpa],[2016.05.002], [elpa-library@mpcdf.mpg.de])
 
 AC_SUBST([PACKAGE_VERSION])
 
@@ -34,7 +34,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [5:0:1])
+AC_SUBST([ELPA_SO_VERSION], [5:1:1])
 #
 
 
