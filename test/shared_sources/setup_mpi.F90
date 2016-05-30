@@ -81,6 +81,12 @@ module mod_setup_mpi
       call mpi_comm_rank(mpi_comm_world,myid,mpierr)
       call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
 
+#ifdef WITH_MPI
+      if (nprocs <= 1) then
+        error stop "The test programs must be run with more than 1 task to ensure that usage with MPI is actually tested"
+      endif
+#endif
+
     end subroutine
 
 
