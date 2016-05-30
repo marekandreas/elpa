@@ -1,5 +1,12 @@
 Changelog for release ELPA 2016.05.001
 
+- fix problem with generated *.sh- check scripts
+- name library differently if build without MPI support
+
+
+
+Changelog for release ELPA 2016.05.001
+
 - support building without MPI for one node usage
 - doxygen and man pages documentation for ELPA
 - cleanup of documentation

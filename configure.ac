@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 
 # Remember to change the version also in elpa.spec
-AC_INIT([elpa],[2016.05.001], [elpa-library@mpcdf.mpg.de])
+AC_INIT([elpa],[2016.05.002], [elpa-library@mpcdf.mpg.de])
 
 AC_SUBST([PACKAGE_VERSION])
 
@@ -34,7 +34,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [5:0:1])
+AC_SUBST([ELPA_SO_VERSION], [5:1:1])
 #
 
 
@@ -887,11 +887,20 @@ mkdir modules private_modules
 # into "postdeps_FC" and causes linking errors later on.
 postdeps_FC=$(echo $postdeps_FC | sed 's/-l //g')
 
-if test x"${enable_openmp}" = x"yes"; then
+if test x"${with_mpi}" = x"yes"; then
+  if test x"${enable_openmp}" = x"yes"; then
 	SUFFIX="_openmp"
-else
+  else
 	SUFFIX=""
+  fi
+else
+  if test x"${enable_openmp}" = x"yes"; then
+	SUFFIX="_onnode_openmp"
+  else
+	SUFFIX="_onenode"
+  fi
 fi
+
 AC_SUBST([SUFFIX])
 AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
 
