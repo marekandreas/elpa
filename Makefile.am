@@ -352,15 +352,16 @@ endif
 
 
 # test scripts
+MPIEXEC ?= mpiexec -n 2
 if WITH_MPI
-  wrapper=mpiexec -n 2
+  wrapper=$(MPIEXEC)
 else
   wrapper=
 endif
 TESTS = $(check_SCRIPTS)
 %.sh: %
-	@echo $(wrapper) ./$^ '$$TEST_FLAGS' > $@
-	@chmod +x $@
+	echo '$(wrapper) ./$^ $$TEST_FLAGS' > $@
+	chmod +x $@
 
 # Preprocessed files (just used for manual inspection)
 elpa2_utilities.i: $(top_srcdir)/src/elpa2_utilities.F90

@@ -2,7 +2,7 @@
 
 ## Preamle ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.001**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.002**.
 Although most of the documentation is generic to any *ELPA* release, some configure options
 described in this document might be specific to the above mentioned version of *ELPA*.
 
@@ -109,6 +109,9 @@ Since release 2016.05.001 it is possible to build *ELPA* without any MPI support
 by applications, which do not have any MPI parallelisation. To set this version, use the
 "--with-mpi=0" configure flag. It is strongly recommmended to also set the "--enable-openmp"
 option, otherwise no parallelisation whatsoever will be present.
+
+It is possible to install the different flavours of ELPA (with/without MPI, with/without OpenMP) in the same
+directory, since the library is named differently for each build.
 
 ### Doxygen documentation ###
 A doxygen documentation can be created with the "--enable-doxygen-doc" configure option
