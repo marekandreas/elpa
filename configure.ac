@@ -863,6 +863,21 @@ if test x"${install_real_avx2_block6}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_AVX2_BLOCK6_KERNEL],[1],[can use real_avx2_block6 kernel])
 fi
 
+AM_CONDITIONAL([WITH_REAL_AVX512_BLOCK2_KERNEL],[test x"$install_real_avx512_block2" = x"yes"])
+if test x"${install_real_avx512_block2}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_AVX512_BLOCK2_KERNEL],[1],[can use real_avx512_block2 kernel])
+fi
+
+AM_CONDITIONAL([WITH_REAL_AVX512_BLOCK4_KERNEL],[test x"$install_real_avx512_block4" = x"yes"])
+if test x"${install_real_avx512_block4}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_AVX512_BLOCK4_KERNEL],[1],[can use real_avx512_block4 kernel])
+fi
+
+AM_CONDITIONAL([WITH_REAL_AVX512_BLOCK6_KERNEL],[test x"$install_real_avx512_block6" = x"yes"])
+if test x"${install_real_avx512_block6}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_AVX512_BLOCK6_KERNEL],[1],[can use real_avx512_block6 kernel])
+fi
+
 AM_CONDITIONAL([WITH_COMPLEX_SSE_BLOCK1_KERNEL],[test x"$install_complex_sse_block1" = x"yes"])
 if test x"${install_complex_sse_block1}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_SSE_BLOCK1_KERNEL],[1],[can use complex_sse_block1 kernel])
@@ -891,6 +906,16 @@ fi
 AM_CONDITIONAL([WITH_COMPLEX_AVX2_BLOCK2_KERNEL],[test x"$install_complex_avx2_block2" = x"yes"])
 if test x"${install_complex_avx2_block2}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_AVX2_BLOCK2_KERNEL],[1],[can use complex_avx2_block2 kernel])
+fi
+
+AM_CONDITIONAL([WITH_COMPLEX_AVX512_BLOCK1_KERNEL],[test x"$install_complex_avx512_block1" = x"yes"])
+if test x"${install_complex_avx512_block1}" = x"yes" ; then
+ AC_DEFINE([WITH_COMPLEX_AVX512_BLOCK1_KERNEL],[1],[can use complex_avx512_block1 kernel])
+fi
+
+AM_CONDITIONAL([WITH_COMPLEX_AVX512_BLOCK2_KERNEL],[test x"$install_complex_avx512_block2" = x"yes"])
+if test x"${install_complex_avx512_block2}" = x"yes" ; then
+ AC_DEFINE([WITH_COMPLEX_AVX512_BLOCK2_KERNEL],[1],[can use complex_avx512_block2 kernel])
 fi
 
 AM_CONDITIONAL([WITH_REAL_BGP_KERNEL],[test x"$install_real_bgp" = x"yes"])
