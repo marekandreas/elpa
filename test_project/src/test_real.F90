@@ -76,7 +76,6 @@ program test_real_example
    use elpa_utilities, only : error_unit
    use iso_c_binding
    implicit none
-   include "mpif.h"
 
    include "mpif.h"
 
