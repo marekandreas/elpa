@@ -143,7 +143,7 @@
       integer(kind=ik)           :: cur_l_rows, cur_l_cols, vmr_size, umc_size
       integer(kind=c_size_t)     :: lc_start, lc_end
       integer(kind=ik)           :: lr_end
-      integer(kind=ik)           :: na_rows, na_cols
+      integer(kind=ik)           :: na_cols !, na_rows
 
       logical, intent(in)        :: wantDebug
       logical, intent(out)       :: success
@@ -181,15 +181,16 @@
         endif
       endif
 
+! na_rows in used nowhere; only na_cols
       if (useGPU) then
 #ifdef WITH_MPI
-        na_rows = numroc(na, nblk, my_prow, 0, np_rows)
+!        na_rows = numroc(na, nblk, my_prow, 0, np_rows)
         na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
 #else
-        na_rows = na
+!        na_rows = na
         na_cols = na
-#endif
-      endif
+!#endif
+!      endif
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
@@ -1906,7 +1907,7 @@
 #endif
 
 #else /* WITH_MPI */
-          tmp2(1:n_cols*l_cols) = tmp1(n_cols*l_cols)
+          tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
 #endif /* WITH_MPI */
           !#ifdef WITH_GPU_VERSION
           !       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*size_of_real_datatype,cudaMemcpyHostToDevice)
