@@ -211,8 +211,9 @@ contains
     y12 = q(12,1) + q(12,2)*hh(2,2)
 #endif
 
-
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1  = hh(i-1,1)
        h2  = hh(i,2)
@@ -324,7 +325,10 @@ contains
     q(11,2) = q(11,2) + x11 + y11*hh(2,2)
     q(12,2) = q(12,2) + x12 + y12*hh(2,2)
 #endif
+
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)
@@ -417,7 +421,10 @@ contains
     y8 = q(8,1) + q(8,2)*hh(2,2)
 #endif
 
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
+
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)
@@ -499,8 +506,9 @@ contains
     q(8,2) = q(8,2) + x8 + y8*hh(2,2)
 #endif
 
-
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)
@@ -577,7 +585,9 @@ contains
     y4 = q(4,1) + q(4,2)*hh(2,2)
 #endif
 
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)
@@ -632,7 +642,9 @@ contains
     q(4,2) = q(4,2) + x4 + y4*hh(2,2)
 #endif
 
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)
