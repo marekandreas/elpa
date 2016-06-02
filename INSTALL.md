@@ -33,6 +33,11 @@ for the documentation how to proceed.
 
 Please look at configure --help for all available options.
 
+Please note, that it is necessary to set the **compiler options** like optimisation flags etc.
+for the Fortran and C part.
+For example sth. like this is a usual way ./configure FCFLAGS="-O2 -mavx" CFLAGS="-O2 -mavx"
+For details, please have a look at the documentation for the compilers of your choice.
+
 ### Setting of MPI compiler and libraries ###
 
 In the standard case *ELPA* need a MPI compiler and MPI libraries. The configure script
