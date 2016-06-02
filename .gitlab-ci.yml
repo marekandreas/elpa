@@ -1821,7 +1821,8 @@ distcheck:
   script:
     - ./autogen.sh
     - ./configure --with-mpi=no
-    - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no" TEST_FLAGS='1500 50 16'
+    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
+    - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no" TEST_FLAGS='1500 50 16' || { chmod u+rwX -R . ; exit 1 ; }
 
 
 # test test_project
