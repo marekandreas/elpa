@@ -416,7 +416,25 @@ gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-#    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
+gfortran-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings --enable-assumed-size-arrays
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
 
 # jobs for intel/gfortran double precision no mpi and openmp ftimings enabled
 
