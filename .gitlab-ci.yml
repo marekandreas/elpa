@@ -1244,6 +1244,10 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 
 gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-assumed-size-kernel:
@@ -1255,6 +1259,10 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 
 #real avx block4, complex avx block2
@@ -1350,6 +1358,10 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-assumed-size-jobs:
   tags:
@@ -1360,6 +1372,10 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 
 #real avx block6, complex block 2
@@ -1456,6 +1472,10 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-assumed-size-jobs:
   tags:
@@ -1466,6 +1486,10 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 
 #real avx2 block2, complex avx2 block1 (emulated)
