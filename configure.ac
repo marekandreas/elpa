@@ -155,6 +155,7 @@ install_complex_generic_simple=yes
 #want_avx=yes
 #want_avx2=yes
 #want_sse=yes
+#want_avx512=yes
 
 AC_LANG([C])
 
@@ -277,7 +278,7 @@ fi
 dnl check whether one can compile with avx - gcc intrinsics
 
 dnl first pass: try with specified CFLAGS and CXXFLAGS
-AC_MSG_CHECKING([whether we can compile AVX intrinsics in C])
+AC_MSG_CHECKING([whether we can compile AVX gcc intrinsics in C])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  #include <x86intrin.h>
  int main(int argc, char **argv){
@@ -292,7 +293,7 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_MSG_RESULT([${can_compile_avx}])
 
 #if test "${can_compile_avx}" = "yes" ; then
-#  AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
+#  AC_MSG_CHECKING([whether we can compile AVX gcc intrinsics in C++])
 #  AC_LANG_PUSH([C++])
 #  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #   #include <x86intrin.h>
@@ -312,7 +313,7 @@ AC_MSG_RESULT([${can_compile_avx}])
 #  fi
 #fi
 
-AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C])
+AC_MSG_CHECKING([whether we can compile AVX2 gcc intrinsics in C])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  #include <x86intrin.h>
  int main(int argc, char **argv){
@@ -327,7 +328,7 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 )
 AC_MSG_RESULT([${can_compile_avx2}])
 #if test "${can_compile_avx2}" = "yes" ; then
-#  AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
+#  AC_MSG_CHECKING([whether we can compile AVX2 gcc intrinsics in C++])
 #  AC_LANG_PUSH([C++])
 #  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #   #include <x86intrin.h>
@@ -345,6 +346,43 @@ AC_MSG_RESULT([${can_compile_avx2}])
 #  AC_MSG_RESULT([${can_compile_avx2}])
 #  if test "${can_compile_avx2}" = "no" ; then
 #    AC_MSG_WARN([Cannot compile C++ with AVX2!])
+#  fi
+#fi
+
+AC_MSG_CHECKING([whether we can compile AVX512 gcc intrinsics in C])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+ #include <x86intrin.h>
+ int main(int argc, char **argv){
+ double* q;
+ __m512d q1 = _mm512_load_pd(q);
+ __m512d y1 = _mm512_fmadd_pd(q1, q1, q1);
+ return 0;
+ }
+ ])],
+ [can_compile_avx512=yes],
+ [can_compile_avx512=no]
+)
+AC_MSG_RESULT([${can_compile_avx512}])
+
+#if test "${can_compile_avx512}" = "yes" ; then
+#  AC_MSG_CHECKING([whether we can compile AVX512 gcc intrinsics in C++])
+#  AC_LANG_PUSH([C++])
+#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#   #include <x86intrin.h>
+#   int main(int argc, char **argv){
+#   double* q;
+#   __m512d q1 = _mm512_load_pd(q);
+#   __m512d y1 = _mm512_fmadd_pd(q1, q1, q1);
+#   return 0;
+#   }
+#   ])],
+#   [can_compile_avx512=yes],
+#   [can_compile_avx512=no]
+#  )
+#  AC_LANG_POP([C++])
+#  AC_MSG_RESULT([${can_compile_avx512}])
+#  if test "${can_compile_avx512}" = "no" ; then
+#    AC_MSG_WARN([Cannot compile C++ with AVX512!])
 #  fi
 #fi
 
@@ -380,6 +418,23 @@ else
   install_complex_avx2_block2=no
 fi
 
+if test "${can_compile_avx512}" = "yes" ; then
+  install_real_avx512_block2=yes
+  install_real_avx512_block4=yes
+  install_real_avx512_block6=yes
+
+  install_complex_avx512_block1=yes
+  install_complex_avx512_block2=yes
+else
+  install_real_avx512_block2=no
+  install_real_avx512_block4=no
+  install_real_avx512_block6=no
+
+  install_complex_avx512_block1=no
+  install_complex_avx512_block2=no
+fi
+
+
 AM_CONDITIONAL([HAVE_SSE_ASSEMBLY],[test x"$can_compile_sse_assembly" = x"yes"])
 if test x"${can_compile_sse_assembly}" = x"yes" ; then
   AC_DEFINE([HAVE_SSE_ASSEMBLY],[1],[assembly SSE is supported on this CPU])
@@ -396,6 +451,10 @@ fi
 AM_CONDITIONAL([HAVE_AVX2],[test x"$can_compile_avx2" = x"yes"])
 if test x"${can_compile_avx2}" = x"yes" ; then
   AC_DEFINE([HAVE_AVX2],[1],[AVX2 is supported on this CPU])
+fi
+AM_CONDITIONAL([HAVE_AVX512],[test x"$can_compile_avx512" = x"yes"])
+if test x"${can_compile_avx512}" = x"yes" ; then
+  AC_DEFINE([HAVE_AVX512],[1],[AVX512 is supported on this CPU])
 fi
 
 dnl set the AVX optimization flags if this option is specified
@@ -741,6 +800,16 @@ DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block4-kernel]-only,[real-avx2-blo
 dnl real-avx2-block6 kernel
 DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block6-kernel-only],[real-avx2-block6-kernel],[install_real_avx2_block6])
 
+dnl real-avx512-block2 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx512-block2-kernel-only],[real-avx512-block2-kernel],[install_real_avx512_block2])
+
+dnl real-avx512-block4 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx512-block4-kernel]-only,[real-avx512-block4-kernel],[install_real_avx512_block4])
+
+dnl real-avx512-block6 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx512-block6-kernel-only],[real-avx512-block6-kernel],[install_real_avx512_block6])
+
+
 dnl complex kernels
 
 dnl generic kernel
@@ -775,6 +844,13 @@ DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx2-block1-kernel-only],[complex
 
 dnl complex-avx2-block2 kernel
 DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx2-block2-kernel-only],[complex-avx2-block2-kernel],[install_complex_avx2_block2])
+
+dnl complex-avx512-block1 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx512-block1-kernel-only],[complex-avx512-block1-kernel],[install_complex_avx512_block1])
+
+dnl complex-avx512-block2 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx512-block2-kernel-only],[complex-avx512-block2-kernel],[install_complex_avx512_block2])
+
 
 
 dnl set the conditionals according to the previous tests
@@ -1035,6 +1111,12 @@ if test "${can_compile_avx2}" = "no" ; then
     AC_MSG_WARN([Could not compile AVX2 instructions])
 #  fi
 fi
+if test "${can_compile_avx512}" = "no" ; then
+#  if test x"${want_avx512}" = x"yes" ; then
+    AC_MSG_WARN([Could not compile AVX512 instructions])
+#  fi
+fi
+
 
 if test "${can_compile_sse}" = "no" ; then
   AC_MSG_WARN([Could not compile SSE instructions])
