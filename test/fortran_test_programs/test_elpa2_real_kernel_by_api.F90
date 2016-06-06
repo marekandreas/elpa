@@ -381,6 +381,19 @@ program test_real2_choose_kernel_with_api_double_precision
 #endif
 
 
+#ifdef WITH_REAL_AVX512_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_AVX512_BLOCK6)
+#else
+#ifdef WITH_REAL_AVX512_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_AVX512_BLOCK4)
+#else
+#ifdef WITH_REAL_AVX512_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_AVX512_BLOCK2)
+#endif
+#endif
+#endif
+
+
 #else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
 
 #ifdef WITH_REAL_SSE_BLOCK2_KERNEL
@@ -419,6 +432,17 @@ program test_real2_choose_kernel_with_api_double_precision
                               REAL_ELPA_KERNEL_AVX2_BLOCK6)
 #endif
 
+#ifdef WITH_REAL_AVX512_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_AVX512_BLOCK2)
+#endif
+
+#ifdef WITH_REAL_AVX512_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_AVX512_BLOCK4)
+#endif
+
+#ifdef WITH_REAL_AVX512_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_AVX512_BLOCK6)
+#endif
 
 #endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
 

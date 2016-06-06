@@ -2200,6 +2200,34 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-
       - coverage_data
 
 
+#real avx512 block2, complex avx2 block1 (emulated)
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx512_block2-complex-avx_block1-kernel-jobs:
+  tags:
+    - emulated
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx512f -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx512_block2-kernel-only --with-complex-avx_block1-kernel-only --enable-single-precision
+    - make -j 8
+    - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -knl -- make check TEST_FLAGS='100 25 16'
+
+gortran-single-precision-mpi-openmp-ftimings-redirect-real-avx512_block2-complex-avx_block1-kernel-special-gcov-jobs:
+  tags:
+    - emulated
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx512f -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx512_block2-kernel-only --with-complex-avx_block1-kernel-only --enable-single-precision
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -knl -- make check TEST_FLAGS='150 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
 #real avx2 block2, complex avx2 block1 (emulated)
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-complex-avx2_block1-kernel-jobs:
@@ -2261,6 +2289,34 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='150 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
+#real avx512 block4, complex avx block2 (emulated)
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
+  tags:
+    - emulated
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx512f -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx512_block4-kernel-only --with-complex-avx_block2-kernel-only --enable-single-precision
+    - make -j 8
+    - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -knl -- make check TEST_FLAGS='100 25 16'
+
+gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx512_block4-complex-avx_block2-kernel-special-gcov-jobs:
+  tags:
+    - emulated
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx512f -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2_block4-kernel-only --with-complex-avx2_block2-kernel-only --enable-single-precision
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -knl -- make check TEST_FLAGS='150 50 16'
     - ./ci_coverage_collect
   artifacts:
     paths:
