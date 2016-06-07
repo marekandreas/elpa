@@ -1884,4 +1884,4 @@ total_coverage:
     - ./ci_coverage_summary
   artifacts:
     paths:
-      - coverage_data
+      - coverage_summary
