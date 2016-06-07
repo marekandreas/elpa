@@ -3544,7 +3544,7 @@
 #ifdef DOUBLE_PRECISION_REAL
           stripe_width = 48 ! Must be a multiple of 4
 #else
-          stripe_width = 96 ! Must be a multiple of 8
+          stripe_width = 48 ! Must be a multiple of 8
 #endif
 #ifdef WITH_OPENMP
           stripe_count = (thread_width-1)/stripe_width + 1
@@ -3562,12 +3562,12 @@
 	      THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK4 .or. &
               THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK6) then
 
-            stripe_width = ((stripe_width+3)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
+            stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                                   ! (8 * sizeof(double) == 64)
 
 	  else
-           stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX/SSE memory alignment of 32 bytes
-	  					! (4 * sizeof(double) == 32)
+            stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX/SSE memory alignment of 32 bytes
+        	                                  ! (4 * sizeof(double) == 32)
           endif
 #else
           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK2 .or. &

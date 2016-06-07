@@ -216,7 +216,7 @@ void double_hh_trafo_real_avx512_2hv_double(double* q, double* hh, int* pnb, int
 	x3 = _mm512_mul_pd(x3, h1);
 	x4 = _mm512_mul_pd(x4, h1);
 
-	h1 = (__m512d) _mm512_xor_si512((__m512i) tau2, (__m512i) sign);
+	h1 = (__m512d) _mm512_xor_epi64((__m512i) tau2, (__m512i) sign);
 	h2 = _mm512_mul_pd(h1, vs);
 	y1 = _mm512_FMA_pd(y1, h1, _mm512_mul_pd(x1,h2));
 	y2 = _mm512_FMA_pd(y2, h1, _mm512_mul_pd(x2,h2));
@@ -364,7 +364,7 @@ void double_hh_trafo_real_avx512_2hv_double(double* q, double* hh, int* pnb, int
 	x2 = _mm512_mul_pd(x2, h1);
 	x3 = _mm512_mul_pd(x3, h1);
 
-	h1 = (__m512d) _mm512_xor_si512((__m512i) tau2, (__m512i) sign);
+	h1 = (__m512d) _mm512_xor_epi64((__m512i) tau2, (__m512i) sign);
 	h2 = _mm512_mul_pd(h1, vs);
 	y1 = _mm512_FMA_pd(y1, h1, _mm512_mul_pd(x1,h2));
 	y2 = _mm512_FMA_pd(y2, h1, _mm512_mul_pd(x2,h2));
@@ -481,11 +481,11 @@ void double_hh_trafo_real_avx512_2hv_double(double* q, double* hh, int* pnb, int
 	__m512d tau2 = _mm512_set1_pd(hh[ldh]);
 	__m512d vs = _mm512_set1_pd(s);
 
-	h1 = (__m512d) _mm512_xor_si512((__m512i) tau1, (__m512i) sign);
+	h1 = (__m512d) _mm512_xor_epi64((__m512i) tau1, (__m512i) sign);
 	x1 = _mm512_mul_pd(x1, h1);
 	x2 = _mm512_mul_pd(x2, h1);
 
-	h1 = (__m512d) _mm512_xor_si512((__m512i) tau2, (__m512i) sign);
+	h1 = (__m512d) _mm512_xor_epi64((__m512i) tau2, (__m512i) sign);
 	h2 = _mm512_mul_pd(h1, vs);
 
 	y1 = _mm512_FMA_pd(y1, h1, _mm512_mul_pd(x1,h2));
@@ -580,10 +580,10 @@ void double_hh_trafo_real_avx512_2hv_double(double* q, double* hh, int* pnb, int
 	__m512d tau2 = _mm512_set1_pd(hh[ldh]);
 	__m512d vs = _mm512_set1_pd(s);
 
-	h1 = (__m512d) _mm512_xor_si512((__m512i) tau1, (__m512i) sign);
+	h1 = (__m512d) _mm512_xor_epi64((__m512i) tau1, (__m512i) sign);
 	x1 = _mm512_mul_pd(x1, h1);
 
-	h1 = (__m512d) _mm512_xor_si512((__m512i) tau2, (__m512i) sign);
+	h1 = (__m512d) _mm512_xor_epi64((__m512i) tau2, (__m512i) sign);
 	h2 = _mm512_mul_pd(h1, vs);
 
 	y1 = _mm512_FMA_pd(y1, h1, _mm512_mul_pd(x1,h2));
@@ -664,9 +664,9 @@ void double_hh_trafo_real_avx512_2hv_double(double* q, double* hh, int* pnb, int
 	__m512d tau2 = _mm512_set1_pd(hh[ldh]);
 	__m512d vs = _mm512_set1_pd(s);
 
-	h1 = (__m512d) _mm512_xor_si512((__m512i) tau1, (__m512i) sign);
+	h1 = (__m512d) _mm512_xor_epi64((__m512i) tau1, (__m512i) sign);
 	x1 = _mm512_mul_pd(x1, h1);
-	h1 = (__m512d) _mm512_xor_si512((__m512i) tau2, (__m512i) sign);
+	h1 = (__m512d) _mm512_xor_epi64((__m512i) tau2, (__m512i) sign);
 	h2 = _mm512_mul_pd(h1, vs);
 	y1 = _mm512_FMA_pd(y1, h1, _mm512_mul_pd(x1,h2));
 
