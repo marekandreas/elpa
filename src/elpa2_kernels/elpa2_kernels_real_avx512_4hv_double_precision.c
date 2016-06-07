@@ -60,8 +60,8 @@
 // Adapted for building a shared-library by Andreas Marek, MPCDF (andreas.marek@mpcdf.mpg.de)
 // --------------------------------------------------------------------------------------------------
 #include "config-f90.h"
-
 #include <x86intrin.h>
+
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -71,7 +71,6 @@
 #define _mm512_NFMA_pd(a,b,c) _mm512_fnmadd_pd(a,b,c)
 #define _mm512_FMSUB_pd(a,b,c) _mm512_fmsub_pd(a,b,c)
 #endif
-
 
 //Forward declaration
 __forceinline void hh_trafo_kernel_8_AVX512_4hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4);
@@ -342,10 +341,10 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_double(double* q, double* hh, i
 
 	h1 = _mm512_set1_pd(hh[nb-1]);
 
-	q1 = _mm512_set1_pd(q[(nb+2)*ldq]);
-	q2 = _mm512_set1_pd(q[((nb+2)*ldq)+8]);
-	q3 = _mm512_set1_pd(q[((nb+2)*ldq)+16]);
-	q4 = _mm512_set1_pd(q[((nb+2)*ldq)+24]);
+	q1 = _mm512_load_pd(&q[(nb+2)*ldq]);
+	q2 = _mm512_load_pd(&q[((nb+2)*ldq)+8]);
+	q3 = _mm512_load_pd(&q[((nb+2)*ldq)+16]);
+	q4 = _mm512_load_pd(&q[((nb+2)*ldq)+24]);
 
 	x1 = _mm512_FMA_pd(q1, h1, x1);
 	x2 = _mm512_FMA_pd(q2, h1, x2);
@@ -751,9 +750,9 @@ __forceinline void hh_trafo_kernel_24_AVX512_4hv_double(double* q, double* hh, i
 
 	h1 = _mm512_set1_pd(hh[nb-1]);
 
-	q1 = _mm512_set1_pd(q[(nb+2)*ldq]);
-	q2 = _mm512_set1_pd(q[((nb+2)*ldq)+8]);
-	q3 = _mm512_set1_pd(q[((nb+2)*ldq)+16]);
+	q1 = _mm512_load_pd(&q[(nb+2)*ldq]);
+	q2 = _mm512_load_pd(&q[((nb+2)*ldq)+8]);
+	q3 = _mm512_load_pd(&q[((nb+2)*ldq)+16]);
 
 	x1 = _mm512_FMA_pd(q1, h1, x1);
 	x2 = _mm512_FMA_pd(q2, h1, x2);
@@ -1092,8 +1091,8 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_double(double* q, double* hh, i
 
 	h1 = _mm512_set1_pd(hh[nb-1]);
 
-	q1 = _mm512_set1_pd(q[(nb+2)*ldq]);
-	q2 = _mm512_set1_pd(q[((nb+2)*ldq)+8]);
+	q1 = _mm512_load_pd(&q[(nb+2)*ldq]);
+	q2 = _mm512_load_pd(&q[((nb+2)*ldq)+8]);
 
 	x1 = _mm512_FMA_pd(q1, h1, x1);
 	x2 = _mm512_FMA_pd(q2, h1, x2);
@@ -1345,7 +1344,7 @@ __forceinline void hh_trafo_kernel_8_AVX512_4hv_double(double* q, double* hh, in
 
 	h1 = _mm512_set1_pd(hh[nb-1]);
 
-	q1 = _mm512_set1_pd(q[(nb+2)*ldq]);
+	q1 = _mm512_load_pd(&q[(nb+2)*ldq]);
 
 	x1 = _mm512_FMA_pd(q1, h1, x1);
 
@@ -1461,6 +1460,8 @@ __forceinline void hh_trafo_kernel_8_AVX512_4hv_double(double* q, double* hh, in
 	q1 = _mm512_NFMA_pd(x1, h1, q1);
 
 	_mm512_store_pd(&q[(nb+2)*ldq],q1);
+
+
 }
 
 
@@ -1708,3 +1709,4 @@ __forceinline void hh_trafo_kernel_4_AVX512_4hv_double(double* q, double* hh, in
 	_mm256_store_pd(&q[(nb+2)*ldq],q1);
 }
 #endif
+

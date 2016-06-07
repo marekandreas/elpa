@@ -3574,8 +3574,8 @@
 	      THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK4 .or. &
               THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK6) then
 
-            stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
-	                                          ! (16 * sizeof(float) == 64)
+            stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
+	                                             ! (16 * sizeof(float) == 64)
 
 	  else
 
