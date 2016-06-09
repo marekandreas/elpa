@@ -1599,7 +1599,7 @@
 #endif
 
 #else /* WITH_MPI */
-             d(noff+1:noff+1+nmid-1) = d(noff+1:noff+1+nmid-1)
+!             d(noff+1:noff+1+nmid-1) = d(noff+1:noff+1+nmid-1)
 #endif /* WITH_MPI */
            endif
 
@@ -1627,7 +1627,7 @@
 #endif
 
 #else /* WITH_MPI */
-             d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) = d(noff+nmid+1:noff+nmid+1+nlen-nmid-1)
+!             d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) = d(noff+nmid+1:noff+nmid+1+nlen-nmid-1)
 #endif /* WITH_MPI */
            endif
            if (nprocs == np_cols) then
