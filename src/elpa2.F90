@@ -182,7 +182,8 @@ contains
 
    integer(kind=ik)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=ik)                       :: nbw, num_blocks
-   real(kind=rk8), allocatable             :: tmat(:,:,:), e(:)
+   real(kind=rk8), allocatable            :: tmat(:,:,:), e(:)
+   integer(kind=c_intptr_t)               :: tmat_dev, q_dev, a_dev
    real(kind=c_double)                    :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
    integer(kind=ik)                       :: i
    logical                                :: success
@@ -322,11 +323,11 @@ contains
     ttt0 = MPI_Wtime()
     ttts = ttt0
 #ifdef DOUBLE_PRECISION_REAL
-    call bandred_real_double(na, a, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
-                      tmat, wantDebug, useGPU, success, useQRActual)
+    call bandred_real_double(na, a, a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
+                             tmat, tmat_dev, wantDebug, useGPU, success, useQRActual)
 #else
-    call bandred_real_single(na, a, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
-                      tmat, wantDebug, useGPU, success, useQRActual)
+    call bandred_real_single(na, a, a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
+                             tmat, tmat_dev, wantDebug, useGPU, success, useQRActual)
 #endif
     if (.not.(success)) return
     ttt1 = MPI_Wtime()
@@ -395,11 +396,11 @@ contains
 
      ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-     call trans_ev_tridi_to_band_real_double(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
+     call trans_ev_tridi_to_band_real_double(na, nev, nblk, nbw, q, q_dev, ldq, matrixCols, hh_trans_real, &
                                     mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success,      &
                                     THIS_REAL_ELPA_KERNEL)
 #else
-     call trans_ev_tridi_to_band_real_single(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
+     call trans_ev_tridi_to_band_real_single(na, nev, nblk, nbw, q, q_dev, ldq, matrixCols, hh_trans_real, &
                                     mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success,      &
                                     THIS_REAL_ELPA_KERNEL)
 #endif
@@ -421,10 +422,10 @@ contains
      print *,"useGPU== ",useGPU
      ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-     call trans_ev_band_to_full_real_double(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, mpi_comm_rows, &
+     call trans_ev_band_to_full_real_double(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, num_blocks, mpi_comm_rows, &
                                      mpi_comm_cols, useGPU, useQRActual)
 #else
-     call trans_ev_band_to_full_real_single(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, mpi_comm_rows, &
+     call trans_ev_band_to_full_real_single(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, num_blocks, mpi_comm_rows, &
                                      mpi_comm_cols, useGPU, useQRActual)
 #endif
 
@@ -533,7 +534,8 @@ contains
 
    integer(kind=ik)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=ik)                       :: nbw, num_blocks
-   real(kind=rk4), allocatable             :: tmat(:,:,:), e(:)
+   real(kind=rk4), allocatable            :: tmat(:,:,:), e(:)
+   integer(kind=c_intptr_t)               :: tmat_dev, q_dev, a_dev
    real(kind=c_double)                    :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
    integer(kind=ik)                       :: i
    logical                                :: success
@@ -672,11 +674,11 @@ contains
     ttt0 = MPI_Wtime()
     ttts = ttt0
 #ifdef DOUBLE_PRECISION_REAL
-    call bandred_real_double(na, a, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
-                      tmat, wantDebug, useGPU, success, useQRActual)
+    call bandred_real_double(na, a, a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
+                      tmat, tmat_dev, wantDebug, useGPU, success, useQRActual)
 #else
-    call bandred_real_single(na, a, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
-                      tmat, wantDebug, useGPU, success, useQRActual)
+    call bandred_real_single(na, a, a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
+                      tmat, tmat_dev, wantDebug, useGPU, success, useQRActual)
 #endif
     if (.not.(success)) return
     ttt1 = MPI_Wtime()
@@ -745,11 +747,11 @@ contains
 
      ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-     call trans_ev_tridi_to_band_real_double(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
+     call trans_ev_tridi_to_band_real_double(na, nev, nblk, nbw, q, q_dev, ldq, matrixCols, hh_trans_real, &
                                     mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success,      &
                                     THIS_REAL_ELPA_KERNEL)
 #else
-     call trans_ev_tridi_to_band_real_single(na, nev, nblk, nbw, q, ldq, matrixCols, hh_trans_real, &
+     call trans_ev_tridi_to_band_real_single(na, nev, nblk, nbw, q, q_dev, ldq, matrixCols, hh_trans_real, &
                                     mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success,      &
                                     THIS_REAL_ELPA_KERNEL)
 #endif
@@ -771,10 +773,10 @@ contains
      print *,"useGPU== ",useGPU
      ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-     call trans_ev_band_to_full_real_double(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, mpi_comm_rows, &
+     call trans_ev_band_to_full_real_double(na, nev, nblk, nbw, a, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, num_blocks, mpi_comm_rows, &
                                      mpi_comm_cols, useGPU, useQRActual)
 #else
-     call trans_ev_band_to_full_real_single(na, nev, nblk, nbw, a, lda, tmat, q, ldq, matrixCols, num_blocks, mpi_comm_rows, &
+     call trans_ev_band_to_full_real_single(na, nev, nblk, nbw, a, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, num_blocks, mpi_comm_rows, &
                                      mpi_comm_cols, useGPU, useQRActual)
 #endif
 
