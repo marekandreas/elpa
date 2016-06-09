@@ -4752,8 +4752,8 @@
 
 #else /* WITH_MPI */
                 if (next_top_msg_length > 0) then
-                  top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
-                      bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+                  top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = bottom_border_send_buffer(1:csw* &
+		                                                                                              next_top_msg_length*max_threads,i)
                 endif
 
 #endif /* WITH_MPI */
@@ -4870,8 +4870,9 @@
 
 #else /* WITH_MPI */
                 if (next_top_msg_length > 0) then
-                  top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
-                      bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+                  top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = bottom_border_send_buffer(1:csw* &
+		                                                                                             next_top_msg_length*&
+													      max_threads,i)
                 endif
 
 #endif /* WITH_MPI */
@@ -5126,7 +5127,7 @@
 #else /* WITH_MPI */
 !             carefull the "recieve" has to be done at the corresponding wait or send
 !              top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
-                                     bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+!                                     bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
 #endif /* WITH_MPI */
 
 #else /* WITH_OPENMP */
