@@ -154,7 +154,8 @@
 
       logical, intent(in)        :: useQR
 
-      integer(kind=ik)           :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, ii, pp, transformChunkSize
+      integer(kind=ik)           :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
+                                    ii, pp, transformChunkSize
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
@@ -4039,11 +4040,13 @@
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
 #ifdef DOUBLE_PRECISION_REAL
-                call unpack_and_prepare_row_group_real_gpu_double(row_group, row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+                call unpack_and_prepare_row_group_real_gpu_double(row_group, row_group_dev, aIntern_dev, stripe_count,&
+		                                           stripe_width, &
                                                            last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
                                                            unpack_idx, i - limits(my_prow), .false.)
 #else
-                call unpack_and_prepare_row_group_real_gpu_single(row_group, row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+                call unpack_and_prepare_row_group_real_gpu_single(row_group, row_group_dev, aIntern_dev, stripe_count,  &
+		                                           stripe_width, &
                                                            last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
                                                            unpack_idx, i - limits(my_prow), .false.)
 #endif
@@ -4524,7 +4527,7 @@
                 n_off = current_local_n+a_off
                 b_len = csw*nbw
                 b_off = (my_thread-1)*b_len
-                aInten(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
+                aIntern(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
                   reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
               enddo
 !$omp end parallel do
@@ -4679,12 +4682,14 @@
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
              endif
 #ifdef DOUBLE_PRECISION_REAL
-                call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads, l_nev,    &
+                call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,      &
+		                                      max_threads, l_nev,    &
                                                       a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                                       hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,         &
                                                       my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
 #else
-                call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads, l_nev,    &
+                call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,      &
+		                                      max_threads, l_nev,    &
                                                       a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                                       hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,         &
                                                       my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
@@ -4707,12 +4712,12 @@
 #else /* WITH_OPENMP */
 
 #ifdef DOUBLE_PRECISION_REAL
-           call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,                          &
+           call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,          &
                                           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                           hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,          &
                                           last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #else
-           call compute_hh_trafo_real_cpu_single(aIntern, aInern_dev, stripe_width, a_dim2, stripe_count,                          &
+           call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,          &
                                           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                           hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,          &
                                           last_stripe_width, THIS_REAL_ELPA_KERNEL)
@@ -4765,11 +4770,11 @@
 #ifdef DOUBLE_PRECISION_REAL
                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_double_real_datatype
                successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
-                                           stripe_width * bottom_msg_length * size_of_double_real_datatype ,cudaMemcpyDeviceToHost)
+                                          stripe_width * bottom_msg_length * size_of_double_real_datatype ,cudaMemcpyDeviceToHost)
 #else
                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_single_real_datatype
                successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
-                                           stripe_width * bottom_msg_length * size_of_single_real_datatype ,cudaMemcpyDeviceToHost)
+                                          stripe_width * bottom_msg_length * size_of_single_real_datatype ,cudaMemcpyDeviceToHost)
 #endif
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
@@ -4816,13 +4821,15 @@
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_REAL
-          call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev,      &
+          call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+	                                        max_threads, l_nev,      &
                                                 a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                                 hh_tau_dev, kernel_flops, kernel_time,                                 &
                                                 current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread,  &
                                                 thread_width, THIS_REAL_ELPA_KERNEL)
 #else
-          call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev,      &
+          call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+	                                        max_threads, l_nev,      &
                                                 a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                                 hh_tau_dev, kernel_flops, kernel_time,                                 &
                                                 current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread,  &
@@ -4850,7 +4857,7 @@
           n_off = current_local_n+nbw-bottom_msg_length+a_off
           b_len = csw*bottom_msg_length*max_threads
           bottom_border_send_buffer(1:b_len,i) = &
-              reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+              reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -4872,13 +4879,13 @@
 #else /* WITH_OPENMP */
 
 #ifdef DOUBLE_PRECISION_REAL
-        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,                          &
+        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,          &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                        hh_tau_dev, kernel_flops, kernel_time,                                 &
                                        current_local_n - bottom_msg_length, bottom_msg_length, i,             &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #else
-        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,                          &
+        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,      &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                        hh_tau_dev, kernel_flops, kernel_time,                                 &
                                        current_local_n - bottom_msg_length, bottom_msg_length, i,             &
@@ -4947,13 +4954,15 @@
 !$omp parallel do private(my_thread), schedule(static, 1)
         do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_REAL
-          call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev,       &
+          call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count,        &
+	                                        max_threads, l_nev,       &
                                                 a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,  &
                                                 hh_tau_dev, kernel_flops, kernel_time,                                  &
                                                 top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i,    &
                                                 my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
 #else
-          call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev,       &
+          call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count,        &
+	                                        max_threads, l_nev,       &
                                                 a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,  &
                                                 hh_tau_dev, kernel_flops, kernel_time,                                  &
                                                 top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i,    &
@@ -4976,13 +4985,13 @@
 #else /* WITH_OPENMP */
 
 #ifdef DOUBLE_PRECISION_REAL
-        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,                              &
+        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,            &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time,  top_msg_length,                    &
                                        current_local_n-top_msg_length-bottom_msg_length, i,                       &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #else
-        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,                              &
+        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,        &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time,  top_msg_length,                    &
                                        current_local_n-top_msg_length-bottom_msg_length, i,                       &
@@ -5052,12 +5061,14 @@
               reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
           endif
 #ifdef DOUBLE_PRECISION_REAL
-          call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev,      &
+          call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+	                                        max_threads, l_nev,      &
                                                 a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                                 hh_tau_dev, kernel_flops, kernel_time,                                  &
                                                 0, top_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
 #else
-          call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev,      &
+          call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+	                                         max_threads, l_nev,      &
                                                 a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                                 hh_tau_dev, kernel_flops, kernel_time,                                  &
                                                 0, top_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
@@ -5078,12 +5089,12 @@
 #else /* WITH_OPENMP */
 
 #ifdef DOUBLE_PRECISION_REAL
-        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,                              &
+        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,        &
                                        a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time, 0, top_msg_length, i,               &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #else
-        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,                              &
+        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,        &
                                        a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time, 0, top_msg_length, i,               &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
@@ -5114,7 +5125,8 @@
 
 #else /* WITH_MPI */
 !             carefull the "recieve" has to be done at the corresponding wait or send
-!              top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+!              top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
+                                     bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
 #endif /* WITH_MPI */
 
 #else /* WITH_OPENMP */
