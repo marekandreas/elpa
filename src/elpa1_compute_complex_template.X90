@@ -275,11 +275,19 @@
           call mpi_allreduce(aux1, aux2, 2, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
 
-#else /* WITH_MPI */
-          aux2 = aux1
-#endif /* WITH_MPI */
           vnorm2 = aux2(1)
           vrl    = aux2(2)
+
+#else /* WITH_MPI */
+!          aux2 = aux1
+
+          vnorm2 = aux1(1)
+          vrl    = aux1(2)
+
+#endif /* WITH_MPI */
+
+!          vnorm2 = aux2(1)
+!          vrl    = aux2(2)
 
           ! Householder transformation
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -878,26 +886,58 @@
 
 #ifdef WITH_MPI
           call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
-#else
-          tmp2 = tmp1
-#endif
+
           if (l_rows>0) then
             call ztrmm('L', 'L', 'N', 'N', nstor, l_cols, CONE, tmat, max_stored_rows, tmp2, nstor)
             call zgemm('N', 'N', l_rows, l_cols, nstor, -CONE, hvm, ubound(hvm,dim=1), &
                         tmp2, nstor, CONE, q, ldq)
           endif
+
+#else
+!          tmp2 = tmp1
+
+          if (l_rows>0) then
+            call ztrmm('L', 'L', 'N', 'N', nstor, l_cols, CONE, tmat, max_stored_rows, tmp1, nstor)
+            call zgemm('N', 'N', l_rows, l_cols, nstor, -CONE, hvm, ubound(hvm,dim=1), &
+                        tmp1, nstor, CONE, q, ldq)
+          endif
+
+#endif
+
+!          if (l_rows>0) then
+!            call ztrmm('L', 'L', 'N', 'N', nstor, l_cols, CONE, tmat, max_stored_rows, tmp2, nstor)
+!            call zgemm('N', 'N', l_rows, l_cols, nstor, -CONE, hvm, ubound(hvm,dim=1), &
+!                        tmp2, nstor, CONE, q, ldq)
+!          endif
+
 #else /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef WITH_MPI
           call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
-#else
-          tmp2 = tmp1
-#endif
+
           if (l_rows>0) then
             call ctrmm('L', 'L', 'N', 'N', nstor, l_cols, CONE, tmat, max_stored_rows, tmp2, nstor)
             call cgemm('N', 'N', l_rows, l_cols, nstor, -CONE, hvm, ubound(hvm,dim=1), &
                         tmp2, nstor, CONE, q, ldq)
           endif
+
+#else
+!          tmp2 = tmp1
+
+          if (l_rows>0) then
+            call ctrmm('L', 'L', 'N', 'N', nstor, l_cols, CONE, tmat, max_stored_rows, tmp1, nstor)
+            call cgemm('N', 'N', l_rows, l_cols, nstor, -CONE, hvm, ubound(hvm,dim=1), &
+                        tmp1, nstor, CONE, q, ldq)
+          endif
+
+#endif
+!
+!          if (l_rows>0) then
+!            call ctrmm('L', 'L', 'N', 'N', nstor, l_cols, CONE, tmat, max_stored_rows, tmp2, nstor)
+!            call cgemm('N', 'N', l_rows, l_cols, nstor, -CONE, hvm, ubound(hvm,dim=1), &
+!                        tmp2, nstor, CONE, q, ldq)
+!          endif
+
 #endif /* DOUBLE_PRECISION_COMPLEX */
           nstor = 0
         endif
@@ -1199,15 +1239,25 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
                call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_DOUBLE_COMPLEX, MPI_SUM, np, mpi_comm_rows, mpierr)
+
 #else
                call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_COMPLEX, MPI_SUM, np, mpi_comm_rows, mpierr)
 #endif
 
-#else /* WITH_MPI */
-               tmp2 = tmp1
-#endif /* WITH_MPI */
                ! Put the result into C
                if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
+
+#else /* WITH_MPI */
+
+!               tmp2 = tmp1
+
+               ! Put the result into C
+               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp1(1:nstor,lcs:lce)
+
+#endif /* WITH_MPI */
+
+!               ! Put the result into C
+!               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
                deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
                if (istat .ne. 0) then
@@ -1415,6 +1465,7 @@
 #endif
 
 #endif /* WITH_MPI */
+
           nc = 0
           do i=1,nblk
             tmp2(1:i,i) = tmp1(nc+1:nc+i)
@@ -1688,6 +1739,7 @@
 #endif
 
 #endif /* WITH_MPI */
+
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
            call ZGEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, (-1.0_rk8,0.0_rk8),        &

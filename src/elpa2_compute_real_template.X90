@@ -1082,11 +1082,13 @@
 #else
            call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, ierr)
 #endif
+           umcCUDA(1 : l_cols * n_cols) = tmpCUDA(1 : l_cols * n_cols)
 
 #else /* WITH_MPI */
-           tmpCUDA(1 : l_cols * n_cols) = umcCUDA(1 : l_cols * n_cols)
+
+!           tmpCUDA(1 : l_cols * n_cols) = umcCUDA(1 : l_cols * n_cols)
+
 #endif /* WITH_MPI */
-           umcCUDA(1 : l_cols * n_cols) = tmpCUDA(1 : l_cols * n_cols)
 
            if (allocated(tmpCUDA)) then
              deallocate(tmpCUDA, stat=istat, errmsg=errorMessage)
@@ -1273,10 +1275,11 @@
            call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
 
-#else /* WITH_MPI */
-           tmpCPU(1:l_cols,1:n_cols) = umcCPU(1:l_cols,1:n_cols)
-#endif /* WITH_MPI */
            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+
+#else /* WITH_MPI */
+!           tmpCPU(1:l_cols,1:n_cols) = umcCPU(1:l_cols,1:n_cols)
+#endif /* WITH_MPI */
 
            deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
@@ -1588,15 +1591,30 @@
       call mpi_allreduce(h1, h2, nc, MPI_REAL4, MPI_SUM, comm, mpierr)
 #endif
 
-#else /* WITH_MPI */
-      h2=h1
-#endif /* WITH_MPI */
       nc = 0
       do i=1,n
         a(1:i,i) = h2(nc+1:nc+i)
         a(i,1:i-1) = a(1:i-1,i)
         nc = nc+i
       enddo
+
+#else /* WITH_MPI */
+!      h2=h1
+
+      nc = 0
+      do i=1,n
+        a(1:i,i) = h1(nc+1:nc+i)
+        a(i,1:i-1) = a(1:i-1,i)
+        nc = nc+i
+      enddo
+
+#endif /* WITH_MPI */
+!      nc = 0
+!      do i=1,n
+!        a(1:i,i) = h2(nc+1:nc+i)
+!        a(i,1:i-1) = a(1:i-1,i)
+!        nc = nc+i
+!      enddo
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -1910,7 +1928,7 @@
             tmp1(1:l_cols*n_cols) = 0
 #else
 
-! if MPI is not used (we do not need to transfer because of MPI_ALLREDUCE) we can set to zero on the device
+            ! if MPI is not used (we do not need to transfer because of MPI_ALLREDUCE) we can set to zero on the device
 #ifdef WITH_GPU_VERSION
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -1944,7 +1962,9 @@
 #endif
 
 #else /* WITH_MPI */
-          tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
+
+!          tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
+
 #endif /* WITH_MPI */
           !#ifdef WITH_GPU_VERSION
           !       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*size_of_real_datatype,cudaMemcpyHostToDevice)
@@ -1956,7 +1976,7 @@
 
           if (l_rows>0) then
 #ifdef WITH_MPI
-            ! after the allreduce we have to copy back to the device
+            ! after the mpi_allreduce we have to copy back to the device
 #ifdef DOUBLE_PRECISION_REAL
             ! copy back to device
             successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols*size_of_double_real_datatype,cudaMemcpyHostToDevice)
@@ -2122,26 +2142,59 @@
                         max_local_rows, 0.0_rk8, t_tmp, cwy_blocking)
 #ifdef WITH_MPI
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
-#else
-              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
-#endif
+
               call dtrmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk8, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call dtrmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk8, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp2, cwy_blocking)
+              tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
+
+#else
+!              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
+
+              call dtrmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk8, tmat_complete, cwy_blocking, t_tmp, cwy_blocking)
+              call dtrmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk8, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
+                         t_tmp, cwy_blocking)
+
+              tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
+
+#endif
+
+!              call dtrmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk8, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
+!              call dtrmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk8, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
+!                         t_tmp2, cwy_blocking)
+
 #else /* DOUBLE_PRECISION_REAL */
+
               call sgemm('T', 'N', t_rows, t_cols, l_rows, 1.0_rk4, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                         max_local_rows, 0.0_rk4, t_tmp, cwy_blocking)
 #ifdef WITH_MPI
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
-#else
-              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
-#endif
+
               call strmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk4, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call strmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk4, tmat_complete(t_rows+1,t_rows+1), &
                           cwy_blocking, t_tmp2, cwy_blocking)
-#endif /* DOUBLE_PRECISION_REAL */
 
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
+
+#else
+!              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
+
+              call strmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk4, tmat_complete, cwy_blocking, t_tmp, cwy_blocking)
+              call strmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk4, tmat_complete(t_rows+1,t_rows+1), &
+                          cwy_blocking, t_tmp, cwy_blocking)
+
+              tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
+
+
+#endif
+
+!              call strmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk4, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
+!              call strmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk4, tmat_complete(t_rows+1,t_rows+1), &
+!                          cwy_blocking, t_tmp2, cwy_blocking)
+
+#endif /* DOUBLE_PRECISION_REAL */
+
+!              tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
              endif
           enddo
 
@@ -2169,25 +2222,48 @@
 
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows ,mpierr)
+
+          if (l_rows>0) then
+            call dtrmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk8, tmat_complete, cwy_blocking, tmp2, n_cols)
+            call dgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk8, hvm, ubound(hvm,dim=1), tmp2, n_cols, 1.0_rk8, q, ldq)
+
+          endif
 #else
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows ,mpierr)
+
+          if (l_rows>0) then
+            call strmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk4, tmat_complete, cwy_blocking, tmp2, n_cols)
+            call sgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk4, hvm, ubound(hvm,dim=1), tmp2, n_cols, 1.0_rk4, q, ldq)
+          endif
+
 #endif
 
 #else /* WITH_MPI */
-          tmp2 = tmp1
-
-#endif /* WITH_MPI */
+!          tmp2 = tmp1
 
           if (l_rows>0) then
 #ifdef DOUBLE_PRECISION_REAL
-            call dtrmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk8, tmat_complete, cwy_blocking, tmp2, n_cols)
-            call dgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk8, hvm, ubound(hvm,dim=1), tmp2, n_cols, 1.0_rk8, q, ldq)
+            call dtrmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk8, tmat_complete, cwy_blocking, tmp1, n_cols)
+            call dgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk8, hvm, ubound(hvm,dim=1), tmp1, n_cols, 1.0_rk8, q, ldq)
 #else
-            call strmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk4, tmat_complete, cwy_blocking, tmp2, n_cols)
-            call sgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk4, hvm, ubound(hvm,dim=1), tmp2, n_cols, 1.0_rk4, q, ldq)
+            call strmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk4, tmat_complete, cwy_blocking, tmp1, n_cols)
+            call sgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk4, hvm, ubound(hvm,dim=1), tmp1, n_cols, 1.0_rk4, q, ldq)
 #endif
 
           endif
+
+#endif /* WITH_MPI */
+
+!          if (l_rows>0) then
+!#ifdef DOUBLE_PRECISION_REAL
+!            call dtrmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk8, tmat_complete, cwy_blocking, tmp2, n_cols)
+!            call dgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk8, hvm, ubound(hvm,dim=1), tmp2, n_cols, 1.0_rk8, q, ldq)
+!#else
+!            call strmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk4, tmat_complete, cwy_blocking, tmp2, n_cols)
+!            call sgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk4, hvm, ubound(hvm,dim=1), tmp2, n_cols, 1.0_rk4, q, ldq)
+!#endif
+!
+!          endif
         enddo ! istep
 
       endif ! useGPU
@@ -3806,7 +3882,9 @@
 #endif
 
 #else /* WITH_MPI */
-              row(1:l_nev) = row(1:l_nev)
+
+!              row(1:l_nev) = row(1:l_nev)
+
 #endif /* WITH_MPI */
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3873,7 +3951,9 @@
 #endif
 
 #else /* WITH_MPI */
-                row(1:l_nev) = row(1:l_nev)
+
+!                row(1:l_nev) = row(1:l_nev)
+
 #endif /* WITH_MPI */
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -4005,7 +4085,8 @@
 #endif
 
 #else /* WITH_MPI */
-              row(1:l_nev) = row(1:l_nev)
+
+!              row(1:l_nev) = row(1:l_nev)
 
 #endif /* WITH_MPI */
 
@@ -4072,7 +4153,8 @@
 #endif
 
 #else /* WITH_MPI */
-                row(1:l_nev) = row(1:l_nev)
+
+!                row(1:l_nev) = row(1:l_nev)
 
 #endif /* WITH_MPI */
 

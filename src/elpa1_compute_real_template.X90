@@ -313,6 +313,7 @@
          ! Broadcast the Householder vector (and tau) along columns
 
          if(my_pcol==pcol(istep, nblk, np_cols)) vr(l_rows+1) = tau(istep)
+
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -921,14 +922,20 @@
 #ifdef WITH_MPI
             call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
-            tmp2 = tmp1
+!            tmp2 = tmp1
 #endif
 !          endif ! useGPU
 
           if (l_rows>0) then
+#ifdef WITH_MPI
             call dtrmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk8, tmat, max_stored_rows, tmp2, nstor)
             call dgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk8, hvm, ubound(hvm,dim=1), &
                           tmp2, nstor, 1.0_rk8, q, ldq)
+#else
+            call dtrmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk8, tmat, max_stored_rows, tmp1, nstor)
+            call dgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk8, hvm, ubound(hvm,dim=1), &
+                          tmp1, nstor, 1.0_rk8, q, ldq)
+#endif
           endif
 #else /* DOUBLE_PRECISION_REAL */
 
@@ -937,14 +944,20 @@
 #ifdef WITH_MPI
             call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
 #else
-            tmp2 = tmp1
+!            tmp2 = tmp1
 #endif
 !         endif ! useGPU
 
           if (l_rows>0) then
+#ifdef WITH_MPI
             call strmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk4, tmat, max_stored_rows, tmp2, nstor)
             call sgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk4, hvm, ubound(hvm,dim=1), &
                           tmp2, nstor, 1.0_rk4, q, ldq)
+#else
+            call strmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk4, tmat, max_stored_rows, tmp1, nstor)
+            call sgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk4, hvm, ubound(hvm,dim=1), &
+                          tmp1, nstor, 1.0_rk4, q, ldq)
+#endif
           endif
 #endif /* DOUBLE_PRECISION_REAL */
           nstor = 0
@@ -1256,12 +1269,15 @@
 #else
               call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_REAL4, MPI_SUM, np, mpi_comm_rows, mpierr)
 #endif
-
-#else /* WITH_MPI */
-              tmp2 = tmp1
-#endif /* WITH_MPI */
               ! Put the result into C
               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
+
+#else /* WITH_MPI */
+!              tmp2 = tmp1
+              ! Put the result into C
+              if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp1(1:nstor,lcs:lce)
+
+#endif /* WITH_MPI */
 
               deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
@@ -1833,14 +1849,27 @@
 #endif
 
 #else /* WITH_MPI */
-          qmat2 = qmat1 ! is this correct
+!          qmat2 = qmat1 ! is this correct
 #endif /* WITH_MPI */
           do i=1,nlen
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
             call distribute_global_column_double(qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #else
             call distribute_global_column_single(qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_REAL
+            call distribute_global_column_double(qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+#else
+            call distribute_global_column_single(qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+#endif
+
+#endif /* WITH_MPI */
           enddo
 
         enddo

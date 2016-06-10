@@ -506,9 +506,6 @@
           if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
 
-#else /* WITH_MPI */
-          if (nlc>0) aux2=aux1
-#endif /* WITH_MPI */
           ! Transform
 
           nlc = 0
@@ -519,6 +516,35 @@
               a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
             endif
           enddo
+
+
+#else /* WITH_MPI */
+!          if (nlc>0) aux2=aux1
+
+          ! Transform
+
+          nlc = 0
+          do j=1,lc-1
+            lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+            if (lcx>0) then
+              nlc = nlc+1
+              a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
+            endif
+          enddo
+
+
+#endif /* WITH_MPI */
+!
+!          ! Transform
+!
+!          nlc = 0
+!          do j=1,lc-1
+!            lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+!            if (lcx>0) then
+!              nlc = nlc+1
+!              a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+!            endif
+!          enddo
 
         enddo
 
@@ -726,6 +752,7 @@
                                           istep*nbw, n_cols, nblk)
 #endif
         endif
+
 #ifdef WITH_MPI
         if (l_cols>0) then
           allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
@@ -733,26 +760,12 @@
             print *,"bandred_complex: error when allocating tmp "//errorMessage
             stop
           endif
+
 #ifdef DOUBLE_PRECISION_COMPLEX
           call mpi_allreduce(umc, tmp, l_cols*n_cols, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #else
           call mpi_allreduce(umc, tmp, l_cols*n_cols, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
-          umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
-          deallocate(tmp, stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_complex: error when deallocating tmp "//errorMessage
-            stop
-          endif
-        endif
-#else /* WITH_MPI */
-        if (l_cols>0) then
-          allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_complex: error when allocating tmp "//errorMessage
-            stop
-          endif
-          tmp(1:l_cols,1:n_cols) = umc(1:l_cols,1:n_cols)
 
           umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
           deallocate(tmp, stat=istat, errmsg=errorMessage)
@@ -761,8 +774,27 @@
             stop
           endif
         endif
+
+#else /* WITH_MPI */
+
+!        if (l_cols>0) then
+!          allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
+!          if (istat .ne. 0) then
+!            print *,"bandred_complex: error when allocating tmp "//errorMessage
+!            stop
+!          endif
+!          tmp(1:l_cols,1:n_cols) = umc(1:l_cols,1:n_cols)
+!
+!          umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
+!          deallocate(tmp, stat=istat, errmsg=errorMessage)
+!          if (istat .ne. 0) then
+!            print *,"bandred_complex: error when deallocating tmp "//errorMessage
+!            stop
+!          endif
+!        endif
 
 #endif /* WITH_MPI */
+
         ! U = U * Tmat**T
         if (useGPU) then
           if (size(umc,dim=1)*size(umc,dim=2) .gt. umc_size) then
@@ -1138,15 +1170,33 @@
        call mpi_allreduce(h1, h2, nc, MPI_COMPLEX, MPI_SUM, comm, mpierr)
 #endif
 
-#else /* WITH_MPI */
-       h2(1:nc) = h1(1:nc)
-#endif /* WITH_MPI */
        nc = 0
        do i=1,n
          a(1:i,i) = h2(nc+1:nc+i)
          a(i,1:i-1) = conjg(a(1:i-1,i))
          nc = nc+i
        enddo
+
+
+#else /* WITH_MPI */
+!       h2(1:nc) = h1(1:nc)
+
+       nc = 0
+       do i=1,n
+         a(1:i,i) = h1(nc+1:nc+i)
+         a(i,1:i-1) = conjg(a(1:i-1,i))
+         nc = nc+i
+       enddo
+
+
+#endif /* WITH_MPI */
+
+!       nc = 0
+!       do i=1,n
+!         a(1:i,i) = h2(nc+1:nc+i)
+!         a(i,1:i-1) = conjg(a(1:i-1,i))
+!         nc = nc+i
+!       enddo
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -1491,16 +1541,30 @@
 #endif
 
 #else /* WITH_MPI */
-         tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
+
+!         tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
+
 #endif /* WITH_MPI */
          if (l_rows>0) then
 
            if (useGPU) then
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
              successCUDA = cuda_memcpy(tmp_dev,loc(tmp2),l_cols*n_cols*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
 #else
              successCUDA = cuda_memcpy(tmp_dev,loc(tmp2),l_cols*n_cols*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+             successCUDA = cuda_memcpy(tmp_dev,loc(tmp1),l_cols*n_cols*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
+#else
+             successCUDA = cuda_memcpy(tmp_dev,loc(tmp1),l_cols*n_cols*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
+#endif
+
+#endif /* WITH_MPI */
              if (.not.(successCUDA)) then
                print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
                stop
@@ -1528,6 +1592,9 @@
                               tmp_dev, n_cols, CONE, q_dev, ldq)
 #endif
            else ! not useGPU
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_COMPLEX
              call ztrmm('L', 'U', 'C', 'N', n_cols, l_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp2, n_cols)
              call zgemm('N', 'N', l_rows, l_cols, n_cols, -CONE, hvm, ubound(hvm,dim=1), &
@@ -1537,6 +1604,21 @@
              call cgemm('N', 'N', l_rows, l_cols, n_cols, -CONE, hvm, ubound(hvm,dim=1), &
                         tmp2, n_cols, CONE, q, ldq)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+             call ztrmm('L', 'U', 'C', 'N', n_cols, l_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp1, n_cols)
+             call zgemm('N', 'N', l_rows, l_cols, n_cols, -CONE, hvm, ubound(hvm,dim=1), &
+                        tmp1, n_cols, CONE, q, ldq)
+#else
+             call ctrmm('L', 'U', 'C', 'N', n_cols, l_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp1, n_cols)
+             call cgemm('N', 'N', l_rows, l_cols, n_cols, -CONE, hvm, ubound(hvm,dim=1), &
+                        tmp1, n_cols, CONE, q, ldq)
+#endif
+
+
+#endif /* WITH_MPI */
            endif
          endif
 
@@ -3403,7 +3485,9 @@
 #endif
 
 #else /* WITH_MPI */
-              row(1:l_nev) = row(1:l_nev)
+
+!              row(1:l_nev) = row(1:l_nev)
+
 #endif /* WITH_MPI */
 
 #else /* WITH_OPENMP */
@@ -3420,7 +3504,9 @@
 #ifdef WITH_MPI
                 call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
-                row(1:l_nev) = row(1:l_nev)
+
+!                row(1:l_nev) = row(1:l_nev)
+
 #endif
               endif
 #else /* DOUBLE_PRECISION_COMPLEX */
@@ -3436,7 +3522,8 @@
 #ifdef WITH_MPI
                 call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
-                row(1:l_nev) = row(1:l_nev)
+
+!                row(1:l_nev) = row(1:l_nev)
 
 #endif
               endif
@@ -3603,7 +3690,9 @@
 #endif
 
 #else /* WITH_MPI */
-              row(1:l_nev) = row(1:l_nev)
+
+!              row(1:l_nev) = row(1:l_nev)
+
 #endif /* WITH_MPI */
 
 #else /* WITH_OPENMP */
@@ -3620,7 +3709,9 @@
 #ifdef WITH_MPI
                 call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
-                row(1:l_nev) = row(1:l_nev)
+
+!                row(1:l_nev) = row(1:l_nev)
+
 #endif
               endif
 #else /* DOUBLE_PRECISION_COMPLEX */
@@ -3635,7 +3726,9 @@
 #ifdef WITH_MPI
                 call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
-                row(1:l_nev) = row(1:l_nev)
+
+!                row(1:l_nev) = row(1:l_nev)
+
 #endif
               endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
