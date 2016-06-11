@@ -189,7 +189,7 @@
 #else
 !        na_rows = na
         na_cols = na
-!#endif
+#endif
 !      endif
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
