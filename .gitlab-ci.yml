@@ -608,12 +608,12 @@ gfortran-double-precision-no-mpi-noopenmp-ftimings-redirect-jobs:
 
 # jobs for intel/gfortran single precision nompi and no openmp ftimings and redirect enabled
 
-intel-single-precision-no-mpi-noopenmp-ftimings-redirect-jobs:
+intel-single-precision-nompi-noopenmp-ftimings-redirect-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0 --enable-single-precision
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0 --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
