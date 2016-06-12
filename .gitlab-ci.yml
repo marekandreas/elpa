@@ -585,12 +585,12 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
 
 # jobs for intel/gfortran double precision nompi and no openmp ftimings and redirect enabled
 
-intel-double-precision-no-mpi-noopenmp-ftimings-redirect-jobs:
+intel-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
@@ -711,7 +711,7 @@ intel-double-precision-nompi-openmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-mpi=0
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NOMPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NOMPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
