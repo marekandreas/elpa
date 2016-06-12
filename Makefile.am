@@ -509,6 +509,7 @@ EXTRA_elpa2_test_complex_gpu_version_single_precision@SUFFIX@_DEPENDENCIES = tes
 endif
 
 endif
+#  elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh
 
 check_SCRIPTS = \
   elpa1_test_real@SUFFIX@.sh \
@@ -517,10 +518,10 @@ check_SCRIPTS = \
   elpa1_test_complex@SUFFIX@.sh \
   elpa2_test_complex@SUFFIX@.sh \
   elpa2_test_complex_default_kernel@SUFFIX@.sh \
-  elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh \
   elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh \
   elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh \
   elpa2_print_kernels@SUFFIX@
+
 
 if !WITH_OPENMP
 check_SCRIPTS += \
@@ -572,8 +573,8 @@ else
 endif
 TESTS = $(check_SCRIPTS)
 %.sh: %
-	echo '$(wrapper) ./$^ $$TEST_FLAGS' > $@
-	chmod +x $@
+	@echo $(wrapper) ./$^ '$$TEST_FLAGS' > $@
+	@chmod +x $@
 
 # Preprocessed files (just used for manual inspection)
 mod_precision.i: $(top_srcdir)/src/mod_precision.F90

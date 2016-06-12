@@ -1,0 +1,14 @@
+#!/bin/bash
+
+lcov $(for i in coverage_data/coverage_${CI_BUILD_REF}_*.info; do echo -a $i; done) -o coverage_data/coverage_${CI_BUILD_REF}.info
+lcov --summary coverage_data/coverage_${CI_BUILD_REF}.info 2>&1 | \
+        awk '/lines|functions/ {
+                gsub(/\.*:$/, "", $1);
+                gsub(/^./, "", $3);
+                printf "%s: %s (%s of %s), ", $1, $2, $3, $5;
+             }
+             /branches/ {
+                print "";
+             }' | \
+        sed 's/^/__COVERAGE__:/; s/, $//;'
+genhtml coverage_data/coverage_${CI_BUILD_REF}.info -o coverage_data
