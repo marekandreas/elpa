@@ -564,15 +564,16 @@ endif
 endif
 
 # test scripts
+MPIEXEC ?= mpiexec -n 2
 if WITH_MPI
-  wrapper=mpiexec -n 2
+  wrapper=$(MPIEXEC)
 else
   wrapper=
 endif
 TESTS = $(check_SCRIPTS)
 %.sh: %
-	@echo $(wrapper) ./$^ '$$TEST_FLAGS' > $@
-	@chmod +x $@
+	echo '$(wrapper) ./$^ $$TEST_FLAGS' > $@
+	chmod +x $@
 
 # Preprocessed files (just used for manual inspection)
 mod_precision.i: $(top_srcdir)/src/mod_precision.F90
