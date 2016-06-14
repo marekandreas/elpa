@@ -84,10 +84,9 @@
 module ELPA1
   use precision
   use elpa_utilities
+  use elpa1_auxiliary
 
   implicit none
-
-  PRIVATE ! By default, all routines contained are private
 
   ! The following routines are public:
 
@@ -116,7 +115,7 @@ module ELPA1
 
 
 !> \brief get_elpa_row_col_comms:  old, deprecated Fortran function to create the MPI communicators for ELPA. Better use "elpa_get_communicators"
-!> \detail
+!> \details
 !> The interface and variable definition is the same as in "elpa_get_communicators"
 !> \param  mpi_comm_global   Global communicator for the calculations (in)
 !>
@@ -134,7 +133,7 @@ module ELPA1
 
 !> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Better use "solve_evp_real_1stage"
 !>
-!> \detail
+!> \details
 !>  The interface and variable definition is the same as in "elpa_solve_evp_real_1stage"
 !  Parameters
 !
@@ -179,7 +178,7 @@ module ELPA1
 
 !> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage"
 !>
-!> \detail
+!> \details
 !> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage"
 !  Parameters
 !

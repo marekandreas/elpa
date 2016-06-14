@@ -13,6 +13,7 @@ libelpa@SUFFIX@_public_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@modules @FC_MODINC@
 libelpa@SUFFIX@_public_la_SOURCES = \
         src/elpa1.F90 \
         src/elpa2.F90 \
+	src/elpa1_auxiliary.F90 \
         src/elpa2_utilities.F90 \
         src/elpa_utilities.F90
 
@@ -28,7 +29,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/mod_compute_hh_trafo_complex.F90 \
         src/mod_pack_unpack_complex.F90 \
         src/aligned_mem.F90 \
-        src/elpa1_compute.F90 \
+        src/elpa1_compute_private.F90 \
         src/elpa2_compute.F90 \
         src/elpa2_kernels/mod_fortran_interfaces.F90 \
         src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
