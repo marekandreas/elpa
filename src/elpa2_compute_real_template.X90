@@ -1442,12 +1442,15 @@
          stop
        endif
 
-! this is not necessart tmat_dev is passed (unchanged) from one routine to the other
-!       successCUDA = cuda_free(tmat_dev)
-!       if (.not.(successCUDA)) then
-!         print *,"bandred_real: error in cudaFree"
-!         stop
-!       endif
+!#ifdef WITH_MPI
+! it should be possible to keep tmat dev on the device and not copy it arround
+! this is not necessary tmat_dev is passed (unchanged) from one routine to the other
+       successCUDA = cuda_free(tmat_dev)
+       if (.not.(successCUDA)) then
+         print *,"bandred_real: error in cudaFree"
+         stop
+       endif
+!#endif
 
        successCUDA = cuda_free(vav_dev)
        if (.not.(successCUDA)) then
@@ -1756,16 +1759,20 @@
           stop
         endif
 
+
+!#ifdef WITH_MPI
+! it should be possible to keep tmat dev on the device and not copy it around
 ! already existent on GPU
-!#ifdef DOUBLE_PRECISION_REAL
-!        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_double_real_datatype)
-!#else
-!        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_single_real_datatype)
+#ifdef DOUBLE_PRECISION_REAL
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_double_real_datatype)
+#else
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_single_real_datatype)
+#endif
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
+          stop
+        endif
 !#endif
-!        if (.not.(successCUDA)) then
-!          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
-!          stop
-!        endif
 
 ! q_dev already living on device
 !#ifdef DOUBLE_PRECISION_REAL
@@ -1782,7 +1789,7 @@
   !      q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
 
 !#ifdef DOUBLE_PRECISION_REAL
-!        ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
+!!!        ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
 !        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*size_of_double_real_datatype, cudaMemcpyHostToDevice)
 !#else
 !        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*size_of_single_real_datatype, cudaMemcpyHostToDevice)
@@ -1969,18 +1976,21 @@
 #endif /* WITH_MPI */
 
 
-! already existend on GPU
-!#ifdef DOUBLE_PRECISION_REAL
+!#ifdef WITH_MPI
+! it should be possible to keep tmat on the device and not copy it aroud
+#ifdef DOUBLE_PRECISION_REAL
 !            ! copy to device, maybe this can be avoided tmat is input from bandred_real
-!
-!            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_double_real_datatype,cudaMemcpyHostToDevice)
-!#else
-!            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_single_real_datatype,cudaMemcpyHostToDevice)
-!#endif
-!            if (.not.(successCUDA)) then
-!              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-!              stop
-!            endif
+
+            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_double_real_datatype,cudaMemcpyHostToDevice)
+#else
+            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_single_real_datatype,cudaMemcpyHostToDevice)
+#endif
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+              stop
+            endif
+!#endif /* WITH_MPI */
+
 #ifdef DOUBLE_PRECISION_REAL
             call cublas_dtrmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk8, tmat_dev, nbw, tmp_dev, n_cols)
             call cublas_dgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk8, hvm_dev, max_local_rows, &
@@ -1991,17 +2001,17 @@
                               tmp_dev, n_cols, 1.0_rk4, q_dev, ldq)
 #endif
 
-!#ifdef DOUBLE_PRECISION_REAL
-!            ! copy to host maybe this can be avoided
-!            ! this is not necessary hvm is not used anymore
-!            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_double_real_datatype),cudaMemcpyDeviceToHost)
-!#else
-!            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_single_real_datatype),cudaMemcpyDeviceToHost)
-!#endif
-!            if (.not.(successCUDA)) then
-!              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-!              stop
-!            endif
+#ifdef DOUBLE_PRECISION_REAL
+            ! copy to host maybe this can be avoided
+            ! this is not necessary hvm is not used anymore
+            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_double_real_datatype),cudaMemcpyDeviceToHost)
+#else
+            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_single_real_datatype),cudaMemcpyDeviceToHost)
+#endif
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+              stop
+            endif
 
           endif ! l_rows > 0
           !#ifdef WITH_GPU_VERSION
