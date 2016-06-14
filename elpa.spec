@@ -34,6 +34,9 @@ BuildRequires:  openmpi-devel
 BuildRequires:  blas-devel
 BuildRequires:  lapack-devel
 BuildRequires:  pkg-config
+BuildRequires:  autoconf
+BuildRequires:  automake
+BuildRequires:  libtool
 
 %if %{defined fedora}
 BuildRequires:  scalapack-openmpi-devel
@@ -172,6 +175,9 @@ that use %{name}_openmp.
 %if %{defined fedora}
 module load mpi/openmpi-%{_arch}
 %endif
+if [ ! -e configure ] ; then
+        ./autogen.sh
+fi
 mkdir build
 pushd build
 %define _configure ../configure
