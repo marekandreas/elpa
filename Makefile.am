@@ -250,27 +250,23 @@ endif
 
 if !WITH_OPENMP
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_real_c_version.c
-elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa1_test_real_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-elpa1_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 EXTRA_elpa1_test_real_c_version@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
 
 elpa1_test_complex_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_complex_c_version.c
-elpa1_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_complex_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa1_test_complex_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-elpa1_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 EXTRA_elpa1_test_complex_c_version@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
 
 elpa2_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa2_test_real_c_version.c
-elpa2_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_real_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa2_test_real_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-elpa2_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 EXTRA_elpa2_test_real_c_version@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
 
 elpa2_test_complex_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa2_test_complex_c_version.c
-elpa2_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_complex_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa2_test_complex_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-elpa2_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 EXTRA_elpa2_test_complex_c_version@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
 endif
 
