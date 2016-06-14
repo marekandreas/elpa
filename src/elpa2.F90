@@ -422,11 +422,11 @@ contains
      print *,"useGPU== ",useGPU
      ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-     call trans_ev_band_to_full_real_double(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, num_blocks, mpi_comm_rows, &
-                                     mpi_comm_cols, useGPU, useQRActual)
+     call trans_ev_band_to_full_real_double(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, &
+                                            num_blocks, mpi_comm_rows, mpi_comm_cols, useGPU, useQRActual)
 #else
-     call trans_ev_band_to_full_real_single(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, num_blocks, mpi_comm_rows, &
-                                     mpi_comm_cols, useGPU, useQRActual)
+     call trans_ev_band_to_full_real_single(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, &
+                                            num_blocks, mpi_comm_rows, mpi_comm_cols, useGPU, useQRActual)
 #endif
 
      ttt1 = MPI_Wtime()
@@ -773,11 +773,11 @@ contains
      print *,"useGPU== ",useGPU
      ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-     call trans_ev_band_to_full_real_double(na, nev, nblk, nbw, a, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, num_blocks, mpi_comm_rows, &
-                                     mpi_comm_cols, useGPU, useQRActual)
+     call trans_ev_band_to_full_real_double(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, &
+                                            matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, useGPU, useQRActual)
 #else
-     call trans_ev_band_to_full_real_single(na, nev, nblk, nbw, a, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, num_blocks, mpi_comm_rows, &
-                                     mpi_comm_cols, useGPU, useQRActual)
+     call trans_ev_band_to_full_real_single(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, &
+                                            matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, useGPU, useQRActual)
 #endif
 
      ttt1 = MPI_Wtime()
