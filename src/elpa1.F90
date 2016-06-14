@@ -87,8 +87,6 @@ module ELPA1
 
   implicit none
 
-  PRIVATE ! By default, all routines contained are private
-
   ! The following routines are public:
 
   public :: get_elpa_row_col_comms     !< old, deprecated interface: Sets MPI row/col communicators
