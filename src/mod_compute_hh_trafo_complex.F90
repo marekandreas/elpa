@@ -192,7 +192,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
            endif
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL */
+#endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL || WITH_COMPLEX_AVX2_BLOCK2_KERNEL  */
 
 
 #if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
@@ -334,7 +334,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
           endif
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL */
+#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL || WITH_COMPLEX_AVX2_BLOCK1_KERNEL */
 
 #ifdef WITH_OPENMP
           if (my_thread==1) then

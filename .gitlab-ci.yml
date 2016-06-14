@@ -871,7 +871,6 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-s
     paths:
       - coverage_data
 
-
 # real sse block2, complex sse block1
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
@@ -921,7 +920,6 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex
   artifacts:
     paths:
       - coverage_data
-
 
 # real sse block4, complex sse block 2
 
@@ -1098,7 +1096,6 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-a
     paths:
       - coverage_data
 
-
 # real sse block6, complex avx block1
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
@@ -1264,7 +1261,6 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex
     paths:
       - coverage_data
 
-
 #real avx block4, complex avx block2
 
 intel-double-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-jobs:
@@ -1325,7 +1321,6 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-a
   artifacts:
     paths:
       - coverage_data
-
 
 #real avx block4, complex block2
 
@@ -1531,7 +1526,6 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-
     paths:
       - coverage_data
 
-
 #real avx2 block2, complex avx2 block1 (emulated)
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-complex-avx2_block1-kernel-jobs:
@@ -1557,7 +1551,6 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-comple
   artifacts:
     paths:
       - coverage_data
-
 
 #real avx2 block4, complex avx2 block2 (emulated)
 
@@ -1598,7 +1591,6 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-
     paths:
       - coverage_data
 
-
 #real avx2 block4, complex avx2 block2 (emulated)
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
@@ -1624,7 +1616,6 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-comple
   artifacts:
     paths:
       - coverage_data
-
 
 #real avx2 block6, complex avx2 block2 (emulated)
 
@@ -1664,7 +1655,6 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-
   artifacts:
     paths:
       - coverage_data
-
 
 #real avx2 block6, complex avx2 block2 (emulated)
 
@@ -1836,7 +1826,6 @@ gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
   artifacts:
     paths:
       - coverage_data
-
 
 # test distcheck
 distcheck:

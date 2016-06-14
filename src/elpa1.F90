@@ -83,6 +83,7 @@
 module ELPA1
   use precision
   use elpa_utilities
+  use elpa1_auxiliary
 
   implicit none
 
