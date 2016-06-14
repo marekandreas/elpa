@@ -31,16 +31,12 @@ Requires:       openmpi
 BuildRequires:  gcc-c++
 BuildRequires:  gcc-fortran
 BuildRequires:  openmpi-devel
-BuildRequires:  blas
 BuildRequires:  blas-devel
-BuildRequires:  lapack
 BuildRequires:  lapack-devel
 BuildRequires:  pkg-config
 
 %if %{defined fedora}
-BuildRequires:  scalapack-openmpi
 BuildRequires:  scalapack-openmpi-devel
-BuildRequires:  blacs-openmpi
 BuildRequires:  blacs-openmpi-devel
 BuildRequires:  environment-modules
 %endif
