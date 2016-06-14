@@ -95,6 +95,7 @@ fi
 AC_PROG_INSTALL
 AM_PROG_AR
 AM_PROG_AS
+AM_PROG_CC_C_O
 
 # Fortran
 AC_LANG([Fortran])
