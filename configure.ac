@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 
-# Remember to change the version also in elpa.spec
-AC_INIT([elpa],[2016.05.002], [elpa-library@mpcdf.mpg.de])
+# The version is set in elpa.spec, to have a single point of reference
+AC_INIT([elpa],m4_esyscmd_s([awk '/^ *Version:/ {print $2;}' elpa.spec]), [elpa-library@mpcdf.mpg.de])
 
 AC_SUBST([PACKAGE_VERSION])
 
