@@ -56,8 +56,6 @@
 module elpa1_auxiliary
   implicit none
 
-  PRIVATE ! set default to private
-
   public :: mult_at_b_real             !< Multiply real matrices A**T * B
   public :: mult_ah_b_complex          !< Multiply complex matrices A**H * B
 
@@ -67,10 +65,12 @@ module elpa1_auxiliary
   public :: cholesky_real              !< Cholesky factorization of a real matrix
   public :: cholesky_complex           !< Cholesky factorization of a complex matrix
 
+  public :: solve_tridi                !< Solve tridiagonal eigensystem with divide and conquer method
+
   contains
 
 !> \brief  cholesky_real: Cholesky factorization of a real symmetric matrix
-!> \detail
+!> \details
 !>
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
@@ -278,7 +278,7 @@ module elpa1_auxiliary
     end subroutine cholesky_real
 
 !> \brief  invert_trm_real: Inverts a upper triangular matrix
-!> \detail
+!> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
 !>                              Distribution is like in Scalapack.
@@ -434,7 +434,7 @@ module elpa1_auxiliary
     end subroutine invert_trm_real
 
 !> \brief  cholesky_complex: Cholesky factorization of a complex hermitian matrix
-!> \detail
+!> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
 !>                              Distribution is like in Scalapack.
@@ -640,7 +640,7 @@ module elpa1_auxiliary
     end subroutine cholesky_complex
 
 !> \brief  invert_trm_complex: Inverts a complex upper triangular matrix
-!> \detail
+!> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
 !>                              Distribution is like in Scalapack.
@@ -799,7 +799,7 @@ module elpa1_auxiliary
 !>                 B is a (na,ncb) matrix
 !>                 C is a (na,ncb) matrix where optionally only the upper or lower
 !>                   triangle may be computed
-!> \detail
+!> \details
 
 !> \param  uplo_a               'U' if A is upper triangular
 !>                              'L' if A is lower triangular
@@ -1043,7 +1043,7 @@ module elpa1_auxiliary
 !>                 B is a (na,ncb) matrix
 !>                 C is a (na,ncb) matrix where optionally only the upper or lower
 !>                   triangle may be computed
-!> \detail
+!> \details
 !>
 !> \param  uplo_a               'U' if A is upper triangular
 !>                              'L' if A is lower triangular
@@ -1281,6 +1281,45 @@ module elpa1_auxiliary
 #endif
 
     end subroutine mult_ah_b_complex
+
+!> \brief  solve_tridi: Solve tridiagonal eigensystem with divide and conquer method
+!> \details
+!>
+!> \param na                    Matrix dimension
+!> \param nev                   number of eigenvalues/vectors to be computed
+!> \param d                     array d(na) on input diagonal elements of tridiagonal matrix, on
+!>                              output the eigenvalues in ascending order
+!> \param e                     array e(na) on input subdiagonal elements of matrix, on exit destroyed
+!> \param q                     on exit : matrix q(ldq,matrixCols) contains the eigenvectors
+!> \param ldq                   leading dimension of matrix q
+!> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+!> \param matrixCols            columns of matrix q
+!> \param mpi_comm_rows         MPI communicator for rows
+!> \param mpi_comm_cols         MPI communicator for columns
+!> \param wantDebug             logical, give more debug information if .true.
+!> \result success              logical, .true. on success, else .false.
+
+    function solve_tridi(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
+
+      use elpa1_compute, solve_tridi_private => solve_tridi
+      use precision
+
+      implicit none
+      integer(kind=ik)       :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=rk)          :: d(na), e(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=rk)          :: q(ldq,*)
+#else
+      real(kind=rk)          :: q(ldq,matrixCols)
+#endif
+      logical, intent(in)    :: wantDebug
+      logical :: success
+
+      success = .false.
+
+      call solve_tridi_private(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+
+    end function
 
 end module elpa1_auxiliary
 
