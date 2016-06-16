@@ -56,6 +56,8 @@
 module elpa1_auxiliary
   implicit none
 
+  private
+
   public :: mult_at_b_real             !< Multiply real matrices A**T * B
   public :: mult_ah_b_complex          !< Multiply complex matrices A**H * B
 
