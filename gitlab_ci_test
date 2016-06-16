@@ -230,6 +230,7 @@ for n, combination in enumerate(product(Configure.compilers, Configure.architect
         check_and_print(configure.cmd())
         check_and_print(["make","-j","8"])
         check_and_print(["make","clean"])
+        check_and_print(["make","check","TEST_FLAGS=1500 50 16"])
     except CheckException as e:
         print("Error for testcase {0}:\n{1}".format(str(configure), e.args[0]))
         sys.exit(1)
