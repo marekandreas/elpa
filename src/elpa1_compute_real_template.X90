@@ -313,6 +313,7 @@
          ! Broadcast the Householder vector (and tau) along columns
 
          if(my_pcol==pcol(istep, nblk, np_cols)) vr(l_rows+1) = tau(istep)
+
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -921,14 +922,20 @@
 #ifdef WITH_MPI
             call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
-            tmp2 = tmp1
+!            tmp2 = tmp1
 #endif
 !          endif ! useGPU
 
           if (l_rows>0) then
+#ifdef WITH_MPI
             call dtrmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk8, tmat, max_stored_rows, tmp2, nstor)
             call dgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk8, hvm, ubound(hvm,dim=1), &
                           tmp2, nstor, 1.0_rk8, q, ldq)
+#else
+            call dtrmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk8, tmat, max_stored_rows, tmp1, nstor)
+            call dgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk8, hvm, ubound(hvm,dim=1), &
+                          tmp1, nstor, 1.0_rk8, q, ldq)
+#endif
           endif
 #else /* DOUBLE_PRECISION_REAL */
 
@@ -937,14 +944,20 @@
 #ifdef WITH_MPI
             call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
 #else
-            tmp2 = tmp1
+!            tmp2 = tmp1
 #endif
 !         endif ! useGPU
 
           if (l_rows>0) then
+#ifdef WITH_MPI
             call strmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk4, tmat, max_stored_rows, tmp2, nstor)
             call sgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk4, hvm, ubound(hvm,dim=1), &
                           tmp2, nstor, 1.0_rk4, q, ldq)
+#else
+            call strmm('L', 'L', 'N', 'N', nstor, l_cols, 1.0_rk4, tmat, max_stored_rows, tmp1, nstor)
+            call sgemm('N', 'N', l_rows, l_cols, nstor, -1.0_rk4, hvm, ubound(hvm,dim=1), &
+                          tmp1, nstor, 1.0_rk4, q, ldq)
+#endif
           endif
 #endif /* DOUBLE_PRECISION_REAL */
           nstor = 0
@@ -975,328 +988,6 @@
     end subroutine trans_ev_real_double
 #else
     end subroutine trans_ev_real_single
-#endif
-
-#ifdef DOUBLE_PRECISION_REAL
-    subroutine mult_at_b_real_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
-                              mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-#else
-    subroutine mult_at_b_real_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
-                              mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-#endif
-
-    !-------------------------------------------------------------------------------
-    !  mult_at_b_real:  Performs C := A**T * B
-    !
-    !      where:  A is a square matrix (na,na) which is optionally upper or lower triangular
-    !              B is a (na,ncb) matrix
-    !              C is a (na,ncb) matrix where optionally only the upper or lower
-    !              triangle may be computed
-    !
-    !  Parameters
-    !
-    !  uplo_a      'U' if A is upper triangular
-    !              'L' if A is lower triangular
-    !              anything else if A is a full matrix
-    !              Please note: This pertains to the original A (as set in the calling program)
-    !              whereas the transpose of A is used for calculations
-    !              If uplo_a is 'U' or 'L', the other triangle is not used at all,
-    !              i.e. it may contain arbitrary numbers
-    !
-    !  uplo_c      'U' if only the upper diagonal part of C is needed
-    !              'L' if only the upper diagonal part of C is needed
-    !              anything else if the full matrix C is needed
-    !              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
-    !              written to a certain extent, i.e. one shouldn't rely on the content there!
-    !
-    !  na          Number of rows/columns of A, number of rows of B and C
-    !
-    !  ncb         Number of columns  of B and C
-    !
-    !  a           Matrix A
-    !
-    !  lda         Leading dimension of a
-    !  ldaCols     Columns of Matrix a
-    !
-    !  b           Matrix B
-    !  ldbCol      Columns of Matrix b
-    !
-    !  ldb         Leading dimension of b
-    !
-    !  nblk        blocksize of cyclic distribution, must be the same in both directions!
-    !
-    !  mpi_comm_rows
-    !  mpi_comm_cols
-    !              MPI-Communicators for rows/columns
-    !
-    !  c           Matrix C
-    !
-    !  ldc         Leading dimension of c
-    !  ldcCol      Columns of Matrix c
-    !-------------------------------------------------------------------------------
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
-      use precision
-      implicit none
-
-      character*1                   :: uplo_a, uplo_c
-
-      integer(kind=ik), intent(in)  :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, nblk
-      integer(kind=ik)              :: ncb, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE)                 :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-
-      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer(kind=ik)              :: l_cols, l_rows, l_rows_np
-      integer(kind=ik)              :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
-      integer(kind=ik)              :: gcol_min, gcol, goff
-      integer(kind=ik)              :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
-      integer(kind=ik), allocatable :: lrs_save(:), lre_save(:)
-
-      logical                       :: a_lower, a_upper, c_lower, c_upper
-
-      real(kind=REAL_DATATYPE), allocatable    :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
-      integer(kind=ik)              :: istat
-      character(200)                :: errorMessage
-#ifdef HAVE_DETAILED_TIMINGS
-#ifdef DOUBLE_PRECISION_REAL
-      call timer%start("mult_at_b_real_double")
-#else
-      call timer%start("mult_at_b_real_single")
-#endif
-#endif
-!      if (na .lt. lda) then
-!        print *,"na lt lda ",na,lda
-!        stop
-!      endif
-!      if (na .lt. ldb) then
-!        print *,"na lt ldb ",na,ldb
-!        stop
-!      endif
-!      if (na .lt. ldc) then
-!        print *,"na lt ldc ",na,ldc
-!        stop
-!      endif
-!      if (na .lt. ldaCols) then
-!        print *,"na lt ldaCols ",na,ldaCols
-!        stop
-!      endif
-!      if (na .lt. ldbCols) then
-!        print *,"na lt ldbCols ",na,ldbCols
-!        stop
-!      endif
-!      if (na .lt. ldcCols) then
-!        print *,"na lt ldcCols ",na,ldcCols
-!        stop
-!      endif
-
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
-      l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
-      l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
-
-      ! Block factor for matrix multiplications, must be a multiple of nblk
-
-      if (na/np_rows<=256) then
-         nblk_mult = (31/nblk+1)*nblk
-      else
-         nblk_mult = (63/nblk+1)*nblk
-      endif
-
-      allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"mult_at_b_real: error when allocating aux_mat "//errorMessage
-        stop
-      endif
-
-      allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"mult_at_b_real: error when allocating aux_bc "//errorMessage
-        stop
-      endif
-
-      allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"mult_at_b_real: error when allocating lrs_save "//errorMessage
-        stop
-      endif
-
-      allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"mult_at_b_real: error when allocating lre_save "//errorMessage
-        stop
-      endif
-
-      a_lower = .false.
-      a_upper = .false.
-      c_lower = .false.
-      c_upper = .false.
-
-      if (uplo_a=='u' .or. uplo_a=='U') a_upper = .true.
-      if (uplo_a=='l' .or. uplo_a=='L') a_lower = .true.
-      if (uplo_c=='u' .or. uplo_c=='U') c_upper = .true.
-      if (uplo_c=='l' .or. uplo_c=='L') c_lower = .true.
-
-      ! Build up the result matrix by processor rows
-
-      do np = 0, np_rows-1
-
-        ! In this turn, procs of row np assemble the result
-
-        l_rows_np = local_index(na, np, np_rows, nblk, -1) ! local rows on receiving processors
-
-        nr_done = 0 ! Number of rows done
-        aux_mat = 0
-        nstor = 0   ! Number of columns stored in aux_mat
-
-        ! Loop over the blocks on row np
-
-        do nb=0,(l_rows_np-1)/nblk
-
-          goff  = nb*np_rows + np ! Global offset in blocks corresponding to nb
-
-          ! Get the processor column which owns this block (A is transposed, so we need the column)
-          ! and the offset in blocks within this column.
-          ! The corresponding block column in A is then broadcast to all for multiplication with B
-
-          np_bc = MOD(goff,np_cols)
-          noff = goff/np_cols
-          n_aux_bc = 0
-
-          ! Gather up the complete block column of A on the owner
-
-          do n = 1, min(l_rows_np-nb*nblk,nblk) ! Loop over columns to be broadcast
-
-            gcol = goff*nblk + n ! global column corresponding to n
-            if (nstor==0 .and. n==1) gcol_min = gcol
-
-            lrs = 1       ! 1st local row number for broadcast
-            lre = l_rows  ! last local row number for broadcast
-            if (a_lower) lrs = local_index(gcol, my_prow, np_rows, nblk, +1)
-            if (a_upper) lre = local_index(gcol, my_prow, np_rows, nblk, -1)
-
-            if (lrs<=lre) then
-              nvals = lre-lrs+1
-              if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
-              n_aux_bc = n_aux_bc + nvals
-            endif
-
-            lrs_save(n) = lrs
-            lre_save(n) = lre
-
-          enddo
-
-          ! Broadcast block column
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-          call MPI_Bcast(aux_bc, n_aux_bc, MPI_REAL8, np_bc, mpi_comm_cols, mpierr)
-#else
-          call MPI_Bcast(aux_bc, n_aux_bc, MPI_REAL4, np_bc, mpi_comm_cols, mpierr)
-#endif
-
-#endif /* WITH_MPI */
-          ! Insert what we got in aux_mat
-
-          n_aux_bc = 0
-          do n = 1, min(l_rows_np-nb*nblk,nblk)
-            nstor = nstor+1
-            lrs = lrs_save(n)
-            lre = lre_save(n)
-            if (lrs<=lre) then
-              nvals = lre-lrs+1
-              aux_mat(lrs:lre,nstor) = aux_bc(n_aux_bc+1:n_aux_bc+nvals)
-              n_aux_bc = n_aux_bc + nvals
-            endif
-          enddo
-
-          ! If we got nblk_mult columns in aux_mat or this is the last block
-          ! do the matrix multiplication
-
-          if (nstor==nblk_mult .or. nb*nblk+nblk >= l_rows_np) then
-
-            lrs = 1       ! 1st local row number for multiply
-            lre = l_rows  ! last local row number for multiply
-            if (a_lower) lrs = local_index(gcol_min, my_prow, np_rows, nblk, +1)
-            if (a_upper) lre = local_index(gcol, my_prow, np_rows, nblk, -1)
-
-            lcs = 1       ! 1st local col number for multiply
-            lce = l_cols  ! last local col number for multiply
-            if (c_upper) lcs = local_index(gcol_min, my_pcol, np_cols, nblk, +1)
-            if (c_lower) lce = MIN(local_index(gcol, my_pcol, np_cols, nblk, -1),l_cols)
-
-            if (lcs<=lce) then
-              allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
-              if (istat .ne. 0) then
-               print *,"mult_at_b_real: error when allocating tmp1 "//errorMessage
-               stop
-              endif
-
-              if (lrs<=lre) then
-#ifdef DOUBLE_PRECISION_REAL
-                call dgemm('T', 'N', nstor, lce-lcs+1, lre-lrs+1, 1.0_rk8, aux_mat(lrs,1), ubound(aux_mat,dim=1), &
-                             b(lrs,lcs), ldb, 0.0_rk8, tmp1, nstor)
-#else
-                call sgemm('T', 'N', nstor, lce-lcs+1, lre-lrs+1, 1.0_rk4, aux_mat(lrs,1), ubound(aux_mat,dim=1), &
-                             b(lrs,lcs), ldb, 0.0_rk4, tmp1, nstor)
-#endif
-
-              else
-                tmp1 = 0
-              endif
-
-              ! Sum up the results and send to processor row np
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-              call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_REAL8, MPI_SUM, np, mpi_comm_rows, mpierr)
-#else
-              call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_REAL4, MPI_SUM, np, mpi_comm_rows, mpierr)
-#endif
-
-#else /* WITH_MPI */
-              tmp2 = tmp1
-#endif /* WITH_MPI */
-              ! Put the result into C
-              if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
-
-              deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
-              if (istat .ne. 0) then
-               print *,"mult_at_b_real: error when deallocating tmp1 "//errorMessage
-               stop
-              endif
-
-            endif
-
-            nr_done = nr_done+nstor
-            nstor=0
-            aux_mat(:,:)=0
-          endif
-        enddo
-      enddo
-
-      deallocate(aux_mat, aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-       print *,"mult_at_b_real: error when deallocating aux_mat "//errorMessage
-       stop
-      endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-#ifdef DOUBLE_PRECISION_REAL
-      call timer%stop("mult_at_b_real_double")
-#else
-      call timer%stop("mult_at_b_real_single")
-#endif
-
-#endif
-
-#ifdef DOUBLE_PRECISION_REAL
-    end subroutine mult_at_b_real_double
-#else
-    end subroutine mult_at_b_real_single
 #endif
 
 #if defined(DOUBLE_PRECISION_REAL)
@@ -1599,7 +1290,7 @@
 #endif
 
 #else /* WITH_MPI */
-             d(noff+1:noff+1+nmid-1) = d(noff+1:noff+1+nmid-1)
+!             d(noff+1:noff+1+nmid-1) = d(noff+1:noff+1+nmid-1)
 #endif /* WITH_MPI */
            endif
 
@@ -1627,7 +1318,7 @@
 #endif
 
 #else /* WITH_MPI */
-             d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) = d(noff+nmid+1:noff+nmid+1+nlen-nmid-1)
+!             d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) = d(noff+nmid+1:noff+nmid+1+nlen-nmid-1)
 #endif /* WITH_MPI */
            endif
            if (nprocs == np_cols) then
@@ -1833,14 +1524,27 @@
 #endif
 
 #else /* WITH_MPI */
-          qmat2 = qmat1 ! is this correct
+!          qmat2 = qmat1 ! is this correct
 #endif /* WITH_MPI */
           do i=1,nlen
+
+#ifdef WITH_MPI
+
 #ifdef DOUBLE_PRECISION_REAL
             call distribute_global_column_double(qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #else
             call distribute_global_column_single(qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_REAL
+            call distribute_global_column_double(qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+#else
+            call distribute_global_column_single(qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+#endif
+
+#endif /* WITH_MPI */
           enddo
 
         enddo
@@ -3694,463 +3398,6 @@
 
     end function local_index
 #endif /* ALREADY_DEFINED */
-
-#ifdef DOUBLE_PRECISION_REAL
-    subroutine cholesky_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                            wantDebug, success)
-#else
-    subroutine cholesky_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                            wantDebug, success)
-#endif
-
-    !-------------------------------------------------------------------------------
-    !  cholesky_real: Cholesky factorization of a real symmetric matrix
-    !
-    !  Parameters
-    !
-    !  na          Order of matrix
-    !
-    !  a(lda,matrixCols)    Distributed matrix which should be factorized.
-    !              Distribution is like in Scalapack.
-    !              Only upper triangle is needs to be set.
-    !              On return, the upper triangle contains the Cholesky factor
-    !              and the lower triangle is set to 0.
-    !
-    !  lda         Leading dimension of a
-    !  matrixCols  local columns of matrix a
-    !
-    !  nblk        blocksize of cyclic distribution, must be the same in both directions!
-    !
-    !  mpi_comm_rows
-    !  mpi_comm_cols
-    !              MPI-Communicators for rows/columns
-    !
-    !-------------------------------------------------------------------------------
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
-      use precision
-      implicit none
-
-      integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE)                 :: a(lda,matrixCols)
-      ! was
-      ! real a(lda, *)
-
-      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-      integer(kind=ik)              :: n, nc, i, info
-      integer(kind=ik)              :: lcs, lce, lrs, lre
-      integer(kind=ik)              :: tile_size, l_rows_tile, l_cols_tile
-
-      real(kind=REAL_DATATYPE), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
-
-      logical, intent(in)           :: wantDebug
-      logical, intent(out)          :: success
-      integer(kind=ik)              :: istat
-      character(200)                :: errorMessage
-
-#ifdef HAVE_DETAILED_TIMINGS
-#ifdef DOUBLE_PRECISION_REAL
-      call timer%start("cholesky_real_double")
-#else
-      call timer%start("cholesky_real_single")
-#endif
-#endif
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-      success = .true.
-
-      ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
-
-      tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
-      tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
-
-      l_rows_tile = tile_size/np_rows ! local rows of a tile
-      l_cols_tile = tile_size/np_cols ! local cols of a tile
-
-      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
-      l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
-
-      allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"cholesky_real: error when allocating tmp1 "//errorMessage
-        stop
-      endif
-
-      allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"cholesky_real: error when allocating tmp2 "//errorMessage
-        stop
-      endif
-
-      tmp1 = 0
-      tmp2 = 0
-
-      allocate(tmatr(l_rows,nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"cholesky_real: error when allocating tmatr "//errorMessage
-        stop
-      endif
-
-      allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"cholesky_real: error when allocating tmatc "//errorMessage
-        stop
-      endif
-
-      tmatr = 0
-      tmatc = 0
-
-      do n = 1, na, nblk
-
-        ! Calculate first local row and column of the still remaining matrix
-        ! on the local processor
-
-        l_row1 = local_index(n, my_prow, np_rows, nblk, +1)
-        l_col1 = local_index(n, my_pcol, np_cols, nblk, +1)
-
-        l_rowx = local_index(n+nblk, my_prow, np_rows, nblk, +1)
-        l_colx = local_index(n+nblk, my_pcol, np_cols, nblk, +1)
-
-        if (n+nblk > na) then
-
-          ! This is the last step, just do a Cholesky-Factorization
-          ! of the remaining block
-
-          if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
-#ifdef DOUBLE_PRECISION_REAL
-            call dpotrf('U', na-n+1, a(l_row1,l_col1), lda, info)
-#else
-            call spotrf('U', na-n+1, a(l_row1,l_col1), lda, info)
-#endif
-            if (info/=0) then
-              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
-              success = .false.
-              return
-            endif
-
-          endif
-
-          exit ! Loop
-
-        endif
-
-        if (my_prow==prow(n, nblk, np_rows)) then
-
-          if (my_pcol==pcol(n, nblk, np_cols)) then
-
-            ! The process owning the upper left remaining block does the
-            ! Cholesky-Factorization of this block
-#ifdef DOUBLE_PRECISION_REAL
-            call dpotrf('U', nblk, a(l_row1,l_col1), lda, info)
-#else
-            call spotrf('U', nblk, a(l_row1,l_col1), lda, info)
-#endif
-            if (info/=0) then
-              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
-              success = .false.
-              return
-            endif
-
-            nc = 0
-            do i=1,nblk
-              tmp1(nc+1:nc+i) = a(l_row1:l_row1+i-1,l_col1+i-1)
-              nc = nc+i
-            enddo
-          endif
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-          call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
-#else
-          call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
-#endif
-
-#endif /* WITH_MPI */
-          nc = 0
-          do i=1,nblk
-            tmp2(1:i,i) = tmp1(nc+1:nc+i)
-            nc = nc+i
-          enddo
-
-          if (l_cols-l_colx+1>0) &
-#ifdef DOUBLE_PRECISION_REAL
-              call dtrsm('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, 1.0_rk8, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
-#else
-              call strsm('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, 1.0_rk4, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
-#endif
-        endif
-
-        do i=1,nblk
-
-          if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = a(l_row1+i-1,l_colx:l_cols)
-#ifdef WITH_MPI
-          if (l_cols-l_colx+1>0) &
-#ifdef DOUBLE_PRECISION_REAL
-              call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL8, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
-#else
-              call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL4, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
-#endif
-
-#endif /* WITH_MPI */
-        enddo
-        ! this has to be checked since it was changed substantially when doing type safe
-#ifdef DOUBLE_PRECISION_REAL
-        call elpa_transpose_vectors_real_double  (tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
-                                      tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
-                                      n, na, nblk, nblk)
-#else
-        call elpa_transpose_vectors_real_single  (tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
-                                      tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
-                                      n, na, nblk, nblk)
-#endif
-
-        do i=0,(na-1)/tile_size
-          lcs = max(l_colx,i*l_cols_tile+1)
-          lce = min(l_cols,(i+1)*l_cols_tile)
-          lrs = l_rowx
-          lre = min(l_rows,(i+1)*l_rows_tile)
-          if (lce<lcs .or. lre<lrs) cycle
-#ifdef DOUBLE_PRECISION_REAL
-          call DGEMM('N', 'T', lre-lrs+1, lce-lcs+1, nblk, -1.0_rk8,                        &
-                     tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
-                     1.0_rk8, a(lrs,lcs), lda)
-#else
-          call SGEMM('N', 'T', lre-lrs+1, lce-lcs+1, nblk, -1.0_rk4,                        &
-                     tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
-                     1.0_rk4, a(lrs,lcs), lda)
-#endif
-        enddo
-
-      enddo
-
-      deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"cholesky_real: error when deallocating tmp1 "//errorMessage
-        stop
-      endif
-
-      ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)
-
-      do i=1,na
-        if (my_pcol==pcol(i, nblk, np_cols)) then
-          ! column i is on local processor
-          l_col1 = local_index(i  , my_pcol, np_cols, nblk, +1) ! local column number
-          l_row1 = local_index(i+1, my_prow, np_rows, nblk, +1) ! first row below diagonal
-          a(l_row1:l_rows,l_col1) = 0
-        endif
-      enddo
-#ifdef HAVE_DETAILED_TIMINGS
-#ifdef DOUBLE_PRECISION_REAL
-      call timer%stop("cholesky_real_double")
-#else
-      call timer%stop("cholesky_real_single")
-#endif
-#endif
-
-#ifdef DOUBLE_PRECISION_REAL
-    end subroutine cholesky_real_double
-#else
-    end subroutine cholesky_real_single
-#endif
-
-#ifdef DOUBLE_PRECISION_REAL
-    subroutine invert_trm_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
-#else
-    subroutine invert_trm_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
-#endif
-    !-------------------------------------------------------------------------------
-    !  invert_trm_real: Inverts a upper triangular matrix
-    !
-    !  Parameters
-    !
-    !  na          Order of matrix
-    !
-    !  a(lda,matrixCols)    Distributed matrix which should be inverted.
-    !              Distribution is like in Scalapack.
-    !              Only upper triangle is needs to be set.
-    !              The lower triangle is not referenced.
-    !
-    !  lda         Leading dimension of a
-    !  matrixCols  local columns of matrix a
-    !
-    !  nblk        blocksize of cyclic distribution, must be the same in both directions!
-    !
-    !  mpi_comm_rows
-    !  mpi_comm_cols
-    !              MPI-Communicators for rows/columns
-    !
-    !-------------------------------------------------------------------------------
-       use precision
-       implicit none
-
-       integer(kind=ik)             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-       real(kind=REAL_DATATYPE)                :: a(lda,*)
-#else
-       real(kind=REAL_DATATYPE)                :: a(lda,matrixCols)
-#endif
-       integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
-       integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-       integer(kind=ik)             :: n, nc, i, info, ns, nb
-
-       real(kind=REAL_DATATYPE), allocatable   :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
-
-       logical, intent(in)          :: wantDebug
-       logical, intent(out)         :: success
-       integer(kind=ik)             :: istat
-       character(200)               :: errorMessage
-       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-       success = .true.
-
-       l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
-       l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
-
-       allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"invert_trm_real: error when allocating tmp1 "//errorMessage
-         stop
-       endif
-
-       allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"invert_trm_real: error when allocating tmp2 "//errorMessage
-         stop
-       endif
-
-       tmp1 = 0
-       tmp2 = 0
-
-       allocate(tmat1(l_rows,nblk), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"invert_trm_real: error when allocating tmat1 "//errorMessage
-         stop
-       endif
-
-       allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"invert_trm_real: error when allocating tmat2 "//errorMessage
-         stop
-       endif
-
-       tmat1 = 0
-       tmat2 = 0
-
-
-       ns = ((na-1)/nblk)*nblk + 1
-
-       do n = ns,1,-nblk
-
-         l_row1 = local_index(n, my_prow, np_rows, nblk, +1)
-         l_col1 = local_index(n, my_pcol, np_cols, nblk, +1)
-
-         nb = nblk
-         if (na-n+1 < nblk) nb = na-n+1
-
-         l_rowx = local_index(n+nb, my_prow, np_rows, nblk, +1)
-         l_colx = local_index(n+nb, my_pcol, np_cols, nblk, +1)
-
-         if (my_prow==prow(n, nblk, np_rows)) then
-
-           if (my_pcol==pcol(n, nblk, np_cols)) then
-#ifdef DOUBLE_PRECISION_REAL
-             call DTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
-#else
-             call STRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
-#endif
-             if (info/=0) then
-               if (wantDebug) write(error_unit,*) "ELPA1_invert_trm_real: Error in DTRTRI"
-               success = .false.
-               return
-             endif
-
-             nc = 0
-             do i=1,nb
-               tmp1(nc+1:nc+i) = a(l_row1:l_row1+i-1,l_col1+i-1)
-               nc = nc+i
-             enddo
-           endif
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-           call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
-#else
-           call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
-#endif
-
-#endif /* WITH_MPI */
-           nc = 0
-           do i=1,nb
-             tmp2(1:i,i) = tmp1(nc+1:nc+i)
-             nc = nc+i
-           enddo
-
-           if (l_cols-l_colx+1>0) &
-#ifdef DOUBLE_PRECISION_REAL
-               call DTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk8, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
-#else
-               call STRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk4, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
-#endif
-           if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
-           if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
-
-         endif
-
-         if (l_row1>1) then
-           if (my_pcol==pcol(n, nblk, np_cols)) then
-             tmat1(1:l_row1-1,1:nb) = a(1:l_row1-1,l_col1:l_col1+nb-1)
-             a(1:l_row1-1,l_col1:l_col1+nb-1) = 0
-           endif
-
-           do i=1,nb
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-             call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
-#else
-             call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
-#endif
-
-#endif /* WITH_MPI */
-           enddo
-         endif
-#ifdef WITH_MPI
-         if (l_cols-l_col1+1>0) &
-#ifdef DOUBLE_PRECISION_REAL
-            call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_REAL8, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
-#else
-            call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_REAL4, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
-#endif
-
-#endif /* WITH_MPI */
-         if (l_row1>1 .and. l_cols-l_col1+1>0) &
-#ifdef DOUBLE_PRECISION_REAL
-            call dgemm('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -1.0_rk8,                 &
-                       tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
-                       1.0_rk8, a(1,l_col1), lda)
-#else
-            call sgemm('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -1.0_rk4,                 &
-                       tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
-                       1.0_rk4, a(1,l_col1), lda)
-#endif
-       enddo
-
-       deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"invert_trm_real: error when deallocating tmp1 "//errorMessage
-         stop
-       endif
-#ifdef DOUBLE_PRECISION_REAL
-    end subroutine invert_trm_real_double
-#else
-    end subroutine invert_trm_real_single
-#endif
 
 #ifndef ALREADY_DEFINED
     integer function least_common_multiple(a, b)

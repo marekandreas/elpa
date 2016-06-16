@@ -66,33 +66,28 @@ module ELPA1_compute
   public :: tridiag_real
   public :: trans_ev_real_double              ! Transform real eigenvectors of a tridiagonal matrix back
   public :: trans_ev_real
-  public :: mult_at_b_real_double             ! Multiply real matrices A**T * B
-  public :: mult_at_b_real
+
+  public :: solve_tridi_double
 
   interface tridiag_real
     module procedure tridiag_real_double
   end interface
 
+
   interface trans_ev_real
     module procedure trans_ev_real_double
-  end interface
-
-  interface mult_at_b_real
-    module procedure mult_at_b_real_double
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: tridiag_real_single        ! Transform real single-precision symmetric matrix to tridiagonal form
   public :: trans_ev_real_single       ! Transform real  single-precision eigenvectors of a tridiagonal matrix back
-  public :: mult_at_b_real_single      ! Multiply real  single-precision matrices A**T * B
+  public :: solve_tridi_single
 #endif
 
   public :: tridiag_complex_double            ! Transform complex hermitian matrix to tridiagonal form
   public :: tridiag_complex
   public :: trans_ev_complex_double           ! Transform eigenvectors of a tridiagonal matrix back
   public :: trans_ev_complex
-  public :: mult_ah_b_complex_double          ! Multiply complex matrices A**H * B
-  public :: mult_ah_b_complex
 
   interface tridiag_complex
     module procedure tridiag_complex_double
@@ -102,60 +97,9 @@ module ELPA1_compute
     module procedure trans_ev_complex_double
   end interface
 
-  interface mult_ah_b_complex
-    module procedure mult_ah_b_complex_double
-  end interface
-
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   public :: tridiag_complex_single     ! Transform complex single-precision hermitian matrix to tridiagonal form
   public :: trans_ev_complex_single    ! Transform complex single-precision eigenvectors of a tridiagonal matrix back
-  public :: mult_ah_b_complex_single   ! Multiply complex single-precision matrices A**H * B
-#endif
-
-  public :: solve_tridi_double                ! Solve tridiagonal eigensystem with divide and conquer method
-  public :: solve_tridi
-
-  public :: cholesky_real_double                ! Cholesky factorization of a real matrix
-  public :: cholesky_real
-
-  public :: invert_trm_real_double              ! Invert real triangular matrix
-  public :: invert_trm_real
-
-  interface solve_tridi
-    module procedure solve_tridi_double
-  end interface
-
-  interface cholesky_real
-    module procedure cholesky_real_double
-  end interface
-
-  interface invert_trm_real
-    module procedure invert_trm_real_double
-  end interface
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-  public :: solve_tridi_single         ! Solve tridiagonal real  single-precision eigensystem with divide and conquer method
-
-  public :: cholesky_real_single       ! Cholesky factorization of a real  single-precision matrix
-  public :: invert_trm_real_single     ! Invert real  single-precision triangular matrix
-#endif
-
-  public :: cholesky_complex_double    ! Cholesky factorization of a complex  single-precision matrix
-  public :: cholesky_complex
-  public :: invert_trm_complex_double  ! Invert complex  single-precision triangular matrix
-  public :: invert_trm_complex
-
-  interface cholesky_complex
-    module procedure cholesky_complex_double
-  end interface
-
-  interface invert_trm_complex
-    module procedure invert_trm_complex_double
-  end interface
-
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: cholesky_complex_single    ! Cholesky factorization of a complex matrix
-  public :: invert_trm_complex_single  ! Invert complex triangular matrix
 #endif
 
   public :: local_index                ! Get local index of a block cyclic distributed matrix

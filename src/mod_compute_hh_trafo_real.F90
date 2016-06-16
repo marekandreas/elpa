@@ -486,7 +486,7 @@ module compute_hh_trafo_real
 #if defined(WITH_REAL_AVX_BLOCK4_KERNEL) || defined(WITH_REAL_AVX2_BLOCK4_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
            if ((THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) .or.  &
-               (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK4)) then 
+               (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK4)) then
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL))
@@ -577,7 +577,6 @@ module compute_hh_trafo_real
            endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX512_BLOCK4_KERNEL */
-
 
 #if defined(WITH_REAL_SSE_BLOCK6_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
@@ -694,7 +693,6 @@ module compute_hh_trafo_real
            endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK6_KERNEL || WITH_REAL_AVX2_BLOCK6_KERNEL */
-
 
 #if defined(WITH_REAL_AVX512_BLOCK6_KERNEL)
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)

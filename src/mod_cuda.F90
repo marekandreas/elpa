@@ -389,7 +389,7 @@ module cuda_functions
 #ifdef WITH_GPU_VERSION
       success = cuda_devicesynchronize_c() /=0
 #else
-      success = .false.
+      success = .true.
 #endif
     end function cuda_devicesynchronize
     ! functions to allocate and free memory
@@ -405,7 +405,7 @@ module cuda_functions
 #ifdef WITH_GPU_VERSION
      success = cuda_malloc_c(a, width_height) /= 0
 #else
-     success = .false.
+     success = .true.
 #endif
    end function
 
@@ -419,7 +419,7 @@ module cuda_functions
 #ifdef WITH_GPU_VERSION
      success = cuda_free_c(a) /= 0
 #else
-     success = .false.
+     success = .true.
 #endif
    end function cuda_free
 
@@ -438,7 +438,7 @@ module cuda_functions
 #ifdef WITH_GPU_VERSION
    success= cuda_memset_c(a, int(val,kind=c_int), int(size,kind=c_size_t)) /=0
 #else
-   success = .false.
+   success = .true.
 #endif
  end function cuda_memset
 
@@ -517,7 +517,7 @@ module cuda_functions
 #ifdef WITH_GPU_VERSION
         success = cuda_memcpy_c(dst, src, size, dir) /= 0
 #else
-        success = .false.
+        success = .true.
 #endif
     end function
 
@@ -538,7 +538,7 @@ module cuda_functions
 #ifdef WITH_GPU_VERSION
       success = cuda_memcpy2d_c(dst, dpitch, src, spitch, width, height , dir) /= 0
 #else
-      success = .false.
+      success = .true.
 #endif
     end function cuda_memcpy2d
 
