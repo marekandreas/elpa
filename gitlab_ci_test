@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 from itertools import product
 from subprocess import run, PIPE, CalledProcessError
 from shutil import copyfile

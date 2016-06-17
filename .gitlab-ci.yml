@@ -1,6 +1,6 @@
 before_script:
   - export LANG=C
-  - module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools pkg-config
+  - module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools pkg-config python33/python/3.3
   - module list
   - env
 
