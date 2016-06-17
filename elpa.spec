@@ -19,6 +19,18 @@
 # Set to 0 to disable
 %define with_openmp 1
 
+# Logic to figure out if we are on SLES-11-SP4, which need special
+# treatment (custom compiler package name, old RPM macros)
+%if 0%{suse_version} > 0
+%if 0%{suse_version} <= 1110
+%define sle_11_sp4 1
+%else
+%define sle_11_sp4 0
+%endif
+%else
+%define sle_11_sp4 0
+%endif
+
 Name:           elpa
 Version:        2016.05.002
 Release:        2
@@ -29,12 +41,12 @@ Url:            https://elpa.rzg.mpg.de/
 Source0:        https://elpa.mpcdf.mpg.de/html/Releases/%{version}/%{name}-%{version}.tar.gz
 Requires:       openmpi
 # For SLE_11_SP4:
-%if %{?suse_version:%{suse_version}}%{!?suse_version:1200} <= 1110
+%if %{sle_11_sp4} == 1
 BuildRequires:  gcc48-c++
 BuildRequires:  gcc48-fortran
 %else
-BuildRequires:  gcc-c++ >= 4.8.0
-BuildRequires:  gcc-fortran >= 4.8.0
+BuildRequires:  gcc-c++ >= 4.8
+BuildRequires:  gcc-fortran >= 4.8
 %endif
 BuildRequires:  strace
 BuildRequires:  openmpi-devel
@@ -197,7 +209,7 @@ if [ ! -e configure ] ; then
 fi
 
 # Set-up compilers for SLE_11_SP4
-%if %{?suse_version:%{suse_version}}%{!?suse_version:1200} <= 1110
+%if %{sle_11_sp4} == 1
 mkdir compilers
 pushd compilers
 ln -s /usr/bin/gfortran-4.8 gfortran
@@ -213,7 +225,7 @@ pushd build
 
 # ancient SLE_11_SP4 cannot deal with configure in sub-directory
 # via _configure macro
-%if %{?suse_version:%{suse_version}}%{!?suse_version:1200} <= 1110
+%if %{sle_11_sp4} == 1
 ln -s ../configure .
 %endif
 
