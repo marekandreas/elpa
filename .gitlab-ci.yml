@@ -1061,33 +1061,33 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
 
 # jobs for intel/gfortran double precision nompi and no openmp ftimings and redirect enabled
 
-intel-double-precision-no-mpi-noopenmp-ftimings-redirect-jobs:
+intel-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0
+    - ./configure FC=ifort CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-intel-double-precision-no-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
+intel-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0 --enable-assumed-size --with-mpi=0
+    - ./configure FC=ifort CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0 --enable-assumed-size --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
 
-gfortran-double-precision-no-mpi-noopenmp-ftimings-redirect-jobs:
+gfortran-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
@@ -1096,12 +1096,12 @@ gfortran-double-precision-no-mpi-noopenmp-ftimings-redirect-jobs:
     paths:
       - coverage_data
 
-gfortran-double-precision-no-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
+gfortran-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0 --enable-assumed-size
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0 --enable-assumed-size
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
@@ -1154,7 +1154,7 @@ intel-double-precision-mpi-openmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0 --enable-single-precision --enable-assumed-size
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0 --enable-single-precision --enable-assumed-size
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1450,10 +1450,10 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-gene
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-    - ./ci_coverage_collect
-  artifacts:
-    paths:
-      - coverage_data
+#    - ./ci_coverage_collect
+#  artifacts:
+#paths:
+#- coverage_data
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-special-gcov-jobs:
   tags:
