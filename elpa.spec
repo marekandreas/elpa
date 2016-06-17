@@ -28,8 +28,15 @@ Group:          System/Libraries
 Url:            https://elpa.rzg.mpg.de/
 Source0:        https://elpa.mpcdf.mpg.de/html/Releases/%{version}/%{name}-%{version}.tar.gz
 Requires:       openmpi
-BuildRequires:  gcc-c++
-BuildRequires:  gcc-fortran
+# For SLE_11_SP4:
+%if %{?suse_version:%{suse_version}}%{!?suse_version:1200} <= 1110
+BuildRequires:  gcc48-c++
+BuildRequires:  gcc48-fortran
+%else
+BuildRequires:  gcc-c++ >= 4.8.0
+BuildRequires:  gcc-fortran >= 4.8.0
+%endif
+BuildRequires:  strace
 BuildRequires:  openmpi-devel
 BuildRequires:  blas-devel
 BuildRequires:  lapack-devel
@@ -50,6 +57,7 @@ BuildRequires:  libscalapack2-openmpi-devel
 
 # For make check, mpirun of openmpi needs an installed openssh
 BuildRequires:  openssh
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
 A new efficient distributed parallel direct eigenvalue solver for
@@ -187,16 +195,44 @@ if [ ! -e configure ] ; then
 
         ./autogen.sh
 fi
+
+# Set-up compilers for SLE_11_SP4
+%if %{?suse_version:%{suse_version}}%{!?suse_version:1200} <= 1110
+mkdir compilers
+pushd compilers
+ln -s /usr/bin/gfortran-4.8 gfortran
+ln -s /usr/bin/gcc-4.8 gcc
+export PATH=$PWD:$PATH
+pushd
+%endif
+
+# Normal build
 mkdir build
 pushd build
 %define _configure ../configure
+
+# ancient SLE_11_SP4 cannot deal with configure in sub-directory
+# via _configure macro
+%if %{?suse_version:%{suse_version}}%{!?suse_version:1200} <= 1110
+ln -s ../configure .
+%endif
+
 %configure --docdir=%{_docdir}/%{name}-%{version}
 make %{?_smp_mflags} V=1
 popd
 
+
+# OpenMP build
 %if %{defined with_openmp}
 mkdir build_openmp
 pushd build_openmp
+
+# ancient SLE_11_SP4 cannot deal with configure in sub-directory
+# via _configure macro
+%if %{?suse_version:%{suse_version}}%{!?suse_version:1200} <= 1110
+ln -s ../configure .
+%endif
+
 %configure --docdir=%{_docdir}/%{name}_openmp-%{version} --enable-openmp
 make %{?_smp_mflags} V=1
 popd
@@ -240,10 +276,8 @@ popd
 %files -n lib%{name}%{so_version}
 # See http://en.opensuse.org/openSUSE:Shared_library_packaging_policy
 # to explain this package's name
-%defattr(0755,root,root)
+%defattr(-,root,root)
 %{_libdir}/lib%{name}.so.*
-%doc
-%defattr(0644,root,root)
 %{_docdir}/%{name}-%{version}/*
 %dir %{_docdir}/%{name}-%{version}
 
@@ -252,7 +286,7 @@ popd
 %attr(0644,root,root) %_mandir/man1/elpa2_print_kernels.1.gz
 
 %files devel
-%defattr(0644,root,root)
+%defattr(-,root,root)
 %{_libdir}/pkgconfig/%{name}-%{version}.pc
 %{_includedir}/%{name}-%{version}
 %{_libdir}/lib%{name}.so
@@ -260,32 +294,30 @@ popd
 %_mandir/man3/*
 
 %files devel-static
-%defattr(0644,root,root)
+%defattr(-,root,root)
 %{_libdir}/lib%{name}.a
 
 %if %{defined with_openmp}
 
 %files -n lib%{name}_openmp%{so_version}
-%defattr(0755,root,root)
+%defattr(-,root,root)
 %{_libdir}/lib%{name}_openmp.so.*
-%doc
-%defattr(0644,root,root)
 %{_docdir}/%{name}_openmp-%{version}/*
 %dir %{_docdir}/%{name}_openmp-%{version}
 
 %files -n %{name}_openmp-tools
-%defattr(0755,root,root)
+%defattr(-,root,root)
 %{_bindir}/elpa2_print_kernels_openmp
 
 %files -n %{name}_openmp-devel
-%defattr(0644,root,root)
+%defattr(-,root,root)
 %{_libdir}/pkgconfig/%{name}_openmp-%{version}.pc
 %{_includedir}/%{name}_openmp-%{version}
 %{_libdir}/lib%{name}_openmp.so
 %{_libdir}/lib%{name}_openmp.la
 
 %files -n %{name}_openmp-devel-static
-%defattr(0644,root,root)
+%defattr(-,root,root)
 %{_libdir}/lib%{name}_openmp.a
 
 %endif
