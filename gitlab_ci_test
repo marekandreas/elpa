@@ -9,15 +9,15 @@ import sys
 class Configure(object):
     compilers = ["intel", "gcc"]
     architectures = ["sse", "avx", "avx2", "avx512-knl"]
-    logical_flags = ["mpi", "openmp", "assumedsize", "ftimings", "redirect", "singleprecision", "coverage", "gcov", "debug"]
+    logical_flags = ["mpi", "openmp", "assumedsize", "ftimings", "redirect", "singleprecision", "coverage", "debug"]
 
     def __init__(self, **kwargs):
         self.flags = kwargs
 
     def sensible(self):
-        if self.conf("gcov") and not self.conf("compiler") == "gcc":
+        if self.conf("coverage") and not self.conf("compiler") == "gcc":
             return False
-        if self.conf("gcov") and self.conf("debug"):
+        if self.conf("coverage") and self.conf("debug"):
             return False
         return True
 
@@ -113,13 +113,7 @@ class Configure(object):
 
         if self.conf("compiler") == "intel":
             line.append("-lmkl_intel_lp64")
-        elif self.conf("compiler") == "intel-debug":
-            line.append("-lmkl_intel_lp64")
         elif self.conf("compiler") == "gcc":
-            line.append("-lmkl_gf_lp64")
-        elif self.conf("compiler") == "gcc-debug":
-            line.append("-lmkl_gf_lp64")
-        elif self.conf("compiler") == "gcc-gcov":
             line.append("-lmkl_gf_lp64")
         else:
             raise Exception("Unsupported compiler {0}".format(self.conf("compiler")))
@@ -232,6 +226,7 @@ for n, combination in enumerate(product(Configure.compilers, Configure.architect
         check_and_print(["make","-j","8"])
         check_and_print(["make","clean"])
         check_and_print(["make","check","TEST_FLAGS=1500 50 16"])
+        check_and_print(["make","clean"])
     except CheckException as e:
         print("Error for testcase {0}:\n{1}".format(str(configure), e.args[0]))
         sys.exit(1)
