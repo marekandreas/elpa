@@ -200,6 +200,9 @@ class CheckException(BaseException):
     pass
 
 def check_and_print(cmd):
+    print()
+    print("Starting command: ",cmd)
+    print()
     proc = run(cmd, stdout=PIPE, stderr=PIPE)
     if proc.returncode != 0:
         sys.stdout.buffer.write(proc.stdout)
@@ -224,9 +227,8 @@ for n, combination in enumerate(product(Configure.compilers, Configure.architect
     try:
         check_and_print(configure.cmd())
         check_and_print(["make","-j","8"])
-        check_and_print(["make","clean"])
         check_and_print(["make","check","TEST_FLAGS=1500 50 16"])
-        check_and_print(["make","clean"])
+        check_and_print(["make","distclean"])
     except CheckException as e:
         print("Error for testcase {0}:\n{1}".format(str(configure), e.args[0]))
         sys.exit(1)
