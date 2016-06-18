@@ -18,6 +18,7 @@ intel-double-precision-mpi-noomp-jobs:
   script:
     - ./autogen.sh
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export PATH=/home/elpa/python-3.6/bin:$PATH
     - ./gitlab_ci_test
 
 # print coverage results

@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
+#!/home/elpa/python-3.6/bin/python3
+
 from itertools import product
-from subprocess import call, PIPE, CalledProcessError
+from subprocess import run, PIPE, CalledProcessError
 from shutil import copyfile
 from os import getenv
 import sys
@@ -205,10 +206,10 @@ class CheckException(BaseException):
     pass
 
 def check_and_print(cmd):
-    returncode = call(cmd, stdout=PIPE, stderr=PIPE)
-    if returncode != 0:
-#        sys.stdout.buffer.write(stdout)
-#        sys.stderr.buffer.write(stderr)
+    proc = run(cmd, stdout=PIPE, stderr=PIPE)
+    if proc.returncode != 0:
+        sys.stdout.buffer.write(proc.stdout)
+        sys.stderr.buffer.write(proc.stderr)
         raise CheckException("Command failed:\n {0}".format(pretty_print_cmd(cmd)))
 
 for n, combination in enumerate(product(Configure.compilers, Configure.architectures, *([(False, True)] * len(Configure.logical_flags)))):
