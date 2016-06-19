@@ -1411,6 +1411,9 @@ subroutine qr_tmerge_pdlarfb_1dcomm_single(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,basei
     integer(kind=ik) :: mergeoffset,mergelda,mergesize
     integer(kind=ik) :: tgenoffset,tgenlda,tgensize
 
+    ! QUICKFIX
+    mergeoffset = 0
+
         if (updatemode .eq. ichar('I')) then
             updatelda = oldk+k
         else
