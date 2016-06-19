@@ -203,7 +203,7 @@ def check_and_print(cmd):
     print()
     print("Starting command: ",cmd)
     print()
-    proc = run(cmd, stdout=PIPE, stderr=PIPE)
+    proc = run(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     if proc.returncode != 0:
         sys.stdout.buffer.write(proc.stdout)
         sys.stderr.buffer.write(proc.stderr)
