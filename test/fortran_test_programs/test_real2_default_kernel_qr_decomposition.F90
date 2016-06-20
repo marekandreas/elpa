@@ -224,7 +224,7 @@ program test_real2
 #endif
       print *, "since the ELPA API call does not contain any kernel specification"
       print *
-      print *, " The settings are: ",trim(get_actual_real_kernel_name())," as real kernel"
+      print *, " The settings are: ",trim(elpa_get_actual_real_kernel_name())," as real kernel"
       print *
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "

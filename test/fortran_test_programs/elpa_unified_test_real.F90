@@ -317,8 +317,77 @@ program test_all_real
 
    ! start again with ELPA2 generic and so forth
 
+   ! first default kernel
+
    if (myid .eq. 0) print *," "
-   if (myid .eq. 0) print *,"Iterating over all availabe ELPA2 real kernels ..."
+   if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", trim(elpa_get_actual_real_kernel_name())
+   if (myid .eq. 0) print *," "
+
+   a = as
+   z = a
+
+   if (myid==0) then
+     print *," "
+     print '(a)','| Entering two-stage ELPA solver ... '
+     print *
+   end if
+
+#ifdef WITH_MPI
+   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+   tStart = mpi_wtime()
+
+   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                   mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+
+   if (.not.(success)) then
+     write(error_unit,*) "solve_evp_real_2stage with default kernel ",trim(elpa_get_actual_real_kernel_name()), &
+                         " produced an error! Aborting..."
+#ifdef WITH_MPI
+     call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+   endif
+
+   if (myid==0) then
+     print '(a)','| Two-step ELPA solver complete.'
+     print *
+   end if
+
+   if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
+   if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
+   if (myid == 0) print *,'Time transform back EVs :',time_evp_back
+   if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
+   if (myid == 0) print *," "
+
+#ifdef WITH_MPI
+   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+   tEnd = mpi_wtime()
+
+   if (myid == 0) print *," "
+   if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
+                  trim(elpa_get_actual_real_kernel_name()),' default kernel:',tEnd - tStart
+   if (myid == 0) print *," "
+
+   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   if (myid == 0) print *," "
+
+   if (status .eq. 1) then
+     if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_get_actual_real_kernel_name()), &
+       ' kernel!'
+#ifdef WITH_MPI
+     call blacs_gridexit(my_blacs_ctxt)
+     call mpi_finalize(mpierr)
+#endif
+
+     call EXIT(STATUS)
+   endif
+   if (myid .eq. 0) print *," "
+
+
+   if (myid .eq. 0) print *," "
+   if (myid .eq. 0) print *,"Iterating over all available ELPA2 real kernels ..."
    if (myid .eq. 0) print *," "
 
    do this_kernel = 1 , elpa_number_of_real_kernels()

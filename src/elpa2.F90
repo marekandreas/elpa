@@ -210,7 +210,7 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 
      ! if kernel is not choosen via api
      ! check whether set by environment variable
-     THIS_REAL_ELPA_KERNEL = get_actual_real_kernel()
+     THIS_REAL_ELPA_KERNEL = elpa_get_actual_real_kernel()
    endif
 
    ! check whether choosen kernel is allowed: function returns true if NOT allowed! change this
@@ -424,7 +424,7 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    else
      ! if kernel is not choosen via api
      ! check whether set by environment variable
-     THIS_COMPLEX_ELPA_KERNEL = get_actual_complex_kernel()
+     THIS_COMPLEX_ELPA_KERNEL = elpa_get_actual_complex_kernel()
    endif
 
    ! check whether choosen kernel is allowed
