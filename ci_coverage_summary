@@ -1,5 +1,13 @@
 #!/bin/bash
 
+for p in coverage_data/coverage_${CI_BUILD_REF}*.package ; do
+        cov_file=${p%.package}.info
+        lcov -c -b $PWD --from-package $p --output-file $cov_file
+        lcov -r $cov_file "/usr/*" -o $cov_file
+        lcov -r $cov_file "/afs/*" -o $cov_file
+        lcov -r $cov_file "src/ftimings" -o $cov_file
+done
+
 lcov $(for i in coverage_data/coverage_${CI_BUILD_REF}_*.info; do echo -a $i; done) -o coverage_data/coverage_${CI_BUILD_REF}.info
 lcov --summary coverage_data/coverage_${CI_BUILD_REF}.info 2>&1 | \
         awk '/lines|functions/ {
@@ -11,4 +19,6 @@ lcov --summary coverage_data/coverage_${CI_BUILD_REF}.info 2>&1 | \
                 print "";
              }' | \
         sed 's/^/__COVERAGE__:/; s/, $//;'
-genhtml coverage_data/coverage_${CI_BUILD_REF}.info -o coverage_data
+
+mkdir coverage_summary
+genhtml coverage_data/coverage_${CI_BUILD_REF}.info -o coverage_summary
