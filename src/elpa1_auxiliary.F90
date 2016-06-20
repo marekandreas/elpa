@@ -56,20 +56,20 @@
 module elpa1_auxiliary
   implicit none
 
-  public :: mult_at_b_real             !< Multiply real matrices A**T * B
-  public :: mult_ah_b_complex          !< Multiply complex matrices A**H * B
+  public :: elpa_mult_at_b_real             !< Multiply real matrices A**T * B
+  public :: elpa_mult_ah_b_complex          !< Multiply complex matrices A**H * B
 
-  public :: invert_trm_real            !< Invert real triangular matrix
-  public :: invert_trm_complex         !< Invert complex triangular matrix
+  public :: elpa_invert_trm_real            !< Invert real triangular matrix
+  public :: elpa_invert_trm_complex         !< Invert complex triangular matrix
 
-  public :: cholesky_real              !< Cholesky factorization of a real matrix
-  public :: cholesky_complex           !< Cholesky factorization of a complex matrix
+  public :: elpa_cholesky_real              !< Cholesky factorization of a real matrix
+  public :: elpa_cholesky_complex           !< Cholesky factorization of a complex matrix
 
-  public :: solve_tridi                !< Solve tridiagonal eigensystem with divide and conquer method
+  public :: elpa_solve_tridi                !< Solve tridiagonal eigensystem with divide and conquer method
 
   contains
 
-!> \brief  cholesky_real: Cholesky factorization of a real symmetric matrix
+!> \brief  elpa_cholesky_real: Cholesky factorization of a real symmetric matrix
 !> \details
 !>
 !> \param  na                   Order of matrix
@@ -85,7 +85,7 @@ module elpa1_auxiliary
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \param succes                logical, reports success or failure
-    subroutine cholesky_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+    subroutine elpa_cholesky_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -115,7 +115,7 @@ module elpa1_auxiliary
       character(200)                :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("cholesky_real")
+      call timer%start("elpa_cholesky_real")
 #endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -136,13 +136,13 @@ module elpa1_auxiliary
 
       allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_real: error when allocating tmp1 "//errorMessage
+        print *,"elpa_cholesky_real: error when allocating tmp1 "//errorMessage
         stop
       endif
 
       allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_real: error when allocating tmp2 "//errorMessage
+        print *,"elpa_cholesky_real: error when allocating tmp2 "//errorMessage
         stop
       endif
 
@@ -151,13 +151,13 @@ module elpa1_auxiliary
 
       allocate(tmatr(l_rows,nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_real: error when allocating tmatr "//errorMessage
+        print *,"elpa_cholesky_real: error when allocating tmatr "//errorMessage
         stop
       endif
 
       allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_real: error when allocating tmatc "//errorMessage
+        print *,"elpa_cholesky_real: error when allocating tmatc "//errorMessage
         stop
       endif
 
@@ -184,7 +184,7 @@ module elpa1_auxiliary
 
             call dpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if (info/=0) then
-              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
+              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf"
               success = .false.
               return
             endif
@@ -204,7 +204,7 @@ module elpa1_auxiliary
 
             call dpotrf('U',nblk,a(l_row1,l_col1),lda,info)
             if (info/=0) then
-              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_real: Error in dpotrf"
+              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf"
               success = .false.
               return
             endif
@@ -257,7 +257,7 @@ module elpa1_auxiliary
 
       deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_real: error when deallocating tmp1 "//errorMessage
+        print *,"elpa_cholesky_real: error when deallocating tmp1 "//errorMessage
         stop
       endif
 
@@ -272,12 +272,12 @@ module elpa1_auxiliary
         endif
       enddo
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("cholesky_real")
+      call timer%stop("elpa_cholesky_real")
 #endif
 
-    end subroutine cholesky_real
+    end subroutine elpa_cholesky_real
 
-!> \brief  invert_trm_real: Inverts a upper triangular matrix
+!> \brief  elpa_invert_trm_real: Inverts a upper triangular matrix
 !> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
@@ -291,7 +291,7 @@ module elpa1_auxiliary
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \param succes                logical, reports success or failure
-    subroutine invert_trm_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+    subroutine elpa_invert_trm_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
        use precision
        use elpa1_compute
        use elpa_utilities
@@ -326,13 +326,13 @@ module elpa1_auxiliary
 
        allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_real: error when allocating tmp1 "//errorMessage
+         print *,"elpa_invert_trm_real: error when allocating tmp1 "//errorMessage
          stop
        endif
 
        allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_real: error when allocating tmp2 "//errorMessage
+         print *,"elpa_invert_trm_real: error when allocating tmp2 "//errorMessage
          stop
        endif
 
@@ -341,13 +341,13 @@ module elpa1_auxiliary
 
        allocate(tmat1(l_rows,nblk), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_real: error when allocating tmat1 "//errorMessage
+         print *,"elpa_invert_trm_real: error when allocating tmat1 "//errorMessage
          stop
        endif
 
        allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_real: error when allocating tmat2 "//errorMessage
+         print *,"elpa_invert_trm_real: error when allocating tmat2 "//errorMessage
          stop
        endif
 
@@ -374,7 +374,7 @@ module elpa1_auxiliary
 
              call DTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
              if (info/=0) then
-               if (wantDebug) write(error_unit,*) "ELPA1_invert_trm_real: Error in DTRTRI"
+               if (wantDebug) write(error_unit,*) "elpa_invert_trm_real: Error in DTRTRI"
                success = .false.
                return
              endif
@@ -427,13 +427,13 @@ module elpa1_auxiliary
 
        deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_real: error when deallocating tmp1 "//errorMessage
+         print *,"elpa_invert_trm_real: error when deallocating tmp1 "//errorMessage
          stop
        endif
 
-    end subroutine invert_trm_real
+    end subroutine elpa_invert_trm_real
 
-!> \brief  cholesky_complex: Cholesky factorization of a complex hermitian matrix
+!> \brief  elpa_cholesky_complex: Cholesky factorization of a complex hermitian matrix
 !> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
@@ -448,7 +448,7 @@ module elpa1_auxiliary
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \param succes                logical, reports success or failure
-    subroutine cholesky_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+    subroutine elpa_cholesky_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -480,7 +480,7 @@ module elpa1_auxiliary
       character(200)                   :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("cholesky_complex")
+      call timer%start("elpa_cholesky_complex")
 #endif
       success = .true.
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -500,13 +500,13 @@ module elpa1_auxiliary
 
       allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_complex: error when allocating tmp1 "//errorMessage
+        print *,"elpa_cholesky_complex: error when allocating tmp1 "//errorMessage
         stop
       endif
 
       allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_complex: error when allocating tmp2 "//errorMessage
+        print *,"elpa_cholesky_complex: error when allocating tmp2 "//errorMessage
         stop
       endif
 
@@ -515,13 +515,13 @@ module elpa1_auxiliary
 
       allocate(tmatr(l_rows,nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_complex: error when allocating tmatr "//errorMessage
+        print *,"elpa_cholesky_complex: error when allocating tmatr "//errorMessage
         stop
       endif
 
       allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_complex: error when allocating tmatc "//errorMessage
+        print *,"elpa_cholesky_complex: error when allocating tmatc "//errorMessage
         stop
       endif
 
@@ -548,7 +548,7 @@ module elpa1_auxiliary
 
             call zpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if (info/=0) then
-              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_complex: Error in zpotrf"
+              if (wantDebug) write(error_unit,*) "elpa_cholesky_complex: Error in zpotrf"
               success = .false.
               return
             endif
@@ -567,7 +567,7 @@ module elpa1_auxiliary
 
             call zpotrf('U',nblk,a(l_row1,l_col1),lda,info)
             if (info/=0) then
-              if (wantDebug) write(error_unit,*) "ELPA1_cholesky_complex: Error in zpotrf"
+              if (wantDebug) write(error_unit,*) "elpa_cholesky_complex: Error in zpotrf"
               success = .false.
               return
             endif
@@ -619,7 +619,7 @@ module elpa1_auxiliary
 
       deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"cholesky_complex: error when deallocating tmatr "//errorMessage
+        print *,"elpa_cholesky_complex: error when deallocating tmatr "//errorMessage
         stop
       endif
 
@@ -634,12 +634,12 @@ module elpa1_auxiliary
         endif
       enddo
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("cholesky_complex")
+      call timer%stop("elpa_cholesky_complex")
 #endif
 
-    end subroutine cholesky_complex
+    end subroutine elpa_cholesky_complex
 
-!> \brief  invert_trm_complex: Inverts a complex upper triangular matrix
+!> \brief  elpa_invert_trm_complex: Inverts a complex upper triangular matrix
 !> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
@@ -653,7 +653,7 @@ module elpa1_auxiliary
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \param succes                logical, reports success or failure
-    subroutine invert_trm_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+    subroutine elpa_invert_trm_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
        use precision
        use elpa1_compute
@@ -689,13 +689,13 @@ module elpa1_auxiliary
 
        allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_complex: error when allocating tmp1 "//errorMessage
+         print *,"elpa_invert_trm_complex: error when allocating tmp1 "//errorMessage
          stop
        endif
 
        allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_complex: error when allocating tmp2 "//errorMessage
+         print *,"elpa_invert_trm_complex: error when allocating tmp2 "//errorMessage
          stop
        endif
 
@@ -704,13 +704,13 @@ module elpa1_auxiliary
 
        allocate(tmat1(l_rows,nblk), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_complex: error when allocating tmat1 "//errorMessage
+         print *,"elpa_invert_trm_complex: error when allocating tmat1 "//errorMessage
          stop
        endif
 
        allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_complex: error when allocating tmat2 "//errorMessage
+         print *,"elpa_invert_trm_complex: error when allocating tmat2 "//errorMessage
          stop
        endif
 
@@ -736,7 +736,7 @@ module elpa1_auxiliary
 
              call ZTRTRI('U','N',nb,a(l_row1,l_col1),lda,info)
              if (info/=0) then
-               if (wantDebug) write(error_unit,*) "ELPA1_invert_trm_complex: Error in ZTRTRI"
+               if (wantDebug) write(error_unit,*) "elpa_invert_trm_complex: Error in ZTRTRI"
                success = .false.
                return
              endif
@@ -758,7 +758,7 @@ module elpa1_auxiliary
            enddo
 
            if (l_cols-l_colx+1>0) &
-             call ZTRMM('L','U','N','N',nb,l_cols-l_colx+1,(1.d0,0.d0),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
+             call ZTRMM('L','U','N','N',nb,l_cols-l_colx+1,(1._ck,0._ck),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
 
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -782,19 +782,20 @@ module elpa1_auxiliary
            call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_DOUBLE_COMPLEX,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
 #endif
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
-           call ZGEMM('N','N',l_row1-1,l_cols-l_col1+1,nb, (-1.d0,0.d0), &
+           call ZGEMM('N','N',l_row1-1,l_cols-l_col1+1,nb, (-1._ck,0.0_ck), &
                         tmat1,ubound(tmat1,dim=1),tmat2(1,l_col1),ubound(tmat2,dim=1), &
-                        (1.d0,0.d0), a(1,l_col1),lda)
+                        (1.0_ck,0.0_ck), a(1,l_col1),lda)
 
        enddo
 
        deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,"invert_trm_complex: error when deallocating tmp1 "//errorMessage
+         print *,"elpa_invert_trm_complex: error when deallocating tmp1 "//errorMessage
          stop
        endif
-    end subroutine invert_trm_complex
-!> \brief  mult_at_b_real: Performs C : = A**T * B
+    end subroutine elpa_invert_trm_complex
+
+!> \brief  elpa_mult_at_b_real: Performs C : = A**T * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
 !>                 B is a (na,ncb) matrix
 !>                 C is a (na,ncb) matrix where optionally only the upper or lower
@@ -824,7 +825,7 @@ module elpa1_auxiliary
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
-    subroutine mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
+    subroutine elpa_mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -853,7 +854,7 @@ module elpa1_auxiliary
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("mult_at_b_real")
+      call timer%start("elpa_mult_at_b_real")
 #endif
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -874,25 +875,25 @@ module elpa1_auxiliary
 
       allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"mult_at_b_real: error when allocating aux_mat "//errorMessage
+        print *,"elpa_mult_at_b_real: error when allocating aux_mat "//errorMessage
         stop
       endif
 
       allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"mult_at_b_real: error when allocating aux_bc "//errorMessage
+        print *,"elpa_mult_at_b_real: error when allocating aux_bc "//errorMessage
         stop
       endif
 
       allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"mult_at_b_real: error when allocating lrs_save "//errorMessage
+        print *,"elpa_mult_at_b_real: error when allocating lrs_save "//errorMessage
         stop
       endif
 
       allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"mult_at_b_real: error when allocating lre_save "//errorMessage
+        print *,"elpa_mult_at_b_real: error when allocating lre_save "//errorMessage
         stop
       endif
 
@@ -991,7 +992,7 @@ module elpa1_auxiliary
             if (lcs<=lce) then
               allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
-               print *,"mult_at_b_real: error when allocating tmp1 "//errorMessage
+               print *,"elpa_mult_at_b_real: error when allocating tmp1 "//errorMessage
                stop
               endif
 
@@ -1013,7 +1014,7 @@ module elpa1_auxiliary
 
               deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
-               print *,"mult_at_b_real: error when deallocating tmp1 "//errorMessage
+               print *,"elpa_mult_at_b_real: error when deallocating tmp1 "//errorMessage
                stop
               endif
 
@@ -1028,17 +1029,17 @@ module elpa1_auxiliary
 
       deallocate(aux_mat, aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-       print *,"mult_at_b_real: error when deallocating aux_mat "//errorMessage
+       print *,"elpa_mult_at_b_real: error when deallocating aux_mat "//errorMessage
        stop
       endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("mult_at_b_real")
+      call timer%stop("elpa_mult_at_b_real")
 #endif
 
-    end subroutine mult_at_b_real
+    end subroutine elpa_mult_at_b_real
 
-!> \brief  mult_ah_b_complex: Performs C : = A**H * B
+!> \brief  elpa_mult_ah_b_complex: Performs C : = A**H * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
 !>                 B is a (na,ncb) matrix
 !>                 C is a (na,ncb) matrix where optionally only the upper or lower
@@ -1069,7 +1070,7 @@ module elpa1_auxiliary
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
 
-  subroutine mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
+  subroutine elpa_mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -1098,7 +1099,7 @@ module elpa1_auxiliary
       character(200)                :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("mult_ah_b_complex")
+      call timer%start("elpa_mult_ah_b_complex")
 #endif
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -1118,25 +1119,25 @@ module elpa1_auxiliary
 
       allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-       print *,"mult_ah_b_complex: error when allocating aux_mat "//errorMessage
+       print *,"elpa_mult_ah_b_complex: error when allocating aux_mat "//errorMessage
        stop
       endif
 
       allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-       print *,"mult_ah_b_complex: error when allocating aux_bc "//errorMessage
+       print *,"elpa_mult_ah_b_complex: error when allocating aux_bc "//errorMessage
        stop
       endif
 
       allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-       print *,"mult_ah_b_complex: error when allocating lrs_save "//errorMessage
+       print *,"elpa_mult_ah_b_complex: error when allocating lrs_save "//errorMessage
        stop
       endif
 
       allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-       print *,"mult_ah_b_complex: error when allocating lre_save "//errorMessage
+       print *,"elpa_mult_ah_b_complex: error when allocating lre_save "//errorMessage
        stop
       endif
 
@@ -1235,13 +1236,13 @@ module elpa1_auxiliary
             if (lcs<=lce) then
               allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
-                print *,"mult_ah_b_complex: error when allocating tmp1 "//errorMessage
+                print *,"elpa_mult_ah_b_complex: error when allocating tmp1 "//errorMessage
                 stop
               endif
 
               if (lrs<=lre) then
-                call zgemm('C','N',nstor,lce-lcs+1,lre-lrs+1,(1.d0,0.d0),aux_mat(lrs,1),ubound(aux_mat,dim=1), &
-                             b(lrs,lcs),ldb,(0.d0,0.d0),tmp1,nstor)
+                call zgemm('C','N',nstor,lce-lcs+1,lre-lrs+1,(1.0_ck,0.0_ck),aux_mat(lrs,1),ubound(aux_mat,dim=1), &
+                             b(lrs,lcs),ldb,(0.0_ck,0.0_ck),tmp1,nstor)
                else
                  tmp1 = 0
                endif
@@ -1257,7 +1258,7 @@ module elpa1_auxiliary
 
                deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
                if (istat .ne. 0) then
-                 print *,"mult_ah_b_complex: error when deallocating tmp1 "//errorMessage
+                 print *,"elpa_mult_ah_b_complex: error when deallocating tmp1 "//errorMessage
                  stop
                endif
 
@@ -1272,17 +1273,17 @@ module elpa1_auxiliary
 
       deallocate(aux_mat, aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"mult_ah_b_complex: error when deallocating aux_mat "//errorMessage
+        print *,"elpa_mult_ah_b_complex: error when deallocating aux_mat "//errorMessage
         stop
       endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("mult_ah_b_complex")
+      call timer%stop("elpa_mult_ah_b_complex")
 #endif
 
-    end subroutine mult_ah_b_complex
+    end subroutine elpa_mult_ah_b_complex
 
-!> \brief  solve_tridi: Solve tridiagonal eigensystem with divide and conquer method
+!> \brief  elpa_solve_tridi: Solve tridiagonal eigensystem with divide and conquer method
 !> \details
 !>
 !> \param na                    Matrix dimension
@@ -1299,7 +1300,7 @@ module elpa1_auxiliary
 !> \param wantDebug             logical, give more debug information if .true.
 !> \result success              logical, .true. on success, else .false.
 
-    function solve_tridi(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
+    function elpa_solve_tridi(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 
       use elpa1_compute, solve_tridi_private => solve_tridi
       use precision
