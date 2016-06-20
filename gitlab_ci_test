@@ -39,7 +39,8 @@ class Configure(object):
         # Debug
         if self.conf("debug"):
             if self.conf("compiler") == "intel":
-                flags.append("-g -C -traceback -CA -CB -check all")
+#                flags.append("-g -C -traceback -CA -CB -check all")
+                flags.append("-g")
             if self.conf("compiler") == "gcc":
                 flags.append("-g -fcheck=all")
 
