@@ -148,7 +148,7 @@ void quad_hh_trafo_real_avx_avx2_4hv(double* q, double* hh, int* pnb, int* pnq, 
 	}
 
 	// Production level kernel calls with padding
-#ifdef __AVX__
+//#ifdef __AVX__
 	for (i = 0; i < nq-8; i+=12)
 	{
 		hh_trafo_kernel_12_AVX_4hv(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
@@ -168,27 +168,27 @@ void quad_hh_trafo_real_avx_avx2_4hv(double* q, double* hh, int* pnb, int* pnq, 
 			hh_trafo_kernel_4_AVX_4hv(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 		}
 	}
-#else
-	for (i = 0; i < nq-4; i+=6)
-	{
-		hh_trafo_kernel_6_SSE_4hv(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-	if (nq == i)
-	{
-		return;
-	}
-	else
-	{
-		if (nq-i > 2)
-		{
-			hh_trafo_kernel_4_SSE_4hv(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		}
-		else
-		{
-			hh_trafo_kernel_2_SSE_4hv(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		}
-	}
-#endif
+//#else
+//	for (i = 0; i < nq-4; i+=6)
+//	{
+//		hh_trafo_kernel_6_SSE_4hv(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	if (nq == i)
+//	{
+//		return;
+//	}
+//	else
+//	{
+//		if (nq-i > 2)
+//		{
+//			hh_trafo_kernel_4_SSE_4hv(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//		}
+//		else
+//		{
+//			hh_trafo_kernel_2_SSE_4hv(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//		}
+//	}
+//#endif
 }
 
 /**
