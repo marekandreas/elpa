@@ -6,9 +6,29 @@ from shutil import copyfile
 from os import getenv
 import sys
 
+
+if len(sys.argv) != 2:
+    print("usage: gitlab_ci_test <all|cpu|emulated|gpu> \n")
+    sys.exit(1)
+
+action = sys.argv[1]
+
 class Configure(object):
+    action = sys.argv[1]
     compilers = ["intel", "gcc"]
-    architectures = ["sse", "avx", "avx2", "avx512-knl"]
+
+    if (action == "all"):
+      architectures = ["sse", "avx", "avx2", "avx512-knl", "gpu"]
+    elif (action == "cpu"):
+      architectures = ["sse", "avx"]
+    elif (action == "emulated"):
+      architectures = ["avx2", "avx512-knl"]
+    elif (action == "gpu"):
+      architectures = ["gpu"]
+    else:
+      print("This argument is not allowd")
+      sys.exit(1)
+
     logical_flags = ["mpi", "openmp", "assumedsize", "ftimings", "redirect", "singleprecision", "coverage", "debug"]
 
     def __init__(self, **kwargs):
@@ -18,6 +38,8 @@ class Configure(object):
         if self.conf("coverage") and not self.conf("compiler") == "gcc":
             return False
         if self.conf("coverage") and self.conf("debug"):
+            return False
+        if self.conf("openmp") and (action == "gpu"):
             return False
         return True
 
@@ -228,7 +250,13 @@ for n, combination in enumerate(product(Configure.compilers, Configure.architect
     try:
         check_and_print(configure.cmd())
         check_and_print(["make","-j","8"])
-        check_and_print(["make","check","TEST_FLAGS=1500 50 16"])
+        if (action == "emulated"):
+            if configure.conf("architecture") == "avx2":
+               check_and_print(["/home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde","-hsw","--","make","check","TEST_FLAGS=150 50 16"])
+            elif configure.conf("architecture") == "avx512-knl":
+               check_and_print(["/home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde","-knl","--","make","check","TEST_FLAGS=150 50 16"])
+        else:
+           check_and_print(["make","check","TEST_FLAGS=1500 50 16"])
         check_and_print(["make","distclean"])
     except CheckException as e:
         print("Error for testcase {0}:\n{1}".format(str(configure), e.args[0]))
