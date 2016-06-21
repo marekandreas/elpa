@@ -20,7 +20,7 @@ class Configure(object):
             return False
         if self.conf("coverage") and self.conf("debug"):
             return False
-        if self.conf("openmp") and self.conf("cuda"):
+        if self.conf("openmp") and self.conf("architecture") == "cuda":
             return False
         return True
 
