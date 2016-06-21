@@ -253,7 +253,7 @@ for n, combination in enumerate(product(Configure.compilers, architectures, *([(
         elif configure.conf("architecture") == "avx512-knl":
             check = ["sde","-knl","--"] + check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
         else:
-            check = check + ["TEST_FLAGS"+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
+            check = check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
         check_and_print(check)
         check_and_print(["make","distclean"])
     except CheckException as e:
