@@ -114,6 +114,14 @@ if test x"${enable_openmp}" = x"yes"; then
   FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 fi
 
+dnl check which MPI binray invokes a MPI job
+if test x"$with_mpi" = x"yes"; then
+  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun], [no])
+  if test x"$MPI_BINARY" = x"no"; then
+    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun])
+  fi
+fi
+
 ## C++
 #AC_LANG([C++])
 #AC_PROG_CXX
@@ -857,6 +865,7 @@ if test x"${DESPERATELY_WANT_ASSUMED_SIZE}" = x"yes" ; then
   AC_DEFINE([DESPERATELY_WANT_ASSUMED_SIZE],[1],[use assumed size Fortran arrays, even if not debuggable])
 fi
 
+AC_SUBST([MPI_BINARY])
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])
 AC_SUBST([with_amd_bulldozer_kernel])

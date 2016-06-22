@@ -352,7 +352,7 @@ endif
 
 
 # test scripts
-MPIEXEC ?= mpiexec -n 2
+MPIEXEC ?= $(MPI_BINARY) -n 2
 if WITH_MPI
   wrapper=$(MPIEXEC)
 else
