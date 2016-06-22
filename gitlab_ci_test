@@ -204,8 +204,6 @@ class CheckException(BaseException):
     pass
 
 def check_and_print(cmd):
-    print(cmd)
-    print()
     proc = run(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     if proc.returncode != 0:
         print("# {0}".format(pretty_print_cmd(cmd)))
@@ -258,6 +256,7 @@ for n, combination in enumerate(product(Configure.compilers, architectures, *([(
             check = check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
         check_and_print(check)
         check_and_print(["make","distclean"])
+        print("ok {0} # {1}".format(n + 1, str(configure)))
     except CheckException as e:
         print("not ok {0} # Error for testcase {1}".format(n + 1, str(configure)))
         print("Bail out!")
