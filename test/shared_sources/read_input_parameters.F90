@@ -45,10 +45,77 @@ module mod_read_input_parameters
 
   contains
 
-    subroutine read_input_parameters(na, nev, nblk, write_to_file)
+    subroutine parse_arguments(command_line_argument, na, nev, nblk, write_to_file, &
+                               this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
+
+      use elpa2_utilities
+      use precision
+      use output_types
+
+      implicit none
+
+      integer(kind=ik)             :: na, nev, nblk
+      type(output_t)               :: write_to_file
+      integer                      :: this_real_kernel, this_complex_kernel
+      logical                      :: realKernelSet, complexKernelSet
+      character(len=128)           :: command_line_argument
+
+      integer(kind=ik)             :: kernels
+
+      if (command_line_argument == "--help") then
+        print *,"usage: elpa_unified_test_real | elpa_unified_test_complex [--help] [na=number] [nev=number] "
+        print *,"                                                        [nblk=number] [--output_eigenvalues]"
+        print *,"                                      [--output_eigenvectors] [--real-kernel=name_of_kernel]"
+        print *,"                                      [--complex-kernel=name_of_kernel]"
+      endif
+
+      if (command_line_argument(1:3) == "na=") then
+        read(command_line_argument(4:), *) na
+      endif
+      if (command_line_argument(1:4) == "nev=") then
+        read(command_line_argument(5:), *) nev
+      endif
+      if (command_line_argument(1:5) == "nblk=") then
+        read(command_line_argument(6:), *) nblk
+      endif
+
+
+      if (command_line_argument(1:21)   == "--output_eigenvectors") then
+        write_to_file%eigenvectors = .true.
+      endif
+
+      if (command_line_argument(1:20)   == "--output_eigenvalues") then
+        write_to_file%eigenvalues = .true.
+      endif
+
+      if (command_line_argument(1:14) == "--real-kernel=") then
+        do kernels = 1, elpa_number_of_real_kernels()
+          if (  trim(command_line_argument(15:)) .eq. elpa_real_kernel_name(kernels)) then
+            this_real_kernel = kernels
+            print *,"Setting ELPA2 real kernel to ",elpa_real_kernel_name(kernels)
+            realKernelSet = .true.
+          endif
+        enddo
+      endif
+
+      if (command_line_argument(1:17) == "--complex-kernel=") then
+        do kernels = 1, elpa_number_of_complex_kernels()
+          if (  trim(command_line_argument(18:)) .eq. elpa_complex_kernel_name(kernels)) then
+            this_complex_kernel = kernels
+            print *,"Setting ELPA2 complex kernel to ",elpa_complex_kernel_name(kernels)
+            realKernelSet = .true.
+          endif
+        enddo
+      endif
+
+    end subroutine
+
+    subroutine read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, realKernelSet, &
+                                     complexKernelSet)
       use ELPA_utilities, only : error_unit
       use precision
       use elpa_mpi
+      use elpa2_utilities
       use output_types
       implicit none
 
@@ -57,8 +124,9 @@ module mod_read_input_parameters
       type(output_t), intent(out)   :: write_to_file
 
       ! Command line arguments
-      character(len=128)            :: arg1, arg2, arg3, arg4, arg5
-      integer(kind=ik)              :: mpierr
+      character(len=128)            :: arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8
+      integer(kind=ik)              :: mpierr, kernels, this_real_kernel, this_complex_kernel
+      logical                       :: realKernelSet, complexKernelSet
 
       ! default parameters
       na = 4000
@@ -66,66 +134,90 @@ module mod_read_input_parameters
       nblk = 16
       write_to_file%eigenvectors = .false.
       write_to_file%eigenvalues  = .false.
+      this_real_kernel = DEFAULT_REAL_ELPA_KERNEL
+      this_complex_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
+      realKernelSet = .false.
+      complexKernelSet = .false.
 
-      if (.not. any(COMMAND_ARGUMENT_COUNT() == [0, 3, 4, 5])) then
+      ! test na=1500 nev=50 nblk=16 --help --kernel --output_eigenvectors --output_eigenvalues
+      if (COMMAND_ARGUMENT_COUNT() .gt. 8) then
         write(error_unit, '(a,i0,a)') "Invalid number (", COMMAND_ARGUMENT_COUNT(), ") of command line arguments!"
-        write(error_unit, *) "Expected: program [ [matrix_size num_eigenvalues block_size] &
-            ""output_eigenvalues"" ""output_eigenvectors""]"
         stop 1
       endif
 
-      if (COMMAND_ARGUMENT_COUNT() == 3) then
-        call GET_COMMAND_ARGUMENT(1, arg1)
-        call GET_COMMAND_ARGUMENT(2, arg2)
-        call GET_COMMAND_ARGUMENT(3, arg3)
+      if (COMMAND_ARGUMENT_COUNT() .gt. 0) then
 
-        read(arg1, *) na
-        read(arg2, *) nev
-        read(arg3, *) nblk
-      endif
+        call get_COMMAND_ARGUMENT(1, arg1)
 
-      if (COMMAND_ARGUMENT_COUNT() == 4) then
-        call GET_COMMAND_ARGUMENT(1, arg1)
-        call GET_COMMAND_ARGUMENT(2, arg2)
-        call GET_COMMAND_ARGUMENT(3, arg3)
-        call GET_COMMAND_ARGUMENT(4, arg4)
-        read(arg1, *) na
-        read(arg2, *) nev
-        read(arg3, *) nblk
+        call parse_arguments(arg1, na, nev, nblk, write_to_file, &
+                               this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
 
-        if (arg4 .eq. "output_eigenvalues") then
-          write_to_file%eigenvalues = .true.
-        else
-          write(error_unit, *) "Invalid value for output flag! Must be ""output_eigenvalues"" or omitted"
-          stop 1
+
+
+        if (COMMAND_ARGUMENT_COUNT() .ge. 2) then
+          ! argument 2
+          call get_COMMAND_ARGUMENT(2, arg2)
+
+          call parse_arguments(arg2, na, nev, nblk, write_to_file, &
+                               this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
         endif
 
-      endif
+        ! argument 3
+        if (COMMAND_ARGUMENT_COUNT() .ge. 3) then
 
-      if (COMMAND_ARGUMENT_COUNT() == 5) then
-        call GET_COMMAND_ARGUMENT(1, arg1)
-        call GET_COMMAND_ARGUMENT(2, arg2)
-        call GET_COMMAND_ARGUMENT(3, arg3)
-        call GET_COMMAND_ARGUMENT(4, arg4)
-        call GET_COMMAND_ARGUMENT(5, arg5)
-        read(arg1, *) na
-        read(arg2, *) nev
-        read(arg3, *) nblk
+          call get_COMMAND_ARGUMENT(3, arg3)
 
-        if (arg4 .eq. "output_eigenvalues") then
-          write_to_file%eigenvalues = .true.
-        else
-          write(error_unit, *) "Invalid value for output flag! Must be ""output_eigenvalues"" or omitted"
-          stop 1
+          call parse_arguments(arg3, na, nev, nblk, write_to_file, &
+                               this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
         endif
 
-        if (arg5 .eq. "output_eigenvectors") then
-          write_to_file%eigenvectors = .true.
-        else
-          write(error_unit, *) "Invalid value for output flag! Must be ""output_eigenvectors"" or omitted"
-          stop 1
+        ! argument 4
+        if (COMMAND_ARGUMENT_COUNT() .ge. 4) then
+
+          call get_COMMAND_ARGUMENT(4, arg4)
+
+          call parse_arguments(arg4, na, nev, nblk, write_to_file, &
+                               this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
+
         endif
 
+        ! argument 5
+        if (COMMAND_ARGUMENT_COUNT() .ge. 5) then
+
+          call get_COMMAND_ARGUMENT(5, arg5)
+
+          call parse_arguments(arg5, na, nev, nblk, write_to_file, &
+                               this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
+        endif
+
+        ! argument 6
+        if (COMMAND_ARGUMENT_COUNT() .ge. 6) then
+
+          call get_COMMAND_ARGUMENT(6, arg6)
+
+          call parse_arguments(arg6, na, nev, nblk, write_to_file, &
+                               this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
+        endif
+
+        ! argument 7
+        if (COMMAND_ARGUMENT_COUNT() .ge. 7) then
+
+          call get_COMMAND_ARGUMENT(7, arg7)
+
+          call parse_arguments(arg7, na, nev, nblk, write_to_file, &
+                               this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
+
+        endif
+
+        ! argument 8
+        if (COMMAND_ARGUMENT_COUNT() .ge. 8) then
+
+          call get_COMMAND_ARGUMENT(8, arg8)
+
+          call parse_arguments(arg8, na, nev, nblk, write_to_file, &
+                               this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
+
+        endif
       endif
     end subroutine
 

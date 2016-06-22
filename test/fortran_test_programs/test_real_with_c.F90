@@ -130,9 +130,13 @@ program test_real
    integer(kind=ik)           :: checksWrong, checksWrongRecv
    logical                    :: success
 
+   integer                    :: this_real_kernel, this_complex_kernel
+   logical                    :: complexKernelSet, realKernelSet
+
    success = .true.
 
-   call read_input_parameters(na, nev, nblk, write_to_file)
+   call read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
+                              realKernelSet, complexKernelSet)
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization

@@ -114,11 +114,15 @@ program test_all_real
    logical                    :: this_qr
 
    real(kind=rk)              :: tStart, tEnd
+
+   integer                    :: this_real_kernel, this_complex_kernel
+   logical                    :: complexKernelSet, realKernelSet
    !-------------------------------------------------------------------------------
 
    success = .true.
 
-   call read_input_parameters(na, nev, nblk, write_to_file)
+   call read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
+                              realKernelSet, complexKernelSet)
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
@@ -315,165 +319,247 @@ program test_all_real
      call EXIT(STATUS)
     endif
 
-   ! start again with ELPA2 generic and so forth
 
-   ! first default kernel
+   if (.not.(realKernelSet)) then
+     ! start again with ELPA2 generic and so forth
 
-   if (myid .eq. 0) print *," "
-   if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", trim(elpa_get_actual_real_kernel_name())
-   if (myid .eq. 0) print *," "
+     ! first default kernel
 
-   a = as
-   z = a
+     if (myid .eq. 0) print *," "
+     if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", trim(elpa_get_actual_real_kernel_name())
+     if (myid .eq. 0) print *," "
 
-   if (myid==0) then
-     print *," "
-     print '(a)','| Entering two-stage ELPA solver ... '
-     print *
-   end if
+     a = as
+     z = a
 
-#ifdef WITH_MPI
-   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-
-   tStart = mpi_wtime()
-
-   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                   mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
-
-   if (.not.(success)) then
-     write(error_unit,*) "solve_evp_real_2stage with default kernel ",trim(elpa_get_actual_real_kernel_name()), &
-                         " produced an error! Aborting..."
-#ifdef WITH_MPI
-     call MPI_ABORT(mpi_comm_world, 1, mpierr)
-#endif
-   endif
-
-   if (myid==0) then
-     print '(a)','| Two-step ELPA solver complete.'
-     print *
-   end if
-
-   if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-   if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
-   if (myid == 0) print *,'Time transform back EVs :',time_evp_back
-   if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-   if (myid == 0) print *," "
+     if (myid==0) then
+       print *," "
+       print '(a)','| Entering two-stage ELPA solver ... '
+       print *
+     end if
 
 #ifdef WITH_MPI
-   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+     call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   tEnd = mpi_wtime()
 
-   if (myid == 0) print *," "
-   if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
-                  trim(elpa_get_actual_real_kernel_name()),' default kernel:',tEnd - tStart
-   if (myid == 0) print *," "
+     tStart = mpi_wtime()
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
-   if (myid == 0) print *," "
+     success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                     mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
-   if (status .eq. 1) then
-     if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_get_actual_real_kernel_name()), &
-       ' kernel!'
+     if (.not.(success)) then
+       write(error_unit,*) "solve_evp_real_2stage with default kernel ",trim(elpa_get_actual_real_kernel_name()), &
+                           " produced an error! Aborting..."
 #ifdef WITH_MPI
-     call blacs_gridexit(my_blacs_ctxt)
-     call mpi_finalize(mpierr)
+       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
+     endif
 
-     call EXIT(STATUS)
-   endif
-   if (myid .eq. 0) print *," "
+     if (myid==0) then
+       print '(a)','| Two-step ELPA solver complete.'
+       print *
+     end if
 
+     if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
+     if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
+     if (myid == 0) print *,'Time transform back EVs :',time_evp_back
+     if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
+     if (myid == 0) print *," "
 
-   if (myid .eq. 0) print *," "
-   if (myid .eq. 0) print *,"Iterating over all available ELPA2 real kernels ..."
-   if (myid .eq. 0) print *," "
-
-   do this_kernel = 1 , elpa_number_of_real_kernels()
-     do qr = 0, 1
-       this_qr = .false.
-!       if (qr .eq. 1) this_qr = .true.
-       a = as
-       z = a
-       if (elpa_real_kernel_is_available(this_kernel)) then
-         if (qr .eq. 0) then
-           if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel)),":"
-         else
-           if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel))," with qr decompostion:"
-         endif
-         if (myid==0) then
-           print *," "
-           print '(a)','| Entering two-stage ELPA solver ... '
-           print *
-         end if
 #ifdef WITH_MPI
-         call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+     call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+     tEnd = mpi_wtime()
+
+     if (myid == 0) print *," "
+     if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
+                    trim(elpa_get_actual_real_kernel_name()),' default kernel:',tEnd - tStart
+     if (myid == 0) print *," "
+
+     status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+     if (myid == 0) print *," "
+
+     if (status .eq. 1) then
+       if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_get_actual_real_kernel_name()), &
+         ' kernel!'
+#ifdef WITH_MPI
+       call blacs_gridexit(my_blacs_ctxt)
+       call mpi_finalize(mpierr)
 #endif
 
-         tStart = mpi_wtime()
+       call EXIT(STATUS)
+     endif
+     if (myid .eq. 0) print *," "
 
-         success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                         mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                         THIS_REAL_ELPA_KERNEL_API = this_kernel, useQR=this_qr)
 
-         if (.not.(success)) then
+     if (myid .eq. 0) print *," "
+     if (myid .eq. 0) print *,"Iterating over all available ELPA2 real kernels ..."
+     if (myid .eq. 0) print *," "
+
+     do this_kernel = 1 , elpa_number_of_real_kernels()
+       do qr = 0, 1
+         this_qr = .false.
+!         if (qr .eq. 1) this_qr = .true.
+         a = as
+         z = a
+         if (elpa_real_kernel_is_available(this_kernel)) then
            if (qr .eq. 0) then
-             write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
-                                 " produced an error! Aborting..."
+             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel)),":"
            else
-             write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
-                                 " and qr-decompostion produced an error! Aborting..."
-
+             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel))," with qr decompostion:"
            endif
+           if (myid==0) then
+             print *," "
+             print '(a)','| Entering two-stage ELPA solver ... '
+             print *
+           end if
 #ifdef WITH_MPI
-           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+           call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-         endif
 
-         if (myid==0) then
-           print '(a)','| Two-step ELPA solver complete.'
-           print *
-         end if
+           tStart = mpi_wtime()
 
-         if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-         if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
-         if (myid == 0) print *,'Time transform back EVs :',time_evp_back
-         if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-         if (myid == 0) print *," "
+           success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                           mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
+                                           THIS_REAL_ELPA_KERNEL_API = this_kernel, useQR=this_qr)
+
+           if (.not.(success)) then
+             if (qr .eq. 0) then
+               write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
+                                   " produced an error! Aborting..."
+             else
+               write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
+                                   " and qr-decompostion produced an error! Aborting..."
+
+             endif
 #ifdef WITH_MPI
-         call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+             call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
-         tEnd = mpi_wtime()
-
-         if (myid == 0) print *," "
-         if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
-                        trim(elpa_real_kernel_name(this_kernel)),' kernel:',tEnd - tStart
-         if (myid == 0) print *," "
-
-         status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
-         if (myid == 0) print *," "
-
-         if (status .eq. 1) then
-           if (qr .eq. 0) then
-             if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_kernel)), &
-             ' kernel!'
-           else
-             if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_kernel)), &
-             ' kernel and qr-decompostion!'
            endif
+
+           if (myid==0) then
+             print '(a)','| Two-step ELPA solver complete.'
+             print *
+           end if
+
+           if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
+           if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
+           if (myid == 0) print *,'Time transform back EVs :',time_evp_back
+           if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
+           if (myid == 0) print *," "
 #ifdef WITH_MPI
-           call blacs_gridexit(my_blacs_ctxt)
-           call mpi_finalize(mpierr)
+           call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+           tEnd = mpi_wtime()
+
+           if (myid == 0) print *," "
+           if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
+                          trim(elpa_real_kernel_name(this_kernel)),' kernel:',tEnd - tStart
+           if (myid == 0) print *," "
+
+           status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+           if (myid == 0) print *," "
+
+           if (status .eq. 1) then
+             if (qr .eq. 0) then
+               if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_kernel)), &
+               ' kernel!'
+             else
+               if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_kernel)), &
+               ' kernel and qr-decompostion!'
+             endif
+#ifdef WITH_MPI
+             call blacs_gridexit(my_blacs_ctxt)
+             call mpi_finalize(mpierr)
 #endif
 
-           call EXIT(STATUS)
+             call EXIT(STATUS)
+           endif
+
          endif
-
-
-       endif
+       enddo
      enddo
-   enddo
+
+   else ! realKernelSet
+
+     a = as
+     z = a
+     if (elpa_real_kernel_is_available(this_real_kernel)) then
+       if (qr .eq. 0) then
+         if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_real_kernel)),":"
+       else
+         if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_real_kernel))," with qr decompostion:"
+       endif
+       if (myid==0) then
+         print *," "
+         print '(a)','| Entering two-stage ELPA solver ... '
+         print *
+       end if
+#ifdef WITH_MPI
+       call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+       tStart = mpi_wtime()
+
+       success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
+                                       THIS_REAL_ELPA_KERNEL_API = this_real_kernel, useQR=this_qr)
+
+       if (.not.(success)) then
+         if (qr .eq. 0) then
+           write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_real_kernel)), &
+                               " produced an error! Aborting..."
+         else
+           write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_real_kernel)), &
+                               " and qr-decompostion produced an error! Aborting..."
+
+         endif
+#ifdef WITH_MPI
+         call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+       endif
+
+       if (myid==0) then
+         print '(a)','| Two-step ELPA solver complete.'
+         print *
+       end if
+
+       if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
+       if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
+       if (myid == 0) print *,'Time transform back EVs :',time_evp_back
+       if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
+       if (myid == 0) print *," "
+#ifdef WITH_MPI
+       call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+       tEnd = mpi_wtime()
+
+       if (myid == 0) print *," "
+       if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
+                      trim(elpa_real_kernel_name(this_real_kernel)),' kernel:',tEnd - tStart
+       if (myid == 0) print *," "
+
+       status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+       if (myid == 0) print *," "
+
+       if (status .eq. 1) then
+         if (qr .eq. 0) then
+           if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_real_kernel)), &
+           ' kernel!'
+         else
+           if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_real_kernel)), &
+           ' kernel and qr-decompostion!'
+         endif
+#ifdef WITH_MPI
+         call blacs_gridexit(my_blacs_ctxt)
+         call mpi_finalize(mpierr)
+#endif
+
+         call EXIT(STATUS)
+       endif
+
+     endif
+   endif ! realKernelSet
 
    deallocate(a)
    deallocate(as)

@@ -134,9 +134,13 @@ program test_real2
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
 
+   integer(kind=ik)           :: this_real_kernel, this_complex_kernel
+   logical                    :: realKernelSet, complexKernelSet
+
    success = .true.
    !write_to_file = .false.
-   call read_input_parameters(na, nev, nblk, write_to_file)
+   call read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
+                              realKernelSet, complexKernelSet )
 
    !if (COMMAND_ARGUMENT_COUNT() /= 0) then
    !  write(error_unit,*) "This program does not support any command-line arguments"
