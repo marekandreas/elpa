@@ -129,9 +129,8 @@ program test_all_real
 
    STATUS = 0
 
-!#define DATATYPE REAL
-!#define ELPA1
-!#include "elpa_test_programs_print_headers.X90"
+#define DATATYPE COMPLEX
+#include "elpa_test_programs_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 

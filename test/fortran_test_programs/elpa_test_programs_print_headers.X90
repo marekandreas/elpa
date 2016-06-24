@@ -85,11 +85,9 @@
    endif
 #endif
 
-#ifndef ELPA1
-
    if (myid .eq. 0) then
       print *," "
-      print *,"This ELPA2 is build with"
+      print *,"ELPA2 is build with"
 #if DATATYPE == REAL
 
 #ifdef HAVE_AVX2
@@ -181,7 +179,6 @@
 #endif /* DATATYPE == COMPLEX */
 
    endif
-#endif /* ELPA1 */
 
    if (write_to_file%eigenvectors) then
      if (myid .eq. 0) print *,"Writing Eigenvectors to files"
