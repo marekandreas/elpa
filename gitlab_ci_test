@@ -1,4 +1,4 @@
-#!/home/elpa/python-3.6/bin/python3
+#!/usr/bin/python3
 
 from itertools import product
 from subprocess import run, PIPE, CalledProcessError
@@ -7,6 +7,11 @@ from os import getenv
 import argparse
 import sys
 
+
+# at the moment all:      2560 tests
+#               cpu:      1024 tests
+#               emulated: 1024 tests
+#               gpu:      512  tests
 class Configure(object):
     compilers = ["intel", "gcc"]
     architectures = ["sse", "avx", "avx2", "avx512-knl", "cuda"]
@@ -221,6 +226,9 @@ parser.add_argument("tests", choices=["all", "cpu", "emulated", "gpu"])
 parser.add_argument("na",type=int,help="size of matrix")
 parser.add_argument("nev",type=int,help="number of computed eigenvalues")
 parser.add_argument("nblk",type=int,help="block size")
+parser.add_argument("startMyBunch",type=int,help="define the start index of my list of tests")
+parser.add_argument("endMyBunch",type=int,help="define the end index of my list of tests")
+
 args = parser.parse_args()
 
 if (args.tests == "all"):
@@ -234,31 +242,31 @@ elif (args.tests == "gpu"):
 
 N = len(Configure.compilers) * len(architectures) * 2**len(Configure.logical_flags)
 print("1..{0}".format(N))
-
 for n, combination in enumerate(product(Configure.compilers, architectures, *([(False, True)] * len(Configure.logical_flags)))):
     compiler, architecture, *rest = combination
     kwargs = {}
-    for flag, value in zip(Configure.logical_flags, rest):
-        kwargs[flag] = value
-    configure = Configure(compiler=compiler, architecture=architecture, **kwargs)
+    if (n >= args.startMyBunch and n <= args.endMyBunch):
 
-    if not configure.sensible():
-        print("ok {0} # SKIP {1}".format(n+1, configure))
-        continue
+        for flag, value in zip(Configure.logical_flags, rest):
+            kwargs[flag] = value
+            configure = Configure(compiler=compiler, architecture=architecture, **kwargs)
+        if not configure.sensible():
+            print("ok {0} # SKIP {1}".format(n+1, configure))
+            continue
 
-    try:
-        check_and_print(configure.cmd())
-        check_and_print(["make","-j","8"])
-        check = ["make","check"]
-        if configure.conf("architecture") == "avx2":
-            check = ["sde","-hsw","--"] + check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
-        elif configure.conf("architecture") == "avx512-knl":
-            check = ["sde","-knl","--"] + check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
-        else:
-            check = check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
-        check_and_print(check)
-        check_and_print(["make","distclean"])
-    except CheckException as e:
-        print("not ok {0} # Error for testcase {1}".format(n + 1, str(configure)))
-        print("Bail out!")
-        sys.exit(1)
+#        try:
+#            check_and_print(configure.cmd())
+#            check_and_print(["make","-j","8"])
+#            check = ["make","check"]
+#            if configure.conf("architecture") == "avx2":
+#                check = ["sde","-hsw","--"] + check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
+#            elif configure.conf("architecture") == "avx512-knl":
+#                check = ["sde","-knl","--"] + check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
+#            else:
+#                check = check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
+#            check_and_print(check)
+#            check_and_print(["make","distclean"])
+#        except CheckException as e:
+#            print("not ok {0} # Error for testcase {1}".format(n + 1, str(configure)))
+#            print("Bail out!")
+#            sys.exit(1)
