@@ -209,6 +209,8 @@ class CheckException(BaseException):
     pass
 
 def check_and_print(cmd):
+    print(cmd)
+    print()
     proc = run(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     if proc.returncode != 0:
         print("# {0}".format(pretty_print_cmd(cmd)))
