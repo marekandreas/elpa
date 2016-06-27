@@ -3,7 +3,7 @@
 from itertools import product
 from subprocess import run, PIPE, CalledProcessError
 from shutil import copyfile
-from os import getenv
+from os import getenv, environ
 import argparse
 import sys
 
@@ -257,6 +257,10 @@ for n, combination in enumerate(product(Configure.compilers, architectures, *([(
         try:
             check_and_print(configure.cmd())
             check_and_print(["make","-j","8"])
+            if configure.conf("coverage") and configure.conf("openmp"):
+                environ["OMP_NUM_THREADS"] = "1"
+            else:
+                environ["OMP_NUM_THREADS"] = "2"
             check = ["make","check"]
             if configure.conf("architecture") == "avx2":
                 check = ["sde","-hsw","--"] + check + ["TEST_FLAGS="+str(args.na)+" "+str(args.nev)+" "+str(args.nblk)]
