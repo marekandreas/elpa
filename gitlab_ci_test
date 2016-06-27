@@ -14,7 +14,7 @@ import sys
 #               gpu:      512  tests
 class Configure(object):
     compilers = ["intel", "gcc"]
-    architectures = ["sse", "avx", "avx2", "avx512-knl", "cuda"]
+    architectures = ["sse", "avx", "avx2", "avx512-knl", "gpu"]
     logical_flags = ["mpi", "openmp", "assumedsize", "ftimings", "redirect", "singleprecision", "coverage", "debug"]
 
     def __init__(self, **kwargs):
@@ -25,7 +25,11 @@ class Configure(object):
             return False
         if self.conf("coverage") and self.conf("debug"):
             return False
-        if self.conf("openmp") and self.conf("architecture") == "cuda":
+        if self.conf("openmp") and self.conf("architecture") == "gpu":
+            return False
+        if self.conf("architecture") == "gpu":
+            return False
+        if self.conf("architecture") == "avx512-knl":
             return False
         return True
 
