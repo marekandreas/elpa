@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cov_dir=coverage_data
-cov_file=$cov_dir/coverage_${CI_BUILD_REF}_${CI_BUILD_NAME}.info
+cov_file=$cov_dir/coverage_${CI_BUILD_REF}_${CI_BUILD_NAME}_${TEST_NUMBER}.info
 
 mkdir -p $cov_dir/
 
