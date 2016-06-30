@@ -195,6 +195,7 @@ dist_files_DATA = \
   test/fortran_test_programs/test_real2_choose_kernel_with_api.F90 \
   test/fortran_test_programs/test_real.F90 \
   test/fortran_test_programs/test_real_with_c.F90 \
+  test/fortran_test_programs/test_real_toeplitz_matrix.F90 \
   src/elpa2_print_kernels.F90
 
 dist_doc_DATA = README.md USERS_GUIDE.md INSTALL.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
@@ -217,6 +218,7 @@ noinst_PROGRAMS = \
   elpa2_test_complex_default_kernel@SUFFIX@ \
   elpa2_test_real_choose_kernel_with_api@SUFFIX@ \
   elpa2_test_complex_choose_kernel_with_api@SUFFIX@ \
+  elpa1_test_real_toeplitz_matrix@SUFFIX@ \
   elpa1_test_real_with_c@SUFFIX@
 if !WITH_OPENMP
 noinst_PROGRAMS += \
@@ -279,6 +281,11 @@ elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa1_test_real@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
 
+elpa1_test_real_toeplitz_matrix@SUFFIX@_SOURCES = test/fortran_test_programs/test_real_toeplitz_matrix.F90
+elpa1_test_real_toeplitz_matrix@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_real_toeplitz_matrix@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_test_real_toeplitz_matrix@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+
 elpa1_test_real_with_c@SUFFIX@_SOURCES = test/fortran_test_programs/test_real_with_c.F90
 elpa1_test_real_with_c@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_with_c@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
@@ -340,9 +347,11 @@ check_SCRIPTS = \
   elpa2_test_real_default_kernel@SUFFIX@.sh \
   elpa1_test_complex@SUFFIX@.sh \
   elpa2_test_complex@SUFFIX@.sh \
+  elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh \
   elpa2_test_complex_default_kernel@SUFFIX@.sh \
   elpa2_test_real_choose_kernel_with_api@SUFFIX@.sh \
   elpa2_test_complex_choose_kernel_with_api@SUFFIX@.sh \
+  elpa1_test_real_toeplitz_matrix@SUFFIX@.sh \
   elpa2_print_kernels@SUFFIX@
 
 
