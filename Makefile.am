@@ -191,7 +191,7 @@ dist_files_DATA = \
   test/fortran_test_programs/test_complex.F90 \
   test/fortran_test_programs/test_real2.F90 \
   test/fortran_test_programs/test_real2_default_kernel.F90 \
-  test/fortran_test_programs/test_real2_default_kernel_qr_decomposition.F90 \
+  test/fortran_test_programs/test_real2_qr.F90 \
   test/fortran_test_programs/test_real2_choose_kernel_with_api.F90 \
   test/fortran_test_programs/test_real.F90 \
   test/fortran_test_programs/test_real_with_c.F90 \
@@ -302,7 +302,7 @@ elpa2_test_real_default_kernel@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@privat
 EXTRA_elpa2_test_real_default_kernel@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
 
 
-elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_default_kernel_qr_decomposition.F90
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_qr.F90
 elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
@@ -336,9 +336,6 @@ EXTRA_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_DEPENDENCIES = test/fort
 elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2_print_kernels.F90
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 elpa2_print_kernels@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-
-#  elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh
-
 
 check_SCRIPTS = \
   elpa1_test_real@SUFFIX@.sh \
