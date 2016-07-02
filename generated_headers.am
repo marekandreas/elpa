@@ -6,7 +6,7 @@ endef
 elpa test:
 	@mkdir $@
 
-test/shared_sources: | test
+test/shared: | test
 	@mkdir $@
 
 config-f90.h: config.h
@@ -16,12 +16,12 @@ config-f90.h: config.h
 elpa/elpa_generated.h: $(top_srcdir)/src/elpa_c_interface.F90 | elpa
 	$(call extract_interface,!c>)
 
-test/shared_sources/generated.h: $(wildcard $(top_srcdir)/test/shared_sources/*.F90) | test/shared_sources
+test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.F90) | test/shared
 	$(call extract_interface,!c>)
 
 elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2_kernels/*.c) $(wildcard $(top_srcdir)/src/elpa2_kernels/*.s) | elpa
 	$(call extract_interface,!f>)
 	$(call extract_interface,#!f>)
 
-generated_headers= config-f90.h elpa/elpa_generated.h test/shared_sources/generated.h elpa/elpa_generated_fortran_interfaces.h
+generated_headers= config-f90.h elpa/elpa_generated.h test/shared/generated.h elpa/elpa_generated_fortran_interfaces.h
 generated-headers: $(generated_headers)
