@@ -147,7 +147,7 @@ program test_complex2
    STATUS = 0
 
 #define DATATYPE COMPLEX
-#include "elpa_test_programs_print_headers.X90"
+#include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 

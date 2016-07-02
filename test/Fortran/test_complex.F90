@@ -138,7 +138,7 @@ program test_complex
 
 #define DATATYPE COMPLEX
 #define ELPA1
-#include "elpa_test_programs_print_headers.X90"
+#include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
