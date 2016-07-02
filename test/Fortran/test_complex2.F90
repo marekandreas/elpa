@@ -80,19 +80,17 @@ program test_complex2
    use precision
    use ELPA1
    use ELPA2
-
    use elpa_utilities, only : error_unit
-   use elpa2_utilities
+#ifdef WITH_OPENMP
+   use test_util
+#endif
+
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
    use elpa_mpi
-#ifdef WITH_OPENMP
-   use test_util
-#endif
-
 #ifdef HAVE_REDIRECT
   use redirect
 #endif
@@ -120,11 +118,11 @@ program test_complex2
 
    integer, external             :: numroc
 
+   complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
    real(kind=rk), allocatable    :: ev(:), xr(:,:)
 
    complex(kind=ck), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
 
-   complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
 
    integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -140,14 +138,14 @@ program test_complex2
    success = .true.
 
    call read_input_parameters(na, nev, nblk, write_to_file)
-   !-------------------------------------------------------------------------------
+      !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
    STATUS = 0
 
 #define DATATYPE COMPLEX
-#include "elpa_test_programs_print_headers.X90"
+#include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -196,21 +194,6 @@ program test_complex2
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is an example how ELPA2 chooses a default kernel,"
-#ifdef HAVE_ENVIRONMENT_CHECKING
-      print *, "or takes the kernel defined in the environment variable,"
-#endif
-      print *, "since the ELPA API call does not contain any kernel specification"
-      print *
-      print *, " The settings are: ",trim(get_actual_complex_kernel_name())," as complex kernel"
-      print *
-#ifndef HAVE_ENVIRONMENT_CHECKING
-      print *, " Notice that it is not possible with this build to set the "
-      print *, " kernel via an environment variable! To change this re-install"
-      print *, " the library and have a look at the log files"
-#endif
-
-
    endif
 
    !-------------------------------------------------------------------------------
@@ -231,7 +214,7 @@ program test_complex2
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators
+   ! rows or columns of processes, these are set in get_elpa_communicators.
 
    mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
@@ -251,6 +234,7 @@ program test_complex2
    end if
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("set up matrix")
 #endif
@@ -265,25 +249,16 @@ program test_complex2
 
    deallocate(xr)
 
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
+
    ! set print flag in elpa1
    elpa_print_times = .true.
 
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
-
-   if (myid==0) then
-     print '(a)','| Entering two-stage ELPA solver ... '
-     print *
-   end if
-
-
-   ! ELPA is called without any kernel specification in the API,
-   ! furthermore, if the environment variable is not set, the
-   ! default kernel is called. Otherwise, the kernel defined in the
-   ! environment variable
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
@@ -315,7 +290,6 @@ program test_complex2
      enddo
      close(17)
    endif
-
    if(write_to_file%eigenvalues) then
       if (myid == 0) then
          open(17,file="Eigenvalues_complex2_out.txt",form='formatted',status='new')
@@ -325,7 +299,6 @@ program test_complex2
          close(17)
       endif
    endif
-
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)

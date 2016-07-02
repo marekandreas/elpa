@@ -43,29 +43,10 @@
 #include "config-f90.h"
 !>
 !> Fortran test programm to demonstrates the use of
-!> ELPA 1 real case library.
-!> If "HAVE_REDIRECT" was defined at build time
-!> the stdout and stderr output of each MPI task
-!> can be redirected to files if the environment
-!> variable "REDIRECT_ELPA_TEST_OUTPUT" is set
-!> to "true".
+!> the elpa_solve_tridi library function
 !>
-!> By calling executable [arg1] [arg2] [arg3] [arg4]
-!> one can define the size (arg1), the number of
-!> Eigenvectors to compute (arg2), and the blocking (arg3).
-!> If these values are not set default values (4000, 1500, 16)
-!> are choosen.
-!> If these values are set the 4th argument can be
-!> "output", which specifies that the EV's are written to
-!> an ascii file.
-!>
-program test_real
+program test_solve_tridi
 
-!-------------------------------------------------------------------------------
-! Standard eigenvalue problem - REAL version
-!
-! This program demonstrates the use of the ELPA module
-! together with standard scalapack routines
 !
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
@@ -75,7 +56,7 @@ program test_real
 !-------------------------------------------------------------------------------
    use precision
    use ELPA1
-   use elpa_utilities, only : error_unit
+   use elpa_utilities
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -113,7 +94,19 @@ program test_real
 
    integer, external          :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real(kind=rk), allocatable :: a(:,:), d(:), e(:), ev_analytic(:), ev(:)
+   real(kind=rk)              :: diagonalELement, subdiagonalElement
+
+   real(kind=rk), allocatable :: tmp1(:,:), tmp2(:,:), as(:,:)
+   real(kind=rk)              :: tmp
+   integer(kind=ik)           :: loctmp ,rowLocal, colLocal
+
+
+   real(kind=rk)              :: maxerr
+
+   logical                    :: wantDebug
+
+   real(kind=rk), parameter   :: pi = 3.141592653589793238462643383279_rk
 
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -138,9 +131,9 @@ program test_real
 
    STATUS = 0
 
-#define DATATYPE REAL
-#define ELPA1
-#include "elpa_test_programs_print_headers.X90"
+!#define DATATYPE REAL
+!#define ELPA1
+!#include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -179,7 +172,7 @@ program test_real
 
    if(myid==0) then
       print *
-      print '(a)','Standard eigenvalue problem - REAL version'
+      print '(a)','Test program for elpa_solve_tridi with a Toeplitz matrix'
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
@@ -221,91 +214,175 @@ program test_real
    end if
 
    !-------------------------------------------------------------------------------
-   ! Allocate matrices and set up a test matrix for the eigenvalue problem
+   ! Allocate matrices and set up a test toeplitz matrix for solve_tridi
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("set up matrix")
 #endif
    allocate(a (na_rows,na_cols))
-   allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
 
+   allocate(d (na))
+   allocate(e (na))
+   allocate(ev_analytic(na))
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+   a(:,:) = 0.0_rk
+
+
+   ! changeable numbers here would be nice
+   diagonalElement = 0.45_rk
+   subdiagonalElement =  0.78_rk
+
+   d(:) = diagonalElement
+   e(:) = subdiagonalElement
+
+
+   ! set up the diagonal and subdiagonals (for general solver test)
+   do i=1, na ! for diagonal elements
+     if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = diagonalElement
+     endif
+   enddo
+
+   do i=1, na-1
+     if (map_global_array_index_to_local_index(i, i+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = subdiagonalElement
+     endif
+   enddo
+
+   do i=2, na
+     if (map_global_array_index_to_local_index(i, i-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = subdiagonalElement
+     endif
+   enddo
+
+   as = a
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
 
+
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
    if (myid==0) then
-     print '(a)','| Entering one-step ELPA solver ... '
+     print '(a)','| Entering elpa_solve_tridi ... '
      print *
    end if
+
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                            na_cols, mpi_comm_rows, mpi_comm_cols)
+
+   success = elpa_solve_tridi(na, nev, d, e, a, na_rows, nblk, na_cols, mpi_comm_rows, &
+                              mpi_comm_cols, wantDebug)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
+      write(error_unit,*) "elpa_solve_tridi produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
    endif
 
-
    if (myid==0) then
-     print '(a)','| One-step ELPA solver complete.'
+     print '(a)','| elpa_solve_tridi complete.'
      print *
    end if
 
-   if(myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
-   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
-   if(myid == 0) print *,'Time trans_ev_real    :',time_evp_back
-   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
 
-   if(write_to_file%eigenvectors) then
-     write(unit = task_suffix, fmt = '(i8.8)') myid
-     open(17,file="EVs_real_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
-     write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
+   ev = d
 
-     do i=1,na_rows
-       do j=1,na_cols
-         write(17,*) "row=",i," col=",j," element of eigenvector=",z(i,j)
-       enddo
-     enddo
-     close(17)
-   endif
-
-   if(write_to_file%eigenvalues) then
-      if (myid == 0) then
-         open(17,file="Eigenvalues_real_out.txt",form='formatted',status='new')
-         do i=1,na
-            write(17,*) i,ev(i)
-         enddo
-         close(17)
-      endif
-   endif
-
-
+!
+!   if(myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
+!   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+!   if(myid == 0) print *,'Time trans_ev_real    :',time_evp_back
+!   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
+!
+!   if(write_to_file%eigenvectors) then
+!     write(unit = task_suffix, fmt = '(i8.8)') myid
+!     open(17,file="EVs_real_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
+!     write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
+!
+!     do i=1,na_rows
+!       do j=1,na_cols
+!         write(17,*) "row=",i," col=",j," element of eigenvector=",z(i,j)
+!       enddo
+!     enddo
+!     close(17)
+!   endif
+!
+!   if(write_to_file%eigenvalues) then
+!      if (myid == 0) then
+!         open(17,file="Eigenvalues_real_out.txt",form='formatted',status='new')
+!         do i=1,na
+!            write(17,*) i,ev(i)
+!         enddo
+!         close(17)
+!      endif
+!   endif
+!
+!
    !-------------------------------------------------------------------------------
+
+   ! analytic solution
+   do i=1, na
+     ev_analytic(i) = diagonalElement + 2.0_rk * subdiagonalElement *cos( pi*real(i,kind=rk)/ real(na+1,kind=rk) )
+   enddo
+
+   ! sort analytic solution:
+
+   ! this hack is neihter elegant, nor optimized: for huge matrixes it might be expensive
+   ! a proper sorting algorithmus might be implemented here
+
+   tmp    = minval(ev_analytic)
+   loctmp = minloc(ev_analytic, 1)
+
+   ev_analytic(loctmp) = ev_analytic(1)
+   ev_analytic(1) = tmp
+
+   do i=2, na
+     tmp = ev_analytic(i)
+     do j= i, na
+       if (ev_analytic(j) .lt. tmp) then
+         tmp    = ev_analytic(j)
+         loctmp = j
+       endif
+     enddo
+     ev_analytic(loctmp) = ev_analytic(i)
+     ev_analytic(i) = tmp
+   enddo
+
+   ! compute a simple error max of eigenvalues
+   maxerr = 0.0_rk
+   maxerr = maxval( (d(:) - ev_analytic(:))/ev_analytic(:) , 1)
+
+   if (maxerr .gt. 8.e-13) then
+     if (myid .eq. 0) then
+       print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+     endif
+
+   status = 1
+
+   endif
+
    ! Test correctness of result (using plain scalapack routines)
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness(na, nev, as, a, ev, sc_desc, myid, tmp1, tmp2)
 
    deallocate(a)
-   deallocate(as)
 
-   deallocate(z)
+   deallocate(as)
+   deallocate(d)
+
    deallocate(tmp1)
    deallocate(tmp2)
+   deallocate(e)
    deallocate(ev)
+   deallocate(ev_analytic)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("program")
