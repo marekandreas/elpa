@@ -399,6 +399,8 @@ CLEANFILES = \
   elpa-generated.h \
   elpa1_test* \
   elpa2_test*\
+  elpa2_real* \
+  elpa1_real* \
   *.i
 
 clean-local:
