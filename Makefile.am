@@ -184,18 +184,18 @@ dist_man_MANS = \
 # other files to distribute
 filesdir = $(docdir)/examples
 dist_files_DATA = \
-  test/fortran_test_programs/read_real.F90 \
-  test/fortran_test_programs/test_complex2.F90 \
-  test/fortran_test_programs/test_complex2_default_kernel.F90 \
-  test/fortran_test_programs/test_complex2_api.F90 \
-  test/fortran_test_programs/test_complex.F90 \
-  test/fortran_test_programs/test_real2.F90 \
-  test/fortran_test_programs/test_real2_default_kernel.F90 \
-  test/fortran_test_programs/test_real2_qr.F90 \
-  test/fortran_test_programs/test_real2_api.F90 \
-  test/fortran_test_programs/test_real.F90 \
-  test/fortran_test_programs/test_real_with_c.F90 \
-  test/fortran_test_programs/test_toeplitz.F90 \
+  test/fortran/read_real.F90 \
+  test/fortran/test_complex2.F90 \
+  test/fortran/test_complex2_default_kernel.F90 \
+  test/fortran/test_complex2_api.F90 \
+  test/fortran/test_complex.F90 \
+  test/fortran/test_real2.F90 \
+  test/fortran/test_real2_default_kernel.F90 \
+  test/fortran/test_real2_qr.F90 \
+  test/fortran/test_real2_api.F90 \
+  test/fortran/test_real.F90 \
+  test/fortran/test_real_with_c.F90 \
+  test/fortran/test_toeplitz.F90 \
   src/elpa2_print_kernels.F90
 
 dist_doc_DATA = README.md USERS_GUIDE.md INSTALL.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
@@ -251,87 +251,87 @@ libelpatest@SUFFIX@_la_SOURCES += \
 endif
 
 if !WITH_OPENMP
-elpa1_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_real_c_version.c
+elpa1_test_real_c_version@SUFFIX@_SOURCES = test/c/elpa1_test_real_c_version.c
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 elpa1_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
-EXTRA_elpa1_test_real_c_version@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa1_test_real_c_version@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa1_test_complex_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa1_test_complex_c_version.c
+elpa1_test_complex_c_version@SUFFIX@_SOURCES = test/c/elpa1_test_complex_c_version.c
 elpa1_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_complex_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 elpa1_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
-EXTRA_elpa1_test_complex_c_version@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa1_test_complex_c_version@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa2_test_real_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa2_test_real_c_version.c
+elpa2_test_real_c_version@SUFFIX@_SOURCES = test/c/elpa2_test_real_c_version.c
 elpa2_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 elpa2_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
-EXTRA_elpa2_test_real_c_version@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa2_test_real_c_version@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa2_test_complex_c_version@SUFFIX@_SOURCES = test/c_test_programs/elpa2_test_complex_c_version.c
+elpa2_test_complex_c_version@SUFFIX@_SOURCES = test/c/elpa2_test_complex_c_version.c
 elpa2_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 elpa2_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
-EXTRA_elpa2_test_complex_c_version@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa2_test_complex_c_version@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 endif
 
-elpa1_test_real@SUFFIX@_SOURCES = test/fortran_test_programs/test_real.F90
+elpa1_test_real@SUFFIX@_SOURCES = test/fortran/test_real.F90
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa1_test_real@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa1_test_real@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa1_test_real_toeplitz_matrix@SUFFIX@_SOURCES = test/fortran_test_programs/test_toeplitz.F90
+elpa1_test_real_toeplitz_matrix@SUFFIX@_SOURCES = test/fortran/test_toeplitz.F90
 elpa1_test_real_toeplitz_matrix@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_toeplitz_matrix@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa1_test_real_toeplitz_matrix@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa1_test_real_toeplitz_matrix@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa1_test_real_with_c@SUFFIX@_SOURCES = test/fortran_test_programs/test_real_with_c.F90
+elpa1_test_real_with_c@SUFFIX@_SOURCES = test/fortran/test_real_with_c.F90
 elpa1_test_real_with_c@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_with_c@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa1_test_real_with_c@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa1_test_real_with_c@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa2_test_real@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2.F90
+elpa2_test_real@SUFFIX@_SOURCES = test/fortran/test_real2.F90
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa2_test_real@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa2_test_real@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_default_kernel.F90
+elpa2_test_real_default_kernel@SUFFIX@_SOURCES = test/fortran/test_real2_default_kernel.F90
 elpa2_test_real_default_kernel@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_default_kernel@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa2_test_real_default_kernel@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa2_test_real_default_kernel@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
 
-elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_qr.F90
+elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_SOURCES = test/fortran/test_real2_qr.F90
 elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran_test_programs/test_real2_api.F90
+elpa2_test_real_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran/test_real2_api.F90
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_choose_kernel_with_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa2_test_real_choose_kernel_with_api@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa2_test_real_choose_kernel_with_api@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa1_test_complex@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex.F90
+elpa1_test_complex@SUFFIX@_SOURCES = test/fortran/test_complex.F90
 elpa1_test_complex@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_complex@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa1_test_complex@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa1_test_complex@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
 
-elpa2_test_complex@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex2.F90
+elpa2_test_complex@SUFFIX@_SOURCES = test/fortran/test_complex2.F90
 elpa2_test_complex@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa2_test_complex@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa2_test_complex@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex2_default_kernel.F90
+elpa2_test_complex_default_kernel@SUFFIX@_SOURCES = test/fortran/test_complex2_default_kernel.F90
 elpa2_test_complex_default_kernel@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_default_kernel@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa2_test_complex_default_kernel@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa2_test_complex_default_kernel@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
-elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran_test_programs/test_complex2_api.F90
+elpa2_test_complex_choose_kernel_with_api@SUFFIX@_SOURCES = test/fortran/test_complex2_api.F90
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_choose_kernel_with_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_DEPENDENCIES = test/fortran_test_programs/elpa_test_programs_print_headers.X90
+EXTRA_elpa2_test_complex_choose_kernel_with_api@SUFFIX@_DEPENDENCIES = test/fortran/elpa_test_programs_print_headers.X90
 
 elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2_print_kernels.F90
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
@@ -420,7 +420,7 @@ distclean-local:
 EXTRA_DIST = \
   fdep/fortran_dependencies.pl \
   fdep/fortran_dependencies.mk \
-  test/fortran_test_programs/elpa_test_programs_print_headers.X90 \
+  test/fortran/elpa_test_programs_print_headers.X90 \
   src/elpa_reduce_add_vectors.X90 \
   src/elpa_transpose_vectors.X90 \
   src/redist_band.X90 \
