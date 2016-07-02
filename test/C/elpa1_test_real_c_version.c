@@ -51,8 +51,8 @@
 #include <math.h>
 
 #include <elpa/elpa.h>
-#include <test/shared_sources/generated.h>
-#include <complex.h>
+
+#include "test/shared/generated.h"
 
 int main(int argc, char** argv) {
    int myid;
@@ -78,22 +78,18 @@ int main(int argc, char** argv) {
    int na_rows, na_cols;
    double startVal;
 
-   complex double *a, *z, *as, *tmp1, *tmp2;
-
-   double *ev, *xr;
+   double *a, *z, *as, *ev, *tmp1, *tmp2;
 
    int *iseed;
 
    int success;
-
-   int THIS_COMPLEX_ELPA_KERNEL_API;
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 #else
    nprocs = 1;
-   myid =0;
+   myid = 0;
    MPI_COMM_WORLD=1;
 #endif
    na = 1000;
@@ -103,14 +99,13 @@ int main(int argc, char** argv) {
    if (myid == 0) {
      printf("This is the c version of an ELPA test-programm\n");
      printf("\n");
-     printf("It will call the 1stage ELPA complex solver for a matrix\n");
+     printf("It will call the 1stage ELPA real solver for an\n");
      printf("of matrix size %d. It will compute %d eigenvalues\n",na,nev);
      printf("and uses a blocksize of %d\n",nblk);
      printf("\n");
      printf("This is an example program with much less functionality\n");
      printf("as it's Fortran counterpart. It's only purpose is to show how \n");
      printf("to evoke ELPA1 from a c programm\n");
-
      printf("\n");
 
    }
@@ -136,8 +131,6 @@ int main(int argc, char** argv) {
    /* convert communicators before */
 #ifdef WITH_MPI
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
-#else
-   my_mpi_comm_world = 1;
 #endif
    set_up_blacsgrid_from_fortran(my_mpi_comm_world, &my_blacs_ctxt, &np_rows, &np_cols, &nprow, &npcol, &my_prow, &my_pcol);
 
@@ -151,6 +144,8 @@ int main(int argc, char** argv) {
    /* These are NOT usable in C without calling the MPI_Comm_f2c function on them !! */
 #ifdef WITH_MPI
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
+#else
+   my_mpi_comm_world =1 ;
 #endif
    mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
@@ -177,34 +172,29 @@ int main(int argc, char** argv) {
      printf("\n");
    }
 
-   a  = malloc(na_rows*na_cols*sizeof(complex double));
-   z  = malloc(na_rows*na_cols*sizeof(complex double));
-   as = malloc(na_rows*na_cols*sizeof(complex double));
-
-   xr = malloc(na_rows*na_cols*sizeof(double));
+   a  = malloc(na_rows*na_cols*sizeof(double));
+   z  = malloc(na_rows*na_cols*sizeof(double));
+   as = malloc(na_rows*na_cols*sizeof(double));
 
 
    ev = malloc(na*sizeof(double));
 
-   tmp1  = malloc(na_rows*na_cols*sizeof(complex double));
-   tmp2 = malloc(na_rows*na_cols*sizeof(complex double));
+   tmp1  = malloc(na_rows*na_cols*sizeof(double));
+   tmp2 = malloc(na_rows*na_cols*sizeof(double));
 
    iseed = malloc(4096*sizeof(int));
 
-   prepare_matrix_complex_from_fortran(na, myid, na_rows, na_cols, sc_desc, iseed, xr, a, z, as);
-
-   free(xr);
+   prepare_matrix_real_from_fortran(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
 
    if (myid == 0) {
      printf("\n");
-     printf("Entering ELPA 2stage complex solver\n");
+     printf("Entering ELPA 1stage real solver\n");
      printf("\n");
    }
 #ifdef WITH_MPI
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
-   THIS_COMPLEX_ELPA_KERNEL_API = ELPA2_COMPLEX_KERNEL_GENERIC;
-   success = elpa_solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API);
+   success = elpa_solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
 
    if (success != 1) {
      printf("error in ELPA solve \n");
@@ -216,20 +206,18 @@ int main(int argc, char** argv) {
 
    if (myid == 0) {
      printf("\n");
-     printf("2stage ELPA complex solver complete\n");
+     printf("1stage ELPA real solver complete\n");
      printf("\n");
    }
 
    /* check the results */
-   status = check_correctness_complex_from_fortran(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+   status = check_correctness_real_from_fortran(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
 
    if (status !=0){
      printf("The computed EVs are not correct !\n");
    }
    if (status ==0){
-     if (myid == 0) {
-       printf("All ok!\n");
-     }
+     printf("All ok!\n");
    }
 
    free(sc_desc);

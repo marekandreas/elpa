@@ -60,6 +60,7 @@
 !> an ascii file.
 !>
 !> The real ELPA 2 kernel is set as the default kernel.
+!> In this test case the qr_decomposition is used.
 !> However, this can be overriden by setting
 !> the environment variable "REAL_ELPA_KERNEL" to an
 !> appropiate value.
@@ -134,16 +135,53 @@ program test_real2
    integer(kind=ik)           :: j
 
    success = .true.
-
+   !write_to_file = .false.
    call read_input_parameters(na, nev, nblk, write_to_file)
+
+   !if (COMMAND_ARGUMENT_COUNT() /= 0) then
+   !  write(error_unit,*) "This program does not support any command-line arguments"
+   !  stop 1
+   !endif
+
+!   ! override nblk
+!       nblk = 32
+!   !   na   = 4000
+!   !   nev  = 1500
+!
+!   ! make sure na, nbl is even
+!   if (mod(nblk,2 ) .ne. 0) then
+!     nblk = nblk - 1
+!   endif
+!
+!
+!   ! make sure na is even
+!   if (mod(na,2) .ne. 0) then
+!     na = na - 1
+!   endif
+!   ! make sure na is at least 34
+!   if (na .lt. 34) then
+!     na = 34
+!   endif
+
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   STATUS = 0
+   status = 0
+   if (nblk .lt. 64) then
+     status = 1
+     if (myid .eq. 0) print *,"At the moment QR decomposition need blocksize of at least 64"
+     if (na .lt. 64) then
+       if (myid .eq. 0) print *,"This is why the matrix size must also be at least 64 or only 1 MPI task can be used"
+     endif
 
+#ifdef WITH_MPI
+      call mpi_finalize(mpierr)
+#endif
+      call EXIT(0)
+   endif
 #define DATATYPE REAL
-#include "elpa_test_programs_print_headers.X90"
+#include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -167,9 +205,9 @@ program test_real2
                 print_max_allocated_memory=.true.)
 
 
-  call timer%enable()
+   call timer%enable()
 
-  call timer%start("program")
+   call timer%start("program")
 #endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -204,6 +242,7 @@ program test_real2
       print *, " kernel via an environment variable! To change this re-install"
       print *, " the library and have a look at the log files"
 #endif
+      print *, " The qr-decomposition is used via the api call"
    endif
 
    !-------------------------------------------------------------------------------
@@ -276,8 +315,9 @@ program test_real2
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
    success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              na_cols, &
-                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+                              na_cols,                                        &
+                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
+                              useQR=.true.)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
@@ -297,7 +337,7 @@ program test_real2
    if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
 
    if(write_to_file%eigenvectors) then
-      write(unit = task_suffix, fmt = '(i8.8)') myid
+     write(unit = task_suffix, fmt = '(i8.8)') myid
      open(17,file="EVs_real2_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
      write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
 
@@ -308,9 +348,10 @@ program test_real2
      enddo
      close(17)
    endif
+
    if(write_to_file%eigenvalues) then
       if (myid == 0) then
-         open(17,file="Eigenvalues_real2_out.txt",form='formatted',status='new')
+         open(17,file="EVs_real2_out.txt",form='formatted',status='new')
          do i=1,na
             write(17,*) i,ev(i)
          enddo

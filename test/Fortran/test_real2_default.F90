@@ -59,8 +59,8 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-!> The complex ELPA 2 kernel is set in this program via
-!> the API call. However, this can be overriden by setting
+!> The real ELPA 2 kernel is set as the default kernel.
+!> However, this can be overriden by setting
 !> the environment variable "REAL_ELPA_KERNEL" to an
 !> appropiate value.
 !>
@@ -81,7 +81,6 @@ program test_real2
    use precision
    use ELPA1
    use ELPA2
-
    use elpa_utilities, only : error_unit
    use elpa2_utilities
 
@@ -137,7 +136,6 @@ program test_real2
    success = .true.
 
    call read_input_parameters(na, nev, nblk, write_to_file)
-
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
@@ -145,7 +143,7 @@ program test_real2
    STATUS = 0
 
 #define DATATYPE REAL
-#include "elpa_test_programs_print_headers.X90"
+#include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -193,20 +191,19 @@ program test_real2
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is an example how to determine the ELPA2 kernel with"
-      print *, "an api call. Note, however, that setting the kernel via"
-      print *, "an environment variable will always take precedence over"
-      print *, "everything else! "
+      print *, "This is an example how ELPA2 chooses a default kernel,"
+#ifdef HAVE_ENVIRONMENT_CHECKING
+      print *, "or takes the kernel defined in the environment variable,"
+#endif
+      print *, "since the ELPA API call does not contain any kernel specification"
+      print *
+      print *, " The settings are: ",trim(get_actual_real_kernel_name())," as real kernel"
       print *
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
       print *, " kernel via an environment variable! To change this re-install"
       print *, " the library and have a look at the log files"
 #endif
-      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
-      print *
-
-
    endif
 
    !-------------------------------------------------------------------------------
@@ -271,92 +268,18 @@ program test_real2
    end if
 
 
-   ! ELPA is called with a kernel specification in the API
+   ! ELPA is called without any kernel specification in the API,
+   ! furthermore, if the environment variable is not set, the
+   ! default kernel is called. Otherwise, the kernel defined in the
+   ! environment variable
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
    success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               na_cols, &
-                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
-                             REAL_ELPA_KERNEL_GENERIC_SIMPLE)
-#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
-#ifdef WITH_REAL_GENERIC_KERNEL
-                              REAL_ELPA_KERNEL_GENERIC)
-#endif
-
-#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
-                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
-#endif
-
-#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
-                              REAL_ELPA_KERNEL_SSE)
-#endif
-#ifdef WITH_ONE_SPECIFIC_REAL_KERNEL
-
-#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK6)
-#else
-#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK4)
-#else
-#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK2)
-#endif
-#endif
-#endif
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK6)
-#else
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK4)
-#else
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK2)
-#endif
-#endif
-#endif
-
-#else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
-
-#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK2)
-#endif
-
-#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK4)
-#endif
-
-#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK6)
-#endif
-
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK2)
-#endif
-
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK4)
-#endif
-
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK6)
-#endif
-
-#endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
-
-#ifdef WITH_REAL_BGP_KERNEL
-                              REAL_ELPA_KERNEL_BGP)
-#endif
-
-#ifdef WITH_REAL_BGQ_KERNEL
-                              REAL_ELPA_KERNEL_BGQ)
-#endif
-
-#endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
-
-    if (.not.(success)) then
+   if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
@@ -374,7 +297,7 @@ program test_real2
    if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
 
    if(write_to_file%eigenvectors) then
-     write(unit = task_suffix, fmt = '(i8.8)') myid
+      write(unit = task_suffix, fmt = '(i8.8)') myid
      open(17,file="EVs_real2_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
      write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
 
@@ -385,7 +308,6 @@ program test_real2
      enddo
      close(17)
    endif
-
    if(write_to_file%eigenvalues) then
       if (myid == 0) then
          open(17,file="Eigenvalues_real2_out.txt",form='formatted',status='new')
@@ -396,9 +318,9 @@ program test_real2
       endif
    endif
 
+
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 

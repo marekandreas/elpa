@@ -83,12 +83,12 @@
 module ELPA1
   use precision
   use elpa_utilities
+  use elpa1_auxiliary
 
   implicit none
 
-  PRIVATE ! By default, all routines contained are private
-
   ! The following routines are public:
+  private
 
   public :: get_elpa_row_col_comms     !< old, deprecated interface: Sets MPI row/col communicators
   public :: get_elpa_communicators     !< Sets MPI row/col communicators
@@ -97,6 +97,29 @@ module ELPA1
   public :: solve_evp_real_1stage      !< Driver routine for real eigenvalue problem
   public :: solve_evp_complex          !< old, deprecated interface:  Driver routine for complex eigenvalue problem
   public :: solve_evp_complex_1stage   !< Driver routine for complex eigenvalue problem
+
+  ! imported from elpa1_auxilliary
+
+  public :: elpa_mult_at_b_real        !< Multiply real matrices A**T * B
+  public :: mult_at_b_real             !< old, deprecated interface to multiply real matrices A**T * B
+
+  public :: elpa_mult_ah_b_complex     !< Multiply complex matrices A**H * B
+  public :: mult_ah_b_complex          !< old, deprecated interface to multiply complex matrices A**H * B
+
+  public :: elpa_invert_trm_real       !< Invert real triangular matrix
+  public :: invert_trm_real            !< old, deprecated interface to invert real triangular matrix
+
+  public :: elpa_invert_trm_complex    !< Invert complex triangular matrix
+  public :: invert_trm_complex         !< old, deprecated interface to invert complex triangular matrix
+
+  public :: elpa_cholesky_real         !< Cholesky factorization of a real matrix
+  public :: cholesky_real              !< old, deprecated interface to do Cholesky factorization of a real matrix
+
+  public :: elpa_cholesky_complex      !< Cholesky factorization of a complex matrix
+  public :: cholesky_complex           !< old, deprecated interface to do Cholesky factorization of a complex matrix
+
+  public :: elpa_solve_tridi           !< Solve tridiagonal eigensystem with divide and conquer method
+
 
   ! Timing results, set by every call to solve_evp_xxx
 
@@ -108,7 +131,7 @@ module ELPA1
 
 
 !> \brief get_elpa_row_col_comms:  old, deprecated Fortran function to create the MPI communicators for ELPA. Better use "elpa_get_communicators"
-!> \detail
+!> \details
 !> The interface and variable definition is the same as in "elpa_get_communicators"
 !> \param  mpi_comm_global   Global communicator for the calculations (in)
 !>
@@ -126,7 +149,7 @@ module ELPA1
 
 !> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Better use "solve_evp_real_1stage"
 !>
-!> \detail
+!> \details
 !>  The interface and variable definition is the same as in "elpa_solve_evp_real_1stage"
 !  Parameters
 !
@@ -167,7 +190,7 @@ module ELPA1
 
 !> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage"
 !>
-!> \detail
+!> \details
 !> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage"
 !  Parameters
 !
