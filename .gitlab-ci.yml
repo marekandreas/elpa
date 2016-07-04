@@ -1864,13 +1864,13 @@ test_project:
     - rm -rf installdest
     - popd
 
-# print coverage results
-total_coverage:
-  stage: coverage
-  tags:
-    - cpu
-  script:
-    - ./ci_coverage_summary
-  artifacts:
-    paths:
-      - coverage_summary
+## print coverage results
+#total_coverage:
+#  stage: coverage
+#  tags:
+#    - cpu
+#  script:
+#    - ./ci_coverage_summary
+#  artifacts:
+#    paths:
+#      - coverage_summary
