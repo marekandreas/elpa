@@ -9,7 +9,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example "man get_elpa_communicators" should provide the documentation for the *ELPA* function which sets
 the necessary communicators.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.002/html/index.html)
+Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.003/html/index.html)
 for each *ELPA* release is available.
 
 ### General concept of the  *ELPA* library ###
@@ -20,7 +20,7 @@ The *ELPA* library consists of two main parts:
 
 Both variants of the *ELPA* solvers are available for real or complex valued matrices.
 
-Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.002/html/index.html) for details):
+Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.003/html/index.html) for details):
 
 - get_elpa_communicators   : set the row / column communicators for *ELPA*
 - solve_evp_complex_1stage : solve a complex valued eigenvale proplem with the *ELPA 1stage* solver

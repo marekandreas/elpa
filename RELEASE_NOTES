@@ -1,8 +1,8 @@
-This file contains the release notes for the ELPA 2016.05.002 version
+This file contains the release notes for the ELPA 2016.05.003 version
 
 What is new?
 -------------
-For changes since release ELPA 2016.05.001 please have a look at the Changelog file
+For changes since release ELPA 2016.05.002 please have a look at the Changelog file
 
 
 a) ABI change
@@ -15,4 +15,4 @@ Any incompatibilities to previous version?
 ---------------------------------------
 
 As mentioned before, the ABI of ELPA was not changed; There is no
-incompatibility with the previous version ELPA 2016.05.001. and ELPA 2015.11.001 releases. There is, however, an incompatibility with older versions than ELPA 2015.11.001 !
+incompatibility with the previous version ELPA 2016.05.002. There is, however, an incompatibility with older versions than ELPA 2015.11.001 !
