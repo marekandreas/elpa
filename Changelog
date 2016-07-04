@@ -1,4 +1,13 @@
-Changelog for release ELPA 2016.05.001
+Changelog for release ELPA 2016.05.003
+
+- fix a problem with the build of SSE kernels
+- make some (internal) functions public, such that they
+  can be used outside of ELPA
+- add documentation and interfaces for new public functions
+- shorten file namses and directory names for test programs
+  in under to by pass "make agrument list too long" error
+
+Changelog for release ELPA 2016.05.002
 
 - fix problem with generated *.sh- check scripts
 - name library differently if build without MPI support
