@@ -310,7 +310,7 @@ EXTRA_elpa2_test_real_qr@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.
 elpa2_test_real_api@SUFFIX@_SOURCES = test/Fortran/test_real2_api.F90
 elpa2_test_real_api@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-EXTRA_elpa2_test_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+EXTRA_elpa2_test_real_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa1_test_complex@SUFFIX@_SOURCES = test/Fortran/test_complex.F90
 elpa1_test_complex@SUFFIX@_LDADD = $(build_lib)
