@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 
 # Remember to change the version also in elpa.spec
-AC_INIT([elpa],[2016.05.002], [elpa-library@mpcdf.mpg.de])
+AC_INIT([elpa],[2016.05.003], [elpa-library@mpcdf.mpg.de])
 
 AC_SUBST([PACKAGE_VERSION])
 
