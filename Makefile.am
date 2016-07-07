@@ -45,7 +45,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/redist_band.X90
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
-libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
+libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION)
 libelpa@SUFFIX@_la_LIBADD = libelpa@SUFFIX@_public.la libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_la_SOURCES =
 
