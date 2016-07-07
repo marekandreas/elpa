@@ -1,8 +1,7 @@
 AC_PREREQ([2.69])
 
-# Remember to change the version also in elpa.spec
-AC_INIT([elpa],[2016.05.002], [elpa-library@mpcdf.mpg.de])
-
+# The version is set in elpa.spec, to have a single point of reference
+AC_INIT([elpa],m4_esyscmd_s([awk '/^ *Version:/ {print $2;}' elpa.spec]), [elpa-library@mpcdf.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
@@ -34,7 +33,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [5:1:1])
+AC_SUBST([ELPA_SO_VERSION], [6:0:2])
 #
 
 
@@ -95,6 +94,7 @@ fi
 AC_PROG_INSTALL
 AM_PROG_AR
 AM_PROG_AS
+AM_PROG_CC_C_O
 
 # Fortran
 
@@ -119,6 +119,14 @@ if test x"${enable_openmp}" = x"yes"; then
     AC_MSG_ERROR([Could not compile a Fortran program with OpenMP, adjust FCFLAGS])
   fi
   FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
+fi
+
+dnl check which MPI binray invokes a MPI job
+if test x"$with_mpi" = x"yes"; then
+  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun], [no])
+  if test x"$MPI_BINARY" = x"no"; then
+    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun])
+  fi
 fi
 
 ## C++
@@ -158,50 +166,51 @@ install_complex_generic_simple=yes
 
 AC_LANG([C])
 
-dnl build with ftimings support
-AC_MSG_CHECKING(whether ELPA should be build with ftimings support)
-AC_ARG_WITH([ftimings],
-		AS_HELP_STRING([--with-ftimings],
-			       [detailed timings, default no.]),
-	      [with_ftimings=yes],
-	      [with_ftimings=no])
-AC_MSG_RESULT([${with_ftimings}])
-
 dnl build with the possibilty to redirect stdout and stderr
 dnl per MPI task in a file
 AC_MSG_CHECKING(whether stdout/stderr file redirect should be enabled)
-AC_ARG_WITH([redirect],
-		AS_HELP_STRING([--with-redirect],
-			       [for test programs, allow redirection of stdout/stderr per MPI taks in a file (useful for ftimings), default no.]),
-	      [with_redirect=yes],
-	      [with_redirect=no])
-AC_MSG_RESULT([${with_redirect}])
+AC_ARG_ENABLE([redirect],
+		AS_HELP_STRING([--enable-redirect],
+			       [for test programs, allow redirection of stdout/stderr per MPI taks in a file (useful for timing), default no.]),
+	      [],
+	      [enable_redirect=no])
+AC_MSG_RESULT([${enable_redirect}])
 
-if test x"${with_redirect}" = x"yes"; then
+dnl redirect
+if test x"${enable_redirect}" = x"yes"; then
   AC_DEFINE([HAVE_REDIRECT], [1], [Redirect stdout and stderr of test programs per MPI tasks to a file])
 fi
-AM_CONDITIONAL([HAVE_REDIRECT],[test x"$with_redirect" = x"yes"])
+AM_CONDITIONAL([HAVE_REDIRECT],[test x"$enable_redirect" = x"yes"])
 
-if test x"${with_ftimings}" = x"yes"; then
-  AC_DEFINE([HAVE_DETAILED_TIMINGS], [1], [Enable more timings])
-  AC_ARG_ENABLE([papi],
-	[AS_HELP_STRING([--disable-papi],[Do not use PAPI to also measure flop count, autodetected by default])],
-	[want_papi=$enableval],[want_papi="auto"])
-  papi_found=unknown
-  if test x"$want_papi" != x"no" ; then
-    AC_CHECK_LIB([papi],[PAPI_library_init],[papi_found="yes"],[papi_found="no"])
-    if test x"$want_papi" = x"yes" ; then
-      if test x"$papi_found" = x"no" ; then
-        AC_MSG_ERROR(["Could not find usable PAPI installation, please adjust CFLAGS, LDFLAGS"])
-      fi
+dnl build with ftimings support
+AC_MSG_CHECKING(whether ELPA should be build with more detailed timing support)
+AC_ARG_ENABLE([timing],
+		AS_HELP_STRING([--enable-timing],
+			       [more detailed timing, default no.]),
+	      [],
+	      [enable_timings=no])
+AC_MSG_RESULT([${enable_timings}])
+
+if test x"${enable_timings}" = x"yes"; then
+  AC_DEFINE([HAVE_DETAILED_TIMINGS], [1], [Enable more timing])
+fi
+AM_CONDITIONAL([HAVE_DETAILED_TIMINGS],[test x"$enable_timings" = x"yes"])
+
+dnl PAPI for ftimings
+AC_ARG_WITH([papi],
+		[AS_HELP_STRING([--with-papi],[Use PAPI to also measure flop count in the detailed timing (--enable-timing), disabled by default])],
+		[],
+		[with_papi="no"])
+if test x"${enable_timings}" = x"yes"; then
+  if test x"$with_papi" = x"yes" ; then
+    AC_SEARCH_LIBS([PAPI_library_init],[papi],
+                  [papi_found=yes],[papi_found=no])
+    if test x"$papi_found" = x"no" ; then
+      AC_MSG_ERROR(["Could not find usable PAPI installation, please install or adjust CFLAGS, LDFLAGS"])
     fi
-  fi
-  if test x"$papi_found" = x"yes"; then
     AC_DEFINE([HAVE_LIBPAPI], [1], [Use the PAPI library])
-    LIBS="-lpapi $LIBS"
   fi
 fi
-AM_CONDITIONAL([HAVE_DETAILED_TIMINGS],[test x"$with_ftimings" = x"yes"])
 
 AC_MSG_CHECKING(whether double-precision SSE assembly kernel can be compiled)
 
@@ -943,6 +952,7 @@ fi
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_REAL],[test x"$want_single_precision" = x"yes"])
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" = x"yes"])
 
+AC_SUBST([MPI_BINARY])
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])
 AC_SUBST([with_amd_bulldozer_kernel])

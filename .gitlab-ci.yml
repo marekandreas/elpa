@@ -325,7 +325,10 @@ gfortran-double-precision-mpi-openmp-special-gcov-jobs:
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-#    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 # jobs for intel/gfortran single precision mpi and openmp
 
@@ -384,7 +387,6 @@ gfortran-single-precision-mpi-openmp-special-gcov-jobs:
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
-#    - ./test_scripts/get_coverage_summary.sh
 
 # jobs for intel/gfortran double precision no mpi and openmp
 
@@ -757,7 +759,7 @@ gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --with-ftimings --enable-openmp
+    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timing --enable-openmp
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1006,6 +1008,18 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
     paths:
       - coverage_data
 
+# real generic simple, compex generic simple
+intel-double-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timing --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - make -j 8
+    - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+>>>>>>> master
 
 # jobs for intel/gfortran single precision mpi and no openmp ftimings and redirect enabled
 
@@ -1290,6 +1304,10 @@ gfortran-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 # jobs for intel/gfortran single precision nompi and no openmp ftimings and redirect enabled
 
@@ -1313,7 +1331,6 @@ gfortran-single-precision-nompi-noopenmp-ftimings-redirect-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
-
 
 # jobs for intel/gfortran double precision mpi and openmp ftimings and redirect enabled
 
@@ -1350,7 +1367,10 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
     - export OMP_NUM_THREADS=1
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
-
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 # jobs for intel/gfortran single precision mpi and openmp ftimings and redirect enabled
 
@@ -1466,6 +1486,10 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-gene
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 
 # jobs for intel/gfortran double precision mpi and no openmp ftimings and redirect enabled
@@ -1507,7 +1531,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-ge
   artifacts:
     paths:
       - coverage_data
- 
+
 # real generic simple, compex generic simple
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
@@ -1576,6 +1600,10 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-com
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-assumed-size-jobs:
   tags:
@@ -1665,7 +1693,6 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-compl
     paths:
       - coverage_data
 
-
 # real sse block2, complex sse block 1
 intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
   tags:
@@ -1688,6 +1715,10 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-s
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-special-gcov-jobs:
   tags:
@@ -1700,6 +1731,10 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-s
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 
 # real sse block2, complex sse block1
@@ -1761,6 +1796,10 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-s
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 # real sse block4, complex sse block 2
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
@@ -1812,6 +1851,10 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
   tags:
@@ -1909,6 +1952,10 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 
 #real avx block2, complex avx block2
@@ -1921,6 +1968,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-av
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   tags:
@@ -2314,6 +2365,10 @@ gfortran-set-kernel-via-environment-variable-mpi-openmp-special-gcov-job:
     - export OMP_NUM_THREADS=1
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 intel-set-kernel-via-environment-variable-mpi-noopenmp-job:
   tags:
@@ -2339,6 +2394,10 @@ gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 intel-set-kernel-via-environment-variable-nompi-openmp-job:
   tags:
@@ -2379,6 +2438,10 @@ gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
     - export OMP_NUM_THREADS=1
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
   tags:
@@ -2404,6 +2467,10 @@ gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 # test distcheck
 distcheck:
@@ -2412,7 +2479,8 @@ distcheck:
   script:
     - ./autogen.sh
     - ./configure --with-mpi=no
-    - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no" TEST_FLAGS='1500 50 16'
+    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
+    - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no" TEST_FLAGS='1500 50 16' || { chmod u+rwX -R . ; exit 1 ; }
 
 
 # test test_project
@@ -2441,3 +2509,13 @@ test_project:
     - rm -rf installdest
     - popd
 
+## print coverage results
+#total_coverage:
+#  stage: coverage
+#  tags:
+#    - cpu
+#  script:
+#    - ./ci_coverage_summary
+#  artifacts:
+#    paths:
+#      - coverage_summary

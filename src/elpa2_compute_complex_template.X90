@@ -3547,10 +3547,10 @@
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call unpack_row_complex_cpu_openmp_double(a, row,i-limits(ip),my_thread, &
+                call unpack_row_complex_cpu_openmp_double(aIntern, row,i-limits(ip),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #else
-                call unpack_row_complex_cpu_openmp_single(a, row,i-limits(ip),my_thread, &
+                call unpack_row_complex_cpu_openmp_single(aIntern, row,i-limits(ip),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #endif
               enddo
@@ -3601,10 +3601,10 @@
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call unpack_row_complex_cpu_openmp_double(a, row,i-limits(ip),my_thread, &
+                call unpack_row_complex_cpu_openmp_double(aIntern, row,i-limits(ip),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #else
-                call unpack_row_complex_cpu_openmp_single(a, row,i-limits(ip),my_thread, &
+                call unpack_row_complex_cpu_openmp_single(aIntern, row,i-limits(ip),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #endif
               enddo
@@ -3751,10 +3751,10 @@
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call unpack_row_complex_cpu_openmp_double(a, row,i-limits(my_prow),my_thread, &
+                call unpack_row_complex_cpu_openmp_double(aIntern, row,i-limits(my_prow),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #else
-                call unpack_row_complex_cpu_openmp_single(a, row,i-limits(my_prow),my_thread, &
+                call unpack_row_complex_cpu_openmp_single(aIntern, row,i-limits(my_prow),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #endif
               enddo
@@ -4439,12 +4439,14 @@
                              reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                   endif
 #ifdef DOUBLE_PRECISION_COMPLEX
-                  call compute_hh_trafo_complex_cpu_openmp_double(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
+                  call compute_hh_trafo_complex_cpu_openmp_double(aIntern, stripe_width, a_dim2, stripe_count, &
+		                                                  max_threads, l_nev, &
                                                            a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                            0, current_local_n, i, my_thread, thread_width,                    &
                                                            THIS_COMPLEX_ELPA_KERNEL)
 #else
-                  call compute_hh_trafo_complex_cpu_openmp_single(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,   &
+                  call compute_hh_trafo_complex_cpu_openmp_single(aIntern, stripe_width, a_dim2, stripe_count, &
+		                                           max_threads, l_nev,   &
                                                            a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                            0, current_local_n, i, my_thread, thread_width,                    &
                                                            THIS_COMPLEX_ELPA_KERNEL)
@@ -4607,12 +4609,12 @@
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call compute_hh_trafo_complex_cpu_openmp_double(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
+                call compute_hh_trafo_complex_cpu_openmp_double(aIntern, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,    &
                                                          current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
                                                           thread_width, THIS_COMPLEX_ELPA_KERNEL)
 #else
-                call compute_hh_trafo_complex_cpu_openmp_single(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,   &
+                call compute_hh_trafo_complex_cpu_openmp_single(aIntern, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,    &
                                                          current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
                                                           thread_width, THIS_COMPLEX_ELPA_KERNEL)
@@ -4781,13 +4783,13 @@
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call compute_hh_trafo_complex_cpu_openmp_double(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,    &
+                call compute_hh_trafo_complex_cpu_openmp_double(aIntern, stripe_width, a_dim2, stripe_count, max_threads, l_nev,&
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops,  &
                                                          kernel_time, top_msg_length,                           &
                                                          current_local_n-top_msg_length-bottom_msg_length, i,   &
                                                          my_thread,  thread_width,  THIS_COMPLEX_ELPA_KERNEL)
 #else
-                call compute_hh_trafo_complex_cpu_openmp_single(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,    &
+                call compute_hh_trafo_complex_cpu_openmp_single(aIntern, stripe_width, a_dim2, stripe_count, max_threads, l_nev,&
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops,  &
                                                          kernel_time, top_msg_length,                           &
                                                          current_local_n-top_msg_length-bottom_msg_length, i,   &
@@ -4903,12 +4905,14 @@
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                 endif
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call compute_hh_trafo_complex_cpu_openmp_double(a, stripe_width, a_dim2, stripe_count, max_threads,  l_nev,        &
+                call compute_hh_trafo_complex_cpu_openmp_double(aIntern, stripe_width, a_dim2, stripe_count, max_threads,  &
+		                                                l_nev,        &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                          0, top_msg_length, i, my_thread, thread_width,                     &
                                                          THIS_COMPLEX_ELPA_KERNEL)
 #else
-                call compute_hh_trafo_complex_cpu_openmp_single(a, stripe_width, a_dim2, stripe_count, max_threads,  l_nev,        &
+                call compute_hh_trafo_complex_cpu_openmp_single(aIntern, stripe_width, a_dim2, stripe_count, max_threads,  &
+		l_nev,        &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                          0, top_msg_length, i, my_thread, thread_width,                     &
                                                          THIS_COMPLEX_ELPA_KERNEL)
@@ -5375,7 +5379,7 @@
             do my_thread = 1, max_threads
               do i = 1, stripe_count
                 do j = top_msg_length+1, top_msg_length+next_local_n
-                  A(:,j,i,my_thread) = A(:,j+a_off,i,my_thread)
+                  aIntern(:,j,i,my_thread) = aIntern(:,j+a_off,i,my_thread)
                 enddo
               enddo
             enddo

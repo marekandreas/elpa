@@ -91,21 +91,57 @@ module ELPA1
   ! The following routines are public:
   private
 
-  public :: get_elpa_row_col_comms           !< old, deprecated interface: Sets MPI row/col communicators
+  public :: get_elpa_row_col_comms           !< old, deprecated interface: Sets MPI row/col communicators DO NOT USE
   public :: get_elpa_communicators           !< Sets MPI row/col communicators
 
-  public :: solve_evp_real                   !< old, deprecated interface: Driver routine for real double-precision eigenvalue problem
+  public :: solve_evp_real                   !< old, deprecated interface: Driver routine for real double-precision eigenvalue problem DO NOT USE
   public :: solve_evp_real_1stage            !< Driver routine for real double-precision eigenvalue problem
   public :: solve_evp_real_1stage_double     !< Driver routine for real double-precision eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: solve_evp_real_1stage_single     !< Driver routine for real single-precision eigenvalue problem
 #endif
-  public :: solve_evp_complex                !< old, deprecated interface:  Driver routine for complex double-precision eigenvalue problem
+  public :: solve_evp_complex                !< old, deprecated interface:  Driver routine for complex double-precision eigenvalue problem DO NOT USE
   public :: solve_evp_complex_1stage         !< Driver routine for complex double-precision eigenvalue problem
   public :: solve_evp_complex_1stage_double  !< Driver routine for complex double-precision eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   public :: solve_evp_complex_1stage_single  !< Driver routine for complex single-precision eigenvalue problem
 #endif
+
+  ! imported from elpa1_auxilliary
+
+  public :: elpa_mult_at_b_real_double       !< Multiply double-precision real matrices A**T * B
+  public :: mult_at_b_real                   !< old, deprecated interface to multiply double-precision real matrices A**T * B  DO NOT USE
+
+  public :: elpa_mult_ah_b_complex_double    !< Multiply double-precision complex matrices A**H * B
+  public :: mult_ah_b_complex                !< old, deprecated interface to multiply double-preicion complex matrices A**H * B  DO NOT USE
+
+  public :: elpa_invert_trm_real_double      !< Invert double-precision real triangular matrix
+  public :: invert_trm_real                  !< old, deprecated interface to invert double-precision real triangular matrix  DO NOT USE
+
+  public :: elpa_invert_trm_complex_double   !< Invert double-precision complex triangular matrix
+  public :: invert_trm_complex               !< old, deprecated interface to invert double-precision complex triangular matrix  DO NOT USE
+
+  public :: elpa_cholesky_real_double        !< Cholesky factorization of a double-precision real matrix
+  public :: cholesky_real                    !< old, deprecated interface to do Cholesky factorization of a double-precision real matrix  DO NOT USE
+
+  public :: elpa_cholesky_complex_double     !< Cholesky factorization of a double-precision complex matrix
+  public :: cholesky_complex                 !< old, deprecated interface to do Cholesky factorization of a double-precision complex matrix  DO NOT USE
+
+  public :: elpa_solve_tridi_double          !< Solve a double-precision tridiagonal eigensystem with divide and conquer method
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  public :: elpa_mult_at_b_real_single       !< Multiply single-precision real matrices A**T * B
+  public :: elpa_invert_trm_real_single      !< Invert single-precision real triangular matrix
+  public :: elpa_cholesky_real_single        !< Cholesky factorization of a single-precision real matrix
+  public :: elpa_solve_tridi_single          !< Solve a single-precision tridiagonal eigensystem with divide and conquer method
+#endif
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  public :: elpa_mult_ah_b_complex_single    !< Multiply single-precision complex matrices A**H * B
+  public :: elpa_invert_trm_complex_single   !< Invert single-precision complex triangular matrix
+  public :: elpa_cholesky_complex_single     !< Cholesky factorization of a single-precision complex matrix
+#endif
+
   ! Timing results, set by every call to solve_evp_xxx
 
   real(kind=c_double), public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
@@ -132,10 +168,10 @@ module ELPA1
     module procedure get_elpa_communicators
   end interface
 
-!> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Better use "solve_evp_real_1stage"
+!> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Better use "solve_evp_real_1stage_double"
 !>
 !> \details
-!>  The interface and variable definition is the same as in "elpa_solve_evp_real_1stage"
+!>  The interface and variable definition is the same as in "elpa_solve_evp_real_1stage_double"
 !  Parameters
 !
 !> \param  na                   Order of matrix a
@@ -177,10 +213,10 @@ module ELPA1
     module procedure solve_evp_real_1stage_double
   end interface
 
-!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage"
+!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage_double"
 !>
 !> \details
-!> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage"
+!> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage_double"
 !  Parameters
 !
 !> \param  na                   Order of matrix a
