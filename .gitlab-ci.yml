@@ -293,6 +293,7 @@ intel-double-precision-mpi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+
 gfortran-double-precision-mpi-openmp-jobs:
   tags:
     - cpu
@@ -1019,7 +1020,6 @@ intel-double-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
->>>>>>> master
 
 # jobs for intel/gfortran single precision mpi and no openmp ftimings and redirect enabled
 
