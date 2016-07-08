@@ -609,13 +609,12 @@ fi
 
 dnl Test possibility of 'use mpi', if requested
 if test x"${with_mpi}" = x"yes" ; then
-  AC_ARG_ENABLE([use-mpi],
-                AS_HELP_STRING([--enable-use-mpi],
-                               [Use Fortran MPI module (otherwise 'include "mpif.h' is used)]),
+  AC_ARG_ENABLE([mpi-module],
+                AS_HELP_STRING([--disable-mpi-module],
+                               [Do not use the Fortran MPI module, get interfaces by 'include "mpif.h')]),
                 [],
-                [enable_use_mpi=no])
-  AC_MSG_RESULT([${enable_use_mpi}])
-  if test x"${enable_use_mpi}" = x"yes" ; then
+                [enable_mpi_module=yes])
+  if test x"${enable_mpi_module}" = x"yes" ; then
     AC_MSG_CHECKING(whether Fortran mpi module can be used)
     AC_COMPILE_IFELSE([AC_LANG_SOURCE([
       program test_mpi_module
@@ -631,7 +630,7 @@ if test x"${with_mpi}" = x"yes" ; then
     if test x"${can_use_fortran_mpi_module}" = x"yes" ; then
       AC_DEFINE([HAVE_MPI_MODULE],[1],[can use the Fortran mpi module])
     else
-      AC_MSG_ERROR([Could not compile a Fortran program with an 'use mpi' statement])
+      AC_MSG_ERROR([Could not compile a Fortran program with an 'use mpi' statement. You can try again with --disable-mpi-module])
     fi
   fi
 fi
