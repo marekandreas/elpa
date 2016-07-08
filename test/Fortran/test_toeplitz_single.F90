@@ -106,7 +106,7 @@ program test_solve_tridi_single
 
    logical                     :: wantDebug
 
-   real(kind=rk4), parameter   :: pi = 3.141592653589793238462643383279_rk
+   real(kind=rk4), parameter   :: pi = 3.141592653589793238462643383279_rk4
 
    integer(kind=ik)            :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -371,7 +371,7 @@ program test_solve_tridi_single
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, a, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_single(na, nev, as, a, ev, sc_desc, myid, tmp1, tmp2)
 
    deallocate(a)
 

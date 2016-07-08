@@ -331,7 +331,8 @@ noinst_PROGRAMS += \
   elpa2_test_real_single_precision@SUFFIX@ \
   elpa2_test_real_default_single_precision@SUFFIX@ \
   elpa2_test_real_qr_single_precision@SUFFIX@ \
-  elpa2_test_real_api_single_precision@SUFFIX@
+  elpa2_test_real_api_single_precision@SUFFIX@ \
+  elpa1_real_toeplitz_single_precision@SUFFIX@
 endif
 
 if WITH_GPU_VERSION
@@ -470,7 +471,7 @@ elpa2_test_real_single_precision@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa2_test_real_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-elpa1_real_toeplitz_single_precision@SUFFIX@_SOURCES = test/Fortran/test_toeplitz_single_precision.F90
+elpa1_real_toeplitz_single_precision@SUFFIX@_SOURCES = test/Fortran/test_toeplitz_single.F90
 elpa1_real_toeplitz_single_precision@SUFFIX@_LDADD = $(build_lib)
 elpa1_real_toeplitz_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa1_real_toeplitz_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
@@ -571,17 +572,17 @@ if WANT_SINGLE_PRECISION_REAL
 check_SCRIPTS += \
   elpa1_test_real_single_precision@SUFFIX@.sh \
   elpa2_test_real_single_precision@SUFFIX@.sh \
-  elpa2_test_real_default_kernel_single_precision@SUFFIX@.sh \
-  elpa2_test_real_default_kernel_qr_decomposition_single_precision@SUFFIX@.sh \
-  elpa2_test_real_choose_kernel_with_api_single_precision@SUFFIX@.sh
+  elpa2_test_real_default_single_precision@SUFFIX@.sh \
+  elpa2_test_real_qr_single_precision@SUFFIX@.sh \
+  elpa2_test_real_api_single_precision@SUFFIX@.sh
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 check_SCRIPTS += \
   elpa1_test_complex_single_precision@SUFFIX@.sh \
   elpa2_test_complex_single_precision@SUFFIX@.sh \
-  elpa2_test_complex_default_kernel_single_precision@SUFFIX@.sh \
-  elpa2_test_complex_choose_kernel_with_api_single_precision@SUFFIX@.sh
+  elpa2_test_complex_default_single_precision@SUFFIX@.sh \
+  elpa2_test_complex_api_single_precision@SUFFIX@.sh
 endif
 
 if WITH_GPU_VERSION

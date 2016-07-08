@@ -82,7 +82,7 @@ program test_complex2_default_kernel_single_precision
    use ELPA2
    use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
-
+   use elpa2_utilities
 #ifdef WITH_OPENMP
    use test_util
 #endif

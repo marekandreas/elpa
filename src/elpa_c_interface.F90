@@ -786,7 +786,8 @@
       wantDebugFortran = .false.
     endif
 
-    successFortran = elpa_solve_tridi_float(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
+    successFortran = elpa_solve_tridi_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                             mpi_comm_cols, wantDebugFortran)
 
     if (successFortran) then
       success = 1
@@ -901,7 +902,7 @@
                                              nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
     bind(C,name="elpa_mult_at_b_real_float") result(success)
     use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_mult_at_b_real_float
+    use elpa1_auxiliary, only : elpa_mult_at_b_real_single
 
     implicit none
 
@@ -916,7 +917,7 @@
 #endif
     logical                     :: successFortran
 
-    successFortran = elpa_mult_at_b_real_float(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    successFortran = elpa_mult_at_b_real_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                                nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
 
     if (successFortran) then
@@ -1051,7 +1052,7 @@
 #endif
     logical                        :: successFortran
 
-    successFortran = elpa_mult_ah_b_complex_float(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    successFortran = elpa_mult_ah_b_complex_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                                   nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
 
     if (successFortran) then
@@ -1235,7 +1236,8 @@
  !c> */
 
  !c> int elpa_invert_trm_complex_single(int na, complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_invert_trm_complex_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success) &
+ function elpa_invert_trm_complex_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
+                                                 mpi_comm_cols, wantDebug) result(success) &
    bind(C,name="elpa_invert_trm_complex_single")
 
    use, intrinsic :: iso_c_binding
@@ -1445,7 +1447,8 @@
  !c> */
 
  !c> int elpa_cholesky_complex_single(int na, complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_cholesky_complex_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success) &
+ function elpa_cholesky_complex_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                               wantDebug) result(success) &
        bind(C,name="elpa_cholesky_complex_single")
 
    use, intrinsic :: iso_c_binding

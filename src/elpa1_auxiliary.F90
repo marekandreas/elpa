@@ -3376,7 +3376,8 @@ module elpa1_auxiliary
 !> \param wantDebug             logical, give more debug information if .true.
 !> \result success              logical, .true. on success, else .false.
 
-    function elpa_solve_tridi_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
+    function elpa_solve_tridi_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                     mpi_comm_cols, wantDebug) result(success)
 
       use elpa1_compute, solve_tridi_single_private => solve_tridi_single
       use precision
