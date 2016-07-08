@@ -550,6 +550,9 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   [fortran_can_check_environment=no]
 )
 AC_MSG_RESULT([${fortran_can_check_environment}])
+if test x"${fortran_can_check_environment}" = x"yes" ; then
+ AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can query environment variables])
+fi
 
 dnl now check which kernels can be compiled
 
@@ -604,27 +607,32 @@ else
   install_complex_bgq=no
 fi
 
-
-dnl environment variable setting of kernel
-if test x"${fortran_can_check_environment}" = x"yes" ; then
- AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can querry environment variables])
-fi
-
-if test x"${with_mpi}" = x"yes"; then
-  AC_MSG_CHECKING(whether Fortran mpi module can be used)
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-    program test_mpi_module
-      use mpi
-      real :: time
-      time = MPI_WTime()
-    end program
-  ])],
-    [fortran_mpi_module=yes],
-    [fortran_mpi_module=no]
-  )
-  AC_MSG_RESULT([${fortran_mpi_module}])
-  if test x"${fortran_mpi_module}" = x"yes" ; then
-    AC_DEFINE([HAVE_MPI_MODULE],[1],[can use Fortran mpi module])
+dnl Test possibility of 'use mpi', if requested
+if test x"${with_mpi}" = x"yes" ; then
+  AC_ARG_ENABLE([use-mpi],
+                AS_HELP_STRING([--enable-use-mpi],
+                               [Use Fortran MPI module (otherwise 'include "mpif.h' is used)]),
+                [],
+                [enable_use_mpi=no])
+  AC_MSG_RESULT([${enable_use_mpi}])
+  if test x"${enable_use_mpi}" = x"yes" ; then
+    AC_MSG_CHECKING(whether Fortran mpi module can be used)
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+      program test_mpi_module
+        use mpi
+        real :: time
+        time = MPI_WTime()
+      end program
+    ])],
+      [can_use_fortran_mpi_module=yes],
+      [can_use_fortran_mpi_module=no]
+    )
+    AC_MSG_RESULT([${can_use_fortran_mpi_module}])
+    if test x"${can_use_fortran_mpi_module}" = x"yes" ; then
+      AC_DEFINE([HAVE_MPI_MODULE],[1],[can use the Fortran mpi module])
+    else
+      AC_MSG_ERROR([Could not compile a Fortran program with an 'use mpi' statement])
+    fi
   fi
 fi
 
