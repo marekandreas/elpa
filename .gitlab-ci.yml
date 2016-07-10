@@ -1163,17 +1163,6 @@ gfortran-single-precision-nompi-openmp-ftimings-special-gcov-jobs:
 
 # jobs for intel/gfortran double precision mpi and openmp ftimings enabled
 
-intel-double-precision-mpi-openmp-ftimings-jobs:
-  tags:
-    - cpu
-  script:
-    - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0 --enable-single-precision --enable-assumed-size
-    - make -j 8
-    - export OMP_NUM_THREADS=2
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='1500 50 16'
-
 gfortran-double-precision-mpi-openmp-ftimings-jobs:
   tags:
     - cpu

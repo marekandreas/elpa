@@ -587,15 +587,15 @@ endif
 
 if WITH_GPU_VERSION
 check_SCRIPTS += \
-  elpa2_test_real_gpu_version@SUFFIX@.sh \
-  elpa2_test_complex_gpu_version@SUFFIX@.sh
+  elpa2_test_real_gpu@SUFFIX@.sh \
+  elpa2_test_complex_gpu@SUFFIX@.sh
 if WANT_SINGLE_PRECISION_REAL
 check_SCRIPTS += \
-  elpa2_test_real_gpu_version_single_precision@SUFFIX@.sh
+  elpa2_test_real_gpu_single_precision@SUFFIX@.sh
 endif
 if WANT_SINGLE_PRECISION_COMPLEX
 check_SCRIPTS += \
-  elpa2_test_complex_gpu_version_single_precision@SUFFIX@.sh
+  elpa2_test_complex_gpu_single_precision@SUFFIX@.sh
 endif
 
 endif
