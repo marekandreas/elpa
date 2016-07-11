@@ -238,7 +238,7 @@ subroutine reverse_matrix_1dcomm_double(trans,m,n,b,a,lda,work,lwork,mpicomm)
     ! local scalars
     integer(kind=ik) :: mpirank,mpiprocs,mpierr
 #ifdef WITH_MPI
-    integer(kind=ik) :: mpistatus(MPI_STATUS_SIZE)
+    integer(kind=ik) :: my_mpistatus(MPI_STATUS_SIZE)
 #endif
     integer(kind=ik) :: nr_blocks,dest_process,src_process,step
     integer(kind=ik) :: lsize,baseoffset,offset
@@ -361,10 +361,10 @@ subroutine reverse_matrix_1dcomm_double(trans,m,n,b,a,lda,work,lwork,mpicomm)
 #ifdef DOUBLE_PRECISION_REAL
 
                 call MPI_Recv(work(recvoffset), recvcount, mpi_real8, &
-                              src_process, current_index, mpicomm, mpistatus, mpierr)
+                              src_process, current_index, mpicomm, my_mpistatus, mpierr)
 #else
                 call MPI_Recv(work(recvoffset), recvcount, mpi_real4, &
-                              src_process, current_index, mpicomm, mpistatus, mpierr)
+                              src_process, current_index, mpicomm, my_mpistatus, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -564,7 +564,7 @@ subroutine reverse_matrix_1dcomm_single(trans,m,n,b,a,lda,work,lwork,mpicomm)
     ! local scalars
     integer(kind=ik) :: mpirank,mpiprocs,mpierr
 #ifdef WITH_MPI
-    integer(kind=ik) :: mpistatus(MPI_STATUS_SIZE)
+    integer(kind=ik) :: my_mpistatus(MPI_STATUS_SIZE)
 #endif
     integer(kind=ik) :: nr_blocks,dest_process,src_process,step
     integer(kind=ik) :: lsize,baseoffset,offset
@@ -687,10 +687,10 @@ subroutine reverse_matrix_1dcomm_single(trans,m,n,b,a,lda,work,lwork,mpicomm)
 #ifdef DOUBLE_PRECISION_REAL
 
                 call MPI_Recv(work(recvoffset), recvcount, mpi_real8, &
-                              src_process, current_index, mpicomm, mpistatus, mpierr)
+                              src_process, current_index, mpicomm, my_mpistatus, mpierr)
 #else
                 call MPI_Recv(work(recvoffset), recvcount, mpi_real4, &
-                              src_process, current_index, mpicomm, mpistatus, mpierr)
+                              src_process, current_index, mpicomm, my_mpistatus, mpierr)
 #endif
 
 #else /* WITH_MPI */

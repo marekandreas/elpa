@@ -300,26 +300,26 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 )
 AC_MSG_RESULT([${can_compile_avx}])
 
-#if test "${can_compile_avx}" = "yes" ; then
-#  AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
-#  AC_LANG_PUSH([C++])
-#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#   #include <x86intrin.h>
-#   int main(int argc, char **argv){
-#   double* q;
-#   __m256d a1_1 = _mm256_load_pd(q);
-#   return 0;
-#   }
-#   ])],
-#   [can_compile_avx=yes],
-#   [can_compile_avx=no]
-#  )
-#  AC_LANG_POP([C++])
-#  AC_MSG_RESULT([${can_compile_avx}])
-#  if test "${can_compile_avx}" = "no" ; then
-#    AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
-#  fi
-#fi
+dnl if test "${can_compile_avx}" = "yes" ; then
+dnl   AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
+dnl   AC_LANG_PUSH([C++])
+dnl   AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+dnl    #include <x86intrin.h>
+dnl    int main(int argc, char **argv){
+dnl    double* q;
+dnl    __m256d a1_1 = _mm256_load_pd(q);
+dnl    return 0;
+dnl    }
+dnl    ])],
+dnl    [can_compile_avx=yes],
+dnl    [can_compile_avx=no]
+dnl   )
+dnl   AC_LANG_POP([C++])
+dnl   AC_MSG_RESULT([${can_compile_avx}])
+dnl   if test "${can_compile_avx}" = "no" ; then
+dnl     AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
+dnl   fi
+dnl fi
 
 AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
@@ -335,27 +335,28 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  [can_compile_avx2=no]
 )
 AC_MSG_RESULT([${can_compile_avx2}])
-#if test "${can_compile_avx2}" = "yes" ; then
-#  AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
-#  AC_LANG_PUSH([C++])
-#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#   #include <x86intrin.h>
-#   int main(int argc, char **argv){
-#   double* q;
-#   __m256d q1 = _mm256_load_pd(q);
-#   __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
-#   return 0;
-#   }
-#   ])],
-#   [can_compile_avx2=yes],
-#   [can_compile_avx2=no]
-#  )
-#  AC_LANG_POP([C++])
-#  AC_MSG_RESULT([${can_compile_avx2}])
-#  if test "${can_compile_avx2}" = "no" ; then
-#    AC_MSG_WARN([Cannot compile C++ with AVX2!])
-#  fi
-#fi
+
+dnl if test "${can_compile_avx2}" = "yes" ; then
+dnl   AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
+dnl   AC_LANG_PUSH([C++])
+dnl   AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+dnl    #include <x86intrin.h>
+dnl    int main(int argc, char **argv){
+dnl    double* q;
+dnl    __m256d q1 = _mm256_load_pd(q);
+dnl    __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+dnl    return 0;
+dnl    }
+dnl    ])],
+dnl    [can_compile_avx2=yes],
+dnl    [can_compile_avx2=no]
+dnl   )
+dnl   AC_LANG_POP([C++])
+dnl   AC_MSG_RESULT([${can_compile_avx2}])
+dnl   if test "${can_compile_avx2}" = "no" ; then
+dnl     AC_MSG_WARN([Cannot compile C++ with AVX2!])
+dnl   fi
+dnl fi
 
 if test "${can_compile_avx}" = "yes" ; then
   install_real_avx_block2=yes
@@ -586,6 +587,9 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   [fortran_can_check_environment=no]
 )
 AC_MSG_RESULT([${fortran_can_check_environment}])
+if test x"${fortran_can_check_environment}" = x"yes" ; then
+ AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can query environment variables])
+fi
 
 dnl check whether GPU version is requested
 
@@ -687,10 +691,32 @@ else
   install_complex_bgq=no
 fi
 
-
-dnl environment variable setting of kernel
-if test x"${fortran_can_check_environment}" = x"yes" ; then
- AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can querry environment variables])
+dnl Test possibility of 'use mpi', if requested
+if test x"${with_mpi}" = x"yes" ; then
+  AC_ARG_ENABLE([mpi-module],
+                AS_HELP_STRING([--disable-mpi-module],
+                               [Do not use the Fortran MPI module, get interfaces by 'include "mpif.h')]),
+                [],
+                [enable_mpi_module=yes])
+  if test x"${enable_mpi_module}" = x"yes" ; then
+    AC_MSG_CHECKING(whether Fortran mpi module can be used)
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+      program test_mpi_module
+        use mpi
+        real :: time
+        time = MPI_WTime()
+      end program
+    ])],
+      [can_use_fortran_mpi_module=yes],
+      [can_use_fortran_mpi_module=no]
+    )
+    AC_MSG_RESULT([${can_use_fortran_mpi_module}])
+    if test x"${can_use_fortran_mpi_module}" = x"yes" ; then
+      AC_DEFINE([HAVE_MPI_MODULE],[1],[can use the Fortran mpi module])
+    else
+      AC_MSG_ERROR([Could not compile a Fortran program with an 'use mpi' statement. You can try again with --disable-mpi-module])
+    fi
+  fi
 fi
 
 dnl default value

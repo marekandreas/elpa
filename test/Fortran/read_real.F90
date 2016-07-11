@@ -73,8 +73,13 @@ program read_real
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
+#ifdef HAVE_MPI_MODULE
+   use mpi
+   implicit none
+#else
    implicit none
    include 'mpif.h'
+#endif
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
@@ -370,7 +375,13 @@ end
 subroutine read_matrix(iunit, na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols)
    use precision
    implicit none
+#ifdef HAVE_MPI_MODULE
+   use mpi
+   implicit none
+#else
+   implicit none
    include 'mpif.h'
+#endif
 
    integer(kind=ik), intent(in)  :: iunit, na, lda, nblk, my_prow, my_pcol, np_rows, np_cols
    real(kind=rk), intent(out)    :: a(lda, *)
