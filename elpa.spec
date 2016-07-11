@@ -39,17 +39,15 @@ License:        LGPL-3.0
 Group:          System/Libraries
 Url:            https://elpa.rzg.mpg.de/
 Source0:        https://elpa.mpcdf.mpg.de/html/Releases/%{version}/%{name}-%{version}.tar.gz
-Requires:       openmpi
+BuildRequires:  c_compiler
 # For SLE_11_SP4:
 %if %{sle_11_sp4} == 1
-BuildRequires:  gcc48-c++
 BuildRequires:  gcc48-fortran
 %else
-BuildRequires:  gcc-c++ >= 4.8
 BuildRequires:  gcc-fortran >= 4.8
 %endif
-BuildRequires:  strace
 BuildRequires:  openmpi-devel
+Requires:       openmpi
 BuildRequires:  blas-devel
 BuildRequires:  lapack-devel
 BuildRequires:  pkg-config
@@ -123,7 +121,6 @@ Summary:        Development files for %{name}
 Group:          Development/Libraries
 Requires:       %{name} = %{version}
 Requires:       openmpi
-Requires:       libstdc++-devel
 Requires:       lapack-devel
 Requires:       blas-devel
 Requires:       libscalapack2-openmpi-devel
@@ -169,7 +166,6 @@ Summary:        Development files for %{name}_openmp
 Group:          Development/Libraries
 Requires:       %{name}_openmp = %{version}
 Requires:       openmpi
-Requires:       libstdc++-devel
 Requires:       lapack-devel
 Requires:       blas-devel
 Requires:       libscalapack2-openmpi-devel
@@ -229,7 +225,12 @@ pushd build
 ln -s ../configure .
 %endif
 
-%configure --docdir=%{_docdir}/%{name}-%{version}
+%configure \
+%if %{sle_11_sp4} == 1
+        --disable-mpi-module \
+%endif
+        --docdir=%{_docdir}/%{name}-%{version}
+
 make %{?_smp_mflags} V=1
 popd
 
@@ -245,10 +246,17 @@ pushd build_openmp
 ln -s ../configure .
 %endif
 
-%configure --docdir=%{_docdir}/%{name}_openmp-%{version} --enable-openmp
+%configure \
+%if %{sle_11_sp4} == 1
+        --disable-mpi-module \
+%endif
+        --docdir=%{_docdir}/%{name}_openmp-%{version} \
+        --enable-openmp
+
 make %{?_smp_mflags} V=1
 popd
-%endif
+
+%endif # OpenMP
 
 
 %check

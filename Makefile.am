@@ -45,7 +45,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/redist_band.X90
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
-libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION) -lstdc++
+libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION)
 libelpa@SUFFIX@_la_LIBADD = libelpa@SUFFIX@_public.la libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_la_SOURCES =
 
@@ -219,14 +219,12 @@ noinst_PROGRAMS = \
   elpa2_test_real_api@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
   elpa1_real_toeplitz@SUFFIX@ \
-  elpa1_test_real_with_c@SUFFIX@
-if !WITH_OPENMP
-noinst_PROGRAMS += \
+  elpa1_test_real_with_c@SUFFIX@ \
   elpa1_test_real_c_version@SUFFIX@ \
   elpa1_test_complex_c_version@SUFFIX@ \
   elpa2_test_real_c_version@SUFFIX@ \
   elpa2_test_complex_c_version@SUFFIX@
-endif
+
 
 build_lib = libelpa@SUFFIX@.la libelpatest@SUFFIX@.la
 
@@ -250,31 +248,25 @@ libelpatest@SUFFIX@_la_SOURCES += \
 	test/shared/redirect.F90
 endif
 
-if !WITH_OPENMP
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/C/elpa1_test_real_c_version.c
-elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa1_test_real_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-elpa1_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 EXTRA_elpa1_test_real_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa1_test_complex_c_version@SUFFIX@_SOURCES = test/C/elpa1_test_complex_c_version.c
-elpa1_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_complex_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa1_test_complex_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-elpa1_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 EXTRA_elpa1_test_complex_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa2_test_real_c_version@SUFFIX@_SOURCES = test/C/elpa2_test_real_c_version.c
-elpa2_test_real_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_real_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa2_test_real_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-elpa2_test_real_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 EXTRA_elpa2_test_real_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa2_test_complex_c_version@SUFFIX@_SOURCES = test/C/elpa2_test_complex_c_version.c
-elpa2_test_complex_c_version@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_complex_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa2_test_complex_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
-elpa2_test_complex_c_version@SUFFIX@_LINK = $(LINK) $(FCLIBS)
 EXTRA_elpa2_test_complex_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
-endif
 
 elpa1_test_real@SUFFIX@_SOURCES = test/Fortran/test_real.F90
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
@@ -349,16 +341,11 @@ check_SCRIPTS = \
   elpa2_test_real_api@SUFFIX@.sh \
   elpa2_test_complex_api@SUFFIX@.sh \
   elpa1_real_toeplitz@SUFFIX@.sh \
-  elpa2_print_kernels@SUFFIX@
-
-
-if !WITH_OPENMP
-check_SCRIPTS += \
+  elpa2_print_kernels@SUFFIX@ \
   elpa1_test_real_c_version@SUFFIX@.sh \
   elpa1_test_complex_c_version@SUFFIX@.sh \
   elpa2_test_real_c_version@SUFFIX@.sh \
   elpa2_test_complex_c_version@SUFFIX@.sh
-endif
 
 
 # test scripts

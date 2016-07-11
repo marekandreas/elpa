@@ -1007,7 +1007,7 @@ module ELPA2_compute
 #ifdef WITH_OPENMP
       integer(kind=ik)              :: max_threads, my_thread, my_block_s, my_block_e, iter
 #ifdef WITH_MPI
-      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)              :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
       integer(kind=ik), allocatable :: mpi_statuses(:,:), global_id_tmp(:,:)
       integer(kind=ik), allocatable :: omp_block_limits(:)
@@ -1233,7 +1233,7 @@ module ELPA2_compute
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-            call mpi_recv(hv,nb,mpi_real8,my_pe-1,2,mpi_comm,MPI_STATUS,mpierr)
+            call mpi_recv(hv,nb,mpi_real8,my_pe-1,2,mpi_comm,my_mpi_status,mpierr)
 #else
             call mpi_recv(hv,nb,mpi_real8,my_pe-1,2,mpi_comm,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -1391,7 +1391,7 @@ module ELPA2_compute
               ! Send our first column to previous PE
               if (my_pe>0 .and. na_s <= na) then
 #ifdef WITH_MPI
-                call mpi_wait(ireq_ab,mpi_status,mpierr)
+                call mpi_wait(ireq_ab,my_mpi_status,mpierr)
 #endif
                 ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
@@ -1403,7 +1403,7 @@ module ELPA2_compute
               ne = na_s + nblocks*nb - (max_threads-1) - 1
 #ifdef WITH_MPI
               if (istep>=max_threads .and. ne <= na) then
-                call mpi_recv(ab(1,ne-n_off),nb+1,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+                call mpi_recv(ab(1,ne-n_off),nb+1,mpi_real8,my_pe+1,1,mpi_comm,my_mpi_status,mpierr)
               endif
 #else
               if (istep>=max_threads .and. ne <= na) then
@@ -1417,7 +1417,7 @@ module ELPA2_compute
               ne = na_s + nblocks*nb - (max_threads-1) - 1
               if (istep>=max_threads .and. ne < na) then
 #ifdef WITH_MPI
-                call mpi_wait(ireq_hv,mpi_status,mpierr)
+                call mpi_wait(ireq_hv,my_mpi_status,mpierr)
 #endif
                 hv_s(1) = tau_t(max_threads)
                 hv_s(2:) = hv_t(2:,max_threads)
@@ -1511,7 +1511,7 @@ module ELPA2_compute
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call mpi_recv(ab(1,ne),nb+1,mpi_real8,my_pe+1,1,mpi_comm,MPI_STATUS,mpierr)
+              call mpi_recv(ab(1,ne),nb+1,mpi_real8,my_pe+1,1,mpi_comm,my_mpi_status,mpierr)
 #else
               call mpi_recv(ab(1,ne),nb+1,mpi_real8,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -1564,7 +1564,7 @@ module ELPA2_compute
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                call mpi_wait(ireq_hv,MPI_STATUS,mpierr)
+                call mpi_wait(ireq_hv,my_mpi_status,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -1594,7 +1594,7 @@ module ELPA2_compute
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
+              call mpi_wait(ireq_ab,my_mpi_status,mpierr)
 #else
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -1647,7 +1647,7 @@ module ELPA2_compute
           if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
 #ifdef WITH_MPI
-            call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+            call mpi_wait(ireq_hhs(iblk), my_mpi_status, mpierr)
 #endif
             ! Copy vectors into send buffer
             hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
@@ -1674,8 +1674,8 @@ module ELPA2_compute
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-      call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
-      call mpi_wait(ireq_hv,MPI_STATUS,mpierr)
+      call mpi_wait(ireq_ab,my_mpi_status,mpierr)
+      call mpi_wait(ireq_hv,my_mpi_status,mpierr)
 
       allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)))
       call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES, mpierr)
@@ -1772,7 +1772,7 @@ module ELPA2_compute
       integer(kind=ik)              :: mpierr, src, src_offset, dst, offset, nfact, num_blk
 #ifdef WITH_OPENMP
 #ifdef WITH_MPI
-      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)              :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
 #endif
       logical                       :: flag
@@ -1957,7 +1957,7 @@ module ELPA2_compute
             if (src < my_prow) then
 #ifdef WITH_OPENMP
 #ifdef WITH_MPI
-              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, my_mpi_status, mpierr)
 #else
               row(1:l_nev) = row(1:l_nev)
 #endif
@@ -2040,7 +2040,7 @@ module ELPA2_compute
               if (src == ip) then
 #ifdef WITH_OPENMP
 #ifdef WITH_MPI
-              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, my_mpi_status, mpierr)
 #else
               row(1:l_nev) = row(1:l_nev)
 #endif
@@ -2234,7 +2234,7 @@ module ELPA2_compute
             if (current_n_end < current_n) then
 #ifdef WITH_OPENMP
 #ifdef WITH_MPI
-              call MPI_Wait(bottom_recv_request(i), MPI_STATUS, mpierr)
+              call MPI_Wait(bottom_recv_request(i), my_mpi_status, mpierr)
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%start("OpenMP parallel")
@@ -2293,7 +2293,7 @@ module ELPA2_compute
               if (top_msg_length>0) then
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-                call MPI_Wait(top_recv_request(i), MPI_STATUS, mpierr)
+                call MPI_Wait(top_recv_request(i), my_mpi_status, mpierr)
 #else
                 call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
                 a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
@@ -2335,7 +2335,7 @@ module ELPA2_compute
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-              call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+              call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
 #endif
               if (bottom_msg_length>0) then
                 n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -2393,7 +2393,7 @@ current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, thread_wid
 
               !send_b
 #ifdef WITH_MPI
-              call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+              call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
 #endif
               if (bottom_msg_length > 0) then
                 n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -2464,7 +2464,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
               if (top_msg_length>0) then
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-                call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+                call MPI_Wait(top_recv_request(i), my_mpi_status, mpierr)
 #else
                 call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
                 a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
@@ -2534,7 +2534,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-              call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+              call MPI_Wait(top_send_request(i), my_mpi_status, mpierr)
 #endif
               b_len = csw*nbw*max_threads
               top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
@@ -2578,7 +2578,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
              if (i>1) then
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-               call MPI_Wait(top_recv_request(i-1), MPI_STATUS, mpierr)
+               call MPI_Wait(top_recv_request(i-1), my_mpi_status, mpierr)
 #else
                call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -2586,7 +2586,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
              else
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-               call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS, mpierr)
+               call MPI_Wait(top_recv_request(stripe_count), my_mpi_status, mpierr)
 #else
                call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -2601,7 +2601,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
          do i = 1, stripe_count
 #ifdef WITH_OPENMP
-           call MPI_Wait(top_send_request(i), MPI_STATUS, mpierr)
+           call MPI_Wait(top_send_request(i), my_mpi_status, mpierr)
 #else
            call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -2622,7 +2622,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
              nbuf = mod(num_blk, num_result_buffers) + 1 ! buffer number to get this block
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-             call MPI_Wait(result_send_request(nbuf), MPI_STATUS, mpierr)
+             call MPI_Wait(result_send_request(nbuf), my_mpi_status, mpierr)
 #else
              call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -2680,7 +2680,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
              if (next_local_n > 0) then
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-              call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS, mpierr)
+              call MPI_Test(result_recv_request(nbuf), flag, my_mpi_status, mpierr)
 #else
               call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
 
@@ -2694,7 +2694,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
             else
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-              call MPI_Wait(result_recv_request(nbuf), MPI_STATUS, mpierr)
+              call MPI_Wait(result_recv_request(nbuf), my_mpi_status, mpierr)
 #else
               call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -3464,7 +3464,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       integer(kind=ik)               :: max_threads, my_thread, my_block_s, my_block_e, iter
       integer(kind=ik)               :: omp_get_max_threads
 #ifdef WITH_MPI
-      integer(kind=ik)               :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)               :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
       complex(kind=ck), allocatable  :: hv_t(:,:), tau_t(:)
 #endif
@@ -3674,7 +3674,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-             call mpi_recv(hv,nb,MPI_COMPLEX16,my_pe-1,2,mpi_comm,mpi_status,mpierr)
+             call mpi_recv(hv,nb,MPI_COMPLEX16,my_pe-1,2,mpi_comm,my_mpi_status,mpierr)
 #else
              call mpi_recv(hv,nb,MPI_COMPLEX16,my_pe-1,2,mpi_comm,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -3830,7 +3830,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                ! Send our first column to previous PE
                if (my_pe>0 .and. na_s <= na) then
 #ifdef WITH_MPI
-                 call mpi_wait(ireq_ab,mpi_status,mpierr)
+                 call mpi_wait(ireq_ab,my_mpi_status,mpierr)
 #endif
                  ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
@@ -3842,7 +3842,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                ne = na_s + nblocks*nb - (max_threads-1) - 1
 #ifdef WITH_MPI
                if (istep>=max_threads .and. ne <= na) then
-                 call mpi_recv(ab(1,ne-n_off),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+                 call mpi_recv(ab(1,ne-n_off),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,my_mpi_status,mpierr)
                endif
 #else
                if (istep>=max_threads .and. ne <= na) then
@@ -3856,7 +3856,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                ne = na_s + nblocks*nb - (max_threads-1) - 1
                if (istep>=max_threads .and. ne < na) then
 #ifdef WITH_MPI
-                 call mpi_wait(ireq_hv,mpi_status,mpierr)
+                 call mpi_wait(ireq_hv,my_mpi_status,mpierr)
 #endif
                  hv_s(1) = tau_t(max_threads)
                  hv_s(2:) = hv_t(2:,max_threads)
@@ -3954,7 +3954,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-               call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+               call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,my_mpi_status,mpierr)
 
 #else
                call mpi_recv(ab(1,ne),nb+1,MPI_COMPLEX16,my_pe+1,1,mpi_comm,MPI_STATUS_IGNORE,mpierr)
@@ -4006,7 +4006,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
               if (iblk==nblocks) then
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-                call mpi_wait(ireq_hv,mpi_status,mpierr)
+                call mpi_wait(ireq_hv,my_mpi_status,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -4035,7 +4035,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
               ! ... send it away ...
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-              call mpi_wait(ireq_ab,mpi_status,mpierr)
+              call mpi_wait(ireq_ab,my_mpi_status,mpierr)
 #else
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -4088,7 +4088,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
           if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
 #ifdef WITH_MPI
-            call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+            call mpi_wait(ireq_hhs(iblk), my_mpi_status, mpierr)
 #endif
             ! Copy vectors into send buffer
             hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
@@ -4112,8 +4112,8 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       ! Finish the last outstanding requests
 #ifdef WITH_MPI
 #ifdef WITH_OPENMP
-      call mpi_wait(ireq_ab,mpi_status,mpierr)
-      call mpi_wait(ireq_hv,mpi_status,mpierr)
+      call mpi_wait(ireq_ab,my_mpi_status,mpierr)
+      call mpi_wait(ireq_hv,my_mpi_status,mpierr)
 
       allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)))
       call mpi_waitall(nblocks, ireq_hhs, mpi_statuses, mpierr)
@@ -4229,7 +4229,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_OPENMP
       integer(kind=ik), allocatable :: mpi_statuses(:,:)
 #ifdef WITH_MPI
-      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)              :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
 #endif
 
@@ -4390,7 +4390,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
+              call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, my_mpi_status, mpierr)
 
 #else
               call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
@@ -4480,7 +4480,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
+              call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, my_mpi_status, mpierr)
 #else
               call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -4685,7 +4685,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-               call MPI_Wait(bottom_recv_request(i), mpi_status, mpierr)
+               call MPI_Wait(bottom_recv_request(i), my_mpi_status, mpierr)
 #else
                call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -4747,7 +4747,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                 call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+                 call MPI_Wait(top_recv_request(i), my_mpi_status, mpierr)
 #else
                  call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -4793,7 +4793,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-               call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+               call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
 #else
                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -4862,7 +4862,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-               call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+               call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
 #else
 
                call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
@@ -4931,7 +4931,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                 call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+                 call MPI_Wait(top_recv_request(i), my_mpi_status, mpierr)
 #else
                  call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5007,7 +5007,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-               call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+               call MPI_Wait(top_send_request(i), my_mpi_status, mpierr)
 #else
                call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5053,7 +5053,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                 call MPI_Wait(top_recv_request(i-1), mpi_status, mpierr)
+                 call MPI_Wait(top_recv_request(i-1), my_mpi_status, mpierr)
 #else
                  call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5063,7 +5063,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                 call MPI_Wait(top_recv_request(stripe_count), mpi_status, mpierr)
+                 call MPI_Wait(top_recv_request(stripe_count), my_mpi_status, mpierr)
 #else
                  call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5081,7 +5081,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
            do i = 1, stripe_count
 #ifdef WITH_OPENMP
-             call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+             call MPI_Wait(top_send_request(i), my_mpi_status, mpierr)
 #else
              call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5104,7 +5104,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-             call MPI_Wait(result_send_request(nbuf), mpi_status, mpierr)
+             call MPI_Wait(result_send_request(nbuf), my_mpi_status, mpierr)
 #else
              call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5164,7 +5164,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-               call MPI_Test(result_recv_request(nbuf), flag, mpi_status, mpierr)
+               call MPI_Test(result_recv_request(nbuf), flag, my_mpi_status, mpierr)
 
 #else
                call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
@@ -5178,7 +5178,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-               call MPI_Wait(result_recv_request(nbuf), mpi_status, mpierr)
+               call MPI_Wait(result_recv_request(nbuf), my_mpi_status, mpierr)
 
 #else
 
@@ -5599,7 +5599,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       integer(kind=ik)              :: nblocks_total2, nblocks2
       integer(kind=ik)              :: ireq_ab, ireq_hv
 #ifdef WITH_MPI
-      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)              :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
       integer(kind=ik), allocatable :: mpi_statuses(:,:)
       integer(kind=ik), allocatable :: block_limits(:), block_limits2(:), ireq_ab2(:)
@@ -5718,7 +5718,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
           if (na>na_s+nb2-1) then
             ! Receive Householder vectors from previous task, from PE owning subdiagonal
 #ifdef WITH_MPI
-            call mpi_recv(hv,nb*nb2,mpi_real8,my_pe-1,2,mpi_comm,mpi_status,mpierr)
+            call mpi_recv(hv,nb*nb2,mpi_real8,my_pe-1,2,mpi_comm,my_mpi_status,mpierr)
 #else
             hv(1:nb,1:nb2) = hv_s(1:nb,1:nb2)
 #endif
@@ -5751,7 +5751,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
            if (iblk==nblocks .and. nc==nb) then
              !request last nb2 columns
 #ifdef WITH_MPI
-             call mpi_recv(ab_r,(nb+1)*nb2,mpi_real8,my_pe+1,1,mpi_comm,mpi_status,mpierr)
+             call mpi_recv(ab_r,(nb+1)*nb2,mpi_real8,my_pe+1,1,mpi_comm,my_mpi_status,mpierr)
 #else
              ab_r(1:nb+1,1:nb2) = ab_s(1:nb+1,1:nb2)
 #endif
@@ -5777,7 +5777,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 	     !send hh-vector
 	     if (iblk==nblocks) then
 #ifdef WITH_MPI
-               call mpi_wait(ireq_hv,mpi_status,mpierr)
+               call mpi_wait(ireq_hv,my_mpi_status,mpierr)
 #endif
 	       hv_s = hv_new
 	       do i=1,nb2
@@ -5795,7 +5795,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
            if (my_pe>0 .and. iblk==1) then
 	     !send first nb2 columns to previous PE
 #ifdef WITH_MPI
-	     call mpi_wait(ireq_ab,mpi_status,mpierr)
+	     call mpi_wait(ireq_ab,my_mpi_status,mpierr)
 #endif
 	     do i=1,nb2
 	       ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
@@ -5818,8 +5818,8 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 
        ! Finish the last outstanding requests
 #ifdef WITH_MPI
-       call mpi_wait(ireq_ab,mpi_status,mpierr)
-       call mpi_wait(ireq_hv,mpi_status,mpierr)
+       call mpi_wait(ireq_ab,my_mpi_status,mpierr)
+       call mpi_wait(ireq_hv,my_mpi_status,mpierr)
        allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2))
        call mpi_waitall(nblocks2,ireq_ab2,mpi_statuses,mpierr)
        deallocate(mpi_statuses)

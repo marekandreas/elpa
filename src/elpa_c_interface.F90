@@ -638,7 +638,8 @@
  !c> */
 
  !c> int elpa_cholesky_complex(int na, double complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_cholesky_complex_wrapper(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
+ function elpa_cholesky_complex_wrapper(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success) &
+       bind(C,name="elpa_cholesky_complex")
    use, intrinsic :: iso_c_binding
    use elpa1_auxiliary, only : elpa_cholesky_complex
 
