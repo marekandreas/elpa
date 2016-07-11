@@ -11,6 +11,9 @@ endef
 _f90_verbose = $(_f90_verbose_$(V))
 _f90_verbose_ = $(_f90_verbose_$(AM_DEFAULT_VERBOSITY))
 _f90_verbose_0 = @echo "  $1";
+_f90_only_verbose = $(_f90_only_verbose_$(V))
+_f90_only_verbose_ = @
+_f90_only_verbose_0 = @
 _f90_targets = $(call translate_name,$(PROGRAMS) $(LTLIBRARIES))
 
 FORTRAN_CPP ?= cpp -P -traditional -Wall -Werror
@@ -87,8 +90,26 @@ endef
 ifneq ($(call is_clean),1)
 include $(_f90_depfile)
 endif
+
+# $1 string
+# $2 file
+define append_to
+	$(_f90_only_verbose)echo '$1' >> $2
+
+endef
+
+# $1 program
+define program_dependencies
+	$(_f90_only_verbose)rm -f .$p.dep.args
+	$(foreach argument,$(_$p_use_mods) $(_$p_def_mods) $(foreach l,$(call recursive_lib_deps,$p),$(_$l_use_mods) $(_$l_def_mods)),$(call append_to,$(argument),.$p.dep.args))
+	$(_f90_only_verbose)$(top_srcdir)/fdep/fortran_dependencies.pl $p < .$p.dep.args >> $@ || { rm $@; exit 1; }
+	$(_f90_only_verbose)rm -f .$p.dep.args
+
+endef
+
 $(_f90_depfile): $(top_srcdir)/fdep/fortran_dependencies.pl $(foreach p,$(_f90_targets),$(_$p_use_mods) $(_$p_def_mods)) | $(foreach p,$(_f90_targets),$(_f90_depdir)/$p)
-	$(call _f90_verbose,F90 DEPS $@)echo > $@; $(foreach p,$(_f90_targets),$(top_srcdir)/fdep/fortran_dependencies.pl $p $(_$p_use_mods) $(_$p_def_mods) $(foreach l,$(call recursive_lib_deps,$p),$(_$l_use_mods) $(_$l_def_mods)) >> $@; )
+	$(call _f90_verbose,F90 DEPS $@)echo > $@;
+	$(foreach p,$(_f90_targets),$(call program_dependencies,$p))
 
 $(_f90_depdir):
 	@mkdir $@
