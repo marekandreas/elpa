@@ -77,7 +77,7 @@ AC_DEFUN([AX_ELPA_OPENMP],
 	  dnl will fail (since we know that it failed without the option),
 	  dnl therefore the loop will continue searching for an option, and
 	  dnl no output file called 'penmp' or 'mp' is created.
-	  for ac_option in -openmp -fopenmp -xopenmp -mp -omp -qsmp=omp; do
+	  for ac_option in -fopenmp -qopenmp -xopenmp -mp -omp -qsmp=omp -openmp; do
 	    ac_save_[]_AC_LANG_PREFIX[]FLAGS=$[]_AC_LANG_PREFIX[]FLAGS
 	    _AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS $ac_option"
 	    AC_LINK_IFELSE([AC_LANG_SOURCE([_AX_ELPA_LANG_OPENMP])],
