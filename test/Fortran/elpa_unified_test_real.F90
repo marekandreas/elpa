@@ -59,7 +59,7 @@ program test_all_real
    use precision
    use elpa1
    use elpa2
-   use elpa_utilities, only : error_unit
+   use elpa_utilities
    use elpa2_utilities
 #ifdef WITH_OPENMP
    use test_util
@@ -98,10 +98,13 @@ program test_all_real
 
    integer, external          :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
-
+   logical                    :: wantDebug
+   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:), &
+                                 d(:), e(:), ev_analytic(:)
+   real(kind=rk)              :: diagonalELement, subdiagonalElement
+   real(kind=rk)              :: tmp
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
-
+   real(kind=rk), parameter   :: pi = 3.141592653589793238462643383279_rk
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
@@ -112,9 +115,9 @@ program test_all_real
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j, this_kernel, qr
    logical                    :: this_qr
-
+   integer(kind=ik)           :: loctmp ,rowLocal, colLocal
    real(kind=rk)              :: tStart, tEnd
-
+   real(kind=rk)              :: maxerr
    integer                    :: this_real_kernel, this_complex_kernel
    logical                    :: complexKernelSet, realKernelSet
    !-------------------------------------------------------------------------------
@@ -220,7 +223,122 @@ program test_all_real
    allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
 
+   allocate(d (na))
+   allocate(e (na))
+   allocate(ev_analytic(na))
+
    allocate(ev(na))
+
+   ! first the toeplitz test
+   ! changeable numbers here would be nice
+   diagonalElement = 0.45_rk
+   subdiagonalElement =  0.78_rk
+
+   d(:) = diagonalElement
+   e(:) = subdiagonalElement
+
+
+   ! set up the diagonal and subdiagonals (for general solver test)
+   do i=1, na ! for diagonal elements
+     if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = diagonalElement
+     endif
+   enddo
+
+   do i=1, na-1
+     if (map_global_array_index_to_local_index(i, i+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = subdiagonalElement
+     endif
+   enddo
+
+   do i=2, na
+     if (map_global_array_index_to_local_index(i, i-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = subdiagonalElement
+     endif
+   enddo
+
+   as = a
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("set up matrix")
+#endif
+
+   !-------------------------------------------------------------------------------
+   ! Calculate eigenvalues/eigenvectors
+
+   if (myid==0) then
+     print '(a)','| Entering elpa_solve_tridi ... '
+     print *
+   end if
+
+#ifdef WITH_MPI
+   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+   success = elpa_solve_tridi(na, nev, d, e, a, na_rows, nblk, na_cols, mpi_comm_rows, &
+                              mpi_comm_cols, wantDebug)
+
+   if (.not.(success)) then
+      write(error_unit,*) "elpa_solve_tridi produced an error! Aborting..."
+#ifdef WITH_MPI
+      call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+   endif
+
+   if (myid==0) then
+     print '(a)','| elpa_solve_tridi complete.'
+     print *
+   end if
+
+
+   ev = d
+
+   ! analytic solution
+   do i=1, na
+     ev_analytic(i) = diagonalElement + 2.0_rk * subdiagonalElement *cos( pi*real(i,kind=rk)/ real(na+1,kind=rk) )
+   enddo
+
+   ! sort analytic solution:
+
+   ! this hack is neihter elegant, nor optimized: for huge matrixes it might be expensive
+   ! a proper sorting algorithmus might be implemented here
+
+   tmp    = minval(ev_analytic)
+   loctmp = minloc(ev_analytic, 1)
+
+   ev_analytic(loctmp) = ev_analytic(1)
+   ev_analytic(1) = tmp
+
+   do i=2, na
+     tmp = ev_analytic(i)
+     do j= i, na
+       if (ev_analytic(j) .lt. tmp) then
+         tmp    = ev_analytic(j)
+         loctmp = j
+       endif
+     enddo
+     ev_analytic(loctmp) = ev_analytic(i)
+     ev_analytic(i) = tmp
+   enddo
+
+   ! compute a simple error max of eigenvalues
+   maxerr = 0.0_rk
+   maxerr = maxval( (d(:) - ev_analytic(:))/ev_analytic(:) , 1)
+
+   if (maxerr .gt. 8.e-13) then
+     if (myid .eq. 0) then
+       print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+     endif
+
+   status = 1
+
+   endif
+
+
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("set up matrix")
+#endif
 
    call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
 
