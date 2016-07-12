@@ -56,16 +56,173 @@
 module elpa1_auxiliary
   implicit none
 
-  public :: elpa_mult_at_b_real             !< Multiply real matrices A**T * B
-  public :: elpa_mult_ah_b_complex          !< Multiply complex matrices A**H * B
+  private
 
-  public :: elpa_invert_trm_real            !< Invert real triangular matrix
-  public :: elpa_invert_trm_complex         !< Invert complex triangular matrix
+  public :: elpa_mult_at_b_real        !< Multiply real matrices A**T * B
+  public :: mult_at_b_real             !< Old, deprecated interface to elpa_mult_at_b_real
+  public :: elpa_mult_ah_b_complex     !< Multiply complex matrices A**H * B
+  public :: mult_ah_b_complex          !< old, deprecated interface to elpa_mult_ah_b_complex
 
-  public :: elpa_cholesky_real              !< Cholesky factorization of a real matrix
-  public :: elpa_cholesky_complex           !< Cholesky factorization of a complex matrix
+  public :: elpa_invert_trm_real       !< Invert real triangular matrix
+  public :: invert_trm_real            !< old, deprecated interface to elpa_invert_trm_real
+  public :: elpa_invert_trm_complex    !< Invert complex triangular matrix
+  public :: invert_trm_complex         !< old, deprecated interface to elpa_invert_trm_complex
 
-  public :: elpa_solve_tridi                !< Solve tridiagonal eigensystem with divide and conquer method
+  public :: elpa_cholesky_real         !< Cholesky factorization of a real matrix
+  public :: cholesky_real              !< old, deprecated interface to elpa_cholesky_real
+
+  public :: elpa_cholesky_complex      !< Cholesky factorization of a complex matrix
+  public :: cholesky_complex           !< old, deprecated interface to cholesky_complex
+
+  public :: elpa_solve_tridi           !< Solve tridiagonal eigensystem with divide and conquer method
+
+!> \brief  old, deprecated interface cholesky_real: Cholesky factorization of a real symmetric matrix
+!> \details
+!>
+!> \param  na                   Order of matrix
+!> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
+!>                              Distribution is like in Scalapack.
+!>                              Only upper triangle is needs to be set.
+!>                              On return, the upper triangle contains the Cholesky factor
+!>                              and the lower triangle is set to 0.
+!> \param  lda                  Leading dimension of a
+!> \param                       matrixCols  local columns of matrix a
+!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  mpi_comm_rows        MPI communicator for rows
+!> \param  mpi_comm_cols        MPI communicator for columns
+!> \param wantDebug             logical, more debug information on failure
+!> \result succes               logical, reports success or failure
+
+    interface cholesky_real
+      module procedure elpa_cholesky_real
+    end interface
+
+!> \brief  Old, deprecated interface invert_trm_real: Inverts a upper triangular matrix
+!> \details
+!> \param  na                   Order of matrix
+!> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
+!>                              Distribution is like in Scalapack.
+!>                              Only upper triangle is needs to be set.
+!>                              The lower triangle is not referenced.
+!> \param  lda                  Leading dimension of a
+!> \param                       matrixCols  local columns of matrix a
+!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  mpi_comm_rows        MPI communicator for rows
+!> \param  mpi_comm_cols        MPI communicator for columns
+!> \param wantDebug             logical, more debug information on failure
+!> \result succes                logical, reports success or failure
+    interface invert_trm_real
+      module procedure elpa_invert_trm_real
+    end interface
+
+!> \brief  old, deprecated interface cholesky_complex: Cholesky factorization of a complex hermitian matrix
+!> \details
+!> \param  na                   Order of matrix
+!> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
+!>                              Distribution is like in Scalapack.
+!>                              Only upper triangle is needs to be set.
+!>                              On return, the upper triangle contains the Cholesky factor
+!>                              and the lower triangle is set to 0.
+!> \param  lda                  Leading dimension of a
+!> \param                       matrixCols  local columns of matrix a
+!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  mpi_comm_rows        MPI communicator for rows
+!> \param  mpi_comm_cols        MPI communicator for columns
+!> \param wantDebug             logical, more debug information on failure
+!> \result succes               logical, reports success or failure
+    interface cholesky_complex
+      module procedure elpa_cholesky_complex
+    end interface
+
+!> \brief  old, deprecated interface invert_trm_complex: Inverts a complex upper triangular matrix
+!> \details
+!> \param  na                   Order of matrix
+!> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
+!>                              Distribution is like in Scalapack.
+!>                              Only upper triangle is needs to be set.
+!>                              The lower triangle is not referenced.
+!> \param  lda                  Leading dimension of a
+!> \param                       matrixCols  local columns of matrix a
+!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  mpi_comm_rows        MPI communicator for rows
+!> \param  mpi_comm_cols        MPI communicator for columns
+!> \param wantDebug             logical, more debug information on failure
+!> \result succes                logical, reports success or failure
+    interface invert_trm_complex
+      module procedure elpa_invert_trm_complex
+    end interface
+
+
+!> \brief  mult_at_b_real: Performs C : = A**T * B
+!> this is the old, deprecated interface for the newer elpa_mult_at_b_real
+!>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+!>                 B is a (na,ncb) matrix
+!>                 C is a (na,ncb) matrix where optionally only the upper or lower
+!>                   triangle may be computed
+!> \details
+
+!> \param  uplo_a               'U' if A is upper triangular
+!>                              'L' if A is lower triangular
+!>                              anything else if A is a full matrix
+!>                              Please note: This pertains to the original A (as set in the calling program)
+!>                                           whereas the transpose of A is used for calculations
+!>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+!>                              i.e. it may contain arbitrary numbers
+!> \param uplo_c                'U' if only the upper diagonal part of C is needed
+!>                              'L' if only the upper diagonal part of C is needed
+!>                              anything else if the full matrix C is needed
+!>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+!>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+!> \param na                    Number of rows/columns of A, number of rows of B and C
+!> \param ncb                   Number of columns  of B and C
+!> \param a                     matrix a
+!> \param lda                   leading dimension of matrix a
+!> \param b                     matrix b
+!> \param ldb                   leading dimension of matrix b
+!> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+!> \param  mpi_comm_rows        MPI communicator for rows
+!> \param  mpi_comm_cols        MPI communicator for columns
+!> \param c                     matrix c
+!> \param ldc                   leading dimension of matrix c
+
+    interface mult_at_b_real
+      module procedure elpa_mult_at_b_real
+    end interface
+
+
+!> \brief  Old, deprecated interface mult_ah_b_complex: Performs C : = A**H * B
+!>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+!>                 B is a (na,ncb) matrix
+!>                 C is a (na,ncb) matrix where optionally only the upper or lower
+!>                   triangle may be computed
+!> \details
+!>
+!> \param  uplo_a               'U' if A is upper triangular
+!>                              'L' if A is lower triangular
+!>                              anything else if A is a full matrix
+!>                              Please note: This pertains to the original A (as set in the calling program)
+!>                                           whereas the transpose of A is used for calculations
+!>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+!>                              i.e. it may contain arbitrary numbers
+!> \param uplo_c                'U' if only the upper diagonal part of C is needed
+!>                              'L' if only the upper diagonal part of C is needed
+!>                              anything else if the full matrix C is needed
+!>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+!>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+!> \param na                    Number of rows/columns of A, number of rows of B and C
+!> \param ncb                   Number of columns  of B and C
+!> \param a                     matrix a
+!> \param lda                   leading dimension of matrix a
+!> \param b                     matrix b
+!> \param ldb                   leading dimension of matrix b
+!> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+!> \param  mpi_comm_rows        MPI communicator for rows
+!> \param  mpi_comm_cols        MPI communicator for columns
+!> \param c                     matrix c
+!> \param ldc                   leading dimension of matrix c
+    interface mult_ah_b_complex
+      module procedure elpa_mult_ah_b_complex
+    end interface
 
   contains
 
@@ -84,8 +241,8 @@ module elpa1_auxiliary
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
-!> \param succes                logical, reports success or failure
-    subroutine elpa_cholesky_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+!> \result succes               logical, reports success or failure
+    function elpa_cholesky_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -110,7 +267,7 @@ module elpa1_auxiliary
       real(kind=rk), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
 
       logical, intent(in)           :: wantDebug
-      logical, intent(out)          :: success
+      logical                       :: success
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
@@ -225,7 +382,7 @@ module elpa1_auxiliary
           enddo
 
           if (l_cols-l_colx+1>0) &
-              call dtrsm('L','U','T','N',nblk,l_cols-l_colx+1,1.d0,tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
+              call dtrsm('L','U','T','N',nblk,l_cols-l_colx+1,1._rk,tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
 
         endif
 
@@ -248,9 +405,9 @@ module elpa1_auxiliary
           lrs = l_rowx
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
-          call DGEMM('N','T',lre-lrs+1,lce-lcs+1,nblk,-1.d0, &
+          call DGEMM('N','T',lre-lrs+1,lce-lcs+1,nblk,-1._rk, &
                       tmatr(lrs,1),ubound(tmatr,dim=1),tmatc(lcs,1),ubound(tmatc,dim=1), &
-                      1.d0,a(lrs,lcs),lda)
+                      1._rk,a(lrs,lcs),lda)
         enddo
 
       enddo
@@ -275,7 +432,7 @@ module elpa1_auxiliary
       call timer%stop("elpa_cholesky_real")
 #endif
 
-    end subroutine elpa_cholesky_real
+    end function elpa_cholesky_real
 
 !> \brief  elpa_invert_trm_real: Inverts a upper triangular matrix
 !> \details
@@ -290,8 +447,8 @@ module elpa1_auxiliary
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
-!> \param succes                logical, reports success or failure
-    subroutine elpa_invert_trm_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+!> \result succes                logical, reports success or failure
+     function elpa_invert_trm_real(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
        use precision
        use elpa1_compute
        use elpa_utilities
@@ -312,9 +469,10 @@ module elpa1_auxiliary
        real(kind=rk), allocatable   :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 
        logical, intent(in)          :: wantDebug
-       logical, intent(out)         :: success
+       logical                      :: success
        integer(kind=ik)             :: istat
        character(200)               :: errorMessage
+
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
        call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -395,7 +553,7 @@ module elpa1_auxiliary
            enddo
 
            if (l_cols-l_colx+1>0) &
-               call DTRMM('L','U','N','N',nb,l_cols-l_colx+1,1.d0,tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
+               call DTRMM('L','U','N','N',nb,l_cols-l_colx+1,1._rk,tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
 
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -419,9 +577,9 @@ module elpa1_auxiliary
             call MPI_Bcast(tmat2(1,l_col1),(l_cols-l_col1+1)*nblk,MPI_REAL8,prow(n, nblk, np_rows),mpi_comm_rows,mpierr)
 #endif
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
-            call dgemm('N','N',l_row1-1,l_cols-l_col1+1,nb, -1.d0, &
+            call dgemm('N','N',l_row1-1,l_cols-l_col1+1,nb, -1._rk, &
                        tmat1,ubound(tmat1,dim=1),tmat2(1,l_col1),ubound(tmat2,dim=1), &
-                       1.d0, a(1,l_col1),lda)
+                       1._rk, a(1,l_col1),lda)
 
        enddo
 
@@ -431,7 +589,7 @@ module elpa1_auxiliary
          stop
        endif
 
-    end subroutine elpa_invert_trm_real
+     end function elpa_invert_trm_real
 
 !> \brief  elpa_cholesky_complex: Cholesky factorization of a complex hermitian matrix
 !> \details
@@ -447,8 +605,8 @@ module elpa1_auxiliary
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
-!> \param succes                logical, reports success or failure
-    subroutine elpa_cholesky_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+!> \result succes               logical, reports success or failure
+  function elpa_cholesky_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -475,7 +633,7 @@ module elpa1_auxiliary
       complex(kind=ck), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
 
       logical, intent(in)              :: wantDebug
-      logical, intent(out)             :: success
+      logical                          :: success
       integer(kind=ik)                 :: istat
       character(200)                   :: errorMessage
 
@@ -588,7 +746,7 @@ module elpa1_auxiliary
           enddo
 
           if (l_cols-l_colx+1>0) &
-                call ztrsm('L','U','C','N',nblk,l_cols-l_colx+1,(1.d0,0.d0),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
+                call ztrsm('L','U','C','N',nblk,l_cols-l_colx+1,(1._rk,0._rk),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
 
         endif
 
@@ -610,9 +768,9 @@ module elpa1_auxiliary
           lrs = l_rowx
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
-          call ZGEMM('N','C',lre-lrs+1,lce-lcs+1,nblk,(-1.d0,0.d0), &
+          call ZGEMM('N','C',lre-lrs+1,lce-lcs+1,nblk,(-1._rk,0._rk), &
                         tmatr(lrs,1),ubound(tmatr,dim=1),tmatc(lcs,1),ubound(tmatc,dim=1), &
-                        (1.d0,0.d0),a(lrs,lcs),lda)
+                        (1._rk,0._rk),a(lrs,lcs),lda)
         enddo
 
       enddo
@@ -637,7 +795,7 @@ module elpa1_auxiliary
       call timer%stop("elpa_cholesky_complex")
 #endif
 
-    end subroutine elpa_cholesky_complex
+    end function elpa_cholesky_complex
 
 !> \brief  elpa_invert_trm_complex: Inverts a complex upper triangular matrix
 !> \details
@@ -652,8 +810,8 @@ module elpa1_auxiliary
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
-!> \param succes                logical, reports success or failure
-    subroutine elpa_invert_trm_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+!> \result succes                logical, reports success or failure
+    function elpa_invert_trm_complex(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 
        use precision
        use elpa1_compute
@@ -675,9 +833,10 @@ module elpa1_auxiliary
        complex(kind=ck), allocatable    :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 
        logical, intent(in)              :: wantDebug
-       logical, intent(out)             :: success
+       logical                          :: success
        integer(kind=ik)                 :: istat
        character(200)                   :: errorMessage
+
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
        call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -758,7 +917,7 @@ module elpa1_auxiliary
            enddo
 
            if (l_cols-l_colx+1>0) &
-             call ZTRMM('L','U','N','N',nb,l_cols-l_colx+1,(1._ck,0._ck),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
+             call ZTRMM('L','U','N','N',nb,l_cols-l_colx+1,(1._rk,0._rk),tmp2,ubound(tmp2,dim=1),a(l_row1,l_colx),lda)
 
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -793,7 +952,7 @@ module elpa1_auxiliary
          print *,"elpa_invert_trm_complex: error when deallocating tmp1 "//errorMessage
          stop
        endif
-    end subroutine elpa_invert_trm_complex
+    end function elpa_invert_trm_complex
 
 !> \brief  elpa_mult_at_b_real: Performs C : = A**T * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
@@ -825,7 +984,9 @@ module elpa1_auxiliary
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
-    subroutine elpa_mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
+!> \result success              logical reports success or failure
+    function elpa_mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc) &
+           result(success)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -853,6 +1014,11 @@ module elpa1_auxiliary
       real(kind=rk), allocatable    :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
+
+      logical                       :: success
+
+      success = .true.
+
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("elpa_mult_at_b_real")
 #endif
@@ -876,24 +1042,28 @@ module elpa1_auxiliary
       allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_mult_at_b_real: error when allocating aux_mat "//errorMessage
+        success = .false.
         stop
       endif
 
       allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_mult_at_b_real: error when allocating aux_bc "//errorMessage
+        success = .false.
         stop
       endif
 
       allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_mult_at_b_real: error when allocating lrs_save "//errorMessage
+        success = .false.
         stop
       endif
 
       allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_mult_at_b_real: error when allocating lre_save "//errorMessage
+        success = .false.
         stop
       endif
 
@@ -993,12 +1163,13 @@ module elpa1_auxiliary
               allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
                print *,"elpa_mult_at_b_real: error when allocating tmp1 "//errorMessage
+               success = .false.
                stop
               endif
 
               if (lrs<=lre) then
-                call dgemm('T','N',nstor,lce-lcs+1,lre-lrs+1,1.d0,aux_mat(lrs,1),ubound(aux_mat,dim=1), &
-                             b(lrs,lcs),ldb,0.d0,tmp1,nstor)
+                call dgemm('T','N',nstor,lce-lcs+1,lre-lrs+1,1._rk,aux_mat(lrs,1),ubound(aux_mat,dim=1), &
+                             b(lrs,lcs),ldb,0._rk,tmp1,nstor)
               else
                 tmp1 = 0
               endif
@@ -1015,6 +1186,7 @@ module elpa1_auxiliary
               deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
                print *,"elpa_mult_at_b_real: error when deallocating tmp1 "//errorMessage
+               success = .false.
                stop
               endif
 
@@ -1030,6 +1202,7 @@ module elpa1_auxiliary
       deallocate(aux_mat, aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
        print *,"elpa_mult_at_b_real: error when deallocating aux_mat "//errorMessage
+       success = .false.
        stop
       endif
 
@@ -1037,7 +1210,7 @@ module elpa1_auxiliary
       call timer%stop("elpa_mult_at_b_real")
 #endif
 
-    end subroutine elpa_mult_at_b_real
+    end function elpa_mult_at_b_real
 
 !> \brief  elpa_mult_ah_b_complex: Performs C : = A**H * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
@@ -1069,8 +1242,9 @@ module elpa1_auxiliary
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
-
-  subroutine elpa_mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
+!> \result success              logical reports success or failure
+    function elpa_mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc) &
+          result(success)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -1097,6 +1271,9 @@ module elpa1_auxiliary
       complex(kind=ck), allocatable :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
+      logical                       :: success
+
+      success =.true.
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("elpa_mult_ah_b_complex")
@@ -1120,24 +1297,28 @@ module elpa1_auxiliary
       allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
        print *,"elpa_mult_ah_b_complex: error when allocating aux_mat "//errorMessage
+       success = .false.
        stop
       endif
 
       allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
        print *,"elpa_mult_ah_b_complex: error when allocating aux_bc "//errorMessage
+       success = .false.
        stop
       endif
 
       allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
        print *,"elpa_mult_ah_b_complex: error when allocating lrs_save "//errorMessage
+       success = .false.
        stop
       endif
 
       allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
        print *,"elpa_mult_ah_b_complex: error when allocating lre_save "//errorMessage
+       success = .false.
        stop
       endif
 
@@ -1237,6 +1418,7 @@ module elpa1_auxiliary
               allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
                 print *,"elpa_mult_ah_b_complex: error when allocating tmp1 "//errorMessage
+                success = .false.
                 stop
               endif
 
@@ -1259,6 +1441,7 @@ module elpa1_auxiliary
                deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
                if (istat .ne. 0) then
                  print *,"elpa_mult_ah_b_complex: error when deallocating tmp1 "//errorMessage
+                 success = .false.
                  stop
                endif
 
@@ -1274,6 +1457,7 @@ module elpa1_auxiliary
       deallocate(aux_mat, aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_mult_ah_b_complex: error when deallocating aux_mat "//errorMessage
+        success = .false.
         stop
       endif
 
@@ -1281,7 +1465,7 @@ module elpa1_auxiliary
       call timer%stop("elpa_mult_ah_b_complex")
 #endif
 
-    end subroutine elpa_mult_ah_b_complex
+    end function elpa_mult_ah_b_complex
 
 !> \brief  elpa_solve_tridi: Solve tridiagonal eigensystem with divide and conquer method
 !> \details
@@ -1302,7 +1486,7 @@ module elpa1_auxiliary
 
     function elpa_solve_tridi(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 
-      use elpa1_compute, solve_tridi_private => solve_tridi
+      use elpa1_compute, only : solve_tridi
       use precision
 
       implicit none
@@ -1318,7 +1502,7 @@ module elpa1_auxiliary
 
       success = .false.
 
-      call solve_tridi_private(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+      call solve_tridi(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
     end function
 

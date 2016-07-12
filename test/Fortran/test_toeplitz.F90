@@ -41,14 +41,12 @@
 !
 !
 #include "config-f90.h"
+!>
+!> Fortran test programm to demonstrates the use of
+!> the elpa_solve_tridi library function
+!>
+program test_solve_tridi
 
-program test_all_real
-
-!-------------------------------------------------------------------------------
-! Standard eigenvalueGproblem - REAL version
-!
-! This program demonstrates the use of the ELPA module
-! together with standard scalapack routines
 !
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
@@ -57,10 +55,8 @@ program test_all_real
 !
 !-------------------------------------------------------------------------------
    use precision
-   use elpa1
-   use elpa2
-   use elpa_utilities, only : error_unit
-   use elpa2_utilities
+   use ELPA1
+   use elpa_utilities
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -97,9 +93,21 @@ program test_all_real
    integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    integer, external          :: numroc
-   real(kind=rk), allocatable    :: ev(:), xr(:,:)
-   complex(kind=ck), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
-   complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+
+   real(kind=rk), allocatable :: a(:,:), d(:), e(:), ev_analytic(:), ev(:)
+   real(kind=rk)              :: diagonalELement, subdiagonalElement
+
+   real(kind=rk), allocatable :: tmp1(:,:), tmp2(:,:), as(:,:)
+   real(kind=rk)              :: tmp
+   integer(kind=ik)           :: loctmp ,rowLocal, colLocal
+
+
+   real(kind=rk)              :: maxerr
+
+   logical                    :: wantDebug
+
+   real(kind=rk), parameter   :: pi = 3.141592653589793238462643383279_rk
+
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    integer(kind=ik)           :: STATUS
@@ -110,12 +118,9 @@ program test_all_real
    type(output_t)             :: write_to_file
    logical                    :: success
    character(len=8)           :: task_suffix
-   integer(kind=ik)           :: j, this_kernel
-
-   real(kind=rk)              :: tStart, tEnd
-
+   integer(kind=ik)           :: j
    integer                    :: this_real_kernel, this_complex_kernel
-   logical                    :: realKernelSet, complexKernelSet
+   logical                    :: complexKernelSet, realKernelSet
    !-------------------------------------------------------------------------------
 
    success = .true.
@@ -129,8 +134,9 @@ program test_all_real
 
    STATUS = 0
 
-#define DATATYPE COMPLEX
-#include "elpa_test_programs_print_headers.X90"
+!#define DATATYPE REAL
+!#define ELPA1
+!#include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -169,7 +175,7 @@ program test_all_real
 
    if(myid==0) then
       print *
-      print '(a)','Standard eigenvalue problem - REAL version'
+      print '(a)','Test program for elpa_solve_tridi with a Toeplitz matrix'
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
@@ -211,74 +217,92 @@ program test_all_real
    end if
 
    !-------------------------------------------------------------------------------
-   ! Allocate matrices and set up a test matrix for the eigenvalue problem
+   ! Allocate matrices and set up a test toeplitz matrix for solve_tridi
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("set up matrix")
 #endif
    allocate(a (na_rows,na_cols))
-   allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
 
+   allocate(d (na))
+   allocate(e (na))
+   allocate(ev_analytic(na))
    allocate(ev(na))
 
-   allocate(xr(na_rows,na_cols))
-   call prepare_matrix(na, myid, sc_desc, iseed,  xr, a, z, as)
+   a(:,:) = 0.0_rk
 
-   deallocate(xr)
+
+   ! changeable numbers here would be nice
+   diagonalElement = 0.45_rk
+   subdiagonalElement =  0.78_rk
+
+   d(:) = diagonalElement
+   e(:) = subdiagonalElement
+
+
+   ! set up the diagonal and subdiagonals (for general solver test)
+   do i=1, na ! for diagonal elements
+     if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = diagonalElement
+     endif
+   enddo
+
+   do i=1, na-1
+     if (map_global_array_index_to_local_index(i, i+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = subdiagonalElement
+     endif
+   enddo
+
+   do i=2, na
+     if (map_global_array_index_to_local_index(i, i-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = subdiagonalElement
+     endif
+   enddo
+
+   as = a
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-
-
-   if (myid==0) then
-     print '(a)','| Starting the test ... '
-     print *
-   end if
 
 
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
    if (myid==0) then
-     print '(a)','| Entering one-step ELPA solver ... '
+     print '(a)','| Entering elpa_solve_tridi ... '
      print *
    end if
+
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   tStart = mpi_wtime()
 
-   success = solve_evp_complex_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                            na_cols, mpi_comm_rows, mpi_comm_cols)
+   success = elpa_solve_tridi(na, nev, d, e, a, na_rows, nblk, na_cols, mpi_comm_rows, &
+                              mpi_comm_cols, wantDebug)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
+      write(error_unit,*) "elpa_solve_tridi produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
    endif
 
-
    if (myid==0) then
-     print '(a)','| One-step ELPA solver complete.'
+     print '(a)','| elpa_solve_tridi complete.'
      print *
    end if
 
-   if (myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
-   if (myid == 0) print *,'Time solve_tridi      :',time_evp_solve
-   if (myid == 0) print *,'Time trans_ev_real    :',time_evp_back
-   if (myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
-   if (myid == 0) print *," "
-#ifdef WITH_MPI
-   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-    tEnd = mpi_wtime()
-   if(myid == 0) print *," "
-   if(myid == 0) print *,'Total time for solve_evp_real1_stage:',tEnd - tStart
-   if(myid == 0) print *," "
 
-! TODO write of output
+   ev = d
 
+!
+!   if(myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
+!   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+!   if(myid == 0) print *,'Time trans_ev_real    :',time_evp_back
+!   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
+!
 !   if(write_to_file%eigenvectors) then
 !     write(unit = task_suffix, fmt = '(i8.8)') myid
 !     open(17,file="EVs_real_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
@@ -301,169 +325,67 @@ program test_all_real
 !         close(17)
 !      endif
 !   endif
-
-
+!
+!
    !-------------------------------------------------------------------------------
+
+   ! analytic solution
+   do i=1, na
+     ev_analytic(i) = diagonalElement + 2.0_rk * subdiagonalElement *cos( pi*real(i,kind=rk)/ real(na+1,kind=rk) )
+   enddo
+
+   ! sort analytic solution:
+
+   ! this hack is neihter elegant, nor optimized: for huge matrixes it might be expensive
+   ! a proper sorting algorithmus might be implemented here
+
+   tmp    = minval(ev_analytic)
+   loctmp = minloc(ev_analytic, 1)
+
+   ev_analytic(loctmp) = ev_analytic(1)
+   ev_analytic(1) = tmp
+
+   do i=2, na
+     tmp = ev_analytic(i)
+     do j= i, na
+       if (ev_analytic(j) .lt. tmp) then
+         tmp    = ev_analytic(j)
+         loctmp = j
+       endif
+     enddo
+     ev_analytic(loctmp) = ev_analytic(i)
+     ev_analytic(i) = tmp
+   enddo
+
+   ! compute a simple error max of eigenvalues
+   maxerr = 0.0_rk
+   maxerr = maxval( (d(:) - ev_analytic(:))/ev_analytic(:) , 1)
+
+   if (maxerr .gt. 8.e-13) then
+     if (myid .eq. 0) then
+       print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+     endif
+
+   status = 1
+
+   endif
+
    ! Test correctness of result (using plain scalapack routines)
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
-
-   if (status .eq. 1) then
-#ifdef WITH_MPI
-     call blacs_gridexit(my_blacs_ctxt)
-     call mpi_finalize(mpierr)
-#endif
-
-     call EXIT(STATUS)
-    endif
-
-
-   if (.not.(complexKernelSet)) then
-     ! start again with ELPA2 generic and so forth
-
-     if (myid .eq. 0) print *," "
-     if (myid .eq. 0) print *,"Iterating over all availabe ELPA2 real kernels ..."
-     if (myid .eq. 0) print *," "
-
-     do this_kernel = 1 , elpa_number_of_real_kernels()
-         a = as
-         z = a
-         if (elpa_real_kernel_is_available(this_kernel)) then
-             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel)),":"
-           if (myid==0) then
-             print *," "
-             print '(a)','| Entering two-stage ELPA solver ... '
-             print *
-           end if
-#ifdef WITH_MPI
-           call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-
-           tStart = mpi_wtime()
-
-           success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                           mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                           THIS_COMPLEX_ELPA_KERNEL_API = this_kernel)
-
-           if (.not.(success)) then
-             write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
-                                   " produced an error! Aborting..."
-#ifdef WITH_MPI
-             call MPI_ABORT(mpi_comm_world, 1, mpierr)
-#endif
-           endif
-
-           if (myid==0) then
-             print '(a)','| Two-step ELPA solver complete.'
-             print *
-           end if
-
-           if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-           if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
-           if (myid == 0) print *,'Time transform back EVs :',time_evp_back
-           if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-           if (myid == 0) print *," "
-#ifdef WITH_MPI
-           call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-           tEnd = mpi_wtime()
-
-           if (myid == 0) print *," "
-           if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
-                          trim(elpa_real_kernel_name(this_kernel)),' kernel:',tEnd - tStart
-           if (myid == 0) print *," "
-
-           status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
-           if (myid == 0) print *," "
-
-           if (status .eq. 1) then
-             if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_kernel)), &
-             ' kernel!'
-#ifdef WITH_MPI
-             call blacs_gridexit(my_blacs_ctxt)
-             call mpi_finalize(mpierr)
-#endif
-
-             call EXIT(STATUS)
-           endif
-         endif
-     enddo
-
-   else ! complexKernelSet
-
-     a = as
-     z = a
-     if (elpa_real_kernel_is_available(this_complex_kernel)) then
-         if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_complex_kernel)),":"
-       if (myid==0) then
-         print *," "
-         print '(a)','| Entering two-stage ELPA solver ... '
-         print *
-       end if
-#ifdef WITH_MPI
-       call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-
-       tStart = mpi_wtime()
-
-       success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                       THIS_COMPLEX_ELPA_KERNEL_API = this_complex_kernel)
-
-       if (.not.(success)) then
-         write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_complex_kernel)), &
-                               " produced an error! Aborting..."
-#ifdef WITH_MPI
-         call MPI_ABORT(mpi_comm_world, 1, mpierr)
-#endif
-       endif
-
-       if (myid==0) then
-         print '(a)','| Two-step ELPA solver complete.'
-         print *
-       end if
-
-       if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-       if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
-       if (myid == 0) print *,'Time transform back EVs :',time_evp_back
-       if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-       if (myid == 0) print *," "
-#ifdef WITH_MPI
-       call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-       tEnd = mpi_wtime()
-
-       if (myid == 0) print *," "
-       if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
-                      trim(elpa_real_kernel_name(this_complex_kernel)),' kernel:',tEnd - tStart
-       if (myid == 0) print *," "
-
-       status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
-       if (myid == 0) print *," "
-
-       if (status .eq. 1) then
-         if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_complex_kernel)), &
-         ' kernel!'
-#ifdef WITH_MPI
-         call blacs_gridexit(my_blacs_ctxt)
-         call mpi_finalize(mpierr)
-#endif
-
-         call EXIT(STATUS)
-       endif
-     endif
-
-   endif ! complexKernelSet
+   status = check_correctness(na, nev, as, a, ev, sc_desc, myid, tmp1, tmp2)
 
    deallocate(a)
-   deallocate(as)
 
-   deallocate(z)
+   deallocate(as)
+   deallocate(d)
+
    deallocate(tmp1)
    deallocate(tmp2)
+   deallocate(e)
    deallocate(ev)
+   deallocate(ev_analytic)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("program")

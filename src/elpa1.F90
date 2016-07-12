@@ -98,6 +98,29 @@ module ELPA1
   public :: solve_evp_complex          !< old, deprecated interface:  Driver routine for complex eigenvalue problem
   public :: solve_evp_complex_1stage   !< Driver routine for complex eigenvalue problem
 
+  ! imported from elpa1_auxilliary
+
+  public :: elpa_mult_at_b_real        !< Multiply real matrices A**T * B
+  public :: mult_at_b_real             !< old, deprecated interface to multiply real matrices A**T * B
+
+  public :: elpa_mult_ah_b_complex     !< Multiply complex matrices A**H * B
+  public :: mult_ah_b_complex          !< old, deprecated interface to multiply complex matrices A**H * B
+
+  public :: elpa_invert_trm_real       !< Invert real triangular matrix
+  public :: invert_trm_real            !< old, deprecated interface to invert real triangular matrix
+
+  public :: elpa_invert_trm_complex    !< Invert complex triangular matrix
+  public :: invert_trm_complex         !< old, deprecated interface to invert complex triangular matrix
+
+  public :: elpa_cholesky_real         !< Cholesky factorization of a real matrix
+  public :: cholesky_real              !< old, deprecated interface to do Cholesky factorization of a real matrix
+
+  public :: elpa_cholesky_complex      !< Cholesky factorization of a complex matrix
+  public :: cholesky_complex           !< old, deprecated interface to do Cholesky factorization of a complex matrix
+
+  public :: elpa_solve_tridi           !< Solve tridiagonal eigensystem with divide and conquer method
+
+
   ! Timing results, set by every call to solve_evp_xxx
 
   real(kind=rk), public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)

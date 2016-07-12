@@ -38,3 +38,9 @@ https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
   the naming conventions. The old interface are still available
 
   The states of release 2016.05.001 and 2016.05.002 define this interface
+
+- 6
+  Compatible API change w.r.t. previous version: Interfaces have been made public.
+
+  The state of release 2016.05.003 defines this interface
+

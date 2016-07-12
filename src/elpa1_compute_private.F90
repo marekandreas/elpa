@@ -1617,7 +1617,7 @@ module ELPA1_compute
            integer(kind=ik)     :: np_off, nprocs
            integer(kind=ik)     :: np1, np2, noff, nlen, nmid, n
 #ifdef WITH_MPI
-           integer(kind=ik)     :: mpi_status(mpi_status_size)
+           integer(kind=ik)     :: my_mpi_status(mpi_status_size)
 #endif
            logical, intent(in)  :: wantDebug
            logical, intent(out) :: success
@@ -1654,7 +1654,7 @@ module ELPA1_compute
 
            if (my_pcol>=np_off+np1 .and. my_pcol<np_off+nprocs) then
 #ifdef WITH_MPI
-             call mpi_recv(d(noff+1),nmid,MPI_REAL8,np_off,1,mpi_comm_cols,mpi_status,mpierr)
+             call mpi_recv(d(noff+1),nmid,MPI_REAL8,np_off,1,mpi_comm_cols,my_mpi_status,mpierr)
 #else
              d(noff+1:noff+1+nmid-1) = d(noff+1:noff+1+nmid-1)
 #endif
@@ -1669,7 +1669,7 @@ module ELPA1_compute
            endif
            if (my_pcol>=np_off .and. my_pcol<np_off+np1) then
 #ifdef WITH_MPI
-             call mpi_recv(d(noff+nmid+1),nlen-nmid,MPI_REAL8,np_off+np1,1,mpi_comm_cols,mpi_status,mpierr)
+             call mpi_recv(d(noff+nmid+1),nlen-nmid,MPI_REAL8,np_off+np1,1,mpi_comm_cols,my_mpi_status,mpierr)
 #else
              d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) = d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) 
 #endif
@@ -2066,7 +2066,7 @@ module ELPA1_compute
       integer(kind=ik)              :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
                                        np_cols, mpierr
 #ifdef WITH_MPI
-      integer(kind=ik)              :: mpi_status(mpi_status_size)
+      integer(kind=ik)              :: my_mpi_status(mpi_status_size)
 #endif
       integer(kind=ik)              :: np_next, np_prev, np_rem
       integer(kind=ik)              :: idx(na), idx1(na), idx2(na)
@@ -2623,7 +2623,7 @@ module ELPA1_compute
 #ifdef WITH_MPI
             call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, MPI_REAL8, &
                                         np_next, 1111, np_prev, 1111, &
-                                        mpi_comm_cols, mpi_status, mpierr)
+                                        mpi_comm_cols, my_mpi_status, mpierr)
 #endif
           endif
 
@@ -2810,7 +2810,7 @@ module ELPA1_compute
               endif
             else if (pc2==my_pcol) then
 #ifdef WITH_MPI
-              call mpi_recv(qtmp(1,nc),l_rows,MPI_REAL8,pc1,mod(i,4096),mpi_comm_cols,mpi_status,mpierr)
+              call mpi_recv(qtmp(1,nc),l_rows,MPI_REAL8,pc1,mod(i,4096),mpi_comm_cols,my_mpi_status,mpierr)
 #else
               qtmp(1:l_rows,nc) = q(l_rqs:l_rqe,nc)
 #endif
@@ -2863,7 +2863,7 @@ module ELPA1_compute
 #ifdef WITH_MPI
               call mpi_sendrecv(q(l_rqs,lc1),l_rows,MPI_REAL8,pc2,1, &
                                   tmp,l_rows,MPI_REAL8,pc2,1, &
-                                  mpi_comm_cols,mpi_status,mpierr)
+                                  mpi_comm_cols,my_mpi_status,mpierr)
 #else
               tmp(1:l_rows) = q(l_rqs:l_rqe,lc1)
 #endif
@@ -2873,7 +2873,7 @@ module ELPA1_compute
 #ifdef WITH_MPI
             call mpi_sendrecv(q(l_rqs,lc2),l_rows,MPI_REAL8,pc1,1, &
                                tmp,l_rows,MPI_REAL8,pc1,1, &
-                               mpi_comm_cols,mpi_status,mpierr)
+                               mpi_comm_cols,my_mpi_status,mpierr)
 #else
             tmp(1:l_rows) = q(l_rqs:l_rqe,lc2)
 #endif
@@ -2925,7 +2925,7 @@ module ELPA1_compute
             z(:) = z(:) + tmp(:)
 #ifdef WITH_MPI
             call MPI_Sendrecv_replace(z, n, MPI_REAL8, np_next, 1111, np_prev, 1111, &
-                                       mpi_comm_cols, mpi_status, mpierr)
+                                       mpi_comm_cols, my_mpi_status, mpierr)
 #endif
           enddo
 
@@ -2973,7 +2973,7 @@ module ELPA1_compute
             z(1:n) = tmp(1:n)
             do np = npc_0+1, npc_0+npc_n-1
 #ifdef WITH_MPI
-              call mpi_recv(tmp,n,MPI_REAL8,np,1111,mpi_comm_cols,mpi_status,mpierr)
+              call mpi_recv(tmp,n,MPI_REAL8,np,1111,mpi_comm_cols,my_mpi_status,mpierr)
 #else
               tmp(1:n) = z(1:n)
 #endif
@@ -2987,7 +2987,7 @@ module ELPA1_compute
           else
 #ifdef WITH_MPI
             call mpi_send(tmp,n,MPI_REAL8,npc_0,1111,mpi_comm_cols,mpierr)
-            call mpi_recv(z  ,n,MPI_REAL8,npc_0,1111,mpi_comm_cols,mpi_status,mpierr)
+            call mpi_recv(z  ,n,MPI_REAL8,npc_0,1111,mpi_comm_cols,my_mpi_status,mpierr)
 #else
             z(1:n) = tmp(1:n)
 #endif

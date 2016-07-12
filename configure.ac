@@ -2,7 +2,6 @@ AC_PREREQ([2.69])
 
 # The version is set in elpa.spec, to have a single point of reference
 AC_INIT([elpa],m4_esyscmd_s([awk '/^ *Version:/ {print $2;}' elpa.spec]), [elpa-library@mpcdf.mpg.de])
-
 AC_SUBST([PACKAGE_VERSION])
 
 AC_CONFIG_SRCDIR([src/elpa1.F90])
@@ -34,7 +33,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [5:1:1])
+AC_SUBST([ELPA_SO_VERSION], [6:0:2])
 #
 
 
@@ -112,6 +111,14 @@ if test x"${enable_openmp}" = x"yes"; then
     AC_MSG_ERROR([Could not compile a Fortran program with OpenMP, adjust FCFLAGS])
   fi
   FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
+fi
+
+dnl check which MPI binray invokes a MPI job
+if test x"$with_mpi" = x"yes"; then
+  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun], [no])
+  if test x"$MPI_BINARY" = x"no"; then
+    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun])
+  fi
 fi
 
 ## C++
@@ -265,26 +272,26 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 )
 AC_MSG_RESULT([${can_compile_avx}])
 
-#if test "${can_compile_avx}" = "yes" ; then
-#  AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
-#  AC_LANG_PUSH([C++])
-#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#   #include <x86intrin.h>
-#   int main(int argc, char **argv){
-#   double* q;
-#   __m256d a1_1 = _mm256_load_pd(q);
-#   return 0;
-#   }
-#   ])],
-#   [can_compile_avx=yes],
-#   [can_compile_avx=no]
-#  )
-#  AC_LANG_POP([C++])
-#  AC_MSG_RESULT([${can_compile_avx}])
-#  if test "${can_compile_avx}" = "no" ; then
-#    AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
-#  fi
-#fi
+dnl if test "${can_compile_avx}" = "yes" ; then
+dnl   AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
+dnl   AC_LANG_PUSH([C++])
+dnl   AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+dnl    #include <x86intrin.h>
+dnl    int main(int argc, char **argv){
+dnl    double* q;
+dnl    __m256d a1_1 = _mm256_load_pd(q);
+dnl    return 0;
+dnl    }
+dnl    ])],
+dnl    [can_compile_avx=yes],
+dnl    [can_compile_avx=no]
+dnl   )
+dnl   AC_LANG_POP([C++])
+dnl   AC_MSG_RESULT([${can_compile_avx}])
+dnl   if test "${can_compile_avx}" = "no" ; then
+dnl     AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
+dnl   fi
+dnl fi
 
 AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
@@ -300,27 +307,28 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  [can_compile_avx2=no]
 )
 AC_MSG_RESULT([${can_compile_avx2}])
-#if test "${can_compile_avx2}" = "yes" ; then
-#  AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
-#  AC_LANG_PUSH([C++])
-#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#   #include <x86intrin.h>
-#   int main(int argc, char **argv){
-#   double* q;
-#   __m256d q1 = _mm256_load_pd(q);
-#   __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
-#   return 0;
-#   }
-#   ])],
-#   [can_compile_avx2=yes],
-#   [can_compile_avx2=no]
-#  )
-#  AC_LANG_POP([C++])
-#  AC_MSG_RESULT([${can_compile_avx2}])
-#  if test "${can_compile_avx2}" = "no" ; then
-#    AC_MSG_WARN([Cannot compile C++ with AVX2!])
-#  fi
-#fi
+
+dnl if test "${can_compile_avx2}" = "yes" ; then
+dnl   AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
+dnl   AC_LANG_PUSH([C++])
+dnl   AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+dnl    #include <x86intrin.h>
+dnl    int main(int argc, char **argv){
+dnl    double* q;
+dnl    __m256d q1 = _mm256_load_pd(q);
+dnl    __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+dnl    return 0;
+dnl    }
+dnl    ])],
+dnl    [can_compile_avx2=yes],
+dnl    [can_compile_avx2=no]
+dnl   )
+dnl   AC_LANG_POP([C++])
+dnl   AC_MSG_RESULT([${can_compile_avx2}])
+dnl   if test "${can_compile_avx2}" = "no" ; then
+dnl     AC_MSG_WARN([Cannot compile C++ with AVX2!])
+dnl   fi
+dnl fi
 
 if test "${can_compile_avx}" = "yes" ; then
   install_real_avx_block2=yes
@@ -551,6 +559,9 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   [fortran_can_check_environment=no]
 )
 AC_MSG_RESULT([${fortran_can_check_environment}])
+if test x"${fortran_can_check_environment}" = x"yes" ; then
+ AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can query environment variables])
+fi
 
 dnl now check which kernels can be compiled
 
@@ -605,10 +616,32 @@ else
   install_complex_bgq=no
 fi
 
-
-dnl environment variable setting of kernel
-if test x"${fortran_can_check_environment}" = x"yes" ; then
- AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can querry environment variables])
+dnl Test possibility of 'use mpi', if requested
+if test x"${with_mpi}" = x"yes" ; then
+  AC_ARG_ENABLE([mpi-module],
+                AS_HELP_STRING([--disable-mpi-module],
+                               [Do not use the Fortran MPI module, get interfaces by 'include "mpif.h')]),
+                [],
+                [enable_mpi_module=yes])
+  if test x"${enable_mpi_module}" = x"yes" ; then
+    AC_MSG_CHECKING(whether Fortran mpi module can be used)
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+      program test_mpi_module
+        use mpi
+        real :: time
+        time = MPI_WTime()
+      end program
+    ])],
+      [can_use_fortran_mpi_module=yes],
+      [can_use_fortran_mpi_module=no]
+    )
+    AC_MSG_RESULT([${can_use_fortran_mpi_module}])
+    if test x"${can_use_fortran_mpi_module}" = x"yes" ; then
+      AC_DEFINE([HAVE_MPI_MODULE],[1],[can use the Fortran mpi module])
+    else
+      AC_MSG_ERROR([Could not compile a Fortran program with an 'use mpi' statement. You can try again with --disable-mpi-module])
+    fi
+  fi
 fi
 
 dnl last check whether user wants to compile only a specific kernel
@@ -857,6 +890,7 @@ if test x"${DESPERATELY_WANT_ASSUMED_SIZE}" = x"yes" ; then
   AC_DEFINE([DESPERATELY_WANT_ASSUMED_SIZE],[1],[use assumed size Fortran arrays, even if not debuggable])
 fi
 
+AC_SUBST([MPI_BINARY])
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])
 AC_SUBST([with_amd_bulldozer_kernel])

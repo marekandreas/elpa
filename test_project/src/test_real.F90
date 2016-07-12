@@ -75,9 +75,13 @@ program test_real_example
    use ELPA1
    use elpa_utilities, only : error_unit
    use iso_c_binding
+#ifdef HAVE_MPI_MODULE
+   use mpi
    implicit none
-
-   include "mpif.h"
+#else
+   implicit none
+   include 'mpif.h'
+#endif
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!

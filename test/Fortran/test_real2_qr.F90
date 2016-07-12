@@ -147,34 +147,45 @@ program test_real2
    !  stop 1
    !endif
 
-   ! override nblk
-       nblk = 32
-   !   na   = 4000
-   !   nev  = 1500
-
-   ! make sure na, nbl is even
-   if (mod(nblk,2 ) .ne. 0) then
-     nblk = nblk - 1
-   endif
-
-
-   ! make sure na is even
-   if (mod(na,2) .ne. 0) then
-     na = na - 1
-   endif
-   ! make sure na is at least 34
-   if (na .lt. 34) then
-     na = 34
-   endif
+!   ! override nblk
+!       nblk = 32
+!   !   na   = 4000
+!   !   nev  = 1500
+!
+!   ! make sure na, nbl is even
+!   if (mod(nblk,2 ) .ne. 0) then
+!     nblk = nblk - 1
+!   endif
+!
+!
+!   ! make sure na is even
+!   if (mod(na,2) .ne. 0) then
+!     na = na - 1
+!   endif
+!   ! make sure na is at least 34
+!   if (na .lt. 34) then
+!     na = 34
+!   endif
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   STATUS = 0
+   status = 0
+   if (nblk .lt. 64) then
+     status = 1
+     if (myid .eq. 0) print *,"At the moment QR decomposition need blocksize of at least 64"
+     if (na .lt. 64) then
+       if (myid .eq. 0) print *,"This is why the matrix size must also be at least 64 or only 1 MPI task can be used"
+     endif
 
+#ifdef WITH_MPI
+      call mpi_finalize(mpierr)
+#endif
+      call EXIT(0)
+   endif
 #define DATATYPE REAL
-#include "elpa_test_programs_print_headers.X90"
+#include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 

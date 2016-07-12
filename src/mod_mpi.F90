@@ -47,9 +47,13 @@ module elpa_mpi
 #ifndef WITH_MPI
   use elpa_mpi_stubs
 #else
+#ifdef HAVE_MPI_MODULE
+  use mpi
   implicit none
-  public
-  include "mpif.h"
+#else
+  implicit none
+  include 'mpif.h'
 #endif
-
+#endif
+  public
 end module
