@@ -54,7 +54,6 @@ module ELPA_utilities
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
 #endif
-  use precision
   implicit none
 
   private ! By default, all routines contained are private
@@ -62,7 +61,7 @@ module ELPA_utilities
   public :: debug_messages_via_environment_variable, pcol, prow, error_unit
   public :: map_global_array_index_to_local_index
 #ifndef HAVE_ISO_FORTRAN_ENV
-  integer(kind=ik), parameter :: error_unit = 0
+  integer, parameter :: error_unit = 0
 #endif
 
 
