@@ -1001,3 +1001,27 @@ test_project:
     - pushd build
     - make distclean
     - rm -rf installdest
+
+test_project_intel:
+  tags:
+    - cpu
+  script:
+    - mkdir build
+    - pushd build
+    - ../autogen.sh
+    - ../configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest
+    - make -j 8
+    - make install
+    - popd
+    - mkdir test_project/build
+    - pushd test_project/build
+    - ../autogen.sh
+    - ../configure PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - ./test_real
+    - make distclean
+    - popd
+    - pushd build
+    - make distclean
+    - rm -rf installdest
