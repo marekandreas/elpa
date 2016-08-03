@@ -82,7 +82,7 @@
 
 !> \brief Fortran module which provides the routines to use the one-stage ELPA solver
 module ELPA1
-  use precision
+  use, intrinsic :: iso_c_binding, only : c_double
   use elpa_utilities
   use elpa1_auxiliary
 
