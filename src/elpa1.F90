@@ -81,7 +81,7 @@
 #include "config-f90.h"
 !> \brief Fortran module which provides the routines to use the one-stage ELPA solver
 module ELPA1
-  use precision
+  use, intrinsic :: iso_c_binding, only : c_double
   use elpa_utilities
   use elpa1_auxiliary
 
@@ -123,9 +123,9 @@ module ELPA1
 
   ! Timing results, set by every call to solve_evp_xxx
 
-  real(kind=rk), public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
-  real(kind=rk), public :: time_evp_solve  !< time for solving the tridiagonal system
-  real(kind=rk), public :: time_evp_back   !< time for back transformations of eigenvectors
+  real(kind=c_double), public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
+  real(kind=c_double), public :: time_evp_solve  !< time for solving the tridiagonal system
+  real(kind=c_double), public :: time_evp_back   !< time for back transformations of eigenvectors
 
   logical, public :: elpa_print_times = .false. !< Set elpa_print_times to .true. for explicit timing outputs
 
