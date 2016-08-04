@@ -247,24 +247,34 @@ program test_transpose_multiply
    tmp1(:,:) = 0.0_rk
 
    ! tmp1 = a**T
+#ifdef WITH_MPI
    call pdtran(na, na, 1.0_rk, a, 1, 1, sc_desc, 0.0_rk, tmp1, 1, 1, sc_desc)
-
+#else
+   tmp1 = transpose(a)
+#endif
    ! tmp2 = tmp1 * b
+#ifdef WITH_MPI
    call pdgemm("N","N", na, na, na, 1.0_rk, tmp1, 1, 1, sc_desc, b, 1, 1, &
                sc_desc, 0.0_rk, tmp2, 1, 1, sc_desc)
-
+#else
+   call dgemm("N","N", na, na, na, 1.0_rk, tmp1, na, b, na, 0.0_rk, tmp2, na)
+#endif
 
    ! compare tmp2 with c
    tmp2(:,:) = tmp2(:,:) - c(:,:)
 
 
    norm = pdlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
-   call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
 
+#ifdef WITH_MPI
+   call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+   normmax = norm
+#endif
    if (myid .eq. 0) then
      print *," Maximum error of result: ", normmax
    endif
- 
+
    if (normmax .gt. 5e-12) then
         status = 1
    endif
