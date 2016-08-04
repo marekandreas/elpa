@@ -687,10 +687,7 @@ EXTRA_DIST = \
   src/cuUtils_real_template.Xcu \
   nvcc_wrap \
   test_project/Makefile.am \
-  test_project/aclocal.m4 \
   test_project/autogen.sh \
-  test_project/config.h.in \
-  test_project/configure \
   test_project/configure.ac \
   test_project/fdep \
   test_project/src/test_real.F90 \
