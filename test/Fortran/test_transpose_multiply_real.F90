@@ -226,7 +226,7 @@ program test_transpose_multiply
                                  mpi_comm_rows, mpi_comm_cols, c, na_rows)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
+      write(error_unit,*) "elpa_mult_at_b_real produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
