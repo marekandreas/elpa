@@ -414,10 +414,7 @@ EXTRA_DIST = \
   src/elpa_transpose_vectors.X90 \
   src/redist_band.X90 \
   test_project/Makefile.am \
-  test_project/aclocal.m4 \
   test_project/autogen.sh \
-  test_project/config.h.in \
-  test_project/configure \
   test_project/configure.ac \
   test_project/fdep \
   test_project/src/test_real.F90 \
