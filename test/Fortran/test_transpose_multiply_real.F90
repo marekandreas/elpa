@@ -87,7 +87,12 @@ program test_transpose_multiply
 
    real(kind=rk), allocatable :: a(:,:), b(:,:), c(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
-   real(kind=rk)              :: norm, normmax, pdlange
+   real(kind=rk)              :: norm, normmax
+#ifdef WITH_MPI
+   real(kind=rk)              :: pdlange
+#else
+   real(kind=rk)              :: dlange
+#endif
 
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -263,8 +268,11 @@ program test_transpose_multiply
    ! compare tmp2 with c
    tmp2(:,:) = tmp2(:,:) - c(:,:)
 
-
-   norm = pdlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+#ifdef WITH_MPI
+   norm = pdlange("M", na, na, tmp2, 1, 1, sc_desc, tmp1)
+#else
+   norm = dlange("M", na, na, tmp2, na_rows, tmp1)
+#endif
 
 #ifdef WITH_MPI
    call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
