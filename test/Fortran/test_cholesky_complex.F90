@@ -42,39 +42,12 @@
 !
 #include "config-f90.h"
 !>
-!> Fortran test programm to demonstrates the use of
-!> ELPA 1 complex case library.
-!> If "HAVE_REDIRECT" was defined at build time
-!> the stdout and stderr output of each MPI task
-!> can be redirected to files if the environment
-!> variable "REDIRECT_ELPA_TEST_OUTPUT" is set
-!> to "true".
-!>
-!> By calling executable [arg1] [arg2] [arg3] [arg4]
-!> one can define the size (arg1), the number of
-!> Eigenvectors to compute (arg2), and the blocking (arg3).
-!> If these values are not set default values (4000, 1500, 16)
-!> are choosen.
-!> If these values are set the 4th argument can be
-!> "output", which specifies that the EV's are written to
-!> an ascii file.
-!>
-program test_complex
 
-!-------------------------------------------------------------------------------
-! Standard eigenvalue problem - COMPLEX version
-!
-! This program demonstrates the use of the ELPA module
-! together with standard scalapack routines
-!
-! Copyright of the original code rests with the authors inside the ELPA
-! consortium. The copyright of any additional modifications shall rest
-! with their original authors, but shall adhere to the licensing terms
-! distributed along with the original code in the file "COPYING".
-!-------------------------------------------------------------------------------
+program test_cholesky
+
    use precision
    use ELPA1
-   use elpa_utilities, only : error_unit
+   use elpa_utilities
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -84,15 +57,16 @@ program test_complex
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
+
    use elpa_mpi
 #ifdef HAVE_REDIRECT
    use redirect
 #endif
-
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+  use timings
 #endif
   use output_types
+
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -101,33 +75,45 @@ program test_complex
    ! nev:  Number of eigenvectors to be calculated
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
+   integer(kind=ik)           :: nblk
+   integer(kind=ik)           :: na, nev
 
-   integer(kind=ik)              :: nblk
-   integer(kind=ik)              :: na, nev
+   integer(kind=ik)           :: np_rows, np_cols, na_rows, na_cols
 
-   integer(kind=ik)              :: np_rows, np_cols, na_rows, na_cols
+   integer(kind=ik)           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer(kind=ik)              :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer(kind=ik)              :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer, external          :: numroc
 
    real(kind=rk), allocatable    :: ev(:), xr(:,:)
-
-   complex(kind=ck), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
-
+   complex(kind=ck), allocatable :: a(:,:), b(:,:), c(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+   complex(kind=ck), allocatable :: d(:), e(:)
+   complex(kind=rk)              :: diagonalElement, subdiagonalElement
+   integer(kind=ik)           :: loctmp ,rowLocal, colLocal
    complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
-
-   integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
-   integer(kind=ik)              :: STATUS
-#ifdef WITH_OPENMP
-   integer(kind=ik)              :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   real(kind=rk)              :: norm, normmax
+#ifdef WITH_MPI
+   real(kind=rk)              :: pzlange
+#else
+   real(kind=rk)              :: zlange
 #endif
-   type(output_t)                :: write_to_file
-   logical                       :: success
-   character(len=8)              :: task_suffix
-   integer(kind=ik)              :: j
+
+   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
+   complex(kind=ck), parameter   :: pi = (3.141592653589793238462643383279d0, 0.d0)
+
+   integer(kind=ik)           :: STATUS
+#ifdef WITH_OPENMP
+   integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
+                                 provided_mpi_thread_level
+#endif
+   type(output_t)             :: write_to_file
+   logical                    :: success
+   character(len=8)           :: task_suffix
+   integer(kind=ik)           :: j
+   !-------------------------------------------------------------------------------
 
    success = .true.
-   ! read input parameters if they are provided
+
    call read_input_parameters(na, nev, nblk, write_to_file)
 
    !-------------------------------------------------------------------------------
@@ -135,10 +121,6 @@ program test_complex
    call setup_mpi(myid, nprocs)
 
    STATUS = 0
-
-#define DATATYPE COMPLEX
-#define ELPA1
-#include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -167,24 +149,16 @@ program test_complex
   call timer%start("program")
 #endif
 
-   !-------------------------------------------------------------------------------
-   ! Selection of number of processor rows/columns
-   ! We try to set up the grid square-like, i.e. start the search for possible
-   ! divisors of nprocs with a number next to the square root of nprocs
-   ! and decrement it until a divisor is found.
-
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
+
    ! at the end of the above loop, nprocs is always divisible by np_cols
 
    np_rows = nprocs/np_cols
 
    if(myid==0) then
-      print *
-      print '(a)','Standard eigenvalue problem - COMPLEX version'
-      print *
-      print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
+      print '(3(a,i0))','Matrix size=',na,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
    endif
@@ -216,9 +190,6 @@ program test_complex
      print '(a)','| Past split communicator setup for rows and columns.'
    end if
 
-   ! Determine the necessary size of the distributed matrices,
-   ! we use the Scalapack tools routine NUMROC for that.
-
    call set_up_blacs_descriptor(na ,nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
 
@@ -228,76 +199,61 @@ program test_complex
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
-
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("set up matrix")
 #endif
    allocate(a (na_rows,na_cols))
+   allocate(b (na_rows,na_cols))
+   allocate(c (na_rows,na_cols))
+
    allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
 
    allocate(ev(na))
+!   allocate(xr(na_rows,na_cols))
+!   call prepare_matrix(na, myid, sc_desc, iseed, xr, a, z, as)
+!   deallocate(xr)
+!   b(:,:) = 2.0 * a(:,:)
+!   c(:,:) = 0.0
 
-   allocate(xr(na_rows,na_cols))
+    a(:,:) = CONE - CONE
+    diagonalElement = (2.546_rk, 0.d0)
+    do i = 1, na
+      if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+        a(rowLocal,colLocal) = diagonalElement * abs(cos( pi*real(i,kind=rk)/ real(na+1,kind=rk) ))
+      endif
+    enddo
+    as(:,:) = a(:,:)
 
-   call prepare_matrix(na, myid, sc_desc, iseed, xr, a, z, as)
-
-   deallocate(xr)
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
+
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
    if (myid==0) then
-     print '(a)','| Entering one-step ELPA solver ... '
+     print '(a)','| Compute cholesky decomposition ... '
      print *
    end if
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_complex_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                               na_cols, mpi_comm_rows, mpi_comm_cols)
+
+   success = elpa_cholesky_complex(na, a, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, .true.)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_complex produced an error! Aborting..."
+      write(error_unit,*) " elpa_cholesky_complex produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
    endif
 
+
    if (myid==0) then
-     print '(a)','| One-step ELPA solver complete.'
+     print '(a)','| Solve cholesky decomposition complete.'
      print *
    end if
-
-   if(myid == 0) print *,'Time tridiag_complex  :',time_evp_fwd
-   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
-   if(myid == 0) print *,'Time trans_ev_complex :',time_evp_back
-   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
-
-   if(write_to_file%eigenvectors) then
-     write(unit = task_suffix, fmt = '(i8.8)') myid
-     open(17,file="EVs_complex_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
-     write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
-
-     do i=1,na_rows
-       do j=1,na_cols
-         write(17,*) "row=",i," col=",j," element of eigenvector=",z(i,j)
-       enddo
-     enddo
-     close(17)
-   endif
-
-   if(write_to_file%eigenvalues) then
-      if (myid == 0) then
-         open(17,file="Eigenvalues_complex_out.txt",form='formatted',status='new')
-         do i=1,na
-            write(17,*) i,ev(i)
-         enddo
-         close(17)
-      endif
-   endif
 
 
    !-------------------------------------------------------------------------------
@@ -305,9 +261,47 @@ program test_complex
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   tmp1(:,:) = 0.0_ck
+
+   ! tmp1 = a**H
+#ifdef WITH_MPI
+   call pztranc(na, na, 1.0_rk, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+#else
+   tmp1 = transpose(conjg(a))
+#endif
+   ! tmp2 = a * a**H
+#ifdef WITH_MPI
+   call pzgemm("N","N", na, na, na, CONE, a, 1, 1, sc_desc, tmp1, 1, 1, &
+               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
+#else
+   call zgemm("N","N", na, na, na, CONE, a, na, tmp1, na, CZERO, tmp2, na)
+#endif
+
+   ! compare tmp2 with c
+   tmp2(:,:) = tmp2(:,:) - as(:,:)
+
+#ifdef WITH_MPI
+   norm = pzlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+#else
+   norm = zlange("M",na, na, tmp2, na_rows, tmp1)
+#endif
+#ifdef WITH_MPI
+   call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+   normmax = norm
+#endif
+   if (myid .eq. 0) then
+     print *," Maximum error of result: ", normmax
+   endif
+
+   if (normmax .gt. 5e-11) then
+        status = 1
+   endif
 
    deallocate(a)
+   deallocate(b)
+   deallocate(c)
+
    deallocate(as)
 
    deallocate(z)
@@ -315,19 +309,26 @@ program test_complex
    deallocate(tmp2)
    deallocate(ev)
 
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("program")
    print *," "
    print *,"Timings program:"
+   print *," "
    call timer%print("program")
    print *," "
    print *,"End timings program"
+   print *," "
 #endif
+
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
+
    call EXIT(STATUS)
+
+
 end
 
 !-------------------------------------------------------------------------------
