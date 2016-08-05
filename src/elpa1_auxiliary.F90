@@ -118,8 +118,8 @@ module elpa1_auxiliary
 !>                              Only upper triangle is needs to be set.
 !>                              The lower triangle is not referenced.
 !> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  matrixCols           local columns of matrix a
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
@@ -128,7 +128,6 @@ module elpa1_auxiliary
   interface invert_trm_real
     module procedure elpa_invert_trm_real_double
   end interface
-
 
 !> \brief  old, deprecated interface cholesky_complex: Cholesky factorization of a double-precision complex hermitian matrix
 !> \details
@@ -139,8 +138,8 @@ module elpa1_auxiliary
 !>                              On return, the upper triangle contains the Cholesky factor
 !>                              and the lower triangle is set to 0.
 !> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  matrixCols           local columns of matrix a
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
@@ -159,8 +158,8 @@ module elpa1_auxiliary
 !>                              Only upper triangle is needs to be set.
 !>                              The lower triangle is not referenced.
 !> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  matrixCols           local columns of matrix a
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
@@ -272,8 +271,8 @@ module elpa1_auxiliary
 !>                              On return, the upper triangle contains the Cholesky factor
 !>                              and the lower triangle is set to 0.
 !> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  matrixCols           local columns of matrix a
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
@@ -368,7 +367,6 @@ module elpa1_auxiliary
       tmatc = 0
 
       do n = 1, na, nblk
-
         ! Calculate first local row and column of the still remaining matrix
         ! on the local processor
 
@@ -390,7 +388,7 @@ module elpa1_auxiliary
             call spotrf('U', na-n+1, a(l_row1,l_col1), lda, info)
 #endif
             if (info/=0) then
-              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf"
+              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf 1: ",info
               success = .false.
               return
             endif
@@ -413,7 +411,7 @@ module elpa1_auxiliary
             call spotrf('U', nblk, a(l_row1,l_col1), lda, info)
 #endif
             if (info/=0) then
-              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf"
+              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf 2: ",info
               success = .false.
               return
             endif
@@ -531,8 +529,8 @@ module elpa1_auxiliary
 !>                              On return, the upper triangle contains the Cholesky factor
 !>                              and the lower triangle is set to 0.
 !> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  matrixCols           local columns of matrix a
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
@@ -784,8 +782,8 @@ module elpa1_auxiliary
 !>                              Only upper triangle is needs to be set.
 !>                              The lower triangle is not referenced.
 !> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  matrixCols           local columns of matrix a
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
