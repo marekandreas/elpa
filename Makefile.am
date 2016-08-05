@@ -404,6 +404,7 @@ CLEANFILES = \
   elpa2_test*\
   elpa2_real* \
   elpa1_real* \
+  *.sh \
   *.i
 
 clean-local:
