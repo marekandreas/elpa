@@ -198,6 +198,7 @@ dist_files_DATA = \
   test/Fortran/test_toeplitz.F90 \
   test/Fortran/test_transpose_multiply_real.F90 \
   test/Fortran/test_transpose_multiply_complex.F90 \
+  test/Fortran/test_cholesky_real.F90 \
   src/elpa2_print_kernels.F90
 
 dist_doc_DATA = README.md USERS_GUIDE.md INSTALL.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
@@ -223,6 +224,7 @@ noinst_PROGRAMS = \
   elpa1_real_toeplitz@SUFFIX@ \
   elpa1_real_transpose_multiply@SUFFIX@ \
   elpa1_complex_transpose_multiply@SUFFIX@ \
+  elpa1_real_cholesky@SUFFIX@ \
   elpa1_test_real_with_c@SUFFIX@ \
   elpa1_test_real_c_version@SUFFIX@ \
   elpa1_test_complex_c_version@SUFFIX@ \
@@ -292,6 +294,11 @@ elpa1_complex_transpose_multiply@SUFFIX@_LDADD = $(build_lib)
 elpa1_complex_transpose_multiply@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa1_complex_transpose_multiply@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
+elpa1_real_cholesky@SUFFIX@_SOURCES = test/Fortran/test_cholesky_real.F90
+elpa1_real_cholesky@SUFFIX@_LDADD = $(build_lib)
+elpa1_real_cholesky@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_real_cholesky@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 elpa1_test_real_with_c@SUFFIX@_SOURCES = test/Fortran/test_real_with_c.F90
 elpa1_test_real_with_c@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_with_c@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
@@ -357,6 +364,7 @@ check_SCRIPTS = \
   elpa1_real_toeplitz@SUFFIX@.sh \
   elpa1_real_transpose_multiply@SUFFIX@.sh \
   elpa1_complex_transpose_multiply@SUFFIX@.sh \
+  elpa1_real_cholesky@SUFFIX@.sh \
   elpa2_print_kernels@SUFFIX@ \
   elpa1_test_real_c_version@SUFFIX@.sh \
   elpa1_test_complex_c_version@SUFFIX@.sh \

@@ -236,8 +236,8 @@ module elpa1_auxiliary
 !>                              On return, the upper triangle contains the Cholesky factor
 !>                              and the lower triangle is set to 0.
 !> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!> \param  matrixCols           local columns of matrix a
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
@@ -322,7 +322,6 @@ module elpa1_auxiliary
       tmatc = 0
 
       do n = 1, na, nblk
-
         ! Calculate first local row and column of the still remaining matrix
         ! on the local processor
 
@@ -341,7 +340,7 @@ module elpa1_auxiliary
 
             call dpotrf('U',na-n+1,a(l_row1,l_col1),lda,info)
             if (info/=0) then
-              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf"
+              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf 1: ",info
               success = .false.
               return
             endif
@@ -361,7 +360,7 @@ module elpa1_auxiliary
 
             call dpotrf('U',nblk,a(l_row1,l_col1),lda,info)
             if (info/=0) then
-              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf"
+              if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf 2: ",info
               success = .false.
               return
             endif
