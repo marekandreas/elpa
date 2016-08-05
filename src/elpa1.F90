@@ -9,7 +9,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -65,7 +65,7 @@
 !>    - Technische Universität München, Lehrstuhl für Informatik mit
 !>      Schwerpunkt Wissenschaftliches Rechnen ,
 !>    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!>    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!>    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !>      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !>      and
 !>    - IBM Deutschland GmbH
