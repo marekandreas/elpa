@@ -82,7 +82,7 @@ module elpa1_auxiliary
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
 !>                              Distribution is like in Scalapack.
-!>                              Only upper triangle is needs to be set.
+!>                              Only upper triangle needs to be set.
 !>                              On return, the upper triangle contains the Cholesky factor
 !>                              and the lower triangle is set to 0.
 !> \param  lda                  Leading dimension of a
@@ -102,7 +102,7 @@ module elpa1_auxiliary
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
 !>                              Distribution is like in Scalapack.
-!>                              Only upper triangle is needs to be set.
+!>                              Only upper triangle needs to be set.
 !>                              The lower triangle is not referenced.
 !> \param  lda                  Leading dimension of a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
@@ -120,7 +120,7 @@ module elpa1_auxiliary
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
 !>                              Distribution is like in Scalapack.
-!>                              Only upper triangle is needs to be set.
+!>                              Only upper triangle needs to be set.
 !>                              On return, the upper triangle contains the Cholesky factor
 !>                              and the lower triangle is set to 0.
 !> \param  lda                  Leading dimension of a
@@ -139,7 +139,7 @@ module elpa1_auxiliary
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
 !>                              Distribution is like in Scalapack.
-!>                              Only upper triangle is needs to be set.
+!>                              Only upper triangle needs to be set.
 !>                              The lower triangle is not referenced.
 !> \param  lda                  Leading dimension of a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
@@ -232,7 +232,7 @@ module elpa1_auxiliary
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
 !>                              Distribution is like in Scalapack.
-!>                              Only upper triangle is needs to be set.
+!>                              Only upper triangle needs to be set.
 !>                              On return, the upper triangle contains the Cholesky factor
 !>                              and the lower triangle is set to 0.
 !> \param  lda                  Leading dimension of a
@@ -438,7 +438,7 @@ module elpa1_auxiliary
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
 !>                              Distribution is like in Scalapack.
-!>                              Only upper triangle is needs to be set.
+!>                              Only upper triangle needs to be set.
 !>                              The lower triangle is not referenced.
 !> \param  lda                  Leading dimension of a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
@@ -595,7 +595,7 @@ module elpa1_auxiliary
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
 !>                              Distribution is like in Scalapack.
-!>                              Only upper triangle is needs to be set.
+!>                              Only upper triangle needs to be set.
 !>                              On return, the upper triangle contains the Cholesky factor
 !>                              and the lower triangle is set to 0.
 !> \param  lda                  Leading dimension of a
@@ -801,7 +801,7 @@ module elpa1_auxiliary
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
 !>                              Distribution is like in Scalapack.
-!>                              Only upper triangle is needs to be set.
+!>                              Only upper triangle needs to be set.
 !>                              The lower triangle is not referenced.
 !> \param  lda                  Leading dimension of a
 !> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
