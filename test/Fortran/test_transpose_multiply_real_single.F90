@@ -284,7 +284,7 @@ program test_transpose_multiply
      print *," Maximum error of result: ", normmax
    endif
 
-   if (normmax .gt. 5e-11_rk4) then
+   if (normmax .gt. 5e-4_rk4) then
         status = 1
    endif
 
