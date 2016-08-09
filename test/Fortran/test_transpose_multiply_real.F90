@@ -206,11 +206,11 @@ program test_transpose_multiply
 
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed,  a, z, as)
 
 
-   b(:,:) = 2.0 * a(:,:)
-   c(:,:) = 0.0
+   b(:,:) = 2.0_rk8 * a(:,:)
+   c(:,:) = 0.0_rk8
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")

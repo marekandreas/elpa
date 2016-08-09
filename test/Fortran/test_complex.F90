@@ -242,7 +242,7 @@ program test_complex_double_precision
 
    allocate(xr(na_rows,na_cols))
 
-   call prepare_matrix(na, myid, sc_desc, iseed, xr, a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed, xr, a, z, as)
 
    deallocate(xr)
 #ifdef HAVE_DETAILED_TIMINGS

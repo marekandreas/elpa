@@ -256,7 +256,7 @@ program test_complex2_double_precision
    allocate(ev(na))
    allocate(xr(na_rows,na_cols))
 
-   call prepare_matrix(na, myid, sc_desc, iseed, xr, a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed, xr, a, z, as)
 
    deallocate(xr)
 

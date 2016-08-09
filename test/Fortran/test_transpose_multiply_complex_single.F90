@@ -209,8 +209,8 @@ program test_transpose_multiply
    allocate(xr(na_rows,na_cols))
    call prepare_matrix_single(na, myid, sc_desc, iseed, xr, a, z, as)
    deallocate(xr)
-   b(:,:) = 2.0 * a(:,:)
-   c(:,:) = 0.0
+   b(:,:) = 2.0_ck4 * a(:,:)
+   c(:,:) = 0.0_ck4
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")

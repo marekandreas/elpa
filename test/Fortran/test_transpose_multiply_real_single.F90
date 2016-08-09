@@ -209,8 +209,8 @@ program test_transpose_multiply
    call prepare_matrix_single(na, myid, sc_desc, iseed,  a, z, as)
 
 
-   b(:,:) = 2.0 * a(:,:)
-   c(:,:) = 0.0
+   b(:,:) = 2.0_rk4 * a(:,:)
+   c(:,:) = 0.0_rk4
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")

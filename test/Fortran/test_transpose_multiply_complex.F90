@@ -207,10 +207,10 @@ program test_transpose_multiply
 
    allocate(ev(na))
    allocate(xr(na_rows,na_cols))
-   call prepare_matrix(na, myid, sc_desc, iseed, xr, a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed, xr, a, z, as)
    deallocate(xr)
-   b(:,:) = 2.0 * a(:,:)
-   c(:,:) = 0.0
+   b(:,:) = 2.0_ck8 * a(:,:)
+   c(:,:) = 0.0_ck8
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
