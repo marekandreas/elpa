@@ -281,7 +281,9 @@ dist_files_DATA = \
   test/Fortran/test_transpose_multiply_real.F90 \
   test/Fortran/test_transpose_multiply_complex.F90 \
   test/Fortran/test_cholesky_real.F90 \
+  test/Fortran/test_invert_trm_real.F90 \
   test/Fortran/test_cholesky_complex.F90 \
+  test/Fortran/test_invert_trm_complex.F90 \
   src/elpa2_print_kernels.F90
 
 #end needed
@@ -310,7 +312,9 @@ noinst_PROGRAMS = \
   elpa1_real_transpose_multiply@SUFFIX@ \
   elpa1_complex_transpose_multiply@SUFFIX@ \
   elpa1_real_cholesky@SUFFIX@ \
+  elpa1_real_invert_trm@SUFFIX@ \
   elpa1_complex_cholesky@SUFFIX@ \
+  elpa1_complex_invert_trm@SUFFIX@ \
   elpa1_test_real_with_c@SUFFIX@ \
   elpa1_test_real_c_version@SUFFIX@ \
   elpa1_test_complex_c_version@SUFFIX@ \
@@ -325,6 +329,7 @@ noinst_PROGRAMS += \
   elpa2_test_complex_default_single_precision@SUFFIX@ \
   elpa1_complex_transpose_multiply_single_precision@SUFFIX@ \
   elpa1_complex_cholesky_single_precision@SUFFIX@ \
+  elpa1_complex_invert_trm_single_precision@SUFFIX@ \
   elpa2_test_complex_api_single_precision@SUFFIX@
 endif
 
@@ -337,6 +342,7 @@ noinst_PROGRAMS += \
   elpa2_test_real_api_single_precision@SUFFIX@ \
   elpa1_real_transpose_multiply_single_precision@SUFFIX@ \
   elpa1_real_cholesky_single_precision@SUFFIX@ \
+  elpa1_real_invert_trm_single_precision@SUFFIX@ \
   elpa1_real_toeplitz_single_precision@SUFFIX@
 endif
 
@@ -429,10 +435,20 @@ elpa1_real_cholesky@SUFFIX@_LDADD = $(build_lib)
 elpa1_real_cholesky@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa1_real_cholesky@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
+elpa1_real_invert_trm@SUFFIX@_SOURCES = test/Fortran/test_invert_trm_real.F90
+elpa1_real_invert_trm@SUFFIX@_LDADD = $(build_lib)
+elpa1_real_invert_trm@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_real_invert_trm@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 elpa1_complex_cholesky@SUFFIX@_SOURCES = test/Fortran/test_cholesky_complex.F90
 elpa1_complex_cholesky@SUFFIX@_LDADD = $(build_lib)
 elpa1_complex_cholesky@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa1_complex_cholesky@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
+elpa1_complex_invert_trm@SUFFIX@_SOURCES = test/Fortran/test_invert_trm_complex.F90
+elpa1_complex_invert_trm@SUFFIX@_LDADD = $(build_lib)
+elpa1_complex_invert_trm@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_complex_invert_trm@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa2_test_real@SUFFIX@_SOURCES = test/Fortran/test_real2.F90
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
@@ -505,6 +521,11 @@ elpa1_real_cholesky_single_precision@SUFFIX@_LDADD = $(build_lib)
 elpa1_real_cholesky_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa1_real_cholesky_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
+elpa1_real_invert_trm_single_precision@SUFFIX@_SOURCES = test/Fortran/test_invert_trm_real_single.F90
+elpa1_real_invert_trm_single_precision@SUFFIX@_LDADD = $(build_lib)
+elpa1_real_invert_trm_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_real_invert_trm_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 elpa2_test_real_default_single_precision@SUFFIX@_SOURCES = test/Fortran/test_real2_default.F90
 elpa2_test_real_default_single_precision@SUFFIX@_LDADD = $(build_lib)
 #elpa2_test_real_default_single_precision@SUFFIX@_LDFLAGS = -static
@@ -549,6 +570,11 @@ elpa1_complex_cholesky_single_precision@SUFFIX@_SOURCES = test/Fortran/test_chol
 elpa1_complex_cholesky_single_precision@SUFFIX@_LDADD = $(build_lib)
 elpa1_complex_cholesky_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa1_complex_cholesky_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
+elpa1_complex_invert_trm_single_precision@SUFFIX@_SOURCES = test/Fortran/test_invert_trm_complex_single.F90
+elpa1_complex_invert_trm_single_precision@SUFFIX@_LDADD = $(build_lib)
+elpa1_complex_invert_trm_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_complex_invert_trm_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa2_test_complex_api_single_precision@SUFFIX@_SOURCES = test/Fortran/test_complex2_api_single.F90
 elpa2_test_complex_api_single_precision@SUFFIX@_LDADD = $(build_lib)
@@ -599,7 +625,9 @@ check_SCRIPTS = \
   elpa1_real_transpose_multiply@SUFFIX@.sh \
   elpa1_complex_transpose_multiply@SUFFIX@.sh \
   elpa1_real_cholesky@SUFFIX@.sh \
+  elpa1_real_invert_trm@SUFFIX@.sh \
   elpa1_complex_cholesky@SUFFIX@.sh \
+  elpa1_complex_invert_trm@SUFFIX@.sh \
   elpa2_print_kernels@SUFFIX@ \
   elpa1_test_real_c_version@SUFFIX@.sh \
   elpa1_test_complex_c_version@SUFFIX@.sh \
@@ -614,6 +642,7 @@ check_SCRIPTS += \
   elpa2_test_real_qr_single_precision@SUFFIX@.sh \
   elpa1_real_transpose_multiply_single_precision@SUFFIX@.sh \
   elpa1_real_cholesky_single_precision@SUFFIX@.sh \
+  elpa1_real_invert_trm_single_precision@SUFFIX@.sh \
   elpa2_test_real_api_single_precision@SUFFIX@.sh
 endif
 
@@ -624,6 +653,7 @@ check_SCRIPTS += \
   elpa2_test_complex_default_single_precision@SUFFIX@.sh \
   elpa1_complex_transpose_multiply_single_precision@SUFFIX@.sh \
   elpa1_complex_cholesky_single_precision@SUFFIX@.sh \
+  elpa1_complex_invert_trm_single_precision@SUFFIX@.sh \
   elpa2_test_complex_api_single_precision@SUFFIX@.sh
 endif
 
