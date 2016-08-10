@@ -624,15 +624,15 @@ check_SCRIPTS = \
   elpa1_test_real_with_c@SUFFIX@.sh \
   elpa1_real_cholesky@SUFFIX@.sh \
   elpa1_real_invert_trm@SUFFIX@.sh \
+  elpa1_real_transpose_multiply@SUFFIX@.sh \
   elpa1_complex_cholesky@SUFFIX@.sh \
   elpa1_complex_invert_trm@SUFFIX@.sh \
+  elpa1_complex_transpose_multiply@SUFFIX@.sh \
   elpa2_print_kernels@SUFFIX@ \
   elpa1_test_real_c_version@SUFFIX@.sh \
   elpa1_test_complex_c_version@SUFFIX@.sh \
   elpa2_test_real_c_version@SUFFIX@.sh \
   elpa2_test_complex_c_version@SUFFIX@.sh
-#  elpa1_real_transpose_multiply@SUFFIX@.sh
-#  elpa1_complex_transpose_multiply@SUFFIX@.sh
 
 if WANT_SINGLE_PRECISION_REAL
 check_SCRIPTS += \
@@ -642,9 +642,9 @@ check_SCRIPTS += \
   elpa2_test_real_qr_single_precision@SUFFIX@.sh \
   elpa1_real_cholesky_single_precision@SUFFIX@.sh \
   elpa1_real_invert_trm_single_precision@SUFFIX@.sh \
+  elpa1_real_transpose_multiply_single_precision@SUFFIX@.sh \
   elpa2_test_real_api_single_precision@SUFFIX@.sh
 endif
-#  elpa1_real_transpose_multiply_single_precision@SUFFIX@.sh
 
 if WANT_SINGLE_PRECISION_COMPLEX
 check_SCRIPTS += \
@@ -653,9 +653,10 @@ check_SCRIPTS += \
   elpa2_test_complex_default_single_precision@SUFFIX@.sh \
   elpa1_complex_cholesky_single_precision@SUFFIX@.sh \
   elpa1_complex_invert_trm_single_precision@SUFFIX@.sh \
+  elpa1_complex_transpose_multiply_single_precision@SUFFIX@.sh \
   elpa2_test_complex_api_single_precision@SUFFIX@.sh
 endif
-#  elpa1_complex_transpose_multiply_single_precision@SUFFIX@.sh 
+
 if WITH_GPU_VERSION
 check_SCRIPTS += \
   elpa2_test_real_gpu@SUFFIX@.sh \
