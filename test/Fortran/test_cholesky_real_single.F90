@@ -293,7 +293,7 @@ program test_cholesky
      print *," Maximum error of result: ", normmax
    endif
 
-   if (normmax .gt. 5e-12_rk4) then
+   if (normmax .gt. 5e-4_rk4) then
         status = 1
    endif
 
