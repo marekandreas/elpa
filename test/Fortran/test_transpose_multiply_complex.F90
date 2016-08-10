@@ -253,7 +253,7 @@ program test_transpose_multiply
 
    ! tmp1 = a**T
 #ifdef WITH_MPI
-   call pztranc(na, na, 1.0_rk, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+   call pztranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
 #else
    tmp1 = transpose(conjg(a))
 #endif
@@ -282,7 +282,7 @@ program test_transpose_multiply
      print *," Maximum error of result: ", normmax
    endif
 
-   if (normmax .gt. 5e-11) then
+   if (normmax .gt. 5e-11_rk) then
         status = 1
    endif
 
