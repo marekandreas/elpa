@@ -2148,6 +2148,9 @@ module elpa1_auxiliary
       call timer%start("elpa_mult_at_b_real_single")
 #endif
 #endif
+
+      success = .true.
+
 !      if (na .lt. lda) then
 !        print *,"na lt lda ",na,lda
 !        stop
@@ -2454,6 +2457,8 @@ module elpa1_auxiliary
       call timer%start("elpa_mult_at_b_real_single")
 #endif
 #endif
+      success = .true.
+
 !      if (na .lt. lda) then
 !        print *,"na lt lda ",na,lda
 !        stop
@@ -2763,6 +2768,9 @@ module elpa1_auxiliary
       call timer%start("elpa_mult_ah_b_complex_single")
 #endif
 #endif
+
+      success = .true.
+
 !      if (na .lt. lda) then
 !        print *,"na lt lda ",na,lda
 !        stop
@@ -3074,6 +3082,9 @@ module elpa1_auxiliary
       call timer%start("elpa_mult_ah_b_complex_single")
 #endif
 #endif
+
+      success = .true.
+
 !      if (na .lt. lda) then
 !        print *,"na lt lda ",na,lda
 !        stop
