@@ -265,7 +265,7 @@ program test_cholesky
 
    ! tmp1 = a**H
 #ifdef WITH_MPI
-   call pctranc(na, na, 1.0_rk4, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+   call pctranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
 #else
    tmp1 = transpose(conjg(a))
 #endif
