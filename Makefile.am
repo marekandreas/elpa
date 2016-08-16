@@ -238,7 +238,7 @@ noinst_PROGRAMS = \
   elpa2_test_complex_c_version@SUFFIX@
 
 
-build_lib = libelpa@SUFFIX@.la libelpatest@SUFFIX@.la
+build_lib = libelpatest@SUFFIX@.la libelpa@SUFFIX@.la
 
 # library with shared sources for the test files
 noinst_LTLIBRARIES += libelpatest@SUFFIX@.la
