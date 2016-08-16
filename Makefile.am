@@ -321,7 +321,6 @@ noinst_PROGRAMS = \
   elpa2_test_real_c_version@SUFFIX@ \
   elpa2_test_complex_c_version@SUFFIX@
 
-
 if WANT_SINGLE_PRECISION_COMPLEX
 noinst_PROGRAMS += \
   elpa1_test_complex_single_precision@SUFFIX@ \
@@ -363,7 +362,7 @@ endif
 
 endif
 
-build_lib = libelpa@SUFFIX@.la libelpatest@SUFFIX@.la
+build_lib = libelpatest@SUFFIX@.la libelpa@SUFFIX@.la
 
 # library with shared sources for the test files
 noinst_LTLIBRARIES += libelpatest@SUFFIX@.la
