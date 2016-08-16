@@ -380,31 +380,41 @@
   !c> \param ncb                   Number of columns  of B and C
   !c> \param a                     matrix a
   !c> \param lda                   leading dimension of matrix a
+  !c> \param ldaCols               columns of matrix a
   !c> \param b                     matrix b
   !c> \param ldb                   leading dimension of matrix b
+  !c> \param ldbCols               columns of matrix b
   !c> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
   !c> \param  mpi_comm_rows        MPI communicator for rows
   !c> \param  mpi_comm_cols        MPI communicator for columns
   !c> \param c                     matrix c
   !c> \param ldc                   leading dimension of matrix c
+  !c> \param ldcCols               columns of matrix c
   !c> \result success              int report success (1) or failure (0)
   !c> */
 
-  !c> int elpa_mult_at_b_real(char uplo_a, char uplo_c, int na, int ncb, double *a, int lda, double *b, int ldb, int nlbk, int mpi_comm_rows, int mpi_comm_cols, double *c, int ldc);
-  function elpa_mult_at_b_real_wrapper(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc) &
-    bind(C,name="elpa_mult_at_b_real") result(success)
+  !c> int elpa_mult_at_b_real(char uplo_a, char uplo_c, int na, int ncb, double *a, int lda, int ldaCols, double *b, int ldb, int ldbCols, int nlbk, int mpi_comm_rows, int mpi_comm_cols, double *c, int ldc, int ldcCols);
+  function elpa_mult_at_b_real_wrapper(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+                                       nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
+                                       bind(C,name="elpa_mult_at_b_real") result(success)
     use, intrinsic :: iso_c_binding
     use elpa1_auxiliary, only : elpa_mult_at_b_real
 
     implicit none
 
     character(1,C_CHAR), value  :: uplo_a, uplo_c
-    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
+    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc, &
+                                   ldaCols, ldbCols, ldcCols
     integer(kind=c_int)         :: success
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     real(kind=c_double)         :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
+    real(kind=c_double)         :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+#endif
     logical                     :: successFortran
 
-    successFortran = elpa_mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
+    successFortran = elpa_mult_at_b_real(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
+                                         mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
 
     if (successFortran) then
       success = 1
@@ -438,31 +448,40 @@
   !c> \param ncb                   Number of columns  of B and C
   !c> \param a                     matrix a
   !c> \param lda                   leading dimension of matrix a
+  !c> \param ldaCols               columns of matrix a
   !c> \param b                     matrix b
   !c> \param ldb                   leading dimension of matrix b
+  !c> \param ldbCols               columns of matrix b
   !c> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
   !c> \param  mpi_comm_rows        MPI communicator for rows
   !c> \param  mpi_comm_cols        MPI communicator for columns
   !c> \param c                     matrix c
   !c> \param ldc                   leading dimension of matrix c
+  !c> \param ldcCols               columns of matrix c
   !c> \result success              int reports success (1) or failure (0)
   !c> */
 
   !c> int elpa_mult_ah_b_complex(char uplo_a, char uplo_c, int na, int ncb, double complex *a, int lda, double complex *b, int ldb, int nblk, int mpi_comm_rows, int mpi_comm_cols, double complex *c, int ldc);
-  function elpa_mult_ah_b_complex_wrapper( uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc) &
-    result(success) bind(C,name="elpa_mult_ah_b_complex")
+  function elpa_mult_ah_b_complex_wrapper( uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
+                                           mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
+                                           result(success) bind(C,name="elpa_mult_ah_b_complex")
     use, intrinsic :: iso_c_binding
     use elpa1_auxiliary, only : elpa_mult_ah_b_complex
 
     implicit none
 
     character(1,C_CHAR), value     :: uplo_a, uplo_c
-    integer(kind=c_int), value     :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
+    integer(kind=c_int), value     :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc, ldaCols, ldbCols, ldcCols
     integer(kind=c_int)            :: success
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
     complex(kind=c_double_complex) :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
+    complex(kind=c_double_complex) :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+#endif
     logical                        :: successFortran
 
-    successFortran = elpa_mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, b, ldb, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc)
+    successFortran = elpa_mult_ah_b_complex(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
+                                            mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
 
     if (successFortran) then
       success = 1
@@ -500,8 +519,11 @@
    integer(kind=c_int), value  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
    integer(kind=c_int), value  :: wantDebug
    integer(kind=c_int)         :: success
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   real(kind=c_double)         :: a(lda,*)
+#else
    real(kind=c_double)         :: a(lda,matrixCols)
-
+#endif
    logical                     :: wantDebugFortran, successFortran
 
    if (wantDebug .ne. 0) then
@@ -549,8 +571,11 @@
    integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
    integer(kind=c_int), value     :: wantDebug
    integer(kind=c_int)            :: success
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   complex(kind=c_double_complex) :: a(lda, *)
+#else
    complex(kind=c_double_complex) :: a(lda, matrixCols)
-
+#endif
    logical                        :: successFortran, wantDebugFortran
 
 
@@ -580,7 +605,7 @@
  !c>                              On return, the upper triangle contains the Cholesky factor
  !c>                              and the lower triangle is set to 0.
  !c> \param  lda                  Leading dimension of a
- !c> \param                       matrixCols  local columns of matrix a
+ !c> \param  matrixCols           local columns of matrix a
  !c> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
  !c> \param  mpi_comm_rows        MPI communicator for rows
  !c> \param  mpi_comm_cols        MPI communicator for columns
@@ -599,8 +624,11 @@
 
    integer(kind=c_int), value :: na, lda, nblk, matrixCols,  mpi_comm_rows, mpi_comm_cols, wantDebug
    integer(kind=c_int)        :: success
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   real(kind=c_double)        :: a(lda,*)
+#else
    real(kind=c_double)        :: a(lda,matrixCols)
-
+#endif
    logical                    :: successFortran, wantDebugFortran
 
    if (wantDebug .ne. 0) then
@@ -647,9 +675,11 @@
 
    integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug
    integer(kind=c_int)            :: success
-
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   complex(kind=c_double_complex) :: a(lda,*)
+#else
    complex(kind=c_double_complex) :: a(lda,matrixCols)
-
+#endif
    logical                        :: wantDebugFortran, successFortran
 
    if (wantDebug .ne. 0) then

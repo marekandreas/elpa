@@ -227,8 +227,8 @@ program test_transpose_multiply
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-   success = elpa_mult_ah_b_complex("F","F", na, na, a, na_rows, b, na_rows, nblk, &
-                                 mpi_comm_rows, mpi_comm_cols, c, na_rows)
+   success = elpa_mult_ah_b_complex("F","F", na, na, a, na_rows, na_cols, b, na_rows, na_cols, nblk, &
+                                 mpi_comm_rows, mpi_comm_cols, c, na_rows, na_cols)
 
    if (.not.(success)) then
       write(error_unit,*) " elpa_mult_at_b_complex produced an error! Aborting..."
