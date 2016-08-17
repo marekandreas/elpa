@@ -3236,11 +3236,7 @@
           stripe_width = 256
         else
 #ifdef DOUBLE_PRECISION_COMPLEX
-<<<<<<< HEAD
           stripe_width = 48 ! Must be a multiple of 2 (half of real case)
-=======
-          stripe_width = 48 ! Must be a multiple of 2
->>>>>>> ELPA_GPU
 #else
           stripe_width = 48 ! Must be a multiple of 4 (half of real case)
 #endif
