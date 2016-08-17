@@ -129,8 +129,12 @@
     implicit none
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows
-    real(kind=c_double)                    :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
-
+    real(kind=c_double)                    :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_double)                    :: a(lda,*), q(ldq,*)
+#else
+    real(kind=c_double)                    :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
     logical                                :: successFortran
 
     successFortran = solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
@@ -177,7 +181,11 @@
     implicit none
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    complex(kind=c_double_complex)         :: a(lda,*), q(ldq,*)
+#else
     complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
     real(kind=c_double)                    :: ev(1:na)
 
     logical                                :: successFortran
@@ -230,10 +238,12 @@
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
                                               mpi_comm_all
     integer(kind=c_int), value, intent(in) :: THIS_REAL_ELPA_KERNEL_API, useQR
-    real(kind=c_double)                    :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
-
-
-
+    real(kind=c_double)                    :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_double)                    :: a(lda,*), q(ldq,*)
+#else
+    real(kind=c_double)                    :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
     logical                                :: successFortran, useQRFortran
 
     if (useQR .eq. 0) then
@@ -294,7 +304,11 @@
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
                                               mpi_comm_all
     integer(kind=c_int), value, intent(in) :: THIS_COMPLEX_ELPA_KERNEL_API
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    complex(kind=c_double_complex)         :: a(lda,*), q(ldq,*)
+#else
     complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
     real(kind=c_double)                    :: ev(1:na)
     logical                                :: successFortran
 
@@ -338,7 +352,12 @@
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, ldq, nblk, matrixCols,  mpi_comm_cols, mpi_comm_rows
     integer(kind=c_int), value             :: wantDebug
-    real(kind=c_double)                    :: d(1:na), e(1:na), q(1:ldq, 1:matrixCols)
+    real(kind=c_double)                    :: d(1:na), e(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_double)                    :: q(ldq,*)
+#else
+    real(kind=c_double)                    :: q(1:ldq, 1:matrixCols)
+#endif
     logical                                :: successFortran, wantDebugFortran
 
     if (wantDebug .ne. 0) then
