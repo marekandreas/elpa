@@ -173,7 +173,7 @@ module compute_hh_trafo_complex
 #endif
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif
+           endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK2)
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK2_KERNEL */
 
@@ -204,7 +204,7 @@ module compute_hh_trafo_complex
 #endif
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif
+           endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) .or. (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK2) )
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL || WITH_COMPLEX_AVX2_BLOCK2_KERNEL */
 
@@ -235,7 +235,7 @@ module compute_hh_trafo_complex
 #endif
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif
+           endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK2))
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX512_BLOCK2_KERNEL */
 
@@ -267,7 +267,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_OPENMP */
              enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif
+           endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_GENERIC_SIMPLE_KERNEL */
 
@@ -302,7 +302,7 @@ module compute_hh_trafo_complex
 
             enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC .or. THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGP .or. THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGQ )
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_GENERIC_KERNEL */
 
@@ -321,7 +321,7 @@ module compute_hh_trafo_complex
 #endif
             enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE)
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_ASSEMBLY_KERNEL */
 
@@ -353,7 +353,7 @@ module compute_hh_trafo_complex
 #endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)) */
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK1)
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK1_KERNEL */
 
@@ -377,7 +377,7 @@ module compute_hh_trafo_complex
 #endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)) */
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif ! ((THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK1))
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL || WITH_COMPLEX_AVX2_BLOCK1_KERNEL */
 
@@ -400,7 +400,7 @@ module compute_hh_trafo_complex
 #endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) ) */
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif ! ((THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK1))
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX512_BLOCK1_KERNEL  */
 
@@ -535,7 +535,7 @@ module compute_hh_trafo_complex
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif
+           endif !  (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK2)
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK2_KERNEL */
 
@@ -564,7 +564,7 @@ module compute_hh_trafo_complex
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif
+           endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) .or. (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK2))
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL || WITH_COMPLEX_AVX2_BLOCK2_KERNEL */
 
@@ -597,7 +597,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_OPENMP */
              enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif
+           endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_GENERIC_SIMPLE_KERNEL */
 
@@ -632,7 +632,7 @@ module compute_hh_trafo_complex
 
             enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC .or. THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGP .or. THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGQ )
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_GENERIC_KERNEL */
 
@@ -651,7 +651,7 @@ module compute_hh_trafo_complex
 #endif
             enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE)
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_ASSEMBLY_KERNEL */
 
@@ -684,13 +684,13 @@ module compute_hh_trafo_complex
 #endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)) */
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif !  (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK1)
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK1_KERNEL */
 
 #if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK1_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. 
+          if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. &
                (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK1)) then
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
             ttt = mpi_wtime()
@@ -707,7 +707,7 @@ module compute_hh_trafo_complex
 #endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)) */
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK1))
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL || WITH_COMPLEX_AVX_BLOCK1_KERNEL */
 
@@ -729,7 +729,7 @@ module compute_hh_trafo_complex
 #endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) ) */
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif
+          endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK1))
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX512_BLOCK1_KERNEL */
 
