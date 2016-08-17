@@ -52,10 +52,10 @@ intel-double-precision-mpi-noomp-cuda-jobs:
     - gpu
   script:
     - module unload gcc
-    - module load gcc/4.8 cuda
+    - module load gcc/4.9 cuda
     - module list
     - ./autogen.sh
-    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=/afs/ipp/.cs/cuda/6.5/amd64_sles11/
+    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
@@ -66,10 +66,10 @@ intel-double-precision-nompi-noomp-cuda-jobs:
     - gpu
   script:
     - module unload gcc
-    - module load gcc/4.8 cuda
+    - module load gcc/4.9 cuda
     - module list
     - ./autogen.sh
-    - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=/afs/ipp/.cs/cuda/6.5/amd64_sles11/ --with-mpi=0
+    - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
@@ -119,10 +119,10 @@ intel-single-precision-mpi-noomp-cuda-jobs:
     - gpu
   script:
     - module unload gcc
-    - module load gcc/4.8 cuda
+    - module load gcc/4.9 cuda
     - module list
     - ./autogen.sh
-    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=/afs/ipp/.cs/cuda/6.5/amd64_sles11/ --enable-single-precision
+    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
@@ -132,10 +132,10 @@ intel-single-precision-nompi-noomp-cuda-jobs:
     - gpu
   script:
     - module unload gcc
-    - module load gcc/4.8 cuda
+    - module load gcc/4.9 cuda
     - module list
     - ./autogen.sh
-    - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L/afs/ipp/.cs/cuda/6.5/amd64_sles11/lib64 -lcublas -I/afs/ipp/.cs/cuda/6.5/amd64_sles11/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=/afs/ipp/.cs/cuda/6.5/amd64_sles11/ --enable-single-precision --with-mpi=0
+    - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
