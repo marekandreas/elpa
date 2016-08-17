@@ -73,12 +73,16 @@ program test_real_example
 !
 !-------------------------------------------------------------------------------
 
+   use iso_c_binding
    use ELPA1
    use elpa_utilities, only : error_unit
-   use iso_c_binding
+#ifdef HAVE_MPI_MODULE
+   use mpi
    implicit none
-
-   include "mpif.h"
+#else
+   implicit none
+   include 'mpif.h'
+#endif
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
@@ -86,28 +90,27 @@ program test_real_example
    ! nev:  Number of eigenvectors to be calculated
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
+ !  integer, parameter         :: ik = C_INT32_T
+ !  integer, parameter         :: rk = C_DOUBLE
 
-   integer, parameter         :: ik = C_INT32_T
-   integer, parameter         :: rk = C_DOUBLE
+   integer           :: nblk
+   integer           :: na, nev
 
-   integer(kind=ik)           :: nblk
-   integer(kind=ik)           :: na, nev
+   integer           :: np_rows, np_cols, na_rows, na_cols
 
-   integer(kind=ik)           :: np_rows, np_cols, na_rows, na_cols
-
-   integer(kind=ik)           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    integer, external          :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), z(:,:), ev(:)
+   real(kind=c_double), allocatable :: a(:,:), z(:,:), ev(:)
 
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
+   integer           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
-   integer(kind=ik)           :: STATUS
+   integer           :: STATUS
    logical                    :: success
    character(len=8)           :: task_suffix
-   integer(kind=ik)           :: j
+   integer           :: j
 
    !-------------------------------------------------------------------------------
 

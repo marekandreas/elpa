@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -215,8 +215,9 @@ module real_generic_kernel
     y12 = q(12,1) + q(12,2)*hh(2,2)
 #endif
 
-
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1  = hh(i-1,1)
        h2  = hh(i,2)
@@ -328,7 +329,10 @@ module real_generic_kernel
     q(11,2) = q(11,2) + x11 + y11*hh(2,2)
     q(12,2) = q(12,2) + x12 + y12*hh(2,2)
 #endif
+
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)
@@ -421,7 +425,10 @@ module real_generic_kernel
     y8 = q(8,1) + q(8,2)*hh(2,2)
 #endif
 
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
+
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)
@@ -503,8 +510,9 @@ module real_generic_kernel
     q(8,2) = q(8,2) + x8 + y8*hh(2,2)
 #endif
 
-
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)
@@ -581,7 +589,9 @@ module real_generic_kernel
     y4 = q(4,1) + q(4,2)*hh(2,2)
 #endif
 
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)
@@ -636,7 +646,9 @@ module real_generic_kernel
     q(4,2) = q(4,2) + x4 + y4*hh(2,2)
 #endif
 
+#if defined(SSE_ALIGNED)
     !DEC$ VECTOR ALIGNED
+#endif
     do i=3,nb
        h1 = hh(i-1,1)
        h2 = hh(i,2)

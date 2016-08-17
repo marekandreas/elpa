@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -777,11 +777,11 @@ contains
 #ifdef DOUBLE_PRECISION_REAL
      call trans_ev_band_to_full_real_double(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, &
                                             matrixCols, num_blocks, mpi_comm_rows, &
-                                     mpi_comm_cols, useGPU, useQRActual)
+                                            mpi_comm_cols, useGPU, useQRActual)
 #else
      call trans_ev_band_to_full_real_single(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, &
                                             matrixCols, num_blocks, mpi_comm_rows, &
-                                     mpi_comm_cols, useGPU, useQRActual)
+                                            mpi_comm_cols, useGPU, useQRActual)
 #endif
 
      ttt1 = MPI_Wtime()

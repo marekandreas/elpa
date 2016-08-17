@@ -10,7 +10,7 @@
 //    - Technische Universität München, Lehrstuhl für Informatik mit
 //      Schwerpunkt Wissenschaftliches Rechnen ,
 //    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-//    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+//    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 //      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 //      and
 //    - IBM Deutschland GmbH
@@ -243,7 +243,7 @@ void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int
 //	printf("s_5_6: %f\n", scalarprods[14]);
 
 	// Production level kernel calls with padding
-#ifdef __AVX__
+//#ifdef __AVX__
 	for (i = 0; i < nq-4; i+=8)
 	{
 		hh_trafo_kernel_8_AVX_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
@@ -256,20 +256,20 @@ void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int
 	{
 		hh_trafo_kernel_4_AVX_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
 	}
-#else
-	for (i = 0; i < nq-2; i+=4)
-	{
-		hh_trafo_kernel_4_SSE_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
-	}
-	if (nq == i)
-	{
-		return;
-	}
-	else
-	{
-		hh_trafo_kernel_2_SSE_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
-	}
-#endif
+//#else
+//	for (i = 0; i < nq-2; i+=4)
+//	{
+//		hh_trafo_kernel_4_SSE_6hv(&q[i], hh, nb, ldq, ldh, scalarprods);
+//	}
+//	if (nq == i)
+//	{
+//		return;
+//	}
+//	else
+//	{
+//		hh_trafo_kernel_2_SSE_6hv(&q[i], hh, nb, ldq, ldh, scalarprods);
+//	}
+//#endif
 }
 
 #if 0
@@ -396,34 +396,19 @@ void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, i
 		scalarprods[10] += hh[i-5] * hh[i+(ldh*5)];
 	}
 
-//	printf("s_1_2: %f\n", scalarprods[0]);
-//	printf("s_1_3: %f\n", scalarprods[1]);
-//	printf("s_2_3: %f\n", scalarprods[2]);
-//	printf("s_1_4: %f\n", scalarprods[3]);
-//	printf("s_2_4: %f\n", scalarprods[4]);
-//	printf("s_3_4: %f\n", scalarprods[5]);
-//	printf("s_1_5: %f\n", scalarprods[6]);
-//	printf("s_2_5: %f\n", scalarprods[7]);
-//	printf("s_3_5: %f\n", scalarprods[8]);
-//	printf("s_4_5: %f\n", scalarprods[9]);
-//	printf("s_1_6: %f\n", scalarprods[10]);
-//	printf("s_2_6: %f\n", scalarprods[11]);
-//	printf("s_3_6: %f\n", scalarprods[12]);
-//	printf("s_4_6: %f\n", scalarprods[13]);
-//	printf("s_5_6: %f\n", scalarprods[14]);
 
 	// Production level kernel calls with padding
-#ifdef __AVX__
+//#ifdef __AVX__
 	for (i = 0; i < nq; i+=8)
 	{
 		hh_trafo_kernel_8_AVX_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
 	}
-#else
-	for (i = 0; i < nq; i+=4)
-	{
-		hh_trafo_kernel_4_SSE_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
-	}
-#endif
+//#else
+//	for (i = 0; i < nq; i+=4)
+//	{
+//		hh_trafo_kernel_4_SSE_6hv(&q[i], hh, nb, ldq, ldh, scalarprods);
+//	}
+//#endif
 }
 #endif
 

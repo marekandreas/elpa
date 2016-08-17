@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -1410,6 +1410,9 @@ subroutine qr_tmerge_pdlarfb_1dcomm_single(m,mb,n,oldk,k,v,ldv,t,ldt,a,lda,basei
     integer(kind=ik) :: updateoffset,updatelda,updatesize
     integer(kind=ik) :: mergeoffset,mergelda,mergesize
     integer(kind=ik) :: tgenoffset,tgenlda,tgensize
+
+    ! quickfix
+    mergeoffset = 0
 
         if (updatemode .eq. ichar('I')) then
             updatelda = oldk+k

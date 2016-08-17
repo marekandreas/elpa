@@ -11,7 +11,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -110,20 +110,20 @@
       use precision
       implicit none
 
-      integer(kind=ik)           :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)                      :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)              :: a(lda,*), tmat(nbw,nbw,*)
 #else
       real(kind=REAL_DATATYPE)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
 #endif
       real(kind=REAL_DATATYPE)              :: eps
-      logical, intent(in)        :: useGPU
+      logical, intent(in)                   :: useGPU
 
-      integer(kind=ik)           :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer(kind=ik)           :: l_cols, l_rows, vmrCols
-      integer(kind=ik)           :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
-      integer(kind=ik)           :: istep, ncol, lch, lcx, nlc, mynlc
-      integer(kind=ik)           :: tile_size, l_rows_tile, l_cols_tile
+      integer(kind=ik)                      :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)                      :: l_cols, l_rows, vmrCols
+      integer(kind=ik)                      :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
+      integer(kind=ik)                      :: istep, ncol, lch, lcx, nlc, mynlc
+      integer(kind=ik)                      :: tile_size, l_rows_tile, l_cols_tile
 
       real(kind=REAL_DATATYPE)              :: vnorm2, xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
@@ -131,31 +131,31 @@
       real(kind=REAL_DATATYPE), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
       real(kind=REAL_DATATYPE), allocatable :: vr(:)
       ! needed for blocked QR decomposition
-      integer(kind=ik)           :: PQRPARAM(11), work_size
+      integer(kind=ik)                      :: PQRPARAM(11), work_size
       real(kind=REAL_DATATYPE)              :: dwork_size(1)
       real(kind=REAL_DATATYPE), allocatable :: work_blocked(:), tauvector(:), blockheuristic(:)
 
       ! a_dev is passed from bandred_real to trans_ev_band
-      integer(kind=C_intptr_T)   :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
+      integer(kind=C_intptr_T)              :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
 #ifdef WITH_MPI
-      integer(kind=ik), external :: numroc
+      integer(kind=ik), external            :: numroc
 #endif
-      integer(kind=ik)           :: ierr
-      integer(kind=ik)           :: cur_l_rows, cur_l_cols, vmr_size, umc_size
-      integer(kind=c_size_t)     :: lc_start, lc_end
-      integer(kind=ik)           :: lr_end
-      integer(kind=ik)           :: na_cols !, na_rows
+      integer(kind=ik)                      :: ierr
+      integer(kind=ik)                      :: cur_l_rows, cur_l_cols, vmr_size, umc_size
+      integer(kind=c_size_t)                :: lc_start, lc_end
+      integer(kind=ik)                      :: lr_end
+      integer(kind=ik)                      :: na_cols !, na_rows
 
-      logical, intent(in)        :: wantDebug
-      logical, intent(out)       :: success
-      logical                    :: successCUDA
-      integer(kind=ik)           :: istat
-      character(200)             :: errorMessage
+      logical, intent(in)                   :: wantDebug
+      logical, intent(out)                  :: success
+      logical                               :: successCUDA
+      integer(kind=ik)                      :: istat
+      character(200)                        :: errorMessage
 
-      logical, intent(in)        :: useQR
+      logical, intent(in)                   :: useQR
 
-      integer(kind=ik)           :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
-                                    ii, pp, transformChunkSize
+      integer(kind=ik)                      :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
+                                               ii, pp, transformChunkSize
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
@@ -192,7 +192,7 @@
 !        na_rows = na
         na_cols = na
 #endif
-      endif
+      endif ! useGPU
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
@@ -423,7 +423,9 @@
             endif
 
           endif
+
         else ! GPU not used
+
           ! Allocate vmr and umc to their exact sizes so that they can be used in bcasts and reduces
 
           allocate(vmrCPU(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
@@ -443,7 +445,9 @@
             print *,"bandred_real: error when allocating vr "//errorMessage
             stop
           endif
+
         endif ! use GPU
+
 #ifdef DOUBLE_PRECISION_REAL
         if (useGPU) then
           vmrCUDA(1 : cur_l_rows * n_cols) = 0._rk8
@@ -547,6 +551,7 @@
 
 #endif /* DOUBLE_PRECISION_REAL */
           endif
+
        else !useQR
 
          do lc = n_cols, 1, -1
@@ -706,7 +711,9 @@
              endif
            enddo
            !$omp end parallel
+
 #else /* WITH_OPENMP */
+
            nlc = 0 ! number of local columns
            do j=1,lc-1
              lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
@@ -919,6 +926,7 @@
          endif ! l_cols>0 .and. l_rows>0
 
        else ! do not useGPU version
+
          !Code for Algorithm 4
 
          n_way = 1
@@ -1338,7 +1346,9 @@
                                          vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                          1, istep*nbw, n_cols, nblk)
 #endif
+
          ! A = A - V*U**T - U*V**T
+
 #ifdef WITH_OPENMP
          !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
          n_threads = omp_get_num_threads()
@@ -1378,7 +1388,9 @@
 #endif
          enddo
          !$omp end parallel
+
 #else /* WITH_OPENMP */
+
          do i=0,(istep*nbw-1)/tile_size
            lcs = i*l_cols_tile+1
            lce = min(l_cols,(i+1)*l_cols_tile)
@@ -1446,12 +1458,15 @@
          stop
        endif
 
-! this is not necessart tmat_dev is passed (unchanged) from one routine to the other
-!       successCUDA = cuda_free(tmat_dev)
-!       if (.not.(successCUDA)) then
-!         print *,"bandred_real: error in cudaFree"
-!         stop
-!       endif
+!#ifdef WITH_MPI
+! it should be possible to keep tmat dev on the device and not copy it arround
+! this is not necessary tmat_dev is passed (unchanged) from one routine to the other
+       successCUDA = cuda_free(tmat_dev)
+       if (.not.(successCUDA)) then
+         print *,"bandred_real: error in cudaFree"
+         stop
+       endif
+!#endif
 
        successCUDA = cuda_free(vav_dev)
        if (.not.(successCUDA)) then
@@ -1558,13 +1573,13 @@
 #endif
       use precision
       implicit none
-      integer(kind=ik)  :: n, lda, ldb, comm
+      integer(kind=ik)             :: n, lda, ldb, comm
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)     :: a(lda,*)
 #else
       real(kind=REAL_DATATYPE)     :: a(lda,ldb)
 #endif
-      integer(kind=ik)  :: i, nc, mpierr
+      integer(kind=ik)             :: i, nc, mpierr
       real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1681,20 +1696,20 @@
 
       implicit none
 
-      integer(kind=ik)            :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)                       :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)    :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+      real(kind=REAL_DATATYPE)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 #else
-      real(kind=REAL_DATATYPE)    :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      real(kind=REAL_DATATYPE)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
 #endif
 
-      integer(kind=C_intptr_T)    :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
+      integer(kind=C_intptr_T)               :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
 
-      integer(kind=ik)            :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer(kind=ik)            :: max_blocks_row, max_blocks_col, max_local_rows, &
-                                     max_local_cols
-      integer(kind=ik)            :: l_cols, l_rows, l_colh, n_cols
-      integer(kind=ik)            :: istep, lc, ncol, nrow, nb, ns
+      integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)                       :: max_blocks_row, max_blocks_col, max_local_rows, &
+                                                max_local_cols
+      integer(kind=ik)                       :: l_cols, l_rows, l_colh, n_cols
+      integer(kind=ik)                       :: istep, lc, ncol, nrow, nb, ns
 
       real(kind=REAL_DATATYPE), allocatable  :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
 
@@ -1702,16 +1717,16 @@
       ! q is changed in trans_ev_tridi on the host, copied to device and passed here. this can be adapted
       ! tmp_dev is first used in this routine
       ! tmat_dev is passed along from bandred_real
-      integer(kind=C_intptr_T)    :: hvm_dev, q_dev, tmp_dev, tmat_dev
+      integer(kind=C_intptr_T)               :: hvm_dev, q_dev, tmp_dev, tmat_dev
 
-      integer(kind=ik)            :: i
+      integer(kind=ik)                       :: i
 
       real(kind=REAL_DATATYPE), allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
-      integer(kind=ik)            :: cwy_blocking, t_blocking, t_cols, t_rows
-      logical, intent(in)         :: useQR, useGPU
-      integer(kind=ik)            :: istat
-      character(200)              :: errorMessage
-      logical                     :: successCUDA
+      integer(kind=ik)                       :: cwy_blocking, t_blocking, t_cols, t_rows
+      logical, intent(in)                    :: useQR, useGPU
+      integer(kind=ik)                       :: istat
+      character(200)                         :: errorMessage
+      logical                                :: successCUDA
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
@@ -1724,6 +1739,7 @@
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
       max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of A
       max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q!
 
@@ -1731,6 +1747,7 @@
       max_local_cols = max_blocks_col*nblk
 
       if (useGPU) then
+
         ! here the GPU and CPU version diverged: the CPU version now always uses the useQR path which
         ! is not implemented in the GPU version
         allocate(tmp1(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
@@ -1775,16 +1792,19 @@
           stop
         endif
 
+!#ifdef WITH_MPI
+! it should be possible to keep tmat dev on the device and not copy it around
 ! already existent on GPU
-!#ifdef DOUBLE_PRECISION_REAL
-!        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_double_real_datatype)
-!#else
-!        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_single_real_datatype)
+#ifdef DOUBLE_PRECISION_REAL
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_double_real_datatype)
+#else
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_single_real_datatype)
+#endif
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
+          stop
+        endif
 !#endif
-!        if (.not.(successCUDA)) then
-!          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
-!          stop
-!        endif
 
 ! q_dev already living on device
 !#ifdef DOUBLE_PRECISION_REAL
@@ -1989,19 +2009,21 @@
             endif
 #endif /* WITH_MPI */
 
-
-! already existend on GPU
-!#ifdef DOUBLE_PRECISION_REAL
+!#ifdef WITH_MPI
+! it should be possible to keep tmat on the device and not copy it aroud
+#ifdef DOUBLE_PRECISION_REAL
 !            ! copy to device, maybe this can be avoided tmat is input from bandred_real
-!
-!            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_double_real_datatype,cudaMemcpyHostToDevice)
-!#else
-!            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_single_real_datatype,cudaMemcpyHostToDevice)
-!#endif
-!            if (.not.(successCUDA)) then
-!              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-!              stop
-!            endif
+
+            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_double_real_datatype,cudaMemcpyHostToDevice)
+#else
+            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_single_real_datatype,cudaMemcpyHostToDevice)
+#endif
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+              stop
+            endif
+!#endif /* WITH_MPI */
+
 #ifdef DOUBLE_PRECISION_REAL
             call cublas_dtrmm('L', 'U', 'T', 'N', n_cols, l_cols, 1.0_rk8, tmat_dev, nbw, tmp_dev, n_cols)
             call cublas_dgemm('N', 'N', l_rows, l_cols, n_cols, -1.0_rk8, hvm_dev, max_local_rows, &
@@ -2012,17 +2034,17 @@
                               tmp_dev, n_cols, 1.0_rk4, q_dev, ldq)
 #endif
 
-!#ifdef DOUBLE_PRECISION_REAL
-!            ! copy to host maybe this can be avoided
-!            ! this is not necessary hvm is not used anymore
-!            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_double_real_datatype),cudaMemcpyDeviceToHost)
-!#else
-!            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_single_real_datatype),cudaMemcpyDeviceToHost)
-!#endif
-!            if (.not.(successCUDA)) then
-!              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-!              stop
-!            endif
+#ifdef DOUBLE_PRECISION_REAL
+            ! copy to host maybe this can be avoided
+            ! this is not necessary hvm is not used anymore
+            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_double_real_datatype),cudaMemcpyDeviceToHost)
+#else
+            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_single_real_datatype),cudaMemcpyDeviceToHost)
+#endif
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+              stop
+            endif
 
           endif ! l_rows > 0
           !#ifdef WITH_GPU_VERSION
@@ -2391,7 +2413,7 @@
       use precision
       implicit none
 
-      integer(kind=ik), intent(in)  ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+      integer(kind=ik), intent(in)             ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
       real(kind=REAL_DATATYPE), intent(in)     :: a(lda,*)
 #else
@@ -2399,38 +2421,38 @@
 #endif
       real(kind=REAL_DATATYPE), intent(out)    :: d(na), e(na) ! set only on PE 0
       real(kind=REAL_DATATYPE), intent(out), &
-          allocatable               :: hh_trans_real(:,:)
+          allocatable                          :: hh_trans_real(:,:)
 
       real(kind=REAL_DATATYPE)                 :: vnorm2, hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
       real(kind=REAL_DATATYPE)                 :: hd(nb), hs(nb)
 
-      integer(kind=ik)              :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
-      integer(kind=ik)              :: my_pe, n_pes, mpierr
-      integer(kind=ik)              :: my_prow, np_rows, my_pcol, np_cols
-      integer(kind=ik)              :: ireq_ab, ireq_hv
-      integer(kind=ik)              :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
+      integer(kind=ik)                         :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
+      integer(kind=ik)                         :: my_pe, n_pes, mpierr
+      integer(kind=ik)                         :: my_prow, np_rows, my_pcol, np_cols
+      integer(kind=ik)                         :: ireq_ab, ireq_hv
+      integer(kind=ik)                         :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
 #ifdef WITH_OPENMP
-      integer(kind=ik)              :: max_threads, my_thread, my_block_s, my_block_e, iter
+      integer(kind=ik)                         :: max_threads, my_thread, my_block_s, my_block_e, iter
 #ifdef WITH_MPI
-      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)                         :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
-      integer(kind=ik), allocatable :: mpi_statuses(:,:), global_id_tmp(:,:)
-      integer(kind=ik), allocatable :: omp_block_limits(:)
+      integer(kind=ik), allocatable            :: mpi_statuses(:,:), global_id_tmp(:,:)
+      integer(kind=ik), allocatable            :: omp_block_limits(:)
       real(kind=REAL_DATATYPE), allocatable    :: hv_t(:,:), tau_t(:)
 #endif
-      integer(kind=ik), allocatable :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
-      integer(kind=ik), allocatable :: limits(:), snd_limits(:,:)
-      integer(kind=ik), allocatable :: block_limits(:)
+      integer(kind=ik), allocatable            :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
+      integer(kind=ik), allocatable            :: limits(:), snd_limits(:,:)
+      integer(kind=ik), allocatable            :: block_limits(:)
       real(kind=REAL_DATATYPE), allocatable    :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
 
 #ifdef WITH_OPENMP
-      integer(kind=ik)              :: omp_get_max_threads
+      integer(kind=ik)                         :: omp_get_max_threads
 #endif
-      integer                       :: istat
-      character(200)                :: errorMessage
+      integer                                  :: istat
+      character(200)                           :: errorMessage
 
 #ifndef WITH_MPI
-      integer(kind=ik)              :: startAddr
+      integer(kind=ik)                         :: startAddr
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -2458,6 +2480,7 @@
 
       global_id(:,:) = 0
       global_id(my_prow, my_pcol) = my_pe
+
 #ifdef WITH_OPENMP
       allocate(global_id_tmp(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
@@ -2481,6 +2504,7 @@
 #endif /* WITH_OPENMP */
 
 #endif /* WITH_MPI */
+
       ! Total number of blocks in the band:
 
       nblocks_total = (na-1)/nb + 1
@@ -2678,6 +2702,7 @@
       hv_t = 0
       tau_t = 0
 #endif /* WITH_OPENMP */
+
       ! ---------------------------------------------------------------------------
       ! Start of calculations
 
@@ -2751,9 +2776,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-            call mpi_recv(hv, nb, mpi_real8, my_pe-1, 2, mpi_comm, MPI_STATUS, mpierr)
+            call mpi_recv(hv, nb, mpi_real8, my_pe-1, 2, mpi_comm, my_MPI_STATUS, mpierr)
 #else
-            call mpi_recv(hv, nb, mpi_real4, my_pe-1, 2, mpi_comm, MPI_STATUS, mpierr)
+            call mpi_recv(hv, nb, mpi_real4, my_pe-1, 2, mpi_comm, my_MPI_STATUS, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -2972,7 +2997,7 @@
               ! Send our first column to previous PE
               if (my_pe>0 .and. na_s <= na) then
 #ifdef WITH_MPI
-                call mpi_wait(ireq_ab, mpi_status, mpierr)
+                call mpi_wait(ireq_ab, my_mpi_status, mpierr)
 #endif
                 ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
@@ -2991,9 +3016,9 @@
 #ifdef WITH_MPI
               if (istep>=max_threads .and. ne <= na) then
 #ifdef DOUBLE_PRECISION_REAL
-                call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
+                call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
 #else
-                call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
+                call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
 #endif
               endif
 #else /* WITH_MPI */
@@ -3008,7 +3033,7 @@
               ne = na_s + nblocks*nb - (max_threads-1) - 1
               if (istep>=max_threads .and. ne < na) then
 #ifdef WITH_MPI
-                call mpi_wait(ireq_hv, mpi_status, mpierr)
+                call mpi_wait(ireq_hv, my_mpi_status, mpierr)
 #endif
                 hv_s(1) = tau_t(max_threads)
                 hv_s(2:) = hv_t(2:,max_threads)
@@ -3130,7 +3155,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS, mpierr)
+              call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, my_MPI_STATUS, mpierr)
 #else
               call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -3151,7 +3176,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS, mpierr)
+              call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, my_MPI_STATUS, mpierr)
 #else
               call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -3217,7 +3242,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                call mpi_wait(ireq_hv,MPI_STATUS,mpierr)
+                call mpi_wait(ireq_hv,my_MPI_STATUS,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -3258,7 +3283,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
+              call mpi_wait(ireq_ab,my_MPI_STATUS,mpierr)
 #else
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -3330,7 +3355,7 @@
           if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
 #ifdef WITH_MPI
-            call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+            call mpi_wait(ireq_hhs(iblk), my_mpi_status, mpierr)
 #endif
             ! Copy vectors into send buffer
             hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
@@ -3373,8 +3398,8 @@
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-      call mpi_wait(ireq_ab,MPI_STATUS,mpierr)
-      call mpi_wait(ireq_hv,MPI_STATUS,mpierr)
+      call mpi_wait(ireq_ab,my_MPI_STATUS,mpierr)
+      call mpi_wait(ireq_hv,my_MPI_STATUS,mpierr)
 
       allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
@@ -3509,8 +3534,8 @@
       implicit none
       logical, intent(in) :: useGPU
 
-      integer(kind=ik), intent(in)  :: THIS_REAL_ELPA_KERNEL
-      integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik), intent(in)             :: THIS_REAL_ELPA_KERNEL
+      integer(kind=ik), intent(in)             :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)                 :: q(ldq,*)
 #else
@@ -3520,25 +3545,27 @@
 
 
       real(kind=REAL_DATATYPE), intent(in)     :: hh_trans_real(:,:)
-      integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
+      integer(kind=ik)                         :: np_rows, my_prow, np_cols, my_pcol
 
-      integer(kind=ik)              :: i, j, ip, sweep, nbuf, l_nev, a_dim2
-      integer(kind=ik)              :: current_n, current_local_n, current_n_start, current_n_end
-      integer(kind=ik)              :: next_n, next_local_n, next_n_start, next_n_end
-      integer(kind=ik)              :: bottom_msg_length, top_msg_length, next_top_msg_length
-      integer(kind=ik)              :: stripe_width, last_stripe_width, stripe_count
+      integer(kind=ik)                         :: i, j, ip, sweep, nbuf, l_nev, a_dim2
+      integer(kind=ik)                         :: current_n, current_local_n, current_n_start, current_n_end
+      integer(kind=ik)                         :: next_n, next_local_n, next_n_start, next_n_end
+      integer(kind=ik)                         :: bottom_msg_length, top_msg_length, next_top_msg_length
+      integer(kind=ik)                         :: stripe_width, last_stripe_width, stripe_count
 #ifdef WITH_OPENMP
-      integer(kind=ik)              :: thread_width, csw, b_off, b_len
+      integer(kind=ik)                         :: thread_width, csw, b_off, b_len
 #endif
-      integer(kind=ik)              :: num_result_blocks, num_result_buffers, num_bufs_recvd
-      integer(kind=ik)              :: a_off, current_tv_off, max_blk_size
-      integer(kind=ik)              :: mpierr, src, src_offset, dst, offset, nfact, num_blk
+      integer(kind=ik)                         :: num_result_blocks, num_result_buffers, num_bufs_recvd
+      integer(kind=ik)                         :: a_off, current_tv_off, max_blk_size
+      integer(kind=ik)                         :: mpierr, src, src_offset, dst, offset, nfact, num_blk
+
 #ifdef WITH_OPENMP
 #ifdef WITH_MPI
-      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)                         :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
 #endif
-      logical                       :: flag
+
+      logical                                  :: flag
 
 #ifdef WITH_OPENMP
       real(kind=REAL_DATATYPE), pointer        :: aIntern(:,:,:,:)
@@ -3559,58 +3586,58 @@
 #endif
       real(kind=REAL_DATATYPE), allocatable    :: result_buffer(:,:,:)
       real(kind=REAL_DATATYPE), allocatable    :: bcast_buffer(:,:)
-      integer(kind=ik)              :: tmp
+      integer(kind=ik)                         :: tmp
 
-!      real*8, allocatable, device :: a_dev(:,:,:)
-!      real*8, allocatable, device :: bcast_buffer_dev(:,:)
-!      real*8, allocatable, device :: row_dev(:)
-!      real*8, allocatable, device :: row_group_dev(:,:)
-!      real*8, allocatable, device :: hh_dot_dev(:)
-!      real*8, allocatable, device :: hh_tau_dev(:)
+!      real*8, allocatable, device              :: a_dev(:,:,:)
+!      real*8, allocatable, device              :: bcast_buffer_dev(:,:)
+!      real*8, allocatable, device              :: row_dev(:)
+!      real*8, allocatable, device              :: row_group_dev(:,:)
+!      real*8, allocatable, device              :: hh_dot_dev(:)
+!      real*8, allocatable, device              :: hh_tau_dev(:)
 
-      integer(kind=c_intptr_t)      :: aIntern_dev
-      integer(kind=c_intptr_t)      :: bcast_buffer_dev
-      integer(kind=c_size_t)        :: num
-      integer(kind=c_size_t)        :: dev_offset, dev_offset_1
+      integer(kind=c_intptr_t)                 :: aIntern_dev
+      integer(kind=c_intptr_t)                 :: bcast_buffer_dev
+      integer(kind=c_size_t)                   :: num
+      integer(kind=c_size_t)                   :: dev_offset, dev_offset_1
 
 
-      integer(kind=c_intptr_t)      :: row_dev
-      integer(kind=c_intptr_t)      :: row_group_dev
-      integer(kind=c_intptr_t)      :: hh_dot_dev
-      integer(kind=c_intptr_t)      :: hh_tau_dev
-      Integer(kind=ik)              :: top, chunk, this_chunk
-      integer(kind=ik)              :: row_group_size, unpack_idx
+      integer(kind=c_intptr_t)                 :: row_dev
+      integer(kind=c_intptr_t)                 :: row_group_dev
+      integer(kind=c_intptr_t)                 :: hh_dot_dev
+      integer(kind=c_intptr_t)                 :: hh_tau_dev
+      Integer(kind=ik)                         :: top, chunk, this_chunk
+      integer(kind=ik)                         :: row_group_size, unpack_idx
 
-      integer(kind=ik)              :: n_off
-      integer(kind=ik), allocatable :: result_send_request(:), result_recv_request(:), limits(:)
-      integer(kind=ik), allocatable :: top_send_request(:), bottom_send_request(:)
-      integer(kind=ik), allocatable :: top_recv_request(:), bottom_recv_request(:)
+      integer(kind=ik)                         :: n_off
+      integer(kind=ik), allocatable            :: result_send_request(:), result_recv_request(:), limits(:)
+      integer(kind=ik), allocatable            :: top_send_request(:), bottom_send_request(:)
+      integer(kind=ik), allocatable            :: top_recv_request(:), bottom_recv_request(:)
 #ifdef WITH_OPENMP
-      integer(kind=ik), allocatable :: mpi_statuses(:,:)
+      integer(kind=ik), allocatable            :: mpi_statuses(:,:)
 #endif
       ! MPI send/recv tags, arbitrary
 
-      integer(kind=ik), parameter  :: bottom_recv_tag = 111
-      integer(kind=ik), parameter  :: top_recv_tag    = 222
-      integer(kind=ik), parameter  :: result_recv_tag = 333
+      integer(kind=ik), parameter              :: bottom_recv_tag = 111
+      integer(kind=ik), parameter              :: top_recv_tag    = 222
+      integer(kind=ik), parameter              :: result_recv_tag = 333
 
       ! Just for measuring the kernel performance
-      real(kind=c_double)          :: kernel_time ! MPI_WTIME always needs double
+      real(kind=c_double)                      :: kernel_time ! MPI_WTIME always needs double
       ! long integer
-      integer(kind=lik)            :: kernel_flops
+      integer(kind=lik)                        :: kernel_flops
 
 #ifdef WITH_OPENMP
-      integer(kind=ik)             :: max_threads, my_thread
-      integer(kind=ik)             :: omp_get_max_threads
+      integer(kind=ik)                         :: max_threads, my_thread
+      integer(kind=ik)                         :: omp_get_max_threads
 #endif
 
-      logical, intent(in)          :: wantDebug
-      logical                      :: success
-      integer(kind=ik)             :: istat
-      character(200)               :: errorMessage
-      logical                      :: successCUDA
+      logical, intent(in)                      :: wantDebug
+      logical                                  :: success
+      integer(kind=ik)                         :: istat
+      character(200)                           :: errorMessage
+      logical                                  :: successCUDA
 #ifndef WITH_MPI
-      integer(kind=ik)             :: j1
+      integer(kind=ik)                         :: j1
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3783,7 +3810,7 @@
         aIntern(:,:,:) = 0._rk4
 #endif
 
-#endif
+#endif /* WITH_OPENMP */
       endif !useGPU
 
       allocate(row(l_nev), stat=istat, errmsg=errorMessage)
@@ -3820,6 +3847,7 @@
           print *,"trans_ev_tridi_to_band_real: error when allocating row_group"//errorMessage
           stop
         endif
+
 #ifdef DOUBLE_PRECISION_REAL
         row_group(:, :) = 0._rk8
 
@@ -3895,9 +3923,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, my_MPI_STATUS, mpierr)
 #else
-              call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, my_MPI_STATUS, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -3912,7 +3940,7 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
@@ -3932,7 +3960,7 @@
 #else
               call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
@@ -3983,6 +4011,7 @@
               endif
 
 #endif /* WITH_OPENMP */
+
             elseif (src==my_prow) then
               src_offset = src_offset+1
               if (.not.(useGPU)) row(:) = q(src_offset, 1:l_nev)
@@ -3995,8 +4024,7 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
               if (useGPU) then
                 print *,"trans_ev_tridi_to_band_real: not yet implemented"
@@ -4020,9 +4048,10 @@
 #else
               call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
+
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
 #ifdef DOUBLE_PRECISION_REAL
@@ -4043,9 +4072,12 @@
                 call unpack_row_real_cpu_single(aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
 #endif
               endif
+
 #endif /* WITH_OPENMP */
+
             endif
           enddo
+
           ! Send all rows which have not yet been send
           src_offset = 0
           do dst = 0, ip-1
@@ -4098,9 +4130,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, my_MPI_STATUS, mpierr)
 #else
-              call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, my_MPI_STATUS, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -4115,7 +4147,7 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
@@ -4137,18 +4169,17 @@
 #endif
 
 #else /* WITH_OPENMP */
+
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
 #ifdef DOUBLE_PRECISION_REAL
-                call unpack_and_prepare_row_group_real_gpu_double(row_group, row_group_dev, aIntern_dev, stripe_count,&
-		                                           stripe_width, &
-                                                           last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
-                                                           unpack_idx, i - limits(my_prow), .false.)
+                call unpack_and_prepare_row_group_real_gpu_double(row_group, row_group_dev, aIntern_dev, stripe_count,  &
+		                                                  stripe_width, last_stripe_width, a_dim2, l_nev,       &
+								  row_group_size, nblk, unpack_idx, i - limits(my_prow), .false.)
 #else
                 call unpack_and_prepare_row_group_real_gpu_single(row_group, row_group_dev, aIntern_dev, stripe_count,  &
-		                                           stripe_width, &
-                                                           last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
-                                                           unpack_idx, i - limits(my_prow), .false.)
+		                                                  stripe_width, last_stripe_width, a_dim2, l_nev,       &
+								  row_group_size, nblk, unpack_idx, i - limits(my_prow), .false.)
 #endif
 
 #ifdef WITH_MPI
@@ -4201,7 +4232,6 @@
         call unpack_and_prepare_row_group_real_gpu_single(row_group, row_group_dev, aIntern_dev, stripe_count, &
 	                                                  stripe_width, last_stripe_width, &
                                                    a_dim2, l_nev, row_group_size, nblk, unpack_idx, -1, .true.)
-
 #endif
         successCUDA = cuda_devicesynchronize()
 
@@ -4335,8 +4365,10 @@
 #endif
 
       ! Initialize broadcast buffer
+
 #else /* WITH_OPENMP */
-      allocate(top_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+
+       allocate(top_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"trans_ev_tridi_to_band_real: error when allocating top_border_send_bufer"//errorMessage
          stop
@@ -4476,7 +4508,9 @@
 
         if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
           do i = 1, stripe_count
+
 #ifdef WITH_OPENMP
+
             if (useGPU) then
               print *,"trans_ev_tridi_to_band_real: not yet implemented"
               stop
@@ -4517,6 +4551,7 @@
 #endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP */
+
           enddo
         endif
 
@@ -4557,7 +4592,8 @@
 #endif
           endif
 
-        else
+        else ! (current_local_n > 1) then
+
           ! for current_local_n == 1 the one and only HH vector is 0 and not stored in hh_trans_real
 #ifdef DOUBLE_PRECISION_REAL
           bcast_buffer(:,1) = 0._rk8
@@ -4582,7 +4618,7 @@
             call extract_hh_tau_real_gpu_single(bcast_buffer_dev, hh_tau_dev, nbw, 1, .true.)
 #endif
           endif
-        endif
+        endif ! (current_local_n > 1) then
 
         if (l_nev == 0) cycle
 
@@ -4612,7 +4648,7 @@
               endif
 
 #ifdef WITH_MPI
-              call MPI_Wait(bottom_recv_request(i), MPI_STATUS, mpierr)
+              call MPI_Wait(bottom_recv_request(i), my_MPI_STATUS, mpierr)
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4621,7 +4657,7 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
               do my_thread = 1, max_threads
@@ -4638,7 +4674,7 @@
 #else
               call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
@@ -4729,7 +4765,7 @@
                stop
              endif
 #ifdef WITH_MPI
-             call MPI_Wait(top_recv_request(i), MPI_STATUS, mpierr)
+             call MPI_Wait(top_recv_request(i), my_MPI_STATUS, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -4762,13 +4798,15 @@
 
            !compute
 #ifdef WITH_OPENMP
+
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
            call timer%start("OpenMP parallel_double")
 #else
            call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
+
            if (useGPU) then
              print *,"trans_ev_tridi_to_band_real: not yet implemented"
              stop
@@ -4784,16 +4822,16 @@
              endif
 #ifdef DOUBLE_PRECISION_REAL
                 call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,      &
-		                                      max_threads, l_nev,    &
-                                                      a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
-                                                      hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,         &
-                                                      my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+		                                             max_threads, l_nev, a_off, nbw, max_blk_size, bcast_buffer,    &
+							     bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,        &
+							     kernel_time, 0, current_local_n, i, my_thread, thread_width,   &
+							     THIS_REAL_ELPA_KERNEL)
 #else
                 call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,      &
-		                                      max_threads, l_nev,    &
-                                                      a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
-                                                      hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,         &
-                                                      my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+		                                             max_threads, l_nev, a_off, nbw, max_blk_size, bcast_buffer,    &
+							     bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,        &
+							     kernel_time, 0, current_local_n, i, my_thread, thread_width,   &
+							     THIS_REAL_ELPA_KERNEL)
 #endif
 
 !                call compute_hh_trafo_real_cpu_openmp(aIntern,stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
@@ -4808,17 +4846,17 @@
 #else
            call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
 #ifdef DOUBLE_PRECISION_REAL
-           call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,          &
+           call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
                                           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                           hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,          &
                                           last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #else
-           call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,          &
+           call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
                                           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                           hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,          &
                                           last_stripe_width, THIS_REAL_ELPA_KERNEL)
@@ -4834,7 +4872,7 @@
             stop
            endif
 #ifdef WITH_MPI
-           call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+           call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
 #endif
            if (bottom_msg_length>0) then
              n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -4917,24 +4955,22 @@
 #else
          call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_REAL
           call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
-	                                        max_threads, l_nev,      &
-                                                a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
-                                                hh_tau_dev, kernel_flops, kernel_time,                                 &
-                                                current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread,  &
-                                                thread_width, THIS_REAL_ELPA_KERNEL)
+	                                               max_threads, l_nev, a_off, nbw, max_blk_size,  bcast_buffer,    &
+						       bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,         &
+						       kernel_time, current_local_n - bottom_msg_length,               &
+						       bottom_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
 #else
           call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
-	                                        max_threads, l_nev,      &
-                                                a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
-                                                hh_tau_dev, kernel_flops, kernel_time,                                 &
-                                                current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread,  &
-                                                thread_width, THIS_REAL_ELPA_KERNEL)
+	                                               max_threads, l_nev,  a_off, nbw, max_blk_size,  bcast_buffer,   &
+						       bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,         &
+						       kernel_time, current_local_n - bottom_msg_length,               &
+						       bottom_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
 #endif
 !                call compute_hh_trafo_real_cpu_openmp(aIntern, stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
 !                    a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time, &
@@ -4948,11 +4984,11 @@
 #else
         call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
         !send_b
 #ifdef WITH_MPI
-        call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+        call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
 #endif
         if (bottom_msg_length > 0) then
           n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -4980,14 +5016,15 @@
         endif
 #else /* WITH_OPENMP */
 
+
 #ifdef DOUBLE_PRECISION_REAL
-        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,          &
+        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                        hh_tau_dev, kernel_flops, kernel_time,                                 &
                                        current_local_n - bottom_msg_length, bottom_msg_length, i,             &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #else
-        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,      &
+        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                        hh_tau_dev, kernel_flops, kernel_time,                                 &
                                        current_local_n - bottom_msg_length, bottom_msg_length, i,             &
@@ -5051,24 +5088,24 @@
 #else
         call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
         do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_REAL
           call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count,        &
-	                                        max_threads, l_nev,       &
-                                                a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,  &
-                                                hh_tau_dev, kernel_flops, kernel_time,                                  &
-                                                top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i,    &
-                                                my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+	                                               max_threads, l_nev, a_off,  nbw, max_blk_size, bcast_buffer,     &
+						       bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,          &
+						       kernel_time, top_msg_length,                                     &
+						       current_local_n-top_msg_length-bottom_msg_length, i, my_thread,  &
+						       thread_width, THIS_REAL_ELPA_KERNEL)
 #else
           call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count,        &
-	                                        max_threads, l_nev,       &
-                                                a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,  &
-                                                hh_tau_dev, kernel_flops, kernel_time,                                  &
-                                                top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i,    &
-                                                my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+	                                               max_threads, l_nev, a_off,  nbw, max_blk_size, bcast_buffer,     &
+						       bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,          &
+						       kernel_time, top_msg_length,                                     &
+						       current_local_n-top_msg_length-bottom_msg_length, i, my_thread,  &
+						       thread_width, THIS_REAL_ELPA_KERNEL)
 #endif
 !                call compute_hh_trafo_real_cpu_openmp(aIntern, stripe_width, a_dim2,stripe_count, max_threads, l_nev, &
 !                    a_off,  nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
@@ -5082,18 +5119,18 @@
 #else
         call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
 #ifdef DOUBLE_PRECISION_REAL
-        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,            &
+        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time,  top_msg_length,                    &
                                        current_local_n-top_msg_length-bottom_msg_length, i,                       &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #else
-        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,        &
+        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time,  top_msg_length,                    &
                                        current_local_n-top_msg_length-bottom_msg_length, i,                       &
@@ -5110,7 +5147,7 @@
             stop
           endif
 #ifdef WITH_MPI
-          call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+          call MPI_Wait(top_recv_request(i), my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5152,7 +5189,7 @@
 #else
         call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
@@ -5164,16 +5201,16 @@
           endif
 #ifdef DOUBLE_PRECISION_REAL
           call compute_hh_trafo_real_cpu_openmp_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
-	                                        max_threads, l_nev,      &
-                                                a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
-                                                hh_tau_dev, kernel_flops, kernel_time,                                  &
-                                                0, top_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+	                                               max_threads, l_nev, a_off, nbw, max_blk_size,  bcast_buffer,    &
+						       bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,         &
+						       kernel_time, 0, top_msg_length, i, my_thread, thread_width,     &
+						       THIS_REAL_ELPA_KERNEL)
 #else
           call compute_hh_trafo_real_cpu_openmp_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
-	                                         max_threads, l_nev,      &
-                                                a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
-                                                hh_tau_dev, kernel_flops, kernel_time,                                  &
-                                                0, top_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+	                                               max_threads, l_nev, a_off, nbw, max_blk_size,  bcast_buffer,    &
+						       bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,         &
+						       kernel_time, 0, top_msg_length, i, my_thread, thread_width,     &
+						       THIS_REAL_ELPA_KERNEL)
 #endif
 !                call compute_hh_trafo_real_cpu_openmp(aIntern, stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
 !                    a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time, &
@@ -5186,17 +5223,18 @@
 #else
         call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
 #ifdef DOUBLE_PRECISION_REAL
-        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,        &
+
+        call compute_hh_trafo_real_cpu_double(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
                                        a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time, 0, top_msg_length, i,               &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
 #else
-        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,        &
+        call compute_hh_trafo_real_cpu_single(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
                                        a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time, 0, top_msg_length, i,               &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
@@ -5261,7 +5299,7 @@
           stop
         endif
 #ifdef WITH_MPI
-        call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+        call MPI_Wait(top_send_request(i), my_mpi_status, mpierr)
 #endif
         b_len = csw*nbw*max_threads
         top_border_send_buffer(1:b_len,i) = reshape(aIntern(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
@@ -5342,7 +5380,7 @@
            stop
           endif
 #ifdef WITH_MPI
-          call MPI_Wait(top_recv_request(i-1), MPI_STATUS, mpierr)
+          call MPI_Wait(top_recv_request(i-1), my_MPI_STATUS, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5360,7 +5398,7 @@
            stop
           endif
 #ifdef WITH_MPI
-          call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS, mpierr)
+          call MPI_Wait(top_recv_request(stripe_count), my_MPI_STATUS, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5386,7 +5424,7 @@
            stop
          endif
 #ifdef WITH_MPI
-      call MPI_Wait(top_send_request(i), MPI_STATUS, mpierr)
+      call MPI_Wait(top_send_request(i), my_MPI_STATUS, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5417,7 +5455,7 @@
           stop
         endif
 #ifdef WITH_MPI
-        call MPI_Wait(result_send_request(nbuf), MPI_STATUS, mpierr)
+        call MPI_Wait(result_send_request(nbuf), my_MPI_STATUS, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5457,7 +5495,7 @@
               call pack_row_real_cpu_double(aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif
 
-#else
+#else /* DOUBLE_PRECISION_REAL */
 
 #ifdef WITH_OPENMP
               call pack_row_real_cpu_openmp_single(aIntern, row, j*nblk+i+a_off, stripe_width, &
@@ -5466,7 +5504,7 @@
               call pack_row_real_cpu_single(aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif
 
-#endif
+#endif /* DOUBLE_PRECISION_REAL */
               q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
             enddo
           endif ! useGPU
@@ -5497,7 +5535,7 @@
 		                              last_stripe_width, stripe_count)
 #endif
 
-#else
+#else /* DOUBLE_PRECISION_REAL */
 
 #ifdef WITH_OPENMP
               call pack_row_real_cpu_openmp_single(aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, &
@@ -5507,7 +5545,8 @@
 		                              last_stripe_width, stripe_count)
 #endif
 
-#endif
+#endif /* DOUBLE_PRECISION_REAL */
+
             enddo
           endif ! useGPU
 #ifdef WITH_MPI
@@ -5552,7 +5591,7 @@
             stop
           endif
 #ifdef WITH_MPI
-          call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS, mpierr)
+          call MPI_Test(result_recv_request(nbuf), flag, my_MPI_STATUS, mpierr)
 #else /* WITH_MPI */
           flag = .true.
 #endif
@@ -5577,7 +5616,7 @@
             stop
           endif
 #ifdef WITH_MPI
-          call MPI_Wait(result_recv_request(nbuf), MPI_STATUS, mpierr)
+          call MPI_Wait(result_recv_request(nbuf), my_MPI_STATUS, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5643,7 +5682,7 @@
 #else
       call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
  !$omp parallel do private(my_thread, i, j), schedule(static, 1)
       do my_thread = 1, max_threads
@@ -5695,14 +5734,16 @@
 #endif /* WITH_OPENMP */
 
 #ifdef WITH_OPENMP
+
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
          call timer%stop("OpenMP parallel_double")
 #else
          call timer%stop("OpenMP parallel_single")
 #endif
-#endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
+
+#endif /* WITH_OPENMP */
          a_off = 0
        endif
 
@@ -5916,7 +5957,8 @@
 #else
      call timer%stop("trans_ev_tridi_to_band_real_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
+
      return
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -6053,32 +6095,32 @@
       use precision
       implicit none
 
-      integer(kind=ik), intent(in)  :: na, nb, nbCol, nb2, nb2Col, mpi_comm
+      integer(kind=ik), intent(in)             :: na, nb, nbCol, nb2, nb2Col, mpi_comm
       real(kind=REAL_DATATYPE), intent(inout)  :: ab(2*nb,nbCol) ! removed assumed size
       real(kind=REAL_DATATYPE), intent(inout)  :: ab2(2*nb2,nb2Col) ! removed assumed size
       real(kind=REAL_DATATYPE), intent(out)    :: d(na), e(na) ! set only on PE 0
 
       real(kind=REAL_DATATYPE)                 :: hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), &
-                                       tau_new(nb2), ab_s(1+nb,nb2), ab_r(1+nb,nb2), ab_s2(2*nb2,nb2), hv_s(nb,nb2)
+                                                  tau_new(nb2), ab_s(1+nb,nb2), ab_r(1+nb,nb2), ab_s2(2*nb2,nb2), hv_s(nb,nb2)
 
       real(kind=REAL_DATATYPE)                 :: work(nb*nb2), work2(nb2*nb2)
-      integer(kind=ik)              :: lwork, info
+      integer(kind=ik)                         :: lwork, info
 
-      integer(kind=ik)              :: istep, i, n, dest
-      integer(kind=ik)              :: n_off, na_s
-      integer(kind=ik)              :: my_pe, n_pes, mpierr
-      integer(kind=ik)              :: nblocks_total, nblocks
-      integer(kind=ik)              :: nblocks_total2, nblocks2
-      integer(kind=ik)              :: ireq_ab, ireq_hv
+      integer(kind=ik)                         :: istep, i, n, dest
+      integer(kind=ik)                         :: n_off, na_s
+      integer(kind=ik)                         :: my_pe, n_pes, mpierr
+      integer(kind=ik)                         :: nblocks_total, nblocks
+      integer(kind=ik)                         :: nblocks_total2, nblocks2
+      integer(kind=ik)                         :: ireq_ab, ireq_hv
 #ifdef WITH_MPI
-      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)                         :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
-      integer(kind=ik), allocatable :: mpi_statuses(:,:)
-      integer(kind=ik), allocatable :: block_limits(:), block_limits2(:), ireq_ab2(:)
+      integer(kind=ik), allocatable            :: mpi_statuses(:,:)
+      integer(kind=ik), allocatable            :: block_limits(:), block_limits2(:), ireq_ab2(:)
 
-      integer(kind=ik)              :: j, nc, nr, ns, ne, iblk
-      integer(kind=ik)              :: istat
-      character(200)                :: errorMessage
+      integer(kind=ik)                         :: j, nc, nr, ns, ne, iblk
+      integer(kind=ik)                         :: istat
+      character(200)                           :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
@@ -6274,9 +6316,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-            call mpi_recv(hv, nb*nb2, mpi_real8, my_pe-1, 2, mpi_comm, mpi_status, mpierr)
+            call mpi_recv(hv, nb*nb2, mpi_real8, my_pe-1, 2, mpi_comm, my_mpi_status, mpierr)
 #else
-            call mpi_recv(hv, nb*nb2, mpi_real4, my_pe-1, 2, mpi_comm, mpi_status, mpierr)
+            call mpi_recv(hv, nb*nb2, mpi_real4, my_pe-1, 2, mpi_comm, my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -6325,9 +6367,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-              call mpi_recv(ab_r,(nb+1)*nb2, mpi_real8, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
+              call mpi_recv(ab_r,(nb+1)*nb2, mpi_real8, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
 #else
-              call mpi_recv(ab_r,(nb+1)*nb2, mpi_real4, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
+              call mpi_recv(ab_r,(nb+1)*nb2, mpi_real4, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -6374,7 +6416,7 @@
               !send hh-vector
               if (iblk==nblocks) then
 #ifdef WITH_MPI
-                call mpi_wait(ireq_hv,mpi_status,mpierr)
+                call mpi_wait(ireq_hv,my_mpi_status,mpierr)
 #endif
                 hv_s = hv_new
                 do i=1,nb2
@@ -6403,7 +6445,7 @@
             if (my_pe>0 .and. iblk==1) then
               !send first nb2 columns to previous PE
 #ifdef WITH_MPI
-              call mpi_wait(ireq_ab,mpi_status,mpierr)
+              call mpi_wait(ireq_ab,my_mpi_status,mpierr)
 #endif
               do i=1,nb2
                 ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
@@ -6439,8 +6481,8 @@
 
         ! Finish the last outstanding requests
 #ifdef WITH_MPI
-        call mpi_wait(ireq_ab,mpi_status,mpierr)
-        call mpi_wait(ireq_hv,mpi_status,mpierr)
+        call mpi_wait(ireq_ab,my_mpi_status,mpierr)
+        call mpi_wait(ireq_hv,my_mpi_status,mpierr)
         allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"error allocating mpi_statuses "//errorMessage
@@ -6496,9 +6538,9 @@
 #endif
       use precision
       implicit none
-      integer(kind=ik), intent(in) :: n		!length of householder-vectors
-      integer(kind=ik), intent(in) :: nb		!number of householder-vectors
-      integer(kind=ik), intent(in) :: lda		!leading dimension of Y and W
+      integer(kind=ik), intent(in)            :: n		!length of householder-vectors
+      integer(kind=ik), intent(in)            :: nb		!number of householder-vectors
+      integer(kind=ik), intent(in)            :: lda		!leading dimension of Y and W
       real(kind=REAL_DATATYPE), intent(in)    :: Y(lda,nb)	!matrix containing nb householder-vectors of length b
       real(kind=REAL_DATATYPE), intent(in)    :: tau(nb)	!tau values
       real(kind=REAL_DATATYPE), intent(out)   :: W(lda,nb)	!output matrix W
@@ -6545,11 +6587,11 @@
 #endif
       use precision
       implicit none
-      integer(kind=ik), intent(in) :: n		!width of the matrix A
-      integer(kind=ik), intent(in) :: m		!length of matrix W and Y
-      integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
-      integer(kind=ik), intent(in) :: lda		!leading dimension of A
-      integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
+      integer(kind=ik), intent(in)            :: n		!width of the matrix A
+      integer(kind=ik), intent(in)            :: m		!length of matrix W and Y
+      integer(kind=ik), intent(in)            :: nb		!width of matrix W and Y
+      integer(kind=ik), intent(in)            :: lda		!leading dimension of A
+      integer(kind=ik), intent(in)            :: lda2		!leading dimension of W and Y
       real(kind=REAL_DATATYPE), intent(inout) :: A(lda,*)	!matrix to be transformed   ! remove assumed size
       real(kind=REAL_DATATYPE), intent(in)    :: W(m,nb)	!blocked transformation matrix W
       real(kind=REAL_DATATYPE), intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
@@ -6591,11 +6633,11 @@
 #endif
       use precision
       implicit none
-      integer(kind=ik), intent(in) :: n		!height of the matrix A
-      integer(kind=ik), intent(in) :: m		!length of matrix W and Y
-      integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
-      integer(kind=ik), intent(in) :: lda		!leading dimension of A
-      integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
+      integer(kind=ik), intent(in)            :: n		!height of the matrix A
+      integer(kind=ik), intent(in)            :: m		!length of matrix W and Y
+      integer(kind=ik), intent(in)            :: nb		!width of matrix W and Y
+      integer(kind=ik), intent(in)            :: lda		!leading dimension of A
+      integer(kind=ik), intent(in)            :: lda2		!leading dimension of W and Y
       real(kind=REAL_DATATYPE), intent(inout) :: A(lda,*)	!matrix to be transformed  ! remove assumed size
       real(kind=REAL_DATATYPE), intent(in)    :: W(m,nb)	!blocked transformation matrix W
       real(kind=REAL_DATATYPE), intent(in)    :: Y(m,nb)	!blocked transformation matrix Y
@@ -6639,10 +6681,10 @@
 #endif
       use precision
       implicit none
-      integer(kind=ik), intent(in) :: n		!width/heigth of the matrix A; length of matrix W and Y
-      integer(kind=ik), intent(in) :: nb		!width of matrix W and Y
-      integer(kind=ik), intent(in) :: lda		!leading dimension of A
-      integer(kind=ik), intent(in) :: lda2		!leading dimension of W and Y
+      integer(kind=ik), intent(in)            :: n		!width/heigth of the matrix A; length of matrix W and Y
+      integer(kind=ik), intent(in)            :: nb		!width of matrix W and Y
+      integer(kind=ik), intent(in)            :: lda		!leading dimension of A
+      integer(kind=ik), intent(in)            :: lda2		!leading dimension of W and Y
       real(kind=REAL_DATATYPE), intent(inout) :: A(lda,*)	!matrix to be transformed  ! remove assumed size
       real(kind=REAL_DATATYPE), intent(in)    :: W(n,nb)	!blocked transformation matrix W
       real(kind=REAL_DATATYPE), intent(in)    :: Y(n,nb)	!blocked transformation matrix Y

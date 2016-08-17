@@ -2,7 +2,7 @@
 
 ## Current Release ##
 
-The current release is ELPA 2016.05.002
+The current release is ELPA 2016.05.003
 
 ## About *ELPA*
 
@@ -30,7 +30,7 @@ consisting of the following organizations:
 - Technische Universität München, Lehrstuhl für Informatik mit
   Schwerpunkt Wissenschaftliches Rechnen ,
 - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-- Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+- Max-Plack-Institut für Mathematik in den Naturwissenschaften,
   Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
   and
 - IBM Deutschland GmbH
@@ -87,7 +87,7 @@ the possible configure options.
 ## Using *ELPA*
 
 Please have a look at the "**USERS_GUIDE**" file, to get a documentation or at the [online]
-(http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.002/html/index.html) doygen
+(http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.003/html/index.html) doygen
 documentation, where you find the definition of the interfaces.
 
 ## Contributing to *ELPA*

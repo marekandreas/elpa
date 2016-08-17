@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -54,14 +54,14 @@ module ELPA_utilities
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
 #endif
-  use precision
   implicit none
 
   private ! By default, all routines contained are private
 
   public :: debug_messages_via_environment_variable, pcol, prow, error_unit
+  public :: map_global_array_index_to_local_index
 #ifndef HAVE_ISO_FORTRAN_ENV
-  integer(kind=ik), parameter :: error_unit = 0
+  integer, parameter :: error_unit = 0
 #endif
 
 
@@ -122,5 +122,44 @@ module ELPA_utilities
   end function
 
 !-------------------------------------------------------------------------------
+
+ function map_global_array_index_to_local_index(iGLobal, jGlobal, iLocal, jLocal , nblk, np_rows, np_cols, my_prow, my_pcol) &
+   result(possible)
+   use precision
+
+   implicit none
+
+   integer(kind=ik)              :: pi, pj, li, lj, xi, xj
+   integer(kind=ik), intent(in)  :: iGlobal, jGlobal, nblk, np_rows, np_cols, my_prow, my_pcol
+   integer(kind=ik), intent(out) :: iLocal, jLocal
+   logical                       :: possible
+
+   possible = .true.
+   iLocal = 0
+   jLocal = 0
+
+   pi = prow(iGlobal, nblk, np_rows)
+
+   if (my_prow .ne. pi) then
+     possible = .false.
+     return
+   endif
+
+   pj = pcol(jGlobal, nblk, np_cols)
+
+   if (my_pcol .ne. pj) then
+     possible = .false.
+     return
+   endif
+   li = (iGlobal-1)/(np_rows*nblk) ! block number for rows
+   lj = (jGlobal-1)/(np_cols*nblk) ! block number for columns
+
+   xi = mod( (iGlobal-1),nblk)+1   ! offset in block li
+   xj = mod( (jGlobal-1),nblk)+1   ! offset in block lj
+
+   iLocal = li * nblk + xi
+   jLocal = lj * nblk + xj
+
+ end function
 
 end module ELPA_utilities

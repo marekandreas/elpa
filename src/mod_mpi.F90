@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -47,9 +47,13 @@ module elpa_mpi
 #ifndef WITH_MPI
   use elpa_mpi_stubs
 #else
+#ifdef HAVE_MPI_MODULE
+  use mpi
   implicit none
-  public
-  include "mpif.h"
+#else
+  implicit none
+  include 'mpif.h'
 #endif
-
+#endif
+  public
 end module

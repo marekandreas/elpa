@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -109,9 +109,8 @@ contains
 
   subroutine hh_trafo_kernel_24_bgq(q, hh, nb, ldq, ldh, s)
     use precision
+    use elpa_mpi
     implicit none
-
-    include 'mpif.h'
 
     integer(kind=ik), intent(in) :: nb, ldq, ldh
 
@@ -317,9 +316,8 @@ contains
 
   subroutine hh_trafo_kernel_16_bgq(q, hh, nb, ldq, ldh, s)
     use precision
+    use elpa_mpi
     implicit none
-
-    include 'mpif.h'
 
     integer(kind=ik), intent(in) :: nb, ldq, ldh
 
@@ -475,9 +473,8 @@ contains
 
   subroutine hh_trafo_kernel_8_bgq(q, hh, nb, ldq, ldh, s)
     use precision
+    use elpa_mpi
     implicit none
-
-    include 'mpif.h'
 
     integer(kind=ik), intent(in) :: nb, ldq, ldh
 
@@ -582,9 +579,8 @@ contains
 
   subroutine hh_trafo_kernel_4_bgq(q, hh, nb, ldq, ldh, s)
     use precision
+    use elpa_mpi
     implicit none
-
-    include 'mpif.h'
 
     integer(kind=ik), intent(in) :: nb, ldq, ldh
 

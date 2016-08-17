@@ -1,13 +1,10 @@
 #!/bin/bash
 
 cov_dir=coverage_data
-cov_file=$cov_dir/coverage_${CI_BUILD_REF}_${CI_BUILD_NAME}.info
-
+prefix=$cov_dir/coverage_${CI_BUILD_REF}_${CI_BUILD_NAME}
 mkdir -p $cov_dir/
 
-lcov --capture \
-        $(find src/ -name "*.gcn[ao]" | xargs -n 1 dirname | sort -u | grep -v ftimings | xargs -n 1 echo --directory) \
-        --output-file $cov_file
-lcov -r $cov_file "/usr/*" -o $cov_file
-lcov -r $cov_file "/afs/*" -o $cov_file
-lcov -r $cov_file "src/ftimings" -o $cov_file
+for dir in $(find -name "*.gcno" -print0 | xargs -0 -n 1 dirname | sort -u); do
+        dir=${dir#./};
+        lcov -c -b $PWD -d $dir --to-package $prefix.${dir//\//_}.package;
+done

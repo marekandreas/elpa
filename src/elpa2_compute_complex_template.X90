@@ -11,7 +11,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -105,9 +105,9 @@
 
       implicit none
 
-      logical, intent(in)           :: useGPU
+      logical, intent(in)                         :: useGPU
 
-      integer(kind=ik)              :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)                            :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,*), tmat(nbw,nbw,*)
 #else
@@ -120,29 +120,29 @@
       complex(kind=COMPLEX_DATATYPE), parameter   :: CZERO = (0.0_rk4, 0.0_rk4), CONE = (1.0_rk4, 0.0_rk4)
 #endif
 
-      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer(kind=ik)              :: l_cols, l_rows
-      integer(kind=ik)              :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
-      integer(kind=ik)              :: istep, ncol, lch, lcx, nlc
-      integer(kind=ik)              :: tile_size, l_rows_tile, l_cols_tile
+      integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)                            :: l_cols, l_rows
+      integer(kind=ik)                            :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
+      integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc
+      integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
-      real(kind=REAL_DATATYPE)                 :: vnorm2
+      real(kind=REAL_DATATYPE)                    :: vnorm2
       complex(kind=COMPLEX_DATATYPE)              :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
       complex(kind=COMPLEX_DATATYPE), allocatable :: tmp(:,:), vr(:), vmr(:,:), umc(:,:)
-      integer(kind=c_intptr_t)      :: umc_dev, tmat_dev,vav_dev,vmr_dev,a_dev
-      integer(kind=ik)              :: cur_l_rows, cur_l_cols,vmr_size ,umc_size
-      integer(kind=c_size_t)        :: lc_start, lc_end, lr_end, lce_1, lcs_1,lre_1
-      integer(kind=ik)              :: na_rows, na_cols
+      integer(kind=c_intptr_t)                    :: umc_dev, tmat_dev,vav_dev,vmr_dev,a_dev
+      integer(kind=ik)                            :: cur_l_rows, cur_l_cols,vmr_size ,umc_size
+      integer(kind=c_size_t)                      :: lc_start, lc_end, lr_end, lce_1, lcs_1,lre_1
+      integer(kind=ik)                            :: na_rows, na_cols
 #ifdef WITH_MPI
-      integer(kind=ik), external    :: numroc
+      integer(kind=ik), external                  :: numroc
 #endif
 
-      logical, intent(in)           :: wantDebug
-      logical, intent(out)          :: success
-      character(200)                :: errorMessage
-      integer(kind=ik)              :: istat
-      logical                       :: successCUDA
+      logical, intent(in)                         :: wantDebug
+      logical, intent(out)                        :: success
+      character(200)                              :: errorMessage
+      integer(kind=ik)                            :: istat
+      logical                                     :: successCUDA
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%start("bandred_complex_double")
@@ -1143,10 +1143,10 @@
 
       use precision
       implicit none
-      integer(kind=ik) :: n, lda, ldb, comm
+      integer(kind=ik)               :: n, lda, ldb, comm
       complex(kind=COMPLEX_DATATYPE) :: a(lda,ldb)
 
-      integer(kind=ik) :: i, nc, mpierr
+      integer(kind=ik)               :: i, nc, mpierr
       complex(kind=COMPLEX_DATATYPE) :: h1(n*n), h2(n*n)
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1262,8 +1262,9 @@
 
        implicit none
 
-       logical, intent(in)           :: useGPU
-       integer(kind=ik)              :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+       logical, intent(in)                         :: useGPU
+       integer(kind=ik)                            :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, &
+                                                      mpi_comm_rows, mpi_comm_cols
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 #else
@@ -1276,19 +1277,19 @@
        complex(kind=COMPLEX_DATATYPE), parameter   :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk4)
 #endif
 
-       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
-       integer(kind=ik)              :: max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
-       integer(kind=ik)              :: l_cols, l_rows, l_colh, n_cols
-       integer(kind=ik)              :: istep, lc, ncol, nrow, nb, ns
+       integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols, mpierr
+       integer(kind=ik)                            :: max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
+       integer(kind=ik)                            :: l_cols, l_rows, l_colh, n_cols
+       integer(kind=ik)                            :: istep, lc, ncol, nrow, nb, ns
 
        complex(kind=COMPLEX_DATATYPE), allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
 
-       integer(kind=ik)              :: i
-       integer(kind=C_intptr_T)      :: hvm_dev, q_dev, tmat_dev, tmp_dev
+       integer(kind=ik)                            :: i
+       integer(kind=C_intptr_T)                    :: hvm_dev, q_dev, tmat_dev, tmp_dev
 
-       integer(kind=ik)              :: istat
-       character(200)                :: errorMessage
-       logical                       :: successCUDA
+       integer(kind=ik)                            :: istat
+       character(200)                              :: errorMessage
+       logical                                     :: successCUDA
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -1738,47 +1739,47 @@
       implicit none
 
       !#ifdef WITH_GPU_VERSION
-      !   integer(C_SIZE_T)        :: h_dev, hv_new_dev ,ab_dev,x_dev,hs_dev,tau_new_dev,hv_dev,hd_dev
-      !   complex*16, allocatable  :: ab_temp(:,:)
+      !   integer(C_SIZE_T)                        :: h_dev, hv_new_dev ,ab_dev,x_dev,hs_dev,tau_new_dev,hv_dev,hd_dev
+      !   complex*16, allocatable                  :: ab_temp(:,:)
       !#endif
 
-      integer(kind=ik), intent(in)   ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+      integer(kind=ik), intent(in)                 ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE),intent(in)    :: a(lda,*)
 #else
       complex(kind=COMPLEX_DATATYPE), intent(in)   :: a(lda,matrixCols)
 #endif
-      real(kind=REAL_DATATYPE), intent(out)     :: d(na), e(na) ! set only on PE 0
+      real(kind=REAL_DATATYPE), intent(out)        :: d(na), e(na) ! set only on PE 0
       complex(kind=COMPLEX_DATATYPE), intent(inout), &
-          allocatable                :: hh_trans_complex(:,:)
+          allocatable                              :: hh_trans_complex(:,:)
 
-      real(kind=REAL_DATATYPE)                  :: vnorm2
+      real(kind=REAL_DATATYPE)                     :: vnorm2
       complex(kind=COMPLEX_DATATYPE)               :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
       complex(kind=COMPLEX_DATATYPE)               :: hd(nb), hs(nb)
 
-      integer(kind=ik)               :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
-      integer(kind=ik)               :: my_pe, n_pes, mpierr
-      integer(kind=ik)               :: my_prow, np_rows, my_pcol, np_cols
-      integer(kind=ik)               :: ireq_ab, ireq_hv
-      integer(kind=ik)               :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
+      integer(kind=ik)                             :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
+      integer(kind=ik)                             :: my_pe, n_pes, mpierr
+      integer(kind=ik)                             :: my_prow, np_rows, my_pcol, np_cols
+      integer(kind=ik)                             :: ireq_ab, ireq_hv
+      integer(kind=ik)                             :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
 #ifdef WITH_OPENMP
-      integer(kind=ik), allocatable  :: mpi_statuses(:,:)
-      integer(kind=ik), allocatable  :: omp_block_limits(:)
-      integer(kind=ik)               :: max_threads, my_thread, my_block_s, my_block_e, iter
-      integer(kind=ik)               :: omp_get_max_threads
+      integer(kind=ik), allocatable                :: mpi_statuses(:,:)
+      integer(kind=ik), allocatable                :: omp_block_limits(:)
+      integer(kind=ik)                             :: max_threads, my_thread, my_block_s, my_block_e, iter
+      integer(kind=ik)                             :: omp_get_max_threads
 #ifdef WITH_MPI
-      integer(kind=ik)               :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)                             :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
       complex(kind=COMPLEX_DATATYPE), allocatable  :: hv_t(:,:), tau_t(:)
 #endif
-      integer(kind=ik), allocatable  :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
-      integer(kind=ik), allocatable  :: limits(:), snd_limits(:,:)
-      integer(kind=ik), allocatable  :: block_limits(:)
+      integer(kind=ik), allocatable                :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
+      integer(kind=ik), allocatable                :: limits(:), snd_limits(:,:)
+      integer(kind=ik), allocatable                :: block_limits(:)
       complex(kind=COMPLEX_DATATYPE), allocatable  :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
-      integer(kind=ik)               :: istat
-      character(200)                 :: errorMessage
+      integer(kind=ik)                             :: istat
+      character(200)                               :: errorMessage
 #ifndef WITH_MPI
-      integer(kind=ik)               :: startAddr
+      integer(kind=ik)                             :: startAddr
 #endif
 
 !   ! dummies for calling redist_band
@@ -2137,9 +2138,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-          call mpi_recv(hv, nb, MPI_COMPLEX16, my_pe-1, 2, mpi_comm, mpi_status, mpierr)
+          call mpi_recv(hv, nb, MPI_COMPLEX16, my_pe-1, 2, mpi_comm, my_mpi_status, mpierr)
 #else
-          call mpi_recv(hv, nb, MPI_COMPLEX8, my_pe-1, 2, mpi_comm, mpi_status, mpierr)
+          call mpi_recv(hv, nb, MPI_COMPLEX8, my_pe-1, 2, mpi_comm, my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -2356,7 +2357,7 @@
             ! Send our first column to previous PE
             if (my_pe>0 .and. na_s <= na) then
 #ifdef WITH_MPI
-              call mpi_wait(ireq_ab,mpi_status,mpierr)
+              call mpi_wait(ireq_ab, my_mpi_status,mpierr)
 #endif
               ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
@@ -2377,9 +2378,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-              call mpi_recv(ab(1,ne-n_off), nb+1, MPI_COMPLEX16, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
+              call mpi_recv(ab(1,ne-n_off), nb+1, MPI_COMPLEX16, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
 #else
-              call mpi_recv(ab(1,ne-n_off), nb+1, MPI_COMPLEX8, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
+              call mpi_recv(ab(1,ne-n_off), nb+1, MPI_COMPLEX8, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -2396,7 +2397,7 @@
             if (istep>=max_threads .and. ne < na) then
 
 #ifdef WITH_MPI
-              call mpi_wait(ireq_hv,mpi_status,mpierr)
+              call mpi_wait(ireq_hv, my_mpi_status,mpierr)
 #endif
               hv_s(1) = tau_t(max_threads)
               hv_s(2:) = hv_t(2:,max_threads)
@@ -2511,7 +2512,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-            call mpi_recv(ab(1,ne), nb+1, MPI_COMPLEX16, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
+            call mpi_recv(ab(1,ne), nb+1, MPI_COMPLEX16, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
 
 #else
             call mpi_recv(ab(1,ne), nb+1, MPI_COMPLEX16, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
@@ -2543,7 +2544,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-            call mpi_recv(ab(1,ne), nb+1, MPI_COMPLEX8, my_pe+1, 1, mpi_comm, mpi_status, mpierr)
+            call mpi_recv(ab(1,ne), nb+1, MPI_COMPLEX8, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
 
 #else
             call mpi_recv(ab(1,ne), nb+1, MPI_COMPLEX8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
@@ -2611,7 +2612,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                call mpi_wait(ireq_hv,mpi_status,mpierr)
+                call mpi_wait(ireq_hv, my_mpi_status,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -2669,7 +2670,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-             call mpi_wait(ireq_ab,mpi_status,mpierr)
+             call mpi_wait(ireq_ab, my_mpi_status,mpierr)
 #else
              call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -2796,7 +2797,7 @@
          if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
            ! Wait for last transfer to finish
 #ifdef WITH_MPI
-           call mpi_wait(ireq_hhs(iblk), mpi_status, mpierr)
+           call mpi_wait(ireq_hhs(iblk), my_mpi_status, mpierr)
 #endif
            ! Copy vectors into send buffer
            hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
@@ -2834,8 +2835,8 @@
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-     call mpi_wait(ireq_ab,mpi_status,mpierr)
-     call mpi_wait(ireq_hv,mpi_status,mpierr)
+     call mpi_wait(ireq_ab, my_mpi_status,mpierr)
+     call mpi_wait(ireq_hv, my_mpi_status,mpierr)
 
      allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
@@ -3001,10 +3002,6 @@
     end subroutine tridiag_band_complex_single ! has to be checked for GPU
 #endif
 
-
-#define ATODEV istat = cuda_memcpy(loc(a), a_dev, stripe_width*a_dim2*stripe_count*size_of_complex_datatype, cudaMemcpyDeviceToHost)
-#define ATOHOST istat = cuda_memcpy(a_dev, loc(a), stripe_width*a_dim2*stripe_count*size_of_complex_datatype, cudaMemcpyDeviceToHost)
-
 #ifdef DOUBLE_PRECISION_COMPLEX
     subroutine trans_ev_tridi_to_band_complex_double(na, nev, nblk, nbw, q, ldq, matrixCols,  &
                                               hh_trans_complex, mpi_comm_rows, mpi_comm_cols, &
@@ -3051,38 +3048,38 @@
       use iso_c_binding
       implicit none
 
-      logical, intent(in)           :: useGPU
-      integer(kind=ik), intent(in)  :: THIS_COMPLEX_ELPA_KERNEL
-      integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+      logical, intent(in)                         :: useGPU
+      integer(kind=ik), intent(in)                :: THIS_COMPLEX_ELPA_KERNEL
+      integer(kind=ik), intent(in)                :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)              :: q(ldq,*)
 #else
       complex(kind=COMPLEX_DATATYPE)              :: q(ldq,matrixCols)
 #endif
       complex(kind=COMPLEX_DATATYPE)              :: hh_trans_complex(:,:)
-      integer(kind=ik)              :: np_rows, my_prow, np_cols, my_pcol
-      integer(kind=ik)              :: tmp
+      integer(kind=ik)                            :: np_rows, my_prow, np_cols, my_pcol
+      integer(kind=ik)                            :: tmp
 
-      integer(kind=ik)              :: i, j, ip, sweep, nbuf, l_nev, a_dim2
-      integer(kind=ik)              :: current_n, current_local_n, current_n_start, current_n_end
-      integer(kind=ik)              :: next_n, next_local_n, next_n_start, next_n_end
-      integer(kind=ik)              :: bottom_msg_length, top_msg_length, next_top_msg_length
-      integer(kind=ik)              :: stripe_width, last_stripe_width, stripe_count
+      integer(kind=ik)                            :: i, j, ip, sweep, nbuf, l_nev, a_dim2
+      integer(kind=ik)                            :: current_n, current_local_n, current_n_start, current_n_end
+      integer(kind=ik)                            :: next_n, next_local_n, next_n_start, next_n_end
+      integer(kind=ik)                            :: bottom_msg_length, top_msg_length, next_top_msg_length
+      integer(kind=ik)                            :: stripe_width, last_stripe_width, stripe_count
 #ifdef WITH_OPENMP
-      integer(kind=ik)              :: thread_width, csw, b_off, b_len
+      integer(kind=ik)                            :: thread_width, csw, b_off, b_len
 #endif
-      integer(kind=ik)              :: num_result_blocks, num_result_buffers, num_bufs_recvd
-      integer(kind=ik)              :: a_off, current_tv_off, max_blk_size
-      integer(kind=ik)              :: mpierr, src, src_offset, dst, offset, nfact, num_blk
-      logical                       :: flag
+      integer(kind=ik)                            :: num_result_blocks, num_result_buffers, num_bufs_recvd
+      integer(kind=ik)                            :: a_off, current_tv_off, max_blk_size
+      integer(kind=ik)                            :: mpierr, src, src_offset, dst, offset, nfact, num_blk
+      logical                                     :: flag
 
 #ifdef WITH_OPENMP
-      complex(kind=COMPLEX_DATATYPE), pointer     :: a(:,:,:,:)
+      complex(kind=COMPLEX_DATATYPE), pointer     :: aIntern(:,:,:,:)
 #else
-      complex(kind=COMPLEX_DATATYPE), pointer     :: a(:,:,:)
+      complex(kind=COMPLEX_DATATYPE), pointer     :: aIntern(:,:,:)
 #endif
       complex(kind=COMPLEX_DATATYPE)              :: a_complex
-      type(c_ptr)                                 :: a_ptr
+      type(c_ptr)                                 :: aIntern_ptr
       complex(kind=COMPLEX_DATATYPE), allocatable :: row(:)
       complex(kind=COMPLEX_DATATYPE), allocatable :: row_group(:,:)
 
@@ -3093,72 +3090,72 @@
       complex(kind=COMPLEX_DATATYPE), allocatable :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
       complex(kind=COMPLEX_DATATYPE), allocatable :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
 #endif
-      integer(kind=c_intptr_t)      :: a_dev
-      integer(kind=c_intptr_t)      :: bcast_buffer_dev
-      integer(kind=c_size_t)        :: num
-      integer(kind=c_size_t)        :: dev_offset, dev_offset_1, dev_offset_2
+      integer(kind=c_intptr_t)                    :: aIntern_dev
+      integer(kind=c_intptr_t)                    :: bcast_buffer_dev
+      integer(kind=c_size_t)                      :: num
+      integer(kind=c_size_t)                      :: dev_offset, dev_offset_1, dev_offset_2
 
 
-      integer(kind=c_intptr_t)      :: row_dev
-      integer(kind=c_intptr_t)      :: row_group_dev
-      integer(kind=c_intptr_t)      :: hh_tau_dev
-      integer(kind=c_intptr_t)      :: hh_dot_dev
-      integer(kind=ik)              :: row_group_size, unpack_idx
-      integer(kind=ik)              :: n_times
+      integer(kind=c_intptr_t)                    :: row_dev
+      integer(kind=c_intptr_t)                    :: row_group_dev
+      integer(kind=c_intptr_t)                    :: hh_tau_dev
+      integer(kind=c_intptr_t)                    :: hh_dot_dev
+      integer(kind=ik)                            :: row_group_size, unpack_idx
+      integer(kind=ik)                            :: n_times
 
-      integer(kind=ik)              :: top, chunk, this_chunk
+      integer(kind=ik)                            :: top, chunk, this_chunk
       complex(kind=COMPLEX_DATATYPE), allocatable :: result_buffer(:,:,:)
       complex(kind=COMPLEX_DATATYPE), allocatable :: bcast_buffer(:,:)
 
-      integer(kind=ik)              :: n_off
-      integer(kind=ik), allocatable :: result_send_request(:), result_recv_request(:), limits(:)
-      integer(kind=ik), allocatable :: top_send_request(:), bottom_send_request(:)
-      integer(kind=ik), allocatable :: top_recv_request(:), bottom_recv_request(:)
+      integer(kind=ik)                            :: n_off
+      integer(kind=ik), allocatable               :: result_send_request(:), result_recv_request(:), limits(:)
+      integer(kind=ik), allocatable               :: top_send_request(:), bottom_send_request(:)
+      integer(kind=ik), allocatable               :: top_recv_request(:), bottom_recv_request(:)
 #ifdef WITH_OPENMP
-      integer(kind=ik), allocatable :: mpi_statuses(:,:)
+      integer(kind=ik), allocatable               :: mpi_statuses(:,:)
 #ifdef WITH_MPI
-      integer(kind=ik)              :: mpi_status(MPI_STATUS_SIZE)
+      integer(kind=ik)                            :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
 #endif
 
 #ifdef WITH_MPI
-      integer(kind=ik), external    :: numroc
+      integer(kind=ik), external                  :: numroc
 #endif
-      integer(kind=ik)              :: na_rows, na_cols
-!    real*8                  :: ttt0, ttt1, ttt2, t2_compute_kernel, t0_compute_kernel,t1_compute_kernel, &
-!                               t0_mpi_time, t1_mpi_time,t2_mpi_time
-!    real*8                  :: t0_cpu_code,t1_cpu_code,t2_cpu_code,t0_block_time,t1_block_time,t2_block_time,t0_cuda_memcpy
-!    real*8                  :: t0_inner_do_time, t1_inner_do_time , t2_inner_do_time,t0_outer_do_time ,t1_outer_do_time , &
-!                               t2_outer_do_time ,t0_result_time ,t1_result_time, t2_result_time,t0_mpi_recv_time,         &
-!                               t1_mpi_recv_time,t2_mpi_recv_time
-!   real*8                   :: t1_mpi_wait_time,t0_mpi_wait_time,t2_mpi_wait_time,t1_memcpy_time,t0_memcpy_time,t2_memcpy_time, &
-!                               t1_mpi_irecv_time,t0_mpi_irecv_time,t2_mpi_irecv_time,t0_mpi_outer_wait_time,t1_mpi_outer_wait_time,&
-!                               t2_mpi_outer_wait_time, time0
-!   real*4                   :: time1
+      integer(kind=ik)                            :: na_rows, na_cols
+!    real*8                                       :: ttt0, ttt1, ttt2, t2_compute_kernel, t0_compute_kernel,t1_compute_kernel, &
+!                                                    t0_mpi_time, t1_mpi_time,t2_mpi_time
+!    real*8                                       :: t0_cpu_code,t1_cpu_code,t2_cpu_code,t0_block_time,t1_block_time,t2_block_time,t0_cuda_memcpy
+!    real*8                                       :: t0_inner_do_time, t1_inner_do_time , t2_inner_do_time,t0_outer_do_time ,t1_outer_do_time , &
+!                                                    t2_outer_do_time ,t0_result_time ,t1_result_time, t2_result_time,t0_mpi_recv_time,         &
+!                                                    t1_mpi_recv_time,t2_mpi_recv_time
+!   real*8                                        :: t1_mpi_wait_time,t0_mpi_wait_time,t2_mpi_wait_time,t1_memcpy_time,t0_memcpy_time,t2_memcpy_time, &
+!                                                    t1_mpi_irecv_time,t0_mpi_irecv_time,t2_mpi_irecv_time,t0_mpi_outer_wait_time,t1_mpi_outer_wait_time,&
+!                                                    t2_mpi_outer_wait_time, time0
+!   real*4                                        :: time1
 
     ! MPI send/recv tags, arbitrary
 
-      integer(kind=ik), parameter   :: bottom_recv_tag = 111
-      integer(kind=ik), parameter   :: top_recv_tag    = 222
-      integer(kind=ik), parameter   :: result_recv_tag = 333
+      integer(kind=ik), parameter                 :: bottom_recv_tag = 111
+      integer(kind=ik), parameter                 :: top_recv_tag    = 222
+      integer(kind=ik), parameter                 :: result_recv_tag = 333
 
 #ifdef WITH_OPENMP
-      integer(kind=ik)              :: max_threads, my_thread
-      integer(kind=ik)              :: omp_get_max_threads
+      integer(kind=ik)                            :: max_threads, my_thread
+      integer(kind=ik)                            :: omp_get_max_threads
 #endif
 
       ! Just for measuring the kernel performance
-      real(kind=c_double)           :: kernel_time  ! MPI_WTIME always needs double
+      real(kind=c_double)                         :: kernel_time  ! MPI_WTIME always needs double
       ! long integer
-      integer(kind=lik)             :: kernel_flops
+      integer(kind=lik)                           :: kernel_flops
 
-      logical, intent(in)           :: wantDebug
-      integer(kind=ik)              :: istat
-      character(200)                :: errorMessage
-      logical                       :: successCUDA
-      logical                       :: success
+      logical, intent(in)                         :: wantDebug
+      integer(kind=ik)                            :: istat
+      character(200)                              :: errorMessage
+      logical                                     :: successCUDA
+      logical                                     :: success
 #ifndef WITH_MPI
-      integer(kind=ik)              :: j1
+      integer(kind=ik)                            :: j1
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3321,7 +3318,9 @@
       max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
 
       a_dim2 = max_blk_size + nbw
-!DEC$ ATTRIBUTES ALIGN: 64:: a
+#if 0
+!DEC$ ATTRIBUTES ALIGN: 64:: aIntern
+#endif
 
 #ifdef WITH_OPENMP
       if (useGPU) then
@@ -3330,30 +3329,30 @@
       endif
 
       if (.not.(useGPU)) then
-         if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a_complex)) /= 0) then
+         if (posix_memalign(aIntern_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a_complex)) /= 0) then
           print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
           stop
         endif
 
-        call c_f_pointer(a_ptr, a, [stripe_width,a_dim2,stripe_count,max_threads] )
-!        allocate(a(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
+        call c_f_pointer(aIntern_ptr, aIntern, [stripe_width,a_dim2,stripe_count,max_threads] )
+!        allocate(aIntern(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
 
-        ! a(:,:,:,:) should be set to 0 in a parallel region, not here!
+        ! aIntern(:,:,:,:) should be set to 0 in a parallel region, not here!
       endif
 
 #else /* OpenMP */
 
       if (.not.(useGPU)) then
-        if (posix_memalign(a_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a_complex)) /= 0) then
+        if (posix_memalign(aIntern_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a_complex)) /= 0) then
           print *,"trans_ev_tridi_to_band_complex: error allocating a "//errorMessage
           stop
         endif
 
-        call c_f_pointer(a_ptr, a, [stripe_width,a_dim2,stripe_count] )
+        call c_f_pointer(aIntern_ptr, aIntern, [stripe_width,a_dim2,stripe_count] )
 
-!        allocate(a(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
+!        allocate(aIntern(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
 
-        a(:,:,:) = 0
+        aIntern(:,:,:) = 0
       endif
 
 #endif /* WITH_OPENMP */
@@ -3370,19 +3369,19 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
         num =  (stripe_width*a_dim2*stripe_count)*size_of_double_complex_datatype
         if (na_rows * na_cols .lt. stripe_width*a_dim2*stripe_count) then
-          print *,"trans_ev_tridi_to_band_complex a_dev ",na_rows * na_cols, stripe_width*a_dim2*stripe_count
+          print *,"trans_ev_tridi_to_band_complex aIntern_dev ",na_rows * na_cols, stripe_width*a_dim2*stripe_count
           !      stop
         endif
 
-        successCUDA = cuda_malloc(a_dev, stripe_width*a_dim2*stripe_count*size_of_double_complex_datatype)
+        successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count*size_of_double_complex_datatype)
 #else
         num =  (stripe_width*a_dim2*stripe_count)*size_of_single_complex_datatype
         if (na_rows * na_cols .lt. stripe_width*a_dim2*stripe_count) then
-          print *,"trans_ev_tridi_to_band_complex a_dev ",na_rows * na_cols, stripe_width*a_dim2*stripe_count
+          print *,"trans_ev_tridi_to_band_complex aIntern_dev ",na_rows * na_cols, stripe_width*a_dim2*stripe_count
           !      stop
         endif
 
-        successCUDA = cuda_malloc(a_dev, stripe_width*a_dim2*stripe_count*size_of_single_complex_datatype)
+        successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count*size_of_single_complex_datatype)
 #endif
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_complex: error in cudaMalloc "
@@ -3390,10 +3389,10 @@
         endif
 
         if (num .gt. na_rows * na_cols) then
-          print *,"trans_ev_tridi_to_band_complex a_dev 1",num, na_rows * na_cols
+          print *,"trans_ev_tridi_to_band_complex aIntern_dev 1",num, na_rows * na_cols
           !      stop
         endif
-        successCUDA = cuda_memset(a_dev , 0, num)
+        successCUDA = cuda_memset(aIntern_dev , 0, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_complex: error in cudaMemset "
           stop
@@ -3465,14 +3464,14 @@
 #else
       call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
       do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-        a(:,:,:,my_thread) = 0._ck8 ! if possible, do first touch allocation!
+        aIntern(:,:,:,my_thread) = 0._ck8 ! if possible, do first touch allocation!
 #else
-        a(:,:,:,my_thread) = 0._ck4 ! if possible, do first touch allocation!
+        aIntern(:,:,:,my_thread) = 0._ck4 ! if possible, do first touch allocation!
 #endif
       enddo
 !$omp end parallel do
@@ -3482,7 +3481,7 @@
 #else
       call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #endif /* WITH_OPENMP */
 
@@ -3502,9 +3501,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-              call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
+              call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, my_mpi_status, mpierr)
 #else
-              call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, mpi_status, mpierr)
+              call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -3566,15 +3565,15 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call unpack_row_complex_cpu_openmp_double(a, row,i-limits(ip),my_thread, &
+                call unpack_row_complex_cpu_openmp_double(aIntern, row,i-limits(ip),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #else
-                call unpack_row_complex_cpu_openmp_single(a, row,i-limits(ip),my_thread, &
+                call unpack_row_complex_cpu_openmp_single(aIntern, row,i-limits(ip),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #endif
               enddo
@@ -3585,15 +3584,15 @@
 #else
               call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
               if (.not.(useGPU)) then
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call unpack_row_complex_cpu_double(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
+                call unpack_row_complex_cpu_double(aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
 #else
-                call unpack_row_complex_cpu_single(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
+                call unpack_row_complex_cpu_single(aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
 #endif
               endif
 
@@ -3620,15 +3619,15 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call unpack_row_complex_cpu_openmp_double(a, row,i-limits(ip),my_thread, &
+                call unpack_row_complex_cpu_openmp_double(aIntern, row,i-limits(ip),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #else
-                call unpack_row_complex_cpu_openmp_single(a, row,i-limits(ip),my_thread, &
+                call unpack_row_complex_cpu_openmp_single(aIntern, row,i-limits(ip),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #endif
               enddo
@@ -3639,15 +3638,15 @@
 #else
               call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
               if (.not.(useGPU)) then
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call unpack_row_complex_cpu_double(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
+                call unpack_row_complex_cpu_double(aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
 #else
-                call unpack_row_complex_cpu_single(a, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
+                call unpack_row_complex_cpu_single(aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
 #endif
               endif
 
@@ -3707,9 +3706,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-              call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, mpi_status, mpierr)
+              call MPI_Recv(row, l_nev, MPI_COMPLEX16, src, 0, mpi_comm_rows, my_mpi_status, mpierr)
 #else
-              call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, mpi_status, mpierr)
+              call MPI_Recv(row, l_nev, MPI_COMPLEX8, src, 0, mpi_comm_rows, my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -3770,14 +3769,15 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
+
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call unpack_row_complex_cpu_openmp_double(a, row,i-limits(my_prow),my_thread, &
+                call unpack_row_complex_cpu_openmp_double(aIntern, row,i-limits(my_prow),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #else
-                call unpack_row_complex_cpu_openmp_single(a, row,i-limits(my_prow),my_thread, &
+                call unpack_row_complex_cpu_openmp_single(aIntern, row,i-limits(my_prow),my_thread, &
                                                    stripe_count, thread_width, stripe_width, l_nev)
 #endif
               enddo
@@ -3788,15 +3788,15 @@
 #else
               call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
               if (.not.(useGPU)) then
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call unpack_row_complex_cpu_double(a, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
+                call unpack_row_complex_cpu_double(aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
 #else
-                call unpack_row_complex_cpu_single(a, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
+                call unpack_row_complex_cpu_single(aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
 #endif
               endif
 
@@ -4258,7 +4258,7 @@
                   stop
                 endif
 #ifdef WITH_MPI
-                call MPI_Wait(bottom_recv_request(i), mpi_status, mpierr)
+                call MPI_Wait(bottom_recv_request(i), my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -4292,13 +4292,14 @@
 #else
                 call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
+
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                   n_off = current_local_n+a_off
                   b_len = csw*nbw
                   b_off = (my_thread-1)*b_len
-                  a(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
+                  aIntern(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
                      reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
                 enddo
 !$omp end parallel do
@@ -4308,7 +4309,7 @@
 #else
                 call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
@@ -4317,11 +4318,11 @@
 !                t1_memcpy_time =MPI_Wtime()
 #ifdef DOUBLE_PRECISION_COMPLEX
                   dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * size_of_double_complex_datatype
-                  successCUDA =  cuda_memcpy( a_dev + dev_offset ,loc(bottom_border_recv_buffer(1,1,i)), &
+                  successCUDA =  cuda_memcpy( aIntern_dev + dev_offset ,loc(bottom_border_recv_buffer(1,1,i)), &
                                             stripe_width*nbw*size_of_double_complex_datatype ,cudaMemcpyHostToDevice)
 #else
                   dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * size_of_single_complex_datatype
-                  successCUDA =  cuda_memcpy( a_dev + dev_offset ,loc(bottom_border_recv_buffer(1,1,i)), &
+                  successCUDA =  cuda_memcpy( aIntern_dev + dev_offset ,loc(bottom_border_recv_buffer(1,1,i)), &
                                             stripe_width*nbw*size_of_single_complex_datatype ,cudaMemcpyHostToDevice)
 #endif
                   if (.not.(successCUDA)) then
@@ -4332,7 +4333,7 @@
 !                t2_memcpy_time =MPI_Wtime()
 !                t0_memcpy_time = t0_memcpy_time + ( t2_memcpy_time - t1_memcpy_time)
                 else
-                  a(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
+                  aIntern(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
                 endif
 
 #endif /* WITH_OPENMP */
@@ -4392,7 +4393,7 @@
                     stop
                   endif
 #ifdef WITH_MPI
-                  call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+                  call MPI_Wait(top_recv_request(i), my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -4418,10 +4419,10 @@
 #endif
 !                   host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ))* 16
 #ifdef DOUBLE_PRECISION_COMPLEX
-                    successCUDA =  cuda_memcpy( a_dev+dev_offset ,loc(top_border_recv_buffer(1,1,i)), &
+                    successCUDA =  cuda_memcpy( aIntern_dev+dev_offset ,loc(top_border_recv_buffer(1,1,i)), &
                                                stripe_width*top_msg_length*size_of_double_complex_datatype , cudaMemcpyHostToDevice)
 #else
-                    successCUDA =  cuda_memcpy( a_dev+dev_offset ,loc(top_border_recv_buffer(1,1,i)), &
+                    successCUDA =  cuda_memcpy( aIntern_dev+dev_offset ,loc(top_border_recv_buffer(1,1,i)), &
                                                stripe_width*top_msg_length*size_of_single_complex_datatype , cudaMemcpyHostToDevice)
 #endif
                     if (.not.(successCUDA)) then
@@ -4432,7 +4433,7 @@
 !                   t2_memcpy_time =MPI_Wtime()
 !                   t0_memcpy_time = t0_memcpy_time + ( t2_memcpy_time - t1_memcpy_time)
                   else
-                    a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+                    aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
                   endif ! useGPU
 
 #endif /* WITH_OPENMP */
@@ -4450,23 +4451,25 @@
 #else
                 call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
                 do my_thread = 1, max_threads
                   if (top_msg_length>0) then
                     b_len = csw*top_msg_length
                     b_off = (my_thread-1)*b_len
-                    a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
+                    aIntern(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                              reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                   endif
 #ifdef DOUBLE_PRECISION_COMPLEX
-                  call compute_hh_trafo_complex_cpu_openmp_double(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
+                  call compute_hh_trafo_complex_cpu_openmp_double(aIntern, stripe_width, a_dim2, stripe_count, &
+		                                                  max_threads, l_nev, &
                                                            a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                            0, current_local_n, i, my_thread, thread_width,                    &
                                                            THIS_COMPLEX_ELPA_KERNEL)
 #else
-                  call compute_hh_trafo_complex_cpu_openmp_single(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,   &
+                  call compute_hh_trafo_complex_cpu_openmp_single(aIntern, stripe_width, a_dim2, stripe_count, &
+		                                           max_threads, l_nev,   &
                                                            a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                            0, current_local_n, i, my_thread, thread_width,                    &
                                                            THIS_COMPLEX_ELPA_KERNEL)
@@ -4479,7 +4482,7 @@
 #else
                 call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
                 if (useGPU) then
@@ -4492,12 +4495,12 @@
 #endif
                 else
 #ifdef DOUBLE_PRECISION_COMPLEX
-                  call compute_hh_trafo_complex_cpu_double(a, stripe_width, a_dim2, stripe_count,                             &
+                  call compute_hh_trafo_complex_cpu_double(aIntern, stripe_width, a_dim2, stripe_count,            &
                                                     a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                     0, current_local_n, i, last_stripe_width,                          &
                                                     THIS_COMPLEX_ELPA_KERNEL)
 #else
-                  call compute_hh_trafo_complex_cpu_single(a, stripe_width, a_dim2, stripe_count,                             &
+                  call compute_hh_trafo_complex_cpu_single(aIntern, stripe_width, a_dim2, stripe_count,         &
                                                     a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                     0, current_local_n, i, last_stripe_width,                          &
                                                     THIS_COMPLEX_ELPA_KERNEL)
@@ -4513,7 +4516,7 @@
                   stop
                 endif
 #ifdef WITH_MPI
-                call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+                call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -4544,7 +4547,7 @@
 
                   b_len = csw*bottom_msg_length*max_threads
                   bottom_border_send_buffer(1:b_len,i) = &
-                          reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+                          reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -4569,13 +4572,13 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
                     dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
                                  size_of_double_complex_datatype
-                    successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), a_dev + dev_offset, &
+                    successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
                                                stripe_width * bottom_msg_length * size_of_double_complex_datatype , &
                                                cudaMemcpyDeviceToHost)
 #else
                     dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
                                  size_of_single_complex_datatype
-                    successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), a_dev + dev_offset, &
+                    successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
                                                stripe_width * bottom_msg_length * size_of_single_complex_datatype , &
                                                cudaMemcpyDeviceToHost)
 #endif
@@ -4587,7 +4590,7 @@
 !                   t2_memcpy_time =MPI_Wtime()
 !                   t0_memcpy_time = t0_memcpy_time + ( t2_memcpy_time -t1_memcpy_time)
                   else
-                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+                    bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
                   endif
 #ifdef WITH_MPI
 
@@ -4624,17 +4627,17 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call compute_hh_trafo_complex_cpu_openmp_double(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
+                call compute_hh_trafo_complex_cpu_openmp_double(aIntern, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,    &
                                                          current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
                                                           thread_width, THIS_COMPLEX_ELPA_KERNEL)
 #else
-                call compute_hh_trafo_complex_cpu_openmp_single(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,   &
+                call compute_hh_trafo_complex_cpu_openmp_single(aIntern, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,    &
                                                          current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
                                                           thread_width, THIS_COMPLEX_ELPA_KERNEL)
@@ -4648,7 +4651,7 @@
 #else
               call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif  /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
@@ -4658,7 +4661,7 @@
                                                   dev_offset, dev_offset_1, dev_offset_2)
 !              call compute_hh_trafo_complex_gpu_double(current_local_n -bottom_msg_length, bottom_msg_length, i)
               else
-                call compute_hh_trafo_complex_cpu_double(a, stripe_width, a_dim2, stripe_count,                             &
+                call compute_hh_trafo_complex_cpu_double(aIntern, stripe_width, a_dim2, stripe_count,              &
                                                   a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                   current_local_n - bottom_msg_length, bottom_msg_length, i,         &
                                                   last_stripe_width, THIS_COMPLEX_ELPA_KERNEL)
@@ -4670,7 +4673,7 @@
                                                   dev_offset, dev_offset_1, dev_offset_2)
 !              call compute_hh_trafo_complex_gpu_single(current_local_n -bottom_msg_length, bottom_msg_length, i)
               else
-                call compute_hh_trafo_complex_cpu_single(a, stripe_width, a_dim2, stripe_count,                             &
+                call compute_hh_trafo_complex_cpu_single(aIntern, stripe_width, a_dim2, stripe_count,            &
                                                   a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                   current_local_n - bottom_msg_length, bottom_msg_length, i,         &
                                                   last_stripe_width, THIS_COMPLEX_ELPA_KERNEL)
@@ -4689,7 +4692,7 @@
                 stop
               endif
 #ifdef WITH_MPI
-              call MPI_Wait(bottom_send_request(i), mpi_status, mpierr)
+              call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -4718,7 +4721,7 @@
 
                 b_len = csw*bottom_msg_length*max_threads
                 bottom_border_send_buffer(1:b_len,i) = &
-                      reshape(a(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+                      reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -4743,13 +4746,13 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
                   dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
                                 size_of_double_complex_datatype
-                  successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), a_dev + dev_offset, &
+                  successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
                                              stripe_width * bottom_msg_length * size_of_double_complex_datatype , &
                                              cudaMemcpyDeviceToHost)
 #else
                   dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
                                 size_of_single_complex_datatype
-                  successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), a_dev + dev_offset, &
+                  successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
                                              stripe_width * bottom_msg_length * size_of_single_complex_datatype , &
                                              cudaMemcpyDeviceToHost)
 #endif
@@ -4761,7 +4764,7 @@
 !                t2_memcpy_time =MPI_Wtime()
 !                t0_memcpy_time = t0_memcpy_time + ( t2_memcpy_time -t1_memcpy_time)
                 else
-                  bottom_border_send_buffer(:,1:bottom_msg_length,i) = a(:,n_off+1:n_off+bottom_msg_length,i)
+                  bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
                 endif
 
 #ifdef WITH_MPI
@@ -4798,18 +4801,18 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call compute_hh_trafo_complex_cpu_openmp_double(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,    &
+                call compute_hh_trafo_complex_cpu_openmp_double(aIntern, stripe_width, a_dim2, stripe_count, max_threads, l_nev,&
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops,  &
                                                          kernel_time, top_msg_length,                           &
                                                          current_local_n-top_msg_length-bottom_msg_length, i,   &
                                                          my_thread,  thread_width,  THIS_COMPLEX_ELPA_KERNEL)
 #else
-                call compute_hh_trafo_complex_cpu_openmp_single(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,    &
+                call compute_hh_trafo_complex_cpu_openmp_single(aIntern, stripe_width, a_dim2, stripe_count, max_threads, l_nev,&
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops,  &
                                                          kernel_time, top_msg_length,                           &
                                                          current_local_n-top_msg_length-bottom_msg_length, i,   &
@@ -4823,7 +4826,7 @@
 #else
               call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
@@ -4835,7 +4838,7 @@
                                                  i, a_off, &
                                                   dev_offset, dev_offset_1, dev_offset_2)
               else
-               call compute_hh_trafo_complex_cpu_double(a, stripe_width, a_dim2, stripe_count,                               &
+               call compute_hh_trafo_complex_cpu_double(aIntern, stripe_width, a_dim2, stripe_count,                  &
                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,   &
                                                  top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                                                  last_stripe_width, THIS_COMPLEX_ELPA_KERNEL)
@@ -4847,7 +4850,7 @@
                                                   i, a_off, &
                                                   dev_offset, dev_offset_1, dev_offset_2)
               else
-               call compute_hh_trafo_complex_cpu_single(a, stripe_width, a_dim2, stripe_count,                               &
+               call compute_hh_trafo_complex_cpu_single(aIntern, stripe_width, a_dim2, stripe_count,                  &
                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,   &
                                                  top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
                                                  last_stripe_width, THIS_COMPLEX_ELPA_KERNEL)
@@ -4860,7 +4863,7 @@
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-                call MPI_Wait(top_recv_request(i), mpi_status, mpierr)
+                call MPI_Wait(top_recv_request(i), my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -4880,13 +4883,13 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
                    dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * &
                                  size_of_double_complex_datatype
-                   successCUDA =  cuda_memcpy( a_dev + dev_offset , loc(top_border_recv_buffer(:,1,i)), &
+                   successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc(top_border_recv_buffer(:,1,i)), &
                                               stripe_width * top_msg_length *size_of_double_complex_datatype , &
                                               cudaMemcpyHostToDevice)
 #else
                    dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * &
                                 size_of_single_complex_datatype
-                   successCUDA =  cuda_memcpy( a_dev + dev_offset , loc(top_border_recv_buffer(:,1,i)), &
+                   successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc(top_border_recv_buffer(:,1,i)), &
                                               stripe_width * top_msg_length *size_of_single_complex_datatype , &
                                               cudaMemcpyHostToDevice)
 #endif
@@ -4899,7 +4902,7 @@
 !                t2_memcpy_time =MPI_Wtime()
 !                t0_memcpy_time = t0_memcpy_time + ( t2_memcpy_time-t1_memcpy_time)
                 else
-                  a(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+                  aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
                 endif
 
 #endif /* WITH_OPENMP */
@@ -4914,23 +4917,25 @@
 #else
               call timer%start("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
               do my_thread = 1, max_threads
                 if (top_msg_length>0) then
                   b_len = csw*top_msg_length
                   b_off = (my_thread-1)*b_len
-                  a(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
+                  aIntern(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
                 endif
 #ifdef DOUBLE_PRECISION_COMPLEX
-                call compute_hh_trafo_complex_cpu_openmp_double(a, stripe_width, a_dim2, stripe_count, max_threads,  l_nev,        &
+                call compute_hh_trafo_complex_cpu_openmp_double(aIntern, stripe_width, a_dim2, stripe_count, max_threads,  &
+		                                                l_nev,        &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                          0, top_msg_length, i, my_thread, thread_width,                     &
                                                          THIS_COMPLEX_ELPA_KERNEL)
 #else
-                call compute_hh_trafo_complex_cpu_openmp_single(a, stripe_width, a_dim2, stripe_count, max_threads,  l_nev,        &
+                call compute_hh_trafo_complex_cpu_openmp_single(aIntern, stripe_width, a_dim2, stripe_count, max_threads,  &
+		l_nev,        &
                                                          a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                          0, top_msg_length, i, my_thread, thread_width,                     &
                                                          THIS_COMPLEX_ELPA_KERNEL)
@@ -4943,7 +4948,7 @@
 #else
               call timer%stop("OpenMP parallel_single")
 #endif
-#endif
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
 
@@ -4952,7 +4957,7 @@
                 call compute_hh_trafo_complex_gpu_double(0, top_msg_length, i, a_off, dev_offset, dev_offset_1, dev_offset_2)
 !              call compute_hh_trafo_complex_gpu_double(0, top_msg_length, i)
               else
-                call compute_hh_trafo_complex_cpu_double(a, stripe_width, a_dim2, stripe_count,                              &
+                call compute_hh_trafo_complex_cpu_double(aIntern, stripe_width, a_dim2, stripe_count,               &
                                                   a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
                                                   0, top_msg_length, i, last_stripe_width,                            &
                                                   THIS_COMPLEX_ELPA_KERNEL)
@@ -4962,7 +4967,7 @@
                 call compute_hh_trafo_complex_gpu_single(0, top_msg_length, i, a_off, dev_offset, dev_offset_1, dev_offset_2)
 !              call compute_hh_trafo_complex_gpu_single(0, top_msg_length, i)
               else
-                call compute_hh_trafo_complex_cpu_single(a, stripe_width, a_dim2, stripe_count,                              &
+                call compute_hh_trafo_complex_cpu_single(aIntern, stripe_width, a_dim2, stripe_count,                  &
                                                   a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
                                                   0, top_msg_length, i, last_stripe_width,                            &
                                                   THIS_COMPLEX_ELPA_KERNEL)
@@ -5020,7 +5025,7 @@
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-              call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+              call MPI_Wait(top_send_request(i), my_mpi_status, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5042,7 +5047,7 @@
 
 #ifdef WITH_OPENMP
               b_len = csw*nbw*max_threads
-              top_border_send_buffer(1:b_len,i) = reshape(a(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
+              top_border_send_buffer(1:b_len,i) = reshape(aIntern(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -5072,13 +5077,13 @@
 
                 dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * &
                               size_of_double_complex_datatype
-                successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), a_dev + dev_offset,   &
+                successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), aIntern_dev + dev_offset,   &
                                            stripe_width*nbw*size_of_double_complex_datatype ,cudaMemcpyDeviceToHost)
 #else
 
                 dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * &
                              size_of_single_complex_datatype
-                successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), a_dev + dev_offset,   &
+                successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), aIntern_dev + dev_offset,   &
                                            stripe_width*nbw*size_of_single_complex_datatype ,cudaMemcpyDeviceToHost)
 #endif
                 if (.not.(successCUDA)) then
@@ -5090,7 +5095,7 @@
 !              t0_memcpy_time = t0_memcpy_time + (t2_memcpy_time-t1_memcpy_time)
 !
               else
-                top_border_send_buffer(:,1:nbw,i) = a(:,a_off+1:a_off+nbw,i)
+                top_border_send_buffer(:,1:nbw,i) = aIntern(:,a_off+1:a_off+nbw,i)
               endif
 #ifdef WITH_MPI
 
@@ -5123,7 +5128,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                call MPI_Wait(top_recv_request(i-1), mpi_status, mpierr)
+                call MPI_Wait(top_recv_request(i-1), my_mpi_status, mpierr)
 #else
                 call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5133,7 +5138,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                call MPI_Wait(top_recv_request(stripe_count), mpi_status, mpierr)
+                call MPI_Wait(top_recv_request(stripe_count), my_mpi_status, mpierr)
 #else
                 call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5164,7 +5169,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-            call MPI_Wait(top_send_request(i), mpi_status, mpierr)
+            call MPI_Wait(top_send_request(i), my_mpi_status, mpierr)
 #else
             call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5196,7 +5201,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-            call MPI_Wait(result_send_request(nbuf), mpi_status, mpierr)
+            call MPI_Wait(result_send_request(nbuf), my_mpi_status, mpierr)
 #else
             call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5221,19 +5226,19 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
 
 #ifdef WITH_OPENMP
-                  call pack_row_complex_cpu_openmp_double(a, row, j*nblk+i+a_off, &
+                  call pack_row_complex_cpu_openmp_double(aIntern, row, j*nblk+i+a_off, &
                                                    stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else
-                  call pack_row_complex_cpu_double(a, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+                  call pack_row_complex_cpu_double(aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif
 
 #else
 
 #ifdef WITH_OPENMP
-                  call pack_row_complex_cpu_openmp_single(a, row, j*nblk+i+a_off, &
+                  call pack_row_complex_cpu_openmp_single(aIntern, row, j*nblk+i+a_off, &
                                                    stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else
-                  call pack_row_complex_cpu_single(a, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+                  call pack_row_complex_cpu_single(aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif
 
 
@@ -5253,20 +5258,20 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
 
 #ifdef WITH_OPENMP
-                  call pack_row_complex_cpu_openmp_double(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, &
+                  call pack_row_complex_cpu_openmp_double(aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, &
                                                    stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else
-                  call pack_row_complex_cpu_double(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, &
+                  call pack_row_complex_cpu_double(aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, &
 		                            last_stripe_width, stripe_count)
 #endif
 
 #else
 
 #ifdef WITH_OPENMP
-                  call pack_row_complex_cpu_openmp_single(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, &
+                  call pack_row_complex_cpu_openmp_single(aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, &
                                                    stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else
-                  call pack_row_complex_cpu_single(a, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, &
+                  call pack_row_complex_cpu_single(aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, &
 		                            last_stripe_width, stripe_count)
 #endif
 
@@ -5312,7 +5317,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call MPI_Test(result_recv_request(nbuf), flag, mpi_status, mpierr)
+              call MPI_Test(result_recv_request(nbuf), flag, my_mpi_status, mpierr)
 
 #else
               call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
@@ -5326,7 +5331,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call MPI_Wait(result_recv_request(nbuf), mpi_status, mpierr)
+              call MPI_Wait(result_recv_request(nbuf), my_mpi_status, mpierr)
 #else
               call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -5397,7 +5402,7 @@
             do my_thread = 1, max_threads
               do i = 1, stripe_count
                 do j = top_msg_length+1, top_msg_length+next_local_n
-                  A(:,j,i,my_thread) = A(:,j+a_off,i,my_thread)
+                  aIntern(:,j,i,my_thread) = aIntern(:,j+a_off,i,my_thread)
                 enddo
               enddo
             enddo
@@ -5423,7 +5428,7 @@
                                  size_of_double_complex_datatype
                   ! it is not logical to set here always the parameter "cudaMemcpyDeviceToDevice" do this ONCE at startup
                   !                  tmp = cuda_d2d(1)
-                  successCUDA =  cuda_memcpy( a_dev + dev_offset , a_dev+dev_offset_1, &
+                  successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , aIntern_dev+dev_offset_1, &
                                               stripe_width*this_chunk*size_of_double_complex_datatype, cudaMemcpyDeviceToDevice)
 #else
                   dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
@@ -5432,7 +5437,7 @@
                                  size_of_single_complex_datatype
                   ! it is not logical to set here always the parameter "cudaMemcpyDeviceToDevice" do this ONCE at startup
                   !                  tmp = cuda_d2d(1)
-                  successCUDA =  cuda_memcpy( a_dev + dev_offset , a_dev+dev_offset_1, &
+                  successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , aIntern_dev+dev_offset_1, &
                                               stripe_width*this_chunk*size_of_single_complex_datatype, cudaMemcpyDeviceToDevice)
 #endif
                   if (.not.(successCUDA)) then
@@ -5443,7 +5448,7 @@
                 enddo
               else ! useGPU
                 do j = top_msg_length+1, top_msg_length+next_local_n
-                  A(:,j,i) = A(:,j+a_off,i)
+                  aIntern(:,j,i) = aIntern(:,j+a_off,i)
                 enddo
               endif
             enddo
@@ -5501,8 +5506,8 @@
         ! deallocate all working space
 
         if (.not.(useGPU)) then
-	  nullify(a)
-	  call free(a_ptr)
+	  nullify(aIntern)
+	  call free(aIntern_ptr)
 !          deallocate(a, stat=istat, errmsg=errorMessage)
 !          if (istat .ne. 0) then
 !            print *,"trans_ev_tridi_to_band_complex: error deallocating a "//errorMessage
@@ -5595,7 +5600,7 @@
         endif
 
         if (useGPU) then
-          successCUDA = cuda_free(a_dev)
+          successCUDA = cuda_free(aIntern_dev)
           if (.not.(successCUDA)) then
             print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
             stop
@@ -5708,12 +5713,12 @@
        max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
 #ifdef DOUBLE_PRECISION_COMPLEX
        call launch_my_pack_c_kernel_complex_double(row_count, n_offset, max_idx, stripe_width,a_dim2, stripe_count, &
-                                            l_nev, a_dev, row_group_dev)
+                                            l_nev, aIntern_dev, row_group_dev)
        successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev ,row_count * l_nev * size_of_double_complex_datatype, &
                                   cudaMemcpyDeviceToHost)
 #else
        call launch_my_pack_c_kernel_complex_single(row_count, n_offset, max_idx, stripe_width,a_dim2, stripe_count, &
-                                            l_nev, a_dev, row_group_dev)
+                                            l_nev, aIntern_dev, row_group_dev)
        successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev ,row_count * l_nev * size_of_single_complex_datatype, &
                                   cudaMemcpyDeviceToHost)
 #endif
@@ -5751,10 +5756,10 @@
        endif
 #ifdef DOUBLE_PRECISION_COMPLEX
        call launch_my_unpack_c_kernel_complex_double( row_count, n_offset,max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
-                                              row_group_dev,a_dev)
+                                              row_group_dev,aIntern_dev)
 #else
        call launch_my_unpack_c_kernel_complex_single( row_count, n_offset,max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
-                                              row_group_dev,a_dev)
+                                              row_group_dev,aIntern_dev)
 #endif
      end subroutine
 
@@ -5819,7 +5824,7 @@
       dev_offset_2 =( off-1 )*size_of_double_complex_datatype
 
 !      t1_compute_kernel =MPI_Wtime()
-      call launch_compute_hh_trafo_c_kernel_complex_double(a_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
+      call launch_compute_hh_trafo_c_kernel_complex_double(aIntern_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
                                                     hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
 #else
       dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * &
@@ -5828,7 +5833,7 @@
       dev_offset_2 =( off-1 )*size_of_single_complex_datatype
 
 !      t1_compute_kernel =MPI_Wtime()
-      call launch_compute_hh_trafo_c_kernel_complex_single(a_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
+      call launch_compute_hh_trafo_c_kernel_complex_single(aIntern_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
                                                     hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
 
 #endif

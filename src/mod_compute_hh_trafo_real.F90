@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -344,7 +344,7 @@ module compute_hh_trafo_real
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
              endif
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
-#endif /* WITH_REAL_AVX_BLOCK2_KERNEL */
+#endif /* WITH_REAL_AVX_BLOCK2_KERNEL || WITH_REAL_AVX2_BLOCK2_KERNEL */
 
 
 #if defined(WITH_REAL_AVX512_BLOCK2_KERNEL)

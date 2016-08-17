@@ -42,7 +42,8 @@ sub add_def {
 
 my $target = shift;
 
-foreach my $file (@ARGV) {
+foreach my $file (<>) {
+	chomp($file);
 	if (exists $files{$file}) {
 		next;
 	} else {

@@ -2,7 +2,7 @@
 
 ## Preamle ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.002**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.003**.
 Although most of the documentation is generic to any *ELPA* release, some configure options
 described in this document might be specific to the above mentioned version of *ELPA*.
 
@@ -32,6 +32,11 @@ for the documentation how to proceed.
 - make install
 
 Please look at configure --help for all available options.
+
+Please note, that it is necessary to set the **compiler options** like optimisation flags etc.
+for the Fortran and C part.
+For example sth. like this is a usual way ./configure FCFLAGS="-O2 -mavx" CFLAGS="-O2 -mavx"
+For details, please have a look at the documentation for the compilers of your choice.
 
 ### Setting of MPI compiler and libraries ###
 
