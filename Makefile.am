@@ -145,9 +145,9 @@ endif
 
 if WITH_REAL_AVX512_BLOCK2_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx512_2hv_double_precision.c
-#if WANT_SINGLE_PRECISION_REAL
-#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx512_2hv_single_precision.c
-#endif
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx512_2hv_single_precision.c
+endif
 endif
 
 

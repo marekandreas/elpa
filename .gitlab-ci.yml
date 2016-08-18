@@ -2143,6 +2143,18 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     -  make check TEST_FLAGS='1000 500 128'
 
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512_block2-kernel-only  --with-complex-avx512_block1-kernel-only --enable-single-precision
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 128'
+
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex-avx512_block2-kernel-jobs:
   tags:
     - KNL
