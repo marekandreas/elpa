@@ -42,22 +42,7 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//
-// --------------------------------------------------------------------------------------------------
-//
-// This file contains the compute intensive kernels for the Householder transformations.
-// It should be compiled with the highest possible optimization level.
-//
-// On Intel Nehalem or Intel Westmere or AMD Magny Cours use -O3 -msse3
-// On Intel Sandy Bridge use -O3 -mavx
-//
-// Copyright of the original code rests with the authors inside the ELPA
-// consortium. The copyright of any additional modifications shall rest
-// with their original authors, but shall adhere to the licensing terms
-// distributed along with the original code in the file "COPYING".
-//
-// Author: Alexander Heinecke (alexander.heinecke@mytum.de)
-// Adapted for building a shared-library by Andreas Marek, MPCDF (andreas.marek@mpcdf.mpg.de)
+// Author: Andreas Marek (andreas.marek@mpcdf.mpg.de)
 // --------------------------------------------------------------------------------------------------
 
 #include "config-f90.h"
