@@ -539,10 +539,9 @@ module compute_hh_trafo_complex
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK2_KERNEL */
 
-#if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)
+#if defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL)
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) .or. &
-                (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK2)) then
+           if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK2) ) then
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 2, -2
@@ -564,9 +563,9 @@ module compute_hh_trafo_complex
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) .or. (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK2))
+           endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK2)
 #endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL || WITH_COMPLEX_AVX2_BLOCK2_KERNEL */
+#endif /* WITH_COMPLEX_AVX512_BLOCK2_KERNEL */
 
 
 #if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
