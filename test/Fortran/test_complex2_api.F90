@@ -373,6 +373,14 @@ program test_complex2_choose_kernel_with_api_double_precision
 #endif
 #endif
 
+#ifdef  WITH_COMPLEX_AVX512_BLOCK2_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX512_BLOCK2)
+#else
+#ifdef  WITH_COMPLEX_AVX512_BLOCK1_KERNEL
+                                 COMPLEX_ELPA_KERNEL_AVX512_BLOCK1)
+#endif
+#endif
+
 #ifdef  WITH_GPU_VERSION
                                  COMPLEX_ELPA_KERNEL_GPU)
 #endif
