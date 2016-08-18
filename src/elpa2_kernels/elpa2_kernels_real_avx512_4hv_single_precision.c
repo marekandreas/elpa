@@ -495,7 +495,7 @@ __forceinline void hh_trafo_kernel_64_AVX512_4hv_single(float* q, float* hh, int
                 q3 = _mm512_NFMA_ps(x3, h1, q3);
                 q3 = _mm512_NFMA_ps(y3, h2, q3);
                 q3 = _mm512_NFMA_ps(z3, h3, q3);
-                q3 = _mm512_NFMA_pd(w3, h4, q3);
+                q3 = _mm512_NFMA_ps(w3, h4, q3);
 		_mm512_store_ps(&q[(i*ldq)+32],q3);
 
 		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
@@ -932,7 +932,7 @@ __forceinline void hh_trafo_kernel_48_AVX512_4hv_single(float* q, float* hh, int
                 q3 = _mm512_NFMA_ps(x3, h1, q3);
                 q3 = _mm512_NFMA_ps(y3, h2, q3);
                 q3 = _mm512_NFMA_ps(z3, h3, q3);
-                q3 = _mm512_NFMA_pd(w3, h4, q3);
+                q3 = _mm512_NFMA_ps(w3, h4, q3);
 		_mm512_store_ps(&q[(i*ldq)+32],q3);
 
 //		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
@@ -1369,7 +1369,7 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
  //               q3 = _mm512_NFMA_ps(x3, h1, q3);
 //                q3 = _mm512_NFMA_ps(y3, h2, q3);
  //               q3 = _mm512_NFMA_ps(z3, h3, q3);
- //               q3 = _mm512_NFMA_pd(w3, h4, q3);
+ //               q3 = _mm512_NFMA_ps(w3, h4, q3);
 //		_mm512_store_ps(&q[(i*ldq)+32],q3);
 
 //		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
@@ -1806,7 +1806,7 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int
  //               q3 = _mm512_NFMA_ps(x3, h1, q3);
 //                q3 = _mm512_NFMA_ps(y3, h2, q3);
  //               q3 = _mm512_NFMA_ps(z3, h3, q3);
- //               q3 = _mm512_NFMA_pd(w3, h4, q3);
+ //               q3 = _mm512_NFMA_ps(w3, h4, q3);
 //		_mm512_store_ps(&q[(i*ldq)+32],q3);
 
 //		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
