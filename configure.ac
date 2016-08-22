@@ -258,19 +258,32 @@ fi
 dnl check whether one can compile with avx - gcc intrinsics
 
 dnl first pass: try with specified CFLAGS and CXXFLAGS
-AC_MSG_CHECKING([whether we can compile AVX intrinsics in C])
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([
- #include <x86intrin.h>
- int main(int argc, char **argv){
- double* q;
- __m256d a1_1 = _mm256_load_pd(q);
- return 0;
- }
- ])],
- [can_compile_avx=yes],
- [can_compile_avx=no]
-)
-AC_MSG_RESULT([${can_compile_avx}])
+
+AC_MSG_CHECKING(whether --enable-avx is specified)
+AC_ARG_ENABLE([avx],
+		AS_HELP_STRING([--enable-avx],
+			       [check whether AVX kernels can be build, default yes]),
+	      [check_avx=no],
+	      [check_avx=yes])
+AC_MSG_RESULT([$check_avx])
+
+if test "${check_avx}" = "yes"; then
+  AC_MSG_CHECKING([whether we can compile AVX intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <x86intrin.h>
+   int main(int argc, char **argv){
+   double* q;
+   __m256d a1_1 = _mm256_load_pd(q);
+   return 0;
+   }
+   ])],
+   [can_compile_avx=yes],
+   [can_compile_avx=no]
+  )
+  AC_MSG_RESULT([${can_compile_avx}])
+else
+  can_compile_avx=no
+fi
 
 dnl if test "${can_compile_avx}" = "yes" ; then
 dnl   AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
@@ -293,20 +306,32 @@ dnl     AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
 dnl   fi
 dnl fi
 
-AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C])
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([
- #include <x86intrin.h>
- int main(int argc, char **argv){
- double* q;
- __m256d q1 = _mm256_load_pd(q);
- __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
- return 0;
- }
- ])],
- [can_compile_avx2=yes],
- [can_compile_avx2=no]
-)
-AC_MSG_RESULT([${can_compile_avx2}])
+AC_MSG_CHECKING(whether --enable-avx2 is specified)
+AC_ARG_ENABLE([avx2],
+		AS_HELP_STRING([--enable-avx2],
+			       [check whether AVX2 kernels can be build, default yes]),
+	      [check_avx2=no],
+	      [check_avx2=yes])
+AC_MSG_RESULT([$check_avx2])
+
+if test "${check_avx2}" = "yes"; then
+  AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <x86intrin.h>
+   int main(int argc, char **argv){
+   double* q;
+   __m256d q1 = _mm256_load_pd(q);
+   __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+   return 0;
+   }
+   ])],
+   [can_compile_avx2=yes],
+   [can_compile_avx2=no]
+  )
+  AC_MSG_RESULT([${can_compile_avx2}])
+else
+  can_compile_avx2=no
+fi
 
 dnl if test "${can_compile_avx2}" = "yes" ; then
 dnl   AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
