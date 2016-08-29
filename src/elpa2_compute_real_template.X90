@@ -2949,7 +2949,7 @@
 
                   ! update subdiagonal block for old and new Householder transformation
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
-#ifdef DOUBLE_PRECSION_REAL
+#ifdef DOUBLE_PRECISION_REAL
                   call DGEMV('T',nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, 0.0_rk8, h(2), 1)
 #else
                   call SGEMV('T',nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, 0.0_rk4, h(2), 1)
