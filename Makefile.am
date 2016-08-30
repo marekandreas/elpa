@@ -50,6 +50,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa1_compute_real_template.X90 \
         src/elpa2_compute_real_template.X90 \
         src/elpa2_compute_complex_template.X90 \
+	src/elpa2_kernels/elpa2_kernels_real_template.X90 \
         src/redist_band.X90
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
@@ -769,6 +770,7 @@ EXTRA_DIST = \
   src/elpa1_compute_complex_template.X90 \
   src/elpa2_compute_real_template.X90 \
   src/elpa2_compute_complex_template.X90 \
+  src/elpa2_kernels/elpa2_kernels_real_template.X90 \
   src/redist_band.X90 \
   src/elpa_qr/elpa_qrkernels.X90 \
   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
