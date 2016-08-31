@@ -349,9 +349,6 @@ program test_complex2_choose_kernel_with_api_single_precision
                                  COMPLEX_ELPA_KERNEL_SSE)
 #endif
 
-
-#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-
 #ifdef  WITH_COMPLEX_SSE_BLOCK2_KERNEL
                                  COMPLEX_ELPA_KERNEL_SSE_BLOCK2)
 #else
@@ -376,35 +373,13 @@ program test_complex2_choose_kernel_with_api_single_precision
 #endif
 #endif
 
-
-#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
-
-#ifdef  WITH_COMPLEX_SSE_BLOCK1_KERNEL
-                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK1)
+#ifdef  WITH_COMPLEX_AVX512_BLOCK2_KERNEL
+                                 )
+#else
+#ifdef  WITH_COMPLEX_AVX512_BLOCK1_KERNEL
+                                 )
 #endif
-
-#ifdef  WITH_COMPLEX_SSE_BLOCK2_KERNEL
-                                 COMPLEX_ELPA_KERNEL_SSE_BLOCK2)
 #endif
-
-#ifdef  WITH_COMPLEX_AVX_BLOCK1_KERNEL
-                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK1)
-#endif
-
-#ifdef  WITH_COMPLEX_AVX_BLOCK2_KERNEL
-                                 COMPLEX_ELPA_KERNEL_AVX_BLOCK2)
-#endif
-
-#ifdef  WITH_COMPLEX_AVX2_BLOCK1_KERNEL
-                                 COMPLEX_ELPA_KERNEL_AVX2_BLOCK1)
-#endif
-
-#ifdef  WITH_COMPLEX_AVX2_BLOCK2_KERNEL
-                                 COMPLEX_ELPA_KERNEL_AVX2_BLOCK2)
-#endif
-
-
-#endif  /*   WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
 
 #ifdef  WITH_GPU_VERSION
                                  COMPLEX_ELPA_KERNEL_GPU)
