@@ -58,6 +58,7 @@
 ! --------------------------------------------------------------------------------------------------
 #endif
 
+#if COMPLEXCASE==1
   ! the intel compiler creates a temp copy of array q
   ! this should be avoided without using assumed size arrays
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -73,14 +74,14 @@
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
-    complex(kind=COMPLEX_DATATYPE), intent(inout) :: q(ldq,*)
-    complex(kind=COMPLEX_DATATYPE), intent(in)    :: hh(*)
+    complex(kind=DATATYPE), intent(inout) :: q(ldq,*)
+    complex(kind=DATATYPE), intent(in)    :: hh(*)
 #else
-    complex(kind=COMPLEX_DATATYPE), intent(inout) :: q(1:ldq,1:nb)
-    complex(kind=COMPLEX_DATATYPE), intent(in)    :: hh(1:nb)
+    complex(kind=DATATYPE), intent(inout) :: q(1:ldq,1:nb)
+    complex(kind=DATATYPE), intent(in)    :: hh(1:nb)
 #endif
     integer(kind=ik)                :: i
-    complex(kind=COMPLEX_DATATYPE)                :: h1, tau1, x(nq)
+    complex(kind=DATATYPE)                :: h1, tau1, x(nq)
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
@@ -88,13 +89,14 @@
     call timer%start("kernel complex generic simple: single_hh_trafo_complex_generic_simple_double")
 #endif
 
-#else
+#else /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("kernel complex generic simple: single_hh_trafo_complex_generic_simple_single")
 #endif
 
-#endif
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
     ! Just one Householder transformation
 
     x(1:nq) = q(1:nq,1)
@@ -117,26 +119,43 @@
     call timer%stop("kernel complex generic simple: single_hh_trafo_complex_generic_simple_double")
 #endif
 
-#else
+#else /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%stop("kernel complex generic simple: single_hh_trafo_complex_generic_simple_single")
 #endif
 
-#endif
+#endif /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
   end subroutine single_hh_trafo_complex_generic_simple_double
 #else
   end subroutine single_hh_trafo_complex_generic_simple_single
 #endif
+
+#endif /* COMPLEXCASE == 1 */
   ! --------------------------------------------------------------------------------------------------
+
+#if REALCASE==1
+
+#ifdef DOUBLE_PRECISION_REAL
+  subroutine double_hh_trafo_generic_simple_double(q, hh, nb, nq, ldq, ldh)
+#else
+  subroutine double_hh_trafo_generic_simple_single(q, hh, nb, nq, ldq, ldh)
+#endif
+
+#endif /* REALCASE == 1 */
+
+#if COMPLEXCASE==1
 
 #ifdef DOUBLE_PRECISION_COMPLEX
   subroutine double_hh_trafo_complex_generic_simple_double(q, hh, nb, nq, ldq, ldh)
 #else
   subroutine double_hh_trafo_complex_generic_simple_single(q, hh, nb, nq, ldq, ldh)
 #endif
+
+#endif /* COMPLEXCASE==1 */
+
     use precision
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
@@ -144,15 +163,50 @@
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
+#if REALCASE==1
+
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
-    complex(kind=COMPLEX_DATATYPE), intent(inout) :: q(ldq,*)
-    complex(kind=COMPLEX_DATATYPE), intent(in)    :: hh(ldh,*)
+    real(kind=DATATYPE), intent(inout) :: q(ldq,*)
+    real(kind=DATATYPE), intent(in)    :: hh(ldh,*)
 #else
-    complex(kind=COMPLEX_DATATYPE), intent(inout) :: q(1:ldq,1:nb+1)
-    complex(kind=COMPLEX_DATATYPE), intent(in)    :: hh(1:ldh,1:2)
+    real(kind=DATATYPE), intent(inout) :: q(1:ldq,1:nb+1)
+    real(kind=DATATYPE), intent(in)    :: hh(1:ldh,1:6)
 #endif
-    complex(kind=COMPLEX_DATATYPE)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
+    real(kind=DATATYPE)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
+#endif /* REALCASE==1 */
+
+#if COMPLEXCASE==1
+
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    complex(kind=DATATYPE), intent(inout) :: q(ldq,*)
+    complex(kind=DATATYPE), intent(in)    :: hh(ldh,*)
+#else
+    complex(kind=DATATYPE), intent(inout) :: q(1:ldq,1:nb+1)
+    complex(kind=DATATYPE), intent(in)    :: hh(1:ldh,1:2)
+#endif
+    complex(kind=DATATYPE)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
+#endif /* COMPLEXCASE==1 */
     integer(kind=ik)                :: i
+
+#if REALCASE==1
+
+#ifdef DOUBLE_PRECISION_REAL
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("kernel real generic simple: double_hh_trafo_real_generic_simple_double")
+#endif
+
+#else
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%start("kernel real generic simple: double_hh_trafo_real_generic_simple_single")
+#endif
+
+#endif 
+
+#endif /* REALCASE==1 */
+
+#if COMPLEXCASE==1
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
@@ -168,28 +222,55 @@
 
 #endif
 
-    ! Calculate dot product of the two Householder vectors
+#endif /* COMPLEXCASE==1 */
 
-    s = conjg(hh(2,2))*1
+    ! Calculate dot product of the two Householder vectors
+#if REALCASE==1
+    s = hh(2,2)*1.0
+    do i=3,nb
+       s = s+hh(i,2)*hh(i-1,1)
+    enddo
+#endif
+
+#if COMPLEXCASE==1
+    s = conjg(hh(2,2))*1.0
     do i=3,nb
        s = s+(conjg(hh(i,2))*hh(i-1,1))
     enddo
+#endif
 
     ! Do the Householder transformations
 
     x(1:nq) = q(1:nq,2)
+#if REALCASE==1
+    y(1:nq) = q(1:nq,1) + q(1:nq,2)*hh(2,2)
+#endif
 
+#if COMPLEXCASE==1
     y(1:nq) = q(1:nq,1) + q(1:nq,2)*conjg(hh(2,2))
+#endif
 
     do i=3,nb
+#if REALCASE==1
+       h1 = hh(i-1,1)
+       h2 = hh(i,2)
+#endif
+
+#if COMPLEXCASE==1
        h1 = conjg(hh(i-1,1))
        h2 = conjg(hh(i,2))
+#endif
        x(1:nq) = x(1:nq) + q(1:nq,i)*h1
        y(1:nq) = y(1:nq) + q(1:nq,i)*h2
     enddo
 
-    x(1:nq) = x(1:nq) + q(1:nq,nb+1)*conjg(hh(nb,1))
+#if REALCASE==1
+    x(1:nq) = x(1:nq) + q(1:nq,nb+1)*hh(nb,1)
+#endif
 
+#if COMPLEXCASE==1
+    x(1:nq) = x(1:nq) + q(1:nq,nb+1)*conjg(hh(nb,1))
+#endif
     tau1 = hh(1,1)
     tau2 = hh(1,2)
 
@@ -210,22 +291,58 @@
 
     q(1:nq,nb+1) = q(1:nq,nb+1) + x(1:nq)*hh(nb,1)
 
+#if REALCASE==1
+
+#ifdef DOUBLE_PRECISION_REAL
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("kernel real generic simple: double_hh_trafo_complex_generic_simple_double")
+#endif
+
+#else /* DOUBLE_PRECISION_REAL */
+
+#ifdef HAVE_DETAILED_TIMINGS
+    call timer%stop("kernel real generic simple: double_hh_trafo_complex_generic_simple_single")
+#endif
+
+#endif /* DOUBLE_PRECISION_REAL */
+
+#endif /* REALCASE==1 */
+
+#if COMPLEXCASE==1
+
 #ifdef DOUBLE_PRECISION_COMPLEX
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%stop("kernel complex generic simple: double_hh_trafo_complex_generic_simple_double")
 #endif
 
-#else
+#else /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%stop("kernel complex generic simple: double_hh_trafo_complex_generic_simple_single")
 #endif
 
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
+#endif /* COMPLEXCASE==1 */
+
+#if REALCASE==1
+
+#ifdef DOUBLE_PRECISION_REAL
+  end subroutine double_hh_trafo_generic_simple_double
+#else
+  end subroutine double_hh_trafo_generic_simple_single
 #endif
+
+#endif /* REALCASE==1 */
+
+#if COMPLEXCASE==1
 
 #ifdef DOUBLE_PRECISION_COMPLEX
   end subroutine double_hh_trafo_complex_generic_simple_double
 #else
   end subroutine double_hh_trafo_complex_generic_simple_single
 #endif
+
+#endif /* COMPLEXCASE==1 */

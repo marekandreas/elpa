@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -69,19 +69,22 @@ module real_generic_simple_kernel
 
   contains
 
+#define REALCASE 1
 #define DOUBLE_PRECISION_REAL 1
-#define REAL_DATATYPE rk8
-#include "elpa2_kernels_real_simple_template.X90"
+#define DATATYPE rk8
+#include "elpa2_kernels_simple_template.X90"
 #undef DOUBLE_PRECISION_REAL
-#undef REAL_DATATYPE
-
+#undef DATATYPE
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
 #undef DOUBLE_PRECISION_REAL
-#define REAL_DATATYPE rk4
-#include "elpa2_kernels_real_simple_template.X90"
+#define DATATYPE rk4
+#include "elpa2_kernels_simple_template.X90"
 #undef DOUBLE_PRECISION_REAL
-#undef REAL_DATATYPE
+#undef DATATYPE
+#undef REALCASE
 #endif
 
 end module real_generic_simple_kernel

@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -68,18 +68,22 @@ module complex_generic_simple_kernel
 
   contains
 
+#define COMPLEXCASE 1
 #define DOUBLE_PRECISION_COMPLEX 1
-#define COMPLEX_DATATYPE ck8
-#include "elpa2_kernels_complex_simple_template.X90"
+#define DATATYPE ck8
+#include "elpa2_kernels_simple_template.X90"
 #undef DOUBLE_PRECISION_COMPLEX
-#undef COMPLEX_DATATYPE
+#undef DATATYPE
+#undef COMPLEXCASE
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
+#define COMPLEXCASE 1
 #undef DOUBLE_PRECISION_COMPLEX
-#define COMPLEX_DATATYPE ck4
-#include "elpa2_kernels_complex_simple_template.X90"
+#define DATATYPE ck4
+#include "elpa2_kernels_simple_template.X90"
 #undef DOUBLE_PRECISION_COMPLEX
-#undef COMPLEX_DATATYPE
+#undef DATATYPE
+#undef COMPLEXCASE
 #endif
 
 
