@@ -697,7 +697,7 @@ dnl real kernels
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block2-kernel-only],[real-sse-block2-kernel],[install_real_sse_block2])
 
   dnl real-sse-block4 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block4-kernel]-only,[real-sse-block4-kernel],[install_real_sse_block4])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block4-kernel-only],[real-sse-block4-kernel],[install_real_sse_block4])
 
   dnl real-sse-block6 kernel
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block6-kernel-only],[real-sse-block6-kernel],[install_real_sse_block6])
@@ -706,7 +706,7 @@ dnl real kernels
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block2-kernel-only],[real-avx-block2-kernel],[install_real_avx_block2])
 
   dnl real-avx-block4 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block4-kernel]-only,[real-avx-block4-kernel],[install_real_avx_block4])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block4-kernel-only],[real-avx-block4-kernel],[install_real_avx_block4])
 
   dnl real-avx-block6 kernel
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block6-kernel-only],[real-avx-block6-kernel],[install_real_avx_block6])
@@ -715,7 +715,7 @@ dnl real kernels
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block2-kernel-only],[real-avx2-block2-kernel],[install_real_avx2_block2])
 
   dnl real-avx2-block4 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block4-kernel]-only,[real-avx2-block4-kernel],[install_real_avx2_block4])
+  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block4-kernel-only],[real-avx2-block4-kernel],[install_real_avx2_block4])
 
   dnl real-avx2-block6 kernel
   DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block6-kernel-only],[real-avx2-block6-kernel],[install_real_avx2_block6])
