@@ -153,33 +153,27 @@ static __forceinline void hh_trafo_complex_kernel_24_AVX512_1hv_double(double co
 
 		tmp1 = _mm512_mul_pd(h1_imag, q1);
 
-	        // check this 0x5
-		x1 = _mm512_add_pd(x1, _mm512_FMSUBADD_pd(h1_real, q1, _mm512_shuffle_pd(tmp1, tmp1, 0x5)));
+		x1 = _mm512_add_pd(x1, _mm512_FMSUBADD_pd(h1_real, q1, _mm512_shuffle_pd(tmp1, tmp1, 0x55)));
 
 		tmp2 = _mm512_mul_pd(h1_imag, q2);
 
-		// check this 0x5
-		x2 = _mm512_add_pd(x2, _mm512_FMSUBADD_pd(h1_real, q2, _mm512_shuffle_pd(tmp2, tmp2, 0x5)));
+		x2 = _mm512_add_pd(x2, _mm512_FMSUBADD_pd(h1_real, q2, _mm512_shuffle_pd(tmp2, tmp2, 0x55)));
 
 		tmp3 = _mm512_mul_pd(h1_imag, q3);
 
-		// check this 0x5
-		x3 = _mm512_add_pd(x3, _mm512_FMSUBADD_pd(h1_real, q3, _mm512_shuffle_pd(tmp3, tmp3, 0x5)));
+		x3 = _mm512_add_pd(x3, _mm512_FMSUBADD_pd(h1_real, q3, _mm512_shuffle_pd(tmp3, tmp3, 0x55)));
 
 		tmp4 = _mm512_mul_pd(h1_imag, q4);
 
-		// check this 0x5
-		x4 = _mm512_add_pd(x4, _mm512_FMSUBADD_pd(h1_real, q4, _mm512_shuffle_pd(tmp4, tmp4, 0x5)));
+		x4 = _mm512_add_pd(x4, _mm512_FMSUBADD_pd(h1_real, q4, _mm512_shuffle_pd(tmp4, tmp4, 0x55)));
 
 		tmp5 = _mm512_mul_pd(h1_imag, q5);
 
-		// check this 0x5
-		x5 = _mm512_add_pd(x5, _mm512_FMSUBADD_pd(h1_real, q5, _mm512_shuffle_pd(tmp5, tmp5, 0x5)));
+		x5 = _mm512_add_pd(x5, _mm512_FMSUBADD_pd(h1_real, q5, _mm512_shuffle_pd(tmp5, tmp5, 0x55)));
 
 		tmp6 = _mm512_mul_pd(h1_imag, q6);
 
-	 	// check this 0x5
-		x6 = _mm512_add_pd(x6, _mm512_FMSUBADD_pd(h1_real, q6, _mm512_shuffle_pd(tmp6, tmp6, 0x5)));
+		x6 = _mm512_add_pd(x6, _mm512_FMSUBADD_pd(h1_real, q6, _mm512_shuffle_pd(tmp6, tmp6, 0x55)));
 	}
 
 	h1_real = _mm512_set1_pd(hh_dbl[0]);
@@ -193,40 +187,34 @@ static __forceinline void hh_trafo_complex_kernel_24_AVX512_1hv_double(double co
 
 	tmp1 = _mm512_mul_pd(h1_imag, x1);
 
-	// check this 0x5
-	x1 = _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x5));
+	x1 = _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x55));
 
 	tmp2 = _mm512_mul_pd(h1_imag, x2);
 
-	// check this 0x5
-	x2 = _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x5));
+	x2 = _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x55));
 
 	tmp3 = _mm512_mul_pd(h1_imag, x3);
 
-	// chrck this 0x5
-	x3 = _mm512_FMADDSUB_pd(h1_real, x3, _mm512_shuffle_pd(tmp3, tmp3, 0x5));
+	x3 = _mm512_FMADDSUB_pd(h1_real, x3, _mm512_shuffle_pd(tmp3, tmp3, 0x55));
 
 	tmp4 = _mm512_mul_pd(h1_imag, x4);
 
-	// check this 0x5
-	x4 = _mm512_FMADDSUB_pd(h1_real, x4, _mm512_shuffle_pd(tmp4, tmp4, 0x5));
+	x4 = _mm512_FMADDSUB_pd(h1_real, x4, _mm512_shuffle_pd(tmp4, tmp4, 0x55));
 
 	tmp5 = _mm512_mul_pd(h1_imag, x5);
 
-	// check this 0x5
-	x5 = _mm512_FMADDSUB_pd(h1_real, x5, _mm512_shuffle_pd(tmp5, tmp5, 0x5));
+	x5 = _mm512_FMADDSUB_pd(h1_real, x5, _mm512_shuffle_pd(tmp5, tmp5, 0x55));
 
 	tmp6 = _mm512_mul_pd(h1_imag, x6);
 
-	// check this 0x5
-	x6 = _mm512_FMADDSUB_pd(h1_real, x6, _mm512_shuffle_pd(tmp6, tmp6, 0x5));
+	x6 = _mm512_FMADDSUB_pd(h1_real, x6, _mm512_shuffle_pd(tmp6, tmp6, 0x55));
 
 	q1 = _mm512_load_pd(&q_dbl[0]);
 	q2 = _mm512_load_pd(&q_dbl[8]);
 	q3 = _mm512_load_pd(&q_dbl[16]);
 	q4 = _mm512_load_pd(&q_dbl[24]);
-	q5 = _mm512_load_pd(&q_dbl[34]);
-	q6 = _mm512_load_pd(&q_dbl[20]);
+	q5 = _mm512_load_pd(&q_dbl[32]);
+	q6 = _mm512_load_pd(&q_dbl[40]);
 
 	q1 = _mm512_add_pd(q1, x1);
 	q2 = _mm512_add_pd(q2, x2);
@@ -256,32 +244,27 @@ static __forceinline void hh_trafo_complex_kernel_24_AVX512_1hv_double(double co
 
 		tmp1 = _mm512_mul_pd(h1_imag, x1);
 
-		// check this 0x5
-		q1 = _mm512_add_pd(q1, _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x5)));
+		q1 = _mm512_add_pd(q1, _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x55)));
 
 		tmp2 = _mm512_mul_pd(h1_imag, x2);
 
-		// check this 0x5
-		q2 = _mm512_add_pd(q2, _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x5)));
+		q2 = _mm512_add_pd(q2, _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x55)));
 
 		tmp3 = _mm512_mul_pd(h1_imag, x3);
 
-		// check this 0x5
-		q3 = _mm512_add_pd(q3, _mm512_FMADDSUB_pd(h1_real, x3, _mm512_shuffle_pd(tmp3, tmp3, 0x5)));
+		q3 = _mm512_add_pd(q3, _mm512_FMADDSUB_pd(h1_real, x3, _mm512_shuffle_pd(tmp3, tmp3, 0x55)));
 
 		tmp4 = _mm512_mul_pd(h1_imag, x4);
 
-		// check this 0x5
-		q4 = _mm512_add_pd(q4, _mm512_FMADDSUB_pd(h1_real, x4, _mm512_shuffle_pd(tmp4, tmp4, 0x5)));
+		q4 = _mm512_add_pd(q4, _mm512_FMADDSUB_pd(h1_real, x4, _mm512_shuffle_pd(tmp4, tmp4, 0x55)));
 
 		tmp5 = _mm512_mul_pd(h1_imag, x5);
 
-		// check this 0x5
-		q5 = _mm512_add_pd(q5, _mm512_FMADDSUB_pd(h1_real, x5, _mm512_shuffle_pd(tmp5, tmp5, 0x5)));
+		q5 = _mm512_add_pd(q5, _mm512_FMADDSUB_pd(h1_real, x5, _mm512_shuffle_pd(tmp5, tmp5, 0x55)));
 
 		tmp6 = _mm512_mul_pd(h1_imag, x6);
 
-		q6 = _mm512_add_pd(q6, _mm512_FMADDSUB_pd(h1_real, x6, _mm512_shuffle_pd(tmp6, tmp6, 0x5)));
+		q6 = _mm512_add_pd(q6, _mm512_FMADDSUB_pd(h1_real, x6, _mm512_shuffle_pd(tmp6, tmp6, 0x55)));
 
 		_mm512_store_pd(&q_dbl[(2*i*ldq)+0], q1);
 		_mm512_store_pd(&q_dbl[(2*i*ldq)+8], q2);
@@ -322,23 +305,19 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_double(double co
 
 		tmp1 = _mm512_mul_pd(h1_imag, q1);
 
-		// check this 0x5
-		x1 = _mm512_add_pd(x1, _mm512_FMSUBADD_pd(h1_real, q1, _mm512_shuffle_pd(tmp1, tmp1, 0x5)));
+		x1 = _mm512_add_pd(x1, _mm512_FMSUBADD_pd(h1_real, q1, _mm512_shuffle_pd(tmp1, tmp1, 0x55)));
 
 		tmp2 = _mm512_mul_pd(h1_imag, q2);
 
-		// check this 0x5
-		x2 = _mm512_add_pd(x2, _mm512_FMSUBADD_pd(h1_real, q2, _mm512_shuffle_pd(tmp2, tmp2, 0x5)));
+		x2 = _mm512_add_pd(x2, _mm512_FMSUBADD_pd(h1_real, q2, _mm512_shuffle_pd(tmp2, tmp2, 0x55)));
 
 		tmp3 = _mm512_mul_pd(h1_imag, q3);
 
-		// check this 0x5
-		x3 = _mm512_add_pd(x3, _mm512_FMSUBADD_pd(h1_real, q3, _mm512_shuffle_pd(tmp3, tmp3, 0x5)));
+		x3 = _mm512_add_pd(x3, _mm512_FMSUBADD_pd(h1_real, q3, _mm512_shuffle_pd(tmp3, tmp3, 0x55)));
 
 		tmp4 = _mm512_mul_pd(h1_imag, q4);
 
-		// check this 0x5
-		x4 = _mm512_add_pd(x4, _mm512_FMSUBADD_pd(h1_real, q4, _mm512_shuffle_pd(tmp4, tmp4, 0x5)));
+		x4 = _mm512_add_pd(x4, _mm512_FMSUBADD_pd(h1_real, q4, _mm512_shuffle_pd(tmp4, tmp4, 0x55)));
 	}
 
 	h1_real = _mm512_set1_pd(hh_dbl[0]);
@@ -351,23 +330,19 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_double(double co
 
 	tmp1 = _mm512_mul_pd(h1_imag, x1);
 
-	// check this 0x5
-	x1 = _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x5));
+	x1 = _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x55));
 
 	tmp2 = _mm512_mul_pd(h1_imag, x2);
 
-	// check this 0x5
-	x2 = _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x5));
+	x2 = _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x55));
 
 	tmp3 = _mm512_mul_pd(h1_imag, x3);
 
-	// check this 0x5
-	x3 = _mm512_FMADDSUB_pd(h1_real, x3, _mm512_shuffle_pd(tmp3, tmp3, 0x5));
+	x3 = _mm512_FMADDSUB_pd(h1_real, x3, _mm512_shuffle_pd(tmp3, tmp3, 0x55));
 
 	tmp4 = _mm512_mul_pd(h1_imag, x4);
 
-	// check this 0x5
-	x4 = _mm512_FMADDSUB_pd(h1_real, x4, _mm512_shuffle_pd(tmp4, tmp4, 0x5));
+	x4 = _mm512_FMADDSUB_pd(h1_real, x4, _mm512_shuffle_pd(tmp4, tmp4, 0x55));
 
 	q1 = _mm512_load_pd(&q_dbl[0]);
 	q2 = _mm512_load_pd(&q_dbl[8]);
@@ -396,23 +371,19 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_double(double co
 
 		tmp1 = _mm512_mul_pd(h1_imag, x1);
 
-		// check this 0x5
-		q1 = _mm512_add_pd(q1, _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x5)));
+		q1 = _mm512_add_pd(q1, _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x55)));
 
 		tmp2 = _mm512_mul_pd(h1_imag, x2);
 
-		// checkt his 0x5
-		q2 = _mm512_add_pd(q2, _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x5)));
+		q2 = _mm512_add_pd(q2, _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x55)));
 
 		tmp3 = _mm512_mul_pd(h1_imag, x3);
 
-		// check this 0x5
-		q3 = _mm512_add_pd(q3, _mm512_FMADDSUB_pd(h1_real, x3, _mm512_shuffle_pd(tmp3, tmp3, 0x5)));
+		q3 = _mm512_add_pd(q3, _mm512_FMADDSUB_pd(h1_real, x3, _mm512_shuffle_pd(tmp3, tmp3, 0x55)));
 
 		tmp4 = _mm512_mul_pd(h1_imag, x4);
 
-		// check this 0x5
-		q4 = _mm512_add_pd(q4, _mm512_FMADDSUB_pd(h1_real, x4, _mm512_shuffle_pd(tmp4, tmp4, 0x5)));
+		q4 = _mm512_add_pd(q4, _mm512_FMADDSUB_pd(h1_real, x4, _mm512_shuffle_pd(tmp4, tmp4, 0x55)));
 
 		_mm512_store_pd(&q_dbl[(2*i*ldq)+0], q1);
 		_mm512_store_pd(&q_dbl[(2*i*ldq)+8], q2);
@@ -446,11 +417,9 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_double(double com
 		q2 = _mm512_load_pd(&q_dbl[(2*i*ldq)+8]);
 
 		tmp1 = _mm512_mul_pd(h1_imag, q1);
-		//check this 0x5
-		x1 = _mm512_add_pd(x1, _mm512_FMSUBADD_pd(h1_real, q1, _mm512_shuffle_pd(tmp1, tmp1, 0x5)));
+		x1 = _mm512_add_pd(x1, _mm512_FMSUBADD_pd(h1_real, q1, _mm512_shuffle_pd(tmp1, tmp1, 0x55)));
 		tmp2 = _mm512_mul_pd(h1_imag, q2);
-		//check this 0x5
-		x2 = _mm512_add_pd(x2, _mm512_FMSUBADD_pd(h1_real, q2, _mm512_shuffle_pd(tmp2, tmp2, 0x5)));
+		x2 = _mm512_add_pd(x2, _mm512_FMSUBADD_pd(h1_real, q2, _mm512_shuffle_pd(tmp2, tmp2, 0x55)));
 	}
 
 	h1_real = _mm512_set1_pd(hh_dbl[0]);
@@ -462,13 +431,11 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_double(double com
 	h1_imag = (__m512d) _mm512_xor_epi64((__m512i) h1_imag, (__m512i) sign);
 
 	tmp1 = _mm512_mul_pd(h1_imag, x1);
-	//check this 0x5
-	x1 = _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x5));
+	x1 = _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x55));
 
 	tmp2 = _mm512_mul_pd(h1_imag, x2);
 
-	//check this 0x5
-	x2 = _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x5));
+	x2 = _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x55));
 
 	q1 = _mm512_load_pd(&q_dbl[0]);
 	q2 = _mm512_load_pd(&q_dbl[8]);
@@ -488,13 +455,11 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_double(double com
 		q2 = _mm512_load_pd(&q_dbl[(2*i*ldq)+8]);
 
 		tmp1 = _mm512_mul_pd(h1_imag, x1);
-		//check this 0x5
-		q1 = _mm512_add_pd(q1, _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x5)));
+		q1 = _mm512_add_pd(q1, _mm512_FMADDSUB_pd(h1_real, x1, _mm512_shuffle_pd(tmp1, tmp1, 0x55)));
 
 		tmp2 = _mm512_mul_pd(h1_imag, x2);
 
-		//check this 0x5
-		q2 = _mm512_add_pd(q2, _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x5)));
+		q2 = _mm512_add_pd(q2, _mm512_FMADDSUB_pd(h1_real, x2, _mm512_shuffle_pd(tmp2, tmp2, 0x55)));
 
 		_mm512_store_pd(&q_dbl[(2*i*ldq)+0], q1);
 		_mm512_store_pd(&q_dbl[(2*i*ldq)+8], q2);
