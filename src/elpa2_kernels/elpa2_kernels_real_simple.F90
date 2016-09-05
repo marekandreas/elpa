@@ -68,152 +68,24 @@ module real_generic_simple_kernel
 #endif
 
   contains
-  ! the intel compiler creates an temp array copy of array q
-  ! This should be prevented if possible without using assumed size arrays
-  subroutine double_hh_trafo_generic_simple_double(q, hh, nb, nq, ldq, ldh)
-    use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
-    implicit none
 
-    integer(kind=ik), intent(in) :: nb, nq, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-    real(kind=rk8), intent(inout) :: q(ldq,*)
-    real(kind=rk8), intent(in)    :: hh(ldh,*)
-#else
-    real(kind=rk8), intent(inout) :: q(ldq,1:nb+1)
-    real(kind=rk8), intent(in)    :: hh(ldh,2)
-#endif
-
-    real(kind=rk8)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
-    integer(kind=ik)             :: i
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic simple: double_hh_trafo_generic_simple_double")
-#endif
-    ! Calculate dot product of the two Householder vectors
-
-    s = hh(2,2)*1
-    do i=3,nb
-       s = s+hh(i,2)*hh(i-1,1)
-    enddo
-
-    ! Do the Householder transformations
-
-    x(1:nq) = q(1:nq,2)
-
-    y(1:nq) = q(1:nq,1) + q(1:nq,2)*hh(2,2)
-
-    do i=3,nb
-       h1 = hh(i-1,1)
-       h2 = hh(i,2)
-       x(1:nq) = x(1:nq) + q(1:nq,i)*h1
-       y(1:nq) = y(1:nq) + q(1:nq,i)*h2
-    enddo
-
-    x(1:nq) = x(1:nq) + q(1:nq,nb+1)*hh(nb,1)
-
-    tau1 = hh(1,1)
-    tau2 = hh(1,2)
-
-    h1 = -tau1
-    x(1:nq) = x(1:nq)*h1
-    h1 = -tau2
-    h2 = -tau2*s
-    y(1:nq) = y(1:nq)*h1 + x(1:nq)*h2
-
-    q(1:nq,1) = q(1:nq,1) + y(1:nq)
-    q(1:nq,2) = q(1:nq,2) + x(1:nq) + y(1:nq)*hh(2,2)
-
-    do i=3,nb
-       h1 = hh(i-1,1)
-       h2 = hh(i,2)
-       q(1:nq,i) = q(1:nq,i) + x(1:nq)*h1 + y(1:nq)*h2
-    enddo
-
-    q(1:nq,nb+1) = q(1:nq,nb+1) + x(1:nq)*hh(nb,1)
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic simple: double_hh_trafo_generic_simple_double")
-#endif
-
-  end subroutine double_hh_trafo_generic_simple_double
+#define REALCASE 1
+#define DOUBLE_PRECISION_REAL 1
+#define DATATYPE rk8
+#include "elpa2_kernels_simple_template.X90"
+#undef DOUBLE_PRECISION_REAL
+#undef DATATYPE
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  ! single precision implementation at the moment duplicated !!!
-
-  subroutine double_hh_trafo_generic_simple_single(q, hh, nb, nq, ldq, ldh)
-    use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
+#define REALCASE 1
+#undef DOUBLE_PRECISION_REAL
+#define DATATYPE rk4
+#include "elpa2_kernels_simple_template.X90"
+#undef DOUBLE_PRECISION_REAL
+#undef DATATYPE
+#undef REALCASE
 #endif
-    implicit none
-
-    integer(kind=ik), intent(in) :: nb, nq, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-    real(kind=rk4), intent(inout) :: q(ldq,*)
-    real(kind=rk4), intent(in)    :: hh(ldh,*)
-#else
-    real(kind=rk4), intent(inout) :: q(ldq,1:nb+1)
-    real(kind=rk4), intent(in)    :: hh(ldh,2)
-#endif
-
-    real(kind=rk4)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
-    integer(kind=ik)             :: i
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic simple: double_hh_trafo_generic_simple_single")
-#endif
-    ! Calculate dot product of the two Householder vectors
-
-    s = hh(2,2)*1
-    do i=3,nb
-       s = s+hh(i,2)*hh(i-1,1)
-    enddo
-
-    ! Do the Householder transformations
-
-    x(1:nq) = q(1:nq,2)
-
-    y(1:nq) = q(1:nq,1) + q(1:nq,2)*hh(2,2)
-
-    do i=3,nb
-       h1 = hh(i-1,1)
-       h2 = hh(i,2)
-       x(1:nq) = x(1:nq) + q(1:nq,i)*h1
-       y(1:nq) = y(1:nq) + q(1:nq,i)*h2
-    enddo
-
-    x(1:nq) = x(1:nq) + q(1:nq,nb+1)*hh(nb,1)
-
-    tau1 = hh(1,1)
-    tau2 = hh(1,2)
-
-    h1 = -tau1
-    x(1:nq) = x(1:nq)*h1
-    h1 = -tau2
-    h2 = -tau2*s
-    y(1:nq) = y(1:nq)*h1 + x(1:nq)*h2
-
-    q(1:nq,1) = q(1:nq,1) + y(1:nq)
-    q(1:nq,2) = q(1:nq,2) + x(1:nq) + y(1:nq)*hh(2,2)
-
-    do i=3,nb
-       h1 = hh(i-1,1)
-       h2 = hh(i,2)
-       q(1:nq,i) = q(1:nq,i) + x(1:nq)*h1 + y(1:nq)*h2
-    enddo
-
-    q(1:nq,nb+1) = q(1:nq,nb+1) + x(1:nq)*hh(nb,1)
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic simple: double_hh_trafo_generic_simple_single")
-#endif
-
-  end subroutine double_hh_trafo_generic_simple_single
-
-#endif /* WANT_SINGLE_PRECISION_REAL */
 
 end module real_generic_simple_kernel
 ! --------------------------------------------------------------------------------------------------
