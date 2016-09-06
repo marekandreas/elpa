@@ -42,8 +42,23 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-// Author: Andreas Marek, MPCDF, based on the double precision case of A. Heinecke
 //
+// --------------------------------------------------------------------------------------------------
+//
+// This file contains the compute intensive kernels for the Householder transformations.
+// It should be compiled with the highest possible optimization level.
+//
+// On Intel Nehalem or Intel Westmere or AMD Magny Cours use -O3 -msse3
+// On Intel Sandy Bridge use -O3 -mavx
+//
+// Copyright of the original code rests with the authors inside the ELPA
+// consortium. The copyright of any additional modifications shall rest
+// with their original authors, but shall adhere to the licensing terms
+// distributed along with the original code in the file "COPYING".
+//
+// Author: Alexander Heinecke (alexander.heinecke@mytum.de)
+// Adapted for building a shared-library by Andreas Marek, MPCDF (andreas.marek@mpcdf.mpg.de)
+// --------------------------------------------------------------------------------------------------
 #include "config-f90.h"
 
 #include <complex.h>
@@ -51,36 +66,28 @@
 
 #define __forceinline __attribute__((always_inline))
 
-#ifdef HAVE_AVX2
+#ifdef HAVE_AVX512
 
-#ifdef __FMA4__
 #define __ELPA_USE_FMA__
-#define _mm256_FMADDSUB_ps(a,b,c) _mm256_maddsub_ps(a,b,c)
-#define _mm256_FMSUBADD_ps(a,b,c) _mm256_msubadd_ps(a,b,c)
-#endif
-
-#ifdef __AVX2__
-#define __ELPA_USE_FMA__
-#define _mm256_FMADDSUB_ps(a,b,c) _mm256_fmaddsub_ps(a,b,c)
-#define _mm256_FMSUBADD_ps(a,b,c) _mm256_fmsubadd_ps(a,b,c)
-#endif
+#define _mm512_FMADDSUB_ps(a,b,c) _mm512_fmaddsub_ps(a,b,c)
+#define _mm512_FMSUBADD_ps(a,b,c) _mm512_fmsubadd_ps(a,b,c)
 
 #endif
 
 //Forward declaration
-static  __forceinline void hh_trafo_complex_kernel_12_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
-static  __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
-static  __forceinline void hh_trafo_complex_kernel_4_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_32_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
 
 /*
-!f>#ifdef HAVE_AVX512
+!f>#if defined(HAVE_AVX512)
 !f> interface
 !f>   subroutine single_hh_trafo_complex_avx512_1hv_single(q, hh, pnb, pnq, pldq) &
 !f>                             bind(C, name="single_hh_trafo_complex_avx512_1hv_single")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq
-!f>     complex(kind=c_float)   :: q(*)
-!f>     complex(kind=c_float)   :: hh(pnb,2)
+!f>     complex(kind=c_float)     :: q(*)
+!f>     complex(kind=c_float)     :: hh(pnb,2)
 !f>   end subroutine
 !f> end interface
 !f>#endif
@@ -94,486 +101,366 @@ void single_hh_trafo_complex_avx512_1hv_single(float complex* q, float complex* 
 	int ldq = *pldq;
 	//int ldh = *pldh;
 
-// carefull here
-	for (i = 0; i < nq-8; i+=12)
+	for (i = 0; i < nq-32; i+=48)
 	{
-		hh_trafo_complex_kernel_12_AVX512_1hv_single(&q[i], hh, nb, ldq);
+		hh_trafo_complex_kernel_48_AVX512_1hv_single(&q[i], hh, nb, ldq);
 	}
 	if (nq == i)
 	{
 		return;
 	}
-//	if (nq-i == 20)
-//	{
-//		hh_trafo_complex_kernel_16_AVX512_1hv_single(&q[i], hh, nb, ldq);
-//		hh_trafo_complex_kernel_4_AVX512_1hv_single(&q[i], hh, nb, ldq);
-//	}
-//	if (nq-i == 16)
-//	{
-//		hh_trafo_complex_kernel_16_AVX512_1hv_single(&q[i], hh, nb, ldq);
-//	}
-//	if (nq-i == 12)
-//	{
-//		hh_trafo_complex_kernel_8_AVX512_1hv_single(&q[i], hh, nb, ldq);
-//		hh_trafo_complex_kernel_4_AVX512_1hv_single(&q[i], hh, nb, ldq);
-//	}
-	if (nq-i == 8)
+	if (nq-i == 32)
 	{
-		hh_trafo_complex_kernel_8_AVX512_1hv_single(&q[i], hh, nb, ldq);
+		hh_trafo_complex_kernel_32_AVX512_1hv_single(&q[i], hh, nb, ldq);
 	}
 	else
 	{
-		hh_trafo_complex_kernel_4_AVX512_1hv_single(&q[i], hh, nb, ldq);
+		hh_trafo_complex_kernel_16_AVX512_1hv_single(&q[i], hh, nb, ldq);
 	}
 }
 
- static __forceinline void hh_trafo_complex_kernel_12_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
 
-	__m256 x1, x2, x3, x4, x5, x6;
-	__m256 q1, q2, q3, q4, q5, q6;
-	__m256 h1_real, h1_imag;
-	__m256 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
+	__m512 x1, x2, x3, x4, x5, x6;
+	__m512 q1, q2, q3, q4, q5, q6;
+	__m512 h1_real, h1_imag;
+	__m512 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
 	int i=0;
 
-//carefull here
-//	__m256d sign = (__m256d)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
-	__m256 sign = (__m256)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
+	__m512 sign = (__m512d)_mm512_set1_epi32(0x80000000);
 
-	x1 = _mm256_load_ps(&q_dbl[0]);      // load four complex q(1,1) | q(2,1) | q(3,1) q(4,1)
-	x2 = _mm256_load_ps(&q_dbl[8]);      // load four complex q(5,1) | q(6,1) | q(7,1) q(8,1)
-	x3 = _mm256_load_ps(&q_dbl[16]);     // load four complex q(9,1) | q(10,1) | q(11,1) q(12,1)
-//	x4 = _mm256_load_pd(&q_dbl[24]);     // load four complex q(13,1) | q(14,1) | q(15,1) q(16,1)
-//	x5 = _mm256_load_pd(&q_dbl[32]);     // load four complex q(17,1) | q(18,1) | q(19,1) q(20,1)
-//	x6 = _mm256_load_pd(&q_dbl[40]);     // load four complex q(21,1) | q(22,1) | q(23,1) q(24,1)
-
+	x1 = _mm512_load_ps(&q_dbl[0]);    // complex 1, 2, 3, 4, 5, 6, 7, 8
+	x2 = _mm512_load_ps(&q_dbl[16]);   // complex 9, 10, 11, 12, 13, 14, 15, 16
+	x3 = _mm512_load_ps(&q_dbl[32]);   // complex 17 ...24
+	x4 = _mm512_load_ps(&q_dbl[48]);   // complex 25 .. 32
+	x5 = _mm512_load_ps(&q_dbl[54]);   // complex 33 .. 40
+	x6 = _mm512_load_ps(&q_dbl[60]);   // complex 40 .. 48
 
 	for (i = 1; i < nb; i++)
 	{
-		h1_real = _mm256_broadcast_ss(&hh_dbl[i*2]);
-		h1_imag = _mm256_broadcast_ss(&hh_dbl[(i*2)+1]);
-#ifndef __ELPA_USE_FMA__
-		// conjugate
-		h1_imag = _mm256_xor_ps(h1_imag, sign);       // h1_imag = - h1_imag
-#endif
+		h1_real = _mm512_set1_ps(hh_dbl[i*2]);
+		h1_imag = _mm512_set1_ps(hh_dbl[(i*2)+1]);
 
-		q1 = _mm256_load_ps(&q_dbl[(2*i*ldq)+0]);
-		q2 = _mm256_load_ps(&q_dbl[(2*i*ldq)+8]);
-		q3 = _mm256_load_ps(&q_dbl[(2*i*ldq)+16]);
-//		q4 = _mm256_load_pd(&q_dbl[(2*i*ldq)+12]);
-//		q5 = _mm256_load_pd(&q_dbl[(2*i*ldq)+16]);
-//		q6 = _mm256_load_pd(&q_dbl[(2*i*ldq)+20]);
+		q1 = _mm512_load_ps(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm512_load_ps(&q_dbl[(2*i*ldq)+16]);
+		q3 = _mm512_load_ps(&q_dbl[(2*i*ldq)+32]);
+		q4 = _mm512_load_ps(&q_dbl[(2*i*ldq)+48]);
+		q5 = _mm512_load_ps(&q_dbl[(2*i*ldq)+54]);
+		q6 = _mm512_load_ps(&q_dbl[(2*i*ldq)+60]);
 
-		tmp1 = _mm256_mul_ps(h1_imag, q1);          // tmp1 = -h1_imag * q1
-		// carefull here we want x1 = x1 + q(1,i) * conjg(hh(i))
-#ifdef __ELPA_USE_FMA__
-		x1 = _mm256_add_ps(x1, _mm256_FMSUBADD_ps(h1_real, q1, _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));                    // x1 = x1 + (h1_real *q1 + 
-#else
-		x1 = _mm256_add_ps(x1, _mm256_addsub_ps( _mm256_mul_ps(h1_real, q1), _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#endif
-		tmp2 = _mm256_mul_ps(h1_imag, q2);
-#ifdef __ELPA_USE_FMA__
-		x2 = _mm256_add_ps(x2, _mm256_FMSUBADD_ps(h1_real, q2, _mm256_shuffle_ps(tmp2, tmp2, 0xb1)));
-#else
-		x2 = _mm256_add_ps(x2, _mm256_addsub_ps( _mm256_mul_ps(h1_real, q2), _mm256_shuffle_ps(tmp2, tmp2, 0xb1)));
-#endif
-		tmp3 = _mm256_mul_ps(h1_imag, q3);
-#ifdef __ELPA_USE_FMA__
-		x3 = _mm256_add_ps(x3, _mm256_FMSUBADD_ps(h1_real, q3, _mm256_shuffle_ps(tmp3, tmp3, 0xb1)));
-#else
-		x3 = _mm256_add_ps(x3, _mm256_addsub_ps( _mm256_mul_ps(h1_real, q3), _mm256_shuffle_ps(tmp3, tmp3, 0xb1)));
-#endif
-//		tmp4 = _mm256_mul_pd(h1_imag, q4);
-#ifdef __ELPA_USE_FMA__
-//		x4 = _mm256_add_pd(x4, _mm256_FMSUBADD_pd(h1_real, q4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
-#else
-//		x4 = _mm256_add_pd(x4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
-#endif
-//		tmp5 = _mm256_mul_pd(h1_imag, q5);
-#ifdef __ELPA_USE_FMA__
-//		x5 = _mm256_add_pd(x5, _mm256_FMSUBADD_pd(h1_real, q5, _mm256_shuffle_pd(tmp5, tmp5, 0x5)));
-#else
-//		x5 = _mm256_add_pd(x5, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q5), _mm256_shuffle_pd(tmp5, tmp5, 0x5)));
-#endif
-//		tmp6 = _mm256_mul_pd(h1_imag, q6);
-#ifdef __ELPA_USE_FMA__
-//		x6 = _mm256_add_pd(x6, _mm256_FMSUBADD_pd(h1_real, q6, _mm256_shuffle_pd(tmp6, tmp6, 0x5)));
-#else
-//		x6 = _mm256_add_pd(x6, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q6), _mm256_shuffle_pd(tmp6, tmp6, 0x5)));
-#endif
+		tmp1 = _mm512_mul_ps(h1_imag, q1);
+		x1 = _mm512_add_ps(x1, _mm512_FMSUBADD_ps(h1_real, q1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1)));
+
+		tmp2 = _mm512_mul_ps(h1_imag, q2);
+
+		x2 = _mm512_add_ps(x2, _mm512_FMSUBADD_ps(h1_real, q2, _mm512_shuffle_ps(tmp2, tmp2, 0xb1)));
+
+		tmp3 = _mm512_mul_ps(h1_imag, q3);
+
+		x3 = _mm512_add_ps(x3, _mm512_FMSUBADD_ps(h1_real, q3, _mm512_shuffle_ps(tmp3, tmp3, 0xb1)));
+
+		tmp4 = _mm512_mul_ps(h1_imag, q4);
+
+		x4 = _mm512_add_ps(x4, _mm512_FMSUBADD_ps(h1_real, q4, _mm512_shuffle_ps(tmp4, tmp4, 0xb1)));
+
+		tmp5 = _mm512_mul_ps(h1_imag, q5);
+
+		x5 = _mm512_add_ps(x5, _mm512_FMSUBADD_ps(h1_real, q5, _mm512_shuffle_ps(tmp5, tmp5, 0xb1)));
+
+		tmp6 = _mm512_mul_ps(h1_imag, q6);
+
+		x6 = _mm512_add_ps(x6, _mm512_FMSUBADD_ps(h1_real, q6, _mm512_shuffle_ps(tmp6, tmp6, 0xb1)));
 	}
 
-	h1_real = _mm256_broadcast_ss(&hh_dbl[0]);
-	h1_imag = _mm256_broadcast_ss(&hh_dbl[1]);
-	h1_real = _mm256_xor_ps(h1_real, sign);
-	h1_imag = _mm256_xor_ps(h1_imag, sign);
+	h1_real = _mm512_set1_ps(hh_dbl[0]);
+	h1_imag = _mm512_set1_ps(hh_dbl[1]);
 
-	tmp1 = _mm256_mul_ps(h1_imag, x1);
-	// carefull here
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm256_FMADDSUB_ps(h1_real, x1, _mm256_shuffle_ps(tmp1, tmp1, 0xb1));
-#else
-	x1 = _mm256_addsub_ps( _mm256_mul_ps(h1_real, x1), _mm256_shuffle_ps(tmp1, tmp1, 0xb1));
-#endif
-	tmp2 = _mm256_mul_ps(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-	x2 = _mm256_FMADDSUB_ps(h1_real, x2, _mm256_shuffle_ps(tmp2, tmp2, 0xb1));
-#else
-	x2 = _mm256_addsub_ps( _mm256_mul_ps(h1_real, x2), _mm256_shuffle_ps(tmp2, tmp2, 0xb1));
-#endif
-	tmp3 = _mm256_mul_ps(h1_imag, x3);
-#ifdef __ELPA_USE_FMA__
-	x3 = _mm256_FMADDSUB_ps(h1_real, x3, _mm256_shuffle_ps(tmp3, tmp3, 0xb1));
-#else
-	x3 = _mm256_addsub_ps( _mm256_mul_ps(h1_real, x3), _mm256_shuffle_ps(tmp3, tmp3, 0xb1));
-#endif
-//	tmp4 = _mm256_mul_pd(h1_imag, x4);
-#ifdef __ELPA_USE_FMA__
-//	x4 = _mm256_FMADDSUB_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5));
-#else
-//	x4 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5));
-#endif
-//	tmp5 = _mm256_mul_pd(h1_imag, x5);
-#ifdef __ELPA_USE_FMA__
-//	x5 = _mm256_FMADDSUB_pd(h1_real, x5, _mm256_shuffle_pd(tmp5, tmp5, 0x5));
-#else
-//	x5 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x5), _mm256_shuffle_pd(tmp5, tmp5, 0x5));
-#endif
-//	tmp6 = _mm256_mul_pd(h1_imag, x6);
-#ifdef __ELPA_USE_FMA__
-//	x6 = _mm256_FMADDSUB_pd(h1_real, x6, _mm256_shuffle_pd(tmp6, tmp6, 0x5));
-#else
-//	x6 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x6), _mm256_shuffle_pd(tmp6, tmp6, 0x5));
-#endif
+//	h1_real = _mm512_xor_ps(h1_real, sign);
+//	h1_imag = _mm512_xor_ps(h1_imag, sign);
 
-	q1 = _mm256_load_ps(&q_dbl[0]);
-	q2 = _mm256_load_ps(&q_dbl[8]);
-	q3 = _mm256_load_ps(&q_dbl[16]);
-//	q4 = _mm256_load_pd(&q_dbl[12]);
-//	q5 = _mm256_load_pd(&q_dbl[16]);
-//	q6 = _mm256_load_pd(&q_dbl[20]);
+        h1_real = (__m512) _mm512_xor_epi32((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__m512) _mm512_xor_epi32((__m512i) h1_imag, (__m512i) sign);
 
-	q1 = _mm256_add_ps(q1, x1);
-	q2 = _mm256_add_ps(q2, x2);
-	q3 = _mm256_add_ps(q3, x3);
-//	q4 = _mm256_add_pd(q4, x4);
-//	q5 = _mm256_add_pd(q5, x5);
-//	q6 = _mm256_add_pd(q6, x6);
+	tmp1 = _mm512_mul_ps(h1_imag, x1);
 
-	_mm256_store_ps(&q_dbl[0], q1);
-	_mm256_store_ps(&q_dbl[8], q2);
-	_mm256_store_ps(&q_dbl[16], q3);
-//	_mm256_store_pd(&q_dbl[12], q4);
-//	_mm256_store_pd(&q_dbl[16], q5);
-//	_mm256_store_pd(&q_dbl[20], q6);
+	x1 = _mm512_FMADDSUB_ps(h1_real, x1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1));
+
+	tmp2 = _mm512_mul_ps(h1_imag, x2);
+
+	x2 = _mm512_FMADDSUB_ps(h1_real, x2, _mm512_shuffle_ps(tmp2, tmp2, 0xb1));
+
+	tmp3 = _mm512_mul_ps(h1_imag, x3);
+
+	x3 = _mm512_FMADDSUB_ps(h1_real, x3, _mm512_shuffle_ps(tmp3, tmp3, 0xb1));
+
+	tmp4 = _mm512_mul_ps(h1_imag, x4);
+
+	x4 = _mm512_FMADDSUB_ps(h1_real, x4, _mm512_shuffle_ps(tmp4, tmp4, 0xb1));
+
+	tmp5 = _mm512_mul_ps(h1_imag, x5);
+
+	x5 = _mm512_FMADDSUB_ps(h1_real, x5, _mm512_shuffle_ps(tmp5, tmp5, 0xb1));
+
+	tmp6 = _mm512_mul_ps(h1_imag, x6);
+
+	x6 = _mm512_FMADDSUB_ps(h1_real, x6, _mm512_shuffle_ps(tmp6, tmp6, 0xb1));
+
+	q1 = _mm512_load_ps(&q_dbl[0]);
+	q2 = _mm512_load_ps(&q_dbl[16]);
+	q3 = _mm512_load_ps(&q_dbl[32]);
+	q4 = _mm512_load_ps(&q_dbl[48]);
+	q5 = _mm512_load_ps(&q_dbl[54]);
+	q6 = _mm512_load_ps(&q_dbl[60]);
+
+	q1 = _mm512_add_ps(q1, x1);
+	q2 = _mm512_add_ps(q2, x2);
+	q3 = _mm512_add_ps(q3, x3);
+	q4 = _mm512_add_ps(q4, x4);
+	q5 = _mm512_add_ps(q5, x5);
+	q6 = _mm512_add_ps(q6, x6);
+
+	_mm512_store_ps(&q_dbl[0], q1);
+	_mm512_store_ps(&q_dbl[16], q2);
+	_mm512_store_ps(&q_dbl[32], q3);
+	_mm512_store_ps(&q_dbl[48], q4);
+	_mm512_store_ps(&q_dbl[54], q5);
+	_mm512_store_ps(&q_dbl[60], q6);
 
 	for (i = 1; i < nb; i++)
 	{
-		h1_real = _mm256_broadcast_ss(&hh_dbl[i*2]);
-		h1_imag = _mm256_broadcast_ss(&hh_dbl[(i*2)+1]);
+		h1_real = _mm512_set1_ps(hh_dbl[i*2]);
+		h1_imag = _mm512_set1_ps(hh_dbl[(i*2)+1]);
 
-		q1 = _mm256_load_ps(&q_dbl[(2*i*ldq)+0]);
-		q2 = _mm256_load_ps(&q_dbl[(2*i*ldq)+8]);
-		q3 = _mm256_load_ps(&q_dbl[(2*i*ldq)+16]);
-//		q4 = _mm256_load_pd(&q_dbl[(2*i*ldq)+12]);
-//		q5 = _mm256_load_pd(&q_dbl[(2*i*ldq)+16]);
-//		q6 = _mm256_load_pd(&q_dbl[(2*i*ldq)+20]);
+		q1 = _mm512_load_ps(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm512_load_ps(&q_dbl[(2*i*ldq)+16]);
+		q3 = _mm512_load_ps(&q_dbl[(2*i*ldq)+32]);
+		q4 = _mm512_load_ps(&q_dbl[(2*i*ldq)+48]);
+		q5 = _mm512_load_ps(&q_dbl[(2*i*ldq)+54]);
+		q6 = _mm512_load_ps(&q_dbl[(2*i*ldq)+60]);
 
-		tmp1 = _mm256_mul_ps(h1_imag, x1);
-		// carefull
-#ifdef __ELPA_USE_FMA__
-		q1 = _mm256_add_ps(q1, _mm256_FMADDSUB_ps(h1_real, x1, _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#else
-		q1 = _mm256_add_ps(q1, _mm256_addsub_ps( _mm256_mul_ps(h1_real, x1), _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#endif
-		tmp2 = _mm256_mul_ps(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-		q2 = _mm256_add_ps(q2, _mm256_FMADDSUB_ps(h1_real, x2, _mm256_shuffle_ps(tmp2, tmp2, 0xb1)));
-#else
-		q2 = _mm256_add_ps(q2, _mm256_addsub_ps( _mm256_mul_ps(h1_real, x2), _mm256_shuffle_ps(tmp2, tmp2, 0xb1)));
-#endif
-		tmp3 = _mm256_mul_ps(h1_imag, x3);
-#ifdef __ELPA_USE_FMA__
-		q3 = _mm256_add_ps(q3, _mm256_FMADDSUB_ps(h1_real, x3, _mm256_shuffle_ps(tmp3, tmp3, 0xb1)));
-#else
-		q3 = _mm256_add_ps(q3, _mm256_addsub_ps( _mm256_mul_ps(h1_real, x3), _mm256_shuffle_ps(tmp3, tmp3, 0xb1)));
-#endif
-//		tmp4 = _mm256_mul_pd(h1_imag, x4);
-#ifdef __ELPA_USE_FMA__
-//		q4 = _mm256_add_pd(q4, _mm256_FMADDSUB_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
-#else
-//		q4 = _mm256_add_pd(q4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
-#endif
-//		tmp5 = _mm256_mul_pd(h1_imag, x5);
-#ifdef __ELPA_USE_FMA__
-//		q5 = _mm256_add_pd(q5, _mm256_FMADDSUB_pd(h1_real, x5, _mm256_shuffle_pd(tmp5, tmp5, 0x5)));
-#else
-//		q5 = _mm256_add_pd(q5, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x5), _mm256_shuffle_pd(tmp5, tmp5, 0x5)));
-#endif
-//		tmp6 = _mm256_mul_pd(h1_imag, x6);
-#ifdef __ELPA_USE_FMA__
-//		q6 = _mm256_add_pd(q6, _mm256_FMADDSUB_pd(h1_real, x6, _mm256_shuffle_pd(tmp6, tmp6, 0x5)));
-#else
-//		q6 = _mm256_add_pd(q6, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x6), _mm256_shuffle_pd(tmp6, tmp6, 0x5)));
-#endif
+		tmp1 = _mm512_mul_ps(h1_imag, x1);
 
-		_mm256_store_ps(&q_dbl[(2*i*ldq)+0], q1);
-		_mm256_store_ps(&q_dbl[(2*i*ldq)+8], q2);
-		_mm256_store_ps(&q_dbl[(2*i*ldq)+16], q3);
-//		_mm256_store_pd(&q_dbl[(2*i*ldq)+12], q4);
-//		_mm256_store_pd(&q_dbl[(2*i*ldq)+16], q5);
-//		_mm256_store_pd(&q_dbl[(2*i*ldq)+20], q6);
+		q1 = _mm512_add_ps(q1, _mm512_FMADDSUB_ps(h1_real, x1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1)));
+
+		tmp2 = _mm512_mul_ps(h1_imag, x2);
+
+		q2 = _mm512_add_ps(q2, _mm512_FMADDSUB_ps(h1_real, x2, _mm512_shuffle_ps(tmp2, tmp2, 0xb1)));
+
+		tmp3 = _mm512_mul_ps(h1_imag, x3);
+
+		q3 = _mm512_add_ps(q3, _mm512_FMADDSUB_ps(h1_real, x3, _mm512_shuffle_ps(tmp3, tmp3, 0xb1)));
+
+		tmp4 = _mm512_mul_ps(h1_imag, x4);
+
+		q4 = _mm512_add_ps(q4, _mm512_FMADDSUB_ps(h1_real, x4, _mm512_shuffle_ps(tmp4, tmp4, 0xb1)));
+
+		tmp5 = _mm512_mul_ps(h1_imag, x5);
+
+		q5 = _mm512_add_ps(q5, _mm512_FMADDSUB_ps(h1_real, x5, _mm512_shuffle_ps(tmp5, tmp5, 0xb1)));
+
+		tmp6 = _mm512_mul_ps(h1_imag, x6);
+
+		q6 = _mm512_add_ps(q6, _mm512_FMADDSUB_ps(h1_real, x6, _mm512_shuffle_ps(tmp6, tmp6, 0xb1)));
+
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+0], q1);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+16], q2);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+32], q3);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+48], q4);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+54], q5);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+60], q6);
 	}
 }
 
-static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_32_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
 
-	__m256 x1, x2, x3, x4;
-	__m256 q1, q2, q3, q4;
-	__m256 h1_real, h1_imag;
-	__m256 tmp1, tmp2, tmp3, tmp4;
+	__m512 x1, x2, x3, x4;
+	__m512 q1, q2, q3, q4;
+	__m512 h1_real, h1_imag;
+	__m512 tmp1, tmp2, tmp3, tmp4;
 	int i=0;
 
-	// carefull 
-//	__m256d sign = (__m256d)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
-	__m256 sign = (__m256)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
+	__m512 sign = (__m512)_mm512_set_epi32(0x80000000);
 
-	x1 = _mm256_load_ps(&q_dbl[0]);   // load q(1,1) | q(2,1) | q(3,1) | q(4,1)
-	x2 = _mm256_load_ps(&q_dbl[8]);   // load q(1,1) | q(2,1) | q(3,1) | q(4,1)
-//	x3 = _mm256_load_pd(&q_dbl[8]);
-//	x4 = _mm256_load_pd(&q_dbl[12]);
+	x1 = _mm512_load_ps(&q_dbl[0]);   // complex 1 2 3 4 5 6 7 8
+	x2 = _mm512_load_ps(&q_dbl[16]);
+	x3 = _mm512_load_ps(&q_dbl[32]);
+	x4 = _mm512_load_ps(&q_dbl[48]);  // comlex 24 ..32
 
 	for (i = 1; i < nb; i++)
 	{
-		h1_real = _mm256_broadcast_ss(&hh_dbl[i*2]);
-		h1_imag = _mm256_broadcast_ss(&hh_dbl[(i*2)+1]);
-#ifndef __ELPA_USE_FMA__
-		// conjugate
-		h1_imag = _mm256_xor_ps(h1_imag, sign);
-#endif
+		h1_real = _mm512_set1_ps(hh_dbl[i*2]);
+		h1_imag = _mm512_set1_ps(hh_dbl[(i*2)+1]);
 
-		q1 = _mm256_load_ps(&q_dbl[(2*i*ldq)+0]);
-		q2 = _mm256_load_ps(&q_dbl[(2*i*ldq)+8]);
-//		q3 = _mm256_load_pd(&q_dbl[(2*i*ldq)+8]);
-//		q4 = _mm256_load_pd(&q_dbl[(2*i*ldq)+12]);
+		q1 = _mm512_load_ps(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm512_load_ps(&q_dbl[(2*i*ldq)+16]);
+		q3 = _mm512_load_ps(&q_dbl[(2*i*ldq)+32]);
+		q4 = _mm512_load_ps(&q_dbl[(2*i*ldq)+48]);
 
-		tmp1 = _mm256_mul_ps(h1_imag, q1);
-		// carefull
-#ifdef __ELPA_USE_FMA__
-		x1 = _mm256_add_ps(x1, _mm256_FMSUBADD_ps(h1_real, q1, _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#else
-		x1 = _mm256_add_ps(x1, _mm256_addsub_ps( _mm256_mul_ps(h1_real, q1), _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#endif
-		tmp2 = _mm256_mul_ps(h1_imag, q2);
-#ifdef __ELPA_USE_FMA__
-		x2 = _mm256_add_ps(x2, _mm256_FMSUBADD_ps(h1_real, q2, _mm256_shuffle_ps(tmp2, tmp2, 0xb1)));
-#else
-		x2 = _mm256_add_ps(x2, _mm256_addsub_ps( _mm256_mul_ps(h1_real, q2), _mm256_shuffle_ps(tmp2, tmp2, 0xb1)));
-#endif
-//		tmp3 = _mm256_mul_pd(h1_imag, q3);
-#ifdef __ELPA_USE_FMA__
-//		x3 = _mm256_add_pd(x3, _mm256_FMSUBADD_pd(h1_real, q3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
-#else
-//		x3 = _mm256_add_pd(x3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
-#endif
-//		tmp4 = _mm256_mul_pd(h1_imag, q4);
-#ifdef __ELPA_USE_FMA__
-//		x4 = _mm256_add_pd(x4, _mm256_FMSUBADD_pd(h1_real, q4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
-#else
-//		x4 = _mm256_add_pd(x4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
-#endif
+		tmp1 = _mm512_mul_ps(h1_imag, q1);
+
+		x1 = _mm512_add_ps(x1, _mm512_FMSUBADD_ps(h1_real, q1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1)));
+
+		tmp2 = _mm512_mul_ps(h1_imag, q2);
+
+		x2 = _mm512_add_ps(x2, _mm512_FMSUBADD_ps(h1_real, q2, _mm512_shuffle_ps(tmp2, tmp2, 0xb1)));
+
+		tmp3 = _mm512_mul_ps(h1_imag, q3);
+
+		x3 = _mm512_add_ps(x3, _mm512_FMSUBADD_ps(h1_real, q3, _mm512_shuffle_ps(tmp3, tmp3, 0xb1)));
+
+		tmp4 = _mm512_mul_ps(h1_imag, q4);
+
+		x4 = _mm512_add_ps(x4, _mm512_FMSUBADD_ps(h1_real, q4, _mm512_shuffle_ps(tmp4, tmp4, 0xb1)));
 	}
 
-	h1_real = _mm256_broadcast_ss(&hh_dbl[0]);
-	h1_imag = _mm256_broadcast_ss(&hh_dbl[1]);
-	h1_real = _mm256_xor_ps(h1_real, sign);
-	h1_imag = _mm256_xor_ps(h1_imag, sign);
+	h1_real = _mm512_set1_ps(hh_dbl[0]);
+	h1_imag = _mm512_set1_ps(hh_dbl[1]);
 
-	tmp1 = _mm256_mul_ps(h1_imag, x1);
+//	h1_real = _mm512_xor_ps(h1_real, sign);
+//	h1_imag = _mm512_xor_ps(h1_imag, sign);
+        h1_real = (__m512) _mm512_xor_epi32((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__m512) _mm512_xor_epi32((__m512i) h1_imag, (__m512i) sign);
 
-	// carefull
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm256_FMADDSUB_ps(h1_real, x1, _mm256_shuffle_ps(tmp1, tmp1, 0xb1));
-#else
-	x1 = _mm256_addsub_ps( _mm256_mul_ps(h1_real, x1), _mm256_shuffle_ps(tmp1, tmp1, 0xb1));
-#endif
-	tmp2 = _mm256_mul_ps(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-	x2 = _mm256_FMADDSUB_ps(h1_real, x2, _mm256_shuffle_ps(tmp2, tmp2, 0xb1));
-#else
-	x2 = _mm256_addsub_ps( _mm256_mul_ps(h1_real, x2), _mm256_shuffle_ps(tmp2, tmp2, 0xb1));
-#endif
-//	tmp3 = _mm256_mul_pd(h1_imag, x3);
-#ifdef __ELPA_USE_FMA__
-//	x3 = _mm256_FMADDSUB_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5));
-#else
-//	x3 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5));
-#endif
-//	tmp4 = _mm256_mul_pd(h1_imag, x4);
-#ifdef __ELPA_USE_FMA__
-//	x4 = _mm256_FMADDSUB_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5));
-#else
-//	x4 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5));
-#endif
+	tmp1 = _mm512_mul_ps(h1_imag, x1);
 
-	q1 = _mm256_load_ps(&q_dbl[0]);
-	q2 = _mm256_load_ps(&q_dbl[8]);
-//	q3 = _mm256_load_pd(&q_dbl[8]);
-//	q4 = _mm256_load_pd(&q_dbl[12]);
+	x1 = _mm512_FMADDSUB_ps(h1_real, x1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1));
 
-	q1 = _mm256_add_ps(q1, x1);
-	q2 = _mm256_add_ps(q2, x2);
-//	q3 = _mm256_add_pd(q3, x3);
-//	q4 = _mm256_add_pd(q4, x4);
+	tmp2 = _mm512_mul_ps(h1_imag, x2);
 
-	_mm256_store_ps(&q_dbl[0], q1);
-	_mm256_store_ps(&q_dbl[8], q2);
-//	_mm256_store_pd(&q_dbl[8], q3);
-//	_mm256_store_pd(&q_dbl[12], q4);
+	x2 = _mm512_FMADDSUB_ps(h1_real, x2, _mm512_shuffle_ps(tmp2, tmp2, 0xb1));
+
+	tmp3 = _mm512_mul_ps(h1_imag, x3);
+
+	x3 = _mm512_FMADDSUB_ps(h1_real, x3, _mm512_shuffle_ps(tmp3, tmp3, 0xb1));
+
+	tmp4 = _mm512_mul_ps(h1_imag, x4);
+
+	x4 = _mm512_FMADDSUB_ps(h1_real, x4, _mm512_shuffle_ps(tmp4, tmp4, 0xb1));
+
+	q1 = _mm512_load_ps(&q_dbl[0]);
+	q2 = _mm512_load_ps(&q_dbl[16]);
+	q3 = _mm512_load_ps(&q_dbl[32]);
+	q4 = _mm512_load_ps(&q_dbl[48]);
+
+	q1 = _mm512_add_ps(q1, x1);
+	q2 = _mm512_add_ps(q2, x2);
+	q3 = _mm512_add_ps(q3, x3);
+	q4 = _mm512_add_ps(q4, x4);
+
+	_mm512_store_ps(&q_dbl[0], q1);
+	_mm512_store_ps(&q_dbl[16], q2);
+	_mm512_store_ps(&q_dbl[32], q3);
+	_mm512_store_ps(&q_dbl[48], q4);
 
 	for (i = 1; i < nb; i++)
 	{
-		h1_real = _mm256_broadcast_ss(&hh_dbl[i*2]);
-		h1_imag = _mm256_broadcast_ss(&hh_dbl[(i*2)+1]);
+		h1_real = _mm512_set1_ps(hh_dbl[i*2]);
+		h1_imag = _mm512_set1_ps(hh_dbl[(i*2)+1]);
 
-		q1 = _mm256_load_ps(&q_dbl[(2*i*ldq)+0]);
-		q2 = _mm256_load_ps(&q_dbl[(2*i*ldq)+8]);
-//		q3 = _mm256_load_pd(&q_dbl[(2*i*ldq)+8]);
-//		q4 = _mm256_load_pd(&q_dbl[(2*i*ldq)+12]);
+		q1 = _mm512_load_ps(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm512_load_ps(&q_dbl[(2*i*ldq)+16]);
+		q3 = _mm512_load_ps(&q_dbl[(2*i*ldq)+32]);
+		q4 = _mm512_load_ps(&q_dbl[(2*i*ldq)+48]);
 
-		tmp1 = _mm256_mul_ps(h1_imag, x1);
-		// carefull
-#ifdef __ELPA_USE_FMA__
-		q1 = _mm256_add_ps(q1, _mm256_FMADDSUB_ps(h1_real, x1, _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#else
-		q1 = _mm256_add_ps(q1, _mm256_addsub_ps( _mm256_mul_ps(h1_real, x1), _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#endif
-		tmp2 = _mm256_mul_ps(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-		q2 = _mm256_add_ps(q2, _mm256_FMADDSUB_ps(h1_real, x2, _mm256_shuffle_ps(tmp2, tmp2, 0xb1)));
-#else
-		q2 = _mm256_add_ps(q2, _mm256_addsub_ps( _mm256_mul_ps(h1_real, x2), _mm256_shuffle_ps(tmp2, tmp2, 0xb1)));
-#endif
-//		tmp3 = _mm256_mul_pd(h1_imag, x3);
-#ifdef __ELPA_USE_FMA__
-//		q3 = _mm256_add_pd(q3, _mm256_FMADDSUB_pd(h1_real, x3, _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
-#else
-//		q3 = _mm256_add_pd(q3, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x3), _mm256_shuffle_pd(tmp3, tmp3, 0x5)));
-#endif
-//		tmp4 = _mm256_mul_pd(h1_imag, x4);
-#ifdef __ELPA_USE_FMA__
-//		q4 = _mm256_add_pd(q4, _mm256_FMADDSUB_pd(h1_real, x4, _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
-#else
-//		q4 = _mm256_add_pd(q4, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x4), _mm256_shuffle_pd(tmp4, tmp4, 0x5)));
-#endif
+		tmp1 = _mm512_mul_ps(h1_imag, x1);
 
-		_mm256_store_ps(&q_dbl[(2*i*ldq)+0], q1);
-		_mm256_store_ps(&q_dbl[(2*i*ldq)+8], q2);
-//		_mm256_store_pd(&q_dbl[(2*i*ldq)+8], q3);
-//		_mm256_store_pd(&q_dbl[(2*i*ldq)+12], q4);
+		q1 = _mm512_add_ps(q1, _mm512_FMADDSUB_ps(h1_real, x1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1)));
+
+		tmp2 = _mm512_mul_ps(h1_imag, x2);
+
+		q2 = _mm512_add_ps(q2, _mm512_FMADDSUB_ps(h1_real, x2, _mm512_shuffle_ps(tmp2, tmp2, 0xb1)));
+
+		tmp3 = _mm512_mul_ps(h1_imag, x3);
+
+		q3 = _mm512_add_ps(q3, _mm512_FMADDSUB_ps(h1_real, x3, _mm512_shuffle_ps(tmp3, tmp3, 0xb1)));
+
+		tmp4 = _mm512_mul_ps(h1_imag, x4);
+
+		q4 = _mm512_add_ps(q4, _mm512_FMADDSUB_ps(h1_real, x4, _mm512_shuffle_ps(tmp4, tmp4, 0xb1)));
+
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+0], q1);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+16], q2);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+32], q3);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+48], q4);
 	}
 }
 
-static __forceinline void hh_trafo_complex_kernel_4_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+static __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
 {
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
 
-	__m256 x1, x2;
-	__m256 q1, q2;
-	__m256 h1_real, h1_imag;
-	__m256 tmp1, tmp2;
+	__m512 x1, x2;
+	__m512 q1, q2;
+	__m512 h1_real, h1_imag;
+	__m512 tmp1, tmp2;
 	int i=0;
 
-	// carefull
-//	__m256d sign = (__m256d)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
-	__m256 sign = (__m256)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
+	__m512 sign = (__m512)_mm512_set_epi32(0x80000000);
 
-	x1 = _mm256_load_ps(&q_dbl[0]);    // load q(1,1) | q(2,1) | q(3,1) | q(4,1)
-//	x2 = _mm256_load_pd(&q_dbl[4]);
+	x1 = _mm512_load_ps(&q_dbl[0]);
+	x2 = _mm512_load_ps(&q_dbl[16]);
 
 	for (i = 1; i < nb; i++)
 	{
-		h1_real = _mm256_broadcast_ss(&hh_dbl[i*2]);
-		h1_imag = _mm256_broadcast_ss(&hh_dbl[(i*2)+1]);
-#ifndef __ELPA_USE_FMA__
-		// conjugate
-		h1_imag = _mm256_xor_ps(h1_imag, sign);
-#endif
+		h1_real = _mm512_set1_ps(hh_dbl[i*2]);
+		h1_imag = _mm512_set1_ps(hh_dbl[(i*2)+1]);
 
-		q1 = _mm256_load_ps(&q_dbl[(2*i*ldq)+0]);
-//		q2 = _mm256_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q1 = _mm512_load_ps(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm512_load_ps(&q_dbl[(2*i*ldq)+16]);
 
-		tmp1 = _mm256_mul_ps(h1_imag, q1);
-
-		// carefull
-#ifdef __ELPA_USE_FMA__
-		x1 = _mm256_add_ps(x1, _mm256_FMSUBADD_ps(h1_real, q1, _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#else
-		x1 = _mm256_add_ps(x1, _mm256_addsub_ps( _mm256_mul_ps(h1_real, q1), _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#endif
-//		tmp2 = _mm256_mul_pd(h1_imag, q2);
-#ifdef __ELPA_USE_FMA__
-//		x2 = _mm256_add_pd(x2, _mm256_FMSUBADD_pd(h1_real, q2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
-#else
-//		x2 = _mm256_add_pd(x2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, q2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
-#endif
+		tmp1 = _mm512_mul_ps(h1_imag, q1);
+		x1 = _mm512_add_ps(x1, _mm512_FMSUBADD_ps(h1_real, q1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1)));
+		tmp2 = _mm512_mul_ps(h1_imag, q2);
+		x2 = _mm512_add_ps(x2, _mm512_FMSUBADD_ps(h1_real, q2, _mm512_shuffle_ps(tmp2, tmp2, 0xb1)));
 	}
 
-	h1_real = _mm256_broadcast_ss(&hh_dbl[0]);
-	h1_imag = _mm256_broadcast_ss(&hh_dbl[1]);
-	h1_real = _mm256_xor_ps(h1_real, sign);
-	h1_imag = _mm256_xor_ps(h1_imag, sign);
+	h1_real = _mm512_set1_ps(hh_dbl[0]);
+	h1_imag = _mm512_set1_ps(hh_dbl[1]);
 
-	tmp1 = _mm256_mul_ps(h1_imag, x1);
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm256_FMADDSUB_ps(h1_real, x1, _mm256_shuffle_ps(tmp1, tmp1, 0xb1));
-#else
-	x1 = _mm256_addsub_ps( _mm256_mul_ps(h1_real, x1), _mm256_shuffle_ps(tmp1, tmp1, 0xb1));
-#endif
-//	tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-//	x2 = _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5));
-#else
-//	x2 = _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5));
-#endif
+//	h1_real = _mm512_xor_ps(h1_real, sign);
+//	h1_imag = _mm512_xor_ps(h1_imag, sign);
+	h1_real = (__m512) _mm512_xor_epi32((__m512i) h1_real, (__m512i) sign);
+	h1_imag = (__m512) _mm512_xor_epi32((__m512i) h1_imag, (__m512i) sign);
 
-	q1 = _mm256_load_ps(&q_dbl[0]);
-//	q2 = _mm256_load_pd(&q_dbl[4]);
+	tmp1 = _mm512_mul_ps(h1_imag, x1);
+	x1 = _mm512_FMADDSUB_ps(h1_real, x1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1));
 
-	q1 = _mm256_add_ps(q1, x1);
-//	q2 = _mm256_add_pd(q2, x2);
+	tmp2 = _mm512_mul_ps(h1_imag, x2);
 
-	_mm256_store_ps(&q_dbl[0], q1);
-//	_mm256_store_pd(&q_dbl[4], q2);
+	x2 = _mm512_FMADDSUB_ps(h1_real, x2, _mm512_shuffle_ps(tmp2, tmp2, 0xb1));
+
+	q1 = _mm512_load_ps(&q_dbl[0]);
+	q2 = _mm512_load_ps(&q_dbl[16]);
+
+	q1 = _mm512_add_ps(q1, x1);
+	q2 = _mm512_add_ps(q2, x2);
+
+	_mm512_store_ps(&q_dbl[0], q1);
+	_mm512_store_ps(&q_dbl[16], q2);
 
 	for (i = 1; i < nb; i++)
 	{
-		h1_real = _mm256_broadcast_ss(&hh_dbl[i*2]);
-		h1_imag = _mm256_broadcast_ss(&hh_dbl[(i*2)+1]);
+		h1_real = _mm512_set1_ps(hh_dbl[i*2]);
+		h1_imag = _mm512_set1_ps(hh_dbl[(i*2)+1]);
 
-		q1 = _mm256_load_ps(&q_dbl[(2*i*ldq)+0]);
-//		q2 = _mm256_load_pd(&q_dbl[(2*i*ldq)+4]);
+		q1 = _mm512_load_ps(&q_dbl[(2*i*ldq)+0]);
+		q2 = _mm512_load_ps(&q_dbl[(2*i*ldq)+16]);
 
-		tmp1 = _mm256_mul_ps(h1_imag, x1);
-#ifdef __ELPA_USE_FMA__
-		q1 = _mm256_add_ps(q1, _mm256_FMADDSUB_ps(h1_real, x1, _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#else
-		q1 = _mm256_add_ps(q1, _mm256_addsub_ps( _mm256_mul_ps(h1_real, x1), _mm256_shuffle_ps(tmp1, tmp1, 0xb1)));
-#endif
-//		tmp2 = _mm256_mul_pd(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-//		q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h1_real, x2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
-#else
-//		q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h1_real, x2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
-#endif
+		tmp1 = _mm512_mul_ps(h1_imag, x1);
+		q1 = _mm512_add_ps(q1, _mm512_FMADDSUB_ps(h1_real, x1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1)));
 
-		_mm256_store_ps(&q_dbl[(2*i*ldq)+0], q1);
-//		_mm256_store_pd(&q_dbl[(2*i*ldq)+4], q2);
+		tmp2 = _mm512_mul_ps(h1_imag, x2);
+
+		q2 = _mm512_add_ps(q2, _mm512_FMADDSUB_ps(h1_real, x2, _mm512_shuffle_ps(tmp2, tmp2, 0xb1)));
+
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+0], q1);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+16], q2);
 	}
 }
