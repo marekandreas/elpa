@@ -265,9 +265,9 @@ endif
 
 if WITH_COMPLEX_AVX512_BLOCK2_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx512_2hv_double_precision.c
-#if WANT_SINGLE_PRECISION_COMPLEX
-#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx512_2hv_single_precision.c
-#endif
+if WANT_SINGLE_PRECISION_COMPLEX
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx512_2hv_single_precision.c
+endif
 endif
 
 .cu.lo:
