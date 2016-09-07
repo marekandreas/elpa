@@ -130,7 +130,7 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
 	__m512 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
 	int i=0;
 
-	__m512 sign = (__m512d)_mm512_set1_epi32(0x80000000);
+	__m512 sign = (__m512)_mm512_set1_epi32(0x80000000);
 
 	x1 = _mm512_load_ps(&q_dbl[0]);    // complex 1, 2, 3, 4, 5, 6, 7, 8
 	x2 = _mm512_load_ps(&q_dbl[16]);   // complex 9, 10, 11, 12, 13, 14, 15, 16
@@ -285,7 +285,7 @@ static __forceinline void hh_trafo_complex_kernel_32_AVX512_1hv_single(float com
 	__m512 tmp1, tmp2, tmp3, tmp4;
 	int i=0;
 
-	__m512 sign = (__m512)_mm512_set_epi32(0x80000000);
+	__m512 sign = (__m512)_mm512_set1_epi32(0x80000000);
 
 	x1 = _mm512_load_ps(&q_dbl[0]);   // complex 1 2 3 4 5 6 7 8
 	x2 = _mm512_load_ps(&q_dbl[16]);
@@ -402,7 +402,7 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_single(float com
 	__m512 tmp1, tmp2;
 	int i=0;
 
-	__m512 sign = (__m512)_mm512_set_epi32(0x80000000);
+	__m512 sign = (__m512)_mm512_set1_epi32(0x80000000);
 
 	x1 = _mm512_load_ps(&q_dbl[0]);
 	x2 = _mm512_load_ps(&q_dbl[16]);
