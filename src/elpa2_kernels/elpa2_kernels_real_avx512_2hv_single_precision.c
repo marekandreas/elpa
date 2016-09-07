@@ -138,7 +138,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 	int i;
 	// Needed bit mask for floating point sign flip
 	// carefull here
-        __m512 sign = (__m512d)_mm512_set1_epi32(0x80000000);
+        __m512 sign = (__m512)_mm512_set1_epi32(0x80000000);
 
 	__m512 x1 = _mm512_load_ps(&q[ldq]);
 	__m512 x2 = _mm512_load_ps(&q[ldq+32]);
