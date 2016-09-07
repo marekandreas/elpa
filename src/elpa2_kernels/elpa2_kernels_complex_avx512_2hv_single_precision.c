@@ -89,8 +89,8 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_2hv_single(float comp
 !f>                             bind(C, name="float_hh_trafo_complex_avx_avx2_2hv_single")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
-!f>     complex(kind=c_single)     :: q(*)
-!f>     complex(kind=c_single)     :: hh(pnb,2)
+!f>     complex(kind=c_float)     :: q(*)
+!f>     complex(kind=c_float)     :: hh(pnb,2)
 !f>   end subroutine
 !f> end interface
 !f>#endif
