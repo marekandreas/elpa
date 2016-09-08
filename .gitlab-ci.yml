@@ -45,7 +45,7 @@ intel-double-precision-mpi-noomp-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 intel-double-precision-mpi-noomp-cuda-jobs:
   tags:
@@ -58,7 +58,7 @@ intel-double-precision-mpi-noomp-cuda-jobs:
     - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --disable-assumed-size
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 500 128'
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
 
 
 intel-double-precision-nompi-noomp-cuda-jobs:
@@ -72,7 +72,7 @@ intel-double-precision-nompi-noomp-cuda-jobs:
     - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 500 128'
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
 
       #gfortran-double-precision-mpi-noomp-jobs:
       #  tags:
@@ -112,7 +112,7 @@ intel-single-precision-mpi-noomp-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 intel-single-precision-mpi-noomp-cuda-jobs:
   tags:
@@ -125,7 +125,7 @@ intel-single-precision-mpi-noomp-cuda-jobs:
     - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 500 128'
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
 
 intel-single-precision-nompi-noomp-cuda-jobs:
   tags:
@@ -138,7 +138,7 @@ intel-single-precision-nompi-noomp-cuda-jobs:
     - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 500 128'
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
 
 
       #gfortran-single-precision-mpi-noomp-jobs:
@@ -179,7 +179,7 @@ intel-double-precision-nompi-noomp-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 intel-double-precision-nompi-noomp-assumed-size-jobs:
   tags:
@@ -189,7 +189,7 @@ intel-double-precision-nompi-noomp-assumed-size-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no  --disable-assumed-size FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-double-precision-nompi-noomp-jobs:
       #  tags:
@@ -229,7 +229,7 @@ intel-single-precision-nompi-noomp-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 intel-single-precision-nompi-noomp-assumed-size-jobs:
   tags:
@@ -239,7 +239,7 @@ intel-single-precision-nompi-noomp-assumed-size-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --disable-assumed-size FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-nompi-noomp-jobs:
       #  tags:
@@ -281,7 +281,7 @@ intel-double-precision-mpi-openmp-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 intel-double-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -292,7 +292,7 @@ intel-double-precision-mpi-openmp-assumed-size-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-double-precision-mpi-openmp-jobs:
   tags:
@@ -303,7 +303,7 @@ gfortran-double-precision-mpi-openmp-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-double-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -314,7 +314,7 @@ gfortran-double-precision-mpi-openmp-assumed-size-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-double-precision-mpi-openmp-special-gcov-jobs:
       #  tags:
@@ -342,7 +342,7 @@ intel-single-precision-mpi-openmp-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 intel-single-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -353,7 +353,7 @@ intel-single-precision-mpi-openmp-assumed-size-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-single-precision-mpi-openmp-jobs:
   tags:
@@ -364,7 +364,7 @@ gfortran-single-precision-mpi-openmp-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-single-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -375,7 +375,7 @@ gfortran-single-precision-mpi-openmp-assumed-size-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 
       #gfortran-single-precision-mpi-openmp-special-gcov-jobs:
@@ -400,7 +400,7 @@ intel-double-precision-nompi-openmp-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 intel-double-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -411,7 +411,7 @@ intel-double-precision-nompi-openmp-assumed-size-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-double-precision-nompi-openmp-jobs:
   tags:
@@ -422,7 +422,7 @@ gfortran-double-precision-nompi-openmp-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-double-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -433,7 +433,7 @@ gfortran-double-precision-nompi-openmp-assumed-size-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-double-precision-nompi-openmp-special-gcov-jobs:
       #  tags:
@@ -458,7 +458,7 @@ intel-single-precision-nompi-openmp-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 intel-single-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -469,7 +469,7 @@ intel-single-precision-nompi-openmp-assumed-size-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-single-precision-nompi-openmp-jobs:
   tags:
@@ -480,7 +480,7 @@ gfortran-single-precision-nompi-openmp-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-single-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -491,7 +491,7 @@ gfortran-single-precision-nompi-openmp-assumed-size-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-nompi-openmp-special-gcov-jobs:
       #  tags:
@@ -515,7 +515,7 @@ intel-double-precision-mpi-noopenmp-ftimings-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-jobs:
       #  tags:
@@ -538,7 +538,7 @@ intel-single-precision-mpi-noopenmp-ftimings-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-jobs:
       #  tags:
@@ -561,7 +561,7 @@ intel-double-precision-nompi-noopenmp-ftimings-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no --with-ftimings FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-double-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
@@ -584,7 +584,7 @@ intel-single-precision-nompi-noopenmp-ftimings-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
@@ -626,7 +626,7 @@ intel-double-precision-nompi-openmp-ftimings-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-double-precision-nompi-openmp-ftimings-jobs:
   tags:
@@ -637,7 +637,7 @@ gfortran-double-precision-nompi-openmp-ftimings-jobs:
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
@@ -665,7 +665,7 @@ intel-single-precision-nompi-noopenmp-ftimings-jobs:
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 intel-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
   tags:
@@ -1548,7 +1548,7 @@ intel-double-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   tags:
@@ -1559,7 +1559,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-compl
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-special-gcov-jobs:
       #  tags:
@@ -1736,7 +1736,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-ss
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
       #  tags:
@@ -1761,7 +1761,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   tags:
@@ -1772,7 +1772,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-s
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-special-gcov-jobs:
       #  tags:
@@ -1799,7 +1799,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
       #  tags:
@@ -1877,7 +1877,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-av
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-noopenmp-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
       #  tags:
@@ -1917,7 +1917,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   tags:
@@ -1928,7 +1928,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-special-gcov-jobs:
       #  tags:
@@ -2007,7 +2007,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-a
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-special-gcov-jobs:
       #  tags:
@@ -2030,7 +2030,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-av
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-jobs:
       #  tags:
@@ -2066,7 +2066,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-avx_
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-jobs:
   tags:
@@ -2077,7 +2077,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-a
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-special-gcov-jobs:
       #  tags:
@@ -2100,7 +2100,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
     - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16'
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-nopenmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-jobs:
       #  tags:
