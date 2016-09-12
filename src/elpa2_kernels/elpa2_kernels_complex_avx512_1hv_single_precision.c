@@ -121,8 +121,8 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
 	x2 = _mm512_load_ps(&q_dbl[16]);   // complex 9, 10, 11, 12, 13, 14, 15, 16
 	x3 = _mm512_load_ps(&q_dbl[32]);   // complex 17 ...24
 	x4 = _mm512_load_ps(&q_dbl[48]);   // complex 25 .. 32
-	x5 = _mm512_load_ps(&q_dbl[54]);   // complex 33 .. 40
-	x6 = _mm512_load_ps(&q_dbl[60]);   // complex 40 .. 48
+	x5 = _mm512_load_ps(&q_dbl[64]);   // complex 33 .. 40
+	x6 = _mm512_load_ps(&q_dbl[80]);   // complex 40 .. 48
 
 	for (i = 1; i < nb; i++)
 	{
@@ -133,8 +133,8 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
 		q2 = _mm512_load_ps(&q_dbl[(2*i*ldq)+16]);
 		q3 = _mm512_load_ps(&q_dbl[(2*i*ldq)+32]);
 		q4 = _mm512_load_ps(&q_dbl[(2*i*ldq)+48]);
-		q5 = _mm512_load_ps(&q_dbl[(2*i*ldq)+54]);
-		q6 = _mm512_load_ps(&q_dbl[(2*i*ldq)+60]);
+		q5 = _mm512_load_ps(&q_dbl[(2*i*ldq)+64]);
+		q6 = _mm512_load_ps(&q_dbl[(2*i*ldq)+80]);
 
 		tmp1 = _mm512_mul_ps(h1_imag, q1);
 		x1 = _mm512_add_ps(x1, _mm512_FMSUBADD_ps(h1_real, q1, _mm512_shuffle_ps(tmp1, tmp1, 0xb1)));
@@ -197,8 +197,8 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
 	q2 = _mm512_load_ps(&q_dbl[16]);
 	q3 = _mm512_load_ps(&q_dbl[32]);
 	q4 = _mm512_load_ps(&q_dbl[48]);
-	q5 = _mm512_load_ps(&q_dbl[54]);
-	q6 = _mm512_load_ps(&q_dbl[60]);
+	q5 = _mm512_load_ps(&q_dbl[64]);
+	q6 = _mm512_load_ps(&q_dbl[80]);
 
 	q1 = _mm512_add_ps(q1, x1);
 	q2 = _mm512_add_ps(q2, x2);
@@ -211,8 +211,8 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
 	_mm512_store_ps(&q_dbl[16], q2);
 	_mm512_store_ps(&q_dbl[32], q3);
 	_mm512_store_ps(&q_dbl[48], q4);
-	_mm512_store_ps(&q_dbl[54], q5);
-	_mm512_store_ps(&q_dbl[60], q6);
+	_mm512_store_ps(&q_dbl[64], q5);
+	_mm512_store_ps(&q_dbl[80], q6);
 
 	for (i = 1; i < nb; i++)
 	{
@@ -223,8 +223,8 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
 		q2 = _mm512_load_ps(&q_dbl[(2*i*ldq)+16]);
 		q3 = _mm512_load_ps(&q_dbl[(2*i*ldq)+32]);
 		q4 = _mm512_load_ps(&q_dbl[(2*i*ldq)+48]);
-		q5 = _mm512_load_ps(&q_dbl[(2*i*ldq)+54]);
-		q6 = _mm512_load_ps(&q_dbl[(2*i*ldq)+60]);
+		q5 = _mm512_load_ps(&q_dbl[(2*i*ldq)+64]);
+		q6 = _mm512_load_ps(&q_dbl[(2*i*ldq)+80]);
 
 		tmp1 = _mm512_mul_ps(h1_imag, x1);
 
@@ -254,8 +254,8 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
 		_mm512_store_ps(&q_dbl[(2*i*ldq)+16], q2);
 		_mm512_store_ps(&q_dbl[(2*i*ldq)+32], q3);
 		_mm512_store_ps(&q_dbl[(2*i*ldq)+48], q4);
-		_mm512_store_ps(&q_dbl[(2*i*ldq)+54], q5);
-		_mm512_store_ps(&q_dbl[(2*i*ldq)+60], q6);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+64], q5);
+		_mm512_store_ps(&q_dbl[(2*i*ldq)+80], q6);
 	}
 }
 
