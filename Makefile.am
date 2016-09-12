@@ -528,7 +528,7 @@ elpa1_real_invert_trm_single_precision@SUFFIX@_LDADD = $(build_lib)
 elpa1_real_invert_trm_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa1_real_invert_trm_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-elpa2_test_real_default_single_precision@SUFFIX@_SOURCES = test/Fortran/test_real2_default.F90
+elpa2_test_real_default_single_precision@SUFFIX@_SOURCES = test/Fortran/test_real2_default_single.F90
 elpa2_test_real_default_single_precision@SUFFIX@_LDADD = $(build_lib)
 #elpa2_test_real_default_single_precision@SUFFIX@_LDFLAGS = -static
 elpa2_test_real_default_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
