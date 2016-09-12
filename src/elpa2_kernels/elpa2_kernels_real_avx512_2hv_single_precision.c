@@ -141,9 +141,9 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
         __m512 sign = (__m512)_mm512_set1_epi32(0x80000000);
 
 	__m512 x1 = _mm512_load_ps(&q[ldq]);
-	__m512 x2 = _mm512_load_ps(&q[ldq+32]);
-	__m512 x3 = _mm512_load_ps(&q[ldq+48]);
-	__m512 x4 = _mm512_load_ps(&q[ldq+64]);
+	__m512 x2 = _mm512_load_ps(&q[ldq+16]);
+	__m512 x3 = _mm512_load_ps(&q[ldq+32]);
+	__m512 x4 = _mm512_load_ps(&q[ldq+48]);
 
 
 	__m512 h1 = _mm512_set1_ps(hh[ldh+1]);
@@ -298,8 +298,8 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
         __m512 sign = (__m512)_mm512_set1_epi32(0x80000000);
 
 	__m512 x1 = _mm512_load_ps(&q[ldq]);
-	__m512 x2 = _mm512_load_ps(&q[ldq+32]);
-	__m512 x3 = _mm512_load_ps(&q[ldq+48]);
+	__m512 x2 = _mm512_load_ps(&q[ldq+16]);
+	__m512 x3 = _mm512_load_ps(&q[ldq+32]);
 //	__m512 x4 = _mm512_load_ps(&q[ldq+64]);
 
 
@@ -456,7 +456,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
         __m512 sign = (__m512)_mm512_set1_epi32(0x80000000);
 
 	__m512 x1 = _mm512_load_ps(&q[ldq]);
-	__m512 x2 = _mm512_load_ps(&q[ldq+32]);
+	__m512 x2 = _mm512_load_ps(&q[ldq+16]);
 //	__m512 x3 = _mm512_load_ps(&q[ldq+48]);
 //	__m512 x4 = _mm512_load_ps(&q[ldq+64]);
 
