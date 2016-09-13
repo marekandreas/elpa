@@ -122,12 +122,13 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_2hv_double(double co
 	__m512d tmp1, tmp2, tmp3, tmp4;
 	int i=0;
 
-	__m512d sign = (__m512d)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+	//__m512d sign = (__m512d)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+       __m512d sign = (__m512d)_mm512_set1_epi64(0x8000000000000000);
 
-	x1 = _mm512_load_pd(&q_dbl[(2*ldq)+0]);
-	x2 = _mm512_load_pd(&q_dbl[(2*ldq)+8]);
-	x3 = _mm512_load_pd(&q_dbl[(2*ldq)+16]);
-	x4 = _mm512_load_pd(&q_dbl[(2*ldq)+24]);
+	x1 = _mm512_load_pd(&q_dbl[(2*ldq)+0]);  // q1, q2, q3, q4
+	x2 = _mm512_load_pd(&q_dbl[(2*ldq)+8]);  // q5, q6, q7, q8
+	x3 = _mm512_load_pd(&q_dbl[(2*ldq)+16]); // q9, q10, q11, q12
+	x4 = _mm512_load_pd(&q_dbl[(2*ldq)+24]); // q13, q14, q15, q16
 
 	h2_real = _mm512_set1_pd(hh_dbl[(ldh+1)*2]);
 	h2_imag = _mm512_set1_pd(hh_dbl[((ldh+1)*2)+1]);
@@ -460,9 +461,10 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_2hv_double(double com
 	__m512d tmp1, tmp2;
 	int i=0;
 
-	__m512d sign = (__m512d)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+	// __m512d sign = (__m512d)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+       __m512d sign = (__m512d)_mm512_set1_epi64(0x8000000000000000);
 
-	x1 = _mm512_load_pd(&q_dbl[(2*ldq)+0]);
+        x1 = _mm512_load_pd(&q_dbl[(2*ldq)+0]);
 	x2 = _mm512_load_pd(&q_dbl[(2*ldq)+8]);
 
 	h2_real = _mm512_set1_pd(hh_dbl[(ldh+1)*2]);
