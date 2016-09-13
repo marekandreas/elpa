@@ -116,7 +116,7 @@ void double_hh_trafo_complex_avx_avx2_2hv_double(double complex* q, double compl
 		s += hh[i-1] * conj(hh[(i+ldh)]);
 	}
 
-#if 1
+//#if 1
 	for (i = 0; i < nq-4; i+=8)
 	{
 		hh_trafo_complex_kernel_8_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
@@ -125,20 +125,20 @@ void double_hh_trafo_complex_avx_avx2_2hv_double(double complex* q, double compl
 	{
 		hh_trafo_complex_kernel_4_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
-#else
-	for (i = 0; i < nq-4; i+=6)
-	{
-		hh_trafo_complex_kernel_6_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
-	}
-	if (nq-i > 2)
-	{
-		hh_trafo_complex_kernel_4_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
-	}
-	else if (nq-i > 0)
-	{
-		hh_trafo_complex_kernel_2_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
-	}
-#endif
+//#else
+//	for (i = 0; i < nq-4; i+=6)
+//	{
+//		hh_trafo_complex_kernel_6_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+//	}
+//	if (nq-i > 2)
+//	{
+//		hh_trafo_complex_kernel_4_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+//	}
+//	else if (nq-i > 0)
+//	{
+//		hh_trafo_complex_kernel_2_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+//	}
+//#endif
 }
 
 static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv_double(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
