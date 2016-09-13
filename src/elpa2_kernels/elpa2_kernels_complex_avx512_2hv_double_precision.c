@@ -99,10 +99,6 @@ void double_hh_trafo_complex_avx512_2hv_double(double complex* q, double complex
 	{
 		hh_trafo_complex_kernel_16_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
-	if (nq == i)
-	{
-		return;
-	}
 	if (nq-i > 0)
 	{
 		hh_trafo_complex_kernel_8_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
