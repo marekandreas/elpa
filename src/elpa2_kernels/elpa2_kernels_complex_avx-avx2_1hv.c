@@ -112,11 +112,17 @@ void single_hh_trafo_complex_avx_avx2_1hv(double complex* q, double complex* hh,
 	{
 		hh_trafo_complex_kernel_12_AVX_1hv(&q[i], hh, nb, ldq);
 	}
-	if (nq-i > 4)
+
+	if (nq == i)
+	{
+		return;
+	}
+
+	if (nq-i == 8)
 	{
 		hh_trafo_complex_kernel_8_AVX_1hv(&q[i], hh, nb, ldq);
 	}
-	else if (nq-i > 0)
+	else
 	{
 		hh_trafo_complex_kernel_4_AVX_1hv(&q[i], hh, nb, ldq);
 	}
