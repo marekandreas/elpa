@@ -120,7 +120,9 @@ void double_hh_trafo_complex_avx_avx2_2hv(double complex* q, double complex* hh,
 	{
 		hh_trafo_complex_kernel_8_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
 	}
-	if (nq-i > 0)
+	if (nq-i == 0) {
+          return;
+	} else
 	{
 		hh_trafo_complex_kernel_4_AVX_2hv(&q[i], hh, nb, ldq, ldh, s);
 	}
