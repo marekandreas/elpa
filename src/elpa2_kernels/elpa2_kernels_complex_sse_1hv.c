@@ -102,13 +102,17 @@ void single_hh_trafo_complex_sse_1hv(double complex* q, double complex* hh, int*
 	{
 		hh_trafo_complex_kernel_6_SSE_1hv(&q[i], hh, nb, ldq);
 	}
-	if (nq-i > 2)
-	{
+	if (nq-i == 0) {
+	  return;
+	} else {
+	  if (nq-i > 2)
+	  {
 		hh_trafo_complex_kernel_4_SSE_1hv(&q[i], hh, nb, ldq);
-	}
-	else if (nq-i > 0)
-	{
+	  }
+	  else
+	  {
 		hh_trafo_complex_kernel_2_SSE_1hv(&q[i], hh, nb, ldq);
+	  }
 	}
 }
 
