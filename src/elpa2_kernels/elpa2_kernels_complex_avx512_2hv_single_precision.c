@@ -70,7 +70,7 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_2hv_single(float com
 !f>#if defined(HAVE_AVX512)
 !f> interface
 !f>   subroutine double_hh_trafo_complex_avx512_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
-!f>                             bind(C, name="double_hh_trafo_complex_avx_avx2_2hv_single")
+!f>                             bind(C, name="double_hh_trafo_complex_avx512_2hv_single")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
 !f>     complex(kind=c_float)     :: q(*)
