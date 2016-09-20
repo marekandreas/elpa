@@ -136,13 +136,13 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
    ! Get global_id mapping 2D procssor coordinates to global id
 
    allocate(global_id(0:np_rows-1,0:np_cols-1))
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    allocate(global_id_tmp(0:np_rows-1,0:np_cols-1))
 #endif
    global_id(:,:) = 0
    global_id(my_prow, my_pcol) = my_pe
 #ifdef WITH_MPI
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    global_id_tmp(:,:) = global_id(:,:)
    call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
    deallocate(global_id_tmp)

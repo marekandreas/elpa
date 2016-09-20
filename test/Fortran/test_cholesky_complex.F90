@@ -48,7 +48,7 @@ program test_cholesky
    use precision
    use ELPA1
    use elpa_utilities
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    use test_util
 #endif
 
@@ -102,7 +102,7 @@ program test_cholesky
    complex(kind=ck8), parameter   :: pi = (3.141592653589793238462643383279_rk8, 0.0_rk8)
 
    integer(kind=ik)           :: STATUS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
                                  provided_mpi_thread_level
 #endif

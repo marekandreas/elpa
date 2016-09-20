@@ -64,7 +64,7 @@ program read_real
    use precision
    use ELPA1
    use elpa_utilities, only : error_unit
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    use test_util
 #endif
 #ifdef HAVE_REDIRECT
@@ -104,13 +104,13 @@ program read_real
    real(kind=rk), allocatable  :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
    character*256               :: filename
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    integer(kind=iK)            :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_LOOP_BASED
    call mpi_init(mpierr)
 #else
    required_mpi_thread_level = MPI_THREAD_MULTIPLE

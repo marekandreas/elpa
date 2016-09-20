@@ -46,14 +46,14 @@ module compute_hh_trafo_real
   use elpa_mpi
   implicit none
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
   public compute_hh_trafo_real_cpu_openmp_double
 #else
   public compute_hh_trafo_real_cpu_double
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
   public compute_hh_trafo_real_cpu_openmp_single
 #else
   public compute_hh_trafo_real_cpu_single
@@ -64,7 +64,7 @@ module compute_hh_trafo_real
 
   contains
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
        subroutine compute_hh_trafo_real_cpu_openmp_double(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
                                                    a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,    &
                                                    hh_tau_dev, kernel_flops, kernel_time, off, ncols, istripe,              &
@@ -115,7 +115,7 @@ module compute_hh_trafo_real
 
          integer(kind=ik), intent(in) :: stripe_width,a_dim2,stripe_count
 
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_LOOP_BASED
          integer(kind=ik), intent(in) :: last_stripe_width
 !         real(kind=rk8)                :: a(stripe_width,a_dim2,stripe_count)
          real(kind=rk8), pointer      :: a(:,:,:)
@@ -133,7 +133,7 @@ module compute_hh_trafo_real
          integer(kind=c_intptr_t)     :: hh_tau_dev
          ! Private variables in OMP regions (my_thread) should better be in the argument list!
          integer(kind=ik)             :: off, ncols, istripe
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          integer(kind=ik)             :: my_thread, noff
 #endif
          integer(kind=ik)             :: j, nl, jj, jjj
@@ -146,7 +146,7 @@ module compute_hh_trafo_real
          endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          call timer%start("compute_hh_trafo_real_cpu_openmp_double")
 #else
          call timer%start("compute_hh_trafo_real_cpu_double")
@@ -154,7 +154,7 @@ module compute_hh_trafo_real
 #endif
          ttt = mpi_wtime()
 
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_LOOP_BASED
          nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
 #else
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
@@ -169,7 +169,7 @@ module compute_hh_trafo_real
            nl = min(my_thread*thread_width-noff, l_nev-noff)
            if (nl<=0) then
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call timer%stop("compute_hh_trafo_real_cpu_openmp_double")
 #else
              call timer%stop("compute_hh_trafo_real_cpu_double")
@@ -178,7 +178,7 @@ module compute_hh_trafo_real
              return
            endif
          endif
-#endif /* not WITH_OPENMP */
+#endif /* not WITH_OPENMP_LOOP_BASED */
 
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
            dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_double_real_datatype
@@ -208,7 +208,7 @@ module compute_hh_trafo_real
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                  call double_hh_trafo_generic_double(a(1,j+off+a_off-1,istripe,my_thread), w, &
                                             nbw, nl, stripe_width, nbw)
@@ -219,7 +219,7 @@ module compute_hh_trafo_real
                                               nbw, nl, stripe_width, nbw)
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                  call double_hh_trafo_generic_double(a(1,j+off+a_off-1,istripe),w, &
@@ -229,7 +229,7 @@ module compute_hh_trafo_real
                  call double_hh_trafo_generic_double(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1,istripe),w(1:nbw,1:6), &
                                             nbw, nl, stripe_width, nbw)
 #endif
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
 
                enddo
 
@@ -246,7 +246,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                  call double_hh_trafo_generic_simple_double(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
@@ -256,7 +256,7 @@ module compute_hh_trafo_real
 
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                  call double_hh_trafo_generic_simple_double(a(1,j+off+a_off-1,istripe), &
                                                        w, nbw, nl, stripe_width, nbw)
@@ -266,7 +266,7 @@ module compute_hh_trafo_real
 
 #endif
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
 
                enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
@@ -282,7 +282,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                  call double_hh_trafo_double(c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, &
                                       stripe_width, nbw)
 #else
@@ -304,7 +304,7 @@ module compute_hh_trafo_real
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_real_sse_2hv_double(c_loc(a(1,j+off+a_off-1,istripe,my_thread)), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -330,7 +330,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 
                call double_hh_trafo_real_avx_avx2_2hv_double(c_loc(a(1,j+off+a_off-1,istripe,my_thread)), &
                                                        w, nbw, nl, stripe_width, nbw)
@@ -357,7 +357,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 
                call double_hh_trafo_real_avx512_2hv_double(c_loc(a(1,j+off+a_off-1,istripe,my_thread)), &
                                                        w, nbw, nl, stripe_width, nbw)
@@ -381,7 +381,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                  call double_hh_trafo_bgp_double(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                           stripe_width, nbw)
 #else
@@ -401,7 +401,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                  call double_hh_trafo_bgq_double(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                           stripe_width, nbw)
 #else
@@ -419,7 +419,7 @@ module compute_hh_trafo_real
 !              call double_hh_trafo_real_avx_avx2_2hv(a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
 !#endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (j==1) call single_hh_trafo_real_cpu_openmp_double(a(1:stripe_width, &
                                       1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
                                       bcast_buffer(1:nbw,off+1), nbw, nl,     &
@@ -447,7 +447,7 @@ module compute_hh_trafo_real
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
                w(:,3) = bcast_buffer(1:nbw,j+off-2)
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call quad_hh_trafo_real_sse_4hv_double(c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -458,7 +458,7 @@ module compute_hh_trafo_real
              do jj = j, 2, -2
                w(:,1) = bcast_buffer(1:nbw,jj+off)
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_real_sse_2hv_double(c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -466,7 +466,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jj==1) call single_hh_trafo_real_cpu_openmp_double(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                      istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -496,7 +496,7 @@ module compute_hh_trafo_real
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
                w(:,3) = bcast_buffer(1:nbw,j+off-2)
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call quad_hh_trafo_real_avx_avx2_4hv_double(c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -507,7 +507,7 @@ module compute_hh_trafo_real
              do jj = j, 2, -2
                w(:,1) = bcast_buffer(1:nbw,jj+off)
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_real_avx_avx2_2hv_double(c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -515,7 +515,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jj==1) call single_hh_trafo_real_cpu_openmp_double(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                       istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -543,7 +543,7 @@ module compute_hh_trafo_real
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
                w(:,3) = bcast_buffer(1:nbw,j+off-2)
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call quad_hh_trafo_real_avx512_4hv_double(c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -554,7 +554,7 @@ module compute_hh_trafo_real
              do jj = j, 2, -2
                w(:,1) = bcast_buffer(1:nbw,jj+off)
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_real_avx512_2hv_double(c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -562,7 +562,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jj==1) call single_hh_trafo_real_cpu_openmp_double(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                       istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -590,7 +590,7 @@ module compute_hh_trafo_real
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
                w(:,5) = bcast_buffer(1:nbw,j+off-4)
                w(:,6) = bcast_buffer(1:nbw,j+off-5)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call hexa_hh_trafo_real_sse_6hv_double(c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -603,7 +603,7 @@ module compute_hh_trafo_real
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
                w(:,3) = bcast_buffer(1:nbw,jj+off-2)
                w(:,4) = bcast_buffer(1:nbw,jj+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call quad_hh_trafo_real_sse_4hv_double(c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -614,7 +614,7 @@ module compute_hh_trafo_real
              do jjj = jj, 2, -2
                w(:,1) = bcast_buffer(1:nbw,jjj+off)
                w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_real_sse_2hv_double(c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -622,7 +622,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jjj==1) call single_hh_trafo_real_cpu_openmp_double(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                         istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -649,7 +649,7 @@ module compute_hh_trafo_real
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
                w(:,5) = bcast_buffer(1:nbw,j+off-4)
                w(:,6) = bcast_buffer(1:nbw,j+off-5)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call hexa_hh_trafo_real_avx_avx2_6hv_double(c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -662,7 +662,7 @@ module compute_hh_trafo_real
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
                w(:,3) = bcast_buffer(1:nbw,jj+off-2)
                w(:,4) = bcast_buffer(1:nbw,jj+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call quad_hh_trafo_real_avx_avx2_4hv_double(c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -673,7 +673,7 @@ module compute_hh_trafo_real
              do jjj = jj, 2, -2
                w(:,1) = bcast_buffer(1:nbw,jjj+off)
                w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_real_avx_avx2_2hv_double(c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -681,7 +681,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jjj==1) call single_hh_trafo_real_cpu_openmp_double(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                        istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -706,7 +706,7 @@ module compute_hh_trafo_real
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
                w(:,5) = bcast_buffer(1:nbw,j+off-4)
                w(:,6) = bcast_buffer(1:nbw,j+off-5)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call hexa_hh_trafo_real_avx512_6hv_double(c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -719,7 +719,7 @@ module compute_hh_trafo_real
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
                w(:,3) = bcast_buffer(1:nbw,jj+off-2)
                w(:,4) = bcast_buffer(1:nbw,jj+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call quad_hh_trafo_real_avx512_4hv_double(c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -730,7 +730,7 @@ module compute_hh_trafo_real
              do jjj = jj, 2, -2
                w(:,1) = bcast_buffer(1:nbw,jjj+off)
                w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_real_avx512_2hv_double(c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -738,7 +738,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jjj==1) call single_hh_trafo_real_cpu_openmp_double(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                        istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -753,23 +753,23 @@ module compute_hh_trafo_real
 
          endif ! GPU_KERNEL
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          if (my_thread==1) then
 #endif
            kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
            kernel_time = kernel_time + mpi_wtime()-ttt
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          endif
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          call timer%stop("compute_hh_trafo_real_cpu_openmp_double")
 #else
          call timer%stop("compute_hh_trafo_real_cpu_double")
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
        end subroutine compute_hh_trafo_real_cpu_openmp_double
 #else
        end subroutine compute_hh_trafo_real_cpu_double
@@ -778,7 +778,7 @@ module compute_hh_trafo_real
 #ifdef WANT_SINGLE_PRECISION_REAL
 ! SINGLE PRECISION IMPLEMENTATION AT THE MOMENT DUPLICATED !!!
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
        subroutine compute_hh_trafo_real_cpu_openmp_single(a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
                                                    a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,    &
                                                    hh_tau_dev, kernel_flops, kernel_time, off, ncols, istripe,              &
@@ -829,7 +829,7 @@ module compute_hh_trafo_real
 
          integer(kind=ik), intent(in) :: stripe_width,a_dim2,stripe_count
 
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_LOOP_BASED
          integer(kind=ik), intent(in) :: last_stripe_width
 !         real(kind=rk4)                :: a(stripe_width,a_dim2,stripe_count)
          real(kind=rk4), pointer      :: a(:,:,:)
@@ -847,7 +847,7 @@ module compute_hh_trafo_real
          integer(kind=c_intptr_t)     :: hh_tau_dev
          ! Private variables in OMP regions (my_thread) should better be in the argument list!
          integer(kind=ik)             :: off, ncols, istripe
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          integer(kind=ik)             :: my_thread, noff
 #endif
          integer(kind=ik)             :: j, nl, jj, jjj
@@ -860,7 +860,7 @@ module compute_hh_trafo_real
          endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          call timer%start("compute_hh_trafo_real_cpu_openmp_single")
 #else
          call timer%start("compute_hh_trafo_real_cpu_single")
@@ -868,7 +868,7 @@ module compute_hh_trafo_real
 #endif
          ttt = mpi_wtime()
 
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_LOOP_BASED
          nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
 #else
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
@@ -883,7 +883,7 @@ module compute_hh_trafo_real
            nl = min(my_thread*thread_width-noff, l_nev-noff)
            if (nl<=0) then
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call timer%stop("compute_hh_trafo_real_cpu_openmp_single")
 #else
              call timer%stop("compute_hh_trafo_real_cpu_single")
@@ -892,7 +892,7 @@ module compute_hh_trafo_real
              return
            endif
          endif
-#endif /* not WITH_OPENMP */
+#endif /* not WITH_OPENMP_LOOP_BASED */
 
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
            dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_single_real_datatype
@@ -922,7 +922,7 @@ module compute_hh_trafo_real
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                  call double_hh_trafo_generic_single(a(1,j+off+a_off-1,istripe,my_thread), w, &
                                             nbw, nl, stripe_width, nbw)
@@ -933,7 +933,7 @@ module compute_hh_trafo_real
                                               nbw, nl, stripe_width, nbw)
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                  call double_hh_trafo_generic_single(a(1,j+off+a_off-1,istripe),w, &
@@ -943,7 +943,7 @@ module compute_hh_trafo_real
                  call double_hh_trafo_generic_single(a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1,istripe),w(1:nbw,1:6), &
                                             nbw, nl, stripe_width, nbw)
 #endif
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
 
                enddo
 
@@ -960,7 +960,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                  call double_hh_trafo_generic_simple_single(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
@@ -970,7 +970,7 @@ module compute_hh_trafo_real
 
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                  call double_hh_trafo_generic_simple_single(a(1,j+off+a_off-1,istripe), &
                                                        w, nbw, nl, stripe_width, nbw)
@@ -980,7 +980,7 @@ module compute_hh_trafo_real
 
 #endif
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
 
                enddo
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
@@ -996,7 +996,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                  call double_hh_trafo_single(c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, &
                                       stripe_width, nbw)
 #else
@@ -1018,7 +1018,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                  call double_hh_trafo_real_sse_2hv_single(c_loc(a(1,j+off+a_off-1,istripe,my_thread)), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -1043,7 +1043,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                  call double_hh_trafo_real_avx_avx2_2hv_single(c_loc(a(1,j+off+a_off-1,istripe,my_thread)), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -1068,7 +1068,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                  call double_hh_trafo_real_avx512_2hv_single(c_loc(a(1,j+off+a_off-1,istripe,my_thread)), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -1091,7 +1091,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                  call double_hh_trafo_bgp_single(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                           stripe_width, nbw)
 #else
@@ -1112,7 +1112,7 @@ module compute_hh_trafo_real
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                  call double_hh_trafo_bgq_single(a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, &
                                           stripe_width, nbw)
 #else
@@ -1125,7 +1125,7 @@ module compute_hh_trafo_real
 #endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
 #endif /* WITH_REAL_BGQ_KERNEL */
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (j==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width, &
                                    1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
                                       bcast_buffer(1:nbw,off+1), nbw, nl,     &
@@ -1155,7 +1155,7 @@ module compute_hh_trafo_real
              w(:,2) = bcast_buffer(1:nbw,j+off-1)
              w(:,3) = bcast_buffer(1:nbw,j+off-2)
              w(:,4) = bcast_buffer(1:nbw,j+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call quad_hh_trafo_real_sse_4hv_single(c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -1166,7 +1166,7 @@ module compute_hh_trafo_real
            do jj = j, 2, -2
              w(:,1) = bcast_buffer(1:nbw,jj+off)
              w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call double_hh_trafo_real_sse_2hv_single(c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -1174,7 +1174,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
            enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
            if (jj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                     istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -1204,7 +1204,7 @@ module compute_hh_trafo_real
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
                w(:,3) = bcast_buffer(1:nbw,j+off-2)
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 
              call quad_hh_trafo_real_avx_avx2_4hv_single(c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
@@ -1216,7 +1216,7 @@ module compute_hh_trafo_real
              do jj = j, 2, -2
                w(:,1) = bcast_buffer(1:nbw,jj+off)
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 
              call double_hh_trafo_real_avx_avx2_2hv_single(c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
@@ -1225,7 +1225,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                       istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -1253,7 +1253,7 @@ module compute_hh_trafo_real
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
                w(:,3) = bcast_buffer(1:nbw,j+off-2)
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call quad_hh_trafo_real_avx512_4hv_single(c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -1264,7 +1264,7 @@ module compute_hh_trafo_real
              do jj = j, 2, -2
                w(:,1) = bcast_buffer(1:nbw,jj+off)
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_real_avx512_2hv_single(c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -1272,7 +1272,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                       istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -1300,7 +1300,7 @@ module compute_hh_trafo_real
              w(:,4) = bcast_buffer(1:nbw,j+off-3)
              w(:,5) = bcast_buffer(1:nbw,j+off-4)
              w(:,6) = bcast_buffer(1:nbw,j+off-5)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call hexa_hh_trafo_real_sse_6hv_single(c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -1313,7 +1313,7 @@ module compute_hh_trafo_real
              w(:,2) = bcast_buffer(1:nbw,jj+off-1)
              w(:,3) = bcast_buffer(1:nbw,jj+off-2)
              w(:,4) = bcast_buffer(1:nbw,jj+off-3)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call quad_hh_trafo_real_sse_4hv_single(c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -1324,7 +1324,7 @@ module compute_hh_trafo_real
            do jjj = jj, 2, -2
              w(:,1) = bcast_buffer(1:nbw,jjj+off)
              w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call double_hh_trafo_real_sse_2hv_single(c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -1332,7 +1332,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
            enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
            if (jjj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                      istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -1360,7 +1360,7 @@ module compute_hh_trafo_real
                w(:,5) = bcast_buffer(1:nbw,j+off-4)
                w(:,6) = bcast_buffer(1:nbw,j+off-5)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call hexa_hh_trafo_real_avx_avx2_6hv_single(c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -1374,7 +1374,7 @@ module compute_hh_trafo_real
                w(:,3) = bcast_buffer(1:nbw,jj+off-2)
                w(:,4) = bcast_buffer(1:nbw,jj+off-3)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call quad_hh_trafo_real_avx_avx2_4hv_single(c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -1386,7 +1386,7 @@ module compute_hh_trafo_real
                w(:,1) = bcast_buffer(1:nbw,jjj+off)
                w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call double_hh_trafo_real_avx_avx2_2hv_single(c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -1394,7 +1394,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jjj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                        istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -1421,7 +1421,7 @@ module compute_hh_trafo_real
                w(:,5) = bcast_buffer(1:nbw,j+off-4)
                w(:,6) = bcast_buffer(1:nbw,j+off-5)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call hexa_hh_trafo_real_avx512_6hv_single(c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -1435,7 +1435,7 @@ module compute_hh_trafo_real
                w(:,3) = bcast_buffer(1:nbw,jj+off-2)
                w(:,4) = bcast_buffer(1:nbw,jj+off-3)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call quad_hh_trafo_real_avx512_4hv_single(c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #else
@@ -1447,7 +1447,7 @@ module compute_hh_trafo_real
                w(:,1) = bcast_buffer(1:nbw,jjj+off)
                w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              call double_hh_trafo_real_avx512_2hv_single(c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), &
                                                     w, nbw, nl, stripe_width, nbw)
 #else
@@ -1455,7 +1455,7 @@ module compute_hh_trafo_real
                                                     w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (jjj==1) call single_hh_trafo_real_cpu_openmp_single(a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, &
                                                                        istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
@@ -1470,23 +1470,23 @@ module compute_hh_trafo_real
 
          endif ! GPU_KERNEL
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          if (my_thread==1) then
 #endif
            kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
            kernel_time = kernel_time + mpi_wtime()-ttt
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          endif
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          call timer%stop("compute_hh_trafo_real_cpu_openmp_single")
 #else
          call timer%stop("compute_hh_trafo_real_cpu_single")
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
        end subroutine compute_hh_trafo_real_cpu_openmp_single
 #else
        end subroutine compute_hh_trafo_real_cpu_single

@@ -108,7 +108,7 @@
       integer(kind=ik)            :: istep, i, j, lcs, lce, lrs, lre
       integer(kind=ik)            :: tile_size, l_rows_tile, l_cols_tile
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       integer(kind=ik)            :: my_thread, n_threads, max_threads, n_iter
       integer(kind=ik)            :: omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
 #endif
@@ -116,7 +116,7 @@
       real(kind=REAL_DATATYPE)               :: vav, vnorm2, x, aux(2*max_stored_rows), aux1(2), aux2(2), vrl, xf
 
       real(kind=REAL_DATATYPE), allocatable  :: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       real(kind=REAL_DATATYPE), allocatable  :: ur_p(:,:), uc_p(:,:)
 #endif
       integer(kind=ik)            :: istat
@@ -181,7 +181,7 @@
         stop
       endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       max_threads = omp_get_max_threads()
 
       allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
@@ -346,7 +346,7 @@
          ur(1:l_rows) = 0
          if (l_rows>0 .and. l_cols>0) then
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
@@ -374,7 +374,7 @@
                lrs = j*l_rows_tile+1
                lre = min(l_rows,(j+1)*l_rows_tile)
                if (lre<lrs) cycle
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                if (mod(n_iter,n_threads) == my_thread) then
 #ifdef DOUBLE_PRECISION_REAL
                  call DGEMV('T', lre-lrs+1, lce-lcs+1, 1.0_rk8, a(lrs,lcs), lda, vr(lrs), 1, 1.0_rk8, uc_p(lcs,my_thread), 1)
@@ -389,7 +389,7 @@
 #endif
                endif
                n_iter = n_iter+1
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 
 !              if (useGPU) then
 !                 uc_dev(1:l_cols) = 0.
@@ -432,10 +432,10 @@
 #endif
 !               endif ! useGPU
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
              enddo
            enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 !$OMP END PARALLEL
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
@@ -448,7 +448,7 @@
              uc(1:l_cols) = uc(1:l_cols) + uc_p(1:l_cols,i)
              ur(1:l_rows) = ur(1:l_rows) + ur_p(1:l_rows,i)
            enddo
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
 
 
            if (nstor>0) then
@@ -1836,7 +1836,7 @@
                                        dbase(na), ddiff(na), ev_scale(na), tmp(na)
       real(kind=REAL_DATATYPE)                 :: d1u(na), zu(na), d1l(na), zl(na)
       real(kind=REAL_DATATYPE), allocatable    :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       real(kind=REAL_DATATYPE), allocatable    :: z_p(:,:)
 #endif
 
@@ -1858,7 +1858,7 @@
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       integer(kind=ik)              :: max_threads, my_thread
       integer(kind=ik)              :: omp_get_max_threads, omp_get_thread_num
 
@@ -2259,14 +2259,14 @@
         ! Solve secular equation
 
         z(1:na1) = 1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
         z_p(1:na1,:) = 1
 #endif
         dbase(1:na1) = 0
         ddiff(1:na1) = 0
 
         info = 0
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
@@ -2299,7 +2299,7 @@
 
           ! Compute updated z
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           do j=1,na1
             if (i/=j)  z_p(j,my_thread) = z_p(j,my_thread)*( delta(j) / (d1(j)-d1(i)) )
           enddo
@@ -2325,7 +2325,7 @@
             ddiff(i) = delta(i)
           endif
         enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 !$OMP END PARALLEL
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -2364,7 +2364,7 @@
         ev_scale(:) = 0._rk4
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
@@ -2394,7 +2394,7 @@
 #endif
 !         ev_scale(i) = ev_scale_val
         enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 !$OMP END PARALLEL DO
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -2683,7 +2683,7 @@
         endif
       endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       deallocate(z_p, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"merge_systems: error when deallocating z_p "//errorMessage

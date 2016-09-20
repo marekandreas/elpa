@@ -77,7 +77,7 @@ program test_real
    use ELPA1
    use elpa_utilities, only : error_unit
    use from_c
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    use test_util
 #endif
 
@@ -121,7 +121,7 @@ program test_real
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    integer(kind=ik)           :: STATUS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
                                  provided_mpi_thread_level
 #endif
@@ -172,7 +172,7 @@ program test_real
 
 
    STATUS = 0
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    if (myid .eq. 0) then
       print *,"Threaded version of test program"
       print *,"Using ",omp_get_max_threads()," threads"

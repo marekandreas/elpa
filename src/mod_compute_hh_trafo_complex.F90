@@ -46,7 +46,7 @@ module compute_hh_trafo_complex
   use elpa_mpi
   implicit none
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
   public compute_hh_trafo_complex_cpu_openmp_double
 #else
   public compute_hh_trafo_complex_cpu_double
@@ -54,7 +54,7 @@ module compute_hh_trafo_complex
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
   public compute_hh_trafo_complex_cpu_openmp_single
 #else
   public compute_hh_trafo_complex_cpu_single
@@ -64,7 +64,7 @@ module compute_hh_trafo_complex
 
   contains
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          subroutine compute_hh_trafo_complex_cpu_openmp_double(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,         &
                                                         a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                         off, ncols, istripe,                                               &
@@ -99,7 +99,7 @@ module compute_hh_trafo_complex
            integer(kind=ik), intent(in) :: a_off
 
            integer(kind=ik), intent(in) :: stripe_width, a_dim2, stripe_count
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_LOOP_BASED
            integer(kind=ik), intent(in) :: last_stripe_width
            complex(kind=ck8)             :: a(stripe_width,a_dim2,stripe_count)
 #else
@@ -111,7 +111,7 @@ module compute_hh_trafo_complex
            ! Private variables in OMP regions (my_thread) should better be in the argument list!
 
            integer(kind=ik)             :: off, ncols, istripe, j, nl, jj
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
            integer(kind=ik)             :: my_thread, noff
 #endif
            real(kind=c_double)          :: ttt  ! MPI_WTIME always needs double
@@ -123,14 +123,14 @@ module compute_hh_trafo_complex
            complex(kind=ck8)            :: w(nbw,2)
 
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           call timer%start("compute_hh_trafo_complex_cpu_openmp_double")
 #else
           call timer%start("compute_hh_trafo_complex_cpu_double")
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
            if (istripe<stripe_count) then
              nl = stripe_width
            else
@@ -156,7 +156,7 @@ module compute_hh_trafo_complex
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_complex_sse_2hv_double(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -164,7 +164,7 @@ module compute_hh_trafo_complex
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (j==1) call single_hh_trafo_complex_sse_1hv_double(a(1,1+off+a_off,istripe,my_thread), &
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
@@ -187,7 +187,7 @@ module compute_hh_trafo_complex
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_complex_avx_avx2_2hv_double(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -195,7 +195,7 @@ module compute_hh_trafo_complex
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (j==1) call single_hh_trafo_complex_avx_avx2_1hv_double(a(1,1+off+a_off,istripe,my_thread), &
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
@@ -218,7 +218,7 @@ module compute_hh_trafo_complex
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_complex_avx512_2hv_double(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -226,7 +226,7 @@ module compute_hh_trafo_complex
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (j==1) call single_hh_trafo_complex_avx512_1hv_double(a(1,1+off+a_off,istripe,my_thread), &
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
@@ -245,7 +245,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                call single_hh_trafo_complex_generic_simple_double(a(1,j+off+a_off,istripe,my_thread), &
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
@@ -255,7 +255,7 @@ module compute_hh_trafo_complex
                                                            bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                call single_hh_trafo_complex_generic_simple_double(a(1,j+off+a_off,istripe), &
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
@@ -264,7 +264,7 @@ module compute_hh_trafo_complex
                                                           bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
              enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
            endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
@@ -280,7 +280,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
 
               call single_hh_trafo_complex_generic_double(a(1,j+off+a_off,istripe,my_thread), &
@@ -290,7 +290,7 @@ module compute_hh_trafo_complex
                                                    bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
               call single_hh_trafo_complex_generic_double(a(1,j+off+a_off,istripe), &
                                                    bcast_buffer(1,j+off),nbw,nl,stripe_width)
@@ -298,7 +298,7 @@ module compute_hh_trafo_complex
               call single_hh_trafo_complex_generic_double(a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe), &
                                                    bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
 
             enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
@@ -312,7 +312,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
               call single_hh_trafo_complex_double(a(1,j+off+a_off,istripe,my_thread), &
                                            bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -342,7 +342,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL))
             ttt = mpi_wtime()
             do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
               call single_hh_trafo_complex_sse_1hv_double(a(1,j+off+a_off,istripe,my_thread), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -366,7 +366,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL))
             ttt = mpi_wtime()
             do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
               call single_hh_trafo_complex_avx_avx2_1hv_double(a(1,j+off+a_off,istripe,my_thread), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -389,7 +389,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) )
             ttt = mpi_wtime()
             do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
               call single_hh_trafo_complex_avx512_1hv_double(a(1,j+off+a_off,istripe,my_thread), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -404,23 +404,23 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX512_BLOCK1_KERNEL  */
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           if (my_thread==1) then
 #endif
             kernel_flops = kernel_flops + 4*4*int(nl,8)*int(ncols,8)*int(nbw,8)
             kernel_time  = kernel_time + mpi_wtime()-ttt
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           endif
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           call timer%stop("compute_hh_trafo_complex_cpu_openmp_double")
 #else
           call timer%stop("compute_hh_trafo_complex_cpu_double")
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
         end subroutine compute_hh_trafo_complex_cpu_openmp_double
 #else
         end subroutine compute_hh_trafo_complex_cpu_double
@@ -429,7 +429,7 @@ module compute_hh_trafo_complex
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 ! single precision implementation , at the moment duplicated !!
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          subroutine compute_hh_trafo_complex_cpu_openmp_single(a, stripe_width, a_dim2, stripe_count, max_threads, l_nev,         &
                                                         a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                         off, ncols, istripe,                                               &
@@ -464,7 +464,7 @@ module compute_hh_trafo_complex
            integer(kind=ik), intent(in) :: a_off
 
            integer(kind=ik), intent(in) :: stripe_width, a_dim2, stripe_count
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_LOOP_BASED
            integer(kind=ik), intent(in) :: last_stripe_width
            complex(kind=ck4)            :: a(stripe_width,a_dim2,stripe_count)
 #else
@@ -476,7 +476,7 @@ module compute_hh_trafo_complex
            ! Private variables in OMP regions (my_thread) should better be in the argument list!
 
            integer(kind=ik)             :: off, ncols, istripe, j, nl, jj
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
            integer(kind=ik)             :: my_thread, noff
 #endif
            real(kind=c_double)          :: ttt  ! MPI_WTIME always needs double
@@ -488,14 +488,14 @@ module compute_hh_trafo_complex
            complex(kind=ck4)            :: w(nbw,2)
 
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           call timer%start("compute_hh_trafo_complex_cpu_openmp_single")
 #else
           call timer%start("compute_hh_trafo_complex_cpu_single")
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
            if (istripe<stripe_count) then
              nl = stripe_width
            else
@@ -519,7 +519,7 @@ module compute_hh_trafo_complex
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_complex_sse_2hv_single(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -527,7 +527,7 @@ module compute_hh_trafo_complex
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (j==1) call single_hh_trafo_complex_sse_1hv_single(a(1,1+off+a_off,istripe,my_thread), &
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
@@ -548,7 +548,7 @@ module compute_hh_trafo_complex
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_complex_avx_avx2_2hv_single(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -556,7 +556,7 @@ module compute_hh_trafo_complex
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (j==1) call single_hh_trafo_complex_avx_avx2_1hv_single(a(1,1+off+a_off,istripe,my_thread), &
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
@@ -576,7 +576,7 @@ module compute_hh_trafo_complex
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
                call double_hh_trafo_complex_avx512_2hv_single(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -584,7 +584,7 @@ module compute_hh_trafo_complex
                                                        w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
              if (j==1) call single_hh_trafo_complex_avx512_1hv_single(a(1,1+off+a_off,istripe,my_thread), &
                                                              bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
@@ -603,7 +603,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                call single_hh_trafo_complex_generic_simple_single(a(1,j+off+a_off,istripe,my_thread), &
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
@@ -613,7 +613,7 @@ module compute_hh_trafo_complex
                                                            bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
                call single_hh_trafo_complex_generic_simple_single(a(1,j+off+a_off,istripe), &
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
@@ -622,7 +622,7 @@ module compute_hh_trafo_complex
                                                           bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
              enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
            endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
@@ -638,7 +638,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
 
               call single_hh_trafo_complex_generic_single(a(1,j+off+a_off,istripe,my_thread), &
@@ -648,7 +648,7 @@ module compute_hh_trafo_complex
                                                    bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
               call single_hh_trafo_complex_generic_single(a(1,j+off+a_off,istripe), &
                                                    bcast_buffer(1,j+off),nbw,nl,stripe_width)
@@ -656,7 +656,7 @@ module compute_hh_trafo_complex
               call single_hh_trafo_complex_generic_single(a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe), &
                                                    bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
 
             enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
@@ -670,7 +670,7 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
               call single_hh_trafo_complex_single(a(1,j+off+a_off,istripe,my_thread), &
                                            bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -700,7 +700,7 @@ module compute_hh_trafo_complex
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL))
             ttt = mpi_wtime()
             do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
               call single_hh_trafo_complex_sse_1hv_single(a(1,j+off+a_off,istripe,my_thread), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -724,7 +724,7 @@ module compute_hh_trafo_complex
             ttt = mpi_wtime()
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL))
             do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
               call single_hh_trafo_complex_avx_avx2_1hv_single(a(1,j+off+a_off,istripe,my_thread), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -746,7 +746,7 @@ module compute_hh_trafo_complex
             ttt = mpi_wtime()
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) )
             do j = ncols, 1, -1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
               call single_hh_trafo_complex_avx512_1hv_single(a(1,j+off+a_off,istripe,my_thread), &
                                                        bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -761,23 +761,23 @@ module compute_hh_trafo_complex
 #endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX512_BLOCK1_KERNEL */
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           if (my_thread==1) then
 #endif
             kernel_flops = kernel_flops + 4*4*int(nl,8)*int(ncols,8)*int(nbw,8)
             kernel_time  = kernel_time + mpi_wtime()-ttt
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           endif
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           call timer%stop("compute_hh_trafo_complex_cpu_openmp_single")
 #else
           call timer%stop("compute_hh_trafo_complex_cpu_single")
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
         end subroutine compute_hh_trafo_complex_cpu_openmp_single
 #else
         end subroutine compute_hh_trafo_complex_cpu_single

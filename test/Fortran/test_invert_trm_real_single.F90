@@ -48,7 +48,7 @@ program test_invert_trm
    use precision
    use ELPA1
    use elpa_utilities
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    use test_util
 #endif
 
@@ -99,7 +99,7 @@ program test_invert_trm
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
    real(kind=rk4), parameter   :: pi = 3.141592653589793238462643383279_rk4
    integer(kind=ik)           :: STATUS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
                                  provided_mpi_thread_level
 #endif

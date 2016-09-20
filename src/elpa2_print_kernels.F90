@@ -93,7 +93,7 @@ program print_available_elpa2_kernels
    print *, "runtime"
    print *
    print *
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    print *, " ELPA supports threads: yes"
 #else
    print *, " ELPA supports threads: no"

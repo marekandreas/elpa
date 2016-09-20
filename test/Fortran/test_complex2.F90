@@ -83,7 +83,7 @@ program test_complex2_double_precision
    use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    use test_util
 #endif
 
@@ -128,7 +128,7 @@ program test_complex2_double_precision
    integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    integer(kind=ik)              :: STATUS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    integer(kind=ik)              :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    type(output_t)                :: write_to_file

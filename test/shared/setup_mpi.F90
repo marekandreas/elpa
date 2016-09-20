@@ -55,14 +55,14 @@ module mod_setup_mpi
       integer(kind=ik)              :: mpierr
 
       integer(kind=ik), intent(out) :: myid, nprocs
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       integer(kind=ik)              :: required_mpi_thread_level, &
                                        provided_mpi_thread_level
 
 #endif
 #ifdef WITH_MPI
 
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_LOOP_BASED
       call mpi_init(mpierr)
 #else
       required_mpi_thread_level = MPI_THREAD_MULTIPLE

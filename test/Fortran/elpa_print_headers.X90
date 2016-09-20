@@ -49,7 +49,7 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    if (myid .eq. 0) then
       print *,"Threaded version of test program"
       print *,"Using ",omp_get_max_threads()," threads"

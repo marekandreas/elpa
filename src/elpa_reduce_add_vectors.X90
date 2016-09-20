@@ -88,7 +88,7 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
 
    use precision
 !   use ELPA1 ! for least_common_multiple
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    use omp_lib
 #endif
    use elpa_mpi
@@ -142,7 +142,7 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
    allocate(aux2( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
    aux1(:) = 0
    aux2(:) = 0
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    !$omp parallel private(ips, ipt, auxstride, lc, i, k, ns, nl)
 #endif
    do n = 0, lcm_s_t-1
@@ -155,7 +155,7 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
       if(myps == ips) then
 
 !         k = 0
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          !$omp do
 #endif
          do lc=1,nvc
@@ -169,7 +169,7 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
          enddo
 
          k = nvc * auxstride
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          !$omp barrier
          !$omp master
 #endif
@@ -200,13 +200,13 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
          if(k>0) aux2 = aux1
 #endif /* WITH_MPI */
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          !$omp end master
          !$omp barrier
 #endif
          if (mypt == ipt) then
 !            k = 0
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
          !$omp do
 #endif
             do lc=1,nvc
@@ -223,7 +223,7 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
       endif
 
    enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
    !$omp end parallel
 #endif
 

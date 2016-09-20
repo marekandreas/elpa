@@ -113,7 +113,7 @@
       integer(kind=ik)              :: istep, i, j, lcs, lce, lrs, lre
       integer(kind=ik)              :: tile_size, l_rows_tile, l_cols_tile
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       integer(kind=ik)              :: my_thread, n_threads, max_threads, n_iter
       integer(kind=ik)              :: omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
 #endif
@@ -122,7 +122,7 @@
       complex(kind=COMPLEX_DATATYPE)              :: vav, xc, aux(2*max_stored_rows),  aux1(2), aux2(2), vrl, xf
 
       complex(kind=COMPLEX_DATATYPE), allocatable :: tmp(:), vr(:), vc(:), ur(:), uc(:), vur(:,:), uvc(:,:)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       complex(kind=COMPLEX_DATATYPE), allocatable :: ur_p(:,:), uc_p(:,:)
 #endif
       real(kind=REAL_DATATYPE), allocatable    :: tmpr(:)
@@ -188,7 +188,7 @@
        stop
       endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
       max_threads = omp_get_max_threads()
 
       allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
@@ -343,7 +343,7 @@
         ur(1:l_rows) = 0
         if (l_rows>0 .and. l_cols>0) then
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -372,7 +372,7 @@
               lrs = j*l_rows_tile+1
               lre = min(l_rows,(j+1)*l_rows_tile)
               if (lre<lrs) cycle
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
               if (mod(n_iter,n_threads) == my_thread) then
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call ZGEMV('C', lre-lrs+1 ,lce-lcs+1, CONE, a(lrs,lcs), lda, vr(lrs), 1, CONE, uc_p(lcs,my_thread), 1)
@@ -387,7 +387,7 @@
 #endif
               endif
               n_iter = n_iter+1
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
               call ZGEMV('C', lre-lrs+1, lce-lcs+1, CONE, a(lrs,lcs), lda, vr(lrs), 1, CONE, uc(lcs), 1)
@@ -401,11 +401,11 @@
               endif
 #endif
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
             enddo
           enddo
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
 !$OMP END PARALLEL
 #ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX

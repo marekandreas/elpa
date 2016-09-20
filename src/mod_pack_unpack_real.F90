@@ -45,14 +45,14 @@ module pack_unpack_real
 #include "config-f90.h"
   implicit none
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
   public pack_row_real_cpu_openmp_double, unpack_row_real_cpu_openmp_double
 #else
   public pack_row_real_cpu_double, unpack_row_real_cpu_double
 #endif
   contains
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
         subroutine pack_row_real_cpu_openmp_double(a, row, n, stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else
         subroutine pack_row_real_cpu_double(a, row, n, stripe_width, last_stripe_width, stripe_count)
@@ -64,7 +64,7 @@ module pack_unpack_real
           use precision
           implicit none
           integer(kind=ik), intent(in) :: n, stripe_count, stripe_width
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           integer(kind=ik), intent(in) :: max_threads, thread_width, l_nev
           real(kind=rk8), intent(in)    :: a(:,:,:,:)
 #else
@@ -74,12 +74,12 @@ module pack_unpack_real
           real(kind=rk8)                :: row(:)
 
           integer(kind=ik)             :: i, noff, nl
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           integer(kind=ik)             :: nt
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           call timer%start("pack_row_real_cpu_openmp_double")
 
 #else
@@ -87,7 +87,7 @@ module pack_unpack_real
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           do nt = 1, max_threads
             do i = 1, stripe_count
               noff = (nt-1)*thread_width + (i-1)*stripe_width
@@ -105,7 +105,7 @@ module pack_unpack_real
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           call timer%stop("pack_row_real_cpu_openmp_double")
 
 #else
@@ -113,13 +113,13 @@ module pack_unpack_real
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
         end subroutine pack_row_real_cpu_openmp_double
 #else
         end subroutine pack_row_real_cpu_double
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
         subroutine unpack_row_real_cpu_openmp_double(a, row, n, my_thread, stripe_count, thread_width, stripe_width, l_nev)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
@@ -150,7 +150,7 @@ module pack_unpack_real
 
         end subroutine unpack_row_real_cpu_openmp_double
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
         subroutine unpack_row_real_cpu_double(a, row, n, stripe_count, stripe_width, last_stripe_width)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
@@ -177,14 +177,14 @@ module pack_unpack_real
           call timer%stop("unpack_row_real_cpu_double")
 #endif
         end subroutine unpack_row_real_cpu_double
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
 
         ! implementation for single precision functions at the moment duplicated !!
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
         subroutine pack_row_real_cpu_openmp_single(a, row, n, stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else
         subroutine pack_row_real_cpu_single(a, row, n, stripe_width, last_stripe_width, stripe_count)
@@ -196,7 +196,7 @@ module pack_unpack_real
           use precision
           implicit none
           integer(kind=ik), intent(in) :: n, stripe_count, stripe_width
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           integer(kind=ik), intent(in) :: max_threads, thread_width, l_nev
           real(kind=rk4), intent(in)    :: a(:,:,:,:)
 #else
@@ -206,12 +206,12 @@ module pack_unpack_real
           real(kind=rk4)                :: row(:)
 
           integer(kind=ik)             :: i, noff, nl
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           integer(kind=ik)             :: nt
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           call timer%start("pack_row_real_cpu_openmp_single")
 
 #else
@@ -219,7 +219,7 @@ module pack_unpack_real
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           do nt = 1, max_threads
             do i = 1, stripe_count
               noff = (nt-1)*thread_width + (i-1)*stripe_width
@@ -237,7 +237,7 @@ module pack_unpack_real
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
           call timer%stop("pack_row_real_cpu_openmp_single")
 
 #else
@@ -245,13 +245,13 @@ module pack_unpack_real
 #endif
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
         end subroutine pack_row_real_cpu_openmp_single
 #else
         end subroutine pack_row_real_cpu_single
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_LOOP_BASED
         subroutine unpack_row_real_cpu_openmp_single(a, row, n, my_thread, stripe_count, thread_width, stripe_width, l_nev)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
@@ -282,7 +282,7 @@ module pack_unpack_real
 
         end subroutine unpack_row_real_cpu_openmp_single
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_LOOP_BASED */
         subroutine unpack_row_real_cpu_single(a, row, n, stripe_count, stripe_width, last_stripe_width)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
@@ -309,7 +309,7 @@ module pack_unpack_real
           call timer%stop("unpack_row_real_cpu_single")
 #endif
         end subroutine unpack_row_real_cpu_single
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_LOOP_BASED */
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 end module
