@@ -135,8 +135,7 @@ void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* 
 		s_1_4 += hh[i-3] * hh[i+(ldh*3)];
 	}
 
-	// Production level kernel calls with padding
-	for (i = 0; i < nq-20; i+=24)
+	for (i = 0; i < nq-16; i+=24)
 	{
 		hh_trafo_kernel_24_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
@@ -144,28 +143,46 @@ void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* 
 	{
 		return;
 	}
-	if (nq-i == 20)
-	{
-		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		hh_trafo_kernel_4_AVX_4hv_single(&q[i+16], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-	else if (nq-i == 16)
+	if (nq-i == 16)
 	{
 		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
-	else if (nq-i == 12)
-	{
-		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		hh_trafo_kernel_4_AVX_4hv_single(&q[i+8], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-	else if (nq-i == 8)
+        else
 	{
 		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
-	else
-	{
-		hh_trafo_kernel_4_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
+
+//	// Production level kernel calls with padding
+//	for (i = 0; i < nq-20; i+=24)
+//	{
+//		hh_trafo_kernel_24_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	if (nq == i)
+//	{
+//		return;
+//	}
+//	if (nq-i == 20)
+//	{
+//		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//		hh_trafo_kernel_4_AVX_4hv_single(&q[i+16], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	else if (nq-i == 16)
+//	{
+//		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	else if (nq-i == 12)
+//	{
+//		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//		hh_trafo_kernel_4_AVX_4hv_single(&q[i+8], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	else if (nq-i == 8)
+//	{
+//		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	else
+//	{
+//		hh_trafo_kernel_4_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
 
 }
 
