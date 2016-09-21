@@ -397,7 +397,7 @@ __forceinline void hh_trafo_kernel_24_AVX_4hv_single(float* q, float* hh, int nb
 #ifdef __ELPA_USE_FMA__
 	y1 = _mm256_FMA_ps(q1, h2, y1);
 	y2 = _mm256_FMA_ps(q2, h2, y2);
-//	y3 = _mm256_FMA_ps(q3, h2, y3);
+	y3 = _mm256_FMA_ps(q3, h2, y3);
 #else
 	y1 = _mm256_add_ps(y1, _mm256_mul_ps(q1,h2));
 	y2 = _mm256_add_ps(y2, _mm256_mul_ps(q2,h2));
