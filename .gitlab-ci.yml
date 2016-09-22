@@ -2165,7 +2165,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
-    - ./test_scripts/get_coverage_summary.sh
+      #    - ./test_scripts/get_coverage_summary.sh
 
 #real avx2 block2, complex avx2 block1 (emulated)
 
