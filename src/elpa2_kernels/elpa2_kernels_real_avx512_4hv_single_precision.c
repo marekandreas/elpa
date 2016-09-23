@@ -42,11 +42,11 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-// Author: Andreas Marek (andreas.marek@mpcdf.mpg.de)
-// --------------------------------------------------------------------------------------------------
+// Author: Andreas Marek, MPCDF, based on the double precision case of A. Heinecke
+//
 #include "config-f90.h"
-#include <x86intrin.h>
 
+#include <x86intrin.h>
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -57,17 +57,14 @@
 #define _mm512_FMSUB_ps(a,b,c) _mm512_fmsub_ps(a,b,c)
 #endif
 
+
 //Forward declaration
-//__forceinline void hh_trafo_kernel_8_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
-__forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
-//__forceinline void hh_trafo_kernel_24_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
-__forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
-__forceinline void hh_trafo_kernel_48_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
-__forceinline void hh_trafo_kernel_64_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
+__forceinline void hh_trafo_kernel_16_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
+__forceinline void hh_trafo_kernel_32_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
+__forceinline void hh_trafo_kernel_48_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
 
+void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 
-
-void quad_hh_trafo_real_avx512_4hv_single(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 /*
 !f>#if defined(HAVE_AVX512)
 !f> interface
@@ -76,12 +73,11 @@ void quad_hh_trafo_real_avx512_4hv_single(float* q, float* hh, int* pnb, int* pn
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
 !f>     type(c_ptr), value      :: q
-!f>     real(kind=c_float)     :: hh(pnb,6)
+!f>     real(kind=c_float)      :: hh(pnb,6)
 !f>   end subroutine
 !f> end interface
 !f>#endif
 */
-
 
 void quad_hh_trafo_real_avx512_4hv_single(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 {
@@ -127,64 +123,45 @@ void quad_hh_trafo_real_avx512_4hv_single(float* q, float* hh, int* pnb, int* pn
 		s_1_4 += hh[i-3] * hh[i+(ldh*3)];
 	}
 
-	// Production level kernel calls with padding
-
-	for (i = 0; i < nq-48; i+=64)
+	for (i = 0; i < nq-32; i+=48)
 	{
-		hh_trafo_kernel_64_AVX512_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		hh_trafo_kernel_48_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
 	if (nq == i)
 	{
 		return;
 	}
-	if (nq-i == 48)
-	{
-		hh_trafo_kernel_48_AVX512_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
 	if (nq-i == 32)
 	{
-		hh_trafo_kernel_32_AVX512_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		hh_trafo_kernel_32_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
         else
 	{
-		hh_trafo_kernel_16_AVX512_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
+
+
 }
+
 
 /**
  * Unrolled kernel that computes
- * 64 rows of Q simultaneously, a
+ * 24 rows of Q simultaneously, a
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-__forceinline void hh_trafo_kernel_64_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
+__forceinline void hh_trafo_kernel_48_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
 {
 	/////////////////////////////////////////////////////
-	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
+	// Matrix Vector Multiplication, Q [12 x nb+3] * hh
 	// hh contains four householder vectors
 	/////////////////////////////////////////////////////
 	int i;
 
-	__m512 a1_1 = _mm512_load_ps(&q[ldq*3]);
-	__m512 a2_1 = _mm512_load_ps(&q[ldq*2]);
-	__m512 a3_1 = _mm512_load_ps(&q[ldq]);
-	__m512 a4_1 = _mm512_load_ps(&q[0]);
-
-	__m512 a1_2 = _mm512_load_ps(&q[(ldq*3)+16]);
-	__m512 a2_2 = _mm512_load_ps(&q[(ldq*2)+16]);
-	__m512 a3_2 = _mm512_load_ps(&q[ldq+16]);
-	__m512 a4_2 = _mm512_load_ps(&q[0+16]);
-
-	__m512 a1_3 = _mm512_load_ps(&q[(ldq*3)+32]);
-	__m512 a2_3 = _mm512_load_ps(&q[(ldq*2)+32]);
-	__m512 a3_3 = _mm512_load_ps(&q[ldq+32]);
-	__m512 a4_3 = _mm512_load_ps(&q[0+32]);
-
-	__m512 a1_4 = _mm512_load_ps(&q[(ldq*3)+48]);
-	__m512 a2_4 = _mm512_load_ps(&q[(ldq*2)+48]);
-	__m512 a3_4 = _mm512_load_ps(&q[ldq+48]);
-	__m512 a4_4 = _mm512_load_ps(&q[0+48]);
-
+	__m512 a1_1 = _mm512_load_ps(&q[ldq*3]); // q(1,4) |                                                  .. | q(8,4)
+	__m512 a2_1 = _mm512_load_ps(&q[ldq*2]); // q(1,3) | q(2,3) | q(3,3) | q(4,3) | q(5,3) | q(6,3) | q(7,3) | q(8,3)
+	__m512 a3_1 = _mm512_load_ps(&q[ldq]);   // q(1,2) | q(2,2) | q(3,2) | q(4,2) | q(5,2) | q(6,2) | q(7,2) | q(8,2)
+	__m512 a4_1 = _mm512_load_ps(&q[0]);     // q(1,1) | q(2,1) | q(3,1) | q(4,1) | q(5,1) | q(6,1) | q(7,1) | q(8,1)
 
 	__m512 h_2_1 = _mm512_set1_ps(hh[ldh+1]);
 	__m512 h_3_2 = _mm512_set1_ps(hh[(ldh*2)+1]);
@@ -193,43 +170,43 @@ __forceinline void hh_trafo_kernel_64_AVX512_4hv_single(float* q, float* hh, int
 	__m512 h_4_2 = _mm512_set1_ps(hh[(ldh*3)+2]);
 	__m512 h_4_1 = _mm512_set1_ps(hh[(ldh*3)+3]);
 
-	__m512 w1 = _mm512_FMA_ps(a3_1, h_4_3, a4_1);
+	register __m512 w1 = _mm512_FMA_ps(a3_1, h_4_3, a4_1);
 	w1 = _mm512_FMA_ps(a2_1, h_4_2, w1);
 	w1 = _mm512_FMA_ps(a1_1, h_4_1, w1);
-	__m512 z1 = _mm512_FMA_ps(a2_1, h_3_2, a3_1);
+	register __m512 z1 = _mm512_FMA_ps(a2_1, h_3_2, a3_1);
 	z1 = _mm512_FMA_ps(a1_1, h_3_1, z1);
-	__m512 y1 = _mm512_FMA_ps(a1_1, h_2_1, a2_1);
-	__m512 x1 = a1_1;
+	register __m512 y1 = _mm512_FMA_ps(a1_1, h_2_1, a2_1);
+	register __m512 x1 = a1_1;
 
-	__m512 w2 = _mm512_FMA_ps(a3_2, h_4_3, a4_2);
+	__m512 a1_2 = _mm512_load_ps(&q[(ldq*3)+16]); // q(9,4) | ...          | q(16,4)
+	__m512 a2_2 = _mm512_load_ps(&q[(ldq*2)+16]);
+	__m512 a3_2 = _mm512_load_ps(&q[ldq+16]);     // q(9,2) | ...          | q(16,2)
+	__m512 a4_2 = _mm512_load_ps(&q[0+16]);       // q(9,1) | q(10,1) .... | q(16,1)
+
+	register __m512 w2 = _mm512_FMA_ps(a3_2, h_4_3, a4_2);
 	w2 = _mm512_FMA_ps(a2_2, h_4_2, w2);
 	w2 = _mm512_FMA_ps(a1_2, h_4_1, w2);
-	__m512 z2 = _mm512_FMA_ps(a2_2, h_3_2, a3_2);
+	register __m512 z2 = _mm512_FMA_ps(a2_2, h_3_2, a3_2);
 	z2 = _mm512_FMA_ps(a1_2, h_3_1, z2);
-	__m512 y2 = _mm512_FMA_ps(a1_2, h_2_1, a2_2);
-	__m512 x2 = a1_2;
+	register __m512 y2 = _mm512_FMA_ps(a1_2, h_2_1, a2_2);
+	register __m512 x2 = a1_2;
 
-	__m512 w3 = _mm512_FMA_ps(a3_3, h_4_3, a4_3);
+	__m512 a1_3 = _mm512_load_ps(&q[(ldq*3)+32]);
+	__m512 a2_3 = _mm512_load_ps(&q[(ldq*2)+32]);
+	__m512 a3_3 = _mm512_load_ps(&q[ldq+32]);
+	__m512 a4_3 = _mm512_load_ps(&q[0+32]);
+
+	register __m512 w3 = _mm512_FMA_ps(a3_3, h_4_3, a4_3);
 	w3 = _mm512_FMA_ps(a2_3, h_4_2, w3);
 	w3 = _mm512_FMA_ps(a1_3, h_4_1, w3);
-	__m512 z3 = _mm512_FMA_ps(a2_3, h_3_2, a3_3);
+	register __m512 z3 = _mm512_FMA_ps(a2_3, h_3_2, a3_3);
 	z3 = _mm512_FMA_ps(a1_3, h_3_1, z3);
-	__m512 y3 = _mm512_FMA_ps(a1_3, h_2_1, a2_3);
-	__m512 x3 = a1_3;
-
-	__m512 w4 = _mm512_FMA_ps(a3_4, h_4_3, a4_4);
-	w4 = _mm512_FMA_ps(a2_4, h_4_2, w4);
-	w4 = _mm512_FMA_ps(a1_4, h_4_1, w4);
-	__m512 z4 = _mm512_FMA_ps(a2_4, h_3_2, a3_4);
-	z4 = _mm512_FMA_ps(a1_4, h_3_1, z4);
-	__m512 y4 = _mm512_FMA_ps(a1_4, h_2_1, a2_4);
-	__m512 x4 = a1_4;
-
+	register __m512 y3 = _mm512_FMA_ps(a1_3, h_2_1, a2_3);
+	register __m512 x3 = a1_3;
 
 	__m512 q1;
 	__m512 q2;
 	__m512 q3;
-	__m512 q4;
 
 	__m512 h1;
 	__m512 h2;
@@ -239,113 +216,94 @@ __forceinline void hh_trafo_kernel_64_AVX512_4hv_single(float* q, float* hh, int
 	for(i = 4; i < nb; i++)
 	{
 		h1 = _mm512_set1_ps(hh[i-3]);
-		h2 = _mm512_set1_ps(hh[ldh+i-2]);
-		h3 = _mm512_set1_ps(hh[(ldh*2)+i-1]);
-		h4 = _mm512_set1_ps(hh[(ldh*3)+i]);
-
-		q1 = _mm512_load_ps(&q[i*ldq]);
+		q1 = _mm512_load_ps(&q[i*ldq]);       // | q(i,2) | q(i+1,2) | q(i+2,2) | q(i+3,2) | q(i+4,2) | q(i+5,2) | q(i+5,2) | q(i+7,2)
 		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
 		q3 = _mm512_load_ps(&q[(i*ldq)+32]);
-		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
 
 		x1 = _mm512_FMA_ps(q1, h1, x1);
-		y1 = _mm512_FMA_ps(q1, h2, y1);
-		z1 = _mm512_FMA_ps(q1, h3, z1);
-		w1 = _mm512_FMA_ps(q1, h4, w1);
-
 		x2 = _mm512_FMA_ps(q2, h1, x2);
-		y2 = _mm512_FMA_ps(q2, h2, y2);
-		z2 = _mm512_FMA_ps(q2, h3, z2);
-		w2 = _mm512_FMA_ps(q2, h4, w2);
-
 		x3 = _mm512_FMA_ps(q3, h1, x3);
+
+		h2 = _mm512_set1_ps(hh[ldh+i-2]);
+
+		y1 = _mm512_FMA_ps(q1, h2, y1);
+		y2 = _mm512_FMA_ps(q2, h2, y2);
 		y3 = _mm512_FMA_ps(q3, h2, y3);
+
+		h3 = _mm512_set1_ps(hh[(ldh*2)+i-1]);
+
+		z1 = _mm512_FMA_ps(q1, h3, z1);
+		z2 = _mm512_FMA_ps(q2, h3, z2);
 		z3 = _mm512_FMA_ps(q3, h3, z3);
+
+		h4 = _mm512_set1_ps(hh[(ldh*3)+i]);
+
+		w1 = _mm512_FMA_ps(q1, h4, w1);
+		w2 = _mm512_FMA_ps(q2, h4, w2);
 		w3 = _mm512_FMA_ps(q3, h4, w3);
-
-		x4 = _mm512_FMA_ps(q4, h1, x4);
-		y4 = _mm512_FMA_ps(q4, h2, y4);
-		z4 = _mm512_FMA_ps(q4, h3, z4);
-		w4 = _mm512_FMA_ps(q4, h4, w4);
-
 	}
 
 	h1 = _mm512_set1_ps(hh[nb-3]);
-	h2 = _mm512_set1_ps(hh[ldh+nb-2]);
-	h3 = _mm512_set1_ps(hh[(ldh*2)+nb-1]);
 
 	q1 = _mm512_load_ps(&q[nb*ldq]);
 	q2 = _mm512_load_ps(&q[(nb*ldq)+16]);
 	q3 = _mm512_load_ps(&q[(nb*ldq)+32]);
-	q4 = _mm512_load_ps(&q[(nb*ldq)+48]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
-	y1 = _mm512_FMA_ps(q1, h2, y1);
-	z1 = _mm512_FMA_ps(q1, h3, z1);
-
 	x2 = _mm512_FMA_ps(q2, h1, x2);
-	y2 = _mm512_FMA_ps(q2, h2, y2);
-	z2 = _mm512_FMA_ps(q2, h3, z2);
-
 	x3 = _mm512_FMA_ps(q3, h1, x3);
+
+	h2 = _mm512_set1_ps(hh[ldh+nb-2]);
+
+	y1 = _mm512_FMA_ps(q1, h2, y1);
+	y2 = _mm512_FMA_ps(q2, h2, y2);
 	y3 = _mm512_FMA_ps(q3, h2, y3);
+
+	h3 = _mm512_set1_ps(hh[(ldh*2)+nb-1]);
+
+	z1 = _mm512_FMA_ps(q1, h3, z1);
+	z2 = _mm512_FMA_ps(q2, h3, z2);
 	z3 = _mm512_FMA_ps(q3, h3, z3);
 
-	x4 = _mm512_FMA_ps(q4, h1, x4);
-	y4 = _mm512_FMA_ps(q4, h2, y4);
-	z4 = _mm512_FMA_ps(q4, h3, z4);
-
-
 	h1 = _mm512_set1_ps(hh[nb-2]);
-	h2 = _mm512_set1_ps(hh[(ldh*1)+nb-1]);
 
 	q1 = _mm512_load_ps(&q[(nb+1)*ldq]);
 	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+16]);
 	q3 = _mm512_load_ps(&q[((nb+1)*ldq)+32]);
-	q4 = _mm512_load_ps(&q[((nb+1)*ldq)+48]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
-	y1 = _mm512_FMA_ps(q1, h2, y1);
 	x2 = _mm512_FMA_ps(q2, h1, x2);
-	y2 = _mm512_FMA_ps(q2, h2, y2);
 	x3 = _mm512_FMA_ps(q3, h1, x3);
+
+	h2 = _mm512_set1_ps(hh[(ldh*1)+nb-1]);
+
+	y1 = _mm512_FMA_ps(q1, h2, y1);
+	y2 = _mm512_FMA_ps(q2, h2, y2);
 	y3 = _mm512_FMA_ps(q3, h2, y3);
-	x4 = _mm512_FMA_ps(q4, h1, x4);
-	y4 = _mm512_FMA_ps(q4, h2, y4);
 
 	h1 = _mm512_set1_ps(hh[nb-1]);
 
 	q1 = _mm512_load_ps(&q[(nb+2)*ldq]);
 	q2 = _mm512_load_ps(&q[((nb+2)*ldq)+16]);
 	q3 = _mm512_load_ps(&q[((nb+2)*ldq)+32]);
-	q4 = _mm512_load_ps(&q[((nb+2)*ldq)+48]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
 	x2 = _mm512_FMA_ps(q2, h1, x2);
 	x3 = _mm512_FMA_ps(q3, h1, x3);
-	x4 = _mm512_FMA_ps(q4, h1, x4);
 
 	/////////////////////////////////////////////////////
-	// Rank-1 update of Q [8 x nb+3]
+	// Rank-1 update of Q [12 x nb+3]
 	/////////////////////////////////////////////////////
 
 	__m512 tau1 = _mm512_set1_ps(hh[0]);
-	__m512 tau2 = _mm512_set1_ps(hh[ldh]);
-	__m512 tau3 = _mm512_set1_ps(hh[ldh*2]);
-	__m512 tau4 = _mm512_set1_ps(hh[ldh*3]);
-
-	__m512 vs_1_2 = _mm512_set1_ps(s_1_2);
-	__m512 vs_1_3 = _mm512_set1_ps(s_1_3);
-	__m512 vs_2_3 = _mm512_set1_ps(s_2_3);
-	__m512 vs_1_4 = _mm512_set1_ps(s_1_4);
-	__m512 vs_2_4 = _mm512_set1_ps(s_2_4);
-	__m512 vs_3_4 = _mm512_set1_ps(s_3_4);
 
 	h1 = tau1;
 	x1 = _mm512_mul_ps(x1, h1);
 	x2 = _mm512_mul_ps(x2, h1);
 	x3 = _mm512_mul_ps(x3, h1);
-	x4 = _mm512_mul_ps(x4, h1);
+
+	__m512 tau2 = _mm512_set1_ps(hh[ldh]);
+	__m512 vs_1_2 = _mm512_set1_ps(s_1_2);
 
 	h1 = tau2;
 	h2 = _mm512_mul_ps(h1, vs_1_2);
@@ -353,7 +311,10 @@ __forceinline void hh_trafo_kernel_64_AVX512_4hv_single(float* q, float* hh, int
 	y1 = _mm512_FMSUB_ps(y1, h1, _mm512_mul_ps(x1,h2));
 	y2 = _mm512_FMSUB_ps(y2, h1, _mm512_mul_ps(x2,h2));
 	y3 = _mm512_FMSUB_ps(y3, h1, _mm512_mul_ps(x3,h2));
-	y4 = _mm512_FMSUB_ps(y4, h1, _mm512_mul_ps(x4,h2));
+
+	__m512 tau3 = _mm512_set1_ps(hh[ldh*2]);
+	__m512 vs_1_3 = _mm512_set1_ps(s_1_3);
+	__m512 vs_2_3 = _mm512_set1_ps(s_2_3);
 
 	h1 = tau3;
 	h2 = _mm512_mul_ps(h1, vs_1_3);
@@ -362,7 +323,11 @@ __forceinline void hh_trafo_kernel_64_AVX512_4hv_single(float* q, float* hh, int
 	z1 = _mm512_FMSUB_ps(z1, h1, _mm512_FMA_ps(y1, h3, _mm512_mul_ps(x1,h2)));
 	z2 = _mm512_FMSUB_ps(z2, h1, _mm512_FMA_ps(y2, h3, _mm512_mul_ps(x2,h2)));
 	z3 = _mm512_FMSUB_ps(z3, h1, _mm512_FMA_ps(y3, h3, _mm512_mul_ps(x3,h2)));
-	z4 = _mm512_FMSUB_ps(z4, h1, _mm512_FMA_ps(y4, h3, _mm512_mul_ps(x4,h2)));
+
+	__m512 tau4 = _mm512_set1_ps(hh[ldh*3]);
+	__m512 vs_1_4 = _mm512_set1_ps(s_1_4);
+	__m512 vs_2_4 = _mm512_set1_ps(s_2_4);
+	__m512 vs_3_4 = _mm512_set1_ps(s_3_4);
 
 	h1 = tau4;
 	h2 = _mm512_mul_ps(h1, vs_1_4);
@@ -372,657 +337,172 @@ __forceinline void hh_trafo_kernel_64_AVX512_4hv_single(float* q, float* hh, int
 	w1 = _mm512_FMSUB_ps(w1, h1, _mm512_FMA_ps(z1, h4, _mm512_FMA_ps(y1, h3, _mm512_mul_ps(x1,h2))));
 	w2 = _mm512_FMSUB_ps(w2, h1, _mm512_FMA_ps(z2, h4, _mm512_FMA_ps(y2, h3, _mm512_mul_ps(x2,h2))));
 	w3 = _mm512_FMSUB_ps(w3, h1, _mm512_FMA_ps(z3, h4, _mm512_FMA_ps(y3, h3, _mm512_mul_ps(x3,h2))));
-	w4 = _mm512_FMSUB_ps(w4, h1, _mm512_FMA_ps(z4, h4, _mm512_FMA_ps(y4, h3, _mm512_mul_ps(x4,h2))));
 
 	q1 = _mm512_load_ps(&q[0]);
+	q2 = _mm512_load_ps(&q[16]);
+	q3 = _mm512_load_ps(&q[32]);
 	q1 = _mm512_sub_ps(q1, w1);
-	_mm512_store_ps(&q[0],q1);
-
-	q2 = _mm512_load_ps(&q[0+16]);
 	q2 = _mm512_sub_ps(q2, w2);
-	_mm512_store_ps(&q[0+16],q2);
-
-	q3 = _mm512_load_ps(&q[0+32]);
 	q3 = _mm512_sub_ps(q3, w3);
-	_mm512_store_ps(&q[0+32],q3);
-
-	q4 = _mm512_load_ps(&q[0+48]);
-	q4 = _mm512_sub_ps(q4, w4);
-	_mm512_store_ps(&q[0+48],q4);
+	_mm512_store_ps(&q[0],q1);
+	_mm512_store_ps(&q[16],q2);
+	_mm512_store_ps(&q[32],q3);
 
 	h4 = _mm512_set1_ps(hh[(ldh*3)+1]);
 	q1 = _mm512_load_ps(&q[ldq]);
 	q2 = _mm512_load_ps(&q[ldq+16]);
 	q3 = _mm512_load_ps(&q[ldq+32]);
-	q4 = _mm512_load_ps(&q[ldq+48]);
 
 	q1 = _mm512_sub_ps(q1, _mm512_FMA_ps(w1, h4, z1));
-	_mm512_store_ps(&q[ldq],q1);
 	q2 = _mm512_sub_ps(q2, _mm512_FMA_ps(w2, h4, z2));
-	_mm512_store_ps(&q[ldq+16],q2);
 	q3 = _mm512_sub_ps(q3, _mm512_FMA_ps(w3, h4, z3));
+
+	_mm512_store_ps(&q[ldq],q1);
+	_mm512_store_ps(&q[ldq+16],q2);
 	_mm512_store_ps(&q[ldq+32],q3);
-	q4 = _mm512_sub_ps(q4, _mm512_FMA_ps(w4, h4, z4));
-	_mm512_store_ps(&q[ldq+48],q4);
 
-
-	h3 = _mm512_set1_ps(hh[(ldh*2)+1]);
 	h4 = _mm512_set1_ps(hh[(ldh*3)+2]);
 	q1 = _mm512_load_ps(&q[ldq*2]);
 	q2 = _mm512_load_ps(&q[(ldq*2)+16]);
 	q3 = _mm512_load_ps(&q[(ldq*2)+32]);
-	q4 = _mm512_load_ps(&q[(ldq*2)+48]);
-
-        q1 = _mm512_sub_ps(q1, y1);
-        q1 = _mm512_NFMA_ps(z1, h3, q1);
-        q1 = _mm512_NFMA_ps(w1, h4, q1);
-	_mm512_store_ps(&q[ldq*2],q1);
-
-        q2 = _mm512_sub_ps(q2, y2);
-        q2 = _mm512_NFMA_ps(z2, h3, q2);
-        q2 = _mm512_NFMA_ps(w2, h4, q2);
-	_mm512_store_ps(&q[(ldq*2)+16],q2);
-
-        q3 = _mm512_sub_ps(q3, y3);
-        q3 = _mm512_NFMA_ps(z3, h3, q3);
-        q3 = _mm512_NFMA_ps(w3, h4, q3);
-	_mm512_store_ps(&q[(ldq*2)+32],q3);
-
-        q4 = _mm512_sub_ps(q4, y4);
-        q4 = _mm512_NFMA_ps(z4, h3, q4);
-        q4 = _mm512_NFMA_ps(w4, h4, q4);
-	_mm512_store_ps(&q[(ldq*2)+48],q4);
-
-
-	h2 = _mm512_set1_ps(hh[ldh+1]);
-	h3 = _mm512_set1_ps(hh[(ldh*2)+2]);
-	h4 = _mm512_set1_ps(hh[(ldh*3)+3]);
-
-	q1 = _mm512_load_ps(&q[ldq*3]);
-
-	q1 = _mm512_sub_ps(q1, x1);
-        q1 = _mm512_NFMA_ps(y1, h2, q1);
-        q1 = _mm512_NFMA_ps(z1, h3, q1);
-        q1 = _mm512_NFMA_ps(w1, h4, q1);
-	_mm512_store_ps(&q[ldq*3], q1);
-
-	q2 = _mm512_load_ps(&q[(ldq*3)+16]);
-
-	q2 = _mm512_sub_ps(q2, x2);
-        q2 = _mm512_NFMA_ps(y2, h2, q2);
-        q2 = _mm512_NFMA_ps(z2, h3, q2);
-        q2 = _mm512_NFMA_ps(w2, h4, q2);
-	_mm512_store_ps(&q[(ldq*3)+16], q2);
-
-	q3 = _mm512_load_ps(&q[(ldq*3)+32]);
-
-	q3 = _mm512_sub_ps(q3, x3);
-        q3 = _mm512_NFMA_ps(y3, h2, q3);
-        q3 = _mm512_NFMA_ps(z3, h3, q3);
-        q3 = _mm512_NFMA_ps(w3, h4, q3);
-	_mm512_store_ps(&q[(ldq*3)+32], q3);
-
-	q4 = _mm512_load_ps(&q[(ldq*3)+48]);
-
-	q4 = _mm512_sub_ps(q4, x4);
-        q4 = _mm512_NFMA_ps(y4, h2, q4);
-        q4 = _mm512_NFMA_ps(z4, h3, q4);
-        q4 = _mm512_NFMA_ps(w4, h4, q4);
-	_mm512_store_ps(&q[(ldq*3)+48], q4);
-
-	for (i = 4; i < nb; i++)
-	{
-		h1 = _mm512_set1_ps(hh[i-3]);
-		h2 = _mm512_set1_ps(hh[ldh+i-2]);
-		h3 = _mm512_set1_ps(hh[(ldh*2)+i-1]);
-		h4 = _mm512_set1_ps(hh[(ldh*3)+i]);
-
-		q1 = _mm512_load_ps(&q[i*ldq]);
-                q1 = _mm512_NFMA_ps(x1, h1, q1);
-                q1 = _mm512_NFMA_ps(y1, h2, q1);
-                q1 = _mm512_NFMA_ps(z1, h3, q1);
-                q1 = _mm512_NFMA_ps(w1, h4, q1);
-		_mm512_store_ps(&q[i*ldq],q1);
-
-		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
-                q2 = _mm512_NFMA_ps(x2, h1, q2);
-                q2 = _mm512_NFMA_ps(y2, h2, q2);
-                q2 = _mm512_NFMA_ps(z2, h3, q2);
-                q2 = _mm512_NFMA_ps(w2, h4, q2);
-		_mm512_store_ps(&q[(i*ldq)+16],q2);
-
-		q3 = _mm512_load_ps(&q[(i*ldq)+32]);
-                q3 = _mm512_NFMA_ps(x3, h1, q3);
-                q3 = _mm512_NFMA_ps(y3, h2, q3);
-                q3 = _mm512_NFMA_ps(z3, h3, q3);
-                q3 = _mm512_NFMA_ps(w3, h4, q3);
-		_mm512_store_ps(&q[(i*ldq)+32],q3);
-
-		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
-                q4 = _mm512_NFMA_ps(x4, h1, q4);
-                q4 = _mm512_NFMA_ps(y4, h2, q4);
-                q4 = _mm512_NFMA_ps(z4, h3, q4);
-                q4 = _mm512_NFMA_ps(w4, h4, q4);
-		_mm512_store_ps(&q[(i*ldq)+48],q4);
-
-	}
-
-	h1 = _mm512_set1_ps(hh[nb-3]);
-	h2 = _mm512_set1_ps(hh[ldh+nb-2]);
-	h3 = _mm512_set1_ps(hh[(ldh*2)+nb-1]);
-	q1 = _mm512_load_ps(&q[nb*ldq]);
-
-	q1 = _mm512_NFMA_ps(x1, h1, q1);
-        q1 = _mm512_NFMA_ps(y1, h2, q1);
-        q1 = _mm512_NFMA_ps(z1, h3, q1);
-	_mm512_store_ps(&q[nb*ldq],q1);
-
-	q2 = _mm512_load_ps(&q[(nb*ldq)+16]);
-
-	q2 = _mm512_NFMA_ps(x2, h1, q2);
-        q2 = _mm512_NFMA_ps(y2, h2, q2);
-        q2 = _mm512_NFMA_ps(z2, h3, q2);
-	_mm512_store_ps(&q[(nb*ldq)+16],q2);
-
-	q3 = _mm512_load_ps(&q[(nb*ldq)+32]);
-
-	q3 = _mm512_NFMA_ps(x3, h1, q3);
-        q3 = _mm512_NFMA_ps(y3, h2, q3);
-        q3 = _mm512_NFMA_ps(z3, h3, q3);
-	_mm512_store_ps(&q[(nb*ldq)+32],q3);
-
-	q4 = _mm512_load_ps(&q[(nb*ldq)+48]);
-
-	q4 = _mm512_NFMA_ps(x4, h1, q4);
-        q4 = _mm512_NFMA_ps(y4, h2, q4);
-        q4 = _mm512_NFMA_ps(z4, h3, q4);
-	_mm512_store_ps(&q[(nb*ldq)+48],q4);
-
-	h1 = _mm512_set1_ps(hh[nb-2]);
-	h2 = _mm512_set1_ps(hh[ldh+nb-1]);
-	q1 = _mm512_load_ps(&q[(nb+1)*ldq]);
-
-	q1 = _mm512_NFMA_ps(x1, h1, q1);
-	q1 = _mm512_NFMA_ps(y1, h2, q1);
-	_mm512_store_ps(&q[(nb+1)*ldq],q1);
-
-	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+16]);
-
-	q2 = _mm512_NFMA_ps(x2, h1, q2);
-	q2 = _mm512_NFMA_ps(y2, h2, q2);
-	_mm512_store_ps(&q[((nb+1)*ldq)+16],q2);
-
-	q3 = _mm512_load_ps(&q[((nb+1)*ldq)+32]);
-
-	q3 = _mm512_NFMA_ps(x3, h1, q3);
-	q3 = _mm512_NFMA_ps(y3, h2, q3);
-	_mm512_store_ps(&q[((nb+1)*ldq)+32],q3);
-
-	q4 = _mm512_load_ps(&q[((nb+1)*ldq)+48]);
-
-	q4 = _mm512_NFMA_ps(x4, h1, q4);
-	q4 = _mm512_NFMA_ps(y4, h2, q4);
-	_mm512_store_ps(&q[((nb+1)*ldq)+48],q4);
-
-
-	h1 = _mm512_set1_ps(hh[nb-1]);
-	q1 = _mm512_load_ps(&q[(nb+2)*ldq]);
-
-	q1 = _mm512_NFMA_ps(x1, h1, q1);
-	_mm512_store_ps(&q[(nb+2)*ldq],q1);
-
-	q2 = _mm512_load_ps(&q[((nb+2)*ldq)+16]);
-
-	q2 = _mm512_NFMA_ps(x2, h1, q2);
-	_mm512_store_ps(&q[((nb+2)*ldq)+16],q2);
-
-	q3 = _mm512_load_ps(&q[((nb+2)*ldq)+32]);
-
-	q3 = _mm512_NFMA_ps(x3, h1, q3);
-	_mm512_store_ps(&q[((nb+2)*ldq)+32],q3);
-
-	q4 = _mm512_load_ps(&q[((nb+2)*ldq)+48]);
-
-	q4 = _mm512_NFMA_ps(x4, h1, q4);
-	_mm512_store_ps(&q[((nb+2)*ldq)+48],q4);
-
-}
-
-/**
- * Unrolled kernel that computes
- * 48 rows of Q simultaneously, a
- * matrix vector product with two householder
- * vectors + a rank 1 update is performed
- */
-__forceinline void hh_trafo_kernel_48_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
-{
-	/////////////////////////////////////////////////////
-	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
-	// hh contains four householder vectors
-	/////////////////////////////////////////////////////
-	int i;
-
-	__m512 a1_1 = _mm512_load_ps(&q[ldq*3]);
-	__m512 a2_1 = _mm512_load_ps(&q[ldq*2]);
-	__m512 a3_1 = _mm512_load_ps(&q[ldq]);
-	__m512 a4_1 = _mm512_load_ps(&q[0]);
-
-	__m512 a1_2 = _mm512_load_ps(&q[(ldq*3)+16]);
-	__m512 a2_2 = _mm512_load_ps(&q[(ldq*2)+16]);
-	__m512 a3_2 = _mm512_load_ps(&q[ldq+16]);
-	__m512 a4_2 = _mm512_load_ps(&q[0+16]);
-
-	__m512 a1_3 = _mm512_load_ps(&q[(ldq*3)+32]);
-	__m512 a2_3 = _mm512_load_ps(&q[(ldq*2)+32]);
-	__m512 a3_3 = _mm512_load_ps(&q[ldq+32]);
-	__m512 a4_3 = _mm512_load_ps(&q[0+32]);
-
-//	__m512 a1_4 = _mm512_load_ps(&q[(ldq*3)+48]);
-//	__m512 a2_4 = _mm512_load_ps(&q[(ldq*2)+48]);
-//	__m512 a3_4 = _mm512_load_ps(&q[ldq+48]);
-//	__m512 a4_4 = _mm512_load_ps(&q[0+48]);
-
-
-	__m512 h_2_1 = _mm512_set1_ps(hh[ldh+1]);
-	__m512 h_3_2 = _mm512_set1_ps(hh[(ldh*2)+1]);
-	__m512 h_3_1 = _mm512_set1_ps(hh[(ldh*2)+2]);
-	__m512 h_4_3 = _mm512_set1_ps(hh[(ldh*3)+1]);
-	__m512 h_4_2 = _mm512_set1_ps(hh[(ldh*3)+2]);
-	__m512 h_4_1 = _mm512_set1_ps(hh[(ldh*3)+3]);
-
-	__m512 w1 = _mm512_FMA_ps(a3_1, h_4_3, a4_1);
-	w1 = _mm512_FMA_ps(a2_1, h_4_2, w1);
-	w1 = _mm512_FMA_ps(a1_1, h_4_1, w1);
-	__m512 z1 = _mm512_FMA_ps(a2_1, h_3_2, a3_1);
-	z1 = _mm512_FMA_ps(a1_1, h_3_1, z1);
-	__m512 y1 = _mm512_FMA_ps(a1_1, h_2_1, a2_1);
-	__m512 x1 = a1_1;
-
-	__m512 w2 = _mm512_FMA_ps(a3_2, h_4_3, a4_2);
-	w2 = _mm512_FMA_ps(a2_2, h_4_2, w2);
-	w2 = _mm512_FMA_ps(a1_2, h_4_1, w2);
-	__m512 z2 = _mm512_FMA_ps(a2_2, h_3_2, a3_2);
-	z2 = _mm512_FMA_ps(a1_2, h_3_1, z2);
-	__m512 y2 = _mm512_FMA_ps(a1_2, h_2_1, a2_2);
-	__m512 x2 = a1_2;
-
-	__m512 w3 = _mm512_FMA_ps(a3_3, h_4_3, a4_3);
-	w3 = _mm512_FMA_ps(a2_3, h_4_2, w3);
-	w3 = _mm512_FMA_ps(a1_3, h_4_1, w3);
-	__m512 z3 = _mm512_FMA_ps(a2_3, h_3_2, a3_3);
-	z3 = _mm512_FMA_ps(a1_3, h_3_1, z3);
-	__m512 y3 = _mm512_FMA_ps(a1_3, h_2_1, a2_3);
-	__m512 x3 = a1_3;
-
-//	__m512 w4 = _mm512_FMA_ps(a3_4, h_4_3, a4_4);
-//	w4 = _mm512_FMA_ps(a2_4, h_4_2, w4);
-//	w4 = _mm512_FMA_ps(a1_4, h_4_1, w4);
-//	__m512 z4 = _mm512_FMA_ps(a2_4, h_3_2, a3_4);
-//	z4 = _mm512_FMA_ps(a1_4, h_3_1, z4);
-//	__m512 y4 = _mm512_FMA_ps(a1_4, h_2_1, a2_4);
-//	__m512 x4 = a1_4;
-
-
-	__m512 q1;
-	__m512 q2;
-	__m512 q3;
-//	__m512 q4;
-
-	__m512 h1;
-	__m512 h2;
-	__m512 h3;
-	__m512 h4;
-
-	for(i = 4; i < nb; i++)
-	{
-		h1 = _mm512_set1_ps(hh[i-3]);
-		h2 = _mm512_set1_ps(hh[ldh+i-2]);
-		h3 = _mm512_set1_ps(hh[(ldh*2)+i-1]);
-		h4 = _mm512_set1_ps(hh[(ldh*3)+i]);
-
-		q1 = _mm512_load_ps(&q[i*ldq]);
-		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
-		q3 = _mm512_load_ps(&q[(i*ldq)+32]);
-//		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
-
-		x1 = _mm512_FMA_ps(q1, h1, x1);
-		y1 = _mm512_FMA_ps(q1, h2, y1);
-		z1 = _mm512_FMA_ps(q1, h3, z1);
-		w1 = _mm512_FMA_ps(q1, h4, w1);
-
-		x2 = _mm512_FMA_ps(q2, h1, x2);
-		y2 = _mm512_FMA_ps(q2, h2, y2);
-		z2 = _mm512_FMA_ps(q2, h3, z2);
-		w2 = _mm512_FMA_ps(q2, h4, w2);
-
-		x3 = _mm512_FMA_ps(q3, h1, x3);
-		y3 = _mm512_FMA_ps(q3, h2, y3);
-		z3 = _mm512_FMA_ps(q3, h3, z3);
-		w3 = _mm512_FMA_ps(q3, h4, w3);
-
-//		x4 = _mm512_FMA_ps(q4, h1, x4);
-//		y4 = _mm512_FMA_ps(q4, h2, y4);
-//		z4 = _mm512_FMA_ps(q4, h3, z4);
-//		w4 = _mm512_FMA_ps(q4, h4, w4);
-
-	}
-
-	h1 = _mm512_set1_ps(hh[nb-3]);
-	h2 = _mm512_set1_ps(hh[ldh+nb-2]);
-	h3 = _mm512_set1_ps(hh[(ldh*2)+nb-1]);
-
-	q1 = _mm512_load_ps(&q[nb*ldq]);
-	q2 = _mm512_load_ps(&q[(nb*ldq)+16]);
-	q3 = _mm512_load_ps(&q[(nb*ldq)+32]);
-//	q4 = _mm512_load_ps(&q[(nb*ldq)+48]);
-
-	x1 = _mm512_FMA_ps(q1, h1, x1);
-	y1 = _mm512_FMA_ps(q1, h2, y1);
-	z1 = _mm512_FMA_ps(q1, h3, z1);
-
-	x2 = _mm512_FMA_ps(q2, h1, x2);
-	y2 = _mm512_FMA_ps(q2, h2, y2);
-	z2 = _mm512_FMA_ps(q2, h3, z2);
-
-	x3 = _mm512_FMA_ps(q3, h1, x3);
-	y3 = _mm512_FMA_ps(q3, h2, y3);
-	z3 = _mm512_FMA_ps(q3, h3, z3);
-
-//	x4 = _mm512_FMA_ps(q4, h1, x4);
-//	y4 = _mm512_FMA_ps(q4, h2, y4);
-//	z4 = _mm512_FMA_ps(q4, h3, z4);
-
-
-	h1 = _mm512_set1_ps(hh[nb-2]);
-	h2 = _mm512_set1_ps(hh[(ldh*1)+nb-1]);
-
-	q1 = _mm512_load_ps(&q[(nb+1)*ldq]);
-	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+16]);
-	q3 = _mm512_load_ps(&q[((nb+1)*ldq)+32]);
-//	q4 = _mm512_load_ps(&q[((nb+1)*ldq)+48]);
-
-	x1 = _mm512_FMA_ps(q1, h1, x1);
-	y1 = _mm512_FMA_ps(q1, h2, y1);
-	x2 = _mm512_FMA_ps(q2, h1, x2);
-	y2 = _mm512_FMA_ps(q2, h2, y2);
-	x3 = _mm512_FMA_ps(q3, h1, x3);
-	y3 = _mm512_FMA_ps(q3, h2, y3);
-//	x4 = _mm512_FMA_ps(q4, h1, x4);
-//	y4 = _mm512_FMA_ps(q4, h2, y4);
-
-	h1 = _mm512_set1_ps(hh[nb-1]);
-
-	q1 = _mm512_load_ps(&q[(nb+2)*ldq]);
-	q2 = _mm512_load_ps(&q[((nb+2)*ldq)+16]);
-	q3 = _mm512_load_ps(&q[((nb+2)*ldq)+32]);
-//	q4 = _mm512_load_ps(&q[((nb+2)*ldq)+48]);
-
-	x1 = _mm512_FMA_ps(q1, h1, x1);
-	x2 = _mm512_FMA_ps(q2, h1, x2);
-	x3 = _mm512_FMA_ps(q3, h1, x3);
-//	x4 = _mm512_FMA_ps(q4, h1, x4);
-
-	/////////////////////////////////////////////////////
-	// Rank-1 update of Q [8 x nb+3]
-	/////////////////////////////////////////////////////
-
-	__m512 tau1 = _mm512_set1_ps(hh[0]);
-	__m512 tau2 = _mm512_set1_ps(hh[ldh]);
-	__m512 tau3 = _mm512_set1_ps(hh[ldh*2]);
-	__m512 tau4 = _mm512_set1_ps(hh[ldh*3]);
-
-	__m512 vs_1_2 = _mm512_set1_ps(s_1_2);
-	__m512 vs_1_3 = _mm512_set1_ps(s_1_3);
-	__m512 vs_2_3 = _mm512_set1_ps(s_2_3);
-	__m512 vs_1_4 = _mm512_set1_ps(s_1_4);
-	__m512 vs_2_4 = _mm512_set1_ps(s_2_4);
-	__m512 vs_3_4 = _mm512_set1_ps(s_3_4);
-
-	h1 = tau1;
-	x1 = _mm512_mul_ps(x1, h1);
-	x2 = _mm512_mul_ps(x2, h1);
-	x3 = _mm512_mul_ps(x3, h1);
-//	x4 = _mm512_mul_ps(x4, h1);
-
-	h1 = tau2;
-	h2 = _mm512_mul_ps(h1, vs_1_2);
-
-	y1 = _mm512_FMSUB_ps(y1, h1, _mm512_mul_ps(x1,h2));
-	y2 = _mm512_FMSUB_ps(y2, h1, _mm512_mul_ps(x2,h2));
-	y3 = _mm512_FMSUB_ps(y3, h1, _mm512_mul_ps(x3,h2));
-//	y4 = _mm512_FMSUB_ps(y4, h1, _mm512_mul_ps(x4,h2));
-
-	h1 = tau3;
-	h2 = _mm512_mul_ps(h1, vs_1_3);
-	h3 = _mm512_mul_ps(h1, vs_2_3);
-
-	z1 = _mm512_FMSUB_ps(z1, h1, _mm512_FMA_ps(y1, h3, _mm512_mul_ps(x1,h2)));
-	z2 = _mm512_FMSUB_ps(z2, h1, _mm512_FMA_ps(y2, h3, _mm512_mul_ps(x2,h2)));
-	z3 = _mm512_FMSUB_ps(z3, h1, _mm512_FMA_ps(y3, h3, _mm512_mul_ps(x3,h2)));
-//	z4 = _mm512_FMSUB_ps(z4, h1, _mm512_FMA_ps(y4, h3, _mm512_mul_ps(x4,h2)));
-
-	h1 = tau4;
-	h2 = _mm512_mul_ps(h1, vs_1_4);
-	h3 = _mm512_mul_ps(h1, vs_2_4);
-	h4 = _mm512_mul_ps(h1, vs_3_4);
-
-	w1 = _mm512_FMSUB_ps(w1, h1, _mm512_FMA_ps(z1, h4, _mm512_FMA_ps(y1, h3, _mm512_mul_ps(x1,h2))));
-	w2 = _mm512_FMSUB_ps(w2, h1, _mm512_FMA_ps(z2, h4, _mm512_FMA_ps(y2, h3, _mm512_mul_ps(x2,h2))));
-	w3 = _mm512_FMSUB_ps(w3, h1, _mm512_FMA_ps(z3, h4, _mm512_FMA_ps(y3, h3, _mm512_mul_ps(x3,h2))));
-//	w4 = _mm512_FMSUB_ps(w4, h1, _mm512_FMA_ps(z4, h4, _mm512_FMA_ps(y4, h3, _mm512_mul_ps(x4,h2))));
-
-	q1 = _mm512_load_ps(&q[0]);
-	q1 = _mm512_sub_ps(q1, w1);
-	_mm512_store_ps(&q[0],q1);
-
-	q2 = _mm512_load_ps(&q[0+16]);
-	q2 = _mm512_sub_ps(q2, w2);
-	_mm512_store_ps(&q[0+16],q2);
-
-	q3 = _mm512_load_ps(&q[0+32]);
-	q3 = _mm512_sub_ps(q3, w3);
-	_mm512_store_ps(&q[0+32],q3);
-
-//	q4 = _mm512_load_ps(&q[0+48]);
-//	q4 = _mm512_sub_ps(q4, w4);
-//	_mm512_store_ps(&q[0+48],q4);
-
-	h4 = _mm512_set1_ps(hh[(ldh*3)+1]);
-	q1 = _mm512_load_ps(&q[ldq]);
-	q2 = _mm512_load_ps(&q[ldq+16]);
-	q3 = _mm512_load_ps(&q[ldq+32]);
-//	q4 = _mm512_load_ps(&q[ldq+48]);
-
-	q1 = _mm512_sub_ps(q1, _mm512_FMA_ps(w1, h4, z1));
-	_mm512_store_ps(&q[ldq],q1);
-	q2 = _mm512_sub_ps(q2, _mm512_FMA_ps(w2, h4, z2));
-	_mm512_store_ps(&q[ldq+16],q2);
-	q3 = _mm512_sub_ps(q3, _mm512_FMA_ps(w3, h4, z3));
-	_mm512_store_ps(&q[ldq+32],q3);
-//	q4 = _mm512_sub_ps(q4, _mm512_FMA_ps(w4, h4, z4));
-//	_mm512_store_ps(&q[ldq+48],q4);
-
+	q1 = _mm512_sub_ps(q1, y1);
+	q2 = _mm512_sub_ps(q2, y2);
+	q3 = _mm512_sub_ps(q3, y3);
+
+	q1 = _mm512_NFMA_ps(w1, h4, q1);
+	q2 = _mm512_NFMA_ps(w2, h4, q2);
+	q3 = _mm512_NFMA_ps(w3, h4, q3);
 
 	h3 = _mm512_set1_ps(hh[(ldh*2)+1]);
-	h4 = _mm512_set1_ps(hh[(ldh*3)+2]);
-	q1 = _mm512_load_ps(&q[ldq*2]);
-	q2 = _mm512_load_ps(&q[(ldq*2)+16]);
-	q3 = _mm512_load_ps(&q[(ldq*2)+32]);
-//	q4 = _mm512_load_ps(&q[(ldq*2)+48]);
 
-        q1 = _mm512_sub_ps(q1, y1);
-        q1 = _mm512_NFMA_ps(z1, h3, q1);
-        q1 = _mm512_NFMA_ps(w1, h4, q1);
+	q1 = _mm512_NFMA_ps(z1, h3, q1);
+	q2 = _mm512_NFMA_ps(z2, h3, q2);
+	q3 = _mm512_NFMA_ps(z3, h3, q3);
+
 	_mm512_store_ps(&q[ldq*2],q1);
-
-        q2 = _mm512_sub_ps(q2, y2);
-        q2 = _mm512_NFMA_ps(z2, h3, q2);
-        q2 = _mm512_NFMA_ps(w2, h4, q2);
 	_mm512_store_ps(&q[(ldq*2)+16],q2);
-
-        q3 = _mm512_sub_ps(q3, y3);
-        q3 = _mm512_NFMA_ps(z3, h3, q3);
-        q3 = _mm512_NFMA_ps(w3, h4, q3);
 	_mm512_store_ps(&q[(ldq*2)+32],q3);
 
-//        q4 = _mm512_sub_ps(q4, y4);
- //       q4 = _mm512_NFMA_ps(z4, h3, q4);
-  //      q4 = _mm512_NFMA_ps(w4, h4, q4);
-//	_mm512_store_ps(&q[(ldq*2)+48],q4);
-
-
-	h2 = _mm512_set1_ps(hh[ldh+1]);
-	h3 = _mm512_set1_ps(hh[(ldh*2)+2]);
 	h4 = _mm512_set1_ps(hh[(ldh*3)+3]);
-
 	q1 = _mm512_load_ps(&q[ldq*3]);
-
-	q1 = _mm512_sub_ps(q1, x1);
-        q1 = _mm512_NFMA_ps(y1, h2, q1);
-        q1 = _mm512_NFMA_ps(z1, h3, q1);
-        q1 = _mm512_NFMA_ps(w1, h4, q1);
-	_mm512_store_ps(&q[ldq*3], q1);
-
 	q2 = _mm512_load_ps(&q[(ldq*3)+16]);
-
-	q2 = _mm512_sub_ps(q2, x2);
-        q2 = _mm512_NFMA_ps(y2, h2, q2);
-        q2 = _mm512_NFMA_ps(z2, h3, q2);
-        q2 = _mm512_NFMA_ps(w2, h4, q2);
-	_mm512_store_ps(&q[(ldq*3)+16], q2);
-
 	q3 = _mm512_load_ps(&q[(ldq*3)+32]);
 
+	q1 = _mm512_sub_ps(q1, x1);
+	q2 = _mm512_sub_ps(q2, x2);
 	q3 = _mm512_sub_ps(q3, x3);
-        q3 = _mm512_NFMA_ps(y3, h2, q3);
-        q3 = _mm512_NFMA_ps(z3, h3, q3);
-        q3 = _mm512_NFMA_ps(w3, h4, q3);
+
+	q1 = _mm512_NFMA_ps(w1, h4, q1);
+	q2 = _mm512_NFMA_ps(w2, h4, q2);
+	q3 = _mm512_NFMA_ps(w3, h4, q3);
+
+	h2 = _mm512_set1_ps(hh[ldh+1]);
+
+	q1 = _mm512_NFMA_ps(y1, h2, q1);
+	q2 = _mm512_NFMA_ps(y2, h2, q2);
+	q3 = _mm512_NFMA_ps(y3, h2, q3);
+
+	h3 = _mm512_set1_ps(hh[(ldh*2)+2]);
+
+	q1 = _mm512_NFMA_ps(z1, h3, q1);
+	q2 = _mm512_NFMA_ps(z2, h3, q2);
+	q3 = _mm512_NFMA_ps(z3, h3, q3);
+
+	_mm512_store_ps(&q[ldq*3], q1);
+	_mm512_store_ps(&q[(ldq*3)+16], q2);
 	_mm512_store_ps(&q[(ldq*3)+32], q3);
-
-//	q4 = _mm512_load_ps(&q[(ldq*3)+48]);
-
-//	q4 = _mm512_sub_ps(q4, x4);
-//      q4 = _mm512_NFMA_ps(y4, h2, q4);
-//        q4 = _mm512_NFMA_ps(z4, h3, q4);
-//        q4 = _mm512_NFMA_ps(w4, h4, q4);
-//	_mm512_store_ps(&q[(ldq*3)+48], q4);
 
 	for (i = 4; i < nb; i++)
 	{
 		h1 = _mm512_set1_ps(hh[i-3]);
-		h2 = _mm512_set1_ps(hh[ldh+i-2]);
-		h3 = _mm512_set1_ps(hh[(ldh*2)+i-1]);
-		h4 = _mm512_set1_ps(hh[(ldh*3)+i]);
 
 		q1 = _mm512_load_ps(&q[i*ldq]);
-                q1 = _mm512_NFMA_ps(x1, h1, q1);
-                q1 = _mm512_NFMA_ps(y1, h2, q1);
-                q1 = _mm512_NFMA_ps(z1, h3, q1);
-                q1 = _mm512_NFMA_ps(w1, h4, q1);
-		_mm512_store_ps(&q[i*ldq],q1);
-
 		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
-                q2 = _mm512_NFMA_ps(x2, h1, q2);
-                q2 = _mm512_NFMA_ps(y2, h2, q2);
-                q2 = _mm512_NFMA_ps(z2, h3, q2);
-                q2 = _mm512_NFMA_ps(w2, h4, q2);
-		_mm512_store_ps(&q[(i*ldq)+16],q2);
-
 		q3 = _mm512_load_ps(&q[(i*ldq)+32]);
-                q3 = _mm512_NFMA_ps(x3, h1, q3);
-                q3 = _mm512_NFMA_ps(y3, h2, q3);
-                q3 = _mm512_NFMA_ps(z3, h3, q3);
-                q3 = _mm512_NFMA_ps(w3, h4, q3);
+
+		q1 = _mm512_NFMA_ps(x1, h1, q1);
+		q2 = _mm512_NFMA_ps(x2, h1, q2);
+		q3 = _mm512_NFMA_ps(x3, h1, q3);
+
+		h2 = _mm512_set1_ps(hh[ldh+i-2]);
+
+		q1 = _mm512_NFMA_ps(y1, h2, q1);
+		q2 = _mm512_NFMA_ps(y2, h2, q2);
+		q3 = _mm512_NFMA_ps(y3, h2, q3);
+
+		h3 = _mm512_set1_ps(hh[(ldh*2)+i-1]);
+
+		q1 = _mm512_NFMA_ps(z1, h3, q1);
+		q2 = _mm512_NFMA_ps(z2, h3, q2);
+		q3 = _mm512_NFMA_ps(z3, h3, q3);
+
+		h4 = _mm512_set1_ps(hh[(ldh*3)+i]);
+
+		q1 = _mm512_NFMA_ps(w1, h4, q1);
+		q2 = _mm512_NFMA_ps(w2, h4, q2);
+		q3 = _mm512_NFMA_ps(w3, h4, q3);
+
+		_mm512_store_ps(&q[i*ldq],q1);
+		_mm512_store_ps(&q[(i*ldq)+16],q2);
 		_mm512_store_ps(&q[(i*ldq)+32],q3);
-
-//		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
- //               q4 = _mm512_NFMA_ps(x4, h1, q4);
-  //              q4 = _mm512_NFMA_ps(y4, h2, q4);
- //               q4 = _mm512_NFMA_ps(z4, h3, q4);
-   //             q4 = _mm512_NFMA_ps(w4, h4, q4);
-//		_mm512_store_ps(&q[(i*ldq)+48],q4);
-
 	}
 
 	h1 = _mm512_set1_ps(hh[nb-3]);
-	h2 = _mm512_set1_ps(hh[ldh+nb-2]);
-	h3 = _mm512_set1_ps(hh[(ldh*2)+nb-1]);
 	q1 = _mm512_load_ps(&q[nb*ldq]);
-
-	q1 = _mm512_NFMA_ps(x1, h1, q1);
-        q1 = _mm512_NFMA_ps(y1, h2, q1);
-        q1 = _mm512_NFMA_ps(z1, h3, q1);
-	_mm512_store_ps(&q[nb*ldq],q1);
-
 	q2 = _mm512_load_ps(&q[(nb*ldq)+16]);
-
-	q2 = _mm512_NFMA_ps(x2, h1, q2);
-        q2 = _mm512_NFMA_ps(y2, h2, q2);
-        q2 = _mm512_NFMA_ps(z2, h3, q2);
-	_mm512_store_ps(&q[(nb*ldq)+16],q2);
-
 	q3 = _mm512_load_ps(&q[(nb*ldq)+32]);
 
+	q1 = _mm512_NFMA_ps(x1, h1, q1);
+	q2 = _mm512_NFMA_ps(x2, h1, q2);
 	q3 = _mm512_NFMA_ps(x3, h1, q3);
-        q3 = _mm512_NFMA_ps(y3, h2, q3);
-        q3 = _mm512_NFMA_ps(z3, h3, q3);
+
+	h2 = _mm512_set1_ps(hh[ldh+nb-2]);
+
+	q1 = _mm512_NFMA_ps(y1, h2, q1);
+	q2 = _mm512_NFMA_ps(y2, h2, q2);
+	q3 = _mm512_NFMA_ps(y3, h2, q3);
+
+	h3 = _mm512_set1_ps(hh[(ldh*2)+nb-1]);
+
+	q1 = _mm512_NFMA_ps(z1, h3, q1);
+	q2 = _mm512_NFMA_ps(z2, h3, q2);
+	q3 = _mm512_NFMA_ps(z3, h3, q3);
+
+	_mm512_store_ps(&q[nb*ldq],q1);
+	_mm512_store_ps(&q[(nb*ldq)+16],q2);
 	_mm512_store_ps(&q[(nb*ldq)+32],q3);
 
-//	q4 = _mm512_load_ps(&q[(nb*ldq)+48]);
-//
-//	q4 = _mm512_NFMA_ps(x4, h1, q4);
-//        q4 = _mm512_NFMA_ps(y4, h2, q4);
- //       q4 = _mm512_NFMA_ps(z4, h3, q4);
-//	_mm512_store_ps(&q[(nb*ldq)+48],q4);
-
 	h1 = _mm512_set1_ps(hh[nb-2]);
-	h2 = _mm512_set1_ps(hh[ldh+nb-1]);
 	q1 = _mm512_load_ps(&q[(nb+1)*ldq]);
-
-	q1 = _mm512_NFMA_ps(x1, h1, q1);
-	q1 = _mm512_NFMA_ps(y1, h2, q1);
-	_mm512_store_ps(&q[(nb+1)*ldq],q1);
-
 	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+16]);
-
-	q2 = _mm512_NFMA_ps(x2, h1, q2);
-	q2 = _mm512_NFMA_ps(y2, h2, q2);
-	_mm512_store_ps(&q[((nb+1)*ldq)+16],q2);
-
 	q3 = _mm512_load_ps(&q[((nb+1)*ldq)+32]);
 
+	q1 = _mm512_NFMA_ps(x1, h1, q1);
+	q2 = _mm512_NFMA_ps(x2, h1, q2);
 	q3 = _mm512_NFMA_ps(x3, h1, q3);
+
+	h2 = _mm512_set1_ps(hh[ldh+nb-1]);
+
+	q1 = _mm512_NFMA_ps(y1, h2, q1);
+	q2 = _mm512_NFMA_ps(y2, h2, q2);
 	q3 = _mm512_NFMA_ps(y3, h2, q3);
+
+	_mm512_store_ps(&q[(nb+1)*ldq],q1);
+	_mm512_store_ps(&q[((nb+1)*ldq)+16],q2);
 	_mm512_store_ps(&q[((nb+1)*ldq)+32],q3);
-
-//	q4 = _mm512_load_ps(&q[((nb+1)*ldq)+48]);
-//
-//	q4 = _mm512_NFMA_ps(x4, h1, q4);
-//	q4 = _mm512_NFMA_ps(y4, h2, q4);
-//	_mm512_store_ps(&q[((nb+1)*ldq)+48],q4);
-
 
 	h1 = _mm512_set1_ps(hh[nb-1]);
 	q1 = _mm512_load_ps(&q[(nb+2)*ldq]);
-
-	q1 = _mm512_NFMA_ps(x1, h1, q1);
-	_mm512_store_ps(&q[(nb+2)*ldq],q1);
-
 	q2 = _mm512_load_ps(&q[((nb+2)*ldq)+16]);
-
-	q2 = _mm512_NFMA_ps(x2, h1, q2);
-	_mm512_store_ps(&q[((nb+2)*ldq)+16],q2);
-
 	q3 = _mm512_load_ps(&q[((nb+2)*ldq)+32]);
 
+	q1 = _mm512_NFMA_ps(x1, h1, q1);
+	q2 = _mm512_NFMA_ps(x2, h1, q2);
 	q3 = _mm512_NFMA_ps(x3, h1, q3);
+
+	_mm512_store_ps(&q[(nb+2)*ldq],q1);
+	_mm512_store_ps(&q[((nb+2)*ldq)+16],q2);
 	_mm512_store_ps(&q[((nb+2)*ldq)+32],q3);
-
-//	q4 = _mm512_load_ps(&q[((nb+2)*ldq)+48]);
-//
-//	q4 = _mm512_NFMA_ps(x4, h1, q4);
-//	_mm512_store_ps(&q[((nb+2)*ldq)+48],q4);
-
 }
 
 /**
@@ -1031,7 +511,7 @@ __forceinline void hh_trafo_kernel_48_AVX512_4hv_single(float* q, float* hh, int
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-__forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
+__forceinline void hh_trafo_kernel_32_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
@@ -1039,26 +519,10 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
 	/////////////////////////////////////////////////////
 	int i;
 
-	__m512 a1_1 = _mm512_load_ps(&q[ldq*3]);
-	__m512 a2_1 = _mm512_load_ps(&q[ldq*2]);
-	__m512 a3_1 = _mm512_load_ps(&q[ldq]);
-	__m512 a4_1 = _mm512_load_ps(&q[0]);
-
-	__m512 a1_2 = _mm512_load_ps(&q[(ldq*3)+16]);
-	__m512 a2_2 = _mm512_load_ps(&q[(ldq*2)+16]);
-	__m512 a3_2 = _mm512_load_ps(&q[ldq+16]);
-	__m512 a4_2 = _mm512_load_ps(&q[0+16]);
-
-//	__m512 a1_3 = _mm512_load_ps(&q[(ldq*3)+32]);
-//	__m512 a2_3 = _mm512_load_ps(&q[(ldq*2)+32]);
-//	__m512 a3_3 = _mm512_load_ps(&q[ldq+32]);
-//	__m512 a4_3 = _mm512_load_ps(&q[0+32]);
-
-//	__m512 a1_4 = _mm512_load_ps(&q[(ldq*3)+48]);
-//	__m512 a2_4 = _mm512_load_ps(&q[(ldq*2)+48]);
-//	__m512 a3_4 = _mm512_load_ps(&q[ldq+48]);
-//	__m512 a4_4 = _mm512_load_ps(&q[0+48]);
-
+	__m512 a1_1 = _mm512_load_ps(&q[ldq*3]);  // q(1,4) | ...                                                 | q(8,4)
+	__m512 a2_1 = _mm512_load_ps(&q[ldq*2]);  // q(1,3) | ...                                                 | q(8,3)
+	__m512 a3_1 = _mm512_load_ps(&q[ldq]);    // q(1,2) | ...                                                 | q(8,2)
+	__m512 a4_1 = _mm512_load_ps(&q[0]);      // q(1,1) | q(2,1) | q(3,1) | q(4,1) | q(5,1) | q(6,1) | q(7,1) | q(8,1)
 
 	__m512 h_2_1 = _mm512_set1_ps(hh[ldh+1]);
 	__m512 h_3_2 = _mm512_set1_ps(hh[(ldh*2)+1]);
@@ -1075,6 +539,11 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
 	__m512 y1 = _mm512_FMA_ps(a1_1, h_2_1, a2_1);
 	__m512 x1 = a1_1;
 
+	__m512 a1_2 = _mm512_load_ps(&q[(ldq*3)+16]);
+	__m512 a2_2 = _mm512_load_ps(&q[(ldq*2)+16]);
+	__m512 a3_2 = _mm512_load_ps(&q[ldq+16]);
+	__m512 a4_2 = _mm512_load_ps(&q[0+16]);       // q(9,1) | q(10,1) | q(11,1) | q(12,1) | q(13,1) | q(14,1) | q(15,1) | q(16,1)
+
 	__m512 w2 = _mm512_FMA_ps(a3_2, h_4_3, a4_2);
 	w2 = _mm512_FMA_ps(a2_2, h_4_2, w2);
 	w2 = _mm512_FMA_ps(a1_2, h_4_1, w2);
@@ -1083,27 +552,8 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
 	__m512 y2 = _mm512_FMA_ps(a1_2, h_2_1, a2_2);
 	__m512 x2 = a1_2;
 
-//	__m512 w3 = _mm512_FMA_ps(a3_3, h_4_3, a4_3);
-//	w3 = _mm512_FMA_ps(a2_3, h_4_2, w3);
-//	w3 = _mm512_FMA_ps(a1_3, h_4_1, w3);
-//	__m512 z3 = _mm512_FMA_ps(a2_3, h_3_2, a3_3);
-//	z3 = _mm512_FMA_ps(a1_3, h_3_1, z3);
-//	__m512 y3 = _mm512_FMA_ps(a1_3, h_2_1, a2_3);
-//	__m512 x3 = a1_3;
-
-//	__m512 w4 = _mm512_FMA_ps(a3_4, h_4_3, a4_4);
-//	w4 = _mm512_FMA_ps(a2_4, h_4_2, w4);
-//	w4 = _mm512_FMA_ps(a1_4, h_4_1, w4);
-//	__m512 z4 = _mm512_FMA_ps(a2_4, h_3_2, a3_4);
-//	z4 = _mm512_FMA_ps(a1_4, h_3_1, z4);
-//	__m512 y4 = _mm512_FMA_ps(a1_4, h_2_1, a2_4);
-//	__m512 x4 = a1_4;
-
-
 	__m512 q1;
 	__m512 q2;
-//	__m512 q3;
-//	__m512 q4;
 
 	__m512 h1;
 	__m512 h2;
@@ -1118,30 +568,18 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
 		h4 = _mm512_set1_ps(hh[(ldh*3)+i]);
 
 		q1 = _mm512_load_ps(&q[i*ldq]);
-		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
-//		q3 = _mm512_load_ps(&q[(i*ldq)+32]);
-//		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
 
 		x1 = _mm512_FMA_ps(q1, h1, x1);
 		y1 = _mm512_FMA_ps(q1, h2, y1);
 		z1 = _mm512_FMA_ps(q1, h3, z1);
 		w1 = _mm512_FMA_ps(q1, h4, w1);
 
+		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
+
 		x2 = _mm512_FMA_ps(q2, h1, x2);
 		y2 = _mm512_FMA_ps(q2, h2, y2);
 		z2 = _mm512_FMA_ps(q2, h3, z2);
 		w2 = _mm512_FMA_ps(q2, h4, w2);
-
-//		x3 = _mm512_FMA_ps(q3, h1, x3);
-//		y3 = _mm512_FMA_ps(q3, h2, y3);
-//		z3 = _mm512_FMA_ps(q3, h3, z3);
-//		w3 = _mm512_FMA_ps(q3, h4, w3);
-
-//		x4 = _mm512_FMA_ps(q4, h1, x4);
-//		y4 = _mm512_FMA_ps(q4, h2, y4);
-//		z4 = _mm512_FMA_ps(q4, h3, z4);
-//		w4 = _mm512_FMA_ps(q4, h4, w4);
-
 	}
 
 	h1 = _mm512_set1_ps(hh[nb-3]);
@@ -1150,54 +588,32 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
 
 	q1 = _mm512_load_ps(&q[nb*ldq]);
 	q2 = _mm512_load_ps(&q[(nb*ldq)+16]);
-//	q3 = _mm512_load_ps(&q[(nb*ldq)+32]);
-//	q4 = _mm512_load_ps(&q[(nb*ldq)+48]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
-	y1 = _mm512_FMA_ps(q1, h2, y1);
-	z1 = _mm512_FMA_ps(q1, h3, z1);
-
 	x2 = _mm512_FMA_ps(q2, h1, x2);
+	y1 = _mm512_FMA_ps(q1, h2, y1);
 	y2 = _mm512_FMA_ps(q2, h2, y2);
+	z1 = _mm512_FMA_ps(q1, h3, z1);
 	z2 = _mm512_FMA_ps(q2, h3, z2);
-
-//	x3 = _mm512_FMA_ps(q3, h1, x3);
-//	y3 = _mm512_FMA_ps(q3, h2, y3);
-//	z3 = _mm512_FMA_ps(q3, h3, z3);
-
-//	x4 = _mm512_FMA_ps(q4, h1, x4);
-//	y4 = _mm512_FMA_ps(q4, h2, y4);
-//	z4 = _mm512_FMA_ps(q4, h3, z4);
-
 
 	h1 = _mm512_set1_ps(hh[nb-2]);
 	h2 = _mm512_set1_ps(hh[(ldh*1)+nb-1]);
 
 	q1 = _mm512_load_ps(&q[(nb+1)*ldq]);
 	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+16]);
-//	q3 = _mm512_load_ps(&q[((nb+1)*ldq)+32]);
-//	q4 = _mm512_load_ps(&q[((nb+1)*ldq)+48]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
-	y1 = _mm512_FMA_ps(q1, h2, y1);
 	x2 = _mm512_FMA_ps(q2, h1, x2);
+	y1 = _mm512_FMA_ps(q1, h2, y1);
 	y2 = _mm512_FMA_ps(q2, h2, y2);
-//	x3 = _mm512_FMA_ps(q3, h1, x3);
-//	y3 = _mm512_FMA_ps(q3, h2, y3);
-//	x4 = _mm512_FMA_ps(q4, h1, x4);
-//	y4 = _mm512_FMA_ps(q4, h2, y4);
 
 	h1 = _mm512_set1_ps(hh[nb-1]);
 
 	q1 = _mm512_load_ps(&q[(nb+2)*ldq]);
 	q2 = _mm512_load_ps(&q[((nb+2)*ldq)+16]);
-//	q3 = _mm512_load_ps(&q[((nb+2)*ldq)+32]);
-//	q4 = _mm512_load_ps(&q[((nb+2)*ldq)+48]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
 	x2 = _mm512_FMA_ps(q2, h1, x2);
-//	x3 = _mm512_FMA_ps(q3, h1, x3);
-//	x4 = _mm512_FMA_ps(q4, h1, x4);
 
 	/////////////////////////////////////////////////////
 	// Rank-1 update of Q [8 x nb+3]
@@ -1218,16 +634,12 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
 	h1 = tau1;
 	x1 = _mm512_mul_ps(x1, h1);
 	x2 = _mm512_mul_ps(x2, h1);
-//	x3 = _mm512_mul_ps(x3, h1);
-//	x4 = _mm512_mul_ps(x4, h1);
 
 	h1 = tau2;
 	h2 = _mm512_mul_ps(h1, vs_1_2);
 
 	y1 = _mm512_FMSUB_ps(y1, h1, _mm512_mul_ps(x1,h2));
 	y2 = _mm512_FMSUB_ps(y2, h1, _mm512_mul_ps(x2,h2));
-//	y3 = _mm512_FMSUB_ps(y3, h1, _mm512_mul_ps(x3,h2));
-//	y4 = _mm512_FMSUB_ps(y4, h1, _mm512_mul_ps(x4,h2));
 
 	h1 = tau3;
 	h2 = _mm512_mul_ps(h1, vs_1_3);
@@ -1235,8 +647,6 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
 
 	z1 = _mm512_FMSUB_ps(z1, h1, _mm512_FMA_ps(y1, h3, _mm512_mul_ps(x1,h2)));
 	z2 = _mm512_FMSUB_ps(z2, h1, _mm512_FMA_ps(y2, h3, _mm512_mul_ps(x2,h2)));
-//	z3 = _mm512_FMSUB_ps(z3, h1, _mm512_FMA_ps(y3, h3, _mm512_mul_ps(x3,h2)));
-//	z4 = _mm512_FMSUB_ps(z4, h1, _mm512_FMA_ps(y4, h3, _mm512_mul_ps(x4,h2)));
 
 	h1 = tau4;
 	h2 = _mm512_mul_ps(h1, vs_1_4);
@@ -1245,104 +655,56 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
 
 	w1 = _mm512_FMSUB_ps(w1, h1, _mm512_FMA_ps(z1, h4, _mm512_FMA_ps(y1, h3, _mm512_mul_ps(x1,h2))));
 	w2 = _mm512_FMSUB_ps(w2, h1, _mm512_FMA_ps(z2, h4, _mm512_FMA_ps(y2, h3, _mm512_mul_ps(x2,h2))));
-//	w3 = _mm512_FMSUB_ps(w3, h1, _mm512_FMA_ps(z3, h4, _mm512_FMA_ps(y3, h3, _mm512_mul_ps(x3,h2))));
-//	w4 = _mm512_FMSUB_ps(w4, h1, _mm512_FMA_ps(z4, h4, _mm512_FMA_ps(y4, h3, _mm512_mul_ps(x4,h2))));
 
 	q1 = _mm512_load_ps(&q[0]);
+	q2 = _mm512_load_ps(&q[16]);
 	q1 = _mm512_sub_ps(q1, w1);
-	_mm512_store_ps(&q[0],q1);
-
-	q2 = _mm512_load_ps(&q[0+16]);
 	q2 = _mm512_sub_ps(q2, w2);
-	_mm512_store_ps(&q[0+16],q2);
-
-//	q3 = _mm512_load_ps(&q[0+32]);
-//	q3 = _mm512_sub_ps(q3, w3);
-//	_mm512_store_ps(&q[0+32],q3);
-
-//	q4 = _mm512_load_ps(&q[0+48]);
-//	q4 = _mm512_sub_ps(q4, w4);
-//	_mm512_store_ps(&q[0+48],q4);
+	_mm512_store_ps(&q[0],q1);
+	_mm512_store_ps(&q[16],q2);
 
 	h4 = _mm512_set1_ps(hh[(ldh*3)+1]);
 	q1 = _mm512_load_ps(&q[ldq]);
 	q2 = _mm512_load_ps(&q[ldq+16]);
-//	q3 = _mm512_load_ps(&q[ldq+32]);
-//	q4 = _mm512_load_ps(&q[ldq+48]);
 
 	q1 = _mm512_sub_ps(q1, _mm512_FMA_ps(w1, h4, z1));
-	_mm512_store_ps(&q[ldq],q1);
 	q2 = _mm512_sub_ps(q2, _mm512_FMA_ps(w2, h4, z2));
-	_mm512_store_ps(&q[ldq+16],q2);
-//	q3 = _mm512_sub_ps(q3, _mm512_FMA_ps(w3, h4, z3));
-//	_mm512_store_ps(&q[ldq+32],q3);
-//	q4 = _mm512_sub_ps(q4, _mm512_FMA_ps(w4, h4, z4));
-//	_mm512_store_ps(&q[ldq+48],q4);
 
+	_mm512_store_ps(&q[ldq],q1);
+	_mm512_store_ps(&q[ldq+16],q2);
 
 	h3 = _mm512_set1_ps(hh[(ldh*2)+1]);
 	h4 = _mm512_set1_ps(hh[(ldh*3)+2]);
 	q1 = _mm512_load_ps(&q[ldq*2]);
 	q2 = _mm512_load_ps(&q[(ldq*2)+16]);
-//	q3 = _mm512_load_ps(&q[(ldq*2)+32]);
-//	q4 = _mm512_load_ps(&q[(ldq*2)+48]);
 
         q1 = _mm512_sub_ps(q1, y1);
         q1 = _mm512_NFMA_ps(z1, h3, q1);
         q1 = _mm512_NFMA_ps(w1, h4, q1);
-	_mm512_store_ps(&q[ldq*2],q1);
-
         q2 = _mm512_sub_ps(q2, y2);
         q2 = _mm512_NFMA_ps(z2, h3, q2);
         q2 = _mm512_NFMA_ps(w2, h4, q2);
+
+	_mm512_store_ps(&q[ldq*2],q1);
 	_mm512_store_ps(&q[(ldq*2)+16],q2);
-
-//        q3 = _mm512_sub_ps(q3, y3);
- //       q3 = _mm512_NFMA_ps(z3, h3, q3);
-  //      q3 = _mm512_NFMA_ps(w3, h4, q3);
-//	_mm512_store_ps(&q[(ldq*2)+32],q3);
-
-//        q4 = _mm512_sub_ps(q4, y4);
- //       q4 = _mm512_NFMA_ps(z4, h3, q4);
-  //      q4 = _mm512_NFMA_ps(w4, h4, q4);
-//	_mm512_store_ps(&q[(ldq*2)+48],q4);
-
 
 	h2 = _mm512_set1_ps(hh[ldh+1]);
 	h3 = _mm512_set1_ps(hh[(ldh*2)+2]);
 	h4 = _mm512_set1_ps(hh[(ldh*3)+3]);
-
 	q1 = _mm512_load_ps(&q[ldq*3]);
+	q2 = _mm512_load_ps(&q[(ldq*3)+16]);
 
-	q1 = _mm512_sub_ps(q1, x1);
+        q1 = _mm512_sub_ps(q1, x1);
         q1 = _mm512_NFMA_ps(y1, h2, q1);
         q1 = _mm512_NFMA_ps(z1, h3, q1);
         q1 = _mm512_NFMA_ps(w1, h4, q1);
-	_mm512_store_ps(&q[ldq*3], q1);
-
-	q2 = _mm512_load_ps(&q[(ldq*3)+16]);
-
-	q2 = _mm512_sub_ps(q2, x2);
+        q2 = _mm512_sub_ps(q2, x2);
         q2 = _mm512_NFMA_ps(y2, h2, q2);
         q2 = _mm512_NFMA_ps(z2, h3, q2);
         q2 = _mm512_NFMA_ps(w2, h4, q2);
+
+	_mm512_store_ps(&q[ldq*3], q1);
 	_mm512_store_ps(&q[(ldq*3)+16], q2);
-
-//	q3 = _mm512_load_ps(&q[(ldq*3)+32]);
-//
-//	q3 = _mm512_sub_ps(q3, x3);
-//        q3 = _mm512_NFMA_ps(y3, h2, q3);
- //       q3 = _mm512_NFMA_ps(z3, h3, q3);
-  //      q3 = _mm512_NFMA_ps(w3, h4, q3);
-//	_mm512_store_ps(&q[(ldq*3)+32], q3);
-
-//	q4 = _mm512_load_ps(&q[(ldq*3)+48]);
-
-//	q4 = _mm512_sub_ps(q4, x4);
-//      q4 = _mm512_NFMA_ps(y4, h2, q4);
-//        q4 = _mm512_NFMA_ps(z4, h3, q4);
-//        q4 = _mm512_NFMA_ps(w4, h4, q4);
-//	_mm512_store_ps(&q[(ldq*3)+48], q4);
 
 	for (i = 4; i < nb; i++)
 	{
@@ -1352,114 +714,57 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
 		h4 = _mm512_set1_ps(hh[(ldh*3)+i]);
 
 		q1 = _mm512_load_ps(&q[i*ldq]);
+		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
                 q1 = _mm512_NFMA_ps(x1, h1, q1);
                 q1 = _mm512_NFMA_ps(y1, h2, q1);
                 q1 = _mm512_NFMA_ps(z1, h3, q1);
                 q1 = _mm512_NFMA_ps(w1, h4, q1);
-		_mm512_store_ps(&q[i*ldq],q1);
-
-		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
                 q2 = _mm512_NFMA_ps(x2, h1, q2);
                 q2 = _mm512_NFMA_ps(y2, h2, q2);
                 q2 = _mm512_NFMA_ps(z2, h3, q2);
                 q2 = _mm512_NFMA_ps(w2, h4, q2);
+		_mm512_store_ps(&q[i*ldq],q1);
 		_mm512_store_ps(&q[(i*ldq)+16],q2);
-
-//		q3 = _mm512_load_ps(&q[(i*ldq)+32]);
- //               q3 = _mm512_NFMA_ps(x3, h1, q3);
-//                q3 = _mm512_NFMA_ps(y3, h2, q3);
- //               q3 = _mm512_NFMA_ps(z3, h3, q3);
- //               q3 = _mm512_NFMA_ps(w3, h4, q3);
-//		_mm512_store_ps(&q[(i*ldq)+32],q3);
-
-//		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
- //               q4 = _mm512_NFMA_ps(x4, h1, q4);
-  //              q4 = _mm512_NFMA_ps(y4, h2, q4);
- //               q4 = _mm512_NFMA_ps(z4, h3, q4);
-   //             q4 = _mm512_NFMA_ps(w4, h4, q4);
-//		_mm512_store_ps(&q[(i*ldq)+48],q4);
-
 	}
 
 	h1 = _mm512_set1_ps(hh[nb-3]);
 	h2 = _mm512_set1_ps(hh[ldh+nb-2]);
 	h3 = _mm512_set1_ps(hh[(ldh*2)+nb-1]);
 	q1 = _mm512_load_ps(&q[nb*ldq]);
-
-	q1 = _mm512_NFMA_ps(x1, h1, q1);
-        q1 = _mm512_NFMA_ps(y1, h2, q1);
-        q1 = _mm512_NFMA_ps(z1, h3, q1);
-	_mm512_store_ps(&q[nb*ldq],q1);
-
 	q2 = _mm512_load_ps(&q[(nb*ldq)+16]);
 
-	q2 = _mm512_NFMA_ps(x2, h1, q2);
+        q1 = _mm512_NFMA_ps(x1, h1, q1);
+        q1 = _mm512_NFMA_ps(y1, h2, q1);
+        q1 = _mm512_NFMA_ps(z1, h3, q1);
+        q2 = _mm512_NFMA_ps(x2, h1, q2);
         q2 = _mm512_NFMA_ps(y2, h2, q2);
         q2 = _mm512_NFMA_ps(z2, h3, q2);
+
+	_mm512_store_ps(&q[nb*ldq],q1);
 	_mm512_store_ps(&q[(nb*ldq)+16],q2);
-
-//	q3 = _mm512_load_ps(&q[(nb*ldq)+32]);
-//
-//	q3 = _mm512_NFMA_ps(x3, h1, q3);
- //       q3 = _mm512_NFMA_ps(y3, h2, q3);
-  //      q3 = _mm512_NFMA_ps(z3, h3, q3);
-//	_mm512_store_ps(&q[(nb*ldq)+32],q3);
-
-//	q4 = _mm512_load_ps(&q[(nb*ldq)+48]);
-//
-//	q4 = _mm512_NFMA_ps(x4, h1, q4);
-//        q4 = _mm512_NFMA_ps(y4, h2, q4);
- //       q4 = _mm512_NFMA_ps(z4, h3, q4);
-//	_mm512_store_ps(&q[(nb*ldq)+48],q4);
 
 	h1 = _mm512_set1_ps(hh[nb-2]);
 	h2 = _mm512_set1_ps(hh[ldh+nb-1]);
 	q1 = _mm512_load_ps(&q[(nb+1)*ldq]);
-
-	q1 = _mm512_NFMA_ps(x1, h1, q1);
-	q1 = _mm512_NFMA_ps(y1, h2, q1);
-	_mm512_store_ps(&q[(nb+1)*ldq],q1);
-
 	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+16]);
 
-	q2 = _mm512_NFMA_ps(x2, h1, q2);
-	q2 = _mm512_NFMA_ps(y2, h2, q2);
+        q1 = _mm512_NFMA_ps(x1, h1, q1);
+        q1 = _mm512_NFMA_ps(y1, h2, q1);
+        q2 = _mm512_NFMA_ps(x2, h1, q2);
+        q2 = _mm512_NFMA_ps(y2, h2, q2);
+
+	_mm512_store_ps(&q[(nb+1)*ldq],q1);
 	_mm512_store_ps(&q[((nb+1)*ldq)+16],q2);
-
-//	q3 = _mm512_load_ps(&q[((nb+1)*ldq)+32]);
-//
-//	q3 = _mm512_NFMA_ps(x3, h1, q3);
-//	q3 = _mm512_NFMA_ps(y3, h2, q3);
-//	_mm512_store_ps(&q[((nb+1)*ldq)+32],q3);
-
-//	q4 = _mm512_load_ps(&q[((nb+1)*ldq)+48]);
-//
-//	q4 = _mm512_NFMA_ps(x4, h1, q4);
-//	q4 = _mm512_NFMA_ps(y4, h2, q4);
-//	_mm512_store_ps(&q[((nb+1)*ldq)+48],q4);
-
 
 	h1 = _mm512_set1_ps(hh[nb-1]);
 	q1 = _mm512_load_ps(&q[(nb+2)*ldq]);
-
-	q1 = _mm512_NFMA_ps(x1, h1, q1);
-	_mm512_store_ps(&q[(nb+2)*ldq],q1);
-
 	q2 = _mm512_load_ps(&q[((nb+2)*ldq)+16]);
 
+	q1 = _mm512_NFMA_ps(x1, h1, q1);
 	q2 = _mm512_NFMA_ps(x2, h1, q2);
+
+	_mm512_store_ps(&q[(nb+2)*ldq],q1);
 	_mm512_store_ps(&q[((nb+2)*ldq)+16],q2);
-
-//	q3 = _mm512_load_ps(&q[((nb+2)*ldq)+32]);
-//
-//	q3 = _mm512_NFMA_ps(x3, h1, q3);
-//	_mm512_store_ps(&q[((nb+2)*ldq)+32],q3);
-
-//	q4 = _mm512_load_ps(&q[((nb+2)*ldq)+48]);
-//
-//	q4 = _mm512_NFMA_ps(x4, h1, q4);
-//	_mm512_store_ps(&q[((nb+2)*ldq)+48],q4);
-
 }
 
 /**
@@ -1468,7 +773,7 @@ __forceinline void hh_trafo_kernel_32_AVX512_4hv_single(float* q, float* hh, int
  * matrix vector product with two householder
  * vectors + a rank 1 update is performed
  */
-__forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
+__forceinline void hh_trafo_kernel_16_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [4 x nb+3] * hh
@@ -1476,26 +781,10 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int
 	/////////////////////////////////////////////////////
 	int i;
 
-	__m512 a1_1 = _mm512_load_ps(&q[ldq*3]);
-	__m512 a2_1 = _mm512_load_ps(&q[ldq*2]);
-	__m512 a3_1 = _mm512_load_ps(&q[ldq]);
-	__m512 a4_1 = _mm512_load_ps(&q[0]);
-
-//	__m512 a1_2 = _mm512_load_ps(&q[(ldq*3)+16]);
-//	__m512 a2_2 = _mm512_load_ps(&q[(ldq*2)+16]);
-//	__m512 a3_2 = _mm512_load_ps(&q[ldq+16]);
-//	__m512 a4_2 = _mm512_load_ps(&q[0+16]);
-
-//	__m512 a1_3 = _mm512_load_ps(&q[(ldq*3)+32]);
-//	__m512 a2_3 = _mm512_load_ps(&q[(ldq*2)+32]);
-//	__m512 a3_3 = _mm512_load_ps(&q[ldq+32]);
-//	__m512 a4_3 = _mm512_load_ps(&q[0+32]);
-
-//	__m512 a1_4 = _mm512_load_ps(&q[(ldq*3)+48]);
-//	__m512 a2_4 = _mm512_load_ps(&q[(ldq*2)+48]);
-//	__m512 a3_4 = _mm512_load_ps(&q[ldq+48]);
-//	__m512 a4_4 = _mm512_load_ps(&q[0+48]);
-
+	__m512 a1_1 = _mm512_load_ps(&q[ldq*3]);  // q(1,4) | ...                                                 | q(8,4)
+	__m512 a2_1 = _mm512_load_ps(&q[ldq*2]);  // q(1,3) | ...                                                 | q(8,3)
+	__m512 a3_1 = _mm512_load_ps(&q[ldq]);    // q(1,2) | ...                                                 | q(8,2)
+	__m512 a4_1 = _mm512_load_ps(&q[0]);      // q(1,1) | q(2,1) | q(3,1) | q(4,1) | q(5,1) | q(6,1) | q(7,1) | q(8,1)
 
 	__m512 h_2_1 = _mm512_set1_ps(hh[ldh+1]);
 	__m512 h_3_2 = _mm512_set1_ps(hh[(ldh*2)+1]);
@@ -1512,35 +801,7 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int
 	__m512 y1 = _mm512_FMA_ps(a1_1, h_2_1, a2_1);
 	__m512 x1 = a1_1;
 
-//	__m512 w2 = _mm512_FMA_ps(a3_2, h_4_3, a4_2);
-//	w2 = _mm512_FMA_ps(a2_2, h_4_2, w2);
-//	w2 = _mm512_FMA_ps(a1_2, h_4_1, w2);
-//	__m512 z2 = _mm512_FMA_ps(a2_2, h_3_2, a3_2);
-//	z2 = _mm512_FMA_ps(a1_2, h_3_1, z2);
-//	__m512 y2 = _mm512_FMA_ps(a1_2, h_2_1, a2_2);
-//	__m512 x2 = a1_2;
-
-//	__m512 w3 = _mm512_FMA_ps(a3_3, h_4_3, a4_3);
-//	w3 = _mm512_FMA_ps(a2_3, h_4_2, w3);
-//	w3 = _mm512_FMA_ps(a1_3, h_4_1, w3);
-//	__m512 z3 = _mm512_FMA_ps(a2_3, h_3_2, a3_3);
-//	z3 = _mm512_FMA_ps(a1_3, h_3_1, z3);
-//	__m512 y3 = _mm512_FMA_ps(a1_3, h_2_1, a2_3);
-//	__m512 x3 = a1_3;
-
-//	__m512 w4 = _mm512_FMA_ps(a3_4, h_4_3, a4_4);
-//	w4 = _mm512_FMA_ps(a2_4, h_4_2, w4);
-//	w4 = _mm512_FMA_ps(a1_4, h_4_1, w4);
-//	__m512 z4 = _mm512_FMA_ps(a2_4, h_3_2, a3_4);
-//	z4 = _mm512_FMA_ps(a1_4, h_3_1, z4);
-//	__m512 y4 = _mm512_FMA_ps(a1_4, h_2_1, a2_4);
-//	__m512 x4 = a1_4;
-
-
 	__m512 q1;
-//	__m512 q2;
-//	__m512 q3;
-//	__m512 q4;
 
 	__m512 h1;
 	__m512 h2;
@@ -1555,29 +816,11 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int
 		h4 = _mm512_set1_ps(hh[(ldh*3)+i]);
 
 		q1 = _mm512_load_ps(&q[i*ldq]);
-//		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
-//		q3 = _mm512_load_ps(&q[(i*ldq)+32]);
-//		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
 
 		x1 = _mm512_FMA_ps(q1, h1, x1);
 		y1 = _mm512_FMA_ps(q1, h2, y1);
 		z1 = _mm512_FMA_ps(q1, h3, z1);
 		w1 = _mm512_FMA_ps(q1, h4, w1);
-
-//		x2 = _mm512_FMA_ps(q2, h1, x2);
-//		y2 = _mm512_FMA_ps(q2, h2, y2);
-//		z2 = _mm512_FMA_ps(q2, h3, z2);
-//		w2 = _mm512_FMA_ps(q2, h4, w2);
-
-//		x3 = _mm512_FMA_ps(q3, h1, x3);
-//		y3 = _mm512_FMA_ps(q3, h2, y3);
-//		z3 = _mm512_FMA_ps(q3, h3, z3);
-//		w3 = _mm512_FMA_ps(q3, h4, w3);
-
-//		x4 = _mm512_FMA_ps(q4, h1, x4);
-//		y4 = _mm512_FMA_ps(q4, h2, y4);
-//		z4 = _mm512_FMA_ps(q4, h3, z4);
-//		w4 = _mm512_FMA_ps(q4, h4, w4);
 
 	}
 
@@ -1586,55 +829,24 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int
 	h3 = _mm512_set1_ps(hh[(ldh*2)+nb-1]);
 
 	q1 = _mm512_load_ps(&q[nb*ldq]);
-//	q2 = _mm512_load_ps(&q[(nb*ldq)+16]);
-//	q3 = _mm512_load_ps(&q[(nb*ldq)+32]);
-//	q4 = _mm512_load_ps(&q[(nb*ldq)+48]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
 	y1 = _mm512_FMA_ps(q1, h2, y1);
 	z1 = _mm512_FMA_ps(q1, h3, z1);
 
-//	x2 = _mm512_FMA_ps(q2, h1, x2);
-//	y2 = _mm512_FMA_ps(q2, h2, y2);
-//	z2 = _mm512_FMA_ps(q2, h3, z2);
-
-//	x3 = _mm512_FMA_ps(q3, h1, x3);
-//	y3 = _mm512_FMA_ps(q3, h2, y3);
-//	z3 = _mm512_FMA_ps(q3, h3, z3);
-
-//	x4 = _mm512_FMA_ps(q4, h1, x4);
-//	y4 = _mm512_FMA_ps(q4, h2, y4);
-//	z4 = _mm512_FMA_ps(q4, h3, z4);
-
-
 	h1 = _mm512_set1_ps(hh[nb-2]);
 	h2 = _mm512_set1_ps(hh[(ldh*1)+nb-1]);
 
 	q1 = _mm512_load_ps(&q[(nb+1)*ldq]);
-//	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+16]);
-//	q3 = _mm512_load_ps(&q[((nb+1)*ldq)+32]);
-//	q4 = _mm512_load_ps(&q[((nb+1)*ldq)+48]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
 	y1 = _mm512_FMA_ps(q1, h2, y1);
-//	x2 = _mm512_FMA_ps(q2, h1, x2);
-//	y2 = _mm512_FMA_ps(q2, h2, y2);
-//	x3 = _mm512_FMA_ps(q3, h1, x3);
-//	y3 = _mm512_FMA_ps(q3, h2, y3);
-//	x4 = _mm512_FMA_ps(q4, h1, x4);
-//	y4 = _mm512_FMA_ps(q4, h2, y4);
 
 	h1 = _mm512_set1_ps(hh[nb-1]);
 
 	q1 = _mm512_load_ps(&q[(nb+2)*ldq]);
-//	q2 = _mm512_load_ps(&q[((nb+2)*ldq)+16]);
-//	q3 = _mm512_load_ps(&q[((nb+2)*ldq)+32]);
-//	q4 = _mm512_load_ps(&q[((nb+2)*ldq)+48]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
-//	x2 = _mm512_FMA_ps(q2, h1, x2);
-//	x3 = _mm512_FMA_ps(q3, h1, x3);
-//	x4 = _mm512_FMA_ps(q4, h1, x4);
 
 	/////////////////////////////////////////////////////
 	// Rank-1 update of Q [8 x nb+3]
@@ -1654,26 +866,16 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int
 
 	h1 = tau1;
 	x1 = _mm512_mul_ps(x1, h1);
-//	x2 = _mm512_mul_ps(x2, h1);
-//	x3 = _mm512_mul_ps(x3, h1);
-//	x4 = _mm512_mul_ps(x4, h1);
 
 	h1 = tau2;
 	h2 = _mm512_mul_ps(h1, vs_1_2);
-
 	y1 = _mm512_FMSUB_ps(y1, h1, _mm512_mul_ps(x1,h2));
-//	y2 = _mm512_FMSUB_ps(y2, h1, _mm512_mul_ps(x2,h2));
-//	y3 = _mm512_FMSUB_ps(y3, h1, _mm512_mul_ps(x3,h2));
-//	y4 = _mm512_FMSUB_ps(y4, h1, _mm512_mul_ps(x4,h2));
 
 	h1 = tau3;
 	h2 = _mm512_mul_ps(h1, vs_1_3);
 	h3 = _mm512_mul_ps(h1, vs_2_3);
 
 	z1 = _mm512_FMSUB_ps(z1, h1, _mm512_FMA_ps(y1, h3, _mm512_mul_ps(x1,h2)));
-//	z2 = _mm512_FMSUB_ps(z2, h1, _mm512_FMA_ps(y2, h3, _mm512_mul_ps(x2,h2)));
-//	z3 = _mm512_FMSUB_ps(z3, h1, _mm512_FMA_ps(y3, h3, _mm512_mul_ps(x3,h2)));
-//	z4 = _mm512_FMSUB_ps(z4, h1, _mm512_FMA_ps(y4, h3, _mm512_mul_ps(x4,h2)));
 
 	h1 = tau4;
 	h2 = _mm512_mul_ps(h1, vs_1_4);
@@ -1681,105 +883,39 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int
 	h4 = _mm512_mul_ps(h1, vs_3_4);
 
 	w1 = _mm512_FMSUB_ps(w1, h1, _mm512_FMA_ps(z1, h4, _mm512_FMA_ps(y1, h3, _mm512_mul_ps(x1,h2))));
-//	w2 = _mm512_FMSUB_ps(w2, h1, _mm512_FMA_ps(z2, h4, _mm512_FMA_ps(y2, h3, _mm512_mul_ps(x2,h2))));
-//	w3 = _mm512_FMSUB_ps(w3, h1, _mm512_FMA_ps(z3, h4, _mm512_FMA_ps(y3, h3, _mm512_mul_ps(x3,h2))));
-//	w4 = _mm512_FMSUB_ps(w4, h1, _mm512_FMA_ps(z4, h4, _mm512_FMA_ps(y4, h3, _mm512_mul_ps(x4,h2))));
 
 	q1 = _mm512_load_ps(&q[0]);
 	q1 = _mm512_sub_ps(q1, w1);
 	_mm512_store_ps(&q[0],q1);
 
-//	q2 = _mm512_load_ps(&q[0+16]);
-//	q2 = _mm512_sub_ps(q2, w2);
-//	_mm512_store_ps(&q[0+16],q2);
-
-//	q3 = _mm512_load_ps(&q[0+32]);
-//	q3 = _mm512_sub_ps(q3, w3);
-//	_mm512_store_ps(&q[0+32],q3);
-
-//	q4 = _mm512_load_ps(&q[0+48]);
-//	q4 = _mm512_sub_ps(q4, w4);
-//	_mm512_store_ps(&q[0+48],q4);
-
 	h4 = _mm512_set1_ps(hh[(ldh*3)+1]);
 	q1 = _mm512_load_ps(&q[ldq]);
-//	q2 = _mm512_load_ps(&q[ldq+16]);
-//	q3 = _mm512_load_ps(&q[ldq+32]);
-//	q4 = _mm512_load_ps(&q[ldq+48]);
 
 	q1 = _mm512_sub_ps(q1, _mm512_FMA_ps(w1, h4, z1));
-	_mm512_store_ps(&q[ldq],q1);
-//	q2 = _mm512_sub_ps(q2, _mm512_FMA_ps(w2, h4, z2));
-//	_mm512_store_ps(&q[ldq+16],q2);
-//	q3 = _mm512_sub_ps(q3, _mm512_FMA_ps(w3, h4, z3));
-//	_mm512_store_ps(&q[ldq+32],q3);
-//	q4 = _mm512_sub_ps(q4, _mm512_FMA_ps(w4, h4, z4));
-//	_mm512_store_ps(&q[ldq+48],q4);
 
+	_mm512_store_ps(&q[ldq],q1);
 
 	h3 = _mm512_set1_ps(hh[(ldh*2)+1]);
 	h4 = _mm512_set1_ps(hh[(ldh*3)+2]);
 	q1 = _mm512_load_ps(&q[ldq*2]);
-//	q2 = _mm512_load_ps(&q[(ldq*2)+16]);
-//	q3 = _mm512_load_ps(&q[(ldq*2)+32]);
-//	q4 = _mm512_load_ps(&q[(ldq*2)+48]);
 
         q1 = _mm512_sub_ps(q1, y1);
         q1 = _mm512_NFMA_ps(z1, h3, q1);
         q1 = _mm512_NFMA_ps(w1, h4, q1);
+
 	_mm512_store_ps(&q[ldq*2],q1);
-
- //       q2 = _mm512_sub_ps(q2, y2);
-//        q2 = _mm512_NFMA_ps(z2, h3, q2);
-//        q2 = _mm512_NFMA_ps(w2, h4, q2);
-//	_mm512_store_ps(&q[(ldq*2)+16],q2);
-
-//        q3 = _mm512_sub_ps(q3, y3);
- //       q3 = _mm512_NFMA_ps(z3, h3, q3);
-  //      q3 = _mm512_NFMA_ps(w3, h4, q3);
-//	_mm512_store_ps(&q[(ldq*2)+32],q3);
-
-//        q4 = _mm512_sub_ps(q4, y4);
- //       q4 = _mm512_NFMA_ps(z4, h3, q4);
-  //      q4 = _mm512_NFMA_ps(w4, h4, q4);
-//	_mm512_store_ps(&q[(ldq*2)+48],q4);
-
 
 	h2 = _mm512_set1_ps(hh[ldh+1]);
 	h3 = _mm512_set1_ps(hh[(ldh*2)+2]);
 	h4 = _mm512_set1_ps(hh[(ldh*3)+3]);
-
 	q1 = _mm512_load_ps(&q[ldq*3]);
 
 	q1 = _mm512_sub_ps(q1, x1);
         q1 = _mm512_NFMA_ps(y1, h2, q1);
         q1 = _mm512_NFMA_ps(z1, h3, q1);
         q1 = _mm512_NFMA_ps(w1, h4, q1);
+
 	_mm512_store_ps(&q[ldq*3], q1);
-
-//	q2 = _mm512_load_ps(&q[(ldq*3)+16]);
-//
-//	q2 = _mm512_sub_ps(q2, x2);
- //       q2 = _mm512_NFMA_ps(y2, h2, q2);
-//        q2 = _mm512_NFMA_ps(z2, h3, q2);
- //       q2 = _mm512_NFMA_ps(w2, h4, q2);
-//	_mm512_store_ps(&q[(ldq*3)+16], q2);
-
-//	q3 = _mm512_load_ps(&q[(ldq*3)+32]);
-
-//	q3 = _mm512_sub_ps(q3, x3);
-//        q3 = _mm512_NFMA_ps(y3, h2, q3);
- //       q3 = _mm512_NFMA_ps(z3, h3, q3);
-  //      q3 = _mm512_NFMA_ps(w3, h4, q3);
-//	_mm512_store_ps(&q[(ldq*3)+32], q3);
-
-//	q4 = _mm512_load_ps(&q[(ldq*3)+48]);
-
-//	q4 = _mm512_sub_ps(q4, x4);
-//      q4 = _mm512_NFMA_ps(y4, h2, q4);
-//        q4 = _mm512_NFMA_ps(z4, h3, q4);
-//        q4 = _mm512_NFMA_ps(w4, h4, q4);
-//	_mm512_store_ps(&q[(ldq*3)+48], q4);
 
 	for (i = 4; i < nb; i++)
 	{
@@ -1794,28 +930,6 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int
                 q1 = _mm512_NFMA_ps(z1, h3, q1);
                 q1 = _mm512_NFMA_ps(w1, h4, q1);
 		_mm512_store_ps(&q[i*ldq],q1);
-
-//		q2 = _mm512_load_ps(&q[(i*ldq)+16]);
-//               q2 = _mm512_NFMA_ps(x2, h1, q2);
-//                q2 = _mm512_NFMA_ps(y2, h2, q2);
- //               q2 = _mm512_NFMA_ps(z2, h3, q2);
-//                q2 = _mm512_NFMA_ps(w2, h4, q2);
-//		_mm512_store_ps(&q[(i*ldq)+16],q2);
-
-//		q3 = _mm512_load_ps(&q[(i*ldq)+32]);
- //               q3 = _mm512_NFMA_ps(x3, h1, q3);
-//                q3 = _mm512_NFMA_ps(y3, h2, q3);
- //               q3 = _mm512_NFMA_ps(z3, h3, q3);
- //               q3 = _mm512_NFMA_ps(w3, h4, q3);
-//		_mm512_store_ps(&q[(i*ldq)+32],q3);
-
-//		q4 = _mm512_load_ps(&q[(i*ldq)+48]);
- //               q4 = _mm512_NFMA_ps(x4, h1, q4);
-  //              q4 = _mm512_NFMA_ps(y4, h2, q4);
- //               q4 = _mm512_NFMA_ps(z4, h3, q4);
-   //             q4 = _mm512_NFMA_ps(w4, h4, q4);
-//		_mm512_store_ps(&q[(i*ldq)+48],q4);
-
 	}
 
 	h1 = _mm512_set1_ps(hh[nb-3]);
@@ -1826,77 +940,24 @@ __forceinline void hh_trafo_kernel_16_AVX512_4hv_single(float* q, float* hh, int
 	q1 = _mm512_NFMA_ps(x1, h1, q1);
         q1 = _mm512_NFMA_ps(y1, h2, q1);
         q1 = _mm512_NFMA_ps(z1, h3, q1);
+
 	_mm512_store_ps(&q[nb*ldq],q1);
-
-//	q2 = _mm512_load_ps(&q[(nb*ldq)+16]);
-//
-//	q2 = _mm512_NFMA_ps(x2, h1, q2);
- //       q2 = _mm512_NFMA_ps(y2, h2, q2);
- //       q2 = _mm512_NFMA_ps(z2, h3, q2);
-//	_mm512_store_ps(&q[(nb*ldq)+16],q2);
-
-//	q3 = _mm512_load_ps(&q[(nb*ldq)+32]);
-//
-//	q3 = _mm512_NFMA_ps(x3, h1, q3);
- //       q3 = _mm512_NFMA_ps(y3, h2, q3);
-  //      q3 = _mm512_NFMA_ps(z3, h3, q3);
-//	_mm512_store_ps(&q[(nb*ldq)+32],q3);
-
-//	q4 = _mm512_load_ps(&q[(nb*ldq)+48]);
-//
-//	q4 = _mm512_NFMA_ps(x4, h1, q4);
-//        q4 = _mm512_NFMA_ps(y4, h2, q4);
- //       q4 = _mm512_NFMA_ps(z4, h3, q4);
-//	_mm512_store_ps(&q[(nb*ldq)+48],q4);
 
 	h1 = _mm512_set1_ps(hh[nb-2]);
 	h2 = _mm512_set1_ps(hh[ldh+nb-1]);
 	q1 = _mm512_load_ps(&q[(nb+1)*ldq]);
 
 	q1 = _mm512_NFMA_ps(x1, h1, q1);
-	q1 = _mm512_NFMA_ps(y1, h2, q1);
+        q1 = _mm512_NFMA_ps(y1, h2, q1);
+
 	_mm512_store_ps(&q[(nb+1)*ldq],q1);
-
-//	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+16]);
-//
-//	q2 = _mm512_NFMA_ps(x2, h1, q2);
-//	q2 = _mm512_NFMA_ps(y2, h2, q2);
-//	_mm512_store_ps(&q[((nb+1)*ldq)+16],q2);
-
-//	q3 = _mm512_load_ps(&q[((nb+1)*ldq)+32]);
-//
-//	q3 = _mm512_NFMA_ps(x3, h1, q3);
-//	q3 = _mm512_NFMA_ps(y3, h2, q3);
-//	_mm512_store_ps(&q[((nb+1)*ldq)+32],q3);
-
-//	q4 = _mm512_load_ps(&q[((nb+1)*ldq)+48]);
-//
-//	q4 = _mm512_NFMA_ps(x4, h1, q4);
-//	q4 = _mm512_NFMA_ps(y4, h2, q4);
-//	_mm512_store_ps(&q[((nb+1)*ldq)+48],q4);
-
 
 	h1 = _mm512_set1_ps(hh[nb-1]);
 	q1 = _mm512_load_ps(&q[(nb+2)*ldq]);
 
 	q1 = _mm512_NFMA_ps(x1, h1, q1);
+
 	_mm512_store_ps(&q[(nb+2)*ldq],q1);
-
-//	q2 = _mm512_load_ps(&q[((nb+2)*ldq)+16]);
-//
-//	q2 = _mm512_NFMA_ps(x2, h1, q2);
-//	_mm512_store_ps(&q[((nb+2)*ldq)+16],q2);
-
-//	q3 = _mm512_load_ps(&q[((nb+2)*ldq)+32]);
-//
-//	q3 = _mm512_NFMA_ps(x3, h1, q3);
-//	_mm512_store_ps(&q[((nb+2)*ldq)+32],q3);
-
-//	q4 = _mm512_load_ps(&q[((nb+2)*ldq)+48]);
-//
-//	q4 = _mm512_NFMA_ps(x4, h1, q4);
-//	_mm512_store_ps(&q[((nb+2)*ldq)+48],q4);
-
 }
 
 
