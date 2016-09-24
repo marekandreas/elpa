@@ -362,7 +362,7 @@ __forceinline void hh_trafo_kernel_32_AVX512_6hv_single(float* q, float* hh, int
 
 	h1 = _mm512_set1_ps(hh[nb-4]);
 	q1 = _mm512_load_ps(&q[(nb+1)*ldq]);
-	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+4]);
+	q2 = _mm512_load_ps(&q[((nb+1)*ldq)+16]);
 
 	x1 = _mm512_FMA_ps(q1, h1, x1);
 	x2 = _mm512_FMA_ps(q2, h1, x2);
