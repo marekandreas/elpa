@@ -444,7 +444,7 @@ __forceinline void hh_trafo_kernel_16_AVX_6hv_single(float* q, float* hh, int nb
 
 	h1 = _mm256_broadcast_ss(&hh[nb-4]);
 	q1 = _mm256_load_ps(&q[(nb+1)*ldq]);
-	q2 = _mm256_load_ps(&q[((nb+1)*ldq)+4]);
+	q2 = _mm256_load_ps(&q[((nb+1)*ldq)+8]);
 #ifdef __ELPA_USE_FMA__
 	x1 = _mm256_FMA_ps(q1, h1, x1);
 	x2 = _mm256_FMA_ps(q2, h1, x2);
@@ -725,7 +725,7 @@ __forceinline void hh_trafo_kernel_16_AVX_6hv_single(float* q, float* hh, int nb
 	q1 = _mm256_sub_ps(q1, _mm256_mul_ps(v1, h5));
 	q2 = _mm256_sub_ps(q2, _mm256_mul_ps(v2, h5));
 #endif
-	h6 = _mm256_broadcast_ss(&hh[(ldh*5)+8]);
+	h6 = _mm256_broadcast_ss(&hh[(ldh*5)+4]);
 #ifdef __ELPA_USE_FMA__
 	q1 = _mm256_NFMA_ps(t1, h6, q1);
 	q2 = _mm256_NFMA_ps(t2, h6, q2);
