@@ -1,0 +1,585 @@
+#if 0
+!    This file is part of ELPA.
+!
+!    The ELPA library was originally created by the ELPA consortium,
+!    consisting of the following organizations:
+!
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!      Informatik,
+!    - Technische Universität München, Lehrstuhl für Informatik mit
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
+!    - IBM Deutschland GmbH
+!
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of
+!    the ELPA consortium.
+!
+!    More information can be found here:
+!    http://elpa.mpcdf.mpg.de/
+!
+!    ELPA is free software: you can redistribute it and/or modify
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
+!    Software Foundation.
+!
+!    ELPA is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU Lesser General Public License for more details.
+!
+!    You should have received a copy of the GNU Lesser General Public License
+!    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+!
+!    ELPA reflects a substantial effort on the part of the original
+!    ELPA consortium, and we ask you to respect the spirit of the
+!    license that we chose: i.e., please contribute any changes you
+!    may have back to the original ELPA library distribution, and keep
+!    any derivatives of ELPA under the same license that we chose for
+!    the original distribution, the GNU Lesser General Public License.
+!
+!
+! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+!
+! Copyright of the original code rests with the authors inside the ELPA
+! consortium. The copyright of any additional modifications shall rest
+! with their original authors, but shall adhere to the licensing terms
+! distributed along with the original code in the file "COPYING".
+#endif
+
+    subroutine M_tridiag_real_PRECISSION(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau)
+    !-------------------------------------------------------------------------------
+    !  tridiag_real: Reduces a distributed symmetric matrix to tridiagonal form
+    !                (like Scalapack Routine PDSYTRD)
+    !
+    !  Parameters
+    !
+    !  na          Order of matrix
+    !
+    !  a(lda,matrixCols)    Distributed matrix which should be reduced.
+    !              Distribution is like in Scalapack.
+    !              Opposed to PDSYTRD, a(:,:) must be set completely (upper and lower half)
+    !              a(:,:) is overwritten on exit with the Householder vectors
+    !
+    !  lda         Leading dimension of a
+    !  matrixCols  local columns of matrix
+    !
+    !  nblk        blocksize of cyclic distribution, must be the same in both directions!
+    !
+    !  mpi_comm_rows
+    !  mpi_comm_cols
+    !              MPI-Communicators for rows/columns
+    !
+    !  d(na)       Diagonal elements (returned), identical on all processors
+    !
+    !  e(na)       Off-Diagonal elements (returned), identical on all processors
+    !
+    !  tau(na)     Factors for the Householder vectors (returned), needed for back transformation
+    !
+    !-------------------------------------------------------------------------------
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#endif
+      use precision
+      implicit none
+
+      integer(kind=ik), intent(in)            :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=REAL_DATATYPE), intent(out)   :: d(na), e(na), tau(na)
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE), intent(inout) :: a(lda,*)
+#else
+      real(kind=REAL_DATATYPE), intent(inout) :: a(lda,matrixCols)
+#endif
+
+      integer(kind=ik), parameter :: max_stored_rows = 32
+
+      ! id in processor row and column and total numbers of processor rows and columns
+      integer(kind=ik)            :: my_prow, my_pcol, np_rows, np_cols
+      integer(kind=ik)            :: mpierr
+      
+      integer(kind=ik)            :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
+      
+      ! updated after each istep (in the main cycle) to contain number of 
+      ! local columns and rows of the remaining part of the matrix
+      integer(kind=ik)            :: l_cols, l_rows 
+      
+      integer(kind=ik)            :: nstor
+      integer(kind=ik)            :: istep, i, j, lcs, lce, lrs, lre
+      integer(kind=ik)            :: tile_size, l_rows_tile, l_cols_tile
+
+#ifdef WITH_OPENMP
+      integer(kind=ik)            :: my_thread, n_threads, max_threads, n_iter
+      integer(kind=ik)            :: omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
+#endif
+
+      real(kind=REAL_DATATYPE)               :: vav, vnorm2, x, aux(2*max_stored_rows), aux1(2), aux2(2), vrl, xf
+
+      real(kind=REAL_DATATYPE), allocatable  :: tmp(:), &  
+                                                vr(:), &   
+                                                vc(:), &
+                                                ur(:), &
+                                                uc(:), &
+                                                vur(:,:), &
+                                                uvc(:,:)
+#ifdef WITH_OPENMP
+      real(kind=REAL_DATATYPE), allocatable  :: ur_p(:,:), uc_p(:,:)
+#endif
+      integer(kind=ik)            :: istat
+      character(200)              :: errorMessage
+
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("tridiag_real" + M_PRECISSION_SUFFIX)
+#endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
+      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
+      ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
+
+      ! pkus: what is tile size exactly?  
+      ! pkus: cannot it be larger than na? 
+      tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
+      tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
+
+      l_rows_tile = tile_size/np_rows ! local rows of a tile
+      l_cols_tile = tile_size/np_cols ! local cols of a tile
+
+
+      totalblocks = (na-1)/nblk + 1
+      max_blocks_row = (totalblocks-1)/np_rows + 1
+      max_blocks_col = (totalblocks-1)/np_cols + 1
+
+      max_local_rows = max_blocks_row*nblk
+      max_local_cols = max_blocks_col*nblk
+
+      allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating tmp "//errorMessage
+        stop
+      endif
+
+      allocate(vr(max_local_rows+1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating vr "//errorMessage
+        stop
+      endif
+
+      allocate(ur(max_local_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating ur "//errorMessage
+        stop
+      endif
+
+      allocate(vc(max_local_cols), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating vc "//errorMessage
+        stop
+      endif
+
+      allocate(uc(max_local_cols), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating uc "//errorMessage
+        stop
+      endif
+
+#ifdef WITH_OPENMP
+      max_threads = omp_get_max_threads()
+
+      allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating ur_p "//errorMessage
+        stop
+      endif
+
+      allocate(uc_p(max_local_cols,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating uc_p "//errorMessage
+        stop
+      endif
+
+#endif
+
+      tmp = 0
+      vr = 0
+      ur = 0
+      vc = 0
+      uc = 0
+
+      allocate(vur(max_local_rows,2*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating vur "//errorMessage
+        stop
+      endif
+
+      allocate(uvc(max_local_cols,2*max_stored_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating uvc "//errorMessage
+        stop
+      endif
+
+!      if (useGPU) then
+!        allocate(vr_dev(max_local_rows))
+!        allocate(ur_dev(max_local_rows))
+!        allocate(vc_dev(max_local_cols))
+!        allocate(uc_dev(max_local_cols))
+!        allocate(vur_dev(max_local_rows,2*max_stored_rows))
+!        allocate(uvc_dev(max_local_cols,2*max_stored_rows))
+!      endif
+
+      d(:) = 0
+      e(:) = 0
+      tau(:) = 0
+
+      nstor = 0
+
+      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
+      l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
+      if(my_prow==prow(na, nblk, np_rows) .and. my_pcol==pcol(na, nblk, np_cols)) d(na) = a(l_rows,l_cols)
+
+!      if (useGPU) then
+!         allocate(a_dev(lda,na))
+!         a_dev = a
+!      endif
+
+      do istep=na,3,-1
+
+         ! Calculate number of local rows and columns of the still remaining matrix
+         ! on the local processor
+         l_rows = local_index(istep-1, my_prow, np_rows, nblk, -1)
+         l_cols = local_index(istep-1, my_pcol, np_cols, nblk, -1)
+
+         ! Calculate vector for Householder transformation on all procs
+         ! owning column istep
+         if(my_pcol==pcol(istep, nblk, np_cols)) then
+
+            ! Get vector to be transformed; distribute last element and norm of
+            ! remaining elements to all procs in current column
+
+!            if (useGPU) then
+!              vr(1:l_rows) = a_dev(1:l_rows,l_cols+1)
+!            else
+              vr(1:l_rows) = a(1:l_rows,l_cols+1)
+!       endif
+            if(nstor>0 .and. l_rows>0) then
+               call M_PRECISSION_GEMV('N', l_rows, 2*nstor, M_CONST_1_0, vur, ubound(vur,dim=1), &
+                          uvc(l_cols+1,1), ubound(uvc,dim=1), M_CONST_1_0, vr, 1)
+            endif
+
+            if(my_prow==prow(istep-1, nblk, np_rows)) then
+               aux1(1) = dot_product(vr(1:l_rows-1),vr(1:l_rows-1))
+               aux1(2) = vr(l_rows)
+            else
+               aux1(1) = dot_product(vr(1:l_rows),vr(1:l_rows))
+               aux1(2) = 0.
+            endif
+
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%start("mpi_communication")
+#endif
+            call mpi_allreduce(aux1, aux2, 2, M_MPI_REAL_PRECISSION, MPI_SUM, mpi_comm_rows, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%stop("mpi_communication")
+#endif
+#else /* WITH_MPI */
+            aux2 = aux1
+#endif /* WITH_MPI */
+            vnorm2 = aux2(1)
+            vrl    = aux2(2)
+
+            ! Householder transformation
+            call M_hh_transform_real_PRECISSION(vrl, vnorm2, xf, tau(istep))
+            ! Scale vr and store Householder vector for back transformation
+
+            vr(1:l_rows) = vr(1:l_rows) * xf
+            if(my_prow==prow(istep-1, nblk, np_rows)) then
+               vr(l_rows) = 1.
+               e(istep-1) = vrl
+            endif
+            a(1:l_rows,l_cols+1) = vr(1:l_rows) ! store Householder vector for back transformation
+
+         endif
+
+         ! Broadcast the Householder vector (and tau) along columns
+
+         if(my_pcol==pcol(istep, nblk, np_cols)) vr(l_rows+1) = tau(istep)
+
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+         call timer%start("mpi_communication")
+#endif
+         call MPI_Bcast(vr, l_rows+1, M_MPI_REAL_PRECISSION, pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+         call timer%stop("mpi_communication")
+#endif
+#endif /* WITH_MPI */
+         tau(istep) =  vr(l_rows+1)
+
+         ! Transpose Householder vector vr -> vc
+         call M_elpa_transpose_vectors_real_PRECISSION  (vr, ubound(vr,dim=1), mpi_comm_rows, &
+                                            vc, ubound(vc,dim=1), mpi_comm_cols, &
+                                            1, istep-1, 1, nblk)
+
+         ! Calculate u = (A + VU**T + UV**T)*v
+
+         ! For cache efficiency, we use only the upper half of the matrix tiles for this,
+         ! thus the result is partly in uc(:) and partly in ur(:)
+
+         uc(1:l_cols) = 0
+         ur(1:l_rows) = 0
+         if (l_rows>0 .and. l_cols>0) then
+
+#ifdef WITH_OPENMP
+
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+#endif
+
+!$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,lcs,lce,j,lrs,lre)
+
+           my_thread = omp_get_thread_num()
+           n_threads = omp_get_num_threads()
+
+           n_iter = 0
+
+           uc_p(1:l_cols,my_thread) = 0.
+           ur_p(1:l_rows,my_thread) = 0.
+#endif
+           do i=0,(istep-2)/tile_size
+             lcs = i*l_cols_tile+1
+             lce = min(l_cols,(i+1)*l_cols_tile)
+             if (lce<lcs) cycle
+             do j=0,i
+               lrs = j*l_rows_tile+1
+               lre = min(l_rows,(j+1)*l_rows_tile)
+               if (lre<lrs) cycle
+#ifdef WITH_OPENMP
+               if (mod(n_iter,n_threads) == my_thread) then
+                 call M_PRECISSION_GEMV('T', lre-lrs+1, lce-lcs+1, M_CONST_1_0, a(lrs,lcs), lda, vr(lrs), 1, M_CONST_1_0, uc_p(lcs,my_thread), 1)
+                 if (i/=j) then
+                   call M_PRECISSION_GEMV('N', lre-lrs+1, lce-lcs+1, M_CONST_1_0, a(lrs,lcs), lda, vc(lcs), 1, M_CONST_1_0, ur_p(lrs,my_thread), 1)
+                 endif
+               endif
+               n_iter = n_iter+1
+#else /* WITH_OPENMP */
+
+!              if (useGPU) then
+!                 uc_dev(1:l_cols) = 0.
+!                 ur_dev(1:l_rows) = 0.
+!                 vc_dev(1:l_cols) = vc(1:l_cols)
+!                 vr_dev(1:l_rows) = vr(1:l_rows)
+!!                do i=0,(istep-2)/tile_size
+!!                  lcs = i*l_cols_tile+1
+!!                  lce = min(l_cols,(i+1)*l_cols_tile)
+!!                  if(lce<lcs) cycle
+!!                  do j=0,i
+!!                     lrs = j*l_rows_tile+1
+!!                     lre = min(l_rows,(j+1)*l_rows_tile)
+!!                     if(lre<lrs) cycle
+!!                     if(mod(n_iter,n_threads) == my_thread) then
+!!                       call cublasDGEMV('T',lre-lrs+1,lce-lcs+1,1.d0,a_dev(lrs,lcs),lda,vr_dev(lrs),1,1.d0,uc_dev(lcs),1)
+!!                       if(i/=j) call cublasDGEMV('N',lre-lrs+1,lce-lcs+1,1.d0,a_dev(lrs,lcs),lda,vc_dev(lcs),1,1.d0,ur_dev(lrs),1)
+!!                     endif
+!!                     n_iter = n_iter+1
+!!                  enddo
+!!                enddo
+!!
+!                !--- for now, just use DSYMV!!!
+!                call DSYMV('U',l_cols,1.d0,a_dev,ubound(a_dev,1),vr_dev,1,0.d0,uc_dev,1)
+
+!               uc(1:l_cols) = uc_dev(1:l_cols)
+!               ur(1:l_rows) = ur_dev(1:l_rows)
+!          else
+
+                 call M_PRECISSION_GEMV('T', lre-lrs+1, lce-lcs+1, M_CONST_1_0, a(lrs,lcs), lda, vr(lrs), 1, M_CONST_1_0, uc(lcs), 1)
+                 if (i/=j) then
+                   call M_PRECISSION_GEMV('N', lre-lrs+1, lce-lcs+1, M_CONST_1_0, a(lrs,lcs), lda, vc(lcs), 1, M_CONST_1_0, ur(lrs), 1)
+                 endif
+!               endif ! useGPU
+
+#endif /* WITH_OPENMP */
+             enddo
+           enddo
+#ifdef WITH_OPENMP
+!$OMP END PARALLEL
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+#endif
+           do i=0,max_threads-1
+             uc(1:l_cols) = uc(1:l_cols) + uc_p(1:l_cols,i)
+             ur(1:l_rows) = ur(1:l_rows) + ur_p(1:l_rows,i)
+           enddo
+#endif /* WITH_OPENMP */
+
+
+           if (nstor>0) then
+             call M_PRECISSION_GEMV('T', l_rows, 2*nstor, M_CONST_1_0, vur, ubound(vur,dim=1), vr,  1, M_CONST_0_0, aux, 1)
+             call M_PRECISSION_GEMV('N', l_cols, 2*nstor, M_CONST_1_0, uvc, ubound(uvc,dim=1), aux, 1, M_CONST_1_0, uc,  1)
+           endif
+
+         endif
+
+        ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
+        ! on the processors containing the diagonal
+        ! This is only necessary if ur has been calculated, i.e. if the
+        ! global tile size is smaller than the global remaining matrix
+
+        if (tile_size < istep-1) then
+          call M_elpa_reduce_add_vectors_real_PRECISSION (ur, ubound(ur,dim=1), mpi_comm_rows, &
+                                        uc, ubound(uc,dim=1), mpi_comm_cols, istep-1, 1, nblk)
+        endif
+
+        ! Sum up all the uc(:) parts, transpose uc -> ur
+
+        if (l_cols>0) then
+          tmp(1:l_cols) = uc(1:l_cols)
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
+          call mpi_allreduce(tmp, uc, l_cols, M_MPI_REAL_PRECISSION, MPI_SUM, mpi_comm_rows, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
+#else /* WITH_MPI */
+          uc = tmp
+#endif /* WITH_MPI */
+
+        endif
+
+        call M_elpa_transpose_vectors_real_PRECISSION (uc, ubound(uc,dim=1), mpi_comm_cols, &
+                                         ur, ubound(ur,dim=1), mpi_comm_rows, 1, istep-1, 1, nblk)
+        ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
+
+        x = 0
+        if (l_cols>0) x = dot_product(vc(1:l_cols),uc(1:l_cols))
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
+        call mpi_allreduce(x, vav, 1, M_MPI_REAL_PRECISSION, MPI_SUM, mpi_comm_cols, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
+#else /* WITH_MPI */
+        vav = x
+#endif /* WITH_MPI */
+
+        ! store u and v in the matrices U and V
+        ! these matrices are stored combined in one here
+
+        do j=1,l_rows
+          vur(j,2*nstor+1) = tau(istep)*vr(j)
+          vur(j,2*nstor+2) = 0.5*tau(istep)*vav*vr(j) - ur(j)
+        enddo
+        do j=1,l_cols
+          uvc(j,2*nstor+1) = 0.5*tau(istep)*vav*vc(j) - uc(j)
+          uvc(j,2*nstor+2) = tau(istep)*vc(j)
+        enddo
+
+        nstor = nstor+1
+
+        ! If the limit of max_stored_rows is reached, calculate A + VU**T + UV**T
+
+        if (nstor==max_stored_rows .or. istep==3) then
+
+!     if (useGPU) then
+!            vur_dev(:,:) = vur(:,:)
+!            uvc_dev(:,:) = uvc(:,:)
+!     endif
+
+          do i=0,(istep-2)/tile_size
+            lcs = i*l_cols_tile+1
+            lce = min(l_cols,(i+1)*l_cols_tile)
+           lrs = 1
+            lre = min(l_rows,(i+1)*l_rows_tile)
+            if (lce<lcs .or. lre<lrs) cycle
+
+!       if (useGPU) then
+!              call cublasdgemm('N','T',lre-lrs+1,lce-lcs+1,2*nstor,1.d0, &
+!                       vur_dev(lrs,1),ubound(vur_dev,1),uvc_dev(lcs,1),ubound(uvc_dev,1), &
+!                       1.d0,a_dev(lrs,lcs),lda)
+!       else
+              call M_PRECISSION_GEMM('N', 'T', lre-lrs+1, lce-lcs+1, 2*nstor, M_CONST_1_0, &
+                         vur(lrs,1), ubound(vur,dim=1), uvc(lcs,1), ubound(uvc,dim=1), &
+                         M_CONST_1_0, a(lrs,lcs), lda)
+!           endif ! useGPU
+          enddo
+
+          nstor = 0
+
+        endif
+
+        if (my_prow==prow(istep-1, nblk, np_rows) .and. my_pcol==pcol(istep-1, nblk, np_cols)) then
+!     if (useGPU) a(l_rows,l_cols) = a_dev(l_rows,l_cols)
+          if (nstor>0) a(l_rows,l_cols) = a(l_rows,l_cols) &
+                        + dot_product(vur(l_rows,1:2*nstor),uvc(l_cols,1:2*nstor))
+          d(istep-1) = a(l_rows,l_cols)
+!     if (useGPU) a_dev(l_rows,l_cols) = a(l_rows,l_cols)
+        endif
+
+      enddo ! main cycle over istep=na,3,-1
+
+      ! Store e(1) and d(1)
+
+!      if (useGPU) then
+!        if(my_prow==prow(1) .and. my_pcol==pcol(2)) e(1) = a_dev(1,l_cols) ! use last l_cols value of loop above
+!        if(my_prow==prow(1) .and. my_pcol==pcol(1)) d(1) = a_dev(1,1)
+!      else
+        if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) e(1) = a(1,l_cols) ! use last l_cols value of loop above
+        if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) d(1) = a(1,1)
+!      endif
+
+      deallocate(tmp, vr, ur, vc, uc, vur, uvc, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when deallocating uvc "//errorMessage
+        stop
+      endif
+
+
+      ! distribute the arrays d and e to all processors
+
+      allocate(tmp(na),  stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when allocating tmp "//errorMessage
+        stop
+      endif
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
+      tmp = d
+      call mpi_allreduce(tmp, d, na, M_MPI_REAL_PRECISSION, MPI_SUM, mpi_comm_rows, mpierr)
+      tmp = d
+      call mpi_allreduce(tmp, d, na, M_MPI_REAL_PRECISSION, MPI_SUM, mpi_comm_cols, mpierr)
+      tmp = e
+      call mpi_allreduce(tmp, e, na, M_MPI_REAL_PRECISSION, MPI_SUM, mpi_comm_rows, mpierr)
+      tmp = e
+      call mpi_allreduce(tmp, e, na, M_MPI_REAL_PRECISSION, MPI_SUM, mpi_comm_cols, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
+#endif /* WITH_MPI */
+      deallocate(tmp,  stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag_real: error when deallocating tmp "//errorMessage
+        stop
+      endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("tridiag_real" + M_PRECISSION_SUFFIX)
+#endif
+
+    end subroutine M_tridiag_real_PRECISSION
