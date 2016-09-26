@@ -189,7 +189,7 @@ void hexa_hh_trafo_real_avx512_6hv_single(float* q, float* hh, int* pnb, int* pn
 	// Production level kernel calls with padding
 	for (i = 0; i < nq-16; i+=32)
 	{
-		hh_trafo_kernel_32_AVX_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		hh_trafo_kernel_32_AVX512_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
 	}
 	if (nq == i)
 	{
@@ -197,7 +197,7 @@ void hexa_hh_trafo_real_avx512_6hv_single(float* q, float* hh, int* pnb, int* pn
 	}
 	else
 	{
-		hh_trafo_kernel_16_AVX_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		hh_trafo_kernel_16_AVX512_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
 	}
 }
 
