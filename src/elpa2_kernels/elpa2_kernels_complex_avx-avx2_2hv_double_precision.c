@@ -121,7 +121,9 @@ void double_hh_trafo_complex_avx_avx2_2hv_double(double complex* q, double compl
 	{
 		hh_trafo_complex_kernel_8_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
-	if (nq-i > 0)
+	if (nq-i == 0) {
+          return;
+	} else
 	{
 		hh_trafo_complex_kernel_4_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 	}
@@ -444,7 +446,7 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv_double(double comple
 	q1 = _mm256_add_pd(q1, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y1), _mm256_shuffle_pd(tmp1, tmp1, 0x5)));
 #endif
 	tmp2 = _mm256_mul_pd(h2_imag, y2);
-#ifdef __FMA4_
+#ifdef __ELPA_USE_FMA_
 	q2 = _mm256_add_pd(q2, _mm256_FMADDSUB_pd(h2_real, y2, _mm256_shuffle_pd(tmp2, tmp2, 0x5)));
 #else
 	q2 = _mm256_add_pd(q2, _mm256_addsub_pd( _mm256_mul_pd(h2_real, y2), _mm256_shuffle_pd(tmp2, tmp2, 0x5)));

@@ -113,10 +113,12 @@ void single_hh_trafo_complex_avx_avx2_1hv_double(double complex* q, double compl
 	{
 		hh_trafo_complex_kernel_12_AVX_1hv_double(&q[i], hh, nb, ldq);
 	}
-	if (nq-i == 0)
+
+	if (nq == i)
 	{
 		return;
 	}
+
 	if (nq-i == 8)
 	{
 		hh_trafo_complex_kernel_8_AVX_1hv_double(&q[i], hh, nb, ldq);

@@ -295,10 +295,11 @@ module elpa1_auxiliary
       implicit none
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE)                 :: a(lda,*)
+#else
       real(kind=REAL_DATATYPE)                 :: a(lda,matrixCols)
-      ! was
-      ! real a(lda, *)
-
+#endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
       integer(kind=ik)              :: n, nc, i, info
@@ -2722,8 +2723,10 @@ module elpa1_auxiliary
 !> \param ncb                   Number of columns  of B and C
 !> \param a                     matrix a
 !> \param lda                   leading dimension of matrix a
+!> \param ldaCols               columns of matrix a
 !> \param b                     matrix b
 !> \param ldb                   leading dimension of matrix b
+!> \param ldbCols               columns of matrix b
 !> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
@@ -2745,8 +2748,11 @@ module elpa1_auxiliary
       character*1                   :: uplo_a, uplo_c
       integer(kind=ik), intent(in)  :: lda, ldaCols, ldb, ldbCols, ldc, ldcCols
       integer(kind=ik)              :: na, ncb, nblk, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE)              ::  a(lda,*), b(ldb,*), c(ldc,*)
+#else
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols) ! removed assumed_size
-
+#endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_rows_np
       integer(kind=ik)              :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
@@ -3036,8 +3042,10 @@ module elpa1_auxiliary
 !> \param ncb                   Number of columns  of B and C
 !> \param a                     matrix a
 !> \param lda                   leading dimension of matrix a
+!> \param ldaCols               columns of matrix a
 !> \param b                     matrix b
 !> \param ldb                   leading dimension of matrix b
+!> \param ldbCols               columns of matrix b
 !> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
 !> \param  mpi_comm_rows        MPI communicator for rows
 !> \param  mpi_comm_cols        MPI communicator for columns
@@ -3059,7 +3067,11 @@ module elpa1_auxiliary
       character*1                   :: uplo_a, uplo_c
       integer(kind=ik), intent(in)  :: lda, ldaCols, ldb, ldbCols, ldc, ldcCols
       integer(kind=ik)              :: na, ncb, nblk, mpi_comm_rows, mpi_comm_cols
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE)              :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols) ! removed assumed_size
+#endif
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_rows_np

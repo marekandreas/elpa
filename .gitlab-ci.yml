@@ -2021,7 +2021,6 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-a
     - make check TEST_FLAGS='1500 50 16'
 #    - ./test_scripts/get_coverage_summary.sh
 
-
 #real avx block4, complex avx block2
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-avx-block2-kernel-jobs:
   tags:
@@ -2043,7 +2042,7 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
 
-gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-assumed-size-jobs:
+gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx-block4-complex-avx_block2-kernel-assumed-size-jobs:
   tags:
     - cpu
   script:

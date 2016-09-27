@@ -142,9 +142,22 @@
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows
 #ifdef DOUBLE_PRECISION_REAL
-    real(kind=c_double)                    :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+    real(kind=c_double)                    :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_double)                    :: a(lda,*), q(ldq,*)
+#else
+    real(kind=c_double)                    :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
+
+#else /* SINGLE_PRECISION */
+    real(kind=c_float)                     :: ev(1:na)
+
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_float)                     :: a(lda,*), q(ldq,*)
 #else
     real(kind=c_float)                     :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+#endif
+
 #endif
     logical                                :: successFortran
 
@@ -275,11 +288,21 @@
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows
 #ifdef DOUBLE_PRECISION_COMPLEX
-    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
     real(kind=c_double)                    :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    complex(kind=c_double_complex)         :: a(lda,*), q(ldq,*)
+#else
+    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
+
+#else /* SINGLE_PRECISION */
+    real(kind=c_float)                     :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    complex(kind=c_float_complex)          :: a(lda,*), q(ldq,*)
 #else
     complex(kind=c_float_complex)          :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-    real(kind=c_float)                     :: ev(1:na)
+#endif
+
 #endif
 
     logical                                :: successFortran
@@ -423,9 +446,22 @@
                                               mpi_comm_all
     integer(kind=c_int), value, intent(in) :: THIS_REAL_ELPA_KERNEL_API, useQR
 #ifdef DOUBLE_PRECISION_REAL
-    real(kind=c_double)                    :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+    real(kind=c_double)                    :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_double)                    :: a(1:lda,*), q(1:ldq,*)
 #else
-    real(kind=c_float)                     :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+    real(kind=c_double)                    :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
+
+#else /* SINGLE_PRECISION */
+
+    real(kind=c_float)                     :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_float)                     :: a(1:lda,*), q(1:ldq,*)
+#else
+    real(kind=c_float)                     :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
+
 #endif
 
     logical                                :: successFortran, useQRFortran
@@ -507,11 +543,23 @@
                                               mpi_comm_all
     integer(kind=c_int), value, intent(in) :: THIS_REAL_ELPA_KERNEL_API, useQR
 #ifdef DOUBLE_PRECISION_REAL
-    real(kind=c_double)                    :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+    real(kind=c_double)                    ::  ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_double)                    :: a(1:lda,*), q(1:ldq,*)
 #else
-    real(kind=c_float)                     :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
+    real(kind=c_double)                    :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
 #endif
 
+#else /* SINGLE_PRECISION */
+
+    real(kind=c_float)                     :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_float)                     :: a(1:lda,*), q(1:ldq,*)
+#else
+    real(kind=c_float)                     :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
+
+#endif
     logical                                :: successFortran, useQRFortran
 
     if (useQR .eq. 0) then
@@ -593,11 +641,21 @@
                                               mpi_comm_all
     integer(kind=c_int), value, intent(in) :: THIS_COMPLEX_ELPA_KERNEL_API
 #ifdef DOUBLE_PRECISION_COMPLEX
-    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
     real(kind=c_double)                    :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    complex(kind=c_double_complex)         :: a(lda,*), q(ldq,*)
+#else
+    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
+
+#else /* SINGLE_PRECISION */
+    real(kind=c_float)                     :: ev(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    complex(kind=c_float_complex)          ::  a(lda,*), q(ldq,*)
 #else
     complex(kind=c_float_complex)          :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-    real(kind=c_float)                     :: ev(1:na)
+#endif
+
 #endif
     logical                                :: successFortran
 
@@ -726,7 +784,12 @@
     integer(kind=c_int)                    :: success
     integer(kind=c_int), value, intent(in) :: na, nev, ldq, nblk, matrixCols,  mpi_comm_cols, mpi_comm_rows
     integer(kind=c_int), value             :: wantDebug
-    real(kind=c_double)                    :: d(1:na), e(1:na), q(1:ldq, 1:matrixCols)
+    real(kind=c_double)                    :: d(1:na), e(1:na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+    real(kind=c_double)                    :: q(ldq,*)
+#else
+    real(kind=c_double)                    :: q(1:ldq, 1:matrixCols)
+#endif
     logical                                :: successFortran, wantDebugFortran
 
     if (wantDebug .ne. 0) then
@@ -822,29 +885,32 @@
   !c> \param ncb                   Number of columns  of B and C
   !c> \param a                     matrix a
   !c> \param lda                   leading dimension of matrix a
+  !c> \param ldaCols               columns of matrix a
   !c> \param b                     matrix b
   !c> \param ldb                   leading dimension of matrix b
+  !c> \param ldbCols               columns of matrix b
   !c> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
   !c> \param  mpi_comm_rows        MPI communicator for rows
   !c> \param  mpi_comm_cols        MPI communicator for columns
   !c> \param c                     matrix c
   !c> \param ldc                   leading dimension of matrix c
+  !c> \param ldcCols               columns of matrix c
   !c> \result success              int report success (1) or failure (0)
   !c> */
 
   !c> int elpa_mult_at_b_real_double(char uplo_a, char uplo_c, int na, int ncb, double *a, int lda, int ldaCols, double *b, int ldb, int ldbCols, int nlbk, int mpi_comm_rows, int mpi_comm_cols, double *c, int ldc, int ldcCols);
   function elpa_mult_at_b_real_wrapper_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                               nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
-    bind(C,name="elpa_mult_at_b_real_double") result(success)
+                                              bind(C,name="elpa_mult_at_b_real_double") result(success)
     use, intrinsic :: iso_c_binding
     use elpa1_auxiliary, only : elpa_mult_at_b_real_double
 
     implicit none
 
     character(1,C_CHAR), value  :: uplo_a, uplo_c
-    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
+    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc, &
+                                   ldaCols, ldbCols, ldcCols
     integer(kind=c_int)         :: success
-    integer(kind=c_int), value  :: ldaCols, ldbCols, ldCcols
 #ifdef DESPERATELY_WANT_ASSUMED_SIZE
     real(kind=c_double)         :: a(lda,*), b(ldb,*), c(ldc,*)
 #else
@@ -887,8 +953,10 @@
   !c> \param ncb                   Number of columns  of B and C
   !c> \param a                     matrix a
   !c> \param lda                   leading dimension of matrix a
+  !c> \param ldaCols               columns of matrix a
   !c> \param b                     matrix b
   !c> \param ldb                   leading dimension of matrix b
+  !c> \param ldbCols               columns of matrix b
   !c> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
   !c> \param  mpi_comm_rows        MPI communicator for rows
   !c> \param  mpi_comm_cols        MPI communicator for columns
@@ -1093,8 +1161,11 @@
    integer(kind=c_int), value  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
    integer(kind=c_int), value  :: wantDebug
    integer(kind=c_int)         :: success
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   real(kind=c_double)         :: a(lda,*)
+#else
    real(kind=c_double)         :: a(lda,matrixCols)
-
+#endif
    logical                     :: wantDebugFortran, successFortran
 
    if (wantDebug .ne. 0) then
@@ -1196,8 +1267,11 @@
    integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
    integer(kind=c_int), value     :: wantDebug
    integer(kind=c_int)            :: success
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   complex(kind=c_double_complex) :: a(lda, *)
+#else
    complex(kind=c_double_complex) :: a(lda, matrixCols)
-
+#endif
    logical                        :: successFortran, wantDebugFortran
 
 
@@ -1281,7 +1355,7 @@
  !c>                              On return, the upper triangle contains the Cholesky factor
  !c>                              and the lower triangle is set to 0.
  !c> \param  lda                  Leading dimension of a
- !c> \param                       matrixCols  local columns of matrix a
+ !c> \param  matrixCols           local columns of matrix a
  !c> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
  !c> \param  mpi_comm_rows        MPI communicator for rows
  !c> \param  mpi_comm_cols        MPI communicator for columns
@@ -1300,8 +1374,11 @@
 
    integer(kind=c_int), value :: na, lda, nblk, matrixCols,  mpi_comm_rows, mpi_comm_cols, wantDebug
    integer(kind=c_int)        :: success
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   real(kind=c_double)        :: a(lda,*)
+#else
    real(kind=c_double)        :: a(lda,matrixCols)
-
+#endif
    logical                    :: successFortran, wantDebugFortran
 
    if (wantDebug .ne. 0) then
@@ -1404,9 +1481,11 @@
 
    integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug
    integer(kind=c_int)            :: success
-
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   complex(kind=c_double_complex) :: a(lda,*)
+#else
    complex(kind=c_double_complex) :: a(lda,matrixCols)
-
+#endif
    logical                        :: wantDebugFortran, successFortran
 
    if (wantDebug .ne. 0) then
