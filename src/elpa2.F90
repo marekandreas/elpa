@@ -175,10 +175,13 @@ contains
    integer(kind=ik), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
                                              mpi_comm_cols, mpi_comm_all
    integer(kind=ik), intent(in)           :: nblk
-   real(kind=rk8), intent(inout)           :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
-   ! was
-   ! real a(lda,*), q(ldq,*)
-   real(kind=rk8), allocatable             :: hh_trans_real(:,:)
+   real(kind=rk8), intent(inout)          :: ev(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   real(kind=rk8), intent(inout)          :: a(lda,*), q(ldq,*)
+#else
+   real(kind=rk8), intent(inout)          :: a(lda,matrixCols), q(ldq,matrixCols)
+#endif
+   real(kind=rk8), allocatable            :: hh_trans_real(:,:)
 
    integer(kind=ik)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=ik)                       :: nbw, num_blocks
@@ -529,10 +532,14 @@ contains
    integer(kind=ik), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
                                              mpi_comm_cols, mpi_comm_all
    integer(kind=ik), intent(in)           :: nblk
-   real(kind=rk4), intent(inout)           :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
-   ! was
-   ! real a(lda,*), q(ldq,*)
-   real(kind=rk4), allocatable             :: hh_trans_real(:,:)
+   real(kind=rk4), intent(inout)          :: ev(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   real(kind=rk4), intent(inout)          :: a(lda,*),  q(ldq,*)
+
+#else
+   real(kind=rk4), intent(inout)          :: a(lda,matrixCols),  q(ldq,matrixCols)
+#endif
+   real(kind=rk4), allocatable            :: hh_trans_real(:,:)
 
    integer(kind=ik)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=ik)                       :: nbw, num_blocks
@@ -871,11 +878,13 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
    integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
    integer(kind=ik)                       :: THIS_COMPLEX_ELPA_KERNEL
    integer(kind=ik), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-   complex(kind=ck8), intent(inout)        :: a(lda,matrixCols), q(ldq,matrixCols)
-   ! was
-   ! complex a(lda,*), q(ldq,*)
-   real(kind=rk8), intent(inout)           :: ev(na)
-   complex(kind=ck8), allocatable          :: hh_trans_complex(:,:)
+   real(kind=rk8), intent(inout)          :: ev(na)
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   complex(kind=ck8), intent(inout)       :: a(lda,*), q(ldq,*)
+#else
+   complex(kind=ck8), intent(inout)       :: a(lda,matrixCols), q(ldq,matrixCols)
+#endif
+   complex(kind=ck8), allocatable         :: hh_trans_complex(:,:)
 
    integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
    integer(kind=ik)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
@@ -1190,9 +1199,11 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
    integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
    integer(kind=ik)                       :: THIS_COMPLEX_ELPA_KERNEL
    integer(kind=ik), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+   complex(kind=ck4), intent(inout)        :: a(lda,*), q(ldq,*)
+#else
    complex(kind=ck4), intent(inout)        :: a(lda,matrixCols), q(ldq,matrixCols)
-   ! was
-   ! complex a(lda,*), q(ldq,*)
+#endif
    real(kind=rk4), intent(inout)           :: ev(na)
    complex(kind=ck4), allocatable          :: hh_trans_complex(:,:)
 
