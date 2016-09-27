@@ -272,145 +272,145 @@ void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int
 //#endif
 }
 
-#if 0
-void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
-{
-	int i;
-	int nb = *pnb;
-	int nq = *pldq;
-	int ldq = *pldq;
-	int ldh = *pldh;
-
-	// calculating scalar products to compute
-	// 6 householder vectors simultaneously
-	double scalarprods[15];
-
-//	scalarprods[0] = s_1_2;
-//	scalarprods[1] = s_1_3;
-//	scalarprods[2] = s_2_3;
-//	scalarprods[3] = s_1_4;
-//	scalarprods[4] = s_2_4;
-//	scalarprods[5] = s_3_4;
-//	scalarprods[6] = s_1_5;
-//	scalarprods[7] = s_2_5;
-//	scalarprods[8] = s_3_5;
-//	scalarprods[9] = s_4_5;
-//	scalarprods[10] = s_1_6;
-//	scalarprods[11] = s_2_6;
-//	scalarprods[12] = s_3_6;
-//	scalarprods[13] = s_4_6;
-//	scalarprods[14] = s_5_6;
-
-	scalarprods[0] = hh[(ldh+1)];
-	scalarprods[1] = hh[(ldh*2)+2];
-	scalarprods[2] = hh[(ldh*2)+1];
-	scalarprods[3] = hh[(ldh*3)+3];
-	scalarprods[4] = hh[(ldh*3)+2];
-	scalarprods[5] = hh[(ldh*3)+1];
-	scalarprods[6] = hh[(ldh*4)+4];
-	scalarprods[7] = hh[(ldh*4)+3];
-	scalarprods[8] = hh[(ldh*4)+2];
-	scalarprods[9] = hh[(ldh*4)+1];
-	scalarprods[10] = hh[(ldh*5)+5];
-	scalarprods[11] = hh[(ldh*5)+4];
-	scalarprods[12] = hh[(ldh*5)+3];
-	scalarprods[13] = hh[(ldh*5)+2];
-	scalarprods[14] = hh[(ldh*5)+1];
-
-	// calculate scalar product of first and fourth householder vector
-	// loop counter = 2
-	scalarprods[0] += hh[1] * hh[(2+ldh)];
-	scalarprods[2] += hh[(ldh)+1] * hh[2+(ldh*2)];
-	scalarprods[5] += hh[(ldh*2)+1] * hh[2+(ldh*3)];
-	scalarprods[9] += hh[(ldh*3)+1] * hh[2+(ldh*4)];
-	scalarprods[14] += hh[(ldh*4)+1] * hh[2+(ldh*5)];
-
-	// loop counter = 3
-	scalarprods[0] += hh[2] * hh[(3+ldh)];
-	scalarprods[2] += hh[(ldh)+2] * hh[3+(ldh*2)];
-	scalarprods[5] += hh[(ldh*2)+2] * hh[3+(ldh*3)];
-	scalarprods[9] += hh[(ldh*3)+2] * hh[3+(ldh*4)];
-	scalarprods[14] += hh[(ldh*4)+2] * hh[3+(ldh*5)];
-
-	scalarprods[1] += hh[1] * hh[3+(ldh*2)];
-	scalarprods[4] += hh[(ldh*1)+1] * hh[3+(ldh*3)];
-	scalarprods[8] += hh[(ldh*2)+1] * hh[3+(ldh*4)];
-	scalarprods[13] += hh[(ldh*3)+1] * hh[3+(ldh*5)];
-
-	// loop counter = 4
-	scalarprods[0] += hh[3] * hh[(4+ldh)];
-	scalarprods[2] += hh[(ldh)+3] * hh[4+(ldh*2)];
-	scalarprods[5] += hh[(ldh*2)+3] * hh[4+(ldh*3)];
-	scalarprods[9] += hh[(ldh*3)+3] * hh[4+(ldh*4)];
-	scalarprods[14] += hh[(ldh*4)+3] * hh[4+(ldh*5)];
-
-	scalarprods[1] += hh[2] * hh[4+(ldh*2)];
-	scalarprods[4] += hh[(ldh*1)+2] * hh[4+(ldh*3)];
-	scalarprods[8] += hh[(ldh*2)+2] * hh[4+(ldh*4)];
-	scalarprods[13] += hh[(ldh*3)+2] * hh[4+(ldh*5)];
-
-	scalarprods[3] += hh[1] * hh[4+(ldh*3)];
-	scalarprods[7] += hh[(ldh)+1] * hh[4+(ldh*4)];
-	scalarprods[12] += hh[(ldh*2)+1] * hh[4+(ldh*5)];
-
-	// loop counter = 5
-	scalarprods[0] += hh[4] * hh[(5+ldh)];
-	scalarprods[2] += hh[(ldh)+4] * hh[5+(ldh*2)];
-	scalarprods[5] += hh[(ldh*2)+4] * hh[5+(ldh*3)];
-	scalarprods[9] += hh[(ldh*3)+4] * hh[5+(ldh*4)];
-	scalarprods[14] += hh[(ldh*4)+4] * hh[5+(ldh*5)];
-
-	scalarprods[1] += hh[3] * hh[5+(ldh*2)];
-	scalarprods[4] += hh[(ldh*1)+3] * hh[5+(ldh*3)];
-	scalarprods[8] += hh[(ldh*2)+3] * hh[5+(ldh*4)];
-	scalarprods[13] += hh[(ldh*3)+3] * hh[5+(ldh*5)];
-
-	scalarprods[3] += hh[2] * hh[5+(ldh*3)];
-	scalarprods[7] += hh[(ldh)+2] * hh[5+(ldh*4)];
-	scalarprods[12] += hh[(ldh*2)+2] * hh[5+(ldh*5)];
-
-	scalarprods[6] += hh[1] * hh[5+(ldh*4)];
-	scalarprods[11] += hh[(ldh)+1] * hh[5+(ldh*5)];
-
-	#pragma ivdep
-	for (i = 6; i < nb; i++)
-	{
-		scalarprods[0] += hh[i-1] * hh[(i+ldh)];
-		scalarprods[2] += hh[(ldh)+i-1] * hh[i+(ldh*2)];
-		scalarprods[5] += hh[(ldh*2)+i-1] * hh[i+(ldh*3)];
-		scalarprods[9] += hh[(ldh*3)+i-1] * hh[i+(ldh*4)];
-		scalarprods[14] += hh[(ldh*4)+i-1] * hh[i+(ldh*5)];
-
-		scalarprods[1] += hh[i-2] * hh[i+(ldh*2)];
-		scalarprods[4] += hh[(ldh*1)+i-2] * hh[i+(ldh*3)];
-		scalarprods[8] += hh[(ldh*2)+i-2] * hh[i+(ldh*4)];
-		scalarprods[13] += hh[(ldh*3)+i-2] * hh[i+(ldh*5)];
-
-		scalarprods[3] += hh[i-3] * hh[i+(ldh*3)];
-		scalarprods[7] += hh[(ldh)+i-3] * hh[i+(ldh*4)];
-		scalarprods[12] += hh[(ldh*2)+i-3] * hh[i+(ldh*5)];
-
-		scalarprods[6] += hh[i-4] * hh[i+(ldh*4)];
-		scalarprods[11] += hh[(ldh)+i-4] * hh[i+(ldh*5)];
-
-		scalarprods[10] += hh[i-5] * hh[i+(ldh*5)];
-	}
-
-
-	// Production level kernel calls with padding
-//#ifdef __AVX__
-	for (i = 0; i < nq; i+=8)
-	{
-		hh_trafo_kernel_8_AVX_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
-	}
-//#else
-//	for (i = 0; i < nq; i+=4)
+//#if 0
+//void hexa_hh_trafo_fast_(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+//{
+//	int i;
+//	int nb = *pnb;
+//	int nq = *pldq;
+//	int ldq = *pldq;
+//	int ldh = *pldh;
+//
+//	// calculating scalar products to compute
+//	// 6 householder vectors simultaneously
+//	double scalarprods[15];
+//
+////	scalarprods[0] = s_1_2;
+////	scalarprods[1] = s_1_3;
+////	scalarprods[2] = s_2_3;
+////	scalarprods[3] = s_1_4;
+////	scalarprods[4] = s_2_4;
+////	scalarprods[5] = s_3_4;
+////	scalarprods[6] = s_1_5;
+////	scalarprods[7] = s_2_5;
+////	scalarprods[8] = s_3_5;
+////	scalarprods[9] = s_4_5;
+////	scalarprods[10] = s_1_6;
+////	scalarprods[11] = s_2_6;
+////	scalarprods[12] = s_3_6;
+////	scalarprods[13] = s_4_6;
+////	scalarprods[14] = s_5_6;
+//
+//	scalarprods[0] = hh[(ldh+1)];
+//	scalarprods[1] = hh[(ldh*2)+2];
+//	scalarprods[2] = hh[(ldh*2)+1];
+//	scalarprods[3] = hh[(ldh*3)+3];
+//	scalarprods[4] = hh[(ldh*3)+2];
+//	scalarprods[5] = hh[(ldh*3)+1];
+//	scalarprods[6] = hh[(ldh*4)+4];
+//	scalarprods[7] = hh[(ldh*4)+3];
+//	scalarprods[8] = hh[(ldh*4)+2];
+//	scalarprods[9] = hh[(ldh*4)+1];
+//	scalarprods[10] = hh[(ldh*5)+5];
+//	scalarprods[11] = hh[(ldh*5)+4];
+//	scalarprods[12] = hh[(ldh*5)+3];
+//	scalarprods[13] = hh[(ldh*5)+2];
+//	scalarprods[14] = hh[(ldh*5)+1];
+//
+//	// calculate scalar product of first and fourth householder vector
+//	// loop counter = 2
+//	scalarprods[0] += hh[1] * hh[(2+ldh)];
+//	scalarprods[2] += hh[(ldh)+1] * hh[2+(ldh*2)];
+//	scalarprods[5] += hh[(ldh*2)+1] * hh[2+(ldh*3)];
+//	scalarprods[9] += hh[(ldh*3)+1] * hh[2+(ldh*4)];
+//	scalarprods[14] += hh[(ldh*4)+1] * hh[2+(ldh*5)];
+//
+//	// loop counter = 3
+//	scalarprods[0] += hh[2] * hh[(3+ldh)];
+//	scalarprods[2] += hh[(ldh)+2] * hh[3+(ldh*2)];
+//	scalarprods[5] += hh[(ldh*2)+2] * hh[3+(ldh*3)];
+//	scalarprods[9] += hh[(ldh*3)+2] * hh[3+(ldh*4)];
+//	scalarprods[14] += hh[(ldh*4)+2] * hh[3+(ldh*5)];
+//
+//	scalarprods[1] += hh[1] * hh[3+(ldh*2)];
+//	scalarprods[4] += hh[(ldh*1)+1] * hh[3+(ldh*3)];
+//	scalarprods[8] += hh[(ldh*2)+1] * hh[3+(ldh*4)];
+//	scalarprods[13] += hh[(ldh*3)+1] * hh[3+(ldh*5)];
+//
+//	// loop counter = 4
+//	scalarprods[0] += hh[3] * hh[(4+ldh)];
+//	scalarprods[2] += hh[(ldh)+3] * hh[4+(ldh*2)];
+//	scalarprods[5] += hh[(ldh*2)+3] * hh[4+(ldh*3)];
+//	scalarprods[9] += hh[(ldh*3)+3] * hh[4+(ldh*4)];
+//	scalarprods[14] += hh[(ldh*4)+3] * hh[4+(ldh*5)];
+//
+//	scalarprods[1] += hh[2] * hh[4+(ldh*2)];
+//	scalarprods[4] += hh[(ldh*1)+2] * hh[4+(ldh*3)];
+//	scalarprods[8] += hh[(ldh*2)+2] * hh[4+(ldh*4)];
+//	scalarprods[13] += hh[(ldh*3)+2] * hh[4+(ldh*5)];
+//
+//	scalarprods[3] += hh[1] * hh[4+(ldh*3)];
+//	scalarprods[7] += hh[(ldh)+1] * hh[4+(ldh*4)];
+//	scalarprods[12] += hh[(ldh*2)+1] * hh[4+(ldh*5)];
+//
+//	// loop counter = 5
+//	scalarprods[0] += hh[4] * hh[(5+ldh)];
+//	scalarprods[2] += hh[(ldh)+4] * hh[5+(ldh*2)];
+//	scalarprods[5] += hh[(ldh*2)+4] * hh[5+(ldh*3)];
+//	scalarprods[9] += hh[(ldh*3)+4] * hh[5+(ldh*4)];
+//	scalarprods[14] += hh[(ldh*4)+4] * hh[5+(ldh*5)];
+//
+//	scalarprods[1] += hh[3] * hh[5+(ldh*2)];
+//	scalarprods[4] += hh[(ldh*1)+3] * hh[5+(ldh*3)];
+//	scalarprods[8] += hh[(ldh*2)+3] * hh[5+(ldh*4)];
+//	scalarprods[13] += hh[(ldh*3)+3] * hh[5+(ldh*5)];
+//
+//	scalarprods[3] += hh[2] * hh[5+(ldh*3)];
+//	scalarprods[7] += hh[(ldh)+2] * hh[5+(ldh*4)];
+//	scalarprods[12] += hh[(ldh*2)+2] * hh[5+(ldh*5)];
+//
+//	scalarprods[6] += hh[1] * hh[5+(ldh*4)];
+//	scalarprods[11] += hh[(ldh)+1] * hh[5+(ldh*5)];
+//
+//	#pragma ivdep
+//	for (i = 6; i < nb; i++)
 //	{
-//		hh_trafo_kernel_4_SSE_6hv(&q[i], hh, nb, ldq, ldh, scalarprods);
+//		scalarprods[0] += hh[i-1] * hh[(i+ldh)];
+//		scalarprods[2] += hh[(ldh)+i-1] * hh[i+(ldh*2)];
+//		scalarprods[5] += hh[(ldh*2)+i-1] * hh[i+(ldh*3)];
+//		scalarprods[9] += hh[(ldh*3)+i-1] * hh[i+(ldh*4)];
+//		scalarprods[14] += hh[(ldh*4)+i-1] * hh[i+(ldh*5)];
+//
+//		scalarprods[1] += hh[i-2] * hh[i+(ldh*2)];
+//		scalarprods[4] += hh[(ldh*1)+i-2] * hh[i+(ldh*3)];
+//		scalarprods[8] += hh[(ldh*2)+i-2] * hh[i+(ldh*4)];
+//		scalarprods[13] += hh[(ldh*3)+i-2] * hh[i+(ldh*5)];
+//
+//		scalarprods[3] += hh[i-3] * hh[i+(ldh*3)];
+//		scalarprods[7] += hh[(ldh)+i-3] * hh[i+(ldh*4)];
+//		scalarprods[12] += hh[(ldh*2)+i-3] * hh[i+(ldh*5)];
+//
+//		scalarprods[6] += hh[i-4] * hh[i+(ldh*4)];
+//		scalarprods[11] += hh[(ldh)+i-4] * hh[i+(ldh*5)];
+//
+//		scalarprods[10] += hh[i-5] * hh[i+(ldh*5)];
 //	}
+//
+//
+//	// Production level kernel calls with padding
+////#ifdef __AVX__
+//	for (i = 0; i < nq; i+=8)
+//	{
+//		hh_trafo_kernel_8_AVX_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+//	}
+////#else
+////	for (i = 0; i < nq; i+=4)
+////	{
+////		hh_trafo_kernel_4_SSE_6hv(&q[i], hh, nb, ldq, ldh, scalarprods);
+////	}
+////#endif
+//}
 //#endif
-}
-#endif
 
 /**
  * Unrolled kernel that computes

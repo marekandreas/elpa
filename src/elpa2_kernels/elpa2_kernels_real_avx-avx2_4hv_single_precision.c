@@ -135,8 +135,7 @@ void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* 
 		s_1_4 += hh[i-3] * hh[i+(ldh*3)];
 	}
 
-	// Production level kernel calls with padding
-	for (i = 0; i < nq-20; i+=24)
+	for (i = 0; i < nq-16; i+=24)
 	{
 		hh_trafo_kernel_24_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
@@ -144,28 +143,46 @@ void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* 
 	{
 		return;
 	}
-	if (nq-i == 20)
-	{
-		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		hh_trafo_kernel_4_AVX_4hv_single(&q[i+16], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-	else if (nq-i == 16)
+	if (nq-i == 16)
 	{
 		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
-	else if (nq-i == 12)
-	{
-		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		hh_trafo_kernel_4_AVX_4hv_single(&q[i+8], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-	else if (nq-i == 8)
+        else
 	{
 		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
-	else
-	{
-		hh_trafo_kernel_4_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
+
+//	// Production level kernel calls with padding
+//	for (i = 0; i < nq-20; i+=24)
+//	{
+//		hh_trafo_kernel_24_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	if (nq == i)
+//	{
+//		return;
+//	}
+//	if (nq-i == 20)
+//	{
+//		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//		hh_trafo_kernel_4_AVX_4hv_single(&q[i+16], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	else if (nq-i == 16)
+//	{
+//		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	else if (nq-i == 12)
+//	{
+//		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//		hh_trafo_kernel_4_AVX_4hv_single(&q[i+8], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	else if (nq-i == 8)
+//	{
+//		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
+//	else
+//	{
+//		hh_trafo_kernel_4_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+//	}
 
 }
 
@@ -380,7 +397,7 @@ __forceinline void hh_trafo_kernel_24_AVX_4hv_single(float* q, float* hh, int nb
 #ifdef __ELPA_USE_FMA__
 	y1 = _mm256_FMA_ps(q1, h2, y1);
 	y2 = _mm256_FMA_ps(q2, h2, y2);
-//	y3 = _mm256_FMA_ps(q3, h2, y3);
+	y3 = _mm256_FMA_ps(q3, h2, y3);
 #else
 	y1 = _mm256_add_ps(y1, _mm256_mul_ps(q1,h2));
 	y2 = _mm256_add_ps(y2, _mm256_mul_ps(q2,h2));
