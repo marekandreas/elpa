@@ -55,13 +55,13 @@
 ! --------------------------------------------------------------------------------------------------
 #include "config-f90.h"
 
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
 #define PACK_REAL_TO_COMPLEX
 #else
 #undef PACK_REAL_TO_COMPLEX
 #endif
 
-#ifndef DESPERATELY_WANT_ASSUMED_SIZE
+#ifndef USE_ASSUMED_SIZE
 module real_generic_kernel
 
   private
@@ -79,7 +79,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)      :: nb, nq, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     real(kind=rk), intent(inout)      :: q(ldq,*)
     real(kind=rk), intent(in)         :: hh(ldh,*)
 #else
@@ -107,14 +107,14 @@ contains
 
     ! Do the Householder transformations
 
-#ifndef DESPERATELY_WANT_ASSUMED_SIZE
+#ifndef USE_ASSUMED_SIZE
 !    ! assign real data to compplex pointer
 !    call c_f_pointer(c_loc(q), q_complex, [size(q,dim=1)/2,size(q,dim=2)])
 #endif
     ! Always a multiple of 4 Q-rows is transformed, even if nq is smaller
 
     do i=1,nq-8,12
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
        call hh_trafo_kernel_12_generic(q(i,1),hh, nb, ldq, ldh, s)
 #else
        call hh_trafo_kernel_12_generic(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
@@ -124,7 +124,7 @@ contains
     ! i > nq-8 now, i.e. at most 8 rows remain
 
     if(nq-i+1 > 4) then
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     print *,"calling 8"
        call hh_trafo_kernel_8_generic(q(i,1),hh, nb, ldq, ldh, s)
 #else
@@ -132,7 +132,7 @@ contains
 #endif
 
     else if(nq-i+1 > 0) then
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
        print *,"calling 4"
        call hh_trafo_kernel_4_generic(q(i,1),hh, nb, ldq, ldh, s)
 #else
@@ -160,7 +160,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq/2,*)
     real(kind=rk), intent(in)       :: hh(ldh,*)
 #else
@@ -379,7 +379,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)     :: nb, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout)  :: q(ldq/2,*)
     real(kind=rk), intent(in)        :: hh(ldh,*)
 #else
@@ -551,7 +551,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq/2,*)
     real(kind=rk), intent(in)       :: hh(ldh,*)
 #else
@@ -668,7 +668,7 @@ contains
 #endif
 
   end subroutine hh_trafo_kernel_4_generic
-#ifndef DESPERATELY_WANT_ASSUMED_SIZE
+#ifndef USE_ASSUMED_SIZE
 end module real_generic_kernel
 #endif
 ! --------------------------------------------------------------------------------------------------

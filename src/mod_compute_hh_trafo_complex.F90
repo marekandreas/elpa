@@ -202,7 +202,7 @@ module compute_hh_trafo_complex
              ttt = mpi_wtime()
              do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe,my_thread), &
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -211,7 +211,7 @@ module compute_hh_trafo_complex
 #endif
 
 #else /* WITH_OPENMP */
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                call single_hh_trafo_complex_generic_simple(a(1,j+off+a_off,istripe), &
                                                           bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
@@ -236,7 +236,7 @@ module compute_hh_trafo_complex
              ttt = mpi_wtime()
              do j = ncols, 1, -1
 #ifdef WITH_OPENMP
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
 
               call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe,my_thread), &
                                                    bcast_buffer(1,j+off),nbw,nl,stripe_width)
@@ -246,7 +246,7 @@ module compute_hh_trafo_complex
 #endif
 
 #else /* WITH_OPENMP */
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
               call single_hh_trafo_complex_generic(a(1,j+off+a_off,istripe), &
                                                    bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else

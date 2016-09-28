@@ -69,7 +69,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(*)
 #else
@@ -91,7 +91,7 @@ contains
     ! Always a multiple of 4 Q-rows is transformed, even if nq is smaller
 
     do i=1,nq-8,12
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
        call hh_trafo_complex_kernel_12(q(i,1),hh, nb, ldq)
 #else
        call hh_trafo_complex_kernel_12(q(i:ldq,1:nb),hh(1:nb), nb, ldq)
@@ -101,13 +101,13 @@ contains
     ! i > nq-8 now, i.e. at most 8 rows remain
 
     if(nq-i+1 > 4) then
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
        call hh_trafo_complex_kernel_8(q(i,1),hh, nb, ldq)
 #else
        call hh_trafo_complex_kernel_8(q(i:ldq,1:nb),hh(1:nb), nb, ldq)
 #endif
     else if(nq-i+1 > 0) then
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
        call hh_trafo_complex_kernel_4(q(i,1),hh, nb, ldq)
 #else
        call hh_trafo_complex_kernel_4(q(i:ldq,1:nb),hh(1:nb), nb, ldq)
@@ -128,7 +128,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(ldh,*)
 #else
@@ -158,7 +158,7 @@ contains
     ! Always a multiple of 4 Q-rows is transformed, even if nq is smaller
 
     do i=1,nq,4
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
        call hh_trafo_complex_kernel_4_2hv(q(i,1),hh, nb, ldq, ldh, s)
 #else
        call hh_trafo_complex_kernel_4_2hv(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
@@ -166,7 +166,7 @@ contains
     enddo
 
     !do i=1,nq-8,12
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     !   call hh_trafo_complex_kernel_12_2hv(q(i,1),hh, nb, ldq, ldh, s)
 #else
     !   call hh_trafo_complex_kernel_12_2hv(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
@@ -176,13 +176,13 @@ contains
     ! i > nq-8 now, i.e. at most 8 rows remain
 
     !if(nq-i+1 > 4) then
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     !   call hh_trafo_complex_kernel_8_2hv(q(i,1),hh, nb, ldq, ldh, s)
 #else
     !   call hh_trafo_complex_kernel_8_2hv(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
 #endif
     !else if(nq-i+1 > 0) then
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     !   call hh_trafo_complex_kernel_4_2hv(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
 #else
 
@@ -204,7 +204,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(*)
 #else
@@ -311,7 +311,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(*)
 #else
@@ -397,7 +397,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(*)
 #else
@@ -462,7 +462,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(ldh,*)
 #else
@@ -561,7 +561,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(ldh,*)
 #else
@@ -707,7 +707,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=ck), intent(inout) :: q(ldq,*)
     complex(kind=ck), intent(in)    :: hh(ldh,*)
 #else

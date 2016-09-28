@@ -129,7 +129,7 @@ module ELPA1_compute
 
       integer(kind=ik)            :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)               :: d(na), e(na), tau(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk)               :: a(lda,*)
 #else
       real(kind=rk)               :: a(lda,matrixCols)
@@ -548,7 +548,7 @@ module ELPA1_compute
 
       integer(kind=ik)           :: na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)              :: tau(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk)              :: a(lda,*), q(ldq,*)
 #else
       real(kind=rk)              :: a(lda,matrixCols), q(ldq,matrixCols)
@@ -783,7 +783,7 @@ module ELPA1_compute
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)              :: tau(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=ck)              :: a(lda,*)
 #else
       complex(kind=ck)              :: a(lda,matrixCols)
@@ -1228,7 +1228,7 @@ module ELPA1_compute
 
       integer(kind=ik)              ::  na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       complex(kind=ck)              ::  tau(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=ck)              :: a(lda,*), q(ldq,*)
 #else
       complex(kind=ck)              ::  a(lda,matrixCols), q(ldq,matrixCols)
@@ -1430,7 +1430,7 @@ module ELPA1_compute
 
       integer(kind=ik)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk)                 :: d(na), e(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk)                 :: q(ldq,*)
 #else
       real(kind=rk)                 :: q(ldq,matrixCols)
@@ -1709,7 +1709,7 @@ module ELPA1_compute
 
       integer(kind=ik)              :: na, nev, nqoff, ldq, nblk, matrixCols, mpi_comm_rows
       real(kind=rk)                 :: d(na), e(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk)                 :: q(ldq,*)
 #else
       real(kind=rk)                 :: q(ldq,matrixCols)
@@ -2041,7 +2041,7 @@ module ELPA1_compute
                                        mpi_comm_cols, npc_0, npc_n
       integer(kind=ik)              :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
       real(kind=rk)                 :: d(na), e
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk)                 :: q(ldq,*)
 #else
       real(kind=rk)                 :: q(ldq,matrixCols)

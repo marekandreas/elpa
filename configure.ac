@@ -902,17 +902,17 @@ DX_MAN_FEATURE(ON)
 DX_HTML_FEATURE(ON)
 DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
-DESPERATELY_WANT_ASSUMED_SIZE=no
+USE_ASSUMED_SIZE=no
 AC_MSG_CHECKING(whether --enable-assumed-size is specified)
 AC_ARG_ENABLE([assumed-size],
                 AS_HELP_STRING([--enable-assumed-size],
                                [use assumed-size Fortran arrays]),
               [],
-              [DESPERATELY_WANT_ASSUMED_SIZE=no])
-AC_MSG_RESULT([${DESPERATELY_WANT_ASSUMED_SIZE}])
-AM_CONDITIONAL([WITH_DESPERATELY_WANT_ASSUMED_SIZE],[test x"$DESPERATELY_WANT_ASSUMED_SIZE" = x"yes"])
-if test x"${DESPERATELY_WANT_ASSUMED_SIZE}" = x"yes" ; then
-  AC_DEFINE([DESPERATELY_WANT_ASSUMED_SIZE],[1],[use assumed size Fortran arrays, even if not debuggable])
+              [USE_ASSUMED_SIZE=no])
+AC_MSG_RESULT([${USE_ASSUMED_SIZE}])
+AM_CONDITIONAL([WITH_USE_ASSUMED_SIZE],[test x"$USE_ASSUMED_SIZE" = x"yes"])
+if test x"${USE_ASSUMED_SIZE}" = x"yes" ; then
+  AC_DEFINE([USE_ASSUMED_SIZE],[1],[use assumed size Fortran arrays, even if not debuggable])
 fi
 
 AC_SUBST([MPI_BINARY])

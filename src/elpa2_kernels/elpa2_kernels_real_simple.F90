@@ -71,7 +71,7 @@ contains
     implicit none
 
     integer(kind=ik), intent(in) :: nb, nq, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     real(kind=rk), intent(inout) :: q(ldq,*)
     real(kind=rk), intent(in)    :: hh(ldh,*)
 #else

@@ -138,7 +138,7 @@ module ELPA2_compute
       implicit none
 
       integer(kind=ik)           :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk)              :: a(lda,*), tmat(nbw,nbw,*)
 #else
       real(kind=rk)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
@@ -204,7 +204,7 @@ module ELPA2_compute
           allocate(vmr(max(l_rows,1),na))
 
           vmrCols = na
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+#ifdef USE_ASSUMED_SIZE_QR
           call qr_pdgeqrf_2dcomm(a, lda, matrixCols, vmr, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
                                  nbw, nbw, dwork_size, 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
@@ -248,7 +248,7 @@ module ELPA2_compute
           if (which_qr_decomposition == 1) then
 
             vmrCols = 2*n_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+#ifdef USE_ASSUMED_SIZE_QR
             call qr_pdgeqrf_2dcomm(a, lda, matrixCols, vmr, max(l_rows,1), vmrCols, tauvector(1), &
                                    na, tmat(1,1,istep), nbw, nbw, work_blocked, work_size,        &
                                      work_size, na, n_cols, nblk, nblk,        &
@@ -650,7 +650,7 @@ module ELPA2_compute
       use precision
       implicit none
       integer(kind=ik)  :: n, lda, ldb, comm
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk)     :: a(lda,*)
 #else
       real(kind=rk)     :: a(lda,ldb)
@@ -727,7 +727,7 @@ module ELPA2_compute
       implicit none
 
       integer(kind=ik)            :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 #else
       real(kind=rk)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
@@ -987,7 +987,7 @@ module ELPA2_compute
       implicit none
 
       integer(kind=ik), intent(in)  ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk), intent(in)     :: a(lda,*)
 #else
       real(kind=rk), intent(in)     :: a(lda,matrixCols)
@@ -1751,7 +1751,7 @@ module ELPA2_compute
 
       integer(kind=ik), intent(in)  :: THIS_REAL_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk)                 :: q(ldq,*)
 #else
       real(kind=rk)                 :: q(ldq,matrixCols)
@@ -2926,7 +2926,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       implicit none
 
       integer(kind=ik)              :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=ck)              :: a(lda,*), tmat(nbw,nbw,*)
 #else
       complex(kind=ck)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
@@ -3293,7 +3293,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       implicit none
 
       integer(kind=ik)              :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=ck)              :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 #else
       complex(kind=ck)              :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
@@ -3440,7 +3440,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
       implicit none
 
       integer(kind=ik), intent(in)   ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=ck),intent(in)    :: a(lda,*)
 #else
       complex(kind=ck), intent(in)   :: a(lda,matrixCols)
@@ -4182,7 +4182,7 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 
       integer(kind=ik), intent(in)  :: THIS_COMPLEX_ELPA_KERNEL
       integer(kind=ik), intent(in)  :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=ck)              :: q(ldq,*)
 #else
       complex(kind=ck)              :: q(ldq,matrixCols)
