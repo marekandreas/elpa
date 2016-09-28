@@ -48,13 +48,13 @@ module from_c
 
   interface
     integer(kind=c_int) function elpa1_real_c_double(na, nev,  a, lda, ev, q, ldq,         &
-                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols ) &
+                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all ) &
                                        bind(C, name="call_elpa1_real_solver_from_c_double")
 
       use iso_c_binding
       implicit none
 
-      integer(kind=c_int), value :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=c_int), value :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 !#ifdef DOUBLE_PRECISION_REAL
       real(kind=c_double)        :: a(1:lda,1:matrixCOls), ev(1:na), q(1:ldq,1:matrixCols)
 !#else
@@ -69,13 +69,13 @@ module from_c
 
   interface
     integer(kind=c_int) function elpa1_real_c_single(na, nev,  a, lda, ev, q, ldq,         &
-                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols ) &
+                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all ) &
                                        bind(C, name="call_elpa1_real_solver_from_c_single")
 
       use iso_c_binding
       implicit none
 
-      integer(kind=c_int), value :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=c_int), value :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 !#ifdef DOUBLE_PRECISION_REAL
 !      real(kind=c_double)        :: a(1:lda,1:matrixCOls), ev(1:na), q(1:ldq,1:matrixCols)
 !#else
@@ -88,13 +88,13 @@ module from_c
 
   interface
     integer(kind=c_int) function elpa1_complex_c_double(na, nev,  a, lda, ev, q, ldq,         &
-                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols ) &
+                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all ) &
                                        bind(C, name="call_elpa1_complex_solver_from_c_double")
 
       use iso_c_binding
       implicit none
 
-      integer(kind=c_int), value  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=c_int), value  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 !#ifdef DOUBLE_PRECISION_COMPLEX
       real(kind=c_double)         :: ev(1:na)
       complex(kind=c_double)      :: a(1:lda,1:matrixCOls), q(1:ldq,1:matrixCols)
@@ -110,13 +110,13 @@ module from_c
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
     integer(kind=c_int) function elpa1_complex_c_single(na, nev,  a, lda, ev, q, ldq,         &
-                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols ) &
+                                       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all ) &
                                        bind(C, name="call_elpa1_complex_solver_from_c_single")
 
       use iso_c_binding
       implicit none
 
-      integer(kind=c_int), value  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=c_int), value  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 !#ifdef DOUBLE_PRECISION_COMPLEX
 !      real(kind=c_double)         :: ev(1:na)
 !      complex(kind=c_double)      :: a(1:lda,1:matrixCOls), q(1:ldq,1:matrixCols)
@@ -144,13 +144,13 @@ module from_c
   contains
 
   function solve_elpa1_real_call_from_c_double(na, nev, a, lda, ev, q, ldq,         &
-                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols ) &
+                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols, mpi_comm_all ) &
                       result(success)
     use precision
     use iso_c_binding
     implicit none
 
-    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
     logical          :: success
     integer(kind=ik) :: successC
 !#ifdef DOUBLE_PRECISION_REAL
@@ -159,7 +159,7 @@ module from_c
 !    real(kind=c_float)   :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
 !#endif
     successC = elpa1_real_c_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                            matrixCols, mpi_comm_rows, mpi_comm_cols)
+                            matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
 
     if (successC .eq. 1) then
       success = .true.
@@ -171,13 +171,13 @@ module from_c
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   function solve_elpa1_real_call_from_c_single(na, nev, a, lda, ev, q, ldq,         &
-                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols ) &
+                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols, mpi_comm_all ) &
                       result(success)
     use precision
     use iso_c_binding
     implicit none
 
-    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
     logical          :: success
     integer(kind=ik) :: successC
 !#ifdef DOUBLE_PRECISION_REAL
@@ -186,7 +186,7 @@ module from_c
     real(kind=c_float)   :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
 !#endif
     successC = elpa1_real_c_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                            matrixCols, mpi_comm_rows, mpi_comm_cols)
+                            matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
 
     if (successC .eq. 1) then
       success = .true.
@@ -198,14 +198,14 @@ module from_c
 #endif
 
   function solve_elpa1_complex_call_from_c_double(na, nev, a, lda, ev, q, ldq,         &
-                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols ) &
+                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols, mpi_comm_all ) &
                       result(success)
 
     use precision
     use iso_c_binding
     implicit none
 
-    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
     logical          :: success
     integer(kind=ik) :: successC
 !#ifdef DOUBLE_PRECISION_COMPLEX
@@ -217,7 +217,7 @@ module from_c
 !#endif
 
     successC = elpa1_complex_c_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                            matrixCols, mpi_comm_rows, mpi_comm_cols)
+                            matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
 
     if (successC .eq. 1) then
       success = .true.
@@ -229,14 +229,14 @@ module from_c
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   function solve_elpa1_complex_call_from_c_single(na, nev, a, lda, ev, q, ldq,         &
-                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols ) &
+                      nblk, matrixCOls, mpi_comm_rows, mpi_comm_cols, mpi_comm_all ) &
                       result(success)
 
     use precision
     use iso_c_binding
     implicit none
 
-    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+    integer(kind=ik) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
     logical          :: success
     integer(kind=ik) :: successC
 !#ifdef DOUBLE_PRECISION_COMPLEX
@@ -248,7 +248,7 @@ module from_c
 !#endif
 
     successC = elpa1_complex_c_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                            matrixCols, mpi_comm_rows, mpi_comm_cols)
+                            matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
 
     if (successC .eq. 1) then
       success = .true.

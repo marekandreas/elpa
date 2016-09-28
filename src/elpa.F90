@@ -252,7 +252,7 @@ module ELPA
 
       if (useELPA1) then
         success = solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols)
+                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
       else
         success = solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,              &
@@ -350,7 +350,7 @@ module ELPA
 
       if (useELPA1) then
         success = solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols)
+                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
       else
         success = solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,              &
@@ -446,7 +446,7 @@ module ELPA
 
       if (useELPA1) then
         success = solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols)
+                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
       else
         success = solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,                 &
@@ -540,7 +540,7 @@ module ELPA
 
       if (useELPA1) then
         success = solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols)
+                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
       else
         success = solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,                 &

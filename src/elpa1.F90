@@ -85,6 +85,7 @@ module ELPA1
   use, intrinsic :: iso_c_binding
   use elpa_utilities
   use elpa1_auxiliary
+  use elpa1_utilities
 
   implicit none
 
@@ -522,8 +523,11 @@ end function get_elpa_communicators
 #define COMPLEX_DATATYPE c_float
 
 function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                      matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
+                                      matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                      THIS_REAL_ELPA_KERNEL_API) result(success)
    use iso_c_binding
+   use cuda_functions
+   use mod_check_for_gpu
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
@@ -531,15 +535,20 @@ function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
    use elpa1_compute
    implicit none
 
-   integer(kind=c_int), intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
    real(kind=REAL_DATATYPE)        :: ev(na)
 #ifdef USE_ASSUMED_SIZE
    real(kind=REAL_DATATYPE)      :: a(lda,*), q(ldq,*)
 #else
    real(kind=REAL_DATATYPE)      :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
+   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
 
-   integer(kind=c_int)           :: my_prow, my_pcol, mpierr
+   logical                                :: useGPU
+   integer(kind=ik)                       :: numberOfGPUDevices
+
+   integer(kind=c_int)              :: my_pe, n_pes, my_prow, my_pcol, mpierr
    real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
    real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
    logical                       :: success
@@ -553,6 +562,10 @@ function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("mpi_communication")
 #endif
+
+   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
+
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
 #ifdef HAVE_DETAILED_TIMINGS
@@ -566,14 +579,43 @@ function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
      wantDebug = debug_messages_via_environment_variable()
      firstCall = .false.
    endif
+   
+   useGPU      = .false.
+   
+   if (present(THIS_REAL_ELPA_KERNEL_API)) then
+     ! user defined kernel via the optional argument in the API call
+     THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
+   else
+     ! if kernel is not choosen via api
+     ! check whether set by environment variable
+     THIS_REAL_ELPA_KERNEL = DEFAULT_REAL_ELPA_KERNEL
+   endif
+   
+   if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
+      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+        useGPU = .true.
+      endif
+      if (nblk .ne. 128) then
+        print *,"At the moment GPU version needs blocksize 128"
+        error stop
+      endif
+
+      ! set the neccessary parameters
+      cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+      cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+      cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+      cudaHostRegisterPortable = cuda_hostRegisterPortable()
+      cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+   endif
+
 
    allocate(e(na), tau(na))
 
    ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
 #else
-   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
 #endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
@@ -657,7 +699,10 @@ end function solve_evp_real_1stage_double
 
 
 function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                      mpi_comm_rows, mpi_comm_cols) result(success)
+                                      mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                      THIS_REAL_ELPA_KERNEL_API) result(success)
+   use cuda_functions
+   use mod_check_for_gpu
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
@@ -666,7 +711,7 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
    use elpa1_compute
    implicit none
 
-   integer(kind=c_int), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
    real(kind=REAL_DATATYPE)      :: ev(na)
 #ifdef USE_ASSUMED_SIZE
    real(kind=REAL_DATATYPE)      :: a(lda,*), q(ldq,*)
@@ -674,12 +719,20 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
    real(kind=REAL_DATATYPE)      :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
 
-   integer(kind=c_int)           :: my_prow, my_pcol, mpierr
+   integer(kind=c_int)           :: my_pe, n_pes, my_prow, my_pcol, mpierr
    real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
    real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
    logical                       :: success
    logical, save                 :: firstCall = .true.
    logical                       :: wantDebug
+
+   
+   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
+
+   logical                                :: useGPU
+   integer(kind=ik)                       :: numberOfGPUDevices
+
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_real_1stage_single")
@@ -688,6 +741,9 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("mpi_communication")
 #endif
+
+   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -704,13 +760,41 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
      firstCall = .false.
    endif
 
+   useGPU      = .false.
+
+   if (present(THIS_REAL_ELPA_KERNEL_API)) then
+     ! user defined kernel via the optional argument in the API call
+     THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
+   else
+     ! if kernel is not choosen via api
+     ! check whether set by environment variable
+     THIS_REAL_ELPA_KERNEL = DEFAULT_REAL_ELPA_KERNEL
+   endif
+   
+   if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
+      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+        useGPU = .true.
+      endif
+      if (nblk .ne. 128) then
+        print *,"At the moment GPU version needs blocksize 128"
+        error stop
+      endif
+
+      ! set the neccessary parameters
+      cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+      cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+      cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+      cudaHostRegisterPortable = cuda_hostRegisterPortable()
+      cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+   endif
+
    allocate(e(na), tau(na))
 
    ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
 #else
-   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau)
+   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
 #endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
@@ -793,17 +877,18 @@ end function solve_evp_real_1stage_single
 !>  \result                     success
 
 function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                         mpi_comm_rows, mpi_comm_cols) result(success)
+                                         mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                         THIS_REAL_ELPA_KERNEL_API) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
-   ! use precision
+   use precision
    use iso_c_binding
    use elpa_mpi
    use elpa1_compute
    implicit none
 
-   integer(kind=c_int), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 #ifdef USE_ASSUMED_SIZE
    complex(kind=COMPLEX_DATATYPE)   :: a(lda,*), q(ldq,*)
 #else
@@ -820,6 +905,12 @@ function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matr
    logical                             :: success
    logical, save                       :: firstCall = .true.
    logical                             :: wantDebug
+
+   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
+
+   logical                                :: useGPU
+   integer(kind=ik)                       :: numberOfGPUDevices
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex_1stage_double")
@@ -944,16 +1035,18 @@ end function solve_evp_complex_1stage_double
 
 
 function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                         mpi_comm_rows, mpi_comm_cols) result(success)
+                                         mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                         THIS_REAL_ELPA_KERNEL_API) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
+   use precision
    use iso_c_binding
    use elpa_mpi
    use elpa1_compute
    implicit none
 
-   integer(kind=c_int), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 #ifdef USE_ASSUMED_SIZE
    complex(kind=COMPLEX_DATATYPE)   :: a(lda,*), q(ldq,*)
 #else
@@ -970,6 +1063,12 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
    logical                          :: success
    logical, save                    :: firstCall = .true.
    logical                          :: wantDebug
+
+   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
+
+   logical                                :: useGPU
+   integer(kind=ik)                       :: numberOfGPUDevices
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex_1stage_single")

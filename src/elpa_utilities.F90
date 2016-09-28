@@ -58,7 +58,7 @@ module ELPA_utilities
 
   private ! By default, all routines contained are private
 
-  public :: debug_messages_via_environment_variable, pcol, prow, error_unit
+  public :: debug_messages_via_environment_variable, pcol, prow, error_unit, check_alloc
   public :: map_global_array_index_to_local_index
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter :: error_unit = 0
@@ -161,5 +161,22 @@ module ELPA_utilities
    jLocal = lj * nblk + xj
 
  end function
+ 
+     
+ subroutine check_alloc(function_name, variable_name, istat, errorMessage)
+    use precision
+    
+    implicit none
+    
+    character(len=*), intent(in)    :: function_name
+    character(len=*), intent(in)    :: variable_name
+    integer(kind=ik), intent(in)    :: istat
+    character(len=*), intent(in)    :: errorMessage
+    
+    if (istat .ne. 0) then
+    print *, function_name, ": error when allocating ", variable_name, " ", errorMessage
+    stop
+    endif
+ end subroutine
 
 end module ELPA_utilities

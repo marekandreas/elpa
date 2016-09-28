@@ -219,9 +219,10 @@ int main(int argc, char** argv) {
 #endif
 
 #ifdef DOUBLE_PRECISION_REAL
-   success = elpa_solve_evp_real_1stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
+   printf("haha \n");
+   success = elpa_solve_evp_real_1stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world);
 #else
-   success = elpa_solve_evp_real_1stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
+   success = elpa_solve_evp_real_1stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world);
 #endif
 
    if (success != 1) {

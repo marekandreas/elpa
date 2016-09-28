@@ -15,6 +15,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
         src/elpa1.F90 \
         src/elpa2.F90 \
 	src/elpa1_auxiliary.F90 \
+        src/elpa1_utilities.F90 \
         src/elpa2_utilities.F90 \
         src/elpa_utilities.F90
 
@@ -377,16 +378,20 @@ endif
 
 if WITH_GPU_VERSION
 noinst_PROGRAMS += \
+  elpa1_test_complex_gpu@SUFFIX@ \
+  elpa1_test_real_gpu@SUFFIX@ \
   elpa2_test_complex_gpu@SUFFIX@ \
   elpa2_test_real_gpu@SUFFIX@
 
 if WANT_SINGLE_PRECISION_REAL
 noinst_PROGRAMS += \
+  elpa1_test_real_gpu_single_precision@SUFFIX@ \
   elpa2_test_real_gpu_single_precision@SUFFIX@
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 noinst_PROGRAMS += \
+  elpa1_test_complex_gpu_single_precision@SUFFIX@ \
   elpa2_test_complex_gpu_single_precision@SUFFIX@
 endif
 
@@ -652,6 +657,16 @@ EXTRA_elpa2_test_complex_api_single_precision@SUFFIX@_DEPENDENCIES = test/Fortra
 endif
 
 if WITH_GPU_VERSION
+elpa1_test_real_gpu@SUFFIX@_SOURCES = test/Fortran/test_real_gpu.F90
+elpa1_test_real_gpu@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_real_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_test_real_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
+elpa1_test_complex_gpu@SUFFIX@_SOURCES = test/Fortran/test_complex_gpu.F90
+elpa1_test_complex_gpu@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_complex_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_test_complex_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 elpa2_test_real_gpu@SUFFIX@_SOURCES = test/Fortran/test_real2_gpu.F90
 elpa2_test_real_gpu@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
@@ -663,6 +678,11 @@ elpa2_test_complex_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_module
 EXTRA_elpa2_test_complex_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 if WANT_SINGLE_PRECISION_REAL
+elpa1_test_real_gpu_single_precision@SUFFIX@_SOURCES = test/Fortran/test_real_gpu_single.F90
+elpa1_test_real_gpu_single_precision@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_real_gpu_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_test_real_gpu_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 elpa2_test_real_gpu_single_precision@SUFFIX@_SOURCES = test/Fortran/test_real2_gpu_single.F90
 elpa2_test_real_gpu_single_precision@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_gpu_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
@@ -670,6 +690,11 @@ EXTRA_elpa2_test_real_gpu_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/e
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
+elpa1_test_complex_gpu_single_precision@SUFFIX@_SOURCES = test/Fortran/test_complex_gpu_single.F90
+elpa1_test_complex_gpu_single_precision@SUFFIX@_LDADD = $(build_lib)
+elpa1_test_complex_gpu_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa1_test_complex_gpu_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 elpa2_test_complex_gpu_single_precision@SUFFIX@_SOURCES = test/Fortran/test_complex2_gpu_single.F90
 elpa2_test_complex_gpu_single_precision@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_gpu_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
@@ -736,14 +761,18 @@ endif
 
 if WITH_GPU_VERSION
 check_SCRIPTS += \
+  elpa1_test_real_gpu@SUFFIX@.sh \
+  elpa1_test_complex_gpu@SUFFIX@.sh \
   elpa2_test_real_gpu@SUFFIX@.sh \
   elpa2_test_complex_gpu@SUFFIX@.sh
 if WANT_SINGLE_PRECISION_REAL
 check_SCRIPTS += \
+  elpa1_test_real_gpu_single_precision@SUFFIX@.sh \
   elpa2_test_real_gpu_single_precision@SUFFIX@.sh
 endif
 if WANT_SINGLE_PRECISION_COMPLEX
 check_SCRIPTS += \
+  elpa1_test_complex_gpu_single_precision@SUFFIX@.sh \
   elpa2_test_complex_gpu_single_precision@SUFFIX@.sh
 endif
 
@@ -764,6 +793,9 @@ TESTS = $(check_SCRIPTS)
 # Preprocessed files (just used for manual inspection)
 mod_precision.i: $(top_srcdir)/src/mod_precision.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/mod_precision.F90 -o $@
+
+elpa1_utilities.i: $(top_srcdir)/src/elpa1_utilities.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa1_utilities.F90 -o $@
 
 elpa2_utilities.i: $(top_srcdir)/src/elpa2_utilities.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa2_utilities.F90 -o $@

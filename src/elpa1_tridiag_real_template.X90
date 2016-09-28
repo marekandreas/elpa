@@ -52,7 +52,7 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
-    subroutine M_tridiag_real_PRECISSION(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau)
+    subroutine M_tridiag_real_PRECISSION(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau, useGPU)
     !-------------------------------------------------------------------------------
     !  tridiag_real: Reduces a distributed symmetric matrix to tridiagonal form
     !                (like Scalapack Routine PDSYTRD)
@@ -82,6 +82,9 @@
     !  tau(na)     Factors for the Householder vectors (returned), needed for back transformation
     !
     !-------------------------------------------------------------------------------
+
+      use cuda_functions
+      use iso_c_binding
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -89,6 +92,8 @@
       implicit none
 
       integer(kind=ik), intent(in)            :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      logical, intent(in)                     :: useGPU
+
       real(kind=REAL_DATATYPE), intent(out)   :: d(na), e(na), tau(na)
 #ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE), intent(inout) :: a(lda,*)
@@ -107,6 +112,15 @@
       ! updated after each istep (in the main cycle) to contain number of 
       ! local columns and rows of the remaining part of the matrix
       integer(kind=ik)            :: l_cols, l_rows 
+        
+      ! number of local columns used for allocation of a_dev
+      ! pkus: isn't it the same as matrixCols?
+      integer(kind=ik)            :: na_cols
+      
+      integer(kind=C_intptr_T)              :: a_dev
+#ifdef WITH_MPI
+      integer(kind=ik), external            :: numroc
+#endif
       
       integer(kind=ik)            :: nstor
       integer(kind=ik)            :: istep, i, j, lcs, lce, lrs, lre
@@ -146,6 +160,17 @@
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
 #endif
+      ! pkus: what is the difference between na_cols and matrixCols?
+      if (useGPU) then
+#ifdef WITH_MPI
+        na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
+#else
+        na_cols = na
+#endif
+        write(*,*) "na_cols", na_cols, "matrixCols", matrixCols
+      endif ! useGPU
+
+
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
       ! pkus: what is tile size exactly?  
@@ -165,10 +190,7 @@
       max_local_cols = max_blocks_col*nblk
 
       allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_real: error when allocating tmp "//errorMessage
-        stop
-      endif
+      call check_alloc("tridiag_real", "tmp", istat, errorMessage)
 
       allocate(vr(max_local_rows+1), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
