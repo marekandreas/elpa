@@ -73,7 +73,7 @@
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=DATATYPE), intent(inout) :: q(ldq,*)
     complex(kind=DATATYPE), intent(in)    :: hh(*)
 #else
@@ -165,7 +165,7 @@
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
 #if REALCASE==1
 
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     real(kind=DATATYPE), intent(inout) :: q(ldq,*)
     real(kind=DATATYPE), intent(in)    :: hh(ldh,*)
 #else
@@ -177,7 +177,7 @@
 
 #if COMPLEXCASE==1
 
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
     complex(kind=DATATYPE), intent(inout) :: q(ldq,*)
     complex(kind=DATATYPE), intent(in)    :: hh(ldh,*)
 #else

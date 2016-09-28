@@ -353,10 +353,11 @@ function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
    implicit none
 
    integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-   real(kind=REAL_DATATYPE)                 :: a(lda,*), q(ldq,*)
+   real(kind=REAL_DATATYPE)      :: ev(na)
+#ifdef USE_ASSUMED_SIZE
+   real(kind=REAL_DATATYPE)      :: a(lda,*), q(ldq,*)
 #else
-   real(kind=REAL_DATATYPE)                 :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
+   real(kind=REAL_DATATYPE)      :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
 
    integer(kind=ik)              :: my_prow, my_pcol, mpierr
@@ -483,10 +484,11 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
    implicit none
 
    integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-   real(kind=REAL_DATATYPE)                 :: a(lda,*), q(ldq,*)
+   real(kind=REAL_DATATYPE)      :: ev(na)
+#ifdef USE_ASSUMED_SIZE
+   real(kind=REAL_DATATYPE)      :: a(lda,*), q(ldq,*)
 #else
-   real(kind=REAL_DATATYPE)                 :: a(lda,matrixCols), ev(na), q(ldq,matrixCols)
+   real(kind=REAL_DATATYPE)      :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
 
    integer(kind=ik)              :: my_prow, my_pcol, mpierr
@@ -612,12 +614,12 @@ function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matr
    implicit none
 
    integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-   complex(kind=COMPLEX_DATATYPE)                 :: a(lda,*), q(ldq,*)
+#ifdef USE_ASSUMED_SIZE
+   complex(kind=COMPLEX_DATATYPE)   :: a(lda,*), q(ldq,*)
 #else
-   complex(kind=COMPLEX_DATATYPE)                 :: a(lda,matrixCols), q(ldq,matrixCols)
+   complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
-   real(kind=REAL_DATATYPE)                    :: ev(na)
+   real(kind=REAL_DATATYPE)         :: ev(na)
 
    integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=ik)                 :: l_rows, l_cols, l_cols_nev
@@ -757,12 +759,12 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
    implicit none
 
    integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-   complex(kind=COMPLEX_DATATYPE)                 :: a(lda,*), q(ldq,*)
+#ifdef USE_ASSUMED_SIZE
+   complex(kind=COMPLEX_DATATYPE)   :: a(lda,*), q(ldq,*)
 #else
-   complex(kind=COMPLEX_DATATYPE)                 :: a(lda,matrixCols), q(ldq,matrixCols)
+   complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
-   real(kind=REAL_DATATYPE)                    :: ev(na)
+   real(kind=REAL_DATATYPE)         :: ev(na)
 
    integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=ik)                 :: l_rows, l_cols, l_cols_nev

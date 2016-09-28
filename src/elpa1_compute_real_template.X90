@@ -94,7 +94,7 @@
 
       integer(kind=ik)            :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE)               :: d(na), e(na), tau(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)               :: a(lda,*)
 #else
       real(kind=REAL_DATATYPE)               :: a(lda,matrixCols)
@@ -697,7 +697,7 @@
 
       integer(kind=ik)           :: na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE)              :: tau(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)              :: a(lda,*), q(ldq,*)
 #else
       real(kind=REAL_DATATYPE)              :: a(lda,matrixCols), q(ldq,matrixCols)
@@ -1006,7 +1006,7 @@
 
       integer(kind=ik)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE)                 :: d(na), e(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)                 :: q(ldq,*)
 #else
       real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)
@@ -1375,7 +1375,7 @@
 
       integer(kind=ik)              :: na, nev, nqoff, ldq, nblk, matrixCols, mpi_comm_rows
       real(kind=REAL_DATATYPE)                 :: d(na), e(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)                 :: q(ldq,*)
 #else
       real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)
@@ -1818,7 +1818,7 @@
                                        mpi_comm_cols, npc_0, npc_n
       integer(kind=ik)              :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
       real(kind=REAL_DATATYPE)                 :: d(na), e
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)                 :: q(ldq,*)
 #else
       real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)

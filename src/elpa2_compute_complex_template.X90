@@ -108,7 +108,7 @@
       logical, intent(in)                         :: useGPU
 
       integer(kind=ik)                            :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,*), tmat(nbw,nbw,*)
 #else
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
@@ -1265,7 +1265,7 @@
        logical, intent(in)                         :: useGPU
        integer(kind=ik)                            :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, &
                                                       mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 #else
       complex(kind=COMPLEX_DATATYPE)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
@@ -1744,7 +1744,7 @@
       !#endif
 
       integer(kind=ik), intent(in)                 ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE),intent(in)    :: a(lda,*)
 #else
       complex(kind=COMPLEX_DATATYPE), intent(in)   :: a(lda,matrixCols)
@@ -3051,7 +3051,7 @@
       logical, intent(in)                         :: useGPU
       integer(kind=ik), intent(in)                :: THIS_COMPLEX_ELPA_KERNEL
       integer(kind=ik), intent(in)                :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)              :: q(ldq,*)
 #else
       complex(kind=COMPLEX_DATATYPE)              :: q(ldq,matrixCols)

@@ -94,7 +94,7 @@
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       complex(kind=COMPLEX_DATATYPE)              :: tau(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,*)
 #else
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,matrixCols)
@@ -683,7 +683,7 @@
 
       integer(kind=ik)              ::  na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       complex(kind=COMPLEX_DATATYPE)              ::  tau(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,*), q(ldq,*)
 #else
       complex(kind=COMPLEX_DATATYPE)              ::  a(lda,matrixCols), q(ldq,matrixCols)

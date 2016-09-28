@@ -295,10 +295,10 @@ module elpa1_auxiliary
       implicit none
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)                 :: a(lda,*)
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE)      :: a(lda,*)
 #else
-      real(kind=REAL_DATATYPE)                 :: a(lda,matrixCols)
+      real(kind=REAL_DATATYPE)      :: a(lda,matrixCols)
 #endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -549,10 +549,11 @@ module elpa1_auxiliary
       implicit none
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE)                 :: a(lda,matrixCols)
-      ! was
-      ! real a(lda, *)
-
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE)      :: a(lda,*)
+#else
+      real(kind=REAL_DATATYPE)      :: a(lda,matrixCols)
+#endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
       integer(kind=ik)              :: n, nc, i, info
@@ -797,10 +798,10 @@ module elpa1_auxiliary
        implicit none
 
        integer(kind=ik)             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-       real(kind=REAL_DATATYPE)                :: a(lda,*)
+#ifdef USE_ASSUMED_SIZE
+       real(kind=REAL_DATATYPE)     :: a(lda,*)
 #else
-       real(kind=REAL_DATATYPE)                :: a(lda,matrixCols)
+       real(kind=REAL_DATATYPE)     :: a(lda,matrixCols)
 #endif
        integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -984,10 +985,10 @@ module elpa1_auxiliary
        implicit none
 
        integer(kind=ik)             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-       real(kind=REAL_DATATYPE)                :: a(lda,*)
+#ifdef USE_ASSUMED_SIZE
+       real(kind=REAL_DATATYPE)     :: a(lda,*)
 #else
-       real(kind=REAL_DATATYPE)                :: a(lda,matrixCols)
+       real(kind=REAL_DATATYPE)     :: a(lda,matrixCols)
 #endif
        integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -1179,10 +1180,10 @@ module elpa1_auxiliary
       implicit none
 
       integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)                 :: a(lda,*)
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
 #else
-      complex(kind=COMPLEX_DATATYPE)                 :: a(lda,matrixCols)
+      complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
 #endif
       integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -1433,10 +1434,10 @@ module elpa1_auxiliary
       implicit none
 
       integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)                 :: a(lda,*)
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
 #else
-      complex(kind=COMPLEX_DATATYPE)                 :: a(lda,matrixCols)
+      complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
 #endif
       integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -1688,10 +1689,10 @@ module elpa1_auxiliary
 #endif
        implicit none
        integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-       complex(kind=COMPLEX_DATATYPE)                 :: a(lda,*)
+#ifdef USE_ASSUMED_SIZE
+       complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
 #else
-       complex(kind=COMPLEX_DATATYPE)                 :: a(lda,matrixCols)
+       complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
 #endif
        integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -1896,10 +1897,10 @@ module elpa1_auxiliary
 #endif
        implicit none
        integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-       complex(kind=COMPLEX_DATATYPE)                 :: a(lda,*)
+#ifdef USE_ASSUMED_SIZE
+       complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
 #else
-       complex(kind=COMPLEX_DATATYPE)                 :: a(lda,matrixCols)
+       complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
 #endif
        integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)                 :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -2748,10 +2749,10 @@ module elpa1_auxiliary
       character*1                   :: uplo_a, uplo_c
       integer(kind=ik), intent(in)  :: lda, ldaCols, ldb, ldbCols, ldc, ldcCols
       integer(kind=ik)              :: na, ncb, nblk, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)              ::  a(lda,*), b(ldb,*), c(ldc,*)
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE)::  a(lda,*), b(ldb,*), c(ldc,*)
 #else
-      complex(kind=COMPLEX_DATATYPE)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols) ! removed assumed_size
+      complex(kind=COMPLEX_DATATYPE):: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_rows_np
@@ -3067,10 +3068,10 @@ module elpa1_auxiliary
       character*1                   :: uplo_a, uplo_c
       integer(kind=ik), intent(in)  :: lda, ldaCols, ldb, ldbCols, ldc, ldcCols
       integer(kind=ik)              :: na, ncb, nblk, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)              :: a(lda,*), b(ldb,*), c(ldc,*)
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE):: a(lda,*), b(ldb,*), c(ldc,*)
 #else
-      complex(kind=COMPLEX_DATATYPE)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols) ! removed assumed_size
+      complex(kind=COMPLEX_DATATYPE):: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
 
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -3363,7 +3364,7 @@ module elpa1_auxiliary
       implicit none
       integer(kind=ik)       :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk8)         :: d(na), e(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk8)         :: q(ldq,*)
 #else
       real(kind=rk8)         :: q(ldq,matrixCols)
@@ -3406,7 +3407,7 @@ module elpa1_auxiliary
       implicit none
       integer(kind=ik)       :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=rk4)         :: d(na), e(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=rk4)         :: q(ldq,*)
 #else
       real(kind=rk4)         :: q(ldq,matrixCols)

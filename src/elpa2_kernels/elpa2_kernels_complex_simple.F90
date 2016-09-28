@@ -86,6 +86,5 @@ module complex_generic_simple_kernel
 #undef COMPLEXCASE
 #endif
 
-
 end module complex_generic_simple_kernel
 ! --------------------------------------------------------------------------------------------------

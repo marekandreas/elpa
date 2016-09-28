@@ -54,13 +54,13 @@
 !
 ! --------------------------------------------------------------------------------------------------
 #include "config-f90.h"
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
 #define PACK_REAL_TO_COMPLEX
 #else
 #undef PACK_REAL_TO_COMPLEX
 #endif
 
-#ifndef DESPERATELY_WANT_ASSUMED_SIZE
+#ifndef USE_ASSUMED_SIZE
 module real_generic_kernel
 
   private
@@ -92,8 +92,7 @@ module real_generic_kernel
 #undef COMPLEX_DATATYPE
 #endif
 
-
-#ifndef DESPERATELY_WANT_ASSUMED_SIZE
+#ifndef USE_ASSUMED_SIZE
 end module real_generic_kernel
 #endif
 ! --------------------------------------------------------------------------------------------------

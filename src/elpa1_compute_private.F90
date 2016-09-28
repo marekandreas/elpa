@@ -73,7 +73,6 @@ module ELPA1_compute
     module procedure tridiag_real_double
   end interface
 
-
   interface trans_ev_real
     module procedure trans_ev_real_double
   end interface

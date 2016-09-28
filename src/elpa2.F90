@@ -176,7 +176,7 @@ contains
                                              mpi_comm_cols, mpi_comm_all
    integer(kind=ik), intent(in)           :: nblk
    real(kind=rk8), intent(inout)          :: ev(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
    real(kind=rk8), intent(inout)          :: a(lda,*), q(ldq,*)
 #else
    real(kind=rk8), intent(inout)          :: a(lda,matrixCols), q(ldq,matrixCols)
@@ -533,7 +533,7 @@ contains
                                              mpi_comm_cols, mpi_comm_all
    integer(kind=ik), intent(in)           :: nblk
    real(kind=rk4), intent(inout)          :: ev(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
    real(kind=rk4), intent(inout)          :: a(lda,*),  q(ldq,*)
 
 #else
@@ -879,7 +879,7 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
    integer(kind=ik)                       :: THIS_COMPLEX_ELPA_KERNEL
    integer(kind=ik), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
    real(kind=rk8), intent(inout)          :: ev(na)
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
    complex(kind=ck8), intent(inout)       :: a(lda,*), q(ldq,*)
 #else
    complex(kind=ck8), intent(inout)       :: a(lda,matrixCols), q(ldq,matrixCols)
@@ -1199,7 +1199,7 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
    integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
    integer(kind=ik)                       :: THIS_COMPLEX_ELPA_KERNEL
    integer(kind=ik), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
    complex(kind=ck4), intent(inout)        :: a(lda,*), q(ldq,*)
 #else
    complex(kind=ck4), intent(inout)        :: a(lda,matrixCols), q(ldq,matrixCols)

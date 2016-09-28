@@ -111,7 +111,7 @@
       implicit none
 
       integer(kind=ik)                      :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)              :: a(lda,*), tmat(nbw,nbw,*)
 #else
       real(kind=REAL_DATATYPE)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
@@ -233,7 +233,7 @@
           vmrCols = na
 #ifdef DOUBLE_PRECISION_REAL
 
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+#ifdef USE_ASSUMED_SIZE_QR
           call qr_pdgeqrf_2dcomm_double(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
                                  nbw, nbw, dwork_size, 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
@@ -247,7 +247,7 @@
 
 #else /* DOUBLE_PRECISION_REAL */
 
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+#ifdef USE_ASSUMED_SIZE_QR
           call qr_pdgeqrf_2dcomm_single(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
                                  nbw, nbw, dwork_size, 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
@@ -510,7 +510,7 @@
             vmrCols = 2*n_cols
 #ifdef DOUBLE_PRECISION_REAL
 
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+#ifdef USE_ASSUMED_SIZE_QR
             call qr_pdgeqrf_2dcomm_double(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), &
                                    na, tmat(1,1,istep), nbw, nbw, work_blocked, work_size,        &
                                      work_size, na, n_cols, nblk, nblk,        &
@@ -530,7 +530,7 @@
 
 #else /* DOUBLE_PRECISION_REAL */
 
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE_QR
+#ifdef USE_ASSUMED_SIZE_QR
             call qr_pdgeqrf_2dcomm_single(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), &
                                    na, tmat(1,1,istep), nbw, nbw, work_blocked, work_size,        &
                                      work_size, na, n_cols, nblk, nblk,        &
@@ -1574,7 +1574,7 @@
       use precision
       implicit none
       integer(kind=ik)             :: n, lda, ldb, comm
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)     :: a(lda,*)
 #else
       real(kind=REAL_DATATYPE)     :: a(lda,ldb)
@@ -1697,7 +1697,7 @@
       implicit none
 
       integer(kind=ik)                       :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 #else
       real(kind=REAL_DATATYPE)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
@@ -2414,7 +2414,7 @@
       implicit none
 
       integer(kind=ik), intent(in)             ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE), intent(in)     :: a(lda,*)
 #else
       real(kind=REAL_DATATYPE), intent(in)     :: a(lda,matrixCols)
@@ -3536,7 +3536,7 @@
 
       integer(kind=ik), intent(in)             :: THIS_REAL_ELPA_KERNEL
       integer(kind=ik), intent(in)             :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)                 :: q(ldq,*)
 #else
       real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)
