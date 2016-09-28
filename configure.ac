@@ -983,17 +983,17 @@ DX_MAN_FEATURE(ON)
 DX_HTML_FEATURE(ON)
 DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
-USE_ASSUMED_SIZE=no
-AC_MSG_CHECKING(whether --enable-assumed-size is specified)
+USE_ASSUMED_SIZE=yes
+AC_MSG_CHECKING(whether --disable-assumed-size is specified)
 AC_ARG_ENABLE([assumed-size],
-                AS_HELP_STRING([--enable-assumed-size],
-                               [use assumed-size Fortran arrays]),
-              [],
-              [USE_ASSUMED_SIZE=no])
+                AS_HELP_STRING([--disable-assumed-size],
+			       [do NOT use assumed-size Fortran arrays]),
+              [USE_ASSUMED_SIZE=no],
+              [USE_ASSUMED_SIZE=yes])
 AC_MSG_RESULT([${USE_ASSUMED_SIZE}])
 AM_CONDITIONAL([WITH_USE_ASSUMED_SIZE],[test x"$USE_ASSUMED_SIZE" = x"yes"])
 if test x"${USE_ASSUMED_SIZE}" = x"yes" ; then
-  AC_DEFINE([USE_ASSUMED_SIZE],[1],[use assumed size Fortran arrays, even if not debuggable])
+  AC_DEFINE([USE_ASSUMED_SIZE],[1],[for performance reasons use assumed size Fortran arrays, even if not debuggable])
 fi
 
 if test x"${want_single_precision}" = x"yes" ; then

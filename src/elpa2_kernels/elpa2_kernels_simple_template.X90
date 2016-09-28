@@ -202,7 +202,7 @@
     call timer%start("kernel real generic simple: double_hh_trafo_real_generic_simple_single")
 #endif
 
-#endif 
+#endif
 
 #endif /* REALCASE==1 */
 

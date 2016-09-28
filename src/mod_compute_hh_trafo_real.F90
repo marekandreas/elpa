@@ -84,7 +84,7 @@ module compute_hh_trafo_real
          use cuda_c_kernel
          use cuda_functions
 
-#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
+#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL) && !(defined(USE_ASSUMED_SIZE))
          use real_generic_simple_kernel !, only : double_hh_trafo_generic_simple
 #endif
 
@@ -668,7 +668,7 @@ module compute_hh_trafo_real
          use cuda_c_kernel
          use cuda_functions
 
-#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
+#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL) && !(defined(USE_ASSUMED_SIZE))
          use real_generic_simple_kernel !, only : double_hh_trafo_generic_simple
 #endif
 

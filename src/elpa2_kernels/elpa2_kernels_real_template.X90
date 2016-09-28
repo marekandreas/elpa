@@ -213,7 +213,7 @@
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
-    complex(kind=COMPLEX_DATATPYE), intent(inout) :: q(ldq/2,*)
+    complex(kind=COMPLEX_DATATYPE), intent(inout) :: q(ldq/2,*)
     real(kind=REAL_DATATYPE), intent(in)       :: hh(ldh,*)
 #else
     real(kind=REAL_DATATYPE), intent(inout)    :: q(:,:)
@@ -222,7 +222,7 @@
     real(kind=REAL_DATATYPE), intent(in)       :: s
 
 #ifdef PACK_REAL_TO_COMPLEX
-    complex(kind=COMPLEX_DATATPYE)                :: x1, x2, x3, x4, x5, x6, y1, y2, y3, y4, y5, y6
+    complex(kind=COMPLEX_DATATYPE)                :: x1, x2, x3, x4, x5, x6, y1, y2, y3, y4, y5, y6
 #else
     real(kind=REAL_DATATYPE)                   :: x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, &
                                        y1, y2, y3, y4, y5, y6, y7, y8, y9, y10, y11, y12
@@ -463,7 +463,7 @@
 
     integer(kind=ik), intent(in)     :: nb, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
-    complex(kind=COMPLEX_DATATPYE), intent(inout)  :: q(ldq/2,*)
+    complex(kind=COMPLEX_DATATYPE), intent(inout)  :: q(ldq/2,*)
     real(kind=REAL_DATATYPE), intent(in)        :: hh(ldh,*)
 #else
     real(kind=REAL_DATATYPE),   intent(inout)   :: q(:,:)
@@ -471,7 +471,7 @@
 #endif
     real(kind=REAL_DATATYPE), intent(in)        :: s
 #ifdef PACK_REAL_TO_COMPLEX
-    complex(kind=COMPLEX_DATATPYE)                 :: x1, x2, x3, x4, y1, y2, y3, y4
+    complex(kind=COMPLEX_DATATYPE)                 :: x1, x2, x3, x4, y1, y2, y3, y4
 #else
     real(kind=REAL_DATATYPE)                    :: x1, x2, x3, x4, x5, x6, x7, x8, &
                                         y1, y2, y3, y4, y5, y6, y7, y8
@@ -654,7 +654,7 @@
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
-    complex(kind=COMPLEX_DATATPYE), intent(inout) :: q(ldq/2,*)
+    complex(kind=COMPLEX_DATATYPE), intent(inout) :: q(ldq/2,*)
     real(kind=REAL_DATATYPE), intent(in)       :: hh(ldh,*)
 #else
     real(kind=REAL_DATATYPE), intent(inout)    :: q(:,:) !q(1:ldq/2,1:nb+1)
@@ -663,7 +663,7 @@
     real(kind=REAL_DATATYPE), intent(in)       :: s
 
 #ifdef PACK_REAL_TO_COMPLEX
-    complex(kind=COMPLEX_DATATPYE)                :: x1, x2, y1, y2
+    complex(kind=COMPLEX_DATATYPE)                :: x1, x2, y1, y2
 #else
     real(kind=REAL_DATATYPE)                   :: x1, x2, x3, x4, y1, y2, y3, y4
 #endif

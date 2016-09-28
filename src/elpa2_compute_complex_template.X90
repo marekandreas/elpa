@@ -217,9 +217,12 @@
       l_cols_tile = tile_size/np_cols ! local cols of a tile
 
       if (useGPU) then
+#if !defined(USE_ASSUMED_SIZE)
         if (size(a,dim=1) .ne. lda .or. size(a,dim=2) .ne. na_cols) then
           print *,"bandred_complex: sizes of a wrong ? ",lda,size(a,dim=1),na_cols,size(a,dim=2)
         endif
+#endif
+
 #ifdef DOUBLE_PRECISION_COMPLEX
         successCUDA = cuda_memcpy(a_dev, loc(a(1,1)),(lda)*(na_cols)*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
 #else
@@ -1046,10 +1049,12 @@
        enddo ! istep
 
        if (useGPU) then
-
+#if !(defined(USE_ASSUMED_SIZE))
          if (size(a,dim=1)*size(a,dim=2) .ne. lda*na_cols) then
            print *,"bandred_complex: size a ",size(a,dim=1)*size(a,dim=2) , lda*na_cols
          endif
+#endif
+
 #ifdef DOUBLE_PRECISION_COMPLEX
          successCUDA = cuda_memcpy ( loc(a(1,1)), a_dev, lda*na_cols*size_of_double_complex_datatype,cudaMemcpyDeviceToHost)
 #else
