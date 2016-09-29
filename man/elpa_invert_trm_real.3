@@ -50,7 +50,7 @@ use elpa1
 .br
 .RI "int \fBna\fP:               Order of matrix \fBa\fP"
 .br
-.RI "double *\fBa\fP:            locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.RI "double *\fBa\fP:            locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP. Only upper triangule needs to be set. The lower triangle is not referenced"
 .br
 .RI "int \fBlda\fP:              leading dimension of locally distributed matrix \fBa\fP"
 .br
