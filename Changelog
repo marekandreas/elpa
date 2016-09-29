@@ -1,3 +1,17 @@
+Changelog for release ELPA 2016.10.001
+
+- fix a problem with the private state of module precision
+- distribute test_project with dist tarball
+- test case for elpa_mult_at_b_real
+- test case for elpa_mult_ah_b_complex
+- test case for elpa_cholesky_real
+- test case for elpa_cholesky_complex
+- test case for elpa_invert_trm_real
+- test case for elpa_invert_trm_complex
+- fix building of static library
+- better choice of AVX, AVX2, AVX512 kernels
+- make assumed size Fortran arrays default
+
 Changelog for release ELPA 2016.05.003
 
 - fix a problem with the build of SSE kernels
