@@ -250,6 +250,8 @@ dist_man_MANS = \
 	   man/solve_evp_complex_2stage_double.3 \
 	   man/get_elpa_row_col_comms.3 \
 	   man/get_elpa_communicators.3 \
+	   man/elpa_mult_at_b_real_double.3 \
+	   man/elpa_mult_at_b_real_single.3 \
 	   man/elpa2_print_kernels.1
 
 if WANT_SINGLE_PRECISION_REAL
