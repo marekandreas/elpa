@@ -11,7 +11,7 @@ elpa_mult_ah_b_complex \- Performs C = herm_transpose(A) * B
 use elpa1
 .br
 .br
-.RI  "success = \fBelpa_mult_ah_b_real\fP (uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)"
+.RI  "success = \fBelpa_mult_ah_b_complex\fP (uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)"
 .br
 .RI " "
 .br
@@ -57,7 +57,7 @@ use elpa1
 .br
 #include <complex.h>
 .br
-.RI "\fBint\fP success = \fBelpa_mult_at_b_real\fP (\fBchar\fP uplo_a, \fBchar\fP uplo_c, \fBint\fP na, \fBint\fP ncb, \fB double complex *\fPa, \fBint\fP lda, \fBint\fP ldaCols, \fB double complex *\fPb, \fBint\fP ldb, \fBint\fP ldbCols, \fBint\fP nblk, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols,  \fB double complex *\fPc, \fBint\fP lc, \fBint\fP ldcCols );"
+.RI "\fBint\fP success = \fBelpa_mult_ah_b_complex\fP (\fBchar\fP uplo_a, \fBchar\fP uplo_c, \fBint\fP na, \fBint\fP ncb, \fB double complex *\fPa, \fBint\fP lda, \fBint\fP ldaCols, \fB double complex *\fPb, \fBint\fP ldb, \fBint\fP ldbCols, \fBint\fP nblk, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols,  \fB double complex *\fPc, \fBint\fP lc, \fBint\fP ldcCols );"
 .br
 .RI " "
 .br
