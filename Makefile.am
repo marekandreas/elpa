@@ -179,6 +179,7 @@ dist_man_MANS = \
 	   man/solve_evp_complex_2stage.3 \
 	   man/get_elpa_row_col_comms.3 \
 	   man/get_elpa_communicators.3 \
+	   man/elpa_mult_at_b_real.3 \
 	   man/elpa2_print_kernels.1
 
 # other files to distribute
