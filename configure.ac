@@ -903,11 +903,15 @@ DX_HTML_FEATURE(ON)
 DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
 USE_ASSUMED_SIZE=yes
-AC_MSG_CHECKING(whether --disable-assumed-size is specified)
+AC_MSG_CHECKING(whether assumed size Fortran arrays should be used)
 AC_ARG_ENABLE([assumed-size],
                 AS_HELP_STRING([--disable-assumed-size],
 			       [do NOT use assumed-size Fortran arrays]),
-              [USE_ASSUMED_SIZE=no],
+			       [if test x"$enableval" = x"yes"; then
+                                  USE_ASSUMED_SIZE=yes
+				else
+			          USE_ASSUMED_SIZE=no
+				fi],
               [USE_ASSUMED_SIZE=yes])
 AC_MSG_RESULT([${USE_ASSUMED_SIZE}])
 AM_CONDITIONAL([WITH_USE_ASSUMED_SIZE],[test x"$USE_ASSUMED_SIZE" = x"yes"])
