@@ -1,8 +1,8 @@
-.TH "elpa_invert_trm_real" 3 "Wed Sept 28 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_invert_trm_complex" 3 "Wed Sept 28 2016" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_invert_trm_real \- Invert a upper triangular matrix
+elpa_invert_trm_complex \- Invert a upper triangular matrix
 .br
 
 .SH SYNOPSIS
@@ -11,7 +11,7 @@ elpa_invert_trm_real \- Invert a upper triangular matrix
 use elpa1
 .br
 .br
-.RI  "success = \fBelpa_invert_trm_real\fP (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug)"
+.RI  "success = \fBelpa_invert_trm_complex\fP (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug)"
 .br
 .RI " "
 .br
@@ -20,7 +20,7 @@ use elpa1
 .br
 .RI "integer, intent(in)    \fBna\fP:            Order of matrix \fBa\fP"
 .br
-.RI "real*8,  intent(inout) \fBa\fP:             locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBldaCols\fP. Only upper triangule needs to be set. The lower triangle is not referenced"
+.RI "complex*16,  intent(inout) \fBa\fP:         locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBldaCols\fP. Only upper triangule needs to be set. The lower triangle is not referenced"
 .br
 .RI "integer, intent(in)    \fBlda\fP:           leading dimension of locally distributed matrix \fBa\fP"
 .br
@@ -41,7 +41,7 @@ use elpa1
 #include "elpa.h"
 
 .br
-.RI "\fBint\fP success = \fBelpa_invert_trm_real\fP (\fBint\fP na, \fB double *\fPa, \fBint\fP lda, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols,  \fBint\fP wantDebug);"
+.RI "\fBint\fP success = \fBelpa_invert_trm_complex\fP (\fBint\fP na, \fB double complex *\fPa, \fBint\fP lda, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols,  \fBint\fP wantDebug);"
 .br
 .RI " "
 .br
@@ -50,7 +50,7 @@ use elpa1
 .br
 .RI "int \fBna\fP:               Order of matrix \fBa\fP"
 .br
-.RI "double *\fBa\fP:            locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.RI "double complex *\fBa\fP:    locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP.  Only upper triangule needs to be set. The lower triangle is not referenced"
 .br
 .RI "int \fBlda\fP:              leading dimension of locally distributed matrix \fBa\fP"
 .br
@@ -71,4 +71,4 @@ use elpa1
 Inverts a upper triangular matrix a. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBget_elpa_communicators\fP(3) function.
 .br
 .SH "SEE ALSO"
-\fBget_elpa_communicators\fP(3) \fBelpa_invert_trm_complex\fP(3)
+\fBget_elpa_communicators\fP(3) \fBelpa_invert_trm_real\fP(3)
