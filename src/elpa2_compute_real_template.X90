@@ -2434,9 +2434,10 @@
 #ifdef WITH_OPENMP
       integer(kind=ik)                         :: max_threads, my_thread, my_block_s, my_block_e, iter
 #ifdef WITH_MPI
-      integer(kind=ik)                         :: my_mpi_status(MPI_STATUS_SIZE)
+!      integer(kind=ik)                         :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
-      integer(kind=ik), allocatable            :: mpi_statuses(:,:), global_id_tmp(:,:)
+!      integer(kind=ik), allocatable            :: mpi_statuses(:,:), global_id_tmp(:,:)
+      integer(kind=ik), allocatable            :: global_id_tmp(:,:)
       integer(kind=ik), allocatable            :: omp_block_limits(:)
       real(kind=REAL_DATATYPE), allocatable    :: hv_t(:,:), tau_t(:)
 #endif
@@ -2776,9 +2777,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-            call mpi_recv(hv, nb, mpi_real8, my_pe-1, 2, mpi_comm, my_MPI_STATUS, mpierr)
+            call mpi_recv(hv, nb, mpi_real8, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
-            call mpi_recv(hv, nb, mpi_real4, my_pe-1, 2, mpi_comm, my_MPI_STATUS, mpierr)
+            call mpi_recv(hv, nb, mpi_real4, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -2997,7 +2998,7 @@
               ! Send our first column to previous PE
               if (my_pe>0 .and. na_s <= na) then
 #ifdef WITH_MPI
-                call mpi_wait(ireq_ab, my_mpi_status, mpierr)
+                call mpi_wait(ireq_ab, MPI_STATUS_IGNORE, mpierr)
 #endif
                 ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
@@ -3016,9 +3017,9 @@
 #ifdef WITH_MPI
               if (istep>=max_threads .and. ne <= na) then
 #ifdef DOUBLE_PRECISION_REAL
-                call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
+                call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
-                call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
+                call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
               endif
 #else /* WITH_MPI */
@@ -3033,7 +3034,7 @@
               ne = na_s + nblocks*nb - (max_threads-1) - 1
               if (istep>=max_threads .and. ne < na) then
 #ifdef WITH_MPI
-                call mpi_wait(ireq_hv, my_mpi_status, mpierr)
+                call mpi_wait(ireq_hv, MPI_STATUS_IGNORE, mpierr)
 #endif
                 hv_s(1) = tau_t(max_threads)
                 hv_s(2:) = hv_t(2:,max_threads)
@@ -3155,7 +3156,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, my_MPI_STATUS, mpierr)
+              call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
               call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -3176,7 +3177,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, my_MPI_STATUS, mpierr)
+              call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
               call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
@@ -3242,7 +3243,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-                call mpi_wait(ireq_hv,my_MPI_STATUS,mpierr)
+                call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -3283,7 +3284,7 @@
 #ifdef WITH_MPI
 
 #ifdef WITH_OPENMP
-              call mpi_wait(ireq_ab,my_MPI_STATUS,mpierr)
+              call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #else
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
@@ -3355,7 +3356,7 @@
           if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
 #ifdef WITH_MPI
-            call mpi_wait(ireq_hhs(iblk), my_mpi_status, mpierr)
+            call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
 #endif
             ! Copy vectors into send buffer
             hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
@@ -3398,22 +3399,22 @@
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-      call mpi_wait(ireq_ab,my_MPI_STATUS,mpierr)
-      call mpi_wait(ireq_hv,my_MPI_STATUS,mpierr)
+      call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+      call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 
-      allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_real: error when allocating mpi_statuses"//errorMessage
-        stop
-      endif
+!      allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)), stat=istat, errmsg=errorMessage)
+!      if (istat .ne. 0) then
+!        print *,"tridiag_band_real: error when allocating mpi_statuses"//errorMessage
+!        stop
+!      endif
 
-      call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES, mpierr)
-      call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES, mpierr)
-      deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_real: error when deallocating mpi_statuses"//errorMessage
-        stop
-      endif
+      call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
+      call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+!      deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
+!      if (istat .ne. 0) then
+!        print *,"tridiag_band_real: error when deallocating mpi_statuses"//errorMessage
+!        stop
+!      endif
 #endif
 
 #else /* WITH_OPENMP */
@@ -3561,7 +3562,7 @@
 
 #ifdef WITH_OPENMP
 #ifdef WITH_MPI
-      integer(kind=ik)                         :: my_mpi_status(MPI_STATUS_SIZE)
+!      integer(kind=ik)                         :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
 #endif
 
@@ -3613,7 +3614,7 @@
       integer(kind=ik), allocatable            :: top_send_request(:), bottom_send_request(:)
       integer(kind=ik), allocatable            :: top_recv_request(:), bottom_recv_request(:)
 #ifdef WITH_OPENMP
-      integer(kind=ik), allocatable            :: mpi_statuses(:,:)
+!      integer(kind=ik), allocatable            :: mpi_statuses(:,:)
 #endif
       ! MPI send/recv tags, arbitrary
 
@@ -3904,9 +3905,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, my_MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
-              call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, my_MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -4111,9 +4112,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, my_MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
-              call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, my_MPI_STATUS, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -4629,7 +4630,7 @@
               endif
 
 #ifdef WITH_MPI
-              call MPI_Wait(bottom_recv_request(i), my_MPI_STATUS, mpierr)
+              call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4746,7 +4747,7 @@
                stop
              endif
 #ifdef WITH_MPI
-             call MPI_Wait(top_recv_request(i), my_MPI_STATUS, mpierr)
+             call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -4853,7 +4854,7 @@
             stop
            endif
 #ifdef WITH_MPI
-           call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
+           call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
            if (bottom_msg_length>0) then
              n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -4969,7 +4970,7 @@
 
         !send_b
 #ifdef WITH_MPI
-        call MPI_Wait(bottom_send_request(i), my_mpi_status, mpierr)
+        call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
         if (bottom_msg_length > 0) then
           n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -5128,7 +5129,7 @@
             stop
           endif
 #ifdef WITH_MPI
-          call MPI_Wait(top_recv_request(i), my_mpi_status, mpierr)
+          call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5280,7 +5281,7 @@
           stop
         endif
 #ifdef WITH_MPI
-        call MPI_Wait(top_send_request(i), my_mpi_status, mpierr)
+        call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
         b_len = csw*nbw*max_threads
         top_border_send_buffer(1:b_len,i) = reshape(aIntern(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
@@ -5361,7 +5362,7 @@
            stop
           endif
 #ifdef WITH_MPI
-          call MPI_Wait(top_recv_request(i-1), my_MPI_STATUS, mpierr)
+          call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5379,7 +5380,7 @@
            stop
           endif
 #ifdef WITH_MPI
-          call MPI_Wait(top_recv_request(stripe_count), my_MPI_STATUS, mpierr)
+          call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5405,7 +5406,7 @@
            stop
          endif
 #ifdef WITH_MPI
-      call MPI_Wait(top_send_request(i), my_MPI_STATUS, mpierr)
+      call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5436,7 +5437,7 @@
           stop
         endif
 #ifdef WITH_MPI
-        call MPI_Wait(result_send_request(nbuf), my_MPI_STATUS, mpierr)
+        call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5572,7 +5573,7 @@
             stop
           endif
 #ifdef WITH_MPI
-          call MPI_Test(result_recv_request(nbuf), flag, my_MPI_STATUS, mpierr)
+          call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
 #else /* WITH_MPI */
           flag = .true.
 #endif
@@ -5597,7 +5598,7 @@
             stop
           endif
 #ifdef WITH_MPI
-          call MPI_Wait(result_recv_request(nbuf), my_MPI_STATUS, mpierr)
+          call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_OPENMP */
@@ -5745,18 +5746,18 @@
          stop
        endif
 #ifdef WITH_MPI
-       allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_real: error when allocating mpi_statuses"//errorMessage
-         stop
-       endif
+!       allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers), stat=istat, errmsg=errorMessage)
+!       if (istat .ne. 0) then
+!         print *,"trans_ev_tridi_to_band_real: error when allocating mpi_statuses"//errorMessage
+!         stop
+!       endif
 
-       call MPI_Waitall(num_result_buffers, result_send_request, mpi_statuses, mpierr)
-       deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_real: error when deallocating mpi_statuses"//errorMessage
-         stop
-       endif
+       call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
+!       deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
+!       if (istat .ne. 0) then
+!         print *,"trans_ev_tridi_to_band_real: error when deallocating mpi_statuses"//errorMessage
+!         stop
+!       endif
 #endif
 
 #else /* WITH_OPENMP */
@@ -6094,9 +6095,9 @@
       integer(kind=ik)                         :: nblocks_total2, nblocks2
       integer(kind=ik)                         :: ireq_ab, ireq_hv
 #ifdef WITH_MPI
-      integer(kind=ik)                         :: my_mpi_status(MPI_STATUS_SIZE)
+!      integer(kind=ik)                         :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
-      integer(kind=ik), allocatable            :: mpi_statuses(:,:)
+!      integer(kind=ik), allocatable            :: mpi_statuses(:,:)
       integer(kind=ik), allocatable            :: block_limits(:), block_limits2(:), ireq_ab2(:)
 
       integer(kind=ik)                         :: j, nc, nr, ns, ne, iblk
@@ -6297,9 +6298,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-            call mpi_recv(hv, nb*nb2, mpi_real8, my_pe-1, 2, mpi_comm, my_mpi_status, mpierr)
+            call mpi_recv(hv, nb*nb2, mpi_real8, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
-            call mpi_recv(hv, nb*nb2, mpi_real4, my_pe-1, 2, mpi_comm, my_mpi_status, mpierr)
+            call mpi_recv(hv, nb*nb2, mpi_real4, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -6348,9 +6349,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-              call mpi_recv(ab_r,(nb+1)*nb2, mpi_real8, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
+              call mpi_recv(ab_r,(nb+1)*nb2, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
-              call mpi_recv(ab_r,(nb+1)*nb2, mpi_real4, my_pe+1, 1, mpi_comm, my_mpi_status, mpierr)
+              call mpi_recv(ab_r,(nb+1)*nb2, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -6397,7 +6398,7 @@
               !send hh-vector
               if (iblk==nblocks) then
 #ifdef WITH_MPI
-                call mpi_wait(ireq_hv,my_mpi_status,mpierr)
+                call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
                 hv_s = hv_new
                 do i=1,nb2
@@ -6426,7 +6427,7 @@
             if (my_pe>0 .and. iblk==1) then
               !send first nb2 columns to previous PE
 #ifdef WITH_MPI
-              call mpi_wait(ireq_ab,my_mpi_status,mpierr)
+              call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
               do i=1,nb2
                 ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
@@ -6462,20 +6463,20 @@
 
         ! Finish the last outstanding requests
 #ifdef WITH_MPI
-        call mpi_wait(ireq_ab,my_mpi_status,mpierr)
-        call mpi_wait(ireq_hv,my_mpi_status,mpierr)
-        allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"error allocating mpi_statuses "//errorMessage
-          stop
-        endif
+        call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+        call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+!        allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2), stat=istat, errmsg=errorMessage)
+!        if (istat .ne. 0) then
+!          print *,"error allocating mpi_statuses "//errorMessage
+!          stop
+!        endif
 
-        call mpi_waitall(nblocks2,ireq_ab2,mpi_statuses,mpierr)
-        deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"error deallocating mpi_statuses "//errorMessage
-          stop
-        endif
+        call mpi_waitall(nblocks2,ireq_ab2,MPI_STATUSES_IGNORE,mpierr)
+!        deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
+!        if (istat .ne. 0) then
+!          print *,"error deallocating mpi_statuses "//errorMessage
+!          stop
+!        endif
 
         call mpi_barrier(mpi_comm,mpierr)
 #endif /* WITH_MPI */
