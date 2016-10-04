@@ -1235,7 +1235,7 @@
            integer(kind=ik)     :: np_off, nprocs
            integer(kind=ik)     :: np1, np2, noff, nlen, nmid, n
 #ifdef WITH_MPI
-           integer(kind=ik)     :: my_mpi_status(mpi_status_size)
+!           integer(kind=ik)     :: my_mpi_status(mpi_status_size)
 #endif
            logical, intent(in)  :: wantDebug
            logical, intent(out) :: success
@@ -1284,9 +1284,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-             call mpi_recv(d(noff+1), nmid, MPI_REAL8, np_off, 1, mpi_comm_cols, my_mpi_status, mpierr)
+             call mpi_recv(d(noff+1), nmid, MPI_REAL8, np_off, 1, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #else
-             call mpi_recv(d(noff+1), nmid, MPI_REAL4, np_off, 1, mpi_comm_cols, my_mpi_status, mpierr)
+             call mpi_recv(d(noff+1), nmid, MPI_REAL4, np_off, 1, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -1312,9 +1312,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-             call mpi_recv(d(noff+nmid+1), nlen-nmid, MPI_REAL8, np_off+np1, 1,mpi_comm_cols, my_mpi_status, mpierr)
+             call mpi_recv(d(noff+nmid+1), nlen-nmid, MPI_REAL8, np_off+np1, 1,mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #else
-             call mpi_recv(d(noff+nmid+1), nlen-nmid, MPI_REAL4, np_off+np1, 1,mpi_comm_cols, my_mpi_status, mpierr)
+             call mpi_recv(d(noff+nmid+1), nlen-nmid, MPI_REAL4, np_off+np1, 1,mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -1847,7 +1847,7 @@
       integer(kind=ik)              :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
                                        np_cols, mpierr
 #ifdef WITH_MPI
-      integer(kind=ik)              :: my_mpi_status(mpi_status_size)
+!      integer(kind=ik)              :: my_mpi_status(mpi_status_size)
 #endif
       integer(kind=ik)              :: np_next, np_prev, np_rem
       integer(kind=ik)              :: idx(na), idx1(na), idx2(na)
@@ -2545,11 +2545,11 @@
 #ifdef DOUBLE_PRECISION_REAL
             call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, MPI_REAL8, &
                                         np_next, 1111, np_prev, 1111, &
-                                        mpi_comm_cols, my_mpi_status, mpierr)
+                                        mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #else
             call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, MPI_REAL4, &
                                         np_next, 1111, np_prev, 1111, &
-                                        mpi_comm_cols, my_mpi_status, mpierr)
+                                        mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #endif /* WITH_MPI */
@@ -2801,9 +2801,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-              call mpi_recv(qtmp(1,nc), l_rows, MPI_REAL8, pc1, mod(i,4096), mpi_comm_cols, my_mpi_status, mpierr)
+              call mpi_recv(qtmp(1,nc), l_rows, MPI_REAL8, pc1, mod(i,4096), mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #else
-              call mpi_recv(qtmp(1,nc), l_rows, MPI_REAL4, pc1, mod(i,4096), mpi_comm_cols, my_mpi_status, mpierr)
+              call mpi_recv(qtmp(1,nc), l_rows, MPI_REAL4, pc1, mod(i,4096), mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -2868,11 +2868,11 @@
 #ifdef DOUBLE_PRECISION_REAL
               call mpi_sendrecv(q(l_rqs,lc1), l_rows, MPI_REAL8, pc2, 1, &
                                 tmp, l_rows, MPI_REAL8, pc2, 1,          &
-                                mpi_comm_cols, my_mpi_status, mpierr)
+                                mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #else
               call mpi_sendrecv(q(l_rqs,lc1), l_rows, MPI_REAL4, pc2, 1, &
                                 tmp, l_rows, MPI_REAL4, pc2, 1,          &
-                                mpi_comm_cols, my_mpi_status, mpierr)
+                                mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -2886,11 +2886,11 @@
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_sendrecv(q(l_rqs,lc2), l_rows, MPI_REAL8, pc1, 1, &
                                tmp, l_rows, MPI_REAL8, pc1, 1,         &
-                               mpi_comm_cols, my_mpi_status, mpierr)
+                               mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #else
             call mpi_sendrecv(q(l_rqs,lc2), l_rows, MPI_REAL4, pc1, 1, &
                                tmp, l_rows, MPI_REAL4, pc1, 1,         &
-                               mpi_comm_cols, my_mpi_status, mpierr)
+                               mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -2966,10 +2966,10 @@
 
 #ifdef DOUBLE_PRECISION_REAL
             call MPI_Sendrecv_replace(z, n, MPI_REAL8, np_next, 1111, np_prev, 1111, &
-                                       mpi_comm_cols, my_mpi_status, mpierr)
+                                       mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #else
             call MPI_Sendrecv_replace(z, n, MPI_REAL4, np_next, 1111, np_prev, 1111, &
-                                       mpi_comm_cols, my_mpi_status, mpierr)
+                                       mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #endif /* WITH_MPI */
@@ -3039,9 +3039,9 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-              call mpi_recv(tmp, n, MPI_REAL8, np, 1111, mpi_comm_cols, my_mpi_status, mpierr)
+              call mpi_recv(tmp, n, MPI_REAL8, np, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #else
-              call mpi_recv(tmp, n, MPI_REAL4, np, 1111, mpi_comm_cols, my_mpi_status, mpierr)
+              call mpi_recv(tmp, n, MPI_REAL4, np, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else  /* WITH_MPI */
@@ -3065,10 +3065,10 @@
 
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_send(tmp, n, MPI_REAL8, npc_0, 1111, mpi_comm_cols, mpierr)
-            call mpi_recv(z  ,n, MPI_REAL8, npc_0, 1111, mpi_comm_cols, my_mpi_status, mpierr)
+            call mpi_recv(z  ,n, MPI_REAL8, npc_0, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #else
             call mpi_send(tmp, n, MPI_REAL4, npc_0, 1111, mpi_comm_cols, mpierr)
-            call mpi_recv(z  ,n, MPI_REAL4, npc_0, 1111, mpi_comm_cols, my_mpi_status, mpierr)
+            call mpi_recv(z  ,n, MPI_REAL4, npc_0, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
 #endif
 
 #else  /* WITH_MPI */
