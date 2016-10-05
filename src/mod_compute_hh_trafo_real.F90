@@ -125,7 +125,15 @@ module compute_hh_trafo_real
          call timer%start("compute_hh_trafo_real_cpu")
 #endif
 #endif
-         ttt = mpi_wtime()
+
+#ifdef WITH_OPENMP
+         if (my_thread==1) then
+#endif
+           ttt = mpi_wtime()
+#ifdef WITH_OPENMP
+         endif
+#endif
+
 
 #ifndef WITH_OPENMP
          nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
