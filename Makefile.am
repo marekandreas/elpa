@@ -15,13 +15,13 @@ libelpa@SUFFIX@_public_la_SOURCES = \
         src/elpa2.F90 \
 	src/elpa1_auxiliary.F90 \
         src/elpa2_utilities.F90 \
-        src/elpa_utilities.F90  \
-	src/mod_precision.F90
+        src/elpa_utilities.F90
 
 # internal parts
 noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_private_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 libelpa@SUFFIX@_private_la_SOURCES = \
+        src/mod_precision.F90 \
         src/mod_mpi.F90 \
         src/mod_mpi_stubs.F90 \
         src/mod_pack_unpack_real.F90 \
