@@ -91,8 +91,9 @@ module ELPA1
   ! The following routines are public:
   private
 
-  public :: get_elpa_row_col_comms           !< old, deprecated interface: Sets MPI row/col communicators DO NOT USE
-  public :: get_elpa_communicators           !< Sets MPI row/col communicators
+  public :: get_elpa_row_col_comms     !< old, deprecated interface: Sets MPI row/col communicators
+  public :: get_elpa_communicators     !< Sets MPI row/col communicators
+  public :: elpa_get_communicators     !< Sets MPI row/col communicators
 
   public :: solve_evp_real                   !< old, deprecated interface: Driver routine for real double-precision eigenvalue problem DO NOT USE
   public :: solve_evp_real_1stage            !< Driver routine for real double-precision eigenvalue problem
@@ -168,7 +169,11 @@ module ELPA1
     module procedure get_elpa_communicators
   end interface
 
-!> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Better use "solve_evp_real_1stage_double"
+  interface elpa_get_communicators
+    module procedure get_elpa_communicators
+  end interface
+
+!> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Better use "solve_evp_real_1stage"
 !>
 !> \details
 !>  The interface and variable definition is the same as in "elpa_solve_evp_real_1stage_double"
