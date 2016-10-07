@@ -92,6 +92,7 @@ module ELPA1
 
   public :: get_elpa_row_col_comms     !< old, deprecated interface: Sets MPI row/col communicators
   public :: get_elpa_communicators     !< Sets MPI row/col communicators
+  public :: elpa_get_communicators     !< Sets MPI row/col communicators
 
   public :: solve_evp_real             !< old, deprecated interface: Driver routine for real eigenvalue problem
   public :: solve_evp_real_1stage      !< Driver routine for real eigenvalue problem
@@ -144,6 +145,10 @@ module ELPA1
 !> \param  mpi_comm_cols     Communicator for communicating within columns of processes (out)
 !> \result mpierr            integer error value of mpi_comm_split function
   interface get_elpa_row_col_comms
+    module procedure get_elpa_communicators
+  end interface
+
+  interface elpa_get_communicators
     module procedure get_elpa_communicators
   end interface
 
