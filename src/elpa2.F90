@@ -61,7 +61,7 @@
 
 
 #include "config-f90.h"
-!> \brief Fortran module which provides the routines to use the two-stage ELPA solver
+!> \brief Fortran module which provides the routines to use the 2-stage ELPA solver
 module ELPA2
 
 ! Version 1.1.2, 2011-02-21
@@ -813,7 +813,7 @@ contains
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
-   !>  \brief solve_evp_complex_2stage_double: Fortran function to solve the double-precision complex eigenvalue problem with a 2 stage approach
+!>  \brief solve_evp_complex_2stage_double: Fortran function to solve the double-precision complex eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>

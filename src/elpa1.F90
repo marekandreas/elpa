@@ -95,13 +95,13 @@ module ELPA1
   public :: get_elpa_communicators     !< Sets MPI row/col communicators; OLD and deprecated interface, will be deleted. Use elpa_get_communicators instead
   public :: elpa_get_communicators     !< Sets MPI row/col communicators
 
-  public :: solve_evp_real                   !< old, deprecated interface: Driver routine for real double-precision eigenvalue problem DO NOT USE
+  public :: solve_evp_real                   !< old, deprecated interface: Driver routine for real double-precision eigenvalue problem DO NOT USE. Will be deleted at some point
   public :: solve_evp_real_1stage            !< Driver routine for real double-precision eigenvalue problem
   public :: solve_evp_real_1stage_double     !< Driver routine for real double-precision eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: solve_evp_real_1stage_single     !< Driver routine for real single-precision eigenvalue problem
 #endif
-  public :: solve_evp_complex                !< old, deprecated interface:  Driver routine for complex double-precision eigenvalue problem DO NOT USE
+  public :: solve_evp_complex                !< old, deprecated interface:  Driver routine for complex double-precision eigenvalue problem DO NOT USE. Will be deleted at some point
   public :: solve_evp_complex_1stage         !< Driver routine for complex double-precision eigenvalue problem
   public :: solve_evp_complex_1stage_double  !< Driver routine for complex double-precision eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
@@ -173,7 +173,7 @@ module ELPA1
     module procedure get_elpa_communicators
   end interface
 
-!> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Better use "solve_evp_real_1stage"
+!> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Will be deleted at some point. Better use "solve_evp_real_1stage" or "elpa_solve_evp_real"
 !>
 !> \details
 !>  The interface and variable definition is the same as in "elpa_solve_evp_real_1stage_double"
@@ -218,7 +218,7 @@ module ELPA1
     module procedure solve_evp_real_1stage_double
   end interface
 
-!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage_double"
+!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage_double" or elpa_solve_evp_complex_double
 !>
 !> \details
 !> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage_double"
