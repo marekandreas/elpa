@@ -184,6 +184,8 @@ dist_man_MANS = \
 	   man/elpa_mult_ah_b_complex.3 \
 	   man/elpa_invert_trm_real.3 \
 	   man/elpa_invert_trm_complex.3 \
+	   man/elpa_solve_evp_real.3 \
+	   man/elpa_solve_evp_complex.3 \
 	   man/elpa2_print_kernels.1
 
 # other files to distribute
