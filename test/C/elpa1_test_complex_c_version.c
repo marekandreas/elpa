@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
 #ifdef WITH_MPI
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
 #endif
-   mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
+   mpierr = elpa_get_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
    if (myid == 0) {
      printf("\n");

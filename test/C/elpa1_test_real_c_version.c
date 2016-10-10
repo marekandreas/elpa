@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
 #else
    my_mpi_comm_world =1 ;
 #endif
-   mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
+   mpierr = elpa_get_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
    if (myid == 0) {
      printf("\n");

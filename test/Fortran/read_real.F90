@@ -226,9 +226,9 @@ program read_real
    call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators
+   ! rows or columns of processes, these are set in elpa_get_communicators
 
-   call get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   call elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                mpi_comm_rows, mpi_comm_cols)
 
    ! Read matrix size

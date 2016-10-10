@@ -210,9 +210,9 @@ program test_real2
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators.
+   ! rows or columns of processes, these are set in elpa_get_communicators.
 
-   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
