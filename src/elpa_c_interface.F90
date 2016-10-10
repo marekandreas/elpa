@@ -311,8 +311,7 @@
   !c> *  \param mpi_comm_rows              MPI-Communicator for rows
   !c> *  \param mpi_comm_cols              MPI-Communicator for columns
   !c> *  \param mpi_coll_all               MPI communicator for the total processor set
-  !c> *  \param THIS_REAL_ELPA_KERNEL_API  specify used ELPA2 kernel via API
-  !c> *  \param use_qr                     use QR decomposition 1 = yes, 0 = no
+  !c> *  \param THIS_COMPLEX_ELPA_KERNEL_API  specify used ELPA2 kernel via API
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
@@ -340,6 +339,172 @@
 
     successFortran = solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                               mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
+
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+
+  end function
+  !c> /*! \brief C interface to driver function "elpa_solve_evp_real"
+  !c> *
+  !c> *  \param  na                        Order of matrix a
+  !c> *  \param  nev                       Number of eigenvalues needed.
+  !c> *                                    The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                         Distributed matrix for which eigenvalues are to be computed.
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                        Leading dimension of a
+  !c> *  \param ev(na)                     On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                          On output: Eigenvectors of a
+  !c> *                                    Distribution is like in Scalapack.
+  !c> *                                    Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                                    even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                        Leading dimension of q
+  !c> *  \param nblk                       blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols                 distributed number of matrix columns
+  !c> *  \param mpi_comm_rows              MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols              MPI-Communicator for columns
+  !c> *  \param mpi_coll_all               MPI communicator for the total processor set
+  !c> *  \param THIS_REAL_ELPA_KERNEL_API  specify used ELPA2 kernel via API
+  !c> *  \param use_qr                     use QR decomposition 1 = yes, 0 = no
+  !c> *  \param method                      choose whether to use ELPA 1stage or 2stage solver
+  !c> *                                     possible values: "1stage" => use ELPA 1stage solver
+  !c> *                                                      "2stage" => use ELPA 2stage solver
+  !c> *                                                       "auto"   => (at the moment) use ELPA 2stage solver
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c> */
+  !c> int elpa_solve_evp_real(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, char *method);
+  function elpa_solve_evp_real_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                  THIS_REAL_ELPA_KERNEL_API, useQR, method)           &
+                                  result(success) bind(C,name="elpa_solve_evp_real")
+
+    use, intrinsic :: iso_c_binding
+    use elpa, only : elpa_solve_evp_real
+
+    implicit none
+    integer(kind=c_int)                      :: success
+    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
+                                                mpi_comm_all
+    integer(kind=c_int), value, intent(in)   :: THIS_REAL_ELPA_KERNEL_API, useQR
+    real(kind=c_double)                      :: ev(1:na)
+#ifdef USE_ASSUMED_SIZE
+    real(kind=c_double)                      :: a(lda,*), q(ldq,*)
+#else
+    real(kind=c_double)                      :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
+    logical                                  :: successFortran, useQRFortran
+    character(kind=c_char,len=1), intent(in) :: method(*)
+    character(len=6)                         :: methodFortran
+    integer(kind=c_int)                      :: charCount
+
+    if (useQR .eq. 0) then
+      useQRFortran =.false.
+    else
+      useQRFortran = .true.
+    endif
+
+    charCount = 1
+    do
+      if (method(charCount) == c_null_char) exit
+      charCount = charCount + 1
+    enddo
+    charCount = charCount - 1
+
+    if (charCount .ge. 1)  then
+      methodFortran(1:charCount) = transfer(method(1:charCount), methodFortran)
+
+      successFortran = elpa_solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                           mpi_comm_cols, mpi_comm_all,                                  &
+                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran, methodFortran)
+    else
+      successFortran = elpa_solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                           mpi_comm_cols, mpi_comm_all,                                  &
+                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran)
+    endif
+
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+
+  end function
+
+
+  !c> /*! \brief C interface to driver function "elpa_solve_evp_complex"
+  !c> *
+  !c> *  \param  na                           Order of matrix a
+  !c> *  \param  nev                          Number of eigenvalues needed.
+  !c> *                                       The smallest nev eigenvalues/eigenvectors are calculated.
+  !c> *  \param  a                            Distributed matrix for which eigenvalues are to be computed.
+  !c> *                                       Distribution is like in Scalapack.
+  !c> *                                       The full matrix must be set (not only one half like in scalapack).
+  !c> *  \param lda                           Leading dimension of a
+  !c> *  \param ev(na)                        On output: eigenvalues of a, every processor gets the complete set
+  !c> *  \param q                             On output: Eigenvectors of a
+  !c> *                                       Distribution is like in Scalapack.
+  !c> *                                       Must be always dimensioned to the full size (corresponding to (na,na))
+  !c> *                                       even if only a part of the eigenvalues is needed.
+  !c> *  \param ldq                           Leading dimension of q
+  !c> *  \param nblk                          blocksize of cyclic distribution, must be the same in both directions!
+  !c> *  \param matrixCols                    distributed number of matrix columns
+  !c> *  \param mpi_comm_rows                 MPI-Communicator for rows
+  !c> *  \param mpi_comm_cols                 MPI-Communicator for columns
+  !c> *  \param mpi_coll_all                  MPI communicator for the total processor set
+  !c> *  \param THIS_COMPLEX_ELPA_KERNEL_API  specify used ELPA2 kernel via API
+  !c> *  \param method                        choose whether to use ELPA 1stage or 2stage solver
+  !c> *                                       possible values: "1stage" => use ELPA 1stage solver
+  !c> *                                                        "2stage" => use ELPA 2stage solver
+  !c> *                                                         "auto"   => (at the moment) use ELPA 2stage solver
+  !c> *
+  !c> *  \result                     int: 1 if error occured, otherwise 0
+  !c> */
+  !c> int elpa_solve_evp_complex(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, char *method);
+  function elpa_solve_evp_complex_wrapper(na, nev, a, lda, ev, q, ldq, nblk,    &
+                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
+                                  THIS_COMPLEX_ELPA_KERNEL_API, method)                  &
+                                  result(success) bind(C,name="elpa_solve_evp_complex")
+
+    use, intrinsic :: iso_c_binding
+    use elpa, only : elpa_solve_evp_complex
+
+    implicit none
+    integer(kind=c_int)                      :: success
+    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
+                                                mpi_comm_all
+    integer(kind=c_int), value, intent(in)   :: THIS_COMPLEX_ELPA_KERNEL_API
+#ifdef USE_ASSUMED_SIZE
+    complex(kind=c_double_complex)           :: a(lda,*), q(ldq,*)
+#else
+    complex(kind=c_double_complex)           :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
+    real(kind=c_double)                      :: ev(1:na)
+    character(kind=c_char,len=1), intent(in) :: method(*)
+    character(len=6)                         :: methodFortran
+    integer(kind=c_int)                      :: charCount
+
+    logical                                  :: successFortran
+
+
+    charCount = 1
+    do
+      if (method(charCount) == c_null_char) exit
+      charCount = charCount + 1
+    enddo
+    charCount = charCount - 1
+
+    if (charCount .ge. 1)  then
+      methodFortran(1:charCount) = transfer(method(1:charCount), methodFortran)
+      successFortran = elpa_solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                              mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, methodFortran)
+    else
+      successFortran = elpa_solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                              mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
+    endif
 
     if (successFortran) then
       success = 1
