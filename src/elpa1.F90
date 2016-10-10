@@ -82,7 +82,7 @@
 
 !> \brief Fortran module which provides the routines to use the one-stage ELPA solver
 module ELPA1
-  use, intrinsic :: iso_c_binding, only : c_double
+  use, intrinsic :: iso_c_binding
   use elpa_utilities
   use elpa1_auxiliary
 
@@ -287,14 +287,15 @@ contains
 
 
 function get_elpa_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
-   use precision
+   ! use precision
    use elpa_mpi
+   use iso_c_binding
    implicit none
 
-   integer(kind=ik), intent(in)  :: mpi_comm_global, my_prow, my_pcol
-   integer(kind=ik), intent(out) :: mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), intent(in)  :: mpi_comm_global, my_prow, my_pcol
+   integer(kind=c_int), intent(out) :: mpi_comm_rows, mpi_comm_cols
 
-   integer(kind=ik)              :: mpierr
+   integer(kind=c_int)              :: mpierr
 
    ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
    ! having the same column coordinate share one mpi_comm_rows.
@@ -343,29 +344,28 @@ end function get_elpa_communicators
 
 #define DOUBLE_PRECISION_REAL 1
 #define DOUBLE_PRECISION_COMPLEX 1
-#define REAL_DATATYPE rk8
-#define COMPLEX_DATATYPE ck4
+#define REAL_DATATYPE c_double
+#define COMPLEX_DATATYPE c_float
 
 function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
                                       matrixCols, mpi_comm_rows, mpi_comm_cols) result(success)
-   use precision
+   use iso_c_binding
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
-   use iso_c_binding
    use elpa_mpi
    use elpa1_compute
    implicit none
 
-   integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   real(kind=REAL_DATATYPE)      :: ev(na)
+   integer(kind=c_int), intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   real(kind=REAL_DATATYPE)        :: ev(na)
 #ifdef USE_ASSUMED_SIZE
    real(kind=REAL_DATATYPE)      :: a(lda,*), q(ldq,*)
 #else
    real(kind=REAL_DATATYPE)      :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
 
-   integer(kind=ik)              :: my_prow, my_pcol, mpierr
+   integer(kind=c_int)           :: my_prow, my_pcol, mpierr
    real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
    real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
    logical                       :: success
@@ -440,8 +440,8 @@ end function solve_evp_real_1stage_double
 #ifdef WANT_SINGLE_PRECISION_REAL
 #undef DOUBLE_PRECISION_REAL
 #undef DOUBLE_PRECISION_COMPLEX
-#define REAL_DATATYPE rk4
-#define COMPLEX_DATATYPE CK4
+#define REAL_DATATYPE c_float
+#define COMPLEX_DATATYPE c_float
 !> \brief solve_evp_real_1stage_single: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
@@ -479,7 +479,6 @@ end function solve_evp_real_1stage_double
 
 function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
                                       mpi_comm_rows, mpi_comm_cols) result(success)
-   use precision
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
@@ -488,7 +487,7 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
    use elpa1_compute
    implicit none
 
-   integer(kind=ik), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
    real(kind=REAL_DATATYPE)      :: ev(na)
 #ifdef USE_ASSUMED_SIZE
    real(kind=REAL_DATATYPE)      :: a(lda,*), q(ldq,*)
@@ -496,7 +495,7 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
    real(kind=REAL_DATATYPE)      :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
 
-   integer(kind=ik)              :: my_prow, my_pcol, mpierr
+   integer(kind=c_int)           :: my_prow, my_pcol, mpierr
    real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
    real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
    logical                       :: success
@@ -571,8 +570,8 @@ end function solve_evp_real_1stage_single
 
 #define DOUBLE_PRECISION_REAL 1
 #define DOUBLE_PRECISION_COMPLEX 1
-#define REAL_DATATYPE rk8
-#define COMPLEX_DATATYPE ck8
+#define REAL_DATATYPE c_double
+#define COMPLEX_DATATYPE c_double
 !> \brief solve_evp_complex_1stage_double: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
@@ -612,13 +611,13 @@ function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matr
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
-   use precision
+   ! use precision
    use iso_c_binding
    use elpa_mpi
    use elpa1_compute
    implicit none
 
-   integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #ifdef USE_ASSUMED_SIZE
    complex(kind=COMPLEX_DATATYPE)   :: a(lda,*), q(ldq,*)
 #else
@@ -626,15 +625,15 @@ function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matr
 #endif
    real(kind=REAL_DATATYPE)         :: ev(na)
 
-   integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer(kind=ik)                 :: l_rows, l_cols, l_cols_nev
+   integer(kind=c_int)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=c_int)              :: l_rows, l_cols, l_cols_nev
    real(kind=REAL_DATATYPE), allocatable       :: q_real(:,:), e(:)
    complex(kind=COMPLEX_DATATYPE), allocatable    :: tau(:)
    real(kind=c_double)              :: ttt0, ttt1  ! MPI_WTIME always needs double
 
-   logical                          :: success
-   logical, save                    :: firstCall = .true.
-   logical                          :: wantDebug
+   logical                             :: success
+   logical, save                       :: firstCall = .true.
+   logical                             :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex_1stage_double")
@@ -714,8 +713,8 @@ end function solve_evp_complex_1stage_double
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #undef DOUBLE_PRECISION_REAL
 #undef DOUBLE_PRECISION_COMPLEX
-#define COMPLEX_DATATYPE ck4
-#define REAL_DATATYPE rk4
+#define COMPLEX_DATATYPE c_float
+#define REAL_DATATYPE c_float
 
 !> \brief solve_evp_complex_1stage_single: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
 !>
@@ -757,13 +756,12 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
-   use precision
    use iso_c_binding
    use elpa_mpi
    use elpa1_compute
    implicit none
 
-   integer(kind=ik), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #ifdef USE_ASSUMED_SIZE
    complex(kind=COMPLEX_DATATYPE)   :: a(lda,*), q(ldq,*)
 #else
@@ -771,8 +769,8 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
 #endif
    real(kind=REAL_DATATYPE)         :: ev(na)
 
-   integer(kind=ik)                 :: my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer(kind=ik)                 :: l_rows, l_cols, l_cols_nev
+   integer(kind=c_int)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=c_int)              :: l_rows, l_cols, l_cols_nev
    real(kind=REAL_DATATYPE), allocatable       :: q_real(:,:), e(:)
    complex(kind=COMPLEX_DATATYPE), allocatable    :: tau(:)
    real(kind=c_double)              :: ttt0, ttt1  ! MPI_WTIME always needs double
