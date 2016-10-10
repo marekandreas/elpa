@@ -162,40 +162,39 @@ contains
    use elpa1_compute
    use elpa2_compute
    use elpa_mpi
-   use precision
    use cuda_functions
    use mod_check_for_gpu
    use iso_c_binding
    implicit none
    logical, intent(in), optional          :: useQR
    logical                                :: useQRActual, useQREnvironment
-   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
-   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
+   integer(kind=c_int), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+   integer(kind=c_int)                       :: THIS_REAL_ELPA_KERNEL
 
-   integer(kind=ik), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
+   integer(kind=c_int), intent(in)        :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
                                              mpi_comm_cols, mpi_comm_all
-   integer(kind=ik), intent(in)           :: nblk
-   real(kind=rk8), intent(inout)          :: ev(na)
+   integer(kind=c_int), intent(in)        :: nblk
+   real(kind=c_double), intent(inout)     :: ev(na)
 #ifdef USE_ASSUMED_SIZE
-   real(kind=rk8), intent(inout)          :: a(lda,*), q(ldq,*)
+   real(kind=c_double), intent(inout)     :: a(lda,*), q(ldq,*)
 #else
-   real(kind=rk8), intent(inout)          :: a(lda,matrixCols), q(ldq,matrixCols)
+   real(kind=c_double), intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
-   real(kind=rk8), allocatable            :: hh_trans_real(:,:)
+   real(kind=c_double), allocatable       :: hh_trans_real(:,:)
 
-   integer(kind=ik)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer(kind=ik)                       :: nbw, num_blocks
-   real(kind=rk8), allocatable            :: tmat(:,:,:), e(:)
+   integer(kind=c_int)                    :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=c_int)                    :: nbw, num_blocks
+   real(kind=c_double), allocatable       :: tmat(:,:,:), e(:)
    integer(kind=c_intptr_t)               :: tmat_dev, q_dev, a_dev
    real(kind=c_double)                    :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
-   integer(kind=ik)                       :: i
+   integer(kind=c_int)                    :: i
    logical                                :: success
    logical, save                          :: firstCall = .true.
    logical                                :: wantDebug
-   integer(kind=ik)                       :: istat
+   integer(kind=c_int)                    :: istat
    character(200)                         :: errorMessage
    logical                                :: useGPU
-   integer(kind=ik)                       :: numberOfGPUDevices
+   integer(kind=c_int)                    :: numberOfGPUDevices
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("solve_evp_real_2stage_double")
@@ -516,7 +515,6 @@ contains
     use timings
 #endif
 
-   use precision
    use cuda_functions
    use mod_check_for_gpu
    use iso_c_binding
@@ -524,36 +522,36 @@ contains
    use elpa2_compute
    use elpa_mpi
    implicit none
-   logical, intent(in), optional          :: useQR
-   logical                                :: useQRActual, useQREnvironment
-   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
-   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
+   logical, intent(in), optional             :: useQR
+   logical                                   :: useQRActual, useQREnvironment
+   integer(kind=c_int), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+   integer(kind=c_int)                       :: THIS_REAL_ELPA_KERNEL
 
-   integer(kind=ik), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
-                                             mpi_comm_cols, mpi_comm_all
-   integer(kind=ik), intent(in)           :: nblk
-   real(kind=rk4), intent(inout)          :: ev(na)
+   integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
+                                                mpi_comm_cols, mpi_comm_all
+   integer(kind=c_int), intent(in)           :: nblk
+   real(kind=c_float), intent(inout)         :: ev(na)
 #ifdef USE_ASSUMED_SIZE
-   real(kind=rk4), intent(inout)          :: a(lda,*),  q(ldq,*)
+   real(kind=c_float), intent(inout)         :: a(lda,*),  q(ldq,*)
 
 #else
-   real(kind=rk4), intent(inout)          :: a(lda,matrixCols),  q(ldq,matrixCols)
+   real(kind=c_float), intent(inout)         :: a(lda,matrixCols),  q(ldq,matrixCols)
 #endif
-   real(kind=rk4), allocatable            :: hh_trans_real(:,:)
+   real(kind=c_float), allocatable           :: hh_trans_real(:,:)
 
-   integer(kind=ik)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer(kind=ik)                       :: nbw, num_blocks
-   real(kind=rk4), allocatable            :: tmat(:,:,:), e(:)
-   integer(kind=c_intptr_t)               :: tmat_dev, q_dev, a_dev
-   real(kind=c_double)                    :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
-   integer(kind=ik)                       :: i
-   logical                                :: success
-   logical, save                          :: firstCall = .true.
-   logical                                :: wantDebug
-   integer(kind=ik)                       :: istat
-   character(200)                         :: errorMessage
-   logical                                :: useGPU
-   integer(kind=ik)                       :: numberOfGPUDevices
+   integer(kind=c_int)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=c_int)                       :: nbw, num_blocks
+   real(kind=c_float), allocatable           :: tmat(:,:,:), e(:)
+   integer(kind=c_intptr_t)                  :: tmat_dev, q_dev, a_dev
+   real(kind=c_double)                       :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
+   integer(kind=c_int)                       :: i
+   logical                                   :: success
+   logical, save                             :: firstCall = .true.
+   logical                                   :: wantDebug
+   integer(kind=c_int)                       :: istat
+   character(200)                            :: errorMessage
+   logical                                   :: useGPU
+   integer(kind=c_int)                       :: numberOfGPUDevices
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("solve_evp_real_2stage_single")
@@ -870,35 +868,34 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
    use elpa1_compute
    use elpa2_compute
    use elpa_mpi
-   use precision
    use cuda_functions
    use mod_check_for_gpu
    use iso_c_binding
    implicit none
-   integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
-   integer(kind=ik)                       :: THIS_COMPLEX_ELPA_KERNEL
-   integer(kind=ik), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-   real(kind=rk8), intent(inout)          :: ev(na)
+   integer(kind=c_int), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
+   integer(kind=c_int)                       :: THIS_COMPLEX_ELPA_KERNEL
+   integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   real(kind=c_double), intent(inout)        :: ev(na)
 #ifdef USE_ASSUMED_SIZE
-   complex(kind=ck8), intent(inout)       :: a(lda,*), q(ldq,*)
+   complex(kind=c_double), intent(inout)     :: a(lda,*), q(ldq,*)
 #else
-   complex(kind=ck8), intent(inout)       :: a(lda,matrixCols), q(ldq,matrixCols)
+   complex(kind=c_double), intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
-   complex(kind=ck8), allocatable         :: hh_trans_complex(:,:)
+   complex(kind=c_double), allocatable       :: hh_trans_complex(:,:)
 
-   integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
-   integer(kind=ik)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
-   complex(kind=ck8), allocatable          :: tmat(:,:,:)
-   real(kind=rk8), allocatable             :: q_real(:,:), e(:)
-   real(kind=c_double)                    :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
-   integer(kind=ik)                       :: i
+   integer(kind=c_int)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
+   integer(kind=c_int)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
+   complex(kind=c_double), allocatable       :: tmat(:,:,:)
+   real(kind=c_double), allocatable          :: q_real(:,:), e(:)
+   real(kind=c_double)                       :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
+   integer(kind=c_int)                       :: i
 
-   logical                                :: success, wantDebug
-   logical, save                          :: firstCall = .true.
-   integer(kind=ik)                       :: istat
-   character(200)                         :: errorMessage
-   logical                                :: useGPU
-   integer(kind=ik)                       :: numberOfGPUDevices
+   logical                                   :: success, wantDebug
+   logical, save                             :: firstCall = .true.
+   integer(kind=c_int)                       :: istat
+   character(200)                            :: errorMessage
+   logical                                   :: useGPU
+   integer(kind=c_int)                       :: numberOfGPUDevices
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("solve_evp_complex_2stage_double")
@@ -1188,7 +1185,6 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
-   use precision
    use cuda_functions
    use mod_check_for_gpu
    use elpa1_compute
@@ -1196,30 +1192,30 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
    use elpa_mpi
    use iso_c_binding
    implicit none
-   integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
-   integer(kind=ik)                       :: THIS_COMPLEX_ELPA_KERNEL
-   integer(kind=ik), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   integer(kind=c_int), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
+   integer(kind=c_int)                       :: THIS_COMPLEX_ELPA_KERNEL
+   integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 #ifdef USE_ASSUMED_SIZE
-   complex(kind=ck4), intent(inout)        :: a(lda,*), q(ldq,*)
+   complex(kind=c_float), intent(inout)      :: a(lda,*), q(ldq,*)
 #else
-   complex(kind=ck4), intent(inout)        :: a(lda,matrixCols), q(ldq,matrixCols)
+   complex(kind=c_float), intent(inout)      :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
-   real(kind=rk4), intent(inout)           :: ev(na)
-   complex(kind=ck4), allocatable          :: hh_trans_complex(:,:)
+   real(kind=c_float), intent(inout)         :: ev(na)
+   complex(kind=c_float), allocatable        :: hh_trans_complex(:,:)
 
-   integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
-   integer(kind=ik)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
-   complex(kind=ck4), allocatable          :: tmat(:,:,:)
-   real(kind=rk4), allocatable             :: q_real(:,:), e(:)
-   real(kind=c_double)                    :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
-   integer(kind=ik)                       :: i
+   integer(kind=c_int)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
+   integer(kind=c_int)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
+   complex(kind=c_float), allocatable        :: tmat(:,:,:)
+   real(kind=c_float), allocatable           :: q_real(:,:), e(:)
+   real(kind=c_double)                       :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
+   integer(kind=c_int)                       :: i
 
-   logical                                :: success, wantDebug
-   logical, save                          :: firstCall = .true.
-   integer(kind=ik)                       :: istat
-   character(200)                         :: errorMessage
-   logical                                :: useGPU
-   integer(kind=ik)                       :: numberOfGPUDevices
+   logical                                   :: success, wantDebug
+   logical, save                             :: firstCall = .true.
+   integer(kind=c_int)                       :: istat
+   character(200)                            :: errorMessage
+   logical                                   :: useGPU
+   integer(kind=c_int)                       :: numberOfGPUDevices
 
 #ifdef HAVE_DETAILED_TIMINGS
     call timer%start("solve_evp_complex_2stage_single")
