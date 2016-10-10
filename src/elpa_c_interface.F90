@@ -43,7 +43,7 @@
 #include "config-f90.h"
   !c> #include <complex.h>
 
-  !c> /*! \brief C old, deprecated interface to create the MPI communicators for ELPA
+  !c> /*! \brief C old, deprecated interface, will be deleted. Use "elpa_get_communicators"
   !c> *
   !c> * \param mpi_comm_word    MPI global communicator (in)
   !c> * \param my_prow          Row coordinate of the calling process in the process grid (in)
@@ -51,10 +51,10 @@
   !c> * \param mpi_comm_rows    Communicator for communicating within rows of processes (out)
   !c> * \result int             integer error value of mpi_comm_split function
   !c> */
-  !c> int elpa_get_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
+  !c> int get_elpa_row_col_comms(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
   function get_elpa_row_col_comms_wrapper_c_name1(mpi_comm_world, my_prow, my_pcol, &
                                           mpi_comm_rows, mpi_comm_cols)     &
-                                          result(mpierr) bind(C,name="elpa_get_communicators")
+                                          result(mpierr) bind(C,name="get_elpa_row_col_comms")
     use, intrinsic :: iso_c_binding
     use elpa1, only : get_elpa_row_col_comms
 
@@ -69,7 +69,7 @@
   end function
   !c> #include <complex.h>
 
-  !c> /*! \brief C interface to create the MPI communicators for ELPA
+  !c> /*! \brief C old, deprecated interface, will be deleted. Use "elpa_get_communicators"
   !c> *
   !c> * \param mpi_comm_word    MPI global communicator (in)
   !c> * \param my_prow          Row coordinate of the calling process in the process grid (in)
@@ -82,18 +82,44 @@
                                           mpi_comm_rows, mpi_comm_cols)     &
                                           result(mpierr) bind(C,name="get_elpa_communicators")
     use, intrinsic :: iso_c_binding
-    use elpa1, only : get_elpa_row_col_comms
+    use elpa1, only : get_elpa_communicators
 
     implicit none
     integer(kind=c_int)         :: mpierr
     integer(kind=c_int), value  :: mpi_comm_world, my_prow, my_pcol
     integer(kind=c_int)         :: mpi_comm_rows, mpi_comm_cols
 
-    mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+    mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                     mpi_comm_rows, mpi_comm_cols)
 
   end function
 
+  !c> #include <complex.h>
+
+  !c> /*! \brief C interface to create ELPA communicators
+  !c> *
+  !c> * \param mpi_comm_word    MPI global communicator (in)
+  !c> * \param my_prow          Row coordinate of the calling process in the process grid (in)
+  !c> * \param my_pcol          Column coordinate of the calling process in the process grid (in)
+  !c> * \param mpi_comm_rows    Communicator for communicating within rows of processes (out)
+  !c> * \result int             integer error value of mpi_comm_split function
+  !c> */
+  !c> int elpa_get_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
+  function elpa_get_communicators_wrapper_c(mpi_comm_world, my_prow, my_pcol, &
+                                          mpi_comm_rows, mpi_comm_cols)     &
+                                          result(mpierr) bind(C,name="elpa_get_communicators")
+    use, intrinsic :: iso_c_binding
+    use elpa1, only : elpa_get_communicators
+
+    implicit none
+    integer(kind=c_int)         :: mpierr
+    integer(kind=c_int), value  :: mpi_comm_world, my_prow, my_pcol
+    integer(kind=c_int)         :: mpi_comm_rows, mpi_comm_cols
+
+    mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
+                                    mpi_comm_rows, mpi_comm_cols)
+
+  end function
 
 
   !c>  /*! \brief C interface to solve the double-precision real eigenvalue problem with 1-stage solver

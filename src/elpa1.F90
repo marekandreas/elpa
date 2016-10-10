@@ -91,8 +91,8 @@ module ELPA1
   ! The following routines are public:
   private
 
-  public :: get_elpa_row_col_comms     !< old, deprecated interface: Sets MPI row/col communicators
-  public :: get_elpa_communicators     !< Sets MPI row/col communicators
+  public :: get_elpa_row_col_comms     !< old, deprecated interface, will be deleted. Use elpa_get_communicators instead
+  public :: get_elpa_communicators     !< Sets MPI row/col communicators; OLD and deprecated interface, will be deleted. Use elpa_get_communicators instead
   public :: elpa_get_communicators     !< Sets MPI row/col communicators
 
   public :: solve_evp_real                   !< old, deprecated interface: Driver routine for real double-precision eigenvalue problem DO NOT USE
@@ -152,7 +152,7 @@ module ELPA1
   logical, public :: elpa_print_times = .false. !< Set elpa_print_times to .true. for explicit timing outputs
 
 
-!> \brief get_elpa_row_col_comms:  old, deprecated Fortran function to create the MPI communicators for ELPA. Better use "elpa_get_communicators"
+!> \brief get_elpa_row_col_comms:  old, deprecated interface, will be deleted. Use "elpa_get_communicators"
 !> \details
 !> The interface and variable definition is the same as in "elpa_get_communicators"
 !> \param  mpi_comm_global   Global communicator for the calculations (in)
@@ -267,7 +267,7 @@ contains
 
 !-------------------------------------------------------------------------------
 
-!> \brief Fortran function to create the MPI communicators for ELPA.
+!> \brief Old, deprecated interface. Will be deleted. Use "elpa_get_communicators"
 ! All ELPA routines need MPI communicators for communicating within
 ! rows or columns of processes, these are set here.
 ! mpi_comm_rows/mpi_comm_cols can be free'd with MPI_Comm_free if not used any more.
