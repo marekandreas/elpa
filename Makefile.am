@@ -11,6 +11,7 @@ AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 noinst_LTLIBRARIES = libelpa@SUFFIX@_public.la
 libelpa@SUFFIX@_public_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@modules @FC_MODINC@private_modules
 libelpa@SUFFIX@_public_la_SOURCES = \
+	src/elpa.F90 \
         src/elpa1.F90 \
         src/elpa2.F90 \
 	src/elpa1_auxiliary.F90 \
