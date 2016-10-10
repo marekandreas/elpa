@@ -134,32 +134,33 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    use elpa1_compute
    use elpa2_compute
    use elpa_mpi
-   use precision
+   use iso_c_binding
+   !use precision
    implicit none
-   logical, intent(in), optional          :: useQR
-   logical                                :: useQRActual, useQREnvironment
-   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
-   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
+   logical, intent(in), optional             :: useQR
+   logical                                   :: useQRActual, useQREnvironment
+   integer(kind=c_int), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+   integer(kind=c_int)                       :: THIS_REAL_ELPA_KERNEL
 
-   integer(kind=ik), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
-                                             mpi_comm_cols, mpi_comm_all
-   integer(kind=ik), intent(in)           :: nblk
-   real(kind=rk), intent(inout)           :: ev(na)
+   integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
+                                                mpi_comm_cols, mpi_comm_all
+   integer(kind=c_int), intent(in)           :: nblk
+   real(kind=c_double), intent(inout)        :: ev(na)
 #ifdef USE_ASSUMED_SIZE
-   real(kind=rk), intent(inout)           :: a(lda,*), q(ldq,*)
+   real(kind=c_double), intent(inout)        :: a(lda,*), q(ldq,*)
 #else
-   real(kind=rk), intent(inout)           :: a(lda,matrixCols), q(ldq,matrixCols)
+   real(kind=c_double), intent(inout)        :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
-   real(kind=rk), allocatable             :: hh_trans_real(:,:)
+   real(kind=c_double), allocatable          :: hh_trans_real(:,:)
 
-   integer(kind=ik)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer(kind=ik)                       :: nbw, num_blocks
-   real(kind=rk), allocatable             :: tmat(:,:,:), e(:)
-   real(kind=rk)                          :: ttt0, ttt1, ttts
-   integer(kind=ik)                       :: i
-   logical                                :: success
-   logical, save                          :: firstCall = .true.
-   logical                                :: wantDebug
+   integer(kind=c_int)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=c_int)                       :: nbw, num_blocks
+   real(kind=c_double), allocatable          :: tmat(:,:,:), e(:)
+   real(kind=c_double)                       :: ttt0, ttt1, ttts
+   integer(kind=c_int)                       :: i
+   logical                                   :: success
+   logical, save                             :: firstCall = .true.
+   logical                                   :: wantDebug
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_real_2stage")
@@ -380,28 +381,29 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    use elpa1_compute
    use elpa2_compute
    use elpa_mpi
-   use precision
+!   use precision
+   use iso_c_binding
    implicit none
-   integer(kind=ik), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
-   integer(kind=ik)                       :: THIS_COMPLEX_ELPA_KERNEL
-   integer(kind=ik), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   integer(kind=c_int), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
+   integer(kind=c_int)                       :: THIS_COMPLEX_ELPA_KERNEL
+   integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 #ifdef USE_ASSUMED_SIZE
-   complex(kind=ck), intent(inout)        :: a(lda,*), q(ldq,*)
+   complex(kind=c_double), intent(inout)     :: a(lda,*), q(ldq,*)
 #else
-   complex(kind=ck), intent(inout)        :: a(lda,matrixCols), q(ldq,matrixCols)
+   complex(kind=c_double), intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
-   real(kind=rk), intent(inout)           :: ev(na)
-   complex(kind=ck), allocatable          :: hh_trans_complex(:,:)
+   real(kind=c_double), intent(inout)        :: ev(na)
+   complex(kind=c_double), allocatable       :: hh_trans_complex(:,:)
 
-   integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
-   integer(kind=ik)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
-   complex(kind=ck), allocatable          :: tmat(:,:,:)
-   real(kind=rk), allocatable             :: q_real(:,:), e(:)
-   real(kind=rk)                          :: ttt0, ttt1, ttts
-   integer(kind=ik)                       :: i
+   integer(kind=c_int)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr, my_pe, n_pes
+   integer(kind=c_int)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
+   complex(kind=c_double), allocatable       :: tmat(:,:,:)
+   real(kind=c_double), allocatable          :: q_real(:,:), e(:)
+   real(kind=c_double)                       :: ttt0, ttt1, ttts
+   integer(kind=c_int)                       :: i
 
-   logical                                :: success, wantDebug
-   logical, save                          :: firstCall = .true.
+   logical                                   :: success, wantDebug
+   logical, save                             :: firstCall = .true.
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex_2stage")
