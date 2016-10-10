@@ -94,10 +94,10 @@ module ELPA1
   public :: get_elpa_communicators     !< Sets MPI row/col communicators; OLD and deprecated interface, will be deleted. Use elpa_get_communicators instead
   public :: elpa_get_communicators     !< Sets MPI row/col communicators
 
-  public :: solve_evp_real             !< old, deprecated interface: Driver routine for real eigenvalue problem
-  public :: solve_evp_real_1stage      !< Driver routine for real eigenvalue problem
-  public :: solve_evp_complex          !< old, deprecated interface:  Driver routine for complex eigenvalue problem
-  public :: solve_evp_complex_1stage   !< Driver routine for complex eigenvalue problem
+  public :: solve_evp_real             !< old, deprecated interface: Driver routine for real eigenvalue problem. will be deleted at some point
+  public :: solve_evp_real_1stage      !< Driver routine for real 1-stage eigenvalue problem
+  public :: solve_evp_complex          !< old, deprecated interface:  Driver routine for complex eigenvalue problem will be deleted at some point
+  public :: solve_evp_complex_1stage   !< Driver routine for complex 1-stage eigenvalue problem
 
   ! imported from elpa1_auxilliary
 
@@ -152,7 +152,7 @@ module ELPA1
     module procedure get_elpa_communicators
   end interface
 
-!> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Better use "solve_evp_real_1stage"
+!> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Will be deleted at some point. Better use "solve_evp_real_1stage" or "elpa_solve_evp_real"
 !>
 !> \details
 !>  The interface and variable definition is the same as in "elpa_solve_evp_real_1stage"
@@ -193,7 +193,7 @@ module ELPA1
     module procedure solve_evp_real_1stage
   end interface
 
-!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage"
+!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. will be deleted at some point. Better use "solve_evp_complex_1stage" or "elpa_solve_evp_complex"
 !>
 !> \details
 !> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage"
@@ -279,7 +279,7 @@ function get_elpa_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows
 end function get_elpa_communicators
 
 
-!> \brief solve_evp_real_1stage: Fortran function to solve the real eigenvalue problem with 1-stage solver
+!> \brief solve_evp_real_1stage: Fortran function to solve the real eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_real"
 !>
 !  Parameters
 !
@@ -388,7 +388,7 @@ function solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mp
 end function solve_evp_real_1stage
 
 
-!> \brief solve_evp_complex_1stage: Fortran function to solve the complex eigenvalue problem with 1-stage solver
+!> \brief solve_evp_complex_1stage: Fortran function to solve the complex eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_complex"
 !>
 !  Parameters
 !

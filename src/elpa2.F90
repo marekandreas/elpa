@@ -61,7 +61,7 @@
 
 
 #include "config-f90.h"
-!> \brief Fortran module which provides the routines to use the two-stage ELPA solver
+!> \brief Fortran module which provides the routines to use the 2-stage ELPA solver
 module ELPA2
 
 ! Version 1.1.2, 2011-02-21
@@ -83,7 +83,7 @@ module ELPA2
 !******
 contains
 !-------------------------------------------------------------------------------
-!>  \brief solve_evp_real_2stage: Fortran function to solve the real eigenvalue problem with a 2 stage approach
+!>  \brief solve_evp_real_2stage: Fortran function to solve the real eigenvalue problem with a 2 stage approach. This is called by "elpa_solve_evp_real"
 !>
 !>  Parameters
 !>
@@ -335,7 +335,7 @@ end function solve_evp_real_2stage
 
 
 !-------------------------------------------------------------------------------
-!>  \brief solve_evp_complex_2stage: Fortran function to solve the complex eigenvalue problem with a 2 stage approach
+!>  \brief solve_evp_complex_2stage: Fortran function to solve the complex eigenvalue problem with a 2 stage approach. This is called by "elpa_solve_evp_complex"
 !>
 !>  Parameters
 !>
