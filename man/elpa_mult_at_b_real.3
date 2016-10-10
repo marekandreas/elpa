@@ -40,9 +40,9 @@ use elpa1
 .br
 .RI "integer, intent(in)    \fBnblk\fP:          blocksize of cyclic distribution, must be the same in both directions"
 .br
-.RI "integer, intent(in)    \fBmpi_comm_rows\fP: communicator for communication in rows. Constructed with \fBget_elpa_communicators\fP(3)"
+.RI "integer, intent(in)    \fBmpi_comm_rows\fP: communicator for communication in rows. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
-.RI "integer, intent(in)    \fBmpi_comm_cols\fP: communicator for communication in colums. Constructed with \fBget_elpa_communicators\fP(3)"
+.RI "integer, intent(in)    \fBmpi_comm_cols\fP: communicator for communication in colums. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
 .RI "real*8,  intent(inout) \fBc\fP:             locally distributed part of the matrix \fBc\fP. The local dimensions are \fBldc\fP x \fBldcCols\fP"
 .br
@@ -85,9 +85,9 @@ use elpa1
 .br
 .RI "int \fBnblk\fP:             blocksize of cyclic distribution, must be the same in both directions"
 .br
-.RI "int \fBmpi_comm_rows\fP:    communicator for communication in rows. Constructed with \fBget_elpa_communicators\fP(3)"
+.RI "int \fBmpi_comm_rows\fP:    communicator for communication in rows. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
-.RI "int \fBmpi_comm_cols\fP:    communicator for communication in colums. Constructed with \fBget_elpa_communicators\fP(3)"
+.RI "int \fBmpi_comm_cols\fP:    communicator for communication in colums. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
 .RI "double *\fBc\fP:            locally distributed part of the matrix \fBc\fP. The local dimensions are \fBldc\fP x \fBldcCols\fP"
 .br
@@ -99,7 +99,7 @@ use elpa1
 .RI "int     \fBsuccess\fP:       return value indicating success (1) or failure (0)
 
 .SH DESCRIPTION
-Does c = transpose(a) * b. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBget_elpa_communicators\fP(3) function.
+Does c = transpose(a) * b. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBelpa_get_communicators\fP(3) function.
 .br
 .SH "SEE ALSO"
-\fBget_elpa_communicators\fP(3) \fBelpa_mult_ah_b_complex\fP(3)
+\fBelpa_get_communicators\fP(3) \fBelpa_mult_ah_b_complex\fP(3)
