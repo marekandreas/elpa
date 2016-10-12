@@ -2,7 +2,7 @@
 
 ## Preamle ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.003**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.004**.
 Although most of the documentation is generic to any *ELPA* release, some configure options
 described in this document might be specific to the above mentioned version of *ELPA*.
 
@@ -73,10 +73,10 @@ automatically. No setting of any library paths should be necessary.
 
 If standard libraries are on the build system either installed in non standard paths, or
 special non standard libraries (e.g. *Intel's MKL*) should be used, it might be necessary
-to specify the appropriate link-line with the **SCALAPACK_LDFLAGS** and **SCALAPACK_FCFLAGS** 
+to specify the appropriate link-line with the **SCALAPACK_LDFLAGS** and **SCALAPACK_FCFLAGS**
 variables.
 
-For example, due to performance reasons it might be benefical to use the *BLAS*, *BLACS*, *LAPACK*, 
+For example, due to performance reasons it might be benefical to use the *BLAS*, *BLACS*, *LAPACK*,
 and *SCALAPACK* implementation from *Intel's MKL* library.
 
 Togehter with the Intel Fortran Compiler the call to configure might then look like:
