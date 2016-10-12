@@ -1,7 +1,8 @@
-Changelog for release ELPA 2016.10.001
+Changelog for release ELPA 2016.05.004
 
 - fix a problem with the private state of module precision
 - distribute test_project with dist tarball
+- generic driver routine for ELPA 1stage and 2stage
 - test case for elpa_mult_at_b_real
 - test case for elpa_mult_ah_b_complex
 - test case for elpa_cholesky_real
