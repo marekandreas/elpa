@@ -217,6 +217,7 @@ module elpa
                                  mpi_comm_all, THIS_REAL_ELPA_KERNEL_API,   &
                                  useQR, method) result(success)
       use iso_c_binding
+      use elpa_utilities
       implicit none
       integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
                                                    mpi_comm_cols, mpi_comm_all
@@ -243,6 +244,9 @@ module elpa
           useELPA1 = .false.
         else if (trim(method) .eq. "auto" .or. trim(method) .eq. "AUTO") then
           useELPA1 = .false.
+        else
+          write(error_unit,*) "Specified method not known! Using ELPA 2-stage"
+          useELPA1 = .false.
         endif
       endif
 
@@ -258,6 +262,7 @@ module elpa
       endif
 
     end function elpa_solve_evp_real_double
+
 #ifdef WANT_SINGLE_PRECISION_REAL
 !-------------------------------------------------------------------------------
 !>  \brief solve_evp_real_single: Fortran function to solve the real eigenvalue
@@ -310,6 +315,7 @@ module elpa
                                  mpi_comm_all, THIS_REAL_ELPA_KERNEL_API,   &
                                  useQR, method) result(success)
       use iso_c_binding
+      use elpa_utilities
       implicit none
       integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
                                                    mpi_comm_cols, mpi_comm_all
@@ -335,6 +341,9 @@ module elpa
         else if (trim(method) .eq. "2stage" .or. trim(method) .eq. "2STAGE") then
           useELPA1 = .false.
         else if (trim(method) .eq. "auto" .or. trim(method) .eq. "AUTO") then
+          useELPA1 = .false.
+        else
+          write(error_unit,*) "Specified method not known! Using ELPA 2-stage"
           useELPA1 = .false.
         endif
       endif
@@ -402,6 +411,8 @@ module elpa
                                     mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API,&
                                     method) result(success)
       use iso_c_binding
+      use elpa_utilities
+
       implicit none
       integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
                                                    mpi_comm_cols, mpi_comm_all
@@ -426,6 +437,9 @@ module elpa
         else if (trim(method) .eq. "2stage" .or. trim(method) .eq. "2STAGE") then
           useELPA1 = .false.
         else if (trim(method) .eq. "auto" .or. trim(method) .eq. "AUTO") then
+          useELPA1 = .false.
+        else
+          write(error_unit,*) "Specified method not known! Using ELPA 2-stage"
           useELPA1 = .false.
         endif
       endif
@@ -492,6 +506,7 @@ module elpa
                                     mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API,&
                                     method) result(success)
       use iso_c_binding
+      use elpa_utilities
       implicit none
       integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
                                                    mpi_comm_cols, mpi_comm_all
@@ -516,6 +531,9 @@ module elpa
         else if (trim(method) .eq. "2stage" .or. trim(method) .eq. "2STAGE") then
           useELPA1 = .false.
         else if (trim(method) .eq. "auto" .or. trim(method) .eq. "AUTO") then
+          useELPA1 = .false.
+        else
+          write(error_unit,*) "Specified method not known! Using ELPA 2-stage"
           useELPA1 = .false.
         endif
       endif
