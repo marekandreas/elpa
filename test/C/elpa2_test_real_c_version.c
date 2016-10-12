@@ -100,13 +100,13 @@ int main(int argc, char** argv) {
    if (myid == 0) {
      printf("This is the c version of an ELPA test-programm\n");
      printf("\n");
-     printf("It will call the 1stage ELPA real solver for an\n");
-     printf("of matrix size %d. It will compute %d eigenvalues\n",na,nev);
+     printf("It will call the 2stage ELPA real solver for an\n");
+     printf("matrix of size %d. It will compute %d eigenvalues\n",na,nev);
      printf("and uses a blocksize of %d\n",nblk);
      printf("\n");
      printf("This is an example program with much less functionality\n");
      printf("as it's Fortran counterpart. It's only purpose is to show how \n");
-     printf("to evoke ELPA1 from a c programm\n");
+     printf("to evoke ELPA2 from a c programm\n");
      printf("\n");
 
    }
