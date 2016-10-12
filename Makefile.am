@@ -233,6 +233,7 @@ noinst_PROGRAMS = \
   elpa2_test_complex_api@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
   elpa_driver_real@SUFFIX@ \
+  elpa_driver_complex@SUFFIX@ \
   elpa1_real_toeplitz@SUFFIX@ \
   elpa1_real_transpose_multiply@SUFFIX@ \
   elpa1_complex_transpose_multiply@SUFFIX@ \
@@ -300,7 +301,6 @@ elpa_driver_real_c_version@SUFFIX@_SOURCES = test/C/elpa_driver_real_c_version.c
 elpa_driver_real_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa_driver_real_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa_driver_real_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
-
 
 elpa1_test_real@SUFFIX@_SOURCES = test/Fortran/test_real.F90
 elpa1_test_real@SUFFIX@_LDADD = $(build_lib)
@@ -394,6 +394,11 @@ elpa_driver_real@SUFFIX@_LDADD = $(build_lib)
 elpa_driver_real@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa_driver_real@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
+elpa_driver_complex@SUFFIX@_SOURCES = test/Fortran/test_driver_complex.F90
+elpa_driver_complex@SUFFIX@_LDADD = $(build_lib)
+elpa_driver_complex@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa_driver_complex@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2_print_kernels.F90
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 elpa2_print_kernels@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
@@ -410,6 +415,7 @@ check_SCRIPTS = \
   elpa2_test_real_api@SUFFIX@.sh \
   elpa2_test_complex_api@SUFFIX@.sh \
   elpa_driver_real@SUFFIX@.sh \
+  elpa_driver_complex@SUFFIX@.sh \
   elpa1_real_toeplitz@SUFFIX@.sh \
   elpa1_real_transpose_multiply@SUFFIX@.sh \
   elpa1_complex_transpose_multiply@SUFFIX@.sh \
