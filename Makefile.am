@@ -243,6 +243,7 @@ noinst_PROGRAMS = \
   elpa1_test_complex_c_version@SUFFIX@ \
   elpa2_test_real_c_version@SUFFIX@ \
   elpa2_test_complex_c_version@SUFFIX@ \
+  elpa_driver_real_c_version@SUFFIX@ \
   elpa_driver_complex_c_version@SUFFIX@
 
 
@@ -292,6 +293,11 @@ elpa_driver_complex_c_version@SUFFIX@_SOURCES = test/C/elpa_driver_complex_c_ver
 elpa_driver_complex_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
 elpa_driver_complex_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa_driver_complex_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
+elpa_driver_real_c_version@SUFFIX@_SOURCES = test/C/elpa_driver_real_c_version.c
+elpa_driver_real_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
+elpa_driver_real_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa_driver_real_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 
 elpa1_test_real@SUFFIX@_SOURCES = test/Fortran/test_real.F90
@@ -408,6 +414,7 @@ check_SCRIPTS = \
   elpa1_test_complex_c_version@SUFFIX@.sh \
   elpa2_test_real_c_version@SUFFIX@.sh \
   elpa2_test_complex_c_version@SUFFIX@.sh \
+  elpa_driver_real_c_version@SUFFIX@.sh \
   elpa_driver_complex_c_version@SUFFIX@.sh
 
 
