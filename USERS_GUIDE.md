@@ -6,10 +6,10 @@ This document provides the guide for using the *ELPA* library in user applicatio
 
 Local documentation (via man pages) should be available (if *ELPA* has been installed with the documentation):
 
-For example "man get_elpa_communicators" should provide the documentation for the *ELPA* function which sets
+For example "man elpa_get_communicators" should provide the documentation for the *ELPA* function which sets
 the necessary communicators.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.003/html/index.html)
+Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.004/html/index.html)
 for each *ELPA* release is available.
 
 ### General concept of the  *ELPA* library ###
@@ -20,13 +20,22 @@ The *ELPA* library consists of two main parts:
 
 Both variants of the *ELPA* solvers are available for real or complex valued matrices.
 
-Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.003/html/index.html) for details):
+Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.004/html/index.html) for details):
 
-- get_elpa_communicators   : set the row / column communicators for *ELPA*
+- elpa_get_communicators   : set the row / column communicators for *ELPA*
 - solve_evp_complex_1stage : solve a complex valued eigenvale proplem with the *ELPA 1stage* solver
 - solve_evp_real_1stage    : solve a real valued eigenvale proplem with the *ELPA 1stage* solver
 - solve_evp_complex_2stage : solve a complex valued eigenvale proplem with the *ELPA 2stage* solver
 - solve_evp_real_2stage    : solve a real valued eigenvale proplem with the *ELPA 2stage* solver
+
+*NEW*
+
+- elpa_solve_evp_real      : driver for *ELPA 1stage* or *ELPA 2stage* solver
+- elpa_solve_evp_complex   : driver for *ELPA 1stage* or *ELPA 2stage* solver
+
+
+
+
 
 Furthermore *ELPA* provides the utility binary "print_available_elpa2_kernels": it tells the user
 which *ELPA 2stage* compute kernels have been installed and which default kernels are set
@@ -43,8 +52,8 @@ In this case, *ELPA* relies on a BLACS distributed matrix.
 To solve a Eigenvalue problem of this matrix with *ELPA*, one has
 
 1. to include the *ELPA* header (C case) or module (Fortran)
-2. to create row and column MPI communicators for ELPA (with "get_elpa_communicators")
-3. to call *ELPA 1stage* or *ELPA 2stage* for the matrix.
+2. to create row and column MPI communicators for ELPA (with "elpa_get_communicators")
+3. to call to the *ELPA driver* or directly call *ELPA 1stage* or *ELPA 2stage* for the matrix.
 
 Here is a very simple MPI code snippet for using *ELPA 1stage*: For the definition of all variables
 please have a look at the man pages and/or the online documentation (see above). A full version
@@ -97,7 +106,7 @@ SYNOPSIS
    FORTRAN INTERFACE
        use elpa1
 
-       success = get_elpa_communicators (mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols)
+       success = elpa_get_communicators (mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols)
 
        integer, intent(in)   mpi_comm_global:  global communicator for the calculation
        integer, intent(in)   my_prow:          row coordinate of the calling process in the process grid
@@ -110,7 +119,7 @@ SYNOPSIS
    C INTERFACE
        #include "elpa_generated.h"
 
-       success = get_elpa_communicators (int mpi_comm_world, int my_prow, my_pcol, int *mpi_comm_rows, int *Pmpi_comm_cols);
+       success = elpa_get_communicators (int mpi_comm_world, int my_prow, my_pcol, int *mpi_comm_rows, int *Pmpi_comm_cols);
 
        int mpi_comm_global:  global communicator for the calculation
        int my_prow:          row coordinate of the calling process in the process grid
@@ -362,4 +371,102 @@ DESCRIPTION
        The solver will compute the first nev eigenvalues, which will be stored on exit in ev. The eigenvectors corresponding to the eigenvalues
        will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
 
+
+
+##### Setting up *ELPA 1stage* or *ELPA 2stage* with the *ELPA driver interface* #####
+
+Since release ELPA 2016.005.004 a driver routine allows to choose more easily which solver (1stage or 2stage) will be used
+
+ SYNOPSIS
+
+ FORTRAN INTERFACE
+
+  use elpa
+
+
+  success = \fBelpa_solve_evp_real\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL=THIS_REAL_ELPA_KERNEL, useQr=useQR, method=method)
+
+  Generalized interface to the ELPA 1stage and 2stage solver for real-valued problems
+
+  With the definintions of the input and output variables:
+
+
+  integer, intent(in)            na\:                    global dimension of quadratic matrix a to solve
+
+  integer, intent(in)            nevP:                   number of eigenvalues to be computed; the first nev eigenvalules are calculated
+
+  real*8,  intent(inout)         a:                     locally distributed part of the matrix a. The local dimensions are lda x matrixCols
+
+  integer, intent(in)            lda:                   leading dimension of locally distributed matrix a
+
+  real*8,  intent(inout)         ev:                    on output the first nev computed eigenvalues"
+
+  real*8,  intent(inout)         q:                     on output the first nev computed eigenvectors"
+
+  integer, intent(in)            ldq:                   leading dimension of matrix q which stores the eigenvectors
+
+  integer, intent(in)            nblk:                  blocksize of block cyclic distributin, must be the same in both directions
+
+  integer, intent(in)            matrixCols:            number of columns of locally distributed matrices a and q
+
+  integer, intent(in)            mpi_comm_rows:         communicator for communication in rows. Constructed with elpa_get_communicators
+
+  integer, intent(in)            mpi_comm_cols:         communicator for communication in colums. Constructed with elpa_get_communicators
+
+  integer, intent(in)            mpi_comm_all:          communicator for all processes in the processor set involved in ELPA
+
+  integer, intent(in), optional: THIS_REAL_ELPA_KERNEL: optional argument, choose the compute kernel for 2-stage solver
+
+  logical, intent(in), optional: useQR:                 optional argument; switches to QR-decomposition if set to .true.
+
+  character(*), optional         method:                use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto"
+
+  logical                        success:               return value indicating success or failure
+
+
+ C INTERFACE
+
+ #include "elpa.h"
+
+
+ success = \fBelpa_solve_evp_real\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQr, \fbchar *\fPmethod);"
+
+
+ With the definintions of the input and output variables:"
+
+
+ int     na:                    global dimension of quadratic matrix a to solve
+
+ int     nev:                   number of eigenvalues to be computed; the first nev eigenvalules are calculated
+
+ double *a:                     pointer to locally distributed part of the matrix a. The local dimensions are lda x matrixCols
+
+ int     lda:                   leading dimension of locally distributed matrix a
+
+ double *ev:                    pointer to memory containing on output the first nev computed eigenvalues
+
+ double *q:                     pointer to memory containing on output the first nev computed eigenvectors
+
+ int     ldq:                   leading dimension of matrix q which stores the eigenvectors
+
+ int     nblk:                  blocksize of block cyclic distributin, must be the same in both directions
+
+ int     matrixCols:            number of columns of locally distributed matrices a and q
+
+ int     mpi_comm_rows:         communicator for communication in rows. Constructed with elpa_get_communicators
+
+ int     mpi_comm_cols:         communicator for communication in colums. Constructed with elpa_get_communicators
+
+ int     mpi_comm_all:          communicator for all processes in the processor set involved in ELPA
+
+ int     THIS_ELPA_REAL_KERNEL: choose the compute kernel for 2-stage solver
+
+ int     useQR:                 if set to 1 switch to QR-decomposition
+
+ char   *method:                use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto"
+
+ int     success:               return value indicating success (1) or failure (0)
+
+ DESCRIPTION
+ Solve the real eigenvalue problem. The value of method desides whether the 1stage or 2stage solver is used. The ELPA communicators mpi_comm_rows and mpi_comm_cols are obtained with the elpa_get_communicators function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols. The solver will compute the first nev eigenvalues, which will be stored on exit in ev. The eigenvectors corresponding to the eigenvalues will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
 
