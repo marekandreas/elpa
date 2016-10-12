@@ -33,7 +33,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [6:0:2])
+AC_SUBST([ELPA_SO_VERSION], [7:0:3])
 #
 
 

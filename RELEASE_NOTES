@@ -1,14 +1,14 @@
-This file contains the release notes for the ELPA 2016.05.003 version
+This file contains the release notes for the ELPA 2016.05.004 version
 
 What is new?
 -------------
-For changes since release ELPA 2016.05.002 please have a look at the Changelog file
+For changes since release ELPA 2016.05.003 please have a look at the Changelog file
 
 
 a) ABI change
 ---------------------
 
-Since release 2016.05.001 the ABI has not changed
+Since release 2016.05.001 the ABI has not changed. Only additional interfaces habe been added
 
 
 Any incompatibilities to previous version?

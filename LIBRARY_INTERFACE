@@ -44,3 +44,9 @@ https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 
   The state of release 2016.05.003 defines this interface
 
+- 7
+  Compatible API change w.r.t. previous version: Interfaces for generic driver
+  routineshave been added. The old interfaces are still available
+
+  The state of release 2016.05.004 defines this interface
+
