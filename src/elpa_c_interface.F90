@@ -1119,19 +1119,19 @@
   !c> \brief  C interface to solve double-precision tridiagonal eigensystem with divide and conquer method
   !c> \details
   !c>
-  !c> \param na                    Matrix dimension
-  !c> \param nev                   number of eigenvalues/vectors to be computed
-  !c> \param d                     array d(na) on input diagonal elements of tridiagonal matrix, on
-  !c>                              output the eigenvalues in ascending order
-  !c> \param e                     array e(na) on input subdiagonal elements of matrix, on exit destroyed
-  !c> \param q                     on exit : matrix q(ldq,matrixCols) contains the eigenvectors
-  !c> \param ldq                   leading dimension of matrix q
-  !c> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
-  !c> \param matrixCols            columns of matrix q
-  !c> \param mpi_comm_rows         MPI communicator for rows
-  !c> \param mpi_comm_cols         MPI communicator for columns
-  !c> \param wantDebug             give more debug information if 1, else 0
-  !c> \result success              int 1 on success, else 0
+  !c> *\param na                    Matrix dimension
+  !c> *\param nev                   number of eigenvalues/vectors to be computed
+  !c> *\param d                     array d(na) on input diagonal elements of tridiagonal matrix, on
+  !c> *                             output the eigenvalues in ascending order
+  !c> *\param e                     array e(na) on input subdiagonal elements of matrix, on exit destroyed
+  !c> *\param q                     on exit : matrix q(ldq,matrixCols) contains the eigenvectors
+  !c> *\param ldq                   leading dimension of matrix q
+  !c> *\param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !c> *\param matrixCols            columns of matrix q
+  !c> *\param mpi_comm_rows         MPI communicator for rows
+  !c> *\param mpi_comm_cols         MPI communicator for columns
+  !c> *\param wantDebug             give more debug information if 1, else 0
+  !c> *\result success              int 1 on success, else 0
   !c> */
   !c> int elpa_solve_tridi_double(int na, int nev, double *d, double *e, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
   function elpa_solve_tridi_wrapper_double(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
@@ -1594,7 +1594,6 @@
 
  end function
 
-
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
  !c> /*
@@ -1708,19 +1707,19 @@
  !c> \brief  elpa_cholesky_real_double: Cholesky factorization of a double-precision real symmetric matrix
  !c> \details
  !c>
- !c> \param  na                   Order of matrix
- !c> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
- !c>                              Distribution is like in Scalapack.
- !c>                              Only upper triangle is needs to be set.
- !c>                              On return, the upper triangle contains the Cholesky factor
- !c>                              and the lower triangle is set to 0.
- !c> \param  lda                  Leading dimension of a
- !c> \param  matrixCols           local columns of matrix a
- !c> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
- !c> \param  mpi_comm_rows        MPI communicator for rows
- !c> \param  mpi_comm_cols        MPI communicator for columns
- !c> \param wantDebug             int more debug information on failure if 1, else 0
- !c> \result succes               int reports success (1) or failure (0)
+ !c> *\param  na                   Order of matrix
+ !c> *\param  a(lda,matrixCols)    Distributed matrix which should be factorized.
+ !c> *                             Distribution is like in Scalapack.
+ !c> *                             Only upper triangle is needs to be set.
+ !c> *                             On return, the upper triangle contains the Cholesky factor
+ !c> *                             and the lower triangle is set to 0.
+ !c> *\param  lda                  Leading dimension of a
+ !c> *\param  matrixCols           local columns of matrix a
+ !c> *\param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+ !c> *\param  mpi_comm_rows        MPI communicator for rows
+ !c> *\param  mpi_comm_cols        MPI communicator for columns
+ !c> *\param wantDebug             int more debug information on failure if 1, else 0
+ !c> *\result succes               int reports success (1) or failure (0)
  !c> */
 
  !c> int elpa_cholesky_real_double(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);

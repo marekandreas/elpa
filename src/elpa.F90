@@ -53,7 +53,7 @@
 
 #include "config-f90.h"
 !> \brief Fortran module which provides the routines to the ELPA solver (1 and 2 stage)
-module elpa
+module ELPA
   use, intrinsic :: iso_c_binding, only : c_double, c_int
   use elpa1
   use elpa2

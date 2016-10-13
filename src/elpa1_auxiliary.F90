@@ -52,8 +52,8 @@
 
 #include "config-f90.h"
 
-
-module elpa1_auxiliary
+!> \brief Fortran module which provides helper routines for matrix calculations
+module ELPA1_AUXILIARY
   implicit none
 
   public :: elpa_mult_at_b_real_double      !< Multiply double-precision real matrices A**T * B
