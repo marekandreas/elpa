@@ -514,23 +514,22 @@
 
   end function
 
-  !c> /*
-  !c> \brief  C interface to solve tridiagonal eigensystem with divide and conquer method
-  !c> \details
+  !c> /*! \brief  C interface to solve tridiagonal eigensystem with divide and conquer method
+  !c> *\details
   !c>
-  !c> \param na                    Matrix dimension
-  !c> \param nev                   number of eigenvalues/vectors to be computed
-  !c> \param d                     array d(na) on input diagonal elements of tridiagonal matrix, on
-  !c>                              output the eigenvalues in ascending order
-  !c> \param e                     array e(na) on input subdiagonal elements of matrix, on exit destroyed
-  !c> \param q                     on exit : matrix q(ldq,matrixCols) contains the eigenvectors
-  !c> \param ldq                   leading dimension of matrix q
-  !c> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
-  !c> \param matrixCols            columns of matrix q
-  !c> \param mpi_comm_rows         MPI communicator for rows
-  !c> \param mpi_comm_cols         MPI communicator for columns
-  !c> \param wantDebug             give more debug information if 1, else 0
-  !c> \result success              int 1 on success, else 0
+  !c> *\param na                    Matrix dimension
+  !c> *\param nev                   number of eigenvalues/vectors to be computed
+  !c> *\param d                     array d(na) on input diagonal elements of tridiagonal matrix, on
+  !c> *                             output the eigenvalues in ascending order
+  !c> *\param e                     array e(na) on input subdiagonal elements of matrix, on exit destroyed
+  !c> *\param q                     on exit : matrix q(ldq,matrixCols) contains the eigenvectors
+  !c> *\param ldq                   leading dimension of matrix q
+  !c> *\param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !c> *\param matrixCols            columns of matrix q
+  !c> *\param mpi_comm_rows         MPI communicator for rows
+  !c> *\param mpi_comm_cols         MPI communicator for columns
+  !c> *\param wantDebug             give more debug information if 1, else 0
+  !c> *\result success              int 1 on success, else 0
   !c> */
   !c> int elpa_solve_tridi(int na, int nev, double *d, double *e, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
   function elpa_solve_tridi_wrapper(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
@@ -567,40 +566,39 @@
 
   end function
 
-  !c> /*
-  !c> \brief  C interface for elpa_mult_at_b_real: Performs C : = A**T * B
-  !c>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-  !c>                 B is a (na,ncb) matrix
-  !c>                 C is a (na,ncb) matrix where optionally only the upper or lower
-  !c>                   triangle may be computed
-  !c> \details
-  !c> \param  uplo_a               'U' if A is upper triangular
-  !c>                              'L' if A is lower triangular
-  !c>                              anything else if A is a full matrix
-  !c>                              Please note: This pertains to the original A (as set in the calling program)
-  !c>                                           whereas the transpose of A is used for calculations
-  !c>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
-  !c>                              i.e. it may contain arbitrary numbers
-  !c> \param uplo_c                'U' if only the upper diagonal part of C is needed
-  !c>                              'L' if only the upper diagonal part of C is needed
-  !c>                              anything else if the full matrix C is needed
-  !c>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
-  !c>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-  !c> \param na                    Number of rows/columns of A, number of rows of B and C
-  !c> \param ncb                   Number of columns  of B and C
-  !c> \param a                     matrix a
-  !c> \param lda                   leading dimension of matrix a
-  !c> \param ldaCols               columns of matrix a
-  !c> \param b                     matrix b
-  !c> \param ldb                   leading dimension of matrix b
-  !c> \param ldbCols               columns of matrix b
-  !c> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
-  !c> \param  mpi_comm_rows        MPI communicator for rows
-  !c> \param  mpi_comm_cols        MPI communicator for columns
-  !c> \param c                     matrix c
-  !c> \param ldc                   leading dimension of matrix c
-  !c> \param ldcCols               columns of matrix c
-  !c> \result success              int report success (1) or failure (0)
+  !c> /*! \brief  C interface for elpa_mult_at_b_real: Performs C : = A**T * B
+  !c> *        where   A is a square matrix (na,na) which is optionally upper or lower triangular
+  !c> *                B is a (na,ncb) matrix
+  !c> *                C is a (na,ncb) matrix where optionally only the upper or lower
+  !c> *                  triangle may be computed
+  !c> *\details
+  !c> *\param  uplo_a               'U' if A is upper triangular
+  !c> *                             'L' if A is lower triangular
+  !c> *                             anything else if A is a full matrix
+  !c> *                             Please note: This pertains to the original A (as set in the calling program)
+  !c> *                                          whereas the transpose of A is used for calculations
+  !c> *                             If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !c> *                             i.e. it may contain arbitrary numbers
+  !c> *\param uplo_c                'U' if only the upper diagonal part of C is needed
+  !c> *                             'L' if only the upper diagonal part of C is needed
+  !c> *                             anything else if the full matrix C is needed
+  !c> *                             Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !c> *                                           written to a certain extent, i.e. one shouldn't rely on the content there!
+  !c> *\param na                    Number of rows/columns of A, number of rows of B and C
+  !c> *\param ncb                   Number of columns  of B and C
+  !c> *\param a                     matrix a
+  !c> *\param lda                   leading dimension of matrix a
+  !c> *\param ldaCols               columns of matrix a
+  !c> *\param b                     matrix b
+  !c> *\param ldb                   leading dimension of matrix b
+  !c> *\param ldbCols               columns of matrix b
+  !c> *\param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !c> *\param  mpi_comm_rows        MPI communicator for rows
+  !c> *\param  mpi_comm_cols        MPI communicator for columns
+  !c> *\param c                     matrix c
+  !c> *\param ldc                   leading dimension of matrix c
+  !c> *\param ldcCols               columns of matrix c
+  !c> *\result success              int report success (1) or failure (0)
   !c> */
 
   !c> int elpa_mult_at_b_real(char uplo_a, char uplo_c, int na, int ncb, double *a, int lda, int ldaCols, double *b, int ldb, int ldbCols, int nlbk, int mpi_comm_rows, int mpi_comm_cols, double *c, int ldc, int ldcCols);
@@ -634,41 +632,40 @@
 
   end function
 
-  !c> /*
-  !c> \brief C interface for elpa_mult_ah_b_complex: Performs C : = A**H * B
-  !c>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-  !c>                 B is a (na,ncb) matrix
-  !c>                 C is a (na,ncb) matrix where optionally only the upper or lower
-  !c>                   triangle may be computed
-  !c> \details
+  !c> /*! \brief C interface for elpa_mult_ah_b_complex: Performs C : = A**H * B
+  !c> *        where   A is a square matrix (na,na) which is optionally upper or lower triangular
+  !c> *                B is a (na,ncb) matrix
+  !c> *                C is a (na,ncb) matrix where optionally only the upper or lower
+  !c> *                  triangle may be computed
+  !c> *\details
   !c>
-  !c> \param  uplo_a               'U' if A is upper triangular
-  !c>                              'L' if A is lower triangular
-  !c>                              anything else if A is a full matrix
-  !c>                              Please note: This pertains to the original A (as set in the calling program)
-  !c>                                           whereas the transpose of A is used for calculations
-  !c>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
-  !c>                              i.e. it may contain arbitrary numbers
-  !c> \param uplo_c                'U' if only the upper diagonal part of C is needed
-  !c>                              'L' if only the upper diagonal part of C is needed
-  !c>                              anything else if the full matrix C is needed
-  !c>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
-  !c>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-  !c> \param na                    Number of rows/columns of A, number of rows of B and C
-  !c> \param ncb                   Number of columns  of B and C
-  !c> \param a                     matrix a
-  !c> \param lda                   leading dimension of matrix a
-  !c> \param ldaCols               columns of matrix a
-  !c> \param b                     matrix b
-  !c> \param ldb                   leading dimension of matrix b
-  !c> \param ldbCols               columns of matrix b
-  !c> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
-  !c> \param  mpi_comm_rows        MPI communicator for rows
-  !c> \param  mpi_comm_cols        MPI communicator for columns
-  !c> \param c                     matrix c
-  !c> \param ldc                   leading dimension of matrix c
-  !c> \param ldcCols               columns of matrix c
-  !c> \result success              int reports success (1) or failure (0)
+  !c> *\param  uplo_a               'U' if A is upper triangular
+  !c> *                             'L' if A is lower triangular
+  !c> *                             anything else if A is a full matrix
+  !c> *                             Please note: This pertains to the original A (as set in the calling program)
+  !c> *                                          whereas the transpose of A is used for calculations
+  !c> *                             If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !c> *                             i.e. it may contain arbitrary numbers
+  !c> *\param uplo_c                'U' if only the upper diagonal part of C is needed
+  !c> *                             'L' if only the upper diagonal part of C is needed
+  !c> *                             anything else if the full matrix C is needed
+  !c> *                             Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !c> *                                           written to a certain extent, i.e. one shouldn't rely on the content there!
+  !c> *\param na                    Number of rows/columns of A, number of rows of B and C
+  !c> *\param ncb                   Number of columns  of B and C
+  !c> *\param a                     matrix a
+  !c> *\param lda                   leading dimension of matrix a
+  !c> *\param ldaCols               columns of matrix a
+  !c> *\param b                     matrix b
+  !c> *\param ldb                   leading dimension of matrix b
+  !c> *\param ldbCols               columns of matrix b
+  !c> *\param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !c> *\param  mpi_comm_rows        MPI communicator for rows
+  !c> *\param  mpi_comm_cols        MPI communicator for columns
+  !c> *\param c                     matrix c
+  !c> *\param ldc                   leading dimension of matrix c
+  !c> *\param ldcCols               columns of matrix c
+  !c> *\result success              int reports success (1) or failure (0)
   !c> */
 
   !c> int elpa_mult_ah_b_complex(char uplo_a, char uplo_c, int na, int ncb, double complex *a, int lda, double complex *b, int ldb, int nblk, int mpi_comm_rows, int mpi_comm_cols, double complex *c, int ldc);
@@ -701,21 +698,20 @@
 
   end function
 
-  !c> /*
-  !c> \brief  C interface to elpa_invert_trm_real: Inverts a upper triangular matrix
-  !c> \details
-  !c> \param  na                   Order of matrix
-  !c> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
-  !c>                              Distribution is like in Scalapack.
-  !c>                              Only upper triangle is needs to be set.
-  !c>                              The lower triangle is not referenced.
-  !c> \param  lda                  Leading dimension of a
-  !c> \param                       matrixCols  local columns of matrix a
-  !c> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-  !c> \param  mpi_comm_rows        MPI communicator for rows
-  !c> \param  mpi_comm_cols        MPI communicator for columns
-  !c> \param wantDebug             int more debug information on failure if 1, else 0
-  !c> \result succes               int reports success (1) or failure (0)
+  !c> /*! \brief  C interface to elpa_invert_trm_real: Inverts a upper triangular matrix
+  !c> *\details
+  !c> *\param  na                   Order of matrix
+  !c> *\param  a(lda,matrixCols)    Distributed matrix which should be inverted
+  !c> *                             Distribution is like in Scalapack.
+  !c> *                             Only upper triangle is needs to be set.
+  !c> *                             The lower triangle is not referenced.
+  !c> *\param  lda                  Leading dimension of a
+  !c> *\param                       matrixCols  local columns of matrix a
+  !c> *\param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+  !c> *\param  mpi_comm_rows        MPI communicator for rows
+  !c> *\param  mpi_comm_cols        MPI communicator for columns
+  !c> *\param wantDebug             int more debug information on failure if 1, else 0
+  !c> *\result succes               int reports success (1) or failure (0)
   !c> */
 
   !c> int elpa_invert_trm_real(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
@@ -752,21 +748,20 @@
 
  end function
 
- !c> /*
- !c> \brief  C interface to elpa_invert_trm_complex: Inverts a complex upper triangular matrix
- !c> \details
- !c> \param  na                   Order of matrix
- !c> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
- !c>                              Distribution is like in Scalapack.
- !c>                              Only upper triangle is needs to be set.
- !c>                              The lower triangle is not referenced.
- !c> \param  lda                  Leading dimension of a
- !c> \param                       matrixCols  local columns of matrix a
- !c> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
- !c> \param  mpi_comm_rows        MPI communicator for rows
- !c> \param  mpi_comm_cols        MPI communicator for columns
- !c> \param wantDebug             int more debug information on failure if 1, else 0
- !c> \result succes               int reports success (1) or failure (0)
+ !c> /*! \brief  C interface to elpa_invert_trm_complex: Inverts a complex upper triangular matrix
+ !c> *\details
+ !c> *\param  na                   Order of matrix
+ !c> *\param  a(lda,matrixCols)    Distributed matrix which should be inverted
+ !c> *                             Distribution is like in Scalapack.
+ !c> *                             Only upper triangle is needs to be set.
+ !c> *                             The lower triangle is not referenced.
+ !c> *\param  lda                  Leading dimension of a
+ !c> *\param                       matrixCols  local columns of matrix a
+ !c> *\param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+ !c> *\param  mpi_comm_rows        MPI communicator for rows
+ !c> *\param  mpi_comm_cols        MPI communicator for columns
+ !c> *\param wantDebug             int more debug information on failure if 1, else 0
+ !c> *\result succes               int reports success (1) or failure (0)
  !c> */
 
  !c> int elpa_invert_trm_complex(int na, double complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
@@ -804,23 +799,22 @@
    endif
  end function
 
- !c> /*
- !c> \brief  elpa_cholesky_real: Cholesky factorization of a real symmetric matrix
- !c> \details
+ !c> /*! \brief  elpa_cholesky_real: Cholesky factorization of a real symmetric matrix
+ !c> *\details
  !c>
- !c> \param  na                   Order of matrix
- !c> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
- !c>                              Distribution is like in Scalapack.
- !c>                              Only upper triangle is needs to be set.
- !c>                              On return, the upper triangle contains the Cholesky factor
- !c>                              and the lower triangle is set to 0.
- !c> \param  lda                  Leading dimension of a
- !c> \param  matrixCols           local columns of matrix a
- !c> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
- !c> \param  mpi_comm_rows        MPI communicator for rows
- !c> \param  mpi_comm_cols        MPI communicator for columns
- !c> \param wantDebug             int more debug information on failure if 1, else 0
- !c> \result succes               int reports success (1) or failure (0)
+ !c> *\param  na                   Order of matrix
+ !c> *\param  a(lda,matrixCols)    Distributed matrix which should be factorized.
+ !c> *                             Distribution is like in Scalapack.
+ !c> *                             Only upper triangle is needs to be set.
+ !c> *                             On return, the upper triangle contains the Cholesky factor
+ !c> *                             and the lower triangle is set to 0.
+ !c> *\param  lda                  Leading dimension of a
+ !c> *\param  matrixCols           local columns of matrix a
+ !c> *\param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+ !c> *\param  mpi_comm_rows        MPI communicator for rows
+ !c> *\param  mpi_comm_cols        MPI communicator for columns
+ !c> *\param wantDebug             int more debug information on failure if 1, else 0
+ !c> *\result succes               int reports success (1) or failure (0)
  !c> */
 
  !c> int elpa_cholesky_real(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
@@ -857,22 +851,21 @@
 
  end function
 
- !c> /*
- !c> \brief  C interface elpa_cholesky_complex: Cholesky factorization of a complex hermitian matrix
- !c> \details
- !c> \param  na                   Order of matrix
- !c> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
- !c>                              Distribution is like in Scalapack.
- !c>                              Only upper triangle is needs to be set.
- !c>                              On return, the upper triangle contains the Cholesky factor
- !c>                              and the lower triangle is set to 0.
- !c> \param  lda                  Leading dimension of a
- !c> \param                       matrixCols  local columns of matrix a
- !c> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
- !c> \param  mpi_comm_rows        MPI communicator for rows
- !c> \param  mpi_comm_cols        MPI communicator for columns
- !c> \param wantDebug             int more debug information on failure, if 1, else 0
- !c> \result succes               int reports success (1) or failure (0)
+ !c> /*! \brief  C interface elpa_cholesky_complex: Cholesky factorization of a complex hermitian matrix
+ !c> *\details
+ !c> *\param  na                   Order of matrix
+ !c> *\param  a(lda,matrixCols)    Distributed matrix which should be factorized.
+ !c> *                             Distribution is like in Scalapack.
+ !c> *                             Only upper triangle is needs to be set.
+ !c> *                             On return, the upper triangle contains the Cholesky factor
+ !c> *                             and the lower triangle is set to 0.
+ !c> *\param  lda                  Leading dimension of a
+ !c> *\param                       matrixCols  local columns of matrix a
+ !c> *\param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
+ !c> *\param  mpi_comm_rows        MPI communicator for rows
+ !c> *\param  mpi_comm_cols        MPI communicator for columns
+ !c> *\param wantDebug             int more debug information on failure, if 1, else 0
+ !c> *\result succes               int reports success (1) or failure (0)
  !c> */
 
  !c> int elpa_cholesky_complex(int na, double complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);

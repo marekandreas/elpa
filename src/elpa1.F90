@@ -92,7 +92,7 @@ module ELPA1
 
   public :: get_elpa_row_col_comms     !< old, deprecated interface, will be deleted. Use elpa_get_communicators instead
   public :: get_elpa_communicators     !< Sets MPI row/col communicators; OLD and deprecated interface, will be deleted. Use elpa_get_communicators instead
-  public :: elpa_get_communicators     !< Sets MPI row/col communicators
+  public :: elpa_get_communicators     !< Sets MPI row/col communicators as needed by ELPA
 
   public :: solve_evp_real             !< old, deprecated interface: Driver routine for real eigenvalue problem. will be deleted at some point
   public :: solve_evp_real_1stage      !< Driver routine for real 1-stage eigenvalue problem
@@ -147,6 +147,20 @@ module ELPA1
   interface get_elpa_row_col_comms
     module procedure get_elpa_communicators
   end interface
+
+!> \brief elpa_get_communicators:  Fortran interface to set the communicators needed by ELPA
+!> \details
+!> The interface and variable definition is the same as in "elpa_get_communicators"
+!> \param  mpi_comm_global   Global communicator for the calculations (in)
+!>
+!> \param  my_prow           Row coordinate of the calling process in the process grid (in)
+!>
+!> \param  my_pcol           Column coordinate of the calling process in the process grid (in)
+!>
+!> \param  mpi_comm_rows     Communicator for communicating within rows of processes (out)
+!>
+!> \param  mpi_comm_cols     Communicator for communicating within columns of processes (out)
+!> \result mpierr            integer error value of mpi_comm_split function
 
   interface elpa_get_communicators
     module procedure get_elpa_communicators

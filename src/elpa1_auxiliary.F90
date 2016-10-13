@@ -52,8 +52,8 @@
 
 #include "config-f90.h"
 
-
-module elpa1_auxiliary
+!> \brief Fortran module which provides helper routines for matrix calculations
+module ELPA1_AUXILIARY
   implicit none
 
   private

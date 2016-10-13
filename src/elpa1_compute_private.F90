@@ -51,8 +51,8 @@
 ! distributed along with the original code in the file "COPYING".
 
 #include "config-f90.h"
-
-module ELPA1_compute
+!> \brief Fortran module which contains the source of ELPA 1stage
+module ELPA1_COMPUTE
   use elpa_utilities
 #ifdef HAVE_DETAILED_TIMINGS
   use timings
