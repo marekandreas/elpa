@@ -182,7 +182,7 @@ program test_real_double_precision
 
    if(myid==0) then
       print *
-      print '(a)','Standard eigenvalue problem - REAL version'
+      print '(a)','Standard eigenvalue problem - ELPA1, REAL version'
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs

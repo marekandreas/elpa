@@ -63,6 +63,7 @@
 
 #define M_cublas_PRECISSION_gemm cublas_dgemm
 #define M_cublas_PRECISSION_trmm cublas_dtrmm
+#define M_cublas_PRECISSION_gemv cublas_dgemv
 
 #define M_PRECISSION_SUFFIX "_double"
 #define M_CONST_0_0 0.0_rk8
@@ -70,7 +71,7 @@
 #define M_CONST_1_0 1.0_rk8
 #define M_CONST_2_0 2.0_rk8
 #define M_CONST_8_0 8.0_rk8
-#define M_size_of_PRECISSION_real_datatape size_of_double_real_datatype
+#define M_size_of_PRECISSION_real size_of_double_real_datatype
 #define M_MPI_REAL_PRECISSION MPI_REAL8
 
 #else
@@ -139,6 +140,7 @@
 
 #undef M_cublas_PRECISSION_gemm
 #undef M_cublas_PRECISSION_trmm 
+#undef M_cublas_PRECISSION_gemv
 
 #undef M_PRECISSION_SUFFIX
 #undef M_CONST_0_0 
@@ -146,7 +148,7 @@
 #undef M_CONST_1_0 
 #undef M_CONST_2_0
 #undef M_CONST_8_0
-#undef M_size_of_PRECISSION_real_datatape
+#undef M_size_of_PRECISSION_real
 #undef M_MPI_REAL_PRECISSION
 
 #define M_elpa_transpose_vectors_real_PRECISSION elpa_transpose_vectors_real_single
@@ -213,6 +215,7 @@
 
 #define M_cublas_PRECISSION_gemm cublas_sgemm
 #define M_cublas_PRECISSION_trmm cublas_strmm
+#define M_cublas_PRECISSION_gemv cublas_sgemv
 
 #define M_PRECISSION_SUFFIX "_single"
 #define M_CONST_0_0 0.0_rk4
@@ -220,7 +223,7 @@
 #define M_CONST_1_0 1.0_rk4
 #define M_CONST_2_0 2.0_rk4
 #define M_CONST_8_0 8.0_rk4
-#define M_size_of_PRECISSION_real_datatape size_of_single_real_datatype
+#define M_size_of_PRECISSION_real size_of_single_real_datatype
 #define M_MPI_REAL_PRECISSION MPI_REAL4
 #endif
 

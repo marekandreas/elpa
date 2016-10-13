@@ -228,82 +228,6 @@
     end subroutine M_solve_secular_equation_PRECISSION
     !-------------------------------------------------------------------------------
 
-#ifndef ALREADY_DEFINED
-    integer function local_index(idx, my_proc, num_procs, nblk, iflag)
-
-    !-------------------------------------------------------------------------------
-    !  local_index: returns the local index for a given global index
-    !               If the global index has no local index on the
-    !               processor my_proc behaviour is defined by iflag
-    !
-    !  Parameters
-    !
-    !  idx         Global index
-    !
-    !  my_proc     Processor row/column for which to calculate the local index
-    !
-    !  num_procs   Total number of processors along row/column
-    !
-    !  nblk        Blocksize
-    !
-    !  iflag       Controls the behaviour if idx is not on local processor
-    !              iflag< 0 : Return last local index before that row/col
-    !              iflag==0 : Return 0
-    !              iflag> 0 : Return next local index after that row/col
-    !-------------------------------------------------------------------------------
-      use precision
-      implicit none
-
-      integer(kind=ik) :: idx, my_proc, num_procs, nblk, iflag
-
-      integer(kind=ik) :: iblk
-
-      iblk = (idx-1)/nblk  ! global block number, 0 based
-
-      if (mod(iblk,num_procs) == my_proc) then
-
-        ! block is local, always return local row/col number
-
-        local_index = (iblk/num_procs)*nblk + mod(idx-1,nblk) + 1
-
-      else
-
-        ! non local block
-
-        if (iflag == 0) then
-
-          local_index = 0
-
-        else
-
-          local_index = (iblk/num_procs)*nblk
-
-          if (mod(iblk,num_procs) > my_proc) local_index = local_index + nblk
-
-          if (iflag>0) local_index = local_index + 1
-        endif
-      endif
-
-    end function local_index
-#endif /* ALREADY_DEFINED */
-
-#ifndef ALREADY_DEFINED
-    integer function least_common_multiple(a, b)
-
-      ! Returns the least common multiple of a and b
-      ! There may be more efficient ways to do this, we use the most simple approach
-      use precision
-      implicit none
-      integer(kind=ik), intent(in) :: a, b
-
-      do least_common_multiple = a, a*(b-1), a
-        if(mod(least_common_multiple,b)==0) exit
-      enddo
-      ! if the loop is left regularly, least_common_multiple = a*b
-
-    end function least_common_multiple
-#endif /* ALREADY_DEFINED */
-
     subroutine M_hh_transform_real_PRECISSION(alpha, xnorm_sq, xf, tau)
       ! Similar to LAPACK routine DLARFP, but uses ||x||**2 instead of x(:)
       ! and returns the factor xf by which x has to be scaled.
@@ -343,4 +267,3 @@
        ALPHA = BETA
      endif
     end subroutine M_hh_transform_real_PRECISSION
-#define ALREADY_DEFINED 1

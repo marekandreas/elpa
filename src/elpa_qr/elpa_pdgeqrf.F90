@@ -45,6 +45,7 @@
 
 module elpa_pdgeqrf
 
+  use elpa_utilities
   use elpa1_compute
   use elpa_pdlarfb
   use qr_utils_mod

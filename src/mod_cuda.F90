@@ -345,6 +345,35 @@ module cuda_functions
     end subroutine cublas_ctrmm_c
   end interface
 
+  interface
+    subroutine cublas_dgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasDgemv')
+
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_DOUBLE),value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+    end subroutine cublas_dgemv_c
+  end interface
+
+  interface
+    subroutine cublas_sgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasSgemv')
+
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_FLOAT),value                :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+    end subroutine cublas_sgemv_c
+  end interface
+
+
 
   contains
 
@@ -660,6 +689,34 @@ module cuda_functions
       call cublas_ctrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ctrmm
+
+    subroutine cublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_DOUBLE)             :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+#ifdef WITH_GPU_VERSION
+      call cublas_dgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine cublas_dgemv
+
+    subroutine cublas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_FLOAT)              :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+#ifdef WITH_GPU_VERSION
+      call cublas_sgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine cublas_sgemv
 
 
 end module cuda_functions

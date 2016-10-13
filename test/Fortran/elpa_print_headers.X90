@@ -65,6 +65,44 @@
    endif
 #endif
 
+#ifdef ELPA1
+
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL
+   if (myid .eq. 0) then
+     print *," "
+     print *,"Real valued double-precision version of ELPA1 is used"
+     print *," "
+   endif
+#else
+   if (myid .eq. 0) then
+     print *," "
+     print *,"Real valued single-precision version of ELPA1 is used"
+     print *," "
+   endif
+#endif
+
+#endif
+
+#ifdef COMPLEXCASE
+#ifdef DOUBLE_PRECISION_COMPLEX
+   if (myid .eq. 0) then
+     print *," "
+     print *,"Complex valued double-precision version of ELPA1 is used"
+     print *," "
+   endif
+#else
+   if (myid .eq. 0) then
+     print *," "
+     print *,"Complex valued single-precision version of ELPA1 is used"
+     print *," "
+   endif
+#endif
+
+#endif /* DATATYPE */
+
+#else /* ELPA1 */
+
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
    if (myid .eq. 0) then
@@ -98,6 +136,8 @@
 #endif
 
 #endif /* DATATYPE */
+
+#endif /* ELPA1 */
 
 #ifdef WITH_MPI
     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)

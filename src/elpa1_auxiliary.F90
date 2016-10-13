@@ -54,6 +54,8 @@
 
 !> \brief Fortran module which provides helper routines for matrix calculations
 module ELPA1_AUXILIARY
+  use elpa_utilities
+  
   implicit none
 
   public :: elpa_mult_at_b_real_double      !< Multiply double-precision real matrices A**T * B

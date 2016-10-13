@@ -260,17 +260,17 @@
 
       if (useGPU) then
         ! Here we convert the regular host array into a pinned host array
-        successCUDA = cuda_malloc(a_dev, lda*na_cols*M_size_of_PRECISSION_real_datatape)
+        successCUDA = cuda_malloc(a_dev, lda*na_cols*M_size_of_PRECISSION_real)
         if (.not.(successCUDA)) then
           print *,"bandred_real: error in cudaMalloc"
           stop
         endif
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*M_size_of_PRECISSION_real_datatape)
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*M_size_of_PRECISSION_real)
         if (.not.(successCUDA)) then
           print *,"bandred_real: error in cudaMalloc"
           stop
         endif
-        successCUDA = cuda_malloc(vav_dev, nbw*nbw*M_size_of_PRECISSION_real_datatape)
+        successCUDA = cuda_malloc(vav_dev, nbw*nbw*M_size_of_PRECISSION_real)
         if (.not.(successCUDA)) then
           print *,"bandred_real: error in cudaMalloc"
           stop
@@ -278,7 +278,7 @@
 
         cur_l_rows = 0
         cur_l_cols = 0
-        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)*M_size_of_PRECISSION_real_datatape, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)*M_size_of_PRECISSION_real, cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"bandred_real: error in cudaMemcpy"
           stop
@@ -339,7 +339,7 @@
               print *,"bandred_real: error when allocating vmrCUDA "//errorMessage
               stop
             endif
-            successCUDA = cuda_malloc(vmr_dev, vmr_size*M_size_of_PRECISSION_real_datatape)
+            successCUDA = cuda_malloc(vmr_dev, vmr_size*M_size_of_PRECISSION_real)
             if (.not.(successCUDA)) then
               print *,"bandred_real: error in cudaMalloc"
               stop
@@ -368,7 +368,7 @@
               print *,"bandred_real: error when deallocating umcCUDA "//errorMessage
               stop
             endif
-            successCUDA = cuda_malloc(umc_dev, umc_size*M_size_of_PRECISSION_real_datatape)
+            successCUDA = cuda_malloc(umc_dev, umc_size*M_size_of_PRECISSION_real)
             if (.not.(successCUDA)) then
               print *,"bandred_real: error in cudaMalloc"
               stop
@@ -420,9 +420,9 @@
           cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
 
           if(my_pcol == cur_pcol) then
-            successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), lda*M_size_of_PRECISSION_real_datatape,         &
-                                       (a_dev + ((lc_start-1) * lda*M_size_of_PRECISSION_real_datatape)),    &
-                                       lda*M_size_of_PRECISSION_real_datatape, lr_end*M_size_of_PRECISSION_real_datatape, &
+            successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), lda*M_size_of_PRECISSION_real,         &
+                                       (a_dev + ((lc_start-1) * lda*M_size_of_PRECISSION_real)),    &
+                                       lda*M_size_of_PRECISSION_real, lr_end*M_size_of_PRECISSION_real, &
                                        (lc_end - lc_start+1), cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"bandred_real: error in cudaMemcpy2d"
@@ -646,9 +646,9 @@
            ! store column tiles back to GPU
            cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
            if (my_pcol == cur_pcol) then
-             successCUDA = cuda_memcpy2d((a_dev+((lc_start-1)*lda*M_size_of_PRECISSION_real_datatape)),          &
-                                          lda*M_size_of_PRECISSION_real_datatape, loc(a(1, lc_start)),           &
-                                          lda*M_size_of_PRECISSION_real_datatape,  lr_end*M_size_of_PRECISSION_real_datatape, &
+             successCUDA = cuda_memcpy2d((a_dev+((lc_start-1)*lda*M_size_of_PRECISSION_real)),          &
+                                          lda*M_size_of_PRECISSION_real, loc(a(1, lc_start)),           &
+                                          lda*M_size_of_PRECISSION_real,  lr_end*M_size_of_PRECISSION_real, &
                                           (lc_end - lc_start+1),cudaMemcpyHostToDevice)
              if (.not.(successCUDA)) then
                print *,"bandred_real: error in cudaMemcpy2d"
@@ -707,12 +707,12 @@
          vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = M_CONST_0_0
 
          if (l_cols>0 .and. l_rows>0) then
-           successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*M_size_of_PRECISSION_real_datatape,cudaMemcpyHostToDevice)
+           successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*M_size_of_PRECISSION_real,cudaMemcpyHostToDevice)
            if (.not.(successCUDA)) then
              print *,"bandred_real: error in cudaMemcpy"
              stop
            endif
-           successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*M_size_of_PRECISSION_real_datatape,cudaMemcpyHostToDevice)
+           successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*M_size_of_PRECISSION_real,cudaMemcpyHostToDevice)
            if (.not.(successCUDA)) then
              print *,"bandred_real: error in cudaMemcpy"
              stop
@@ -726,21 +726,21 @@
 
              lre = min(l_rows,(i+1)*l_rows_tile)
              call M_cublas_PRECISSION_gemm('T', 'N', lce-lcs+1, n_cols, lre, &
-                               M_CONST_1_0, (a_dev + ((lcs-1)*lda*M_size_of_PRECISSION_real_datatape)), lda, vmr_dev,cur_l_rows, &
-                               M_CONST_1_0, (umc_dev+ (lcs-1)*M_size_of_PRECISSION_real_datatape), cur_l_cols)
+                               M_CONST_1_0, (a_dev + ((lcs-1)*lda*M_size_of_PRECISSION_real)), lda, vmr_dev,cur_l_rows, &
+                               M_CONST_1_0, (umc_dev+ (lcs-1)*M_size_of_PRECISSION_real), cur_l_cols)
              if(i==0) cycle
              lre = min(l_rows,i*l_rows_tile)
              call M_cublas_PRECISSION_gemm('N', 'N', lre,n_cols, lce-lcs+1,&
-                               M_CONST_1_0, (a_dev+ ((lcs-1)*lda*M_size_of_PRECISSION_real_datatape)), lda,                  &
-                               (umc_dev+(cur_l_cols * n_cols+lcs-1)*M_size_of_PRECISSION_real_datatape), cur_l_cols, &
-                               M_CONST_1_0, (vmr_dev+(cur_l_rows * n_cols)*M_size_of_PRECISSION_real_datatape), cur_l_rows)
+                               M_CONST_1_0, (a_dev+ ((lcs-1)*lda*M_size_of_PRECISSION_real)), lda,                  &
+                               (umc_dev+(cur_l_cols * n_cols+lcs-1)*M_size_of_PRECISSION_real), cur_l_cols, &
+                               M_CONST_1_0, (vmr_dev+(cur_l_rows * n_cols)*M_size_of_PRECISSION_real), cur_l_rows)
            enddo
-           successCUDA = cuda_memcpy(loc(vmrCUDA(1)), vmr_dev,vmr_size*M_size_of_PRECISSION_real_datatape,cudaMemcpyDeviceToHost)
+           successCUDA = cuda_memcpy(loc(vmrCUDA(1)), vmr_dev,vmr_size*M_size_of_PRECISSION_real,cudaMemcpyDeviceToHost)
            if (.not.(successCUDA)) then
              print *,"bandred_real: error in cudaMemcpy"
              stop
            endif
-           successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*M_size_of_PRECISSION_real_datatape,cudaMemcpyDeviceToHost)
+           successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*M_size_of_PRECISSION_real,cudaMemcpyDeviceToHost)
            if (.not.(successCUDA)) then
              print *,"bandred_real: error in cudaMemcpy"
              stop
@@ -887,12 +887,12 @@
          endif ! l_cols
 
          ! U = U * Tmat**T
-         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*M_size_of_PRECISSION_real_datatape, cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*M_size_of_PRECISSION_real, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
-         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*M_size_of_PRECISSION_real_datatape,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*M_size_of_PRECISSION_real,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
@@ -900,19 +900,19 @@
          call M_cublas_PRECISSION_trmm('Right', 'Upper', 'Trans', 'Nonunit', l_cols, n_cols, &
                            M_CONST_1_0, tmat_dev, nbw, umc_dev, cur_l_cols)
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*M_size_of_PRECISSION_real_datatape,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*M_size_of_PRECISSION_real,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
          call M_cublas_PRECISSION_gemm('T', 'N', n_cols, n_cols, l_cols, &
-                           M_CONST_1_0, umc_dev, cur_l_cols, (umc_dev+(cur_l_cols * n_cols )*M_size_of_PRECISSION_real_datatape),cur_l_cols, &
+                           M_CONST_1_0, umc_dev, cur_l_cols, (umc_dev+(cur_l_cols * n_cols )*M_size_of_PRECISSION_real),cur_l_cols, &
                            M_CONST_0_0, vav_dev, nbw)
 
          call M_cublas_PRECISSION_trmm('Right', 'Upper', 'Trans', 'Nonunit', n_cols, n_cols, &
                            M_CONST_1_0, tmat_dev, nbw, vav_dev, nbw)
 
-         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*M_size_of_PRECISSION_real_datatape, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*M_size_of_PRECISSION_real, cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
@@ -920,7 +920,7 @@
 
          call M_symm_matrix_allreduce_PRECISSION(n_cols,vav, nbw,nbw,mpi_comm_cols)
 
-         successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*M_size_of_PRECISSION_real_datatape,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*M_size_of_PRECISSION_real,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
@@ -928,10 +928,10 @@
 
          ! U = U - 0.5 * V * VAV
          call M_cublas_PRECISSION_gemm('N', 'N', l_cols, n_cols, n_cols,&
-                           -M_CONST_0_5, (umc_dev+(cur_l_cols * n_cols )*M_size_of_PRECISSION_real_datatape),cur_l_cols, vav_dev,nbw,&
+                           -M_CONST_0_5, (umc_dev+(cur_l_cols * n_cols )*M_size_of_PRECISSION_real),cur_l_cols, vav_dev,nbw,&
                            M_CONST_1_0, umc_dev, cur_l_cols)
 
-         successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*M_size_of_PRECISSION_real_datatape, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*M_size_of_PRECISSION_real, cudaMemcpyDeviceToHost)
 
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
@@ -943,13 +943,13 @@
                                             vmrCUDA(cur_l_rows * n_cols + 1), cur_l_rows, mpi_comm_rows, &
                                             1, istep*nbw, n_cols, nblk)
 
-         successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*M_size_of_PRECISSION_real_datatape, cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*M_size_of_PRECISSION_real, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
 
-         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*M_size_of_PRECISSION_real_datatape, cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*M_size_of_PRECISSION_real, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
@@ -962,8 +962,8 @@
            lre = min(l_rows,(i+1)*l_rows_tile)
            if (lce<lcs .or. lre<1) cycle
            call M_cublas_PRECISSION_gemm('N', 'T', lre, lce-lcs+1, 2*n_cols, -M_CONST_1_0, &
-                             vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*M_size_of_PRECISSION_real_datatape), cur_l_cols, &
-                             M_CONST_1_0, (a_dev+(lcs-1)*lda*M_size_of_PRECISSION_real_datatape), lda)
+                             vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*M_size_of_PRECISSION_real), cur_l_cols, &
+                             M_CONST_1_0, (a_dev+(lcs-1)*lda*M_size_of_PRECISSION_real), lda)
          enddo
 
        else ! do not useGPU
@@ -1107,7 +1107,7 @@
 
      if (useGPU) then
        ! this is not needed since a_dev is passed along from one subroutine to the other
-       successCUDA = cuda_memcpy ( loc (a), a_dev, lda*na_cols*M_size_of_PRECISSION_real_datatape,cudaMemcpyDeviceToHost)
+       successCUDA = cuda_memcpy ( loc (a), a_dev, lda*na_cols*M_size_of_PRECISSION_real,cudaMemcpyDeviceToHost)
        if (.not.(successCUDA)) then
          print *,"bandred_real: error in cudaMemcpy"
          stop
@@ -1402,12 +1402,12 @@
           print *,"trans_ev_band_to_full_real: error when allocating hvm "//errorMessage
           stop
         endif
-        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw*M_size_of_PRECISSION_real_datatape)
+        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw*M_size_of_PRECISSION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaMalloc"
           stop
         endif
-        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw*M_size_of_PRECISSION_real_datatape)
+        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw*M_size_of_PRECISSION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaMalloc"
           stop
@@ -1416,7 +1416,7 @@
 !#ifdef WITH_MPI
 ! it should be possible to keep tmat dev on the device and not copy it around
 ! already existent on GPU
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*M_size_of_PRECISSION_real_datatape)
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*M_size_of_PRECISSION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaMalloc"
           stop
@@ -1424,7 +1424,7 @@
 !#endif
 
 ! q_dev already living on device
-!        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*M_size_of_PRECISSION_real_datatape)
+!        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*M_size_of_PRECISSION_real)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
 !          stop
@@ -1434,14 +1434,14 @@
   !      q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
 
 !        ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-!        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*M_size_of_PRECISSION_real_datatape, cudaMemcpyHostToDevice)
+!        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*M_size_of_PRECISSION_real, cudaMemcpyHostToDevice)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
 !          stop
 !        endif
 
         ! if MPI is NOT used the following steps could be done on the GPU and memory transfers could be avoided
-        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)*M_size_of_PRECISSION_real_datatape)
+        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)*M_size_of_PRECISSION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaMalloc"
           stop
@@ -1498,7 +1498,7 @@
 
             nb = nb+l_rows
           enddo
-          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw*M_size_of_PRECISSION_real_datatape),cudaMemcpyHostToDevice)
+          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw*M_size_of_PRECISSION_real),cudaMemcpyHostToDevice)
 
           if (.not.(successCUDA)) then
             print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
@@ -1518,7 +1518,7 @@
             ! copy data from device to host for a later MPI_ALLREDUCE
 
             ! copy to host maybe this can be avoided this is needed if MPI is used (allreduce)
-            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*M_size_of_PRECISSION_real_datatape, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*M_size_of_PRECISSION_real, cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
@@ -1534,7 +1534,7 @@
             ! if MPI is not used (we do not need to transfer because of MPI_ALLREDUCE) we can set to zero on the device
 #ifdef WITH_GPU_VERSION
 
-            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols*M_size_of_PRECISSION_real_datatape)
+            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols*M_size_of_PRECISSION_real)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemset"
               stop
@@ -1575,7 +1575,7 @@
 #ifdef WITH_MPI
             ! after the mpi_allreduce we have to copy back to the device
             ! copy back to device
-            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols*M_size_of_PRECISSION_real_datatape,cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols*M_size_of_PRECISSION_real,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
@@ -1586,7 +1586,7 @@
 ! it should be possible to keep tmat on the device and not copy it aroud
 !            ! copy to device, maybe this can be avoided tmat is input from bandred_real
 
-            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*M_size_of_PRECISSION_real_datatape,cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*M_size_of_PRECISSION_real,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
@@ -1599,7 +1599,7 @@
 
             ! copy to host maybe this can be avoided
             ! this is not necessary hvm is not used anymore
-            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*M_size_of_PRECISSION_real_datatape),cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*M_size_of_PRECISSION_real),cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
@@ -1815,7 +1815,7 @@
           stop
         endif
          ! final transfer of q_dev
-         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols*M_size_of_PRECISSION_real_datatape, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols*M_size_of_PRECISSION_real, cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaFree"
           stop
@@ -3130,8 +3130,8 @@
       a_dim2 = max_blk_size + nbw
 
       if (useGPU) then
-        num =  (stripe_width*a_dim2*stripe_count)*M_size_of_PRECISSION_real_datatape
-        successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count*M_size_of_PRECISSION_real_datatape)
+        num =  (stripe_width*a_dim2*stripe_count)*M_size_of_PRECISSION_real
+        successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count*M_size_of_PRECISSION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"//errorMessage
           stop
@@ -3179,7 +3179,7 @@
       endif
       row(:) = M_CONST_0_0
       if (useGPU) then
-        num =  (l_nev)*M_size_of_PRECISSION_real_datatape
+        num =  (l_nev)*M_size_of_PRECISSION_real
         successCUDA = cuda_malloc( row_dev,num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc "//errorMessage
@@ -3201,8 +3201,8 @@
 
         row_group(:, :) = M_CONST_0_0
 
-        num =  (l_nev*nblk)*M_size_of_PRECISSION_real_datatape
-        !    call cuda_malloc2d( row_group_dev,l_nev*M_size_of_PRECISSION_real_datatape,nblk*size_of_real_datatype)
+        num =  (l_nev*nblk)*M_size_of_PRECISSION_real
+        !    call cuda_malloc2d( row_group_dev,l_nev*M_size_of_PRECISSION_real,nblk*size_of_real_datatype)
         successCUDA = cuda_malloc(row_group_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"//errorMessage
@@ -3651,7 +3651,7 @@
       bcast_buffer = M_CONST_0_0
 
       if (useGPU) then
-        num =  ( nbw * max_blk_size) * M_size_of_PRECISSION_real_datatape
+        num =  ( nbw * max_blk_size) * M_size_of_PRECISSION_real
         successCUDA = cuda_malloc(bcast_buffer_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
@@ -3664,7 +3664,7 @@
           stop
         endif
 
-        num =  ((max_blk_size-1))*M_size_of_PRECISSION_real_datatape
+        num =  ((max_blk_size-1))*M_size_of_PRECISSION_real
         successCUDA = cuda_malloc( hh_dot_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
@@ -3677,7 +3677,7 @@
           stop
         endif
 
-        num =  (max_blk_size)*M_size_of_PRECISSION_real_datatape
+        num =  (max_blk_size)*M_size_of_PRECISSION_real
         successCUDA = cuda_malloc( hh_tau_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
@@ -3792,7 +3792,7 @@
 
           if (useGPU) then
             successCUDA =  cuda_memcpy(bcast_buffer_dev, loc(bcast_buffer(1,1)),  &
-                                       nbw * current_local_n * M_size_of_PRECISSION_real_datatape , cudaMemcpyHostToDevice)
+                                       nbw * current_local_n * M_size_of_PRECISSION_real , cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
               stop
@@ -3808,7 +3808,7 @@
           bcast_buffer(:,1) = M_CONST_0_0
 
           if (useGPU) then
-            successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw * M_size_of_PRECISSION_real_datatape)
+            successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw * M_size_of_PRECISSION_real)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_real: error in cudaMemset"
               stop
@@ -3890,9 +3890,9 @@
               n_off = current_local_n+a_off
 
               if (useGPU) then
-                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *M_size_of_PRECISSION_real_datatape
+                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *M_size_of_PRECISSION_real
                 successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc(bottom_border_recv_buffer(1,1,i)), &
-                                           stripe_width*nbw*M_size_of_PRECISSION_real_datatape ,cudaMemcpyHostToDevice)
+                                           stripe_width*nbw*M_size_of_PRECISSION_real ,cudaMemcpyHostToDevice)
                 if (.not.(successCUDA)) then
                   print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
                   stop
@@ -3985,10 +3985,10 @@
 #endif
 
              if (useGPU) then
-               dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real_datatape
+               dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real
                !             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
                successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , loc(top_border_recv_buffer(1,1,i)),  &
-                                           stripe_width*top_msg_length*M_size_of_PRECISSION_real_datatape , cudaMemcpyHostToDevice)
+                                           stripe_width*top_msg_length*M_size_of_PRECISSION_real , cudaMemcpyHostToDevice)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
                  stop
@@ -4095,9 +4095,9 @@
              n_off = current_local_n+nbw-bottom_msg_length+a_off
 
              if (useGPU) then
-               dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real_datatape
+               dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real
                successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
-                                          stripe_width * bottom_msg_length * M_size_of_PRECISSION_real_datatape ,cudaMemcpyDeviceToHost)
+                                          stripe_width * bottom_msg_length * M_size_of_PRECISSION_real ,cudaMemcpyDeviceToHost)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
                  stop
@@ -4209,9 +4209,9 @@
           n_off = current_local_n+nbw-bottom_msg_length+a_off
 
           if (useGPU) then
-            dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real_datatape
+            dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real
             successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset,  &
-                                         stripe_width*bottom_msg_length*M_size_of_PRECISSION_real_datatape ,cudaMemcpyDeviceToHost)
+                                         stripe_width*bottom_msg_length*M_size_of_PRECISSION_real ,cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_real: error cudaMemcpy"
               stop
@@ -4304,9 +4304,9 @@
 #endif
 #endif
           if (useGPU) then
-            dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real_datatape
+            dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real
             successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc( top_border_recv_buffer(:,1,i)),  &
-                                       stripe_width * top_msg_length *M_size_of_PRECISSION_real_datatape ,cudaMemcpyHostToDevice)
+                                       stripe_width * top_msg_length *M_size_of_PRECISSION_real ,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
               stop
@@ -4453,9 +4453,9 @@
 #endif
 #endif
         if (useGPU) then
-          dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * M_size_of_PRECISSION_real_datatape
+          dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * M_size_of_PRECISSION_real
           successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), aIntern_dev + dev_offset, &
-                                     stripe_width*nbw*M_size_of_PRECISSION_real_datatape ,cudaMemcpyDeviceToHost)
+                                     stripe_width*nbw*M_size_of_PRECISSION_real ,cudaMemcpyDeviceToHost)
           if (.not.(successCUDA)) then
             print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
             stop
@@ -4851,14 +4851,14 @@
              do j = top_msg_length + 1, top_msg_length + next_local_n, chunk
                top = min(j + chunk, top_msg_length + next_local_n)
                this_chunk = top - j + 1
-               dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real_datatape
+               dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISSION_real
                dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
-                             M_size_of_PRECISSION_real_datatape
+                             M_size_of_PRECISSION_real
                ! it is not logical to set here always the value for the parameter
                ! "cudaMemcpyDeviceToDevice" do this ONCE at startup
                !               tmp = cuda_d2d(1)
                successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , aIntern_dev +dev_offset_1, &
-                                         stripe_width*this_chunk*M_size_of_PRECISSION_real_datatape, cudaMemcpyDeviceToDevice)
+                                         stripe_width*this_chunk*M_size_of_PRECISSION_real, cudaMemcpyDeviceToDevice)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_real: error cudaMemcpy"
                  stop
@@ -4953,14 +4953,14 @@
 #endif /* WITH_MPI */
 
      ! copy q to q_dev needed in trans_ev_band_to_full
-        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*M_size_of_PRECISSION_real_datatape)
+        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*M_size_of_PRECISSION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
           stop
         endif
 
         ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*M_size_of_PRECISSION_real_datatape, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*M_size_of_PRECISSION_real, cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
           stop

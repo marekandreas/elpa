@@ -101,9 +101,6 @@ module ELPA1_COMPUTE
   public :: trans_ev_complex_single    ! Transform complex single-precision eigenvectors of a tridiagonal matrix back
 #endif
 
-  public :: local_index                ! Get local index of a block cyclic distributed matrix
-  public :: least_common_multiple      ! Get least common multiple
-
   public :: hh_transform_real_double
   public :: hh_transform_real
   public :: elpa_reduce_add_vectors_real_double
