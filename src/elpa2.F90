@@ -306,7 +306,6 @@ module ELPA2
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  interface elpa_solve_evp_complex_2stage_single
 !-------------------------------------------------------------------------------
 !>  \brief elpa_solve_evp_complex_2stage_single: Fortran function to solve the complex double-precision eigenvalue problem with a 2 stage approach. This is called by "elpa_solve_evp_complex_single"
 !>
@@ -344,12 +343,12 @@ module ELPA2
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
+  interface elpa_solve_evp_complex_2stage_single
     module procedure solve_evp_complex_2stage_single
   end interface
 #endif
 
-
-contains
+  contains
 !-------------------------------------------------------------------------------
 !>  \brief solve_evp_real_2stage_double: Fortran function to solve the double-precision real eigenvalue problem with a 2 stage approach
 !>
