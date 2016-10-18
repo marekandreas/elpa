@@ -150,7 +150,7 @@
                                   result(success) bind(C,name="elpa_solve_evp_real_1stage")
 
     use, intrinsic :: iso_c_binding
-    use elpa1, only : solve_evp_real
+    use elpa1, only : elpa_solve_evp_real_1stage
 
     implicit none
     integer(kind=c_int)                    :: success
@@ -163,7 +163,7 @@
 #endif
     logical                                :: successFortran
 
-    successFortran = solve_evp_real(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_real_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
 
     if (successFortran) then
       success = 1
@@ -202,7 +202,7 @@
                                   result(success) bind(C,name="elpa_solve_evp_complex_1stage")
 
     use, intrinsic :: iso_c_binding
-    use elpa1, only : solve_evp_complex
+    use elpa1, only : elpa_solve_evp_complex_1stage
 
     implicit none
     integer(kind=c_int)                    :: success
@@ -216,7 +216,7 @@
 
     logical                                :: successFortran
 
-    successFortran = solve_evp_complex(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_complex_1stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
 
     if (successFortran) then
       success = 1
