@@ -187,7 +187,7 @@ AC_MSG_CHECKING(whether ELPA should be build with more detailed timing support)
 AC_ARG_ENABLE([timings],
 		AS_HELP_STRING([--enable-timing],
 			       [more detailed timing, default no.]),
-	      [],
+	      [enable_timings=yes],
 	      [enable_timings=no])
 AC_MSG_RESULT([${enable_timings}])
 

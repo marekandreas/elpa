@@ -86,6 +86,8 @@
       use iso_c_binding
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -155,9 +157,7 @@
       integer(kind=ik)            :: istat
       character(200)              :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("tridiag_real" + M_PRECISSION_SUFFIX)
-#endif
+      call timer%start("tridiag_real" // M_PRECISSION_SUFFIX)
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
@@ -448,9 +448,7 @@
 !            else !do not use GPU
 #ifdef WITH_OPENMP
 
-#ifdef HAVE_DETAILED_TIMINGS
              call timer%start("OpenMP parallel")
-#endif
 !$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end)
 
              my_thread = omp_get_thread_num()
@@ -531,9 +529,7 @@
 
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL
-#ifdef HAVE_DETAILED_TIMINGS
            call timer%stop("OpenMP parallel")
-#endif
            do i=0,max_threads-1
              u_col(1:l_cols) = u_col(1:l_cols) + uc_p(1:l_cols,i)
              u_row(1:l_rows) = u_row(1:l_rows) + ur_p(1:l_rows,i)
@@ -708,6 +704,31 @@
         print *,"tridiag_real: error when deallocating uv_stored_cols "//errorMessage
         stop
       endif
+      
+      if (useGPU) then
+         ! todo: should we leave a on the device for further use?
+         successCUDA = cuda_free(a_dev)
+         call check_dealloc_CUDA("tridiag_real", "a_dev", successCUDA)
+      
+         successCUDA = cuda_free(v_row_dev)
+         call check_dealloc_CUDA("tridiag_real", "v_row_dev", successCUDA)
+         
+         successCUDA = cuda_free(u_row_dev)
+         call check_dealloc_CUDA("tridiag_real", "u_row_dev", successCUDA)
+         
+         successCUDA = cuda_free(v_col_dev)
+         call check_dealloc_CUDA("tridiag_real", "v_col_dev", successCUDA)
+         
+         successCUDA = cuda_free(u_col_dev)
+         call check_dealloc_CUDA("tridiag_real", "u_col_dev", successCUDA)
+
+         successCUDA = cuda_free(vu_stored_rows_dev)
+         call check_dealloc_CUDA("tridiag_real", "vu_stored_rows_dev", successCUDA)
+
+         successCUDA = cuda_free(uv_stored_cols_dev)
+         call check_dealloc_CUDA("tridiag_real", "uv_stored_cols_dev", successCUDA)
+      endif
+
 
       ! todo dealocate at the GPU
 
@@ -740,9 +761,7 @@
         stop
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("tridiag_real" + M_PRECISSION_SUFFIX)
-#endif
+      call timer%stop("tridiag_real" // M_PRECISSION_SUFFIX)
 
     contains
    

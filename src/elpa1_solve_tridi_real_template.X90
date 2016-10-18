@@ -57,6 +57,8 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -79,19 +81,15 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("solve_tridi" + M_PRECISSION_SUFFIX)
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("solve_tridi" // M_PRECISSION_SUFFIX)
+
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
+
       success = .true.
 
       l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
@@ -118,9 +116,7 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
         ! Scalapack supports it but delivers no results for these columns,
         ! which is rather annoying
         if (nc==0) then
-#ifdef HAVE_DETAILED_TIMINGS
-          call timer%stop("solve_tridi" + M_PRECISSION_SUFFIX)
-#endif
+          call timer%stop("solve_tridi" // M_PRECISSION_SUFFIX)
           if (wantDebug) write(error_unit,*) 'ELPA1_solve_tridi: ERROR: Problem contains processor column with zero width'
           success = .false.
           return
@@ -148,9 +144,7 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
       call M_solve_tridi_col_PRECISSION(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         matrixCols, mpi_comm_rows, wantDebug, success)
       if (.not.(success)) then
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("solve_tridi" + M_PRECISSION_SUFFIX)
-#endif
+        call timer%stop("solve_tridi" // M_PRECISSION_SUFFIX)
         return
       endif
       ! If there is only 1 processor column, we are done
@@ -162,9 +156,7 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
           stop
         endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("solve_tridi" + M_PRECISSION_SUFFIX)
-#endif
+        call timer%stop("solve_tridi" // M_PRECISSION_SUFFIX)
         return
       endif
 
@@ -225,9 +217,7 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
       ! Recursively merge sub problems
       call M_merge_recursive_PRECISSION(0, np_cols, wantDebug, success)
       if (.not.(success)) then
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("solve_tridi" + M_PRECISSION_SUFFIX)
-#endif
+        call timer%stop("solve_tridi" // M_PRECISSION_SUFFIX)
         return
       endif
 
@@ -237,9 +227,7 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
         stop
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("solve_tridi" + M_PRECISSION_SUFFIX)
-#endif
+      call timer%stop("solve_tridi" // M_PRECISSION_SUFFIX)
       return
 
       contains
@@ -364,6 +352,8 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
    ! Works best if the number of processor rows is a power of 2!
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -389,9 +379,7 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("solve_tridi_col" + M_PRECISSION_SUFFIX)
-#endif
+      call timer%start("solve_tridi_col" // M_PRECISSION_SUFFIX)
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
 #endif
@@ -576,9 +564,7 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
         stop
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("solve_tridi_col" + M_PRECISSION_SUFFIX)
-#endif
+      call timer%stop("solve_tridi_col" // M_PRECISSION_SUFFIX)
 
     end subroutine M_solve_tridi_col_PRECISSION
 
@@ -588,6 +574,8 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
 #ifdef HAVE_DETAILED_TIMINGS
      use timings
+#else
+     use timings_dummy
 #endif
      use precision
      implicit none
@@ -606,9 +594,7 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
       integer(kind=ik)             :: istat
       character(200)               :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
-     call timer%start("solve_tridi_single" + M_PRECISSION_SUFFIX)
-#endif
+     call timer%start("solve_tridi_single" // M_PRECISSION_SUFFIX)
 
      success = .true.
      allocate(ds(nlen), es(nlen), stat=istat, errmsg=errorMessage)
@@ -702,9 +688,7 @@ subroutine M_solve_tridi_PRECISSION( na, nev, d, e, q, ldq, nblk, matrixCols, mp
 
        endif
      enddo
-#ifdef HAVE_DETAILED_TIMINGS
-     call timer%stop("solve_tridi_single" + M_PRECISSION_SUFFIX)
-#endif
+     call timer%stop("solve_tridi_single" // M_PRECISSION_SUFFIX)
 
     end subroutine M_solve_tridi_single_problem_PRECISSION
 

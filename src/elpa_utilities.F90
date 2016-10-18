@@ -59,7 +59,7 @@ module ELPA_utilities
   private ! By default, all routines contained are private
 
   public :: debug_messages_via_environment_variable, error_unit
-  public :: check_alloc, check_alloc_CUDA, check_memcpy_CUDA
+  public :: check_alloc, check_alloc_CUDA, check_memcpy_CUDA, check_dealloc_CUDA
   public :: map_global_array_index_to_local_index
   public :: pcol, prow
   public :: local_index                ! Get local index of a block cyclic distributed matrix
@@ -268,6 +268,21 @@ module ELPA_utilities
     
     if (.not.(successCUDA)) then
       print *, function_name, ": error in cuda_malloc when allocating ", variable_name
+      stop
+    endif
+ end subroutine
+
+ subroutine check_dealloc_CUDA(function_name, variable_name, successCUDA)
+    use precision
+    
+    implicit none
+    
+    character(len=*), intent(in)    :: function_name
+    character(len=*), intent(in)    :: variable_name
+    logical                         :: successCUDA
+    
+    if (.not.(successCUDA)) then
+      print *, function_name, ": error in cuda_free when deallocating ", variable_name
       stop
     endif
  end subroutine

@@ -111,7 +111,7 @@
       integer(kind=ik)           :: istat
       character(200)             :: errorMessage
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("trans_ev_real" + M_PRECISSION_SUFFIX)
+      call timer%start("trans_ev_real" // M_PRECISSION_SUFFIX)
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
@@ -249,7 +249,9 @@
 
           tmat = 0
           if (l_rows>0) &
-               call M_PRECISSION_SYRK('U', 'T', nstor, l_rows, M_CONST_1_0, hvm, ubound(hvm,dim=1), M_CONST_0_0, tmat, max_stored_rows)
+               call M_PRECISSION_SYRK('U', 'T', nstor, l_rows,   &
+                                      M_CONST_1_0, hvm, ubound(hvm,dim=1),   &
+                                      M_CONST_0_0, tmat, max_stored_rows)
 
           nc = 0
           do n=1,nstor-1
@@ -272,7 +274,9 @@
           nc = 0
           tmat(1,1) = tau(ice-nstor+1)
           do n=1,nstor-1
-            call M_PRECISSION_TRMV('L', 'T', 'N', n, tmat, max_stored_rows, h2(nc+1), 1)
+            call M_PRECISSION_TRMV('L', 'T', 'N', n,  &
+                                   tmat, max_stored_rows,  &
+                                   h2(nc+1), 1)
             tmat(n+1,1:n) = -h2(nc+1:nc+n)*tau(ice-nstor+n+1)
             tmat(n+1,n+1) = tau(ice-nstor+n+1)
             nc = nc+n
@@ -288,8 +292,10 @@
           ! Q = Q - V * T * V**T * Q
 
           if (l_rows>0) then
-            call M_PRECISSION_GEMM('T', 'N', nstor, l_cols, l_rows, M_CONST_1_0, hvm, ubound(hvm,dim=1), &
-                          q, ldq, M_CONST_0_0, tmp1, nstor)
+            call M_PRECISSION_GEMM('T', 'N', nstor, l_cols, l_rows,  &
+                                   M_CONST_1_0, hvm, ubound(hvm,dim=1), &
+                                   q, ldq,  &
+                                   M_CONST_0_0, tmp1, nstor)
 
           else
 !       if (useGPU) then
@@ -316,13 +322,21 @@
 
           if (l_rows>0) then
 #ifdef WITH_MPI
-            call M_PRECISSION_TRMM('L', 'L', 'N', 'N', nstor, l_cols, M_CONST_1_0, tmat, max_stored_rows, tmp2, nstor)
-            call M_PRECISSION_GEMM('N', 'N', l_rows, l_cols, nstor, -M_CONST_1_0, hvm, ubound(hvm,dim=1), &
-                          tmp2, nstor, M_CONST_1_0, q, ldq)
+            call M_PRECISSION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
+                                   M_CONST_1_0, tmat, max_stored_rows,  &
+                                   tmp2, nstor)
+            call M_PRECISSION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
+                                   -M_CONST_1_0, hvm, ubound(hvm,dim=1),  &
+                                   tmp2, nstor,   &
+                                   M_CONST_1_0, q, ldq)
 #else
-            call M_PRECISSION_TRMM('L', 'L', 'N', 'N', nstor, l_cols, M_CONST_1_0, tmat, max_stored_rows, tmp1, nstor)
-            call M_PRECISSION_GEMM('N', 'N', l_rows, l_cols, nstor, -M_CONST_1_0, hvm, ubound(hvm,dim=1), &
-                          tmp1, nstor, M_CONST_1_0, q, ldq)
+            call M_PRECISSION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
+                                   M_CONST_1_0, tmat, max_stored_rows,  &
+                                   tmp1, nstor)
+            call M_PRECISSION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
+                                   -M_CONST_1_0, hvm, ubound(hvm,dim=1), &
+                                   tmp1, nstor,   &
+                                   M_CONST_1_0, q, ldq)
 #endif
           endif
           nstor = 0
@@ -342,7 +356,7 @@
 !      endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("trans_ev_real" + M_PRECISSION_SUFFIX)
+      call timer%stop("trans_ev_real" // M_PRECISSION_SUFFIX)
 #endif
 
     end subroutine M_trans_ev_real_PRECISSION

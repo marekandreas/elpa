@@ -117,7 +117,7 @@
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("merge_systems" + M_PRECISSION_SUFFIX)
+      call timer%start("merge_systems" // M_PRECISSION_SUFFIX)
 #endif
       success = .true.
 #ifdef HAVE_DETAILED_TIMINGS
@@ -135,7 +135,7 @@
 
       if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("merge_systems" + M_PRECISSION_SUFFIX)
+        call timer%stop("merge_systems" // M_PRECISSION_SUFFIX)
 #endif
         return
       endif
@@ -155,14 +155,14 @@
       call M_check_monotony_PRECISSION(nm,d,'Input1',wantDebug, success)
       if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("merge_systems" + M_PRECISSION_SUFFIX)
+        call timer%stop("merge_systems" // M_PRECISSION_SUFFIX)
 #endif
         return
       endif
       call M_check_monotony_PRECISSION(na-nm,d(nm+1),'Input2',wantDebug, success)
       if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("merge_systems" + M_PRECISSION_SUFFIX)
+        call timer%stop("merge_systems" // M_PRECISSION_SUFFIX)
 #endif
         return
       endif
@@ -249,7 +249,7 @@
         call M_resort_ev_PRECISSION(idx, na)
 
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("merge_systems" + M_PRECISSION_SUFFIX)
+        call timer%stop("merge_systems" // M_PRECISSION_SUFFIX)
 #endif
 
         return
@@ -363,14 +363,14 @@
       call M_check_monotony_PRECISSION(na1,d1,'Sorted1', wantDebug, success)
       if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("merge_systems" + M_PRECISSION_SUFFIX)
+        call timer%stop("merge_systems" // M_PRECISSION_SUFFIX)
 #endif
         return
       endif
       call M_check_monotony_PRECISSION(na2,d2,'Sorted2', wantDebug, success)
       if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("merge_systems" + M_PRECISSION_SUFFIX)
+        call timer%stop("merge_systems" // M_PRECISSION_SUFFIX)
 #endif
         return
       endif
@@ -424,7 +424,7 @@
 #ifdef WITH_OPENMP
 
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+        call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif
 
 !$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,j)
@@ -472,7 +472,7 @@
 !$OMP END PARALLEL
 
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+        call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif
 
         do i = 0, max_threads-1
@@ -493,7 +493,7 @@
 #ifdef WITH_OPENMP
 
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+        call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif
 
 !$OMP PARALLEL DO PRIVATE(i) SHARED(na1, my_proc, n_procs,  &
@@ -516,7 +516,7 @@
 !$OMP END PARALLEL DO
 
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+        call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif
 
 #endif
@@ -537,7 +537,7 @@
 
         if (.not.(success)) then
 #ifdef HAVE_DETAILED_TIMINGS
-          call timer%stop("merge_systems" + M_PRECISSION_SUFFIX)
+          call timer%stop("merge_systems" // M_PRECISSION_SUFFIX)
 #endif
           return
         endif
@@ -770,7 +770,7 @@
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("merge_systems" + M_PRECISSION_SUFFIX)
+      call timer%stop("merge_systems" // M_PRECISSION_SUFFIX)
 #endif
 
 

@@ -75,6 +75,9 @@ if HAVE_DETAILED_TIMINGS
         src/ftimings/time.c \
         src/ftimings/virtual_memory.c \
         src/ftimings/papi.c
+else
+  libelpa@SUFFIX@_private_la_SOURCES += \
+        src/timer_dummy.F90 
 endif
 
 if WITH_GPU_VERSION

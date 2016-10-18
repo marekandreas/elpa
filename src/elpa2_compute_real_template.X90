@@ -152,7 +152,7 @@
       integer(kind=ik)                      :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
                                                ii, pp, transformChunkSize
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("bandred_real" + M_PRECISSION_SUFFIX)
+      call timer%start("bandred_real" // M_PRECISSION_SUFFIX)
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
@@ -1206,7 +1206,7 @@
      endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-     call timer%stop("bandred_real" + M_PRECISSION_SUFFIX)
+     call timer%stop("bandred_real" // M_PRECISSION_SUFFIX)
 #endif
 
    end subroutine M_bandred_real_PRECISSION ! slower for gpu on 10000 10000 ???
@@ -1232,7 +1232,7 @@
       real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("symm_matrix_allreduce" + M_PRECISSION_SUFFIX)
+      call timer%start("symm_matrix_allreduce" // M_PRECISSION_SUFFIX)
 #endif
 
       nc = 0
@@ -1275,7 +1275,7 @@
 !      enddo
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("symm_matrix_allreduce" + M_PRECISSION_SUFFIX)
+      call timer%stop("symm_matrix_allreduce" // M_PRECISSION_SUFFIX)
 #endif
 
     end subroutine M_symm_matrix_allreduce_PRECISSION
@@ -1357,7 +1357,7 @@
       logical                                :: successCUDA
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("trans_ev_band_to_full_real" + M_PRECISSION_SUFFIX)
+      call timer%start("trans_ev_band_to_full_real" // M_PRECISSION_SUFFIX)
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
@@ -1858,7 +1858,7 @@
       endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("trans_ev_band_to_full_real" + M_PRECISSION_SUFFIX)
+      call timer%stop("trans_ev_band_to_full_real" // M_PRECISSION_SUFFIX)
 #endif
 
     end subroutine M_trans_ev_band_to_full_real_PRECISSION
@@ -1940,7 +1940,7 @@
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("tridiag_band_real" + M_PRECISSION_SUFFIX)
+      call timer%start("tridiag_band_real" // M_PRECISSION_SUFFIX)
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
@@ -2309,7 +2309,7 @@
             ! After the first iteration it is also the place to exchange the last row
             ! with MPI calls
 #ifdef HAVE_DETAILED_TIMINGS
-            call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+            call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif
 
 !$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
@@ -2401,7 +2401,7 @@
 !$omp end parallel do
 
 #ifdef HAVE_DETAILED_TIMINGS
-            call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+            call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif
 
             if (iter==1) then
@@ -2875,7 +2875,7 @@
        endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("tridiag_band_real" + M_PRECISSION_SUFFIX)
+      call timer%stop("tridiag_band_real" // M_PRECISSION_SUFFIX)
 #endif
     end subroutine M_tridiag_band_real_PRECISSION
 
@@ -3027,7 +3027,7 @@
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("trans_ev_tridi_to_band_real" + M_PRECISSION_SUFFIX)
+      call timer%start("trans_ev_tridi_to_band_real" // M_PRECISSION_SUFFIX)
 #endif
 
 #ifdef WITH_GPU_VERSION
@@ -3227,7 +3227,7 @@
       ! This is not for speed, but because we want the matrix a in the memory and
       ! in the cache of the correct thread (if possible)
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+      call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif
       !$omp parallel do private(my_thread), schedule(static, 1)
       do my_thread = 1, max_threads
@@ -3236,7 +3236,7 @@
       !$omp end parallel do
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+      call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif
 #endif /* WITH_OPENMP */
 
@@ -3268,7 +3268,7 @@
 #endif /* WITH_MPI */
 
 #ifdef HAVE_DETAILED_TIMINGS
-              call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+              call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
@@ -3279,7 +3279,7 @@
 !$omp end parallel do
 
 #ifdef HAVE_DETAILED_TIMINGS
-              call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX) 
+              call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX) 
 #endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
@@ -3327,7 +3327,7 @@
 #ifdef WITH_OPENMP
 
 #ifdef HAVE_DETAILED_TIMINGS
-              call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+              call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
               if (useGPU) then
@@ -3342,7 +3342,7 @@
 !$omp end parallel do
 
 #ifdef HAVE_DETAILED_TIMINGS
-              call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+              call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
@@ -3426,7 +3426,7 @@
 #endif /* WITH_MPI */
 
 #ifdef HAVE_DETAILED_TIMINGS
-              call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+              call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
@@ -3436,7 +3436,7 @@
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-              call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX) 
+              call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX) 
 #endif
 
 #else /* WITH_OPENMP */
@@ -3858,7 +3858,7 @@
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-              call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+              call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
@@ -3871,7 +3871,7 @@
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-              call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+              call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
@@ -4003,7 +4003,7 @@
 #ifdef WITH_OPENMP
 
 #ifdef HAVE_DETAILED_TIMINGS
-           call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+           call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
            if (useGPU) then
@@ -4032,7 +4032,7 @@
            enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX) 
+           call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX) 
 #endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
@@ -4133,7 +4133,7 @@
            stop
          endif
 #ifdef HAVE_DETAILED_TIMINGS
-         call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX) 
+         call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX) 
 #endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
@@ -4150,7 +4150,7 @@
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+        call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
         !send_b
@@ -4246,7 +4246,7 @@
         endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+        call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread), schedule(static, 1)
@@ -4264,7 +4264,7 @@
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX) 
+        call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX) 
 #endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
@@ -4325,7 +4325,7 @@
          endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+        call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
@@ -4347,7 +4347,7 @@
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+        call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
@@ -4833,7 +4833,7 @@
       endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("OpenMP parallel" + M_PRECISSION_SUFFIX)
+      call timer%start("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
  !$omp parallel do private(my_thread, i, j), schedule(static, 1)
@@ -4875,7 +4875,7 @@
 #ifdef WITH_OPENMP
 
 #ifdef HAVE_DETAILED_TIMINGS
-         call timer%stop("OpenMP parallel" + M_PRECISSION_SUFFIX)
+         call timer%stop("OpenMP parallel" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 #endif /* WITH_OPENMP */
@@ -5101,7 +5101,7 @@
      endif ! useGPU
 
 #ifdef HAVE_DETAILED_TIMINGS
-     call timer%stop("trans_ev_tridi_to_band_real" + M_PRECISSION_SUFFIX)
+     call timer%stop("trans_ev_tridi_to_band_real" // M_PRECISSION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
      return
@@ -5260,7 +5260,7 @@
       character(200)                           :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("band_band_real" + M_PRECISSION_SUFFIX)
+      call timer%start("band_band_real" // M_PRECISSION_SUFFIX)
 #endif
 !      if (na .lt. 2*nb) then
 !        print *,"na lt 2*nb ",na,2*nb
@@ -5623,7 +5623,7 @@
         endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("band_band_real" + M_PRECISSION_SUFFIX)
+        call timer%stop("band_band_real" // M_PRECISSION_SUFFIX)
 #endif
 
     end subroutine
@@ -5646,7 +5646,7 @@
       integer(kind=ik)             :: i
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("wy_gen" + M_PRECISSION_SUFFIX)
+   call timer%start("wy_gen" // M_PRECISSION_SUFFIX)
 #endif
 
    W(1:n,1) = tau(1)*Y(1:n,1)
@@ -5656,7 +5656,7 @@
      call M_PRECISSION_GEMV('N', n, i-1, -M_CONST_1_0, W, lda, mem, 1, M_CONST_1_0, W(1,i),1)
    enddo
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("wy_gen" + M_PRECISSION_SUFFIX)
+   call timer%stop("wy_gen" // M_PRECISSION_SUFFIX)
 #endif
     end subroutine
 
@@ -5678,14 +5678,14 @@
       real(kind=REAL_DATATYPE), intent(inout) :: mem(n,nb)  !memory for a temporary matrix of size n x nb
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("wy_left" + M_PRECISSION_SUFFIX)
+   call timer%start("wy_left" // M_PRECISSION_SUFFIX)
 #endif
 
    call M_PRECISSION_GEMM('T', 'N', nb, n, m, M_CONST_1_0, W, lda2, A, lda, M_CONST_0_0, mem, nb)
    call M_PRECISSION_GEMM('N', 'N', m, n, nb, -M_CONST_1_0, Y, lda2, mem, nb, M_CONST_1_0, A, lda)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("wy_left" + M_PRECISSION_SUFFIX)
+   call timer%stop("wy_left" // M_PRECISSION_SUFFIX)
 #endif
     end subroutine
 
@@ -5708,14 +5708,14 @@
 
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("wy_right" + M_PRECISSION_SUFFIX)
+   call timer%start("wy_right" // M_PRECISSION_SUFFIX)
 #endif
 
    call M_PRECISSION_GEMM('N', 'N', n, nb, m, M_CONST_1_0, A, lda, W, lda2, M_CONST_0_0, mem, n)
    call M_PRECISSION_GEMM('N', 'T', n, m, nb, -M_CONST_1_0, mem, n, Y, lda2, M_CONST_1_0, A, lda)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("wy_right" + M_PRECISSION_SUFFIX)
+   call timer%stop("wy_right" // M_PRECISSION_SUFFIX)
 #endif
 
     end subroutine
@@ -5738,7 +5738,7 @@
       real(kind=REAL_DATATYPE)                :: mem2(nb,nb)    !memory for a temporary matrix of size nb x nb
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("wy_symm" + M_PRECISSION_SUFFIX)
+   call timer%start("wy_symm" // M_PRECISSION_SUFFIX)
 #endif
 
    call M_PRECISSION_SYMM('L', 'L', n, nb, M_CONST_1_0, A, lda, W, lda2, M_CONST_0_0, mem, n)
@@ -5747,7 +5747,7 @@
    call M_PRECISSION_SYR2K('L', 'N', n, nb, -M_CONST_1_0, Y, lda2, mem, n, M_CONST_1_0, A, lda)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("wy_symm" + M_PRECISSION_SUFFIX)
+   call timer%stop("wy_symm" // M_PRECISSION_SUFFIX)
 #endif
 
     end subroutine

@@ -156,7 +156,7 @@
       ! Upper and lower bound of the shifted solution interval are a and b
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("solve_secular_equation" + M_PRECISSION_SUFFIX)
+      call timer%start("solve_secular_equation" // M_PRECISSION_SUFFIX)
 #endif
       if (i==n) then
 
@@ -222,7 +222,7 @@
       dlam = x + dshift
       delta(:) = delta(:) - x
 #ifdef HAVE_DETAILED_TIMINGS
-      call  timer%stop("solve_secular_equation" + M_PRECISSION_SUFFIX)
+      call  timer%stop("solve_secular_equation" // M_PRECISSION_SUFFIX)
 #endif
 
     end subroutine M_solve_secular_equation_PRECISSION
