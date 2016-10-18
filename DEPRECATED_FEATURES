@@ -12,6 +12,8 @@ solve_evp_real                   elpa_solve_evp_real_1stage
 solve_evp_complex                elpa_solve_evp_complex_1stage
 solve_evp_real_1stage            elpa_solve_evp_real_1stage
 solve_evp_complex_1stage         elpa_solve_evp_complex_1stage
+solve_evp_real_2stage            elpa_solve_evp_real_2stage
+solve_evp_complex_2stage         elpa_solve_evp_complex_2stage
 mult_at_b_real                   elpa_mult_at_b_real
 mult_ah_b_complex                elpa_mult_ah_b_complex
 invert_trm_real                  elpa_invert_trm_real
