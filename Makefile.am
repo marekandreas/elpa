@@ -249,6 +249,8 @@ dist_man_MANS = \
 	   man/solve_evp_complex_1stage_double.3 \
 	   man/solve_evp_real_2stage_double.3 \
 	   man/solve_evp_complex_2stage_double.3 \
+	   man/elpa_solve_evp_real_1stage_double.3 \
+	   man/elpa_solve_evp_complex_1stage_double.3 \
 	   man/get_elpa_row_col_comms.3 \
 	   man/get_elpa_communicators.3 \
 	   man/elpa_mult_at_b_real_double.3 \
@@ -268,13 +270,15 @@ dist_man_MANS = \
 if WANT_SINGLE_PRECISION_REAL
 
 dist_man_MANS += man/solve_evp_real_1stage_single.3 \
-	    man/solve_evp_real_2stage_single.3
+		 man/elpa_solve_evp_real_1stage_single.3 \
+         	 man/solve_evp_real_2stage_single.3
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 
 dist_man_MANS += man/solve_evp_complex_1stage_single.3 \
-	    man/solve_evp_complex_2stage_single.3
+		 man/elpa_solve_evp_complex_1stage_single.3 \
+                 man/solve_evp_complex_2stage_single.3
 endif
 
 #needed?

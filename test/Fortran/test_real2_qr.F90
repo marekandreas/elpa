@@ -332,7 +332,7 @@ program test_real2_default_kernel_qr_decomposition_double_precision
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-   successELPA = solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   successELPA = elpa_solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
                               useQR=.true.)
 

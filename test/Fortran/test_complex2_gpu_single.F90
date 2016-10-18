@@ -291,7 +291,7 @@ program test_complex2_gpu_version_single_precision
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   successELPA = solve_evp_complex_2stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   successELPA = elpa_solve_evp_complex_2stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                  na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
                                  COMPLEX_ELPA_KERNEL_GPU)
 

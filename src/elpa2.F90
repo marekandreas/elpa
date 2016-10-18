@@ -79,7 +79,14 @@ module ELPA2
   public :: solve_evp_real_2stage_double
   public :: solve_evp_complex_2stage_double
 
+  public :: elpa_solve_evp_real_2stage_double
+  public :: elpa_solve_evp_complex_2stage_double
+
   interface solve_evp_real_2stage
+    module procedure solve_evp_real_2stage_double
+  end interface
+
+  interface elpa_solve_evp_real_2stage_double
     module procedure solve_evp_real_2stage_double
   end interface
 
@@ -87,14 +94,31 @@ module ELPA2
     module procedure solve_evp_complex_2stage_double
   end interface
 
+  interface elpa_solve_evp_complex_2stage_double
+    module procedure solve_evp_complex_2stage_double
+  end interface
+
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: solve_evp_real_2stage_single
+  public :: elpa_solve_evp_real_2stage_single
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   public :: solve_evp_complex_2stage_single
+  public :: elpa_solve_evp_complex_2stage_single
 #endif
 
+#ifdef WANT_SINGLE_PRECISION_REAL
+  interface elpa_solve_evp_real_2stage_single
+    module procedure solve_evp_real_2stage_single
+  end interface
+#endif
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  interface elpa_solve_evp_complex_2stage_single
+    module procedure solve_evp_complex_2stage_single
+  end interface
+#endif
 
 !******
 contains

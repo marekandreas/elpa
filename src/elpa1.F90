@@ -91,21 +91,27 @@ module ELPA1
   ! The following routines are public:
   private
 
-  public :: get_elpa_row_col_comms     !< old, deprecated interface, will be deleted. Use elpa_get_communicators instead
-  public :: get_elpa_communicators     !< Sets MPI row/col communicators; OLD and deprecated interface, will be deleted. Use elpa_get_communicators instead
-  public :: elpa_get_communicators     !< Sets MPI row/col communicators as needed by ELPA
+  public :: get_elpa_row_col_comms               !< old, deprecated interface, will be deleted. Use elpa_get_communicators instead
+  public :: get_elpa_communicators               !< Sets MPI row/col communicators; OLD and deprecated interface, will be deleted. Use elpa_get_communicators instead
+  public :: elpa_get_communicators               !< Sets MPI row/col communicators as needed by ELPA
 
-  public :: solve_evp_real                   !< old, deprecated interface: Driver routine for real double-precision eigenvalue problem DO NOT USE. Will be deleted at some point
-  public :: solve_evp_real_1stage            !< Driver routine for real double-precision eigenvalue problem
-  public :: solve_evp_real_1stage_double     !< Driver routine for real double-precision eigenvalue problem
+  public :: solve_evp_real                       !< old, deprecated interface: Driver routine for real double-precision eigenvalue problem DO NOT USE. Will be deleted at some point
+  public :: elpa_solve_evp_real_1stage_double    !< Driver routine for real double-precision 1-stage eigenvalue problem
+
+  public :: solve_evp_real_1stage                !< Driver routine for real double-precision eigenvalue problem
+  public :: solve_evp_real_1stage_double         !< Driver routine for real double-precision eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: solve_evp_real_1stage_single     !< Driver routine for real single-precision eigenvalue problem
+  public :: solve_evp_real_1stage_single         !< Driver routine for real single-precision eigenvalue problem
+  public :: elpa_solve_evp_real_1stage_single    !< Driver routine for real single-precision 1-stage eigenvalue problem
+
 #endif
-  public :: solve_evp_complex                !< old, deprecated interface:  Driver routine for complex double-precision eigenvalue problem DO NOT USE. Will be deleted at some point
-  public :: solve_evp_complex_1stage         !< Driver routine for complex double-precision eigenvalue problem
-  public :: solve_evp_complex_1stage_double  !< Driver routine for complex double-precision eigenvalue problem
+  public :: solve_evp_complex                    !< old, deprecated interface:  Driver routine for complex double-precision eigenvalue problem DO NOT USE. Will be deleted at some point
+  public :: elpa_solve_evp_complex_1stage_double !< Driver routine for complex 1-stage eigenvalue problem
+  public :: solve_evp_complex_1stage             !< Driver routine for complex double-precision eigenvalue problem
+  public :: solve_evp_complex_1stage_double      !< Driver routine for complex double-precision eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: solve_evp_complex_1stage_single  !< Driver routine for complex single-precision eigenvalue problem
+  public :: solve_evp_complex_1stage_single      !< Driver routine for complex single-precision eigenvalue problem
+  public :: elpa_solve_evp_complex_1stage_single !< Driver routine for complex 1-stage eigenvalue problem
 #endif
 
   ! imported from elpa1_auxilliary
@@ -233,6 +239,45 @@ module ELPA1
   end interface
 
 !> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage_double" or elpa_solve_evp_complex_double
+!> \brief elpa_solve_evp_real_1stage_double: Fortran function to solve the real eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_real"
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+  interface elpa_solve_evp_real_1stage_double
+    module procedure solve_evp_real_1stage_double
+  end interface
+
+
+!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. will be deleted at some point. Better use "solve_evp_complex_1stage" or "elpa_solve_evp_complex"
 !>
 !> \details
 !> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage_double"
@@ -267,8 +312,6 @@ module ELPA1
 !>  \param mpi_comm_cols        MPI-Communicator for columns
 !>
 !>  \result                     success
-
-
   interface solve_evp_complex
     module procedure solve_evp_complex_1stage_double
   end interface
@@ -276,6 +319,123 @@ module ELPA1
   interface solve_evp_complex_1stage
     module procedure solve_evp_complex_1stage_double
   end interface
+
+!> \brief elpa_solve_evp_complex_1stage_double: Fortran function to solve the complex eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_complex"
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+  interface elpa_solve_evp_complex_1stage_double
+    module procedure solve_evp_complex_1stage_double
+  end interface
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+!> \brief elpa_solve_evp_real_1stage_single: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+
+  interface elpa_solve_evp_real_1stage_single
+    module procedure solve_evp_real_1stage_single
+  end interface
+#endif
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+!> \brief elpa_solve_evp_complex_1stage_single: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
+interface elpa_solve_evp_complex_1stage_single
+  module procedure solve_evp_complex_1stage_single
+end interface
+#endif
+
 
 contains
 

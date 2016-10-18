@@ -258,7 +258,7 @@ program test_complex_double_precision
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_complex_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = elpa_solve_evp_complex_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                na_cols, mpi_comm_rows, mpi_comm_cols)
 
    if (.not.(success)) then

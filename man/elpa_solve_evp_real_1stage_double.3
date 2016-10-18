@@ -1,9 +1,8 @@
-.TH "solve_evp_real_1stage" 3 "Tue Oct 18 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_solve_evp_real_1stage_double" 3 "Tue Oct 18 2016" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-solve_evp_real_1stage \- solve the real eigenvalue problem with the 1-stage ELPA solver
-This interface is old and deprecated. It is recommended to use \fBelpa_solve_evp_real_1stage\fP(3)
+elpa_solve_evp_real_1stage_double \- solve the real eigenvalue problem with the 1-stage ELPA solver
 .br
 
 .SH SYNOPSIS
@@ -12,7 +11,7 @@ This interface is old and deprecated. It is recommended to use \fBelpa_solve_evp
 use elpa1
 .br
 .br
-.RI  "success = \fBsolve_evp_real_1stage\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)"
+.RI  "success = \fBelpa_solve_evp_real_1stage_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)"
 .br
 .RI " "
 .br
@@ -48,7 +47,7 @@ use elpa1
 #include "elpa.h"
 
 .br
-.RI "success = \fBsolve_evp_real_1stage\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols);"
+.RI "success = \fBelpa_solve_evp_real_1stage_double\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols);"
 .br
 .RI " "
 .br
@@ -86,4 +85,4 @@ Solve the real eigenvalue problem with the 1-stage solver. The ELPA communicator
 The interface \fBelpa_solve_evp_real\fP(3) is a more flexible alternative.
 .br
 .SH "SEE ALSO"
-\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real\fP(3) \fBelpa_solve_evp_complex\fP(3) \fBelpa_solve_evp_complex_1stage\fP(3) \fBsolve_evp_real_2stage\fP(3) \fBsolve_evp_complex_2stage\fP(3) \fBelpa2_print_kernels\fP(1)
+\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real_double\fP(3) \fBelpa_solve_evp_real_single\fP(3) \fBelpa_solve_evp_complex_double\fP(3) \fBelpa_solve_evp_complex_single\fP(3) \fBelpa_solve_evp_complex_1stage_double\fP(3) \fBelpa_solve_evp_complex_1stage_single \fBsolve_evp_real_2stage_double\fP(3) \fBsolve_evp_real_2stage_single\fP(3) \fBsolve_evp_complex_2stage_double\fP(3) \fBsolve_evp_complex_2stage_single\fP(3) \fBelpa2_print_kernels\fP(1)

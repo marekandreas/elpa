@@ -285,8 +285,8 @@ program read_real
    ! Calculate eigenvalues/eigenvectors
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   call solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                       mpi_comm_rows, mpi_comm_cols)
+   call elpa_solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                                   mpi_comm_rows, mpi_comm_cols)
 
    if(myid == 0) print *,'Time tridiag_real :',time_evp_fwd
    if(myid == 0) print *,'Time solve_tridi  :',time_evp_solve

@@ -188,9 +188,9 @@
     logical                                :: successFortran
 
 #ifdef DOUBLE_PRECISION_REAL
-    successFortran = solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
 #else
-    successFortran = solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
 #endif
     if (successFortran) then
       success = 1
@@ -253,9 +253,9 @@
     logical                                :: successFortran
 
 #ifdef DOUBLE_PRECISION_REAL
-    successFortran = solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
 #else
-    successFortran = solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
 #endif
     if (successFortran) then
       success = 1
@@ -334,9 +334,11 @@
     logical                                :: successFortran
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-    successFortran = solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                                          mpi_comm_rows, mpi_comm_cols)
 #else
-    successFortran = solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                                          mpi_comm_rows, mpi_comm_cols)
 #endif
     if (successFortran) then
       success = 1
@@ -403,9 +405,11 @@
     logical                                :: successFortran
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-    successFortran = solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                                          mpi_comm_rows, mpi_comm_cols)
 #else
-    successFortran = solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    successFortran = elpa_solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                                          mpi_comm_rows, mpi_comm_cols)
 #endif
     if (successFortran) then
       success = 1
@@ -499,11 +503,11 @@
     endif
 
 #ifdef DOUBLE_PRECISION_REAL
-    successFortran = solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+    successFortran = elpa_solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, mpi_comm_all,                                  &
                                            THIS_REAL_ELPA_KERNEL_API, useQRFortran)
 #else
-    successFortran = solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+    successFortran = elpa_solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, mpi_comm_all,                                  &
                                            THIS_REAL_ELPA_KERNEL_API, useQRFortran)
 #endif
@@ -595,11 +599,11 @@
     endif
 
 #ifdef DOUBLE_PRECISION_REAL
-    successFortran = solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+    successFortran = elpa_solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, mpi_comm_all,                                  &
                                            THIS_REAL_ELPA_KERNEL_API, useQRFortran)
 #else
-    successFortran = solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+    successFortran = elpa_solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, mpi_comm_all,                                  &
                                            THIS_REAL_ELPA_KERNEL_API, useQRFortran)
 #endif
@@ -685,10 +689,12 @@
     logical                                :: successFortran
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-    successFortran = solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+    successFortran = elpa_solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                                          mpi_comm_rows, mpi_comm_cols, &
                                               mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
 #else
-    successFortran = solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+    successFortran = elpa_solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                                          mpi_comm_rows, mpi_comm_cols, &
                                               mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
 #endif
     if (successFortran) then
@@ -764,10 +770,12 @@
     logical                                :: successFortran
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-    successFortran = solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+    successFortran = elpa_solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                                          mpi_comm_rows, mpi_comm_cols, &
                                               mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
 #else
-    successFortran = solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+    successFortran = elpa_solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                                          mpi_comm_rows, mpi_comm_cols, &
                                               mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
 #endif
     if (successFortran) then
