@@ -257,7 +257,7 @@
                                   result(success) bind(C,name="elpa_solve_evp_real_2stage")
 
     use, intrinsic :: iso_c_binding
-    use elpa2, only : solve_evp_real_2stage
+    use elpa2, only : elpa_solve_evp_real_2stage
 
     implicit none
     integer(kind=c_int)                    :: success
@@ -278,7 +278,7 @@
       useQRFortran = .true.
     endif
 
-    successFortran = solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+    successFortran = elpa_solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, mpi_comm_all,                                  &
                                            THIS_REAL_ELPA_KERNEL_API, useQRFortran)
 
@@ -322,7 +322,7 @@
                                   result(success) bind(C,name="elpa_solve_evp_complex_2stage")
 
     use, intrinsic :: iso_c_binding
-    use elpa2, only : solve_evp_complex_2stage
+    use elpa2, only : elpa_solve_evp_complex_2stage
 
     implicit none
     integer(kind=c_int)                    :: success
@@ -337,7 +337,7 @@
     real(kind=c_double)                    :: ev(1:na)
     logical                                :: successFortran
 
-    successFortran = solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+    successFortran = elpa_solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                               mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API)
 
     if (successFortran) then

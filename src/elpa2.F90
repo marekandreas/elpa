@@ -76,14 +76,98 @@ module ELPA2
 
   ! The following routines are public:
 
-  public :: solve_evp_real_2stage
-  public :: solve_evp_complex_2stage
+  public :: solve_evp_real_2stage          !< old, deprecated interface: Driver routine for real eigenvalue problem. will be deleted at some point
+  public :: elpa_solve_evp_real_2stage     !< Driver routine for real 2-stage eigenvalue problem
+  public :: solve_evp_complex_2stage       !< old, deprecated interface: Driver routine for real eigenvalue problem. will be deleted at some point
+  public :: elpa_solve_evp_complex_2stage  !< Driver routine for complex 2-stage eigenvalue problem
 
+!-------------------------------------------------------------------------------
+!>  \brief elpa_solve_evp_real_2stage: Fortran function to solve the real eigenvalue problem with a 2 stage approach. This is called by "elpa_solve_evp_real"
+!>
+!>  Parameters
+!>
+!>  \param na                                   Order of matrix a
+!>
+!>  \param nev                                  Number of eigenvalues needed
+!>
+!>  \param a(lda,matrixCols)                    Distributed matrix for which eigenvalues are to be computed.
+!>                                              Distribution is like in Scalapack.
+!>                                              The full matrix must be set (not only one half like in scalapack).
+!>                                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                                  Leading dimension of a
+!>
+!>  \param ev(na)                               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)                    On output: Eigenvectors of a
+!>                                              Distribution is like in Scalapack.
+!>                                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                                  Leading dimension of q
+!>
+!>  \param nblk                                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols                           local columns of matrix a and q
+!>
+!>  \param mpi_comm_rows                        MPI communicator for rows
+!>  \param mpi_comm_cols                        MPI communicator for columns
+!>  \param mpi_comm_all                         MPI communicator for the total processor set
+!>
+!>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
+!>
+!>  \param use_qr (optional)                    use QR decomposition
+!>
+!>  \result success                             logical, false if error occured
+!-------------------------------------------------------------------------------
+  interface elpa_solve_evp_real_2stage
+    module procedure solve_evp_real_2stage
+  end interface
 
+!-------------------------------------------------------------------------------
+!>  \brief elpa_solve_evp_complex_2stage: Fortran function to solve the complex eigenvalue problem with a 2 stage approach. This is called by "elpa_solve_evp_complex"
+!>
+!>  Parameters
+!>
+!>  \param na                                   Order of matrix a
+!>
+!>  \param nev                                  Number of eigenvalues needed
+!>
+!>  \param a(lda,matrixCols)                    Distributed matrix for which eigenvalues are to be computed.
+!>                                              Distribution is like in Scalapack.
+!>                                              The full matrix must be set (not only one half like in scalapack).
+!>                                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                                  Leading dimension of a
+!>
+!>  \param ev(na)                               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)                    On output: Eigenvectors of a
+!>                                              Distribution is like in Scalapack.
+!>                                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                                  Leading dimension of q
+!>
+!>  \param nblk                                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols                           local columns of matrix a and q
+!>
+!>  \param mpi_comm_rows                        MPI communicator for rows
+!>  \param mpi_comm_cols                        MPI communicator for columns
+!>  \param mpi_comm_all                         MPI communicator for the total processor set
+!>
+!>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
+!>
+!>  \result success                             logical, false if error occured
+!-------------------------------------------------------------------------------
+  interface elpa_solve_evp_complex_2stage
+    module procedure solve_evp_complex_2stage
+  end interface
 !******
 contains
 !-------------------------------------------------------------------------------
-!>  \brief solve_evp_real_2stage: Fortran function to solve the real eigenvalue problem with a 2 stage approach. This is called by "elpa_solve_evp_real"
+!>  \brief solve_evp_real_2stage: Old, deprecated interface better use "elpa_solve_evp_real_2stage"
 !>
 !>  Parameters
 !>
@@ -335,7 +419,7 @@ end function solve_evp_real_2stage
 
 
 !-------------------------------------------------------------------------------
-!>  \brief solve_evp_complex_2stage: Fortran function to solve the complex eigenvalue problem with a 2 stage approach. This is called by "elpa_solve_evp_complex"
+!>  \brief solve_evp_complex_2stage: Old, deprecated interface. Better use "elpa_solve_evp_complex_2stage"
 !>
 !>  Parameters
 !>
