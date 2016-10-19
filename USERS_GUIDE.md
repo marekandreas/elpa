@@ -1,4 +1,4 @@
-## Users guide for the ELPA library ##
+## Users guide for the *ELPA* library ##
 
 This document provides the guide for using the *ELPA* library in user applications.
 
@@ -12,7 +12,7 @@ the necessary communicators.
 Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.004/html/index.html)
 for each *ELPA* release is available.
 
-### General concept of the  *ELPA* library ###
+### General concept of the *ELPA* library ###
 
 The *ELPA* library consists of two main parts:
 - *ELPA 1stage* solver
@@ -22,11 +22,11 @@ Both variants of the *ELPA* solvers are available for real or complex valued mat
 
 Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.004/html/index.html) for details):
 
-- elpa_get_communicators   : set the row / column communicators for *ELPA*
-- solve_evp_complex_1stage : solve a complex valued eigenvale proplem with the *ELPA 1stage* solver
-- solve_evp_real_1stage    : solve a real valued eigenvale proplem with the *ELPA 1stage* solver
-- solve_evp_complex_2stage : solve a complex valued eigenvale proplem with the *ELPA 2stage* solver
-- solve_evp_real_2stage    : solve a real valued eigenvale proplem with the *ELPA 2stage* solver
+- elpa_get_communicators        : set the row / column communicators for *ELPA*
+- elpa_solve_evp_complex_1stage : solve a complex valued eigenvale proplem with the *ELPA 1stage* solver
+- elpa_solve_evp_real_1stage    : solve a real valued eigenvale proplem with the *ELPA 1stage* solver
+- elpa_solve_evp_complex_2stage : solve a complex valued eigenvale proplem with the *ELPA 2stage* solver
+- elpa_solve_evp_real_2stage    : solve a real valued eigenvale proplem with the *ELPA 2stage* solver
 
 *NEW*
 
@@ -63,7 +63,7 @@ of a simple example program can be found in ./test_project/src.
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in get_elpa_communicators
 
-   success = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   success = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                     mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -84,7 +84,7 @@ of a simple example program can be found in ./test_project/src.
      print *
    end if
 
-   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = elpa_solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                    matrixCols, mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -138,7 +138,7 @@ only the real or complex valued solver has to be called:
 SYNOPSIS
    FORTRAN INTERFACE
        use elpa1
-       success = solve_evp_real_1stage (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
+       success = elpa_solve_evp_real_1stage (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
        mpi_comm_cols)
 
        With the definintions of the input and output variables:
@@ -160,7 +160,7 @@ SYNOPSIS
    C INTERFACE
        #include "elpa.h"
 
-       success = solve_evp_real_1stage (int na, int nev,  double *a, int lda,  double *ev, double *q, int ldq, int nblk, int matrixCols, int
+       success = elpa_solve_evp_real_1stage (int na, int nev,  double *a, int lda,  double *ev, double *q, int ldq, int nblk, int matrixCols, int
        mpi_comm_rows, int mpi_comm_cols);
 
        With the definintions of the input and output variables:
@@ -187,7 +187,7 @@ DESCRIPTION
 
    FORTRAN INTERFACE
        use elpa1
-       success = solve_evp_complex_1stage (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
+       success = elpa_solve_evp_complex_1stage (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
        mpi_comm_cols)
 
        With the definintions of the input and output variables:
@@ -210,7 +210,7 @@ DESCRIPTION
        #include "elpa.h"
        #include <complex.h>
 
-       success = solve_evp_complex_1stage (int na, int nev,  double complex *a, int lda,  double *ev, double complex*q, int ldq, int nblk, int
+       success = elpa_solve_evp_complex_1stage (int na, int nev,  double complex *a, int lda,  double *ev, double complex*q, int ldq, int nblk, int
        matrixCols, int mpi_comm_rows, int mpi_comm_cols);
 
        With the definintions of the input and output variables:
@@ -267,8 +267,9 @@ It is also possible to set the *ELPA 2stage* compute kernels via the API.
 
 SYNOPSIS
    FORTRAN INTERFACE
-       use elpa1 use elpa2
-       success = solve_evp_real_2stage (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
+       use elpa1
+       use elpa2
+       success = elpa_solve_evp_real_2stage (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
        mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQr=useQR)
 
        With the definintions of the input and output variables:
@@ -292,7 +293,7 @@ SYNOPSIS
    C INTERFACE
        #include "elpa.h"
 
-       success = solve_evp_real_2stage (int na, int nev,  double *a, int lda,  double *ev, double *q, int ldq, int nblk, int matrixCols, int
+       success = elpa_solve_evp_real_2stage (int na, int nev,  double *a, int lda,  double *ev, double *q, int ldq, int nblk, int matrixCols, int
        mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_ELPA_REAL_KERNEL, int useQr);
 
        With the definintions of the input and output variables:
@@ -322,8 +323,9 @@ DESCRIPTION
 
 SYNOPSIS
    FORTRAN INTERFACE
-       use elpa1 use elpa2
-       success = solve_evp_real_2stage (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
+       use elpa1
+       use elpa2
+       success = elpa_solve_evp_real_2stage (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
        mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL)
 
        With the definintions of the input and output variables:
@@ -346,7 +348,7 @@ SYNOPSIS
        #include "elpa.h"
        #include <complex.h>
 
-       success = solve_evp_complex_2stage (int na, int nev,  double complex *a, int lda,  double *ev, double complex *q, int ldq, int nblk, int
+       success = elpa_solve_evp_complex_2stage (int na, int nev,  double complex *a, int lda,  double *ev, double complex *q, int ldq, int nblk, int
        matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_ELPA_REAL_KERNEL);
 
        With the definintions of the input and output variables:
@@ -383,17 +385,16 @@ Since release ELPA 2016.005.004 a driver routine allows to choose more easily wh
 
   use elpa
 
-
-  success = \fBelpa_solve_evp_real\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL=THIS_REAL_ELPA_KERNEL, useQr=useQR, method=method)
+  success = elpa_solve_evp_real (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL=THIS_REAL_ELPA_KERNEL, useQr=useQR, method=method)
 
   Generalized interface to the ELPA 1stage and 2stage solver for real-valued problems
 
   With the definintions of the input and output variables:
 
 
-  integer, intent(in)            na\:                    global dimension of quadratic matrix a to solve
+  integer, intent(in)            na:                    global dimension of quadratic matrix a to solve
 
-  integer, intent(in)            nevP:                   number of eigenvalues to be computed; the first nev eigenvalules are calculated
+  integer, intent(in)            nev:                   number of eigenvalues to be computed; the first nev eigenvalules are calculated
 
   real*8,  intent(inout)         a:                     locally distributed part of the matrix a. The local dimensions are lda x matrixCols
 
@@ -428,8 +429,7 @@ Since release ELPA 2016.005.004 a driver routine allows to choose more easily wh
 
  #include "elpa.h"
 
-
- success = \fBelpa_solve_evp_real\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQr, \fbchar *\fPmethod);"
+ success = elpa_solve_evp_real (int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_ELPA_REAL_KERNEL, int useQr, char *method);"
 
 
  With the definintions of the input and output variables:"
