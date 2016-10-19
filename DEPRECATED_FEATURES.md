@@ -1,8 +1,13 @@
-This file contains a list of features, which have been replaced by other options.
-Thus these features are considered as deprecated and will be removed at some point
-from the ELPA library.
+## DEPRECATED FEATURES OF *ELPA* ##
 
-A) Deprecated interfaces:
+This file contains a list of features, which have been replaced by other options.
+Thus these features are considered as deprecated, and will be removed at some point
+in the (near) future from the *ELPA* library.
+
+### A) Deprecated interfaces:###
+
+In order to unfiy the namespace of the *ELPA* public interfaces, several interfaces
+have been replaced by new names. The old interfaces will be removed
 
 Deprecated interface             Replacement
 ===================================================
@@ -20,3 +25,7 @@ invert_trm_real                  elpa_invert_trm_real
 invert_trm_complex               elpa_invert_trm_complex
 cholesky_real                    elpa_cholesky_real
 cholesky_complex                 elpa_cholesky_complex
+
+
+### B) Runtime options ###
+At the moment no runtime options are deprecated
