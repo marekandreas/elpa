@@ -54,6 +54,11 @@
 
 #include "precision_macros.h"
 
+!cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
+#define check_memcpy_cuda(file, success) call check_memcpy_CUDA_f(file, __LINE__, success)
+#define check_alloc_cuda(file, success) call check_alloc_CUDA_f(file, __LINE__, success)
+#define check_dealloc_cuda(file, success) call check_dealloc_CUDA_f(file, __LINE__, success)
+
 #include "elpa1_tridiag_real_template.X90"
 #include "elpa1_trans_ev_real_template.X90"
 #include "elpa1_solve_tridi_real_template.X90"

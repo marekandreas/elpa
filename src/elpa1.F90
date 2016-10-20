@@ -637,9 +637,9 @@ function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
 
    ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
 #else
-   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
 #endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
@@ -816,9 +816,9 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
 
    ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_REAL
-   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
 #else
-   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
 #endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0

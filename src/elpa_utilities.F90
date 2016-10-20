@@ -59,7 +59,7 @@ module ELPA_utilities
   private ! By default, all routines contained are private
 
   public :: debug_messages_via_environment_variable, error_unit
-  public :: check_alloc, check_alloc_CUDA, check_memcpy_CUDA, check_dealloc_CUDA
+  public :: check_alloc, check_alloc_CUDA_f, check_memcpy_CUDA_f, check_dealloc_CUDA_f
   public :: map_global_array_index_to_local_index
   public :: pcol, prow
   public :: local_index                ! Get local index of a block cyclic distributed matrix
@@ -257,37 +257,37 @@ module ELPA_utilities
     endif
  end subroutine
 
- subroutine check_alloc_CUDA(function_name, variable_name, successCUDA)
+ subroutine check_alloc_CUDA_f(file_name, line, successCUDA)
     use precision
     
     implicit none
     
-    character(len=*), intent(in)    :: function_name
-    character(len=*), intent(in)    :: variable_name
+    character(len=*), intent(in)    :: file_name
+    integer(kind=ik), intent(in)    :: line
     logical                         :: successCUDA
     
     if (.not.(successCUDA)) then
-      print *, function_name, ": error in cuda_malloc when allocating ", variable_name
+      print *, file_name, ":", line,  " error in cuda_malloc when allocating "
       stop
     endif
  end subroutine
 
- subroutine check_dealloc_CUDA(function_name, variable_name, successCUDA)
+ subroutine check_dealloc_CUDA_f(file_name, line, successCUDA)
     use precision
     
     implicit none
     
-    character(len=*), intent(in)    :: function_name
-    character(len=*), intent(in)    :: variable_name
+    character(len=*), intent(in)    :: file_name
+    integer(kind=ik), intent(in)    :: line
     logical                         :: successCUDA
     
     if (.not.(successCUDA)) then
-      print *, function_name, ": error in cuda_free when deallocating ", variable_name
+      print *, file_name, ":", line,  " error in cuda_free when deallocating "
       stop
     endif
  end subroutine
 
- subroutine check_memcpy_CUDA(file_name, line, successCUDA)
+ subroutine check_memcpy_CUDA_f(file_name, line, successCUDA)
     use precision
     
     implicit none
