@@ -76,6 +76,9 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
 #ifdef WITH_OPENMP
    use omp_lib
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
    use elpa_mpi
 
    implicit none
@@ -91,10 +94,16 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
    integer(kind=ik)                          :: lcm_s_t, nblks_tot
    integer(kind=ik)                          :: auxstride, tylerk, error_unit
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)
    call mpi_comm_rank(comm_t,mypt,mpierr)
    call mpi_comm_size(comm_t,npt ,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
 
    ! Look to elpa_transpose_vectors for the basic idea!
 
@@ -141,6 +150,9 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
          !$omp master
 #endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
 
 #if REALCASE==1
          if(k>0) call mpi_reduce(aux1,aux2,k,MPI_REAL8,MPI_SUM,ipt,comm_t,mpierr)
@@ -148,6 +160,9 @@ subroutine elpa_reduce_add_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t
 
 #if COMPLEXCASE==1
          if(k>0) call mpi_reduce(aux1,aux2,k,MPI_DOUBLE_COMPLEX,MPI_SUM,ipt,comm_t,mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
