@@ -80,7 +80,9 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
 #ifdef WITH_OPENMP
    use omp_lib
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
    use elpa_mpi
 
    implicit none
@@ -97,11 +99,17 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
    integer(kind=ik)                          :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
    integer(kind=ik)                          :: auxstride
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)
    call mpi_comm_rank(comm_t,mypt,mpierr)
    call mpi_comm_size(comm_t,npt ,mpierr)
 
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
    ! The basic idea of this routine is that for every block (in the block cyclic
    ! distribution), the processor within comm_t which owns the diagonal
    ! broadcasts its values of vmat_s to all processors within comm_t.
@@ -155,6 +163,9 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
          !$omp master
 #endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
 
 #if COMPLEXCASE==1
          call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_DOUBLE_COMPLEX,ips,comm_s,mpierr)
@@ -162,6 +173,9 @@ subroutine elpa_transpose_vectors_complex(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,
 
 #if REALCASE==1
          call MPI_Bcast(aux,nblks_comm*nblk*nvc,MPI_REAL8,ips,comm_s,mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
