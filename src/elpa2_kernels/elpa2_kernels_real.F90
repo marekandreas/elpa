@@ -125,7 +125,6 @@ contains
 
     if(nq-i+1 > 4) then
 #ifdef USE_ASSUMED_SIZE
-    print *,"calling 8"
        call hh_trafo_kernel_8_generic(q(i,1),hh, nb, ldq, ldh, s)
 #else
        call hh_trafo_kernel_8_generic(q(i:ldq,1:nb+1), hh(1:ldh,1:2), nb, ldq, ldh, s)
@@ -133,7 +132,6 @@ contains
 
     else if(nq-i+1 > 0) then
 #ifdef USE_ASSUMED_SIZE
-       print *,"calling 4"
        call hh_trafo_kernel_4_generic(q(i,1),hh, nb, ldq, ldh, s)
 #else
        call hh_trafo_kernel_4_generic(q(i:ldq,1:+nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
