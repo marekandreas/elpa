@@ -164,10 +164,17 @@
       call timer%start("bandred_real_single")
 #endif
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
+
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
       success = .true.
 
 
@@ -588,11 +595,16 @@
              endif
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
              call mpi_allreduce(aux1, aux2, 2, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
              call mpi_allreduce(aux1, aux2, 2, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -629,11 +641,17 @@
 
            vr(lr+1) = tau
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
            call MPI_Bcast(vr, lr+1, MPI_REAL8, cur_pcol, mpi_comm_cols, mpierr)
 #else
            call MPI_Bcast(vr, lr+1, MPI_REAL4, cur_pcol, mpi_comm_cols, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
@@ -679,11 +697,17 @@
            !$omp barrier
            !$omp single
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
            if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
            if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -725,11 +749,17 @@
 
            ! Get global dot products
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
            if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
            if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -1084,6 +1114,9 @@
            endif
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
            call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, ierr)
@@ -1091,7 +1124,9 @@
            call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, ierr)
 #endif
            umcCUDA(1 : l_cols * n_cols) = tmpCUDA(1 : l_cols * n_cols)
-
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 
 !           tmpCUDA(1 : l_cols * n_cols) = umcCUDA(1 : l_cols * n_cols)
@@ -1276,7 +1311,9 @@
            endif
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
            call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
@@ -1284,7 +1321,9 @@
 #endif
 
            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 !           tmpCPU(1:l_cols,1:n_cols) = umcCPU(1:l_cols,1:n_cols)
 #endif /* WITH_MPI */
@@ -1599,13 +1638,17 @@
       enddo
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
       call mpi_allreduce(h1, h2, nc, MPI_REAL8, MPI_SUM, comm, mpierr)
 #else
       call mpi_allreduce(h1, h2, nc, MPI_REAL4, MPI_SUM, comm, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
       nc = 0
       do i=1,n
         a(1:i,i) = h2(nc+1:nc+i)
@@ -1735,11 +1778,16 @@
       call timer%start("trans_ev_band_to_full_real_single")
 #endif
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
       max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of A
       max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q!
 
@@ -1874,11 +1922,16 @@
 
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL8, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
               call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL4, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
@@ -1974,13 +2027,18 @@
           !       endif
           !#endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
 #else
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 
 !          tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
@@ -2120,11 +2178,16 @@
 
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL8, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
               call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL4, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
@@ -2163,7 +2226,14 @@
               call dgemm('T', 'N', t_rows, t_cols, l_rows, 1.0_rk8, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                         max_local_rows, 0.0_rk8, t_tmp, cwy_blocking)
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
+
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_REAL8, MPI_SUM, mpi_comm_rows, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
 
               call dtrmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk8, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call dtrmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk8, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
@@ -2190,7 +2260,14 @@
               call sgemm('T', 'N', t_rows, t_cols, l_rows, 1.0_rk4, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                         max_local_rows, 0.0_rk4, t_tmp, cwy_blocking)
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
+
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_REAL4, MPI_SUM, mpi_comm_rows, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
 
               call strmm('L', 'U', 'N', 'N', t_rows, t_cols, 1.0_rk4, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call strmm('R', 'U', 'N', 'N', t_rows, t_cols, -1.0_rk4, tmat_complete(t_rows+1,t_rows+1), &
@@ -2241,6 +2318,9 @@
           endif ! l_rows>0
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL8, MPI_SUM, mpi_comm_rows ,mpierr)
@@ -2259,7 +2339,9 @@
           endif
 
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 !          tmp2 = tmp1
 
@@ -2463,6 +2545,9 @@
       call timer%start("tridiag_band_real_single")
 #endif
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
       call mpi_comm_rank(mpi_comm,my_pe,mpierr)
       call mpi_comm_size(mpi_comm,n_pes,mpierr)
 
@@ -2470,6 +2555,9 @@
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
       ! Get global_id mapping 2D procssor coordinates to global id
 
       allocate(global_id(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
@@ -2491,7 +2579,9 @@
 #endif
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
 #ifndef WITH_OPENMP
       call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
 #else
@@ -2503,7 +2593,9 @@
         stop
       endif
 #endif /* WITH_OPENMP */
-
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
 #endif /* WITH_MPI */
 
       ! Total number of blocks in the band:
@@ -2601,13 +2693,18 @@
         if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
           num_chunks  = num_chunks+1
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, mpi_real8, nt, &
                            10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
 #else
           call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, mpi_real4, nt, &
                            10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -2714,13 +2811,18 @@
         ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
         ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_isend(ab_s, nb+1, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
         call mpi_isend(ab_s, nb+1, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #endif /* WITH_MPI */
       endif
 
@@ -2775,11 +2877,16 @@
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_recv(hv, nb, mpi_real8, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
             call mpi_recv(hv, nb, mpi_real4, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -2791,11 +2898,17 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_recv(hv, nb, mpi_real8, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
             call mpi_recv(hv, nb, mpi_real4, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -2998,15 +3111,29 @@
               ! Send our first column to previous PE
               if (my_pe>0 .and. na_s <= na) then
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
+
                 call mpi_wait(ireq_ab, MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
+#endif
+
 #endif
                 ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_isend(ab_s, nb+1, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
                 call mpi_isend(ab_s, nb+1, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
@@ -3015,6 +3142,10 @@
               ! Request last column from next PE
               ne = na_s + nblocks*nb - (max_threads-1) - 1
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
+
               if (istep>=max_threads .and. ne <= na) then
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
@@ -3022,6 +3153,9 @@
                 call mpi_recv(ab(1,ne-n_off), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
               endif
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
               if (istep>=max_threads .and. ne <= na) then
                 ab(1:nb+1,ne-n_off) = ab_s(1:nb+1)
@@ -3034,17 +3168,30 @@
               ne = na_s + nblocks*nb - (max_threads-1) - 1
               if (istep>=max_threads .and. ne < na) then
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
                 call mpi_wait(ireq_hv, MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
+#endif
+
 #endif
                 hv_s(1) = tau_t(max_threads)
                 hv_s(2:) = hv_t(2:,max_threads)
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_isend(hv_s, nb, mpi_real8, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #else
                 call mpi_isend(hv_s, nb, mpi_real4, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
@@ -3088,14 +3235,23 @@
             if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
               ! Wait for last transfer to finish
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
+
               call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
 #endif
               ! Copy vectors into send buffer
               hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
               ! Send to destination
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
               call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
                            global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
@@ -3105,7 +3261,9 @@
                            global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
                            10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
              ! do the post-poned irecv here
              startAddr = startAddr - hh_cnt(iblk)
@@ -3154,13 +3312,17 @@
 
               ! ... then request last column ...
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 #ifdef WITH_OPENMP
               call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
               call mpi_recv(ab(1,ne), nb+1, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 
               ab(1:nb+1,ne) = ab_s(1:nb+1)
@@ -3175,13 +3337,17 @@
 
               ! ... then request last column ...
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 #ifdef WITH_OPENMP
               call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
               call mpi_recv(ab(1,ne), nb+1, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 
               ab(1:nb+1,ne) = ab_s(1:nb+1)
@@ -3241,11 +3407,16 @@
 
               if (iblk==nblocks) then
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
 #ifdef WITH_OPENMP
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
@@ -3253,11 +3424,17 @@
                 hv_s(2:) = hv_new(2:)
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_isend(hv_s, nb, mpi_real8, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #else
                 call mpi_isend(hv_s, nb, mpi_real4, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
@@ -3282,11 +3459,17 @@
 
               ! ... send it away ...
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 
 #ifdef WITH_OPENMP
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #else
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
@@ -3295,7 +3478,15 @@
 #ifdef DOUBLE_PRECISION_REAL
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
+
               call mpi_isend(ab_s, nb+1, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
+
 #endif
               ! ... and calculate remaining columns with rank-2 update
               if (nc>1) call DSYR2('L', nc-1, -1.0_rk8, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
@@ -3306,7 +3497,15 @@
 #else /* DOUBLE_PRECISION_REAL */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
+
               call mpi_isend(ab_s, nb+1, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
+
 #endif
               ! ... and calculate remaining columns with rank-2 update
               if (nc>1) call SSYR2('L', nc-1, -1.0_rk4, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
@@ -3356,14 +3555,23 @@
           if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%start("mpi_communication")
+#endif
+
             call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%stop("mpi_communication")
+#endif
 #endif
             ! Copy vectors into send buffer
             hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
             ! Send to destination
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
 
             call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), mpi_real8, &
@@ -3374,7 +3582,9 @@
                   global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
                   10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
             ! do the post-poned irecv here
             startAddr = startAddr - hh_cnt(iblk)
@@ -3399,6 +3609,9 @@
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
       call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
       call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 
@@ -3415,22 +3628,37 @@
 !        print *,"tridiag_band_real: error when deallocating mpi_statuses"//errorMessage
 !        stop
 !      endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
       call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
       call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 
       call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
       call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
 #endif
 
 #endif /* WITH_OPENMP */
 
 #ifdef  WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
       call mpi_barrier(mpi_comm,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
 #endif
       deallocate(ab, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
@@ -3662,10 +3890,16 @@
       max_threads = 1
       max_threads = omp_get_max_threads()
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
       call MPI_Comm_rank(mpi_comm_rows, my_prow, mpierr)
       call MPI_Comm_size(mpi_comm_rows, np_rows, mpierr)
       call MPI_Comm_rank(mpi_comm_cols, my_pcol, mpierr)
       call MPI_Comm_size(mpi_comm_cols, np_cols, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
       if (mod(nbw,nblk)/=0) then
         if (my_prow==0 .and. my_pcol==0) then
           if (wantDebug) then
@@ -3903,11 +4137,16 @@
                stop
               endif
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
               call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -3959,11 +4198,17 @@
 #endif
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
                 call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
                 call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -3972,11 +4217,17 @@
 
               else
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
                 call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
                 call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+               call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -4068,13 +4319,17 @@
                 src_offset = src_offset+1
                 row(:) = q(src_offset, 1:l_nev)
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
                 call MPI_Send(row, l_nev, MPI_REAL8, dst, 0, mpi_comm_rows, mpierr)
 #else
                 call MPI_Send(row, l_nev, MPI_REAL4, dst, 0, mpi_comm_rows, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
+#endif
 #endif /* WITH_MPI */
               endif
             enddo
@@ -4089,13 +4344,17 @@
               src_offset = src_offset+1
               row(:) = q(src_offset, 1:l_nev)
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Send(row, l_nev, MPI_REAL8, ip, 0, mpi_comm_rows, mpierr)
 #else
               call MPI_Send(row, l_nev, MPI_REAL4, ip, 0, mpi_comm_rows, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
 #endif /* WITH_MPI */
             endif
           enddo
@@ -4110,13 +4369,17 @@
               endif
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
               call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 
 !              row(1:l_nev) = row(1:l_nev)
@@ -4165,25 +4428,33 @@
 #endif
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+               call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
                call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
                call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+               call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
                row_group(1:l_nev,row_group_size) = row(1:l_nev) ! is this correct ?
 #endif /* WITH_MPI */
               else
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
                 call MPI_Recv(row, l_nev, MPI_REAL8, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #else
                 call MPI_Recv(row, l_nev, MPI_REAL4, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 
 !                row(1:l_nev) = row(1:l_nev)
@@ -4255,7 +4526,9 @@
       if (my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
         do j = 1, min(num_result_buffers, num_result_blocks)
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_REAL8, 0, result_recv_tag, &
                               mpi_comm_rows, result_recv_request(j), mpierr)
@@ -4264,7 +4537,9 @@
                               mpi_comm_rows, result_recv_request(j), mpierr)
 
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 
           ! carefull the "recv" has to be done at the corresponding wait or send
@@ -4501,13 +4776,18 @@
             csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
             b_len = csw*nbw*max_threads
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
             call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow+1, bottom_recv_tag, &
                               mpi_comm_rows, bottom_recv_request(i), mpierr)
 #else
             call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_REAL4, my_prow+1, bottom_recv_tag, &
                               mpi_comm_rows, bottom_recv_request(i), mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -4518,6 +4798,9 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
@@ -4525,6 +4808,9 @@
 #else
             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL4, my_prow+1, bottom_recv_tag, &
                         mpi_comm_rows, bottom_recv_request(i), mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%stop("mpi_communication")
 #endif
 
 #else  /* WITH_MPI */
@@ -4543,11 +4829,17 @@
             current_tv_off = current_tv_off + current_local_n
           endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
           call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_REAL8, mod(sweep,np_cols), mpi_comm_cols, mpierr)
 #else
           call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_REAL4, mod(sweep,np_cols), mpi_comm_cols, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_MPI */
@@ -4630,7 +4922,15 @@
               endif
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
+
               call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
+
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4661,7 +4961,15 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
+
               call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
+
 #endif
               n_off = current_local_n+a_off
 
@@ -4695,6 +5003,9 @@
                stop
              endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
@@ -4704,6 +5015,9 @@
              call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
                                    MPI_REAL4, my_prow+1, bottom_recv_tag, &
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%stop("mpi_communication")
 #endif
 
 #else /* WTIH_MPI */
@@ -4715,6 +5029,9 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow+1, bottom_recv_tag, &
@@ -4724,6 +5041,9 @@
              call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL4, my_prow+1, bottom_recv_tag, &
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
 
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -4747,13 +5067,26 @@
                stop
              endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%start("mpi_communication")
+#endif
+
              call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%stop("mpi_communication")
+#endif
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%start("mpi_communication")
+#endif
              call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%stop("mpi_communication")
+#endif
 #endif
 
              if (useGPU) then
@@ -4854,7 +5187,13 @@
             stop
            endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("mpi_communication")
+#endif
            call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
+#endif
 #endif
            if (bottom_msg_length>0) then
              n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -4862,7 +5201,9 @@
              bottom_border_send_buffer(1:b_len,i) = &
                  reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -4870,7 +5211,9 @@
              call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL4, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
                 if (next_top_msg_length > 0) then
                   top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = bottom_border_send_buffer(1:csw* &
@@ -4882,7 +5225,13 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%start("mpi_communication")
+#endif
            call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
+#endif
 #endif
            if (bottom_msg_length>0) then
              n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -4905,13 +5254,18 @@
                bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
              endif
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #else
              call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL4, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+             call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -4970,7 +5324,14 @@
 
         !send_b
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
+
         call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #endif
         if (bottom_msg_length > 0) then
           n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -4978,13 +5339,18 @@
           bottom_border_send_buffer(1:b_len,i) = &
               reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL8, my_prow+1, &
                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #else
           call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL4, my_prow+1, &
                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -5015,7 +5381,14 @@
 
         !send_b
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
+
         call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #endif
         if (bottom_msg_length > 0) then
           n_off = current_local_n+nbw-bottom_msg_length+a_off
@@ -5038,7 +5411,9 @@
             bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
           endif
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL8, my_prow+1, &
                          top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
@@ -5046,7 +5421,9 @@
           call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL4, my_prow+1, &
                          top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
                 if (next_top_msg_length > 0) then
                   top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
@@ -5129,13 +5506,25 @@
             stop
           endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
           call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
           call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
+#endif
 #endif
           if (useGPU) then
 #ifdef DOUBLE_PRECISION_REAL
@@ -5236,7 +5625,9 @@
 
         b_len = csw*next_top_msg_length*max_threads
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
         call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_REAL8, my_prow-1, &
                        top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
@@ -5244,7 +5635,9 @@
         call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_REAL4, my_prow-1, &
                        top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 !             carefull the "recieve" has to be done at the corresponding wait or send
 !              top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
@@ -5254,7 +5647,9 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
         call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_REAL8, my_prow-1, &
                        top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
@@ -5262,7 +5657,9 @@
         call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_REAL4, my_prow-1, &
                        top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
 !             carefull the "recieve" has to be done at the corresponding wait or send
 !              top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
@@ -5281,13 +5678,21 @@
           stop
         endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
         call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #endif
         b_len = csw*nbw*max_threads
         top_border_send_buffer(1:b_len,i) = reshape(aIntern(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
 
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
         call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_REAL8, &
                        my_prow-1, bottom_recv_tag, &
@@ -5297,7 +5702,9 @@
                        my_prow-1, bottom_recv_tag, &
                        mpi_comm_rows, top_send_request(i), mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
               if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
                 bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
@@ -5310,7 +5717,13 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
         call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #endif
         if (useGPU) then
 #ifdef DOUBLE_PRECISION_REAL
@@ -5331,7 +5744,9 @@
           top_border_send_buffer(:,1:nbw,i) = aIntern(:,a_off+1:a_off+nbw,i)
         endif
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
         call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_REAL8, my_prow-1, bottom_recv_tag, &
                        mpi_comm_rows, top_send_request(i), mpierr)
@@ -5339,7 +5754,9 @@
         call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_REAL4, my_prow-1, bottom_recv_tag, &
                        mpi_comm_rows, top_send_request(i), mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #else /* WITH_MPI */
             if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
                bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
@@ -5362,13 +5779,25 @@
            stop
           endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
           call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
           call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
 #endif
 
 #endif /* WITH_OPENMP */
@@ -5380,13 +5809,25 @@
            stop
           endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
           call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
           call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
 #endif
 
 #endif /* WITH_OPENMP */
@@ -5406,13 +5847,25 @@
            stop
          endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
       call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
       call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
 #endif
 
 #endif /* WITH_OPENMP */
@@ -5437,13 +5890,28 @@
           stop
         endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
         call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
+
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
+
         call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
+
 #endif
 
 #endif /* WITH_OPENMP */
@@ -5532,6 +6000,9 @@
             enddo
           endif ! useGPU
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL8, dst, &
@@ -5539,6 +6010,9 @@
 #else
           call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL4, dst, &
                                     result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -5573,7 +6047,15 @@
             stop
           endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
+
           call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+           call timer%stop("mpi_communication")
+#endif
+
 #else /* WITH_MPI */
           flag = .true.
 #endif
@@ -5581,7 +6063,15 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
+
           call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
+
 #else /* WITH_MPI */
           flag = .true.
 #endif
@@ -5598,13 +6088,29 @@
             stop
           endif
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
+
           call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
+
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
+
           call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
+
 #endif
 
 #endif /* WITH_OPENMP */
@@ -5619,6 +6125,10 @@
 
         ! Queue result buffer again if there are outstanding blocks left
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
+
         if (j+num_result_buffers < num_result_blocks) &
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -5631,6 +6141,9 @@
         ! carefull the "recieve" has to be done at the corresponding wait or send
 !         if (j+num_result_buffers < num_result_blocks) &
 !                result_buffer(1:l_nev*nblk,1,nbuf) =  result_buffer(1:l_nev*nblk,1,nbuf)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 
 #else /* WITH_MPI */
 
@@ -5763,7 +6276,15 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+       call timer%start("mpi_communication")
+#endif
+
        call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+       call timer%stop("mpi_communication")
+#endif
+
 #endif
 
 #endif /* WITH_OPENMP */
@@ -6128,8 +6649,15 @@
 !        stop
 !      endif
 
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
       call mpi_comm_rank(mpi_comm,my_pe,mpierr)
       call mpi_comm_size(mpi_comm,n_pes,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
+
       ! Total number of blocks in the band:
       nblocks_total = (na-1)/nb + 1
       nblocks_total2 = (na-1)/nb2 + 1
@@ -6161,6 +6689,10 @@
       endif
 
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
+
       ireq_ab2 = MPI_REQUEST_NULL
 
       if (nb2>1) then
@@ -6173,6 +6705,10 @@
 #endif
         enddo
       endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
+
 #else /* WITH_MPI */
       ! carefull the "recieve" has to be done at the corresponding send or wait
 !      if (nb2>1) then
@@ -6202,13 +6738,18 @@
           ab_s(1:nb+1,i) = ab(1:nb+1,na_s-n_off+i-1)
         enddo
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_isend(ab_s, (nb+1)*nb2, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
         call mpi_isend(ab_s, (nb+1)*nb2, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #endif
-
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
 #endif /* WITH_MPI */
       endif
 
@@ -6273,11 +6814,16 @@
               dest = dest+1
             endif
 #ifdef WITH_MPI
-
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%start("mpi_communication")
+#endif
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_send(ab_s2, 2*nb2*nb2, mpi_real8, dest, 3, mpi_comm, mpierr)
 #else
             call mpi_send(ab_s2, 2*nb2*nb2, mpi_real4, dest, 3, mpi_comm, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -6296,11 +6842,17 @@
           if (na>na_s+nb2-1) then
             ! Receive Householder vectors from previous task, from PE owning subdiagonal
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
             call mpi_recv(hv, nb*nb2, mpi_real8, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
             call mpi_recv(hv, nb*nb2, mpi_real4, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+            call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -6347,11 +6899,17 @@
             if (iblk==nblocks .and. nc==nb) then
               !request last nb2 columns
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
               call mpi_recv(ab_r,(nb+1)*nb2, mpi_real8, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
               call mpi_recv(ab_r,(nb+1)*nb2, mpi_real4, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -6398,18 +6956,32 @@
               !send hh-vector
               if (iblk==nblocks) then
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
+
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
+#endif
+
 #endif
                 hv_s = hv_new
                 do i=1,nb2
                   hv_s(i,i) = tau_new(i)
                 enddo
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
                 call mpi_isend(hv_s,nb*nb2, mpi_real8, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #else
                 call mpi_isend(hv_s,nb*nb2, mpi_real4, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+                call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -6427,17 +6999,31 @@
             if (my_pe>0 .and. iblk==1) then
               !send first nb2 columns to previous PE
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
+
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
+#endif
+
 #endif
               do i=1,nb2
                 ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
               enddo
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%start("mpi_communication")
+#endif
 
 #ifdef DOUBLE_PRECISION_REAL
               call mpi_isend(ab_s,(nb+1)*nb2, mpi_real8, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #else
               call mpi_isend(ab_s,(nb+1)*nb2, mpi_real4, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+              call timer%stop("mpi_communication")
 #endif
 
 #else /* WITH_MPI */
@@ -6463,6 +7049,10 @@
 
         ! Finish the last outstanding requests
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+         call timer%start("mpi_communication")
+#endif
+
         call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
         call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 !        allocate(mpi_statuses(MPI_STATUS_SIZE,nblocks2), stat=istat, errmsg=errorMessage)
@@ -6479,6 +7069,10 @@
 !        endif
 
         call mpi_barrier(mpi_comm,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
+
 #endif /* WITH_MPI */
 
         deallocate(block_limits, stat=istat, errmsg=errorMessage)
