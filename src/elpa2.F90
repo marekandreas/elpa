@@ -249,6 +249,9 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_real_2stage")
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
 
@@ -256,6 +259,9 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
 
    wantDebug = .false.
    if (firstCall) then
@@ -364,8 +370,14 @@ function solve_evp_real_2stage(na, nev, a, lda, ev, q, ldq, nblk,        &
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_real          :',ttt1-ttt0
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
    call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
    call mpi_bcast(e,na,MPI_REAL8,0,mpi_comm_all,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
 #endif
    ttt1 = MPI_Wtime()
    time_evp_fwd = ttt1-ttts
@@ -492,6 +504,9 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve_evp_complex_2stage")
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
 
@@ -499,6 +514,9 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
    wantDebug = .false.
    if (firstCall) then
      ! are debug messages desired?
@@ -582,8 +600,14 @@ function solve_evp_complex_2stage(na, nev, a, lda, ev, q, ldq, nblk, &
    if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
       write(error_unit,*) 'Time tridiag_band_complex          :',ttt1-ttt0
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
    call mpi_bcast(ev,na,MPI_REAL8,0,mpi_comm_all,mpierr)
    call mpi_bcast(e,na,MPI_REAL8,0,mpi_comm_all,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
 #endif
    ttt1 = MPI_Wtime()
    time_evp_fwd = ttt1-ttts
