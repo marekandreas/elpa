@@ -2016,9 +2016,9 @@ module ELPA2_compute
       integer(kind=ik), parameter  :: result_recv_tag = 333
 
       ! Just for measuring the kernel performance
-      real(kind=rk)                :: kernel_time
+      real(kind=rk)                :: kernel_time, kernel_time_recv
       ! long integer
-      integer(kind=lik)            :: kernel_flops
+      integer(kind=lik)            :: kernel_flops, kernel_flops_recv
 
 #ifdef WITH_OPENMP
       integer(kind=ik)             :: max_threads, my_thread
@@ -3011,10 +3011,10 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #else
            call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
 #endif
+         enddo
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("mpi_communication")
 #endif
-         enddo
 #endif
        endif
 
@@ -3226,10 +3226,25 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
       if (ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
       if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
+
+#ifdef HAVE_DETAILED_TIMINGS
+       call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, mpierr)
+       kernel_flops = kernel_flops_recv
+       call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_COLS, mpierr)
+       kernel_flops = kernel_flops_recv
+
+       call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_ROWS, mpierr)
+       kernel_time_recv = kernel_time
+       call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_COLS, mpierr)
+       kernel_time_recv = kernel_time
 #endif
+       if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) then
+         write(error_unit,'(" Kernel time:",f10.3," MFlops: ",f10.3)') kernel_time, kernel_flops/kernel_time*1.d-6
+       endif
+#else
       if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
          write(error_unit,'(" Kernel time:",f10.3," MFlops: ",f10.3)')  kernel_time, kernel_flops/kernel_time*1.d-6
-
+#endif
       ! deallocate all working space
 
       nullify(a)
@@ -4864,9 +4879,9 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #endif
 
       ! Just for measuring the kernel performance
-      real(kind=rk)                 :: kernel_time
+      real(kind=rk)                 :: kernel_time, kernel_time_recv
       ! long integer
-      integer(kind=lik)             :: kernel_flops
+      integer(kind=lik)             :: kernel_flops, kernel_flops_recv
 
       logical, intent(in)           :: wantDebug
       logical                       :: success
@@ -6090,10 +6105,26 @@ top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
 #ifdef WITH_MPI
        if (ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
        if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
+#ifdef HAVE_DETAILED_TIMINGS
+       call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, mpierr)
+       kernel_flops = kernel_flops_recv
+       call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_COLS, mpierr)
+       kernel_flops = kernel_flops_recv
+
+       call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_ROWS, mpierr)
+       kernel_time_recv = kernel_time
+       call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_COLS, mpierr)
+       kernel_time_recv = kernel_time
 #endif
+       if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) then
+         write(error_unit,'(" Kernel time:",f10.3," MFlops: ",f10.3)') kernel_time, kernel_flops/kernel_time*1.d-6
+       endif
+
+
+#else
        if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
          write(error_unit,'(" Kernel time:",f10.3," MFlops: ",f10.3)') kernel_time, kernel_flops/kernel_time*1.d-6
-
+#endif
        ! deallocate all working space
 
        nullify(a)
