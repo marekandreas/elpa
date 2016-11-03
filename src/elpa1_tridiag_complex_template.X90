@@ -1,0 +1,543 @@
+#if 0
+!    This file is part of ELPA.
+!
+!    The ELPA library was originally created by the ELPA consortium,
+!    consisting of the following organizations:
+!
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!      Informatik,
+!    - Technische Universität München, Lehrstuhl für Informatik mit
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
+!    - IBM Deutschland GmbH
+!
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of
+!    the ELPA consortium.
+!
+!    More information can be found here:
+!    http://elpa.mpcdf.mpg.de/
+!
+!    ELPA is free software: you can redistribute it and/or modify
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
+!    Software Foundation.
+!
+!    ELPA is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU Lesser General Public License for more details.
+!
+!    You should have received a copy of the GNU Lesser General Public License
+!    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+!
+!    ELPA reflects a substantial effort on the part of the original
+!    ELPA consortium, and we ask you to respect the spirit of the
+!    license that we chose: i.e., please contribute any changes you
+!    may have back to the original ELPA library distribution, and keep
+!    any derivatives of ELPA under the same license that we chose for
+!    the original distribution, the GNU Lesser General Public License.
+!
+!
+! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+!
+! Copyright of the original code rests with the authors inside the ELPA
+! consortium. The copyright of any additional modifications shall rest
+! with their original authors, but shall adhere to the licensing terms
+! distributed along with the original code in the file "COPYING".
+#endif
+
+!> \brief Reduces a distributed symmetric matrix to tridiagonal form (like Scalapack Routine PDSYTRD)
+!>
+!  Parameters
+!
+!> \param na          Order of matrix
+!>
+!> \param a(lda,matrixCols)    Distributed matrix which should be reduced.
+!>              Distribution is like in Scalapack.
+!>              Opposed to PDSYTRD, a(:,:) must be set completely (upper and lower half)
+!>              a(:,:) is overwritten on exit with the Householder vectors
+!>
+!> \param lda         Leading dimension of a
+!>
+!> \param nblk        blocksize of cyclic distribution, must be the same in both directions!
+!>
+!> \param matrixCols  local columns of matrix
+!>
+!> \param mpi_comm_rows        MPI-Communicator for rows
+!> \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!> \param d(na)       Diagonal elements (returned), identical on all processors
+!>
+!> \param e(na)       Off-Diagonal elements (returned), identical on all processors
+!>
+!> \param tau(na)     Factors for the Householder vectors (returned), needed for back transformation
+!>
+!> \param useGPU      If true,  GPU version of the subroutine will be used
+!>
+    subroutine tridiag_complex_PRECISION(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau)
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#else
+      use timings_dummy
+#endif
+      use precision
+      implicit none
+
+      integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      complex(kind=COMPLEX_DATATYPE)              :: tau(na)
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE)              :: a(lda,*)
+#else
+      complex(kind=COMPLEX_DATATYPE)              :: a(lda,matrixCols)
+#endif
+      real(kind=REAL_DATATYPE), intent(out)         :: d(na), e(na)
+
+      integer(kind=ik), parameter   :: max_stored_rows = 32
+#ifdef DOUBLE_PRECISION_COMPLEX
+      complex(kind=ck8), parameter   :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
+#else
+      complex(kind=ck4), parameter   :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk4)
+#endif
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      
+      integer(kind=ik)              :: totalblocks, max_loc_block_rows, max_loc_block_cols, max_local_rows, max_local_cols
+      integer(kind=ik)              :: l_cols, l_rows, n_stored_vecs
+      integer(kind=ik)              :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
+      integer(kind=ik)              :: tile_size, l_rows_per_tile, l_cols_per_tile
+
+#ifdef WITH_OPENMP
+      integer(kind=ik)              :: my_thread, n_threads, max_threads, n_iter
+      integer(kind=ik)              :: omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
+#endif
+
+      real(kind=REAL_DATATYPE)                 :: vnorm2
+      complex(kind=COMPLEX_DATATYPE)              :: vav, xc, aux(2*max_stored_rows),  aux1(2), aux2(2), vrl, xf
+
+      complex(kind=COMPLEX_DATATYPE), allocatable :: tmp(:), v_row(:), v_col(:), u_row(:), u_col(:), vu_stored_rows(:,:), uv_stored_cols(:,:)
+#ifdef WITH_OPENMP
+      complex(kind=COMPLEX_DATATYPE), allocatable :: ur_p(:,:), uc_p(:,:)
+#endif
+      real(kind=REAL_DATATYPE), allocatable    :: tmp_real(:)
+      integer(kind=ik)              :: istat
+      character(200)                :: errorMessage
+
+      call timer%start("tridiag_complex" // PRECISION_SUFFIX)
+
+      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+      ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
+
+      tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
+      tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
+
+      l_rows_per_tile = tile_size/np_rows ! local rows of a tile
+      l_cols_per_tile = tile_size/np_cols ! local cols of a tile
+
+
+      totalblocks = (na-1)/nblk + 1
+      max_loc_block_rows = (totalblocks-1)/np_rows + 1
+      max_loc_block_cols = (totalblocks-1)/np_cols + 1
+
+      max_local_rows = max_loc_block_rows*nblk
+      max_local_cols = max_loc_block_cols*nblk
+
+      allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_complex", "tmp", istat, errorMessage)
+
+      allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_complex", "v_row", istat, errorMessage)
+
+      allocate(u_row(max_local_rows), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_complex", "u_row", istat, errorMessage)
+
+      allocate(v_col(max_local_cols), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_complex", "v_col", istat, errorMessage)
+
+      allocate(u_col(max_local_cols), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_complex", "u_col", istat, errorMessage)
+
+#ifdef WITH_OPENMP
+      max_threads = omp_get_max_threads()
+
+      allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_complex", "ur_p", istat, errorMessage)
+
+      allocate(uc_p(max_local_cols,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_complex", "uc_p", istat, errorMessage)
+#endif
+
+      tmp = 0
+      v_row = 0
+      u_row = 0
+      v_col = 0
+      u_col = 0
+
+      allocate(vu_stored_rows(max_local_rows,2*max_stored_rows), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_complex", "vu_stored_rows", istat, errorMessage)
+
+      allocate(uv_stored_cols(max_local_cols,2*max_stored_rows), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_complex", "uv_stored_cols", istat, errorMessage)
+
+      d(:) = 0
+      e(:) = 0
+      tau(:) = 0
+
+      n_stored_vecs = 0
+
+      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
+      l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
+      if (my_prow==prow(na, nblk, np_rows) .and. my_pcol==pcol(na, nblk, np_cols)) d(na) = a(l_rows,l_cols)
+
+      do istep=na,3,-1
+
+        ! Calculate number of local rows and columns of the still remaining matrix
+        ! on the local processor
+
+        l_rows = local_index(istep-1, my_prow, np_rows, nblk, -1)
+        l_cols = local_index(istep-1, my_pcol, np_cols, nblk, -1)
+
+        ! Calculate vector for Householder transformation on all procs
+        ! owning column istep
+
+        if (my_pcol==pcol(istep, nblk, np_cols)) then
+
+          ! Get vector to be transformed; distribute last element and norm of
+          ! remaining elements to all procs in current column
+
+          v_row(1:l_rows) = a(1:l_rows,l_cols+1)
+          if (n_stored_vecs>0 .and. l_rows>0) then
+            aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
+            call PRECISION_GEMV('N', l_rows, 2*n_stored_vecs,  &
+                                CONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),  &
+                                aux, 1,  &
+                                CONE, v_row, 1)
+          endif
+
+          if (my_prow==prow(istep-1, nblk, np_rows)) then
+            aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1))
+            aux1(2) = v_row(l_rows)
+          else
+            aux1(1) = dot_product(v_row(1:l_rows),v_row(1:l_rows))
+            aux1(2) = 0.
+          endif
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
+          call mpi_allreduce(aux1, aux2, 2, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          vnorm2 = aux2(1)
+          vrl    = aux2(2)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
+
+#else /* WITH_MPI */
+!          aux2 = aux1
+
+          vnorm2 = aux1(1)
+          vrl    = aux1(2)
+
+#endif /* WITH_MPI */
+
+!          vnorm2 = aux2(1)
+!          vrl    = aux2(2)
+
+          ! Householder transformation
+          call hh_transform_complex_PRECISION(vrl, vnorm2, xf, tau(istep))
+          ! Scale v_row and store Householder vector for back transformation
+
+          v_row(1:l_rows) = v_row(1:l_rows) * xf
+          if (my_prow==prow(istep-1, nblk, np_rows)) then
+            v_row(l_rows) = 1.
+            e(istep-1) = vrl
+          endif
+          a(1:l_rows,l_cols+1) = v_row(1:l_rows) ! store Householder vector for back transformation
+
+        endif
+
+        ! Broadcast the Householder vector (and tau) along columns
+
+        if (my_pcol==pcol(istep, nblk, np_cols)) v_row(l_rows+1) = tau(istep)
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
+        call MPI_Bcast(v_row, l_rows+1, MPI_COMPLEX_PRECISION, pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
+
+#endif /* WITH_MPI */
+        tau(istep) =  v_row(l_rows+1)
+
+        ! Transpose Householder vector v_row -> v_col
+
+!        call elpa_transpose_vectors  (v_row, 2*ubound(v_row,dim=1), mpi_comm_rows, &
+!                                      v_col, 2*ubound(v_col,dim=1), mpi_comm_cols, &
+!                                      1, 2*(istep-1), 1, 2*nblk)
+        call elpa_transpose_vectors_complex_PRECISION  (v_row, ubound(v_row,dim=1), mpi_comm_rows, &
+                                              v_col, ubound(v_col,dim=1), mpi_comm_cols, &
+                                              1, (istep-1), 1, nblk)
+        ! Calculate u = (A + VU**T + UV**T)*v
+
+        ! For cache efficiency, we use only the upper half of the matrix tiles for this,
+        ! thus the result is partly in u_col(:) and partly in u_row(:)
+
+        u_col(1:l_cols) = 0
+        u_row(1:l_rows) = 0
+        if (l_rows>0 .and. l_cols>0) then
+
+#ifdef WITH_OPENMP
+          call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+!$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end)
+
+          my_thread = omp_get_thread_num()
+          n_threads = omp_get_num_threads()
+
+          n_iter = 0
+
+          uc_p(1:l_cols,my_thread) = 0.
+          ur_p(1:l_rows,my_thread) = 0.
+#endif
+
+          do i=0,(istep-2)/tile_size
+            l_col_beg = i*l_cols_per_tile+1
+            l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+            if (l_col_end<l_col_beg) cycle
+            do j=0,i
+              l_row_beg = j*l_rows_per_tile+1
+              l_row_end = min(l_rows,(j+1)*l_rows_per_tile)
+              if (l_row_end<l_row_beg) cycle
+#ifdef WITH_OPENMP
+              if (mod(n_iter,n_threads) == my_thread) then
+                call PRECISION_GEMV('C', l_row_end-l_row_beg+1 ,l_col_end-l_col_beg+1,  &
+                                    CONE, a(l_row_beg,l_col_beg), lda,  &
+                                    v_row(l_row_beg), 1,  &
+                                    CONE, uc_p(l_col_beg,my_thread), 1)
+                if (i/=j) then
+                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
+                                      CONE, a(l_row_beg,l_col_beg), lda,  &
+                                      v_col(l_col_beg), 1,  &
+                                      CONE, ur_p(l_row_beg,my_thread), 1)
+                endif
+              endif
+              n_iter = n_iter+1
+#else /* WITH_OPENMP */
+              call PRECISION_GEMV('C', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
+                                  CONE, a(l_row_beg,l_col_beg), lda,  &
+                                  v_row(l_row_beg), 1,  &
+                                  CONE, u_col(l_col_beg), 1)
+              if (i/=j) then
+                call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
+                                    CONE, a(l_row_beg,l_col_beg), lda,  &
+                                    v_col(l_col_beg), 1,  &
+                                    CONE, u_row(l_row_beg), 1)
+              endif
+#endif /* WITH_OPENMP */
+            enddo
+          enddo
+
+#ifdef WITH_OPENMP
+!$OMP END PARALLEL
+          call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+          do i=0,max_threads-1
+            u_col(1:l_cols) = u_col(1:l_cols) + uc_p(1:l_cols,i)
+            u_row(1:l_rows) = u_row(1:l_rows) + ur_p(1:l_rows,i)
+          enddo
+#endif
+
+          if (n_stored_vecs>0) then
+            call PRECISION_GEMV('C', l_rows, 2*n_stored_vecs,  &
+                                CONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),  &
+                                v_row,  1,  &
+                                CZERO, aux, 1)
+            call PRECISION_GEMV('N', l_cols, 2*n_stored_vecs, CONE,  &
+                                uv_stored_cols, ubound(uv_stored_cols,dim=1),  &
+                                aux, 1, CONE,  &
+                                u_col, 1)
+          endif
+
+        endif
+
+        ! Sum up all u_row(:) parts along rows and add them to the u_col(:) parts
+        ! on the processors containing the diagonal
+        ! This is only necessary if u_row has been calculated, i.e. if the
+        ! global tile size is smaller than the global remaining matrix
+
+        if (tile_size < istep-1) then
+          call elpa_reduce_add_vectors_complex_PRECISION  (u_row, ubound(u_row,dim=1), mpi_comm_rows, &
+                                          u_col, ubound(u_col,dim=1), mpi_comm_cols, &
+                                          (istep-1), 1, nblk)
+        endif
+
+        ! Sum up all the u_col(:) parts, transpose u_col -> u_row
+
+        if (l_cols>0) then
+          tmp(1:l_cols) = u_col(1:l_cols)
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%start("mpi_communication")
+#endif
+          call mpi_allreduce(tmp, u_col, l_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+          call timer%stop("mpi_communication")
+#endif
+
+#else /* WITH_MPI */
+          u_col = tmp
+#endif /* WITH_MPI */
+        endif
+
+!        call elpa_transpose_vectors  (u_col, 2*ubound(u_col,dim=1), mpi_comm_cols, &
+!                                      u_row, 2*ubound(u_row,dim=1), mpi_comm_rows, &
+!                                      1, 2*(istep-1), 1, 2*nblk)
+        call elpa_transpose_vectors_complex_PRECISION  (u_col, ubound(u_col,dim=1), mpi_comm_cols, &
+                                              u_row, ubound(u_row,dim=1), mpi_comm_rows, &
+                                              1, (istep-1), 1, nblk)
+
+        ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
+
+        xc = 0
+        if (l_cols>0) xc = dot_product(v_col(1:l_cols),u_col(1:l_cols))
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
+        call mpi_allreduce(xc, vav, 1 , MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
+
+#else /* WITH_MPI */
+        vav = xc
+#endif /* WITH_MPI */
+
+        ! store u and v in the matrices U and V
+        ! these matrices are stored combined in one here
+
+        do j=1,l_rows
+          vu_stored_rows(j,2*n_stored_vecs+1) = conjg(tau(istep))*v_row(j)
+          vu_stored_rows(j,2*n_stored_vecs+2) = 0.5*conjg(tau(istep))*vav*v_row(j) - u_row(j)
+        enddo
+        do j=1,l_cols
+          uv_stored_cols(j,2*n_stored_vecs+1) = 0.5*conjg(tau(istep))*vav*v_col(j) - u_col(j)
+          uv_stored_cols(j,2*n_stored_vecs+2) = conjg(tau(istep))*v_col(j)
+        enddo
+
+        n_stored_vecs = n_stored_vecs+1
+
+        ! If the limit of max_stored_rows is reached, calculate A + VU**T + UV**T
+
+        if (n_stored_vecs==max_stored_rows .or. istep==3) then
+
+          do i=0,(istep-2)/tile_size
+            l_col_beg = i*l_cols_per_tile+1
+            l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+            l_row_beg = 1
+            l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
+            if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) cycle
+            call PRECISION_GEMM('N', 'C', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,  &
+                                CONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),  &
+                                uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),  &
+                                CONE, a(l_row_beg,l_col_beg), lda)
+          enddo
+
+          n_stored_vecs = 0
+
+        endif
+
+        if (my_prow==prow(istep-1, nblk, np_rows) .and. my_pcol==pcol(istep-1, nblk, np_cols)) then
+          if (n_stored_vecs>0) a(l_rows,l_cols) = a(l_rows,l_cols) &
+                          + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
+          d(istep-1) = a(l_rows,l_cols)
+        endif
+
+      enddo ! istep
+
+      ! Store e(1) and d(1)
+
+      if (my_pcol==pcol(2, nblk, np_cols)) then
+        if (my_prow==prow(1, nblk, np_rows)) then
+          ! We use last l_cols value of loop above
+          vrl = a(1,l_cols)
+          call hh_transform_complex_PRECISION(vrl, CONST_REAL_0_0, xf, tau(2))
+          e(1) = vrl
+          a(1,l_cols) = 1. ! for consistency only
+        endif
+
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%start("mpi_communication")
+#endif
+        call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, prow(1, nblk, np_rows), mpi_comm_rows, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+        call timer%stop("mpi_communication")
+#endif
+
+#endif /* WITH_MPI */
+      endif
+
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
+      call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, pcol(2, nblk, np_cols), mpi_comm_cols, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
+
+#endif /* WITH_MPI */
+
+
+      if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) d(1) = a(1,1)
+
+      deallocate(tmp, v_row, u_row, v_col, u_col, vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when deallocating tmp "//errorMessage
+       stop
+      endif
+      ! distribute the arrays d and e to all processors
+
+      allocate(tmp_real(na), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when allocating tmp_real "//errorMessage
+       stop
+      endif
+
+#ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("mpi_communication")
+#endif
+      tmp_real = d
+      call mpi_allreduce(tmp_real, d, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+      tmp_real = d
+      call mpi_allreduce(tmp_real, d, na, MPI_REAL_PRECISION ,MPI_SUM, mpi_comm_cols, mpierr)
+      tmp_real = e
+      call mpi_allreduce(tmp_real, e, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+      tmp_real = e
+      call mpi_allreduce(tmp_real, e, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("mpi_communication")
+#endif
+
+#endif /* WITH_MPI */
+      deallocate(tmp_real, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+       print *,"tridiag_complex: error when deallocating tmp_real "//errorMessage
+       stop
+      endif
+
+      call timer%stop("tridiag_complex" // PRECISION_SUFFIX)
+
+    end subroutine tridiag_complex_PRECISION
