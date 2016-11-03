@@ -86,7 +86,7 @@
 !>
 !> \param useGPU      If true,  GPU version of the subroutine will be used
 !>
-    subroutine trans_ev_complex_PRECISION(na, nqc, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)
+    subroutine trans_ev_complex_PRECISION(na, nqc, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -103,6 +103,8 @@
 #else
       complex(kind=COMPLEX_DATATYPE)              ::  a(lda,matrixCols), q(ldq,matrixCols)
 #endif
+      logical, intent(in)                         :: useGPU
+
       integer(kind=ik)              :: max_stored_rows
 #ifdef DOUBLE_PRECISION_COMPLEX
       complex(kind=ck8), parameter   :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)

@@ -80,7 +80,7 @@
 !>
 !> \param useGPU      If true,  GPU version of the subroutine will be used
 !>
-    subroutine tridiag_complex_PRECISION(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau)
+    subroutine tridiag_complex_PRECISION(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau, useGPU)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #else
@@ -89,7 +89,9 @@
       use precision
       implicit none
 
-      integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      logical, intent(in)                           :: useGPU
+
       complex(kind=COMPLEX_DATATYPE)              :: tau(na)
 #ifdef USE_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,*)
@@ -174,7 +176,7 @@
       allocate(uc_p(max_local_cols,0:max_threads-1), stat=istat, errmsg=errorMessage)
       call check_alloc("tridiag_complex", "uc_p", istat, errorMessage)
 #endif
-
+      
       tmp = 0
       v_row = 0
       u_row = 0
