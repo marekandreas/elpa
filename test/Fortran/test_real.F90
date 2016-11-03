@@ -184,7 +184,13 @@ program test_real_double_precision
       print *
       print '(a)','Standard eigenvalue problem - ELPA1, REAL version'
       print *
-      print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
+      print '((a,i0))', 'Num MPI proc: ', nprocs 
+      print '((a,i0))', 'Matrix size: ', na 
+      print '((a,i0))', 'Num eigenvectors: ', nev
+      print '((a,i0))', 'Blocksize: ', nblk 
+      print '((a))', 'Using gpu: NO'
+      print *
+!       print '((a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
    endif
