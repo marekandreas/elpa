@@ -617,7 +617,6 @@
           endif !useGPU          
           call hh_transform_complex_PRECISION(vrl, CONST_REAL_0_0, xf, tau(2))
           e(1) = vrl
-          write(*,*) "aux3 ", aux3(1), ", vrl ", vrl, ", e(1) ", e(1)
           a(1,l_cols) = 1. ! for consistency only
         endif
 

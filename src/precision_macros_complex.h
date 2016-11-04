@@ -11,6 +11,7 @@
 #define  PRECISION_TRMM ZTRMM
 #define  PRECISION_HERK ZHERK
 #define  cublas_PRECISION_gemm cublas_Zgemm
+#define  cublas_PRECISION_trmm cublas_Ztrmm
 #define  cublas_PRECISION_gemv cublas_Zgemv
 #define  PRECISION_SUFFIX "_double"
 #define  MPI_COMPLEX_PRECISION MPI_DOUBLE_COMPLEX
@@ -34,6 +35,7 @@
 #undef  PRECISION_TRMM
 #undef  PRECISION_HERK
 #undef  cublas_PRECISION_gemm
+#undef  cublas_PRECISION_trmm
 #undef  cublas_PRECISION_gemv
 #undef  PRECISION_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
@@ -56,6 +58,7 @@
 #define  PRECISION_TRMM CTRMM
 #define  PRECISION_HERK CHERK
 #define  cublas_PRECISION_gemm cublas_Cgemm
+#define  cublas_PRECISION_trmm cublas_Ctrmm
 #define  cublas_PRECISION_gemv cublas_Cgemv
 #define  PRECISION_SUFFIX "_single"
 #define  MPI_COMPLEX_PRECISION MPI_COMPLEX

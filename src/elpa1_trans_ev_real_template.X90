@@ -362,7 +362,7 @@
                                             -M_CONST_1_0, hvm_dev, hvm_ubnd,  &
                                             tmp_dev, nstor,   &
                                             M_CONST_1_0, q_dev, ldq)
-            else 
+            else !useGPU
 #ifdef WITH_MPI
               ! tmp2 = tmat * tmp2
               call M_PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &

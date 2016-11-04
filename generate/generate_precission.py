@@ -13,6 +13,7 @@ blas_tokens = ["PRECISION_GEMV",
                "PRECISION_TRMM",
                "PRECISION_HERK",
                "cublas_PRECISION_gemm",
+               "cublas_PRECISION_trmm",
                "cublas_PRECISION_gemv",
                ]
 
