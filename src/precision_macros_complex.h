@@ -10,6 +10,8 @@
 #define  PRECISION_GEMM ZGEMM
 #define  PRECISION_TRMM ZTRMM
 #define  PRECISION_HERK ZHERK
+#define  cublas_PRECISION_gemm cublas_Zgemm
+#define  cublas_PRECISION_gemv cublas_Zgemv
 #define  PRECISION_SUFFIX "_double"
 #define  MPI_COMPLEX_PRECISION MPI_DOUBLE_COMPLEX
 #define  MPI_REAL_PRECISION MPI_REAL8
@@ -18,6 +20,7 @@
 #define  PRECISION_IMAG DIMAG
 #define  CONST_REAL_0_0 0.0_rk8
 #define  CONST_REAL_1_0 1.0_rk8
+#define  size_of_PRECISION_complex size_of_double_complex_datatype
 #else
 #undef  tridiag_complex_PRECISION
 #undef  trans_ev_complex_PRECISION
@@ -30,6 +33,8 @@
 #undef  PRECISION_GEMM
 #undef  PRECISION_TRMM
 #undef  PRECISION_HERK
+#undef  cublas_PRECISION_gemm
+#undef  cublas_PRECISION_gemv
 #undef  PRECISION_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
 #undef  MPI_REAL_PRECISION
@@ -38,6 +43,7 @@
 #undef  PRECISION_IMAG
 #undef  CONST_REAL_0_0
 #undef  CONST_REAL_1_0
+#undef  size_of_PRECISION_complex
 #define  tridiag_complex_PRECISION tridiag_complex_single
 #define  trans_ev_complex_PRECISION trans_ev_complex_single
 #define  solve_complex_PRECISION solve_complex_single
@@ -49,6 +55,8 @@
 #define  PRECISION_GEMM CGEMM
 #define  PRECISION_TRMM CTRMM
 #define  PRECISION_HERK CHERK
+#define  cublas_PRECISION_gemm cublas_Cgemm
+#define  cublas_PRECISION_gemv cublas_Cgemv
 #define  PRECISION_SUFFIX "_single"
 #define  MPI_COMPLEX_PRECISION MPI_COMPLEX
 #define  MPI_REAL_PRECISION MPI_REAL4
@@ -57,4 +65,5 @@
 #define  PRECISION_IMAG AIMAG
 #define  CONST_REAL_0_0 0.0_rk4
 #define  CONST_REAL_1_0 1.0_rk4
+#define  size_of_PRECISION_complex size_of_single_complex_datatype
 #endif

@@ -172,13 +172,17 @@
 #endif
       ! pkus: what is the difference between na_cols and matrixCols?
       ! pkus: probably matrixCols is not supplied when using 
-      if (useGPU) then
-#ifdef WITH_MPI
-        na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
-#else
-        na_cols = na
-#endif
-      endif ! useGPU
+      ! pkus: I should be able to use matrixCols
+      ! pkus: todo: remove na_cols completely
+      na_cols = matrixCols
+      
+!       if (useGPU) then
+! #ifdef WITH_MPI
+!         na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
+! #else
+!         na_cols = na
+! #endif
+!       endif ! useGPU
 
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
@@ -624,9 +628,6 @@
             successCUDA = cuda_memcpy(uv_stored_cols_dev, loc(uv_stored_cols(1,1)), &
                                       max_local_cols * 2 * max_stored_uv * M_size_of_PRECISSION_real, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag", successCUDA)
-                    
-!             vu_stored_rows_dev(:,:) = vu_stored_rows(:,:)
-!             uv_stored_cols_dev(:,:) = uv_stored_cols(:,:)
           endif
 
           do i=0,(istep-2)/tile_size
@@ -642,7 +643,7 @@
                      M_CONST_1_0, vu_stored_rows_dev + (l_row_beg - 1) * M_size_of_PRECISSION_real, max_local_rows,   &
                      uv_stored_cols_dev + (l_col_beg - 1) * M_size_of_PRECISSION_real, max_local_cols,  &
                      M_CONST_1_0, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *  M_size_of_PRECISSION_real, lda)
-            else
+            else !useGPU
               
               call M_PRECISSION_GEMM('N', 'T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,  &
                                      M_CONST_1_0, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
@@ -680,24 +681,26 @@
 
       enddo ! main cycle over istep=na,3,-1
 
-      ! Store e(1) and d(1)
-
-      if (useGPU) then
-        if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
+      ! Store e(1) 
+      if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
+        if(useGPU) then 
           successCUDA = cuda_memcpy(loc(e(1)), a_dev + (lda * (l_cols - 1)) * M_size_of_PRECISSION_real, &
-                                      1 * M_size_of_PRECISSION_real, cudaMemcpyDeviceToHost)
+                                    1 * M_size_of_PRECISSION_real, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag", successCUDA)            
-        endif
-        if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
-          successCUDA = cuda_memcpy(loc(d(1)), a_dev, &
-                                      1 * M_size_of_PRECISSION_real, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag", successCUDA)   
-        endif
-      else
-        if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols))  &
+        else !useGPU
           e(1) = a(1,l_cols) ! use last l_cols value of loop above
-        if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols))  &
+        endif !useGPU
+      endif
+     
+     ! Store d(1)
+      if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
+        if(useGPU) then 
+          successCUDA = cuda_memcpy(loc(d(1)), a_dev, &
+                                    1 * M_size_of_PRECISSION_real, cudaMemcpyDeviceToHost)
+          check_memcpy_cuda("tridiag", successCUDA)            
+        else !useGPU
           d(1) = a(1,1)
+        endif !useGPU
       endif
 
       deallocate(tmp, v_row, u_row, v_col, u_col, vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
@@ -729,9 +732,6 @@
          successCUDA = cuda_free(uv_stored_cols_dev)
          check_dealloc_cuda("tridiag", successCUDA)
       endif
-
-
-      ! todo dealocate at the GPU
 
       ! distribute the arrays d and e to all processors
 

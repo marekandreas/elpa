@@ -12,6 +12,8 @@ blas_tokens = ["PRECISION_GEMV",
                "PRECISION_GEMM",
                "PRECISION_TRMM",
                "PRECISION_HERK",
+               "cublas_PRECISION_gemm",
+               "cublas_PRECISION_gemv",
                ]
 
 explicit_tokens = [("PRECISION_SUFFIX", "\"_double\"", "\"_single\""),
@@ -22,6 +24,7 @@ explicit_tokens = [("PRECISION_SUFFIX", "\"_double\"", "\"_single\""),
                    ("PRECISION_IMAG", "DIMAG", "AIMAG"),
                    ("CONST_REAL_0_0", "0.0_rk8", "0.0_rk4"),
                    ("CONST_REAL_1_0", "1.0_rk8", "1.0_rk4"),
+                   ("size_of_PRECISION_complex", "size_of_double_complex_datatype", "size_of_single_complex_datatype"),
                    ]
 
 print "#ifdef DOUBLE_PRECISION_COMPLEX"

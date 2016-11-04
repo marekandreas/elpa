@@ -777,8 +777,8 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
         useGPU = .true.
       endif
       if (nblk .ne. 128) then
-        print *,"At the moment GPU version needs blocksize 128"
-        error stop
+        print *,"Warning: using GPU with blocksize different from 128"
+!         error stop
       endif
 
       ! set the neccessary parameters
@@ -959,8 +959,8 @@ function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matr
         useGPU = .true.
       endif
       if (nblk .ne. 128) then
-        print *,"At the moment GPU version needs blocksize 128"
-        error stop
+        print *,"Warning: using GPU with blocksize different from 128"
+!         error stop
       endif
 
       ! set the neccessary parameters
@@ -1151,8 +1151,8 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
         useGPU = .true.
       endif
       if (nblk .ne. 128) then
-        print *,"At the moment GPU version needs blocksize 128"
-        error stop
+        print *,"Warning: using GPU with blocksize different from 128"
+!         error stop
       endif
 
       ! set the neccessary parameters
