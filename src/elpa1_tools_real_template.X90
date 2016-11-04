@@ -52,16 +52,16 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
  
-    subroutine M_v_add_s_PRECISSION(v,n,s)
+    subroutine M_v_add_s_PRECISION(v,n,s)
       use precision
       implicit none
       integer(kind=ik) :: n
       real(kind=REAL_DATATYPE)    :: v(n),s
 
       v(:) = v(:) + s
-    end subroutine M_v_add_s_PRECISSION
+    end subroutine M_v_add_s_PRECISION
 
-    subroutine M_distribute_global_column_PRECISSION(g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
+    subroutine M_distribute_global_column_PRECISION(g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
       use precision
       implicit none
 
@@ -86,9 +86,9 @@
         l_col(l_off+js:l_off+je) = g_col(g_off+js-noff:g_off+je-noff)
 
       enddo
-    end subroutine M_distribute_global_column_PRECISSION
+    end subroutine M_distribute_global_column_PRECISION
 
-    subroutine M_solve_secular_equation_PRECISSION(n, i, d, z, delta, rho, dlam)
+    subroutine M_solve_secular_equation_PRECISION(n, i, d, z, delta, rho, dlam)
     !-------------------------------------------------------------------------------
     ! This routine solves the secular equation of a symmetric rank 1 modified
     ! diagonal matrix:
@@ -156,7 +156,7 @@
       ! Upper and lower bound of the shifted solution interval are a and b
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("solve_secular_equation" // M_PRECISSION_SUFFIX)
+      call timer%start("solve_secular_equation" // M_PRECISION_SUFFIX)
 #endif
       if (i==n) then
 
@@ -222,13 +222,13 @@
       dlam = x + dshift
       delta(:) = delta(:) - x
 #ifdef HAVE_DETAILED_TIMINGS
-      call  timer%stop("solve_secular_equation" // M_PRECISSION_SUFFIX)
+      call  timer%stop("solve_secular_equation" // M_PRECISION_SUFFIX)
 #endif
 
-    end subroutine M_solve_secular_equation_PRECISSION
+    end subroutine M_solve_secular_equation_PRECISION
     !-------------------------------------------------------------------------------
 
-    subroutine M_hh_transform_real_PRECISSION(alpha, xnorm_sq, xf, tau)
+    subroutine M_hh_transform_real_PRECISION(alpha, xnorm_sq, xf, tau)
       ! Similar to LAPACK routine DLARFP, but uses ||x||**2 instead of x(:)
       ! and returns the factor xf by which x has to be scaled.
       ! It also hasn't the special handling for numbers < 1.d-300 or > 1.d150
@@ -266,4 +266,4 @@
        XF = 1./ALPHA
        ALPHA = BETA
      endif
-    end subroutine M_hh_transform_real_PRECISSION
+    end subroutine M_hh_transform_real_PRECISION
