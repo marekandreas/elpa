@@ -19,6 +19,7 @@
 #define  KIND_PRECISION rk8
 #define  PRECISION_CMPLX DCMPLX
 #define  PRECISION_IMAG DIMAG
+#define  PRECISION_REAL DREAL
 #define  CONST_REAL_0_0 0.0_rk8
 #define  CONST_REAL_1_0 1.0_rk8
 #define  size_of_PRECISION_complex size_of_double_complex_datatype
@@ -43,6 +44,7 @@
 #undef  KIND_PRECISION
 #undef  PRECISION_CMPLX
 #undef  PRECISION_IMAG
+#undef  PRECISION_REAL
 #undef  CONST_REAL_0_0
 #undef  CONST_REAL_1_0
 #undef  size_of_PRECISION_complex
@@ -66,6 +68,7 @@
 #define  KIND_PRECISION rk4
 #define  PRECISION_CMPLX CMPLX
 #define  PRECISION_IMAG AIMAG
+#define  PRECISION_REAL REAL
 #define  CONST_REAL_0_0 0.0_rk4
 #define  CONST_REAL_1_0 1.0_rk4
 #define  size_of_PRECISION_complex size_of_single_complex_datatype

@@ -202,8 +202,8 @@
         check_alloc_cuda("trans_ev", successCUDA)
 
 !         q_dev = q_mat
-        successCUDA = cuda_memcpy(q_dev, loc(q_mat(1,1)), ldq * matrixCols * size_of_PRECISION_complex, & 
-        cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(q_dev, loc(q_mat(1,1)), ldq * matrixCols * size_of_PRECISION_complex, &
+                                  cudaMemcpyHostToDevice)
         check_memcpy_cuda("trans_ev", successCUDA)        
       endif
       
