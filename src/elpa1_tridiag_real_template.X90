@@ -81,7 +81,7 @@
 !>
 !> \param useGPU      If true,  GPU version of the subroutine will be used
 !>
-    subroutine M_tridiag_real_PRECISION(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d, e, tau, useGPU)
+    subroutine M_tridiag_real_PRECISION(na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU)
 
       use cuda_functions
       use iso_c_binding
@@ -96,11 +96,11 @@
       integer(kind=ik), intent(in)            :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                     :: useGPU
 
-      real(kind=REAL_DATATYPE), intent(out)   :: d(na), e(na), tau(na)
+      real(kind=REAL_DATATYPE), intent(out)   :: d_vec(na), e_vec(na), tau(na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE), intent(inout) :: a(lda,*)
+      real(kind=REAL_DATATYPE), intent(inout) :: a_mat(lda,*)
 #else
-      real(kind=REAL_DATATYPE), intent(inout) :: a(lda,matrixCols)
+      real(kind=REAL_DATATYPE), intent(inout) :: a_mat(lda,matrixCols)
 #endif
 
       integer(kind=ik), parameter :: max_stored_uv = 32
@@ -283,22 +283,22 @@
          check_alloc_cuda("tridiag", successCUDA)
       endif
 
-      d(:) = 0
-      e(:) = 0
+      d_vec(:) = 0
+      e_vec(:) = 0
       tau(:) = 0
 
       n_stored_vecs = 0
 
-      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
-      l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
+      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a_mat
+      l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a_mat
       if(my_prow==prow(na, nblk, np_rows) .and. my_pcol==pcol(na, nblk, np_cols)) &
-        d(na) = a(l_rows,l_cols)
+        d_vec(na) = a_mat(l_rows,l_cols)
         
       if (useGPU) then
         ! allocate memmory for matrix A on the device and than copy the matrix
         successCUDA = cuda_malloc(a_dev, lda * na_cols * M_size_of_PRECISION_real)
         check_alloc_cuda("tridiag", successCUDA)
-        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), lda * na_cols * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * na_cols * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
         check_memcpy_cuda("tridiag", successCUDA)
      endif
 
@@ -331,7 +331,7 @@
                                         cudaMemcpyDeviceToHost)             
               check_memcpy_cuda("tridiag", successCUDA)              
             else
-              v_row(1:l_rows) = a(1:l_rows,l_cols+1)
+              v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
             endif
             
             !if((my_prow == 1) .and. (my_pcol == 1)) write(*,'(2I2, A, 20G14.3)'), l_rows, l_cols, "v_row:", v_row(:)
@@ -376,11 +376,11 @@
                v_row(l_rows) = 1.
                
                ! vrl is newly computed off-diagonal element of the final tridiagonal matrix
-               e(istep-1) = vrl
+               e_vec(istep-1) = vrl
             endif
             
             ! store Householder vector for back transformation
-            a(1:l_rows,l_cols+1) = v_row(1:l_rows) 
+            a_mat(1:l_rows,l_cols+1) = v_row(1:l_rows) 
 
             ! add tau after the end of actuall v_row, to be broadcasted with it 
             v_row(l_rows+1) = tau(istep)
@@ -440,10 +440,10 @@
 !                enddo
 !
              !--- for now, just use DSYMV!!!
-             ! a_dev -> a ? 
-             !write(*,*) "ubound ", ubound(a,1), "lda", lda, "lcols", l_cols
+             ! a_dev -> a_mat ? 
+             !write(*,*) "ubound ", ubound(a_mat,1), "lda", lda, "lcols", l_cols
 !              call M_PRECISION_SYMV('U', l_cols,  &
-!                         1.d0, a, ubound(a,1),  &
+!                         1.d0, a_mat, ubound(a_mat,1),  &
 !                         v_row, 1,  &
 !                         0.d0, u_col, 1) 
 
@@ -475,12 +475,12 @@
 #ifdef WITH_OPENMP
                  if (mod(n_iter,n_threads) == my_thread) then
                    call M_PRECISION_GEMV('T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                                          M_CONST_1_0, a(l_row_beg,l_col_beg), lda,  &
+                                          M_CONST_1_0, a_mat(l_row_beg,l_col_beg), lda,  &
                                           v_row(l_row_beg), 1,  &
                                           M_CONST_1_0, uc_p(l_col_beg,my_thread), 1)
                    if (i/=j) then
                      call M_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                            M_CONST_1_0, a(l_row_beg,l_col_beg), lda,  &
+                                            M_CONST_1_0, a_mat(l_row_beg,l_col_beg), lda,  &
                                             v_col(l_col_beg), 1,  &
                                             M_CONST_1_0, ur_p(l_row_beg,my_thread), 1)
                    endif
@@ -503,12 +503,12 @@
                  
                  else ! useGPU
                    call M_PRECISION_GEMV('T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                          M_CONST_1_0, a(l_row_beg, l_col_beg), lda,  &
+                                          M_CONST_1_0, a_mat(l_row_beg, l_col_beg), lda,  &
                                           v_row(l_row_beg), 1,  &
                                           M_CONST_1_0, u_col(l_col_beg), 1)
                    if (i/=j) then
                      call M_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                            M_CONST_1_0, a(l_row_beg,l_col_beg), lda,  &
+                                            M_CONST_1_0, a_mat(l_row_beg,l_col_beg), lda,  &
                                             v_col(l_col_beg), 1,  &
                                             M_CONST_1_0, u_row(l_row_beg), 1)
                    endif
@@ -526,7 +526,7 @@
              endif
 
 !              call M_PRECISION_SYMV('U', l_cols,  &
-!                         1.d0, a, ubound(a,1),  &
+!                         1.d0, a_mat, ubound(a_mat,1),  &
 !                         v_row, 1,  &
 !                         0.d0, u_col, 1) 
 
@@ -648,7 +648,7 @@
               call M_PRECISION_GEMM('N', 'T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,  &
                                      M_CONST_1_0, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
                                      uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1), &
-                                     M_CONST_1_0, a(l_row_beg,l_col_beg), lda)
+                                     M_CONST_1_0, a_mat(l_row_beg,l_col_beg), lda)
             endif ! useGPU
           enddo
 
@@ -658,22 +658,22 @@
 
         if (my_prow==prow(istep-1, nblk, np_rows) .and. my_pcol==pcol(istep-1, nblk, np_cols)) then
           if (useGPU) then 
-            !a(l_rows,l_cols) = a_dev(l_rows,l_cols)
+            !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
              a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * M_size_of_PRECISION_real
-             successCUDA = cuda_memcpy(loc(a(l_rows, l_cols)), a_dev + a_offset, &
+             successCUDA = cuda_memcpy(loc(a_mat(l_rows, l_cols)), a_dev + a_offset, &
                                        1 * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost); 
              check_memcpy_cuda("tridiag", successCUDA)
             
           endif
           if (n_stored_vecs>0) then
-            a(l_rows,l_cols) = a(l_rows,l_cols) &
+            a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
                         + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
           end if
-          d(istep-1) = a(l_rows,l_cols)
+          d_vec(istep-1) = a_mat(l_rows,l_cols)
           
           if (useGPU) then
-            !a_dev(l_rows,l_cols) = a(l_rows,l_cols)
-             successCUDA = cuda_memcpy(a_dev + a_offset, loc(a(l_rows, l_cols)), &
+            !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
+             successCUDA = cuda_memcpy(a_dev + a_offset, loc(a_mat(l_rows, l_cols)), &
                                        1 * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
              check_memcpy_cuda("tridiag", successCUDA)            
           endif
@@ -681,25 +681,25 @@
 
       enddo ! main cycle over istep=na,3,-1
 
-      ! Store e(1) 
+      ! Store e_vec(1) 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
         if(useGPU) then 
-          successCUDA = cuda_memcpy(loc(e(1)), a_dev + (lda * (l_cols - 1)) * M_size_of_PRECISION_real, &
+          successCUDA = cuda_memcpy(loc(e_vec(1)), a_dev + (lda * (l_cols - 1)) * M_size_of_PRECISION_real, &
                                     1 * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag", successCUDA)            
         else !useGPU
-          e(1) = a(1,l_cols) ! use last l_cols value of loop above
+          e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
         endif !useGPU
       endif
      
-     ! Store d(1)
+     ! Store d_vec(1)
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
         if(useGPU) then 
-          successCUDA = cuda_memcpy(loc(d(1)), a_dev, &
+          successCUDA = cuda_memcpy(loc(d_vec(1)), a_dev, &
                                     1 * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag", successCUDA)            
         else !useGPU
-          d(1) = a(1,1)
+          d_vec(1) = a_mat(1,1)
         endif !useGPU
       endif
 
@@ -710,7 +710,7 @@
       endif
       
       if (useGPU) then
-         ! todo: should we leave a on the device for further use?
+         ! todo: should we leave a_mat on the device for further use?
          successCUDA = cuda_free(a_dev)
          check_dealloc_cuda("tridiag", successCUDA)
       
@@ -733,7 +733,7 @@
          check_dealloc_cuda("tridiag", successCUDA)
       endif
 
-      ! distribute the arrays d and e to all processors
+      ! distribute the arrays d_vec and e_vec to all processors
 
       allocate(tmp(na),  stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
@@ -744,14 +744,14 @@
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
 #endif
-      tmp = d
-      call mpi_allreduce(tmp, d, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-      tmp = d
-      call mpi_allreduce(tmp, d, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-      tmp = e
-      call mpi_allreduce(tmp, e, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-      tmp = e
-      call mpi_allreduce(tmp, e, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+      tmp = d_vec
+      call mpi_allreduce(tmp, d_vec, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+      tmp = d_vec
+      call mpi_allreduce(tmp, d_vec, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+      tmp = e_vec
+      call mpi_allreduce(tmp, e_vec, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+      tmp = e_vec
+      call mpi_allreduce(tmp, e_vec, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
 #endif
@@ -774,8 +774,8 @@
 ! 
 !         if((my_prow == prow) .and. (my_pcol == pcol)) then 
 !            write(*, '(A,2I4.2)') "MATRIX A :", prow, pcol 
-!            do i=1,size(a,1) 
-!              write(*,'(20G12.4)') a(i,:) 
+!            do i=1,size(a_mat,1) 
+!              write(*,'(20G12.4)') a_mat(i,:) 
 !            enddo      
 !          endif
 !         

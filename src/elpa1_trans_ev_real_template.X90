@@ -58,26 +58,26 @@
 !>
 !  Parameters
 !
-!> \param na          Order of matrix a, number of rows of matrix q
+!> \param na          Order of matrix a_mat, number of rows of matrix q_mat
 !>
-!> \param nqc         Number of columns of matrix q
+!> \param nqc         Number of columns of matrix q_mat
 !>
-!> \param a(lda,matrixCols)  Matrix containing the Householder vectors (i.e. matrix a after tridiag_real)
+!> \param a_mat(lda,matrixCols)  Matrix containing the Householder vectors (i.e. matrix a after tridiag_real)
 !>                           Distribution is like in Scalapack.
 !>
-!> \param lda         Leading dimension of a
+!> \param lda         Leading dimension of a_mat
 !>
 !> \param tau(na)     Factors of the Householder vectors
 !>
-!> \param q           On input: Eigenvectors of tridiagonal matrix
+!> \param q_mat           On input: Eigenvectors of tridiagonal matrix
 !>                    On output: Transformed eigenvectors
 !>                    Distribution is like in Scalapack.
 !>    
-!> \param ldq         Leading dimension of q
+!> \param ldq         Leading dimension of q_mat
 !>
 !> \param nblk        blocksize of cyclic distribution, must be the same in both directions!
 !>
-!> \param matrixCols  local columns of matrix a and q
+!> \param matrixCols  local columns of matrix a_mat and q_mat
 !>
 !> \param mpi_comm_rows        MPI-Communicator for rows
 !>
@@ -85,7 +85,7 @@
 !>
 !> \param useGPU      If true,  GPU version of the subroutine will be used
 !>
-    subroutine M_trans_ev_real_PRECISION(na, nqc, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
+    subroutine M_trans_ev_real_PRECISION(na, nqc, a_mat, lda, tau, q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
       use cuda_functions
       use iso_c_binding
 #ifdef HAVE_DETAILED_TIMINGS
@@ -99,9 +99,9 @@
       integer(kind=ik)           :: na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE)              :: tau(na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)              :: a(lda,*), q(ldq,*)
+      real(kind=REAL_DATATYPE)              :: a_mat(lda,*), q_mat(ldq,*)
 #else
-      real(kind=REAL_DATATYPE)              :: a(lda,matrixCols), q(ldq,matrixCols)
+      real(kind=REAL_DATATYPE)              :: a_mat(lda,matrixCols), q_mat(ldq,matrixCols)
 #endif
       logical, intent(in)                     :: useGPU
 
@@ -138,7 +138,7 @@
 #endif
       totalblocks = (na-1)/nblk + 1
       max_blocks_row = (totalblocks-1)/np_rows + 1
-      max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q!
+      max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q_mat!
 
       max_local_rows = max_blocks_row*nblk
       max_local_cols = max_blocks_col*nblk
@@ -184,15 +184,15 @@
         successCUDA = cuda_malloc(q_dev, ldq * matrixCols * M_size_of_PRECISION_real)
         check_alloc_cuda("trans_ev", successCUDA)
 
-!         q_dev = q
-        successCUDA = cuda_memcpy(q_dev, loc(q(1,1)), ldq * matrixCols * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
+!         q_dev = q_mat
+        successCUDA = cuda_memcpy(q_dev, loc(q_mat(1,1)), ldq * matrixCols * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
         check_memcpy_cuda("trans_ev", successCUDA)        
       endif
 
       hvm = 0   ! Must be set to 0 !!!
       hvb = 0   ! Safety only
 
-      l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
+      l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q_mat
 
       nstor = 0
       if (useGPU) then
@@ -214,7 +214,7 @@
 
 
           if (my_pcol==cur_pcol) then
-            hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+            hvb(nb+1:nb+l_rows) = a_mat(1:l_rows,l_colh)
             if (my_prow==prow(ic-1, nblk, np_rows)) then
               hvb(nb+l_rows) = 1.
             endif
@@ -312,7 +312,7 @@
             else
               call M_PRECISION_GEMM('T', 'N', nstor, l_cols, l_rows,  &
                                      M_CONST_1_0, hvm, ubound(hvm,dim=1), &
-                                     q, ldq,  &
+                                     q_mat, ldq,  &
                                      M_CONST_0_0, tmp1, nstor)
             endif
 
@@ -368,11 +368,11 @@
               call M_PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
                                      M_CONST_1_0, tmat, max_stored_rows,  &
                                      tmp2, nstor)
-              !q = q - hvm*tmp2 
+              !q_mat = q_mat - hvm*tmp2 
               call M_PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
                                      -M_CONST_1_0, hvm, ubound(hvm,dim=1),  &
                                      tmp2, nstor,   &
-                                     M_CONST_1_0, q, ldq)            
+                                     M_CONST_1_0, q_mat, ldq)            
            
 #else
               call M_PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
@@ -381,7 +381,7 @@
               call M_PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
                                      -M_CONST_1_0, hvm, ubound(hvm,dim=1), &
                                      tmp1, nstor,   &
-                                     M_CONST_1_0, q, ldq)
+                                     M_CONST_1_0, q_mat, ldq)
 #endif
             endif ! useGPU
           endif  ! l_rows>0
@@ -397,8 +397,8 @@
       endif
 
       if (useGPU) then
-        !q = q_dev
-        successCUDA = cuda_memcpy(loc(q(1,1)), q_dev, ldq * matrixCols * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+        !q_mat = q_dev
+        successCUDA = cuda_memcpy(loc(q_mat(1,1)), q_dev, ldq * matrixCols * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
         check_memcpy_cuda("trans_ev", successCUDA)     
         
         deallocate(hvm1, stat=istat, errmsg=errorMessage)
