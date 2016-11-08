@@ -117,9 +117,6 @@
       integer(kind=ik)              :: tile_size, l_rows_per_tile, l_cols_per_tile
       integer(kind=c_size_t)        :: a_offset
 
-      ! number of local columns used for allocation of a_dev
-      integer(kind=ik)            :: na_cols
-
       integer(kind=C_intptr_T)    :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, uv_stored_cols_dev
       logical                     :: successCUDA
       
@@ -149,13 +146,8 @@
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
-      ! pkus: I should be able to use matrixCols
-      ! pkus: todo: remove na_cols completely
-      na_cols = matrixCols
       
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
-
       tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
       tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
 
@@ -240,9 +232,10 @@
 
       if (useGPU) then
         ! allocate memmory for matrix A on the device and than copy the matrix
-        successCUDA = cuda_malloc(a_dev, lda * na_cols * size_of_PRECISION_complex)
+        successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_PRECISION_complex)
         check_alloc_cuda("tridiag", successCUDA)
-        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * na_cols * size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_PRECISION_complex, &
+                                  cudaMemcpyHostToDevice)
         check_memcpy_cuda("tridiag", successCUDA)
       endif
 

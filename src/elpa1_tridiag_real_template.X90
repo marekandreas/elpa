@@ -116,14 +116,8 @@
       !integer(kind=ik)            :: l_cols, l_rows 
       integer(kind=c_size_t)      :: l_cols, l_rows   
       
-      ! number of local columns used for allocation of a_dev
-      integer(kind=ik)            :: na_cols
-      
       integer(kind=C_intptr_T)    :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, uv_stored_cols_dev
       logical                     :: successCUDA
-#ifdef WITH_MPI
-      integer(kind=ik), external            :: numroc
-#endif
       
       integer(kind=ik)            :: n_stored_vecs
       integer(kind=ik)            :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
@@ -170,21 +164,6 @@
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
 #endif
-      ! pkus: what is the difference between na_cols and matrixCols?
-      ! pkus: probably matrixCols is not supplied when using 
-      ! pkus: I should be able to use matrixCols
-      ! pkus: todo: remove na_cols completely
-      na_cols = matrixCols
-      
-!       if (useGPU) then
-! #ifdef WITH_MPI
-!         na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
-! #else
-!         na_cols = na
-! #endif
-!       endif ! useGPU
-
-
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
       ! seems that tile is a square submatrix, consisting by several blocks
       ! it is a smallest possible square submatrix, where blocks being distributed among
@@ -297,10 +276,10 @@
 
       if (useGPU) then
         ! allocate memmory for matrix A on the device and than copy the matrix
-        successCUDA = cuda_malloc(a_dev, lda * na_cols * M_size_of_PRECISION_real)
+        successCUDA = cuda_malloc(a_dev, lda * matrixCols * M_size_of_PRECISION_real)
         check_alloc_cuda("tridiag", successCUDA)
-        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * na_cols * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
-        check_memcpy_cuda("tridiag", successCUDA)
+        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
+        check_alloc_cuda("tridiag", successCUDA)
       endif
 
       ! main cycle of tridiagonalization
@@ -785,7 +764,7 @@
 !         tmp(:,:) = 0
 !         
 !         if((my_prow == prow) .and. (my_pcol == pcol)) then 
-!            successCUDA = cuda_memcpy(loc(tmp(1,1)), a_dev, lda * na_cols * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+!            successCUDA = cuda_memcpy(loc(tmp(1,1)), a_dev, lda * matrixCols * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
 !            check_memcpy_cuda("tridiag", successCUDA)
 ! 
 !            write(*, '(A,2I4.2)') "MATRIX A ON DEVICE:", prow, pcol 
