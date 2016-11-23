@@ -97,14 +97,14 @@
       use precision
       implicit none
 
-      integer(kind=ik)              ::  na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      complex(kind=COMPLEX_DATATYPE)              ::  tau(na)
+      integer(kind=ik), intent(in)                  ::  na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      complex(kind=COMPLEX_DATATYPE), intent(in)    :: tau(na)
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)              :: a_mat(lda,*), q_mat(ldq,*)
+      complex(kind=COMPLEX_DATATYPE), intent(inout) :: a_mat(lda,*), q_mat(ldq,*)
 #else
-      complex(kind=COMPLEX_DATATYPE)              ::  a_mat(lda,matrixCols), q_mat(ldq,matrixCols)
+      complex(kind=COMPLEX_DATATYPE), intent(inout) ::  a_mat(lda,matrixCols), q_mat(ldq,matrixCols)
 #endif
-      logical, intent(in)                         :: useGPU
+      logical, intent(in)                           :: useGPU
 
       integer(kind=ik)              :: max_stored_rows
 #ifdef DOUBLE_PRECISION_COMPLEX

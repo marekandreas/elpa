@@ -62,15 +62,17 @@
       use precision
       implicit none
 
-      integer(kind=ik)              :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
+      integer(kind=ik), intent(in)  :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
                                        mpi_comm_cols, npc_0, npc_n
-      integer(kind=ik)              :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
-      real(kind=REAL_DATATYPE)                 :: d(na), e
+      integer(kind=ik), intent(in)  :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
+      real(kind=REAL_DATATYPE), intent(inout)     :: d(na), e
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)                 :: q(ldq,*)
+      real(kind=REAL_DATATYPE), intent(inout)     :: q(ldq,*)
 #else
-      real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)
+      real(kind=REAL_DATATYPE), intent(inout)     :: q(ldq,matrixCols)
 #endif
+      logical, intent(in)           :: wantDebug
+      logical, intent(out)          :: success
 
       integer(kind=ik), parameter   :: max_strip=128      
       
@@ -99,8 +101,6 @@
       integer(kind=ik)              :: idx(na), idx1(na), idx2(na)
       integer(kind=ik)              :: coltyp(na), idxq1(na), idxq2(na)
 
-      logical, intent(in)           :: wantDebug
-      logical, intent(out)          :: success
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 

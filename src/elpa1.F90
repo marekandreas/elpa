@@ -536,14 +536,18 @@ function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
    use elpa1_compute
    implicit none
 
-   integer(kind=c_int), intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-   real(kind=REAL_DATATYPE)        :: ev(na)
+   integer(kind=c_int), intent(in)      :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   real(kind=REAL_DATATYPE), intent(out)   :: ev(na)
 #ifdef USE_ASSUMED_SIZE
-   real(kind=REAL_DATATYPE)      :: a(lda,*), q(ldq,*)
+   real(kind=REAL_DATATYPE), intent(inout)      :: a(lda,*)
+   real(kind=REAL_DATATYPE), intent(out)        :: q(ldq,*)
 #else
-   real(kind=REAL_DATATYPE)      :: a(lda,matrixCols), q(ldq,matrixCols)
+   real(kind=REAL_DATATYPE), intent(inout)      :: a(lda,matrixCols)
+   real(kind=REAL_DATATYPE), intent(out)        :: q(ldq,matrixCols)
 #endif
-   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
+   integer(kind=ik), intent(in), optional       :: THIS_REAL_ELPA_KERNEL_API
+   logical                                      :: success
+
    integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
 
    logical                                :: useGPU
@@ -552,7 +556,6 @@ function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
    integer(kind=c_int)              :: my_pe, n_pes, my_prow, my_pcol, mpierr
    real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
    real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
-   logical                       :: success
    logical, save                 :: firstCall = .true.
    logical                       :: wantDebug
 
@@ -712,23 +715,26 @@ function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixC
    use elpa1_compute
    implicit none
 
-   integer(kind=c_int), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-   real(kind=REAL_DATATYPE)      :: ev(na)
+   integer(kind=c_int), intent(in)            :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   real(kind=REAL_DATATYPE), intent(out)      :: ev(na)
 #ifdef USE_ASSUMED_SIZE
-   real(kind=REAL_DATATYPE)      :: a(lda,*), q(ldq,*)
+   real(kind=REAL_DATATYPE), intent(inout)    :: a(lda,*)
+   real(kind=REAL_DATATYPE), intent(out)      :: q(ldq,*)
 #else
-   real(kind=REAL_DATATYPE)      :: a(lda,matrixCols), q(ldq,matrixCols)
+   real(kind=REAL_DATATYPE), intent(inout)    :: a(lda,matrixCols)
+   real(kind=REAL_DATATYPE), intent(out)      :: q(ldq,matrixCols)
 #endif
+
+   integer(kind=ik), intent(in), optional     :: THIS_REAL_ELPA_KERNEL_API
+   logical                                    :: success
 
    integer(kind=c_int)           :: my_pe, n_pes, my_prow, my_pcol, mpierr
    real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
    real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
-   logical                       :: success
    logical, save                 :: firstCall = .true.
    logical                       :: wantDebug
 
    
-   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
    integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
 
    logical                                :: useGPU
@@ -893,11 +899,16 @@ function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matr
 
    integer(kind=c_int), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 #ifdef USE_ASSUMED_SIZE
-   complex(kind=COMPLEX_DATATYPE)   :: a(lda,*), q(ldq,*)
+   complex(kind=COMPLEX_DATATYPE), intent(inout)   :: a(lda,*)
+   complex(kind=COMPLEX_DATATYPE), intent(out)     :: q(ldq,*)
 #else
-   complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols), q(ldq,matrixCols)
+   complex(kind=COMPLEX_DATATYPE), intent(inout)   :: a(lda,matrixCols)
+   complex(kind=COMPLEX_DATATYPE), intent(out)     :: q(ldq,matrixCols)
 #endif
-   real(kind=REAL_DATATYPE)         :: ev(na)
+   real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
+
+   logical                                         :: success
+   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
 
    integer(kind=c_int)                 :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=c_int)                 :: l_rows, l_cols, l_cols_nev
@@ -905,11 +916,9 @@ function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matr
    complex(kind=COMPLEX_DATATYPE), allocatable    :: tau(:)
    real(kind=c_double)              :: ttt0, ttt1  ! MPI_WTIME always needs double
 
-   logical                          :: success
    logical, save                    :: firstCall = .true.
    logical                          :: wantDebug
 
-   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
    integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
 
    logical                                :: useGPU
@@ -1083,13 +1092,19 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
    use elpa1_compute
    implicit none
 
-   integer(kind=c_int), intent(in)  :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   integer(kind=c_int), intent(in)                 :: na, nev, lda, ldq, nblk, matrixCols
+   integer(kind=c_int), intent(in)                 :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 #ifdef USE_ASSUMED_SIZE
-   complex(kind=COMPLEX_DATATYPE)   :: a(lda,*), q(ldq,*)
+   complex(kind=COMPLEX_DATATYPE), intent(inout)   :: a(lda,*)
+   complex(kind=COMPLEX_DATATYPE), intent(out)     :: q(ldq,*)
 #else
-   complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols), q(ldq,matrixCols)
+   complex(kind=COMPLEX_DATATYPE), intent(inout)   :: a(lda,matrixCols)
+   complex(kind=COMPLEX_DATATYPE), intent(out)     :: q(ldq,matrixCols)
 #endif
-   real(kind=REAL_DATATYPE)         :: ev(na)
+   real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
+
+   integer(kind=ik), intent(in), optional          :: THIS_REAL_ELPA_KERNEL_API
+   logical                                         :: success
 
    integer(kind=c_int)                 :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
    integer(kind=c_int)                 :: l_rows, l_cols, l_cols_nev
@@ -1097,11 +1112,9 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
    complex(kind=COMPLEX_DATATYPE), allocatable    :: tau(:)
    real(kind=c_double)              :: ttt0, ttt1  ! MPI_WTIME always needs double
 
-   logical                          :: success
    logical, save                    :: firstCall = .true.
    logical                          :: wantDebug
 
-   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
    integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
 
    logical                                :: useGPU

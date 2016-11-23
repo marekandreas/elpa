@@ -95,11 +95,11 @@
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                           :: useGPU
 
-      complex(kind=COMPLEX_DATATYPE)              :: tau(na)
+      complex(kind=COMPLEX_DATATYPE), intent(out)   :: tau(na)
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)              :: a_mat(lda,*)
+      complex(kind=COMPLEX_DATATYPE), intent(inout) :: a_mat(lda,*)
 #else
-      complex(kind=COMPLEX_DATATYPE)              :: a_mat(lda,matrixCols)
+      complex(kind=COMPLEX_DATATYPE), intent(inout) :: a_mat(lda,matrixCols)
 #endif
       real(kind=REAL_DATATYPE), intent(out)         :: d_vec(na), e_vec(na)
 

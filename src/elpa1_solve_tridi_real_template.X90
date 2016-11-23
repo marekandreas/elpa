@@ -63,21 +63,21 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
       use precision
       implicit none
 
-      integer(kind=ik)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE)                 :: d(na), e(na)
+      integer(kind=ik), intent(in)           :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=REAL_DATATYPE), intent(inout)   :: d(na), e(na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)                 :: q(ldq,*)
+      real(kind=REAL_DATATYPE), intent(inout)   :: q(ldq,*)
 #else
-      real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)
+      real(kind=REAL_DATATYPE), intent(inout)   :: q(ldq,matrixCols)
 #endif
+      logical, intent(in)           :: wantDebug
+      logical, intent(out)          :: success
 
       integer(kind=ik)              :: i, j, n, np, nc, nev1, l_cols, l_rows
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
 
       integer(kind=ik), allocatable :: limits(:), l_col(:), p_col(:), l_col_bc(:), p_col_bc(:)
 
-      logical, intent(in)           :: wantDebug
-      logical, intent(out)          :: success
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
