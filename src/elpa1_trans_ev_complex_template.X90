@@ -127,17 +127,13 @@
       logical                     :: successCUDA
 
       call timer%start("trans_ev_complex" // PRECISION_SUFFIX)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
 
       totalblocks = (na-1)/nblk + 1
       max_blocks_row = (totalblocks-1)/np_rows + 1
@@ -233,15 +229,11 @@
         enddo
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%start("mpi_communication")
-#endif
 
         if (nb>0) &
            call MPI_Bcast(hvb, nb, MPI_COMPLEX_PRECISION, cur_pcol, mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("mpi_communication")
-#endif
 
 #endif /* WITH_MPI */
         nb = 0
@@ -270,13 +262,9 @@
             nc = nc+n
           enddo
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           if (nc>0) call mpi_allreduce(h1, h2, nc, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
           if (nc>0) h2=h1
@@ -342,13 +330,9 @@
             check_memcpy_cuda("trans_ev", successCUDA)
           endif 
           
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 
           ! copy back tmp2 - after reduction...
           if (useGPU) then          

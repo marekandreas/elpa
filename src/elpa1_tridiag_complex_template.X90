@@ -285,13 +285,9 @@
             aux1(2) = 0.
           endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           call mpi_allreduce(aux1, aux2, 2, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
           aux2 = aux1
 #endif /* WITH_MPI */
@@ -318,14 +314,10 @@
          endif !(my_pcol==pcol(istep, nblk, np_cols))
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("mpi_communication")
-#endif
+         call timer%start("mpi_communication")
          ! Broadcast the Householder vector (and tau) along columns
          call MPI_Bcast(v_row, l_rows+1, MPI_COMPLEX_PRECISION, pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("mpi_communication")
-#endif
+         call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
 
@@ -475,13 +467,9 @@
         if (l_cols>0) then
           tmp(1:l_cols) = u_col(1:l_cols)
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           call mpi_allreduce(tmp, u_col, l_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
           u_col = tmp
@@ -502,13 +490,9 @@
         if (l_cols>0)  &
            xc = dot_product(v_col(1:l_cols),u_col(1:l_cols))
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%start("mpi_communication")
-#endif
         call mpi_allreduce(xc, vav, 1 , MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
         vav = xc
@@ -613,25 +597,17 @@
         endif
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%start("mpi_communication")
-#endif
         call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, prow(1, nblk, np_rows), mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("mpi_communication")
-#endif
 
 #endif /* WITH_MPI */
       endif
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, pcol(2, nblk, np_cols), mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
 
 #endif /* WITH_MPI */
 
@@ -686,9 +662,7 @@
         stop
       endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       tmp_real = d_vec
       call mpi_allreduce(tmp_real, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
       tmp_real = d_vec
@@ -697,9 +671,7 @@
       call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
       tmp_real = e_vec
       call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
 
 #endif /* WITH_MPI */
       deallocate(tmp_real, stat=istat, errmsg=errorMessage)

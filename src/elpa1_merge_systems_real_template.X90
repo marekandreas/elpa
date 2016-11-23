@@ -56,6 +56,8 @@
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -116,27 +118,19 @@
       endif
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("merge_systems" // M_PRECISION_SUFFIX)
-#endif
       success = .true.
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
 
       ! If my processor column isn't in the requested set, do nothing
 
       if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
-#endif
         return
       endif
       ! Determine number of "next" and "prev" column for ring sends
@@ -154,16 +148,12 @@
       endif
       call M_check_monotony_PRECISION(nm,d,'Input1',wantDebug, success)
       if (.not.(success)) then
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
-#endif
         return
       endif
       call M_check_monotony_PRECISION(na-nm,d(nm+1),'Input2',wantDebug, success)
       if (.not.(success)) then
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
-#endif
         return
       endif
       ! Get global number of processors and my processor number.
@@ -248,9 +238,7 @@
         ! Rearrange eigenvectors
         call M_resort_ev_PRECISION(idx, na)
 
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
-#endif
 
         return
       ENDIF
@@ -362,16 +350,12 @@
       enddo
       call M_check_monotony_PRECISION(na1,d1,'Sorted1', wantDebug, success)
       if (.not.(success)) then
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
-#endif
         return
       endif
       call M_check_monotony_PRECISION(na2,d2,'Sorted2', wantDebug, success)
       if (.not.(success)) then
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
-#endif
         return
       endif
 
@@ -423,9 +407,7 @@
         info = 0
 #ifdef WITH_OPENMP
 
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
-#endif
 
 !$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,j)
         my_thread = omp_get_thread_num()
@@ -471,9 +453,7 @@
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL
 
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
-#endif
 
         do i = 0, max_threads-1
           z(1:na1) = z(1:na1)*z_p(1:na1,i)
@@ -492,9 +472,7 @@
 
 #ifdef WITH_OPENMP
 
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
-#endif
 
 !$OMP PARALLEL DO PRIVATE(i) SHARED(na1, my_proc, n_procs,  &
 !$OMP d1,dbase, ddiff, z, ev_scale) &
@@ -515,9 +493,7 @@
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL DO
 
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
-#endif
 
 #endif
 
@@ -536,9 +512,7 @@
         call M_check_monotony_PRECISION(na,d,'Output', wantDebug, success)
 
         if (.not.(success)) then
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
-#endif
           return
         endif
         ! Eigenvector calculations
@@ -639,15 +613,11 @@
               np_rem = np_rem-1
             endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
             call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, M_MPI_REAL_PRECISION, &
                                         np_next, 1111, np_prev, 1111, &
                                         mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
-           call timer%stop("mpi_communication")
-#endif
+            call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
           endif
 
@@ -769,10 +739,7 @@
       endif
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
-#endif
-
 
       return
 
@@ -803,6 +770,8 @@
         subroutine M_resort_ev_PRECISION(idx_ev, nLength)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
+#else
+      use timings_dummy
 #endif
           use precision
           implicit none
@@ -844,24 +813,16 @@
                 qtmp(1:l_rows,nc) = q(l_rqs:l_rqe,lc1)
               else
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
                 call timer%start("mpi_communication")
-#endif
                 call mpi_send(q(l_rqs,lc1), l_rows, M_MPI_REAL_PRECISION, pc2, mod(i,4096), mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
                 call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
               endif
             else if (pc2==my_pcol) then
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
               call mpi_recv(qtmp(1,nc), l_rows, M_MPI_REAL_PRECISION, pc1, mod(i,4096), mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
               qtmp(1:l_rows,nc) = q(l_rqs:l_rqe,lc1)
 #endif /* WITH_MPI */
@@ -893,6 +854,8 @@
         subroutine M_transform_columns_PRECISION(col1, col2)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
+#else
+          use timings_dummy
 #endif
           use precision
           implicit none
@@ -915,15 +878,11 @@
               q(l_rqs:l_rqe,lc1) = tmp(1:l_rows)
             else
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
               call mpi_sendrecv(q(l_rqs,lc1), l_rows, M_MPI_REAL_PRECISION, pc2, 1, &
                                 tmp, l_rows, M_MPI_REAL_PRECISION, pc2, 1,          &
                                 mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
               tmp(1:l_rows) = q(l_rqs:l_rqe,lc1)
 #endif /* WITH_MPI */
@@ -931,15 +890,11 @@
             endif
           else if (pc2==my_pcol) then
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
             call mpi_sendrecv(q(l_rqs,lc2), l_rows, M_MPI_REAL_PRECISION, pc1, 1, &
                                tmp, l_rows, M_MPI_REAL_PRECISION, pc1, 1,         &
                                mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
             tmp(1:l_rows) = q(l_rqs:l_rqe,lc2)
 #endif /* WITH_MPI */
@@ -956,6 +911,8 @@
           use precision
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
+#else
+          use timings_dummy
 #endif
           implicit none
 
@@ -967,13 +924,9 @@
 
           ! Do an mpi_allreduce over processor rows
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           call mpi_allreduce(z, tmp, n, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
           tmp = z
 #endif /* WITH_MPI */
@@ -986,13 +939,9 @@
           ! If all processor columns are involved, we can use mpi_allreduce
           if (npc_n==np_cols) then
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
             call mpi_allreduce(tmp, z, n, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
             tmp = z
 #endif /* WITH_MPI */
@@ -1005,14 +954,10 @@
           do np = 1, npc_n
             z(:) = z(:) + tmp(:)
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
             call MPI_Sendrecv_replace(z, n, M_MPI_REAL_PRECISION, np_next, 1111, np_prev, 1111, &
                                        mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
           enddo
         end subroutine M_global_gather_PRECISION
@@ -1022,6 +967,8 @@
           use precision
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
+#else
+          use timings_dummy
 #endif
           implicit none
 
@@ -1034,13 +981,9 @@
 
           ! Do an mpi_allreduce over processor rows
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           call mpi_allreduce(z, tmp, n, M_MPI_REAL_PRECISION, MPI_PROD, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
           tmp = z
 #endif /* WITH_MPI */
@@ -1053,13 +996,9 @@
           ! If all processor columns are involved, we can use mpi_allreduce
           if (npc_n==np_cols) then
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
             call mpi_allreduce(tmp, z, n, M_MPI_REAL_PRECISION, MPI_PROD, mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
             z = tmp
 #endif /* WITH_MPI */
@@ -1073,13 +1012,9 @@
             z(1:n) = tmp(1:n)
             do np = npc_0+1, npc_0+npc_n-1
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
               call mpi_recv(tmp, n, M_MPI_REAL_PRECISION, np, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 #else  /* WITH_MPI */
               tmp(1:n) = z(1:n)
 #endif  /* WITH_MPI */
@@ -1087,25 +1022,17 @@
             enddo
             do np = npc_0+1, npc_0+npc_n-1
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
               call mpi_send(z, n, M_MPI_REAL_PRECISION, np, 1111, mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 #endif  /* WITH_MPI */
             enddo
           else
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
             call mpi_send(tmp, n, M_MPI_REAL_PRECISION, npc_0, 1111, mpi_comm_cols, mpierr)
             call mpi_recv(z  ,n, M_MPI_REAL_PRECISION, npc_0, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
-#endif
 #else  /* WITH_MPI */
             z(1:n) = tmp(1:n)
 #endif  /* WITH_MPI */

@@ -154,16 +154,12 @@
 
       call timer%start("tridiag_real" // M_PRECISION_SUFFIX)
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
       ! seems that tile is a square submatrix, consisting by several blocks
       ! it is a smallest possible square submatrix, where blocks being distributed among
@@ -327,13 +323,9 @@
             endif
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
-          call mpi_allreduce(aux1, aux2, 2, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
+            call mpi_allreduce(aux1, aux2, 2, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
             call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
           aux2 = aux1
 #endif /* WITH_MPI */
@@ -543,13 +535,9 @@
         if (l_cols>0) then
           tmp(1:l_cols) = u_col(1:l_cols)
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           call mpi_allreduce(tmp, u_col, l_cols, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
           u_col = tmp
 #endif /* WITH_MPI */
@@ -563,13 +551,9 @@
         if (l_cols>0)  &
            x = dot_product(v_col(1:l_cols),u_col(1:l_cols))
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%start("mpi_communication")
-#endif
         call mpi_allreduce(x, vav, 1, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
         vav = x
 #endif /* WITH_MPI */
@@ -713,9 +697,7 @@
         stop
       endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       tmp = d_vec
       call mpi_allreduce(tmp, d_vec, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
       tmp = d_vec
@@ -724,9 +706,7 @@
       call mpi_allreduce(tmp, e_vec, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
       tmp = e_vec
       call mpi_allreduce(tmp, e_vec, na, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
       deallocate(tmp,  stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then

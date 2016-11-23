@@ -126,16 +126,12 @@
       
       
       call timer%start("trans_ev_real" // M_PRECISION_SUFFIX)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
       totalblocks = (na-1)/nblk + 1
       max_blocks_row = (totalblocks-1)/np_rows + 1
       max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q_mat!
@@ -224,14 +220,10 @@
         enddo
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%start("mpi_communication")
-#endif
         if (nb>0) &
             call MPI_Bcast(hvb, nb, M_MPI_REAL_PRECISION, cur_pcol, mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
         nb = 0
         do ic=ics,ice
@@ -262,13 +254,9 @@
             nc = nc+n
           enddo
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           if (nc>0) call mpi_allreduce( h1, h2, nc, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
           if (nc>0) h2 = h1
 #endif /* WITH_MPI */
@@ -326,9 +314,7 @@
           endif  !l_rows>0
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
           ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
           ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
           if (useGPU) then          
@@ -346,9 +332,7 @@
             check_memcpy_cuda("trans_ev", successCUDA)
           endif 
 
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
-#endif
 #else
 !          tmp2 = tmp1
 #endif
