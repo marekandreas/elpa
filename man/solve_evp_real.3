@@ -12,34 +12,38 @@ This is an old and deprecated interface. It is recommendet to use \fBsolve_evp_r
 use elpa1
 .br
 .br
-.RI  "success = \fBsolve_evp_real\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)"
+.RI  "success = \fBsolve_evp_real\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU)"
 .br
 .RI " "
 .br
 .RI "With the definintions of the input and output variables:"
 
 .br
-.RI "integer, intent(in)    \fBna\fP:            global dimension of quadratic matrix \fBa\fP to solve"
+.RI "integer, intent(in)           \fBna\fP:            global dimension of quadratic matrix \fBa\fP to solve"
 .br
-.RI "integer, intent(in)    \fBnev\fP:           number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
+.RI "integer, intent(in)           \fBnev\fP:           number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
 .br
-.RI "real*8,  intent(inout) \fBa\fP:             locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.RI "real*8,  intent(inout)        \fBa\fP:             locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
 .br
-.RI "integer, intent(in)    \fBlda\fP:           leading dimension of locally distributed matrix \fBa\fP"
+.RI "integer, intent(in)           \fBlda\fP:           leading dimension of locally distributed matrix \fBa\fP"
 .br
-.RI "real*8,  intent(inout) \fBev\fP:            on output the first \fBnev\fP computed eigenvalues"
+.RI "real*8,  intent(inout)        \fBev\fP:            on output the first \fBnev\fP computed eigenvalues"
 .br
-.RI "real*8,  intent(inout) \fBq\fP:             on output the first \fBnev\fP computed eigenvectors"
+.RI "real*8,  intent(inout)        \fBq\fP:             on output the first \fBnev\fP computed eigenvectors"
 .br
-.RI "integer, intent(in)    \fBldq\fP:           leading dimension of matrix \fBq\fP which stores the eigenvectors"
+.RI "integer, intent(in)           \fBldq\fP:           leading dimension of matrix \fBq\fP which stores the eigenvectors"
 .br
-.RI "integer, intent(in)    \fBnblk\fP:          blocksize of block cyclic distributin, must be the same in both directions"
+.RI "integer, intent(in)           \fBnblk\fP:          blocksize of block cyclic distributin, must be the same in both directions"
 .br
-.RI "integer, intent(in)    \fBmatrixCols\fP:    number of columns of locally distributed matrices \fBa\fP and \fBq\fP"
+.RI "integer, intent(in)           \fBmatrixCols\fP:    number of columns of locally distributed matrices \fBa\fP and \fBq\fP"
 .br
-.RI "integer, intent(in)    \fBmpi_comm_rows\fP: communicator for communication in rows. Constructed with \fBelpa_get_communicators\fP(3)"
+.RI "integer, intent(in)           \fBmpi_comm_rows\fP: communicator for communication in rows. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
-.RI "integer, intent(in)    \fBmpi_comm_cols\fP: communicator for communication in colums. Constructed with \fBelpa_get_communicators\fP(3)"
+.RI "integer, intent(in)           \fBmpi_comm_cols\fP: communicator for communication in colums. Constructed with \fBelpa_get_communicators\fP(3)"
+.br
+.RI "integer, intent(in)           \fBmpi_comm_all\fP:  communicator for all MPI processes used in ELPA"
+.br
+.RI "logical, optional, intent(in) \fBuseGPU\fP:        decide whether GPUs should be used or not"
 .br
 
 .RI "logical                \fBsuccess\fP:       return value indicating success or failure"

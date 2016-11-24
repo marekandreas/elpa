@@ -11,42 +11,44 @@ elpa_solve_evp_complex_double \- solve the complex eigenvalue problem with eithe
 use elpa
 .br
 .br
-.RI  "success = \fBelpa_solve_evp_complex_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL=THIS_COMPLEX_ELPA_KERNEL, method=method)"
+.RI  "success = \fBelpa_solve_evp_complex_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL, useGPU, method)"
 .br
 .RI " "
 .br
 .RI "With the definintions of the input and output variables:"
 
 .br
-.RI "integer,     intent(in)    \fBna\fP:                       global dimension of quadratic matrix \fBa\fP to solve"
+.RI "integer,     intent(in)       \fBna\fP:                       global dimension of quadratic matrix \fBa\fP to solve"
 .br
-.RI "integer,     intent(in)    \fBnev\fP:                      number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
+.RI "integer,     intent(in)       \fBnev\fP:                      number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
 .br
-.RI "complex*16,  intent(inout) \fBa\fP:                        locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.RI "complex*16,  intent(inout)    \fBa\fP:                        locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
 .br
-.RI "integer,     intent(in)    \fBlda\fP:                      leading dimension of locally distributed matrix \fBa\fP"
+.RI "integer,     intent(in)       \fBlda\fP:                      leading dimension of locally distributed matrix \fBa\fP"
 .br
-.RI "real*8,      intent(inout) \fBev\fP:                       on output the first \fBnev\fP computed eigenvalues"
+.RI "real*8,      intent(inout)    \fBev\fP:                       on output the first \fBnev\fP computed eigenvalues"
 .br
-.RI "complex*16,  intent(inout) \fBq\fP:                        on output the first \fBnev\fP computed eigenvectors"
+.RI "complex*16,  intent(inout)    \fBq\fP:                        on output the first \fBnev\fP computed eigenvectors"
 .br
-.RI "integer,     intent(in)    \fBldq\fP:                      leading dimension of matrix \fBq\fP which stores the eigenvectors"
+.RI "integer,     intent(in)       \fBldq\fP:                      leading dimension of matrix \fBq\fP which stores the eigenvectors"
 .br
-.RI "integer,     intent(in)    \fBnblk\fP:                     blocksize of block cyclic distributin, must be the same in both directions"
+.RI "integer,     intent(in)       \fBnblk\fP:                     blocksize of block cyclic distributin, must be the same in both directions"
 .br
-.RI "integer,     intent(in)    \fBmatrixCols\fP:               number of columns of locally distributed matrices \fBa\fP and \fBq\fP"
+.RI "integer,     intent(in)       \fBmatrixCols\fP:               number of columns of locally distributed matrices \fBa\fP and \fBq\fP"
 .br
-.RI "integer,     intent(in)    \fBmpi_comm_rows\fP:            communicator for communication in rows. Constructed with \fBelpa_get_communicators\fP(3)"
+.RI "integer,     intent(in)       \fBmpi_comm_rows\fP:            communicator for communication in rows. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
-.RI "integer,     intent(in)    \fBmpi_comm_cols\fP:            communicator for communication in colums. Constructed with \fBelpa_get_communicators\fP(3)"
+.RI "integer,     intent(in)       \fBmpi_comm_cols\fP:            communicator for communication in colums. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
-.RI "integer,     intent(in)    \fBmpi_comm_all\fP:             communicator for all processes in the processor set involved in ELPA"
+.RI "integer,     intent(in)       \fBmpi_comm_all\fP:             communicator for all processes in the processor set involved in ELPA"
 .br
-.RI "int                        \fBTHIS_ELPA_COMPLEX_KERNEL\fp: choose the compute kernel for 2-stage solver"
+.RI "int                           \fBTHIS_ELPA_COMPLEX_KERNEL\fp: choose the compute kernel for 2-stage solver"
 .br
-.RI "character(*), optional     \fBmethod\fP:                   use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto" "
+.RI "logical, optional, intent(in) \fBuseGPU\fP:                   specify whether GPUs should be used or not used"
+.br
+.RI "character(*), optional        \fBmethod\fP:                   use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto" "
 
-.RI "logical                    \fBsuccess\fP:       return value indicating success or failure"
+.RI "logical                       \fBsuccess\fP:                  return value indicating success or failure"
 .br
 .SS C INTERFACE
 #include "elpa.h"
@@ -54,7 +56,7 @@ use elpa
 #include <complex.h>
 
 .br
-.RI "success = \fBelpa_solve_evp_complex_double\fP (\fBint\fP na, \fBint\fP nev, \fB double complex *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble complex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_COMPLEX_KERNEL \fB char *\fPmethod);"
+.RI "success = \fBelpa_solve_evp_complex_double\fP (\fBint\fP na, \fBint\fP nev, \fB double complex *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble complex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_COMPLEX_KERNEL, \fBint\fP useGPU, \fB char *\fPmethod);"
 .br
 .RI " "
 .br
@@ -86,6 +88,8 @@ use elpa
 .RI "int             \fBmpi_comm_all\fP:             communicator for all processes in the processor set involved in ELPA"
 .br
 .RI "int             \fBTHIS_ELPA_COMPLEX_KERNEL\fp: choose the compute kernel for 2-stage solver"
+.br
+.RI "int             \fBuseGPU\fP:                   specify whether GPUS should be used or not
 .br
 .RI "char           *\fBmethod\fP:                   use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto" "
 

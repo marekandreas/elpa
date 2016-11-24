@@ -11,7 +11,7 @@ elpa_solve_evp_real_double \- solve the real eigenvalue problem
 use elpa
 .br
 .br
-.RI  "success = \fBelpa_solve_evp_real_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL=THIS_REAL_ELPA_KERNEL, useQr=useQR, method=method)"
+.RI  "success = \fBelpa_solve_evp_real_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQr, useGPU, method=method)"
 .br
 .RI " "
 .br
@@ -48,6 +48,8 @@ use elpa
 .br
 .RI "logical, intent(in), optional: \fBuseQR\fP:                 optional argument; switches to QR-decomposition if set to .true."
 .br
+.RI "logical, optional, intent(in)  \fBuseGPU\fP:                specify whether GPUs should be used or not used"
+.br
 .RI "character(*), optional         \fBmethod\fP:                use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto" "
 
 .RI "logical                        \fBsuccess\fP:               return value indicating success or failure"
@@ -56,7 +58,7 @@ use elpa
 #include "elpa.h"
 
 .br
-.RI "success = \fBelpa_solve_evp_real_double\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQr, \fbchar *\fPmethod);"
+.RI "success = \fBelpa_solve_evp_real_double\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQr, \fBint\fP useGPU, \fbchar *\fPmethod);"
 .br
 .RI " "
 .br
@@ -90,6 +92,8 @@ use elpa
 .RI "int     \fBTHIS_ELPA_REAL_KERNEL\fp: choose the compute kernel for 2-stage solver"
 .br
 .RI "int     \fBuseQR\fP:                 if set to 1 switch to QR-decomposition"
+.br
+.RI "int     \fBuseGPU\fP:                specify whether GPUS should be used or not
 .br
 .RI "char   *\fBmethod\fP:                use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto" "
 

@@ -11,7 +11,7 @@ elpa_solve_evp_complex_1stage_single \- solve the complex eigenvalue problem wit
 use elpa1
 .br
 .br
-.RI  "success = \fBelpa_solve_evp_complex_1stage_single\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols)"
+.RI  "success = \fBelpa_solve_evp_complex_1stage_single\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU)"
 .br
 .RI " "
 .br
@@ -40,7 +40,10 @@ use elpa1
 .br
 .RI "integer, intent(in)        \fBmpi_comm_cols\fP: communicator for communication in colums. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
-
+.RI "integer,     intent(in)    \fBmpi_comm_all\fP:  communicator for all processes in the processor set involved in ELPA"
+.br
+.RI "logical, optional, intent(in) \fBuseGPU\fP:     specify whether GPUs should be used or not used"
+.br
 .RI "logical                    \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
@@ -49,7 +52,7 @@ use elpa1
 #include <complex.h>
 
 .br
-.RI "success = \fBelpa_solve_evp_complex_1stage_single\fP (\fBint\fP na, \fBint\fP nev, \fB complex *\fPa, \fBint\fP lda, \fB float *\fPev, \fBcomplex*\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols);"
+.RI "success = \fBelpa_solve_evp_complex_1stage_single\fP (\fBint\fP na, \fBint\fP nev, \fB complex *\fPa, \fBint\fP lda, \fB float *\fPev, \fBcomplex*\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP useGPU);"
 .br
 .RI " "
 .br
@@ -78,7 +81,10 @@ use elpa1
 .br
 .RI "int             \fBmpi_comm_cols\fP: communicator for communication in colums. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
-
+.RI "int             \fBmpi_comm_all\fP:  communicator for all processes in the processor set involved in ELPA"
+.br
+.RI "int             \fBuseGPU\fP:        specify whether GPUS should be used or not
+.br
 .RI "int             \fBsuccess\fP:       return value indicating success (1) or failure (0)
 
 .SH DESCRIPTION
