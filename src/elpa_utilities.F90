@@ -166,7 +166,7 @@ module ELPA_utilities
    jLocal = lj * nblk + xj
 
  end function
- 
+
  integer function local_index(idx, my_proc, num_procs, nblk, iflag)
 
 !-------------------------------------------------------------------------------

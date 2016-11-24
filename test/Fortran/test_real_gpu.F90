@@ -75,7 +75,7 @@ program test_real_gpu_version_double_precision
 !-------------------------------------------------------------------------------
    use precision
    use ELPA1
-   
+
    use mod_check_for_gpu, only : check_for_gpu
 
    use elpa_utilities, only : error_unit
@@ -132,6 +132,7 @@ program test_real_gpu_version_double_precision
    logical                    :: success
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
+   logical                    :: useGPU
    !-------------------------------------------------------------------------------
 
 #define DOUBLE_PRECISION_REAL 1
@@ -270,8 +271,9 @@ program test_real_gpu_version_double_precision
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
+   useGPU = .true.
    success = solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                            na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, REAL_ELPA_KERNEL_GPU)
+                            na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."

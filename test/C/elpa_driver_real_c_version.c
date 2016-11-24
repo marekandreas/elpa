@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
    int i;
    int success;
 
-   int useQr, THIS_REAL_ELPA_KERNEL_API;
+   int useQr, useGPU,  THIS_REAL_ELPA_KERNEL_API ;
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -196,9 +196,9 @@ int main(int argc, char** argv) {
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
    useQr = 0;
-   THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
+   useGPU = 0;
 
-   success = elpa_solve_evp_real_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, "1stage");
+   success = elpa_solve_evp_real_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "1stage");
 
    if (success != 1) {
      printf("error in ELPA solve \n");
@@ -228,9 +228,10 @@ int main(int argc, char** argv) {
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
    useQr = 0;
+   useGPU =0;
    THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
 
-   success = elpa_solve_evp_real_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, "2stage");
+   success = elpa_solve_evp_real_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "2stage");
 
    if (success != 1) {
      printf("error in ELPA solve \n");
@@ -258,9 +259,10 @@ int main(int argc, char** argv) {
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
    useQr = 0;
+   useGPU = 0;
    THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
 
-   success = elpa_solve_evp_real_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, "auto");
+   success = elpa_solve_evp_real_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "auto");
 
    if (success != 1) {
      printf("error in ELPA solve \n");

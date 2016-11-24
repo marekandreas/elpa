@@ -106,6 +106,7 @@ module ELPA
 !>                                              kernel via API (only evalulated if 2 stage solver is used_
 !>
 !>  \param use_qr (optional)                    use QR decomposition in the ELPA 2stage solver
+!>  \param useGPU (optional)                    use GPU version of ELPA 1stage
 !>
 !>  \param method                               choose whether to use ELPA 1stage or 2stage solver
 !>                                              possible values: "1stage" => use ELPA 1stage solver
@@ -152,7 +153,8 @@ module ELPA
 !>  \param mpi_comm_all                            MPI communicator for the total processor set
 !>
 !>  \param THIS_REAL_COMPLEX_KERNEL_API (optional) specify used ELPA 2stage
-!>                                                 kernel via API (only evalulated if 2 stage solver is used_
+!>                                                 kernel via API (only evalulated if 2 stage solver is used
+!>  \param useGPU (optional)                    use GPU version of ELPA 1stage
 !>
 !>  \param method                                  choose whether to use ELPA 1stage or 2stage solver
 !>                                                 possible values: "1stage" => use ELPA 1stage solver
@@ -204,6 +206,7 @@ module ELPA
 !>                                              kernel via API (only evalulated if 2 stage solver is used_
 !>
 !>  \param use_qr (optional)                    use QR decomposition in the ELPA 2stage solver
+!>  \param useGPU (optional)                    use GPU version of ELPA 1stage
 !>
 !>  \param method                               choose whether to use ELPA 1stage or 2stage solver
 !>                                              possible values: "1stage" => use ELPA 1stage solver
@@ -215,7 +218,7 @@ module ELPA
     function elpa_solve_evp_real_double(na, nev, a, lda, ev, q, ldq, nblk,         &
                                  matrixCols, mpi_comm_rows, mpi_comm_cols,  &
                                  mpi_comm_all, THIS_REAL_ELPA_KERNEL_API,   &
-                                 useQR, method) result(success)
+                                 useQR, useGPU, method) result(success)
       use iso_c_binding
       use elpa_utilities
       implicit none
@@ -228,7 +231,7 @@ module ELPA
 #else
       real(kind=c_double), intent(inout)        :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
-      logical, intent(in), optional             :: useQR
+      logical, intent(in), optional             :: useQR, useGPU
       integer(kind=c_int), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
       character(*), intent(in), optional        :: method
 
@@ -251,10 +254,11 @@ module ELPA
       endif
 
       if (useELPA1) then
-        success = solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+        success = elpa_solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
+                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,       &
+                                        useGPU = useGPU)
       else
-        success = solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
+        success = elpa_solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,              &
                                         mpi_comm_all,                                          &
                                         THIS_REAL_ELPA_KERNEL_API = THIS_REAL_ELPA_KERNEL_API, &
@@ -302,6 +306,7 @@ module ELPA
 !>                                              kernel via API (only evalulated if 2 stage solver is used_
 !>
 !>  \param use_qr (optional)                    use QR decomposition in the ELPA 2stage solver
+!>  \param useGPU (optional)                    use GPU version of ELPA 1stage
 !>
 !>  \param method                               choose whether to use ELPA 1stage or 2stage solver
 !>                                              possible values: "1stage" => use ELPA 1stage solver
@@ -313,7 +318,7 @@ module ELPA
     function elpa_solve_evp_real_single(na, nev, a, lda, ev, q, ldq, nblk,         &
                                  matrixCols, mpi_comm_rows, mpi_comm_cols,  &
                                  mpi_comm_all, THIS_REAL_ELPA_KERNEL_API,   &
-                                 useQR, method) result(success)
+                                 useQR, useGPU, method) result(success)
       use iso_c_binding
       use elpa_utilities
       implicit none
@@ -326,7 +331,7 @@ module ELPA
 #else
       real(kind=c_float), intent(inout)         :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
-      logical, intent(in), optional             :: useQR
+      logical, intent(in), optional             :: useQR, useGPU
       integer(kind=c_int), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
       character(*), intent(in), optional        :: method
 
@@ -349,10 +354,11 @@ module ELPA
       endif
 
       if (useELPA1) then
-        success = solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+        success = elpa_solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
+                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,       &
+                                        useGPU = useGPU)
       else
-        success = solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
+        success = elpa_solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,              &
                                         mpi_comm_all,                                          &
                                         THIS_REAL_ELPA_KERNEL_API = THIS_REAL_ELPA_KERNEL_API, &
@@ -397,7 +403,8 @@ module ELPA
 !>  \param mpi_comm_all                            MPI communicator for the total processor set
 !>
 !>  \param THIS_REAL_COMPLEX_KERNEL_API (optional) specify used ELPA 2stage
-!>                                                 kernel via API (only evalulated if 2 stage solver is used_
+!>                                                 kernel via API (only evalulated if 2 stage solver is used
+!>  \param useGPU (optional)                       use GPU version of ELPA 1stage
 !>
 !>  \param method                                  choose whether to use ELPA 1stage or 2stage solver
 !>                                                 possible values: "1stage" => use ELPA 1stage solver
@@ -407,9 +414,9 @@ module ELPA
 !>  \result success                                logical, false if error occured
 !-------------------------------------------------------------------------------
     function elpa_solve_evp_complex_double(na, nev, a, lda, ev, q, ldq, nblk,         &
-                                    matrixCols, mpi_comm_rows, mpi_comm_cols,  &
-                                    mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API,&
-                                    method) result(success)
+                                    matrixCols, mpi_comm_rows, mpi_comm_cols,         &
+                                    mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API,       &
+                                    useGPU, method) result(success)
       use iso_c_binding
       use elpa_utilities
 
@@ -424,6 +431,7 @@ module ELPA
       complex(kind=c_double), intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
       integer(kind=c_int), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
+      logical, intent(in), optional             :: useGPU
       character(*), intent(in), optional        :: method
 
       logical                                   :: useELPA1
@@ -445,10 +453,11 @@ module ELPA
       endif
 
       if (useELPA1) then
-        success = solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+        success = elpa_solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
+                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,          &
+                                        useGPU)
       else
-        success = solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
+        success = elpa_solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,                 &
                                         mpi_comm_all,                                             &
                                         THIS_COMPLEX_ELPA_KERNEL_API = THIS_COMPLEX_ELPA_KERNEL_API)
@@ -492,7 +501,8 @@ module ELPA
 !>  \param mpi_comm_all                            MPI communicator for the total processor set
 !>
 !>  \param THIS_REAL_COMPLEX_KERNEL_API (optional) specify used ELPA 2stage
-!>                                                 kernel via API (only evalulated if 2 stage solver is used_
+!>                                                 kernel via API (only evalulated if 2 stage solver is used
+!>  \param useGPU (optional)                       use GPU version of ELPA 1stage
 !>
 !>  \param method                                  choose whether to use ELPA 1stage or 2stage solver
 !>                                                 possible values: "1stage" => use ELPA 1stage solver
@@ -504,7 +514,7 @@ module ELPA
     function elpa_solve_evp_complex_single(na, nev, a, lda, ev, q, ldq, nblk,         &
                                     matrixCols, mpi_comm_rows, mpi_comm_cols,  &
                                     mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API,&
-                                    method) result(success)
+                                    useGPU, method) result(success)
       use iso_c_binding
       use elpa_utilities
       implicit none
@@ -518,6 +528,7 @@ module ELPA
       complex(kind=c_float), intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
       integer(kind=c_int), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
+      logical, intent(in), optional             :: useGPU
       character(*), intent(in), optional        :: method
 
       logical                                   :: useELPA1
@@ -539,10 +550,11 @@ module ELPA
       endif
 
       if (useELPA1) then
-        success = solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+        success = elpa_solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
+                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,          &
+                                        useGPU)
       else
-        success = solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
+        success = elpa_solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,                 &
                                         mpi_comm_all,                                             &
                                         THIS_COMPLEX_ELPA_KERNEL_API = THIS_COMPLEX_ELPA_KERNEL_API)

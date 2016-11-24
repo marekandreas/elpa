@@ -173,7 +173,7 @@ module ELPA1
 !> \param  mpi_comm_cols     Communicator for communicating within columns of processes (out)
 !> \result mpierr            integer error value of mpi_comm_split function
   interface get_elpa_row_col_comms
-    module procedure get_elpa_communicators
+    module procedure elpa_get_communicators
   end interface
 
 !> \brief elpa_get_communicators:  Fortran interface to set the communicators needed by ELPA
@@ -190,8 +190,8 @@ module ELPA1
 !> \param  mpi_comm_cols     Communicator for communicating within columns of processes (out)
 !> \result mpierr            integer error value of mpi_comm_split function
 
-  interface elpa_get_communicators
-    module procedure get_elpa_communicators
+  interface get_elpa_communicators
+    module procedure elpa_get_communicators
   end interface
 
 !> \brief solve_evp_real: old, deprecated Fortran function to solve the real eigenvalue problem with 1-stage solver. Will be deleted at some point. Better use "solve_evp_real_1stage" or "elpa_solve_evp_real"
@@ -232,14 +232,13 @@ module ELPA1
 
 
   interface solve_evp_real
-    module procedure solve_evp_real_1stage_double
+    module procedure elpa_solve_evp_real_1stage_double
   end interface
 
   interface solve_evp_real_1stage
-    module procedure solve_evp_real_1stage_double
+    module procedure elpa_solve_evp_real_1stage_double
   end interface
 
-!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. Better use "solve_evp_complex_1stage_double" or elpa_solve_evp_complex_double
 !> \brief elpa_solve_evp_real_1stage_double: Fortran function to solve the real eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_real"
 !>
 !  Parameters
@@ -273,8 +272,12 @@ module ELPA1
 !>  \param mpi_comm_cols        MPI-Communicator for columns
 !>
 !>  \result                     success
-  interface elpa_solve_evp_real_1stage_double
-    module procedure solve_evp_real_1stage_double
+  !interface elpa_solve_evp_real_1stage_double
+   ! module procedure solve_evp_real_1stage_double
+  !end interface
+
+  interface solve_evp_real_1stage_double
+    module procedure elpa_solve_evp_real_1stage_double
   end interface
 
 
@@ -314,14 +317,48 @@ module ELPA1
 !>
 !>  \result                     success
   interface solve_evp_complex
-    module procedure solve_evp_complex_1stage_double
+    module procedure elpa_solve_evp_complex_1stage_double
   end interface
-
+!> \brief solve_evp_complex: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. will be deleted at some point. Better use "solve_evp_complex_1stage" or "elpa_solve_evp_complex"
+!>
+!> \details
+!> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage_double"
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>
+!>  \result                     success
   interface solve_evp_complex_1stage
-    module procedure solve_evp_complex_1stage_double
+    module procedure elpa_solve_evp_complex_1stage_double
   end interface
 
-!> \brief elpa_solve_evp_complex_1stage_double: Fortran function to solve the complex eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_complex"
+!> \brief solve_evp_complex_1stage_double: Fortran function to solve the complex eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_complex"
 !>
 !  Parameters
 !
@@ -354,319 +391,11 @@ module ELPA1
 !>  \param mpi_comm_cols        MPI-Communicator for columns
 !>
 !>  \result                     success
-  interface elpa_solve_evp_complex_1stage_double
-    module procedure solve_evp_complex_1stage_double
+  interface solve_evp_complex_1stage_double
+    module procedure elpa_solve_evp_complex_1stage_double
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-!> \brief elpa_solve_evp_real_1stage_single: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
-!>
-!  Parameters
-!
-!> \param  na                   Order of matrix a
-!>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
-!>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
-!>
-!>  \param lda                  Leading dimension of a
-!>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>
-!>  \result                     success
-
-  interface elpa_solve_evp_real_1stage_single
-    module procedure solve_evp_real_1stage_single
-  end interface
-#endif
-
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-!> \brief elpa_solve_evp_complex_1stage_single: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
-!>
-!  Parameters
-!
-!> \param  na                   Order of matrix a
-!>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
-!>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
-!>
-!>  \param lda                  Leading dimension of a
-!>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>
-!>  \result                     success
-interface elpa_solve_evp_complex_1stage_single
-  module procedure solve_evp_complex_1stage_single
-end interface
-#endif
-
-
-contains
-
-!-------------------------------------------------------------------------------
-
-!> \brief Old, deprecated interface. Will be deleted. Use "elpa_get_communicators"
-! All ELPA routines need MPI communicators for communicating within
-! rows or columns of processes, these are set here.
-! mpi_comm_rows/mpi_comm_cols can be free'd with MPI_Comm_free if not used any more.
-!
-!  Parameters
-!
-!> \param  mpi_comm_global   Global communicator for the calculations (in)
-!>
-!> \param  my_prow           Row coordinate of the calling process in the process grid (in)
-!>
-!> \param  my_pcol           Column coordinate of the calling process in the process grid (in)
-!>
-!> \param  mpi_comm_rows     Communicator for communicating within rows of processes (out)
-!>
-!> \param  mpi_comm_cols     Communicator for communicating within columns of processes (out)
-!> \result mpierr            integer error value of mpi_comm_split function
-
-
-function get_elpa_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
-   ! use precision
-   use elpa_mpi
-   use iso_c_binding
-   implicit none
-
-   integer(kind=c_int), intent(in)  :: mpi_comm_global, my_prow, my_pcol
-   integer(kind=c_int), intent(out) :: mpi_comm_rows, mpi_comm_cols
-
-   integer(kind=c_int)              :: mpierr
-
-   ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
-   ! having the same column coordinate share one mpi_comm_rows.
-   ! So the "color" for splitting is my_pcol and the "key" is my row coordinate.
-   ! Analogous for mpi_comm_cols
-
-   call mpi_comm_split(mpi_comm_global,my_pcol,my_prow,mpi_comm_rows,mpierr)
-   call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols,mpierr)
-
-end function get_elpa_communicators
-
-
-!> \brief solve_evp_real_1stage_double: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
-!>
-!  Parameters
-!
-!> \param  na                   Order of matrix a
-!>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
-!>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
-!>
-!>  \param lda                  Leading dimension of a
-!>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>
-!>  \result                     success
-
-#define DOUBLE_PRECISION_REAL 1
-#define DOUBLE_PRECISION_COMPLEX 1
-#define REAL_DATATYPE c_double
-#define COMPLEX_DATATYPE c_float
-
-function solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                      matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                      THIS_REAL_ELPA_KERNEL_API) result(success)
-   use precision
-   use cuda_functions
-   use mod_check_for_gpu
-#ifdef HAVE_DETAILED_TIMINGS
-   use timings
-#endif
-   use iso_c_binding
-   use elpa_mpi
-   use elpa1_compute
-   implicit none
-
-   integer(kind=c_int), intent(in)      :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-   real(kind=REAL_DATATYPE), intent(out)   :: ev(na)
-#ifdef USE_ASSUMED_SIZE
-   real(kind=REAL_DATATYPE), intent(inout)      :: a(lda,*)
-   real(kind=REAL_DATATYPE), intent(out)        :: q(ldq,*)
-#else
-   real(kind=REAL_DATATYPE), intent(inout)      :: a(lda,matrixCols)
-   real(kind=REAL_DATATYPE), intent(out)        :: q(ldq,matrixCols)
-#endif
-   integer(kind=ik), intent(in), optional       :: THIS_REAL_ELPA_KERNEL_API
-   logical                                      :: success
-
-   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
-
-   logical                                :: useGPU
-   integer(kind=ik)                       :: numberOfGPUDevices
-
-   integer(kind=c_int)              :: my_pe, n_pes, my_prow, my_pcol, mpierr
-   real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
-   real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
-   logical, save                 :: firstCall = .true.
-   logical                       :: wantDebug
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("solve_evp_real_1stage_double")
-#endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("mpi_communication")
-#endif
-
-   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
-   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
-
-   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("mpi_communication")
-#endif
-   success = .true.
-
-   wantDebug = .false.
-   if (firstCall) then
-     ! are debug messages desired?
-     wantDebug = debug_messages_via_environment_variable()
-     firstCall = .false.
-   endif
-   
-   useGPU      = .false.
-   
-   if (present(THIS_REAL_ELPA_KERNEL_API)) then
-     ! user defined kernel via the optional argument in the API call
-     THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
-   else
-     ! if kernel is not choosen via api
-     ! check whether set by environment variable
-     THIS_REAL_ELPA_KERNEL = DEFAULT_REAL_ELPA_KERNEL
-   endif
-   
-   if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
-        useGPU = .true.
-      endif
-      if (nblk .ne. 128) then
-        print *,"Warning: using GPU with blocksize different from 128"
-!         error stop
-      endif
-
-      ! set the neccessary parameters
-      cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-      cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-      cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-      cudaHostRegisterPortable = cuda_hostRegisterPortable()
-      cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-   endif
-
-
-   allocate(e(na), tau(na))
-
-   ttt0 = MPI_Wtime()
-#ifdef DOUBLE_PRECISION_REAL
-   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
-#else
-   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
-#endif
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
-   time_evp_fwd = ttt1-ttt0
-
-   ttt0 = MPI_Wtime()
-#ifdef DOUBLE_PRECISION_REAL
-   call solve_tridi_double(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                    mpi_comm_cols, wantDebug, success)
-#else
-   call solve_tridi_single(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                    mpi_comm_cols, wantDebug, success)
-#endif
-   if (.not.(success)) return
-
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi  :',ttt1-ttt0
-   time_evp_solve = ttt1-ttt0
-
-   ttt0 = MPI_Wtime()
-#ifdef DOUBLE_PRECISION_REAL
-   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
-#else
-   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
-#endif
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
-   time_evp_back = ttt1-ttt0
-
-   deallocate(e, tau)
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve_evp_real_1stage_double")
-#endif
-
-end function solve_evp_real_1stage_double
-
-#undef DOUBLE_PRECISION_REAL
-#undef DOUBLE_PRECISION_COMPLEX
-#undef REAL_DATATYPE
-#undef COMPLEX_DATATYPE
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-#undef DOUBLE_PRECISION_REAL
-#undef DOUBLE_PRECISION_COMPLEX
-#define REAL_DATATYPE c_float
-#define COMPLEX_DATATYPE c_float
 !> \brief solve_evp_real_1stage_single: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
@@ -701,348 +430,12 @@ end function solve_evp_real_1stage_double
 !>
 !>  \result                     success
 
-
-function solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                      mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                      THIS_REAL_ELPA_KERNEL_API) result(success)
-   use cuda_functions
-   use mod_check_for_gpu
-#ifdef HAVE_DETAILED_TIMINGS
-   use timings
+  interface solve_evp_real_1stage_single
+    module procedure elpa_solve_evp_real_1stage_single
+  end interface
 #endif
-   use iso_c_binding
-   use elpa_mpi
-   use elpa1_compute
-   implicit none
-
-   integer(kind=c_int), intent(in)            :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-   real(kind=REAL_DATATYPE), intent(out)      :: ev(na)
-#ifdef USE_ASSUMED_SIZE
-   real(kind=REAL_DATATYPE), intent(inout)    :: a(lda,*)
-   real(kind=REAL_DATATYPE), intent(out)      :: q(ldq,*)
-#else
-   real(kind=REAL_DATATYPE), intent(inout)    :: a(lda,matrixCols)
-   real(kind=REAL_DATATYPE), intent(out)      :: q(ldq,matrixCols)
-#endif
-
-   integer(kind=ik), intent(in), optional     :: THIS_REAL_ELPA_KERNEL_API
-   logical                                    :: success
-
-   integer(kind=c_int)           :: my_pe, n_pes, my_prow, my_pcol, mpierr
-   real(kind=REAL_DATATYPE), allocatable    :: e(:), tau(:)
-   real(kind=c_double)           :: ttt0, ttt1 ! MPI_WTIME always needs double
-   logical, save                 :: firstCall = .true.
-   logical                       :: wantDebug
-
-   
-   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
-
-   logical                                :: useGPU
-   integer(kind=ik)                       :: numberOfGPUDevices
-
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("solve_evp_real_1stage_single")
-#endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("mpi_communication")
-#endif
-
-   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
-   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
-
-   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("mpi_communication")
-#endif
-   success = .true.
-
-   wantDebug = .false.
-   if (firstCall) then
-     ! are debug messages desired?
-     wantDebug = debug_messages_via_environment_variable()
-     firstCall = .false.
-   endif
-
-   useGPU      = .false.
-
-   if (present(THIS_REAL_ELPA_KERNEL_API)) then
-     ! user defined kernel via the optional argument in the API call
-     THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
-   else
-     ! if kernel is not choosen via api
-     ! check whether set by environment variable
-     THIS_REAL_ELPA_KERNEL = DEFAULT_REAL_ELPA_KERNEL
-   endif
-   
-   if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
-        useGPU = .true.
-      endif
-      if (nblk .ne. 128) then
-        print *,"Warning: using GPU with blocksize different from 128"
-!         error stop
-      endif
-
-      ! set the neccessary parameters
-      cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-      cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-      cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-      cudaHostRegisterPortable = cuda_hostRegisterPortable()
-      cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-   endif
-
-   allocate(e(na), tau(na))
-
-   ttt0 = MPI_Wtime()
-#ifdef DOUBLE_PRECISION_REAL
-   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
-#else
-   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
-#endif
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
-   time_evp_fwd = ttt1-ttt0
-
-   ttt0 = MPI_Wtime()
-#ifdef DOUBLE_PRECISION_REAL
-   call solve_tridi_double(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                    mpi_comm_cols, wantDebug, success)
-#else
-   call solve_tridi_single(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                    mpi_comm_cols, wantDebug, success)
-#endif
-   if (.not.(success)) return
-
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi  :',ttt1-ttt0
-   time_evp_solve = ttt1-ttt0
-
-   ttt0 = MPI_Wtime()
-#ifdef DOUBLE_PRECISION_REAL
-   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
-#else
-   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
-#endif
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
-   time_evp_back = ttt1-ttt0
-
-   deallocate(e, tau)
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve_evp_real_1stage_single")
-#endif
-
-end function solve_evp_real_1stage_single
-#undef DOUBLE_PRECISION_REAL
-#undef DOUBLE_PRECISION_COMPLEX
-#undef REAL_DATATYPE
-#undef COMPLEX_DATATYPE
-
-#endif /* WANT_SINGLE_PRECISION_REAL */
-
-#define DOUBLE_PRECISION_REAL 1
-#define DOUBLE_PRECISION_COMPLEX 1
-#define REAL_DATATYPE c_double
-#define COMPLEX_DATATYPE c_double
-!> \brief solve_evp_complex_1stage_double: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
-!>
-!  Parameters
-!
-!> \param  na                   Order of matrix a
-!>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
-!>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
-!>
-!>  \param lda                  Leading dimension of a
-!>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>
-!>  \result                     success
-
-function solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                         mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                         THIS_REAL_ELPA_KERNEL_API) result(success)
-#ifdef HAVE_DETAILED_TIMINGS
-   use timings
-#endif
-   use precision
-   use cuda_functions
-   use mod_check_for_gpu
-   use iso_c_binding
-   use elpa_mpi
-   use elpa1_compute
-   implicit none
-
-   integer(kind=c_int), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-#ifdef USE_ASSUMED_SIZE
-   complex(kind=COMPLEX_DATATYPE), intent(inout)   :: a(lda,*)
-   complex(kind=COMPLEX_DATATYPE), intent(out)     :: q(ldq,*)
-#else
-   complex(kind=COMPLEX_DATATYPE), intent(inout)   :: a(lda,matrixCols)
-   complex(kind=COMPLEX_DATATYPE), intent(out)     :: q(ldq,matrixCols)
-#endif
-   real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
-
-   logical                                         :: success
-   integer(kind=ik), intent(in), optional :: THIS_REAL_ELPA_KERNEL_API
-
-   integer(kind=c_int)                 :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer(kind=c_int)                 :: l_rows, l_cols, l_cols_nev
-   real(kind=REAL_DATATYPE), allocatable       :: q_real(:,:), e(:)
-   complex(kind=COMPLEX_DATATYPE), allocatable    :: tau(:)
-   real(kind=c_double)              :: ttt0, ttt1  ! MPI_WTIME always needs double
-
-   logical, save                    :: firstCall = .true.
-   logical                          :: wantDebug
-
-   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
-
-   logical                                :: useGPU
-   integer(kind=ik)                       :: numberOfGPUDevices
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("solve_evp_complex_1stage_double")
-#endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("mpi_communication")
-#endif
-
-   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
-   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
-
-   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-   call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-   call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("mpi_communication")
-#endif
-   success = .true.
-
-   wantDebug = .false.
-   if (firstCall) then
-     ! are debug messages desired?
-     wantDebug = debug_messages_via_environment_variable()
-     firstCall = .false.
-   endif
-
-   useGPU      = .false.
-   
-   if (present(THIS_REAL_ELPA_KERNEL_API)) then
-     ! user defined kernel via the optional argument in the API call
-     THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
-   else
-     ! if kernel is not choosen via api
-     ! check whether set by environment variable
-     THIS_REAL_ELPA_KERNEL = DEFAULT_REAL_ELPA_KERNEL
-   endif
-   
-   if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
-        useGPU = .true.
-      endif
-      if (nblk .ne. 128) then
-        print *,"Warning: using GPU with blocksize different from 128"
-!         error stop
-      endif
-
-      ! set the neccessary parameters
-      cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-      cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-      cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-      cudaHostRegisterPortable = cuda_hostRegisterPortable()
-      cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-   endif
-
-
-   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
-   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
-
-   l_cols_nev = local_index(nev, my_pcol, np_cols, nblk, -1) ! Local columns corresponding to nev
-
-   allocate(e(na), tau(na))
-   allocate(q_real(l_rows,l_cols))
-
-   ttt0 = MPI_Wtime()
-#ifdef DOUBLE_PRECISION_COMPLEX
-   call tridiag_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
-#else
-   call tridiag_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
-#endif
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_complex :',ttt1-ttt0
-   time_evp_fwd = ttt1-ttt0
-
-   ttt0 = MPI_Wtime()
-#ifdef DOUBLE_PRECISION_COMPLEX
-   call solve_tridi_double(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
-                    mpi_comm_cols, wantDebug, success)
-#else
-   call solve_tridi_single(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
-                    mpi_comm_cols, wantDebug, success)
-#endif
-   if (.not.(success)) return
-
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi     :',ttt1-ttt0
-   time_evp_solve = ttt1-ttt0
-
-   ttt0 = MPI_Wtime()
-   q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
-#ifdef DOUBLE_PRECISION_COMPLEX
-   call trans_ev_complex_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
-#else
-   call trans_ev_complex_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
-#endif
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_complex:',ttt1-ttt0
-   time_evp_back = ttt1-ttt0
-
-   deallocate(q_real)
-   deallocate(e, tau)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve_evp_complex_1stage_double")
-#endif
-
-end function solve_evp_complex_1stage_double
-#undef DOUBLE_PRECISION_REAL
-#undef DOUBLE_PRECISION_COMPLEX
-#undef REAL_DATATYPE
-#undef COMPLEX_DATATYPE
-
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-#undef DOUBLE_PRECISION_REAL
-#undef DOUBLE_PRECISION_COMPLEX
-#define COMPLEX_DATATYPE c_float
-#define REAL_DATATYPE c_float
-
 !> \brief solve_evp_complex_1stage_single: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
@@ -1074,13 +467,453 @@ end function solve_evp_complex_1stage_double
 !>
 !>  \param mpi_comm_rows        MPI-Communicator for rows
 !>  \param mpi_comm_cols        MPI-Communicator for columns
+!>  \param mpi_comm_all         global MPI communicator
+!>  \param useGPU
+!>
+!>  \result                     success
+interface solve_evp_complex_1stage_single
+  module procedure elpa_solve_evp_complex_1stage_single
+end interface
+#endif
+
+
+contains
+
+!-------------------------------------------------------------------------------
+
+! All ELPA routines need MPI communicators for communicating within
+! rows or columns of processes, these are set here.
+! mpi_comm_rows/mpi_comm_cols can be free'd with MPI_Comm_free if not used any more.
+!
+!  Parameters
+!
+!> \param  mpi_comm_global   Global communicator for the calculations (in)
+!>
+!> \param  my_prow           Row coordinate of the calling process in the process grid (in)
+!>
+!> \param  my_pcol           Column coordinate of the calling process in the process grid (in)
+!>
+!> \param  mpi_comm_rows     Communicator for communicating within rows of processes (out)
+!>
+!> \param  mpi_comm_cols     Communicator for communicating within columns of processes (out)
+!> \result mpierr            integer error value of mpi_comm_split function
+
+
+function elpa_get_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
+   ! use precision
+   use elpa_mpi
+   use iso_c_binding
+   implicit none
+
+   integer(kind=c_int), intent(in)  :: mpi_comm_global, my_prow, my_pcol
+   integer(kind=c_int), intent(out) :: mpi_comm_rows, mpi_comm_cols
+
+   integer(kind=c_int)              :: mpierr
+
+   ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
+   ! having the same column coordinate share one mpi_comm_rows.
+   ! So the "color" for splitting is my_pcol and the "key" is my row coordinate.
+   ! Analogous for mpi_comm_cols
+
+   call mpi_comm_split(mpi_comm_global,my_pcol,my_prow,mpi_comm_rows,mpierr)
+   call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols,mpierr)
+
+end function elpa_get_communicators
+
+
+!> \brief elpa_solve_evp_real_1stage_double: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>  \param mpi_comm_all         global MPI communicator
+!>  \param useGPU              use GPU version (.true. or .false.)
+!>
+!>  \result                     success
+
+#define DOUBLE_PRECISION_REAL 1
+#define DOUBLE_PRECISION_COMPLEX 1
+#define REAL_DATATYPE c_double
+#define COMPLEX_DATATYPE c_float
+
+function elpa_solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
+                                           matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                           useGPU) result(success)
+   use precision
+   use cuda_functions
+   use mod_check_for_gpu
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   use iso_c_binding
+   use elpa_mpi
+   use elpa1_compute
+   implicit none
+
+   integer(kind=c_int), intent(in)              :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                                   mpi_comm_cols, mpi_comm_all
+   real(kind=REAL_DATATYPE), intent(out)        :: ev(na)
+#ifdef USE_ASSUMED_SIZE
+   real(kind=REAL_DATATYPE), intent(inout)      :: a(lda,*)
+   real(kind=REAL_DATATYPE), intent(out)        :: q(ldq,*)
+#else
+   real(kind=REAL_DATATYPE), intent(inout)      :: a(lda,matrixCols)
+   real(kind=REAL_DATATYPE), intent(out)        :: q(ldq,matrixCols)
+#endif
+   logical, intent(in), optional                :: useGPU
+   logical                                      :: success
+
+   logical                                      :: do_useGPU
+   integer(kind=ik)                             :: numberOfGPUDevices
+
+   integer(kind=c_int)                          :: my_pe, n_pes, my_prow, my_pcol, mpierr
+   real(kind=REAL_DATATYPE), allocatable        :: e(:), tau(:)
+   real(kind=c_double)                          :: ttt0, ttt1 ! MPI_WTIME always needs double
+   logical, save                                :: firstCall = .true.
+   logical                                      :: wantDebug
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("elpa_solve_evp_real_1stage_double")
+#endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
+
+   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
+
+   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
+   success = .true.
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
+
+   do_useGPU      = .false.
+
+   if (present(useGPU)) then
+     ! user defined GPU usage via the optional argument in the API call
+     if (useGPU) then
+       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+
+         do_useGPU = .true.
+         ! set the neccessary parameters
+         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+         cudaHostRegisterPortable = cuda_hostRegisterPortable()
+         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+
+       endif
+     endif
+   else
+     ! check whether set by environment variable
+     do_useGPU = gpu_usage_via_environment_variable()
+   endif
+
+   allocate(e(na), tau(na))
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_REAL
+   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
+#else
+   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
+   time_evp_fwd = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_REAL
+   call solve_tridi_double(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#else
+   call solve_tridi_single(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#endif
+   if (.not.(success)) return
+
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi  :',ttt1-ttt0
+   time_evp_solve = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_REAL
+   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
+#else
+   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
+   time_evp_back = ttt1-ttt0
+
+   deallocate(e, tau)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("elpa_solve_evp_real_1stage_double")
+#endif
+
+end function elpa_solve_evp_real_1stage_double
+
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#undef REAL_DATATYPE
+#undef COMPLEX_DATATYPE
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#define REAL_DATATYPE c_float
+#define COMPLEX_DATATYPE c_float
+!> \brief elpa_solve_evp_real_1stage_single: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>  \param mpi_comm_all         global MPI commuicator
+!>  \param useGPU
 !>
 !>  \result                     success
 
 
-function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+function elpa_solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                      mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                      useGPU) result(success)
+   use cuda_functions
+   use mod_check_for_gpu
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   use iso_c_binding
+   use elpa_mpi
+   use elpa1_compute
+   implicit none
+
+   integer(kind=c_int), intent(in)            :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   real(kind=REAL_DATATYPE), intent(out)      :: ev(na)
+#ifdef USE_ASSUMED_SIZE
+   real(kind=REAL_DATATYPE), intent(inout)    :: a(lda,*)
+   real(kind=REAL_DATATYPE), intent(out)      :: q(ldq,*)
+#else
+   real(kind=REAL_DATATYPE), intent(inout)    :: a(lda,matrixCols)
+   real(kind=REAL_DATATYPE), intent(out)      :: q(ldq,matrixCols)
+#endif
+
+   logical, intent(in), optional              :: useGPU
+   logical                                    :: success
+
+   integer(kind=c_int)                        :: my_pe, n_pes, my_prow, my_pcol, mpierr
+   real(kind=REAL_DATATYPE), allocatable      :: e(:), tau(:)
+   real(kind=c_double)                        :: ttt0, ttt1 ! MPI_WTIME always needs double
+   logical, save                              :: firstCall = .true.
+   logical                                    :: wantDebug
+
+
+   logical                                    :: do_useGPU
+   integer(kind=ik)                           :: numberOfGPUDevices
+
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("elpa_solve_evp_real_1stage_single")
+#endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
+
+   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
+
+   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
+   success = .true.
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
+
+   do_useGPU      = .false.
+
+
+   if (present(useGPU)) then
+     ! user defined GPU usage via the optional argument in the API call
+     if (useGPU) then
+       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+         do_useGPU = .true.
+         ! set the neccessary parameters
+         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+         cudaHostRegisterPortable = cuda_hostRegisterPortable()
+         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+
+       endif
+     endif
+   else
+     ! check whether set by environment variable
+     do_useGPU = gpu_usage_via_environment_variable()
+   endif
+
+   allocate(e(na), tau(na))
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_REAL
+   call tridiag_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
+#else
+   call tridiag_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
+   time_evp_fwd = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_REAL
+   call solve_tridi_double(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#else
+   call solve_tridi_single(na, nev, ev, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#endif
+   if (.not.(success)) return
+
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi  :',ttt1-ttt0
+   time_evp_solve = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_REAL
+   call trans_ev_real_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
+#else
+   call trans_ev_real_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
+   time_evp_back = ttt1-ttt0
+
+   deallocate(e, tau)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("elpa_solve_evp_real_1stage_single")
+#endif
+
+end function elpa_solve_evp_real_1stage_single
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#undef REAL_DATATYPE
+#undef COMPLEX_DATATYPE
+
+#endif /* WANT_SINGLE_PRECISION_REAL */
+
+#define DOUBLE_PRECISION_REAL 1
+#define DOUBLE_PRECISION_COMPLEX 1
+#define REAL_DATATYPE c_double
+#define COMPLEX_DATATYPE c_double
+!> \brief elpa_solve_evp_complex_1stage_double: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>  \param mpi_comm_all         global MPI Communicator
+!>  \param useGPU              use GPU version (.true. or .false.)
+!>
+!>  \result                     success
+
+function elpa_solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
                                          mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                         THIS_REAL_ELPA_KERNEL_API) result(success)
+                                         useGPU) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
@@ -1092,8 +925,7 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
    use elpa1_compute
    implicit none
 
-   integer(kind=c_int), intent(in)                 :: na, nev, lda, ldq, nblk, matrixCols
-   integer(kind=c_int), intent(in)                 :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   integer(kind=c_int), intent(in)     :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 #ifdef USE_ASSUMED_SIZE
    complex(kind=COMPLEX_DATATYPE), intent(inout)   :: a(lda,*)
    complex(kind=COMPLEX_DATATYPE), intent(out)     :: q(ldq,*)
@@ -1103,25 +935,23 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
 #endif
    real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
 
-   integer(kind=ik), intent(in), optional          :: THIS_REAL_ELPA_KERNEL_API
    logical                                         :: success
+   logical, intent(in), optional                   :: useGPU
 
-   integer(kind=c_int)                 :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer(kind=c_int)                 :: l_rows, l_cols, l_cols_nev
-   real(kind=REAL_DATATYPE), allocatable       :: q_real(:,:), e(:)
-   complex(kind=COMPLEX_DATATYPE), allocatable    :: tau(:)
-   real(kind=c_double)              :: ttt0, ttt1  ! MPI_WTIME always needs double
+   integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=c_int)                             :: l_rows, l_cols, l_cols_nev
+   real(kind=REAL_DATATYPE), allocatable           :: q_real(:,:), e(:)
+   complex(kind=COMPLEX_DATATYPE), allocatable     :: tau(:)
+   real(kind=c_double)                             :: ttt0, ttt1  ! MPI_WTIME always needs double
 
-   logical, save                    :: firstCall = .true.
-   logical                          :: wantDebug
+   logical, save                                   :: firstCall = .true.
+   logical                                         :: wantDebug
 
-   integer(kind=ik)                       :: THIS_REAL_ELPA_KERNEL
-
-   logical                                :: useGPU
-   integer(kind=ik)                       :: numberOfGPUDevices
+   logical                                         :: do_useGPU
+   integer(kind=ik)                                :: numberOfGPUDevices
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("solve_evp_complex_1stage_single")
+   call timer%start("elpa_solve_evp_complex_1stage_double")
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1148,32 +978,25 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
      firstCall = .false.
    endif
 
-   useGPU      = .false.
-   
-   if (present(THIS_REAL_ELPA_KERNEL_API)) then
-     ! user defined kernel via the optional argument in the API call
-     THIS_REAL_ELPA_KERNEL = THIS_REAL_ELPA_KERNEL_API
-   else
-     ! if kernel is not choosen via api
-     ! check whether set by environment variable
-     THIS_REAL_ELPA_KERNEL = DEFAULT_REAL_ELPA_KERNEL
-   endif
-   
-   if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
-        useGPU = .true.
-      endif
-      if (nblk .ne. 128) then
-        print *,"Warning: using GPU with blocksize different from 128"
-!         error stop
-      endif
+   do_useGPU      = .false.
 
-      ! set the neccessary parameters
-      cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-      cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-      cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-      cudaHostRegisterPortable = cuda_hostRegisterPortable()
-      cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+   if (present(useGPU)) then
+     ! user defined GPU usage via the optional argument in the API call
+     if (useGPU) then
+       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+         do_useGPU = .true.
+         ! set the neccessary parameters
+         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+         cudaHostRegisterPortable = cuda_hostRegisterPortable()
+         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+
+       endif
+     endif
+   else
+     ! check whether set by environment variable
+     do_useGPU = gpu_usage_via_environment_variable()
    endif
 
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
@@ -1186,9 +1009,9 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
 
    ttt0 = MPI_Wtime()
 #ifdef DOUBLE_PRECISION_COMPLEX
-   call tridiag_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
+   call tridiag_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
 #else
-   call tridiag_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, useGPU)
+   call tridiag_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
 #endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_complex :',ttt1-ttt0
@@ -1211,9 +1034,9 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
    ttt0 = MPI_Wtime()
    q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 #ifdef DOUBLE_PRECISION_COMPLEX
-   call trans_ev_complex_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
+   call trans_ev_complex_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
 #else
-   call trans_ev_complex_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
+   call trans_ev_complex_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
 #endif
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_complex:',ttt1-ttt0
@@ -1222,10 +1045,199 @@ function solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matr
    deallocate(q_real)
    deallocate(e, tau)
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve_evp_complex_1stage_single")
+   call timer%stop("elpa_solve_evp_complex_1stage_double")
 #endif
 
-end function solve_evp_complex_1stage_single
+end function elpa_solve_evp_complex_1stage_double
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#undef REAL_DATATYPE
+#undef COMPLEX_DATATYPE
+
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+#undef DOUBLE_PRECISION_REAL
+#undef DOUBLE_PRECISION_COMPLEX
+#define COMPLEX_DATATYPE c_float
+#define REAL_DATATYPE c_float
+
+!> \brief elpa_solve_evp_complex_1stage_single: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
+!>
+!  Parameters
+!
+!> \param  na                   Order of matrix a
+!>
+!> \param  nev                  Number of eigenvalues needed.
+!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>
+!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
+!>                              Distribution is like in Scalapack.
+!>                              The full matrix must be set (not only one half like in scalapack).
+!>                              Destroyed on exit (upper and lower half).
+!>
+!>  \param lda                  Leading dimension of a
+!>
+!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
+!>                              Distribution is like in Scalapack.
+!>                              Must be always dimensioned to the full size (corresponding to (na,na))
+!>                              even if only a part of the eigenvalues is needed.
+!>
+!>  \param ldq                  Leading dimension of q
+!>
+!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
+!>
+!>  \param matrixCols           distributed number of matrix columns
+!>
+!>  \param mpi_comm_rows        MPI-Communicator for rows
+!>  \param mpi_comm_cols        MPI-Communicator for columns
+!>  \param mpi_comm_all         global MPI communicator
+!>  \param useGPU
+!>
+!>  \result                     success
+
+
+function elpa_solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
+                                         mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+                                         useGPU) result(success)
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#endif
+   use precision
+   use cuda_functions
+   use mod_check_for_gpu
+   use iso_c_binding
+   use elpa_mpi
+   use elpa1_compute
+   implicit none
+
+   integer(kind=c_int), intent(in)                 :: na, nev, lda, ldq, nblk, matrixCols
+   integer(kind=c_int), intent(in)                 :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+#ifdef USE_ASSUMED_SIZE
+   complex(kind=COMPLEX_DATATYPE), intent(inout)   :: a(lda,*)
+   complex(kind=COMPLEX_DATATYPE), intent(out)     :: q(ldq,*)
+#else
+   complex(kind=COMPLEX_DATATYPE), intent(inout)   :: a(lda,matrixCols)
+   complex(kind=COMPLEX_DATATYPE), intent(out)     :: q(ldq,matrixCols)
+#endif
+   real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
+
+   logical, intent(in), optional                   :: useGPU
+   logical                                         :: success
+
+   integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=c_int)                             :: l_rows, l_cols, l_cols_nev
+   real(kind=REAL_DATATYPE), allocatable           :: q_real(:,:), e(:)
+   complex(kind=COMPLEX_DATATYPE), allocatable     :: tau(:)
+   real(kind=c_double)                             :: ttt0, ttt1  ! MPI_WTIME always needs double
+
+   logical, save                                   :: firstCall = .true.
+   logical                                         :: wantDebug
+
+   logical                                         :: do_useGPU
+   integer(kind=ik)                                :: numberOfGPUDevices
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("elpa_solve_evp_complex_1stage_single")
+#endif
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
+
+   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
+
+   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+   call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+   call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
+   success = .true.
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
+
+   do_useGPU      = .false.
+
+   if (present(useGPU)) then
+     ! user defined GPU usage via the optional argument in the API call
+     if (useGPU) then
+       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+         do_useGPU = .true.
+         ! set the neccessary parameters
+         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+         cudaHostRegisterPortable = cuda_hostRegisterPortable()
+         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+
+       endif
+     endif
+
+   else
+     ! check whether set by environment variable
+     do_useGPU = gpu_usage_via_environment_variable()
+   endif
+
+   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
+   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
+
+   l_cols_nev = local_index(nev, my_pcol, np_cols, nblk, -1) ! Local columns corresponding to nev
+
+   allocate(e(na), tau(na))
+   allocate(q_real(l_rows,l_cols))
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call tridiag_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
+#else
+   call tridiag_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_complex :',ttt1-ttt0
+   time_evp_fwd = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call solve_tridi_double(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#else
+   call solve_tridi_single(na, nev, ev, e, q_real, l_rows, nblk, matrixCols, mpi_comm_rows, &
+                    mpi_comm_cols, wantDebug, success)
+#endif
+   if (.not.(success)) return
+
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi     :',ttt1-ttt0
+   time_evp_solve = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+   q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
+#ifdef DOUBLE_PRECISION_COMPLEX
+   call trans_ev_complex_double(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
+#else
+   call trans_ev_complex_single(na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
+#endif
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_complex:',ttt1-ttt0
+   time_evp_back = ttt1-ttt0
+
+   deallocate(q_real)
+   deallocate(e, tau)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("elpa_solve_evp_complex_1stage_single")
+#endif
+
+end function elpa_solve_evp_complex_1stage_single
 #undef DOUBLE_PRECISION_REAL
 #undef DOUBLE_PRECISION_COMPLEX
 #undef COMPLEX_DATATYPE

@@ -46,7 +46,7 @@
 #define M_PRECISION_SYRK DSYRK
 #define M_PRECISION_TRMV DTRMV
 #define M_PRECISION_GEMM DGEMM
-#define M_PRECISION_GEMV DGEMV 
+#define M_PRECISION_GEMV DGEMV
 #define M_PRECISION_TRMM DTRMM
 #define M_PRECISION_SYMV DSYMV
 #define M_PRECISION_SYMM DSYMM
@@ -81,14 +81,14 @@
 
 #undef M_bandred_real_PRECISION
 #undef M_trans_ev_band_to_full_real_PRECISION
-#undef M_tridiag_band_real_PRECISION 
+#undef M_tridiag_band_real_PRECISION
 #undef M_trans_ev_tridi_to_band_real_PRECISION
 #undef M_band_band_real_PRECISION
-#undef M_tridiag_real_PRECISION 
+#undef M_tridiag_real_PRECISION
 #undef M_trans_ev_real_PRECISION
 #undef M_solve_tridi_PRECISION
 #undef M_solve_tridi_col_PRECISION
-#undef M_solve_tridi_single_problem_PRECISION 
+#undef M_solve_tridi_single_problem_PRECISION
 
 #undef M_qr_pdgeqrf_2dcomm_PRECISION
 #undef M_hh_transform_real_PRECISION
@@ -141,7 +141,6 @@
 #undef M_cublas_PRECISION_gemm
 #undef M_cublas_PRECISION_trmm 
 #undef M_cublas_PRECISION_gemv
-
 #undef M_PRECISION_SUFFIX
 #undef M_CONST_0_0 
 #undef M_CONST_0_5 

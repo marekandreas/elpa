@@ -108,17 +108,17 @@
       ! id in processor row and column and total numbers of processor rows and columns
       integer(kind=ik)            :: my_prow, my_pcol, np_rows, np_cols, my_rank
       integer(kind=ik)            :: mpierr
-      
+
       integer(kind=ik)            :: totalblocks, max_loc_block_rows, max_loc_block_cols, max_local_rows, max_local_cols
-      
-      ! updated after each istep (in the main cycle) to contain number of 
+
+      ! updated after each istep (in the main cycle) to contain number of
       ! local columns and rows of the remaining part of the matrix
-      !integer(kind=ik)            :: l_cols, l_rows 
-      integer(kind=c_size_t)      :: l_cols, l_rows   
-      
+      !integer(kind=ik)            :: l_cols, l_rows
+      integer(kind=ik)            :: l_cols, l_rows
+
       integer(kind=C_intptr_T)    :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, uv_stored_cols_dev
       logical                     :: successCUDA
-      
+
       integer(kind=ik)            :: n_stored_vecs
       integer(kind=ik)            :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
       integer(kind=ik)            :: tile_size, l_rows_per_tile, l_cols_per_tile
@@ -131,21 +131,21 @@
 
       real(kind=REAL_DATATYPE)               :: vav, vnorm2, x, aux(2*max_stored_uv), aux1(2), aux2(2), vrl, xf
 
-      real(kind=REAL_DATATYPE), allocatable  :: tmp(:), &  
+      real(kind=REAL_DATATYPE), allocatable  :: tmp(:), &
                                                 v_row(:), &   ! used to store calculated Householder vector
-                                                v_col(:), &   ! the same vector, but transposed - differently distributed among MPI tasks 
+                                                v_col(:), &   ! the same vector, but transposed - differently distributed among MPI tasks
                                                 u_row(:), &
-                                                u_col(:) 
-      
+                                                u_col(:)
+
       ! the following two matrices store pairs of vectors v and u calculated in each step
       ! at most max_stored_uv vector pairs are stored, than the matrix A_i is explicitli updated
-      ! u and v are stored both in row and vector forms      
+      ! u and v are stored both in row and vector forms
       ! pattern: v1,u1,v2,u2,v3,u3,....
       ! todo: It is little bit confusing, I think, that variables _row actually store columns and vice versa
-      real(kind=REAL_DATATYPE), allocatable  :: vu_stored_rows(:,:)   
+      real(kind=REAL_DATATYPE), allocatable  :: vu_stored_rows(:,:)
       ! pattern: u1,v1,u2,v2,u3,v3,....
       real(kind=REAL_DATATYPE), allocatable  :: uv_stored_cols(:,:)
-      
+
 #ifdef WITH_OPENMP
       real(kind=REAL_DATATYPE), allocatable  :: ur_p(:,:), uc_p(:,:)
 #endif
@@ -164,7 +164,7 @@
       ! seems that tile is a square submatrix, consisting by several blocks
       ! it is a smallest possible square submatrix, where blocks being distributed among
       ! processors are "aligned" in both rows and columns
-      !  ----------------- 
+      !  -----------------
       ! | 1 4 | 1 4 | 1 4 | ...
       ! | 2 5 | 2 5 | 2 5 | ...
       ! | 3 6 | 3 6 | 3 6 | ...
@@ -177,16 +177,16 @@
       !   : :   : :   : :      .
       !
       ! this is a tile, where each number represents block, assigned to a processor with the shown number
-      ! size of this small block is nblk      
+      ! size of this small block is nblk
       ! Image is for situation with 6 processors, 3 processor rows and 2 columns
-      ! tile_size is thus nblk * 6 
+      ! tile_size is thus nblk * 6
       !
       tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
       tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
-      
+
       l_rows_per_tile = tile_size/np_rows ! local rows of a tile
       l_cols_per_tile = tile_size/np_cols ! local cols of a tile
-      
+
       totalblocks = (na-1)/nblk + 1
       max_loc_block_rows = (totalblocks-1)/np_rows + 1
       max_loc_block_cols = (totalblocks-1)/np_cols + 1
@@ -194,7 +194,7 @@
       ! localy owned submatrix has size at most max_local_rows x max_local_cols at each processor
       max_local_rows = max_loc_block_rows*nblk
       max_local_cols = max_loc_block_cols*nblk
-      
+
       ! allocate memmory for vectors
       ! todo: It is little bit confusing, I think, that variables _row actually store columns and vice versa
       ! todo: if something has length max_local_rows, it is actually a column, no?
@@ -203,7 +203,7 @@
       allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
       call check_alloc("tridiag_real", "tmp", istat, errorMessage)
 
-      ! allocate v_row 1 element longer to allow store and broadcast tau together with it 
+      ! allocate v_row 1 element longer to allow store and broadcast tau together with it
       allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
       call check_alloc("tridiag_real", "v_row", istat, errorMessage)
 
@@ -241,13 +241,13 @@
       if (useGPU) then
          successCUDA = cuda_malloc(v_row_dev, max_local_rows * M_size_of_PRECISION_real)
          check_alloc_cuda("tridiag", successCUDA)
-         
+
          successCUDA = cuda_malloc(u_row_dev, max_local_rows * M_size_of_PRECISION_real)
          check_alloc_cuda("tridiag", successCUDA)
-        
+
          successCUDA = cuda_malloc(v_col_dev, max_local_cols * M_size_of_PRECISION_real)
          check_alloc_cuda("tridiag", successCUDA)
-         
+
          successCUDA = cuda_malloc(u_col_dev, max_local_cols * M_size_of_PRECISION_real)
          check_alloc_cuda("tridiag", successCUDA)
 
@@ -298,22 +298,22 @@
           ! copy l_cols + 1 column of A to v_row
           if (useGPU) then
             a_offset = l_cols * lda * M_size_of_PRECISION_real
-            ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, (l_rows)*M_size_of_PRECISION_real, cudaMemcpyDeviceToDevice)              
-  
+            ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, (l_rows)*M_size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
+
             successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)*M_size_of_PRECISION_real,  &
-                                        cudaMemcpyDeviceToHost)             
-            check_memcpy_cuda("tridiag", successCUDA)              
+                                        cudaMemcpyDeviceToHost)
+            check_memcpy_cuda("tridiag", successCUDA)
           else
             v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
           endif
-                        
+
             if(n_stored_vecs>0 .and. l_rows>0) then
               call M_PRECISION_GEMV('N', l_rows, 2*n_stored_vecs, &
-                             M_CONST_1_0, vu_stored_rows, ubound(vu_stored_rows,dim=1), & 
+                             M_CONST_1_0, vu_stored_rows, ubound(vu_stored_rows,dim=1), &
                              uv_stored_cols(l_cols+1,1), ubound(uv_stored_cols,dim=1), &
                              M_CONST_1_0, v_row, 1)
             endif
-           
+
             if(my_prow==prow(istep-1, nblk, np_rows)) then
                aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1))
                aux1(2) = v_row(l_rows)
@@ -345,9 +345,9 @@
           endif
 
           ! store Householder vector for back transformation
-          a_mat(1:l_rows,l_cols+1) = v_row(1:l_rows) 
+          a_mat(1:l_rows,l_cols+1) = v_row(1:l_rows)
 
-          ! add tau after the end of actuall v_row, to be broadcasted with it 
+          ! add tau after the end of actuall v_row, to be broadcasted with it
           v_row(l_rows+1) = tau(istep)
          endif !(my_pcol==pcol(istep, nblk, np_cols))
 
@@ -377,7 +377,7 @@
              check_memcpy_cuda("tridiag", successCUDA)
             successCUDA = cuda_memset(u_row_dev, 0, l_rows * M_size_of_PRECISION_real)
              check_memcpy_cuda("tridiag", successCUDA)
-             
+
             successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
              check_memcpy_cuda("tridiag", successCUDA)
             successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
@@ -405,15 +405,15 @@
 !                enddo
 !
              !--- for now, just use DSYMV!!!
-             ! a_dev -> a_mat ? 
+             ! a_dev -> a_mat ?
              !write(*,*) "ubound ", ubound(a_mat,1), "lda", lda, "lcols", l_cols
 !              call M_PRECISION_SYMV('U', l_cols,  &
 !                         1.d0, a_mat, ubound(a_mat,1),  &
 !                         v_row, 1,  &
-!                         0.d0, u_col, 1) 
+!                         0.d0, u_col, 1)
              !u_col(1:l_cols) = u_col_dev(1:l_cols)
              !u_row(1:l_rows) = u_row_dev(1:l_rows)
-             
+
 !            else !do not use GPU
 #ifdef WITH_OPENMP
           call timer%start("OpenMP parallel")
@@ -451,20 +451,20 @@
               n_iter = n_iter+1
 #else /* WITH_OPENMP */
 
-              if(useGPU) then 
+              if(useGPU) then
                 a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * M_size_of_PRECISION_real
                 call M_cublas_PRECISION_gemv('T',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                      M_CONST_1_0,a_dev + a_offset, lda,  &
                                      v_row_dev + (l_row_beg - 1) * M_size_of_PRECISION_real, 1,  &
                                      M_CONST_1_0, u_col_dev + (l_col_beg - 1) * M_size_of_PRECISION_real, 1)
- 
+
                if(i/=j) then
                   call M_cublas_PRECISION_gemv('N',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                       M_CONST_1_0,a_dev + a_offset, lda,  &
                                       v_col_dev + (l_col_beg - 1) * M_size_of_PRECISION_real, 1,  &
                                       M_CONST_1_0, u_row_dev + (l_row_beg - 1) * M_size_of_PRECISION_real, 1)
                 endif
-                 
+
               else ! useGPU
                 call M_PRECISION_GEMV('T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
                                       M_CONST_1_0, a_mat(l_row_beg, l_col_beg), lda,  &
@@ -481,19 +481,19 @@
 
 #endif /* WITH_OPENMP */
             enddo  ! j=0,i
-          enddo  ! i=0,(istep-2)/tile_size 
-          
-          if(useGPU) then 
+          enddo  ! i=0,(istep-2)/tile_size
+
+          if(useGPU) then
             successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag", successCUDA)           
+            check_memcpy_cuda("tridiag", successCUDA)
             successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag", successCUDA)           
+            check_memcpy_cuda("tridiag", successCUDA)
           endif
 
 !              call M_PRECISION_SYMV('U', l_cols,  &
 !                         1.d0, a_mat, ubound(a_mat,1),  &
 !                         v_row, 1,  &
-!                         0.d0, u_col, 1) 
+!                         0.d0, u_col, 1)
 
 !            endif ! useGPU
 
@@ -580,7 +580,7 @@
             successCUDA = cuda_memcpy(vu_stored_rows_dev, loc(vu_stored_rows(1,1)), &
                                       max_local_rows * 2 * max_stored_uv * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag", successCUDA)
-          
+
             successCUDA = cuda_memcpy(uv_stored_cols_dev, loc(uv_stored_cols(1,1)), &
                                       max_local_cols * 2 * max_stored_uv * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag", successCUDA)
@@ -613,13 +613,13 @@
         endif
 
         if (my_prow==prow(istep-1, nblk, np_rows) .and. my_pcol==pcol(istep-1, nblk, np_cols)) then
-          if (useGPU) then 
+          if (useGPU) then
             !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
              a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * M_size_of_PRECISION_real
              successCUDA = cuda_memcpy(loc(a_mat(l_rows, l_cols)), a_dev + a_offset, &
-                                       1 * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost); 
+                                       1 * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost);
              check_memcpy_cuda("tridiag", successCUDA)
-            
+
           endif
           if (n_stored_vecs>0) then
             a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
@@ -631,29 +631,29 @@
             !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
              successCUDA = cuda_memcpy(a_dev + a_offset, loc(a_mat(l_rows, l_cols)), &
                                        1 * M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
-             check_memcpy_cuda("tridiag", successCUDA)            
+             check_memcpy_cuda("tridiag", successCUDA)
           endif
         endif
 
       enddo ! main cycle over istep=na,3,-1
 
-      ! Store e_vec(1) 
+      ! Store e_vec(1)
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
-        if(useGPU) then 
+        if(useGPU) then
           successCUDA = cuda_memcpy(loc(e_vec(1)), a_dev + (lda * (l_cols - 1)) * M_size_of_PRECISION_real, &
                                     1 * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag", successCUDA)            
+          check_memcpy_cuda("tridiag", successCUDA)
         else !useGPU
           e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
         endif !useGPU
       endif
-     
+
      ! Store d_vec(1)
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
-        if(useGPU) then 
+        if(useGPU) then
           successCUDA = cuda_memcpy(loc(d_vec(1)), a_dev, &
                                     1 * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag", successCUDA)            
+          check_memcpy_cuda("tridiag", successCUDA)
         else !useGPU
           d_vec(1) = a_mat(1,1)
         endif !useGPU
@@ -664,21 +664,21 @@
         print *,"tridiag_real: error when deallocating uv_stored_cols "//errorMessage
         stop
       endif
-      
+
       if (useGPU) then
         ! todo: should we leave a_mat on the device for further use?
         successCUDA = cuda_free(a_dev)
         check_dealloc_cuda("tridiag", successCUDA)
-     
+
         successCUDA = cuda_free(v_row_dev)
-        check_dealloc_cuda("tridiag", successCUDA)     
-   
+        check_dealloc_cuda("tridiag", successCUDA)
+
         successCUDA = cuda_free(u_row_dev)
         check_dealloc_cuda("tridiag", successCUDA)
-         
+
         successCUDA = cuda_free(v_col_dev)
         check_dealloc_cuda("tridiag", successCUDA)
-         
+
         successCUDA = cuda_free(u_col_dev)
         check_dealloc_cuda("tridiag", successCUDA)
 
@@ -717,43 +717,43 @@
       call timer%stop("tridiag_real" // M_PRECISION_SUFFIX)
 
     contains
-   
+
 !       subroutine print_a(prow, pcol)
 !         implicit none
-! 
+!
 !         integer, intent(in)      :: prow, pcol
 !         integer                  :: i
-! 
-!         if((my_prow == prow) .and. (my_pcol == pcol)) then 
-!            write(*, '(A,2I4.2)') "MATRIX A :", prow, pcol 
-!            do i=1,size(a_mat,1) 
-!              write(*,'(20G12.4)') a_mat(i,:) 
-!            enddo      
+!
+!         if((my_prow == prow) .and. (my_pcol == pcol)) then
+!            write(*, '(A,2I4.2)') "MATRIX A :", prow, pcol
+!            do i=1,size(a_mat,1)
+!              write(*,'(20G12.4)') a_mat(i,:)
+!            enddo
 !          endif
-!         
-!       end subroutine 
-!       
+!
+!       end subroutine
+!
 !       subroutine print_a_dev(prow, pcol)
 !         implicit none
-! 
+!
 !         integer, intent(in)      :: prow, pcol
 !         integer                  :: i
 !         real(kind=REAL_DATATYPE) :: tmp(lda,matrixCols)
-! 
-! 
+!
+!
 !         tmp(:,:) = 0
-!         
-!         if((my_prow == prow) .and. (my_pcol == pcol)) then 
+!
+!         if((my_prow == prow) .and. (my_pcol == pcol)) then
 !            successCUDA = cuda_memcpy(loc(tmp(1,1)), a_dev, lda * matrixCols * M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
 !            check_memcpy_cuda("tridiag", successCUDA)
-! 
-!            write(*, '(A,2I4.2)') "MATRIX A ON DEVICE:", prow, pcol 
-!            do i=1,size(tmp,1) 
-!              write(*,'(20G12.4)') tmp(i,:) 
-!            enddo      
+!
+!            write(*, '(A,2I4.2)') "MATRIX A ON DEVICE:", prow, pcol
+!            do i=1,size(tmp,1)
+!              write(*,'(20G12.4)') tmp(i,:)
+!            enddo
 !          endif
-!         
-!       end subroutine 
-      
+!
+!       end subroutine
+
 
     end subroutine M_tridiag_real_PRECISION

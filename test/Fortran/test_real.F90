@@ -257,8 +257,7 @@ program test_real_double_precision
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
    success = elpa_solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                            na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, REAL_ELPA_KERNEL_GENERIC)
-
+                            na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
 #ifdef WITH_MPI
