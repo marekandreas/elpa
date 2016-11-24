@@ -637,7 +637,10 @@ function elpa_solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
          cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
          cudaHostRegisterPortable = cuda_hostRegisterPortable()
          cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-
+       else
+         print *,"GPUs are requested but not detected! Aborting..."
+         success = .false.
+         return
        endif
      endif
    else
@@ -813,7 +816,10 @@ function elpa_solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, ma
          cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
          cudaHostRegisterPortable = cuda_hostRegisterPortable()
          cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-
+       else
+         print *,"GPUs are requested but not detected! Aborting..."
+         success = .false.
+         return
        endif
      endif
    else
@@ -991,7 +997,10 @@ function elpa_solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk,
          cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
          cudaHostRegisterPortable = cuda_hostRegisterPortable()
          cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-
+       else
+         print *,"GPUs are requested but not detected! Aborting..."
+         success = .false.
+         return
        endif
      endif
    else
@@ -1179,7 +1188,10 @@ function elpa_solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk,
          cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
          cudaHostRegisterPortable = cuda_hostRegisterPortable()
          cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-
+       else
+         print *,"GPUs are requested but not detected! Aborting..."
+         success = .false.
+         return
        endif
      endif
 
