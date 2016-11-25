@@ -1,8 +1,8 @@
-.TH "elpa_solve_evp_complex_2stage" 3 "Tue Oct 18 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_solve_evp_complex_2stage_single" 3 "Tue Oct 18 2016" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_solve_evp_complex_2stage \- solve the complex eigenvalue problem with the 2-stage ELPA solver
+elpa_solve_evp_complex_2stage_single \- solve the single-precision complex eigenvalue problem with the 2-stage ELPA solver
 .br
 
 .SH SYNOPSIS
@@ -12,7 +12,7 @@ use elpa1
 use elpa2
 .br
 .br
-.RI  "success = \fBelpa_solve_evp_real_2stage\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL=THIS_COMPLEX_ELPA_KERNEL)"
+.RI  "success = \fBelpa_solve_evp_real_2stage_single\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL, useGPU)"
 .br
 .RI " "
 .br
@@ -23,13 +23,13 @@ use elpa2
 .br
 .RI "integer,     intent(in)    \fBnev\fP:                      number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
 .br
-.RI "complex*16,  intent(inout) \fBa\fP:                        locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.RI "complex*8,   intent(inout) \fBa\fP:                        locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
 .br
 .RI "integer,     intent(in)    \fBlda\fP:                      leading dimension of locally distributed matrix \fBa\fP"
 .br
-.RI "real*8,      intent(inout) \fBev\fP:                       on output the first \fBnev\fP computed eigenvalues"
+.RI "real*4,      intent(inout) \fBev\fP:                       on output the first \fBnev\fP computed eigenvalues"
 .br
-.RI "complex*16,  intent(inout) \fBq\fP:                        on output the first \fBnev\fP computed eigenvectors"
+.RI "complex*8,   intent(inout) \fBq\fP:                        on output the first \fBnev\fP computed eigenvectors"
 .br
 .RI "integer,     intent(in)    \fBldq\fP:                      leading dimension of matrix \fBq\fP which stores the eigenvectors"
 .br
@@ -44,7 +44,9 @@ use elpa2
 .RI "integer,     intent(in)    \fBmpi_comm_all\fP:             communicator for all processes in the processor set involved in ELPA"
 .br
 .RI "int                        \fBTHIS_ELPA_COMPLEX_KERNEL\fp: choose the compute kernel for 2-stage solver"
-
+.br
+.RI "logical, intent(in), optional: \fBuseGPU\fP:               decide whether GPUs should be used or not"
+.br
 .RI "logical                    \fBsuccess\fP:                  return value indicating success or failure"
 .br
 .SS C INTERFACE
@@ -53,7 +55,7 @@ use elpa2
 #include <complex.h>
 
 .br
-.RI "success = \fBelpa_solve_evp_complex_2stage\fP (\fBint\fP na, \fBint\fP nev, \fB double complex *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble complex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_COMPLEX_KERNEL);"
+.RI "success = \fBelpa_solve_evp_complex_2stage_single\fP (\fBint\fP na, \fBint\fP nev, \fB complex *\fPa, \fBint\fP lda, \fB float *\fPev, \fBcomplex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_COMPLEX_KERNEL, \fBint\fP useGPU);"
 .br
 .RI " "
 .br
@@ -64,13 +66,13 @@ use elpa2
 .br
 .RI "int             \fBnev\fP:                      number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
 .br
-.RI "double complex *\fBa\fP:                        pointer to locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.RI "complex        *\fBa\fP:                        pointer to locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
 .br
 .RI "int             \fBlda\fP:                      leading dimension of locally distributed matrix \fBa\fP"
 .br
-.RI "double         *\fBev\fP:                       pointer to memory containing on output the first \fBnev\fP computed eigenvalues"
+.RI "float          *\fBev\fP:                       pointer to memory containing on output the first \fBnev\fP computed eigenvalues"
 .br
-.RI "double complex *\fBq\fP:                        pointer to memory containing on output the first \fBnev\fP computed eigenvectors"
+.RI "complex        *\fBq\fP:                        pointer to memory containing on output the first \fBnev\fP computed eigenvectors"
 .br
 .RI "int             \fBldq\fP:                      leading dimension of matrix \fBq\fP which stores the eigenvectors"
 .br
@@ -86,9 +88,8 @@ use elpa2
 .br
 .RI "int             \fBTHIS_ELPA_COMPLEX_KERNEL\fp: choose the compute kernel for 2-stage solver"
 .br
-.RI "char           *\fBmethod\fP:                   use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto" "
-
-.RI "int             \fBsuccess\fP:       return value indicating success (1) or failure (0)
+.RI "int             \fBuseGPU\fP:                   decide whether GPUs should be used or not"
+.RI "int             \fBsuccess\fP:                  return value indicating success (1) or failure (0)
 
 .SH DESCRIPTION
 Solve the complex eigenvalue problem with the 2-stage solver. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBelpa_get_communicators\fP(3) function. The distributed quadratic marix \fBa\fP has global dimensions \fBna\fP x \fBna\fP, and a local size \fBlda\fP x \fBmatrixCols\fP. The solver will compute the first \fBnev\fP eigenvalues, which will be stored on exit in \fBev\fP. The eigenvectors corresponding to the eigenvalues will be stored in \fBq\fP. All memory of the arguments must be allocated outside the call to the solver.
@@ -96,4 +97,4 @@ Solve the complex eigenvalue problem with the 2-stage solver. The ELPA communica
 The interface \fBelpa_solve_evp_complex\fP(3) is a more flexible alternative.
 .br
 .SH "SEE ALSO"
-\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real\fP(3) \fBelpa_solve_evp_complex\fP(3) \fBelpa_solve_evp_real_1stage\fP(3) \fBelpa_solve_evp_complex_1stage\fP(3) \fBelpa_solve_evp_real_2stage\fP(3) \fBelpa2_print_kernels\fP(1)
+\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real\fP(3) \fBelpa_solve_evp_complex\fP(3) \fBelpa_solve_evp_real_1stage\fP(3) \fBelpa_solve_evp_complex_1stage\fP(3) \fBelpa_solve_evp_real_2stage_double\fP(3) \fBelpa_solve_evp_real_2stage_single\fP(3) \fBelpa_solve_evp_complex_2stage_double\fP(3) \fBelpa2_print_kernels\fP(1)

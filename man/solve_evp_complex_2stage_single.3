@@ -12,7 +12,7 @@ use elpa1
 use elpa2
 .br
 .br
-.RI  "success = \fBsolve_evp_real_2stage_single\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL)"
+.RI  "success = \fBsolve_evp_real_2stage_single\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL, useGPU)"
 .br
 .RI " "
 .br
@@ -43,6 +43,8 @@ use elpa2
 .br
 .RI "integer,     intent(in)    \fBmpi_comm_all\fP:  communicator for all processes in the processor set involved in ELPA"
 .br
+.RI "logical, intent(in), optional: \fBuseGPU\fP:    decide whether GPUs should be used or not"
+.br
 .RI "logical                    \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
@@ -51,7 +53,7 @@ use elpa2
 #include <complex.h>
 
 .br
-.RI "success = \fBsolve_evp_complex_2stage_single_precision\fP (\fBint\fP na, \fBint\fP nev, \fBcomplex *\fPa, \fBint\fP lda, \fB float *\fPev, \fBcomplex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL);"
+.RI "success = \fBsolve_evp_complex_2stage_single_precision\fP (\fBint\fP na, \fBint\fP nev, \fBcomplex *\fPa, \fBint\fP lda, \fB float *\fPev, \fBcomplex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_COMPLEX_KERNEL, \fBint\fP useGPU);"
 .br
 .RI " "
 .br
@@ -81,6 +83,8 @@ use elpa2
 .RI "int             \fBmpi_comm_cols\fP: communicator for communication in colums. Constructed with \fBelpa_get_communicators\fP(3)"
 .br
 .RI "int             \fBmpi_comm_all\fP:  communicator for all processes in the processor set involved in ELPA"
+.br
+.RI "int             \fBuseGPU\fP:        decide whether GPUs should be used or not"
 .br
 .RI "int             \fBsuccess\fP:       return value indicating success (1) or failure (0)
 

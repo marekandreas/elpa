@@ -1,8 +1,8 @@
-.TH "elpa_solve_evp_real_2stage" 3 "Tue Oct 18 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_solve_evp_real_2stage_single" 3 "Tue Oct 18 2016" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-solve_evp_real_2stage \- solve the real eigenvalue problem with the 2-stage ELPA solver
+elpa_solve_evp_real_2stage_single \- solve the single-precision real eigenvalue problem with the 2-stage ELPA solver
 .br
 
 .SH SYNOPSIS
@@ -12,7 +12,7 @@ use elpa1
 use elpa2
 .br
 .br
-.RI  "success = \fBelpa_solve_evp_real_2stage\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQr=useQR)"
+.RI  "success = \fBelpa_solve_evp_real_2stage_single\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQR, useGPU)"
 .br
 .RI " "
 .br
@@ -23,13 +23,13 @@ use elpa2
 .br
 .RI "integer, intent(in)            \fBnev\fP:           number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
 .br
-.RI "real*8,  intent(inout)         \fBa\fP:             locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.RI "real*4,  intent(inout)         \fBa\fP:             locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
 .br
 .RI "integer, intent(in)            \fBlda\fP:           leading dimension of locally distributed matrix \fBa\fP"
 .br
-.RI "real*8,  intent(inout)         \fBev\fP:            on output the first \fBnev\fP computed eigenvalues"
+.RI "real*4,  intent(inout)         \fBev\fP:            on output the first \fBnev\fP computed eigenvalues"
 .br
-.RI "real*8,  intent(inout)         \fBq\fP:             on output the first \fBnev\fP computed eigenvectors"
+.RI "real*4,  intent(inout)         \fBq\fP:             on output the first \fBnev\fP computed eigenvectors"
 .br
 .RI "integer, intent(in)            \fBldq\fP:           leading dimension of matrix \fBq\fP which stores the eigenvectors"
 .br
@@ -46,14 +46,16 @@ use elpa2
 .RI "integer, intent(in), optional  \fBTHIS_ELPA_REAL_KERNEL\fp: choose the compute kernel for 2-stage solver"
 .br
 .RI "logical, intent(in), optional: \fBuseQR\fP:         optional argument; switches to QR-decomposition if set to .true."
-
+.br
+.RI "logical, intent(in), optional: \fBuseGPU\fP:        decide whether GPUs should be used or not"
+.br
 .RI "logical                        \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
 #include "elpa.h"
 
 .br
-.RI "success = \fBelpa_solve_evp_real_2stage\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQr);"
+.RI "success = \fBelpa_solve_evp_real_2stage_single\fP (\fBint\fP na, \fBint\fP nev, \fB float *\fPa, \fBint\fP lda, \fB float *\fPev, \fBfloat *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQR, \fBint\fP useGPU);"
 .br
 .RI " "
 .br
@@ -64,13 +66,13 @@ use elpa2
 .br
 .RI "int     \fBnev\fP:                   number of eigenvalues to be computed; the first \fBnev\fP eigenvalules are calculated"
 .br
-.RI "double *\fBa\fP:                     pointer to locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
+.RI "float  *\fBa\fP:                     pointer to locally distributed part of the matrix \fBa\fP. The local dimensions are \fBlda\fP x \fBmatrixCols\fP"
 .br
 .RI "int     \fBlda\fP:                   leading dimension of locally distributed matrix \fBa\fP"
 .br
-.RI "double *\fBev\fP:                    pointer to memory containing on output the first \fBnev\fP computed eigenvalues"
+.RI "float  *\fBev\fP:                    pointer to memory containing on output the first \fBnev\fP computed eigenvalues"
 .br
-.RI "double *\fBq\fP:                     pointer to memory containing on output the first \fBnev\fP computed eigenvectors"
+.RI "float  *\fBq\fP:                     pointer to memory containing on output the first \fBnev\fP computed eigenvectors"
 .br
 .RI "int     \fBldq\fP:                   leading dimension of matrix \fBq\fP which stores the eigenvectors"
 .br
@@ -87,7 +89,9 @@ use elpa2
 .RI "int     \fBTHIS_ELPA_REAL_KERNEL\fp: choose the compute kernel for 2-stage solver"
 .br
 .RI "int     \fBuseQR\fP:                 if set to 1 switch to QR-decomposition"
-
+.br
+.RI "int     \fBuseGPU\fP:                decide whether GPUs should be used or not"
+.br
 .RI "int     \fBsuccess\fP:               return value indicating success (1) or failure (0)
 
 .SH DESCRIPTION
@@ -96,4 +100,4 @@ Solve the real eigenvalue problem with the 2-stage solver. The ELPA communicator
 The interface \fBelpa_solve_evp_real\fP(3) is a more flexible alternative.
 .br
 .SH "SEE ALSO"
-\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real\fP(3) \fBelpa_solve_evp_complex\fP(3) \fBelpa_solve_evp_real_1stage\fP(3) \fBelpa_solve_evp_complex_1stage\fP(3) \fBelpa_solve_evp_complex_2stage\fP(3) \fBelpa2_print_kernels\fP(1)
+\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real\fP(3) \fBelpa_solve_evp_complex\fP(3) \fBelpa_solve_evp_real_1stage\fP(3) \fBelpa_solve_evp_complex_1stage\fP(3)  \fBelpa_solve_evp_real_2stage_double\fP(3) \fBelpa_solve_evp_complex_2stage_double\fP(3) \fBelpa_solve_evp_complex_2stage_singe\fP(3) \fBelpa2_print_kernels\fP(1)

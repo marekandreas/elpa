@@ -1,9 +1,8 @@
-.TH "solve_evp_complex_2stage" 3 "Tue Oct 18 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_solve_evp_complex_2stage_double" 3 "Tue Oct 18 2016" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-solve_evp_complex_2stage \- solve the complex eigenvalue problem with the 2-stage ELPA solver
-Old, deprecated interface. It is recommended to use \fBelpa_solve_evp_complex_2stage\fP.(3)
+elpa_solve_evp_complex_2stage_double \- solve the double-precision complex eigenvalue problem with the 2-stage ELPA solver
 .br
 
 .SH SYNOPSIS
@@ -13,7 +12,7 @@ use elpa1
 use elpa2
 .br
 .br
-.RI  "success = \fBsolve_evp_complex_2stage\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL, useGPU)"
+.RI  "success = \fBelpa_solve_evp_real_2stage_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL, useGPU)"
 .br
 .RI " "
 .br
@@ -44,9 +43,9 @@ use elpa2
 .br
 .RI "integer,     intent(in)    \fBmpi_comm_all\fP:             communicator for all processes in the processor set involved in ELPA"
 .br
-.RI "integer, optional          \fBTHIS_ELPA_COMPLEX_KERNEL\fp: choose the compute kernel for 2-stage solver"
+.RI "int                        \fBTHIS_ELPA_COMPLEX_KERNEL\fp: choose the compute kernel for 2-stage solver"
 .br
-.RI "integer, optional          \fBuseGPU\fP:                   decide whether GPUs should be used or not"
+.RI "logical, intent(in), optional: \fBuseGPU\fP:               decide whether GPUs should be used or not"
 .br
 .RI "logical                    \fBsuccess\fP:                  return value indicating success or failure"
 .br
@@ -56,7 +55,7 @@ use elpa2
 #include <complex.h>
 
 .br
-.RI "success = \fBsolve_evp_complex_2stage\fP (\fBint\fP na, \fBint\fP nev, \fB double complex *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble complex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_COMPLEX_KERNEL, \fBint\fP useGPU);"
+.RI "success = \fBelpa_solve_evp_complex_2stage_double\fP (\fBint\fP na, \fBint\fP nev, \fB double complex *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble complex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_COMPLEX_KERNEL, \fBint\fP useGPU);"
 .br
 .RI " "
 .br
@@ -90,10 +89,7 @@ use elpa2
 .RI "int             \fBTHIS_ELPA_COMPLEX_KERNEL\fp: choose the compute kernel for 2-stage solver"
 .br
 .RI "int             \fBuseGPU\fP:                   decide whether GPUs should be used or not"
-.br
-.RI "char           *\fBmethod\fP:                   use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto" "
-
-.RI "int             \fBsuccess\fP:       return value indicating success (1) or failure (0)
+.RI "int             \fBsuccess\fP:                  return value indicating success (1) or failure (0)
 
 .SH DESCRIPTION
 Solve the complex eigenvalue problem with the 2-stage solver. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBelpa_get_communicators\fP(3) function. The distributed quadratic marix \fBa\fP has global dimensions \fBna\fP x \fBna\fP, and a local size \fBlda\fP x \fBmatrixCols\fP. The solver will compute the first \fBnev\fP eigenvalues, which will be stored on exit in \fBev\fP. The eigenvectors corresponding to the eigenvalues will be stored in \fBq\fP. All memory of the arguments must be allocated outside the call to the solver.
@@ -101,4 +97,4 @@ Solve the complex eigenvalue problem with the 2-stage solver. The ELPA communica
 The interface \fBelpa_solve_evp_complex\fP(3) is a more flexible alternative.
 .br
 .SH "SEE ALSO"
-\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real\fP(3) \fBelpa_solve_evp_complex\fP(3) \fBelpa_solve_evp_real_1stage\fP(3) \fBelpa_solve_evp_complex_1stage\fP(3) \fBelpa_solve_evp_real_2stage\fP(3) \fBelpa2_print_kernels\fP(1)
+\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real\fP(3) \fBelpa_solve_evp_complex\fP(3) \fBelpa_solve_evp_real_1stage\fP(3) \fBelpa_solve_evp_complex_1stage\fP(3) \fBelpa_solve_evp_real_2stage_double\fP(3) \fBelpa_solve_evp_real_2stage_single\fP(3) \fBelpa_solve_evp_complex_2stage_single\fP(3) \fBelpa2_print_kernels\fP(1)

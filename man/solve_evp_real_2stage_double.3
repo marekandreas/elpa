@@ -12,7 +12,7 @@ use elpa1
 use elpa2
 .br
 .br
-.RI  "success = \fBsolve_evp_real_2stage_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQr=useQR)"
+.RI  "success = \fBsolve_evp_real_2stage_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQR, useGPU)"
 .br
 .RI " "
 .br
@@ -44,14 +44,16 @@ use elpa2
 .RI "integer, intent(in)            \fBmpi_comm_all\fP:  communicator for all processes in the processor set involved in ELPA"
 .br
 .RI "logical, intent(in), optional: \fBuseQR\fP:         optional argument; switches to QR-decomposition if set to .true."
-
+.br
+.RI "logical, intent(in), optional: \fBuseGPU\fP:        decide whether GPUs should be used or not"
+.br
 .RI "logical                        \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
 #include "elpa.h"
 
 .br
-.RI "success = \fBsolve_evp_real_2stage_double_precision\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQr);"
+.RI "success = \fBsolve_evp_real_2stage_double_precision\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQR, \fBint\fP useGPU);"
 .br
 .RI " "
 .br
@@ -83,7 +85,9 @@ use elpa2
 .RI "int     \fBmpi_comm_all\fP:  communicator for all processes in the processor set involved in ELPA"
 .br
 .RI "int     \fBuseQR\fP:         if set to 1 switch to QR-decomposition"
-
+.br
+.RI "int     \fBuseGPU\fP:        decide whether GPUs should be used or nor"
+.br
 .RI "int     \fBsuccess\fP:       return value indicating success (1) or failure (0)
 
 .SH DESCRIPTION
