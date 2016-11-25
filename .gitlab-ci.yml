@@ -127,37 +127,38 @@ intel-single-precision-mpi-noomp-cuda-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
 
-intel-single-precision-mpi-noomp-cuda-runtime-choice-jobs:
-  tags:
-    - gpu
-  script:
-    - module unload gcc
-    - module load gcc/4.9 cuda
-    - module list
-    - ./autogen.sh
-    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - export ELPA_USE_GPU=yes
-    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GPU
-    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GPU
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
+      #intel-single-precision-mpi-noomp-cuda-runtime-choice-jobs:
+      #  tags:
+      #    - gpu
+      #  script:
+      #    - module unload gcc
+      #    - module load gcc/4.9 cuda
+      #    - module list
+      #    - ./autogen.sh
+      #    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
+      #    - make -j 8
+      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+      #    - export ELPA_USE_GPU=yes
+      #    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GPU
+      #    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GPU
+      #    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
 
-intel-single-precision-mpi-noomp-cuda-blocksize-jobs:
-  tags:
-    - gpu
-  script:
-    - module unload gcc
-    - module load gcc/4.9 cuda
-    - module list
-    - ./autogen.sh
-    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - export ELPA_USE_GPU=yes
-    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GPU
-    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GPU
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+      #intel-single-precision-mpi-noomp-cuda-blocksize-jobs:
+      #  tags:
+      #    - gpu
+      #  script:
+      #    - module unload gcc
+      #    - module load gcc/4.9 cuda
+      #    - module list
+      #    - ./autogen.sh
+      #    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
+      #    - make -j 8
+      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+      #    - export ELPA_USE_GPU=yes
+      #    - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GPU
+      #    - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GPU
+      #    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+
 intel-single-precision-nompi-noomp-cuda-jobs:
   tags:
     - gpu
