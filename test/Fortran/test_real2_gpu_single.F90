@@ -136,6 +136,7 @@ program test_real2_gpu_version_single_precision
    type(output_t)             :: write_to_file
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
+   logical                    :: useGPU
 
 #define DOUBLE_PRECISION_REAL 1
 
@@ -283,9 +284,10 @@ program test_real2_gpu_version_single_precision
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
+   useGPU = .true. 
    successELPA = elpa_solve_evp_real_2stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-                              REAL_ELPA_KERNEL_GPU)
+                              REAL_ELPA_KERNEL_GPU, useGPU=useGPU)
 
 
    if (.not.(successELPA)) then

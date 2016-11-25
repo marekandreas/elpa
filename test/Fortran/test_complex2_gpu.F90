@@ -140,6 +140,7 @@ program test_complex2_gpu_version_double_precision
    type(output_t)                :: write_to_file
    character(len=8)              :: task_suffix
    integer(kind=ik)              :: j
+   logical                       :: useGPU
 
 #define DOUBLE_PRECISION_COMPLEX 1
 
@@ -291,9 +292,11 @@ program test_complex2_gpu_version_double_precision
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
+   useGPU = .true.
+
    successELPA = elpa_solve_evp_complex_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                  na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-                                 COMPLEX_ELPA_KERNEL_GPU)
+                                 COMPLEX_ELPA_KERNEL_GPU, useGPU)
 
 
    if (.not.(successELPA)) then

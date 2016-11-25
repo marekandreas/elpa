@@ -254,15 +254,15 @@ module ELPA
       endif
 
       if (useELPA1) then
-        success = elpa_solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
-                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,       &
-                                        useGPU = useGPU)
+        success = elpa_solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk,           &
+                                        matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
+                                        useGPU)
       else
-        success = elpa_solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
+        success = elpa_solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk,         &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,              &
                                         mpi_comm_all,                                          &
-                                        THIS_REAL_ELPA_KERNEL_API = THIS_REAL_ELPA_KERNEL_API, &
-                                        useQR = useQR)
+                                        THIS_REAL_ELPA_KERNEL_API, &
+                                        useQR, useGPU)
       endif
 
     end function elpa_solve_evp_real_double
@@ -356,13 +356,13 @@ module ELPA
       if (useELPA1) then
         success = elpa_solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,       &
-                                        useGPU = useGPU)
+                                        useGPU)
       else
         success = elpa_solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,              &
                                         mpi_comm_all,                                          &
-                                        THIS_REAL_ELPA_KERNEL_API = THIS_REAL_ELPA_KERNEL_API, &
-                                        useQR = useQR)
+                                        THIS_REAL_ELPA_KERNEL_API, &
+                                        useQR, useGPU)
       endif
 
     end function elpa_solve_evp_real_single
@@ -460,7 +460,7 @@ module ELPA
         success = elpa_solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,                 &
                                         mpi_comm_all,                                             &
-                                        THIS_COMPLEX_ELPA_KERNEL_API = THIS_COMPLEX_ELPA_KERNEL_API)
+                                        THIS_COMPLEX_ELPA_KERNEL_API, useGPU)
       endif
 
     end function elpa_solve_evp_complex_double
@@ -557,7 +557,7 @@ module ELPA
         success = elpa_solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk,                     &
                                         matrixCols, mpi_comm_rows, mpi_comm_cols,                 &
                                         mpi_comm_all,                                             &
-                                        THIS_COMPLEX_ELPA_KERNEL_API = THIS_COMPLEX_ELPA_KERNEL_API)
+                                        THIS_COMPLEX_ELPA_KERNEL_API,useGPU)
       endif
 
     end function elpa_solve_evp_complex_single
