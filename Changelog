@@ -1,3 +1,12 @@
+Changelog for pre-release ELPA 2016.11.001.pre
+
+This pre-release contains an experimental API which will most likely
+change in the next stable release
+
+- also suport of single-precision (real and complex case) eigenvalule problems
+- GPU support in ELPA 1stage and 2stage (real and complex case)
+- change of API (w.r.t. ELPA 2016.05.004) to support runtime-choice of GPU usage
+
 Changelog for release ELPA 2016.05.004
 
 - fix a problem with the private state of module precision

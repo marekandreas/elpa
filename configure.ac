@@ -33,7 +33,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [7:0:3])
+AC_SUBST([ELPA_SO_VERSION], [8:0:0])
 #
 
 
@@ -1079,5 +1079,11 @@ fi
 if test "${can_compile_sse}" = "no" ; then
   AC_MSG_WARN([Could not compile SSE instructions])
 fi
-
+echo " "
+echo "***********************************************************************"
+echo "*  This is a prerelease of the ELPA library 2016.11.001.pre library!  *"
+echo "*  It contains an experimental API which will most likely change with *"
+echo "*  the next stable release.                                           *"
+echo "***********************************************************************"
+echo " "
 make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"
