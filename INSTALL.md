@@ -118,6 +118,13 @@ option, otherwise no parallelisation whatsoever will be present.
 It is possible to install the different flavours of *ELPA* (with/without MPI, with/without OpenMP) in the same
 directory, since the library is named differently for each build.
 
+### GPU support as runtime option ###
+If the target systems has NVIDIA GPUs as accelerator cards *ELPA* can be build with GPU support.
+The configure option "--enable-GPU-support" will trigger a build of the GPU version of ELPA. It might be necessary
+that also the option "--with-cuda-path=[your path to the local cuda installation]" has to be set.
+
+For GPU support, only models of NIVIDA GPUs with "compute capabillity" > 3.5 are supported.
+
 ### Doxygen documentation ###
 A doxygen documentation can be created with the "--enable-doxygen-doc" configure option
 
