@@ -5930,7 +5930,7 @@
 !            stop
 !          endif
 
-          call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUS_IGNORE, mpierr)
+          call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
 !          deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
 !          if (istat .ne. 0) then
 !            print *,"trans_ev_tridi_to_band_complex: error deallocating mpi_statuses "//errorMessage
