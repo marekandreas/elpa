@@ -893,6 +893,9 @@ EXCLUDE                = @top_srcdir@/src/elpa1_compute.F90 \
 			 @top_srcdir@/src/elpa_utilities.F90 \
 			 @top_srcdir@/src/timer.F90 \
 			 @top_srcdir@/src/redist_band.X90 \
+			 @top_srcdir@/src/timer_dummy.F90 \
+			 @top_srcdir@/src/precision_macros.h \
+			 @top_srcdir@/src/precision_macros_complex.h \
 			 @top_srcdir@/src/elpa2_kernels/elpa2_kernels_asm_x86_64.s \
 			 @top_srcdir@/src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
 			 @top_srcdir@/src/elpa2_kernels/mod_fortran_interfaces.F90 \
