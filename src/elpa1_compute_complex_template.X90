@@ -55,7 +55,10 @@
 #include "precision_macros_complex.h"
 
 #include "elpa1_tridiag_complex_template.X90"
-#include "elpa1_trans_ev_complex_template.X90"
+#define COMPLEXCASE 1
+#undef REALCASE
+#include "elpa1_trans_ev_template.X90"
+#undef COMPLEXCASE
 #include "elpa1_tools_complex_template.X90"
 
 #define ALREADY_DEFINED 1
