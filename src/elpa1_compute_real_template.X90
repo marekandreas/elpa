@@ -67,5 +67,7 @@
 #undef REALCASE
 #include "elpa1_solve_tridi_real_template.X90"
 #include "elpa1_merge_systems_real_template.X90"
-#include "elpa1_tools_real_template.X90"
-
+#define REALCASE 1
+#undef COMPLEXCASE
+#include "elpa1_tools_template.X90"
+#undef REALCASE

@@ -887,11 +887,10 @@ EXTRA_DIST = \
   src/elpa1_compute_real_template.X90 \
   src/elpa1_merge_systems_real_template.X90 \
   src/elpa1_solve_tridi_real_template.X90 \
-  src/elpa1_tools_real_template.X90 \
+  src/elpa1_tools_template.X90 \
   src/elpa1_trans_ev_template.X90 \
   src/elpa1_tridiag_template.X90 \
   src/elpa1_compute_complex_template.X90 \
-  src/elpa1_tools_complex_template.X90 \
   src/elpa2_compute_real_template.X90 \
   src/elpa2_compute_complex_template.X90 \
   src/precision_macros.h \

@@ -58,7 +58,7 @@
 #undef REALCASE
 #include "elpa1_tridiag_template.X90"
 #include "elpa1_trans_ev_template.X90"
+#include "elpa1_tools_template.X90"
 #undef COMPLEXCASE
-#include "elpa1_tools_complex_template.X90"
 
 #define ALREADY_DEFINED 1
