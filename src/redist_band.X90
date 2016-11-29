@@ -72,6 +72,7 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif
+   use elpa2_workload
    use precision
    implicit none
 

@@ -103,7 +103,7 @@ module ELPA2_compute
   public :: trans_ev_band_to_full_complex_single
 #endif
   public :: band_band_real_double
-  public :: divide_band
+!  public :: divide_band
 
   integer(kind=ik), public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
                                                     ! 0 for unblocked
