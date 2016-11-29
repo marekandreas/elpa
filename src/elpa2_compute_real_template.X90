@@ -3436,7 +3436,7 @@
               enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-              call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX) 
+              call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
 #endif
 
 #else /* WITH_OPENMP */
@@ -3453,9 +3453,9 @@
 #ifdef HAVE_DETAILED_TIMINGS
                call timer%stop("mpi_communication")
 #endif
-#else 
+#else
                row_group(1:l_nev,row_group_size) = row(1:l_nev) ! is this correct ?
-#endif 
+#endif
               else
 #ifdef WITH_MPI
 #ifdef HAVE_DETAILED_TIMINGS
@@ -3469,7 +3469,7 @@
 
 !                row(1:l_nev) = row(1:l_nev)
 
-#endif 
+#endif
                 call M_unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
               endif
 
@@ -4133,7 +4133,7 @@
            stop
          endif
 #ifdef HAVE_DETAILED_TIMINGS
-         call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX) 
+         call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
@@ -4264,7 +4264,7 @@
         enddo
 !$omp end parallel do
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX) 
+        call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
 #endif /* HAVE_DETAILED_TIMINGS */
 
 #else /* WITH_OPENMP */
