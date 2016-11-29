@@ -49,7 +49,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa_reduce_add_vectors.X90 \
         src/elpa_transpose_vectors.X90 \
         src/elpa1_compute_complex_template.X90 \
-        src/elpa1_compute_real_template.X90 \
+        src/elpa1_compute_template.X90 \
         src/elpa2_compute_real_template.X90 \
         src/elpa2_compute_complex_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_real_template.X90 \
@@ -884,13 +884,12 @@ EXTRA_DIST = \
   test/Fortran/elpa_print_headers.X90 \
   src/elpa_reduce_add_vectors.X90 \
   src/elpa_transpose_vectors.X90 \
-  src/elpa1_compute_real_template.X90 \
+  src/elpa1_compute_template.X90 \
   src/elpa1_merge_systems_real_template.X90 \
   src/elpa1_solve_tridi_real_template.X90 \
   src/elpa1_tools_template.X90 \
   src/elpa1_trans_ev_template.X90 \
   src/elpa1_tridiag_template.X90 \
-  src/elpa1_compute_complex_template.X90 \
   src/elpa2_compute_real_template.X90 \
   src/elpa2_compute_complex_template.X90 \
   src/precision_macros.h \
