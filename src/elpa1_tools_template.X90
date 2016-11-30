@@ -54,16 +54,16 @@
 
 #if REALCASE == 1
 
-    subroutine M_v_add_s_PRECISION(v,n,s)
+    subroutine v_add_s_PRECISION(v,n,s)
       use precision
       implicit none
       integer(kind=ik) :: n
       real(kind=REAL_DATATYPE)    :: v(n),s
 
       v(:) = v(:) + s
-    end subroutine M_v_add_s_PRECISION
+    end subroutine v_add_s_PRECISION
 
-    subroutine M_distribute_global_column_PRECISION(g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
+    subroutine distribute_global_column_PRECISION(g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
       use precision
       implicit none
 
@@ -88,9 +88,9 @@
         l_col(l_off+js:l_off+je) = g_col(g_off+js-noff:g_off+je-noff)
 
       enddo
-    end subroutine M_distribute_global_column_PRECISION
+    end subroutine distribute_global_column_PRECISION
 
-    subroutine M_solve_secular_equation_PRECISION(n, i, d, z, delta, rho, dlam)
+    subroutine solve_secular_equation_PRECISION(n, i, d, z, delta, rho, dlam)
     !-------------------------------------------------------------------------------
     ! This routine solves the secular equation of a symmetric rank 1 modified
     ! diagonal matrix:
@@ -159,7 +159,7 @@
 
       ! Upper and lower bound of the shifted solution interval are a and b
 
-      call timer%start("solve_secular_equation" // M_PRECISION_SUFFIX)
+      call timer%start("solve_secular_equation" // PRECISION_SUFFIX)
       if (i==n) then
 
        ! Special case: Last eigenvalue
@@ -169,15 +169,15 @@
        dshift = d(n)
        delta(:) = d(:) - dshift
 
-       a = M_CONST_0_0 ! delta(n)
-       b = rho*SUM(z(:)**2) + M_CONST_1_0 ! rho*SUM(z(:)**2) is the lower bound for the guess
+       a = CONST_0_0 ! delta(n)
+       b = rho*SUM(z(:)**2) + CONST_1_0 ! rho*SUM(z(:)**2) is the lower bound for the guess
       else
 
         ! Other eigenvalues: lower bound is d(i), upper bound is d(i+1)
         ! We check the sign of the function in the midpoint of the interval
         ! in order to determine if eigenvalue is more close to d(i) or d(i+1)
-        x = M_CONST_0_5*(d(i)+d(i+1))
-        y = M_CONST_1_0 + rho*SUM(z(:)**2/(d(:)-x))
+        x = CONST_0_5*(d(i)+d(i+1))
+        y = CONST_1_0 + rho*SUM(z(:)**2/(d(:)-x))
         if (y>0) then
           ! solution is next to d(i)
           dshift = d(i)
@@ -197,7 +197,7 @@
       do iter=1,200
 
         ! Interval subdivision
-        x = M_CONST_0_5*(a+b)
+        x = CONST_0_5*(a+b)
         if (x==a .or. x==b) exit   ! No further interval subdivisions possible
 #ifdef DOUBLE_PRECISION_REAL
         if (abs(x) < 1.e-200_rk8) exit ! x next to pole
@@ -223,14 +223,14 @@
 
       dlam = x + dshift
       delta(:) = delta(:) - x
-      call  timer%stop("solve_secular_equation" // M_PRECISION_SUFFIX)
+      call  timer%stop("solve_secular_equation" // PRECISION_SUFFIX)
 
-    end subroutine M_solve_secular_equation_PRECISION
+    end subroutine solve_secular_equation_PRECISION
     !-------------------------------------------------------------------------------
 #endif
 
 #if REALCASE  == 1
-    subroutine M_hh_transform_real_PRECISION(alpha, xnorm_sq, xf, tau)
+    subroutine hh_transform_real_PRECISION(alpha, xnorm_sq, xf, tau)
       ! Similar to LAPACK routine DLARFP, but uses ||x||**2 instead of x(:)
 #endif
 #if COMPLEXCASE == 1
@@ -266,7 +266,7 @@
       real(kind=REAL_DATATYPE)                      :: BETA
 
 #if REALCASE == 1
-      call timer%start("hh_transform_real" // M_PRECISION_SUFFIX )
+      call timer%start("hh_transform_real" // PRECISION_SUFFIX )
 #endif
 #if COMPLEXCASE == 1
       call timer%start("hh_transform_complex" // PRECISION_SUFFIX )
@@ -332,14 +332,14 @@
      endif
 
 #if REALCASE == 1
-      call timer%stop("hh_transform_real" // M_PRECISION_SUFFIX )
+      call timer%stop("hh_transform_real" // PRECISION_SUFFIX )
 #endif
 #if COMPLEXCASE == 1
       call timer%stop("hh_transform_complex" // PRECISION_SUFFIX )
 #endif
 
 #if REALCASE == 1
-    end subroutine M_hh_transform_real_PRECISION
+    end subroutine hh_transform_real_PRECISION
 #endif
 #if COMPLEXCASE == 1
     end subroutine hh_transform_complex_PRECISION

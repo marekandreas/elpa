@@ -1,5 +1,5 @@
 
-    subroutine M_tridiag_band_real_PRECISION(na, nb, nblk, a, lda, d, e, matrixCols, hh_trans_real, &
+    subroutine tridiag_band_real_PRECISION(na, nb, nblk, a, lda, d, e, matrixCols, hh_trans_real, &
                                  mpi_comm_rows, mpi_comm_cols, mpi_comm)
     !-------------------------------------------------------------------------------
     ! tridiag_band_real:
@@ -78,7 +78,7 @@
       integer(kind=ik)                         :: startAddr
 #endif
 
-      call timer%start("tridiag_band_real" // M_PRECISION_SUFFIX)
+      call timer%start("tridiag_band_real" // PRECISION_SUFFIX)
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm,my_pe,mpierr)
       call mpi_comm_size(mpi_comm,n_pes,mpierr)
@@ -155,7 +155,7 @@
       n_off = block_limits(my_pe)*nb
 
       ! Redistribute band in a to ab
-      call M_redist_band_real_PRECISION(a, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab)
+      call redist_band_real_PRECISION(a, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab)
       ! Calculate the workload for each sweep in the back transformation
       ! and the space requirements to hold the HH vectors
 
@@ -216,7 +216,7 @@
           num_chunks  = num_chunks+1
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, M_MPI_REAL_PRECISION, nt, &
+          call mpi_irecv(hh_trans_real(1,num_hh_vecs+1), nb*local_size, MPI_REAL_PRECISION, nt, &
                            10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
           call timer%stop("mpi_communication")
 
@@ -247,8 +247,8 @@
         print *,"tridiag_band_real: error when allocating hh_send"//errorMessage
         stop
       endif
-      hh_gath(:,:,:) = M_CONST_0_0
-      hh_send(:,:,:) = M_CONST_0_0
+      hh_gath(:,:,:) = CONST_0_0
+      hh_send(:,:,:) = CONST_0_0
 
       ! Some counters
 
@@ -320,7 +320,7 @@
         ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
-        call mpi_isend(ab_s, nb+1, M_MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+        call mpi_isend(ab_s, nb+1, MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
         call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
       endif
@@ -338,22 +338,22 @@
 
         if (my_pe==0) then
           n = MIN(na-na_s,nb) ! number of rows to be reduced
-          hv(:) = M_CONST_0_0
-          tau = M_CONST_0_0
+          hv(:) = CONST_0_0
+          tau = CONST_0_0
           ! The last step (istep=na-1) is only needed for sending the last HH vectors.
           ! We don't want the sign of the last element flipped (analogous to the other sweeps)
           if (istep < na-1) then
             ! Transform first column of remaining matrix
             vnorm2 = sum(ab(3:n+1,na_s-n_off)**2)
-            call M_hh_transform_real_PRECISION(ab(2,na_s-n_off),vnorm2,hf,tau)
-            hv(1) = M_CONST_1_0
+            call hh_transform_real_PRECISION(ab(2,na_s-n_off),vnorm2,hf,tau)
+            hv(1) = CONST_1_0
             hv(2:n) = ab(3:n+1,na_s-n_off)*hf
           endif
           d(istep) = ab(1,na_s-n_off)
           e(istep) = ab(2,na_s-n_off)
           if (istep == na-1) then
             d(na) = ab(1,na_s+1-n_off)
-            e(na) = M_CONST_0_0
+            e(na) = CONST_0_0
           endif
         else
           if (na>na_s) then
@@ -363,7 +363,7 @@
 
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_recv(hv, nb, M_MPI_REAL_PRECISION, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+            call mpi_recv(hv, nb, MPI_REAL_PRECISION, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
             call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -377,7 +377,7 @@
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
 
-            call mpi_recv(hv, nb, M_MPI_REAL_PRECISION, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+            call mpi_recv(hv, nb, MPI_REAL_PRECISION, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
             call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -386,14 +386,14 @@
 
 #endif /* WITH_OPENMP */
             tau = hv(1)
-            hv(1) = M_CONST_1_0
+            hv(1) = CONST_1_0
           endif
         endif
 
         na_s = na_s+1
         if (na_s-n_off > nb) then
           ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-          ab(:,nblocks*nb+1:(nblocks+1)*nb) = M_CONST_0_0
+          ab(:,nblocks*nb+1:(nblocks+1)*nb) = CONST_0_0
           n_off = n_off + nb
         endif
 
@@ -421,7 +421,7 @@
             ! is completed by the next thread.
             ! After the first iteration it is also the place to exchange the last row
             ! with MPI calls
-            call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+            call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
 !$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
@@ -457,18 +457,18 @@
                                           ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
                 ! Transform diagonal block
-                call M_PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, M_CONST_0_0, hd, 1)
+                call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
                 x = dot_product(hv(1:nc),hd(1:nc))*tau
-                hd(1:nc) = hd(1:nc) - M_CONST_0_5*x*hv(1:nc)
+                hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
 
-                call M_PRECISION_SYR2('L', nc, -M_CONST_1_0 ,hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                call PRECISION_SYR2('L', nc, -CONST_1_0 ,hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 
-                hv_t(:,my_thread) = M_CONST_0_0
-                tau_t(my_thread)  = M_CONST_0_0
+                hv_t(:,my_thread) = CONST_0_0
+                tau_t(my_thread)  = CONST_0_0
                 if (nr<=0) cycle ! No subdiagonal block present any more
 
                 ! Transform subdiagonal block
-                call M_PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, M_CONST_0_0, hs, 1)
+                call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, CONST_0_0, hs, 1)
                 if (nr>1) then
 
                   ! complete (old) Householder transformation for first column
@@ -479,15 +479,15 @@
                   ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
 
                   vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
-                  call M_hh_transform_real_PRECISION(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
+                  call hh_transform_real_PRECISION(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
 
-                  hv_t(1   ,my_thread) = M_CONST_1_0
+                  hv_t(1   ,my_thread) = CONST_1_0
                   hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
-                  ab(nb+2:,ns) = M_CONST_0_0
+                  ab(nb+2:,ns) = CONST_0_0
 
                   ! update subdiagonal block for old and new Householder transformation
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
-                  call M_PRECISION_GEMV('T',nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, M_CONST_0_0, h(2), 1)
+                  call PRECISION_GEMV('T',nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, CONST_0_0, h(2), 1)
                   x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
                   h(2:nb) = h(2:nb) - x*hv(2:nb)
                   ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
@@ -503,7 +503,7 @@
                     ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
                   enddo
                   ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
-                  hv_t(1,my_thread) = M_CONST_1_0
+                  hv_t(1,my_thread) = CONST_1_0
                 endif
 
               enddo
@@ -511,7 +511,7 @@
             enddo ! my_thread
 !$omp end parallel do
 
-            call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+            call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
             if (iter==1) then
               ! We are at the end of the first block
@@ -530,7 +530,7 @@
                 ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
-                call mpi_isend(ab_s, nb+1, M_MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+                call mpi_isend(ab_s, nb+1, MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
                 call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -542,7 +542,7 @@
               call timer%start("mpi_communication")
 
               if (istep>=max_threads .and. ne <= na) then
-                call mpi_recv(ab(1,ne-n_off), nb+1, M_MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+                call mpi_recv(ab(1,ne-n_off), nb+1, MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
               endif
               call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -564,7 +564,7 @@
 
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
-                call mpi_isend(hv_s, nb, M_MPI_REAL_PRECISION, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
+                call mpi_isend(hv_s, nb, MPI_REAL_PRECISION, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
                 call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -619,7 +619,7 @@
 
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), M_MPI_REAL_PRECISION, &
+              call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_REAL_PRECISION, &
                            global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
                            10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
               call timer%stop("mpi_communication")
@@ -630,7 +630,7 @@
 #endif /* WITH_MPI */
 
             ! Reset counter and increase destination row
-              hh_cnt(iblk) = M_CONST_0_0
+              hh_cnt(iblk) = CONST_0_0
               hh_dst(iblk) = hh_dst(iblk)+1
             endif
 
@@ -652,20 +652,20 @@
               ! First do the matrix multiplications without last column ...
 
               ! Diagonal block, the contribution of the last element is added below!
-              ab(1,ne) = M_CONST_0_0
+              ab(1,ne) = CONST_0_0
 
-              call M_PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, M_CONST_0_0, hd, 1)
+              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
 
               ! Subdiagonal block
-              if (nr>0) call M_PRECISION_GEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1, M_CONST_0_0, hs, 1)
+              if (nr>0) call PRECISION_GEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1, CONST_0_0, hs, 1)
 
               ! ... then request last column ...
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
 #ifdef WITH_OPENMP
-              call mpi_recv(ab(1,ne), nb+1, M_MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(ab(1,ne), nb+1, MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #else
-              call mpi_recv(ab(1,ne), nb+1, M_MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(ab(1,ne), nb+1, MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #endif
               call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -681,14 +681,14 @@
             else
 
               ! Normal matrix multiply
-              call M_PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, M_CONST_0_0, hd, 1)
-              if (nr>0) call M_PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, M_CONST_0_0, hs, 1)
+              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
+              if (nr>0) call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, CONST_0_0, hs, 1)
             endif
 
             ! Calculate first column of subdiagonal block and calculate new
             ! Householder transformation for this column
-            hv_new(:) = M_CONST_0_0 ! Needed, last rows must be 0 for nr < nb
-            tau_new = M_CONST_0_0
+            hv_new(:) = CONST_0_0 ! Needed, last rows must be 0 for nr < nb
+            tau_new = CONST_0_0
             if (nr>0) then
 
               ! complete (old) Householder transformation for first column
@@ -698,10 +698,10 @@
               ! calculate new Householder transformation ...
               if (nr>1) then
                 vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
-                call M_hh_transform_real_PRECISION(ab(nb+1,ns),vnorm2,hf,tau_new)
-                hv_new(1) = M_CONST_1_0
+                call hh_transform_real_PRECISION(ab(nb+1,ns),vnorm2,hf,tau_new)
+                hv_new(1) = CONST_1_0
                 hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
-                ab(nb+2:,ns) = M_CONST_0_0
+                ab(nb+2:,ns) = CONST_0_0
               endif
 
               ! ... and send it away immediatly if this is the last block
@@ -722,7 +722,7 @@
 
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
-                call mpi_isend(hv_s, nb, M_MPI_REAL_PRECISION, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
+                call mpi_isend(hv_s, nb, MPI_REAL_PRECISION, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
                 call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -732,7 +732,7 @@
 
             ! Transform diagonal block
             x = dot_product(hv(1:nc),hd(1:nc))*tau
-            hd(1:nc) = hd(1:nc) - M_CONST_0_5*x*hv(1:nc)
+            hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
 
             if (my_pe>0 .and. iblk==1) then
 
@@ -758,22 +758,22 @@
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
 
-              call mpi_isend(ab_s, nb+1, M_MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+              call mpi_isend(ab_s, nb+1, MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
               call timer%stop("mpi_communication")
 
 #endif
               ! ... and calculate remaining columns with rank-2 update
-              if (nc>1) call M_PRECISION_SYR2('L', nc-1, -M_CONST_1_0, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+              if (nc>1) call PRECISION_SYR2('L', nc-1, -CONST_1_0, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
             else
               ! No need to  send, just a rank-2 update
-              call M_PRECISION_SYR2('L', nc, -M_CONST_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+              call PRECISION_SYR2('L', nc, -CONST_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
             endif
 
             ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
             if (nr>0) then
               if (nr>1) then
-                call M_PRECISION_GEMV('T', nr, nb-1, tau_new, ab(nb,ns+1), 2*nb-1, hv_new, 1, M_CONST_0_0, h(2), 1)
+                call PRECISION_GEMV('T', nr, nb-1, tau_new, ab(nb,ns+1), 2*nb-1, hv_new, 1, CONST_0_0, h(2), 1)
                 x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
                 h(2:nb) = h(2:nb) - x*hv(2:nb)
                 ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update
@@ -816,7 +816,7 @@
 
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), M_MPI_REAL_PRECISION, &
+            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_REAL_PRECISION, &
                   global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
                   10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
             call timer%stop("mpi_communication")
@@ -827,7 +827,7 @@
 #endif /* WITH_MPI */
 
             ! Reset counter and increase destination row
-            hh_cnt(iblk) = M_CONST_0_0
+            hh_cnt(iblk) = CONST_0_0
             hh_dst(iblk) = hh_dst(iblk)+1
           endif
 
@@ -921,7 +921,7 @@
          stop
        endif
 
-      call timer%stop("tridiag_band_real" // M_PRECISION_SUFFIX)
-    end subroutine M_tridiag_band_real_PRECISION
+      call timer%stop("tridiag_band_real" // PRECISION_SUFFIX)
+    end subroutine tridiag_band_real_PRECISION
 
 

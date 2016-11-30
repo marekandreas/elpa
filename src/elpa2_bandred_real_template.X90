@@ -61,7 +61,7 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
-    subroutine M_bandred_real_PRECISION(na, a, a_dev, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, &
+    subroutine bandred_real_PRECISION(na, a, a_dev, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, &
                             tmat, tmat_dev, wantDebug, useGPU, success, useQR)
 
   !-------------------------------------------------------------------------------
@@ -154,7 +154,7 @@
       integer(kind=ik)                      :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
                                                ii, pp, transformChunkSize
 
-      call timer%start("bandred_real" // M_PRECISION_SUFFIX)
+      call timer%start("bandred_real" // PRECISION_SUFFIX)
       call timer%start("mpi_communication")
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -228,12 +228,12 @@
           vmrCols = na
 
 #ifdef USE_ASSUMED_SIZE_QR
-          call M_qr_pdgeqrf_2dcomm_PRECISION(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
+          call qr_pdgeqrf_2dcomm_PRECISION(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
                                  nbw, nbw, dwork_size, 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
 
 #else
-          call M_qr_pdgeqrf_2dcomm_PRECISION(a(1:lda,1:matrixCols), matrixCols, lda, vmrCPU(1:max(l_rows,1),1:vmrCols), max(l_rows,1), &
+          call qr_pdgeqrf_2dcomm_PRECISION(a(1:lda,1:matrixCols), matrixCols, lda, vmrCPU(1:max(l_rows,1),1:vmrCols), max(l_rows,1), &
                                  vmrCols, tauvector(1:na), na, tmat(1:nbw,1:nbw,1), nbw, &
                                  nbw, dwork_size(1:1), 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
@@ -245,7 +245,7 @@
             print *,"bandred_real: error when allocating work_blocked "//errorMessage
             stop
           endif
-          work_blocked = M_CONST_0_0
+          work_blocked = CONST_0_0
           deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_real: error when deallocating vmrCPU "//errorMessage
@@ -258,17 +258,17 @@
 
       if (useGPU) then
         ! Here we convert the regular host array into a pinned host array
-        successCUDA = cuda_malloc(a_dev, lda*na_cols*M_size_of_PRECISION_real)
+        successCUDA = cuda_malloc(a_dev, lda*na_cols*size_of_PRECISION_real)
         if (.not.(successCUDA)) then
           print *,"bandred_real: error in cudaMalloc"
           stop
         endif
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*M_size_of_PRECISION_real)
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_PRECISION_real)
         if (.not.(successCUDA)) then
           print *,"bandred_real: error in cudaMalloc"
           stop
         endif
-        successCUDA = cuda_malloc(vav_dev, nbw*nbw*M_size_of_PRECISION_real)
+        successCUDA = cuda_malloc(vav_dev, nbw*nbw*size_of_PRECISION_real)
         if (.not.(successCUDA)) then
           print *,"bandred_real: error in cudaMalloc"
           stop
@@ -276,7 +276,7 @@
 
         cur_l_rows = 0
         cur_l_cols = 0
-        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)*M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"bandred_real: error in cudaMemcpy"
           stop
@@ -337,7 +337,7 @@
               print *,"bandred_real: error when allocating vmrCUDA "//errorMessage
               stop
             endif
-            successCUDA = cuda_malloc(vmr_dev, vmr_size*M_size_of_PRECISION_real)
+            successCUDA = cuda_malloc(vmr_dev, vmr_size*size_of_PRECISION_real)
             if (.not.(successCUDA)) then
               print *,"bandred_real: error in cudaMalloc"
               stop
@@ -366,7 +366,7 @@
               print *,"bandred_real: error when deallocating umcCUDA "//errorMessage
               stop
             endif
-            successCUDA = cuda_malloc(umc_dev, umc_size*M_size_of_PRECISION_real)
+            successCUDA = cuda_malloc(umc_dev, umc_size*size_of_PRECISION_real)
             if (.not.(successCUDA)) then
               print *,"bandred_real: error in cudaMalloc"
               stop
@@ -399,15 +399,15 @@
         endif ! use GPU
 
         if (useGPU) then
-          vmrCUDA(1 : cur_l_rows * n_cols) = M_CONST_0_0
+          vmrCUDA(1 : cur_l_rows * n_cols) = CONST_0_0
         else
-          vmrCPU(1:l_rows,1:n_cols) = M_CONST_0_0
+          vmrCPU(1:l_rows,1:n_cols) = CONST_0_0
         endif
-        vr(:) = M_CONST_0_0
-        tmat(:,:,istep) = M_CONST_0_0
+        vr(:) = CONST_0_0
+        tmat(:,:,istep) = CONST_0_0
 
         if (useGPU) then
-          umcCUDA(1 : umc_size) = M_CONST_0_0
+          umcCUDA(1 : umc_size) = CONST_0_0
           lc_start = local_index(istep*nbw+1, my_pcol, np_cols, nblk, -1)
           lc_end   = local_index(istep*nbw+n_cols, my_pcol, np_cols, nblk, -1)
           lr_end   = local_index((istep-1)*nbw + n_cols, my_prow, np_rows, nblk, -1)
@@ -418,9 +418,9 @@
           cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
 
           if(my_pcol == cur_pcol) then
-            successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), lda*M_size_of_PRECISION_real,         &
-                                       (a_dev + ((lc_start-1) * lda*M_size_of_PRECISION_real)),    &
-                                       lda*M_size_of_PRECISION_real, lr_end*M_size_of_PRECISION_real, &
+            successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), lda*size_of_PRECISION_real,         &
+                                       (a_dev + ((lc_start-1) * lda*size_of_PRECISION_real)),    &
+                                       lda*size_of_PRECISION_real, lr_end*size_of_PRECISION_real, &
                                        (lc_end - lc_start+1), cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"bandred_real: error in cudaMemcpy2d"
@@ -436,7 +436,7 @@
           if (which_qr_decomposition == 1) then
             vmrCols = 2*n_cols
 #ifdef USE_ASSUMED_SIZE_QR
-            call M_qr_pdgeqrf_2dcomm_PRECISION(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), &
+            call qr_pdgeqrf_2dcomm_PRECISION(a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), &
                                    na, tmat(1,1,istep), nbw, nbw, work_blocked, work_size,        &
                                      work_size, na, n_cols, nblk, nblk,        &
                                      istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
@@ -444,7 +444,7 @@
                                      blockheuristic)
 
 #else
-            call M_qr_pdgeqrf_2dcomm_PRECISION(a(1:lda,1:matrixCols), lda, matrixCols, vmrCPU(1:max(l_rows,1),1:vmrCols) ,   &
+            call qr_pdgeqrf_2dcomm_PRECISION(a(1:lda,1:matrixCols), lda, matrixCols, vmrCPU(1:max(l_rows,1),1:vmrCols) ,   &
                                     max(l_rows,1), vmrCols, tauvector(1:na), na, &
                                      tmat(1:nbw,1:nbw,istep), nbw, nbw, work_blocked(1:work_size), work_size, &
                                      work_size, na, n_cols, nblk, nblk,        &
@@ -482,12 +482,12 @@
                aux1(2) = vr(lr)
              else
                aux1(1) = dot_product(vr(1:lr),vr(1:lr))
-               aux1(2) = M_CONST_0_0
+               aux1(2) = CONST_0_0
              endif
 
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
-             call mpi_allreduce(aux1, aux2, 2, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+             call mpi_allreduce(aux1, aux2, 2, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
              call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -498,7 +498,7 @@
              vrl    = aux2(2)
 
              ! Householder transformation
-             call M_hh_transform_real_PRECISION(vrl, vnorm2, xf, tau)
+             call hh_transform_real_PRECISION(vrl, vnorm2, xf, tau)
 
              ! Scale vr and store Householder vector for back transformation
 
@@ -506,7 +506,7 @@
              if (my_prow==prow(nrow, nblk, np_rows)) then
                a(1:lr-1,lch) = vr(1:lr-1)
                a(lr,lch) = vrl
-               vr(lr) = M_CONST_1_0
+               vr(lr) = CONST_1_0
              else
                a(1:lr,lch) = vr(1:lr)
              endif
@@ -518,7 +518,7 @@
            vr(lr+1) = tau
 #ifdef WITH_MPI
            call timer%start("mpi_communication")
-           call MPI_Bcast(vr, lr+1, M_MPI_REAL_PRECISION, cur_pcol, mpi_comm_cols, mpierr)
+           call MPI_Bcast(vr, lr+1, MPI_REAL_PRECISION, cur_pcol, mpi_comm_cols, mpierr)
            call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -565,7 +565,7 @@
            !$omp single
 #ifdef WITH_MPI
            call timer%start("mpi_communication")
-           if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+           if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
            call timer%stop("mpi_communication")
 #else /* WITH_MPI */
            if (mynlc>0) aux2 = aux1
@@ -606,7 +606,7 @@
            ! Get global dot products
 #ifdef WITH_MPI
            call timer%start("mpi_communication")
-           if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+           if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
            call timer%stop("mpi_communication")
 #else /* WITH_MPI */
            if (nlc>0) aux2=aux1
@@ -628,9 +628,9 @@
            ! store column tiles back to GPU
            cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
            if (my_pcol == cur_pcol) then
-             successCUDA = cuda_memcpy2d((a_dev+((lc_start-1)*lda*M_size_of_PRECISION_real)),          &
-                                          lda*M_size_of_PRECISION_real, loc(a(1, lc_start)),           &
-                                          lda*M_size_of_PRECISION_real,  lr_end*M_size_of_PRECISION_real, &
+             successCUDA = cuda_memcpy2d((a_dev+((lc_start-1)*lda*size_of_PRECISION_real)),          &
+                                          lda*size_of_PRECISION_real, loc(a(1, lc_start)),           &
+                                          lda*size_of_PRECISION_real,  lr_end*size_of_PRECISION_real, &
                                           (lc_end - lc_start+1),cudaMemcpyHostToDevice)
              if (.not.(successCUDA)) then
                print *,"bandred_real: error in cudaMemcpy2d"
@@ -647,19 +647,19 @@
 
          if (useGPU) then
            if (l_rows>0) &
-             call M_PRECISION_SYRK('U', 'T', n_cols, l_rows, M_CONST_1_0, vmrCUDA, cur_l_rows, M_CONST_0_0, vav, ubound(vav,dim=1))
+             call PRECISION_SYRK('U', 'T', n_cols, l_rows, CONST_1_0, vmrCUDA, cur_l_rows, CONST_0_0, vav, ubound(vav,dim=1))
          else
            if (l_rows>0) &
-             call M_PRECISION_SYRK('U', 'T', n_cols, l_rows, M_CONST_1_0, vmrCPU, ubound(vmrCPU,dim=1), M_CONST_0_0, vav, ubound(vav,dim=1))
+             call PRECISION_SYRK('U', 'T', n_cols, l_rows, CONST_1_0, vmrCPU, ubound(vmrCPU,dim=1), CONST_0_0, vav, ubound(vav,dim=1))
          endif
 
-         call M_symm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw,mpi_comm_rows)
+         call symm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw,mpi_comm_rows)
 
          ! Calculate triangular matrix T for block Householder Transformation
          do lc=n_cols,1,-1
            tau = tmat(lc,lc,istep)
            if (lc<n_cols) then
-             call M_PRECISION_TRMV('U', 'T', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
+             call PRECISION_TRMV('U', 'T', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
              tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
            endif
          enddo
@@ -668,11 +668,11 @@
        ! Transpose vmr -> vmc (stored in umc, second half)
 
        if (useGPU) then
-         call M_elpa_transpose_vectors_real_PRECISION  (vmrCUDA, cur_l_rows, mpi_comm_rows, &
+         call elpa_transpose_vectors_real_PRECISION  (vmrCUDA, cur_l_rows, mpi_comm_rows, &
                                             umcCUDA(cur_l_cols * n_cols + 1), cur_l_cols, mpi_comm_cols, &
                                             1, istep*nbw, n_cols, nblk)
        else
-         call M_elpa_transpose_vectors_real_PRECISION  (vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
+         call elpa_transpose_vectors_real_PRECISION  (vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                             umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
                                             1, istep*nbw, n_cols, nblk)
        endif
@@ -685,16 +685,16 @@
        ! here the GPU version and CPU version diverged substantially, due to the newest
        ! optimizations due to Intel. The GPU version has to be re-written
        if (useGPU) then
-         umcCUDA(1 : l_cols * n_cols) = M_CONST_0_0
-         vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = M_CONST_0_0
+         umcCUDA(1 : l_cols * n_cols) = CONST_0_0
+         vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = CONST_0_0
 
          if (l_cols>0 .and. l_rows>0) then
-           successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*M_size_of_PRECISION_real,cudaMemcpyHostToDevice)
+           successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*size_of_PRECISION_real,cudaMemcpyHostToDevice)
            if (.not.(successCUDA)) then
              print *,"bandred_real: error in cudaMemcpy"
              stop
            endif
-           successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*M_size_of_PRECISION_real,cudaMemcpyHostToDevice)
+           successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*size_of_PRECISION_real,cudaMemcpyHostToDevice)
            if (.not.(successCUDA)) then
              print *,"bandred_real: error in cudaMemcpy"
              stop
@@ -707,22 +707,22 @@
              if (lce<lcs) cycle
 
              lre = min(l_rows,(i+1)*l_rows_tile)
-             call M_cublas_PRECISION_gemm('T', 'N', lce-lcs+1, n_cols, lre, &
-                               M_CONST_1_0, (a_dev + ((lcs-1)*lda*M_size_of_PRECISION_real)), lda, vmr_dev,cur_l_rows, &
-                               M_CONST_1_0, (umc_dev+ (lcs-1)*M_size_of_PRECISION_real), cur_l_cols)
+             call cublas_PRECISION_gemm('T', 'N', lce-lcs+1, n_cols, lre, &
+                               CONST_1_0, (a_dev + ((lcs-1)*lda*size_of_PRECISION_real)), lda, vmr_dev,cur_l_rows, &
+                               CONST_1_0, (umc_dev+ (lcs-1)*size_of_PRECISION_real), cur_l_cols)
              if(i==0) cycle
              lre = min(l_rows,i*l_rows_tile)
-             call M_cublas_PRECISION_gemm('N', 'N', lre,n_cols, lce-lcs+1,&
-                               M_CONST_1_0, (a_dev+ ((lcs-1)*lda*M_size_of_PRECISION_real)), lda,                  &
-                               (umc_dev+(cur_l_cols * n_cols+lcs-1)*M_size_of_PRECISION_real), cur_l_cols, &
-                               M_CONST_1_0, (vmr_dev+(cur_l_rows * n_cols)*M_size_of_PRECISION_real), cur_l_rows)
+             call cublas_PRECISION_gemm('N', 'N', lre,n_cols, lce-lcs+1,&
+                               CONST_1_0, (a_dev+ ((lcs-1)*lda*size_of_PRECISION_real)), lda,                  &
+                               (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_PRECISION_real), cur_l_cols, &
+                               CONST_1_0, (vmr_dev+(cur_l_rows * n_cols)*size_of_PRECISION_real), cur_l_rows)
            enddo
-           successCUDA = cuda_memcpy(loc(vmrCUDA(1)), vmr_dev,vmr_size*M_size_of_PRECISION_real,cudaMemcpyDeviceToHost)
+           successCUDA = cuda_memcpy(loc(vmrCUDA(1)), vmr_dev,vmr_size*size_of_PRECISION_real,cudaMemcpyDeviceToHost)
            if (.not.(successCUDA)) then
              print *,"bandred_real: error in cudaMemcpy"
              stop
            endif
-           successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*M_size_of_PRECISION_real,cudaMemcpyDeviceToHost)
+           successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*size_of_PRECISION_real,cudaMemcpyDeviceToHost)
            if (.not.(successCUDA)) then
              print *,"bandred_real: error in cudaMemcpy"
              stop
@@ -746,12 +746,12 @@
          if (n_way > 1) then
            !$omp do
            do i=1,min(l_cols_tile, l_cols)
-             umcCPU(i,1:n_cols) = M_CONST_0_0
+             umcCPU(i,1:n_cols) = CONST_0_0
            enddo
 
            !$omp do
            do i=1,l_rows
-             vmrCPU(i,n_cols+1:2*n_cols) = M_CONST_0_0
+             vmrCPU(i,n_cols+1:2*n_cols) = CONST_0_0
            enddo
            if (l_cols>0 .and. l_rows>0) then
 
@@ -781,24 +781,24 @@
                !C1 += [A11 A12] [B1
                !                 B2]
                if ( lre > lrs .and. l_cols > lcs ) then
-                 call M_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
-                            M_CONST_1_0, a(lrs,lcs), ubound(a,dim=1),                 &
+                 call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
+                            CONST_1_0, a(lrs,lcs), ubound(a,dim=1),                 &
                                   umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
-                            M_CONST_0_0, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
+                            CONST_0_0, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
                endif
 
                ! C1 += A10' B0
                if ( lce > lcs .and. i > 0 ) then
-                 call M_PRECISION_GEMM('T', 'N', lce-lcs+1, n_cols, lrs-1,           &
-                            M_CONST_1_0, a(1,lcs),   ubound(a,dim=1),           &
+                 call PRECISION_GEMM('T', 'N', lce-lcs+1, n_cols, lrs-1,           &
+                            CONST_1_0, a(1,lcs),   ubound(a,dim=1),           &
                                   vmrCPU(1,1),   ubound(vmrCPU,dim=1),   &
-                            M_CONST_0_0, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+                            CONST_0_0, umcCPU(lcs,1), ubound(umcCPU,dim=1))
                endif
              enddo
            endif ! l_cols>0 .and. l_rows>0
          else ! n_way > 1
-           umcCPU(1:l_cols,1:n_cols) = M_CONST_0_0
-           vmrCPU(1:l_rows,n_cols+1:2*n_cols) = M_CONST_0_0
+           umcCPU(1:l_cols,1:n_cols) = CONST_0_0
+           vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_0_0
            if (l_cols>0 .and. l_rows>0) then
              do i=0,(istep*nbw-1)/tile_size
 
@@ -807,13 +807,13 @@
                if (lce<lcs) cycle
 
                lre = min(l_rows,(i+1)*l_rows_tile)
-               call M_PRECISION_GEMM('T', 'N', lce-lcs+1, n_cols, lre, M_CONST_1_0, a(1,lcs), ubound(a,dim=1), &
-                            vmrCPU, ubound(vmrCPU,dim=1), M_CONST_1_0, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+               call PRECISION_GEMM('T', 'N', lce-lcs+1, n_cols, lre, CONST_1_0, a(1,lcs), ubound(a,dim=1), &
+                            vmrCPU, ubound(vmrCPU,dim=1), CONST_1_0, umcCPU(lcs,1), ubound(umcCPU,dim=1))
 
                if (i==0) cycle
                  lre = min(l_rows,i*l_rows_tile)
-                 call M_PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, M_CONST_1_0, a(1,lcs), lda, &
-                            umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), M_CONST_1_0, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+                 call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, CONST_1_0, a(1,lcs), lda, &
+                            umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), CONST_1_0, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
              enddo
            endif
          endif ! n_way > 1
@@ -831,7 +831,7 @@
          ! here the GPU version and CPU version divereged due to the same reasons as above
 
          if (tile_size < istep*nbw) then
-           call M_elpa_reduce_add_vectors_real_PRECISION  (vmrCUDA(cur_l_rows * n_cols + 1),cur_l_rows,mpi_comm_rows, &
+           call elpa_reduce_add_vectors_real_PRECISION  (vmrCUDA(cur_l_rows * n_cols + 1),cur_l_rows,mpi_comm_rows, &
                                                umcCUDA, cur_l_cols, mpi_comm_cols, &
                                                istep*nbw, n_cols, nblk)
          endif
@@ -846,7 +846,7 @@
 #ifdef WITH_MPI
            call timer%start("mpi_communication")
 
-           call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, ierr)
+           call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, ierr)
            umcCUDA(1 : l_cols * n_cols) = tmpCUDA(1 : l_cols * n_cols)
            call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -865,51 +865,51 @@
          endif ! l_cols
 
          ! U = U * Tmat**T
-         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*size_of_PRECISION_real, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
-         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*M_size_of_PRECISION_real,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
-         call M_cublas_PRECISION_trmm('Right', 'Upper', 'Trans', 'Nonunit', l_cols, n_cols, &
-                           M_CONST_1_0, tmat_dev, nbw, umc_dev, cur_l_cols)
+         call cublas_PRECISION_trmm('Right', 'Upper', 'Trans', 'Nonunit', l_cols, n_cols, &
+                           CONST_1_0, tmat_dev, nbw, umc_dev, cur_l_cols)
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*M_size_of_PRECISION_real,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
-         call M_cublas_PRECISION_gemm('T', 'N', n_cols, n_cols, l_cols, &
-                           M_CONST_1_0, umc_dev, cur_l_cols, (umc_dev+(cur_l_cols * n_cols )*M_size_of_PRECISION_real),cur_l_cols, &
-                           M_CONST_0_0, vav_dev, nbw)
+         call cublas_PRECISION_gemm('T', 'N', n_cols, n_cols, l_cols, &
+                           CONST_1_0, umc_dev, cur_l_cols, (umc_dev+(cur_l_cols * n_cols )*size_of_PRECISION_real),cur_l_cols, &
+                           CONST_0_0, vav_dev, nbw)
 
-         call M_cublas_PRECISION_trmm('Right', 'Upper', 'Trans', 'Nonunit', n_cols, n_cols, &
-                           M_CONST_1_0, tmat_dev, nbw, vav_dev, nbw)
+         call cublas_PRECISION_trmm('Right', 'Upper', 'Trans', 'Nonunit', n_cols, n_cols, &
+                           CONST_1_0, tmat_dev, nbw, vav_dev, nbw)
 
-         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
 
-         call M_symm_matrix_allreduce_PRECISION(n_cols,vav, nbw,nbw,mpi_comm_cols)
+         call symm_matrix_allreduce_PRECISION(n_cols,vav, nbw,nbw,mpi_comm_cols)
 
-         successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*M_size_of_PRECISION_real,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
 
          ! U = U - 0.5 * V * VAV
-         call M_cublas_PRECISION_gemm('N', 'N', l_cols, n_cols, n_cols,&
-                           -M_CONST_0_5, (umc_dev+(cur_l_cols * n_cols )*M_size_of_PRECISION_real),cur_l_cols, vav_dev,nbw,&
-                           M_CONST_1_0, umc_dev, cur_l_cols)
+         call cublas_PRECISION_gemm('N', 'N', l_cols, n_cols, n_cols,&
+                           -CONST_0_5, (umc_dev+(cur_l_cols * n_cols )*size_of_PRECISION_real),cur_l_cols, vav_dev,nbw,&
+                           CONST_1_0, umc_dev, cur_l_cols)
 
-         successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
 
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
@@ -917,17 +917,17 @@
          endif
 
          ! Transpose umc -> umr (stored in vmr, second half)
-         call M_elpa_transpose_vectors_real_PRECISION  (umcCUDA, cur_l_cols, mpi_comm_cols, &
+         call elpa_transpose_vectors_real_PRECISION  (umcCUDA, cur_l_cols, mpi_comm_cols, &
                                             vmrCUDA(cur_l_rows * n_cols + 1), cur_l_rows, mpi_comm_rows, &
                                             1, istep*nbw, n_cols, nblk)
 
-         successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*size_of_PRECISION_real, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
 
-         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*size_of_PRECISION_real, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
@@ -939,16 +939,16 @@
            lce = min(l_cols,(i+1)*l_cols_tile)
            lre = min(l_rows,(i+1)*l_rows_tile)
            if (lce<lcs .or. lre<1) cycle
-           call M_cublas_PRECISION_gemm('N', 'T', lre, lce-lcs+1, 2*n_cols, -M_CONST_1_0, &
-                             vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*M_size_of_PRECISION_real), cur_l_cols, &
-                             M_CONST_1_0, (a_dev+(lcs-1)*lda*M_size_of_PRECISION_real), lda)
+           call cublas_PRECISION_gemm('N', 'T', lre, lce-lcs+1, 2*n_cols, -CONST_1_0, &
+                             vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*size_of_PRECISION_real), cur_l_cols, &
+                             CONST_1_0, (a_dev+(lcs-1)*lda*size_of_PRECISION_real), lda)
          enddo
 
        else ! do not useGPU
 
          ! Or if we used the Algorithm 4
          if (tile_size < istep*nbw .or. n_way > 1) then
-           call M_elpa_reduce_add_vectors_real_PRECISION  (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
+           call elpa_reduce_add_vectors_real_PRECISION  (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
                                              umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                              istep*nbw, n_cols, nblk)
          endif
@@ -962,7 +962,7 @@
 
 #ifdef WITH_MPI
            call timer%start("mpi_communication")
-           call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+           call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
            call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -977,25 +977,25 @@
          endif
 
          ! U = U * Tmat**T
-         call M_PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', l_cols,n_cols, M_CONST_1_0, tmat(1,1,istep), ubound(tmat,dim=1), &
+         call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', l_cols,n_cols, CONST_1_0, tmat(1,1,istep), ubound(tmat,dim=1), &
                     umcCPU, ubound(umcCPU,dim=1))
 
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
 
-         call M_PRECISION_GEMM('T', 'N', n_cols, n_cols, l_cols, M_CONST_1_0, umcCPU, ubound(umcCPU,dim=1), umcCPU(1,n_cols+1), &
-                    ubound(umcCPU,dim=1), M_CONST_0_0, vav, ubound(vav,dim=1))
+         call PRECISION_GEMM('T', 'N', n_cols, n_cols, l_cols, CONST_1_0, umcCPU, ubound(umcCPU,dim=1), umcCPU(1,n_cols+1), &
+                    ubound(umcCPU,dim=1), CONST_0_0, vav, ubound(vav,dim=1))
 
-         call M_PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', n_cols, n_cols, M_CONST_1_0, tmat(1,1,istep),    &
+         call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', n_cols, n_cols, CONST_1_0, tmat(1,1,istep),    &
                     ubound(tmat,dim=1), vav, ubound(vav,dim=1))
 
-         call M_symm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw ,mpi_comm_cols)
+         call symm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
          ! U = U - 0.5 * V * VAV
-         call M_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, -M_CONST_0_5, umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
-                     ubound(vav,dim=1), M_CONST_1_0, umcCPU, ubound(umcCPU,dim=1))
+         call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, -CONST_0_5, umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
+                     ubound(vav,dim=1), CONST_1_0, umcCPU, ubound(umcCPU,dim=1))
 
          ! Transpose umc -> umr (stored in vmr, second half)
-         call M_elpa_transpose_vectors_real_PRECISION(umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+         call elpa_transpose_vectors_real_PRECISION(umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                          vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                          1, istep*nbw, n_cols, nblk)
 
@@ -1029,9 +1029,9 @@
            myend   = mystart + work_per_thread - 1
            if ( myend > lre ) myend = lre
            if ( myend-mystart+1 < 1) cycle
-           call M_PRECISION_GEMM('N', 'T', myend-mystart+1, lce-lcs+1, 2*n_cols, -M_CONST_1_0, &
+           call PRECISION_GEMM('N', 'T', myend-mystart+1, lce-lcs+1, 2*n_cols, -CONST_1_0, &
                       vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
-                       M_CONST_1_0, a(mystart,lcs), ubound(a,1))
+                       CONST_1_0, a(mystart,lcs), ubound(a,1))
          enddo
          !$omp end parallel
 
@@ -1042,9 +1042,9 @@
            lce = min(l_cols,(i+1)*l_cols_tile)
            lre = min(l_rows,(i+1)*l_rows_tile)
            if (lce<lcs .or. lre<1) cycle
-           call M_PRECISION_GEMM('N', 'T', lre,lce-lcs+1, 2*n_cols, -M_CONST_1_0, &
+           call PRECISION_GEMM('N', 'T', lre,lce-lcs+1, 2*n_cols, -CONST_1_0, &
                        vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-                       M_CONST_1_0, a(1,lcs), lda)
+                       CONST_1_0, a(1,lcs), lda)
          enddo
 #endif /* WITH_OPENMP */
 
@@ -1081,7 +1081,7 @@
 
      if (useGPU) then
        ! this is not needed since a_dev is passed along from one subroutine to the other
-       successCUDA = cuda_memcpy ( loc (a), a_dev, lda*na_cols*M_size_of_PRECISION_real,cudaMemcpyDeviceToHost)
+       successCUDA = cuda_memcpy ( loc (a), a_dev, lda*na_cols*size_of_PRECISION_real,cudaMemcpyDeviceToHost)
        if (.not.(successCUDA)) then
          print *,"bandred_real: error in cudaMemcpy"
          stop
@@ -1179,9 +1179,9 @@
        endif
      endif
 
-     call timer%stop("bandred_real" // M_PRECISION_SUFFIX)
+     call timer%stop("bandred_real" // PRECISION_SUFFIX)
 
-   end subroutine M_bandred_real_PRECISION ! slower for gpu on 10000 10000 ???
+   end subroutine bandred_real_PRECISION ! slower for gpu on 10000 10000 ???
 
 
 

@@ -70,7 +70,7 @@
 
 
 
-    subroutine M_band_band_real_PRECISION(na, nb, nbCol, nb2, nb2Col, ab, ab2, d, e, mpi_comm)
+    subroutine band_band_real_PRECISION(na, nb, nbCol, nb2, nb2Col, ab, ab2, d, e, mpi_comm)
     !-------------------------------------------------------------------------------
     ! band_band_real:
     ! Reduces a real symmetric banded matrix to a real symmetric matrix with smaller bandwidth. Householder transformations are not stored.
@@ -134,7 +134,7 @@
       character(200)                           :: errorMessage
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("band_band_real" // M_PRECISION_SUFFIX)
+      call timer%start("band_band_real" // PRECISION_SUFFIX)
 #endif
 !      if (na .lt. 2*nb) then
 !        print *,"na lt 2*nb ",na,2*nb
@@ -202,7 +202,7 @@
       if (nb2>1) then
         do i=0,nblocks2-1
 
-          call mpi_irecv(ab2(1,i*nb2+1), 2*nb2*nb2, M_MPI_REAL_PRECISION, 0, 3, mpi_comm, ireq_ab2(i+1), mpierr)
+          call mpi_irecv(ab2(1,i*nb2+1), 2*nb2*nb2, MPI_REAL_PRECISION, 0, 3, mpi_comm, ireq_ab2(i+1), mpierr)
         enddo
       endif
 #ifdef HAVE_DETAILED_TIMINGS
@@ -242,7 +242,7 @@
         call timer%start("mpi_communication")
 #endif
 
-        call mpi_isend(ab_s, (nb+1)*nb2, M_MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+        call mpi_isend(ab_s, (nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("mpi_communication")
 #endif
@@ -254,20 +254,20 @@
         if (my_pe==0) then
 
           n = MIN(na-na_s-nb2+1,nb) ! number of rows to be reduced
-          hv(:,:) = M_CONST_0_0
-          tau(:) = M_CONST_0_0
+          hv(:,:) = CONST_0_0
+          tau(:) = CONST_0_0
 
           ! The last step (istep=na-1) is only needed for sending the last HH vectors.
           ! We don't want the sign of the last element flipped (analogous to the other sweeps)
           if (istep < na/nb2) then
 
             ! Transform first block column of remaining matrix
-            call M_PRECISION_GEQRF(n, nb2, ab(1+nb2,na_s-n_off), 2*nb-1, tau, work, lwork, info)
+            call PRECISION_GEQRF(n, nb2, ab(1+nb2,na_s-n_off), 2*nb-1, tau, work, lwork, info)
 
             do i=1,nb2
-              hv(i,i) = M_CONST_1_0
+              hv(i,i) = CONST_1_0
               hv(i+1:n,i) = ab(1+nb2+1:1+nb2+n-i,na_s-n_off+i-1)
-              ab(1+nb2+1:2*nb,na_s-n_off+i-1) = M_CONST_0_0
+              ab(1+nb2+1:2*nb,na_s-n_off+i-1) = CONST_0_0
             enddo
 
           endif
@@ -276,10 +276,10 @@
             d(istep) = ab(1,na_s-n_off)
             e(istep) = ab(2,na_s-n_off)
             if (istep == na) then
-              e(na) = M_CONST_0_0
+              e(na) = CONST_0_0
             endif
           else
-            ab_s2 = M_CONST_0_0
+            ab_s2 = CONST_0_0
             ab_s2(:,:) = ab(1:nb2+1,na_s-n_off:na_s-n_off+nb2-1)
             if (block_limits2(dest+1)<istep) then
               dest = dest+1
@@ -288,7 +288,7 @@
 #ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
 #endif
-            call mpi_send(ab_s2, 2*nb2*nb2, M_MPI_REAL_PRECISION, dest, 3, mpi_comm, mpierr)
+            call mpi_send(ab_s2, 2*nb2*nb2, MPI_REAL_PRECISION, dest, 3, mpi_comm, mpierr)
 #ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
 #endif
@@ -311,7 +311,7 @@
 #ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
 #endif
-            call mpi_recv(hv, nb*nb2, M_MPI_REAL_PRECISION, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+            call mpi_recv(hv, nb*nb2, MPI_REAL_PRECISION, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
 #endif
@@ -322,7 +322,7 @@
 
             do i=1,nb2
               tau(i) = hv(i,i)
-              hv(i,i) = M_CONST_1_0
+              hv(i,i) = CONST_1_0
             enddo
           endif
         endif
@@ -330,7 +330,7 @@
         na_s = na_s+nb2
         if (na_s-n_off > nb) then
           ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-          ab(:,nblocks*nb+1:(nblocks+1)*nb) = M_CONST_0_0
+          ab(:,nblocks*nb+1:(nblocks+1)*nb) = CONST_0_0
           n_off = n_off + nb
         endif
 
@@ -343,7 +343,7 @@
             nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
             nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
                                           ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
-            call M_wy_gen_PRECISION(nc,nb2,w,hv,tau,work,nb)
+            call wy_gen_PRECISION(nc,nb2,w,hv,tau,work,nb)
 
             if (iblk==nblocks .and. nc==nb) then
               !request last nb2 columns
@@ -351,7 +351,7 @@
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
 #endif
-              call mpi_recv(ab_r,(nb+1)*nb2, M_MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(ab_r,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
 #endif
@@ -363,16 +363,16 @@
                 ab(1:nb+1,ne+i-1) = ab_r(:,i)
               enddo
             endif
-            hv_new(:,:) = M_CONST_0_0 ! Needed, last rows must be 0 for nr < nb
-            tau_new(:) = M_CONST_0_0
+            hv_new(:,:) = CONST_0_0 ! Needed, last rows must be 0 for nr < nb
+            tau_new(:) = CONST_0_0
 
             if (nr>0) then
-              call M_wy_right_PRECISION(nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
-              call M_PRECISION_GEQRF(nr, nb2, ab(nb+1,ns), 2*nb-1, tau_new, work, lwork, info)
+              call wy_right_PRECISION(nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
+              call PRECISION_GEQRF(nr, nb2, ab(nb+1,ns), 2*nb-1, tau_new, work, lwork, info)
               do i=1,nb2
-                hv_new(i,i) = M_CONST_1_0
+                hv_new(i,i) = CONST_1_0
                 hv_new(i+1:,i) = ab(nb+2:2*nb-i+1,ns+i-1)
-                ab(nb+2:,ns+i-1) = M_CONST_0_0
+                ab(nb+2:,ns+i-1) = CONST_0_0
               enddo
 
               !send hh-vector
@@ -396,7 +396,7 @@
 #ifdef HAVE_DETAILED_TIMINGS
                 call timer%start("mpi_communication")
 #endif
-                call mpi_isend(hv_s,nb*nb2, M_MPI_REAL_PRECISION, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
+                call mpi_isend(hv_s,nb*nb2, MPI_REAL_PRECISION, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
 #ifdef HAVE_DETAILED_TIMINGS
                 call timer%stop("mpi_communication")
 #endif
@@ -407,7 +407,7 @@
               endif
             endif
 
-            call M_wy_symm_PRECISION(nc,nb2,ab(1,ns),2*nb-1,w,hv,work,work2,nb)
+            call wy_symm_PRECISION(nc,nb2,ab(1,ns),2*nb-1,w,hv,work,work2,nb)
 
             if (my_pe>0 .and. iblk==1) then
               !send first nb2 columns to previous PE
@@ -429,7 +429,7 @@
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
 #endif
-              call mpi_isend(ab_s,(nb+1)*nb2, M_MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+              call mpi_isend(ab_s,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
 #ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
 #endif
@@ -440,8 +440,8 @@
             endif
 
             if (nr>0) then
-              call M_wy_gen_PRECISION(nr,nb2,w_new,hv_new,tau_new,work,nb)
-              call M_wy_left_PRECISION(nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
+              call wy_gen_PRECISION(nr,nb2,w_new,hv_new,tau_new,work,nb)
+              call wy_left_PRECISION(nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
             endif
 
             ! Use new HH vector for the next block
@@ -497,12 +497,12 @@
         endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("band_band_real" // M_PRECISION_SUFFIX)
+        call timer%stop("band_band_real" // PRECISION_SUFFIX)
 #endif
 
     end subroutine
 
-    subroutine M_wy_gen_PRECISION(n, nb, W, Y, tau, mem, lda)
+    subroutine wy_gen_PRECISION(n, nb, W, Y, tau, mem, lda)
 
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
@@ -520,21 +520,21 @@
       integer(kind=ik)             :: i
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("wy_gen" // M_PRECISION_SUFFIX)
+   call timer%start("wy_gen" // PRECISION_SUFFIX)
 #endif
 
    W(1:n,1) = tau(1)*Y(1:n,1)
    do i=2,nb
      W(1:n,i) = tau(i)*Y(1:n,i)
-     call M_PRECISION_GEMV('T', n, i-1,  M_CONST_1_0, Y, lda, W(1,i), 1, M_CONST_0_0, mem,1)
-     call M_PRECISION_GEMV('N', n, i-1, -M_CONST_1_0, W, lda, mem, 1, M_CONST_1_0, W(1,i),1)
+     call PRECISION_GEMV('T', n, i-1,  CONST_1_0, Y, lda, W(1,i), 1, CONST_0_0, mem,1)
+     call PRECISION_GEMV('N', n, i-1, -CONST_1_0, W, lda, mem, 1, CONST_1_0, W(1,i),1)
    enddo
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("wy_gen" // M_PRECISION_SUFFIX)
+   call timer%stop("wy_gen" // PRECISION_SUFFIX)
 #endif
     end subroutine
 
-    subroutine M_wy_left_PRECISION(n, m, nb, A, lda, W, Y, mem, lda2)
+    subroutine wy_left_PRECISION(n, m, nb, A, lda, W, Y, mem, lda2)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -552,18 +552,18 @@
       real(kind=REAL_DATATYPE), intent(inout) :: mem(n,nb)  !memory for a temporary matrix of size n x nb
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("wy_left" // M_PRECISION_SUFFIX)
+   call timer%start("wy_left" // PRECISION_SUFFIX)
 #endif
 
-   call M_PRECISION_GEMM('T', 'N', nb, n, m, M_CONST_1_0, W, lda2, A, lda, M_CONST_0_0, mem, nb)
-   call M_PRECISION_GEMM('N', 'N', m, n, nb, -M_CONST_1_0, Y, lda2, mem, nb, M_CONST_1_0, A, lda)
+   call PRECISION_GEMM('T', 'N', nb, n, m, CONST_1_0, W, lda2, A, lda, CONST_0_0, mem, nb)
+   call PRECISION_GEMM('N', 'N', m, n, nb, -CONST_1_0, Y, lda2, mem, nb, CONST_1_0, A, lda)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("wy_left" // M_PRECISION_SUFFIX)
+   call timer%stop("wy_left" // PRECISION_SUFFIX)
 #endif
     end subroutine
 
-    subroutine M_wy_right_PRECISION(n, m, nb, A, lda, W, Y, mem, lda2)
+    subroutine wy_right_PRECISION(n, m, nb, A, lda, W, Y, mem, lda2)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -582,19 +582,19 @@
 
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("wy_right" // M_PRECISION_SUFFIX)
+   call timer%start("wy_right" // PRECISION_SUFFIX)
 #endif
 
-   call M_PRECISION_GEMM('N', 'N', n, nb, m, M_CONST_1_0, A, lda, W, lda2, M_CONST_0_0, mem, n)
-   call M_PRECISION_GEMM('N', 'T', n, m, nb, -M_CONST_1_0, mem, n, Y, lda2, M_CONST_1_0, A, lda)
+   call PRECISION_GEMM('N', 'N', n, nb, m, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
+   call PRECISION_GEMM('N', 'T', n, m, nb, -CONST_1_0, mem, n, Y, lda2, CONST_1_0, A, lda)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("wy_right" // M_PRECISION_SUFFIX)
+   call timer%stop("wy_right" // PRECISION_SUFFIX)
 #endif
 
     end subroutine
 
-    subroutine M_wy_symm_PRECISION(n, nb, A, lda, W, Y, mem, mem2, lda2)
+    subroutine wy_symm_PRECISION(n, nb, A, lda, W, Y, mem, mem2, lda2)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -612,16 +612,16 @@
       real(kind=REAL_DATATYPE)                :: mem2(nb,nb)    !memory for a temporary matrix of size nb x nb
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("wy_symm" // M_PRECISION_SUFFIX)
+   call timer%start("wy_symm" // PRECISION_SUFFIX)
 #endif
 
-   call M_PRECISION_SYMM('L', 'L', n, nb, M_CONST_1_0, A, lda, W, lda2, M_CONST_0_0, mem, n)
-   call M_PRECISION_GEMM('T', 'N', nb, nb, n, M_CONST_1_0, mem, n, W, lda2, M_CONST_0_0, mem2, nb)
-   call M_PRECISION_GEMM('N', 'N', n, nb, nb, -M_CONST_0_5, Y, lda2, mem2, nb, M_CONST_1_0, mem, n)
-   call M_PRECISION_SYR2K('L', 'N', n, nb, -M_CONST_1_0, Y, lda2, mem, n, M_CONST_1_0, A, lda)
+   call PRECISION_SYMM('L', 'L', n, nb, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
+   call PRECISION_GEMM('T', 'N', nb, nb, n, CONST_1_0, mem, n, W, lda2, CONST_0_0, mem2, nb)
+   call PRECISION_GEMM('N', 'N', n, nb, nb, -CONST_0_5, Y, lda2, mem2, nb, CONST_1_0, mem, n)
+   call PRECISION_SYR2K('L', 'N', n, nb, -CONST_1_0, Y, lda2, mem, n, CONST_1_0, A, lda)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("wy_symm" // M_PRECISION_SUFFIX)
+   call timer%stop("wy_symm" // PRECISION_SUFFIX)
 #endif
 
     end subroutine

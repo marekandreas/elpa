@@ -1,5 +1,5 @@
 
-    subroutine M_trans_ev_tridi_to_band_real_PRECISION(na, nev, nblk, nbw, q, q_dev, ldq, matrixCols, hh_trans_real, &
+    subroutine trans_ev_tridi_to_band_real_PRECISION(na, nev, nblk, nbw, q, q_dev, ldq, matrixCols, hh_trans_real, &
                                            mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success, &
                                            THIS_REAL_ELPA_KERNEL)
     !-------------------------------------------------------------------------------
@@ -149,7 +149,7 @@
       integer(kind=ik)                         :: j1
 #endif
 
-      call timer%start("trans_ev_tridi_to_band_real" // M_PRECISION_SUFFIX)
+      call timer%start("trans_ev_tridi_to_band_real" // PRECISION_SUFFIX)
 
 #ifdef WITH_GPU_VERSION
       unpack_idx = 0
@@ -247,8 +247,8 @@
       a_dim2 = max_blk_size + nbw
 
       if (useGPU) then
-        num =  (stripe_width*a_dim2*stripe_count)*M_size_of_PRECISION_real
-        successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count*M_size_of_PRECISION_real)
+        num =  (stripe_width*a_dim2*stripe_count)*size_of_PRECISION_real
+        successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count*size_of_PRECISION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"//errorMessage
           stop
@@ -284,7 +284,7 @@
         call c_f_pointer(aIntern_ptr, aIntern,[stripe_width,a_dim2,stripe_count] )
         !allocate(aIntern(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
 
-        aIntern(:,:,:) = M_CONST_0_0
+        aIntern(:,:,:) = CONST_0_0
 
 #endif /* WITH_OPENMP */
       endif !useGPU
@@ -294,9 +294,9 @@
         print *,"trans_ev_tridi_to_band_real: error when allocating row"//errorMessage
         stop
       endif
-      row(:) = M_CONST_0_0
+      row(:) = CONST_0_0
       if (useGPU) then
-        num =  (l_nev)*M_size_of_PRECISION_real
+        num =  (l_nev)*size_of_PRECISION_real
         successCUDA = cuda_malloc( row_dev,num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc "//errorMessage
@@ -316,10 +316,10 @@
           stop
         endif
 
-        row_group(:, :) = M_CONST_0_0
+        row_group(:, :) = CONST_0_0
 
-        num =  (l_nev*nblk)*M_size_of_PRECISION_real
-        !    call cuda_malloc2d( row_group_dev,l_nev*M_size_of_PRECISION_real,nblk*size_of_real_datatype)
+        num =  (l_nev*nblk)*size_of_PRECISION_real
+        !    call cuda_malloc2d( row_group_dev,l_nev*size_of_PRECISION_real,nblk*size_of_real_datatype)
         successCUDA = cuda_malloc(row_group_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"//errorMessage
@@ -344,14 +344,14 @@
       ! This is not for speed, but because we want the matrix a in the memory and
       ! in the cache of the correct thread (if possible)
 
-      call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+      call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
       !$omp parallel do private(my_thread), schedule(static, 1)
       do my_thread = 1, max_threads
-        aIntern(:,:,:,my_thread) = M_CONST_0_0 ! if possible, do first touch allocation!
+        aIntern(:,:,:,my_thread) = CONST_0_0 ! if possible, do first touch allocation!
       enddo
       !$omp end parallel do
 
-      call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+      call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 #endif /* WITH_OPENMP */
 
       do ip = np_rows-1, 0, -1
@@ -368,7 +368,7 @@
               endif
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call MPI_Recv(row, l_nev, M_MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
               call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -377,26 +377,26 @@
 
 #endif /* WITH_MPI */
 
-              call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+              call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call M_unpack_row_real_cpu_openmp_PRECISION(aIntern, row, i-limits(ip), my_thread, stripe_count, &
+                call unpack_row_real_cpu_openmp_PRECISION(aIntern, row, i-limits(ip), my_thread, stripe_count, &
                                                 thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 
-              call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+              call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP */
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
-                call M_unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count, &
+                call unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count, &
                                                            stripe_width, last_stripe_width, a_dim2, l_nev,&
                                                            row_group_size, nblk, unpack_idx, i - limits(ip), .false.)
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
-                call MPI_Recv(row_group(:, row_group_size), l_nev, M_MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
                 call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -406,7 +406,7 @@
               else
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
-                call MPI_Recv(row, l_nev, M_MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                call MPI_Recv(row, l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
                 call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -414,7 +414,7 @@
 !                row(1:l_nev) = row(1:l_nev)
 
 #endif /* WITH_MPI */
-                call M_unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
+                call unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
               endif
 #endif /* WITH_OPENMP */
 
@@ -424,7 +424,7 @@
 
 #ifdef WITH_OPENMP
 
-              call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+              call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
               if (useGPU) then
                 print *,"trans_ev_tridi_to_band_real: not yet implemented"
@@ -432,23 +432,23 @@
               endif
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call M_unpack_row_real_cpu_openmp_PRECISION(aIntern, row, i-limits(ip), my_thread, &
+                call unpack_row_real_cpu_openmp_PRECISION(aIntern, row, i-limits(ip), my_thread, &
                                                 stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
 
-              call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+              call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP */
 
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
-                call M_unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count, &
+                call unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count, &
                                                            stripe_width, last_stripe_width, a_dim2, l_nev,&
                                                            row_group_size, nblk, unpack_idx, i - limits(ip), .false.)
                 row_group(:, row_group_size) = q(src_offset, 1:l_nev)
               else
-                call M_unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
+                call unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
               endif
 
 #endif /* WITH_OPENMP */
@@ -465,7 +465,7 @@
                 row(:) = q(src_offset, 1:l_nev)
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
-                call MPI_Send(row, l_nev, M_MPI_REAL_PRECISION, dst, 0, mpi_comm_rows, mpierr)
+                call MPI_Send(row, l_nev, MPI_REAL_PRECISION, dst, 0, mpi_comm_rows, mpierr)
                 call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
               endif
@@ -482,7 +482,7 @@
               row(:) = q(src_offset, 1:l_nev)
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call MPI_Send(row, l_nev, M_MPI_REAL_PRECISION, ip, 0, mpi_comm_rows, mpierr)
+              call MPI_Send(row, l_nev, MPI_REAL_PRECISION, ip, 0, mpi_comm_rows, mpierr)
               call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
             endif
@@ -499,7 +499,7 @@
 
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call MPI_Recv(row, l_nev, M_MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+              call MPI_Recv(row, l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
               call timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -507,25 +507,25 @@
 
 #endif /* WITH_MPI */
 
-              call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+              call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-                call M_unpack_row_real_cpu_openmp_PRECISION(aIntern, row, i-limits(my_prow), my_thread, &
+                call unpack_row_real_cpu_openmp_PRECISION(aIntern, row, i-limits(my_prow), my_thread, &
                                                 stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
-              call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+              call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP */
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
-                call M_unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count,  &
+                call unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count,  &
                                                           stripe_width, last_stripe_width, a_dim2, l_nev,       &
                                   row_group_size, nblk, unpack_idx, i - limits(my_prow), .false.)
 #ifdef WITH_MPI
                call timer%start("mpi_communication")
-               call MPI_Recv(row_group(:, row_group_size), l_nev, M_MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+               call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
                call timer%stop("mpi_communication")
 #else
                row_group(1:l_nev,row_group_size) = row(1:l_nev) ! is this correct ?
@@ -533,14 +533,14 @@
               else
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
-                call MPI_Recv(row, l_nev, M_MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                call MPI_Recv(row, l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
                 call timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
 !                row(1:l_nev) = row(1:l_nev)
 
 #endif
-                call M_unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
+                call unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
               endif
 
 #endif /* WITH_OPENMP */
@@ -552,7 +552,7 @@
 
       if (useGPU) then
         ! Force an unpacking of all remaining rows that haven't been unpacked yet
-        call M_unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count, &
+        call unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count, &
                                                       stripe_width, last_stripe_width, &
                                                    a_dim2, l_nev, row_group_size, nblk, unpack_idx, -1, .true.)
         successCUDA = cuda_devicesynchronize()
@@ -596,7 +596,7 @@
         do j = 1, min(num_result_buffers, num_result_blocks)
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, M_MPI_REAL_PRECISION, 0, result_recv_tag, &
+          call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_REAL_PRECISION, 0, result_recv_tag, &
                               mpi_comm_rows, result_recv_request(j), mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -668,10 +668,10 @@
          stop
        endif
 
-      top_border_send_buffer(:,:) = M_CONST_0_0
-      top_border_recv_buffer(:,:) = M_CONST_0_0
-      bottom_border_send_buffer(:,:) = M_CONST_0_0
-      bottom_border_recv_buffer(:,:) = M_CONST_0_0
+      top_border_send_buffer(:,:) = CONST_0_0
+      top_border_recv_buffer(:,:) = CONST_0_0
+      bottom_border_send_buffer(:,:) = CONST_0_0
+      bottom_border_recv_buffer(:,:) = CONST_0_0
 
       ! Initialize broadcast buffer
 
@@ -701,10 +701,10 @@
          stop
        endif
 
-      top_border_send_buffer(:,:,:) = M_CONST_0_0
-      top_border_recv_buffer(:,:,:) = M_CONST_0_0
-      bottom_border_send_buffer(:,:,:) = M_CONST_0_0
-      bottom_border_recv_buffer(:,:,:) = M_CONST_0_0
+      top_border_send_buffer(:,:,:) = CONST_0_0
+      top_border_recv_buffer(:,:,:) = CONST_0_0
+      bottom_border_send_buffer(:,:,:) = CONST_0_0
+      bottom_border_recv_buffer(:,:,:) = CONST_0_0
 
 #endif /* WITH_OPENMP */
 
@@ -714,10 +714,10 @@
          stop
        endif
 
-      bcast_buffer = M_CONST_0_0
+      bcast_buffer = CONST_0_0
 
       if (useGPU) then
-        num =  ( nbw * max_blk_size) * M_size_of_PRECISION_real
+        num =  ( nbw * max_blk_size) * size_of_PRECISION_real
         successCUDA = cuda_malloc(bcast_buffer_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
@@ -730,7 +730,7 @@
           stop
         endif
 
-        num =  ((max_blk_size-1))*M_size_of_PRECISION_real
+        num =  ((max_blk_size-1))*size_of_PRECISION_real
         successCUDA = cuda_malloc( hh_dot_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
@@ -743,7 +743,7 @@
           stop
         endif
 
-        num =  (max_blk_size)*M_size_of_PRECISION_real
+        num =  (max_blk_size)*size_of_PRECISION_real
         successCUDA = cuda_malloc( hh_tau_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
@@ -806,7 +806,7 @@
             b_len = csw*nbw*max_threads
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, M_MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
+            call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
                               mpi_comm_rows, bottom_recv_request(i), mpierr)
             call timer%stop("mpi_communication")
 
@@ -819,7 +819,7 @@
 
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, M_MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
+            call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
                         mpi_comm_rows, bottom_recv_request(i), mpierr)
             call timer%stop("mpi_communication")
 #else  /* WITH_MPI */
@@ -839,36 +839,36 @@
           endif
 #ifdef WITH_MPI
            call timer%start("mpi_communication")
-           call mpi_bcast(bcast_buffer, nbw*current_local_n, M_MPI_REAL_PRECISION, mod(sweep,np_cols), mpi_comm_cols, mpierr)
+           call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_REAL_PRECISION, mod(sweep,np_cols), mpi_comm_cols, mpierr)
            call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
 
           if (useGPU) then
             successCUDA =  cuda_memcpy(bcast_buffer_dev, loc(bcast_buffer(1,1)),  &
-                                       nbw * current_local_n * M_size_of_PRECISION_real , cudaMemcpyHostToDevice)
+                                       nbw * current_local_n * size_of_PRECISION_real , cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
               stop
             endif
 
-            call M_extract_hh_tau_real_gpu_PRECISION(bcast_buffer_dev, hh_tau_dev, nbw, current_local_n, .false.)
-            call M_compute_hh_dot_products_real_gpu_PRECISION(bcast_buffer_dev, hh_dot_dev, nbw, current_local_n)
+            call extract_hh_tau_real_gpu_PRECISION(bcast_buffer_dev, hh_tau_dev, nbw, current_local_n, .false.)
+            call compute_hh_dot_products_real_gpu_PRECISION(bcast_buffer_dev, hh_dot_dev, nbw, current_local_n)
           endif
 
         else ! (current_local_n > 1) then
 
           ! for current_local_n == 1 the one and only HH vector is 0 and not stored in hh_trans_real
-          bcast_buffer(:,1) = M_CONST_0_0
+          bcast_buffer(:,1) = CONST_0_0
 
           if (useGPU) then
-            successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw * M_size_of_PRECISION_real)
+            successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw * size_of_PRECISION_real)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_real: error in cudaMemset"
               stop
             endif
 
-            call M_extract_hh_tau_real_gpu_PRECISION(bcast_buffer_dev, hh_tau_dev, nbw, 1, .true.)
+            call extract_hh_tau_real_gpu_PRECISION(bcast_buffer_dev, hh_tau_dev, nbw, 1, .true.)
           endif
         endif ! (current_local_n > 1) then
 
@@ -907,7 +907,7 @@
 
 #endif
 
-              call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+              call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
               do my_thread = 1, max_threads
@@ -918,7 +918,7 @@
                   reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
               enddo
 !$omp end parallel do
-              call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+              call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP */
 
@@ -932,9 +932,9 @@
               n_off = current_local_n+a_off
 
               if (useGPU) then
-                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *M_size_of_PRECISION_real
+                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *size_of_PRECISION_real
                 successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc(bottom_border_recv_buffer(1,1,i)), &
-                                           stripe_width*nbw*M_size_of_PRECISION_real ,cudaMemcpyHostToDevice)
+                                           stripe_width*nbw*size_of_PRECISION_real ,cudaMemcpyHostToDevice)
                 if (.not.(successCUDA)) then
                   print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
                   stop
@@ -957,7 +957,7 @@
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
              call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
-                                   M_MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
+                                   MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
              call timer%stop("mpi_communication")
 
@@ -971,7 +971,7 @@
 
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
-             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, M_MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
+             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
                                    mpi_comm_rows, bottom_recv_request(i), mpierr)
               call timer%stop("mpi_communication")
 
@@ -1011,10 +1011,10 @@
 #endif
 
              if (useGPU) then
-               dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISION_real
+               dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
                !             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
                successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , loc(top_border_recv_buffer(1,1,i)),  &
-                                           stripe_width*top_msg_length*M_size_of_PRECISION_real , cudaMemcpyHostToDevice)
+                                           stripe_width*top_msg_length*size_of_PRECISION_real , cudaMemcpyHostToDevice)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
                  stop
@@ -1028,7 +1028,7 @@
            !compute
 #ifdef WITH_OPENMP
 
-           call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+           call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
            if (useGPU) then
              print *,"trans_ev_tridi_to_band_real: not yet implemented"
@@ -1043,7 +1043,7 @@
                aIntern(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
                           reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
              endif
-                call M_compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,      &
+                call compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,      &
                                                      max_threads, l_nev, a_off, nbw, max_blk_size, bcast_buffer,    &
                                  bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,        &
                                  kernel_time, 0, current_local_n, i, my_thread, thread_width,   &
@@ -1055,10 +1055,10 @@
 !                                         THIS_REAL_ELPA_KERNEL)
            enddo
 !$omp end parallel do
-           call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+           call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP */
-           call M_compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+           call compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
                                           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                           hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,          &
                                           last_stripe_width, THIS_REAL_ELPA_KERNEL)
@@ -1083,7 +1083,7 @@
                  reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
-             call MPI_Isend(bottom_border_send_buffer(1,i), b_len, M_MPI_REAL_PRECISION, my_prow+1, &
+             call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL_PRECISION, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
              call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -1105,9 +1105,9 @@
              n_off = current_local_n+nbw-bottom_msg_length+a_off
 
              if (useGPU) then
-               dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISION_real
+               dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
                successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
-                                          stripe_width * bottom_msg_length * M_size_of_PRECISION_real ,cudaMemcpyDeviceToHost)
+                                          stripe_width * bottom_msg_length * size_of_PRECISION_real ,cudaMemcpyDeviceToHost)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
                  stop
@@ -1117,7 +1117,7 @@
              endif
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
-             call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, M_MPI_REAL_PRECISION, my_prow+1, &
+             call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL_PRECISION, my_prow+1, &
                             top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
              call timer%stop("mpi_communication")
 
@@ -1138,11 +1138,11 @@
            print *,"trans_ev_tridi_to_band_real: not yet implemented"
            stop
          endif
-         call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+         call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
-          call M_compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+          call compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
                                                    max_threads, l_nev, a_off, nbw, max_blk_size,  bcast_buffer,    &
                                bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,         &
                                kernel_time, current_local_n - bottom_msg_length,               &
@@ -1153,7 +1153,7 @@
 !                                    THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
-        call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+        call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
         !send_b
 #ifdef WITH_MPI
@@ -1169,7 +1169,7 @@
               reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call MPI_Isend(bottom_border_send_buffer(1,i), b_len, M_MPI_REAL_PRECISION, my_prow+1, &
+          call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL_PRECISION, my_prow+1, &
                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
           call timer%stop("mpi_communication")
 
@@ -1183,7 +1183,7 @@
 #endif /* WITH_MPI */
         endif
 #else /* WITH_OPENMP */
-        call M_compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+        call compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                        hh_tau_dev, kernel_flops, kernel_time,                                 &
                                        current_local_n - bottom_msg_length, bottom_msg_length, i,             &
@@ -1199,9 +1199,9 @@
           n_off = current_local_n+nbw-bottom_msg_length+a_off
 
           if (useGPU) then
-            dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISION_real
+            dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
             successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset,  &
-                                         stripe_width*bottom_msg_length*M_size_of_PRECISION_real ,cudaMemcpyDeviceToHost)
+                                         stripe_width*bottom_msg_length*size_of_PRECISION_real ,cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_real: error cudaMemcpy"
               stop
@@ -1211,7 +1211,7 @@
           endif
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, M_MPI_REAL_PRECISION, my_prow+1, &
+          call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL_PRECISION, my_prow+1, &
                          top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -1231,11 +1231,11 @@
           stop
         endif
 
-        call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+        call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread), schedule(static, 1)
         do my_thread = 1, max_threads
-          call M_compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count,        &
+          call compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count,        &
                                                    max_threads, l_nev, a_off,  nbw, max_blk_size, bcast_buffer,     &
                                bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,          &
                                kernel_time, top_msg_length,                                     &
@@ -1247,10 +1247,10 @@
 !                                      THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
-        call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+        call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP */
-        call M_compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+        call compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time,  top_msg_length,                    &
                                        current_local_n-top_msg_length-bottom_msg_length, i,                       &
@@ -1278,9 +1278,9 @@
            call timer%stop("mpi_communication")
 #endif
           if (useGPU) then
-            dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISION_real
+            dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
             successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc( top_border_recv_buffer(:,1,i)),  &
-                                       stripe_width * top_msg_length *M_size_of_PRECISION_real ,cudaMemcpyHostToDevice)
+                                       stripe_width * top_msg_length *size_of_PRECISION_real ,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
               stop
@@ -1298,7 +1298,7 @@
            stop
          endif
 
-        call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+        call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
@@ -1308,7 +1308,7 @@
             aIntern(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
               reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
           endif
-          call M_compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+          call compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
                                                    max_threads, l_nev, a_off, nbw, max_blk_size,  bcast_buffer,    &
                                bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,         &
                                kernel_time, 0, top_msg_length, i, my_thread, thread_width,     &
@@ -1318,10 +1318,10 @@
 !                                                      0, top_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
         enddo
 !$omp end parallel do
-        call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+        call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP */
-        call M_compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+        call compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
                                        a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time, 0, top_msg_length, i,               &
                                        last_stripe_width, THIS_REAL_ELPA_KERNEL)
@@ -1339,7 +1339,7 @@
         b_len = csw*next_top_msg_length*max_threads
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
-        call MPI_Irecv(top_border_recv_buffer(1,i), b_len, M_MPI_REAL_PRECISION, my_prow-1, &
+        call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_REAL_PRECISION, my_prow-1, &
                        top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
         call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -1352,7 +1352,7 @@
 
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
-        call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, M_MPI_REAL_PRECISION, my_prow-1, &
+        call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_REAL_PRECISION, my_prow-1, &
                        top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
         call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -1382,7 +1382,7 @@
 
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
-        call MPI_Isend(top_border_send_buffer(1,i), b_len, M_MPI_REAL_PRECISION, &
+        call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_REAL_PRECISION, &
                        my_prow-1, bottom_recv_tag, &
                        mpi_comm_rows, top_send_request(i), mpierr)
         call timer%stop("mpi_communication")
@@ -1403,9 +1403,9 @@
         call timer%stop("mpi_communication")
 #endif
         if (useGPU) then
-          dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * M_size_of_PRECISION_real
+          dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_PRECISION_real
           successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), aIntern_dev + dev_offset, &
-                                     stripe_width*nbw*M_size_of_PRECISION_real ,cudaMemcpyDeviceToHost)
+                                     stripe_width*nbw*size_of_PRECISION_real ,cudaMemcpyDeviceToHost)
           if (.not.(successCUDA)) then
             print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
             stop
@@ -1416,7 +1416,7 @@
         endif
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
-        call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, M_MPI_REAL_PRECISION, my_prow-1, bottom_recv_tag, &
+        call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_REAL_PRECISION, my_prow-1, bottom_recv_tag, &
                        mpi_comm_rows, top_send_request(i), mpierr)
         call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -1550,7 +1550,7 @@
         if (dst == 0) then
           if (useGPU) then
             row_group_size = min(na - num_blk*nblk, nblk)
-            call M_pack_row_group_real_gpu_PRECISION(row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+            call pack_row_group_real_gpu_PRECISION(row_group_dev, aIntern_dev, stripe_count, stripe_width, &
                                      last_stripe_width, a_dim2, l_nev, &
                                          row_group(:, :), j * nblk + a_off, row_group_size)
             do i = 1, row_group_size
@@ -1560,10 +1560,10 @@
 
             do i = 1, min(na - num_blk*nblk, nblk)
 #ifdef WITH_OPENMP
-              call M_pack_row_real_cpu_openmp_PRECISION(aIntern, row, j*nblk+i+a_off, stripe_width, &
+              call pack_row_real_cpu_openmp_PRECISION(aIntern, row, j*nblk+i+a_off, stripe_width, &
                                                stripe_count, max_threads, thread_width, l_nev)
 #else
-              call M_pack_row_real_cpu_PRECISION(aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+              call pack_row_real_cpu_PRECISION(aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif
               q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
             enddo
@@ -1572,23 +1572,23 @@
         else ! (dst == 0)
 
           if (useGPU) then
-            call M_pack_row_group_real_gpu_PRECISION(row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+            call pack_row_group_real_gpu_PRECISION(row_group_dev, aIntern_dev, stripe_count, stripe_width, &
                                        last_stripe_width, a_dim2, l_nev, &
                                            result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
           else  ! useGPU
             do i = 1, nblk
 #ifdef WITH_OPENMP
-              call M_pack_row_real_cpu_openmp_PRECISION(aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, &
+              call pack_row_real_cpu_openmp_PRECISION(aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, &
                                               stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else
-              call M_pack_row_real_cpu_PRECISION(aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, &
+              call pack_row_real_cpu_PRECISION(aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, &
                                       last_stripe_width, stripe_count)
 #endif
             enddo
           endif ! useGPU
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, M_MPI_REAL_PRECISION, dst, &
+          call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL_PRECISION, dst, &
                                     result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
           call timer%stop("mpi_communication")
 
@@ -1688,7 +1688,7 @@
         call timer%start("mpi_communication")
 
         if (j+num_result_buffers < num_result_blocks) &
-            call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, M_MPI_REAL_PRECISION, 0, result_recv_tag, &
+            call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL_PRECISION, 0, result_recv_tag, &
                          mpi_comm_rows, result_recv_request(nbuf), mpierr)
         ! carefull the "recieve" has to be done at the corresponding wait or send
 !         if (j+num_result_buffers < num_result_blocks) &
@@ -1721,7 +1721,7 @@
         stop
       endif
 
-      call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+      call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
  !$omp parallel do private(my_thread, i, j), schedule(static, 1)
       do my_thread = 1, max_threads
@@ -1738,14 +1738,14 @@
              do j = top_msg_length + 1, top_msg_length + next_local_n, chunk
                top = min(j + chunk, top_msg_length + next_local_n)
                this_chunk = top - j + 1
-               dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *M_size_of_PRECISION_real
+               dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
                dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
-                             M_size_of_PRECISION_real
+                             size_of_PRECISION_real
                ! it is not logical to set here always the value for the parameter
                ! "cudaMemcpyDeviceToDevice" do this ONCE at startup
                !               tmp = cuda_d2d(1)
                successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , aIntern_dev +dev_offset_1, &
-                                         stripe_width*this_chunk*M_size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
+                                         stripe_width*this_chunk*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_real: error cudaMemcpy"
                  stop
@@ -1761,7 +1761,7 @@
 
 #ifdef WITH_OPENMP
 
-         call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #endif /* WITH_OPENMP */
          a_off = 0
@@ -1834,14 +1834,14 @@
 #endif /* WITH_MPI */
 
      ! copy q to q_dev needed in trans_ev_band_to_full
-        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*M_size_of_PRECISION_real)
+        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
           stop
         endif
 
         ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
           stop
@@ -1981,10 +1981,10 @@
        endif
      endif ! useGPU
 
-     call timer%stop("trans_ev_tridi_to_band_real" // M_PRECISION_SUFFIX)
+     call timer%stop("trans_ev_tridi_to_band_real" // PRECISION_SUFFIX)
 
      return
 
-    end subroutine M_trans_ev_tridi_to_band_real_PRECISION
+    end subroutine trans_ev_tridi_to_band_real_PRECISION
 
 
