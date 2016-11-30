@@ -58,9 +58,9 @@
 #undef  PRECISION_LAPY2
 #undef  PRECISION_LAED4
 #undef  PRECISION_LAED5
-#undef  cublas_PRECISION_gemm
-#undef  cublas_PRECISION_trmm
-#undef  cublas_PRECISION_gemv
+#undef  cublas_PRECISION_GEMM
+#undef  cublas_PRECISION_TRMM
+#undef  cublas_PRECISION_GEMV
 #undef  PRECISION_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
 #undef  MPI_REAL_PRECISION
@@ -70,6 +70,7 @@
 #undef  PRECISION_REAL
 #undef  CONST_REAL_0_0
 #undef  CONST_REAL_1_0
+#undef  CONST_COMPLEX_0_0
 #undef  size_of_PRECISION_complex
 #define  elpa_transpose_vectors_complex_PRECISION elpa_transpose_vectors_complex_double
 #define  elpa_reduce_add_vectors_complex_PRECISION elpa_reduce_add_vectors_complex_double
@@ -130,9 +131,9 @@
 #define  PRECISION_LAPY2 ZLAPY2
 #define  PRECISION_LAED4 ZLAED4
 #define  PRECISION_LAED5 ZLAED5
-#define  cublas_PRECISION_gemm cublas_Zgemm
-#define  cublas_PRECISION_trmm cublas_Ztrmm
-#define  cublas_PRECISION_gemv cublas_Zgemv
+#define  cublas_PRECISION_GEMM cublas_ZGEMM
+#define  cublas_PRECISION_TRMM cublas_ZTRMM
+#define  cublas_PRECISION_GEMV cublas_ZGEMV
 #define  PRECISION_SUFFIX "_double"
 #define  MPI_COMPLEX_PRECISION MPI_DOUBLE_COMPLEX
 #define  MPI_REAL_PRECISION MPI_REAL8
@@ -142,6 +143,7 @@
 #define  PRECISION_REAL DREAL
 #define  CONST_REAL_0_0 0.0_rk8
 #define  CONST_REAL_1_0 1.0_rk8
+#define  CONST_COMPLEX_0_0 0.0_ck8
 #define  size_of_PRECISION_complex size_of_double_complex_datatype
 #else
 #undef  elpa_transpose_vectors_complex_PRECISION
@@ -203,9 +205,9 @@
 #undef  PRECISION_LAPY2
 #undef  PRECISION_LAED4
 #undef  PRECISION_LAED5
-#undef  cublas_PRECISION_gemm
-#undef  cublas_PRECISION_trmm
-#undef  cublas_PRECISION_gemv
+#undef  cublas_PRECISION_GEMM
+#undef  cublas_PRECISION_TRMM
+#undef  cublas_PRECISION_GEMV
 #undef  PRECISION_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
 #undef  MPI_REAL_PRECISION
@@ -215,6 +217,7 @@
 #undef  PRECISION_REAL
 #undef  CONST_REAL_0_0
 #undef  CONST_REAL_1_0
+#undef  CONST_COMPLEX_0_0
 #undef  size_of_PRECISION_complex
 #define  elpa_transpose_vectors_complex_PRECISION elpa_transpose_vectors_complex_single
 #define  elpa_reduce_add_vectors_complex_PRECISION elpa_reduce_add_vectors_complex_single
@@ -275,9 +278,9 @@
 #define  PRECISION_LAPY2 CLAPY2
 #define  PRECISION_LAED4 CLAED4
 #define  PRECISION_LAED5 CLAED5
-#define  cublas_PRECISION_gemm cublas_Cgemm
-#define  cublas_PRECISION_trmm cublas_Ctrmm
-#define  cublas_PRECISION_gemv cublas_Cgemv
+#define  cublas_PRECISION_GEMM cublas_CGEMM
+#define  cublas_PRECISION_TRMM cublas_CTRMM
+#define  cublas_PRECISION_GEMV cublas_CGEMV
 #define  PRECISION_SUFFIX "_single"
 #define  MPI_COMPLEX_PRECISION MPI_COMPLEX
 #define  MPI_REAL_PRECISION MPI_REAL4
@@ -287,5 +290,6 @@
 #define  PRECISION_REAL REAL
 #define  CONST_REAL_0_0 0.0_rk4
 #define  CONST_REAL_1_0 1.0_rk4
+#define  CONST_COMPLEX_0_0 0.0_ck4
 #define  size_of_PRECISION_complex size_of_single_complex_datatype
 #endif

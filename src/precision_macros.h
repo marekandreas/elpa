@@ -58,9 +58,9 @@
 #undef  PRECISION_LAPY2
 #undef  PRECISION_LAED4
 #undef  PRECISION_LAED5
-#undef  cublas_PRECISION_gemm
-#undef  cublas_PRECISION_trmm
-#undef  cublas_PRECISION_gemv
+#undef  cublas_PRECISION_GEMM
+#undef  cublas_PRECISION_TRMM
+#undef  cublas_PRECISION_GEMV
 #undef  PRECISION_SUFFIX
 #undef  CONST_0_0
 #undef  CONST_0_5
@@ -128,9 +128,9 @@
 #define  PRECISION_LAPY2 DLAPY2
 #define  PRECISION_LAED4 DLAED4
 #define  PRECISION_LAED5 DLAED5
-#define  cublas_PRECISION_gemm cublas_Dgemm
-#define  cublas_PRECISION_trmm cublas_Dtrmm
-#define  cublas_PRECISION_gemv cublas_Dgemv
+#define  cublas_PRECISION_GEMM cublas_DGEMM
+#define  cublas_PRECISION_TRMM cublas_DTRMM
+#define  cublas_PRECISION_GEMV cublas_DGEMV
 #define  PRECISION_SUFFIX "_double"
 #define  CONST_0_0 0.0_rk8
 #define  CONST_0_5 0.5_rk8
@@ -199,9 +199,9 @@
 #undef  PRECISION_LAPY2
 #undef  PRECISION_LAED4
 #undef  PRECISION_LAED5
-#undef  cublas_PRECISION_gemm
-#undef  cublas_PRECISION_trmm
-#undef  cublas_PRECISION_gemv
+#undef  cublas_PRECISION_GEMM
+#undef  cublas_PRECISION_TRMM
+#undef  cublas_PRECISION_GEMV
 #undef  PRECISION_SUFFIX
 #undef  CONST_0_0
 #undef  CONST_0_5
@@ -269,9 +269,9 @@
 #define  PRECISION_LAPY2 SLAPY2
 #define  PRECISION_LAED4 SLAED4
 #define  PRECISION_LAED5 SLAED5
-#define  cublas_PRECISION_gemm cublas_Sgemm
-#define  cublas_PRECISION_trmm cublas_Strmm
-#define  cublas_PRECISION_gemv cublas_Sgemv
+#define  cublas_PRECISION_GEMM cublas_SGEMM
+#define  cublas_PRECISION_TRMM cublas_STRMM
+#define  cublas_PRECISION_GEMV cublas_SGEMV
 #define  PRECISION_SUFFIX "_single"
 #define  CONST_0_0 0.0_rk4
 #define  CONST_0_5 0.5_rk4

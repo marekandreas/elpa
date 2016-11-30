@@ -67,9 +67,9 @@ blas_tokens = [
     "PRECISION_LAPY2",
     "PRECISION_LAED4",
     "PRECISION_LAED5",
-    "cublas_PRECISION_gemm",
-    "cublas_PRECISION_trmm",
-    "cublas_PRECISION_gemv",
+    "cublas_PRECISION_GEMM",
+    "cublas_PRECISION_TRMM",
+    "cublas_PRECISION_GEMV",
 ]
 
 explicit_tokens_complex = [
@@ -82,6 +82,7 @@ explicit_tokens_complex = [
     ("PRECISION_REAL", "DREAL", "REAL"),
     ("CONST_REAL_0_0", "0.0_rk8", "0.0_rk4"),
     ("CONST_REAL_1_0", "1.0_rk8", "1.0_rk4"),
+    ("CONST_COMPLEX_0_0", "0.0_ck8", "0.0_ck4"),
     ("size_of_PRECISION_complex", "size_of_double_complex_datatype", "size_of_single_complex_datatype"),
 ]
 

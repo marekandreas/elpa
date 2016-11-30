@@ -680,13 +680,13 @@
 #endif
 
 #if REALCASE == 1
-                call cublas_PRECISION_gemv('T',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+                call cublas_PRECISION_GEMV('T',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                      CONST_1_0,a_dev + a_offset, lda,  &
                                      v_row_dev + (l_row_beg - 1) * size_of_PRECISION_real, 1,  &
                                      CONST_1_0, u_col_dev + (l_col_beg - 1) * size_of_PRECISION_real, 1)
 #endif
 #if COMPLEXCASE == 1
-                call cublas_PRECISION_gemv('C',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+                call cublas_PRECISION_GEMV('C',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                             CONE,a_dev + a_offset, lda,  &
                                             v_row_dev + (l_row_beg - 1) * size_of_PRECISION_complex, 1,  &
                                             CONE, u_col_dev + (l_col_beg - 1) * size_of_PRECISION_complex, 1)
@@ -694,13 +694,13 @@
 
                if(i/=j) then
 #if REALCASE == 1
-                  call cublas_PRECISION_gemv('N',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+                  call cublas_PRECISION_GEMV('N',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                       CONST_1_0,a_dev + a_offset, lda,  &
                                       v_col_dev + (l_col_beg - 1) * size_of_PRECISION_real, 1,  &
                                       CONST_1_0, u_row_dev + (l_row_beg - 1) * size_of_PRECISION_real, 1)
 #endif
 #if COMPLEXCASE == 1
-                  call cublas_PRECISION_gemv('N',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+                  call cublas_PRECISION_GEMV('N',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                               CONE, a_dev + a_offset, lda,  &
                                               v_col_dev + (l_col_beg - 1) * size_of_PRECISION_complex, 1,  &
                                               CONE, u_row_dev + (l_row_beg - 1) * size_of_PRECISION_complex, 1)
@@ -938,13 +938,13 @@
 
             if (useGPU) then
 #if REALCASE == 1
-              call cublas_PRECISION_gemm('N', 'T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,   &
+              call cublas_PRECISION_GEMM('N', 'T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,   &
                      CONST_1_0, vu_stored_rows_dev + (l_row_beg - 1) * size_of_PRECISION_real, max_local_rows,   &
                      uv_stored_cols_dev + (l_col_beg - 1) * size_of_PRECISION_real, max_local_cols,  &
                      CONST_1_0, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *  size_of_PRECISION_real, lda)
 #endif
 #if COMPLEXCASE == 1
-              call cublas_PRECISION_gemm('N', 'C', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,   &
+              call cublas_PRECISION_GEMM('N', 'C', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,   &
                              CONE, vu_stored_rows_dev + (l_row_beg - 1) * size_of_PRECISION_complex, max_local_rows,   &
                              uv_stored_cols_dev + (l_col_beg - 1) * size_of_PRECISION_complex, max_local_cols,  &
                              CONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *  size_of_PRECISION_complex, lda)

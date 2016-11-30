@@ -192,6 +192,7 @@ module ELPA2_compute
 #define REAL_DATATYPE rk8
 #define COMPLEX_DATATYPE ck8
 
+#include "precision_macros_complex.h"
 #include "elpa2_compute_complex_template.X90"
 
 #undef DOUBLE_PRECISION_COMPLEX
@@ -206,6 +207,7 @@ module ELPA2_compute
 #define REAL_DATATYPE rk4
 #define COMPLEX_DATATYPE ck4
 
+#include "precision_macros_complex.h"
 #include "elpa2_compute_complex_template.X90"
 
 #undef DOUBLE_PRECISION_COMPLEX
