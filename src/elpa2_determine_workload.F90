@@ -73,6 +73,8 @@ module elpa2_workload
     subroutine determine_workload(na, nb, nprocs, limits)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -82,15 +84,12 @@ module elpa2_workload
 
       integer(kind=ik)              :: i
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("determine_workload")
-#endif
 
       if (na <= 0) then
         limits(:) = 0
-#ifdef HAVE_DETAILED_TIMINGS
+
         call timer%stop("determine_workload")
-#endif
         return
       endif
 
@@ -105,9 +104,7 @@ module elpa2_workload
          enddo
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("determine_workload")
-#endif
     end subroutine
     !---------------------------------------------------------------------------------------------------
     ! divide_band: sets the work distribution in band
@@ -116,6 +113,8 @@ module elpa2_workload
     subroutine divide_band(nblocks_total, n_pes, block_limits)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -125,9 +124,7 @@ module elpa2_workload
 
       integer(kind=ik)              :: n, nblocks, nblocks_left
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("divide_band")
-#endif
 
       block_limits(0) = 0
       if (nblocks_total < n_pes) then
@@ -149,9 +146,7 @@ module elpa2_workload
         enddo
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("divide_band")
-#endif
 
     end subroutine
 end module elpa2_workload

@@ -36,6 +36,8 @@
     !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       use cuda_functions
@@ -75,19 +77,15 @@
       character(200)                         :: errorMessage
       logical                                :: successCUDA
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("trans_ev_band_to_full_real" // M_PRECISION_SUFFIX)
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
+
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
+
       call timer%stop("mpi_communication")
-#endif
       max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of A
       max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q!
 
@@ -192,13 +190,9 @@
 
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
               call MPI_Bcast(hvb(ns+1), nb-ns, M_MPI_REAL_PRECISION, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 
 #endif /* WITH_MPI */
               ns = nb
@@ -272,13 +266,9 @@
           !       endif
           !#endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #else /* WITH_MPI */
 !          tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
 #endif /* WITH_MPI */
@@ -393,13 +383,9 @@
 
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
               call MPI_Bcast(hvb(ns+1), nb-ns, M_MPI_REAL_PRECISION, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 
 #endif /* WITH_MPI */
               ns = nb
@@ -432,14 +418,10 @@
               call M_PRECISION_GEMM('T', 'N', t_rows, t_cols, l_rows, M_CONST_1_0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                         max_local_rows, M_CONST_0_0, t_tmp, cwy_blocking)
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
 
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 
               call M_PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, M_CONST_1_0, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call M_PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -M_CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
@@ -477,14 +459,10 @@
           endif ! l_rows>0
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows ,mpierr)
 
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 
           if (l_rows>0) then
             call M_PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, M_CONST_1_0, tmat_complete, cwy_blocking, tmp2, n_cols)
@@ -576,9 +554,7 @@
 
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("trans_ev_band_to_full_real" // M_PRECISION_SUFFIX)
-#endif
 
     end subroutine M_trans_ev_band_to_full_real_PRECISION
 
