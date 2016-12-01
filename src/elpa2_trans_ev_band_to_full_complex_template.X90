@@ -230,8 +230,11 @@
 
          if (l_rows > 0) then
            if (useGPU) then
+	     call timer%start("cublas")
              call cublas_PRECISION_GEMM('C', 'N', n_cols, l_cols, l_rows, CONE, hvm_dev, max_local_rows, &
                                q_dev, ldq, CZERO, tmp_dev, n_cols)
+	     call timer%stop("cublas")
+
              successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, n_cols*l_cols*size_of_PRECISION_complex, &
                                        cudaMemcpyDeviceToHost)
 
@@ -240,8 +243,10 @@
                stop
              endif
            else
+	     call timer%start("blas")
              call PRECISION_GEMM('C', 'N', n_cols, l_cols, l_rows, CONE, hvm, ubound(hvm,dim=1), &
                         q, ldq, CZERO, tmp1, n_cols)
+	     call timer%stop("blas")
            endif
          else ! l_rows > 0
            if (useGPU) then
@@ -288,11 +293,15 @@
                print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
                stop
              endif
+	     call timer%start("cublas")
+
              call cublas_PRECISION_TRMM('L', 'U', 'C', 'N', n_cols, l_cols, CONE, tmat_dev, nbw, tmp_dev, n_cols)
              call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONE, hvm_dev, max_local_rows, &
                               tmp_dev, n_cols, CONE, q_dev, ldq)
-           else ! not useGPU
+	     call timer%stop("cublas")
 
+           else ! not useGPU
+	     call timer%start("blas")
 #ifdef WITH_MPI
              call PRECISION_TRMM('L', 'U', 'C', 'N', n_cols, l_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp2, n_cols)
              call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONE, hvm, ubound(hvm,dim=1), &
@@ -301,6 +310,7 @@
              call PRECISION_TRMM('L', 'U', 'C', 'N', n_cols, l_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp1, n_cols)
              call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONE, hvm, ubound(hvm,dim=1), &
                         tmp1, n_cols, CONE, q, ldq)
+	     call timer%stop("blas")
 #endif /* WITH_MPI */
            endif
          endif

@@ -2529,6 +2529,7 @@
         if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
 
 #ifdef HAVE_DETAILED_TIMINGS
+       call timer%start("mpi_communication")
        call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, mpierr)
        kernel_flops = kernel_flops_recv
        call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_COLS, mpierr)
@@ -2538,6 +2539,8 @@
        kernel_time_recv = kernel_time
        call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_COLS, mpierr)
        kernel_time_recv = kernel_time
+       call timer%stop("mpi_communication")
+
 #endif
 
 #else /* WITH_MPI */

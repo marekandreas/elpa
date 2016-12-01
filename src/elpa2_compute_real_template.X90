@@ -101,6 +101,8 @@
     !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+     use timings_dummy
 #endif
       use elpa2_workload
       use precision
@@ -133,9 +135,7 @@
       integer(kind=ik)                         :: istat
       character(200)                           :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("band_band_real" // PRECISION_SUFFIX)
-#endif
 !      if (na .lt. 2*nb) then
 !        print *,"na lt 2*nb ",na,2*nb
 !        stop
@@ -153,14 +153,10 @@
 !        stop
 !      endif
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm,my_pe,mpierr)
       call mpi_comm_size(mpi_comm,n_pes,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
 
       ! Total number of blocks in the band:
       nblocks_total = (na-1)/nb + 1
@@ -193,9 +189,7 @@
       endif
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
 
       ireq_ab2 = MPI_REQUEST_NULL
 
@@ -205,9 +199,7 @@
           call mpi_irecv(ab2(1,i*nb2+1), 2*nb2*nb2, MPI_REAL_PRECISION, 0, 3, mpi_comm, ireq_ab2(i+1), mpierr)
         enddo
       endif
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
       ! carefull the "recieve" has to be done at the corresponding send or wait
@@ -238,14 +230,10 @@
           ab_s(1:nb+1,i) = ab(1:nb+1,na_s-n_off+i-1)
         enddo
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%start("mpi_communication")
-#endif
 
         call mpi_isend(ab_s, (nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
       endif
 
@@ -262,7 +250,9 @@
           if (istep < na/nb2) then
 
             ! Transform first block column of remaining matrix
+	    call timer%start("blas")
             call PRECISION_GEQRF(n, nb2, ab(1+nb2,na_s-n_off), 2*nb-1, tau, work, lwork, info)
+	    call timer%stop("blas")
 
             do i=1,nb2
               hv(i,i) = CONST_1_0
@@ -285,13 +275,9 @@
               dest = dest+1
             endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
             call mpi_send(ab_s2, 2*nb2*nb2, MPI_REAL_PRECISION, dest, 3, mpi_comm, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
             ! do irecv here
@@ -308,13 +294,9 @@
           if (na>na_s+nb2-1) then
             ! Receive Householder vectors from previous task, from PE owning subdiagonal
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%start("mpi_communication")
-#endif
             call mpi_recv(hv, nb*nb2, MPI_REAL_PRECISION, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
             call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
            hv(1:nb,1:nb2) = hv_s(1:nb,1:nb2)
@@ -348,13 +330,9 @@
             if (iblk==nblocks .and. nc==nb) then
               !request last nb2 columns
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
               call mpi_recv(ab_r,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
              ab_r(1:nb+1,1:nb2) = ab_s(1:nb+1,1:nb2)
@@ -368,7 +346,9 @@
 
             if (nr>0) then
               call wy_right_PRECISION(nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
+	      call timer%start("blas")
               call PRECISION_GEQRF(nr, nb2, ab(nb+1,ns), 2*nb-1, tau_new, work, lwork, info)
+	      call timer%stop("blas")
               do i=1,nb2
                 hv_new(i,i) = CONST_1_0
                 hv_new(i+1:,i) = ab(nb+2:2*nb-i+1,ns+i-1)
@@ -378,14 +358,10 @@
               !send hh-vector
               if (iblk==nblocks) then
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
                 call timer%start("mpi_communication")
-#endif
 
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
                 call timer%stop("mpi_communication")
-#endif
 
 #endif
                 hv_s = hv_new
@@ -393,13 +369,9 @@
                   hv_s(i,i) = tau_new(i)
                 enddo
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
                 call timer%start("mpi_communication")
-#endif
                 call mpi_isend(hv_s,nb*nb2, MPI_REAL_PRECISION, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
                 call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
 
@@ -412,27 +384,19 @@
             if (my_pe>0 .and. iblk==1) then
               !send first nb2 columns to previous PE
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
 
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 
 #endif
               do i=1,nb2
                 ab_s(1:nb+1,i) = ab(1:nb+1,ns+i-1)
               enddo
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
               call mpi_isend(ab_s,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
 
@@ -452,9 +416,7 @@
 
         ! Finish the last outstanding requests
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
          call timer%start("mpi_communication")
-#endif
 
         call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
         call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
@@ -472,9 +434,7 @@
 !        endif
 
         call mpi_barrier(mpi_comm,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("mpi_communication")
-#endif
 
 #endif /* WITH_MPI */
 
@@ -496,9 +456,7 @@
           stop
         endif
 
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("band_band_real" // PRECISION_SUFFIX)
-#endif
 
     end subroutine
 
@@ -506,6 +464,8 @@
 
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
+#else
+   use timings_dummy
 #endif
       use precision
       implicit none
@@ -519,25 +479,25 @@
 
       integer(kind=ik)             :: i
 
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%start("wy_gen" // PRECISION_SUFFIX)
-#endif
 
    W(1:n,1) = tau(1)*Y(1:n,1)
    do i=2,nb
      W(1:n,i) = tau(i)*Y(1:n,i)
+     call timer%start("blas")
      call PRECISION_GEMV('T', n, i-1,  CONST_1_0, Y, lda, W(1,i), 1, CONST_0_0, mem,1)
      call PRECISION_GEMV('N', n, i-1, -CONST_1_0, W, lda, mem, 1, CONST_1_0, W(1,i),1)
+     call timer%stop("blas")
    enddo
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("wy_gen" // PRECISION_SUFFIX)
-#endif
     end subroutine
 
     subroutine wy_left_PRECISION(n, m, nb, A, lda, W, Y, mem, lda2)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -551,22 +511,20 @@
       real(kind=REAL_DATATYPE), intent(in)    :: Y(m,nb)    !blocked transformation matrix Y
       real(kind=REAL_DATATYPE), intent(inout) :: mem(n,nb)  !memory for a temporary matrix of size n x nb
 
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%start("wy_left" // PRECISION_SUFFIX)
-#endif
-
+   call timer%start("blas")
    call PRECISION_GEMM('T', 'N', nb, n, m, CONST_1_0, W, lda2, A, lda, CONST_0_0, mem, nb)
    call PRECISION_GEMM('N', 'N', m, n, nb, -CONST_1_0, Y, lda2, mem, nb, CONST_1_0, A, lda)
-
-#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("blas")
    call timer%stop("wy_left" // PRECISION_SUFFIX)
-#endif
     end subroutine
 
     subroutine wy_right_PRECISION(n, m, nb, A, lda, W, Y, mem, lda2)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -581,16 +539,12 @@
       real(kind=REAL_DATATYPE), intent(inout) :: mem(n,nb)  !memory for a temporary matrix of size n x nb
 
 
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%start("wy_right" // PRECISION_SUFFIX)
-#endif
-
+   call timer%start("blas")
    call PRECISION_GEMM('N', 'N', n, nb, m, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
    call PRECISION_GEMM('N', 'T', n, m, nb, -CONST_1_0, mem, n, Y, lda2, CONST_1_0, A, lda)
-
-#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("blas")
    call timer%stop("wy_right" // PRECISION_SUFFIX)
-#endif
 
     end subroutine
 
@@ -598,6 +552,8 @@
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -611,18 +567,14 @@
       real(kind=REAL_DATATYPE)                :: mem(n,nb)  !memory for a temporary matrix of size n x nb
       real(kind=REAL_DATATYPE)                :: mem2(nb,nb)    !memory for a temporary matrix of size nb x nb
 
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%start("wy_symm" // PRECISION_SUFFIX)
-#endif
-
+   call timer%start("blas")
    call PRECISION_SYMM('L', 'L', n, nb, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
    call PRECISION_GEMM('T', 'N', nb, nb, n, CONST_1_0, mem, n, W, lda2, CONST_0_0, mem2, nb)
    call PRECISION_GEMM('N', 'N', n, nb, nb, -CONST_0_5, Y, lda2, mem2, nb, CONST_1_0, mem, n)
    call PRECISION_SYR2K('L', 'N', n, nb, -CONST_1_0, Y, lda2, mem, n, CONST_1_0, A, lda)
-
-#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("blas")
    call timer%stop("wy_symm" // PRECISION_SUFFIX)
-#endif
 
     end subroutine
 

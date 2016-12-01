@@ -165,7 +165,7 @@
         endif
         hvm = CONST_0_0   ! Must be set to 0 !!!
         hvb = CONST_0_0   ! Safety only
-        
+
         l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
         do istep=1,(na-1)/nbw
@@ -224,8 +224,10 @@
           ! Q = Q - V * T**T * V**T * Q
 
           if (l_rows>0) then
+	    call timer%start("cublas")
             call cublas_PRECISION_GEMM('T', 'N', n_cols, l_cols, l_rows, CONST_1_0, hvm_dev, max_local_rows, &
                               q_dev, ldq , CONST_0_0, tmp_dev, n_cols)
+	    call timer%stop("cublas")
 
 #ifdef WITH_MPI
             ! copy data from device to host for a later MPI_ALLREDUCE
@@ -301,11 +303,11 @@
               stop
             endif
 !#endif /* WITH_MPI */
-
+	    call timer%start("cublas")
             call cublas_PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_dev, nbw, tmp_dev, n_cols)
             call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm_dev, max_local_rows, &
                               tmp_dev, n_cols, CONST_1_0, q_dev, ldq)
-
+	    call timer%stop("cublas")
             ! copy to host maybe this can be avoided
             ! this is not necessary hvm is not used anymore
             successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_PRECISION_real),cudaMemcpyDeviceToHost)
@@ -414,26 +416,32 @@
             if (t_cols <= 0) exit
             t_rows = (i - 1) * nbw
             tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
+	    call timer%start("blas")
             if (i > 1) then
               call PRECISION_GEMM('T', 'N', t_rows, t_cols, l_rows, CONST_1_0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                         max_local_rows, CONST_0_0, t_tmp, cwy_blocking)
+            call timer%stop("blas")
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
 
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
               call timer%stop("mpi_communication")
-
+	      call timer%start("blas")
               call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, CONST_1_0, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp2, cwy_blocking)
+     	      call timer%stop("blas")
+
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
 
 #else
 !              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
+	      call timer%start("blas")
 
               call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, CONST_1_0, tmat_complete, cwy_blocking, t_tmp, cwy_blocking)
               call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp, cwy_blocking)
+	      call timer%stop("blas")
 
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
 
@@ -450,8 +458,11 @@
           ! Q = Q - V * T**T * V**T * Q
 
           if (l_rows>0) then
+            call timer%start("blas")
+
             call PRECISION_GEMM('T', 'N', n_cols, l_cols, l_rows, CONST_1_0, hvm, ubound(hvm,dim=1), &
                        q, ldq, CONST_0_0, tmp1, n_cols)
+	    call timer%stop("blas")
 
           else ! l_rows>0
 
@@ -463,20 +474,22 @@
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows ,mpierr)
 
           call timer%stop("mpi_communication")
+	  call timer%start("blas")
 
           if (l_rows>0) then
             call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_complete, cwy_blocking, tmp2, n_cols)
             call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm, ubound(hvm,dim=1), tmp2, n_cols, CONST_1_0, q, ldq)
 
           endif
+	  call timer%stop("blas")
 #else /* WITH_MPI */
 !          tmp2 = tmp1
-
+	  call timer%start("blas")
           if (l_rows>0) then
             call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_complete, cwy_blocking, tmp1, n_cols)
             call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm, ubound(hvm,dim=1), tmp1, n_cols, CONST_1_0, q, ldq)
           endif
-
+	  call timer%stop("blas")
 #endif /* WITH_MPI */
 
 !          if (l_rows>0) then

@@ -457,18 +457,22 @@
                                           ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
                 ! Transform diagonal block
+		call timer%start("blas")
                 call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
+		call timer%stop("blas")
                 x = dot_product(hv(1:nc),hd(1:nc))*tau
                 hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
-
+                call timer%start("blas")
                 call PRECISION_SYR2('L', nc, -CONST_1_0 ,hd, 1, hv, 1, ab(1,ns), 2*nb-1)
-
+                call timer%stop("blas")
                 hv_t(:,my_thread) = CONST_0_0
                 tau_t(my_thread)  = CONST_0_0
                 if (nr<=0) cycle ! No subdiagonal block present any more
 
                 ! Transform subdiagonal block
+		call timer%start("blas")
                 call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, CONST_0_0, hs, 1)
+		call timer%stop("blas")
                 if (nr>1) then
 
                   ! complete (old) Householder transformation for first column
@@ -487,7 +491,10 @@
 
                   ! update subdiagonal block for old and new Householder transformation
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
+		  call timer%start("blas")
                   call PRECISION_GEMV('T',nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, CONST_0_0, h(2), 1)
+		  call timer%stop("blas")
+
                   x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
                   h(2:nb) = h(2:nb) - x*hv(2:nb)
                   ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
@@ -653,11 +660,13 @@
 
               ! Diagonal block, the contribution of the last element is added below!
               ab(1,ne) = CONST_0_0
+	      call timer%start("blas")
 
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
 
               ! Subdiagonal block
               if (nr>0) call PRECISION_GEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1, CONST_0_0, hs, 1)
+	      call timer%stop("blas")
 
               ! ... then request last column ...
 #ifdef WITH_MPI
@@ -681,8 +690,10 @@
             else
 
               ! Normal matrix multiply
+	      call timer%start("blas")
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
               if (nr>0) call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, CONST_0_0, hs, 1)
+	      call timer%stop("blas")
             endif
 
             ! Calculate first column of subdiagonal block and calculate new
@@ -763,17 +774,26 @@
 
 #endif
               ! ... and calculate remaining columns with rank-2 update
+	      call timer%start("blas")
               if (nc>1) call PRECISION_SYR2('L', nc-1, -CONST_1_0, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+	      call timer%stop("blas")
+
             else
               ! No need to  send, just a rank-2 update
+	      call timer%start("blas")
               call PRECISION_SYR2('L', nc, -CONST_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+	      call timer%stop("blas")
+
             endif
 
             ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
             if (nr>0) then
               if (nr>1) then
+	      	call timer%start("blas")
                 call PRECISION_GEMV('T', nr, nb-1, tau_new, ab(nb,ns+1), 2*nb-1, hv_new, 1, CONST_0_0, h(2), 1)
+		call timer%stop("blas")
+
                 x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
                 h(2:nb) = h(2:nb) - x*hv(2:nb)
                 ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update
