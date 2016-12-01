@@ -88,7 +88,7 @@ if HAVE_DETAILED_TIMINGS
         src/ftimings/papi.c
 else
   libelpa@SUFFIX@_private_la_SOURCES += \
-        src/timer_dummy.F90 
+        src/timer_dummy.F90
 endif
 
 if WITH_GPU_VERSION
@@ -902,6 +902,16 @@ EXTRA_DIST = \
   src/elpa1_tridiag_template.X90 \
   src/elpa2_compute_real_template.X90 \
   src/elpa2_compute_complex_template.X90 \
+  src/elpa2_bandred_complex_template.X90 \
+  src/elpa2_bandred_real_template.X90 \
+  src/elpa2_herm_matrix_allreduce_complex_template.X90 \
+  src/elpa2_symm_matrix_allreduce_real_template.X90 \
+  src/elpa2_trans_ev_band_to_full_complex_template.X90 \
+  src/elpa2_trans_ev_band_to_full_real_template.X90 \
+  src/elpa2_trans_ev_tridi_to_band_complex_template.X90 \
+  src/elpa2_trans_ev_tridi_to_band_real_template.X90 \
+  src/elpa2_tridiag_band_complex_template.X90 \
+  src/elpa2_tridiag_band_real_template.X90 \
   src/precision_macros.h \
   src/precision_macros_complex.h \
   src/elpa2_kernels/elpa2_kernels_real_template.X90 \
