@@ -236,7 +236,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
 #ifdef HAVE_DETAILED_TIMINGS
            use timings
 #else
-           use timings_dummy           
+           use timings_dummy
 #endif
            implicit none
 
@@ -429,7 +429,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
 
           call solve_tridi_single_problem_PRECISION(nlen,d(noff+1),e(noff+1), &
                                     q(nqoff+noff+1,noff+1),ubound(q,dim=1), wantDebug, success)
-                                    
+
           if (.not.(success)) return
         enddo
 
@@ -458,7 +458,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
           nlen = limits(my_prow+1)-noff ! Size of subproblem
           call solve_tridi_single_problem_PRECISION(nlen,d(noff+1),e(noff+1),qmat1, &
                                     ubound(qmat1,dim=1), wantDebug, success)
-                                    
+
           if (.not.(success)) return
         endif
 
@@ -595,8 +595,9 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
        print *,"solve_tridi_single: error when allocating work "//errorMessage
        stop
      endif
-
+     call timer%start("blas")
      call PRECISION_STEDC('I', nlen, d, e, q, ldq, work, lwork, iwork, liwork, info)
+     call timer%stop("blas")
 
      if (info /= 0) then
 
@@ -606,7 +607,10 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
 
        d(:) = ds(:)
        e(:) = es(:)
+       call timer%start("blas")
        call PRECISION_STEQR('I', nlen, d, e, q, ldq, work, info)
+       call timer%stop("blas")
+
        ! If DSTEQR fails also, we don't know what to do further ...
 
        if (info /= 0) then

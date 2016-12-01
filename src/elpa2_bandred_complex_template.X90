@@ -591,13 +591,19 @@
         endif
 
         vav = 0
-        if (l_rows>0) &
+        if (l_rows>0) then
 #ifdef DOUBLE_PRECISION_COMPLEX
-           call zherk('U', 'C', n_cols, l_rows, CONE, vmr, ubound(vmr,dim=1), CZERO, vav, ubound(vav,dim=1))
+          call timer%start("blas")
+          call zherk('U', 'C', n_cols, l_rows, CONE, vmr, ubound(vmr,dim=1), CZERO, vav, ubound(vav,dim=1))
+	  call timer%stop("blas")
+	endif
         call herm_matrix_allreduce_double(n_cols,vav, nbw,nbw,mpi_comm_rows)
 
 #else
+           call timer%start("blas")
            call cherk('U', 'C', n_cols, l_rows, CONE, vmr, ubound(vmr,dim=1), CZERO, vav, ubound(vav,dim=1))
+	   call timer%stop("blas")
+	 endif
         call herm_matrix_allreduce_single(n_cols,vav, nbw,nbw,mpi_comm_rows)
 #endif
 
@@ -606,11 +612,13 @@
         do lc=n_cols,1,-1
           tau = tmat(lc,lc,istep)
           if (lc<n_cols) then
+            call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
             call ztrmv('U', 'C', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
 #else
             call ctrmv('U', 'C', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
 #endif
+            call timer%stop("blas")
             tmat(lc,lc+1:n_cols,istep) = -tau * conjg(vav(lc+1:n_cols,lc))
           endif
         enddo
@@ -676,6 +684,7 @@
             lre = min(l_rows,(i+1)*l_rows_tile)
 
             if (useGPU) then
+	      call timer%start("cublas")
 #ifdef DOUBLE_PRECISION_COMPLEX
               call cublas_ZGEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, (a_dev + ((lcs-1)*lda* &
 	                        size_of_double_complex_datatype)), lda, &
@@ -685,7 +694,9 @@
 	                        size_of_single_complex_datatype)), lda, &
                                 vmr_dev, cur_l_rows, CONE, (umc_dev +(lcs-1)*size_of_single_complex_datatype), cur_l_cols)
 #endif
+	      call timer%stop("cublas")
             else
+	       call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
               call ZGEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, a(1,lcs), ubound(a,dim=1), &
                          vmr, ubound(vmr,dim=1), CONE, umc(lcs,1), ubound(umc,dim=1))
@@ -693,29 +704,38 @@
               call CGEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, a(1,lcs), ubound(a,dim=1), &
                          vmr, ubound(vmr,dim=1), CONE, umc(lcs,1), ubound(umc,dim=1))
 #endif
+	      call timer%stop("blas")
             endif
 
             if (i==0) cycle
             lre = min(l_rows,i*l_rows_tile)
 #ifdef DOUBLE_PRECISION_COMPLEX
             if (useGPU) then
+	      call timer%start("cublas")
               call cublas_ZGEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, (a_dev+((lcs-1)*lda* &
 	                        size_of_double_complex_datatype)),lda,  &
                                 (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_double_complex_datatype), cur_l_cols,CONE,         &
                                 (vmr_dev+(cur_l_rows * n_cols)*size_of_double_complex_datatype), cur_l_rows)
+	      call timer%stop("cublas")
             else
+	      call timer%start("blas")
               call ZGEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, a(1,lcs), lda, &
                          umc(lcs,n_cols+1), ubound(umc,dim=1), CONE, vmr(1,n_cols+1), ubound(vmr,dim=1))
+	      call timer%stop("blas")
             endif
 #else
             if (useGPU) then
+	      call timer%start("cublas")
               call cublas_CGEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, (a_dev+((lcs-1)*lda* &
 	                        size_of_single_complex_datatype)),lda,  &
                                 (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_single_complex_datatype), cur_l_cols,CONE,         &
                                 (vmr_dev+(cur_l_rows * n_cols)*size_of_single_complex_datatype), cur_l_rows)
+	      call timer%stop("cublas")
             else
+	      call timer%start("blas")
               call CGEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, a(1,lcs), lda, &
                          umc(lcs,n_cols+1), ubound(umc,dim=1), CONE, vmr(1,n_cols+1), ubound(vmr,dim=1))
+	      call timer%stop("blas")
             endif
 #endif
           enddo
@@ -835,12 +855,15 @@
             print *, "bandred_complex:  cuad memcpy failed tmat_dev ", istat
             stop
           endif
+	  call timer%start("cublas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           call  cublas_ztrmm('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat_dev, nbw, umc_dev, cur_l_cols)
 #else
           call  cublas_ctrmm('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat_dev, nbw, umc_dev, cur_l_cols)
 #endif
+ 	  call timer%stop("cublas")
         else ! not useGPU
+	  call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           call ztrmm('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), &
                      umc, ubound(umc,dim=1))
@@ -848,6 +871,7 @@
           call ctrmm('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), &
                      umc, ubound(umc,dim=1))
 #endif
+          call timer%stop("blas")
         endif
 
         ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
@@ -861,6 +885,7 @@
             print *, "bandred_complex:  cuad memcpy failed vav_dev ", istat
             stop
           endif
+	  call timer%start("cublas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           call cublas_zgemm('C', 'N', n_cols, n_cols, l_cols, CONE, umc_dev, cur_l_cols, (umc_dev +( cur_l_cols *n_cols) &
                             *size_of_double_complex_datatype ), cur_l_cols, CZERO, vav_dev, nbw)
@@ -872,7 +897,7 @@
 
           call cublas_ctrmm('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat_dev, nbw, vav_dev, nbw)
 #endif
-
+	  call timer%stop("cublas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev,nbw*nbw*size_of_double_complex_datatype,cudaMemcpyDeviceToHost)
 #else
@@ -898,7 +923,8 @@
             print *, "bandred_complex:  cuad memcpy failed vav_dev ", istat
             stop
           endif
-        else
+        else ! useGPU
+	  call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           call zgemm('C', 'N', n_cols, n_cols, l_cols, CONE, umc, ubound(umc,dim=1), umc(1,n_cols+1), &
                      ubound(umc,dim=1), CZERO, vav, ubound(vav,dim=1))
@@ -910,7 +936,7 @@
           call ctrmm('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat(1,1,istep), &
                      ubound(tmat,dim=1), vav, ubound(vav,dim=1))
 #endif
-
+	  call timer%stop("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           call herm_matrix_allreduce_double(n_cols,vav,nbw,nbw,mpi_comm_cols)
 #else
@@ -921,6 +947,7 @@
         ! U = U - 0.5 * V * VAV
 
         if (useGPU) then
+	  call timer%start("cublas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           call cublas_zgemm('N', 'N', l_cols, n_cols, n_cols, (-0.5_rk8, 0.0_rk8), (umc_dev +  &
                             (cur_l_cols * n_cols )*size_of_double_complex_datatype), &
@@ -930,6 +957,7 @@
                             (cur_l_cols * n_cols )*size_of_single_complex_datatype), &
                             cur_l_cols, vav_dev, nbw, CONE, umc_dev, cur_l_cols)
 #endif
+	  call timer%stop("cublas")
           ! Transpose umc -> umr (stored in vmr, second half)
 
           if (size(umc,dim=1)*size(umc,dim=2) .gt. umc_size) then
@@ -982,6 +1010,7 @@
             stop
           endif
         else ! not useGPU
+	  call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           call zgemm('N', 'N', l_cols, n_cols, n_cols, (-0.5_rk8, 0.0_rk8), umc(1,n_cols+1), ubound(umc,dim=1), &
                      vav, ubound(vav,dim=1), CONE, umc, ubound(umc,dim=1))
@@ -989,6 +1018,7 @@
           call cgemm('N', 'N', l_cols, n_cols, n_cols, (-0.5_rk4, 0.0_rk4), umc(1,n_cols+1), ubound(umc,dim=1), &
                      vav, ubound(vav,dim=1), CONE, umc, ubound(umc,dim=1))
 #endif
+	  call timer%stop("blas")
           ! Transpose umc -> umr (stored in vmr, second half)
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -1010,23 +1040,32 @@
           if (lce<lcs .or. lre<1) cycle
 #ifdef DOUBLE_PRECISION_COMPLEX
             if (useGPU) then
+	      call timer%start("cublas")
               call cublas_zgemm('N', 'C', lre, lce-lcs+1, 2*n_cols, -CONE, &
                                 vmr_dev ,cur_l_rows, (umc_dev +(lcs-1)*size_of_double_complex_datatype),cur_l_cols, &
                                 CONE, (a_dev + (lcs-1)*lda*size_of_double_complex_datatype),lda)
+	      call timer%stop("cublas")
             else
+	      call timer%start("blas")
+
               call zgemm('N', 'C', lre,lce-lcs+1, 2*n_cols, -CONE, &
                          vmr, ubound(vmr,dim=1), umc(lcs,1), ubound(umc,dim=1), &
                          CONE, a(1,lcs), lda)
+	      call timer%stop("blas")
             endif
 #else
             if (useGPU) then
+	      call timer%start("cublas")
               call cublas_cgemm('N', 'C', lre, lce-lcs+1, 2*n_cols, -CONE, &
                                 vmr_dev ,cur_l_rows, (umc_dev +(lcs-1)*size_of_single_complex_datatype),cur_l_cols, &
                                 CONE, (a_dev + (lcs-1)*lda*size_of_single_complex_datatype),lda)
+	      call timer%stop("cublas")
             else
+	      call timer%start("blas")
               call cgemm('N', 'C', lre,lce-lcs+1, 2*n_cols, -CONE, &
                          vmr, ubound(vmr,dim=1), umc(lcs,1), ubound(umc,dim=1), &
                          CONE, a(1,lcs), lda)
+	      call timer%stop("blas")
             endif
 #endif
           enddo

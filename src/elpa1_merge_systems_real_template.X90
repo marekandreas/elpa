@@ -214,7 +214,9 @@
       z = z/sqrt(CONST_2_0)
       rho = CONST_2_0*beta
       ! Calculate index for merging both systems by ascending eigenvalues
+      call timer%start("blas")
       call PRECISION_LAMRG( nm, na-nm, d, 1, 1, idx )
+      call timer%stop("blas")
 
 ! Calculate the allowable deflation tolerance
 
@@ -365,9 +367,10 @@
         if (na1==1) then
           d(1) = d1(1) + rho*z1(1)**2 ! solve secular equation
         else ! na1==2
+	  call timer%start("blas")
           call PRECISION_LAED5(1, d1, z1, qtrans(1,1), rho, d(1))
           call PRECISION_LAED5(2, d1, z1, qtrans(1,2), rho, d(2))
-
+	  call timer%stop("blas")
           call transform_columns_PRECISION(idx1(1), idx1(2))
         endif
 
@@ -375,7 +378,9 @@
         d(na1+1:na) = d2(1:na2)
 
         ! Calculate arrangement of all eigenvalues  in output
+	call timer%start("blas")
         call PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
+	call timer%stop("blas")
         ! Rearrange eigenvalues
 
         tmp = d
@@ -414,7 +419,9 @@
 !$OMP DO
 #endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
+	  call timer%start("blas")
           call PRECISION_LAED4(na1, i, d1, z1, delta, rho, s, info) ! s is not used!
+	  call timer%stop("blas")
           if (info/=0) then
             ! If DLAED4 fails (may happen especially for LAPACK versions before 3.2)
             ! use the more stable bisection algorithm in solve_secular_equation
@@ -501,9 +508,10 @@
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
+	call timer%start("blas")
         ! Calculate arrangement of all eigenvalues  in output
         call PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
-
+        call timer%stop("blas")
         ! Rearrange eigenvalues
         tmp = d
         do i=1,na
@@ -688,9 +696,11 @@
 !                 call dgemm('N','N',l_rnm,ncnt,nnzu,1.d0,qtmp1_dev,ubound(qtmp1_dev,1),ev,ubound(ev,1), &
 !                            1.d0,qtmp2(1,1),ubound(qtmp2,1))
 !       else
+              call timer%start("blas")
               if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) &
                   call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu, CONST_1_0, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
                              CONST_1_0, qtmp2(1,1), ubound(qtmp2,dim=1))
+	      call timer%stop("blas")
 !            endif ! useGPU
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
@@ -711,9 +721,11 @@
 !                 call dgemm('N','N',l_rows-l_rnm,ncnt,nnzl,1.d0,qtmp1_dev(l_rnm+1,1),ubound(qtmp1_dev,1),ev,ubound(ev,1), &
 !                            1.d0,qtmp2(l_rnm+1,1),ubound(qtmp2,1))
 !       else
+              call timer%start("blas")
               if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
                  call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl, CONST_1_0, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
                             ubound(ev,dim=1), CONST_1_0, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+	      call timer%stop("blas")
 !            endif ! useGPU
              ! Put partial result into (output) Q
 

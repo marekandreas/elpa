@@ -357,16 +357,17 @@
           ! This can be done in different ways, we use dsyrk or zherk
 
           tmat = 0
+	  call timer%start("blas")
           if (l_rows>0) &
 #if REALCASE == 1
-               call PRECISION_SYRK('U', 'T', nstor, l_rows,   &
+            call PRECISION_SYRK('U', 'T', nstor, l_rows,   &
                                       CONST_1_0, hvm, ubound(hvm,dim=1),   &
                                       CONST_0_0, tmat, max_stored_rows)
 #endif
 #if COMPLEXCASE == 1
-             call PRECISION_HERK('U', 'C', nstor, l_rows, CONE, hvm, ubound(hvm,dim=1), CZERO, tmat, max_stored_rows)
+            call PRECISION_HERK('U', 'C', nstor, l_rows, CONE, hvm, ubound(hvm,dim=1), CZERO, tmat, max_stored_rows)
 #endif
-
+	  call timer%stop("blas")
           nc = 0
           do n = 1, nstor-1
             h1(nc+1:nc+n) = tmat(1:n,n+1)
@@ -391,6 +392,7 @@
           nc = 0
           tmat(1,1) = tau(ice-nstor+1)
           do n = 1, nstor-1
+	    call timer%start("blas")
 #if REALCASE == 1
             call PRECISION_TRMV('L', 'T', 'N', n,  &
                                    tmat, max_stored_rows,  &
@@ -401,6 +403,7 @@
                                 tmat, max_stored_rows,   &
                                 h2(nc+1),1)
 #endif
+	  call timer%stop("blas")
 #if REALCASE == 1
             tmat(n+1,1:n) = -h2(nc+1:nc+n)*tau(ice-nstor+n+1)
 #endif
@@ -441,7 +444,8 @@
           ! Q = Q - V * T * V**T * Q
 
           if (l_rows>0) then
-            if(useGPU) then
+            if (useGPU) then
+	      call timer%start("cublas")
 #if REALCASE == 1
               call cublas_PRECISION_GEMM('T', 'N', nstor, l_cols, l_rows,  &
                          CONST_1_0, hvm_dev, hvm_ubnd,  &
@@ -454,8 +458,9 @@
                          q_dev, ldq,  &
                          CZERO, tmp_dev, nstor)
 #endif
-
+	      call timer%stop("cublas")
             else ! useGPU
+	      call timer%start("blas")
 #if REALCASE == 1
               call PRECISION_GEMM('T', 'N', nstor, l_cols, l_rows,  &
                                      CONST_1_0, hvm, ubound(hvm,dim=1), &
@@ -468,6 +473,7 @@
                                   q_mat, ldq,  &
                                   CZERO, tmp1 ,nstor)
 #endif
+              call timer%stop("blas")
             endif ! useGPU
 
           else !l_rows>0
@@ -527,6 +533,7 @@
 
           if (l_rows>0) then
             if (useGPU) then
+	      call timer%start("cublas")
 #if REALCASE == 1
               call cublas_PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,  &
                                             CONST_1_0, tmat_dev, max_stored_rows,  &
@@ -545,9 +552,11 @@
                                             tmp_dev, nstor,   &
                                             CONE, q_dev, ldq)
 #endif
+  	      call timer%stop("cublas")
             else !useGPU
 #ifdef WITH_MPI
               ! tmp2 = tmat * tmp2
+	      call timer%start("blas")
 #if REALCASE ==1
               call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
                                      CONST_1_0, tmat, max_stored_rows,  &
@@ -568,9 +577,9 @@
                                   tmp2, nstor,  &
                                   CONE, q_mat, ldq)
 #endif
-
+	      call timer%stop("blas")
 #else /* WITH_MPI */
-
+	      call timer%start("blas")
 #if REALCASE == 1
               call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
                                      CONST_1_0, tmat, max_stored_rows,  &
@@ -589,6 +598,7 @@
                                   tmp1, nstor,  &
                                   CONE, q_mat, ldq)
 #endif
+	      call timer%stop("blas")
 #endif /* WITH_MPI */
             endif ! useGPU
           endif  ! l_rows>0

@@ -644,7 +644,7 @@
          ! This can be done in different ways, we use dsyrk
 
          vav = 0
-
+	 call timer%start("blas")
          if (useGPU) then
            if (l_rows>0) &
              call PRECISION_SYRK('U', 'T', n_cols, l_rows, CONST_1_0, vmrCUDA, cur_l_rows, CONST_0_0, vav, ubound(vav,dim=1))
@@ -652,10 +652,11 @@
            if (l_rows>0) &
              call PRECISION_SYRK('U', 'T', n_cols, l_rows, CONST_1_0, vmrCPU, ubound(vmrCPU,dim=1), CONST_0_0, vav, ubound(vav,dim=1))
          endif
-
+	 call timer%stop("blas")
          call symm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw,mpi_comm_rows)
 
          ! Calculate triangular matrix T for block Householder Transformation
+	 call timer%start("blas")
          do lc=n_cols,1,-1
            tau = tmat(lc,lc,istep)
            if (lc<n_cols) then
@@ -663,6 +664,7 @@
              tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
            endif
          enddo
+ 	 call timer%stop("blas")
        endif
 
        ! Transpose vmr -> vmc (stored in umc, second half)
@@ -705,7 +707,7 @@
              lcs = i*l_cols_tile+1
              lce = min(l_cols,(i+1)*l_cols_tile)
              if (lce<lcs) cycle
-
+             call timer%start("cublas")
              lre = min(l_rows,(i+1)*l_rows_tile)
              call cublas_PRECISION_GEMM('T', 'N', lce-lcs+1, n_cols, lre, &
                                CONST_1_0, (a_dev + ((lcs-1)*lda*size_of_PRECISION_real)), lda, vmr_dev,cur_l_rows, &
@@ -716,6 +718,7 @@
                                CONST_1_0, (a_dev+ ((lcs-1)*lda*size_of_PRECISION_real)), lda,                  &
                                (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_PRECISION_real), cur_l_cols, &
                                CONST_1_0, (vmr_dev+(cur_l_rows * n_cols)*size_of_PRECISION_real), cur_l_rows)
+             call timer%stop("cublas")
            enddo
            successCUDA = cuda_memcpy(loc(vmrCUDA(1)), vmr_dev,vmr_size*size_of_PRECISION_real,cudaMemcpyDeviceToHost)
            if (.not.(successCUDA)) then
@@ -781,18 +784,22 @@
                !C1 += [A11 A12] [B1
                !                 B2]
                if ( lre > lrs .and. l_cols > lcs ) then
+	         call timer%start("blas")
                  call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
                             CONST_1_0, a(lrs,lcs), ubound(a,dim=1),                 &
                                   umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
                             CONST_0_0, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
+	         call timer%stop("blas")
                endif
 
                ! C1 += A10' B0
                if ( lce > lcs .and. i > 0 ) then
+	       	 call timer%start("blas")
                  call PRECISION_GEMM('T', 'N', lce-lcs+1, n_cols, lrs-1,           &
                             CONST_1_0, a(1,lcs),   ubound(a,dim=1),           &
                                   vmrCPU(1,1),   ubound(vmrCPU,dim=1),   &
                             CONST_0_0, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+	       	 call timer%stop("blas")
                endif
              enddo
            endif ! l_cols>0 .and. l_rows>0
@@ -805,15 +812,17 @@
                lcs = i*l_cols_tile+1
                lce = min(l_cols,(i+1)*l_cols_tile)
                if (lce<lcs) cycle
-
+	       call timer%start("blas")
                lre = min(l_rows,(i+1)*l_rows_tile)
                call PRECISION_GEMM('T', 'N', lce-lcs+1, n_cols, lre, CONST_1_0, a(1,lcs), ubound(a,dim=1), &
                             vmrCPU, ubound(vmrCPU,dim=1), CONST_1_0, umcCPU(lcs,1), ubound(umcCPU,dim=1))
-
+	       call timer%stop("blas")
                if (i==0) cycle
                  lre = min(l_rows,i*l_rows_tile)
+	       	 call timer%start("blas")
                  call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, CONST_1_0, a(1,lcs), lda, &
                             umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), CONST_1_0, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+	       	 call timer%stop("blas")
              enddo
            endif
          endif ! n_way > 1
@@ -875,20 +884,26 @@
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
+	 call timer%start("cublas")
          call cublas_PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', l_cols, n_cols, &
                            CONST_1_0, tmat_dev, nbw, umc_dev, cur_l_cols)
+	 call timer%start("cublas")
+
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_real: error in cudaMemcpy"
            stop
          endif
+	 call timer%start("cublas")
+
          call cublas_PRECISION_GEMM('T', 'N', n_cols, n_cols, l_cols, &
                            CONST_1_0, umc_dev, cur_l_cols, (umc_dev+(cur_l_cols * n_cols )*size_of_PRECISION_real),cur_l_cols, &
                            CONST_0_0, vav_dev, nbw)
 
          call cublas_PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', n_cols, n_cols, &
                            CONST_1_0, tmat_dev, nbw, vav_dev, nbw)
+	 call timer%stop("cublas")
 
          successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
@@ -905,9 +920,12 @@
          endif
 
          ! U = U - 0.5 * V * VAV
+ 	 call timer%start("cublas")
+
          call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
                            -CONST_0_5, (umc_dev+(cur_l_cols * n_cols )*size_of_PRECISION_real),cur_l_cols, vav_dev,nbw,&
                            CONST_1_0, umc_dev, cur_l_cols)
+	 call timer%stop("cublas")
 
          successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
 
@@ -939,9 +957,13 @@
            lce = min(l_cols,(i+1)*l_cols_tile)
            lre = min(l_rows,(i+1)*l_rows_tile)
            if (lce<lcs .or. lre<1) cycle
+	   call timer%start("cublas")
+
            call cublas_PRECISION_GEMM('N', 'T', lre, lce-lcs+1, 2*n_cols, -CONST_1_0, &
                              vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*size_of_PRECISION_real), cur_l_cols, &
                              CONST_1_0, (a_dev+(lcs-1)*lda*size_of_PRECISION_real), lda)
+	   call timer%stop("cublas")
+
          enddo
 
        else ! do not useGPU
@@ -977,6 +999,8 @@
          endif
 
          ! U = U * Tmat**T
+	 call timer%start("blas")
+
          call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', l_cols,n_cols, CONST_1_0, tmat(1,1,istep), ubound(tmat,dim=1), &
                     umcCPU, ubound(umcCPU,dim=1))
 
@@ -987,13 +1011,14 @@
 
          call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', n_cols, n_cols, CONST_1_0, tmat(1,1,istep),    &
                     ubound(tmat,dim=1), vav, ubound(vav,dim=1))
-
+	 call timer%stop("blas")
          call symm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
          ! U = U - 0.5 * V * VAV
+	 call timer%start("blas")
          call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, -CONST_0_5, umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
                      ubound(vav,dim=1), CONST_1_0, umcCPU, ubound(umcCPU,dim=1))
-
+	 call timer%stop("blas")
          ! Transpose umc -> umr (stored in vmr, second half)
          call elpa_transpose_vectors_real_PRECISION(umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                          vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
@@ -1029,9 +1054,11 @@
            myend   = mystart + work_per_thread - 1
            if ( myend > lre ) myend = lre
            if ( myend-mystart+1 < 1) cycle
+	   call timer%start("blas")
            call PRECISION_GEMM('N', 'T', myend-mystart+1, lce-lcs+1, 2*n_cols, -CONST_1_0, &
                       vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
                        CONST_1_0, a(mystart,lcs), ubound(a,1))
+       	   call timer%stop("blas")
          enddo
          !$omp end parallel
 
@@ -1042,9 +1069,11 @@
            lce = min(l_cols,(i+1)*l_cols_tile)
            lre = min(l_rows,(i+1)*l_rows_tile)
            if (lce<lcs .or. lre<1) cycle
+	   call timer%start("blas")
            call PRECISION_GEMM('N', 'T', lre,lce-lcs+1, 2*n_cols, -CONST_1_0, &
                        vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
                        CONST_1_0, a(1,lcs), lda)
+	   call timer%stop("blas")
          enddo
 #endif /* WITH_OPENMP */
 
