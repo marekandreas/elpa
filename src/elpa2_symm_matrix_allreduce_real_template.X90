@@ -1,5 +1,5 @@
 
-    subroutine M_symm_matrix_allreduce_PRECISION(n,a,lda,ldb,comm)
+    subroutine symm_matrix_allreduce_PRECISION(n,a,lda,ldb,comm)
     !-------------------------------------------------------------------------------
     !  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
     !  On entry, only the upper half of A needs to be set
@@ -21,7 +21,7 @@
       integer(kind=ik)             :: i, nc, mpierr
       real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
-      call timer%start("symm_matrix_allreduce" // M_PRECISION_SUFFIX)
+      call timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
       nc = 0
       do i=1,n
@@ -31,7 +31,7 @@
 
 #ifdef WITH_MPI
       call timer%start("mpi_communication")
-      call mpi_allreduce(h1, h2, nc, M_MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
+      call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
       call timer%stop("mpi_communication")
       nc = 0
       do i=1,n
@@ -58,8 +58,8 @@
 !        nc = nc+i
 !      enddo
 
-      call timer%stop("symm_matrix_allreduce" // M_PRECISION_SUFFIX)
+      call timer%stop("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
-    end subroutine M_symm_matrix_allreduce_PRECISION
+    end subroutine symm_matrix_allreduce_PRECISION
 
 

@@ -1,5 +1,5 @@
 
-    subroutine M_trans_ev_band_to_full_real_PRECISION(na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, &
+    subroutine trans_ev_band_to_full_real_PRECISION(na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, &
                                                        numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU, useQR)
     !-------------------------------------------------------------------------------
     !  trans_ev_band_to_full_real:
@@ -77,7 +77,7 @@
       character(200)                         :: errorMessage
       logical                                :: successCUDA
 
-      call timer%start("trans_ev_band_to_full_real" // M_PRECISION_SUFFIX)
+      call timer%start("trans_ev_band_to_full_real" // PRECISION_SUFFIX)
       call timer%start("mpi_communication")
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -119,12 +119,12 @@
           print *,"trans_ev_band_to_full_real: error when allocating hvm "//errorMessage
           stop
         endif
-        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw*M_size_of_PRECISION_real)
+        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw*size_of_PRECISION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaMalloc"
           stop
         endif
-        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw*M_size_of_PRECISION_real)
+        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw*size_of_PRECISION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaMalloc"
           stop
@@ -133,7 +133,7 @@
 !#ifdef WITH_MPI
 ! it should be possible to keep tmat dev on the device and not copy it around
 ! already existent on GPU
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*M_size_of_PRECISION_real)
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_PRECISION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaMalloc"
           stop
@@ -141,7 +141,7 @@
 !#endif
 
 ! q_dev already living on device
-!        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*M_size_of_PRECISION_real)
+!        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_real)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
 !          stop
@@ -151,20 +151,20 @@
   !      q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
 
 !        ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-!        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*M_size_of_PRECISION_real, cudaMemcpyHostToDevice)
+!        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
 !          stop
 !        endif
 
         ! if MPI is NOT used the following steps could be done on the GPU and memory transfers could be avoided
-        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)*M_size_of_PRECISION_real)
+        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)*size_of_PRECISION_real)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaMalloc"
           stop
         endif
-        hvm = M_CONST_0_0   ! Must be set to 0 !!!
-        hvb = M_CONST_0_0   ! Safety only
+        hvm = CONST_0_0   ! Must be set to 0 !!!
+        hvb = CONST_0_0   ! Safety only
         
         l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
@@ -191,7 +191,7 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns, M_MPI_REAL_PRECISION, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL_PRECISION, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
               call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -207,11 +207,11 @@
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
             hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = M_CONST_1_0
+            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = CONST_1_0
 
             nb = nb+l_rows
           enddo
-          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw*M_size_of_PRECISION_real),cudaMemcpyHostToDevice)
+          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw*size_of_PRECISION_real),cudaMemcpyHostToDevice)
 
           if (.not.(successCUDA)) then
             print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
@@ -224,14 +224,14 @@
           ! Q = Q - V * T**T * V**T * Q
 
           if (l_rows>0) then
-            call M_cublas_PRECISION_gemm('T', 'N', n_cols, l_cols, l_rows, M_CONST_1_0, hvm_dev, max_local_rows, &
-                              q_dev, ldq , M_CONST_0_0, tmp_dev, n_cols)
+            call cublas_PRECISION_GEMM('T', 'N', n_cols, l_cols, l_rows, CONST_1_0, hvm_dev, max_local_rows, &
+                              q_dev, ldq , CONST_0_0, tmp_dev, n_cols)
 
 #ifdef WITH_MPI
             ! copy data from device to host for a later MPI_ALLREDUCE
 
             ! copy to host maybe this can be avoided this is needed if MPI is used (allreduce)
-            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
@@ -247,7 +247,7 @@
             ! if MPI is not used (we do not need to transfer because of MPI_ALLREDUCE) we can set to zero on the device
 #ifdef WITH_GPU_VERSION
 
-            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols*M_size_of_PRECISION_real)
+            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols*size_of_PRECISION_real)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemset"
               stop
@@ -267,7 +267,7 @@
           !#endif
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !          tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
@@ -284,7 +284,7 @@
 #ifdef WITH_MPI
             ! after the mpi_allreduce we have to copy back to the device
             ! copy back to device
-            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols*M_size_of_PRECISION_real,cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols*size_of_PRECISION_real,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
@@ -295,20 +295,20 @@
 ! it should be possible to keep tmat on the device and not copy it aroud
 !            ! copy to device, maybe this can be avoided tmat is input from bandred_real
 
-            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*M_size_of_PRECISION_real,cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
             endif
 !#endif /* WITH_MPI */
 
-            call M_cublas_PRECISION_trmm('L', 'U', 'T', 'N', n_cols, l_cols, M_CONST_1_0, tmat_dev, nbw, tmp_dev, n_cols)
-            call M_cublas_PRECISION_gemm('N', 'N', l_rows, l_cols, n_cols, -M_CONST_1_0, hvm_dev, max_local_rows, &
-                              tmp_dev, n_cols, M_CONST_1_0, q_dev, ldq)
+            call cublas_PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_dev, nbw, tmp_dev, n_cols)
+            call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm_dev, max_local_rows, &
+                              tmp_dev, n_cols, CONST_1_0, q_dev, ldq)
 
             ! copy to host maybe this can be avoided
             ! this is not necessary hvm is not used anymore
-            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*M_size_of_PRECISION_real),cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_PRECISION_real),cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
@@ -347,8 +347,8 @@
 !          allocate(hvb(max_local_rows*nbw))
 !          allocate(hvm(max_local_rows,nbw))
 !        endif
-        hvm = M_CONST_0_0   ! Must be set to 0 !!!
-        hvb = M_CONST_0_0   ! Safety only
+        hvm = CONST_0_0   ! Must be set to 0 !!!
+        hvb = CONST_0_0   ! Safety only
         l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
 !       if ( na >= ((t_blocking+1)*nbw) ) then
@@ -384,7 +384,7 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns, M_MPI_REAL_PRECISION, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL_PRECISION, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
               call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -400,7 +400,7 @@
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
             hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = M_CONST_1_0
+            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = CONST_1_0
 
             nb = nb+l_rows
           enddo
@@ -415,32 +415,32 @@
             t_rows = (i - 1) * nbw
             tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
             if (i > 1) then
-              call M_PRECISION_GEMM('T', 'N', t_rows, t_cols, l_rows, M_CONST_1_0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
-                        max_local_rows, M_CONST_0_0, t_tmp, cwy_blocking)
+              call PRECISION_GEMM('T', 'N', t_rows, t_cols, l_rows, CONST_1_0, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
+                        max_local_rows, CONST_0_0, t_tmp, cwy_blocking)
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
 
-              call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+              call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
               call timer%stop("mpi_communication")
 
-              call M_PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, M_CONST_1_0, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
-              call M_PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -M_CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
+              call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, CONST_1_0, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
+              call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp2, cwy_blocking)
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
 
 #else
 !              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
 
-              call M_PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, M_CONST_1_0, tmat_complete, cwy_blocking, t_tmp, cwy_blocking)
-              call M_PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -M_CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
+              call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, CONST_1_0, tmat_complete, cwy_blocking, t_tmp, cwy_blocking)
+              call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp, cwy_blocking)
 
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
 
 #endif
 
-!              call M_PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, M_CONST_1_0, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
-!              call M_PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -M_CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
+!              call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, CONST_1_0, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
+!              call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
 !                         t_tmp2, cwy_blocking)
 
 !              tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
@@ -450,38 +450,38 @@
           ! Q = Q - V * T**T * V**T * Q
 
           if (l_rows>0) then
-            call M_PRECISION_GEMM('T', 'N', n_cols, l_cols, l_rows, M_CONST_1_0, hvm, ubound(hvm,dim=1), &
-                       q, ldq, M_CONST_0_0, tmp1, n_cols)
+            call PRECISION_GEMM('T', 'N', n_cols, l_cols, l_rows, CONST_1_0, hvm, ubound(hvm,dim=1), &
+                       q, ldq, CONST_0_0, tmp1, n_cols)
 
           else ! l_rows>0
 
-            tmp1(1:l_cols*n_cols) = M_CONST_0_0
+            tmp1(1:l_cols*n_cols) = CONST_0_0
           endif ! l_rows>0
 
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows ,mpierr)
+          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows ,mpierr)
 
           call timer%stop("mpi_communication")
 
           if (l_rows>0) then
-            call M_PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, M_CONST_1_0, tmat_complete, cwy_blocking, tmp2, n_cols)
-            call M_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -M_CONST_1_0, hvm, ubound(hvm,dim=1), tmp2, n_cols, M_CONST_1_0, q, ldq)
+            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_complete, cwy_blocking, tmp2, n_cols)
+            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm, ubound(hvm,dim=1), tmp2, n_cols, CONST_1_0, q, ldq)
 
           endif
 #else /* WITH_MPI */
 !          tmp2 = tmp1
 
           if (l_rows>0) then
-            call M_PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, M_CONST_1_0, tmat_complete, cwy_blocking, tmp1, n_cols)
-            call M_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -M_CONST_1_0, hvm, ubound(hvm,dim=1), tmp1, n_cols, M_CONST_1_0, q, ldq)
+            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_complete, cwy_blocking, tmp1, n_cols)
+            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm, ubound(hvm,dim=1), tmp1, n_cols, CONST_1_0, q, ldq)
           endif
 
 #endif /* WITH_MPI */
 
 !          if (l_rows>0) then
-!            call M_PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, M_CONST_1_0, tmat_complete, cwy_blocking, tmp2, n_cols)
-!            call M_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -M_CONST_1_0, hvm, ubound(hvm,dim=1), tmp2, n_cols, M_CONST_1_0, q, ldq)
+!            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_complete, cwy_blocking, tmp2, n_cols)
+!            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm, ubound(hvm,dim=1), tmp2, n_cols, CONST_1_0, q, ldq)
 !          endif
         enddo ! istep
 
@@ -512,7 +512,7 @@
           stop
         endif
          ! final transfer of q_dev
-         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols*M_size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_real: error in cudaFree"
           stop
@@ -554,8 +554,8 @@
 
       endif
 
-      call timer%stop("trans_ev_band_to_full_real" // M_PRECISION_SUFFIX)
+      call timer%stop("trans_ev_band_to_full_real" // PRECISION_SUFFIX)
 
-    end subroutine M_trans_ev_band_to_full_real_PRECISION
+    end subroutine trans_ev_band_to_full_real_PRECISION
 
 
