@@ -247,9 +247,9 @@ program test_real
    my_pcolFromC = my_pcol
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators.
+   ! rows or columns of processes, these are set in elpa_get_communicators.
 
-   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    ! call here a c function, which via the c-interface in turn calls the
@@ -304,8 +304,8 @@ program test_real
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                          na_cols, mpi_comm_rows, mpi_comm_cols)
+   success = elpa_solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                          na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
@@ -336,7 +336,7 @@ program test_real
    end if
 
    success = solve_elpa1_real_call_from_c_double(na, nev, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
-                                          na_cols, mpi_comm_rows_fromC, mpi_comm_cols_fromC )
+                                          na_cols, mpi_comm_rows_fromC, mpi_comm_cols_fromC, mpi_comm_world )
 
    if (myid==0) then
      print *," "

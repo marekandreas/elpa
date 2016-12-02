@@ -51,8 +51,8 @@
 ! distributed along with the original code in the file "COPYING".
 
 #include "config-f90.h"
-
-module ELPA1_compute
+!> \brief Fortran module which contains the source of ELPA 1stage
+module ELPA1_COMPUTE
   use elpa_utilities
 #ifdef HAVE_DETAILED_TIMINGS
   use timings
@@ -72,7 +72,6 @@ module ELPA1_compute
   interface tridiag_real
     module procedure tridiag_real_double
   end interface
-
 
   interface trans_ev_real
     module procedure trans_ev_real_double
@@ -101,9 +100,6 @@ module ELPA1_compute
   public :: tridiag_complex_single     ! Transform complex single-precision hermitian matrix to tridiagonal form
   public :: trans_ev_complex_single    ! Transform complex single-precision eigenvectors of a tridiagonal matrix back
 #endif
-
-  public :: local_index                ! Get local index of a block cyclic distributed matrix
-  public :: least_common_multiple      ! Get least common multiple
 
   public :: hh_transform_real_double
   public :: hh_transform_real

@@ -45,6 +45,7 @@
 module qr_utils_mod
   use elpa_mpi
   use elpa1_compute
+  use elpa_utilities
   implicit none
 
   PRIVATE

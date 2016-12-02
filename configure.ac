@@ -33,7 +33,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [6:0:2])
+AC_SUBST([ELPA_SO_VERSION], [8:0:0])
 #
 
 
@@ -185,10 +185,10 @@ AM_CONDITIONAL([HAVE_REDIRECT],[test x"$enable_redirect" = x"yes"])
 
 dnl build with ftimings support
 AC_MSG_CHECKING(whether ELPA should be build with more detailed timing support)
-AC_ARG_ENABLE([timing],
+AC_ARG_ENABLE([timings],
 		AS_HELP_STRING([--enable-timing],
 			       [more detailed timing, default no.]),
-	      [],
+	      [enable_timings=yes],
 	      [enable_timings=no])
 AC_MSG_RESULT([${enable_timings}])
 
@@ -1165,17 +1165,21 @@ DX_MAN_FEATURE(ON)
 DX_HTML_FEATURE(ON)
 DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
-DESPERATELY_WANT_ASSUMED_SIZE=no
-AC_MSG_CHECKING(whether --enable-assumed-size is specified)
+USE_ASSUMED_SIZE=yes
+AC_MSG_CHECKING(whether assumed size Fortran arrays should be used)
 AC_ARG_ENABLE([assumed-size],
-                AS_HELP_STRING([--enable-assumed-size],
-                               [use assumed-size Fortran arrays]),
-              [],
-              [DESPERATELY_WANT_ASSUMED_SIZE=no])
-AC_MSG_RESULT([${DESPERATELY_WANT_ASSUMED_SIZE}])
-AM_CONDITIONAL([WITH_DESPERATELY_WANT_ASSUMED_SIZE],[test x"$DESPERATELY_WANT_ASSUMED_SIZE" = x"yes"])
-if test x"${DESPERATELY_WANT_ASSUMED_SIZE}" = x"yes" ; then
-  AC_DEFINE([DESPERATELY_WANT_ASSUMED_SIZE],[1],[use assumed size Fortran arrays, even if not debuggable])
+                AS_HELP_STRING([--disable-assumed-size],
+			       [do NOT use assumed-size Fortran arrays]),
+			       [if test x"$enableval" = x"yes"; then
+                                  USE_ASSUMED_SIZE=yes
+				else
+			          USE_ASSUMED_SIZE=no
+				fi],
+              [USE_ASSUMED_SIZE=yes])
+AC_MSG_RESULT([${USE_ASSUMED_SIZE}])
+AM_CONDITIONAL([WITH_USE_ASSUMED_SIZE],[test x"$USE_ASSUMED_SIZE" = x"yes"])
+if test x"${USE_ASSUMED_SIZE}" = x"yes" ; then
+  AC_DEFINE([USE_ASSUMED_SIZE],[1],[for performance reasons use assumed size Fortran arrays, even if not debuggable])
 fi
 
 if test x"${want_single_precision}" = x"yes" ; then
@@ -1263,5 +1267,11 @@ fi
 if test "${can_compile_sse}" = "no" ; then
   AC_MSG_WARN([Could not compile SSE instructions])
 fi
-
+echo " "
+echo "***********************************************************************"
+echo "*  This is a prerelease of the ELPA library 2016.11.001.pre library!  *"
+echo "*  It contains an experimental API which will most likely change with *"
+echo "*  the next stable release.                                           *"
+echo "***********************************************************************"
+echo " "
 make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"

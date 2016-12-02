@@ -58,6 +58,7 @@
 
 #include "config-f90.h"
 
+#ifndef USE_ASSUMED_SIZE
 module real_generic_simple_kernel
 
   private
@@ -68,6 +69,7 @@ module real_generic_simple_kernel
 #endif
 
   contains
+#endif
 
 #define REALCASE 1
 #define DOUBLE_PRECISION_REAL 1
@@ -87,5 +89,7 @@ module real_generic_simple_kernel
 #undef REALCASE
 #endif
 
+#ifndef USE_ASSUMED_SIZE
 end module real_generic_simple_kernel
+#endif
 ! --------------------------------------------------------------------------------------------------

@@ -84,11 +84,11 @@ module compute_hh_trafo_real
          use cuda_c_kernel
          use cuda_functions
 
-#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
+#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL) && !(defined(USE_ASSUMED_SIZE))
          use real_generic_simple_kernel !, only : double_hh_trafo_generic_simple
 #endif
 
-#if defined(WITH_REAL_GENERIC_KERNEL) && !(defined(DESPERATELY_WANT_ASSUMED_SIZE))
+#if defined(WITH_REAL_GENERIC_KERNEL) && !(defined(USE_ASSUMED_SIZE))
         use real_generic_kernel !, only : double_hh_trafo_generic
 #endif
 
@@ -152,7 +152,15 @@ module compute_hh_trafo_real
          call timer%start("compute_hh_trafo_real_cpu_double")
 #endif
 #endif
-         ttt = mpi_wtime()
+
+#ifdef WITH_OPENMP
+         if (my_thread==1) then
+#endif
+           ttt = mpi_wtime()
+#ifdef WITH_OPENMP
+         endif
+#endif
+
 
 #ifndef WITH_OPENMP
          nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
@@ -209,7 +217,8 @@ module compute_hh_trafo_real
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
 
 #ifdef WITH_OPENMP
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+
+#ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_generic_double(a(1,j+off+a_off-1,istripe,my_thread), w, &
                                             nbw, nl, stripe_width, nbw)
 
@@ -221,7 +230,7 @@ module compute_hh_trafo_real
 
 #else /* WITH_OPENMP */
 
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_generic_double(a(1,j+off+a_off-1,istripe),w, &
                                             nbw, nl, stripe_width, nbw)
 
@@ -247,7 +256,8 @@ module compute_hh_trafo_real
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+
+#ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_generic_simple_double(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -257,7 +267,8 @@ module compute_hh_trafo_real
 #endif
 
 #else /* WITH_OPENMP */
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+
+#ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_generic_simple_double(a(1,j+off+a_off-1,istripe), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -798,11 +809,11 @@ module compute_hh_trafo_real
          use cuda_c_kernel
          use cuda_functions
 
-#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
+#if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL) && !(defined(USE_ASSUMED_SIZE))
          use real_generic_simple_kernel !, only : double_hh_trafo_generic_simple
 #endif
 
-#if defined(WITH_REAL_GENERIC_KERNEL) && !(defined(DESPERATELY_WANT_ASSUMED_SIZE))
+#if defined(WITH_REAL_GENERIC_KERNEL) && !(defined(USE_ASSUMED_SIZE))
         use real_generic_kernel !, only : double_hh_trafo_generic
 #endif
 
@@ -923,7 +934,7 @@ module compute_hh_trafo_real
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
 
 #ifdef WITH_OPENMP
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_generic_single(a(1,j+off+a_off-1,istripe,my_thread), w, &
                                             nbw, nl, stripe_width, nbw)
 
@@ -935,7 +946,7 @@ module compute_hh_trafo_real
 
 #else /* WITH_OPENMP */
 
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_generic_single(a(1,j+off+a_off-1,istripe),w, &
                                             nbw, nl, stripe_width, nbw)
 
@@ -961,7 +972,7 @@ module compute_hh_trafo_real
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_generic_simple_single(a(1,j+off+a_off-1,istripe,my_thread), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else
@@ -971,7 +982,7 @@ module compute_hh_trafo_real
 #endif
 
 #else /* WITH_OPENMP */
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_generic_simple_single(a(1,j+off+a_off-1,istripe), &
                                                        w, nbw, nl, stripe_width, nbw)
 #else

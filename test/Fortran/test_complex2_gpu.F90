@@ -140,6 +140,7 @@ program test_complex2_gpu_version_double_precision
    type(output_t)                :: write_to_file
    character(len=8)              :: task_suffix
    integer(kind=ik)              :: j
+   logical                       :: useGPU
 
 #define DOUBLE_PRECISION_COMPLEX 1
 
@@ -236,9 +237,9 @@ program test_complex2_gpu_version_double_precision
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators
+   ! rows or columns of processes, these are set in elpa_get_communicators
 
-   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -291,9 +292,11 @@ program test_complex2_gpu_version_double_precision
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   successELPA = solve_evp_complex_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   useGPU = .true.
+
+   successELPA = elpa_solve_evp_complex_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                  na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-                                 COMPLEX_ELPA_KERNEL_GPU)
+                                 COMPLEX_ELPA_KERNEL_GPU, useGPU)
 
 
    if (.not.(successELPA)) then

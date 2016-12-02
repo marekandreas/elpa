@@ -58,8 +58,13 @@ module ELPA_utilities
 
   private ! By default, all routines contained are private
 
-  public :: debug_messages_via_environment_variable, pcol, prow, error_unit
+  public :: debug_messages_via_environment_variable, error_unit
+  public :: check_alloc, check_alloc_CUDA_f, check_memcpy_CUDA_f, check_dealloc_CUDA_f
   public :: map_global_array_index_to_local_index
+  public :: pcol, prow
+  public :: local_index                ! Get local index of a block cyclic distributed matrix
+  public :: least_common_multiple      ! Get least common multiple
+
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter :: error_unit = 0
 #endif
@@ -102,23 +107,23 @@ module ELPA_utilities
 !-------------------------------------------------------------------------------
 
   !Processor col for global col number
-  pure function pcol(i, nblk, np_cols) result(col)
+  pure function pcol(global_col, nblk, np_cols) result(local_col)
     use precision
     implicit none
-    integer(kind=ik), intent(in) :: i, nblk, np_cols
-    integer(kind=ik)             :: col
-    col = MOD((i-1)/nblk,np_cols)
+    integer(kind=ik), intent(in) :: global_col, nblk, np_cols
+    integer(kind=ik)             :: local_col
+    local_col = MOD((global_col-1)/nblk,np_cols)
   end function
 
 !-------------------------------------------------------------------------------
 
   !Processor row for global row number
-  pure function prow(i, nblk, np_rows) result(row)
+  pure function prow(global_row, nblk, np_rows) result(local_row)
     use precision
     implicit none
-    integer(kind=ik), intent(in) :: i, nblk, np_rows
-    integer(kind=ik)             :: row
-    row = MOD((i-1)/nblk,np_rows)
+    integer(kind=ik), intent(in) :: global_row, nblk, np_rows
+    integer(kind=ik)             :: local_row
+    local_row = MOD((global_row-1)/nblk,np_rows)
   end function
 
 !-------------------------------------------------------------------------------
@@ -161,5 +166,140 @@ module ELPA_utilities
    jLocal = lj * nblk + xj
 
  end function
+
+ integer function local_index(idx, my_proc, num_procs, nblk, iflag)
+
+!-------------------------------------------------------------------------------
+!  local_index: returns the local index for a given global index
+!               If the global index has no local index on the
+!               processor my_proc behaviour is defined by iflag
+!
+!  Parameters
+!
+!  idx         Global index
+!
+!  my_proc     Processor row/column for which to calculate the local index
+!
+!  num_procs   Total number of processors along row/column
+!
+!  nblk        Blocksize
+!
+!  iflag       Controls the behaviour if idx is not on local processor
+!              iflag< 0 : Return last local index before that row/col
+!              iflag==0 : Return 0
+!              iflag> 0 : Return next local index after that row/col
+!-------------------------------------------------------------------------------
+    use precision
+    implicit none
+
+    integer(kind=ik) :: idx, my_proc, num_procs, nblk, iflag
+
+    integer(kind=ik) :: iblk
+
+    iblk = (idx-1)/nblk  ! global block number, 0 based
+
+    if (mod(iblk,num_procs) == my_proc) then
+
+    ! block is local, always return local row/col number
+
+    local_index = (iblk/num_procs)*nblk + mod(idx-1,nblk) + 1
+
+    else
+
+    ! non local block
+
+    if (iflag == 0) then
+
+        local_index = 0
+
+    else
+
+        local_index = (iblk/num_procs)*nblk
+
+        if (mod(iblk,num_procs) > my_proc) local_index = local_index + nblk
+
+        if (iflag>0) local_index = local_index + 1
+    endif
+    endif
+
+ end function local_index
+
+ integer function least_common_multiple(a, b)
+
+    ! Returns the least common multiple of a and b
+    ! There may be more efficient ways to do this, we use the most simple approach
+    use precision
+    implicit none
+    integer(kind=ik), intent(in) :: a, b
+
+    do least_common_multiple = a, a*(b-1), a
+    if(mod(least_common_multiple,b)==0) exit
+    enddo
+    ! if the loop is left regularly, least_common_multiple = a*b
+
+ end function least_common_multiple
+
+ 
+     
+ subroutine check_alloc(function_name, variable_name, istat, errorMessage)
+    use precision
+    
+    implicit none
+    
+    character(len=*), intent(in)    :: function_name
+    character(len=*), intent(in)    :: variable_name
+    integer(kind=ik), intent(in)    :: istat
+    character(len=*), intent(in)    :: errorMessage
+    
+    if (istat .ne. 0) then
+      print *, function_name, ": error when allocating ", variable_name, " ", errorMessage
+      stop
+    endif
+ end subroutine
+
+ subroutine check_alloc_CUDA_f(file_name, line, successCUDA)
+    use precision
+    
+    implicit none
+    
+    character(len=*), intent(in)    :: file_name
+    integer(kind=ik), intent(in)    :: line
+    logical                         :: successCUDA
+    
+    if (.not.(successCUDA)) then
+      print *, file_name, ":", line,  " error in cuda_malloc when allocating "
+      stop
+    endif
+ end subroutine
+
+ subroutine check_dealloc_CUDA_f(file_name, line, successCUDA)
+    use precision
+    
+    implicit none
+    
+    character(len=*), intent(in)    :: file_name
+    integer(kind=ik), intent(in)    :: line
+    logical                         :: successCUDA
+    
+    if (.not.(successCUDA)) then
+      print *, file_name, ":", line,  " error in cuda_free when deallocating "
+      stop
+    endif
+ end subroutine
+
+ subroutine check_memcpy_CUDA_f(file_name, line, successCUDA)
+    use precision
+    
+    implicit none
+    
+    character(len=*), intent(in)    :: file_name
+    integer(kind=ik), intent(in)    :: line
+    logical                         :: successCUDA
+    
+    if (.not.(successCUDA)) then
+      print *, file_name, ":", line,  " error in cuda_memcpy when copying "
+      stop
+    endif
+ end subroutine
 
 end module ELPA_utilities

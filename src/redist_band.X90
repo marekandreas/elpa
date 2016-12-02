@@ -126,6 +126,9 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
 #endif
 
 #endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
    call mpi_comm_size(mpi_comm,n_pes,mpierr)
 
@@ -133,6 +136,9 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
+#endif
    ! Get global_id mapping 2D procssor coordinates to global id
 
    allocate(global_id(0:np_rows-1,0:np_cols-1))
@@ -142,12 +148,18 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
    global_id(:,:) = 0
    global_id(my_prow, my_pcol) = my_pe
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
 #ifdef WITH_OPENMP
    global_id_tmp(:,:) = global_id(:,:)
    call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
    deallocate(global_id_tmp)
 #else
    call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
 #endif
 #endif
    ! Set work distribution
@@ -267,6 +279,9 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
 
    ! Exchange all data with MPI_Alltoallv
 #ifdef WITH_MPI
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("mpi_communication")
+#endif
 
 #if REALCASE==1
 
@@ -284,6 +299,9 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
     call MPI_Alltoallv(c_sbuf, ncnt_s, nstart_s, MPI_COMPLEX16, c_rbuf, ncnt_r, nstart_r, MPI_COMPLEX16, mpi_comm, mpierr)
 #else
     call MPI_Alltoallv(c_sbuf, ncnt_s, nstart_s, MPI_COMPLEX, c_rbuf, ncnt_r, nstart_r, MPI_COMPLEX, mpi_comm, mpierr)
+#endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("mpi_communication")
 #endif
 
 #endif /* COMPLEXCASE==1 */

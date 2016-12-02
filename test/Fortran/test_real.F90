@@ -76,6 +76,7 @@ program test_real_double_precision
    use precision
    use ELPA1
    use elpa_utilities, only : error_unit
+   use elpa1_utilities
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -181,9 +182,15 @@ program test_real_double_precision
 
    if(myid==0) then
       print *
-      print '(a)','Standard eigenvalue problem - REAL version'
+      print '(a)','Standard eigenvalue problem - ELPA1, REAL version'
       print *
-      print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
+      print '((a,i0))', 'Num MPI proc: ', nprocs 
+      print '((a,i0))', 'Matrix size: ', na 
+      print '((a,i0))', 'Num eigenvectors: ', nev
+      print '((a,i0))', 'Blocksize: ', nblk 
+      print '((a))', 'Using gpu: NO'
+      print *
+!       print '((a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
    endif
@@ -206,9 +213,9 @@ program test_real_double_precision
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators.
+   ! rows or columns of processes, these are set in elpa_get_communicators.
 
-   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -249,9 +256,8 @@ program test_real_double_precision
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                            na_cols, mpi_comm_rows, mpi_comm_cols)
-
+   success = elpa_solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                            na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
 #ifdef WITH_MPI

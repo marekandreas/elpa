@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 
    int success;
 
-   int THIS_COMPLEX_ELPA_KERNEL_API;
+   int THIS_COMPLEX_ELPA_KERNEL_API, useGPU;
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -109,13 +109,13 @@ int main(int argc, char** argv) {
    if (myid == 0) {
      printf("This is the c version of an ELPA test-programm\n");
      printf("\n");
-     printf("It will call the 1stage ELPA complex solver for a matrix\n");
+     printf("It will call the 2stage ELPA complex solver for a matrix\n");
      printf("of matrix size %d. It will compute %d eigenvalues\n",na,nev);
      printf("and uses a blocksize of %d\n",nblk);
      printf("\n");
      printf("This is an example program with much less functionality\n");
      printf("as it's Fortran counterpart. It's only purpose is to show how \n");
-     printf("to evoke ELPA1 from a c programm\n");
+     printf("to evoke ELPA 2 from a c programm\n");
 
      printf("\n");
 
@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
 #ifdef WITH_MPI
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
 #endif
-   mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
+   mpierr = elpa_get_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
    if (myid == 0) {
      printf("\n");
@@ -229,11 +229,12 @@ int main(int argc, char** argv) {
 #ifdef WITH_MPI
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
+   useGPU = 0;
    THIS_COMPLEX_ELPA_KERNEL_API = ELPA2_COMPLEX_KERNEL_GENERIC;
 #ifdef DOUBLE_PRECISION_COMPLEX
-   success = elpa_solve_evp_complex_2stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API);
+   success = elpa_solve_evp_complex_2stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API, useGPU);
 #else
-   success = elpa_solve_evp_complex_2stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API);
+   success = elpa_solve_evp_complex_2stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API, useGPU);
 #endif
 
    if (success != 1) {

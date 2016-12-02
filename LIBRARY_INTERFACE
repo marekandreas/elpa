@@ -44,3 +44,17 @@ https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 
   The state of release 2016.05.003 defines this interface
 
+- 7
+  Compatible API change w.r.t. previous version: Interfaces for generic driver
+  routines have been added. The old interfaces are still available
+
+  The state of release 2016.05.004 defines this interface
+
+- 8
+  INCOMPATIBLE API change w.r.t. previous version: Interfaces for single precision
+  routines have been added. Additional parameters allow run-time choice of GPU
+  version.
+
+  This is an experimental API, which will most likely change in the future
+
+  The state of release 2016.11.001.pre defines this interface

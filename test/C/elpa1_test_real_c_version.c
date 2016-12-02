@@ -87,6 +87,8 @@ int main(int argc, char** argv) {
    int *iseed;
 
    int success;
+
+   int useGPU;
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -157,7 +159,7 @@ int main(int argc, char** argv) {
 #else
    my_mpi_comm_world =1 ;
 #endif
-   mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
+   mpierr = elpa_get_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
    if (myid == 0) {
      printf("\n");
@@ -219,9 +221,10 @@ int main(int argc, char** argv) {
 #endif
 
 #ifdef DOUBLE_PRECISION_REAL
-   success = elpa_solve_evp_real_1stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
+   useGPU = 0;
+   success = elpa_solve_evp_real_1stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, useGPU);
 #else
-   success = elpa_solve_evp_real_1stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
+   success = elpa_solve_evp_real_1stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, useGPU);
 #endif
 
    if (success != 1) {

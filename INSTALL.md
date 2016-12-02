@@ -1,12 +1,12 @@
-# Installation guide #
+# Installation guide for the *ELPA* library#
 
 ## Preamle ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.003**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.004**.
 Although most of the documentation is generic to any *ELPA* release, some configure options
 described in this document might be specific to the above mentioned version of *ELPA*.
 
-## How to install ELPA ##
+## How to install *ELPA *##
 
 First of all, if you do not want to build *ELPA* yourself, and you run Linux,
 it is worth having a look at the [*ELPA* webpage*] (http://elpa.mpcdf.mpg.de)
@@ -23,7 +23,7 @@ the needed configure script! Please look at the "**INSTALL_FROM_GIT_VERSION**" f
 for the documentation how to proceed.
 
 
-## (A): Installing ELPA as library with configure ##
+## (A): Installing *ELPA* as library with configure ##
 
 *ELPA* can be installed with the build steps
 - configure
@@ -73,10 +73,10 @@ automatically. No setting of any library paths should be necessary.
 
 If standard libraries are on the build system either installed in non standard paths, or
 special non standard libraries (e.g. *Intel's MKL*) should be used, it might be necessary
-to specify the appropriate link-line with the **SCALAPACK_LDFLAGS** and **SCALAPACK_FCFLAGS** 
+to specify the appropriate link-line with the **SCALAPACK_LDFLAGS** and **SCALAPACK_FCFLAGS**
 variables.
 
-For example, due to performance reasons it might be benefical to use the *BLAS*, *BLACS*, *LAPACK*, 
+For example, due to performance reasons it might be benefical to use the *BLAS*, *BLACS*, *LAPACK*,
 and *SCALAPACK* implementation from *Intel's MKL* library.
 
 Togehter with the Intel Fortran Compiler the call to configure might then look like:
@@ -108,15 +108,22 @@ It this is not desired, it is possible to build *ELPA* with only one (not necess
 real and complex valued case, respectively. This can be done with the "--with-real-..-kernel-only" and
 "--with-complex-..-kernel-only" configure options. For details please do a "configure --help"
 
-### No MPI, one node shared-memory version of ELPA ###
+### No MPI, one node shared-memory version of *ELPA* ###
 
 Since release 2016.05.001 it is possible to build *ELPA* without any MPI support. This version can be used
 by applications, which do not have any MPI parallelisation. To set this version, use the
 "--with-mpi=0" configure flag. It is strongly recommmended to also set the "--enable-openmp"
 option, otherwise no parallelisation whatsoever will be present.
 
-It is possible to install the different flavours of ELPA (with/without MPI, with/without OpenMP) in the same
+It is possible to install the different flavours of *ELPA* (with/without MPI, with/without OpenMP) in the same
 directory, since the library is named differently for each build.
+
+### GPU support as runtime option ###
+If the target systems has NVIDIA GPUs as accelerator cards *ELPA* can be build with GPU support.
+The configure option "--enable-GPU-support" will trigger a build of the GPU version of ELPA. It might be necessary
+that also the option "--with-cuda-path=[your path to the local cuda installation]" has to be set.
+
+For GPU support, only models of NIVIDA GPUs with "compute capabillity" > 3.5 are supported.
 
 ### Doxygen documentation ###
 A doxygen documentation can be created with the "--enable-doxygen-doc" configure option
