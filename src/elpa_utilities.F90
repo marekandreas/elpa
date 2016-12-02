@@ -239,18 +239,16 @@ module ELPA_utilities
 
  end function least_common_multiple
 
- 
-     
  subroutine check_alloc(function_name, variable_name, istat, errorMessage)
     use precision
-    
+
     implicit none
-    
+
     character(len=*), intent(in)    :: function_name
     character(len=*), intent(in)    :: variable_name
     integer(kind=ik), intent(in)    :: istat
     character(len=*), intent(in)    :: errorMessage
-    
+
     if (istat .ne. 0) then
       print *, function_name, ": error when allocating ", variable_name, " ", errorMessage
       stop
@@ -259,13 +257,13 @@ module ELPA_utilities
 
  subroutine check_alloc_CUDA_f(file_name, line, successCUDA)
     use precision
-    
+
     implicit none
-    
+
     character(len=*), intent(in)    :: file_name
     integer(kind=ik), intent(in)    :: line
     logical                         :: successCUDA
-    
+
     if (.not.(successCUDA)) then
       print *, file_name, ":", line,  " error in cuda_malloc when allocating "
       stop
@@ -274,13 +272,13 @@ module ELPA_utilities
 
  subroutine check_dealloc_CUDA_f(file_name, line, successCUDA)
     use precision
-    
+
     implicit none
-    
+
     character(len=*), intent(in)    :: file_name
     integer(kind=ik), intent(in)    :: line
     logical                         :: successCUDA
-    
+
     if (.not.(successCUDA)) then
       print *, file_name, ":", line,  " error in cuda_free when deallocating "
       stop
@@ -289,13 +287,13 @@ module ELPA_utilities
 
  subroutine check_memcpy_CUDA_f(file_name, line, successCUDA)
     use precision
-    
+
     implicit none
-    
+
     character(len=*), intent(in)    :: file_name
     integer(kind=ik), intent(in)    :: line
     logical                         :: successCUDA
-    
+
     if (.not.(successCUDA)) then
       print *, file_name, ":", line,  " error in cuda_memcpy when copying "
       stop

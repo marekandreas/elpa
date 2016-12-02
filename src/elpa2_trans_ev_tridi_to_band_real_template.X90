@@ -1,0 +1,2009 @@
+
+    subroutine trans_ev_tridi_to_band_real_PRECISION(na, nev, nblk, nbw, q, q_dev, ldq, matrixCols, hh_trans_real, &
+                                           mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success, &
+                                           THIS_REAL_ELPA_KERNEL)
+    !-------------------------------------------------------------------------------
+    !  trans_ev_tridi_to_band_real:
+    !  Transforms the eigenvectors of a tridiagonal matrix back to the eigenvectors of the band matrix
+    !
+    !  Parameters
+    !
+    !  na          Order of matrix a, number of rows of matrix q
+    !
+    !  nev         Number eigenvectors to compute (= columns of matrix q)
+    !
+    !  nblk        blocksize of cyclic distribution, must be the same in both directions!
+    !
+    !  nb          semi bandwith
+    !
+    !  q           On input: Eigenvectors of tridiagonal matrix
+    !              On output: Transformed eigenvectors
+    !              Distribution is like in Scalapack.
+    !
+    !  ldq         Leading dimension of q
+    !  matrixCols  local columns of matrix q
+    !
+    !  mpi_comm_rows
+    !  mpi_comm_cols
+    !              MPI-Communicators for rows/columns/both
+    !
+    !-------------------------------------------------------------------------------
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#else
+      use timings_dummy
+#endif
+      use cuda_functions
+      use precision
+      use pack_unpack_real
+      use pack_unpack_real_gpu
+      use compute_hh_trafo_real
+      use iso_c_binding
+      use elpa2_workload
+      implicit none
+      logical, intent(in) :: useGPU
+
+      integer(kind=ik), intent(in)             :: THIS_REAL_ELPA_KERNEL
+      integer(kind=ik), intent(in)             :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE)                 :: q(ldq,*)
+#else
+      real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)
+#endif
+      integer(kind=c_intptr_t)                 :: q_dev
+
+
+      real(kind=REAL_DATATYPE), intent(in)     :: hh_trans_real(:,:)
+      integer(kind=ik)                         :: np_rows, my_prow, np_cols, my_pcol
+
+      integer(kind=ik)                         :: i, j, ip, sweep, nbuf, l_nev, a_dim2
+      integer(kind=ik)                         :: current_n, current_local_n, current_n_start, current_n_end
+      integer(kind=ik)                         :: next_n, next_local_n, next_n_start, next_n_end
+      integer(kind=ik)                         :: bottom_msg_length, top_msg_length, next_top_msg_length
+      integer(kind=ik)                         :: stripe_width, last_stripe_width, stripe_count
+#ifdef WITH_OPENMP
+      integer(kind=ik)                         :: thread_width, csw, b_off, b_len
+#endif
+      integer(kind=ik)                         :: num_result_blocks, num_result_buffers, num_bufs_recvd
+      integer(kind=ik)                         :: a_off, current_tv_off, max_blk_size
+      integer(kind=ik)                         :: mpierr, src, src_offset, dst, offset, nfact, num_blk
+
+#ifdef WITH_OPENMP
+#ifdef WITH_MPI
+!      integer(kind=ik)                         :: my_MPI_STATUS_(MPI_STATUS_SIZE)
+#endif
+#endif
+
+      logical                                  :: flag
+
+#ifdef WITH_OPENMP
+      real(kind=REAL_DATATYPE), pointer        :: aIntern(:,:,:,:)
+#else
+      real(kind=REAL_DATATYPE), pointer        :: aIntern(:,:,:)
+#endif
+      real(kind=REAL_DATATYPE)                 :: a_real
+      type(c_ptr)                              :: aIntern_ptr
+      real(kind=REAL_DATATYPE)   , allocatable :: row(:)
+      real(kind=REAL_DATATYPE)   , allocatable :: row_group(:,:)
+
+#ifdef WITH_OPENMP
+      real(kind=REAL_DATATYPE), allocatable    :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
+      real(kind=REAL_DATATYPE), allocatable    :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
+#else
+      real(kind=REAL_DATATYPE), allocatable    :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
+      real(kind=REAL_DATATYPE), allocatable    :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
+#endif
+      real(kind=REAL_DATATYPE), allocatable    :: result_buffer(:,:,:)
+      real(kind=REAL_DATATYPE), allocatable    :: bcast_buffer(:,:)
+      integer(kind=ik)                         :: tmp
+
+!      real*8, allocatable, device              :: a_dev(:,:,:)
+!      real*8, allocatable, device              :: bcast_buffer_dev(:,:)
+!      real*8, allocatable, device              :: row_dev(:)
+!      real*8, allocatable, device              :: row_group_dev(:,:)
+!      real*8, allocatable, device              :: hh_dot_dev(:)
+!      real*8, allocatable, device              :: hh_tau_dev(:)
+
+      integer(kind=c_intptr_t)                 :: aIntern_dev
+      integer(kind=c_intptr_t)                 :: bcast_buffer_dev
+      integer(kind=c_size_t)                   :: num
+      integer(kind=c_size_t)                   :: dev_offset, dev_offset_1
+
+
+      integer(kind=c_intptr_t)                 :: row_dev
+      integer(kind=c_intptr_t)                 :: row_group_dev
+      integer(kind=c_intptr_t)                 :: hh_dot_dev
+      integer(kind=c_intptr_t)                 :: hh_tau_dev
+      Integer(kind=ik)                         :: top, chunk, this_chunk
+      integer(kind=ik)                         :: row_group_size, unpack_idx
+
+      integer(kind=ik)                         :: n_off
+      integer(kind=ik), allocatable            :: result_send_request(:), result_recv_request(:), limits(:)
+      integer(kind=ik), allocatable            :: top_send_request(:), bottom_send_request(:)
+      integer(kind=ik), allocatable            :: top_recv_request(:), bottom_recv_request(:)
+#ifdef WITH_OPENMP
+!      integer(kind=ik), allocatable            :: mpi_statuses(:,:)
+#endif
+      ! MPI send/recv tags, arbitrary
+
+      integer(kind=ik), parameter              :: bottom_recv_tag = 111
+      integer(kind=ik), parameter              :: top_recv_tag    = 222
+      integer(kind=ik), parameter              :: result_recv_tag = 333
+
+      ! Just for measuring the kernel performance
+      real(kind=c_double)                      :: kernel_time, kernel_time_recv ! MPI_WTIME always needs double
+      ! long integer
+      integer(kind=lik)                        :: kernel_flops, kernel_flops_recv
+
+#ifdef WITH_OPENMP
+      integer(kind=ik)                         :: max_threads, my_thread
+      integer(kind=ik)                         :: omp_get_max_threads
+#endif
+
+      logical, intent(in)                      :: wantDebug
+      logical                                  :: success
+      integer(kind=ik)                         :: istat
+      character(200)                           :: errorMessage
+      logical                                  :: successCUDA
+#ifndef WITH_MPI
+      integer(kind=ik)                         :: j1
+#endif
+
+      call timer%start("trans_ev_tridi_to_band_real" // PRECISION_SUFFIX)
+
+#ifdef WITH_GPU_VERSION
+      unpack_idx = 0
+      row_group_size = 0
+#endif
+      success = .true.
+      kernel_time = 0.0
+      kernel_flops = 0
+
+#ifdef WITH_OPENMP
+      max_threads = 1
+      max_threads = omp_get_max_threads()
+#endif
+      call timer%start("mpi_communication")
+      call MPI_Comm_rank(mpi_comm_rows, my_prow, mpierr)
+      call MPI_Comm_size(mpi_comm_rows, np_rows, mpierr)
+      call MPI_Comm_rank(mpi_comm_cols, my_pcol, mpierr)
+      call MPI_Comm_size(mpi_comm_cols, np_cols, mpierr)
+      call timer%stop("mpi_communication")
+      if (mod(nbw,nblk)/=0) then
+        if (my_prow==0 .and. my_pcol==0) then
+          if (wantDebug) then
+            write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_real: ERROR: nbw=',nbw,', nblk=',nblk
+            write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_real: band backtransform works only for nbw==n*nblk'
+          endif
+          success = .false.
+          return
+        endif
+      endif
+
+      nfact = nbw / nblk
+
+
+      ! local number of eigenvectors
+      l_nev = local_index(nev, my_pcol, np_cols, nblk, -1)
+
+      if (l_nev==0) then
+#ifdef WITH_OPENMP
+        thread_width = 0
+#endif
+        stripe_width = 0
+        stripe_count = 0
+        last_stripe_width = 0
+      else
+
+        ! Suggested stripe width is 48 since 48*64 real*8 numbers should fit into
+        ! every primary cache
+        if (.not.(useGPU)) then
+
+#ifdef WITH_OPENMP
+          thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
+#endif
+#ifdef DOUBLE_PRECISION_REAL
+          stripe_width = 48 ! Must be a multiple of 4
+#else
+          stripe_width = 96 ! Must be a multiple of 8
+#endif
+#ifdef WITH_OPENMP
+          stripe_count = (thread_width-1)/stripe_width + 1
+#else
+          stripe_count = (l_nev-1)/stripe_width + 1
+#endif
+          ! Adapt stripe width so that last one doesn't get too small
+#ifdef WITH_OPENMP
+          stripe_width = (thread_width-1)/stripe_count + 1
+#else
+          stripe_width = (l_nev-1)/stripe_count + 1
+#endif
+#ifdef DOUBLE_PRECISION_REAL
+          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK2 .or. &
+	      THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK4 .or. &
+              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK6) then
+
+            stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
+                                                  ! (8 * sizeof(double) == 64)
+
+	  else
+            stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX/SSE memory alignment of 32 bytes
+        	                                  ! (4 * sizeof(double) == 32)
+          endif
+#else
+          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK2 .or. &
+	      THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK4 .or. &
+              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK6) then
+
+            stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
+	                                             ! (16 * sizeof(float) == 64)
+
+	  else
+
+            stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX/SSE memory alignment of 32 bytes
+	                                          ! (8 * sizeof(float) == 32)
+          endif
+#endif
+        else ! GPUs are used
+          stripe_width = 256 ! Must be a multiple of 4
+          stripe_count = (l_nev - 1) / stripe_width + 1
+        endif
+
+        last_stripe_width = l_nev - (stripe_count-1)*stripe_width
+      endif
+
+      ! Determine the matrix distribution at the beginning
+
+      allocate(limits(0:np_rows), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_tridi_to_band_real: error when allocating limits"//errorMessage
+        stop
+      endif
+      call determine_workload(na, nbw, np_rows, limits)
+
+      max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
+
+      a_dim2 = max_blk_size + nbw
+
+      if (useGPU) then
+        num =  (stripe_width*a_dim2*stripe_count)*size_of_PRECISION_real
+        successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count*size_of_PRECISION_real)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"//errorMessage
+          stop
+        endif
+
+        successCUDA = cuda_memset(aIntern_dev , 0, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMemset"//errorMessage
+          stop
+        endif
+
+      else ! GPUs are not used
+#if 0
+!DEC$ ATTRIBUTES ALIGN: 64:: aIntern
+#endif
+
+#ifdef WITH_OPENMP
+        if (posix_memalign(aIntern_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*C_SIZEOF(a_real)) /= 0) then
+          print *,"trans_ev_tridi_to_band_real: error when allocating aIntern"//errorMessage
+          stop
+        endif
+
+        call c_f_pointer(aIntern_ptr, aIntern, [stripe_width,a_dim2,stripe_count,max_threads])
+        ! allocate(aIntern(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
+
+        ! aIntern(:,:,:,:) should be set to 0 in a parallel region, not here!
+#else
+        if (posix_memalign(aIntern_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*C_SIZEOF(a_real)) /= 0) then
+          print *,"trans_ev_tridi_to_band_real: error when allocating aIntern"//errorMessage
+          stop
+        endif
+
+        call c_f_pointer(aIntern_ptr, aIntern,[stripe_width,a_dim2,stripe_count] )
+        !allocate(aIntern(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
+
+        aIntern(:,:,:) = CONST_0_0
+
+#endif /* WITH_OPENMP */
+      endif !useGPU
+
+      allocate(row(l_nev), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_tridi_to_band_real: error when allocating row"//errorMessage
+        stop
+      endif
+      row(:) = CONST_0_0
+      if (useGPU) then
+        num =  (l_nev)*size_of_PRECISION_real
+        successCUDA = cuda_malloc( row_dev,num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc "//errorMessage
+          stop
+        endif
+
+        successCUDA = cuda_memset(row_dev , 0, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMemset"//errorMessage
+          stop
+        endif
+
+        ! "row_group" and "row_group_dev" are needed for GPU optimizations
+        allocate(row_group(l_nev, nblk), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_tridi_to_band_real: error when allocating row_group"//errorMessage
+          stop
+        endif
+
+        row_group(:, :) = CONST_0_0
+
+        num =  (l_nev*nblk)*size_of_PRECISION_real
+        !    call cuda_malloc2d( row_group_dev,l_nev*size_of_PRECISION_real,nblk*size_of_real_datatype)
+        successCUDA = cuda_malloc(row_group_dev, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"//errorMessage
+          stop
+        endif
+        successCUDA = cuda_memset(row_group_dev , 0, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMemset"//errorMessage
+          stop
+        endif
+
+      endif ! useGPU
+
+      ! Copy q from a block cyclic distribution into a distribution with contiguous rows,
+      ! and transpose the matrix using stripes of given stripe_width for cache blocking.
+
+      ! The peculiar way it is done below is due to the fact that the last row should be
+      ! ready first since it is the first one to start below
+
+#ifdef WITH_OPENMP
+      ! Please note about the OMP usage below:
+      ! This is not for speed, but because we want the matrix a in the memory and
+      ! in the cache of the correct thread (if possible)
+
+      call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+      !$omp parallel do private(my_thread), schedule(static, 1)
+      do my_thread = 1, max_threads
+        aIntern(:,:,:,my_thread) = CONST_0_0 ! if possible, do first touch allocation!
+      enddo
+      !$omp end parallel do
+
+      call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+#endif /* WITH_OPENMP */
+
+      do ip = np_rows-1, 0, -1
+        if (my_prow == ip) then
+          ! Receive my rows which have not yet been received
+          src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
+          do i=limits(ip)+1,limits(ip+1)
+            src = mod((i-1)/nblk, np_rows)
+            if (src < my_prow) then
+#ifdef WITH_OPENMP
+              if (useGPU) then
+               print *,"trans_ev_tridi_to_band_real: not yet implemented"
+               stop
+              endif
+#ifdef WITH_MPI
+              call timer%start("mpi_communication")
+              call MPI_Recv(row, l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+              call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+
+!              row(1:l_nev) = row(1:l_nev)
+
+#endif /* WITH_MPI */
+
+              call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+!$omp parallel do private(my_thread), schedule(static, 1)
+              do my_thread = 1, max_threads
+                call unpack_row_real_cpu_openmp_PRECISION(aIntern, row, i-limits(ip), my_thread, stripe_count, &
+                                                thread_width, stripe_width, l_nev)
+              enddo
+!$omp end parallel do
+
+              call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+#else /* WITH_OPENMP */
+              if (useGPU) then
+                ! An unpacking of the current row group may occur before queuing the next row
+                call unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count, &
+                                                           stripe_width, last_stripe_width, a_dim2, l_nev,&
+                                                           row_group_size, nblk, unpack_idx, i - limits(ip), .false.)
+#ifdef WITH_MPI
+                call timer%start("mpi_communication")
+                call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+                row_group(1:l_nev, row_group_size) = row(1:l_nev) ! is this correct?
+#endif /* WITH_MPI */
+
+              else
+#ifdef WITH_MPI
+                call timer%start("mpi_communication")
+                call MPI_Recv(row, l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+
+!                row(1:l_nev) = row(1:l_nev)
+
+#endif /* WITH_MPI */
+                call unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
+              endif
+#endif /* WITH_OPENMP */
+
+            elseif (src==my_prow) then
+              src_offset = src_offset+1
+              if (.not.(useGPU)) row(:) = q(src_offset, 1:l_nev)
+
+#ifdef WITH_OPENMP
+
+              call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+              if (useGPU) then
+                print *,"trans_ev_tridi_to_band_real: not yet implemented"
+                stop
+              endif
+!$omp parallel do private(my_thread), schedule(static, 1)
+              do my_thread = 1, max_threads
+                call unpack_row_real_cpu_openmp_PRECISION(aIntern, row, i-limits(ip), my_thread, &
+                                                stripe_count, thread_width, stripe_width, l_nev)
+              enddo
+!$omp end parallel do
+
+              call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+#else /* WITH_OPENMP */
+
+              if (useGPU) then
+                ! An unpacking of the current row group may occur before queuing the next row
+                call unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count, &
+                                                           stripe_width, last_stripe_width, a_dim2, l_nev,&
+                                                           row_group_size, nblk, unpack_idx, i - limits(ip), .false.)
+                row_group(:, row_group_size) = q(src_offset, 1:l_nev)
+              else
+                call unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
+              endif
+
+#endif /* WITH_OPENMP */
+
+            endif
+          enddo
+
+          ! Send all rows which have not yet been send
+          src_offset = 0
+          do dst = 0, ip-1
+            do i=limits(dst)+1,limits(dst+1)
+              if (mod((i-1)/nblk, np_rows) == my_prow) then
+                src_offset = src_offset+1
+                row(:) = q(src_offset, 1:l_nev)
+#ifdef WITH_MPI
+                call timer%start("mpi_communication")
+                call MPI_Send(row, l_nev, MPI_REAL_PRECISION, dst, 0, mpi_comm_rows, mpierr)
+                call timer%stop("mpi_communication")
+#endif /* WITH_MPI */
+              endif
+            enddo
+          enddo
+
+        else if (my_prow < ip) then
+          ! Send all rows going to PE ip
+          src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
+          do i=limits(ip)+1,limits(ip+1)
+            src = mod((i-1)/nblk, np_rows)
+            if (src == my_prow) then
+              src_offset = src_offset+1
+              row(:) = q(src_offset, 1:l_nev)
+#ifdef WITH_MPI
+              call timer%start("mpi_communication")
+              call MPI_Send(row, l_nev, MPI_REAL_PRECISION, ip, 0, mpi_comm_rows, mpierr)
+              call timer%stop("mpi_communication")
+#endif /* WITH_MPI */
+            endif
+          enddo
+          ! Receive all rows from PE ip
+          do i=limits(my_prow)+1,limits(my_prow+1)
+            src = mod((i-1)/nblk, np_rows)
+            if (src == ip) then
+#ifdef WITH_OPENMP
+              if (useGPU) then
+                print *,"trans_ev_tridi_to_band_real: not yet implemented"
+                stop
+              endif
+
+#ifdef WITH_MPI
+              call timer%start("mpi_communication")
+              call MPI_Recv(row, l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+              call timer%stop("mpi_communication")
+#else /* WITH_MPI */
+
+!              row(1:l_nev) = row(1:l_nev)
+
+#endif /* WITH_MPI */
+
+              call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+!$omp parallel do private(my_thread), schedule(static, 1)
+              do my_thread = 1, max_threads
+                call unpack_row_real_cpu_openmp_PRECISION(aIntern, row, i-limits(my_prow), my_thread, &
+                                                stripe_count, thread_width, stripe_width, l_nev)
+              enddo
+!$omp end parallel do
+              call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+#else /* WITH_OPENMP */
+              if (useGPU) then
+                ! An unpacking of the current row group may occur before queuing the next row
+                call unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count,  &
+                                                          stripe_width, last_stripe_width, a_dim2, l_nev,       &
+                                  row_group_size, nblk, unpack_idx, i - limits(my_prow), .false.)
+#ifdef WITH_MPI
+               call timer%start("mpi_communication")
+               call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+               call timer%stop("mpi_communication")
+#else
+               row_group(1:l_nev,row_group_size) = row(1:l_nev) ! is this correct ?
+#endif
+              else
+#ifdef WITH_MPI
+                call timer%start("mpi_communication")
+                call MPI_Recv(row, l_nev, MPI_REAL_PRECISION, src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                call timer%stop("mpi_communication")
+#else /* WITH_MPI */
+
+!                row(1:l_nev) = row(1:l_nev)
+
+#endif
+                call unpack_row_real_cpu_PRECISION(aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
+              endif
+
+#endif /* WITH_OPENMP */
+
+            endif
+          enddo
+        endif
+      enddo
+
+      if (useGPU) then
+        ! Force an unpacking of all remaining rows that haven't been unpacked yet
+        call unpack_and_prepare_row_group_real_gpu_PRECISION(row_group, row_group_dev, aIntern_dev, stripe_count, &
+                                                      stripe_width, last_stripe_width, &
+                                                   a_dim2, l_nev, row_group_size, nblk, unpack_idx, -1, .true.)
+        successCUDA = cuda_devicesynchronize()
+
+         if (.not.(successCUDA)) then
+           print *,"trans_ev_tridi_to_band_real: error in cudaDeviceSynchronize"//errorMessage
+           stop
+         endif
+      endif
+
+      ! Set up result buffer queue
+
+      num_result_blocks = ((na-1)/nblk + np_rows - my_prow) / np_rows
+
+      num_result_buffers = 4*nfact
+      allocate(result_buffer(l_nev,nblk,num_result_buffers), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_tridi_to_band_real: error when allocating result_buffer"//errorMessage
+        stop
+      endif
+
+      allocate(result_send_request(num_result_buffers), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_tridi_to_band_real: error when allocating result_send_request"//errorMessage
+        stop
+      endif
+
+      allocate(result_recv_request(num_result_buffers), stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"trans_ev_tridi_to_band_real: error when allocating result_recv_request"//errorMessage
+        stop
+      endif
+
+#ifdef WITH_MPI
+      result_send_request(:) = MPI_REQUEST_NULL
+      result_recv_request(:) = MPI_REQUEST_NULL
+#endif
+      ! Queue up buffers
+
+      if (my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
+        do j = 1, min(num_result_buffers, num_result_blocks)
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_REAL_PRECISION, 0, result_recv_tag, &
+                              mpi_comm_rows, result_recv_request(j), mpierr)
+          call timer%stop("mpi_communication")
+#else /* WITH_MPI */
+
+          ! carefull the "recv" has to be done at the corresponding wait or send
+          ! result_buffer(1: l_nev*nblk,1,j) =result_buffer(1:l_nev*nblk,1,nbuf)
+
+#endif /* WITH_MPI */
+        enddo
+      endif
+
+      num_bufs_recvd = 0 ! No buffers received yet
+
+      ! Initialize top/bottom requests
+
+      allocate(top_send_request(stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating top_send_request"//errorMessage
+         stop
+       endif
+
+      allocate(top_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating top_recv_request"//errorMessage
+         stop
+       endif
+
+      allocate(bottom_send_request(stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating bottom_send_request"//errorMessage
+         stop
+       endif
+
+      allocate(bottom_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating bottom_recv_request"//errorMessage
+         stop
+       endif
+
+#ifdef WITH_MPI
+      top_send_request(:) = MPI_REQUEST_NULL
+      top_recv_request(:) = MPI_REQUEST_NULL
+      bottom_send_request(:) = MPI_REQUEST_NULL
+      bottom_recv_request(:) = MPI_REQUEST_NULL
+#endif
+
+#ifdef WITH_OPENMP
+      allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating top_border_send_buffer"//errorMessage
+         stop
+       endif
+
+      allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating top_border_recv_buffer"//errorMessage
+         stop
+       endif
+
+      allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating bottom_border_send_buffer"//errorMessage
+         stop
+       endif
+
+      allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating bottom_border_recv_buffer"//errorMessage
+         stop
+       endif
+
+      top_border_send_buffer(:,:) = CONST_0_0
+      top_border_recv_buffer(:,:) = CONST_0_0
+      bottom_border_send_buffer(:,:) = CONST_0_0
+      bottom_border_recv_buffer(:,:) = CONST_0_0
+
+      ! Initialize broadcast buffer
+
+#else /* WITH_OPENMP */
+
+       allocate(top_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating top_border_send_bufer"//errorMessage
+         stop
+       endif
+
+      allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating top_border_recv_buffer"//errorMessage
+         stop
+       endif
+
+      allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating bottom_border_send_buffer"//errorMessage
+         stop
+       endif
+
+      allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating bottom_border_recv_buffer"//errorMessage
+         stop
+       endif
+
+      top_border_send_buffer(:,:,:) = CONST_0_0
+      top_border_recv_buffer(:,:,:) = CONST_0_0
+      bottom_border_send_buffer(:,:,:) = CONST_0_0
+      bottom_border_recv_buffer(:,:,:) = CONST_0_0
+
+#endif /* WITH_OPENMP */
+
+      allocate(bcast_buffer(nbw, max_blk_size), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when allocating bcast_buffer"//errorMessage
+         stop
+       endif
+
+      bcast_buffer = CONST_0_0
+
+      if (useGPU) then
+        num =  ( nbw * max_blk_size) * size_of_PRECISION_real
+        successCUDA = cuda_malloc(bcast_buffer_dev, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
+          stop
+        endif
+
+        successCUDA = cuda_memset( bcast_buffer_dev, 0, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMemset"
+          stop
+        endif
+
+        num =  ((max_blk_size-1))*size_of_PRECISION_real
+        successCUDA = cuda_malloc( hh_dot_dev, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
+          stop
+        endif
+
+        successCUDA = cuda_memset( hh_dot_dev, 0, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMemset"
+          stop
+        endif
+
+        num =  (max_blk_size)*size_of_PRECISION_real
+        successCUDA = cuda_malloc( hh_tau_dev, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
+          stop
+        endif
+
+        successCUDA = cuda_memset( hh_tau_dev, 0, num)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMemset"
+          stop
+        endif
+      endif ! useGPU
+
+      current_tv_off = 0 ! Offset of next row to be broadcast
+
+       ! ------------------- start of work loop -------------------
+
+      a_off = 0 ! offset in aIntern (to avoid unnecessary shifts)
+
+      top_msg_length = 0
+      bottom_msg_length = 0
+
+      do sweep = 0, (na-1)/nbw
+
+        current_n = na - sweep*nbw
+        call determine_workload(current_n, nbw, np_rows, limits)
+        current_n_start = limits(my_prow)
+        current_n_end   = limits(my_prow+1)
+        current_local_n = current_n_end - current_n_start
+
+        next_n = max(current_n - nbw, 0)
+        call determine_workload(next_n, nbw, np_rows, limits)
+        next_n_start = limits(my_prow)
+        next_n_end   = limits(my_prow+1)
+        next_local_n = next_n_end - next_n_start
+
+        if (next_n_end < next_n) then
+          bottom_msg_length = current_n_end - next_n_end
+        else
+          bottom_msg_length = 0
+        endif
+
+        if (next_local_n > 0) then
+          next_top_msg_length = current_n_start - next_n_start
+        else
+          next_top_msg_length = 0
+        endif
+
+        if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+          do i = 1, stripe_count
+
+#ifdef WITH_OPENMP
+
+            if (useGPU) then
+              print *,"trans_ev_tridi_to_band_real: not yet implemented"
+              stop
+            endif
+
+            csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
+            b_len = csw*nbw*max_threads
+#ifdef WITH_MPI
+            call timer%start("mpi_communication")
+            call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
+                              mpi_comm_rows, bottom_recv_request(i), mpierr)
+            call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+!            carefull the "recieve" has to be done at the corresponding wait or send
+!            bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+#endif /* WITH_MPI */
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+            call timer%start("mpi_communication")
+            call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
+                        mpi_comm_rows, bottom_recv_request(i), mpierr)
+            call timer%stop("mpi_communication")
+#else  /* WITH_MPI */
+!            carefull the recieve has to be done at the corresponding wait or send
+!            bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
+#endif /* WITH_MPI */
+
+#endif /* WITH_OPENMP */
+
+          enddo
+        endif
+
+        if (current_local_n > 1) then
+          if (my_pcol == mod(sweep,np_cols)) then
+            bcast_buffer(:,1:current_local_n) = hh_trans_real(:,current_tv_off+1:current_tv_off+current_local_n)
+            current_tv_off = current_tv_off + current_local_n
+          endif
+#ifdef WITH_MPI
+           call timer%start("mpi_communication")
+           call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_REAL_PRECISION, mod(sweep,np_cols), mpi_comm_cols, mpierr)
+           call timer%stop("mpi_communication")
+
+#endif /* WITH_MPI */
+
+          if (useGPU) then
+            successCUDA =  cuda_memcpy(bcast_buffer_dev, loc(bcast_buffer(1,1)),  &
+                                       nbw * current_local_n * size_of_PRECISION_real , cudaMemcpyHostToDevice)
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
+              stop
+            endif
+
+            call extract_hh_tau_real_gpu_PRECISION(bcast_buffer_dev, hh_tau_dev, nbw, current_local_n, .false.)
+            call compute_hh_dot_products_real_gpu_PRECISION(bcast_buffer_dev, hh_dot_dev, nbw, current_local_n)
+          endif
+
+        else ! (current_local_n > 1) then
+
+          ! for current_local_n == 1 the one and only HH vector is 0 and not stored in hh_trans_real
+          bcast_buffer(:,1) = CONST_0_0
+
+          if (useGPU) then
+            successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw * size_of_PRECISION_real)
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_tridi_to_band_real: error in cudaMemset"
+              stop
+            endif
+
+            call extract_hh_tau_real_gpu_PRECISION(bcast_buffer_dev, hh_tau_dev, nbw, 1, .true.)
+          endif
+        endif ! (current_local_n > 1) then
+
+        if (l_nev == 0) cycle
+
+        if (current_local_n > 0) then
+
+          do i = 1, stripe_count
+#ifdef WITH_OPENMP
+            if (useGPU) then
+              print *,"trans_ev_tridi_to_band_real: not yet implemented"
+              stop
+            endif
+
+            ! Get real stripe width for strip i;
+            ! The last OpenMP tasks may have an even smaller stripe with,
+            ! but we don't care about this, i.e. we send/recv a bit too much in this case.
+            ! csw: current_stripe_width
+
+            csw = min(stripe_width, thread_width-(i-1)*stripe_width)
+#endif /* WITH_OPENMP */
+
+            !wait_b
+            if (current_n_end < current_n) then
+#ifdef WITH_OPENMP
+              if (useGPU) then
+                print *,"trans_ev_tridi_to_band_real: not yet implemented"
+                stop
+              endif
+
+#ifdef WITH_MPI
+              call timer%start("mpi_communication")
+
+              call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+              call timer%stop("mpi_communication")
+
+#endif
+
+              call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+!$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
+              do my_thread = 1, max_threads
+                n_off = current_local_n+a_off
+                b_len = csw*nbw
+                b_off = (my_thread-1)*b_len
+                aIntern(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
+                  reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
+              enddo
+!$omp end parallel do
+              call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+              call timer%start("mpi_communication")
+
+              call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+              call timer%stop("mpi_communication")
+
+#endif
+              n_off = current_local_n+a_off
+
+              if (useGPU) then
+                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *size_of_PRECISION_real
+                successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc(bottom_border_recv_buffer(1,1,i)), &
+                                           stripe_width*nbw*size_of_PRECISION_real ,cudaMemcpyHostToDevice)
+                if (.not.(successCUDA)) then
+                  print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
+                  stop
+                endif
+
+              else
+                aIntern(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
+              endif
+
+#endif /* WITH_OPENMP */
+
+           if (next_n_end < next_n) then
+
+#ifdef WITH_OPENMP
+
+             if (useGPU) then
+               print *,"trans_ev_tridi_to_band_real: not yet implemented"
+               stop
+             endif
+#ifdef WITH_MPI
+             call timer%start("mpi_communication")
+             call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, &
+                                   MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
+                                   mpi_comm_rows, bottom_recv_request(i), mpierr)
+             call timer%stop("mpi_communication")
+
+#else /* WTIH_MPI */
+!                carefull the recieve has to be done at the corresponding wait or send
+!                bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+
+#endif /* WITH_MPI */
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+             call timer%start("mpi_communication")
+             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_REAL_PRECISION, my_prow+1, bottom_recv_tag, &
+                                   mpi_comm_rows, bottom_recv_request(i), mpierr)
+              call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+
+!!                carefull the recieve has to be done at the corresponding wait or send
+!!                bottom_border_recv_buffer(1:stripe_width,1:nbw,i) =  top_border_send_buffer(1:stripe_width,1:nbw,i)
+
+#endif /* WITH_MPI */
+
+#endif /* WITH_OPENMP */
+           endif
+         endif
+
+         if (current_local_n <= bottom_msg_length + top_msg_length) then
+
+           !wait_t
+           if (top_msg_length>0) then
+#ifdef WITH_OPENMP
+             if (useGPU) then
+               print *,"trans_ev_tridi_to_band_real: not yet implemented"
+               stop
+             endif
+#ifdef WITH_MPI
+             call timer%start("mpi_communication")
+
+             call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+             call timer%stop("mpi_communication")
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+             call timer%start("mpi_communication")
+             call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+             call timer%stop("mpi_communication")
+#endif
+
+             if (useGPU) then
+               dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
+               !             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
+               successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , loc(top_border_recv_buffer(1,1,i)),  &
+                                           stripe_width*top_msg_length*size_of_PRECISION_real , cudaMemcpyHostToDevice)
+               if (.not.(successCUDA)) then
+                 print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
+                 stop
+                endif
+             else
+               aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+             endif ! useGPU
+#endif /* WITH_OPENMP */
+           endif ! top_msg_length
+
+           !compute
+#ifdef WITH_OPENMP
+
+           call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+           if (useGPU) then
+             print *,"trans_ev_tridi_to_band_real: not yet implemented"
+             stop
+            endif
+
+!$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
+           do my_thread = 1, max_threads
+             if (top_msg_length>0) then
+               b_len = csw*top_msg_length
+               b_off = (my_thread-1)*b_len
+               aIntern(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
+                          reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
+             endif
+                call compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,      &
+                                                     max_threads, l_nev, a_off, nbw, max_blk_size, bcast_buffer,    &
+                                 bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,        &
+                                 kernel_time, 0, current_local_n, i, my_thread, thread_width,   &
+                                 THIS_REAL_ELPA_KERNEL)
+
+!                call compute_hh_trafo_real_cpu_openmp(aIntern,stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
+!                    a_off, nbw, max_blk_size, bcast_buffer,  kernel_flops, kernel_time, &
+!0, current_local_n, i, my_thread, thread_width, &
+!                                         THIS_REAL_ELPA_KERNEL)
+           enddo
+!$omp end parallel do
+           call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+#else /* WITH_OPENMP */
+           call compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+                                          a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
+                                          hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,          &
+                                          last_stripe_width, THIS_REAL_ELPA_KERNEL)
+#endif /* WITH_OPENMP */
+
+           !send_b
+#ifdef WITH_OPENMP
+
+           if (useGPU) then
+             print *,"trans_ev_tridi_to_band_real: not yet implemented"
+            stop
+           endif
+#ifdef WITH_MPI
+           call timer%start("mpi_communication")
+           call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+           call timer%stop("mpi_communication")
+#endif
+           if (bottom_msg_length>0) then
+             n_off = current_local_n+nbw-bottom_msg_length+a_off
+             b_len = csw*bottom_msg_length*max_threads
+             bottom_border_send_buffer(1:b_len,i) = &
+                 reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+#ifdef WITH_MPI
+             call timer%start("mpi_communication")
+             call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL_PRECISION, my_prow+1, &
+                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+             call timer%stop("mpi_communication")
+#else /* WITH_MPI */
+                if (next_top_msg_length > 0) then
+                  top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = bottom_border_send_buffer(1:csw* &
+                                            next_top_msg_length*max_threads,i)
+                endif
+
+#endif /* WITH_MPI */
+           endif
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+           call timer%start("mpi_communication")
+           call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+           call timer%stop("mpi_communication")
+#endif
+           if (bottom_msg_length>0) then
+             n_off = current_local_n+nbw-bottom_msg_length+a_off
+
+             if (useGPU) then
+               dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
+               successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
+                                          stripe_width * bottom_msg_length * size_of_PRECISION_real ,cudaMemcpyDeviceToHost)
+               if (.not.(successCUDA)) then
+                 print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
+                 stop
+               endif
+             else
+               bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
+             endif
+#ifdef WITH_MPI
+             call timer%start("mpi_communication")
+             call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL_PRECISION, my_prow+1, &
+                            top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+             call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+                if (next_top_msg_length > 0) then
+                  top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
+                  bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
+                endif
+
+#endif /* WITH_MPI */
+           endif
+#endif /* WITH_OPENMP */
+         else ! current_local_n <= bottom_msg_length + top_msg_length
+
+         !compute
+#ifdef WITH_OPENMP
+         if (useGPU) then
+           print *,"trans_ev_tridi_to_band_real: not yet implemented"
+           stop
+         endif
+         call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+!$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
+        do my_thread = 1, max_threads
+          call compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+                                                   max_threads, l_nev, a_off, nbw, max_blk_size,  bcast_buffer,    &
+                               bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,         &
+                               kernel_time, current_local_n - bottom_msg_length,               &
+                               bottom_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+!                call compute_hh_trafo_real_cpu_openmp(aIntern, stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
+!                    a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time, &
+!current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, thread_width, &
+!                                    THIS_REAL_ELPA_KERNEL)
+        enddo
+!$omp end parallel do
+        call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+        !send_b
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+
+        call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+        call timer%stop("mpi_communication")
+#endif
+        if (bottom_msg_length > 0) then
+          n_off = current_local_n+nbw-bottom_msg_length+a_off
+          b_len = csw*bottom_msg_length*max_threads
+          bottom_border_send_buffer(1:b_len,i) = &
+              reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_REAL_PRECISION, my_prow+1, &
+                           top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+          call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+                if (next_top_msg_length > 0) then
+                  top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = bottom_border_send_buffer(1:csw* &
+                                                                                                     next_top_msg_length*&
+                                                          max_threads,i)
+                endif
+
+#endif /* WITH_MPI */
+        endif
+#else /* WITH_OPENMP */
+        call compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+                                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
+                                       hh_tau_dev, kernel_flops, kernel_time,                                 &
+                                       current_local_n - bottom_msg_length, bottom_msg_length, i,             &
+                                       last_stripe_width, THIS_REAL_ELPA_KERNEL)
+        !send_b
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+
+        call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
+        call timer%stop("mpi_communication")
+#endif
+        if (bottom_msg_length > 0) then
+          n_off = current_local_n+nbw-bottom_msg_length+a_off
+
+          if (useGPU) then
+            dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
+            successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset,  &
+                                         stripe_width*bottom_msg_length*size_of_PRECISION_real ,cudaMemcpyDeviceToHost)
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_tridi_to_band_real: error cudaMemcpy"
+              stop
+            endif
+          else
+            bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
+          endif
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, MPI_REAL_PRECISION, my_prow+1, &
+                         top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+          call timer%stop("mpi_communication")
+#else /* WITH_MPI */
+                if (next_top_msg_length > 0) then
+                  top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
+                  bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
+                endif
+
+#endif /* WITH_MPI */
+        endif
+#endif /* WITH_OPENMP */
+
+        !compute
+#ifdef WITH_OPENMP
+        if (useGPU) then
+          print *,"trans_ev_tridi_to_band_real: not yet implemented"
+          stop
+        endif
+
+        call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+!$omp parallel do private(my_thread), schedule(static, 1)
+        do my_thread = 1, max_threads
+          call compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count,        &
+                                                   max_threads, l_nev, a_off,  nbw, max_blk_size, bcast_buffer,     &
+                               bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,          &
+                               kernel_time, top_msg_length,                                     &
+                               current_local_n-top_msg_length-bottom_msg_length, i, my_thread,  &
+                               thread_width, THIS_REAL_ELPA_KERNEL)
+!                call compute_hh_trafo_real_cpu_openmp(aIntern, stripe_width, a_dim2,stripe_count, max_threads, l_nev, &
+!                    a_off,  nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
+!                    top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
+!                                      THIS_REAL_ELPA_KERNEL)
+        enddo
+!$omp end parallel do
+        call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+#else /* WITH_OPENMP */
+        call compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+                                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
+                                       hh_tau_dev, kernel_flops, kernel_time,  top_msg_length,                    &
+                                       current_local_n-top_msg_length-bottom_msg_length, i,                       &
+                                       last_stripe_width, THIS_REAL_ELPA_KERNEL)
+#endif /* WITH_OPENMP */
+
+        !wait_t
+        if (top_msg_length>0) then
+#ifdef WITH_OPENMP
+          if (useGPU) then
+            print *,"trans_ev_tridi_to_band_real: not yet implemented"
+            stop
+          endif
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+          call timer%stop("mpi_communication")
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
+           call timer%stop("mpi_communication")
+#endif
+          if (useGPU) then
+            dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
+            successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc( top_border_recv_buffer(:,1,i)),  &
+                                       stripe_width * top_msg_length *size_of_PRECISION_real ,cudaMemcpyHostToDevice)
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
+              stop
+            endif
+          else
+            aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+          endif
+#endif /* WITH_OPENMP */
+        endif
+
+        !compute
+#ifdef WITH_OPENMP
+         if (useGPU) then
+           print *,"trans_ev_tridi_to_band_real: not yet implemented"
+           stop
+         endif
+
+        call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+!$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
+        do my_thread = 1, max_threads
+          if (top_msg_length>0) then
+            b_len = csw*top_msg_length
+            b_off = (my_thread-1)*b_len
+            aIntern(1:csw,a_off+1:a_off+top_msg_length,i,my_thread) = &
+              reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
+          endif
+          call compute_hh_trafo_real_cpu_openmp_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+                                                   max_threads, l_nev, a_off, nbw, max_blk_size,  bcast_buffer,    &
+                               bcast_buffer_dev, hh_dot_dev, hh_tau_dev, kernel_flops,         &
+                               kernel_time, 0, top_msg_length, i, my_thread, thread_width,     &
+                               THIS_REAL_ELPA_KERNEL)
+!                call compute_hh_trafo_real_cpu_openmp(aIntern, stripe_width,a_dim2,stripe_count, max_threads, l_nev, &
+!                    a_off, nbw, max_blk_size,  bcast_buffer, kernel_flops, kernel_time, &
+!                                                      0, top_msg_length, i, my_thread, thread_width, THIS_REAL_ELPA_KERNEL)
+        enddo
+!$omp end parallel do
+        call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+#else /* WITH_OPENMP */
+        call compute_hh_trafo_real_cpu_PRECISION(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+                                       a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
+                                       hh_tau_dev, kernel_flops, kernel_time, 0, top_msg_length, i,               &
+                                       last_stripe_width, THIS_REAL_ELPA_KERNEL)
+#endif /* WITH_OPENMP */
+      endif
+
+      if (next_top_msg_length > 0) then
+        !request top_border data
+#ifdef WITH_OPENMP
+         if (useGPU) then
+           print *,"trans_ev_tridi_to_band_real: not yet implemented"
+           stop
+          endif
+
+        b_len = csw*next_top_msg_length*max_threads
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+        call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_REAL_PRECISION, my_prow-1, &
+                       top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
+        call timer%stop("mpi_communication")
+#else /* WITH_MPI */
+!             carefull the "recieve" has to be done at the corresponding wait or send
+!              top_border_recv_buffer(1:csw*next_top_msg_length*max_threads,i) = &
+!                                     bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
+#endif /* WITH_MPI */
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+        call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, MPI_REAL_PRECISION, my_prow-1, &
+                       top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
+        call timer%stop("mpi_communication")
+#else /* WITH_MPI */
+!             carefull the "recieve" has to be done at the corresponding wait or send
+!              top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
+!               bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
+#endif /* WITH_MPI */
+
+#endif /* WITH_OPENMP */
+
+      endif
+
+      !send_t
+      if (my_prow > 0) then
+#ifdef WITH_OPENMP
+        if (useGPU) then
+          print *,"trans_ev_tridi_to_band_real: not yet implemented"
+          stop
+        endif
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+        call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+        call timer%stop("mpi_communication")
+#endif
+        b_len = csw*nbw*max_threads
+        top_border_send_buffer(1:b_len,i) = reshape(aIntern(1:csw,a_off+1:a_off+nbw,i,:), (/ b_len /))
+
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+        call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_REAL_PRECISION, &
+                       my_prow-1, bottom_recv_tag, &
+                       mpi_comm_rows, top_send_request(i), mpierr)
+        call timer%stop("mpi_communication")
+#else /* WITH_MPI */
+              if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+                bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+              endif
+              if (next_n_end < next_n) then
+                bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+              endif
+#endif /* WITH_MPI */
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+        call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+        call timer%stop("mpi_communication")
+#endif
+        if (useGPU) then
+          dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_PRECISION_real
+          successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), aIntern_dev + dev_offset, &
+                                     stripe_width*nbw*size_of_PRECISION_real ,cudaMemcpyDeviceToHost)
+          if (.not.(successCUDA)) then
+            print *,"trans_ev_tridi_to_band_real: error in cudaMemcpy"
+            stop
+          endif
+
+        else
+          top_border_send_buffer(:,1:nbw,i) = aIntern(:,a_off+1:a_off+nbw,i)
+        endif
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+        call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_REAL_PRECISION, my_prow-1, bottom_recv_tag, &
+                       mpi_comm_rows, top_send_request(i), mpierr)
+        call timer%stop("mpi_communication")
+#else /* WITH_MPI */
+            if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+               bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
+             endif
+             if (next_n_end < next_n) then
+               bottom_border_recv_buffer(1:stripe_width,1:nbw,i) =  top_border_send_buffer(1:stripe_width,1:nbw,i)
+             endif
+#endif /* WITH_MPI */
+
+#endif /* WITH_OPENMP */
+      endif
+
+      ! Care that there are not too many outstanding top_recv_request's
+      if (stripe_count > 1) then
+        if (i>1) then
+
+#ifdef WITH_OPENMP
+          if (useGPU) then
+            print *,"trans_ev_tridi_to_band_real: not yet implemented"
+           stop
+          endif
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
+          call timer%stop("mpi_communication")
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Wait(top_recv_request(i-1), MPI_STATUS_IGNORE, mpierr)
+          call timer%stop("mpi_communication")
+#endif
+
+#endif /* WITH_OPENMP */
+        else
+
+#ifdef WITH_OPENMP
+          if (useGPU) then
+            print *,"trans_ev_tridi_to_band_real: not yet implemented"
+           stop
+          endif
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
+          call timer%stop("mpi_communication")
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Wait(top_recv_request(stripe_count), MPI_STATUS_IGNORE, mpierr)
+          call timer%stop("mpi_communication")
+#endif
+
+#endif /* WITH_OPENMP */
+        endif
+      endif
+
+    enddo
+
+    top_msg_length = next_top_msg_length
+
+  else
+    ! wait for last top_send_request
+    do i = 1, stripe_count
+#ifdef WITH_OPENMP
+         if (useGPU) then
+           print *,"trans_ev_tridi_to_band_real: not yet implemented"
+           stop
+         endif
+#ifdef WITH_MPI
+      call timer%start("mpi_communication")
+      call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+      call timer%stop("mpi_communication")
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+      call timer%start("mpi_communication")
+      call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
+      call timer%stop("mpi_communication")
+#endif
+
+#endif /* WITH_OPENMP */
+      enddo
+    endif
+
+    ! Care about the result
+
+    if (my_prow == 0) then
+
+      ! topmost process sends nbw rows to destination processes
+
+      do j=0, nfact-1
+        num_blk = sweep*nfact+j ! global number of destination block, 0 based
+        if (num_blk*nblk >= na) exit
+
+        nbuf = mod(num_blk, num_result_buffers) + 1 ! buffer number to get this block
+
+#ifdef WITH_OPENMP
+        if (useGPU) then
+          print *,"trans_ev_tridi_to_band_real: not yet implemented"
+          stop
+        endif
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+        call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+        call timer%stop("mpi_communication")
+
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+
+        call MPI_Wait(result_send_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+        call timer%stop("mpi_communication")
+
+#endif
+
+#endif /* WITH_OPENMP */
+        dst = mod(num_blk, np_rows)
+
+        if (dst == 0) then
+          if (useGPU) then
+            row_group_size = min(na - num_blk*nblk, nblk)
+            call pack_row_group_real_gpu_PRECISION(row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+                                     last_stripe_width, a_dim2, l_nev, &
+                                         row_group(:, :), j * nblk + a_off, row_group_size)
+            do i = 1, row_group_size
+              q((num_blk / np_rows) * nblk + i, 1 : l_nev) = row_group(:, i)
+            enddo
+          else ! useGPU
+
+            do i = 1, min(na - num_blk*nblk, nblk)
+#ifdef WITH_OPENMP
+              call pack_row_real_cpu_openmp_PRECISION(aIntern, row, j*nblk+i+a_off, stripe_width, &
+                                               stripe_count, max_threads, thread_width, l_nev)
+#else
+              call pack_row_real_cpu_PRECISION(aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+#endif
+              q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
+            enddo
+          endif ! useGPU
+
+        else ! (dst == 0)
+
+          if (useGPU) then
+            call pack_row_group_real_gpu_PRECISION(row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+                                       last_stripe_width, a_dim2, l_nev, &
+                                           result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
+          else  ! useGPU
+            do i = 1, nblk
+#ifdef WITH_OPENMP
+              call pack_row_real_cpu_openmp_PRECISION(aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, &
+                                              stripe_width, stripe_count, max_threads, thread_width, l_nev)
+#else
+              call pack_row_real_cpu_PRECISION(aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, &
+                                      last_stripe_width, stripe_count)
+#endif
+            enddo
+          endif ! useGPU
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+          call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL_PRECISION, dst, &
+                                    result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
+          call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+          if (j+num_result_buffers < num_result_blocks) &
+                   result_buffer(1:l_nev,1:nblk,nbuf) = result_buffer(1:l_nev,1:nblk,nbuf)
+          if (my_prow > 0 .and. l_nev>0) then
+            do j1 = 1, min(num_result_buffers, num_result_blocks)
+              result_buffer(1:l_nev,1:nblk,j1) = result_buffer(1:l_nev,1:nblk,nbuf)
+            enddo
+          endif
+
+#endif /* WITH_MPI */
+        endif ! (dst == 0)
+      enddo  !j=0, nfact-1
+
+    else ! (my_prow == 0)
+
+      ! receive and store final result
+
+      do j = num_bufs_recvd, num_result_blocks-1
+
+        nbuf = mod(j, num_result_buffers) + 1 ! buffer number to get this block
+
+        ! If there is still work to do, just test for the next result request
+        ! and leave the loop if it is not ready, otherwise wait for all
+        ! outstanding requests
+
+        if (next_local_n > 0) then
+#ifdef WITH_OPENMP
+          if (useGPU) then
+            print *,"trans_ev_tridi_to_band_real: not yet implemented"
+            stop
+          endif
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+
+          call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
+           call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+          flag = .true.
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+
+          call MPI_Test(result_recv_request(nbuf), flag, MPI_STATUS_IGNORE, mpierr)
+          call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+          flag = .true.
+#endif
+
+#endif /* WITH_OPENMP */
+
+          if (.not.flag) exit
+
+        else ! (next_local_n > 0)
+
+#ifdef WITH_OPENMP
+          if (useGPU) then
+            print *,"trans_ev_tridi_to_band_real: not yet implemented"
+            stop
+          endif
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+
+          call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+          call timer%stop("mpi_communication")
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+          call timer%start("mpi_communication")
+
+          call MPI_Wait(result_recv_request(nbuf), MPI_STATUS_IGNORE, mpierr)
+          call timer%stop("mpi_communication")
+
+#endif
+
+#endif /* WITH_OPENMP */
+
+        endif ! (next_local_n > 0)
+
+        ! Fill result buffer into q
+        num_blk = j*np_rows + my_prow ! global number of current block, 0 based
+        do i = 1, min(na - num_blk*nblk, nblk)
+          q(j*nblk+i, 1:l_nev) = result_buffer(1:l_nev, i, nbuf)
+        enddo
+
+        ! Queue result buffer again if there are outstanding blocks left
+#ifdef WITH_MPI
+        call timer%start("mpi_communication")
+
+        if (j+num_result_buffers < num_result_blocks) &
+            call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_REAL_PRECISION, 0, result_recv_tag, &
+                         mpi_comm_rows, result_recv_request(nbuf), mpierr)
+        ! carefull the "recieve" has to be done at the corresponding wait or send
+!         if (j+num_result_buffers < num_result_blocks) &
+!                result_buffer(1:l_nev*nblk,1,nbuf) =  result_buffer(1:l_nev*nblk,1,nbuf)
+        call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+
+#endif /* WITH_MPI */
+
+      enddo ! j = num_bufs_recvd, num_result_blocks-1
+      num_bufs_recvd = j
+
+    endif ! (my_prow == 0)
+
+    ! Shift the remaining rows to the front of aIntern (if necessary)
+
+    offset = nbw - top_msg_length
+    if (offset<0) then
+      if (wantDebug) write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_real: internal error, offset for shifting = ',offset
+      success = .false.
+      return
+    endif
+
+    a_off = a_off + offset
+    if (a_off + next_local_n + nbw > a_dim2) then
+#ifdef WITH_OPENMP
+      if (useGPU) then
+        print *,"trans_ev_tridi_to_band_real: not yet implemented"
+        stop
+      endif
+
+      call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+ !$omp parallel do private(my_thread, i, j), schedule(static, 1)
+      do my_thread = 1, max_threads
+        do i = 1, stripe_count
+          do j = top_msg_length+1, top_msg_length+next_local_n
+            aIntern(:,j,i,my_thread) = aIntern(:,j+a_off,i,my_thread)
+          enddo
+        enddo
+      enddo
+#else /* WITH_OPENMP */
+         do i = 1, stripe_count
+           if (useGPU) then
+             chunk = min(next_local_n - 1, a_off)
+             do j = top_msg_length + 1, top_msg_length + next_local_n, chunk
+               top = min(j + chunk, top_msg_length + next_local_n)
+               this_chunk = top - j + 1
+               dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *size_of_PRECISION_real
+               dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
+                             size_of_PRECISION_real
+               ! it is not logical to set here always the value for the parameter
+               ! "cudaMemcpyDeviceToDevice" do this ONCE at startup
+               !               tmp = cuda_d2d(1)
+               successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , aIntern_dev +dev_offset_1, &
+                                         stripe_width*this_chunk*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
+               if (.not.(successCUDA)) then
+                 print *,"trans_ev_tridi_to_band_real: error cudaMemcpy"
+                 stop
+               endif
+             enddo
+           else ! not useGPU
+             do j = top_msg_length+1, top_msg_length+next_local_n
+               aIntern(:,j,i) = aIntern(:,j+a_off,i)
+             enddo
+           endif
+         enddo ! stripe_count
+#endif /* WITH_OPENMP */
+
+#ifdef WITH_OPENMP
+
+         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+#endif /* WITH_OPENMP */
+         a_off = 0
+       endif
+
+     enddo
+
+     ! Just for safety:
+#ifdef WITH_MPI
+     if (ANY(top_send_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_send_request ***',my_prow,my_pcol
+     if (ANY(bottom_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_send_request ***',my_prow,my_pcol
+     if (ANY(top_recv_request    /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR top_recv_request ***',my_prow,my_pcol
+     if (ANY(bottom_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR bottom_recv_request ***',my_prow,my_pcol
+#endif
+     if (my_prow == 0) then
+
+#ifdef WITH_OPENMP
+       if (useGPU) then
+         print *,"trans_ev_tridi_to_band_real: not yet implemented"
+         stop
+       endif
+#ifdef WITH_MPI
+!       allocate(mpi_statuses(MPI_STATUS_SIZE,num_result_buffers), stat=istat, errmsg=errorMessage)
+!       if (istat .ne. 0) then
+!         print *,"trans_ev_tridi_to_band_real: error when allocating mpi_statuses"//errorMessage
+!         stop
+!       endif
+
+       call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
+!       deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
+!       if (istat .ne. 0) then
+!         print *,"trans_ev_tridi_to_band_real: error when deallocating mpi_statuses"//errorMessage
+!         stop
+!       endif
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef WITH_MPI
+       call timer%start("mpi_communication")
+
+       call MPI_Waitall(num_result_buffers, result_send_request, MPI_STATUSES_IGNORE, mpierr)
+       call timer%stop("mpi_communication")
+
+#endif
+
+#endif /* WITH_OPENMP */
+     endif
+#ifdef WITH_MPI
+     if (ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
+     if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
+
+#ifdef HAVE_DETAILED_TIMINGS
+       call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, mpierr)
+       kernel_flops = kernel_flops_recv
+       call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_COLS, mpierr)
+       kernel_flops = kernel_flops_recv
+
+       call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_ROWS, mpierr)
+       kernel_time_recv = kernel_time
+       call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_COLS, mpierr)
+       kernel_time_recv = kernel_time
+#endif
+
+#else /* WITH_MPI */
+
+     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+         write(error_unit,'(" Kernel time:",f10.3," MFlops: ",es12.5)')  kernel_time, kernel_flops/kernel_time*1.d-6
+
+#endif /* WITH_MPI */
+
+     ! copy q to q_dev needed in trans_ev_band_to_full
+        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_real)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
+          stop
+        endif
+
+        ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
+        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
+          stop
+        endif
+
+     ! deallocate all working space
+
+     if (.not.(useGPU)) then
+       nullify(aIntern)
+       call free(aIntern_ptr)
+!       deallocate(aIntern, stat=istat, errmsg=errorMessage)
+!       if (istat .ne. 0) then
+!         print *,"trans_ev_tridi_to_band_real: error when deallocating aIntern "//errorMessage
+!         stop
+!       endif
+     endif
+
+     deallocate(row, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating row "//errorMessage
+       stop
+     endif
+
+     deallocate(limits, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating limits"//errorMessage
+       stop
+     endif
+
+     deallocate(result_send_request, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating result_send_request "//errorMessage
+       stop
+     endif
+
+     deallocate(result_recv_request, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating result_recv_request "//errorMessage
+       stop
+     endif
+
+     deallocate(top_border_send_buffer, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating top_border_send_buffer "//errorMessage
+       stop
+     endif
+
+     deallocate(top_border_recv_buffer, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating top_border_recv_buffer "//errorMessage
+       stop
+     endif
+
+     deallocate(bottom_border_send_buffer, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating bottom_border_send_buffer "//errorMessage
+       stop
+     endif
+
+     deallocate(bottom_border_recv_buffer, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating bottom_border_recv_buffer "//errorMessage
+       stop
+     endif
+
+     deallocate(result_buffer, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating result_buffer "//errorMessage
+       stop
+     endif
+
+     deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating bcast_buffer "//errorMessage
+       stop
+     endif
+
+     deallocate(top_send_request, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating top_send_request "//errorMessage
+       stop
+     endif
+
+     deallocate(top_recv_request, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating top_recv_request "//errorMessage
+       stop
+     endif
+
+     deallocate(bottom_send_request, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating bottom_send_request "//errorMessage
+       stop
+     endif
+
+     deallocate(bottom_recv_request, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_real: error when deallocating bottom_recv_request "//errorMessage
+       stop
+     endif
+
+     if (useGPU) then
+       successCUDA = cuda_free(hh_dot_dev)
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_tridi_to_band_real: error in cudaFree "//errorMessage
+         stop
+       endif
+
+       successCUDA = cuda_free(hh_tau_dev)
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_tridi_to_band_real: error in cudaFree "//errorMessage
+         stop
+       endif
+
+       successCUDA = cuda_free(row_dev)
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_tridi_to_band_real: error in cudaFree "//errorMessage
+         stop
+       endif
+
+       deallocate(row_group, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_real: error when deallocating row_group "//errorMessage
+         stop
+       endif
+
+       successCUDA = cuda_free(row_group_dev)
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_tridi_to_band_real: error in cudaFree "//errorMessage
+         stop
+       endif
+
+       successCUDA =  cuda_free(bcast_buffer_dev)
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_tridi_to_band_real: error in cudaFree "//errorMessage
+         stop
+       endif
+     endif ! useGPU
+
+     call timer%stop("trans_ev_tridi_to_band_real" // PRECISION_SUFFIX)
+
+     return
+
+    end subroutine trans_ev_tridi_to_band_real_PRECISION
+
+

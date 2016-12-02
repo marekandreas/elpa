@@ -32,6 +32,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/mod_pack_unpack_complex.F90 \
         src/aligned_mem.F90 \
         src/elpa1_compute_private.F90 \
+	src/elpa2_determine_workload.F90 \
         src/elpa2_compute.F90 \
         src/elpa2_kernels/mod_fortran_interfaces.F90 \
         src/elpa2_kernels/mod_single_hh_trafo_real.F90 \
@@ -48,10 +49,19 @@ libelpa@SUFFIX@_private_la_SOURCES = \
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa_reduce_add_vectors.X90 \
         src/elpa_transpose_vectors.X90 \
-        src/elpa1_compute_complex_template.X90 \
-        src/elpa1_compute_real_template.X90 \
+        src/elpa1_compute_template.X90 \
         src/elpa2_compute_real_template.X90 \
         src/elpa2_compute_complex_template.X90 \
+	src/elpa2_bandred_real_template.X90 \
+	src/elpa2_symm_matrix_allreduce_real_template.X90 \
+	src/elpa2_trans_ev_band_to_full_real_template.X90 \
+	src/elpa2_tridiag_band_real_template.X90 \
+	src/elpa2_trans_ev_tridi_to_band_real_template.X90 \
+	src/elpa2_bandred_complex_template.X90 \
+	src/elpa2_herm_matrix_allreduce_complex_template.X90 \
+	src/elpa2_trans_ev_band_to_full_complex_template.X90 \
+	src/elpa2_tridiag_band_complex_template.X90 \
+	src/elpa2_trans_ev_tridi_to_band_complex_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_real_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
@@ -78,7 +88,7 @@ if HAVE_DETAILED_TIMINGS
         src/ftimings/papi.c
 else
   libelpa@SUFFIX@_private_la_SOURCES += \
-        src/timer_dummy.F90 
+        src/timer_dummy.F90
 endif
 
 if WITH_GPU_VERSION
@@ -924,18 +934,24 @@ EXTRA_DIST = \
   test/Fortran/elpa_print_headers.X90 \
   src/elpa_reduce_add_vectors.X90 \
   src/elpa_transpose_vectors.X90 \
-  src/elpa1_compute_real_template.X90 \
+  src/elpa1_compute_template.X90 \
   src/elpa1_merge_systems_real_template.X90 \
   src/elpa1_solve_tridi_real_template.X90 \
-  src/elpa1_tools_real_template.X90 \
-  src/elpa1_trans_ev_real_template.X90 \
-  src/elpa1_tridiag_real_template.X90 \
-  src/elpa1_compute_complex_template.X90 \
-  src/elpa1_tools_complex_template.X90 \
-  src/elpa1_trans_ev_complex_template.X90 \
-  src/elpa1_tridiag_complex_template.X90 \
+  src/elpa1_tools_template.X90 \
+  src/elpa1_trans_ev_template.X90 \
+  src/elpa1_tridiag_template.X90 \
   src/elpa2_compute_real_template.X90 \
   src/elpa2_compute_complex_template.X90 \
+  src/elpa2_bandred_complex_template.X90 \
+  src/elpa2_bandred_real_template.X90 \
+  src/elpa2_herm_matrix_allreduce_complex_template.X90 \
+  src/elpa2_symm_matrix_allreduce_real_template.X90 \
+  src/elpa2_trans_ev_band_to_full_complex_template.X90 \
+  src/elpa2_trans_ev_band_to_full_real_template.X90 \
+  src/elpa2_trans_ev_tridi_to_band_complex_template.X90 \
+  src/elpa2_trans_ev_tridi_to_band_real_template.X90 \
+  src/elpa2_tridiag_band_complex_template.X90 \
+  src/elpa2_tridiag_band_real_template.X90 \
   src/precision_macros.h \
   src/precision_macros_complex.h \
   src/elpa2_kernels/elpa2_kernels_real_template.X90 \

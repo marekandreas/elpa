@@ -51,7 +51,7 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 #endif
-    subroutine M_merge_systems_PRECISION( na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+    subroutine merge_systems_PRECISION( na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, wantDebug, success)
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -77,7 +77,7 @@
       integer(kind=ik), parameter   :: max_strip=128      
       
 
-      real(kind=REAL_DATATYPE)                 :: M_PRECISION_LAMCH, M_PRECISION_LAPY2
+      real(kind=REAL_DATATYPE)                 :: PRECISION_LAMCH, PRECISION_LAPY2
       real(kind=REAL_DATATYPE)                 :: beta, sig, s, c, t, tau, rho, eps, tol, &
                                        qtrans(2,2), dmax, zmax, d1new, d2new
       real(kind=REAL_DATATYPE)                 :: z(na), d1(na), d2(na), z1(na), delta(na),  &
@@ -118,7 +118,7 @@
       endif
 #endif
 
-      call timer%start("merge_systems" // M_PRECISION_SUFFIX)
+      call timer%start("merge_systems" // PRECISION_SUFFIX)
       success = .true.
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -130,7 +130,7 @@
       ! If my processor column isn't in the requested set, do nothing
 
       if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
-        call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
+        call timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
       endif
       ! Determine number of "next" and "prev" column for ring sends
@@ -146,14 +146,14 @@
       else
         np_prev = my_pcol - 1
       endif
-      call M_check_monotony_PRECISION(nm,d,'Input1',wantDebug, success)
+      call check_monotony_PRECISION(nm,d,'Input1',wantDebug, success)
       if (.not.(success)) then
-        call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
+        call timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
       endif
-      call M_check_monotony_PRECISION(na-nm,d(nm+1),'Input2',wantDebug, success)
+      call check_monotony_PRECISION(na-nm,d(nm+1),'Input2',wantDebug, success)
       if (.not.(success)) then
-        call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
+        call timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
       endif
       ! Get global number of processors and my processor number.
@@ -188,7 +188,7 @@
       ! Calculations start here
 
       beta = abs(e)
-      sig  = sign(M_CONST_1_0,e)
+      sig  = sign(CONST_1_0,e)
 
       ! Calculate rank-1 modifier z
 
@@ -208,20 +208,22 @@
         enddo
       endif
 
-      call M_global_gather_PRECISION(z, na)
+      call global_gather_PRECISION(z, na)
       ! Normalize z so that norm(z) = 1.  Since z is the concatenation of
       ! two normalized vectors, norm2(z) = sqrt(2).
-      z = z/sqrt(M_CONST_2_0)
-      rho = M_CONST_2_0*beta
+      z = z/sqrt(CONST_2_0)
+      rho = CONST_2_0*beta
       ! Calculate index for merging both systems by ascending eigenvalues
-      call M_PRECISION_LAMRG( nm, na-nm, d, 1, 1, idx )
+      call timer%start("blas")
+      call PRECISION_LAMRG( nm, na-nm, d, 1, 1, idx )
+      call timer%stop("blas")
 
 ! Calculate the allowable deflation tolerance
 
       zmax = maxval(abs(z))
       dmax = maxval(abs(d))
-      EPS = M_PRECISION_LAMCH( 'Epsilon' )
-      TOL = M_CONST_8_0*EPS*MAX(dmax,zmax)
+      EPS = PRECISION_LAMCH( 'Epsilon' )
+      TOL = CONST_8_0*EPS*MAX(dmax,zmax)
 
       ! If the rank-1 modifier is small enough, no more needs to be done
       ! except to reorganize D and Q
@@ -236,9 +238,9 @@
         enddo
 
         ! Rearrange eigenvectors
-        call M_resort_ev_PRECISION(idx, na)
+        call resort_ev_PRECISION(idx, na)
 
-        call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
+        call timer%stop("merge_systems" // PRECISION_SUFFIX)
 
         return
       ENDIF
@@ -277,7 +279,7 @@
 
           ! Find sqrt(a**2+b**2) without overflow or
           ! destructive underflow.
-          TAU = M_PRECISION_LAPY2( C, S )
+          TAU = PRECISION_LAPY2( C, S )
           T = D1(na1) - D(idx(i))
           C = C / TAU
           S = -S / TAU
@@ -328,7 +330,7 @@
 
             qtrans(1,1) = C; qtrans(1,2) =-S
             qtrans(2,1) = S; qtrans(2,2) = C
-            call M_transform_columns_PRECISION(idx(i), idx1(na1))
+            call transform_columns_PRECISION(idx(i), idx1(na1))
             if (coltyp(idx(i))==1 .and. coltyp(idx1(na1))/=1) coltyp(idx1(na1)) = 2
             if (coltyp(idx(i))==3 .and. coltyp(idx1(na1))/=3) coltyp(idx1(na1)) = 2
 
@@ -348,14 +350,14 @@
         endif
 
       enddo
-      call M_check_monotony_PRECISION(na1,d1,'Sorted1', wantDebug, success)
+      call check_monotony_PRECISION(na1,d1,'Sorted1', wantDebug, success)
       if (.not.(success)) then
-        call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
+        call timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
       endif
-      call M_check_monotony_PRECISION(na2,d2,'Sorted2', wantDebug, success)
+      call check_monotony_PRECISION(na2,d2,'Sorted2', wantDebug, success)
       if (.not.(success)) then
-        call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
+        call timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
       endif
 
@@ -365,17 +367,20 @@
         if (na1==1) then
           d(1) = d1(1) + rho*z1(1)**2 ! solve secular equation
         else ! na1==2
-          call M_PRECISION_LAED5(1, d1, z1, qtrans(1,1), rho, d(1))
-          call M_PRECISION_LAED5(2, d1, z1, qtrans(1,2), rho, d(2))
-
-          call M_transform_columns_PRECISION(idx1(1), idx1(2))
+	  call timer%start("blas")
+          call PRECISION_LAED5(1, d1, z1, qtrans(1,1), rho, d(1))
+          call PRECISION_LAED5(2, d1, z1, qtrans(1,2), rho, d(2))
+	  call timer%stop("blas")
+          call transform_columns_PRECISION(idx1(1), idx1(2))
         endif
 
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
         ! Calculate arrangement of all eigenvalues  in output
-        call M_PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
+	call timer%start("blas")
+        call PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
+	call timer%stop("blas")
         ! Rearrange eigenvalues
 
         tmp = d
@@ -392,7 +397,7 @@
             idxq1(i) = idx2(idx(i)-na1)
           endif
         enddo
-        call M_resort_ev_PRECISION(idxq1, na)
+        call resort_ev_PRECISION(idxq1, na)
       else if (na1>2) then
 
         ! Solve secular equation
@@ -407,19 +412,21 @@
         info = 0
 #ifdef WITH_OPENMP
 
-        call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+        call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,j)
         my_thread = omp_get_thread_num()
 !$OMP DO
 #endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
-          call M_PRECISION_LAED4(na1, i, d1, z1, delta, rho, s, info) ! s is not used!
+	  call timer%start("blas")
+          call PRECISION_LAED4(na1, i, d1, z1, delta, rho, s, info) ! s is not used!
+	  call timer%stop("blas")
           if (info/=0) then
             ! If DLAED4 fails (may happen especially for LAPACK versions before 3.2)
             ! use the more stable bisection algorithm in solve_secular_equation
             ! print *,'ERROR DLAED4 n=',na1,'i=',i,' Using Bisection'
-            call M_solve_secular_equation_PRECISION(na1, i, d1, z1, delta, rho, s)
+            call solve_secular_equation_PRECISION(na1, i, d1, z1, delta, rho, s)
           endif
 
           ! Compute updated z
@@ -453,26 +460,26 @@
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL
 
-        call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+        call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
         do i = 0, max_threads-1
           z(1:na1) = z(1:na1)*z_p(1:na1,i)
         enddo
 #endif
 
-        call M_global_product_PRECISION(z, na1)
+        call global_product_PRECISION(z, na1)
         z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
 
-        call M_global_gather_PRECISION(dbase, na1)
-        call M_global_gather_PRECISION(ddiff, na1)
+        call global_gather_PRECISION(dbase, na1)
+        call global_gather_PRECISION(ddiff, na1)
         d(1:na1) = dbase(1:na1) - ddiff(1:na1)
 
         ! Calculate scale factors for eigenvectors
-        ev_scale(:) = M_CONST_0_0
+        ev_scale(:) = CONST_0_0
 
 #ifdef WITH_OPENMP
 
-        call timer%start("OpenMP parallel" // M_PRECISION_SUFFIX)
+        call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$OMP PARALLEL DO PRIVATE(i) SHARED(na1, my_proc, n_procs,  &
 !$OMP d1,dbase, ddiff, z, ev_scale) &
@@ -487,32 +494,33 @@
           ! All we want to calculate is tmp = (d1(1:na1)-dbase(i))+ddiff(i)
           ! in exactly this order, but we want to prevent compiler optimization
 !         ev_scale_val = ev_scale(i)
-          call M_add_tmp_PRECISION(d1, dbase, ddiff, z, ev_scale(i), na1,i)
+          call add_tmp_PRECISION(d1, dbase, ddiff, z, ev_scale(i), na1,i)
 !         ev_scale(i) = ev_scale_val
         enddo
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL DO
 
-        call timer%stop("OpenMP parallel" // M_PRECISION_SUFFIX)
+        call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #endif
 
-        call M_global_gather_PRECISION(ev_scale, na1)
+        call global_gather_PRECISION(ev_scale, na1)
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
+	call timer%start("blas")
         ! Calculate arrangement of all eigenvalues  in output
-        call M_PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
-
+        call PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
+        call timer%stop("blas")
         ! Rearrange eigenvalues
         tmp = d
         do i=1,na
           d(i) = tmp(idx(i))
         enddo
-        call M_check_monotony_PRECISION(na,d,'Output', wantDebug, success)
+        call check_monotony_PRECISION(na,d,'Output', wantDebug, success)
 
         if (.not.(success)) then
-          call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
+          call timer%stop("merge_systems" // PRECISION_SUFFIX)
           return
         endif
         ! Eigenvector calculations
@@ -614,7 +622,7 @@
             endif
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, M_MPI_REAL_PRECISION, &
+            call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, MPI_REAL_PRECISION, &
                                         np_next, 1111, np_prev, 1111, &
                                         mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
             call timer%stop("mpi_communication")
@@ -677,7 +685,7 @@
               ! Calculate the j-th eigenvector of the deflated system
               ! See above why we are doing it this way!
               tmp(1:nnzu) = d1u(1:nnzu)-dbase(j)
-              call M_v_add_s_PRECISION(tmp,nnzu,ddiff(j))
+              call v_add_s_PRECISION(tmp,nnzu,ddiff(j))
               ev(1:nnzu,i) = zu(1:nnzu) / tmp(1:nnzu) * ev_scale(j)
             enddo
 
@@ -688,9 +696,11 @@
 !                 call dgemm('N','N',l_rnm,ncnt,nnzu,1.d0,qtmp1_dev,ubound(qtmp1_dev,1),ev,ubound(ev,1), &
 !                            1.d0,qtmp2(1,1),ubound(qtmp2,1))
 !       else
+              call timer%start("blas")
               if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) &
-                  call M_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu, M_CONST_1_0, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
-                             M_CONST_1_0, qtmp2(1,1), ubound(qtmp2,dim=1))
+                  call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu, CONST_1_0, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
+                             CONST_1_0, qtmp2(1,1), ubound(qtmp2,dim=1))
+	      call timer%stop("blas")
 !            endif ! useGPU
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
@@ -700,7 +710,7 @@
               ! Calculate the j-th eigenvector of the deflated system
               ! See above why we are doing it this way!
               tmp(1:nnzl) = d1l(1:nnzl)-dbase(j)
-              call M_v_add_s_PRECISION(tmp,nnzl,ddiff(j))
+              call v_add_s_PRECISION(tmp,nnzl,ddiff(j))
               ev(1:nnzl,i) = zl(1:nnzl) / tmp(1:nnzl) * ev_scale(j)
             enddo
 
@@ -711,9 +721,11 @@
 !                 call dgemm('N','N',l_rows-l_rnm,ncnt,nnzl,1.d0,qtmp1_dev(l_rnm+1,1),ubound(qtmp1_dev,1),ev,ubound(ev,1), &
 !                            1.d0,qtmp2(l_rnm+1,1),ubound(qtmp2,1))
 !       else
+              call timer%start("blas")
               if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
-                 call M_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl, M_CONST_1_0, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
-                            ubound(ev,dim=1), M_CONST_1_0, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+                 call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl, CONST_1_0, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
+                            ubound(ev,dim=1), CONST_1_0, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+	      call timer%stop("blas")
 !            endif ! useGPU
              ! Put partial result into (output) Q
 
@@ -739,12 +751,12 @@
       endif
 #endif
 
-      call timer%stop("merge_systems" // M_PRECISION_SUFFIX)
+      call timer%stop("merge_systems" // PRECISION_SUFFIX)
 
       return
 
       contains
-        subroutine M_add_tmp_PRECISION(d1, dbase, ddiff, z, ev_scale_value, na1,i)
+        subroutine add_tmp_PRECISION(d1, dbase, ddiff, z, ev_scale_value, na1,i)
           use precision
           implicit none
 
@@ -761,13 +773,13 @@
                ! in exactly this order, but we want to prevent compiler optimization
 
           tmp(1:na1) = d1(1:na1) -dbase(i)
-          call M_v_add_s_PRECISION(tmp(1:na1),na1,ddiff(i))
+          call v_add_s_PRECISION(tmp(1:na1),na1,ddiff(i))
           tmp(1:na1) = z(1:na1) / tmp(1:na1)
-          ev_scale_value = M_CONST_1_0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
+          ev_scale_value = CONST_1_0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
 
-        end subroutine M_add_tmp_PRECISION
+        end subroutine add_tmp_PRECISION
 
-        subroutine M_resort_ev_PRECISION(idx_ev, nLength)
+        subroutine resort_ev_PRECISION(idx_ev, nLength)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #else
@@ -814,14 +826,14 @@
               else
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
-                call mpi_send(q(l_rqs,lc1), l_rows, M_MPI_REAL_PRECISION, pc2, mod(i,4096), mpi_comm_cols, mpierr)
+                call mpi_send(q(l_rqs,lc1), l_rows, MPI_REAL_PRECISION, pc2, mod(i,4096), mpi_comm_cols, mpierr)
                 call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
               endif
             else if (pc2==my_pcol) then
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call mpi_recv(qtmp(1,nc), l_rows, M_MPI_REAL_PRECISION, pc1, mod(i,4096), mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(qtmp(1,nc), l_rows, MPI_REAL_PRECISION, pc1, mod(i,4096), mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
               call timer%stop("mpi_communication")
 #else /* WITH_MPI */
               qtmp(1:l_rows,nc) = q(l_rqs:l_rqe,lc1)
@@ -849,9 +861,9 @@
             print *,"resort_ev: error when deallocating qtmp "//errorMessage
             stop
           endif
-        end subroutine M_resort_ev_PRECISION
+        end subroutine resort_ev_PRECISION
 
-        subroutine M_transform_columns_PRECISION(col1, col2)
+        subroutine transform_columns_PRECISION(col1, col2)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #else
@@ -879,8 +891,8 @@
             else
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call mpi_sendrecv(q(l_rqs,lc1), l_rows, M_MPI_REAL_PRECISION, pc2, 1, &
-                                tmp, l_rows, M_MPI_REAL_PRECISION, pc2, 1,          &
+              call mpi_sendrecv(q(l_rqs,lc1), l_rows, MPI_REAL_PRECISION, pc2, 1, &
+                                tmp, l_rows, MPI_REAL_PRECISION, pc2, 1,          &
                                 mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
               call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -891,8 +903,8 @@
           else if (pc2==my_pcol) then
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_sendrecv(q(l_rqs,lc2), l_rows, M_MPI_REAL_PRECISION, pc1, 1, &
-                               tmp, l_rows, M_MPI_REAL_PRECISION, pc1, 1,         &
+            call mpi_sendrecv(q(l_rqs,lc2), l_rows, MPI_REAL_PRECISION, pc1, 1, &
+                               tmp, l_rows, MPI_REAL_PRECISION, pc1, 1,         &
                                mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
             call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -901,9 +913,9 @@
 
             q(l_rqs:l_rqe,lc2) = tmp(1:l_rows)*qtrans(1,2) + q(l_rqs:l_rqe,lc2)*qtrans(2,2)
           endif
-        end subroutine M_transform_columns_PRECISION
+        end subroutine transform_columns_PRECISION
 
-        subroutine M_global_gather_PRECISION(z, n)
+        subroutine global_gather_PRECISION(z, n)
           ! This routine sums up z over all processors.
           ! It should only be used for gathering distributed results,
           ! i.e. z(i) should be nonzero on exactly 1 processor column,
@@ -925,7 +937,7 @@
           ! Do an mpi_allreduce over processor rows
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call mpi_allreduce(z, tmp, n, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(z, tmp, n, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
           tmp = z
@@ -940,7 +952,7 @@
           if (npc_n==np_cols) then
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_allreduce(tmp, z, n, M_MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+            call mpi_allreduce(tmp, z, n, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
             call timer%stop("mpi_communication")
 #else /* WITH_MPI */
             tmp = z
@@ -955,14 +967,14 @@
             z(:) = z(:) + tmp(:)
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call MPI_Sendrecv_replace(z, n, M_MPI_REAL_PRECISION, np_next, 1111, np_prev, 1111, &
+            call MPI_Sendrecv_replace(z, n, MPI_REAL_PRECISION, np_next, 1111, np_prev, 1111, &
                                        mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
             call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
           enddo
-        end subroutine M_global_gather_PRECISION
+        end subroutine global_gather_PRECISION
 
-        subroutine M_global_product_PRECISION(z, n)
+        subroutine global_product_PRECISION(z, n)
           ! This routine calculates the global product of z.
           use precision
 #ifdef HAVE_DETAILED_TIMINGS
@@ -982,7 +994,7 @@
           ! Do an mpi_allreduce over processor rows
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call mpi_allreduce(z, tmp, n, M_MPI_REAL_PRECISION, MPI_PROD, mpi_comm_rows, mpierr)
+          call mpi_allreduce(z, tmp, n, MPI_REAL_PRECISION, MPI_PROD, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
           tmp = z
@@ -997,7 +1009,7 @@
           if (npc_n==np_cols) then
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_allreduce(tmp, z, n, M_MPI_REAL_PRECISION, MPI_PROD, mpi_comm_cols, mpierr)
+            call mpi_allreduce(tmp, z, n, MPI_REAL_PRECISION, MPI_PROD, mpi_comm_cols, mpierr)
             call timer%stop("mpi_communication")
 #else /* WITH_MPI */
             z = tmp
@@ -1013,7 +1025,7 @@
             do np = npc_0+1, npc_0+npc_n-1
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call mpi_recv(tmp, n, M_MPI_REAL_PRECISION, np, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(tmp, n, MPI_REAL_PRECISION, np, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
               call timer%stop("mpi_communication")
 #else  /* WITH_MPI */
               tmp(1:n) = z(1:n)
@@ -1023,24 +1035,24 @@
             do np = npc_0+1, npc_0+npc_n-1
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call mpi_send(z, n, M_MPI_REAL_PRECISION, np, 1111, mpi_comm_cols, mpierr)
+              call mpi_send(z, n, MPI_REAL_PRECISION, np, 1111, mpi_comm_cols, mpierr)
               call timer%stop("mpi_communication")
 #endif  /* WITH_MPI */
             enddo
           else
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_send(tmp, n, M_MPI_REAL_PRECISION, npc_0, 1111, mpi_comm_cols, mpierr)
-            call mpi_recv(z  ,n, M_MPI_REAL_PRECISION, npc_0, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+            call mpi_send(tmp, n, MPI_REAL_PRECISION, npc_0, 1111, mpi_comm_cols, mpierr)
+            call mpi_recv(z  ,n, MPI_REAL_PRECISION, npc_0, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
             call timer%stop("mpi_communication")
 #else  /* WITH_MPI */
             z(1:n) = tmp(1:n)
 #endif  /* WITH_MPI */
 
           endif
-        end subroutine M_global_product_PRECISION
+        end subroutine global_product_PRECISION
 
-        subroutine M_check_monotony_PRECISION(n,d,text, wantDebug, success)
+        subroutine check_monotony_PRECISION(n,d,text, wantDebug, success)
         ! This is a test routine for checking if the eigenvalues are monotonically increasing.
         ! It is for debug purposes only, an error should never be triggered!
           use precision
@@ -1062,6 +1074,6 @@
               return
             endif
           enddo
-        end subroutine M_check_monotony_PRECISION
+        end subroutine check_monotony_PRECISION
 
-    end subroutine M_merge_systems_PRECISION
+    end subroutine merge_systems_PRECISION

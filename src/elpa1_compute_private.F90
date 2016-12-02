@@ -212,10 +212,14 @@ module ELPA1_COMPUTE
 #define DOUBLE_PRECISION_REAL 1
 #define REAL_DATATYPE rk8
 
-#include "elpa1_compute_real_template.X90"
+#define REALCASE 1
+#undef COMPLEXCASE
+
+#include "elpa1_compute_template.X90"
 
 #undef DOUBLE_PRECISION_REAL
 #undef REAL_DATATYPE
+#undef REALCASE
 
 ! real single precision
 #if defined(WANT_SINGLE_PRECISION_REAL)
@@ -223,7 +227,12 @@ module ELPA1_COMPUTE
 #undef DOUBLE_PRECISION_REAL
 #define REAL_DATATYPE rk4
 
-#include "elpa1_compute_real_template.X90"
+#define REALCASE 1
+#undef COMPLEXCASE
+
+#include "elpa1_compute_template.X90"
+
+#undef REALCASE
 
 #undef DOUBLE_PRECISION_REAL
 #undef REAL_DATATYPE
@@ -234,7 +243,12 @@ module ELPA1_COMPUTE
 #define DOUBLE_PRECISION_COMPLEX 1
 #define REAL_DATATYPE rk8
 #define COMPLEX_DATATYPE ck8
-#include "elpa1_compute_complex_template.X90"
+
+#define COMPLEXCASE 1
+#undef REALCASE
+#include "elpa1_compute_template.X90"
+
+#undef COMPLEXCASE
 
 #undef DOUBLE_PRECISION_COMPLEX
 #undef REAL_DATATYPE
@@ -248,7 +262,12 @@ module ELPA1_COMPUTE
 #define REAL_DATATYPE rk4
 #define COMPLEX_DATATYPE ck4
 
-#include "elpa1_compute_complex_template.X90"
+#define COMPLEXCASE 1
+#undef REALCASE
+
+#include "elpa1_compute_template.X90"
+
+#undef COMPLEXCASE
 
 #undef DOUBLE_PRECISION_COMPLEX
 #undef COMPLEX_DATATYPE

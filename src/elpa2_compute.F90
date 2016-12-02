@@ -103,7 +103,7 @@ module ELPA2_compute
   public :: trans_ev_band_to_full_complex_single
 #endif
   public :: band_band_real_double
-  public :: divide_band
+!  public :: divide_band
 
   integer(kind=ik), public :: which_qr_decomposition = 1     ! defines, which QR-decomposition algorithm will be used
                                                     ! 0 for unblocked
@@ -192,6 +192,7 @@ module ELPA2_compute
 #define REAL_DATATYPE rk8
 #define COMPLEX_DATATYPE ck8
 
+#include "precision_macros_complex.h"
 #include "elpa2_compute_complex_template.X90"
 
 #undef DOUBLE_PRECISION_COMPLEX
@@ -206,6 +207,7 @@ module ELPA2_compute
 #define REAL_DATATYPE rk4
 #define COMPLEX_DATATYPE ck4
 
+#include "precision_macros_complex.h"
 #include "elpa2_compute_complex_template.X90"
 
 #undef DOUBLE_PRECISION_COMPLEX

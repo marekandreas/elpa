@@ -204,7 +204,7 @@ subroutine elpa_transpose_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,
 
 #ifdef WITH_MPI
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("mpi_communication")
+        call timer%start("mpi_communication")
 #endif
 
 #if COMPLEXCASE==1
@@ -229,7 +229,7 @@ subroutine elpa_transpose_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,
 #endif /* REALCASE == 1 */
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("mpi_communication")
+         call timer%stop("mpi_communication")
 #endif
 #endif /* WITH_MPI */
 

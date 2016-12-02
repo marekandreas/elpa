@@ -292,6 +292,8 @@ module ELPA1_AUXILIARY
      use elpa_mpi
 #ifdef HAVE_DETAILED_TIMINGS
      use timings
+#else
+     use timings_dummy
 #endif
      use precision
       implicit none
@@ -315,24 +317,18 @@ module ELPA1_AUXILIARY
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
       call timer%start("elpa_cholesky_real_double")
 #else
       call timer%start("elpa_cholesky_real_single")
 #endif
-#endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("mpi_communication")
-#endif
+      call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("mpi_communication")
-#endif
+      call timer%stop("mpi_communication")
       success = .true.
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
@@ -392,11 +388,14 @@ module ELPA1_AUXILIARY
           ! of the remaining block
 
           if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
+            call timer%start("blas")
 #ifdef DOUBLE_PRECISION_REAL
             call dpotrf('U', na-n+1, a(l_row1,l_col1), lda, info)
 #else
             call spotrf('U', na-n+1, a(l_row1,l_col1), lda, info)
 #endif
+            call timer%stop("blas")
+
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf 1: ",info
               success = .false.
@@ -415,11 +414,15 @@ module ELPA1_AUXILIARY
 
             ! The process owning the upper left remaining block does the
             ! Cholesky-Factorization of this block
+            call timer%start("blas")
+
 #ifdef DOUBLE_PRECISION_REAL
             call dpotrf('U', nblk, a(l_row1,l_col1), lda, info)
 #else
             call spotrf('U', nblk, a(l_row1,l_col1), lda, info)
 #endif
+            call timer%stop("blas")
+
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf 2: ",info
               success = .false.
@@ -433,9 +436,7 @@ module ELPA1_AUXILIARY
             enddo
           endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
 
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
@@ -443,9 +444,7 @@ module ELPA1_AUXILIARY
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 
 #endif /* WITH_MPI */
           nc = 0
@@ -454,12 +453,14 @@ module ELPA1_AUXILIARY
             nc = nc+i
           enddo
 
+          call timer%start("blas")
           if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
               call dtrsm('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, 1.0_rk8, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #else
               call strsm('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, 1.0_rk4, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #endif
+          call timer%stop("blas")
         endif
 
         do i=1,nblk
@@ -467,19 +468,15 @@ module ELPA1_AUXILIARY
           if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = a(l_row1+i-1,l_colx:l_cols)
 #ifdef WITH_MPI
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("mpi_communication")
-#endif
+          call timer%start("mpi_communication")
           if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
-              call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL8, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+            call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL8, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 #else
-              call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL4, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+            call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL4, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
@@ -499,6 +496,8 @@ module ELPA1_AUXILIARY
           lrs = l_rowx
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
+          call timer%start("blas")
+
 #ifdef DOUBLE_PRECISION_REAL
           call DGEMM('N', 'T', lre-lrs+1, lce-lcs+1, nblk, -1.0_rk8,                        &
                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
@@ -508,6 +507,8 @@ module ELPA1_AUXILIARY
                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
                      1.0_rk4, a(lrs,lcs), lda)
 #endif
+          call timer%stop("blas")
+
         enddo
 
       enddo
@@ -528,12 +529,10 @@ module ELPA1_AUXILIARY
           a(l_row1:l_rows,l_col1) = 0
         endif
       enddo
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
       call timer%stop("elpa_cholesky_real_double")
 #else
       call timer%stop("elpa_cholesky_real_single")
-#endif
 #endif
 
     end function elpa_cholesky_real_double
@@ -567,6 +566,8 @@ module ELPA1_AUXILIARY
      use elpa_mpi
 #ifdef HAVE_DETAILED_TIMINGS
      use timings
+#else
+     use timings_dummy
 #endif
      use precision
 
@@ -591,26 +592,20 @@ module ELPA1_AUXILIARY
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
       call timer%start("elpa_cholesky_real_double")
 #else
       call timer%start("elpa_cholesky_real_single")
 #endif
-#endif
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
 
       success = .true.
 
@@ -672,11 +667,15 @@ module ELPA1_AUXILIARY
           ! of the remaining block
 
           if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
+            call timer%start("blas")
+
 #ifdef DOUBLE_PRECISION_REAL
             call dpotrf('U', na-n+1, a(l_row1,l_col1), lda, info)
 #else
             call spotrf('U', na-n+1, a(l_row1,l_col1), lda, info)
 #endif
+            call timer%stop("blas")
+
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf"
               success = .false.
@@ -695,11 +694,15 @@ module ELPA1_AUXILIARY
 
             ! The process owning the upper left remaining block does the
             ! Cholesky-Factorization of this block
+            call timer%start("blas")
+
 #ifdef DOUBLE_PRECISION_REAL
             call dpotrf('U', nblk, a(l_row1,l_col1), lda, info)
 #else
             call spotrf('U', nblk, a(l_row1,l_col1), lda, info)
 #endif
+            call timer%stop("blas")
+
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_real: Error in dpotrf"
               success = .false.
@@ -713,18 +716,14 @@ module ELPA1_AUXILIARY
             enddo
           endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
 
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
           nc = 0
           do i=1,nblk
@@ -732,30 +731,29 @@ module ELPA1_AUXILIARY
             nc = nc+i
           enddo
 
+          call timer%start("blas")
           if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
               call dtrsm('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, 1.0_rk8, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #else
               call strsm('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, 1.0_rk4, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #endif
+          call timer%stop("blas")
+
         endif
 
         do i=1,nblk
 
           if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = a(l_row1+i-1,l_colx:l_cols)
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
               call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL8, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 #else
               call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_REAL4, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
@@ -775,6 +773,8 @@ module ELPA1_AUXILIARY
           lrs = l_rowx
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
+          call timer%start("blas")
+
 #ifdef DOUBLE_PRECISION_REAL
           call DGEMM('N', 'T', lre-lrs+1, lce-lcs+1, nblk, -1.0_rk8,                        &
                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
@@ -784,6 +784,7 @@ module ELPA1_AUXILIARY
                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
                      1.0_rk4, a(lrs,lcs), lda)
 #endif
+          call timer%stop("blas")
         enddo
 
       enddo
@@ -804,12 +805,10 @@ module ELPA1_AUXILIARY
           a(l_row1:l_rows,l_col1) = 0
         endif
       enddo
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
       call timer%stop("elpa_cholesky_real_double")
 #else
       call timer%stop("elpa_cholesky_real_single")
-#endif
 #endif
 
     end function elpa_cholesky_real_single
@@ -841,6 +840,8 @@ module ELPA1_AUXILIARY
        use elpa_mpi
 #ifdef HAVE_DETAILED_TIMINGS
        use timings
+#else
+       use timings_dummy
 #endif
        implicit none
 
@@ -861,17 +862,12 @@ module ELPA1_AUXILIARY
        integer(kind=ik)             :: istat
        character(200)               :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("mpi_communication")
-#endif
-
+       call timer%start("mpi_communication")
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
        call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
        call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("mpi_communication")
-#endif
+       call timer%stop("mpi_communication")
        success = .true.
 
        l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
@@ -924,11 +920,14 @@ module ELPA1_AUXILIARY
          if (my_prow==prow(n, nblk, np_rows)) then
 
            if (my_pcol==pcol(n, nblk, np_cols)) then
+             call timer%start("blas")
 #ifdef DOUBLE_PRECISION_REAL
              call DTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
 #else
              call STRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
 #endif
+             call timer%stop("blas")
+
              if (info/=0) then
                if (wantDebug) write(error_unit,*) "elpa_invert_trm_real: Error in DTRTRI"
                success = .false.
@@ -942,17 +941,13 @@ module ELPA1_AUXILIARY
              enddo
            endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
            call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_REAL
            call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
            call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
            call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
            nc = 0
            do i=1,nb
@@ -960,12 +955,14 @@ module ELPA1_AUXILIARY
              nc = nc+i
            enddo
 
+           call timer%start("blas")
            if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
                call DTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk8, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #else
                call STRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk4, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #endif
+           call timer%stop("blas")
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 
@@ -979,34 +976,28 @@ module ELPA1_AUXILIARY
 
            do i=1,nb
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
              call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
              call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
              call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
            enddo
          endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
          call timer%start("mpi_communication")
-#endif
          if (l_cols-l_col1+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
             call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_REAL8, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 #else
             call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_REAL4, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
+
+         call timer%start("blas")
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
             call dgemm('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -1.0_rk8,                 &
@@ -1017,6 +1008,8 @@ module ELPA1_AUXILIARY
                        tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
                        1.0_rk4, a(1,l_col1), lda)
 #endif
+         call timer%stop("blas")
+
        enddo
 
        deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
@@ -1051,6 +1044,8 @@ module ELPA1_AUXILIARY
        use elpa_mpi
 #ifdef HAVE_DETAILED_TIMINGS
        use timings
+#else
+       use timings_dummy
 #endif
        implicit none
 
@@ -1071,16 +1066,12 @@ module ELPA1_AUXILIARY
        integer(kind=ik)             :: istat
        character(200)               :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("mpi_communication")
-#endif
+       call timer%start("mpi_communication")
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
        call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
        call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("mpi_communication")
-#endif
+       call timer%stop("mpi_communication")
        success = .true.
 
        l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
@@ -1133,11 +1124,14 @@ module ELPA1_AUXILIARY
          if (my_prow==prow(n, nblk, np_rows)) then
 
            if (my_pcol==pcol(n, nblk, np_cols)) then
+             call timer%start("blas")
 #ifdef DOUBLE_PRECISION_REAL
              call DTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
 #else
              call STRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
 #endif
+            call timer%stop("blas")
+
              if (info/=0) then
                if (wantDebug) write(error_unit,*) "elpa_invert_trm_real: Error in DTRTRI"
                success = .false.
@@ -1151,17 +1145,13 @@ module ELPA1_AUXILIARY
              enddo
            endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
            call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_REAL
            call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
            call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
            call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
            nc = 0
            do i=1,nb
@@ -1169,12 +1159,15 @@ module ELPA1_AUXILIARY
              nc = nc+i
            enddo
 
+            call timer%start("blas")
+
            if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
                call DTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk8, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #else
                call STRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk4, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #endif
+           call timer%stop("blas")
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 
@@ -1188,34 +1181,28 @@ module ELPA1_AUXILIARY
 
            do i=1,nb
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
              call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_REAL
              call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_REAL8, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
              call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_REAL4, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
              call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
            enddo
          endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
          call timer%start("mpi_communication")
-#endif
          if (l_cols-l_col1+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
             call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_REAL8, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 #else
             call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_REAL4, prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
+
+         call timer%start("blas")
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
 #ifdef DOUBLE_PRECISION_REAL
             call dgemm('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -1.0_rk8,                 &
@@ -1226,6 +1213,8 @@ module ELPA1_AUXILIARY
                        tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
                        1.0_rk4, a(1,l_col1), lda)
 #endif
+         call timer%stop("blas")
+
        enddo
 
        deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
@@ -1264,6 +1253,8 @@ module ELPA1_AUXILIARY
       use elpa_mpi
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -1287,24 +1278,18 @@ module ELPA1_AUXILIARY
       integer(kind=ik)                 :: istat
       character(200)                   :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%start("elpa_cholesky_complex_double")
 #else
       call timer%start("elpa_cholesky_complex_single")
 #endif
-#endif
       success = .true.
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
       tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
@@ -1363,11 +1348,14 @@ module ELPA1_AUXILIARY
           ! of the remaining block
 
           if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
+            call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
             call zpotrf('U', na-n+1, a(l_row1,l_col1),lda, info)
 #else
             call cpotrf('U', na-n+1, a(l_row1,l_col1),lda, info)
 #endif
+            call timer%stop("blas")
+
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_complex: Error in zpotrf"
               success = .false.
@@ -1385,11 +1373,14 @@ module ELPA1_AUXILIARY
 
             ! The process owning the upper left remaining block does the
             ! Cholesky-Factorization of this block
+            call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
             call zpotrf('U', nblk, a(l_row1,l_col1),lda, info)
 #else
             call cpotrf('U', nblk, a(l_row1,l_col1),lda, info)
 #endif
+            call timer%stop("blas")
+
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_complex: Error in zpotrf"
               success = .false.
@@ -1403,17 +1394,13 @@ module ELPA1_AUXILIARY
             enddo
           endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_DOUBLE_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
 
           nc = 0
@@ -1422,6 +1409,7 @@ module ELPA1_AUXILIARY
             nc = nc+i
           enddo
 
+          call timer%start("blas")
           if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call ztrsm('L', 'U', 'C', 'N', nblk, l_cols-l_colx+1, (1.0_rk8,0.0_rk8), tmp2, ubound(tmp2,dim=1), &
@@ -1430,15 +1418,14 @@ module ELPA1_AUXILIARY
                 call ctrsm('L', 'U', 'C', 'N', nblk, l_cols-l_colx+1, (1.0_rk4,0.0_rk4), tmp2, ubound(tmp2,dim=1), &
                            a(l_row1,l_colx), lda)
 #endif
+          call timer%stop("blas")
         endif
 
         do i=1,nblk
 
           if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = conjg(a(l_row1+i-1,l_colx:l_cols))
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_DOUBLE_COMPLEX, prow(n, nblk, np_rows), &
@@ -1447,9 +1434,7 @@ module ELPA1_AUXILIARY
                 call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_COMPLEX, prow(n, nblk, np_rows), &
                                mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
@@ -1468,6 +1453,8 @@ module ELPA1_AUXILIARY
           lrs = l_rowx
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
+
+          call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           call ZGEMM('N', 'C', lre-lrs+1, lce-lcs+1, nblk, (-1.0_rk8,0.0_rk8),               &
                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
@@ -1477,6 +1464,7 @@ module ELPA1_AUXILIARY
                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
                      (1.0_rk4,0.0_rk4), a(lrs,lcs), lda)
 #endif
+          call timer%stop("blas")
         enddo
 
       enddo
@@ -1497,12 +1485,10 @@ module ELPA1_AUXILIARY
           a(l_row1:l_rows,l_col1) = 0
         endif
       enddo
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%stop("elpa_cholesky_complex_double")
 #else
       call timer%stop("elpa_cholesky_complex_single")
-#endif
 #endif
 
     end function elpa_cholesky_complex_double
@@ -1533,6 +1519,8 @@ module ELPA1_AUXILIARY
       use elpa_mpi
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       implicit none
@@ -1556,24 +1544,18 @@ module ELPA1_AUXILIARY
       integer(kind=ik)                 :: istat
       character(200)                   :: errorMessage
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%start("elpa_cholesky_complex_double")
 #else
       call timer%start("elpa_cholesky_complex_single")
 #endif
-#endif
       success = .true.
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
       tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
@@ -1632,11 +1614,15 @@ module ELPA1_AUXILIARY
           ! of the remaining block
 
           if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
+            call timer%start("blas")
+
 #ifdef DOUBLE_PRECISION_COMPLEX
             call zpotrf('U', na-n+1, a(l_row1,l_col1),lda, info)
 #else
             call cpotrf('U', na-n+1, a(l_row1,l_col1),lda, info)
 #endif
+            call timer%stop("blas")
+
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_complex: Error in zpotrf"
               success = .false.
@@ -1654,11 +1640,13 @@ module ELPA1_AUXILIARY
 
             ! The process owning the upper left remaining block does the
             ! Cholesky-Factorization of this block
+            call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
             call zpotrf('U', nblk, a(l_row1,l_col1),lda, info)
 #else
             call cpotrf('U', nblk, a(l_row1,l_col1),lda, info)
 #endif
+            call timer%stop("blas")
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_complex: Error in zpotrf"
               success = .false.
@@ -1672,17 +1660,13 @@ module ELPA1_AUXILIARY
             enddo
           endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_DOUBLE_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2, MPI_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
 
           nc = 0
@@ -1691,6 +1675,7 @@ module ELPA1_AUXILIARY
             nc = nc+i
           enddo
 
+          call timer%start("blas")
           if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call ztrsm('L', 'U', 'C', 'N', nblk, l_cols-l_colx+1, (1.0_rk8,0.0_rk8), tmp2, ubound(tmp2,dim=1), &
@@ -1699,15 +1684,14 @@ module ELPA1_AUXILIARY
                 call ctrsm('L', 'U', 'C', 'N', nblk, l_cols-l_colx+1, (1.0_rk4,0.0_rk4), tmp2, ubound(tmp2,dim=1), &
                            a(l_row1,l_colx), lda)
 #endif
+          call timer%stop("blas")
         endif
 
         do i=1,nblk
 
           if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = conjg(a(l_row1+i-1,l_colx:l_cols))
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
           if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_DOUBLE_COMPLEX, prow(n, nblk, np_rows), &
@@ -1716,9 +1700,7 @@ module ELPA1_AUXILIARY
                 call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_COMPLEX, prow(n, nblk, np_rows), &
                                mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
@@ -1737,6 +1719,7 @@ module ELPA1_AUXILIARY
           lrs = l_rowx
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
+          call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
           call ZGEMM('N', 'C', lre-lrs+1, lce-lcs+1, nblk, (-1.0_rk8,0.0_rk8),               &
                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
@@ -1746,6 +1729,7 @@ module ELPA1_AUXILIARY
                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
                      (1.0_rk4,0.0_rk4), a(lrs,lcs), lda)
 #endif
+          call timer%stop("blas")
         enddo
 
       enddo
@@ -1766,12 +1750,10 @@ module ELPA1_AUXILIARY
           a(l_row1:l_rows,l_col1) = 0
         endif
       enddo
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%stop("elpa_cholesky_complex_double")
 #else
       call timer%stop("elpa_cholesky_complex_single")
-#endif
 #endif
 
     end function elpa_cholesky_complex_single
@@ -1805,6 +1787,8 @@ module ELPA1_AUXILIARY
        use precision
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
        implicit none
        integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
@@ -1823,23 +1807,17 @@ module ELPA1_AUXILIARY
        logical                          :: success
        integer(kind=ik)                 :: istat
        character(200)                   :: errorMessage
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%start("elpa_invert_trm_complex_double")
 #else
       call timer%start("elpa_invert_trm_complex_single")
 #endif
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
        call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
        call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
        call timer%stop("mpi_communication")
-#endif
        success = .true.
 
        l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
@@ -1891,11 +1869,13 @@ module ELPA1_AUXILIARY
          if (my_prow==prow(n, nblk, np_rows)) then
 
            if (my_pcol==pcol(n, nblk, np_cols)) then
+             call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
              call ZTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
 #else
              call CTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
 #endif
+             call timer%stop("blas")
              if (info/=0) then
                if (wantDebug) write(error_unit,*) "elpa_invert_trm_complex: Error in ZTRTRI"
                success = .false.
@@ -1909,17 +1889,13 @@ module ELPA1_AUXILIARY
              enddo
            endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
            call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
            call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_DOUBLE_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
            call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
            call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
            nc = 0
            do i=1,nb
@@ -1927,12 +1903,14 @@ module ELPA1_AUXILIARY
              nc = nc+i
            enddo
 
+           call timer%start("blas")
            if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
              call ZTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, (1.0_rk8,0.0_rk8), tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #else
              call CTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, (1.0_rk4,0.0_rk4), tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #endif
+           call timer%start("blas")
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 
@@ -1946,24 +1924,18 @@ module ELPA1_AUXILIARY
 
            do i=1,nb
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
              call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
              call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_DOUBLE_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
              call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
              call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
            enddo
          endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
          if (l_cols-l_col1+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
            call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_DOUBLE_COMPLEX, prow(n, nblk, np_rows), &
@@ -1972,11 +1944,10 @@ module ELPA1_AUXILIARY
            call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_COMPLEX, prow(n, nblk, np_rows), &
                           mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
 
+         call timer%start("blas")
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
            call ZGEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, (-1.0_rk8,0.0_rk8),        &
@@ -1987,6 +1958,7 @@ module ELPA1_AUXILIARY
                       tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
                       (1.0_rk4,0.0_rk4), a(1,l_col1), lda)
 #endif
+          call timer%stop("blas")
        enddo
 
        deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
@@ -1995,12 +1967,10 @@ module ELPA1_AUXILIARY
          stop
        endif
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%stop("elpa_invert_trm_complex_double")
 #else
       call timer%stop("elpa_invert_trm_complex_single")
-#endif
 #endif
 
     end function elpa_invert_trm_complex_double
@@ -2032,6 +2002,8 @@ module ELPA1_AUXILIARY
        use precision
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
        implicit none
        integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
@@ -2050,23 +2022,17 @@ module ELPA1_AUXILIARY
        logical                          :: success
        integer(kind=ik)                 :: istat
        character(200)                   :: errorMessage
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%start("elpa_invert_trm_complex_double")
 #else
       call timer%start("elpa_invert_trm_complex_single")
 #endif
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
        call timer%start("mpi_communication")
-#endif
        call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
        call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
        call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
        call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
        call timer%stop("mpi_communication")
-#endif
        success = .true.
 
        l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
@@ -2118,11 +2084,13 @@ module ELPA1_AUXILIARY
          if (my_prow==prow(n, nblk, np_rows)) then
 
            if (my_pcol==pcol(n, nblk, np_cols)) then
+             call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
              call ZTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
 #else
              call CTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
 #endif
+             call timer%stop("blas")
              if (info/=0) then
                if (wantDebug) write(error_unit,*) "elpa_invert_trm_complex: Error in ZTRTRI"
                success = .false.
@@ -2136,17 +2104,13 @@ module ELPA1_AUXILIARY
              enddo
            endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
            call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
            call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_DOUBLE_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
            call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
            call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
            nc = 0
            do i=1,nb
@@ -2154,12 +2118,14 @@ module ELPA1_AUXILIARY
              nc = nc+i
            enddo
 
+           call timer%start("blas")
            if (l_cols-l_colx+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
              call ZTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, (1.0_rk8,0.0_rk8), tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #else
              call CTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, (1.0_rk4,0.0_rk4), tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 #endif
+           call timer%stop("blas")
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 
@@ -2173,24 +2139,18 @@ module ELPA1_AUXILIARY
 
            do i=1,nb
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
              call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
              call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_DOUBLE_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #else
              call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_COMPLEX, pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
              call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
            enddo
          endif
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
          call timer%start("mpi_communication")
-#endif
          if (l_cols-l_col1+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
            call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_DOUBLE_COMPLEX, prow(n, nblk, np_rows), &
@@ -2199,11 +2159,10 @@ module ELPA1_AUXILIARY
            call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_COMPLEX, prow(n, nblk, np_rows), &
                           mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
 
+         call timer%start("blas")
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
 #ifdef DOUBLE_PRECISION_COMPLEX
            call ZGEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, (-1.0_rk8,0.0_rk8),        &
@@ -2214,6 +2173,7 @@ module ELPA1_AUXILIARY
                       tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
                       (1.0_rk4,0.0_rk4), a(1,l_col1), lda)
 #endif
+          call timer%stop("blas")
        enddo
 
        deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
@@ -2222,12 +2182,10 @@ module ELPA1_AUXILIARY
          stop
        endif
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%stop("elpa_invert_trm_complex_double")
 #else
       call timer%stop("elpa_invert_trm_complex_single")
-#endif
 #endif
 
     end function elpa_invert_trm_complex_single
@@ -2274,6 +2232,8 @@ module ELPA1_AUXILIARY
                               mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use elpa1_compute
       use elpa_mpi
@@ -2300,12 +2260,10 @@ module ELPA1_AUXILIARY
       character(200)                :: errorMessage
       logical                       :: success
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
       call timer%start("elpa_mult_at_b_real_double")
 #else
       call timer%start("elpa_mult_at_b_real_single")
-#endif
 #endif
 
       success = .true.
@@ -2334,16 +2292,12 @@ module ELPA1_AUXILIARY
 !        print *,"na lt ldcCols ",na,ldcCols
 !        stop
 !      endif
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
       l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
       l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
 
@@ -2440,17 +2394,13 @@ module ELPA1_AUXILIARY
 
           ! Broadcast block column
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Bcast(aux_bc, n_aux_bc, MPI_REAL8, np_bc, mpi_comm_cols, mpierr)
 #else
           call MPI_Bcast(aux_bc, n_aux_bc, MPI_REAL4, np_bc, mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
           ! Insert what we got in aux_mat
 
@@ -2489,6 +2439,7 @@ module ELPA1_AUXILIARY
               endif
 
               if (lrs<=lre) then
+                call timer%start("blas")
 #ifdef DOUBLE_PRECISION_REAL
                 call dgemm('T', 'N', nstor, lce-lcs+1, lre-lrs+1, 1.0_rk8, aux_mat(lrs,1), ubound(aux_mat,dim=1), &
                              b(lrs,lcs), ldb, 0.0_rk8, tmp1, nstor)
@@ -2496,24 +2447,20 @@ module ELPA1_AUXILIARY
                 call sgemm('T', 'N', nstor, lce-lcs+1, lre-lrs+1, 1.0_rk4, aux_mat(lrs,1), ubound(aux_mat,dim=1), &
                              b(lrs,lcs), ldb, 0.0_rk4, tmp1, nstor)
 #endif
-
+                call timer%stop("blas")
               else
                 tmp1 = 0
               endif
 
               ! Sum up the results and send to processor row np
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_REAL
               call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_REAL8, MPI_SUM, np, mpi_comm_rows, mpierr)
 #else
               call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_REAL4, MPI_SUM, np, mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
               ! Put the result into C
               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
@@ -2545,13 +2492,10 @@ module ELPA1_AUXILIARY
        stop
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
       call timer%stop("elpa_mult_at_b_real_double")
 #else
       call timer%stop("elpa_mult_at_b_real_single")
-#endif
-
 #endif
 
     end function elpa_mult_at_b_real_double
@@ -2596,6 +2540,8 @@ module ELPA1_AUXILIARY
                               mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use elpa1_compute
       use elpa_mpi
@@ -2622,12 +2568,10 @@ module ELPA1_AUXILIARY
       character(200)                :: errorMessage
       logical                       :: success
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
       call timer%start("elpa_mult_at_b_real_double")
 #else
       call timer%start("elpa_mult_at_b_real_single")
-#endif
 #endif
       success = .true.
 
@@ -2655,16 +2599,12 @@ module ELPA1_AUXILIARY
 !        print *,"na lt ldcCols ",na,ldcCols
 !        stop
 !      endif
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
       l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
       l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
 
@@ -2761,17 +2701,13 @@ module ELPA1_AUXILIARY
 
           ! Broadcast block column
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_REAL
           call MPI_Bcast(aux_bc, n_aux_bc, MPI_REAL8, np_bc, mpi_comm_cols, mpierr)
 #else
           call MPI_Bcast(aux_bc, n_aux_bc, MPI_REAL4, np_bc, mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
           ! Insert what we got in aux_mat
 
@@ -2809,7 +2745,8 @@ module ELPA1_AUXILIARY
                stop
               endif
 
-              if (lrs<=lre) then
+              if (lrs <= lre) then
+                call timer%start("blas")
 #ifdef DOUBLE_PRECISION_REAL
                 call dgemm('T', 'N', nstor, lce-lcs+1, lre-lrs+1, 1.0_rk8, aux_mat(lrs,1), ubound(aux_mat,dim=1), &
                              b(lrs,lcs), ldb, 0.0_rk8, tmp1, nstor)
@@ -2817,24 +2754,20 @@ module ELPA1_AUXILIARY
                 call sgemm('T', 'N', nstor, lce-lcs+1, lre-lrs+1, 1.0_rk4, aux_mat(lrs,1), ubound(aux_mat,dim=1), &
                              b(lrs,lcs), ldb, 0.0_rk4, tmp1, nstor)
 #endif
-
+                call timer%stop("blas")
               else
                 tmp1 = 0
               endif
 
               ! Sum up the results and send to processor row np
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_REAL
               call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_REAL8, MPI_SUM, np, mpi_comm_rows, mpierr)
 #else
               call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_REAL4, MPI_SUM, np, mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
               call timer%stop("mpi_communication")
-#endif
               ! Put the result into C
               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
@@ -2866,13 +2799,10 @@ module ELPA1_AUXILIARY
        stop
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_REAL
       call timer%stop("elpa_mult_at_b_real_double")
 #else
       call timer%stop("elpa_mult_at_b_real_single")
-#endif
-
 #endif
 
     end function elpa_mult_at_b_real_single
@@ -2922,6 +2852,8 @@ module ELPA1_AUXILIARY
                                  mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       use elpa1_compute
@@ -2951,12 +2883,10 @@ module ELPA1_AUXILIARY
       character(200)                :: errorMessage
       logical                       :: success
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%start("elpa_mult_ah_b_complex_double")
 #else
       call timer%start("elpa_mult_ah_b_complex_single")
-#endif
 #endif
 
       success = .true.
@@ -2986,17 +2916,13 @@ module ELPA1_AUXILIARY
 !        stop
 !      endif
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
       l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
       l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
 
@@ -3080,7 +3006,7 @@ module ELPA1_AUXILIARY
             if (a_lower) lrs = local_index(gcol, my_prow, np_rows, nblk, +1)
             if (a_upper) lre = local_index(gcol, my_prow, np_rows, nblk, -1)
 
-            if (lrs<=lre) then
+            if (lrs <= lre) then
               nvals = lre-lrs+1
               if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
               n_aux_bc = n_aux_bc + nvals
@@ -3093,17 +3019,13 @@ module ELPA1_AUXILIARY
 
           ! Broadcast block column
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
           call MPI_Bcast(aux_bc, n_aux_bc, MPI_DOUBLE_COMPLEX, np_bc, mpi_comm_cols, mpierr)
 #else
           call MPI_Bcast(aux_bc, n_aux_bc, MPI_COMPLEX, np_bc, mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
           ! Insert what we got in aux_mat
 
@@ -3141,7 +3063,8 @@ module ELPA1_AUXILIARY
                 stop
               endif
 
-              if (lrs<=lre) then
+              if (lrs <= lre) then
+                call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call zgemm('C', 'N', nstor, lce-lcs+1, lre-lrs+1, (1.0_rk8,0.0_rk8), aux_mat(lrs,1), ubound(aux_mat,dim=1), &
                              b(lrs,lcs), ldb, (0.0_rk8,0.0_rk8), tmp1, nstor)
@@ -3149,24 +3072,21 @@ module ELPA1_AUXILIARY
                 call cgemm('C', 'N', nstor, lce-lcs+1, lre-lrs+1, (1.0_rk4,0.0_rk4), aux_mat(lrs,1), ubound(aux_mat,dim=1), &
                              b(lrs,lcs), ldb, (0.0_rk4,0.0_rk4), tmp1, nstor)
 #endif
-               else
-                 tmp1 = 0
-               endif
+                call timer%stop("blas")
+              else
+                tmp1 = 0
+              endif
 
                ! Sum up the results and send to processor row np
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
                call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
                call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_DOUBLE_COMPLEX, MPI_SUM, np, mpi_comm_rows, mpierr)
 
 #else
                call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_COMPLEX, MPI_SUM, np, mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
                call timer%stop("mpi_communication")
-#endif
                ! Put the result into C
                if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
@@ -3203,12 +3123,10 @@ module ELPA1_AUXILIARY
         stop
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%stop("elpa_mult_ah_b_complex_double")
 #else
       call timer%stop("elpa_mult_ah_b_complex_single")
-#endif
 #endif
 
     end function elpa_mult_ah_b_complex_double
@@ -3256,6 +3174,8 @@ module ELPA1_AUXILIARY
                                  mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       use precision
       use elpa1_compute
@@ -3286,12 +3206,10 @@ module ELPA1_AUXILIARY
       character(200)                :: errorMessage
       logical                       :: success
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%start("elpa_mult_ah_b_complex_double")
 #else
       call timer%start("elpa_mult_ah_b_complex_single")
-#endif
 #endif
 
       success = .true.
@@ -3321,16 +3239,12 @@ module ELPA1_AUXILIARY
 !        stop
 !      endif
 
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%start("mpi_communication")
-#endif
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("mpi_communication")
-#endif
       l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
       l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
 
@@ -3427,17 +3341,13 @@ module ELPA1_AUXILIARY
 
           ! Broadcast block column
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
           call MPI_Bcast(aux_bc, n_aux_bc, MPI_DOUBLE_COMPLEX, np_bc, mpi_comm_cols, mpierr)
 #else
           call MPI_Bcast(aux_bc, n_aux_bc, MPI_COMPLEX, np_bc, mpi_comm_cols, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
           ! Insert what we got in aux_mat
 
@@ -3476,6 +3386,7 @@ module ELPA1_AUXILIARY
               endif
 
               if (lrs<=lre) then
+                call timer%start("blas")
 #ifdef DOUBLE_PRECISION_COMPLEX
                 call zgemm('C', 'N', nstor, lce-lcs+1, lre-lrs+1, (1.0_rk8,0.0_rk8), aux_mat(lrs,1), ubound(aux_mat,dim=1), &
                              b(lrs,lcs), ldb, (0.0_rk8,0.0_rk8), tmp1, nstor)
@@ -3483,23 +3394,20 @@ module ELPA1_AUXILIARY
                 call cgemm('C', 'N', nstor, lce-lcs+1, lre-lrs+1, (1.0_rk4,0.0_rk4), aux_mat(lrs,1), ubound(aux_mat,dim=1), &
                              b(lrs,lcs), ldb, (0.0_rk4,0.0_rk4), tmp1, nstor)
 #endif
-               else
-                 tmp1 = 0
-               endif
+                call timer%stop("blas")
+              else
+                tmp1 = 0
+              endif
 
                ! Sum up the results and send to processor row np
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
                call timer%start("mpi_communication")
-#endif
 #ifdef DOUBLE_PRECISION_COMPLEX
                call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_DOUBLE_COMPLEX, MPI_SUM, np, mpi_comm_rows, mpierr)
 #else
                call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1), MPI_COMPLEX, MPI_SUM, np, mpi_comm_rows, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
                call timer%stop("mpi_communication")
-#endif
                ! Put the result into C
                if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
 
@@ -3536,12 +3444,10 @@ module ELPA1_AUXILIARY
         stop
       endif
 
-#ifdef HAVE_DETAILED_TIMINGS
 #ifdef DOUBLE_PRECISION_COMPLEX
       call timer%stop("elpa_mult_ah_b_complex_double")
 #else
       call timer%stop("elpa_mult_ah_b_complex_single")
-#endif
 #endif
 
     end function elpa_mult_ah_b_complex_single

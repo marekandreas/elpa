@@ -52,7 +52,7 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
-subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, wantDebug, success )
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -81,7 +81,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
-      call timer%start("solve_tridi" // M_PRECISION_SUFFIX)
+      call timer%start("solve_tridi" // PRECISION_SUFFIX)
 
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -96,7 +96,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
       l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
       ! Set Q to 0
-      q(1:l_rows, 1:l_cols) = M_CONST_0_0
+      q(1:l_rows, 1:l_cols) = CONST_0_0
 
       ! Get the limits of the subdivisons, each subdivison has as many cols
       ! as fit on the respective processor column
@@ -116,7 +116,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
         ! Scalapack supports it but delivers no results for these columns,
         ! which is rather annoying
         if (nc==0) then
-          call timer%stop("solve_tridi" // M_PRECISION_SUFFIX)
+          call timer%stop("solve_tridi" // PRECISION_SUFFIX)
           if (wantDebug) write(error_unit,*) 'ELPA1_solve_tridi: ERROR: Problem contains processor column with zero width'
           success = .false.
           return
@@ -141,10 +141,10 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
       else
         nev1 = MIN(nev,l_cols)
       endif
-      call M_solve_tridi_col_PRECISION(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
+      call solve_tridi_col_PRECISION(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         matrixCols, mpi_comm_rows, wantDebug, success)
       if (.not.(success)) then
-        call timer%stop("solve_tridi" // M_PRECISION_SUFFIX)
+        call timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
       endif
       ! If there is only 1 processor column, we are done
@@ -156,7 +156,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
           stop
         endif
 
-        call timer%stop("solve_tridi" // M_PRECISION_SUFFIX)
+        call timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
       endif
 
@@ -215,9 +215,9 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
       enddo
 
       ! Recursively merge sub problems
-      call M_merge_recursive_PRECISION(0, np_cols, wantDebug, success)
+      call merge_recursive_PRECISION(0, np_cols, wantDebug, success)
       if (.not.(success)) then
-        call timer%stop("solve_tridi" // M_PRECISION_SUFFIX)
+        call timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
       endif
 
@@ -227,16 +227,16 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
         stop
       endif
 
-      call timer%stop("solve_tridi" // M_PRECISION_SUFFIX)
+      call timer%stop("solve_tridi" // PRECISION_SUFFIX)
       return
 
       contains
-        recursive subroutine M_merge_recursive_PRECISION(np_off, nprocs, wantDebug, success)
+        recursive subroutine merge_recursive_PRECISION(np_off, nprocs, wantDebug, success)
            use precision
 #ifdef HAVE_DETAILED_TIMINGS
            use timings
 #else
-           use timings_dummy           
+           use timings_dummy
 #endif
            implicit none
 
@@ -264,9 +264,9 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
            np1 = nprocs/2
            np2 = nprocs-np1
 
-           if (np1 > 1) call M_merge_recursive_PRECISION(np_off, np1, wantDebug, success)
+           if (np1 > 1) call merge_recursive_PRECISION(np_off, np1, wantDebug, success)
            if (.not.(success)) return
-           if (np2 > 1) call M_merge_recursive_PRECISION(np_off+np1, np2, wantDebug, success)
+           if (np2 > 1) call merge_recursive_PRECISION(np_off+np1, np2, wantDebug, success)
            if (.not.(success)) return
 
            noff = limits(np_off)
@@ -277,7 +277,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
            call timer%start("mpi_communication")
            if (my_pcol==np_off) then
              do n=np_off+np1,np_off+nprocs-1
-               call mpi_send(d(noff+1), nmid, M_MPI_REAL_PRECISION, n, 1, mpi_comm_cols, mpierr)
+               call mpi_send(d(noff+1), nmid, MPI_REAL_PRECISION, n, 1, mpi_comm_cols, mpierr)
              enddo
            endif
            call timer%stop("mpi_communication")
@@ -286,7 +286,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
            if (my_pcol>=np_off+np1 .and. my_pcol<np_off+nprocs) then
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
-             call mpi_recv(d(noff+1), nmid, M_MPI_REAL_PRECISION, np_off, 1, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+             call mpi_recv(d(noff+1), nmid, MPI_REAL_PRECISION, np_off, 1, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
              call timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !             d(noff+1:noff+1+nmid-1) = d(noff+1:noff+1+nmid-1)
@@ -297,7 +297,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
              do n=np_off,np_off+np1-1
 #ifdef WITH_MPI
                call timer%start("mpi_communication")
-               call mpi_send(d(noff+nmid+1), nlen-nmid, M_MPI_REAL_PRECISION, n, 1, mpi_comm_cols, mpierr)
+               call mpi_send(d(noff+nmid+1), nlen-nmid, MPI_REAL_PRECISION, n, 1, mpi_comm_cols, mpierr)
                call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
@@ -306,7 +306,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
            if (my_pcol>=np_off .and. my_pcol<np_off+np1) then
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
-             call mpi_recv(d(noff+nmid+1), nlen-nmid, M_MPI_REAL_PRECISION, np_off+np1, 1,mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+             call mpi_recv(d(noff+nmid+1), nlen-nmid, MPI_REAL_PRECISION, np_off+np1, 1,mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
              call timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !             d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) = d(noff+nmid+1:noff+nmid+1+nlen-nmid-1)
@@ -316,22 +316,22 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
 
              ! Last merge, result distribution must be block cyclic, noff==0,
              ! p_col_bc is set so that only nev eigenvalues are calculated
-             call M_merge_systems_PRECISION(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
+             call merge_systems_PRECISION(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
                                  l_col_bc, p_col_bc, np_off, nprocs, wantDebug, success )
              if (.not.(success)) return
            else
              ! Not last merge, leave dense column distribution
-             call M_merge_systems_PRECISION(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
+             call merge_systems_PRECISION(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
                                  l_col(noff+1), p_col(noff+1), np_off, nprocs, wantDebug, success )
              if (.not.(success)) return
            endif
-       end subroutine M_merge_recursive_PRECISION
+       end subroutine merge_recursive_PRECISION
 
-    end subroutine M_solve_tridi_PRECISION
+    end subroutine solve_tridi_PRECISION
 
-    subroutine M_solve_tridi_col_PRECISION( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
+    subroutine solve_tridi_col_PRECISION( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -365,7 +365,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
-      call timer%start("solve_tridi_col" // M_PRECISION_SUFFIX)
+      call timer%start("solve_tridi_col" // PRECISION_SUFFIX)
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -427,9 +427,9 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
           noff = limits(n)        ! Start of subproblem
           nlen = limits(n+1)-noff ! Size of subproblem
 
-          call M_solve_tridi_single_problem_PRECISION(nlen,d(noff+1),e(noff+1), &
+          call solve_tridi_single_problem_PRECISION(nlen,d(noff+1),e(noff+1), &
                                     q(nqoff+noff+1,noff+1),ubound(q,dim=1), wantDebug, success)
-                                    
+
           if (.not.(success)) return
         enddo
 
@@ -456,9 +456,9 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
 
           noff = limits(my_prow)        ! Start of subproblem
           nlen = limits(my_prow+1)-noff ! Size of subproblem
-          call M_solve_tridi_single_problem_PRECISION(nlen,d(noff+1),e(noff+1),qmat1, &
+          call solve_tridi_single_problem_PRECISION(nlen,d(noff+1),e(noff+1),qmat1, &
                                     ubound(qmat1,dim=1), wantDebug, success)
-                                    
+
           if (.not.(success)) return
         endif
 
@@ -470,9 +470,9 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
           nlen = limits(np+1)-noff
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call MPI_Bcast(d(noff+1), nlen, M_MPI_REAL_PRECISION, np, mpi_comm_rows, mpierr)
+          call MPI_Bcast(d(noff+1), nlen, MPI_REAL_PRECISION, np, mpi_comm_rows, mpierr)
           qmat2 = qmat1
-          call MPI_Bcast(qmat2, max_size*max_size, M_MPI_REAL_PRECISION, np, mpi_comm_rows, mpierr)
+          call MPI_Bcast(qmat2, max_size*max_size, MPI_REAL_PRECISION, np, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !          qmat2 = qmat1 ! is this correct
@@ -480,9 +480,9 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
           do i=1,nlen
 
 #ifdef WITH_MPI
-            call M_distribute_global_column_PRECISION(qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+            call distribute_global_column_PRECISION(qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #else /* WITH_MPI */
-            call M_distribute_global_column_PRECISION(qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+            call distribute_global_column_PRECISION(qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #endif /* WITH_MPI */
           enddo
 
@@ -525,7 +525,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
             ! Last merge, set p_col_o=-1 for unneeded (output) eigenvectors
             p_col_o(nev+1:na) = -1
           endif
-          call M_merge_systems_PRECISION(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
+          call merge_systems_PRECISION(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                                matrixCols, mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
                                l_col(noff+1), p_col_o(noff+1), 0, 1, wantDebug, success)
           if (.not.(success)) return
@@ -542,11 +542,11 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
         stop
       endif
 
-      call timer%stop("solve_tridi_col" // M_PRECISION_SUFFIX)
+      call timer%stop("solve_tridi_col" // PRECISION_SUFFIX)
 
-    end subroutine M_solve_tridi_col_PRECISION
+    end subroutine solve_tridi_col_PRECISION
 
-    recursive subroutine M_solve_tridi_single_problem_PRECISION(nlen, d, e, q, ldq, wantDebug, success)
+    recursive subroutine solve_tridi_single_problem_PRECISION(nlen, d, e, q, ldq, wantDebug, success)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
@@ -572,7 +572,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
       integer(kind=ik)             :: istat
       character(200)               :: errorMessage
 
-     call timer%start("solve_tridi_single" // M_PRECISION_SUFFIX)
+     call timer%start("solve_tridi_single" // PRECISION_SUFFIX)
 
      success = .true.
      allocate(ds(nlen), es(nlen), stat=istat, errmsg=errorMessage)
@@ -595,8 +595,9 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
        print *,"solve_tridi_single: error when allocating work "//errorMessage
        stop
      endif
-
-     call M_PRECISION_STEDC('I', nlen, d, e, q, ldq, work, lwork, iwork, liwork, info)
+     call timer%start("blas")
+     call PRECISION_STEDC('I', nlen, d, e, q, ldq, work, lwork, iwork, liwork, info)
+     call timer%stop("blas")
 
      if (info /= 0) then
 
@@ -606,7 +607,10 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
 
        d(:) = ds(:)
        e(:) = es(:)
-       call M_PRECISION_STEQR('I', nlen, d, e, q, ldq, work, info)
+       call timer%start("blas")
+       call PRECISION_STEQR('I', nlen, d, e, q, ldq, work, info)
+       call timer%stop("blas")
+
        ! If DSTEQR fails also, we don't know what to do further ...
 
        if (info /= 0) then
@@ -666,7 +670,7 @@ subroutine M_solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi
 
        endif
      enddo
-     call timer%stop("solve_tridi_single" // M_PRECISION_SUFFIX)
+     call timer%stop("solve_tridi_single" // PRECISION_SUFFIX)
 
-    end subroutine M_solve_tridi_single_problem_PRECISION
+    end subroutine solve_tridi_single_problem_PRECISION
 

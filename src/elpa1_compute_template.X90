@@ -52,10 +52,39 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
-#include "precision_macros_complex.h"
+#if REALCASE == 1
+#include "precision_macros.h"
+#endif
 
-#include "elpa1_tridiag_complex_template.X90"
-#include "elpa1_trans_ev_complex_template.X90"
-#include "elpa1_tools_complex_template.X90"
+#if COMPLEXCASE == 1
+#include "precision_macros_complex.h"
+#endif
+
+#if REALCASE == 1
+
+!cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
+#define check_memcpy_cuda(file, success) call check_memcpy_CUDA_f(file, __LINE__, success)
+#define check_alloc_cuda(file, success) call check_alloc_CUDA_f(file, __LINE__, success)
+#define check_dealloc_cuda(file, success) call check_dealloc_CUDA_f(file, __LINE__, success)
+
+#endif
+
+#if REALCASE == 1
+
+#include "elpa1_tridiag_template.X90"
+#include "elpa1_trans_ev_template.X90"
+#include "elpa1_solve_tridi_real_template.X90"
+#include "elpa1_merge_systems_real_template.X90"
+#include "elpa1_tools_template.X90"
+
+#endif
+
+#if COMPLEXCASE == 1
+
+#include "elpa1_tridiag_template.X90"
+#include "elpa1_trans_ev_template.X90"
+#include "elpa1_tools_template.X90"
 
 #define ALREADY_DEFINED 1
+
+#endif

@@ -581,6 +581,14 @@ module ELPA2
       endif
     endif
 
+    if (do_useGPU) then
+      if (nblk .ne. 128) then
+        write(error_unit,*) "In case of GPU usage the blocksize for ELPA 2stage has to be 128"
+        success = .false.
+        return
+      endif
+    endif
+
     ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
     ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
     ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
@@ -960,6 +968,13 @@ module ELPA2
       endif
     endif
 
+    if (do_useGPU) then
+      if (nblk .ne. 128) then
+        write(error_unit,*) "In case of GPU usage the blocksize for ELPA 2stage has to be 128"
+        success = .false.
+        return
+      endif
+    endif
     ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
     ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
     ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
@@ -1296,6 +1311,13 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
       endif
     endif
 
+    if (do_useGPU) then
+      if (nblk .ne. 128) then
+        write(error_unit,*) "In case of GPU usage the blocksize for ELPA 2stage has to be 128"
+        success = .false.
+        return
+      endif
+    endif
     ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
 
     nbw = (31/nblk+1)*nblk
@@ -1638,6 +1660,14 @@ function solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
     if (do_useGPU) then
       if (THIS_COMPLEX_ELPA_KERNEL .ne. COMPLEX_ELPA_KERNEL_GPU) then
         write(error_unit,*) "GPU usage has been requested but compute kernel is defined as non-GPU! Aborting..."
+        success = .false.
+        return
+      endif
+    endif
+
+    if (do_useGPU) then
+      if (nblk .ne. 128) then
+        write(error_unit,*) "In case of GPU usage the blocksize for ELPA 2stage has to be 128"
         success = .false.
         return
       endif
