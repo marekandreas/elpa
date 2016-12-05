@@ -45,8 +45,13 @@ simple_tokens = [
     "global_product_PRECISION",
     "add_tmp_PRECISION",
     "v_add_s_PRECISION",
+    "launch_compute_hh_trafo_c_kernel_NUMBER_PRECISION",
+    "compute_hh_trafo_NUMBER_gpu_PRECISION", 
+    "launch_my_pack_c_kernel_NUMBER_PRECISION",
+    "launch_my_unpack_c_kernel_NUMBER_PRECISION",
+    "launch_compute_hh_dotp_c_kernel_NUMBER_PRECISION",    
+    "launch_extract_hh_tau_c_kernel_NUMBER_PRECISION",
 ]
-
 
 blas_tokens = [
     "PRECISION_GEMV",
@@ -75,6 +80,7 @@ blas_tokens = [
 explicit_tokens_complex = [
     ("PRECISION_SUFFIX", "\"_double\"", "\"_single\""),
     ("MPI_COMPLEX_PRECISION", "MPI_DOUBLE_COMPLEX", "MPI_COMPLEX"),
+    ("MPI_COMPLEX_EXPLICIT_PRECISION", "MPI_COMPLEX16", "MPI_COMPLEX8"),
     ("MPI_REAL_PRECISION", "MPI_REAL8", "MPI_REAL4"),
     ("KIND_PRECISION", "rk8", "rk4"),
     ("PRECISION_CMPLX", "DCMPLX", "CMPLX"),

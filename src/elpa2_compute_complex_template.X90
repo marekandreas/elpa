@@ -67,29 +67,17 @@
 #include "elpa2_tridiag_band_complex_template.X90"
 #include "elpa2_trans_ev_tridi_to_band_complex_template.X90"
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-    subroutine compute_hh_dot_products_complex_gpu_double(nbw, n)
-#else
-    subroutine compute_hh_dot_products_complex_gpu_single(nbw, n)
-#endif
+    subroutine compute_hh_dot_products_complex_gpu_PRECISION(nbw, n)
       use cuda_c_kernel
       use precision
       implicit none
       integer(kind=ik), value :: nbw, n
 
       if (n .le. 1) return
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call launch_compute_hh_dotp_c_kernel_complex_double( bcast_buffer_dev, hh_dot_dev, nbw,n)
-#else
-      call launch_compute_hh_dotp_c_kernel_complex_single( bcast_buffer_dev, hh_dot_dev, nbw,n)
-#endif
+      call launch_compute_hh_dotp_c_kernel_complex_PRECISION( bcast_buffer_dev, hh_dot_dev, nbw,n)
      end subroutine
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-     subroutine pack_row_group_complex_gpu_double(rows, n_offset, row_count)
-#else
-     subroutine pack_row_group_complex_gpu_single(rows, n_offset, row_count)
-#endif
+     subroutine pack_row_group_complex_gpu_PRECISION(rows, n_offset, row_count)
        use cuda_c_kernel
        use precision
        implicit none
@@ -99,28 +87,18 @@
        logical                      :: successCUDA
 
        max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
-#ifdef DOUBLE_PRECISION_COMPLEX
-       call launch_my_pack_c_kernel_complex_double(row_count, n_offset, max_idx, stripe_width,a_dim2, stripe_count, &
+       call launch_my_pack_c_kernel_complex_PRECISION(row_count, n_offset, max_idx, stripe_width,a_dim2, stripe_count, &
                                             l_nev, aIntern_dev, row_group_dev)
-       successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev ,row_count * l_nev * size_of_double_complex_datatype, &
+       successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev ,row_count * l_nev * size_of_PRECISION_complex, &
                                   cudaMemcpyDeviceToHost)
-#else
-       call launch_my_pack_c_kernel_complex_single(row_count, n_offset, max_idx, stripe_width,a_dim2, stripe_count, &
-                                            l_nev, aIntern_dev, row_group_dev)
-       successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev ,row_count * l_nev * size_of_single_complex_datatype, &
-                                  cudaMemcpyDeviceToHost)
-#endif
        if (.not.(successCUDA)) then
          print *,"pack_row_group_complex_gpu: error in cudaMemcpy"
          stop
        endif
 
      end subroutine
-#ifdef DOUBLE_PRECISION_COMPLEX
-     subroutine unpack_row_group_complex_gpu_double(rows, n_offset, row_count)
-#else
-     subroutine unpack_row_group_complex_gpu_single(rows, n_offset, row_count)
-#endif
+
+     subroutine unpack_row_group_complex_gpu_PRECISION(rows, n_offset, row_count)
        use cuda_c_kernel
        use precision
        implicit none
@@ -131,31 +109,17 @@
        logical                         :: successCUDA
 
        max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
-#ifdef DOUBLE_PRECISION_COMPLEX
-       successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev* size_of_double_complex_datatype , &
+       successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev* size_of_PRECISION_complex , &
                                   cudaMemcpyHostToDevice)
-#else
-       successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev* size_of_single_complex_datatype , &
-                                  cudaMemcpyHostToDevice)
-#endif
        if (.not.(successCUDA)) then
          print *,"unpack_row_group_complex_gpu: error in cudaMemcpy"
          stop
        endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-       call launch_my_unpack_c_kernel_complex_double( row_count, n_offset,max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
+       call launch_my_unpack_c_kernel_complex_PRECISION( row_count, n_offset,max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
                                               row_group_dev,aIntern_dev)
-#else
-       call launch_my_unpack_c_kernel_complex_single( row_count, n_offset,max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
-                                              row_group_dev,aIntern_dev)
-#endif
      end subroutine
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-     subroutine unpack_and_prepare_row_group_complex_gpu_double(next_unpack_idx, force)
-#else
-     subroutine unpack_and_prepare_row_group_complex_gpu_single(next_unpack_idx, force)
-#endif
+     subroutine unpack_and_prepare_row_group_complex_gpu_PRECISION(next_unpack_idx, force)
 
        use precision
        implicit none
@@ -168,11 +132,7 @@
        else
          if (force .or. (row_group_size == nblk) .or. (unpack_idx + 1 /=next_unpack_idx)) then
            ! A flush and a reset must  performed
-#ifdef DOUBLE_PRECISION_COMPLEX
-           call unpack_row_group_complex_gpu_double(row_group(:, :), unpack_idx - row_group_size, row_group_size)
-#else
-           call unpack_row_group_complex_gpu_single(row_group(:, :), unpack_idx - row_group_size, row_group_size)
-#endif
+           call unpack_row_group_complex_gpu_PRECISION(row_group(:, :), unpack_idx - row_group_size, row_group_size)
            row_group_size = 1
          else
            ! Just prepare for the upcoming row
@@ -184,11 +144,7 @@
 
     end subroutine
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-    subroutine compute_hh_trafo_complex_gpu_double(off, ncols, istripe, a_off, dev_offset, dev_offset_1, dev_offset_2)
-#else
-    subroutine compute_hh_trafo_complex_gpu_single(off, ncols, istripe, a_off, dev_offset, dev_offset_1, dev_offset_2)
-#endif
+    subroutine compute_hh_trafo_complex_gpu_PRECISION(off, ncols, istripe, a_off, dev_offset, dev_offset_1, dev_offset_2)
 
       use iso_c_binding
       use cuda_c_kernel
@@ -205,26 +161,14 @@
       ttt = mpi_wtime()
       nl = merge(stripe_width, last_stripe_width, istripe < stripe_count)
 
-#ifdef DOUBLE_PRECISION_COMPLEX
       dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * &
-                    size_of_double_complex_datatype
-      dev_offset_1 = (0 +  (  off-1 )* nbw) *size_of_double_complex_datatype
-      dev_offset_2 =( off-1 )*size_of_double_complex_datatype
+                    size_of_PRECISION_complex
+      dev_offset_1 = (0 +  (  off-1 )* nbw) *size_of_PRECISION_complex
+      dev_offset_2 =( off-1 )*size_of_PRECISION_complex
 
 !      t1_compute_kernel =MPI_Wtime()
-      call launch_compute_hh_trafo_c_kernel_complex_double(aIntern_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
+      call launch_compute_hh_trafo_c_kernel_complex_PRECISION(aIntern_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
                                                     hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
-#else
-      dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * &
-                   size_of_single_complex_datatype
-      dev_offset_1 = (0 +  (  off-1 )* nbw) *size_of_single_complex_datatype
-      dev_offset_2 =( off-1 )*size_of_single_complex_datatype
-
-!      t1_compute_kernel =MPI_Wtime()
-      call launch_compute_hh_trafo_c_kernel_complex_single(aIntern_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
-                                                    hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
-
-#endif
 
 !      time0 = time0 + time1
 !      t2_compute_kernel =MPI_Wtime()

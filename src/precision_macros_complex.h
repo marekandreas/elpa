@@ -40,6 +40,12 @@
 #undef  global_product_PRECISION
 #undef  add_tmp_PRECISION
 #undef  v_add_s_PRECISION
+#undef  launch_compute_hh_trafo_c_kernel_complex_PRECISION
+#undef  compute_hh_trafo_complex_gpu_PRECISION
+#undef  launch_my_pack_c_kernel_complex_PRECISION
+#undef  launch_my_unpack_c_kernel_complex_PRECISION
+#undef  launch_compute_hh_dotp_c_kernel_complex_PRECISION
+#undef  launch_extract_hh_tau_c_kernel_complex_PRECISION
 #undef  PRECISION_GEMV
 #undef  PRECISION_TRMV
 #undef  PRECISION_GEMM
@@ -63,6 +69,7 @@
 #undef  cublas_PRECISION_GEMV
 #undef  PRECISION_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
+#undef  MPI_COMPLEX_EXPLICIT_PRECISION
 #undef  MPI_REAL_PRECISION
 #undef  KIND_PRECISION
 #undef  PRECISION_CMPLX
@@ -113,6 +120,12 @@
 #define  global_product_PRECISION global_product_double
 #define  add_tmp_PRECISION add_tmp_double
 #define  v_add_s_PRECISION v_add_s_double
+#define  launch_compute_hh_trafo_c_kernel_complex_PRECISION launch_compute_hh_trafo_c_kernel_complex_double
+#define  compute_hh_trafo_complex_gpu_PRECISION compute_hh_trafo_complex_gpu_double
+#define  launch_my_pack_c_kernel_complex_PRECISION launch_my_pack_c_kernel_complex_double
+#define  launch_my_unpack_c_kernel_complex_PRECISION launch_my_unpack_c_kernel_complex_double
+#define  launch_compute_hh_dotp_c_kernel_complex_PRECISION launch_compute_hh_dotp_c_kernel_complex_double
+#define  launch_extract_hh_tau_c_kernel_complex_PRECISION launch_extract_hh_tau_c_kernel_complex_double
 #define  PRECISION_GEMV ZGEMV
 #define  PRECISION_TRMV ZTRMV
 #define  PRECISION_GEMM ZGEMM
@@ -136,6 +149,7 @@
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
 #define  PRECISION_SUFFIX "_double"
 #define  MPI_COMPLEX_PRECISION MPI_DOUBLE_COMPLEX
+#define  MPI_COMPLEX_EXPLICIT_PRECISION MPI_COMPLEX16
 #define  MPI_REAL_PRECISION MPI_REAL8
 #define  KIND_PRECISION rk8
 #define  PRECISION_CMPLX DCMPLX
@@ -187,6 +201,12 @@
 #undef  global_product_PRECISION
 #undef  add_tmp_PRECISION
 #undef  v_add_s_PRECISION
+#undef  launch_compute_hh_trafo_c_kernel_complex_PRECISION
+#undef  compute_hh_trafo_complex_gpu_PRECISION
+#undef  launch_my_pack_c_kernel_complex_PRECISION
+#undef  launch_my_unpack_c_kernel_complex_PRECISION
+#undef  launch_compute_hh_dotp_c_kernel_complex_PRECISION
+#undef  launch_extract_hh_tau_c_kernel_complex_PRECISION
 #undef  PRECISION_GEMV
 #undef  PRECISION_TRMV
 #undef  PRECISION_GEMM
@@ -210,6 +230,7 @@
 #undef  cublas_PRECISION_GEMV
 #undef  PRECISION_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
+#undef  MPI_COMPLEX_EXPLICIT_PRECISION
 #undef  MPI_REAL_PRECISION
 #undef  KIND_PRECISION
 #undef  PRECISION_CMPLX
@@ -260,6 +281,12 @@
 #define  global_product_PRECISION global_product_single
 #define  add_tmp_PRECISION add_tmp_single
 #define  v_add_s_PRECISION v_add_s_single
+#define  launch_compute_hh_trafo_c_kernel_complex_PRECISION launch_compute_hh_trafo_c_kernel_complex_single
+#define  compute_hh_trafo_complex_gpu_PRECISION compute_hh_trafo_complex_gpu_single
+#define  launch_my_pack_c_kernel_complex_PRECISION launch_my_pack_c_kernel_complex_single
+#define  launch_my_unpack_c_kernel_complex_PRECISION launch_my_unpack_c_kernel_complex_single
+#define  launch_compute_hh_dotp_c_kernel_complex_PRECISION launch_compute_hh_dotp_c_kernel_complex_single
+#define  launch_extract_hh_tau_c_kernel_complex_PRECISION launch_extract_hh_tau_c_kernel_complex_single
 #define  PRECISION_GEMV CGEMV
 #define  PRECISION_TRMV CTRMV
 #define  PRECISION_GEMM CGEMM
@@ -283,6 +310,7 @@
 #define  cublas_PRECISION_GEMV cublas_CGEMV
 #define  PRECISION_SUFFIX "_single"
 #define  MPI_COMPLEX_PRECISION MPI_COMPLEX
+#define  MPI_COMPLEX_EXPLICIT_PRECISION MPI_COMPLEX8
 #define  MPI_REAL_PRECISION MPI_REAL4
 #define  KIND_PRECISION rk4
 #define  PRECISION_CMPLX CMPLX
