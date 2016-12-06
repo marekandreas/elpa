@@ -62,6 +62,8 @@ blas_tokens = [
     "PRECISION_SYRK",
     "PRECISION_SYMV",
     "PRECISION_SYMM",
+    "PRECISION_HEMV",
+    "PRECISION_HER2",
     "PRECISION_SYR2",
     "PRECISION_SYR2K",
     "PRECISION_GEQRF",
@@ -88,7 +90,12 @@ explicit_tokens_complex = [
     ("PRECISION_REAL", "DREAL", "REAL"),
     ("CONST_REAL_0_0", "0.0_rk8", "0.0_rk4"),
     ("CONST_REAL_1_0", "1.0_rk8", "1.0_rk4"),
+    ("CONST_REAL_0_5", "0.5_rk8", "0.5_rk4"),
+    ("CONST_COMPLEX_PAIR_0_0", "(0.0_rk8,0.0_rk8)", "(0.0_rk4,0.0_rk4)"),
+    ("CONST_COMPLEX_PAIR_1_0", "(1.0_rk8,0.0_rk8)", "(1.0_rk4,0.0_rk4)"),
+    ("CONST_COMPLEX_PAIR_NEGATIVE_1_0", "(-1.0_rk8,0.0_rk8)", "(-1.0_rk4,0.0_rk4)"),
     ("CONST_COMPLEX_0_0", "0.0_ck8", "0.0_ck4"),
+    ("CONST_COMPLEX_1_0", "1.0_ck8", "1.0_ck4"),
     ("size_of_PRECISION_complex", "size_of_double_complex_datatype", "size_of_single_complex_datatype"),
 ]
 

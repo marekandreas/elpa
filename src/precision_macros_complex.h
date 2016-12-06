@@ -54,6 +54,8 @@
 #undef  PRECISION_SYRK
 #undef  PRECISION_SYMV
 #undef  PRECISION_SYMM
+#undef  PRECISION_HEMV
+#undef  PRECISION_HER2
 #undef  PRECISION_SYR2
 #undef  PRECISION_SYR2K
 #undef  PRECISION_GEQRF
@@ -77,7 +79,12 @@
 #undef  PRECISION_REAL
 #undef  CONST_REAL_0_0
 #undef  CONST_REAL_1_0
+#undef  CONST_REAL_0_5
+#undef  CONST_COMPLEX_PAIR_0_0
+#undef  CONST_COMPLEX_PAIR_1_0
+#undef  CONST_COMPLEX_PAIR_NEGATIVE_1_0
 #undef  CONST_COMPLEX_0_0
+#undef  CONST_COMPLEX_1_0
 #undef  size_of_PRECISION_complex
 #define  elpa_transpose_vectors_complex_PRECISION elpa_transpose_vectors_complex_double
 #define  elpa_reduce_add_vectors_complex_PRECISION elpa_reduce_add_vectors_complex_double
@@ -134,6 +141,8 @@
 #define  PRECISION_SYRK ZSYRK
 #define  PRECISION_SYMV ZSYMV
 #define  PRECISION_SYMM ZSYMM
+#define  PRECISION_HEMV ZHEMV
+#define  PRECISION_HER2 ZHER2
 #define  PRECISION_SYR2 ZSYR2
 #define  PRECISION_SYR2K ZSYR2K
 #define  PRECISION_GEQRF ZGEQRF
@@ -157,7 +166,12 @@
 #define  PRECISION_REAL DREAL
 #define  CONST_REAL_0_0 0.0_rk8
 #define  CONST_REAL_1_0 1.0_rk8
+#define  CONST_REAL_0_5 0.5_rk8
+#define  CONST_COMPLEX_PAIR_0_0 (0.0_rk8,0.0_rk8)
+#define  CONST_COMPLEX_PAIR_1_0 (1.0_rk8,0.0_rk8)
+#define  CONST_COMPLEX_PAIR_NEGATIVE_1_0 (-1.0_rk8,0.0_rk8)
 #define  CONST_COMPLEX_0_0 0.0_ck8
+#define  CONST_COMPLEX_1_0 1.0_ck8
 #define  size_of_PRECISION_complex size_of_double_complex_datatype
 #else
 #undef  elpa_transpose_vectors_complex_PRECISION
@@ -215,6 +229,8 @@
 #undef  PRECISION_SYRK
 #undef  PRECISION_SYMV
 #undef  PRECISION_SYMM
+#undef  PRECISION_HEMV
+#undef  PRECISION_HER2
 #undef  PRECISION_SYR2
 #undef  PRECISION_SYR2K
 #undef  PRECISION_GEQRF
@@ -238,7 +254,12 @@
 #undef  PRECISION_REAL
 #undef  CONST_REAL_0_0
 #undef  CONST_REAL_1_0
+#undef  CONST_REAL_0_5
+#undef  CONST_COMPLEX_PAIR_0_0
+#undef  CONST_COMPLEX_PAIR_1_0
+#undef  CONST_COMPLEX_PAIR_NEGATIVE_1_0
 #undef  CONST_COMPLEX_0_0
+#undef  CONST_COMPLEX_1_0
 #undef  size_of_PRECISION_complex
 #define  elpa_transpose_vectors_complex_PRECISION elpa_transpose_vectors_complex_single
 #define  elpa_reduce_add_vectors_complex_PRECISION elpa_reduce_add_vectors_complex_single
@@ -295,6 +316,8 @@
 #define  PRECISION_SYRK CSYRK
 #define  PRECISION_SYMV CSYMV
 #define  PRECISION_SYMM CSYMM
+#define  PRECISION_HEMV CHEMV
+#define  PRECISION_HER2 CHER2
 #define  PRECISION_SYR2 CSYR2
 #define  PRECISION_SYR2K CSYR2K
 #define  PRECISION_GEQRF CGEQRF
@@ -318,6 +341,11 @@
 #define  PRECISION_REAL REAL
 #define  CONST_REAL_0_0 0.0_rk4
 #define  CONST_REAL_1_0 1.0_rk4
+#define  CONST_REAL_0_5 0.5_rk4
+#define  CONST_COMPLEX_PAIR_0_0 (0.0_rk4,0.0_rk4)
+#define  CONST_COMPLEX_PAIR_1_0 (1.0_rk4,0.0_rk4)
+#define  CONST_COMPLEX_PAIR_NEGATIVE_1_0 (-1.0_rk4,0.0_rk4)
 #define  CONST_COMPLEX_0_0 0.0_ck4
+#define  CONST_COMPLEX_1_0 1.0_ck4
 #define  size_of_PRECISION_complex size_of_single_complex_datatype
 #endif
