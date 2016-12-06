@@ -62,13 +62,8 @@
 #endif
 
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-    subroutine bandred_complex_double(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, wantDebug, &
-                             useGPU, success)
-#else
-    subroutine bandred_complex_single(na, a, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, wantDebug, &
-                             useGPU, success)
-#endif
+    subroutine bandred_complex_PRECISION(na, a, lda, nblk, nbw, matrixCols, numBlocks,  &
+                           mpi_comm_rows, mpi_comm_cols, tmat, wantDebug, useGPU, success)
       !-------------------------------------------------------------------------------
       !  bandred_complex: Reduces a distributed hermitian matrix to band form
       !
@@ -146,13 +141,9 @@
       character(200)                              :: errorMessage
       integer(kind=ik)                            :: istat
       logical                                     :: successCUDA
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call timer%start("bandred_complex_double")
-#else
-      call timer%start("bandred_complex_single")
-#endif
-      call timer%start("mpi_communication")
 
+      call timer%start("bandred_complex" // PRECISION_SUFFIX)
+      call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -182,31 +173,19 @@
         na_cols = na
 #endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_double_complex_datatype)
-#else
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_single_complex_datatype)
-#endif
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_PRECISION_complex)
         if (.not.(successCUDA)) then
           print *, " bandred_complex: cuda malloc failed tmat_dev ", istat
           stop
         endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-        successCUDA = cuda_malloc(vav_dev, nbw*nbw*size_of_double_complex_datatype)
-#else
-        successCUDA = cuda_malloc(vav_dev, nbw*nbw*size_of_single_complex_datatype)
-#endif
+        successCUDA = cuda_malloc(vav_dev, nbw*nbw*size_of_PRECISION_complex)
         if (.not.(successCUDA)) then
           print *, "bandred_complex:  cuda malloc failed vav_dev ", istat
           stop
         endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-        successCUDA = cuda_malloc(a_dev, lda*na_cols*size_of_double_complex_datatype)
-#else
-        successCUDA = cuda_malloc(a_dev, lda*na_cols*size_of_single_complex_datatype)
-#endif
+        successCUDA = cuda_malloc(a_dev, lda*na_cols*size_of_PRECISION_complex)
         if (.not.(successCUDA)) then
           print *, "bandred_complex:  cuda malloc failed a_dev ", istat
           stop
@@ -228,11 +207,7 @@
         endif
 #endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)),(lda)*(na_cols)*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
-#else
-        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)),(lda)*(na_cols)*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
-#endif
+        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)),(lda)*(na_cols)*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *, "bandred_complex:  cuda memcpy faild a_dev ", istat
           stop
@@ -279,11 +254,7 @@
             if (max(l_cols,1) * 2*n_cols .gt. umc_size) then
               print *,"bandred_complex: umc_size ",max(l_cols,1) * 2*n_cols,umc_size
             endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-            successCUDA = cuda_malloc(umc_dev, umc_size*size_of_double_complex_datatype)
-#else
-            successCUDA = cuda_malloc(umc_dev, umc_size*size_of_single_complex_datatype)
-#endif
+            successCUDA = cuda_malloc(umc_dev, umc_size*size_of_PRECISION_complex)
             if (.not.(successCUDA)) then
               print *, "bandred_complex:  cuda malloc failed umc_dev ", istat
               stop
@@ -314,11 +285,7 @@
               print *,"bandred_complex: vmc_size ",max(l_rows,1) * 2*n_cols,vmr_size
             endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-            successCUDA = cuda_malloc(vmr_dev, vmr_size*size_of_double_complex_datatype)
-#else
-            successCUDA = cuda_malloc(vmr_dev, vmr_size*size_of_single_complex_datatype)
-#endif
+            successCUDA = cuda_malloc(vmr_dev, vmr_size*size_of_PRECISION_complex)
             if (.not.(successCUDA)) then
               print *, "bandred_complex:  cuda malloc failed vmr_dev ", istat
               stop
@@ -362,15 +329,9 @@
           endif
         endif ! useGPU
 
-#ifdef DOUBLE_PRECISION_COMLEX
-        vmr(1:l_rows,1:n_cols) = 0._ck8
-        vr(:) = 0._ck8
-        tmat(:,:,istep) = 0._ck8
-#else
-        vmr(1:l_rows,1:n_cols) = 0._ck4
-        vr(:) = 0._ck4
-        tmat(:,:,istep) = 0._ck4
-#endif
+        vmr(1:l_rows,1:n_cols) = CONST_COMPLEX_0_0
+        vr(:) = CONST_COMPLEX_0_0
+        tmat(:,:,istep) = CONST_COMPLEX_0_0
 
         if (useGPU) then
           lc_start = local_index(istep*nbw+1, my_pcol, np_cols, nblk, -1)
@@ -380,19 +341,11 @@
           if (lc_start .le. 0) lc_start = 1
           cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
           if (my_pcol == cur_pcol) then
-#ifdef DOUBLE_PRECISION_COMPLEX
-            successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), int(lda*size_of_double_complex_datatype,kind=c_size_t),            &
-                                        (a_dev + int( ( (lc_start-1) * lda*size_of_double_complex_datatype),kind=c_size_t )),      &
-                                        int(lda*size_of_double_complex_datatype,kind=c_size_t),              &
-                                    int(lr_end*size_of_double_complex_datatype,kind=c_size_t),               &
+            successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), int(lda*size_of_PRECISION_complex,kind=c_size_t),            &
+                                        (a_dev + int( ( (lc_start-1) * lda*size_of_PRECISION_complex),kind=c_size_t )),      &
+                                        int(lda*size_of_PRECISION_complex,kind=c_size_t),              &
+                                    int(lr_end*size_of_PRECISION_complex,kind=c_size_t),               &
                                       int((lc_end - lc_start+1),kind=c_size_t),int(cudaMemcpyDeviceToHost,kind=c_int))
-#else
-            successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), int(lda*size_of_single_complex_datatype,kind=c_size_t),            &
-                                        (a_dev + int( ( (lc_start-1) * lda*size_of_single_complex_datatype),kind=c_size_t )),      &
-                                        int(lda*size_of_single_complex_datatype,kind=c_size_t),              &
-                                    int(lr_end*size_of_single_complex_datatype,kind=c_size_t),               &
-                                      int((lc_end - lc_start+1),kind=c_size_t),int(cudaMemcpyDeviceToHost,kind=c_int))
-#endif
             if (.not.(successCUDA)) then
               print *, "bandred_complex: error in cudaMemcpy2"
               stop
@@ -428,20 +381,11 @@
               aux1(2) = vr(lr)
             else
               aux1(1) = dot_product(vr(1:lr),vr(1:lr))
-#ifdef DOUBLE_PRECISION_COMPLEX
-              aux1(2) = 0._ck8
-#else
-              aux1(2) = 0._ck4
-#endif
+              aux1(2) = CONST_COMPLEX_0_0
             endif
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-            call mpi_allreduce(aux1, aux2, 2, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
-#else
-            call mpi_allreduce(aux1, aux2, 2, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
-#endif
+            call mpi_allreduce(aux1, aux2, 2, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
             call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -451,22 +395,14 @@
             vrl    = aux2(2)
 
             ! Householder transformation
-#ifdef DOUBLE_PRECISION_COMPLEX
-            call hh_transform_complex_double(vrl, vnorm2, xf, tau)
-#else
-            call hh_transform_complex_single(vrl, vnorm2, xf, tau)
-#endif
+            call hh_transform_complex_PRECISION(vrl, vnorm2, xf, tau)
             ! Scale vr and store Householder vector for back transformation
 
             vr(1:lr) = vr(1:lr) * xf
             if (my_prow==prow(nrow, nblk, np_rows)) then
               a(1:lr-1,lch) = vr(1:lr-1)
               a(lr,lch) = vrl
-#ifdef DOUBLE_PRECISION_COMPLEX
-              vr(lr) = 1._ck8
-#else
-              vr(lr) = 1._ck4
-#endif
+              vr(lr) = CONST_COMPLEX_1_0
             else
               a(1:lr,lch) = vr(1:lr)
             endif
@@ -478,12 +414,7 @@
           vr(lr+1) = tau
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call MPI_Bcast(vr, lr+1, MPI_DOUBLE_COMPLEX, cur_pcol, mpi_comm_cols, mpierr)
-#else
-          call MPI_Bcast(vr, lr+1, MPI_COMPLEX, cur_pcol, mpi_comm_cols, mpierr)
-#endif
+          call MPI_Bcast(vr, lr+1, MPI_COMPLEX_PRECISION, cur_pcol, mpi_comm_cols, mpierr)
           call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -494,11 +425,7 @@
           ! Transform remaining columns in current block with Householder vector
 
           ! Local dot product
-#ifdef DOUBLE_PRECISION_COMPLEX
-          aux1 = 0._ck8
-#else
-          aux1 = 0._ck4
-#endif
+          aux1 = CONST_COMPLEX_0_0
 
           nlc = 0 ! number of local columns
           do j=1,lc-1
@@ -512,12 +439,7 @@
           ! Get global dot products
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-          if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
-#else
-          if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
-#endif
+          if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
 
           ! Transform
 
@@ -568,21 +490,12 @@
         if (useGPU) then
           cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
           if (my_pcol == cur_pcol) then
-#ifdef DOUBLE_PRECISION_COMPLEX
-            successCUDA = cuda_memcpy2d((a_dev+int(((lc_start-1)*lda*size_of_double_complex_datatype),kind=c_size_t)),    &
-                                        int(lda*size_of_double_complex_datatype,kind=c_size_t), loc(a(1,lc_start)),       &
-                                        int(lda*size_of_double_complex_datatype,kind=c_size_t),                           &
-                                        int(lr_end*size_of_double_complex_datatype,kind=c_size_t),                        &
+            successCUDA = cuda_memcpy2d((a_dev+int(((lc_start-1)*lda*size_of_PRECISION_complex),kind=c_size_t)),    &
+                                        int(lda*size_of_PRECISION_complex,kind=c_size_t), loc(a(1,lc_start)),       &
+                                        int(lda*size_of_PRECISION_complex,kind=c_size_t),                           &
+                                        int(lr_end*size_of_PRECISION_complex,kind=c_size_t),                        &
                                         int((lc_end - lc_start+1),kind=c_size_t) &
                                         ,int(cudaMemcpyHostToDevice,kind=c_int))
-#else
-            successCUDA = cuda_memcpy2d((a_dev+int(((lc_start-1)*lda*size_of_single_complex_datatype),kind=c_size_t)),    &
-                                        int(lda*size_of_single_complex_datatype,kind=c_size_t), loc(a(1,lc_start)),       &
-                                        int(lda*size_of_single_complex_datatype,kind=c_size_t),                           &
-                                        int(lr_end*size_of_single_complex_datatype,kind=c_size_t),                        &
-                                        int((lc_end - lc_start+1),kind=c_size_t) &
-                                        ,int(cudaMemcpyHostToDevice,kind=c_int))
-#endif
             if (.not.(successCUDA)) then
               print *, "bandred_complex: cuda memcpy a_dev  failed ", istat
               stop
@@ -592,20 +505,11 @@
 
         vav = 0
         if (l_rows>0) then
-#ifdef DOUBLE_PRECISION_COMPLEX
           call timer%start("blas")
-          call zherk('U', 'C', n_cols, l_rows, CONE, vmr, ubound(vmr,dim=1), CZERO, vav, ubound(vav,dim=1))
-	  call timer%stop("blas")
-	endif
-        call herm_matrix_allreduce_double(n_cols,vav, nbw,nbw,mpi_comm_rows)
-
-#else
-           call timer%start("blas")
-           call cherk('U', 'C', n_cols, l_rows, CONE, vmr, ubound(vmr,dim=1), CZERO, vav, ubound(vav,dim=1))
-	   call timer%stop("blas")
-	 endif
-        call herm_matrix_allreduce_single(n_cols,vav, nbw,nbw,mpi_comm_rows)
-#endif
+          call PRECISION_HERK('U', 'C', n_cols, l_rows, CONE, vmr, ubound(vmr,dim=1), CZERO, vav, ubound(vav,dim=1))
+          call timer%stop("blas")
+        endif
+        call herm_matrix_allreduce_PRECISION(n_cols,vav, nbw,nbw,mpi_comm_rows)
 
         ! Calculate triangular matrix T for block Householder Transformation
 
@@ -613,49 +517,30 @@
           tau = tmat(lc,lc,istep)
           if (lc<n_cols) then
             call timer%start("blas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-            call ztrmv('U', 'C', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
-#else
-            call ctrmv('U', 'C', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
-#endif
+            call PRECISION_TRMV('U', 'C', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
             call timer%stop("blas")
             tmat(lc,lc+1:n_cols,istep) = -tau * conjg(vav(lc+1:n_cols,lc))
           endif
         enddo
 
         ! Transpose vmr -> vmc (stored in umc, second half)
-#ifdef DOUBLE_PRECISION_COMPLEX
-        call elpa_transpose_vectors_complex_double  (vmr, ubound(vmr,dim=1), mpi_comm_rows, &
+        call elpa_transpose_vectors_complex_PRECISION  (vmr, ubound(vmr,dim=1), mpi_comm_rows, &
                                       umc(1,n_cols+1), ubound(umc,dim=1), mpi_comm_cols, &
                                       1, istep*nbw, n_cols, nblk)
-#else
-        call elpa_transpose_vectors_complex_single  (vmr, ubound(vmr,dim=1), mpi_comm_rows, &
-                                      umc(1,n_cols+1), ubound(umc,dim=1), mpi_comm_cols, &
-                                      1, istep*nbw, n_cols, nblk)
-#endif
 
         ! Calculate umc = A**T * vmr
         ! Note that the distributed A has to be transposed
         ! Opposed to direct tridiagonalization there is no need to use the cache locality
         ! of the tiles, so we can use strips of the matrix
-#ifdef DOUBLE_PRECISION_COMPLEX
-        umc(1:l_cols,1:n_cols) = 0.0_ck8
-        vmr(1:l_rows,n_cols+1:2*n_cols) = 0._ck8
-#else
-        umc(1:l_cols,1:n_cols) = 0.0_ck4
-        vmr(1:l_rows,n_cols+1:2*n_cols) = 0._ck4
-#endif
+        umc(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
+        vmr(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
         if (l_cols>0 .and. l_rows>0) then
           if (useGPU) then
             if (size(vmr,dim=1)*size(vmr,dim=2) .gt. vmr_size) then
               print *,"bandred_complex: vmr size 2 :",size(vmr,dim=1)*size(vmr,dim=2),vmr_size
               stop
             endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-            successCUDA = cuda_memcpy(vmr_dev, loc(vmr(1,1)),vmr_size*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
-#else
-            successCUDA = cuda_memcpy(vmr_dev, loc(vmr(1,1)),vmr_size*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
-#endif
+            successCUDA = cuda_memcpy(vmr_dev, loc(vmr(1,1)),vmr_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
 
             if (.not.(successCUDA)) then
               print *, "bandred_complex:  cuda memcpy vmr_dev failed ", istat
@@ -665,11 +550,7 @@
               print *,"bandred_complex: umc size 2 :",size(umc,dim=1)*size(umc,dim=2),umc_size
               stop
             endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-            successCUDA = cuda_memcpy(umc_dev, loc(umc(1,1)),umc_size*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
-#else
-            successCUDA = cuda_memcpy(umc_dev, loc(umc(1,1)),umc_size*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
-#endif
+            successCUDA = cuda_memcpy(umc_dev, loc(umc(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *, "bandred_complex:  cuda memcpy umc_dev failed  ", istat
               stop
@@ -684,60 +565,33 @@
             lre = min(l_rows,(i+1)*l_rows_tile)
 
             if (useGPU) then
-	      call timer%start("cublas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-              call cublas_ZGEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, (a_dev + ((lcs-1)*lda* &
-	                        size_of_double_complex_datatype)), lda, &
-                                vmr_dev, cur_l_rows, CONE, (umc_dev +(lcs-1)*size_of_double_complex_datatype), cur_l_cols)
-#else
-              call cublas_CGEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, (a_dev + ((lcs-1)*lda* &
-	                        size_of_single_complex_datatype)), lda, &
-                                vmr_dev, cur_l_rows, CONE, (umc_dev +(lcs-1)*size_of_single_complex_datatype), cur_l_cols)
-#endif
-	      call timer%stop("cublas")
+              call timer%start("cublas")
+              call cublas_PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, (a_dev + ((lcs-1)*lda* &
+                        size_of_PRECISION_complex)), lda, &
+                        vmr_dev, cur_l_rows, CONE, (umc_dev +(lcs-1)*size_of_PRECISION_complex), cur_l_cols)
+              call timer%stop("cublas")
             else
-	       call timer%start("blas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-              call ZGEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, a(1,lcs), ubound(a,dim=1), &
+              call timer%start("blas")
+              call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, a(1,lcs), ubound(a,dim=1), &
                          vmr, ubound(vmr,dim=1), CONE, umc(lcs,1), ubound(umc,dim=1))
-#else
-              call CGEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, a(1,lcs), ubound(a,dim=1), &
-                         vmr, ubound(vmr,dim=1), CONE, umc(lcs,1), ubound(umc,dim=1))
-#endif
-	      call timer%stop("blas")
+              call timer%stop("blas")
             endif
 
             if (i==0) cycle
             lre = min(l_rows,i*l_rows_tile)
-#ifdef DOUBLE_PRECISION_COMPLEX
             if (useGPU) then
-	      call timer%start("cublas")
-              call cublas_ZGEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, (a_dev+((lcs-1)*lda* &
-	                        size_of_double_complex_datatype)),lda,  &
-                                (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_double_complex_datatype), cur_l_cols,CONE,         &
-                                (vmr_dev+(cur_l_rows * n_cols)*size_of_double_complex_datatype), cur_l_rows)
-	      call timer%stop("cublas")
+              call timer%start("cublas")
+              call cublas_PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, (a_dev+((lcs-1)*lda* &
+                        size_of_PRECISION_complex)),lda,  &
+                        (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_PRECISION_complex), cur_l_cols,CONE,  &
+                        (vmr_dev+(cur_l_rows * n_cols)*size_of_PRECISION_complex), cur_l_rows)
+              call timer%stop("cublas")
             else
-	      call timer%start("blas")
-              call ZGEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, a(1,lcs), lda, &
+              call timer%start("blas")
+              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, a(1,lcs), lda, &
                          umc(lcs,n_cols+1), ubound(umc,dim=1), CONE, vmr(1,n_cols+1), ubound(vmr,dim=1))
-	      call timer%stop("blas")
+              call timer%stop("blas")
             endif
-#else
-            if (useGPU) then
-	      call timer%start("cublas")
-              call cublas_CGEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, (a_dev+((lcs-1)*lda* &
-	                        size_of_single_complex_datatype)),lda,  &
-                                (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_single_complex_datatype), cur_l_cols,CONE,         &
-                                (vmr_dev+(cur_l_rows * n_cols)*size_of_single_complex_datatype), cur_l_rows)
-	      call timer%stop("cublas")
-            else
-	      call timer%start("blas")
-              call CGEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, a(1,lcs), lda, &
-                         umc(lcs,n_cols+1), ubound(umc,dim=1), CONE, vmr(1,n_cols+1), ubound(vmr,dim=1))
-	      call timer%stop("blas")
-            endif
-#endif
           enddo
 
           if (useGPU) then
@@ -745,11 +599,7 @@
               print *,"bandred_complex: vmr size 3 :",size(vmr,dim=1)*size(vmr,dim=2),vmr_size
               stop
             endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-            successCUDA = cuda_memcpy(loc(vmr(1,1)),vmr_dev,vmr_size*size_of_double_complex_datatype,cudaMemcpyDeviceToHost)
-#else
-            successCUDA = cuda_memcpy(loc(vmr(1,1)),vmr_dev,vmr_size*size_of_single_complex_datatype,cudaMemcpyDeviceToHost)
-#endif
+            successCUDA = cuda_memcpy(loc(vmr(1,1)),vmr_dev,vmr_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *, "bandred_complex:  cuad memcpy failed vmr ", istat
               stop
@@ -758,11 +608,7 @@
               print *,"bandred_complex: umc size 3 :",size(umc,dim=1)*size(umc,dim=2),umc_size
               stop
             endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-            successCUDA = cuda_memcpy(loc(umc(1,1)), umc_dev,umc_size*size_of_double_complex_datatype,cudaMemcpyDeviceToHost)
-#else
-            successCUDA = cuda_memcpy(loc(umc(1,1)), umc_dev,umc_size*size_of_single_complex_datatype,cudaMemcpyDeviceToHost)
-#endif
+            successCUDA = cuda_memcpy(loc(umc(1,1)), umc_dev,umc_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *, "bandred_complex:  cuad memcpy failed umc ", istat
               stop
@@ -776,15 +622,9 @@
         ! global tile size is smaller than the global remaining matrix
 
         if (tile_size < istep*nbw) then
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call elpa_reduce_add_vectors_complex_double  (vmr(1,n_cols+1),ubound(vmr,dim=1),mpi_comm_rows, &
+          call elpa_reduce_add_vectors_complex_PRECISION  (vmr(1,n_cols+1),ubound(vmr,dim=1),mpi_comm_rows, &
                                           umc, ubound(umc,dim=1), mpi_comm_cols, &
                                           istep*nbw, n_cols, nblk)
-#else
-          call elpa_reduce_add_vectors_complex_single  (vmr(1,n_cols+1),ubound(vmr,dim=1),mpi_comm_rows, &
-                                          umc, ubound(umc,dim=1), mpi_comm_cols, &
-                                          istep*nbw, n_cols, nblk)
-#endif
         endif
 
 #ifdef WITH_MPI
@@ -795,12 +635,7 @@
             stop
           endif
           call timer%start("mpi_communication")
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call mpi_allreduce(umc, tmp, l_cols*n_cols, MPI_DOUBLE_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
-#else
-          call mpi_allreduce(umc, tmp, l_cols*n_cols, MPI_COMPLEX, MPI_SUM, mpi_comm_rows, mpierr)
-#endif
+          call mpi_allreduce(umc, tmp, l_cols*n_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 
           umc(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
@@ -837,160 +672,89 @@
             print *,"bandred_complex: umc size 4 :",size(umc,dim=1)*size(umc,dim=2),umc_size
             stop
           endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-          successCUDA = cuda_memcpy(umc_dev, loc(umc(1,1)),umc_size*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
-#else
-          successCUDA = cuda_memcpy(umc_dev, loc(umc(1,1)),umc_size*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
-#endif
+          successCUDA = cuda_memcpy(umc_dev, loc(umc(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
           if (.not.(successCUDA)) then
             print *, "bandred_complex:  cuad memcpy failed umc_dev ", istat
             stop
           endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-          successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
-#else
-          successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
-#endif
+          successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
           if (.not.(successCUDA)) then
             print *, "bandred_complex:  cuad memcpy failed tmat_dev ", istat
             stop
           endif
-	  call timer%start("cublas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call  cublas_ztrmm('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat_dev, nbw, umc_dev, cur_l_cols)
-#else
-          call  cublas_ctrmm('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat_dev, nbw, umc_dev, cur_l_cols)
-#endif
- 	  call timer%stop("cublas")
+          call timer%start("cublas")
+          call  cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat_dev, nbw, umc_dev, cur_l_cols)
+          call timer%stop("cublas")
         else ! not useGPU
-	  call timer%start("blas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call ztrmm('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), &
+          call timer%start("blas")
+          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), &
                      umc, ubound(umc,dim=1))
-#else
-          call ctrmm('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), &
-                     umc, ubound(umc,dim=1))
-#endif
           call timer%stop("blas")
         endif
 
         ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
         if (useGPU) then
-#ifdef DOUBLE_PRECISION_COMPLEX
-          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
-#else
-          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
-#endif
+          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
           if (.not.(successCUDA)) then
             print *, "bandred_complex:  cuad memcpy failed vav_dev ", istat
             stop
           endif
-	  call timer%start("cublas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call cublas_zgemm('C', 'N', n_cols, n_cols, l_cols, CONE, umc_dev, cur_l_cols, (umc_dev +( cur_l_cols *n_cols) &
-                            *size_of_double_complex_datatype ), cur_l_cols, CZERO, vav_dev, nbw)
+          call timer%start("cublas")
+          call cublas_PRECISION_GEMM('C', 'N', n_cols, n_cols, l_cols, CONE, umc_dev, cur_l_cols, (umc_dev +( cur_l_cols *n_cols) &
+                            *size_of_PRECISION_complex ), cur_l_cols, CZERO, vav_dev, nbw)
 
-          call cublas_ztrmm('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat_dev, nbw, vav_dev, nbw)
-#else
-          call cublas_cgemm('C', 'N', n_cols, n_cols, l_cols, CONE, umc_dev, cur_l_cols, (umc_dev +( cur_l_cols *n_cols) &
-                            *size_of_single_complex_datatype ), cur_l_cols, CZERO, vav_dev, nbw)
-
-          call cublas_ctrmm('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat_dev, nbw, vav_dev, nbw)
-#endif
-	  call timer%stop("cublas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-          successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev,nbw*nbw*size_of_double_complex_datatype,cudaMemcpyDeviceToHost)
-#else
-          successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev,nbw*nbw*size_of_single_complex_datatype,cudaMemcpyDeviceToHost)
-#endif
+          call cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat_dev, nbw, vav_dev, nbw)
+          call timer%stop("cublas")
+          successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev,nbw*nbw*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
           if (.not.(successCUDA)) then
             print *, "bandred_complex:  cuad memcpy failed vav ", istat
             stop
           endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call herm_matrix_allreduce_double(n_cols,vav, nbw, nbw,mpi_comm_cols)
-#else
-          call herm_matrix_allreduce_single(n_cols,vav, nbw, nbw,mpi_comm_cols)
-#endif
+          call herm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw,mpi_comm_cols)
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)),nbw*nbw*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
-#else
-          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)),nbw*nbw*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
-#endif
+          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)),nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
           if (.not.(successCUDA)) then
             print *, "bandred_complex:  cuad memcpy failed vav_dev ", istat
             stop
           endif
         else ! useGPU
-	  call timer%start("blas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call zgemm('C', 'N', n_cols, n_cols, l_cols, CONE, umc, ubound(umc,dim=1), umc(1,n_cols+1), &
+          call timer%start("blas")
+          call PRECISION_GEMM('C', 'N', n_cols, n_cols, l_cols, CONE, umc, ubound(umc,dim=1), umc(1,n_cols+1), &
                      ubound(umc,dim=1), CZERO, vav, ubound(vav,dim=1))
-          call ztrmm('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat(1,1,istep), &
+          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat(1,1,istep), &
                      ubound(tmat,dim=1), vav, ubound(vav,dim=1))
-#else
-          call cgemm('C', 'N', n_cols, n_cols, l_cols, CONE, umc, ubound(umc,dim=1), umc(1,n_cols+1), &
-                     ubound(umc,dim=1), CZERO, vav, ubound(vav,dim=1))
-          call ctrmm('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat(1,1,istep), &
-                     ubound(tmat,dim=1), vav, ubound(vav,dim=1))
-#endif
-	  call timer%stop("blas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call herm_matrix_allreduce_double(n_cols,vav,nbw,nbw,mpi_comm_cols)
-#else
-          call herm_matrix_allreduce_single(n_cols,vav,nbw,nbw,mpi_comm_cols)
-#endif
+          call timer%stop("blas")
+          call herm_matrix_allreduce_PRECISION(n_cols,vav,nbw,nbw,mpi_comm_cols)
         endif
 
         ! U = U - 0.5 * V * VAV
 
         if (useGPU) then
-	  call timer%start("cublas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call cublas_zgemm('N', 'N', l_cols, n_cols, n_cols, (-0.5_rk8, 0.0_rk8), (umc_dev +  &
-                            (cur_l_cols * n_cols )*size_of_double_complex_datatype), &
+          call timer%start("cublas")
+          call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, CONST_COMPLEX_PAIR_NEGATIVE_0_5, (umc_dev +  &
+                            (cur_l_cols * n_cols )*size_of_PRECISION_complex), &
                             cur_l_cols, vav_dev, nbw, CONE, umc_dev, cur_l_cols)
-#else
-          call cublas_cgemm('N', 'N', l_cols, n_cols, n_cols, (-0.5_rk4, 0.0_rk4), (umc_dev +  &
-                            (cur_l_cols * n_cols )*size_of_single_complex_datatype), &
-                            cur_l_cols, vav_dev, nbw, CONE, umc_dev, cur_l_cols)
-#endif
-	  call timer%stop("cublas")
+          call timer%stop("cublas")
           ! Transpose umc -> umr (stored in vmr, second half)
 
           if (size(umc,dim=1)*size(umc,dim=2) .gt. umc_size) then
             print *,"bandred_complex: umc size 5 :",size(umc,dim=1)*size(umc,dim=2),umc_size
             stop
           endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-          successCUDA = cuda_memcpy(loc(umc(1,1)),umc_dev,umc_size*size_of_double_complex_datatype,cudaMemcpyDeviceToHost)
-#else
-          successCUDA = cuda_memcpy(loc(umc(1,1)),umc_dev,umc_size*size_of_single_complex_datatype,cudaMemcpyDeviceToHost)
-#endif
+          successCUDA = cuda_memcpy(loc(umc(1,1)),umc_dev,umc_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
           if (.not.(successCUDA)) then
             print *, "bandred_complex:  cuad memcpy failed umc ", istat
             stop
           endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call elpa_transpose_vectors_complex_double  (umc, ubound(umc,dim=1), mpi_comm_cols, &
+          call elpa_transpose_vectors_complex_PRECISION  (umc, ubound(umc,dim=1), mpi_comm_cols, &
                                                 vmr(1,n_cols+1), ubound(vmr,dim=1), mpi_comm_rows, &
                                                 1, istep*nbw, n_cols, nblk)
-#else
-          call elpa_transpose_vectors_complex_single  (umc, ubound(umc,dim=1), mpi_comm_cols, &
-                                                vmr(1,n_cols+1), ubound(vmr,dim=1), mpi_comm_rows, &
-                                                1, istep*nbw, n_cols, nblk)
-#endif
           if (size(vmr,dim=1)*size(vmr,dim=2) .gt. vmr_size) then
             print *,"bandred_complex: vmr size 4 :",size(vmr,dim=1)*size(vmr,dim=2),vmr_size
             stop
           endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-          successCUDA = cuda_memcpy(vmr_dev,loc(vmr(1,1)),vmr_size*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
-#else
-          successCUDA = cuda_memcpy(vmr_dev,loc(vmr(1,1)),vmr_size*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
-#endif
+          successCUDA = cuda_memcpy(vmr_dev,loc(vmr(1,1)),vmr_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
           if (.not.(successCUDA)) then
             print *, "bandred_complex:  cuda memcpy failed vav_dev", istat
             stop
@@ -1000,36 +764,21 @@
             print *,"bandred_complex: umc size 6 :",size(umc,dim=1)*size(umc,dim=2),umc_size
             stop
           endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-          successCUDA = cuda_memcpy(umc_dev,loc(umc(1,1)),umc_size*size_of_double_complex_datatype,cudaMemcpyHostToDevice)
-#else
-          successCUDA = cuda_memcpy(umc_dev,loc(umc(1,1)),umc_size*size_of_single_complex_datatype,cudaMemcpyHostToDevice)
-#endif
+          successCUDA = cuda_memcpy(umc_dev,loc(umc(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
           if (.not.(successCUDA)) then
             print *, "bandred_complex:  cuda memcpy failed umc_dev ", istat
             stop
           endif
         else ! not useGPU
-	  call timer%start("blas")
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call zgemm('N', 'N', l_cols, n_cols, n_cols, (-0.5_rk8, 0.0_rk8), umc(1,n_cols+1), ubound(umc,dim=1), &
+          call timer%start("blas")
+          call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, CONST_COMPLEX_PAIR_NEGATIVE_0_5, umc(1,n_cols+1), ubound(umc,dim=1), &
                      vav, ubound(vav,dim=1), CONE, umc, ubound(umc,dim=1))
-#else
-          call cgemm('N', 'N', l_cols, n_cols, n_cols, (-0.5_rk4, 0.0_rk4), umc(1,n_cols+1), ubound(umc,dim=1), &
-                     vav, ubound(vav,dim=1), CONE, umc, ubound(umc,dim=1))
-#endif
-	  call timer%stop("blas")
+          call timer%stop("blas")
           ! Transpose umc -> umr (stored in vmr, second half)
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-          call elpa_transpose_vectors_complex_double  (umc, ubound(umc,dim=1), mpi_comm_cols, &
+          call elpa_transpose_vectors_complex_PRECISION  (umc, ubound(umc,dim=1), mpi_comm_cols, &
                                                 vmr(1,n_cols+1), ubound(vmr,dim=1), mpi_comm_rows, &
                                                 1, istep*nbw, n_cols, nblk)
-#else
-          call elpa_transpose_vectors_complex_single  (umc, ubound(umc,dim=1), mpi_comm_cols, &
-                                                vmr(1,n_cols+1), ubound(vmr,dim=1), mpi_comm_rows, &
-                                                1, istep*nbw, n_cols, nblk)
-#endif
         endif
         ! A = A - V*U**T - U*V**T
 
@@ -1038,36 +787,19 @@
           lce = min(l_cols,(i+1)*l_cols_tile)
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<1) cycle
-#ifdef DOUBLE_PRECISION_COMPLEX
             if (useGPU) then
-	      call timer%start("cublas")
-              call cublas_zgemm('N', 'C', lre, lce-lcs+1, 2*n_cols, -CONE, &
-                                vmr_dev ,cur_l_rows, (umc_dev +(lcs-1)*size_of_double_complex_datatype),cur_l_cols, &
-                                CONE, (a_dev + (lcs-1)*lda*size_of_double_complex_datatype),lda)
-	      call timer%stop("cublas")
+              call timer%start("cublas")
+              call cublas_PRECISION_GEMM('N', 'C', lre, lce-lcs+1, 2*n_cols, -CONE, &
+                                vmr_dev ,cur_l_rows, (umc_dev +(lcs-1)*size_of_PRECISION_complex),cur_l_cols, &
+                                CONE, (a_dev + (lcs-1)*lda*size_of_PRECISION_complex),lda)
+              call timer%stop("cublas")
             else
-	      call timer%start("blas")
-
-              call zgemm('N', 'C', lre,lce-lcs+1, 2*n_cols, -CONE, &
+              call timer%start("blas")
+              call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -CONE, &
                          vmr, ubound(vmr,dim=1), umc(lcs,1), ubound(umc,dim=1), &
                          CONE, a(1,lcs), lda)
-	      call timer%stop("blas")
+              call timer%stop("blas")
             endif
-#else
-            if (useGPU) then
-	      call timer%start("cublas")
-              call cublas_cgemm('N', 'C', lre, lce-lcs+1, 2*n_cols, -CONE, &
-                                vmr_dev ,cur_l_rows, (umc_dev +(lcs-1)*size_of_single_complex_datatype),cur_l_cols, &
-                                CONE, (a_dev + (lcs-1)*lda*size_of_single_complex_datatype),lda)
-	      call timer%stop("cublas")
-            else
-	      call timer%start("blas")
-              call cgemm('N', 'C', lre,lce-lcs+1, 2*n_cols, -CONE, &
-                         vmr, ubound(vmr,dim=1), umc(lcs,1), ubound(umc,dim=1), &
-                         CONE, a(1,lcs), lda)
-	      call timer%stop("blas")
-            endif
-#endif
           enddo
 
          if (.not.(useGPU)) then
@@ -1107,11 +839,7 @@
          endif
 #endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-         successCUDA = cuda_memcpy ( loc(a(1,1)), a_dev, lda*na_cols*size_of_double_complex_datatype,cudaMemcpyDeviceToHost)
-#else
-         successCUDA = cuda_memcpy ( loc(a(1,1)), a_dev, lda*na_cols*size_of_single_complex_datatype,cudaMemcpyDeviceToHost)
-#endif
+         successCUDA = cuda_memcpy ( loc(a(1,1)), a_dev, lda*na_cols*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
            print *, "bandred_complex:  cuad memcpy failed a ", istat
            stop
@@ -1171,16 +899,8 @@
          endif
        endif ! use GPU
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-       call timer%stop("bandred_complex_double")
-#else
-       call timer%stop("bandred_complex_single")
-#endif
+       call timer%stop("bandred_complex" // PRECISION_SUFFIX)
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-     end subroutine bandred_complex_double
-#else
-     end subroutine bandred_complex_single
-#endif
+     end subroutine bandred_complex_PRECISION
 
 

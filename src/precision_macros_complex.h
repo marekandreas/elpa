@@ -14,6 +14,7 @@
 #undef  qr_pdgeqrf_2dcomm_PRECISION
 #undef  hh_transform_complex_PRECISION
 #undef  symm_matrix_allreduce_PRECISION
+#undef  herm_matrix_allreduce_PRECISION
 #undef  redist_band_complex_PRECISION
 #undef  unpack_row_complex_cpu_PRECISION
 #undef  unpack_row_complex_cpu_openmp_PRECISION
@@ -83,6 +84,7 @@
 #undef  CONST_COMPLEX_PAIR_0_0
 #undef  CONST_COMPLEX_PAIR_1_0
 #undef  CONST_COMPLEX_PAIR_NEGATIVE_1_0
+#undef  CONST_COMPLEX_PAIR_NEGATIVE_0_5
 #undef  CONST_COMPLEX_0_0
 #undef  CONST_COMPLEX_1_0
 #undef  size_of_PRECISION_complex
@@ -101,6 +103,7 @@
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_double
 #define  hh_transform_complex_PRECISION hh_transform_complex_double
 #define  symm_matrix_allreduce_PRECISION symm_matrix_allreduce_double
+#define  herm_matrix_allreduce_PRECISION herm_matrix_allreduce_double
 #define  redist_band_complex_PRECISION redist_band_complex_double
 #define  unpack_row_complex_cpu_PRECISION unpack_row_complex_cpu_double
 #define  unpack_row_complex_cpu_openmp_PRECISION unpack_row_complex_cpu_openmp_double
@@ -170,6 +173,7 @@
 #define  CONST_COMPLEX_PAIR_0_0 (0.0_rk8,0.0_rk8)
 #define  CONST_COMPLEX_PAIR_1_0 (1.0_rk8,0.0_rk8)
 #define  CONST_COMPLEX_PAIR_NEGATIVE_1_0 (-1.0_rk8,0.0_rk8)
+#define  CONST_COMPLEX_PAIR_NEGATIVE_0_5 (-0.5_rk8,0.0_rk8)
 #define  CONST_COMPLEX_0_0 0.0_ck8
 #define  CONST_COMPLEX_1_0 1.0_ck8
 #define  size_of_PRECISION_complex size_of_double_complex_datatype
@@ -189,6 +193,7 @@
 #undef  qr_pdgeqrf_2dcomm_PRECISION
 #undef  hh_transform_complex_PRECISION
 #undef  symm_matrix_allreduce_PRECISION
+#undef  herm_matrix_allreduce_PRECISION
 #undef  redist_band_complex_PRECISION
 #undef  unpack_row_complex_cpu_PRECISION
 #undef  unpack_row_complex_cpu_openmp_PRECISION
@@ -258,6 +263,7 @@
 #undef  CONST_COMPLEX_PAIR_0_0
 #undef  CONST_COMPLEX_PAIR_1_0
 #undef  CONST_COMPLEX_PAIR_NEGATIVE_1_0
+#undef  CONST_COMPLEX_PAIR_NEGATIVE_0_5
 #undef  CONST_COMPLEX_0_0
 #undef  CONST_COMPLEX_1_0
 #undef  size_of_PRECISION_complex
@@ -276,6 +282,7 @@
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_single
 #define  hh_transform_complex_PRECISION hh_transform_complex_single
 #define  symm_matrix_allreduce_PRECISION symm_matrix_allreduce_single
+#define  herm_matrix_allreduce_PRECISION herm_matrix_allreduce_single
 #define  redist_band_complex_PRECISION redist_band_complex_single
 #define  unpack_row_complex_cpu_PRECISION unpack_row_complex_cpu_single
 #define  unpack_row_complex_cpu_openmp_PRECISION unpack_row_complex_cpu_openmp_single
@@ -345,6 +352,7 @@
 #define  CONST_COMPLEX_PAIR_0_0 (0.0_rk4,0.0_rk4)
 #define  CONST_COMPLEX_PAIR_1_0 (1.0_rk4,0.0_rk4)
 #define  CONST_COMPLEX_PAIR_NEGATIVE_1_0 (-1.0_rk4,0.0_rk4)
+#define  CONST_COMPLEX_PAIR_NEGATIVE_0_5 (-0.5_rk4,0.0_rk4)
 #define  CONST_COMPLEX_0_0 0.0_ck4
 #define  CONST_COMPLEX_1_0 1.0_ck4
 #define  size_of_PRECISION_complex size_of_single_complex_datatype
