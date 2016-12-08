@@ -61,11 +61,16 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
+#if REALCASE == 1
     subroutine bandred_real_PRECISION(na, a, a_dev, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, &
                             tmat, tmat_dev, wantDebug, useGPU, success, useQR)
-
+#endif
+#if COMPLEXCASE == 1
+subroutine bandred_complex_PRECISION(na, a, lda, nblk, nbw, matrixCols, numBlocks,  &
+                           mpi_comm_rows, mpi_comm_cols, tmat, wantDebug, useGPU, success)
+#endif
   !-------------------------------------------------------------------------------
-  !  bandred_real: Reduces a distributed symmetric matrix to band form
+  !  bandred_real/complex: Reduces a distributed symmetric matrix to band form
   !
   !  Parameters
   !
@@ -107,54 +112,101 @@
       use precision
       implicit none
 
-      integer(kind=ik)                      :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)                            :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+
+#if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)              :: a(lda,*), tmat(nbw,nbw,*)
+      real(kind=REAL_DATATYPE)                    :: a(lda,*), tmat(nbw,nbw,*)
 #else
-      real(kind=REAL_DATATYPE)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      real(kind=REAL_DATATYPE)                    :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
 #endif
-      real(kind=REAL_DATATYPE)              :: eps
-      logical, intent(in)                   :: useGPU
+#endif
+#if COMPLEXCASE == 1
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE)              :: a(lda,*), tmat(nbw,nbw,*)
+#else
+      complex(kind=COMPLEX_DATATYPE)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+#endif
+#ifdef DOUBLE_PRECISION_COMPLEX
+      complex(kind=COMPLEX_DATATYPE), parameter   :: CZERO = (0.0_rk8, 0.0_rk8), CONE = (1.0_rk8, 0.0_rk8)
+#else
+      complex(kind=COMPLEX_DATATYPE), parameter   :: CZERO = (0.0_rk4, 0.0_rk4), CONE = (1.0_rk4, 0.0_rk4)
+#endif
+#endif /* COMPLEXCASE == 1 */
 
-      integer(kind=ik)                      :: my_prow, my_pcol, np_rows, np_cols, mpierr
-      integer(kind=ik)                      :: l_cols, l_rows, vmrCols
-      integer(kind=ik)                      :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
-      integer(kind=ik)                      :: istep, ncol, lch, lcx, nlc, mynlc
-      integer(kind=ik)                      :: tile_size, l_rows_tile, l_cols_tile
+#if REALCASE == 1
+      real(kind=REAL_DATATYPE)                    :: eps
+#endif
+      logical, intent(in)                         :: useGPU
 
-      real(kind=REAL_DATATYPE)              :: vnorm2, xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
+      integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)                            :: l_cols, l_rows
+#if REALCASE == 1
+      integer(kind=ik)                            :: vmrCols, mynlc
+#endif
+      integer(kind=ik)                            :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
+      integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc
+      integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
-      real(kind=REAL_DATATYPE), allocatable :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
-      real(kind=REAL_DATATYPE), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
-      real(kind=REAL_DATATYPE), allocatable :: vr(:)
+      real(kind=REAL_DATATYPE)                    :: vnorm2
+#if REALCASE == 1
+      real(kind=REAL_DATATYPE)                    :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
+#endif
+#if COMPLEXCASE == 1
+      complex(kind=COMPLEX_DATATYPE)              :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
+
+      complex(kind=COMPLEX_DATATYPE), allocatable :: tmp(:,:), vr(:), vmrCPU(:,:), umcCPU(:,:)
+#endif
+
+#if REALCASE == 1
+      real(kind=REAL_DATATYPE), allocatable       :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
+      real(kind=REAL_DATATYPE), allocatable       :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
+      real(kind=REAL_DATATYPE), allocatable       :: vr(:)
+#endif
+
+#if REALCASE == 1
       ! needed for blocked QR decomposition
-      integer(kind=ik)                      :: PQRPARAM(11), work_size
-      real(kind=REAL_DATATYPE)              :: dwork_size(1)
-      real(kind=REAL_DATATYPE), allocatable :: work_blocked(:), tauvector(:), blockheuristic(:)
-
-      ! a_dev is passed from bandred_real to trans_ev_band
-      integer(kind=C_intptr_T)              :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
-#ifdef WITH_MPI
-      integer(kind=ik), external            :: numroc
+      integer(kind=ik)                            :: PQRPARAM(11), work_size
+      real(kind=REAL_DATATYPE)                    :: dwork_size(1)
+      real(kind=REAL_DATATYPE), allocatable       :: work_blocked(:), tauvector(:), blockheuristic(:)
 #endif
-      integer(kind=ik)                      :: ierr
-      integer(kind=ik)                      :: cur_l_rows, cur_l_cols, vmr_size, umc_size
-      integer(kind=c_size_t)                :: lc_start, lc_end
-      integer(kind=ik)                      :: lr_end
-      integer(kind=ik)                      :: na_cols !, na_rows
+      ! a_dev is passed from bandred_real to trans_ev_band
+      integer(kind=C_intptr_T)                    :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
+#ifdef WITH_MPI
+      integer(kind=ik), external                  :: numroc
+#endif
+      integer(kind=ik)                            :: ierr
+      integer(kind=ik)                            :: cur_l_rows, cur_l_cols, vmr_size, umc_size
+      integer(kind=c_size_t)                      :: lc_start, lc_end
+#if COMPLEXCASE == 1
+      integer(kind=c_size_t)                      :: lce_1, lcs_1, lre_1
+#endif
+      integer(kind=ik)                            :: lr_end
+      integer(kind=ik)                            :: na_cols
+#if COMPLEXCASE == 1
+      integer(kind=ik)                            :: na_rows
+#endif
 
-      logical, intent(in)                   :: wantDebug
-      logical, intent(out)                  :: success
-      logical                               :: successCUDA
-      integer(kind=ik)                      :: istat
-      character(200)                        :: errorMessage
+      logical, intent(in)                         :: wantDebug
+      logical, intent(out)                        :: success
+      logical                                     :: successCUDA
+      integer(kind=ik)                            :: istat
+      character(200)                              :: errorMessage
 
-      logical, intent(in)                   :: useQR
+#if REALCASE == 1
+      logical, intent(in)                         :: useQR
+#endif
+#if REALCASE == 1
+      integer(kind=ik)                            :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
+                                                    ii, pp, transformChunkSize
+#endif
 
-      integer(kind=ik)                      :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
-                                               ii, pp, transformChunkSize
-
+#if REALCASE == 1
       call timer%start("bandred_real" // PRECISION_SUFFIX)
+#endif
+#if COMPLEXCASE == 1
+      call timer%start("bandred_complex" // PRECISION_SUFFIX)
+#endif
       call timer%start("mpi_communication")
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -170,8 +222,14 @@
       if (mod(nbw,nblk)/=0) then
         if (my_prow==0 .and. my_pcol==0) then
           if (wantDebug) then
+#if REALCASE == 1
             write(error_unit,*) 'ELPA2_bandred_real: ERROR: nbw=',nbw,', nblk=',nblk
             write(error_unit,*) 'ELPA2_bandred_real: ELPA2 works only for nbw==n*nblk'
+#endif
+#if COMPLEXCASE == 1
+            write(error_unit,*) 'ELPA2_bandred_complex: ERROR: nbw=',nbw,', nblk=',nblk
+            write(error_unit,*) 'ELPA2_bandred_complex: ELPA2 works only for nbw==n*nblk'
+#endif
           endif
           success = .false.
           return
@@ -182,10 +240,64 @@
       if (useGPU) then
 #ifdef WITH_MPI
 !        na_rows = numroc(na, nblk, my_prow, 0, np_rows)
+#if COMPLEXCASE == 1
+         na_rows = numroc(na, nblk, my_prow, 0, np_rows)
+#endif
         na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
 #else
 !        na_rows = na
+#if COMPLEXCASE == 1
+         na_rows = na
+#endif
         na_cols = na
+#endif
+
+#if REALCASE == 1
+        ! Here we convert the regular host array into a pinned host array
+        successCUDA = cuda_malloc(a_dev, lda*na_cols*size_of_PRECISION_real)
+        if (.not.(successCUDA)) then
+          print *,"bandred_real: error in cudaMalloc"
+          stop
+        endif
+#endif
+#if COMPLEXCASE == 1
+        successCUDA = cuda_malloc(a_dev, lda*na_cols*size_of_PRECISION_complex)
+        if (.not.(successCUDA)) then
+          print *, "bandred_complex:  cuda malloc failed a_dev ", istat
+          stop
+        endif
+#endif
+
+#if REALCASE == 1
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_PRECISION_real)
+        if (.not.(successCUDA)) then
+          print *,"bandred_real: error in cudaMalloc"
+          stop
+        endif
+#endif
+#if COMPLEXCASE == 1
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_PRECISION_complex)
+        if (.not.(successCUDA)) then
+          print *, " bandred_complex: cuda malloc failed tmat_dev ", istat
+          stop
+        endif
+
+#endif
+
+#if REALCASE == 1
+        successCUDA = cuda_malloc(vav_dev, nbw*nbw*size_of_PRECISION_real)
+        if (.not.(successCUDA)) then
+          print *,"bandred_real: error in cudaMalloc"
+          stop
+        endif
+#endif
+#if COMPLEXCASE == 1
+        successCUDA = cuda_malloc(vav_dev, nbw*nbw*size_of_PRECISION_complex)
+        if (.not.(successCUDA)) then
+          print *, "bandred_complex:  cuda malloc failed vav_dev ", istat
+          stop
+        endif
+
 #endif
       endif ! useGPU
 
@@ -197,6 +309,7 @@
       l_rows_tile = tile_size/np_rows ! local rows of a tile
       l_cols_tile = tile_size/np_cols ! local cols of a tile
 
+#if REALCASE == 1
       if (useQR) then
 
         if (useGPU) then
@@ -255,32 +368,31 @@
         endif ! which_qr_decomposition
 
       endif ! useQr
+#endif /* useQr */
 
       if (useGPU) then
-        ! Here we convert the regular host array into a pinned host array
-        successCUDA = cuda_malloc(a_dev, lda*na_cols*size_of_PRECISION_real)
-        if (.not.(successCUDA)) then
-          print *,"bandred_real: error in cudaMalloc"
-          stop
-        endif
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_PRECISION_real)
-        if (.not.(successCUDA)) then
-          print *,"bandred_real: error in cudaMalloc"
-          stop
-        endif
-        successCUDA = cuda_malloc(vav_dev, nbw*nbw*size_of_PRECISION_real)
-        if (.not.(successCUDA)) then
-          print *,"bandred_real: error in cudaMalloc"
-          stop
-        endif
+!#if !defined(USE_ASSUMED_SIZE)
+!        if (size(a,dim=1) .ne. lda .or. size(a,dim=2) .ne. na_cols) then
+!          print *,"bandred_complex: sizes of a wrong ? ",lda,size(a,dim=1),na_cols,size(a,dim=2)
+!        endif
+!#endif
 
         cur_l_rows = 0
         cur_l_cols = 0
+#if REALCASE == 1
         successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"bandred_real: error in cudaMemcpy"
           stop
         endif
+#endif
+#if COMPLEXCASE == 1
+        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)),(lda)*(na_cols)*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+        if (.not.(successCUDA)) then
+          print *, "bandred_complex:  cuda memcpy faild a_dev ", istat
+          stop
+        endif
+#endif
       endif ! useGPU
 
 
@@ -291,6 +403,8 @@
         ! Number of local columns/rows of remaining matrix
         l_cols = local_index(istep*nbw, my_pcol, np_cols, nblk, -1)
         l_rows = local_index(istep*nbw, my_prow, np_rows, nblk, -1)
+
+        ! Allocate vmr and umc to their exact sizes so that they can be used in bcasts and reduces
 
         if (useGPU) then
           cur_l_rows = max(l_rows, 1)
@@ -305,18 +419,29 @@
             if (allocated(vr)) then
               deallocate(vr, stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
+#if REALCASE == 1
                 print *,"bandred_real: error when deallocating vr "//errorMessage
+#endif
+#if COMPLEXCASE == 1
+                print *,"bandred_complex: error when deallocating vr "//errorMessage
+#endif
                 stop
               endif
             endif
             allocate(vr(l_rows + 1), stat=istat, errmsg=errorMessage)
             if (istat .ne. 0) then
+#if REALCASE == 1
               print *,"bandred_real: error when allocating vr "//errorMessage
+#endif
+#if COMPLEXCASE == 1
+              print *,"bandred_complex: error when allocating vr "//errorMessage
+#endif
               stop
             endif
 
           endif
 
+#if REALCASE == 1
           if ((.not. allocated(vmrCUDA)) .or. (vmr_size .gt. ubound(vmrCUDA, dim=1))) then
             if (allocated(vmrCUDA)) then
               deallocate(vmrCUDA, stat=istat, errmsg=errorMessage)
@@ -344,7 +469,44 @@
             endif
 
           endif
+#endif
 
+#if COMPLEXCASE == 1
+          if ((.not. allocated(vmrCPU)) .or. (vmr_size .gt. ubound(vmrCPU, dim=1))) then
+            if (allocated(vmrCPU)) then
+              deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
+              if (istat .ne. 0) then
+                print *,"bandred_complex: error when deallocating vmrCPU "//errorMessage
+                stop
+              endif
+
+              successCUDA = cuda_free(vmr_dev)
+              if (.not.(successCUDA))then
+                print *,"bandred_complex: error in cudaFree"
+                stop
+              endif
+            endif
+
+            allocate(vmrCPU(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
+            if (istat .ne. 0) then
+              print *,"bandred_complex: error when allocating vmrCPU "//errorMessage
+              stop
+            endif
+
+            if (max(l_rows,1) * 2*n_cols .gt. vmr_size) then
+              print *,"bandred_complex: vmc_size ",max(l_rows,1) * 2*n_cols,vmr_size
+            endif
+
+            successCUDA = cuda_malloc(vmr_dev, vmr_size*size_of_PRECISION_complex)
+            if (.not.(successCUDA)) then
+              print *, "bandred_complex:  cuda malloc failed vmr_dev ", istat
+              stop
+            endif
+
+          endif
+#endif
+
+#if REALCASE == 1
           if ((.not. allocated(umcCUDA)) .or. (umc_size .gt. ubound(umcCUDA, dim=1))) then
             if (allocated(umcCUDA)) then
               deallocate(umcCUDA, stat=istat, errmsg=errorMessage)
@@ -360,12 +522,12 @@
               endif
 
             endif
-
             allocate(umcCUDA(umc_size), stat=istat, errmsg=errorMessage)
             if (istat .ne. 0) then
               print *,"bandred_real: error when deallocating umcCUDA "//errorMessage
               stop
             endif
+
             successCUDA = cuda_malloc(umc_dev, umc_size*size_of_PRECISION_real)
             if (.not.(successCUDA)) then
               print *,"bandred_real: error in cudaMalloc"
@@ -373,57 +535,146 @@
             endif
 
           endif
+#endif /* REALCASE == 1 */
+
+#if COMPLEXCASE == 1
+          if ((.not. allocated(umcCPU)) .or. (umc_size .gt. ubound(umcCPU, dim=1))) then
+            if (allocated(umcCPU)) then
+              deallocate(umcCPU, stat=istat, errmsg=errorMessage)
+
+
+              if (istat .ne. 0) then
+                print *,"bandred_complex: error when allocating umcCPU "//errorMessage
+                stop
+              endif
+              successCUDA = cuda_free(umc_dev)
+              if (.not.(successCUDA))then
+                print *,"bandred_complex: error in cudaFree"
+                stop
+              endif
+            endif
+
+            allocate(umcCPU(max(l_cols,1),2*n_cols), stat=istat, errmsg=errorMessage)
+            if (istat .ne. 0) then
+              print *,"bandred_complex: error when allocating umcCPU "//errorMessage
+              stop
+            endif
+
+            if (max(l_cols,1) * 2*n_cols .gt. umc_size) then
+              print *,"bandred_complex: umc_size ",max(l_cols,1) * 2*n_cols,umc_size
+            endif
+            successCUDA = cuda_malloc(umc_dev, umc_size*size_of_PRECISION_complex)
+            if (.not.(successCUDA)) then
+              print *, "bandred_complex:  cuda malloc failed umc_dev ", istat
+              stop
+            endif
+          endif
+#endif
 
         else ! GPU not used
 
-          ! Allocate vmr and umc to their exact sizes so that they can be used in bcasts and reduces
+          ! unify the the name vmr and vmrCPU, as well as vmrGPU
+          ! the same for umcCPU and umcGPU
+#if REALCASE == 1
+          ! Allocate vmr and umcCPU to their exact sizes so that they can be used in bcasts and reduces
 
           allocate(vmrCPU(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_real: error when allocating vmrCPU "//errorMessage
             stop
           endif
+#endif
+#if COMPLEXCASE == 1
+          allocate(vmrCPU(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
 
+          if (istat .ne. 0) then
+            print *,"bandred_complex: error when allocating vmrCPU "//errorMessage
+            stop
+          endif
+#endif
+
+#if REALCASE == 1
           allocate(umcCPU(max(l_cols,1),2*n_cols), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_real: error when allocating umcCPU "//errorMessage
             stop
           endif
-
+#endif
+#if COMPLEXCASE == 1
+          allocate(umcCPU(max(l_cols,1),2*n_cols), stat=istat, errmsg=errorMessage)
+          if (istat .ne. 0) then
+            print *,"bandred_complex: error when allocating umcCPU "//errorMessage
+            stop
+          endif
+#endif
           allocate(vr(l_rows+1), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
+#if REALCASE == 1
             print *,"bandred_real: error when allocating vr "//errorMessage
+#endif
+#if COMPLEXCASE == 1
+            print *,"bandred_complex: error when allocating vr "//errorMessage
+#endif
             stop
           endif
 
         endif ! use GPU
 
         if (useGPU) then
+#if REALCASE == 1
           vmrCUDA(1 : cur_l_rows * n_cols) = CONST_0_0
+#endif
         else
+#if REALCASE == 1
           vmrCPU(1:l_rows,1:n_cols) = CONST_0_0
-        endif
+#endif
+#if COMPLEXCASE == 1
+          vmrCPU(1:l_rows,1:n_cols) = CONST_COMPLEX_0_0
+#endif
+        endif ! useGPU
+
+#if REALCASE == 1
         vr(:) = CONST_0_0
         tmat(:,:,istep) = CONST_0_0
-
+#endif
+#if COMPLEXCASE == 1
+        vr(:) = CONST_COMPLEX_0_0
+        tmat(:,:,istep) = CONST_COMPLEX_0_0
+#endif
         if (useGPU) then
+#if REALCASE == 1
           umcCUDA(1 : umc_size) = CONST_0_0
+#endif
           lc_start = local_index(istep*nbw+1, my_pcol, np_cols, nblk, -1)
           lc_end   = local_index(istep*nbw+n_cols, my_pcol, np_cols, nblk, -1)
           lr_end   = local_index((istep-1)*nbw + n_cols, my_prow, np_rows, nblk, -1)
 
-          if(lc_start .le. 0) lc_start = 1
+          if (lc_start .le. 0) lc_start = 1
 
           ! Here we assume that the processor grid and the block grid are aligned
           cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
 
           if(my_pcol == cur_pcol) then
+#if REALCASE == 1
             successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), lda*size_of_PRECISION_real,         &
                                        (a_dev + ((lc_start-1) * lda*size_of_PRECISION_real)),    &
                                        lda*size_of_PRECISION_real, lr_end*size_of_PRECISION_real, &
                                        (lc_end - lc_start+1), cudaMemcpyDeviceToHost)
+#endif
+#if COMPLEXCASE == 1
+            successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), int(lda*size_of_PRECISION_complex,kind=c_size_t),            &
+                                        (a_dev + int( ( (lc_start-1) * lda*size_of_PRECISION_complex),kind=c_size_t )),      &
+                                        int(lda*size_of_PRECISION_complex,kind=c_size_t),              &
+                                    int(lr_end*size_of_PRECISION_complex,kind=c_size_t),               &
+                                      int((lc_end - lc_start+1),kind=c_size_t),int(cudaMemcpyDeviceToHost,kind=c_int))
+#endif
             if (.not.(successCUDA)) then
+#if REALCASE == 1
               print *,"bandred_real: error in cudaMemcpy2d"
+#endif
+#if COMPLEXCASE == 1
+              print *, "bandred_complex: error in cudaMemcpy2"
+#endif
               stop
             endif
 
@@ -431,7 +682,7 @@
         endif ! useGPU
 
         ! Reduce current block to lower triangular form
-
+#if REALCASE == 1
         if (useQR) then
           if (which_qr_decomposition == 1) then
             vmrCols = 2*n_cols
@@ -455,7 +706,7 @@
           endif
 
        else !useQR
-
+#endif /* REALCASE == 1 */
          do lc = n_cols, 1, -1
 
            ncol = istep*nbw + lc ! absolute column number of householder vector
@@ -482,12 +733,22 @@
                aux1(2) = vr(lr)
              else
                aux1(1) = dot_product(vr(1:lr),vr(1:lr))
+#if REALCASE == 1
                aux1(2) = CONST_0_0
+#endif
+#if COMPLEXCASE == 1
+               aux1(2) = CONST_COMPLEX_0_0
+#endif
              endif
 
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
+#if REALCASE == 1
              call mpi_allreduce(aux1, aux2, 2, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
+#if COMPLEXCASE == 1
+             call mpi_allreduce(aux1, aux2, 2, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+#endif
              call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -498,15 +759,24 @@
              vrl    = aux2(2)
 
              ! Householder transformation
+#if REALCASE == 1
              call hh_transform_real_PRECISION(vrl, vnorm2, xf, tau)
-
+#endif
+#if COMPLEXCASE == 1
+             call hh_transform_complex_PRECISION(vrl, vnorm2, xf, tau)
+#endif
              ! Scale vr and store Householder vector for back transformation
 
              vr(1:lr) = vr(1:lr) * xf
              if (my_prow==prow(nrow, nblk, np_rows)) then
                a(1:lr-1,lch) = vr(1:lr-1)
                a(lr,lch) = vrl
+#if REALCASE == 1
                vr(lr) = CONST_1_0
+#endif
+#if COMPLEXCASE == 1
+               vr(lr) = CONST_COMPLEX_1_0
+#endif
              else
                a(1:lr,lch) = vr(1:lr)
              endif
@@ -518,24 +788,45 @@
            vr(lr+1) = tau
 #ifdef WITH_MPI
            call timer%start("mpi_communication")
+#if REALCASE == 1
            call MPI_Bcast(vr, lr+1, MPI_REAL_PRECISION, cur_pcol, mpi_comm_cols, mpierr)
+#endif
+#if COMPLEXCASE == 1
+           call MPI_Bcast(vr, lr+1, MPI_COMPLEX_PRECISION, cur_pcol, mpi_comm_cols, mpierr)
+#endif
            call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
+
+#if REALCASE == 1
            if (useGPU) then
              vmrCUDA(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
            else
              vmrCPU(1:lr,lc) = vr(1:lr)
            endif
-
+#endif
+#if COMPLEXCASE == 1
+           vmrCPU(1:lr,lc) = vr(1:lr)
+#endif
            tau = vr(lr+1)
-           tmat(lc,lc,istep) = tau ! Store tau in diagonal of tmat
 
+#if REALCASE == 1
+           tmat(lc,lc,istep) = tau ! Store tau in diagonal of tmat
+#endif
+#if COMPLEXCASE == 1
+           tmat(lc,lc,istep) = conjg(tau) ! Store tau in diagonal of tmat
+#endif
            ! Transform remaining columns in current block with Householder vector
            ! Local dot product
 
+#if REALCASE == 1
            aux1 = 0
+#endif
+#if COMPLEXCASE == 1
+          aux1 = CONST_COMPLEX_0_0
+#endif
 
+#if REALCASE == 1
 #ifdef WITH_OPENMP
            !Open up one omp region to avoid paying openmp overhead.
            !This does not help performance due to the addition of two openmp barriers around the MPI call,
@@ -591,7 +882,6 @@
              endif
            enddo
            !$omp end parallel
-
 #else /* WITH_OPENMP */
 
            nlc = 0 ! number of local columns
@@ -622,12 +912,70 @@
              endif
            enddo
 #endif /* WITH_OPENMP */
+#endif /* REALCASE == 1 */
+
+#if COMPLEXCASE == 1
+           nlc = 0 ! number of local columns
+           do j=1,lc-1
+             lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+             if (lcx>0) then
+               nlc = nlc+1
+               aux1(nlc) = dot_product(vr(1:lr),a(1:lr,lcx))
+             endif
+           enddo
+
+           ! Get global dot products
+#ifdef WITH_MPI
+           call timer%start("mpi_communication")
+           if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+
+           ! Transform
+
+           nlc = 0
+           do j=1,lc-1
+             lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+             if (lcx>0) then
+               nlc = nlc+1
+               a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+             endif
+           enddo
+
+           call timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+!          if (nlc>0) aux2=aux1
+
+           ! Transform
+
+           nlc = 0
+           do j=1,lc-1
+             lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+             if (lcx>0) then
+               nlc = nlc+1
+               a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
+             endif
+           enddo
+
+#endif /* WITH_MPI */
+!
+!           ! Transform
+!
+!           nlc = 0
+!           do j=1,lc-1
+!             lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+!             if (lcx>0) then
+!               nlc = nlc+1
+!               a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+!             endif
+!           enddo
+#endif
          enddo ! lc
 
          if (useGPU) then
            ! store column tiles back to GPU
            cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
            if (my_pcol == cur_pcol) then
+#if REALCASE == 1
              successCUDA = cuda_memcpy2d((a_dev+((lc_start-1)*lda*size_of_PRECISION_real)),          &
                                           lda*size_of_PRECISION_real, loc(a(1, lc_start)),           &
                                           lda*size_of_PRECISION_real,  lr_end*size_of_PRECISION_real, &
@@ -636,7 +984,19 @@
                print *,"bandred_real: error in cudaMemcpy2d"
                stop
              endif
-
+#endif
+#if COMPLEXCASE == 1
+             successCUDA = cuda_memcpy2d((a_dev+int(((lc_start-1)*lda*size_of_PRECISION_complex),kind=c_size_t)),    &
+                                        int(lda*size_of_PRECISION_complex,kind=c_size_t), loc(a(1,lc_start)),       &
+                                        int(lda*size_of_PRECISION_complex,kind=c_size_t),                           &
+                                        int(lr_end*size_of_PRECISION_complex,kind=c_size_t),                        &
+                                        int((lc_end - lc_start+1),kind=c_size_t) &
+                                        ,int(cudaMemcpyHostToDevice,kind=c_int))
+             if (.not.(successCUDA)) then
+               print *, "bandred_complex: cuda memcpy a_dev  failed ", istat
+               stop
+             endif
+#endif
            endif
          endif
 
@@ -645,6 +1005,7 @@
 
          vav = 0
 	 call timer%start("blas")
+#if REALCASE == 1
          if (useGPU) then
            if (l_rows>0) &
              call PRECISION_SYRK('U', 'T', n_cols, l_rows, CONST_1_0, vmrCUDA, cur_l_rows, CONST_0_0, vav, ubound(vav,dim=1))
@@ -652,23 +1013,47 @@
            if (l_rows>0) &
              call PRECISION_SYRK('U', 'T', n_cols, l_rows, CONST_1_0, vmrCPU, ubound(vmrCPU,dim=1), CONST_0_0, vav, ubound(vav,dim=1))
          endif
+#endif
+#if COMPLEXCASE == 1
+        if (l_rows>0) then
+          call timer%start("blas")
+          call PRECISION_HERK('U', 'C', n_cols, l_rows, CONE, vmrCPU, ubound(vmrCPU,dim=1), CZERO, vav, ubound(vav,dim=1))
+          call timer%stop("blas")
+        endif
+#endif
 	 call timer%stop("blas")
+#if REALCASE == 1
          call symm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw,mpi_comm_rows)
-
+#endif
+#if COMPLEXCASE == 1
+         call herm_matrix_allreduce_PRECISION(n_cols,vav, nbw,nbw,mpi_comm_rows)
+#endif
          ! Calculate triangular matrix T for block Householder Transformation
 	 call timer%start("blas")
          do lc=n_cols,1,-1
            tau = tmat(lc,lc,istep)
            if (lc<n_cols) then
+#if REALCASE == 1
              call PRECISION_TRMV('U', 'T', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
+#endif
+#if COMPLEXCASE == 1
+             call PRECISION_TRMV('U', 'C', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
+#endif
+
+#if REALCASE == 1
              tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
+#endif
+#if COMPLEXCASE == 1
+             tmat(lc,lc+1:n_cols,istep) = -tau * conjg(vav(lc+1:n_cols,lc))
+#endif
            endif
          enddo
  	 call timer%stop("blas")
-       endif
-
+#if REALCASE == 1
+       endif !useQR
+#endif
        ! Transpose vmr -> vmc (stored in umc, second half)
-
+#if REALCASE == 1
        if (useGPU) then
          call elpa_transpose_vectors_real_PRECISION  (vmrCUDA, cur_l_rows, mpi_comm_rows, &
                                             umcCUDA(cur_l_cols * n_cols + 1), cur_l_cols, mpi_comm_cols, &
@@ -678,12 +1063,18 @@
                                             umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
                                             1, istep*nbw, n_cols, nblk)
        endif
+#endif
+#if COMPLEXCASE == 1
+       call elpa_transpose_vectors_complex_PRECISION  (vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                      umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                      1, istep*nbw, n_cols, nblk)
+#endif
 
        ! Calculate umc = A**T * vmr
        ! Note that the distributed A has to be transposed
        ! Opposed to direct tridiagonalization there is no need to use the cache locality
        ! of the tiles, so we can use strips of the matrix
-
+#if REALCASE == 1
        ! here the GPU version and CPU version diverged substantially, due to the newest
        ! optimizations due to Intel. The GPU version has to be re-written
        if (useGPU) then
@@ -741,8 +1132,8 @@
 #ifdef WITH_OPENMP
          n_way = omp_get_max_threads()
 #endif
-         !umc(1:l_cols,1:n_cols) = 0.d0
-         !vmr(1:l_rows,n_cols+1:2*n_cols) = 0
+         !umcCPU(1:l_cols,1:n_cols) = 0.d0
+         !vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0
 #ifdef WITH_OPENMP
          !$omp parallel private( i,lcs,lce,lrs,lre)
 #endif
@@ -830,12 +1221,100 @@
         !$omp end parallel
 #endif
        endif ! do not useGPU version
+#endif /* REALCASE == 1 */
+
+#if COMPLEXCASE == 1
+        umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
+        vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+        if (l_cols>0 .and. l_rows>0) then
+          if (useGPU) then
+            if (size(vmrCPU,dim=1)*size(vmrCPU,dim=2) .gt. vmr_size) then
+              print *,"bandred_complex: vmr size 2 :",size(vmrCPU,dim=1)*size(vmrCPU,dim=2),vmr_size
+              stop
+            endif
+            successCUDA = cuda_memcpy(vmr_dev, loc(vmrCPU(1,1)),vmr_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+
+            if (.not.(successCUDA)) then
+              print *, "bandred_complex:  cuda memcpy vmr_dev failed ", istat
+              stop
+            endif
+            if (size(umcCPU,dim=1)*size(umcCPU,dim=2) .gt. umc_size) then
+              print *,"bandred_complex: umc size 2 :",size(umcCPU,dim=1)*size(umcCPU,dim=2),umc_size
+              stop
+            endif
+            successCUDA = cuda_memcpy(umc_dev, loc(umcCPU(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+            if (.not.(successCUDA)) then
+              print *, "bandred_complex:  cuda memcpy umc_dev failed  ", istat
+              stop
+            endif
+          endif
+          do i=0,(istep*nbw-1)/tile_size
+
+            lcs = i*l_cols_tile+1
+            lce = min(l_cols,(i+1)*l_cols_tile)
+            if (lce<lcs) cycle
+
+            lre = min(l_rows,(i+1)*l_rows_tile)
+
+            if (useGPU) then
+              call timer%start("cublas")
+              call cublas_PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, (a_dev + ((lcs-1)*lda* &
+                        size_of_PRECISION_complex)), lda, &
+                        vmr_dev, cur_l_rows, CONE, (umc_dev +(lcs-1)*size_of_PRECISION_complex), cur_l_cols)
+              call timer%stop("cublas")
+            else
+              call timer%start("blas")
+              call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, a(1,lcs), ubound(a,dim=1), &
+                         vmrCPU, ubound(vmrCPU,dim=1), CONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+              call timer%stop("blas")
+            endif
+
+            if (i==0) cycle
+            lre = min(l_rows,i*l_rows_tile)
+            if (useGPU) then
+              call timer%start("cublas")
+              call cublas_PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, (a_dev+((lcs-1)*lda* &
+                        size_of_PRECISION_complex)),lda,  &
+                        (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_PRECISION_complex), cur_l_cols,CONE,  &
+                        (vmr_dev+(cur_l_rows * n_cols)*size_of_PRECISION_complex), cur_l_rows)
+              call timer%stop("cublas")
+            else
+              call timer%start("blas")
+              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, a(1,lcs), lda, &
+                         umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), CONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+              call timer%stop("blas")
+            endif
+          enddo
+
+          if (useGPU) then
+            if (size(vmrCPU,dim=1)*size(vmrCPU,dim=2) .gt. vmr_size) then
+              print *,"bandred_complex: vmr size 3 :",size(vmrCPU,dim=1)*size(vmrCPU,dim=2),vmr_size
+              stop
+            endif
+            successCUDA = cuda_memcpy(loc(vmrCPU(1,1)),vmr_dev,vmr_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
+            if (.not.(successCUDA)) then
+              print *, "bandred_complex:  cuad memcpy failed vmrCPU ", istat
+              stop
+            endif
+            if (size(umcCPU,dim=1)*size(umcCPU,dim=2) .gt. umc_size) then
+              print *,"bandred_complex: umc size 3 :",size(umcCPU,dim=1)*size(umcCPU,dim=2),umc_size
+              stop
+            endif
+            successCUDA = cuda_memcpy(loc(umcCPU(1,1)), umc_dev,umc_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
+            if (.not.(successCUDA)) then
+              print *, "bandred_complex:  cuad memcpy failed umcCPU ", istat
+              stop
+            endif
+          endif ! useGPU
+        endif ! (l_cols>0 .and. l_rows>0) 
+#endif /* COMPLEXCASE == 1 */
 
        ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
        ! on the processors containing the diagonal
        ! This is only necessary if ur has been calculated, i.e. if the
        ! global tile size is smaller than the global remaining matrix
 
+#if REALCASE == 1
        if (useGPU) then
          ! here the GPU version and CPU version divereged due to the same reasons as above
 
@@ -1078,12 +1557,203 @@
 #endif /* WITH_OPENMP */
 
        endif ! useGPU
+#endif /* REALCASE == 1 */
 
+#if COMPLEXCASE == 1
+        if (tile_size < istep*nbw) then
+          call elpa_reduce_add_vectors_complex_PRECISION  (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
+                                          umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                          istep*nbw, n_cols, nblk)
+        endif
+#ifdef WITH_MPI
+        if (l_cols>0) then
+          allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
+          if (istat .ne. 0) then
+            print *,"bandred_complex: error when allocating tmp "//errorMessage
+            stop
+          endif
+          call timer%start("mpi_communication")
+          call mpi_allreduce(umcCPU, tmp, l_cols*n_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          call timer%stop("mpi_communication")
+
+          umcCPU(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
+          deallocate(tmp, stat=istat, errmsg=errorMessage)
+          if (istat .ne. 0) then
+            print *,"bandred_complex: error when deallocating tmp "//errorMessage
+            stop
+          endif
+        endif
+
+#else /* WITH_MPI */
+
+!        if (l_cols>0) then
+!          allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
+!          if (istat .ne. 0) then
+!            print *,"bandred_complex: error when allocating tmp "//errorMessage
+!            stop
+!          endif
+!          tmp(1:l_cols,1:n_cols) = umcCPU(1:l_cols,1:n_cols)
+!
+!          umcCPU(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
+!          deallocate(tmp, stat=istat, errmsg=errorMessage)
+!          if (istat .ne. 0) then
+!            print *,"bandred_complex: error when deallocating tmp "//errorMessage
+!            stop
+!          endif
+!        endif
+
+#endif /* WITH_MPI */
+
+
+
+
+        ! U = U * Tmat**T
+        if (useGPU) then
+          if (size(umcCPU,dim=1)*size(umcCPU,dim=2) .gt. umc_size) then
+            print *,"bandred_complex: umcCPU size 4 :",size(umcCPU,dim=1)*size(umcCPU,dim=2),umc_size
+            stop
+          endif
+          successCUDA = cuda_memcpy(umc_dev, loc(umcCPU(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+          if (.not.(successCUDA)) then
+            print *, "bandred_complex:  cuad memcpy failed umc_dev ", istat
+            stop
+          endif
+          successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+          if (.not.(successCUDA)) then
+            print *, "bandred_complex:  cuad memcpy failed tmat_dev ", istat
+            stop
+          endif
+          call timer%start("cublas")
+          call  cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat_dev, nbw, umc_dev, cur_l_cols)
+          call timer%stop("cublas")
+        else ! not useGPU
+          call timer%start("blas")
+          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), &
+                     umcCPU, ubound(umcCPU,dim=1))
+          call timer%stop("blas")
+        endif
+
+        ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+        if (useGPU) then
+          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+          if (.not.(successCUDA)) then
+            print *, "bandred_complex:  cuad memcpy failed vav_dev ", istat
+            stop
+          endif
+          call timer%start("cublas")
+          call cublas_PRECISION_GEMM('C', 'N', n_cols, n_cols, l_cols, CONE, umc_dev, cur_l_cols, (umc_dev +( cur_l_cols *n_cols) &
+                            *size_of_PRECISION_complex ), cur_l_cols, CZERO, vav_dev, nbw)
+
+          call cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat_dev, nbw, vav_dev, nbw)
+          call timer%stop("cublas")
+          successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev,nbw*nbw*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
+          if (.not.(successCUDA)) then
+            print *, "bandred_complex:  cuad memcpy failed vav ", istat
+            stop
+          endif
+
+          call herm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw,mpi_comm_cols)
+
+          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)),nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+          if (.not.(successCUDA)) then
+            print *, "bandred_complex:  cuad memcpy failed vav_dev ", istat
+            stop
+          endif
+        else ! useGPU
+          call timer%start("blas")
+          call PRECISION_GEMM('C', 'N', n_cols, n_cols, l_cols, CONE, umcCPU, ubound(umcCPU,dim=1), umcCPU(1,n_cols+1), &
+                     ubound(umcCPU,dim=1), CZERO, vav, ubound(vav,dim=1))
+          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat(1,1,istep), &
+                     ubound(tmat,dim=1), vav, ubound(vav,dim=1))
+          call timer%stop("blas")
+          call herm_matrix_allreduce_PRECISION(n_cols,vav,nbw,nbw,mpi_comm_cols)
+        endif
+
+        ! U = U - 0.5 * V * VAV
+
+        if (useGPU) then
+          call timer%start("cublas")
+          call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, CONST_COMPLEX_PAIR_NEGATIVE_0_5, (umc_dev +  &
+                            (cur_l_cols * n_cols )*size_of_PRECISION_complex), &
+                            cur_l_cols, vav_dev, nbw, CONE, umc_dev, cur_l_cols)
+          call timer%stop("cublas")
+          ! Transpose umc -> umr (stored in vmr, second half)
+
+          if (size(umcCPU,dim=1)*size(umcCPU,dim=2) .gt. umc_size) then
+            print *,"bandred_complex: umcCPU size 5 :",size(umcCPU,dim=1)*size(umcCPU,dim=2),umc_size
+            stop
+          endif
+          successCUDA = cuda_memcpy(loc(umcCPU(1,1)),umc_dev,umc_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
+          if (.not.(successCUDA)) then
+            print *, "bandred_complex:  cuda memcpy failed umcCPU ", istat
+            stop
+          endif
+          call elpa_transpose_vectors_complex_PRECISION  (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                                vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                                1, istep*nbw, n_cols, nblk)
+          if (size(vmrCPU,dim=1)*size(vmrCPU,dim=2) .gt. vmr_size) then
+            print *,"bandred_complex: vmr size 4 :",size(vmrCPU,dim=1)*size(vmrCPU,dim=2),vmr_size
+            stop
+          endif
+          successCUDA = cuda_memcpy(vmr_dev,loc(vmrCPU(1,1)),vmr_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+          if (.not.(successCUDA)) then
+            print *, "bandred_complex:  cuda memcpy failed vav_dev", istat
+            stop
+          endif
+
+          if (size(umcCPU,dim=1)*size(umcCPU,dim=2) .gt. umc_size) then
+            print *,"bandred_complex: umcCPU size 6 :",size(umcCPU,dim=1)*size(umcCPU,dim=2),umc_size
+            stop
+          endif
+          successCUDA = cuda_memcpy(umc_dev,loc(umcCPU(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+          if (.not.(successCUDA)) then
+            print *, "bandred_complex:  cuda memcpy failed umc_dev ", istat
+            stop
+          endif
+        else ! not useGPU
+          call timer%start("blas")
+          call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, CONST_COMPLEX_PAIR_NEGATIVE_0_5, umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), &
+                     vav, ubound(vav,dim=1), CONE, umcCPU, ubound(umcCPU,dim=1))
+          call timer%stop("blas")
+          ! Transpose umc -> umr (stored in vmr, second half)
+
+          call elpa_transpose_vectors_complex_PRECISION  (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                                vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                                1, istep*nbw, n_cols, nblk)
+        endif
+        ! A = A - V*U**T - U*V**T
+
+        do i=0,(istep*nbw-1)/tile_size
+          lcs = i*l_cols_tile+1
+          lce = min(l_cols,(i+1)*l_cols_tile)
+          lre = min(l_rows,(i+1)*l_rows_tile)
+          if (lce<lcs .or. lre<1) cycle
+            if (useGPU) then
+              call timer%start("cublas")
+              call cublas_PRECISION_GEMM('N', 'C', lre, lce-lcs+1, 2*n_cols, -CONE, &
+                                vmr_dev ,cur_l_rows, (umc_dev +(lcs-1)*size_of_PRECISION_complex),cur_l_cols, &
+                                CONE, (a_dev + (lcs-1)*lda*size_of_PRECISION_complex),lda)
+              call timer%stop("cublas")
+            else
+              call timer%start("blas")
+              call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -CONE, &
+                         vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
+                         CONE, a(1,lcs), lda)
+              call timer%stop("blas")
+            endif
+          enddo
+#endif
+ 
        if (.not.(useGPU)) then
          if (allocated(vr)) then
            deallocate(vr, stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
+#if REALCASE == 1
              print *,"bandred_real: error when deallocating vr "//errorMessage
+#endif
+#if COMPLEXCASE == 1
+             print *,"bandred_complex: error when deallocating vr "//errorMessage
+#endif
              stop
            endif
          endif
@@ -1091,11 +1761,17 @@
          if (allocated(umcCPU)) then
            deallocate(umcCPU, stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
-             print *,"bandred_real: error when deallocating vmrCPU "//errorMessage
+#if REALCASE == 1
+             print *,"bandred_real: error when deallocating umcCPU "//errorMessage
+#endif
+#if COMPLEXCASE == 1
+             print *,"bandred_complex: error when deallocating umcCPU "//errorMessage
+#endif
              stop
            endif
          endif
 
+#if REALCASE == 1
          if (allocated(vmrCPU)) then
            deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
@@ -1103,22 +1779,51 @@
              stop
            endif
          endif
-
+#endif
+#if COMPLEXCASE == 1
+         if (allocated(vmrCPU)) then
+           deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
+           if (istat .ne. 0) then
+             print *,"bandred_complex: error when deallocating vmrCPU "//errorMessage
+             stop
+           endif
+         endif
+#endif
        endif !useGPU
 
      enddo ! istep
 
      if (useGPU) then
+!#if !(defined(USE_ASSUMED_SIZE))
+!       if (size(a,dim=1)*size(a,dim=2) .ne. lda*na_cols) then
+!         print *,"bandred_complex: size a ",size(a,dim=1)*size(a,dim=2) , lda*na_cols
+!       endif
+!#endif
        ! this is not needed since a_dev is passed along from one subroutine to the other
+#if REALCASE == 1
        successCUDA = cuda_memcpy ( loc (a), a_dev, lda*na_cols*size_of_PRECISION_real,cudaMemcpyDeviceToHost)
+#endif
+#if COMPLEXCASE == 1
+       successCUDA = cuda_memcpy ( loc(a(1,1)), a_dev, lda*na_cols*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
+#endif
        if (.not.(successCUDA)) then
+#if REALCASE == 1
          print *,"bandred_real: error in cudaMemcpy"
+#endif
+#if COMPLEXCASE == 1
+         print *, "bandred_complex:  cuad memcpy failed a ", istat
+#endif
          stop
        endif
 
        successCUDA = cuda_free(a_dev)
        if (.not.(successCUDA)) then
+#if REALCASE == 1
          print *,"bandred_real: error in cudaFree"
+#endif
+#if COMPLEXCASE == 1
+         print *, "bandred_complex:  cuad memcpy failed a ", istat
+#endif
          stop
        endif
 
@@ -1127,14 +1832,24 @@
 ! this is not necessary tmat_dev is passed (unchanged) from one routine to the other
        successCUDA = cuda_free(tmat_dev)
        if (.not.(successCUDA)) then
+#if REALCASE == 1
          print *,"bandred_real: error in cudaFree"
+#endif
+#if COMPLEXCASE == 1
+         print *,"bandred_complex: error in cudaFree"
+#endif
          stop
        endif
 !#endif
 
        successCUDA = cuda_free(vav_dev)
        if (.not.(successCUDA)) then
+#if REALCASE == 1
          print *,"bandred_real: error in cudaFree"
+#endif
+#if COMPLEXCASE == 1
+         print *,"bandred_complex: error in cudaFree"
+#endif
          stop
        endif
      endif ! useGPU
@@ -1142,7 +1857,12 @@
      if (allocated(vr)) then
        deallocate(vr, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
+#if REALCASE == 1
          print *,"bandred_real: error when deallocating vr "//errorMessage
+#endif
+#if COMPLEXCASE == 1
+         print *,"bandred_complex: error when deallocating vr "//errorMessage
+#endif
          stop
        endif
      endif
@@ -1150,7 +1870,12 @@
      if (allocated(umcCPU)) then
        deallocate(umcCPU, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
+#if REALCASE == 1
          print *,"bandred_real: error when deallocating umcCPU "//errorMessage
+#endif
+#if COMPLEXCASE == 1
+         print *,"bandred_complex: error when deallocating umcCPU "//errorMessage
+#endif
          stop
        endif
      endif
@@ -1158,23 +1883,47 @@
      if (allocated(vmrCPU)) then
        deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
+#if REALCASE == 1
          print *,"bandred_real: error when deallocating vmrCPU "//errorMessage
+#endif
+#if COMPLEXCASE == 1
+         print *,"bandred_complex: error when deallocating vmrCPU "//errorMessage
+#endif
          stop
        endif
      endif
 
+#if COMPLEXCASE == 1
+       successCUDA = cuda_free(umc_dev)
+       if (.not.(successCUDA)) then
+         print *,"bandred_complex: error in cudaFree"
+
+         stop
+       endif
+#endif
      if (useGPU) then
        successCUDA = cuda_free(vmr_dev)
        if (.not.(successCUDA)) then
+#if REALCASE == 1
          print *,"bandred_real: error in cudaFree"
+#endif
+#if COMPLEXCASE == 1
+         print *,"bandred_complex: error in cudaFree"
+#endif
          stop
        endif
 
        successCUDA = cuda_free(umc_dev)
        if (.not.(successCUDA)) then
+#if REALCASE == 1
          print *,"bandred_real: error in cudaFree"
+#endif
+#if COMPLEXCASE == 1
+         print *,"bandred_complex: error in cudaFree"
+#endif
          stop
        endif
+#if REALCASE == 1
        if (allocated(umcCUDA)) then
          deallocate(umcCUDA, stat=istat, errmsg=errorMessage)
          if (istat .ne. 0) then
@@ -1189,9 +1938,10 @@
            stop
          endif
        endif
-
+#endif
      endif ! useGPU
 
+#if REALCASE == 1
      if (useQR) then
        if (which_qr_decomposition == 1) then
          deallocate(work_blocked, stat=istat, errmsg=errorMessage)
@@ -1207,10 +1957,21 @@
          endif
        endif
      endif
+#endif
 
+#if REALCASE == 1
      call timer%stop("bandred_real" // PRECISION_SUFFIX)
+#endif
+#if COMPLEXCASE == 1
+     call timer%stop("bandred_complex" // PRECISION_SUFFIX)
+#endif
 
+#if REALCASE == 1
    end subroutine bandred_real_PRECISION ! slower for gpu on 10000 10000 ???
+#endif
 
+#if COMPLEXCASE == 1
+   end subroutine bandred_complex_PRECISION
+#endif
 
 
