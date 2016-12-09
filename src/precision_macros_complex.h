@@ -1,4 +1,15 @@
+#undef PRECISION
+#undef MATH_DATATYPE
+#define MATH_DATATYPE complex
+
 #ifdef DOUBLE_PRECISION_COMPLEX
+#define PRECISION double
+#else
+#define PRECISION single
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+
 #undef  elpa_transpose_vectors_complex_PRECISION
 #undef  elpa_reduce_add_vectors_complex_PRECISION
 #undef  bandred_complex_PRECISION
@@ -7,7 +18,6 @@
 #undef  trans_ev_tridi_to_band_complex_PRECISION
 #undef  band_band_complex_PRECISION
 #undef  tridiag_complex_PRECISION
-#undef  trans_ev_complex_PRECISION
 #undef  solve_tridi_PRECISION
 #undef  solve_tridi_col_PRECISION
 #undef  solve_tridi_single_problem_PRECISION
@@ -96,7 +106,6 @@
 #define  trans_ev_tridi_to_band_complex_PRECISION trans_ev_tridi_to_band_complex_double
 #define  band_band_complex_PRECISION band_band_complex_double
 #define  tridiag_complex_PRECISION tridiag_complex_double
-#define  trans_ev_complex_PRECISION trans_ev_complex_double
 #define  solve_tridi_PRECISION solve_tridi_double
 #define  solve_tridi_col_PRECISION solve_tridi_col_double
 #define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_double
@@ -178,6 +187,7 @@
 #define  CONST_COMPLEX_1_0 1.0_ck8
 #define  size_of_PRECISION_complex size_of_double_complex_datatype
 #else
+
 #undef  elpa_transpose_vectors_complex_PRECISION
 #undef  elpa_reduce_add_vectors_complex_PRECISION
 #undef  bandred_complex_PRECISION
@@ -186,7 +196,6 @@
 #undef  trans_ev_tridi_to_band_complex_PRECISION
 #undef  band_band_complex_PRECISION
 #undef  tridiag_complex_PRECISION
-#undef  trans_ev_complex_PRECISION
 #undef  solve_tridi_PRECISION
 #undef  solve_tridi_col_PRECISION
 #undef  solve_tridi_single_problem_PRECISION
@@ -275,7 +284,6 @@
 #define  trans_ev_tridi_to_band_complex_PRECISION trans_ev_tridi_to_band_complex_single
 #define  band_band_complex_PRECISION band_band_complex_single
 #define  tridiag_complex_PRECISION tridiag_complex_single
-#define  trans_ev_complex_PRECISION trans_ev_complex_single
 #define  solve_tridi_PRECISION solve_tridi_single
 #define  solve_tridi_col_PRECISION solve_tridi_col_single
 #define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_single

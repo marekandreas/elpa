@@ -901,6 +901,7 @@ EXTRA_DIST = \
   src/elpa1_tridiag_template.X90 \
   src/elpa2_compute_real_template.X90 \
   src/elpa2_compute_complex_template.X90 \
+  src/elpa2_bandred_template.X90 \
   src/elpa2_herm_matrix_allreduce_complex_template.X90 \
   src/elpa2_symm_matrix_allreduce_real_template.X90 \
   src/elpa2_trans_ev_band_to_full_complex_template.X90 \

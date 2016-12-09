@@ -1,3 +1,13 @@
+#undef PRECISION
+#undef MATH_DATATYPE
+#define MATH_DATATYPE real
+
+#ifdef DOUBLE_PRECISION_REAL
+#define PRECISION double
+#else
+#define PRECISION single
+#endif
+
 #ifdef DOUBLE_PRECISION_REAL
 #undef  elpa_transpose_vectors_real_PRECISION
 #undef  elpa_reduce_add_vectors_real_PRECISION
@@ -7,7 +17,6 @@
 #undef  trans_ev_tridi_to_band_real_PRECISION
 #undef  band_band_real_PRECISION
 #undef  tridiag_real_PRECISION
-#undef  trans_ev_real_PRECISION
 #undef  solve_tridi_PRECISION
 #undef  solve_tridi_col_PRECISION
 #undef  solve_tridi_single_problem_PRECISION
@@ -77,7 +86,6 @@
 #define  trans_ev_tridi_to_band_real_PRECISION trans_ev_tridi_to_band_real_double
 #define  band_band_real_PRECISION band_band_real_double
 #define  tridiag_real_PRECISION tridiag_real_double
-#define  trans_ev_real_PRECISION trans_ev_real_double
 #define  solve_tridi_PRECISION solve_tridi_double
 #define  solve_tridi_col_PRECISION solve_tridi_col_double
 #define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_double
@@ -140,6 +148,7 @@
 #define  size_of_PRECISION_real size_of_double_real_datatype
 #define  MPI_REAL_PRECISION MPI_REAL8
 #else
+
 #undef  elpa_transpose_vectors_real_PRECISION
 #undef  elpa_reduce_add_vectors_real_PRECISION
 #undef  bandred_real_PRECISION
@@ -148,7 +157,6 @@
 #undef  trans_ev_tridi_to_band_real_PRECISION
 #undef  band_band_real_PRECISION
 #undef  tridiag_real_PRECISION
-#undef  trans_ev_real_PRECISION
 #undef  solve_tridi_PRECISION
 #undef  solve_tridi_col_PRECISION
 #undef  solve_tridi_single_problem_PRECISION
@@ -218,7 +226,6 @@
 #define  trans_ev_tridi_to_band_real_PRECISION trans_ev_tridi_to_band_real_single
 #define  band_band_real_PRECISION band_band_real_single
 #define  tridiag_real_PRECISION tridiag_real_single
-#define  trans_ev_real_PRECISION trans_ev_real_single
 #define  solve_tridi_PRECISION solve_tridi_single
 #define  solve_tridi_col_PRECISION solve_tridi_col_single
 #define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_single
