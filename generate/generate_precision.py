@@ -2,6 +2,7 @@
 import sys
 
 simple_tokens = [
+    "PRECISION",
     "elpa_transpose_vectors_NUMBER_PRECISION",
     "elpa_reduce_add_vectors_NUMBER_PRECISION",
 
@@ -133,21 +134,41 @@ def print_undefs(number, explicit):
         print "#undef ", token[0]
 
 
-if(sys.argv[1] == "complex"):
-    print "#ifdef DOUBLE_PRECISION_COMPLEX"
-    print_undefs("complex", explicit_tokens_complex)
-    print_variant("complex", "double", explicit_tokens_complex)
-    print "#else"
-    print_undefs("complex", explicit_tokens_complex)
-    print_variant("complex", "single", explicit_tokens_complex)
-    print "#endif"
-elif(sys.argv[1] == "real"):    
-    print "#ifdef DOUBLE_PRECISION_REAL"
-    print_undefs("real", explicit_tokens_real)
-    print_variant("real", "double", explicit_tokens_real)
-    print "#else"
-    print_undefs("real", explicit_tokens_real)
-    print_variant("real", "single", explicit_tokens_real)
-    print "#endif"
-else:
-    assert(False)
+print "#ifdef REALCASE"
+print "#undef  MATH_DATATYPE"
+print "#define  MATH_DATATYPE real"
+print_undefs("real", explicit_tokens_real)
+#print_undefs("complex", explicit_tokens_complex)
+print "#ifdef DOUBLE_PRECISION"
+print_variant("real", "double", explicit_tokens_real)
+print "#endif"
+print "#ifdef SINGLE_PRECISION"
+print_variant("real", "single", explicit_tokens_real)
+print "#endif"
+print "#endif"
+
+print "#ifdef COMPLEXCASE"
+print "#undef  MATH_DATATYPE"
+print "#define  MATH_DATATYPE complex"
+#print_undefs("real", explicit_tokens_real)
+print_undefs("complex", explicit_tokens_complex)
+print "#ifdef DOUBLE_PRECISION"
+print_variant("complex", "double", explicit_tokens_complex)
+print "#endif"
+print "#ifdef SINGLE_PRECISION"
+print_variant("complex", "single", explicit_tokens_complex)
+print "#endif"
+print "#endif"
+
+#print "#elif MACROS_TYPE == COMPLEX_DOUBLE"
+#print "#undef  NUMBER"
+#print_undefs("complex", explicit_tokens_complex)
+#print "#define  NUMBER complex"
+#print_variant("complex", "double", explicit_tokens_complex)
+
+#print "#elif MACROS_TYPE == COMPLEX_SINGLE"
+#print "#undef  NUMBER"
+#print_undefs("complex", explicit_tokens_complex)
+#print "#define  NUMBER complex"
+#print_variant("complex", "single", explicit_tokens_complex)
+#print "#endif"

@@ -65,8 +65,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
         src/redist_band.X90 \
-        src/precision_macros.h \
-        src/precision_macros_complex.h
+        src/precision_macros.h 
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION)
@@ -911,7 +910,6 @@ EXTRA_DIST = \
   src/elpa2_tridiag_band_complex_template.X90 \
   src/elpa2_tridiag_band_real_template.X90 \
   src/precision_macros.h \
-  src/precision_macros_complex.h \
   src/elpa2_kernels/elpa2_kernels_real_template.X90 \
   src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
   src/elpa2_kernels/elpa2_kernels_simple_template.X90 \

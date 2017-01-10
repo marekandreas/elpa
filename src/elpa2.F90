@@ -400,6 +400,14 @@ module ELPA2
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
 
+! #undef PRECISION
+! #undef MATH_DATATYPE
+! #define MATH_DATATYPE real
+! #define PRECISION double
+! #include "elpa2_template.X90"
+
+
+
 #define DOUBLE_PRECISION_REAL
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -599,6 +607,7 @@ module ELPA2
     else
       nbw = (63/nblk+1)*nblk
     endif
+    write(*,*) "nbw", nbw
 
     num_blocks = (na-1)/nbw + 1
 
