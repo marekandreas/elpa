@@ -5,7 +5,6 @@ simple_tokens = [
     "PRECISION",
     "elpa_transpose_vectors_NUMBER_PRECISION",
     "elpa_reduce_add_vectors_NUMBER_PRECISION",
-
     "bandred_NUMBER_PRECISION",
     "trans_ev_band_to_full_NUMBER_PRECISION",
     "tridiag_band_NUMBER_PRECISION",
@@ -16,7 +15,7 @@ simple_tokens = [
     "solve_tridi_PRECISION",
     "solve_tridi_col_PRECISION",
     "solve_tridi_single_problem_PRECISION",
-
+    "solve_evp_NUMBER_2stage_PRECISION",
     "qr_pdgeqrf_2dcomm_PRECISION",
     "hh_transform_NUMBER_PRECISION",
     "symm_matrix_allreduce_PRECISION",
@@ -53,6 +52,11 @@ simple_tokens = [
     "launch_my_unpack_c_kernel_NUMBER_PRECISION",
     "launch_compute_hh_dotp_c_kernel_NUMBER_PRECISION",    
     "launch_extract_hh_tau_c_kernel_NUMBER_PRECISION",
+    "AVAILABLE_UPCASENUMBER_ELPA_KERNELS",
+    "UPCASENUMBER_ELPA_KERNEL_GENERIC",
+    "DEFAULT_UPCASENUMBER_ELPA_KERNEL",
+    "UPCASENUMBER_ELPA_KERNEL_NAMES",
+    "UPCASENUMBER_ELPA_KERNEL_GPU",
 ]
 
 blas_tokens = [
@@ -100,6 +104,7 @@ explicit_tokens_complex = [
     ("CONST_COMPLEX_0_0", "0.0_ck8", "0.0_ck4"),
     ("CONST_COMPLEX_1_0", "1.0_ck8", "1.0_ck4"),
     ("size_of_PRECISION_complex", "size_of_double_complex_datatype", "size_of_single_complex_datatype"),
+    ("C_DATATYPE_KIND", "c_double", "c_float"),
 ]
 
 explicit_tokens_real = [
@@ -111,6 +116,7 @@ explicit_tokens_real = [
     ("CONST_8_0", "8.0_rk8", "8.0_rk4"),
     ("size_of_PRECISION_real",  "size_of_double_real_datatype",  "size_of_single_real_datatype"),
     ("MPI_REAL_PRECISION", "MPI_REAL8", "MPI_REAL4"),
+    ("C_DATATYPE_KIND", "c_double", "c_float"),
 ]
 
 
@@ -119,6 +125,7 @@ blas_prefixes = {("real","single") : "S", ("real","double") : "D", ("complex","s
 
 def print_variant(number, precision, explicit):
     for token in simple_tokens:
+        print "#define ", token, token.replace("PRECISION", precision).replace("UPCASENUMBER", number.upper()).replace("NUMBER", number)
         print "#define ", token.replace("NUMBER", number), token.replace("PRECISION", precision).replace("NUMBER", number)
     for token in blas_tokens:
         print "#define ", token, token.replace("PRECISION_", blas_prefixes[(number, precision)])    
@@ -127,6 +134,7 @@ def print_variant(number, precision, explicit):
     
 def print_undefs(number, explicit):
     for token in simple_tokens:
+        print "#undef ", token
         print "#undef ", token.replace("NUMBER", number)
     for token in blas_tokens:
         print "#undef ", token
