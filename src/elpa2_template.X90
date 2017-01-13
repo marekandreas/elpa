@@ -59,12 +59,7 @@
    logical                                   :: do_useGPU
    integer(kind=c_int)                       :: numberOfGPUDevices
 
-   call timer%start("solve_evp_&
-      &MATH_DATATYPE&
-      &_2stage_" // &
-      &PRECISION_SUFFIX &
-      )
-
+    call timer%start(solve_evp_NUMBER_2stage_PRECISION_STR)
 
     call timer%start("mpi_communication")
     call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
@@ -214,9 +209,7 @@
 
     allocate(tmat(nbw,nbw,num_blocks), stat=istat, errmsg=errorMessage)
     if (istat .ne. 0) then
-      print *,"solve_evp_&
-                         &MATH_DATATYPE&
-                         &_2stage: error when allocating tmat "//errorMessage
+      print *,solve_evp_NUMBER_2stage_PRECISION_STR//": error when allocating tmat "//errorMessage
       stop
     endif
 
@@ -234,17 +227,13 @@
     if (.not.(success)) return
     ttt1 = MPI_Wtime()
     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-       write(error_unit,*) 'Time bandred_&
-                                         &MATH_DATATYPE&
-                                         &               :',ttt1-ttt0
+       write(error_unit,*) 'Time '//bandred_NUMBER_PRECISION_STR//'               :',ttt1-ttt0
 
      ! Reduction band -> tridiagonal
 
      allocate(e(na), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"solve_evp_&
-                          &MATH_DATATYPE&
-                          &_2stage: error when allocating e "//errorMessage
+       print *,solve_evp_NUMBER_2stage_PRECISION_STR//": error when allocating e "//errorMessage
        stop
      endif
 
@@ -255,9 +244,7 @@
 
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-       write(error_unit,*) 'Time tridiag_band_&
-                                              &MATH_DATATYPE&
-                                              &          :',ttt1-ttt0
+       write(error_unit,*) 'Time '//tridiag_band_NUMBER_PRECISION_STR//'          :',ttt1-ttt0
 
 #ifdef WITH_MPI
      call timer%start("mpi_communication")
@@ -331,16 +318,12 @@
      if (.not.(success)) return
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-       write(error_unit,*) 'Time trans_ev_tridi_to_band_&
-                           &MATH_DATATYPE&
-                           &:',ttt1-ttt0
+       write(error_unit,*) 'Time '//trans_ev_tridi_to_band_NUMBER_PRECISION_STR//' :',ttt1-ttt0
 
      ! We can now deallocate the stored householder vectors
      deallocate(hh_trans, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"solve_evp_&
-       &MATH_DATATYPE&
-       &_2stage: error when deallocating hh_trans "//errorMessage
+       print *, solve_evp_NUMBER_2stage_PRECISION_STR//": error when deallocating hh_trans "//errorMessage
        stop
      endif
 
@@ -360,22 +343,16 @@
 
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-       write(error_unit,*) 'Time trans_ev_band_to_full_&
-                                                       &MATH_DATATYPE&
-                                                       & :',ttt1-ttt0
+       write(error_unit,*) 'Time '//trans_ev_band_to_full_NUMBER_PRECISION_STR//' :',ttt1-ttt0
      time_evp_back = ttt1-ttts
 
      deallocate(tmat, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"solve_evp_&
-                          &MATH_DATATYPE&
-                          &_2stage: error when deallocating tmat"//errorMessage
+       print *,solve_evp_NUMBER_2stage_PRECISION_STR//": error when deallocating tmat"//errorMessage
        stop
      endif
 
-     call timer%stop("solve_evp_real_2stage_&
-                                            &MATH_DATATYPE&
-                                            &")
+     call timer%stop(solve_evp_NUMBER_2stage_PRECISION_STR)
 1    format(a,f10.3)
 
    end function solve_evp_NUMBER_2stage_PRECISION

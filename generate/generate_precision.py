@@ -126,7 +126,9 @@ blas_prefixes = {("real","single") : "S", ("real","double") : "D", ("complex","s
 def print_variant(number, precision, explicit):
     for token in simple_tokens:
         print "#define ", token, token.replace("PRECISION", precision).replace("UPCASENUMBER", number.upper()).replace("NUMBER", number)
-        print "#define ", token.replace("NUMBER", number), token.replace("PRECISION", precision).replace("NUMBER", number)
+        print "#define ", token + "_STR", "'" + token.replace("PRECISION", precision).replace("UPCASENUMBER", number.upper()).replace("NUMBER", number) + "'"
+        if("NUMBER" in token):
+            print "#define ", token.replace("NUMBER", number), token.replace("PRECISION", precision).replace("NUMBER", number)
     for token in blas_tokens:
         print "#define ", token, token.replace("PRECISION_", blas_prefixes[(number, precision)])    
     for token in explicit:
@@ -135,7 +137,9 @@ def print_variant(number, precision, explicit):
 def print_undefs(number, explicit):
     for token in simple_tokens:
         print "#undef ", token
-        print "#undef ", token.replace("NUMBER", number)
+        print "#undef ", token + "_STR"
+        if("NUMBER" in token):
+            print "#undef ", token.replace("NUMBER", number)
     for token in blas_tokens:
         print "#undef ", token
     for token in explicit:
