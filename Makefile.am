@@ -315,6 +315,7 @@ dist_files_DATA = \
   test/Fortran/test_real2_default.F90 \
   test/Fortran/test_real2_qr.F90 \
   test/Fortran/test_real2_api.F90 \
+  test/Fortran/test_real2_banded.F90 \
   test/Fortran/test_real.F90 \
   test/Fortran/test_real_with_c.F90 \
   test/Fortran/test_toeplitz.F90 \
@@ -345,6 +346,7 @@ noinst_PROGRAMS = \
   elpa2_test_real_default@SUFFIX@ \
   elpa2_test_real_qr@SUFFIX@ \
   elpa2_test_real_api@SUFFIX@ \
+  elpa2_test_real_banded@SUFFIX@ \
   elpa2_test_complex@SUFFIX@ \
   elpa2_test_complex_default@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
@@ -531,6 +533,11 @@ elpa2_test_real_api@SUFFIX@_SOURCES = test/Fortran/test_real2_api.F90
 elpa2_test_real_api@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa2_test_real_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
+elpa2_test_real_banded@SUFFIX@_SOURCES = test/Fortran/test_real2_banded.F90
+elpa2_test_real_banded@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_real_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa2_test_real_banded@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa1_test_complex@SUFFIX@_SOURCES = test/Fortran/test_complex.F90
 elpa1_test_complex@SUFFIX@_LDADD = $(build_lib)
@@ -731,6 +738,7 @@ check_SCRIPTS = \
   elpa2_test_real_qr@SUFFIX@.sh \
   elpa2_test_complex_default@SUFFIX@.sh \
   elpa2_test_real_api@SUFFIX@.sh \
+  elpa2_test_real_banded@SUFFIX@.sh \
   elpa2_test_complex_api@SUFFIX@.sh \
   elpa_driver_real@SUFFIX@.sh \
   elpa_driver_complex@SUFFIX@.sh \
