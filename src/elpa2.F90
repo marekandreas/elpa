@@ -363,7 +363,7 @@ module ELPA2
 #define DOUBLE_PRECISION_REAL
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"     
+#include "precision_macros.h"
 !-------------------------------------------------------------------------------
 !>  \brief solve_evp_real_2stage_double: Fortran function to solve the double-precision real eigenvalue problem with a 2 stage approach
 !>
@@ -412,7 +412,7 @@ module ELPA2
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"     
+#include "precision_macros.h"
 !-------------------------------------------------------------------------------
 !>  \brief solve_evp_real_2stage_single: Fortran function to solve the single-precision real eigenvalue problem with a 2 stage approach
 !>
@@ -462,7 +462,7 @@ module ELPA2
 #define DOUBLE_PRECISION_COMPLEX 1
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"     
+#include "precision_macros.h"
 !>  \brief solve_evp_complex_2stage_double: Fortran function to solve the double-precision complex eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
@@ -510,7 +510,7 @@ module ELPA2
 
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"     
+#include "precision_macros.h"
 
 !>  \brief solve_evp_complex_2stage_single: Fortran function to solve the single-precision complex eigenvalue problem with a 2 stage approach
 !>
