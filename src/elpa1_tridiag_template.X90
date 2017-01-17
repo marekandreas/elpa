@@ -129,12 +129,18 @@
       ! id in processor row and column and total numbers of processor rows and columns
       integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols, my_rank
       integer(kind=ik)                              :: mpierr
-
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+      real(kind=rk8), parameter                     :: ZERO=0.0_rk8, ONE = 1.0_rk8
+#else
+      real(kind=rk4), parameter                     :: ZERO=0.0_rk4, ONE = 1.0_rk4
+#endif
+#endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=ck8), parameter                  :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
+      complex(kind=ck8), parameter                  :: ZERO = (0.0_rk8,0.0_rk8), ONE = (1.0_rk8,0.0_rk8)
 #else
-      complex(kind=ck4), parameter                  :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk4)
+      complex(kind=ck4), parameter                  :: ZERO = (0.0_rk4,0.0_rk4), ONE = (1.0_rk4,0.0_rk4)
 #endif
 #endif
       integer(kind=ik)                              :: totalblocks, max_loc_block_rows, max_loc_block_cols, max_local_rows, &
@@ -436,22 +442,24 @@
 
           ! copy l_cols + 1 column of A to v_row
           if (useGPU) then
+	    a_offset = l_cols * lda * &
 #if REALCASE == 1
-            a_offset = l_cols * lda * size_of_PRECISION_real
+                       size_of_PRECISION_real
 #endif
 #if COMPLEXCASE == 1
-            a_offset = l_cols * lda * size_of_PRECISION_complex
+                       size_of_PRECISION_complex
 #endif
             ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
 
+            successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)* &
 #if REALCASE == 1
-            successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)*size_of_PRECISION_real,  &
-                                        cudaMemcpyDeviceToHost)
+                                      size_of_PRECISION_real,  &
 #endif
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)*size_of_PRECISION_complex,  &
-                                        cudaMemcpyDeviceToHost)
+                                      size_of_PRECISION_complex,  &
 #endif
+                                       cudaMemcpyDeviceToHost)
+
             check_memcpy_cuda("tridiag", successCUDA)
           else
             v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
@@ -459,19 +467,20 @@
 
             if (n_stored_vecs > 0 .and. l_rows > 0) then
 	      call timer%start("blas")
+#if COMPLEXCASE == 1
+              aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
+#endif
+              call PRECISION_GEMV('N',   &
+	                          l_rows, 2*n_stored_vecs,                                  &
+                                  ONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),        &
 #if REALCASE == 1
-              call PRECISION_GEMV('N', l_rows, 2*n_stored_vecs, &
-                             CONST_1_0, vu_stored_rows, ubound(vu_stored_rows,dim=1), &
-                             uv_stored_cols(l_cols+1,1), ubound(uv_stored_cols,dim=1), &
-                             CONST_1_0, v_row, 1)
+                                  uv_stored_cols(l_cols+1,1), ubound(uv_stored_cols,dim=1), &
 #endif
 #if COMPLEXCASE == 1
-               aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
-               call PRECISION_GEMV('N', l_rows, 2*n_stored_vecs,  &
-                                CONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),  &
-                                aux, 1,  &
-                                CONE, v_row, 1)
+                                   aux, 1,  &
+
 #endif
+                                  ONE, v_row, 1)
 	       call timer%stop("blas")
 
             endif
@@ -486,12 +495,14 @@
 
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
+            call mpi_allreduce(aux1, aux2, 2, &
 #if REALCASE == 1
-            call mpi_allreduce(aux1, aux2, 2, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+	    MPI_REAL_PRECISION,               &
 #endif
 #if COMPLEXCASE == 1
-            call mpi_allreduce(aux1, aux2, 2, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+            MPI_COMPLEX_PRECISION,            &
 #endif
+	    MPI_SUM, mpi_comm_rows, mpierr)
             call timer%stop("mpi_communication")
 #else /* WITH_MPI */
           aux2 = aux1
@@ -525,12 +536,14 @@
 
 #ifdef WITH_MPI
          ! Broadcast the Householder vector (and tau) along columns
+         call MPI_Bcast(v_row, l_rows+1,       &
 #if REALCASE == 1
-         call MPI_Bcast(v_row, l_rows+1, MPI_REAL_PRECISION, pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+                        MPI_REAL_PRECISION,    &
 #endif
 #if COMPLEXCASE == 1
-         call MPI_Bcast(v_row, l_rows+1, MPI_COMPLEX_PRECISION, pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+                        MPI_COMPLEX_PRECISION, &
 #endif
+                        pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif /* WITH_MPI */
 
         !recover tau, which has been broadcasted together with v_row
@@ -556,36 +569,43 @@
         u_row(1:l_rows) = 0
         if (l_rows > 0 .and. l_cols> 0 ) then
           if(useGPU) then
+            successCUDA = cuda_memset(u_col_dev, 0, l_cols * &
 #if REALCASE == 1
-            successCUDA = cuda_memset(u_col_dev, 0, l_cols * size_of_PRECISION_real)
+                                      size_of_PRECISION_real)
 #endif
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memset(u_col_dev, 0, l_cols * size_of_PRECISION_complex)
+                                      size_of_PRECISION_complex)
 #endif
             check_memcpy_cuda("tridiag", successCUDA)
 
+            successCUDA = cuda_memset(u_row_dev, 0, l_rows * &
 #if REALCASE == 1
-            successCUDA = cuda_memset(u_row_dev, 0, l_rows * size_of_PRECISION_real)
+                                      size_of_PRECISION_real)
 #endif
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memset(u_row_dev, 0, l_rows * size_of_PRECISION_complex)
+                                      size_of_PRECISION_complex)
 #endif
             check_memcpy_cuda("tridiag", successCUDA)
 
+            successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * &
 #if REALCASE == 1
-            successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * size_of_PRECISION_real, cudaMemcpyHostToDevice)
+                                      size_of_PRECISION_real,            &
 #endif
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+                                      size_of_PRECISION_complex,         &
 #endif
+                                      cudaMemcpyHostToDevice)
+
             check_memcpy_cuda("tridiag", successCUDA)
 
+            successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * &
 #if REALCASE == 1
-            successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * size_of_PRECISION_real, cudaMemcpyHostToDevice)
+                                      size_of_PRECISION_real,            &
 #endif
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+                                      size_of_PRECISION_complex,         &
 #endif
+                                      cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag", successCUDA)
           endif ! useGU
 
@@ -648,98 +668,97 @@
               if (mod(n_iter,n_threads) == my_thread) then
 	        call timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_GEMV('T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                                      CONST_1_0, a_mat(l_row_beg,l_col_beg), lda,  &
-                                      v_row(l_row_beg), 1,  &
-                                      CONST_1_0, uc_p(l_col_beg,my_thread), 1)
-                if (i/=j) then
-                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                        CONST_1_0, a_mat(l_row_beg,l_col_beg), lda,  &
-                                        v_col(l_col_beg), 1,  &
-                                        CONST_1_0, ur_p(l_row_beg,my_thread), 1)
-                endif
+                call PRECISION_GEMV('T',                    &
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_GEMV('C', l_row_end-l_row_beg+1 ,l_col_end-l_col_beg+1,  &
-                                    CONE, a_mat(l_row_beg,l_col_beg), lda,  &
-                                    v_row(l_row_beg), 1,  &
-                                    CONE, uc_p(l_col_beg,my_thread), 1)
-                if (i/=j) then
-                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                      CONE, a_mat(l_row_beg,l_col_beg), lda,  &
-                                      v_col(l_col_beg), 1,  &
-                                      CONE, ur_p(l_row_beg,my_thread), 1)
-                endif
+                call PRECISION_GEMV('C',                    &
 #endif
+		                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                                    ONE, a_mat(l_row_beg,l_col_beg), lda,         &
+                                    v_row(l_row_beg), 1, ONE, uc_p(l_col_beg,my_thread), 1)
+
+                if (i/=j) then
+                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,          &
+                                      ONE, a_mat(l_row_beg,l_col_beg), lda, v_col(l_col_beg), 1,  &
+
+                                      ONE, ur_p(l_row_beg,my_thread), 1)
+                endif
 	        call timer%stop("blas")
               endif
               n_iter = n_iter+1
 #else /* WITH_OPENMP */
 
               if (useGPU) then
+                a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
 #if REALCASE == 1
-                a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * size_of_PRECISION_real
+                           size_of_PRECISION_real
 #endif
 #if COMPLEXCASE == 1
-                a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * size_of_PRECISION_complex
+                           size_of_PRECISION_complex
 #endif
 	        call timer%start("cublas")
 #if REALCASE == 1
-                call cublas_PRECISION_GEMV('T',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
-                                     CONST_1_0,a_dev + a_offset, lda,  &
-                                     v_row_dev + (l_row_beg - 1) * size_of_PRECISION_real, 1,  &
-                                     CONST_1_0, u_col_dev + (l_col_beg - 1) * size_of_PRECISION_real, 1)
+                call cublas_PRECISION_GEMV('T',                        &
 #endif
 #if COMPLEXCASE == 1
-                call cublas_PRECISION_GEMV('C',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
-                                            CONE,a_dev + a_offset, lda,  &
-                                            v_row_dev + (l_row_beg - 1) * size_of_PRECISION_complex, 1,  &
-                                            CONE, u_col_dev + (l_col_beg - 1) * size_of_PRECISION_complex, 1)
+                call cublas_PRECISION_GEMV('C',                        &
+#endif
+                                           l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+                                           ONE, a_dev + a_offset, lda,                   &
+                                           v_row_dev + (l_row_beg - 1) *                 &
+#if REALCASE == 1
+					   size_of_PRECISION_real, 1,                    &
+#endif
+#if COMPLEXCASE == 1
+                                           size_of_PRECISION_complex, 1,                 &
+#endif
+                                           ONE, u_col_dev + (l_col_beg - 1) *            &
+#if REALCASE == 1
+					   size_of_PRECISION_real, 1)
+#endif
+#if COMPLEXCASE == 1
+                                           size_of_PRECISION_complex, 1)
 #endif
 
                if(i/=j) then
+                  call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+                                             ONE, a_dev + a_offset, lda,                        &
+                                             v_col_dev + (l_col_beg - 1) *                      &
 #if REALCASE == 1
-                  call cublas_PRECISION_GEMV('N',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
-                                      CONST_1_0,a_dev + a_offset, lda,  &
-                                      v_col_dev + (l_col_beg - 1) * size_of_PRECISION_real, 1,  &
-                                      CONST_1_0, u_row_dev + (l_row_beg - 1) * size_of_PRECISION_real, 1)
+					     size_of_PRECISION_real, 1,                         &
 #endif
 #if COMPLEXCASE == 1
-                  call cublas_PRECISION_GEMV('N',l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
-                                              CONE, a_dev + a_offset, lda,  &
-                                              v_col_dev + (l_col_beg - 1) * size_of_PRECISION_complex, 1,  &
-                                              CONE, u_row_dev + (l_row_beg - 1) * size_of_PRECISION_complex, 1)
+                                             size_of_PRECISION_complex, 1,                      &
 #endif
+                                             ONE, u_row_dev + (l_row_beg - 1) *                 &
+#if REALCASE == 1
+					     size_of_PRECISION_real, 1)
+#endif
+#if COMPLEXCASE == 1
+                                             size_of_PRECISION_complex, 1)
+#endif
+
                 endif
 	        call timer%stop("cublas")
               else ! useGPU
 	        call timer%start("blas")
-#if REALCASE ==  1
-                call PRECISION_GEMV('T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                      CONST_1_0, a_mat(l_row_beg, l_col_beg), lda,  &
-                                      v_row(l_row_beg), 1,  &
-                                      CONST_1_0, u_col(l_col_beg), 1)
+#if REALCASE == 1
+                call PRECISION_GEMV('T',           &
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_GEMV('C', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                    CONE, a_mat(l_row_beg,l_col_beg), lda,  &
-                                    v_row(l_row_beg), 1,  &
-                                    CONE, u_col(l_col_beg), 1)
+                call PRECISION_GEMV('C',           &
 #endif
+	                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
+                                    ONE, a_mat(l_row_beg, l_col_beg), lda,         &
+                                    v_row(l_row_beg), 1,                           &
+                                    ONE, u_col(l_col_beg), 1)
 
                 if (i/=j) then
-#if REALCASE == 1
+
                   call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                        CONST_1_0, a_mat(l_row_beg,l_col_beg), lda,  &
-                                        v_col(l_col_beg), 1,  &
-                                        CONST_1_0, u_row(l_row_beg), 1)
-#endif
-#if COMPLEXCASE == 1
-                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                      CONE, a_mat(l_row_beg,l_col_beg), lda,  &
-                                      v_col(l_col_beg), 1,  &
-                                      CONE, u_row(l_row_beg), 1)
-#endif
+                                      ONE, a_mat(l_row_beg,l_col_beg), lda,               &
+                                      v_col(l_col_beg), 1,                                &
+                                      ONE, u_row(l_row_beg), 1)
                 endif
 	        call timer%stop("blas")
               endif ! useGPU
@@ -749,19 +768,24 @@
           enddo  ! i=0,(istep-2)/tile_size
 
           if (useGPU) then
+            successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * &
 #if REALCASE == 1
-            successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+                                      size_of_PRECISION_real,    &
 #endif
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * size_of_PRECISION_complex, cudaMemcpyDeviceToHost)
+                                      size_of_PRECISION_complex, &
 #endif
+                                      cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag", successCUDA)
+
+            successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * &
 #if REALCASE == 1
-            successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+                                      size_of_PRECISION_real,    &
 #endif
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * size_of_PRECISION_complex, cudaMemcpyDeviceToHost)
+                                      size_of_PRECISION_complex, &
 #endif
+                                      cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag", successCUDA)
           endif
 
@@ -785,25 +809,18 @@
           if (n_stored_vecs > 0) then
 	    call timer%start("blas")
 #if REALCASE == 1
-            call PRECISION_GEMV('T', l_rows, 2*n_stored_vecs,   &
-                                  CONST_1_0, vu_stored_rows, ubound(vu_stored_rows,dim=1),   &
-                                  v_row,  1,   &
-                                  CONST_0_0, aux, 1)
-            call PRECISION_GEMV('N', l_cols, 2*n_stored_vecs,   &
-                                  CONST_1_0, uv_stored_cols, ubound(uv_stored_cols,dim=1),   &
-                                  aux, 1, CONST_1_0,   &
-                                  u_col,  1)
+            call PRECISION_GEMV('T',     &
 #endif
 #if COMPLEXCASE == 1
-            call PRECISION_GEMV('C', l_rows, 2*n_stored_vecs,  &
-                                CONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),  &
-                                v_row,  1,  &
-                                CZERO, aux, 1)
-            call PRECISION_GEMV('N', l_cols, 2*n_stored_vecs,  &
-                                CONE, uv_stored_cols, ubound(uv_stored_cols,dim=1),  &
-                                aux, 1,  &
-                                CONE, u_col, 1)
+            call PRECISION_GEMV('C',     &
 #endif
+	                        l_rows, 2*n_stored_vecs,   &
+                                ONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),   &
+                                v_row,  1, ZERO, aux, 1)
+
+            call PRECISION_GEMV('N', l_cols, 2*n_stored_vecs,   &
+                                ONE, uv_stored_cols, ubound(uv_stored_cols,dim=1),   &
+                                aux, 1, ONE, u_col,  1)
 	    call timer%stop("blas")
           endif
 
@@ -831,12 +848,14 @@
           tmp(1:l_cols) = u_col(1:l_cols)
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
+          call mpi_allreduce(tmp, u_col, l_cols,    &
 #if REALCASE == 1
-          call mpi_allreduce(tmp, u_col, l_cols, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+                             MPI_REAL_PRECISION,    &
 #endif
 #if COMPLEXCASE == 1
-          call mpi_allreduce(tmp, u_col, l_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+                             MPI_COMPLEX_PRECISION, &
 #endif
+                             MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
           u_col = tmp
@@ -915,24 +934,28 @@
         if (n_stored_vecs == max_stored_uv .or. istep == 3) then
 
           if (useGPU) then
-#if REALCASE == 1
             successCUDA = cuda_memcpy(vu_stored_rows_dev, loc(vu_stored_rows(1,1)), &
-                                      max_local_rows * 2 * max_stored_uv * size_of_PRECISION_real, cudaMemcpyHostToDevice)
+                                      max_local_rows * 2 * max_stored_uv *          &
+#if REALCASE == 1
+                                      size_of_PRECISION_real,                       &
 #endif
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memcpy(vu_stored_rows_dev, loc(vu_stored_rows(1,1)), &
-                                      max_local_rows * 2 * max_stored_uv * size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+                                      size_of_PRECISION_complex,                    &
+
 #endif
+                                      cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag", successCUDA)
 
-#if REALCASE == 1
             successCUDA = cuda_memcpy(uv_stored_cols_dev, loc(uv_stored_cols(1,1)), &
-                                      max_local_cols * 2 * max_stored_uv * size_of_PRECISION_real, cudaMemcpyHostToDevice)
+                                      max_local_cols * 2 * max_stored_uv *          &
+#if REALCASE == 1
+                                      size_of_PRECISION_real,                       &
 #endif
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memcpy(uv_stored_cols_dev, loc(uv_stored_cols(1,1)), &
-                                      max_local_cols * 2 * max_stored_uv * size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+                                      size_of_PRECISION_complex,                    &
+
 #endif
+                                      cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag", successCUDA)
           endif
 
@@ -947,32 +970,48 @@
             if (useGPU) then
 	      call timer%start("cublas")
 #if REALCASE == 1
-              call cublas_PRECISION_GEMM('N', 'T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,   &
-                     CONST_1_0, vu_stored_rows_dev + (l_row_beg - 1) * size_of_PRECISION_real, max_local_rows,   &
-                     uv_stored_cols_dev + (l_col_beg - 1) * size_of_PRECISION_real, max_local_cols,  &
-                     CONST_1_0, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *  size_of_PRECISION_real, lda)
+              call cublas_PRECISION_GEMM('N', 'T',     &
 #endif
 #if COMPLEXCASE == 1
-              call cublas_PRECISION_GEMM('N', 'C', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,   &
-                             CONE, vu_stored_rows_dev + (l_row_beg - 1) * size_of_PRECISION_complex, max_local_rows,   &
-                             uv_stored_cols_dev + (l_col_beg - 1) * size_of_PRECISION_complex, max_local_cols,  &
-                             CONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *  size_of_PRECISION_complex, lda)
+              call cublas_PRECISION_GEMM('N', 'C',     &
 #endif
+	                                 l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
+                                         ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
+#if REALCASE == 1
+                                         size_of_PRECISION_real,    &
+#endif
+#if COMPLEXCASE == 1
+                                         size_of_PRECISION_complex, &
+#endif
+
+                                         max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
+#if REALCASE == 1
+                                         size_of_PRECISION_real, &
+#endif
+#if COMPLEXCASE == 1
+                                         size_of_PRECISION_complex, &
+#endif
+                                         max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *            &
+#if REALCASE == 1
+                                         size_of_PRECISION_real, &
+#endif
+#if COMPLEXCASE == 1
+                                         size_of_PRECISION_complex, &
+#endif
+                                         lda)
 	      call timer%stop("cublas")
             else !useGPU
 	      call timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_GEMM('N', 'T', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,  &
-                                     CONST_1_0, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
-                                     uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1), &
-                                     CONST_1_0, a_mat(l_row_beg,l_col_beg), lda)
+              call PRECISION_GEMM('N', 'T',                &
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_GEMM('N', 'C', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,  &
-                                  CONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),  &
-                                  uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),  &
-                                  CONE, a_mat(l_row_beg,l_col_beg), lda)
+              call PRECISION_GEMM('N', 'C',                &
 #endif
+	                           l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
+                                   ONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
+                                   uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),        &
+                                   ONE, a_mat(l_row_beg,l_col_beg), lda)
 	      call timer%stop("blas")
             endif !useGPU
           enddo
@@ -984,21 +1023,24 @@
         if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
           if (useGPU) then
             !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
+             a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * &
 #if REALCASE == 1
-             a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * size_of_PRECISION_real
+                        size_of_PRECISION_real
 #endif
 #if COMPLEXCASE == 1
-             a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * size_of_PRECISION_complex
-#endif
-#if REALCASE == 1
-             successCUDA = cuda_memcpy(loc(a_mat(l_rows, l_cols)), a_dev + a_offset, &
-                                       1 * size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-#endif
-#if COMPLEXCASE == 1
-             successCUDA = cuda_memcpy(loc(a_mat(l_rows, l_cols)), a_dev + a_offset, &
-                                       1 * size_of_PRECISION_complex, cudaMemcpyDeviceToHost)
+                        size_of_PRECISION_complex
 #endif
 
+             successCUDA = cuda_memcpy(loc(a_mat(l_rows, l_cols)), a_dev + a_offset, &
+                                       1 *                                           &
+#if REALCASE == 1
+				       size_of_PRECISION_real,                       &
+#endif
+#if COMPLEXCASE == 1
+                                       size_of_PRECISION_complex,                    &
+
+#endif
+				       cudaMemcpyDeviceToHost)
              check_memcpy_cuda("tridiag", successCUDA)
 
           endif
@@ -1010,14 +1052,16 @@
 
           if (useGPU) then
             !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
-#if REALCASE == 1
              successCUDA = cuda_memcpy(a_dev + a_offset, loc(a_mat(l_rows, l_cols)), &
-                                       1 * size_of_PRECISION_real, cudaMemcpyHostToDevice)
+                                       1 *                                           &
+#if REALCASE == 1
+				       size_of_PRECISION_real,                       &
 #endif
 #if COMPLEXCASE == 1
-             successCUDA = cuda_memcpy(a_dev + a_offset, loc(a_mat(l_rows, l_cols)), &
-                                       1 * size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+                                       size_of_PRECISION_complex,                    &
 #endif
+
+				       cudaMemcpyHostToDevice)
              check_memcpy_cuda("tridiag", successCUDA)
           endif
         endif
