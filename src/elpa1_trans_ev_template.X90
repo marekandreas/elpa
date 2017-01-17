@@ -127,11 +127,18 @@
 
       integer(kind=ik)                              :: max_stored_rows
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+      real(kind=rk8), parameter                     :: ZERO = 0.0_rk8, ONE = 1.0_rk8
+#else
+      real(kind=rk4), parameter                     :: ZERO = 0.0_rk4, ONE = 1.0_rk4
+#endif
+#endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=ck8), parameter                  :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
+      complex(kind=ck8), parameter                  :: ZERO = (0.0_rk8,0.0_rk8), ONE = (1.0_rk8,0.0_rk8)
 #else
-      complex(kind=ck4), parameter                  :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk4)
+      complex(kind=ck4), parameter                  :: ZERO = (0.0_rk4,0.0_rk4), ONE = (1.0_rk4,0.0_rk4)
 #endif
 #endif
       integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -224,7 +231,7 @@
 #if COMPLEXCASE == 1
       ! In the complex case tau(2) /= 0
       if (my_prow == prow(1, nblk, np_rows)) then
-        q_mat(1,1:l_cols) = q_mat(1,1:l_cols)*(CONE-tau(2))
+        q_mat(1,1:l_cols) = q_mat(1,1:l_cols)*(ONE-tau(2))
       endif
 #endif
 
@@ -332,13 +339,12 @@
 	  call timer%start("blas")
           if (l_rows>0) &
 #if REALCASE == 1
-            call PRECISION_SYRK('U', 'T', nstor, l_rows,   &
-                                      CONST_1_0, hvm, ubound(hvm,dim=1),   &
-                                      CONST_0_0, tmat, max_stored_rows)
+            call PRECISION_SYRK('U', 'T',   &
 #endif
 #if COMPLEXCASE == 1
-            call PRECISION_HERK('U', 'C', nstor, l_rows, CONE, hvm, ubound(hvm,dim=1), CZERO, tmat, max_stored_rows)
+            call PRECISION_HERK('U', 'C',   &
 #endif
+	                         nstor, l_rows, ONE, hvm, ubound(hvm,dim=1), ZERO, tmat, max_stored_rows)
 	  call timer%stop("blas")
           nc = 0
           do n = 1, nstor-1
@@ -368,16 +374,14 @@
           do n = 1, nstor-1
 	    call timer%start("blas")
 #if REALCASE == 1
-            call PRECISION_TRMV('L', 'T', 'N', n,  &
-                                   tmat, max_stored_rows,  &
-                                   h2(nc+1), 1)
+            call PRECISION_TRMV('L', 'T', 'N',    &
 #endif
 #if COMPLEXCASE == 1
-            call PRECISION_TRMV('L', 'C', 'N', n,   &
-                                tmat, max_stored_rows,   &
-                                h2(nc+1),1)
+            call PRECISION_TRMV('L', 'C', 'N',    &
 #endif
+                      	        n, tmat, max_stored_rows, h2(nc+1), 1)
 	    call timer%stop("blas")
+
             tmat(n+1,1:n) = &
 #if REALCASE == 1
 	    -h2(nc+1:nc+n)  &
@@ -421,32 +425,26 @@
             if (useGPU) then
 	      call timer%start("cublas")
 #if REALCASE == 1
-              call cublas_PRECISION_GEMM('T', 'N', nstor, l_cols, l_rows,  &
-                         CONST_1_0, hvm_dev, hvm_ubnd,  &
-                         q_dev, ldq,  &
-                         CONST_0_0, tmp_dev, nstor)
+              call cublas_PRECISION_GEMM('T', 'N',     &
 #endif
 #if COMPLEXCASE == 1
-              call cublas_PRECISION_GEMM('C', 'N', nstor, l_cols, l_rows,  &
-                         CONE, hvm_dev, hvm_ubnd,  &
-                         q_dev, ldq,  &
-                         CZERO, tmp_dev, nstor)
+              call cublas_PRECISION_GEMM('C', 'N',     &
 #endif
+                                         nstor, l_cols, l_rows, ONE, hvm_dev, hvm_ubnd,  &
+                                         q_dev, ldq,  ZERO, tmp_dev, nstor)
 	      call timer%stop("cublas")
+
             else ! useGPU
+
 	      call timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_GEMM('T', 'N', nstor, l_cols, l_rows,  &
-                                     CONST_1_0, hvm, ubound(hvm,dim=1), &
-                                     q_mat, ldq,  &
-                                     CONST_0_0, tmp1, nstor)
+              call PRECISION_GEMM('T', 'N',           &
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_GEMM('C', 'N', nstor, l_cols, l_rows,  &
-                                  CONE, hvm, ubound(hvm,dim=1), &
-                                  q_mat, ldq,  &
-                                  CZERO, tmp1 ,nstor)
+              call PRECISION_GEMM('C', 'N',           &
 #endif
+             	                  nstor, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
+                                  q_mat, ldq, ZERO, tmp1, nstor)
               call timer%stop("blas")
             endif ! useGPU
 
@@ -505,70 +503,31 @@
           if (l_rows>0) then
             if (useGPU) then
 	      call timer%start("cublas")
-#if REALCASE == 1
-              call cublas_PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,  &
-                                            CONST_1_0, tmat_dev, max_stored_rows,  &
-                                            tmp_dev, nstor)
+              call cublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
+	                                 nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
+                                         tmp_dev, nstor)
+
               call cublas_PRECISION_GEMM('N', 'N' ,l_rows ,l_cols ,nstor,  &
-                                            -CONST_1_0, hvm_dev, hvm_ubnd,  &
-                                            tmp_dev, nstor,   &
-                                            CONST_1_0, q_dev, ldq)
-#endif
-#if COMPLEXCASE == 1
-              call cublas_PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,  &
-                                            CONE, tmat_dev, max_stored_rows,  &
-                                            tmp_dev, nstor)
-              call cublas_PRECISION_GEMM('N', 'N' ,l_rows ,l_cols ,nstor,  &
-                                            -CONE, hvm_dev, hvm_ubnd,  &
-                                            tmp_dev, nstor,   &
-                                            CONE, q_dev, ldq)
-#endif
+                                         -ONE, hvm_dev, hvm_ubnd, tmp_dev, nstor,   &
+                                         ONE, q_dev, ldq)
   	      call timer%stop("cublas")
             else !useGPU
 #ifdef WITH_MPI
               ! tmp2 = tmat * tmp2
 	      call timer%start("blas")
-#if REALCASE ==1
               call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
-                                     CONST_1_0, tmat, max_stored_rows,  &
-                                     tmp2, nstor)
+                                  ONE, tmat, max_stored_rows, tmp2, nstor)
               !q_mat = q_mat - hvm*tmp2
               call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
-                                     -CONST_1_0, hvm, ubound(hvm,dim=1),  &
-                                     tmp2, nstor,   &
-                                     CONST_1_0, q_mat, ldq)
-#endif
-#if COMPLEXCASE == 1
-              call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,  &
-                                  CONE, tmat, max_stored_rows,  &
-                                  tmp2, nstor)
-              !q_mat = q_mat - hvm*tmp2
-              call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,  &
-                                  -CONE, hvm, ubound(hvm,dim=1),  &
-                                  tmp2, nstor,  &
-                                  CONE, q_mat, ldq)
-#endif
+                                  -ONE, hvm, ubound(hvm,dim=1), tmp2, nstor, ONE, q_mat, ldq)
 	      call timer%stop("blas")
 #else /* WITH_MPI */
 	      call timer%start("blas")
-#if REALCASE == 1
+
               call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
-                                     CONST_1_0, tmat, max_stored_rows,  &
-                                     tmp1, nstor)
+                                  ONE, tmat, max_stored_rows, tmp1, nstor)
               call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
-                                     -CONST_1_0, hvm, ubound(hvm,dim=1), &
-                                     tmp1, nstor,   &
-                                     CONST_1_0, q_mat, ldq)
-#endif
-#if COMPLEXCASE == 1
-              call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,  &
-                                  CONE, tmat, max_stored_rows,  &
-                                  tmp1, nstor)
-              call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,  &
-                                  -CONE, hvm, ubound(hvm,dim=1),  &
-                                  tmp1, nstor,  &
-                                  CONE, q_mat, ldq)
-#endif
+                                  -ONE, hvm, ubound(hvm,dim=1), tmp1, nstor, ONE, q_mat, ldq)
 	      call timer%stop("blas")
 #endif /* WITH_MPI */
             endif ! useGPU
