@@ -56,10 +56,9 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2_bandred_template.X90 \
 	src/elpa2_symm_matrix_allreduce_real_template.X90 \
 	src/elpa2_trans_ev_band_to_full_template.X90 \
-	src/elpa2_tridiag_band_real_template.X90 \
+	src/elpa2_tridiag_band_template.X90 \
 	src/elpa2_trans_ev_tridi_to_band_real_template.X90 \
 	src/elpa2_herm_matrix_allreduce_complex_template.X90 \
-	src/elpa2_tridiag_band_complex_template.X90 \
 	src/elpa2_trans_ev_tridi_to_band_complex_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_real_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
@@ -912,11 +911,10 @@ EXTRA_DIST = \
   src/elpa2_herm_matrix_allreduce_complex_template.X90 \
   src/elpa2_symm_matrix_allreduce_real_template.X90 \
   src/elpa2_template.X90 \
+  src/elpa2_tridiag_band_template.X90 \
   src/elpa2_trans_ev_band_to_full_template.X90 \
   src/elpa2_trans_ev_tridi_to_band_complex_template.X90 \
   src/elpa2_trans_ev_tridi_to_band_real_template.X90 \
-  src/elpa2_tridiag_band_complex_template.X90 \
-  src/elpa2_tridiag_band_real_template.X90 \
   src/precision_macros.h \
   src/elpa2_kernels/elpa2_kernels_real_template.X90 \
   src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
