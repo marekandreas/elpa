@@ -58,7 +58,7 @@
 #include <stdio.h>
 
 #if COMPLEXCASE == 1
-#include "config-f90.h"
+#include <cuComplex.h>
 #endif
 
 // Reset a reduction block
