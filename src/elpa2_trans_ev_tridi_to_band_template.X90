@@ -363,7 +363,13 @@
 #endif
 #endif /* COMPLEXCASE */
 
+#if REALCASE == 1
         last_stripe_width = l_nev - (stripe_count-1)*stripe_width
+#endif
+#if COMPLEXCASE == 1
+! only needed in no OMP case check thsis
+! last_stripe_width = l_nev - (stripe_count-1)*stripe_width
+#endif
 
         endif ! useGPU
 #else /* WITH_OPENMP */
@@ -744,6 +750,11 @@
                 row_group(:, row_group_size) = q(src_offset, 1:l_nev)
 #endif
 
+#else /* WITH_OPENMP */
+#if COMPLEXCASE == 1
+                call unpack_and_prepare_row_group_complex_gpu_PRECISION(i - limits(ip),.false.)
+                row_group(:, row_group_size) = q(src_offset, 1:l_nev)
+#endif
 #endif /* not OpenMP */
               else
                 row(:) = q(src_offset, 1:l_nev)
@@ -1473,6 +1484,21 @@
               call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 #endif
 
+#if COMPLEXCASE == 1
+                call timer%start("OpenMP parallel_PRECISION")
+
+!$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
+                do my_thread = 1, max_threads
+                  n_off = current_local_n+a_off
+                  b_len = csw*nbw
+                  b_off = (my_thread-1)*b_len
+                  aIntern(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
+                     reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
+                enddo
+!$omp end parallel do
+                call timer%stop("OpenMP parallel_PRECISION")
+#endif
+
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
@@ -1549,7 +1575,7 @@
                             MPI_REAL_PRECISION,     &
 #endif
 #if COMPLEXCASE == 1
-                            MPI_COMPLEX_EXPLICIT_PRECISION, &                  
+                            MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
                             my_prow+1, bottom_recv_tag, mpi_comm_rows, bottom_recv_request(i), mpierr)
               call timer%stop("mpi_communication")
@@ -1711,9 +1737,9 @@
 
 #endif /* WITH_MPI */
 
-#if REALCASE == 1
+!#if REALCASE == 1
            endif ! this endif is not here in complex -case is for bottom_msg_length
-#endif
+!#endif
 
 #else /* WITH_OPENMP */
 
@@ -1919,8 +1945,10 @@
 
 #endif /* WITH_OPENMP */
 
+#ifndef WITH_OPENMP
 #if COMPLEXCASE == 1
         endif
+#endif
 #endif
 	! until here unify
         !compute
