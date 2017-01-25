@@ -963,15 +963,31 @@
 !          tmp2 = tmp1
 	  call timer%start("blas")
           if (l_rows>0) then
+#ifdef BAND_TO_FULL_BLOCKING
+
 #if REALCASE == 1
-            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp1, n_cols)
-            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp1, n_cols, ONE, q, ldq)
+            call PRECISION_TRMM('L', 'U', 'T', 'N',        &
 #endif
 #if COMPLEXCASE == 1
-            call PRECISION_TRMM('L', 'U', 'C', 'N', n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp1, n_cols)
+            call PRECISION_TRMM('L', 'U', 'C', 'N',        &
+#endif
+                                n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp1, n_cols)
+            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp1, n_cols, ONE, q, ldq)
+
+
+#else /* BAND_TO_FULL_BLOCKING */
+
+#if REALCASE == 1
+            call PRECISION_TRMM('L', 'U', 'T', 'N',        &
+#endif
+#if COMPLEXCASE == 1
+            call PRECISION_TRMM('L', 'U', 'C', 'N',        &
+#endif
+                                n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp1, n_cols)
             call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), &
                                 tmp1, n_cols, ONE, q, ldq)
-#endif
+
+#endif  /* BAND_TO_FULL_BLOCKING */
           endif
 	  call timer%stop("blas")
 #endif /* WITH_MPI */
