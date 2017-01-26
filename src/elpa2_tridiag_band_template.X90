@@ -50,11 +50,12 @@
 #endif
 
 #if REALCASE == 1
-    subroutine tridiag_band_real_PRECISION &
+    subroutine tridiag_band_real_&
 #endif
 #if COMPLEXCASE == 1
-    subroutine tridiag_band_complex_PRECISION &
+    subroutine tridiag_band_complex_&
 #endif
+    &PRECISION &
     (na, nb, nblk, a, lda, d, e, matrixCols, &
 #if REALCASE == 1
     hh_trans_real, &
@@ -1446,10 +1447,13 @@
       &" // &
       &PRECISION_SUFFIX&
       )
+
+! intel compiler bug makes these ifdefs necessary
 #if REALCASE == 1
-    end subroutine tridiag_band_real_PRECISION
+    end subroutine tridiag_band_real_&
 #endif
 #if COMPLEXCASE == 1
-    end subroutine tridiag_band_complex_PRECISION
+    end subroutine tridiag_band_complex_&
 #endif
+    &PRECISION
 

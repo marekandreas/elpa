@@ -1,9 +1,7 @@
-#if REALCASE == 1
-    subroutine trans_ev_tridi_to_band_real_PRECISION &
-#endif
-#if COMPLEXCASE == 1
-    subroutine trans_ev_tridi_to_band_complex_PRECISION &
-#endif
+    subroutine trans_ev_tridi_to_band_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION &
     (na, nev, nblk, nbw, q,  &
 #if REALCASE == 1
     q_dev,                   &
@@ -2816,7 +2814,8 @@
 #endif /* COMPLEXCASE */
 
 #if REALCASE == 1
-    end subroutine trans_ev_tridi_to_band_real_PRECISION
+    end subroutine trans_ev_tridi_to_band_real_&
+    &PRECISION
 #endif
 
 

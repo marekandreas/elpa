@@ -9,29 +9,9 @@
 #undef  elpa_reduce_add_vectors_NUMBER_PRECISION
 #undef  elpa_reduce_add_vectors_NUMBER_PRECISION_STR
 #undef  elpa_reduce_add_vectors_real_PRECISION
-#undef  bandred_NUMBER_PRECISION
-#undef  bandred_NUMBER_PRECISION_STR
-#undef  bandred_real_PRECISION
-#undef  trans_ev_band_to_full_NUMBER_PRECISION
-#undef  trans_ev_band_to_full_NUMBER_PRECISION_STR
-#undef  trans_ev_band_to_full_real_PRECISION
-#undef  tridiag_band_NUMBER_PRECISION
-#undef  tridiag_band_NUMBER_PRECISION_STR
-#undef  tridiag_band_real_PRECISION
-#undef  trans_ev_tridi_to_band_NUMBER_PRECISION
-#undef  trans_ev_tridi_to_band_NUMBER_PRECISION_STR
-#undef  trans_ev_tridi_to_band_real_PRECISION
 #undef  band_band_NUMBER_PRECISION
 #undef  band_band_NUMBER_PRECISION_STR
 #undef  band_band_real_PRECISION
-#undef  tridiag_NUMBER_PRECISION
-#undef  tridiag_NUMBER_PRECISION_STR
-#undef  tridiag_real_PRECISION
-#undef  trans_ev_NUMBER_PRECISION
-#undef  trans_ev_NUMBER_PRECISION_STR
-#undef  trans_ev_real_PRECISION
-#undef  solve_tridi_PRECISION
-#undef  solve_tridi_PRECISION_STR
 #undef  solve_tridi_col_PRECISION
 #undef  solve_tridi_col_PRECISION_STR
 #undef  solve_tridi_single_problem_PRECISION
@@ -129,21 +109,6 @@
 #undef  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION
 #undef  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION_STR
 #undef  launch_extract_hh_tau_c_kernel_real_PRECISION
-#undef  AVAILABLE_UPCASENUMBER_ELPA_KERNELS
-#undef  AVAILABLE_UPCASENUMBER_ELPA_KERNELS_STR
-#undef  AVAILABLE_UPCASEreal_ELPA_KERNELS
-#undef  UPCASENUMBER_ELPA_KERNEL_GENERIC
-#undef  UPCASENUMBER_ELPA_KERNEL_GENERIC_STR
-#undef  UPCASEreal_ELPA_KERNEL_GENERIC
-#undef  DEFAULT_UPCASENUMBER_ELPA_KERNEL
-#undef  DEFAULT_UPCASENUMBER_ELPA_KERNEL_STR
-#undef  DEFAULT_UPCASEreal_ELPA_KERNEL
-#undef  UPCASENUMBER_ELPA_KERNEL_NAMES
-#undef  UPCASENUMBER_ELPA_KERNEL_NAMES_STR
-#undef  UPCASEreal_ELPA_KERNEL_NAMES
-#undef  UPCASENUMBER_ELPA_KERNEL_GPU
-#undef  UPCASENUMBER_ELPA_KERNEL_GPU_STR
-#undef  UPCASEreal_ELPA_KERNEL_GPU
 #undef  PRECISION_GEMV
 #undef  PRECISION_TRMV
 #undef  PRECISION_GEMM
@@ -185,29 +150,9 @@
 #define  elpa_reduce_add_vectors_NUMBER_PRECISION elpa_reduce_add_vectors_real_double
 #define  elpa_reduce_add_vectors_NUMBER_PRECISION_STR 'elpa_reduce_add_vectors_real_double'
 #define  elpa_reduce_add_vectors_real_PRECISION elpa_reduce_add_vectors_real_double
-#define  bandred_NUMBER_PRECISION bandred_real_double
-#define  bandred_NUMBER_PRECISION_STR 'bandred_real_double'
-#define  bandred_real_PRECISION bandred_real_double
-#define  trans_ev_band_to_full_NUMBER_PRECISION trans_ev_band_to_full_real_double
-#define  trans_ev_band_to_full_NUMBER_PRECISION_STR 'trans_ev_band_to_full_real_double'
-#define  trans_ev_band_to_full_real_PRECISION trans_ev_band_to_full_real_double
-#define  tridiag_band_NUMBER_PRECISION tridiag_band_real_double
-#define  tridiag_band_NUMBER_PRECISION_STR 'tridiag_band_real_double'
-#define  tridiag_band_real_PRECISION tridiag_band_real_double
-#define  trans_ev_tridi_to_band_NUMBER_PRECISION trans_ev_tridi_to_band_real_double
-#define  trans_ev_tridi_to_band_NUMBER_PRECISION_STR 'trans_ev_tridi_to_band_real_double'
-#define  trans_ev_tridi_to_band_real_PRECISION trans_ev_tridi_to_band_real_double
 #define  band_band_NUMBER_PRECISION band_band_real_double
 #define  band_band_NUMBER_PRECISION_STR 'band_band_real_double'
 #define  band_band_real_PRECISION band_band_real_double
-#define  tridiag_NUMBER_PRECISION tridiag_real_double
-#define  tridiag_NUMBER_PRECISION_STR 'tridiag_real_double'
-#define  tridiag_real_PRECISION tridiag_real_double
-#define  trans_ev_NUMBER_PRECISION trans_ev_real_double
-#define  trans_ev_NUMBER_PRECISION_STR 'trans_ev_real_double'
-#define  trans_ev_real_PRECISION trans_ev_real_double
-#define  solve_tridi_PRECISION solve_tridi_double
-#define  solve_tridi_PRECISION_STR 'solve_tridi_double'
 #define  solve_tridi_col_PRECISION solve_tridi_col_double
 #define  solve_tridi_col_PRECISION_STR 'solve_tridi_col_double'
 #define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_double
@@ -305,21 +250,6 @@
 #define  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION launch_extract_hh_tau_c_kernel_real_double
 #define  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION_STR 'launch_extract_hh_tau_c_kernel_real_double'
 #define  launch_extract_hh_tau_c_kernel_real_PRECISION launch_extract_hh_tau_c_kernel_real_double
-#define  AVAILABLE_UPCASENUMBER_ELPA_KERNELS AVAILABLE_REAL_ELPA_KERNELS
-#define  AVAILABLE_UPCASENUMBER_ELPA_KERNELS_STR 'AVAILABLE_REAL_ELPA_KERNELS'
-#define  AVAILABLE_UPCASEreal_ELPA_KERNELS AVAILABLE_UPCASEreal_ELPA_KERNELS
-#define  UPCASENUMBER_ELPA_KERNEL_GENERIC REAL_ELPA_KERNEL_GENERIC
-#define  UPCASENUMBER_ELPA_KERNEL_GENERIC_STR 'REAL_ELPA_KERNEL_GENERIC'
-#define  UPCASEreal_ELPA_KERNEL_GENERIC UPCASEreal_ELPA_KERNEL_GENERIC
-#define  DEFAULT_UPCASENUMBER_ELPA_KERNEL DEFAULT_REAL_ELPA_KERNEL
-#define  DEFAULT_UPCASENUMBER_ELPA_KERNEL_STR 'DEFAULT_REAL_ELPA_KERNEL'
-#define  DEFAULT_UPCASEreal_ELPA_KERNEL DEFAULT_UPCASEreal_ELPA_KERNEL
-#define  UPCASENUMBER_ELPA_KERNEL_NAMES REAL_ELPA_KERNEL_NAMES
-#define  UPCASENUMBER_ELPA_KERNEL_NAMES_STR 'REAL_ELPA_KERNEL_NAMES'
-#define  UPCASEreal_ELPA_KERNEL_NAMES UPCASEreal_ELPA_KERNEL_NAMES
-#define  UPCASENUMBER_ELPA_KERNEL_GPU REAL_ELPA_KERNEL_GPU
-#define  UPCASENUMBER_ELPA_KERNEL_GPU_STR 'REAL_ELPA_KERNEL_GPU'
-#define  UPCASEreal_ELPA_KERNEL_GPU UPCASEreal_ELPA_KERNEL_GPU
 #define  PRECISION_GEMV DGEMV
 #define  PRECISION_TRMV DTRMV
 #define  PRECISION_GEMM DGEMM
@@ -362,29 +292,9 @@
 #define  elpa_reduce_add_vectors_NUMBER_PRECISION elpa_reduce_add_vectors_real_single
 #define  elpa_reduce_add_vectors_NUMBER_PRECISION_STR 'elpa_reduce_add_vectors_real_single'
 #define  elpa_reduce_add_vectors_real_PRECISION elpa_reduce_add_vectors_real_single
-#define  bandred_NUMBER_PRECISION bandred_real_single
-#define  bandred_NUMBER_PRECISION_STR 'bandred_real_single'
-#define  bandred_real_PRECISION bandred_real_single
-#define  trans_ev_band_to_full_NUMBER_PRECISION trans_ev_band_to_full_real_single
-#define  trans_ev_band_to_full_NUMBER_PRECISION_STR 'trans_ev_band_to_full_real_single'
-#define  trans_ev_band_to_full_real_PRECISION trans_ev_band_to_full_real_single
-#define  tridiag_band_NUMBER_PRECISION tridiag_band_real_single
-#define  tridiag_band_NUMBER_PRECISION_STR 'tridiag_band_real_single'
-#define  tridiag_band_real_PRECISION tridiag_band_real_single
-#define  trans_ev_tridi_to_band_NUMBER_PRECISION trans_ev_tridi_to_band_real_single
-#define  trans_ev_tridi_to_band_NUMBER_PRECISION_STR 'trans_ev_tridi_to_band_real_single'
-#define  trans_ev_tridi_to_band_real_PRECISION trans_ev_tridi_to_band_real_single
 #define  band_band_NUMBER_PRECISION band_band_real_single
 #define  band_band_NUMBER_PRECISION_STR 'band_band_real_single'
 #define  band_band_real_PRECISION band_band_real_single
-#define  tridiag_NUMBER_PRECISION tridiag_real_single
-#define  tridiag_NUMBER_PRECISION_STR 'tridiag_real_single'
-#define  tridiag_real_PRECISION tridiag_real_single
-#define  trans_ev_NUMBER_PRECISION trans_ev_real_single
-#define  trans_ev_NUMBER_PRECISION_STR 'trans_ev_real_single'
-#define  trans_ev_real_PRECISION trans_ev_real_single
-#define  solve_tridi_PRECISION solve_tridi_single
-#define  solve_tridi_PRECISION_STR 'solve_tridi_single'
 #define  solve_tridi_col_PRECISION solve_tridi_col_single
 #define  solve_tridi_col_PRECISION_STR 'solve_tridi_col_single'
 #define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_single
@@ -482,21 +392,6 @@
 #define  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION launch_extract_hh_tau_c_kernel_real_single
 #define  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION_STR 'launch_extract_hh_tau_c_kernel_real_single'
 #define  launch_extract_hh_tau_c_kernel_real_PRECISION launch_extract_hh_tau_c_kernel_real_single
-#define  AVAILABLE_UPCASENUMBER_ELPA_KERNELS AVAILABLE_REAL_ELPA_KERNELS
-#define  AVAILABLE_UPCASENUMBER_ELPA_KERNELS_STR 'AVAILABLE_REAL_ELPA_KERNELS'
-#define  AVAILABLE_UPCASEreal_ELPA_KERNELS AVAILABLE_UPCASEreal_ELPA_KERNELS
-#define  UPCASENUMBER_ELPA_KERNEL_GENERIC REAL_ELPA_KERNEL_GENERIC
-#define  UPCASENUMBER_ELPA_KERNEL_GENERIC_STR 'REAL_ELPA_KERNEL_GENERIC'
-#define  UPCASEreal_ELPA_KERNEL_GENERIC UPCASEreal_ELPA_KERNEL_GENERIC
-#define  DEFAULT_UPCASENUMBER_ELPA_KERNEL DEFAULT_REAL_ELPA_KERNEL
-#define  DEFAULT_UPCASENUMBER_ELPA_KERNEL_STR 'DEFAULT_REAL_ELPA_KERNEL'
-#define  DEFAULT_UPCASEreal_ELPA_KERNEL DEFAULT_UPCASEreal_ELPA_KERNEL
-#define  UPCASENUMBER_ELPA_KERNEL_NAMES REAL_ELPA_KERNEL_NAMES
-#define  UPCASENUMBER_ELPA_KERNEL_NAMES_STR 'REAL_ELPA_KERNEL_NAMES'
-#define  UPCASEreal_ELPA_KERNEL_NAMES UPCASEreal_ELPA_KERNEL_NAMES
-#define  UPCASENUMBER_ELPA_KERNEL_GPU REAL_ELPA_KERNEL_GPU
-#define  UPCASENUMBER_ELPA_KERNEL_GPU_STR 'REAL_ELPA_KERNEL_GPU'
-#define  UPCASEreal_ELPA_KERNEL_GPU UPCASEreal_ELPA_KERNEL_GPU
 #define  PRECISION_GEMV SGEMV
 #define  PRECISION_TRMV STRMV
 #define  PRECISION_GEMM SGEMM
@@ -542,29 +437,9 @@
 #undef  elpa_reduce_add_vectors_NUMBER_PRECISION
 #undef  elpa_reduce_add_vectors_NUMBER_PRECISION_STR
 #undef  elpa_reduce_add_vectors_complex_PRECISION
-#undef  bandred_NUMBER_PRECISION
-#undef  bandred_NUMBER_PRECISION_STR
-#undef  bandred_complex_PRECISION
-#undef  trans_ev_band_to_full_NUMBER_PRECISION
-#undef  trans_ev_band_to_full_NUMBER_PRECISION_STR
-#undef  trans_ev_band_to_full_complex_PRECISION
-#undef  tridiag_band_NUMBER_PRECISION
-#undef  tridiag_band_NUMBER_PRECISION_STR
-#undef  tridiag_band_complex_PRECISION
-#undef  trans_ev_tridi_to_band_NUMBER_PRECISION
-#undef  trans_ev_tridi_to_band_NUMBER_PRECISION_STR
-#undef  trans_ev_tridi_to_band_complex_PRECISION
 #undef  band_band_NUMBER_PRECISION
 #undef  band_band_NUMBER_PRECISION_STR
 #undef  band_band_complex_PRECISION
-#undef  tridiag_NUMBER_PRECISION
-#undef  tridiag_NUMBER_PRECISION_STR
-#undef  tridiag_complex_PRECISION
-#undef  trans_ev_NUMBER_PRECISION
-#undef  trans_ev_NUMBER_PRECISION_STR
-#undef  trans_ev_complex_PRECISION
-#undef  solve_tridi_PRECISION
-#undef  solve_tridi_PRECISION_STR
 #undef  solve_tridi_col_PRECISION
 #undef  solve_tridi_col_PRECISION_STR
 #undef  solve_tridi_single_problem_PRECISION
@@ -662,21 +537,6 @@
 #undef  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION
 #undef  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION_STR
 #undef  launch_extract_hh_tau_c_kernel_complex_PRECISION
-#undef  AVAILABLE_UPCASENUMBER_ELPA_KERNELS
-#undef  AVAILABLE_UPCASENUMBER_ELPA_KERNELS_STR
-#undef  AVAILABLE_UPCASEcomplex_ELPA_KERNELS
-#undef  UPCASENUMBER_ELPA_KERNEL_GENERIC
-#undef  UPCASENUMBER_ELPA_KERNEL_GENERIC_STR
-#undef  UPCASEcomplex_ELPA_KERNEL_GENERIC
-#undef  DEFAULT_UPCASENUMBER_ELPA_KERNEL
-#undef  DEFAULT_UPCASENUMBER_ELPA_KERNEL_STR
-#undef  DEFAULT_UPCASEcomplex_ELPA_KERNEL
-#undef  UPCASENUMBER_ELPA_KERNEL_NAMES
-#undef  UPCASENUMBER_ELPA_KERNEL_NAMES_STR
-#undef  UPCASEcomplex_ELPA_KERNEL_NAMES
-#undef  UPCASENUMBER_ELPA_KERNEL_GPU
-#undef  UPCASENUMBER_ELPA_KERNEL_GPU_STR
-#undef  UPCASEcomplex_ELPA_KERNEL_GPU
 #undef  PRECISION_GEMV
 #undef  PRECISION_TRMV
 #undef  PRECISION_GEMM
@@ -728,29 +588,9 @@
 #define  elpa_reduce_add_vectors_NUMBER_PRECISION elpa_reduce_add_vectors_complex_double
 #define  elpa_reduce_add_vectors_NUMBER_PRECISION_STR 'elpa_reduce_add_vectors_complex_double'
 #define  elpa_reduce_add_vectors_complex_PRECISION elpa_reduce_add_vectors_complex_double
-#define  bandred_NUMBER_PRECISION bandred_complex_double
-#define  bandred_NUMBER_PRECISION_STR 'bandred_complex_double'
-#define  bandred_complex_PRECISION bandred_complex_double
-#define  trans_ev_band_to_full_NUMBER_PRECISION trans_ev_band_to_full_complex_double
-#define  trans_ev_band_to_full_NUMBER_PRECISION_STR 'trans_ev_band_to_full_complex_double'
-#define  trans_ev_band_to_full_complex_PRECISION trans_ev_band_to_full_complex_double
-#define  tridiag_band_NUMBER_PRECISION tridiag_band_complex_double
-#define  tridiag_band_NUMBER_PRECISION_STR 'tridiag_band_complex_double'
-#define  tridiag_band_complex_PRECISION tridiag_band_complex_double
-#define  trans_ev_tridi_to_band_NUMBER_PRECISION trans_ev_tridi_to_band_complex_double
-#define  trans_ev_tridi_to_band_NUMBER_PRECISION_STR 'trans_ev_tridi_to_band_complex_double'
-#define  trans_ev_tridi_to_band_complex_PRECISION trans_ev_tridi_to_band_complex_double
 #define  band_band_NUMBER_PRECISION band_band_complex_double
 #define  band_band_NUMBER_PRECISION_STR 'band_band_complex_double'
 #define  band_band_complex_PRECISION band_band_complex_double
-#define  tridiag_NUMBER_PRECISION tridiag_complex_double
-#define  tridiag_NUMBER_PRECISION_STR 'tridiag_complex_double'
-#define  tridiag_complex_PRECISION tridiag_complex_double
-#define  trans_ev_NUMBER_PRECISION trans_ev_complex_double
-#define  trans_ev_NUMBER_PRECISION_STR 'trans_ev_complex_double'
-#define  trans_ev_complex_PRECISION trans_ev_complex_double
-#define  solve_tridi_PRECISION solve_tridi_double
-#define  solve_tridi_PRECISION_STR 'solve_tridi_double'
 #define  solve_tridi_col_PRECISION solve_tridi_col_double
 #define  solve_tridi_col_PRECISION_STR 'solve_tridi_col_double'
 #define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_double
@@ -848,21 +688,6 @@
 #define  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION launch_extract_hh_tau_c_kernel_complex_double
 #define  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION_STR 'launch_extract_hh_tau_c_kernel_complex_double'
 #define  launch_extract_hh_tau_c_kernel_complex_PRECISION launch_extract_hh_tau_c_kernel_complex_double
-#define  AVAILABLE_UPCASENUMBER_ELPA_KERNELS AVAILABLE_COMPLEX_ELPA_KERNELS
-#define  AVAILABLE_UPCASENUMBER_ELPA_KERNELS_STR 'AVAILABLE_COMPLEX_ELPA_KERNELS'
-#define  AVAILABLE_UPCASEcomplex_ELPA_KERNELS AVAILABLE_UPCASEcomplex_ELPA_KERNELS
-#define  UPCASENUMBER_ELPA_KERNEL_GENERIC COMPLEX_ELPA_KERNEL_GENERIC
-#define  UPCASENUMBER_ELPA_KERNEL_GENERIC_STR 'COMPLEX_ELPA_KERNEL_GENERIC'
-#define  UPCASEcomplex_ELPA_KERNEL_GENERIC UPCASEcomplex_ELPA_KERNEL_GENERIC
-#define  DEFAULT_UPCASENUMBER_ELPA_KERNEL DEFAULT_COMPLEX_ELPA_KERNEL
-#define  DEFAULT_UPCASENUMBER_ELPA_KERNEL_STR 'DEFAULT_COMPLEX_ELPA_KERNEL'
-#define  DEFAULT_UPCASEcomplex_ELPA_KERNEL DEFAULT_UPCASEcomplex_ELPA_KERNEL
-#define  UPCASENUMBER_ELPA_KERNEL_NAMES COMPLEX_ELPA_KERNEL_NAMES
-#define  UPCASENUMBER_ELPA_KERNEL_NAMES_STR 'COMPLEX_ELPA_KERNEL_NAMES'
-#define  UPCASEcomplex_ELPA_KERNEL_NAMES UPCASEcomplex_ELPA_KERNEL_NAMES
-#define  UPCASENUMBER_ELPA_KERNEL_GPU COMPLEX_ELPA_KERNEL_GPU
-#define  UPCASENUMBER_ELPA_KERNEL_GPU_STR 'COMPLEX_ELPA_KERNEL_GPU'
-#define  UPCASEcomplex_ELPA_KERNEL_GPU UPCASEcomplex_ELPA_KERNEL_GPU
 #define  PRECISION_GEMV ZGEMV
 #define  PRECISION_TRMV ZTRMV
 #define  PRECISION_GEMM ZGEMM
@@ -915,29 +740,9 @@
 #define  elpa_reduce_add_vectors_NUMBER_PRECISION elpa_reduce_add_vectors_complex_single
 #define  elpa_reduce_add_vectors_NUMBER_PRECISION_STR 'elpa_reduce_add_vectors_complex_single'
 #define  elpa_reduce_add_vectors_complex_PRECISION elpa_reduce_add_vectors_complex_single
-#define  bandred_NUMBER_PRECISION bandred_complex_single
-#define  bandred_NUMBER_PRECISION_STR 'bandred_complex_single'
-#define  bandred_complex_PRECISION bandred_complex_single
-#define  trans_ev_band_to_full_NUMBER_PRECISION trans_ev_band_to_full_complex_single
-#define  trans_ev_band_to_full_NUMBER_PRECISION_STR 'trans_ev_band_to_full_complex_single'
-#define  trans_ev_band_to_full_complex_PRECISION trans_ev_band_to_full_complex_single
-#define  tridiag_band_NUMBER_PRECISION tridiag_band_complex_single
-#define  tridiag_band_NUMBER_PRECISION_STR 'tridiag_band_complex_single'
-#define  tridiag_band_complex_PRECISION tridiag_band_complex_single
-#define  trans_ev_tridi_to_band_NUMBER_PRECISION trans_ev_tridi_to_band_complex_single
-#define  trans_ev_tridi_to_band_NUMBER_PRECISION_STR 'trans_ev_tridi_to_band_complex_single'
-#define  trans_ev_tridi_to_band_complex_PRECISION trans_ev_tridi_to_band_complex_single
 #define  band_band_NUMBER_PRECISION band_band_complex_single
 #define  band_band_NUMBER_PRECISION_STR 'band_band_complex_single'
 #define  band_band_complex_PRECISION band_band_complex_single
-#define  tridiag_NUMBER_PRECISION tridiag_complex_single
-#define  tridiag_NUMBER_PRECISION_STR 'tridiag_complex_single'
-#define  tridiag_complex_PRECISION tridiag_complex_single
-#define  trans_ev_NUMBER_PRECISION trans_ev_complex_single
-#define  trans_ev_NUMBER_PRECISION_STR 'trans_ev_complex_single'
-#define  trans_ev_complex_PRECISION trans_ev_complex_single
-#define  solve_tridi_PRECISION solve_tridi_single
-#define  solve_tridi_PRECISION_STR 'solve_tridi_single'
 #define  solve_tridi_col_PRECISION solve_tridi_col_single
 #define  solve_tridi_col_PRECISION_STR 'solve_tridi_col_single'
 #define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_single
@@ -1035,21 +840,6 @@
 #define  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION launch_extract_hh_tau_c_kernel_complex_single
 #define  launch_extract_hh_tau_c_kernel_NUMBER_PRECISION_STR 'launch_extract_hh_tau_c_kernel_complex_single'
 #define  launch_extract_hh_tau_c_kernel_complex_PRECISION launch_extract_hh_tau_c_kernel_complex_single
-#define  AVAILABLE_UPCASENUMBER_ELPA_KERNELS AVAILABLE_COMPLEX_ELPA_KERNELS
-#define  AVAILABLE_UPCASENUMBER_ELPA_KERNELS_STR 'AVAILABLE_COMPLEX_ELPA_KERNELS'
-#define  AVAILABLE_UPCASEcomplex_ELPA_KERNELS AVAILABLE_UPCASEcomplex_ELPA_KERNELS
-#define  UPCASENUMBER_ELPA_KERNEL_GENERIC COMPLEX_ELPA_KERNEL_GENERIC
-#define  UPCASENUMBER_ELPA_KERNEL_GENERIC_STR 'COMPLEX_ELPA_KERNEL_GENERIC'
-#define  UPCASEcomplex_ELPA_KERNEL_GENERIC UPCASEcomplex_ELPA_KERNEL_GENERIC
-#define  DEFAULT_UPCASENUMBER_ELPA_KERNEL DEFAULT_COMPLEX_ELPA_KERNEL
-#define  DEFAULT_UPCASENUMBER_ELPA_KERNEL_STR 'DEFAULT_COMPLEX_ELPA_KERNEL'
-#define  DEFAULT_UPCASEcomplex_ELPA_KERNEL DEFAULT_UPCASEcomplex_ELPA_KERNEL
-#define  UPCASENUMBER_ELPA_KERNEL_NAMES COMPLEX_ELPA_KERNEL_NAMES
-#define  UPCASENUMBER_ELPA_KERNEL_NAMES_STR 'COMPLEX_ELPA_KERNEL_NAMES'
-#define  UPCASEcomplex_ELPA_KERNEL_NAMES UPCASEcomplex_ELPA_KERNEL_NAMES
-#define  UPCASENUMBER_ELPA_KERNEL_GPU COMPLEX_ELPA_KERNEL_GPU
-#define  UPCASENUMBER_ELPA_KERNEL_GPU_STR 'COMPLEX_ELPA_KERNEL_GPU'
-#define  UPCASEcomplex_ELPA_KERNEL_GPU UPCASEcomplex_ELPA_KERNEL_GPU
 #define  PRECISION_GEMV CGEMV
 #define  PRECISION_TRMV CTRMV
 #define  PRECISION_GEMM CGEMM

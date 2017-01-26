@@ -82,13 +82,11 @@
 !> \param useGPU      If true,  GPU version of the subroutine will be used
 !>
 
-#if REALCASE == 1
-    subroutine tridiag_real_PRECISION (na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU)
-#endif
-#if COMPLEXCASE == 1
-    subroutine tridiag_complex_PRECISION(na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols,  &
-                                         d_vec, e_vec, tau, useGPU)
-#endif
+    subroutine tridiag_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION &
+    (na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU)
       use cuda_functions
       use iso_c_binding
 #ifdef HAVE_DETAILED_TIMINGS
@@ -211,12 +209,12 @@
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
 
-#if REALCASE == 1
-      call timer%start("tridiag_real" // PRECISION_SUFFIX)
-#endif
-#if COMPLEXCASE == 1
-      call timer%start("tridiag_complex" // PRECISION_SUFFIX)
-#endif
+      call timer%start("tridiag_&
+      &MATH_DATATYPE&
+      &_" // &
+      PRECISION_SUFFIX &
+      )
+
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -265,61 +263,36 @@
       ! todo: probably one should read it as v_row = vector v distributed among rows
       !
       allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "tmp", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "tmp", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "tmp", istat, errorMessage)
 
       ! allocate v_row 1 element longer to allow store and broadcast tau together with it
       allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "v_row", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "v_row", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "v_row", istat, errorMessage)
 
       allocate(u_row(max_local_rows), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "u_row", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "u_row", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "u_row", istat, errorMessage)
+
       allocate(v_col(max_local_cols), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "v_col", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "v_col", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "v_col", istat, errorMessage)
+
       allocate(u_col(max_local_cols), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "u_col", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "u_col", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "u_col", istat, errorMessage)
 
 #ifdef WITH_OPENMP
       max_threads = omp_get_max_threads()
 
       allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "ur_p", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "ur_p", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "ur_p", istat, errorMessage)
+
       allocate(uc_p(max_local_cols,0:max_threads-1), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "uc_p", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "uc_p", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "uc_p", istat, errorMessage)
 #endif /* WITH_OPENMP */
 
       tmp = 0
@@ -329,65 +302,65 @@
       u_col = 0
 
       allocate(vu_stored_rows(max_local_rows,2*max_stored_uv), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "vu_stored_rows", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "vu_stored_rows", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "vu_stored_rows", istat, errorMessage)
+
       allocate(uv_stored_cols(max_local_cols,2*max_stored_uv), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "uv_stored_cols", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "uv_stored_cols", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "uv_stored_cols", istat, errorMessage)
+
       if (useGPU) then
+         successCUDA = cuda_malloc(v_row_dev, max_local_rows * &
 #if REALCASE == 1
-         successCUDA = cuda_malloc(v_row_dev, max_local_rows * size_of_PRECISION_real)
+                                   size_of_PRECISION_real)
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(v_row_dev, max_local_rows * size_of_PRECISION_complex)
+                                   size_of_PRECISION_complex)
 #endif
          check_alloc_cuda("tridiag", successCUDA)
 
+         successCUDA = cuda_malloc(u_row_dev, max_local_rows * &
 #if REALCASE == 1
-         successCUDA = cuda_malloc(u_row_dev, max_local_rows * size_of_PRECISION_real)
+                                   size_of_PRECISION_real)
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(u_row_dev, max_local_rows * size_of_PRECISION_complex)
+                                   size_of_PRECISION_complex)
 #endif
          check_alloc_cuda("tridiag", successCUDA)
 
+         successCUDA = cuda_malloc(v_col_dev, max_local_cols * &
 #if REALCASE == 1
-         successCUDA = cuda_malloc(v_col_dev, max_local_cols * size_of_PRECISION_real)
+                                   size_of_PRECISION_real)
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(v_col_dev, max_local_cols * size_of_PRECISION_complex)
+                                   size_of_PRECISION_complex)
 #endif
          check_alloc_cuda("tridiag", successCUDA)
 
+         successCUDA = cuda_malloc(u_col_dev, max_local_cols * &
 #if REALCASE == 1
-         successCUDA = cuda_malloc(u_col_dev, max_local_cols * size_of_PRECISION_real)
+                                   size_of_PRECISION_real)
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(u_col_dev, max_local_cols * size_of_PRECISION_complex)
+                                   size_of_PRECISION_complex)
 #endif
          check_alloc_cuda("tridiag", successCUDA)
 
+         successCUDA = cuda_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * &
 #if REALCASE == 1
-         successCUDA = cuda_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * size_of_PRECISION_real)
+                                   size_of_PRECISION_real)
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * size_of_PRECISION_complex)
+                                   size_of_PRECISION_complex)
 #endif
          check_alloc_cuda("tridiag", successCUDA)
 
+         successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * &
 #if REALCASE == 1
-         successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_PRECISION_real)
+                                   size_of_PRECISION_real)
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_PRECISION_complex)
+                                   size_of_PRECISION_complex)
 #endif
          check_alloc_cuda("tridiag", successCUDA)
       endif !useGPU
@@ -406,19 +379,22 @@
 
       if (useGPU) then
         ! allocate memmory for matrix A on the device and than copy the matrix
+
+        successCUDA = cuda_malloc(a_dev, lda * matrixCols * &
 #if REALCASE == 1
-        successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_PRECISION_real)
+                                  size_of_PRECISION_real)
 #endif
 #if COMPLEXCASE == 1
-        successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_PRECISION_complex)
+                                  size_of_PRECISION_complex)
 #endif
         check_alloc_cuda("tridiag", successCUDA)
+
+        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * &
 #if REALCASE == 1
-        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_PRECISION_real, cudaMemcpyHostToDevice)
+                                  size_of_PRECISION_real, cudaMemcpyHostToDevice)
 #endif
 #if COMPLEXCASE == 1
-       successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_PRECISION_complex, &
-                                  cudaMemcpyHostToDevice)
+                                  size_of_PRECISION_complex, cudaMemcpyHostToDevice)
 #endif
         check_alloc_cuda("tridiag", successCUDA)
       endif
@@ -832,14 +808,14 @@
         ! global tile size is smaller than the global remaining matrix
 
         if (tile_size < istep-1) then
-#if REALCASE == 1
-          call elpa_reduce_add_vectors_real_PRECISION (u_row, ubound(u_row,dim=1), mpi_comm_rows, &
-                                        u_col, ubound(u_col,dim=1), mpi_comm_cols, istep-1, 1, nblk)
-#endif
-#if COMPLEXCASE == 1
-          call elpa_reduce_add_vectors_complex_PRECISION  (u_row, ubound(u_row,dim=1), mpi_comm_rows, &
-                                        u_col, ubound(u_col,dim=1), mpi_comm_cols, istep-1, 1, nblk)
-#endif
+
+	  call elpa_reduce_add_vectors_&
+	  &MATH_DATATYPE&
+	  &_&
+	  &PRECISION &
+          (u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
+	   mpi_comm_cols, istep-1, 1, nblk)
+
         endif
 
         ! Sum up all the u_col(:) parts, transpose u_col -> u_row
@@ -862,15 +838,13 @@
 #endif /* WITH_MPI */
         endif
 
-#if REALCASE == 1
-        call elpa_transpose_vectors_real_PRECISION (u_col, ubound(u_col,dim=1), mpi_comm_cols, &
-                                         u_row, ubound(u_row,dim=1), mpi_comm_rows, 1, istep-1, 1, nblk)
-#endif
-#if COMPLEXCASE == 1
-        call elpa_transpose_vectors_complex_PRECISION  (u_col, ubound(u_col,dim=1), mpi_comm_cols, &
-                                              u_row, ubound(u_row,dim=1), mpi_comm_rows, &
-                                              1, (istep-1), 1, nblk)
-#endif
+        call elpa_transpose_vectors_&
+	&MATH_DATATYPE&
+	&_&
+	&PRECISION &
+        (u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+	 mpi_comm_rows, 1, istep-1, 1, nblk)
+
         ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
 #if REALCASE == 1
         x = 0
@@ -1278,9 +1252,7 @@
 !
 !       end subroutine
 
-#if REALCASE == 1
-    end subroutine tridiag_real_PRECISION
-#endif
-#if COMPLEXCASE == 1
-    end subroutine tridiag_complex_PRECISION
-#endif
+    end subroutine tridiag_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION
