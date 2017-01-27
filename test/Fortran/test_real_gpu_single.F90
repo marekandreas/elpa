@@ -191,11 +191,20 @@ program test_real_gpu_version_single_precision
    if(myid==0) then
       print *
       print '(a)','Standard eigenvalue problem - REAL version'
-      if (gpuAvailable) then
-        print *,"with GPU Version"
-      endif
       print *
-      print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
+      print '((a,i0))', 'Matrix size: ', na 
+      print '((a,i0))', 'Num eigenvectors: ', nev
+      print '((a,i0))', 'Blocksize: ', nblk 
+      print '((a,i0))', 'Num MPI proc: ', nprocs 
+      if (gpuAvailable) then
+        print '((a))', 'Using gpu: YES'
+      else
+        print '((a))', 'Using gpu: NO, not available'
+      endif
+      print '((a,i0))', 'Num gpu devices: ', numberOfDevices
+      print '((a))', 'Number type: real'
+      print '((a))', 'Number precision: single'
+      print *
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
    endif
