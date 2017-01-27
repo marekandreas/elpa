@@ -73,7 +73,9 @@
 
 
 
-    subroutine band_band_real_PRECISION(na, nb, nbCol, nb2, nb2Col, ab, ab2, d, e, mpi_comm)
+    subroutine band_band_real_&
+&PRECISION &
+                  (na, nb, nbCol, nb2, nb2Col, ab, ab2, d, e, mpi_comm)
     !-------------------------------------------------------------------------------
     ! band_band_real:
     ! Reduces a real symmetric banded matrix to a real symmetric matrix with smaller bandwidth. Householder transformations are not stored.

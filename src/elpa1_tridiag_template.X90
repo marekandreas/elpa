@@ -526,16 +526,13 @@
         tau(istep) =  v_row(l_rows+1)
 
         ! Transpose Householder vector v_row -> v_col
-#if REALCASE == 1
-        call elpa_transpose_vectors_real_PRECISION  (v_row, ubound(v_row,dim=1), mpi_comm_rows, &
-                                            v_col, ubound(v_col,dim=1), mpi_comm_cols, &
-                                            1, istep-1, 1, nblk)
-#endif
-#if COMPLEXCASE == 1
-        call elpa_transpose_vectors_complex_PRECISION  (v_row, ubound(v_row,dim=1), mpi_comm_rows, &
-                                            v_col, ubound(v_col,dim=1), mpi_comm_cols, &
-                                            1, istep-1, 1, nblk)
-#endif
+	call elpa_transpose_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+                                   (v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
+				    1, istep-1, 1, nblk)
+
         ! Calculate u = (A + VU**T + UV**T)*v
 
         ! For cache efficiency, we use only the upper half of the matrix tiles for this,

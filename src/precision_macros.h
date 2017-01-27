@@ -3,22 +3,6 @@
 #define  MATH_DATATYPE real
 #undef  PRECISION
 #undef  PRECISION_STR
-#undef  elpa_transpose_vectors_NUMBER_PRECISION
-#undef  elpa_transpose_vectors_NUMBER_PRECISION_STR
-#undef  elpa_transpose_vectors_real_PRECISION
-#undef  elpa_reduce_add_vectors_NUMBER_PRECISION
-#undef  elpa_reduce_add_vectors_NUMBER_PRECISION_STR
-#undef  elpa_reduce_add_vectors_real_PRECISION
-#undef  band_band_NUMBER_PRECISION
-#undef  band_band_NUMBER_PRECISION_STR
-#undef  band_band_real_PRECISION
-#undef  solve_tridi_col_PRECISION
-#undef  solve_tridi_col_PRECISION_STR
-#undef  solve_tridi_single_problem_PRECISION
-#undef  solve_tridi_single_problem_PRECISION_STR
-#undef  solve_evp_NUMBER_2stage_PRECISION
-#undef  solve_evp_NUMBER_2stage_PRECISION_STR
-#undef  solve_evp_real_2stage_PRECISION
 #undef  qr_pdgeqrf_2dcomm_PRECISION
 #undef  qr_pdgeqrf_2dcomm_PRECISION_STR
 #undef  hh_transform_NUMBER_PRECISION
@@ -31,12 +15,6 @@
 #undef  redist_band_NUMBER_PRECISION
 #undef  redist_band_NUMBER_PRECISION_STR
 #undef  redist_band_real_PRECISION
-#undef  unpack_row_NUMBER_cpu_PRECISION
-#undef  unpack_row_NUMBER_cpu_PRECISION_STR
-#undef  unpack_row_real_cpu_PRECISION
-#undef  unpack_row_NUMBER_cpu_openmp_PRECISION
-#undef  unpack_row_NUMBER_cpu_openmp_PRECISION_STR
-#undef  unpack_row_real_cpu_openmp_PRECISION
 #undef  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION
 #undef  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION_STR
 #undef  unpack_and_prepare_row_group_real_gpu_PRECISION
@@ -144,22 +122,6 @@
 #ifdef DOUBLE_PRECISION
 #define  PRECISION double
 #define  PRECISION_STR 'double'
-#define  elpa_transpose_vectors_NUMBER_PRECISION elpa_transpose_vectors_real_double
-#define  elpa_transpose_vectors_NUMBER_PRECISION_STR 'elpa_transpose_vectors_real_double'
-#define  elpa_transpose_vectors_real_PRECISION elpa_transpose_vectors_real_double
-#define  elpa_reduce_add_vectors_NUMBER_PRECISION elpa_reduce_add_vectors_real_double
-#define  elpa_reduce_add_vectors_NUMBER_PRECISION_STR 'elpa_reduce_add_vectors_real_double'
-#define  elpa_reduce_add_vectors_real_PRECISION elpa_reduce_add_vectors_real_double
-#define  band_band_NUMBER_PRECISION band_band_real_double
-#define  band_band_NUMBER_PRECISION_STR 'band_band_real_double'
-#define  band_band_real_PRECISION band_band_real_double
-#define  solve_tridi_col_PRECISION solve_tridi_col_double
-#define  solve_tridi_col_PRECISION_STR 'solve_tridi_col_double'
-#define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_double
-#define  solve_tridi_single_problem_PRECISION_STR 'solve_tridi_single_problem_double'
-#define  solve_evp_NUMBER_2stage_PRECISION solve_evp_real_2stage_double
-#define  solve_evp_NUMBER_2stage_PRECISION_STR 'solve_evp_real_2stage_double'
-#define  solve_evp_real_2stage_PRECISION solve_evp_real_2stage_double
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_double
 #define  qr_pdgeqrf_2dcomm_PRECISION_STR 'qr_pdgeqrf_2dcomm_double'
 #define  hh_transform_NUMBER_PRECISION hh_transform_real_double
@@ -172,12 +134,6 @@
 #define  redist_band_NUMBER_PRECISION redist_band_real_double
 #define  redist_band_NUMBER_PRECISION_STR 'redist_band_real_double'
 #define  redist_band_real_PRECISION redist_band_real_double
-#define  unpack_row_NUMBER_cpu_PRECISION unpack_row_real_cpu_double
-#define  unpack_row_NUMBER_cpu_PRECISION_STR 'unpack_row_real_cpu_double'
-#define  unpack_row_real_cpu_PRECISION unpack_row_real_cpu_double
-#define  unpack_row_NUMBER_cpu_openmp_PRECISION unpack_row_real_cpu_openmp_double
-#define  unpack_row_NUMBER_cpu_openmp_PRECISION_STR 'unpack_row_real_cpu_openmp_double'
-#define  unpack_row_real_cpu_openmp_PRECISION unpack_row_real_cpu_openmp_double
 #define  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION unpack_and_prepare_row_group_real_gpu_double
 #define  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION_STR 'unpack_and_prepare_row_group_real_gpu_double'
 #define  unpack_and_prepare_row_group_real_gpu_PRECISION unpack_and_prepare_row_group_real_gpu_double
@@ -286,22 +242,6 @@
 #ifdef SINGLE_PRECISION
 #define  PRECISION single
 #define  PRECISION_STR 'single'
-#define  elpa_transpose_vectors_NUMBER_PRECISION elpa_transpose_vectors_real_single
-#define  elpa_transpose_vectors_NUMBER_PRECISION_STR 'elpa_transpose_vectors_real_single'
-#define  elpa_transpose_vectors_real_PRECISION elpa_transpose_vectors_real_single
-#define  elpa_reduce_add_vectors_NUMBER_PRECISION elpa_reduce_add_vectors_real_single
-#define  elpa_reduce_add_vectors_NUMBER_PRECISION_STR 'elpa_reduce_add_vectors_real_single'
-#define  elpa_reduce_add_vectors_real_PRECISION elpa_reduce_add_vectors_real_single
-#define  band_band_NUMBER_PRECISION band_band_real_single
-#define  band_band_NUMBER_PRECISION_STR 'band_band_real_single'
-#define  band_band_real_PRECISION band_band_real_single
-#define  solve_tridi_col_PRECISION solve_tridi_col_single
-#define  solve_tridi_col_PRECISION_STR 'solve_tridi_col_single'
-#define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_single
-#define  solve_tridi_single_problem_PRECISION_STR 'solve_tridi_single_problem_single'
-#define  solve_evp_NUMBER_2stage_PRECISION solve_evp_real_2stage_single
-#define  solve_evp_NUMBER_2stage_PRECISION_STR 'solve_evp_real_2stage_single'
-#define  solve_evp_real_2stage_PRECISION solve_evp_real_2stage_single
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_single
 #define  qr_pdgeqrf_2dcomm_PRECISION_STR 'qr_pdgeqrf_2dcomm_single'
 #define  hh_transform_NUMBER_PRECISION hh_transform_real_single
@@ -314,12 +254,6 @@
 #define  redist_band_NUMBER_PRECISION redist_band_real_single
 #define  redist_band_NUMBER_PRECISION_STR 'redist_band_real_single'
 #define  redist_band_real_PRECISION redist_band_real_single
-#define  unpack_row_NUMBER_cpu_PRECISION unpack_row_real_cpu_single
-#define  unpack_row_NUMBER_cpu_PRECISION_STR 'unpack_row_real_cpu_single'
-#define  unpack_row_real_cpu_PRECISION unpack_row_real_cpu_single
-#define  unpack_row_NUMBER_cpu_openmp_PRECISION unpack_row_real_cpu_openmp_single
-#define  unpack_row_NUMBER_cpu_openmp_PRECISION_STR 'unpack_row_real_cpu_openmp_single'
-#define  unpack_row_real_cpu_openmp_PRECISION unpack_row_real_cpu_openmp_single
 #define  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION unpack_and_prepare_row_group_real_gpu_single
 #define  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION_STR 'unpack_and_prepare_row_group_real_gpu_single'
 #define  unpack_and_prepare_row_group_real_gpu_PRECISION unpack_and_prepare_row_group_real_gpu_single
@@ -431,22 +365,6 @@
 #define  MATH_DATATYPE complex
 #undef  PRECISION
 #undef  PRECISION_STR
-#undef  elpa_transpose_vectors_NUMBER_PRECISION
-#undef  elpa_transpose_vectors_NUMBER_PRECISION_STR
-#undef  elpa_transpose_vectors_complex_PRECISION
-#undef  elpa_reduce_add_vectors_NUMBER_PRECISION
-#undef  elpa_reduce_add_vectors_NUMBER_PRECISION_STR
-#undef  elpa_reduce_add_vectors_complex_PRECISION
-#undef  band_band_NUMBER_PRECISION
-#undef  band_band_NUMBER_PRECISION_STR
-#undef  band_band_complex_PRECISION
-#undef  solve_tridi_col_PRECISION
-#undef  solve_tridi_col_PRECISION_STR
-#undef  solve_tridi_single_problem_PRECISION
-#undef  solve_tridi_single_problem_PRECISION_STR
-#undef  solve_evp_NUMBER_2stage_PRECISION
-#undef  solve_evp_NUMBER_2stage_PRECISION_STR
-#undef  solve_evp_complex_2stage_PRECISION
 #undef  qr_pdgeqrf_2dcomm_PRECISION
 #undef  qr_pdgeqrf_2dcomm_PRECISION_STR
 #undef  hh_transform_NUMBER_PRECISION
@@ -459,12 +377,6 @@
 #undef  redist_band_NUMBER_PRECISION
 #undef  redist_band_NUMBER_PRECISION_STR
 #undef  redist_band_complex_PRECISION
-#undef  unpack_row_NUMBER_cpu_PRECISION
-#undef  unpack_row_NUMBER_cpu_PRECISION_STR
-#undef  unpack_row_complex_cpu_PRECISION
-#undef  unpack_row_NUMBER_cpu_openmp_PRECISION
-#undef  unpack_row_NUMBER_cpu_openmp_PRECISION_STR
-#undef  unpack_row_complex_cpu_openmp_PRECISION
 #undef  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION
 #undef  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION_STR
 #undef  unpack_and_prepare_row_group_complex_gpu_PRECISION
@@ -582,22 +494,6 @@
 #ifdef DOUBLE_PRECISION
 #define  PRECISION double
 #define  PRECISION_STR 'double'
-#define  elpa_transpose_vectors_NUMBER_PRECISION elpa_transpose_vectors_complex_double
-#define  elpa_transpose_vectors_NUMBER_PRECISION_STR 'elpa_transpose_vectors_complex_double'
-#define  elpa_transpose_vectors_complex_PRECISION elpa_transpose_vectors_complex_double
-#define  elpa_reduce_add_vectors_NUMBER_PRECISION elpa_reduce_add_vectors_complex_double
-#define  elpa_reduce_add_vectors_NUMBER_PRECISION_STR 'elpa_reduce_add_vectors_complex_double'
-#define  elpa_reduce_add_vectors_complex_PRECISION elpa_reduce_add_vectors_complex_double
-#define  band_band_NUMBER_PRECISION band_band_complex_double
-#define  band_band_NUMBER_PRECISION_STR 'band_band_complex_double'
-#define  band_band_complex_PRECISION band_band_complex_double
-#define  solve_tridi_col_PRECISION solve_tridi_col_double
-#define  solve_tridi_col_PRECISION_STR 'solve_tridi_col_double'
-#define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_double
-#define  solve_tridi_single_problem_PRECISION_STR 'solve_tridi_single_problem_double'
-#define  solve_evp_NUMBER_2stage_PRECISION solve_evp_complex_2stage_double
-#define  solve_evp_NUMBER_2stage_PRECISION_STR 'solve_evp_complex_2stage_double'
-#define  solve_evp_complex_2stage_PRECISION solve_evp_complex_2stage_double
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_double
 #define  qr_pdgeqrf_2dcomm_PRECISION_STR 'qr_pdgeqrf_2dcomm_double'
 #define  hh_transform_NUMBER_PRECISION hh_transform_complex_double
@@ -610,12 +506,6 @@
 #define  redist_band_NUMBER_PRECISION redist_band_complex_double
 #define  redist_band_NUMBER_PRECISION_STR 'redist_band_complex_double'
 #define  redist_band_complex_PRECISION redist_band_complex_double
-#define  unpack_row_NUMBER_cpu_PRECISION unpack_row_complex_cpu_double
-#define  unpack_row_NUMBER_cpu_PRECISION_STR 'unpack_row_complex_cpu_double'
-#define  unpack_row_complex_cpu_PRECISION unpack_row_complex_cpu_double
-#define  unpack_row_NUMBER_cpu_openmp_PRECISION unpack_row_complex_cpu_openmp_double
-#define  unpack_row_NUMBER_cpu_openmp_PRECISION_STR 'unpack_row_complex_cpu_openmp_double'
-#define  unpack_row_complex_cpu_openmp_PRECISION unpack_row_complex_cpu_openmp_double
 #define  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION unpack_and_prepare_row_group_complex_gpu_double
 #define  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION_STR 'unpack_and_prepare_row_group_complex_gpu_double'
 #define  unpack_and_prepare_row_group_complex_gpu_PRECISION unpack_and_prepare_row_group_complex_gpu_double
@@ -734,22 +624,6 @@
 #ifdef SINGLE_PRECISION
 #define  PRECISION single
 #define  PRECISION_STR 'single'
-#define  elpa_transpose_vectors_NUMBER_PRECISION elpa_transpose_vectors_complex_single
-#define  elpa_transpose_vectors_NUMBER_PRECISION_STR 'elpa_transpose_vectors_complex_single'
-#define  elpa_transpose_vectors_complex_PRECISION elpa_transpose_vectors_complex_single
-#define  elpa_reduce_add_vectors_NUMBER_PRECISION elpa_reduce_add_vectors_complex_single
-#define  elpa_reduce_add_vectors_NUMBER_PRECISION_STR 'elpa_reduce_add_vectors_complex_single'
-#define  elpa_reduce_add_vectors_complex_PRECISION elpa_reduce_add_vectors_complex_single
-#define  band_band_NUMBER_PRECISION band_band_complex_single
-#define  band_band_NUMBER_PRECISION_STR 'band_band_complex_single'
-#define  band_band_complex_PRECISION band_band_complex_single
-#define  solve_tridi_col_PRECISION solve_tridi_col_single
-#define  solve_tridi_col_PRECISION_STR 'solve_tridi_col_single'
-#define  solve_tridi_single_problem_PRECISION solve_tridi_single_problem_single
-#define  solve_tridi_single_problem_PRECISION_STR 'solve_tridi_single_problem_single'
-#define  solve_evp_NUMBER_2stage_PRECISION solve_evp_complex_2stage_single
-#define  solve_evp_NUMBER_2stage_PRECISION_STR 'solve_evp_complex_2stage_single'
-#define  solve_evp_complex_2stage_PRECISION solve_evp_complex_2stage_single
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_single
 #define  qr_pdgeqrf_2dcomm_PRECISION_STR 'qr_pdgeqrf_2dcomm_single'
 #define  hh_transform_NUMBER_PRECISION hh_transform_complex_single
@@ -762,12 +636,6 @@
 #define  redist_band_NUMBER_PRECISION redist_band_complex_single
 #define  redist_band_NUMBER_PRECISION_STR 'redist_band_complex_single'
 #define  redist_band_complex_PRECISION redist_band_complex_single
-#define  unpack_row_NUMBER_cpu_PRECISION unpack_row_complex_cpu_single
-#define  unpack_row_NUMBER_cpu_PRECISION_STR 'unpack_row_complex_cpu_single'
-#define  unpack_row_complex_cpu_PRECISION unpack_row_complex_cpu_single
-#define  unpack_row_NUMBER_cpu_openmp_PRECISION unpack_row_complex_cpu_openmp_single
-#define  unpack_row_NUMBER_cpu_openmp_PRECISION_STR 'unpack_row_complex_cpu_openmp_single'
-#define  unpack_row_complex_cpu_openmp_PRECISION unpack_row_complex_cpu_openmp_single
 #define  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION unpack_and_prepare_row_group_complex_gpu_single
 #define  unpack_and_prepare_row_group_NUMBER_gpu_PRECISION_STR 'unpack_and_prepare_row_group_complex_gpu_single'
 #define  unpack_and_prepare_row_group_complex_gpu_PRECISION unpack_and_prepare_row_group_complex_gpu_single

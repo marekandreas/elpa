@@ -1066,17 +1066,29 @@
        ! Transpose vmr -> vmc (stored in umc, second half)
 #if REALCASE == 1
        if (useGPU) then
-         call elpa_transpose_vectors_real_PRECISION  (vmrCUDA, cur_l_rows, mpi_comm_rows, &
+         call elpa_transpose_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+	                                   (vmrCUDA, cur_l_rows, mpi_comm_rows, &
                                             umcCUDA(cur_l_cols * n_cols + 1), cur_l_cols, mpi_comm_cols, &
                                             1, istep*nbw, n_cols, nblk)
        else
-         call elpa_transpose_vectors_real_PRECISION  (vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
+         call elpa_transpose_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+                                           (vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                             umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
                                             1, istep*nbw, n_cols, nblk)
        endif
 #endif
 #if COMPLEXCASE == 1
-       call elpa_transpose_vectors_complex_PRECISION  (vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
+         call elpa_transpose_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+                                      (vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                       umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
                                       1, istep*nbw, n_cols, nblk)
 #endif
@@ -1317,7 +1329,7 @@
               stop
             endif
           endif ! useGPU
-        endif ! (l_cols>0 .and. l_rows>0) 
+        endif ! (l_cols>0 .and. l_rows>0)
 #endif /* COMPLEXCASE == 1 */
 
        ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
@@ -1330,7 +1342,11 @@
          ! here the GPU version and CPU version divereged due to the same reasons as above
 
          if (tile_size < istep*nbw) then
-           call elpa_reduce_add_vectors_real_PRECISION  (vmrCUDA(cur_l_rows * n_cols + 1),cur_l_rows,mpi_comm_rows, &
+           call elpa_reduce_add_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+                                               (vmrCUDA(cur_l_rows * n_cols + 1),cur_l_rows,mpi_comm_rows, &
                                                umcCUDA, cur_l_cols, mpi_comm_cols, &
                                                istep*nbw, n_cols, nblk)
          endif
@@ -1425,7 +1441,11 @@
          endif
 
          ! Transpose umc -> umr (stored in vmr, second half)
-         call elpa_transpose_vectors_real_PRECISION  (umcCUDA, cur_l_cols, mpi_comm_cols, &
+         call elpa_transpose_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+                                           (umcCUDA, cur_l_cols, mpi_comm_cols, &
                                             vmrCUDA(cur_l_rows * n_cols + 1), cur_l_rows, mpi_comm_rows, &
                                             1, istep*nbw, n_cols, nblk)
 
@@ -1460,7 +1480,11 @@
 
          ! Or if we used the Algorithm 4
          if (tile_size < istep*nbw .or. n_way > 1) then
-           call elpa_reduce_add_vectors_real_PRECISION  (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
+           call elpa_reduce_add_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+                                            (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
                                              umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                              istep*nbw, n_cols, nblk)
          endif
@@ -1510,7 +1534,11 @@
                      ubound(vav,dim=1), CONST_1_0, umcCPU, ubound(umcCPU,dim=1))
 	 call timer%stop("blas")
          ! Transpose umc -> umr (stored in vmr, second half)
-         call elpa_transpose_vectors_real_PRECISION(umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+         call elpa_transpose_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+	                                (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                          vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                          1, istep*nbw, n_cols, nblk)
 
@@ -1572,7 +1600,11 @@
 
 #if COMPLEXCASE == 1
         if (tile_size < istep*nbw) then
-          call elpa_reduce_add_vectors_complex_PRECISION  (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
+          call elpa_reduce_add_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+                                          (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
                                           umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                           istep*nbw, n_cols, nblk)
         endif
@@ -1699,7 +1731,11 @@
             print *, "bandred_complex:  cuda memcpy failed umcCPU ", istat
             stop
           endif
-          call elpa_transpose_vectors_complex_PRECISION  (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+          call elpa_transpose_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+	                                       (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                                 vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                                 1, istep*nbw, n_cols, nblk)
           if (size(vmrCPU,dim=1)*size(vmrCPU,dim=2) .gt. vmr_size) then
@@ -1727,8 +1763,11 @@
                      vav, ubound(vav,dim=1), CONE, umcCPU, ubound(umcCPU,dim=1))
           call timer%stop("blas")
           ! Transpose umc -> umr (stored in vmr, second half)
-
-          call elpa_transpose_vectors_complex_PRECISION  (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+          call elpa_transpose_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+	                                       (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                                 vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                                 1, istep*nbw, n_cols, nblk)
         endif
