@@ -488,11 +488,13 @@
 
           ! Householder transformation
 #if REALCASE == 1
-          call hh_transform_real_PRECISION(vrl, vnorm2, xf, tau(istep))
+          call hh_transform_real_&
 #endif
 #if COMPLEXCASE == 1
-          call hh_transform_complex_PRECISION(vrl, vnorm2, xf, tau(istep))
+          call hh_transform_complex_&
 #endif
+&PRECISION &
+                             (vrl, vnorm2, xf, tau(istep))
           ! Scale v_row and store Householder vector for back transformation
 
           v_row(1:l_rows) = v_row(1:l_rows) * xf
@@ -1053,7 +1055,14 @@
           else !useGPU
             vrl = a_mat(1,l_cols)
           endif !useGPU
-          call hh_transform_complex_PRECISION(vrl, CONST_REAL_0_0, xf, tau(2))
+#if REALCASE == 1
+          call hh_transform_real_&
+#endif
+#if COMPLEXCASE == 1
+          call hh_transform_complex_&
+#endif
+&PRECISION &
+	                     (vrl, CONST_REAL_0_0, xf, tau(2))
           e_vec(1) = vrl
 
           a_mat(1,l_cols) = 1. ! for consistency only

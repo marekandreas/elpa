@@ -771,11 +771,13 @@
 
              ! Householder transformation
 #if REALCASE == 1
-             call hh_transform_real_PRECISION(vrl, vnorm2, xf, tau)
+	     call hh_transform_real_&
 #endif
 #if COMPLEXCASE == 1
-             call hh_transform_complex_PRECISION(vrl, vnorm2, xf, tau)
+	     call hh_transform_complex_&
 #endif
+&PRECISION &
+                              (vrl, vnorm2, xf, tau)
              ! Scale vr and store Householder vector for back transformation
 
              vr(1:lr) = vr(1:lr) * xf
@@ -1034,11 +1036,13 @@
 #endif
 	 call timer%stop("blas")
 #if REALCASE == 1
-         call symm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw,mpi_comm_rows)
+	 call symm_matrix_allreduce_&
 #endif
 #if COMPLEXCASE == 1
-         call herm_matrix_allreduce_PRECISION(n_cols,vav, nbw,nbw,mpi_comm_rows)
+         call herm_matrix_allreduce_&
 #endif
+&PRECISION &
+                         (n_cols,vav, nbw, nbw,mpi_comm_rows)
          ! Calculate triangular matrix T for block Householder Transformation
 	 call timer%start("blas")
          do lc=n_cols,1,-1
@@ -1417,7 +1421,9 @@
            stop
          endif
 
-         call symm_matrix_allreduce_PRECISION(n_cols,vav, nbw,nbw,mpi_comm_cols)
+         call symm_matrix_allreduce_&
+&PRECISION &
+	                          (n_cols,vav, nbw,nbw,mpi_comm_cols)
 
          successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
@@ -1526,7 +1532,9 @@
          call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', n_cols, n_cols, CONST_1_0, tmat(1,1,istep),    &
                     ubound(tmat,dim=1), vav, ubound(vav,dim=1))
 	 call timer%stop("blas")
-         call symm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw ,mpi_comm_cols)
+         call symm_matrix_allreduce_&
+&PRECISION &
+	                            (n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
          ! U = U - 0.5 * V * VAV
 	 call timer%start("blas")
@@ -1695,7 +1703,9 @@
             stop
           endif
 
-          call herm_matrix_allreduce_PRECISION(n_cols,vav, nbw, nbw,mpi_comm_cols)
+          call herm_matrix_allreduce_&
+&PRECISION &
+                                    (n_cols,vav, nbw, nbw,mpi_comm_cols)
 
           successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)),nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
           if (.not.(successCUDA)) then
@@ -1709,7 +1719,9 @@
           call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat(1,1,istep), &
                      ubound(tmat,dim=1), vav, ubound(vav,dim=1))
           call timer%stop("blas")
-          call herm_matrix_allreduce_PRECISION(n_cols,vav,nbw,nbw,mpi_comm_cols)
+          call herm_matrix_allreduce_&
+&PRECISION &
+                                    (n_cols,vav,nbw,nbw,mpi_comm_cols)
         endif
 
         ! U = U - 0.5 * V * VAV

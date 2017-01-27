@@ -229,13 +229,18 @@
     !-------------------------------------------------------------------------------
 #endif
 
+#if REALCASE == 1
+    subroutine hh_transform_real_&
+#endif
+#if COMPLEXCASE == 1
+    subroutine hh_transform_complex_&
+#endif
+&PRECISION &
+                   (alpha, xnorm_sq, xf, tau)
 #if REALCASE  == 1
-    subroutine hh_transform_real_PRECISION(alpha, xnorm_sq, xf, tau)
       ! Similar to LAPACK routine DLARFP, but uses ||x||**2 instead of x(:)
 #endif
 #if COMPLEXCASE == 1
-    subroutine hh_transform_complex_PRECISION(alpha, xnorm_sq, xf, tau)
-
       ! Similar to LAPACK routine ZLARFP, but uses ||x||**2 instead of x(:)
 #endif
       ! and returns the factor xf by which x has to be scaled.
@@ -265,12 +270,9 @@
 
       real(kind=REAL_DATATYPE)                      :: BETA
 
-#if REALCASE == 1
-      call timer%start("hh_transform_real" // PRECISION_SUFFIX )
-#endif
-#if COMPLEXCASE == 1
-      call timer%start("hh_transform_complex" // PRECISION_SUFFIX )
-#endif
+     call timer%start("hh_tranform_&
+&MATH_DATATYPE&
+&" // PRECISION_SUFFIX )
 
 #if COMPLEXCASE == 1
       ALPHR = real( ALPHA, kind=REAL_DATATYPE )
@@ -331,16 +333,14 @@
        ALPHA = BETA
      endif
 
-#if REALCASE == 1
-      call timer%stop("hh_transform_real" // PRECISION_SUFFIX )
-#endif
-#if COMPLEXCASE == 1
-      call timer%stop("hh_transform_complex" // PRECISION_SUFFIX )
-#endif
+      call timer%stop("hh_transform_&
+&MATH_DATATYPE&
+&" // PRECISION_SUFFIX )
 
 #if REALCASE == 1
-    end subroutine hh_transform_real_PRECISION
+    end subroutine hh_transform_real_&
 #endif
 #if COMPLEXCASE == 1
-    end subroutine hh_transform_complex_PRECISION
+    end subroutine hh_transform_complex_&
 #endif
+&PRECISION

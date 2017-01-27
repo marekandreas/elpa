@@ -5,13 +5,6 @@
 #undef  PRECISION_STR
 #undef  qr_pdgeqrf_2dcomm_PRECISION
 #undef  qr_pdgeqrf_2dcomm_PRECISION_STR
-#undef  hh_transform_NUMBER_PRECISION
-#undef  hh_transform_NUMBER_PRECISION_STR
-#undef  hh_transform_real_PRECISION
-#undef  symm_matrix_allreduce_PRECISION
-#undef  symm_matrix_allreduce_PRECISION_STR
-#undef  herm_matrix_allreduce_PRECISION
-#undef  herm_matrix_allreduce_PRECISION_STR
 #undef  redist_band_NUMBER_PRECISION
 #undef  redist_band_NUMBER_PRECISION_STR
 #undef  redist_band_real_PRECISION
@@ -124,13 +117,6 @@
 #define  PRECISION_STR 'double'
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_double
 #define  qr_pdgeqrf_2dcomm_PRECISION_STR 'qr_pdgeqrf_2dcomm_double'
-#define  hh_transform_NUMBER_PRECISION hh_transform_real_double
-#define  hh_transform_NUMBER_PRECISION_STR 'hh_transform_real_double'
-#define  hh_transform_real_PRECISION hh_transform_real_double
-#define  symm_matrix_allreduce_PRECISION symm_matrix_allreduce_double
-#define  symm_matrix_allreduce_PRECISION_STR 'symm_matrix_allreduce_double'
-#define  herm_matrix_allreduce_PRECISION herm_matrix_allreduce_double
-#define  herm_matrix_allreduce_PRECISION_STR 'herm_matrix_allreduce_double'
 #define  redist_band_NUMBER_PRECISION redist_band_real_double
 #define  redist_band_NUMBER_PRECISION_STR 'redist_band_real_double'
 #define  redist_band_real_PRECISION redist_band_real_double
@@ -244,13 +230,6 @@
 #define  PRECISION_STR 'single'
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_single
 #define  qr_pdgeqrf_2dcomm_PRECISION_STR 'qr_pdgeqrf_2dcomm_single'
-#define  hh_transform_NUMBER_PRECISION hh_transform_real_single
-#define  hh_transform_NUMBER_PRECISION_STR 'hh_transform_real_single'
-#define  hh_transform_real_PRECISION hh_transform_real_single
-#define  symm_matrix_allreduce_PRECISION symm_matrix_allreduce_single
-#define  symm_matrix_allreduce_PRECISION_STR 'symm_matrix_allreduce_single'
-#define  herm_matrix_allreduce_PRECISION herm_matrix_allreduce_single
-#define  herm_matrix_allreduce_PRECISION_STR 'herm_matrix_allreduce_single'
 #define  redist_band_NUMBER_PRECISION redist_band_real_single
 #define  redist_band_NUMBER_PRECISION_STR 'redist_band_real_single'
 #define  redist_band_real_PRECISION redist_band_real_single
@@ -367,13 +346,6 @@
 #undef  PRECISION_STR
 #undef  qr_pdgeqrf_2dcomm_PRECISION
 #undef  qr_pdgeqrf_2dcomm_PRECISION_STR
-#undef  hh_transform_NUMBER_PRECISION
-#undef  hh_transform_NUMBER_PRECISION_STR
-#undef  hh_transform_complex_PRECISION
-#undef  symm_matrix_allreduce_PRECISION
-#undef  symm_matrix_allreduce_PRECISION_STR
-#undef  herm_matrix_allreduce_PRECISION
-#undef  herm_matrix_allreduce_PRECISION_STR
 #undef  redist_band_NUMBER_PRECISION
 #undef  redist_band_NUMBER_PRECISION_STR
 #undef  redist_band_complex_PRECISION
@@ -496,13 +468,6 @@
 #define  PRECISION_STR 'double'
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_double
 #define  qr_pdgeqrf_2dcomm_PRECISION_STR 'qr_pdgeqrf_2dcomm_double'
-#define  hh_transform_NUMBER_PRECISION hh_transform_complex_double
-#define  hh_transform_NUMBER_PRECISION_STR 'hh_transform_complex_double'
-#define  hh_transform_complex_PRECISION hh_transform_complex_double
-#define  symm_matrix_allreduce_PRECISION symm_matrix_allreduce_double
-#define  symm_matrix_allreduce_PRECISION_STR 'symm_matrix_allreduce_double'
-#define  herm_matrix_allreduce_PRECISION herm_matrix_allreduce_double
-#define  herm_matrix_allreduce_PRECISION_STR 'herm_matrix_allreduce_double'
 #define  redist_band_NUMBER_PRECISION redist_band_complex_double
 #define  redist_band_NUMBER_PRECISION_STR 'redist_band_complex_double'
 #define  redist_band_complex_PRECISION redist_band_complex_double
@@ -626,13 +591,6 @@
 #define  PRECISION_STR 'single'
 #define  qr_pdgeqrf_2dcomm_PRECISION qr_pdgeqrf_2dcomm_single
 #define  qr_pdgeqrf_2dcomm_PRECISION_STR 'qr_pdgeqrf_2dcomm_single'
-#define  hh_transform_NUMBER_PRECISION hh_transform_complex_single
-#define  hh_transform_NUMBER_PRECISION_STR 'hh_transform_complex_single'
-#define  hh_transform_complex_PRECISION hh_transform_complex_single
-#define  symm_matrix_allreduce_PRECISION symm_matrix_allreduce_single
-#define  symm_matrix_allreduce_PRECISION_STR 'symm_matrix_allreduce_single'
-#define  herm_matrix_allreduce_PRECISION herm_matrix_allreduce_single
-#define  herm_matrix_allreduce_PRECISION_STR 'herm_matrix_allreduce_single'
 #define  redist_band_NUMBER_PRECISION redist_band_complex_single
 #define  redist_band_NUMBER_PRECISION_STR 'redist_band_complex_single'
 #define  redist_band_complex_PRECISION redist_band_complex_single

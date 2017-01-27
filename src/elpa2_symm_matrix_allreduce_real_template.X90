@@ -1,5 +1,7 @@
 
-    subroutine symm_matrix_allreduce_PRECISION(n,a,lda,ldb,comm)
+    subroutine symm_matrix_allreduce_&
+&PRECISION &
+                    (n,a,lda,ldb,comm)
     !-------------------------------------------------------------------------------
     !  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
     !  On entry, only the upper half of A needs to be set
@@ -60,6 +62,8 @@
 
       call timer%stop("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
-    end subroutine symm_matrix_allreduce_PRECISION
+    end subroutine symm_matrix_allreduce_&
+&PRECISION
+
 
 
