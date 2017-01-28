@@ -49,25 +49,11 @@
 
 #include "config-f90.h"
 
-#if REALCASE==1
-
-#ifdef DOUBLE_PRECISION_REAL
-subroutine elpa_transpose_vectors_real_double(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
-#else
-subroutine elpa_transpose_vectors_real_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
-#endif
-
-#endif /* REALCASE == 1 */
-
-#if COMPLEXCASE==1
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-subroutine elpa_transpose_vectors_complex_double(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
-#else
-subroutine elpa_transpose_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
-#endif
-
-#endif /* COMPLEXCASE == 1 */
+subroutine elpa_transpose_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+             (vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvs,nvr,nvc,nblk)
 
 !-------------------------------------------------------------------------------
 ! This routine transposes an array of vectors which are distributed in
@@ -92,19 +78,16 @@ subroutine elpa_transpose_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,
     use precision
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
+#else
+    use timings_dummy
 #endif
 !   use ELPA1 ! for least_common_multiple
 #ifdef WITH_OPENMP
    use omp_lib
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
-   use timings
-#endif
    use elpa_mpi
 
    implicit none
-
-
 
    integer(kind=ik), intent(in)              :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
    DATATYPE, intent(in)                      :: vmat_s(ld_s,nvc)
@@ -116,39 +99,19 @@ subroutine elpa_transpose_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,
    integer(kind=ik)                          :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
    integer(kind=ik)                          :: auxstride
 
-#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("elpa_transpose_vectors_&
+   &MATH_DATATYPE&
+   &" // &
+   &PRECISION_SUFFIX &
+   )
 
-#if COMPLEXCASE == 1
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-   call timer%start("elpa_transpose_vectors_complex_double")
-#else
-   call timer%start("elpa_transpose_vectors_complex_single")
-#endif
-
-#else /* COMPLEXCASE == 1 */
-
-#ifdef DOUBLE_PRECISION_REAL
-   call timer%start("elpa_transpose_vectors_real_double")
-#else
-   call timer%start("elpa_transpose_vectors_real_single")
-#endif
-
-#endif /* COMPLEXCASE == 1 */
-#endif /* HAVE_DETAILED_TIMINGS */
-
-
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%start("mpi_communication")
-#endif
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)
    call mpi_comm_rank(comm_t,mypt,mpierr)
    call mpi_comm_size(comm_t,npt ,mpierr)
 
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("mpi_communication")
-#endif
    ! The basic idea of this routine is that for every block (in the block cyclic
    ! distribution), the processor within comm_t which owns the diagonal
    ! broadcasts its values of vmat_s to all processors within comm_t.
@@ -203,34 +166,19 @@ subroutine elpa_transpose_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,
 #endif
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
         call timer%start("mpi_communication")
+
+        call MPI_Bcast(aux, nblks_comm*nblk*nvc,    &
+#if REALCASE == 1
+                       MPI_REAL_PRECISION,    &
 #endif
-
-#if COMPLEXCASE==1
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-         call MPI_Bcast(aux, nblks_comm*nblk*nvc, MPI_DOUBLE_COMPLEX, ips, comm_s, mpierr)
-#else
-         call MPI_Bcast(aux, nblks_comm*nblk*nvc, MPI_COMPLEX, ips, comm_s, mpierr)
-
-#endif /* DOUBLE_PRECISION_COMPLEX */
-
-#endif /* COMPLEXCASE==1 */
-
-#if REALCASE==1
-
-#ifdef DOUBLE_PRECISION_REAL
-         call MPI_Bcast(aux, nblks_comm*nblk*nvc, MPI_REAL8, ips, comm_s, mpierr)
-#else
-         call MPI_Bcast(aux, nblks_comm*nblk*nvc, MPI_REAL4, ips, comm_s, mpierr)
+#if COMPLEXCASE == 1
+                       MPI_COMPLEX_PRECISION, &
 #endif
+                       ips, comm_s, mpierr)
 
-#endif /* REALCASE == 1 */
 
-#ifdef HAVE_DETAILED_TIMINGS
          call timer%stop("mpi_communication")
-#endif
 #endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP
@@ -257,23 +205,12 @@ subroutine elpa_transpose_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,
    !$omp end parallel
 #endif
    deallocate(aux)
-#ifdef HAVE_DETAILED_TIMINGS
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-   call timer%stop("elpa_transpose_vectors_complex_double")
-#else
-   call timer%stop("elpa_transpose_vectors_complex_single")
-#endif
 
-#else /* COMPLEXCASE == 1 */
+   call timer%stop("elpa_transpose_vectors_&
+   &MATH_DATATYPE&
+   &" // &
+   &PRECISION_SUFFIX &
+   )
 
-#ifdef DOUBLE_PRECISION_REAL
-   call timer%stop("elpa_transpose_vectors_real_double")
-#else
-   call timer%stop("elpa_transpose_vectors_real_single")
-#endif
-#endif /* COMPLEXCASE == 1 */
-
-#endif /* HAVE_DETAILED_TIMINGS */
 end subroutine
 

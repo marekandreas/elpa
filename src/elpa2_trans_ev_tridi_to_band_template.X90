@@ -238,7 +238,7 @@
 
       call timer%start("trans_ev_tridi_to_band_&
       &MATH_DATATYPE&
-      &_" // &
+      &" // &
       &PRECISION_SUFFIX &
       )
 
@@ -275,7 +275,7 @@
         na_cols = na
 #endif
       endif
-#endif /* COMPLEXCASEc*/
+#endif /* COMPLEXCASE */
 
       if (mod(nbw,nblk)/=0) then
         if (my_prow==0 .and. my_pcol==0) then
@@ -370,7 +370,9 @@
 #endif
 
         endif ! useGPU
+
 #else /* WITH_OPENMP */
+
         ! Suggested stripe width is 48 since 48*64 real*8 numbers should fit into
         ! every primary cache
 	! Suggested stripe width is 48 - should this be reduced for the complex case ???
@@ -553,7 +555,7 @@
 #endif
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
-          &^: error when allocating aIntern"//errorMessage
+          &: error when allocating aIntern"//errorMessage
           stop
         endif
 
@@ -721,9 +723,9 @@
 #endif /* WITH_MPI */
 
                 call unpack_row_&
-&MATH_DATATYPE&
-&_cpu_&
-&PRECISION &
+                &MATH_DATATYPE&
+                &_cpu_&
+                &PRECISION &
                                 (aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
               endif ! useGPU
 #endif /* WITH_OPENMP */
@@ -776,9 +778,9 @@
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 	        call unpack_row_&
-&MATH_DATATYPE&
-&_cpu_openmp_&
-&PRECISION &
+                &MATH_DATATYPE&
+                &_cpu_openmp_&
+                &PRECISION &
                                    (aIntern, row, i-limits(ip), my_thread, stripe_count, thread_width, stripe_width, l_nev)
 
               enddo
@@ -792,9 +794,9 @@
 
               else
 	        call unpack_row_&
-&MATH_DATATYPE&
-&_cpu_&
-&PRECISION &
+                &MATH_DATATYPE&
+                &_cpu_&
+                &PRECISION &
                                 (aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
               endif
 
@@ -828,6 +830,7 @@
           enddo
 
         else if (my_prow < ip) then
+
           ! Send all rows going to PE ip
           src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
           do i=limits(ip)+1,limits(ip+1)
@@ -877,9 +880,9 @@
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
 	        call unpack_row_&
-&MATH_DATATYPE&
-&_cpu_openmp_&
-&PRECISION &
+                &MATH_DATATYPE&
+                &_cpu_openmp_&
+                &PRECISION &
                                  (aIntern, row, i-limits(my_prow), my_thread, stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
@@ -944,9 +947,9 @@
 
 #endif
                 call unpack_row_&
-&MATH_DATATYPE&
-&_cpu_&
-&PRECISION &
+                &MATH_DATATYPE&
+                &_cpu_&
+                &PRECISION &
                                 (aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
               endif ! useGPU
 
@@ -1728,9 +1731,6 @@
              call compute_hh_trafo_complex_gpu_&
 	     &PRECISION&
 	     &(0, current_local_n, i, a_off, dev_offset, dev_offset_1, dev_offset_2)
-!             call compute_hh_trafo_complex_gpu_&
-!              &PRECISION&
-!	      &(0, current_local_n, i)
            else
              call compute_hh_trafo_complex_cpu_&
 	     &PRECISION&
@@ -1865,7 +1865,7 @@
 !$omp end parallel do
         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
-        !send_b      2
+        !send_b
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
         call MPI_Wait(bottom_send_request(i), MPI_STATUS_IGNORE, mpierr)
@@ -1928,7 +1928,7 @@
 
 #endif
 
-        !send_b       3
+        !send_b
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
 
@@ -1995,7 +1995,6 @@
         endif
 #endif
 #endif
-	! until here unify
         !compute
 #ifdef WITH_OPENMP
 
@@ -2549,9 +2548,7 @@
         stop
       endif
 
-      call timer%start("OpenMP parallel_&
-      &PRECISION&
-      &")
+      call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread, i, j), schedule(static, 1)
       do my_thread = 1, max_threads
@@ -2562,9 +2559,8 @@
         enddo
       enddo
 !$omp end parallel do
-      call timer%stop("OpenMP parallel_&
-      &PRECISION&
-      &")
+      call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
 #else /* WITH_OPENMP */
          do i = 1, stripe_count
            if (useGPU) then

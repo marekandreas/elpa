@@ -258,7 +258,7 @@
          na_rows = na
 #endif
         na_cols = na
-#endif
+#endif /* WITH_MPI */
 
         ! Here we convert the regular host array into a pinned host array
         successCUDA = cuda_malloc(a_dev, lda*na_cols*  &
@@ -1326,9 +1326,9 @@
 
          if (tile_size < istep*nbw) then
            call elpa_reduce_add_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+                &MATH_DATATYPE&
+                &_&
+                &PRECISION &
                                                (vmrCUDA(cur_l_rows * n_cols + 1),cur_l_rows,mpi_comm_rows, &
                                                umcCUDA, cur_l_cols, mpi_comm_cols, &
                                                istep*nbw, n_cols, nblk)
@@ -1401,7 +1401,7 @@
          endif
 
          call symm_matrix_allreduce_&
-&PRECISION &
+         &PRECISION &
 	                          (n_cols,vav, nbw,nbw,mpi_comm_cols)
 
          successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
@@ -1427,9 +1427,9 @@
 
          ! Transpose umc -> umr (stored in vmr, second half)
          call elpa_transpose_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+         &MATH_DATATYPE&
+         &_&
+         &PRECISION &
                                            (umcCUDA, cur_l_cols, mpi_comm_cols, &
                                             vmrCUDA(cur_l_rows * n_cols + 1), cur_l_rows, mpi_comm_rows, &
                                             1, istep*nbw, n_cols, nblk)
@@ -1466,9 +1466,9 @@
          ! Or if we used the Algorithm 4
          if (tile_size < istep*nbw .or. n_way > 1) then
            call elpa_reduce_add_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION &
                                             (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
                                              umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                              istep*nbw, n_cols, nblk)
@@ -1512,7 +1512,7 @@
                     ubound(tmat,dim=1), vav, ubound(vav,dim=1))
 	 call timer%stop("blas")
          call symm_matrix_allreduce_&
-&PRECISION &
+         &PRECISION &
 	                            (n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
          ! U = U - 0.5 * V * VAV
@@ -1522,9 +1522,9 @@
 	 call timer%stop("blas")
          ! Transpose umc -> umr (stored in vmr, second half)
          call elpa_transpose_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+         &MATH_DATATYPE&
+         &_&
+         &PRECISION &
 	                                (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                          vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                          1, istep*nbw, n_cols, nblk)
@@ -1588,9 +1588,9 @@
 #if COMPLEXCASE == 1
         if (tile_size < istep*nbw) then
           call elpa_reduce_add_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION &
                                           (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
                                           umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                           istep*nbw, n_cols, nblk)
@@ -1683,7 +1683,7 @@
           endif
 
           call herm_matrix_allreduce_&
-&PRECISION &
+          &PRECISION &
                                     (n_cols,vav, nbw, nbw,mpi_comm_cols)
 
           successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)),nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
@@ -1699,7 +1699,7 @@
                      ubound(tmat,dim=1), vav, ubound(vav,dim=1))
           call timer%stop("blas")
           call herm_matrix_allreduce_&
-&PRECISION &
+          &PRECISION &
                                     (n_cols,vav,nbw,nbw,mpi_comm_cols)
         endif
 
@@ -1723,9 +1723,9 @@
             stop
           endif
           call elpa_transpose_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION &
 	                                       (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                                 vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                                 1, istep*nbw, n_cols, nblk)
@@ -1755,9 +1755,9 @@
           call timer%stop("blas")
           ! Transpose umc -> umr (stored in vmr, second half)
           call elpa_transpose_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION &
 	                                       (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                                 vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                                 1, istep*nbw, n_cols, nblk)
@@ -1826,12 +1826,22 @@
 !       endif
 !#endif
        ! this is not needed since a_dev is passed along from one subroutine to the other
+
+       successCUDA = cuda_memcpy ( &
 #if REALCASE == 1
-       successCUDA = cuda_memcpy ( loc (a), a_dev, lda*na_cols*size_of_PRECISION_real,cudaMemcpyDeviceToHost)
+                                   loc(a),      &
 #endif
 #if COMPLEXCASE == 1
-       successCUDA = cuda_memcpy ( loc(a(1,1)), a_dev, lda*na_cols*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
+                                   loc(a(1,1)), &
 #endif
+                                   a_dev, lda*na_cols*  &
+#if REALCASE == 1
+                                   size_of_PRECISION_real,   &
+#endif
+#if COMPLEXCASE ==1
+                                   size_of_PRECISION_complex,&
+#endif
+                                   cudaMemcpyDeviceToHost)
        if (.not.(successCUDA)) then
          print *,"bandred_&
 	 &MATH_DATATYPE&

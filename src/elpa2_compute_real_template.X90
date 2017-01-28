@@ -141,22 +141,6 @@
       character(200)                           :: errorMessage
 
       call timer%start("band_band_real" // PRECISION_SUFFIX)
-!      if (na .lt. 2*nb) then
-!        print *,"na lt 2*nb ",na,2*nb
-!        stop
-!      endif
-!      if (na .lt. 2*nb2) then
-!        print *,"na lt 2*nb2 ",na,2*nb2
-!        stop
-!      endif
-!      if (na .lt. nbCol) then
-!        print *,"na lt nbCol ",na,nbCol
-!        stop
-!      endif
-!      if (na .lt. nb2Col) then
-!        print *,"na lt nb2Col ",na,nb2Col
-!        stop
-!      endif
 
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm,my_pe,mpierr)
@@ -560,12 +544,12 @@
       real(kind=REAL_DATATYPE), intent(inout) :: mem(n,nb)  !memory for a temporary matrix of size n x nb
 
 
-   call timer%start("wy_right" // PRECISION_SUFFIX)
-   call timer%start("blas")
-   call PRECISION_GEMM('N', 'N', n, nb, m, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
-   call PRECISION_GEMM('N', 'T', n, m, nb, -CONST_1_0, mem, n, Y, lda2, CONST_1_0, A, lda)
-   call timer%stop("blas")
-   call timer%stop("wy_right" // PRECISION_SUFFIX)
+      call timer%start("wy_right" // PRECISION_SUFFIX)
+      call timer%start("blas")
+      call PRECISION_GEMM('N', 'N', n, nb, m, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
+      call PRECISION_GEMM('N', 'T', n, m, nb, -CONST_1_0, mem, n, Y, lda2, CONST_1_0, A, lda)
+      call timer%stop("blas")
+      call timer%stop("wy_right" // PRECISION_SUFFIX)
 
     end subroutine
 
@@ -590,14 +574,14 @@
       real(kind=REAL_DATATYPE)                :: mem(n,nb)  !memory for a temporary matrix of size n x nb
       real(kind=REAL_DATATYPE)                :: mem2(nb,nb)    !memory for a temporary matrix of size nb x nb
 
-   call timer%start("wy_symm" // PRECISION_SUFFIX)
-   call timer%start("blas")
-   call PRECISION_SYMM('L', 'L', n, nb, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
-   call PRECISION_GEMM('T', 'N', nb, nb, n, CONST_1_0, mem, n, W, lda2, CONST_0_0, mem2, nb)
-   call PRECISION_GEMM('N', 'N', n, nb, nb, -CONST_0_5, Y, lda2, mem2, nb, CONST_1_0, mem, n)
-   call PRECISION_SYR2K('L', 'N', n, nb, -CONST_1_0, Y, lda2, mem, n, CONST_1_0, A, lda)
-   call timer%stop("blas")
-   call timer%stop("wy_symm" // PRECISION_SUFFIX)
+      call timer%start("wy_symm" // PRECISION_SUFFIX)
+      call timer%start("blas")
+      call PRECISION_SYMM('L', 'L', n, nb, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
+      call PRECISION_GEMM('T', 'N', nb, nb, n, CONST_1_0, mem, n, W, lda2, CONST_0_0, mem2, nb)
+      call PRECISION_GEMM('N', 'N', n, nb, nb, -CONST_0_5, Y, lda2, mem2, nb, CONST_1_0, mem, n)
+      call PRECISION_SYR2K('L', 'N', n, nb, -CONST_1_0, Y, lda2, mem, n, CONST_1_0, A, lda)
+      call timer%stop("blas")
+      call timer%stop("wy_symm" // PRECISION_SUFFIX)
 
     end subroutine
 

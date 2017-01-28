@@ -47,89 +47,90 @@
 
 #include "config-f90.h"
 
-#if REALCASE==1
+!#if REALCASE==1
+!
+!#ifdef DOUBLE_PRECISION_REAL
+!subroutine redist_band_real_double(lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab)
+!#else
+!subroutine redist_band_real_single(lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab)
+!#endif
+!
+!#endif /* REALCASE == 1 */
+!
+!#if COMPLEXCASE==1
+!
+!#ifdef DOUBLE_PRECISION_COMPLEX
+!subroutine redist_band_complex_double(lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, c_ab)
+!#else
+!subroutine redist_band_complex_single(lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, c_ab)
+!#endif
+!
+!#endif /* COMPLEXCASE == 1 */
 
-#ifdef DOUBLE_PRECISION_REAL
-subroutine redist_band_real_double(r_a, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab)
-#else
-subroutine redist_band_real_single(r_a, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab)
+subroutine redist_band_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+           (   &
+#if REALCASE == 1
+            r_a, &
 #endif
-
-#endif /* REALCASE == 1 */
-
-#if COMPLEXCASE==1
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-subroutine redist_band_complex_double(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, c_ab)
-#else
-subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, c_ab)
+#if COMPLEXCASE == 1
+            c_a, &
 #endif
-
-#endif /* COMPLEXCASE == 1 */
-
-
+            lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, &
+#if REALCASE == 1
+            r_ab)
+#endif
+#if COMPLEXCASE == 1
+            c_ab)
+#endif
 
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
+#else
+   use timings_dummy
 #endif
    use elpa2_workload
    use precision
    implicit none
 
    integer(kind=ik), intent(in)     :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
-#if REALCASE==1
+#if REALCASE == 1
    real(kind=REAL_DATATYPE), intent(in)        :: r_a(lda, matrixCols)
 #endif
-#if COMPLEXCASE==1
+#if COMPLEXCASE == 1
    complex(kind=COMPLEX_DATATYPE), intent(in)     :: c_a(lda, matrixCols)
 #endif
 
-
-#if REALCASE==1
+#if REALCASE == 1
    real(kind=REAL_DATATYPE), intent(out)       :: r_ab(:,:)
 #endif
 
-#if COMPLEXCASE==1
+#if COMPLEXCASE == 1
    complex(kind=COMPLEX_DATATYPE), intent(out)    :: c_ab(:,:)
 #endif
 
    integer(kind=ik), allocatable    :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), &
                                        global_id(:,:), global_id_tmp(:,:), block_limits(:)
-#if REALCASE==1
+#if REALCASE == 1
    real(kind=REAL_DATATYPE), allocatable       :: r_sbuf(:,:,:), r_rbuf(:,:,:), r_buf(:,:)
 #endif
 
-#if COMPLEXCASE==1
+#if COMPLEXCASE == 1
    complex(kind=COMPLEX_DATATYPE), allocatable    :: c_sbuf(:,:,:), c_rbuf(:,:,:), c_buf(:,:)
 #endif
    integer(kind=ik)                 :: i, j, my_pe, n_pes, my_prow, np_rows, my_pcol, np_cols, &
                                        nfact, np, npr, npc, mpierr, is, js
    integer(kind=ik)                 :: nblocks_total, il, jl, l_rows, l_cols, n_off
 
-#ifdef HAVE_DETAILED_TIMINGS
-#if REALCASE==1
+   call timer%start("redist_band_&
+   &MATH_DATATYPE&
+   &" // &
+   &PRECISION_SUFFIX &
+   )
 
-#ifdef DOUBLE_PRECISION_REAL
-        call timer%start("redist_band_real_double")
-#else
-        call timer%start("redist_band_real_single")
-#endif
-
-#endif
-#if COMPLEXCASE==1
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-        call timer%start("redist_band_complex_double")
-#else
-        call timer%start("redist_band_complex_single")
-#endif
-
-#endif
-
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%start("mpi_communication")
-#endif
    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
    call mpi_comm_size(mpi_comm,n_pes,mpierr)
 
@@ -137,9 +138,8 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("mpi_communication")
-#endif
+
    ! Get global_id mapping 2D procssor coordinates to global id
 
    allocate(global_id(0:np_rows-1,0:np_cols-1))
@@ -149,9 +149,7 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
    global_id(:,:) = 0
    global_id(my_prow, my_pcol) = my_pe
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%start("mpi_communication")
-#endif
 #ifdef WITH_OPENMP
    global_id_tmp(:,:) = global_id(:,:)
    call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
@@ -159,10 +157,8 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
 #else
    call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("mpi_communication")
-#endif
-#endif
+#endif /* WITH_MPI */
    ! Set work distribution
 
    nblocks_total = (na-1)/nbw + 1
@@ -280,9 +276,7 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
 
    ! Exchange all data with MPI_Alltoallv
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%start("mpi_communication")
-#endif
 
 #if REALCASE==1
 
@@ -301,12 +295,10 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
 #else
     call MPI_Alltoallv(c_sbuf, ncnt_s, nstart_s, MPI_COMPLEX, c_rbuf, ncnt_r, nstart_r, MPI_COMPLEX, mpi_comm, mpierr)
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("mpi_communication")
-#endif
 
 #endif /* COMPLEXCASE==1 */
 
+    call timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
 #if REALCASE==1
@@ -373,28 +365,11 @@ subroutine redist_band_complex_single(c_a, lda, na, nblk, nbw, matrixCols, mpi_c
    deallocate(c_sbuf, c_rbuf, c_buf)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-#if REALCASE==1
-
-#ifdef DOUBLE_PRECISION_REAL
-   call timer%stop("redist_band_real_double")
-#else
-   call timer%stop("redist_band_real_single")
-#endif
-
-#endif
-#if COMPLEXCASE==1
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-   call timer%stop("redist_band_complex_double")
-#else
-   call timer%stop("redist_band_complex_single")
-#endif
-
-#endif
-
-#endif
-
+   call timer%stop("redist_band_&
+   &MATH_DATATYPE&
+   &" // &
+   &PRECISION_SUFFIX &
+   )
 
 end subroutine
 

@@ -45,25 +45,11 @@
 
 #include "config-f90.h"
 
-#if REALCASE==1
-
-#ifdef DOUBLE_PRECISION_REAL
-subroutine elpa_reduce_add_vectors_real_double(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
-#else
-subroutine elpa_reduce_add_vectors_real_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
-#endif
-
-#endif /* REALCASE == 1 */
-
-#if COMPLEXCASE==1
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-subroutine elpa_reduce_add_vectors_complex_double(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
-#else
-subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
-#endif
-
-#endif /* COMPLEXCASE == 1 */
+subroutine elpa_reduce_add_vectors_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+            (vmat_s,ld_s,comm_s,vmat_t,ld_t,comm_t,nvr,nvc,nblk)
 
 !-------------------------------------------------------------------------------
 ! This routine does a reduce of all vectors in vmat_s over the communicator comm_t.
@@ -93,11 +79,10 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
 #endif
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
+#else
+   use timings_dummy
 #endif
    use elpa_mpi
-#ifdef HAVE_DETAILED_TIMINGS
-   use timings
-#endif
    implicit none
 
 
@@ -110,36 +95,19 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
    integer(kind=ik)                          :: n, lc, k, i, ips, ipt, ns, nl, mpierr
    integer(kind=ik)                          :: lcm_s_t, nblks_tot
    integer(kind=ik)                          :: auxstride, tylerk, error_unit
-#ifdef HAVE_DETAILED_TIMINGS
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-   call timer%start("elpa_reduce_add_vectors_complex_double")
-#else
-   call timer%start("elpa_reduce_add_vectors_complex_single")
-#endif
 
-#else /*COMPLEXCASE == 1 */
+   call timer%start("elpa_reduce_add_vectors_&
+   &MATH_DATATYPE&
+   &" // &
+   &PRECISION_SUFFIX &
+   )
 
-#ifdef DOUBLE_PRECISION_REAL
-   call timer%start("elpa_reduce_add_vectors_double")
-#else
-   call timer%start("elpa_reduce_add_vectors_single")
-#endif
-
-#endif /* COMPLEXCASE == 1 */
-
-#endif /* HAVE_DETAILED_TIMINGS */
-
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%start("mpi_communication")
-#endif
    call mpi_comm_rank(comm_s,myps,mpierr)
    call mpi_comm_size(comm_s,nps ,mpierr)
    call mpi_comm_rank(comm_t,mypt,mpierr)
    call mpi_comm_size(comm_t,npt ,mpierr)
-#ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("mpi_communication")
-#endif
 
    ! Look to elpa_transpose_vectors for the basic idea!
 
@@ -187,33 +155,18 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
 #endif
 
 #ifdef WITH_MPI
-#ifdef HAVE_DETAILED_TIMINGS
          call timer%start("mpi_communication")
+
+         if (k>0) call mpi_reduce(aux1, aux2, k, &
+#if REALCASE == 1
+                                  MPI_REAL_PRECISION,  &
 #endif
-
-#if REALCASE==1
-
-#ifdef DOUBLE_PRECISION_REAL
-         if(k>0) call mpi_reduce(aux1, aux2, k, MPI_REAL8, MPI_SUM, ipt, comm_t, mpierr)
-#else
-         if(k>0) call mpi_reduce(aux1, aux2, k, MPI_REAL4, MPI_SUM, ipt, comm_t, mpierr)
+#if COMPLEXCASE == 1
+                                  MPI_COMPLEX_PRECISION, &
 #endif
+                                  MPI_SUM, ipt, comm_t, mpierr)
 
-#endif /* REALCASE==1 */
-
-#if COMPLEXCASE==1
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-         if(k>0) call mpi_reduce(aux1, aux2, k, MPI_DOUBLE_COMPLEX, MPI_SUM, ipt, comm_t, mpierr)
-#else
-         if(k>0) call mpi_reduce(aux1, aux2, k, MPI_COMPLEX, MPI_SUM, ipt, comm_t, mpierr)
-#endif
-
-#endif /* COMPLEXCASE == 1 */
-
-#ifdef HAVE_DETAILED_TIMINGS
           call timer%stop("mpi_communication")
-#endif
 
 #else /* WITH_MPI */
          if(k>0) aux2 = aux1
@@ -248,25 +201,12 @@ subroutine elpa_reduce_add_vectors_complex_single(vmat_s,ld_s,comm_s,vmat_t,ld_t
 
    deallocate(aux1)
    deallocate(aux2)
-#ifdef HAVE_DETAILED_TIMINGS
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-   call timer%stop("elpa_reduce_add_vectors_complex_double")
-#else
-   call timer%stop("elpa_reduce_add_vectors_complex_single")
-#endif
 
-#else /* COMPLEXCASE == 1 */
-
-#ifdef DOUBLE_PRECISION_REAL
-   call timer%stop("elpa_reduce_add_vectors_double")
-#else
-   call timer%stop("elpa_reduce_add_vectors_single")
-#endif
-
-#endif
-#endif /* HAVE_DETAILED_TIMINGS */
-
+   call timer%stop("elpa_reduce_add_vectors_&
+   &MATH_DATATYPE&
+   &" // &
+   &PRECISION_SUFFIX &
+   )
 end subroutine
 
 

@@ -120,8 +120,7 @@
       endif
 #endif
 
-      call timer%start("merge_systems" // &
-      &PRECISION_SUFFIX)
+      call timer%start("merge_systems" // PRECISION_SUFFIX)
       success = .true.
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -829,7 +828,7 @@
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #else
-      use timings_dummy
+          use timings_dummy
 #endif
           use precision
           implicit none

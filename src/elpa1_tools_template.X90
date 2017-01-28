@@ -244,7 +244,7 @@
 #if COMPLEXCASE == 1
     subroutine hh_transform_complex_&
 #endif
-&PRECISION &
+    &PRECISION &
                    (alpha, xnorm_sq, xf, tau)
 #if REALCASE  == 1
       ! Similar to LAPACK routine DLARFP, but uses ||x||**2 instead of x(:)
@@ -282,8 +282,7 @@
      call timer%start("hh_tranform_&
                       &MATH_DATATYPE&
 		      &" // &
-		      &PRECISION_SUFFIX &
-		      )
+		      &PRECISION_SUFFIX )
 
 #if COMPLEXCASE == 1
       ALPHR = real( ALPHA, kind=REAL_DATATYPE )
@@ -347,8 +346,7 @@
       call timer%stop("hh_transform_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX &
-      )
+      &PRECISION_SUFFIX )
 
 #if REALCASE == 1
     end subroutine hh_transform_real_&
@@ -356,4 +354,4 @@
 #if COMPLEXCASE == 1
     end subroutine hh_transform_complex_&
 #endif
-&PRECISION
+    &PRECISION
