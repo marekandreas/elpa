@@ -276,7 +276,9 @@
       if (istat .ne. 0) then
         print *,"solve_evp_&
 	&MATH_DATATYPE&
-	&_2stage_PRECISION " // ": error when allocating tmat "//errorMessage
+	&_2stage_&
+	&PRECISION&
+	&" // ": error when allocating tmat "//errorMessage
         stop
       endif
 

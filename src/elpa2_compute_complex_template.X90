@@ -71,17 +71,23 @@
 #include "elpa2_tridiag_band_template.X90"
 #include "elpa2_trans_ev_tridi_to_band_template.X90"
 
-    subroutine compute_hh_dot_products_complex_gpu_PRECISION(nbw, n)
+    subroutine compute_hh_dot_products_complex_gpu_&
+    &PRECISION&
+    &(nbw, n)
       use cuda_c_kernel
       use precision
       implicit none
       integer(kind=ik), value :: nbw, n
 
       if (n .le. 1) return
-      call launch_compute_hh_dotp_c_kernel_complex_PRECISION( bcast_buffer_dev, hh_dot_dev, nbw,n)
+      call launch_compute_hh_dotp_c_kernel_complex_&
+      &PRECISION&
+      &( bcast_buffer_dev, hh_dot_dev, nbw,n)
      end subroutine
 
-     subroutine pack_row_group_complex_gpu_PRECISION(rows, n_offset, row_count)
+     subroutine pack_row_group_complex_gpu_&
+     &PRECISION&
+     &(rows, n_offset, row_count)
        use cuda_c_kernel
        use precision
        implicit none
@@ -91,7 +97,9 @@
        logical                      :: successCUDA
 
        max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
-       call launch_my_pack_c_kernel_complex_PRECISION(row_count, n_offset, max_idx, stripe_width,a_dim2, stripe_count, &
+       call launch_my_pack_c_kernel_complex_&
+       &PRECISION&
+       &(row_count, n_offset, max_idx, stripe_width,a_dim2, stripe_count, &
                                             l_nev, aIntern_dev, row_group_dev)
        successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev ,row_count * l_nev * size_of_PRECISION_complex, &
                                   cudaMemcpyDeviceToHost)
@@ -102,7 +110,9 @@
 
      end subroutine
 
-     subroutine unpack_row_group_complex_gpu_PRECISION(rows, n_offset, row_count)
+     subroutine unpack_row_group_complex_gpu_&
+     &PRECISION&
+     &(rows, n_offset, row_count)
        use cuda_c_kernel
        use precision
        implicit none
@@ -119,11 +129,15 @@
          print *,"unpack_row_group_complex_gpu: error in cudaMemcpy"
          stop
        endif
-       call launch_my_unpack_c_kernel_complex_PRECISION( row_count, n_offset,max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
+       call launch_my_unpack_c_kernel_complex_&
+       &PRECISION&
+       &( row_count, n_offset,max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
                                               row_group_dev,aIntern_dev)
      end subroutine
 
-     subroutine unpack_and_prepare_row_group_complex_gpu_PRECISION(next_unpack_idx, force)
+     subroutine unpack_and_prepare_row_group_complex_gpu_&
+     &PRECISION&
+     &(next_unpack_idx, force)
 
        use precision
        implicit none
@@ -136,7 +150,9 @@
        else
          if (force .or. (row_group_size == nblk) .or. (unpack_idx + 1 /=next_unpack_idx)) then
            ! A flush and a reset must  performed
-           call unpack_row_group_complex_gpu_PRECISION(row_group(:, :), unpack_idx - row_group_size, row_group_size)
+           call unpack_row_group_complex_gpu_&
+	   &PRECISION&
+	   &(row_group(:, :), unpack_idx - row_group_size, row_group_size)
            row_group_size = 1
          else
            ! Just prepare for the upcoming row
@@ -148,7 +164,9 @@
 
     end subroutine
 
-    subroutine compute_hh_trafo_complex_gpu_PRECISION(off, ncols, istripe, a_off, dev_offset, dev_offset_1, dev_offset_2)
+    subroutine compute_hh_trafo_complex_gpu_&
+    &PRECISION&
+    &(off, ncols, istripe, a_off, dev_offset, dev_offset_1, dev_offset_2)
 
       use iso_c_binding
       use cuda_c_kernel
@@ -171,7 +189,9 @@
       dev_offset_2 =( off-1 )*size_of_PRECISION_complex
 
 !      t1_compute_kernel =MPI_Wtime()
-      call launch_compute_hh_trafo_c_kernel_complex_PRECISION(aIntern_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
+      call launch_compute_hh_trafo_c_kernel_complex_&
+      &PRECISION&
+      &(aIntern_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
                                                     hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
 
 !      time0 = time0 + time1

@@ -51,7 +51,10 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 #endif
-    subroutine merge_systems_PRECISION( na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+
+    subroutine merge_systems_&
+    &PRECISION &
+                         ( na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, wantDebug, success)
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -74,8 +77,7 @@
       logical, intent(in)           :: wantDebug
       logical, intent(out)          :: success
 
-      integer(kind=ik), parameter   :: max_strip=128      
-      
+      integer(kind=ik), parameter   :: max_strip=128
 
       real(kind=REAL_DATATYPE)                 :: PRECISION_LAMCH, PRECISION_LAPY2
       real(kind=REAL_DATATYPE)                 :: beta, sig, s, c, t, tau, rho, eps, tol, &
@@ -118,7 +120,8 @@
       endif
 #endif
 
-      call timer%start("merge_systems" // PRECISION_SUFFIX)
+      call timer%start("merge_systems" // &
+      &PRECISION_SUFFIX)
       success = .true.
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -146,12 +149,16 @@
       else
         np_prev = my_pcol - 1
       endif
-      call check_monotony_PRECISION(nm,d,'Input1',wantDebug, success)
+      call check_monotony_&
+      &PRECISION&
+      &(nm,d,'Input1',wantDebug, success)
       if (.not.(success)) then
         call timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
       endif
-      call check_monotony_PRECISION(na-nm,d(nm+1),'Input2',wantDebug, success)
+      call check_monotony_&
+      &PRECISION&
+      &(na-nm,d(nm+1),'Input2',wantDebug, success)
       if (.not.(success)) then
         call timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
@@ -208,7 +215,9 @@
         enddo
       endif
 
-      call global_gather_PRECISION(z, na)
+      call global_gather_&
+      &PRECISION&
+      &(z, na)
       ! Normalize z so that norm(z) = 1.  Since z is the concatenation of
       ! two normalized vectors, norm2(z) = sqrt(2).
       z = z/sqrt(CONST_2_0)
@@ -238,7 +247,9 @@
         enddo
 
         ! Rearrange eigenvectors
-        call resort_ev_PRECISION(idx, na)
+        call resort_ev_&
+	&PRECISION &
+	               (idx, na)
 
         call timer%stop("merge_systems" // PRECISION_SUFFIX)
 
@@ -330,7 +341,9 @@
 
             qtrans(1,1) = C; qtrans(1,2) =-S
             qtrans(2,1) = S; qtrans(2,2) = C
-            call transform_columns_PRECISION(idx(i), idx1(na1))
+            call transform_columns_&
+	    &PRECISION &
+	                (idx(i), idx1(na1))
             if (coltyp(idx(i))==1 .and. coltyp(idx1(na1))/=1) coltyp(idx1(na1)) = 2
             if (coltyp(idx(i))==3 .and. coltyp(idx1(na1))/=3) coltyp(idx1(na1)) = 2
 
@@ -350,12 +363,16 @@
         endif
 
       enddo
-      call check_monotony_PRECISION(na1,d1,'Sorted1', wantDebug, success)
+      call check_monotony_&
+      &PRECISION&
+      &(na1,d1,'Sorted1', wantDebug, success)
       if (.not.(success)) then
         call timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
       endif
-      call check_monotony_PRECISION(na2,d2,'Sorted2', wantDebug, success)
+      call check_monotony_&
+      &PRECISION&
+      &(na2,d2,'Sorted2', wantDebug, success)
       if (.not.(success)) then
         call timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
@@ -371,7 +388,9 @@
           call PRECISION_LAED5(1, d1, z1, qtrans(1,1), rho, d(1))
           call PRECISION_LAED5(2, d1, z1, qtrans(1,2), rho, d(2))
 	  call timer%stop("blas")
-          call transform_columns_PRECISION(idx1(1), idx1(2))
+          call transform_columns_&
+	  &PRECISION&
+	  &(idx1(1), idx1(2))
         endif
 
         ! Add the deflated eigenvalues
@@ -397,7 +416,9 @@
             idxq1(i) = idx2(idx(i)-na1)
           endif
         enddo
-        call resort_ev_PRECISION(idxq1, na)
+        call resort_ev_&
+	&PRECISION&
+	&(idxq1, na)
       else if (na1>2) then
 
         ! Solve secular equation
@@ -426,7 +447,9 @@
             ! If DLAED4 fails (may happen especially for LAPACK versions before 3.2)
             ! use the more stable bisection algorithm in solve_secular_equation
             ! print *,'ERROR DLAED4 n=',na1,'i=',i,' Using Bisection'
-            call solve_secular_equation_PRECISION(na1, i, d1, z1, delta, rho, s)
+            call solve_secular_equation_&
+	    &PRECISION&
+	    &(na1, i, d1, z1, delta, rho, s)
           endif
 
           ! Compute updated z
@@ -467,11 +490,17 @@
         enddo
 #endif
 
-        call global_product_PRECISION(z, na1)
+        call global_product_&
+	&PRECISION&
+	(z, na1)
         z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
 
-        call global_gather_PRECISION(dbase, na1)
-        call global_gather_PRECISION(ddiff, na1)
+        call global_gather_&
+	&PRECISION&
+	&(dbase, na1)
+        call global_gather_&
+	&PRECISION&
+	&(ddiff, na1)
         d(1:na1) = dbase(1:na1) - ddiff(1:na1)
 
         ! Calculate scale factors for eigenvectors
@@ -494,7 +523,9 @@
           ! All we want to calculate is tmp = (d1(1:na1)-dbase(i))+ddiff(i)
           ! in exactly this order, but we want to prevent compiler optimization
 !         ev_scale_val = ev_scale(i)
-          call add_tmp_PRECISION(d1, dbase, ddiff, z, ev_scale(i), na1,i)
+          call add_tmp_&
+	  &PRECISION&
+	  &(d1, dbase, ddiff, z, ev_scale(i), na1,i)
 !         ev_scale(i) = ev_scale_val
         enddo
 #ifdef WITH_OPENMP
@@ -504,7 +535,9 @@
 
 #endif
 
-        call global_gather_PRECISION(ev_scale, na1)
+        call global_gather_&
+	&PRECISION&
+	&(ev_scale, na1)
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
@@ -517,7 +550,9 @@
         do i=1,na
           d(i) = tmp(idx(i))
         enddo
-        call check_monotony_PRECISION(na,d,'Output', wantDebug, success)
+        call check_monotony_&
+	&PRECISION&
+	&(na,d,'Output', wantDebug, success)
 
         if (.not.(success)) then
           call timer%stop("merge_systems" // PRECISION_SUFFIX)
@@ -685,7 +720,9 @@
               ! Calculate the j-th eigenvector of the deflated system
               ! See above why we are doing it this way!
               tmp(1:nnzu) = d1u(1:nnzu)-dbase(j)
-              call v_add_s_PRECISION(tmp,nnzu,ddiff(j))
+              call v_add_s_&
+	      &PRECISION&
+	      &(tmp,nnzu,ddiff(j))
               ev(1:nnzu,i) = zu(1:nnzu) / tmp(1:nnzu) * ev_scale(j)
             enddo
 
@@ -710,7 +747,9 @@
               ! Calculate the j-th eigenvector of the deflated system
               ! See above why we are doing it this way!
               tmp(1:nnzl) = d1l(1:nnzl)-dbase(j)
-              call v_add_s_PRECISION(tmp,nnzl,ddiff(j))
+              call v_add_s_&
+	      &PRECISION&
+	      &(tmp,nnzl,ddiff(j))
               ev(1:nnzl,i) = zl(1:nnzl) / tmp(1:nnzl) * ev_scale(j)
             enddo
 
@@ -756,7 +795,9 @@
       return
 
       contains
-        subroutine add_tmp_PRECISION(d1, dbase, ddiff, z, ev_scale_value, na1,i)
+        subroutine add_tmp_&
+	&PRECISION&
+	&(d1, dbase, ddiff, z, ev_scale_value, na1,i)
           use precision
           implicit none
 
@@ -773,13 +814,18 @@
                ! in exactly this order, but we want to prevent compiler optimization
 
           tmp(1:na1) = d1(1:na1) -dbase(i)
-          call v_add_s_PRECISION(tmp(1:na1),na1,ddiff(i))
+          call v_add_s_&
+	  &PRECISION&
+	  &(tmp(1:na1),na1,ddiff(i))
           tmp(1:na1) = z(1:na1) / tmp(1:na1)
           ev_scale_value = CONST_1_0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
 
-        end subroutine add_tmp_PRECISION
+        end subroutine add_tmp_&
+	&PRECISION
 
-        subroutine resort_ev_PRECISION(idx_ev, nLength)
+        subroutine resort_ev_&
+	&PRECISION&
+	&(idx_ev, nLength)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #else
@@ -861,9 +907,12 @@
             print *,"resort_ev: error when deallocating qtmp "//errorMessage
             stop
           endif
-        end subroutine resort_ev_PRECISION
+        end subroutine resort_ev_&
+	&PRECISION
 
-        subroutine transform_columns_PRECISION(col1, col2)
+        subroutine transform_columns_&
+	&PRECISION&
+	&(col1, col2)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #else
@@ -913,9 +962,12 @@
 
             q(l_rqs:l_rqe,lc2) = tmp(1:l_rows)*qtrans(1,2) + q(l_rqs:l_rqe,lc2)*qtrans(2,2)
           endif
-        end subroutine transform_columns_PRECISION
+        end subroutine transform_columns_&
+	&PRECISION
 
-        subroutine global_gather_PRECISION(z, n)
+        subroutine global_gather_&
+	&PRECISION&
+	&(z, n)
           ! This routine sums up z over all processors.
           ! It should only be used for gathering distributed results,
           ! i.e. z(i) should be nonzero on exactly 1 processor column,
@@ -972,9 +1024,12 @@
             call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
           enddo
-        end subroutine global_gather_PRECISION
+        end subroutine global_gather_&
+	&PRECISION
 
-        subroutine global_product_PRECISION(z, n)
+        subroutine global_product_&
+	&PRECISION&
+	&(z, n)
           ! This routine calculates the global product of z.
           use precision
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1050,9 +1105,12 @@
 #endif  /* WITH_MPI */
 
           endif
-        end subroutine global_product_PRECISION
+        end subroutine global_product_&
+	&PRECISION
 
-        subroutine check_monotony_PRECISION(n,d,text, wantDebug, success)
+        subroutine check_monotony_&
+	&PRECISION&
+	&(n,d,text, wantDebug, success)
         ! This is a test routine for checking if the eigenvalues are monotonically increasing.
         ! It is for debug purposes only, an error should never be triggered!
           use precision
@@ -1074,6 +1132,8 @@
               return
             endif
           enddo
-        end subroutine check_monotony_PRECISION
+        end subroutine check_monotony_&
+	&PRECISION
 
-    end subroutine merge_systems_PRECISION
+    end subroutine merge_systems_&
+    &PRECISION

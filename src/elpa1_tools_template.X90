@@ -54,16 +54,21 @@
 
 #if REALCASE == 1
 
-    subroutine v_add_s_PRECISION(v,n,s)
+    subroutine v_add_s_&
+    &PRECISION&
+    &(v,n,s)
       use precision
       implicit none
       integer(kind=ik) :: n
       real(kind=REAL_DATATYPE)    :: v(n),s
 
       v(:) = v(:) + s
-    end subroutine v_add_s_PRECISION
+    end subroutine v_add_s_&
+    &PRECISION
 
-    subroutine distribute_global_column_PRECISION(g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
+    subroutine distribute_global_column_&
+    &PRECISION&
+    &(g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
       use precision
       implicit none
 
@@ -88,9 +93,12 @@
         l_col(l_off+js:l_off+je) = g_col(g_off+js-noff:g_off+je-noff)
 
       enddo
-    end subroutine distribute_global_column_PRECISION
+    end subroutine distribute_global_column_&
+    &PRECISION
 
-    subroutine solve_secular_equation_PRECISION(n, i, d, z, delta, rho, dlam)
+    subroutine solve_secular_equation_&
+    &PRECISION&
+    &(n, i, d, z, delta, rho, dlam)
     !-------------------------------------------------------------------------------
     ! This routine solves the secular equation of a symmetric rank 1 modified
     ! diagonal matrix:
@@ -225,7 +233,8 @@
       delta(:) = delta(:) - x
       call  timer%stop("solve_secular_equation" // PRECISION_SUFFIX)
 
-    end subroutine solve_secular_equation_PRECISION
+    end subroutine solve_secular_equation_&
+    &PRECISION
     !-------------------------------------------------------------------------------
 #endif
 
@@ -271,8 +280,10 @@
       real(kind=REAL_DATATYPE)                      :: BETA
 
      call timer%start("hh_tranform_&
-&MATH_DATATYPE&
-&" // PRECISION_SUFFIX )
+                      &MATH_DATATYPE&
+		      &" // &
+		      &PRECISION_SUFFIX &
+		      )
 
 #if COMPLEXCASE == 1
       ALPHR = real( ALPHA, kind=REAL_DATATYPE )
@@ -334,8 +345,10 @@
      endif
 
       call timer%stop("hh_transform_&
-&MATH_DATATYPE&
-&" // PRECISION_SUFFIX )
+      &MATH_DATATYPE&
+      &" // &
+      &PRECISION_SUFFIX &
+      )
 
 #if REALCASE == 1
     end subroutine hh_transform_real_&

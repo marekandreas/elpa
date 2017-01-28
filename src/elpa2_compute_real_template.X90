@@ -330,7 +330,9 @@
             nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
             nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
                                           ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
-            call wy_gen_PRECISION(nc,nb2,w,hv,tau,work,nb)
+            call wy_gen_&
+	    &PRECISION&
+	    &(nc,nb2,w,hv,tau,work,nb)
 
             if (iblk==nblocks .and. nc==nb) then
               !request last nb2 columns
@@ -350,7 +352,9 @@
             tau_new(:) = CONST_0_0
 
             if (nr>0) then
-              call wy_right_PRECISION(nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
+              call wy_right_&
+	      &PRECISION&
+	      &(nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
 	      call timer%start("blas")
               call PRECISION_GEQRF(nr, nb2, ab(nb+1,ns), 2*nb-1, tau_new, work, lwork, info)
 	      call timer%stop("blas")
@@ -384,7 +388,9 @@
               endif
             endif
 
-            call wy_symm_PRECISION(nc,nb2,ab(1,ns),2*nb-1,w,hv,work,work2,nb)
+            call wy_symm_&
+	    &PRECISION&
+	    &(nc,nb2,ab(1,ns),2*nb-1,w,hv,work,work2,nb)
 
             if (my_pe>0 .and. iblk==1) then
               !send first nb2 columns to previous PE
@@ -409,8 +415,12 @@
             endif
 
             if (nr>0) then
-              call wy_gen_PRECISION(nr,nb2,w_new,hv_new,tau_new,work,nb)
-              call wy_left_PRECISION(nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
+              call wy_gen_&
+	      &PRECISION&
+	      &(nr,nb2,w_new,hv_new,tau_new,work,nb)
+              call wy_left_&
+	      &PRECISION&
+	      &(nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
             endif
 
             ! Use new HH vector for the next block
@@ -465,7 +475,9 @@
 
     end subroutine
 
-    subroutine wy_gen_PRECISION(n, nb, W, Y, tau, mem, lda)
+    subroutine wy_gen_&
+    &PRECISION&
+    &(n, nb, W, Y, tau, mem, lda)
 
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
@@ -497,7 +509,9 @@
    call timer%stop("wy_gen" // PRECISION_SUFFIX)
     end subroutine
 
-    subroutine wy_left_PRECISION(n, m, nb, A, lda, W, Y, mem, lda2)
+    subroutine wy_left_&
+    &PRECISION&
+    &(n, m, nb, A, lda, W, Y, mem, lda2)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -524,7 +538,9 @@
    call timer%stop("wy_left" // PRECISION_SUFFIX)
     end subroutine
 
-    subroutine wy_right_PRECISION(n, m, nb, A, lda, W, Y, mem, lda2)
+    subroutine wy_right_&
+    &PRECISION&
+    &(n, m, nb, A, lda, W, Y, mem, lda2)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -553,7 +569,9 @@
 
     end subroutine
 
-    subroutine wy_symm_PRECISION(n, nb, A, lda, W, Y, mem, mem2, lda2)
+    subroutine wy_symm_&
+    &PRECISION&
+    &(n, nb, A, lda, W, Y, mem, mem2, lda2)
 
 #ifdef HAVE_DETAILED_TIMINGS
       use timings

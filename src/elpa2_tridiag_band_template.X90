@@ -263,12 +263,12 @@
       n_off = block_limits(my_pe)*nb
 
       ! Redistribute band in a to ab
-#if REALCASE == 1
-      call redist_band_real_PRECISION(a, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab)
-#endif
-#if COMPLEXCASE == 1
-      call redist_band_complex_PRECISION(a, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab)
-#endif
+      call redist_band_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &(a, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab)
+
       ! Calculate the workload for each sweep in the back transformation
       ! and the space requirements to hold the HH vectors
 
@@ -351,7 +351,7 @@
 #endif
 	                 nb*local_size,                           &
 #if REALCASE == 1
-			 MPI_REAL_PRECISION,                      &
+			 MPI_REAL_PRECISION,                     &
 #endif
 #if COMPLEXCASE == 1
                         MPI_COMPLEX_EXPLICIT_PRECISION,           &
