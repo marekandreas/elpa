@@ -144,7 +144,7 @@ subroutine solve_tridi_&
         nev1 = MIN(nev,l_cols)
       endif
       call solve_tridi_col_&
-&PRECISION &
+           &PRECISION &
            (l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         matrixCols, mpi_comm_rows, wantDebug, success)
       if (.not.(success)) then
@@ -220,7 +220,7 @@ subroutine solve_tridi_&
 
       ! Recursively merge sub problems
       call merge_recursive_&
-&PRECISION &
+           &PRECISION &
            (0, np_cols, wantDebug, success)
       if (.not.(success)) then
         call timer%stop("solve_tridi" // PRECISION_SUFFIX)
@@ -238,8 +238,8 @@ subroutine solve_tridi_&
 
       contains
         recursive subroutine merge_recursive_&
-&PRECISION &
-        (np_off, nprocs, wantDebug, success)
+                  &PRECISION &
+           (np_off, nprocs, wantDebug, success)
            use precision
 #ifdef HAVE_DETAILED_TIMINGS
            use timings
@@ -273,11 +273,11 @@ subroutine solve_tridi_&
            np2 = nprocs-np1
 
            if (np1 > 1) call merge_recursive_&
-&PRECISION &
+                        &PRECISION &
            (np_off, np1, wantDebug, success)
            if (.not.(success)) return
            if (np2 > 1) call merge_recursive_&
-&PRECISION &
+                        &PRECISION &
            (np_off+np1, np2, wantDebug, success)
            if (.not.(success)) return
 
@@ -329,7 +329,7 @@ subroutine solve_tridi_&
              ! Last merge, result distribution must be block cyclic, noff==0,
              ! p_col_bc is set so that only nev eigenvalues are calculated
              call merge_systems_&
-&PRECISION &
+                  &PRECISION &
                                  (nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
                                  l_col_bc, p_col_bc, np_off, nprocs, wantDebug, success )
@@ -337,20 +337,20 @@ subroutine solve_tridi_&
            else
              ! Not last merge, leave dense column distribution
              call merge_systems_&
-&PRECISION &
+                  &PRECISION &
                                 (nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
                                  l_col(noff+1), p_col(noff+1), np_off, nprocs, wantDebug, success )
              if (.not.(success)) return
            endif
        end subroutine merge_recursive_&
-&PRECISION
+           &PRECISION
 
     end subroutine solve_tridi_&
-&PRECISION
+        &PRECISION
 
     subroutine solve_tridi_col_&
-&PRECISION &
+    &PRECISION &
     ( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
@@ -448,7 +448,7 @@ subroutine solve_tridi_&
           nlen = limits(n+1)-noff ! Size of subproblem
 
           call solve_tridi_single_problem_&
-&PRECISION &
+          &PRECISION &
                                    (nlen,d(noff+1),e(noff+1), &
                                     q(nqoff+noff+1,noff+1),ubound(q,dim=1), wantDebug, success)
 
@@ -479,7 +479,7 @@ subroutine solve_tridi_&
           noff = limits(my_prow)        ! Start of subproblem
           nlen = limits(my_prow+1)-noff ! Size of subproblem
           call solve_tridi_single_problem_&
-&PRECISION &
+          &PRECISION &
                                    (nlen,d(noff+1),e(noff+1),qmat1, &
                                     ubound(qmat1,dim=1), wantDebug, success)
 
@@ -505,11 +505,11 @@ subroutine solve_tridi_&
 
 #ifdef WITH_MPI
             call distribute_global_column_&
-&PRECISION &
+            &PRECISION &
                      (qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #else /* WITH_MPI */
             call distribute_global_column_&
-&PRECISION &
+            &PRECISION &
                      (qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #endif /* WITH_MPI */
           enddo
@@ -554,7 +554,7 @@ subroutine solve_tridi_&
             p_col_o(nev+1:na) = -1
           endif
           call merge_systems_&
-&PRECISION &
+          &PRECISION &
                               (nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                                matrixCols, mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
                                l_col(noff+1), p_col_o(noff+1), 0, 1, wantDebug, success)
@@ -575,10 +575,10 @@ subroutine solve_tridi_&
       call timer%stop("solve_tridi_col" // PRECISION_SUFFIX)
 
     end subroutine solve_tridi_col_&
-&PRECISION
+    &PRECISION
 
     recursive subroutine solve_tridi_single_problem_&
-&PRECISION &
+    &PRECISION &
               (nlen, d, e, q, ldq, wantDebug, success)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
@@ -706,5 +706,5 @@ subroutine solve_tridi_&
      call timer%stop("solve_tridi_single" // PRECISION_SUFFIX)
 
     end subroutine solve_tridi_single_problem_&
-&PRECISION
+    &PRECISION
 

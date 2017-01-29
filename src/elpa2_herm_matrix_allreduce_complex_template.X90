@@ -1,6 +1,6 @@
 
      subroutine herm_matrix_allreduce_&
-&PRECISION &
+     &PRECISION &
                                     (n,a,lda,ldb,comm)
      !-------------------------------------------------------------------------------
      !  herm_matrix_allreduce: Does an mpi_allreduce for a hermitian matrix A.
@@ -63,6 +63,6 @@
        call timer%stop("herm_matrix_allreduce" // PRECISION_SUFFIX)
 
      end subroutine herm_matrix_allreduce_&
-&PRECISION
+     &PRECISION
 
 

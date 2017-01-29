@@ -63,7 +63,7 @@
       call timer%stop("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
     end subroutine symm_matrix_allreduce_&
-&PRECISION
+    &PRECISION
 
 
 
