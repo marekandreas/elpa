@@ -138,10 +138,22 @@
 #else
       complex(kind=COMPLEX_DATATYPE)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
 #endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=COMPLEX_DATATYPE), parameter   :: CZERO = (0.0_rk8, 0.0_rk8), CONE = (1.0_rk8, 0.0_rk8)
+#endif /* COMPLEXCASE */
+
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+      real(kind=REAL_DATATYPE), parameter         :: ZERO = 0.0_rk8, ONE = 1.0_rk8
+
 #else
-      complex(kind=COMPLEX_DATATYPE), parameter   :: CZERO = (0.0_rk4, 0.0_rk4), CONE = (1.0_rk4, 0.0_rk4)
+      real(kind=REAL_DATATYPE), parameter         :: ZERO = 0.0_rk4, ONE = 1.0_rk4
+#endif
+#endif
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+      complex(kind=COMPLEX_DATATYPE), parameter   :: ZERO = (0.0_rk8, 0.0_rk8), ONE = (1.0_rk8, 0.0_rk8)
+#else
+      complex(kind=COMPLEX_DATATYPE), parameter   :: ZERO = (0.0_rk4, 0.0_rk4), ONE = (1.0_rk4, 0.0_rk4)
 #endif
 #endif /* COMPLEXCASE == 1 */
 
@@ -166,7 +178,8 @@
 #if COMPLEXCASE == 1
       complex(kind=COMPLEX_DATATYPE)              :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
-      complex(kind=COMPLEX_DATATYPE), allocatable :: tmp(:,:), vr(:), vmrCPU(:,:), umcCPU(:,:)
+      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
+      complex(kind=COMPLEX_DATATYPE), allocatable :: vr(:)
 #endif
 
 #if REALCASE == 1
@@ -820,6 +833,7 @@
 
 #if REALCASE == 1
 #ifdef WITH_OPENMP
+
            !Open up one omp region to avoid paying openmp overhead.
            !This does not help performance due to the addition of two openmp barriers around the MPI call,
            !But in the future this may be beneficial if these barriers are replaced with a faster implementation
@@ -874,6 +888,7 @@
              endif
            enddo
            !$omp end parallel
+
 #else /* WITH_OPENMP */
 
            nlc = 0 ! number of local columns
@@ -905,7 +920,6 @@
            enddo
 #endif /* WITH_OPENMP */
 #endif /* REALCASE == 1 */
-
 #if COMPLEXCASE == 1
            nlc = 0 ! number of local columns
            do j=1,lc-1
@@ -929,6 +943,7 @@
              if (lcx>0) then
                nlc = nlc+1
                a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+
              endif
            enddo
 
@@ -997,22 +1012,32 @@
 
          vav = 0
 	 call timer%start("blas")
-#if REALCASE == 1
          if (useGPU) then
            if (l_rows>0) &
-             call PRECISION_SYRK('U', 'T', n_cols, l_rows, CONST_1_0, vmrCUDA, cur_l_rows, CONST_0_0, vav, ubound(vav,dim=1))
-         else
-           if (l_rows>0) &
-             call PRECISION_SYRK('U', 'T', n_cols, l_rows, CONST_1_0, vmrCPU, ubound(vmrCPU,dim=1), CONST_0_0, vav, ubound(vav,dim=1))
-         endif
+#if REALCASE == 1
+             call PRECISION_SYRK('U', 'T',            &
 #endif
 #if COMPLEXCASE == 1
-        if (l_rows>0) then
-          call timer%start("blas")
-          call PRECISION_HERK('U', 'C', n_cols, l_rows, CONE, vmrCPU, ubound(vmrCPU,dim=1), CZERO, vav, ubound(vav,dim=1))
-          call timer%stop("blas")
-        endif
+             call PRECISION_HERK('U', 'C',            &
 #endif
+	                         n_cols, l_rows, ONE, &
+#if REALCASE == 1
+				 vmrCUDA, cur_l_rows, &
+#endif
+#if COMPEXCASE == 1
+                                 vmrCPU, ubound(vmrCPU,dim=1), &
+#endif
+				 ZERO, vav, ubound(vav,dim=1))
+         else
+           if (l_rows>0) &
+#if REALCASE == 1
+             call PRECISION_SYRK('U', 'T',           &
+#endif
+#if COMPLEXCASE == 1
+             call PRECISION_HERK('U', 'C',           &
+#endif
+	                         n_cols, l_rows, ONE, vmrCPU, ubound(vmrCPU,dim=1), ZERO, vav, ubound(vav,dim=1))
+         endif
 	 call timer%stop("blas")
 #if REALCASE == 1
 	 call symm_matrix_allreduce_&
@@ -1028,11 +1053,12 @@
            tau = tmat(lc,lc,istep)
            if (lc<n_cols) then
 #if REALCASE == 1
-             call PRECISION_TRMV('U', 'T', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
+             call PRECISION_TRMV('U', 'T', 'N',          &
 #endif
 #if COMPLEXCASE == 1
-             call PRECISION_TRMV('U', 'C', 'N', n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
+             call PRECISION_TRMV('U', 'C', 'N',          &
 #endif
+                                 n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
 
 #if REALCASE == 1
              tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
@@ -1050,17 +1076,17 @@
 #if REALCASE == 1
        if (useGPU) then
          call elpa_transpose_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+              &MATH_DATATYPE&
+              &_&
+              &PRECISION &
 	                                   (vmrCUDA, cur_l_rows, mpi_comm_rows, &
                                             umcCUDA(cur_l_cols * n_cols + 1), cur_l_cols, mpi_comm_cols, &
                                             1, istep*nbw, n_cols, nblk)
        else
          call elpa_transpose_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+              &MATH_DATATYPE&
+              &_&
+              &PRECISION &
                                            (vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                             umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
                                             1, istep*nbw, n_cols, nblk)
@@ -1068,9 +1094,9 @@
 #endif
 #if COMPLEXCASE == 1
          call elpa_transpose_vectors_&
-&MATH_DATATYPE&
-&_&
-&PRECISION &
+              &MATH_DATATYPE&
+              &_&
+              &PRECISION &
                                       (vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                       umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
                                       1, istep*nbw, n_cols, nblk)
@@ -1264,14 +1290,14 @@
 
             if (useGPU) then
               call timer%start("cublas")
-              call cublas_PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, (a_dev + ((lcs-1)*lda* &
+              call cublas_PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, (a_dev + ((lcs-1)*lda* &
                         size_of_PRECISION_complex)), lda, &
-                        vmr_dev, cur_l_rows, CONE, (umc_dev +(lcs-1)*size_of_PRECISION_complex), cur_l_cols)
+                        vmr_dev, cur_l_rows, ONE, (umc_dev +(lcs-1)*size_of_PRECISION_complex), cur_l_cols)
               call timer%stop("cublas")
             else
               call timer%start("blas")
-              call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, CONE, a(1,lcs), ubound(a,dim=1), &
-                         vmrCPU, ubound(vmrCPU,dim=1), CONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+              call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
+                         vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
               call timer%stop("blas")
             endif
 
@@ -1279,15 +1305,15 @@
             lre = min(l_rows,i*l_rows_tile)
             if (useGPU) then
               call timer%start("cublas")
-              call cublas_PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, (a_dev+((lcs-1)*lda* &
+              call cublas_PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, (a_dev+((lcs-1)*lda* &
                         size_of_PRECISION_complex)),lda,  &
-                        (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_PRECISION_complex), cur_l_cols,CONE,  &
+                        (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_PRECISION_complex), cur_l_cols,ONE,  &
                         (vmr_dev+(cur_l_rows * n_cols)*size_of_PRECISION_complex), cur_l_rows)
               call timer%stop("cublas")
             else
               call timer%start("blas")
-              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, CONE, a(1,lcs), lda, &
-                         umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), CONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
+                         umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
               call timer%stop("blas")
             endif
           enddo
@@ -1597,17 +1623,17 @@
         endif
 #ifdef WITH_MPI
         if (l_cols>0) then
-          allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
+          allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_complex: error when allocating tmp "//errorMessage
             stop
           endif
           call timer%start("mpi_communication")
-          call mpi_allreduce(umcCPU, tmp, l_cols*n_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 
-          umcCPU(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
-          deallocate(tmp, stat=istat, errmsg=errorMessage)
+          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+          deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_complex: error when deallocating tmp "//errorMessage
             stop
@@ -1654,11 +1680,11 @@
             stop
           endif
           call timer%start("cublas")
-          call  cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat_dev, nbw, umc_dev, cur_l_cols)
+          call  cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, cur_l_cols)
           call timer%stop("cublas")
         else ! not useGPU
           call timer%start("blas")
-          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, CONE, tmat(1,1,istep), ubound(tmat,dim=1), &
+          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), &
                      umcCPU, ubound(umcCPU,dim=1))
           call timer%stop("blas")
         endif
@@ -1671,10 +1697,10 @@
             stop
           endif
           call timer%start("cublas")
-          call cublas_PRECISION_GEMM('C', 'N', n_cols, n_cols, l_cols, CONE, umc_dev, cur_l_cols, (umc_dev +( cur_l_cols *n_cols) &
-                            *size_of_PRECISION_complex ), cur_l_cols, CZERO, vav_dev, nbw)
+          call cublas_PRECISION_GEMM('C', 'N', n_cols, n_cols, l_cols, ONE, umc_dev, cur_l_cols, (umc_dev +( cur_l_cols *n_cols) &
+                            *size_of_PRECISION_complex ), cur_l_cols, ZERO, vav_dev, nbw)
 
-          call cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat_dev, nbw, vav_dev, nbw)
+          call cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
           call timer%stop("cublas")
           successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev,nbw*nbw*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
           if (.not.(successCUDA)) then
@@ -1693,9 +1719,9 @@
           endif
         else ! useGPU
           call timer%start("blas")
-          call PRECISION_GEMM('C', 'N', n_cols, n_cols, l_cols, CONE, umcCPU, ubound(umcCPU,dim=1), umcCPU(1,n_cols+1), &
-                     ubound(umcCPU,dim=1), CZERO, vav, ubound(vav,dim=1))
-          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, CONE, tmat(1,1,istep), &
+          call PRECISION_GEMM('C', 'N', n_cols, n_cols, l_cols, ONE, umcCPU, ubound(umcCPU,dim=1), umcCPU(1,n_cols+1), &
+                     ubound(umcCPU,dim=1), ZERO, vav, ubound(vav,dim=1))
+          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, ONE, tmat(1,1,istep), &
                      ubound(tmat,dim=1), vav, ubound(vav,dim=1))
           call timer%stop("blas")
           call herm_matrix_allreduce_&
@@ -1709,7 +1735,7 @@
           call timer%start("cublas")
           call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, CONST_COMPLEX_PAIR_NEGATIVE_0_5, (umc_dev +  &
                             (cur_l_cols * n_cols )*size_of_PRECISION_complex), &
-                            cur_l_cols, vav_dev, nbw, CONE, umc_dev, cur_l_cols)
+                            cur_l_cols, vav_dev, nbw, ONE, umc_dev, cur_l_cols)
           call timer%stop("cublas")
           ! Transpose umc -> umr (stored in vmr, second half)
 
@@ -1751,7 +1777,7 @@
         else ! not useGPU
           call timer%start("blas")
           call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, CONST_COMPLEX_PAIR_NEGATIVE_0_5, umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), &
-                     vav, ubound(vav,dim=1), CONE, umcCPU, ubound(umcCPU,dim=1))
+                     vav, ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
           call timer%stop("blas")
           ! Transpose umc -> umr (stored in vmr, second half)
           call elpa_transpose_vectors_&
@@ -1771,15 +1797,15 @@
           if (lce<lcs .or. lre<1) cycle
             if (useGPU) then
               call timer%start("cublas")
-              call cublas_PRECISION_GEMM('N', 'C', lre, lce-lcs+1, 2*n_cols, -CONE, &
+              call cublas_PRECISION_GEMM('N', 'C', lre, lce-lcs+1, 2*n_cols, -ONE, &
                                 vmr_dev ,cur_l_rows, (umc_dev +(lcs-1)*size_of_PRECISION_complex),cur_l_cols, &
-                                CONE, (a_dev + (lcs-1)*lda*size_of_PRECISION_complex),lda)
+                                ONE, (a_dev + (lcs-1)*lda*size_of_PRECISION_complex),lda)
               call timer%stop("cublas")
             else
               call timer%start("blas")
-              call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -CONE, &
+              call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -ONE, &
                          vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-                         CONE, a(1,lcs), lda)
+                         ONE, a(1,lcs), lda)
               call timer%stop("blas")
             endif
           enddo
