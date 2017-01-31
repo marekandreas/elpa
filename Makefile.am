@@ -17,6 +17,8 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa1_auxiliary.F90 \
         src/elpa1_utilities.F90 \
         src/elpa2_utilities.F90 \
+	src/elpa_init.F90 \
+	src/elpa_t.F90 \
         src/elpa_utilities.F90
 
 # internal parts
@@ -322,6 +324,7 @@ dist_files_DATA = \
   test/Fortran/test_invert_trm_real.F90 \
   test/Fortran/test_cholesky_complex.F90 \
   test/Fortran/test_invert_trm_complex.F90 \
+  test/Fortran/test_new_interface.F90 \
   src/elpa2_print_kernels.F90
 
 #end needed
@@ -363,6 +366,7 @@ noinst_PROGRAMS = \
   elpa2_test_real_c_version@SUFFIX@ \
   elpa2_test_complex_c_version@SUFFIX@ \
   elpa_driver_real_c_version@SUFFIX@ \
+  elpa_test_new_interface@SUFFIX@ \
   elpa_driver_complex_c_version@SUFFIX@
 
 if WANT_SINGLE_PRECISION_COMPLEX
@@ -435,6 +439,11 @@ libelpatest@SUFFIX@_la_SOURCES += \
 	test/shared/redir.c \
 	test/shared/redirect.F90
 endif
+elpa_test_new_interface@SUFFIX@_SOURCES = test/Fortran/test_new_interface.F90
+elpa_test_new_interface@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
+elpa_test_new_interface@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa_test_new_interface@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/C/elpa1_test_real_c_version.c
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
@@ -753,6 +762,7 @@ check_SCRIPTS = \
   elpa2_test_real_c_version@SUFFIX@.sh \
   elpa2_test_complex_c_version@SUFFIX@.sh \
   elpa_driver_real_c_version@SUFFIX@.sh \
+  elpa_test_new_interface@SUFFIX@.sh \
   elpa_driver_complex_c_version@SUFFIX@.sh
 
 if WANT_SINGLE_PRECISION_REAL
