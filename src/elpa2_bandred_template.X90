@@ -1024,7 +1024,7 @@
 #if REALCASE == 1
 				 vmrCUDA, cur_l_rows, &
 #endif
-#if COMPEXCASE == 1
+#if COMPLEXCASE == 1
                                  vmrCPU, ubound(vmrCPU,dim=1), &
 #endif
 				 ZERO, vav, ubound(vav,dim=1))
