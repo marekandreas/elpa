@@ -178,7 +178,7 @@
 #if COMPLEXCASE == 1
       complex(kind=COMPLEX_DATATYPE)              :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
-      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
+      complex(kind=COMPLEX_DATATYPE), allocatable :: tmp_CPU(:,:), vmrCPU(:,:), umcCPU(:,:)
       complex(kind=COMPLEX_DATATYPE), allocatable :: vr(:)
 #endif
 
@@ -1609,6 +1609,7 @@
 #endif /* WITH_OPENMP */
 
        endif ! useGPU
+
 #endif /* REALCASE == 1 */
 
 #if COMPLEXCASE == 1
@@ -1623,19 +1624,19 @@
         endif
 #ifdef WITH_MPI
         if (l_cols>0) then
-          allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
+          allocate(tmp_CPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
-            print *,"bandred_complex: error when allocating tmp "//errorMessage
+            print *,"bandred_complex: error when allocating tmp_CPU "//errorMessage
             stop
           endif
           call timer%start("mpi_communication")
-          call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(umcCPU, tmp_CPU, l_cols*n_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 
-          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-          deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
+          umcCPU(1:l_cols,1:n_cols) = tmp_CPU(1:l_cols,1:n_cols)
+          deallocate(tmp_CPU, stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
-            print *,"bandred_complex: error when deallocating tmp "//errorMessage
+            print *,"bandred_complex: error when deallocating tmp_CPU "//errorMessage
             stop
           endif
         endif
@@ -1659,9 +1660,6 @@
 !        endif
 
 #endif /* WITH_MPI */
-
-
-
 
         ! U = U * Tmat**T
         if (useGPU) then
@@ -1809,7 +1807,7 @@
               call timer%stop("blas")
             endif
           enddo
-#endif
+#endif /* COMPLEXCASE */
 
        if (.not.(useGPU)) then
          if (allocated(vr)) then
@@ -1934,14 +1932,6 @@
        endif
      endif
 
-#if COMPLEXCASE == 1
-       successCUDA = cuda_free(umc_dev)
-       if (.not.(successCUDA)) then
-         print *,"bandred_complex: error in cudaFree"
-
-         stop
-       endif
-#endif
      if (useGPU) then
        successCUDA = cuda_free(vmr_dev)
        if (.not.(successCUDA)) then
@@ -1958,6 +1948,7 @@
 	 &: error in cudaFree"
          stop
        endif
+
 #if REALCASE == 1
        if (allocated(umcCUDA)) then
          deallocate(umcCUDA, stat=istat, errmsg=errorMessage)
