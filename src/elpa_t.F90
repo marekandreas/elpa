@@ -27,8 +27,6 @@ module elpa_type
 
  contains
 
-
-
    function elpa_create(na, nev, local_nrows, local_ncols, nblk) result(elpa)
      use precision
      use init_elpa
