@@ -1642,7 +1642,7 @@
             stop
           endif
           call timer%start("mpi_communication")
-          call mpi_allreduce(umcCPU, tmpCUDA, l_cols*n_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 
           umcCUDA(1:l_cols,1:n_cols) = tmpCUDA(1:l_cols,1:n_cols)
