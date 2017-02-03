@@ -1247,31 +1247,79 @@
          endif ! l_cols>0 .and. l_rows>0
 
 
-#if REALCASE == 1
-
-
        else ! do not useGPU version
+#if 0
+! original complex implemetation check for performance
+          umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
+          vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+
+        if (l_cols>0 .and. l_rows>0) then
+          do i=0,(istep*nbw-1)/tile_size
+
+            lcs = i*l_cols_tile+1
+            lce = min(l_cols,(i+1)*l_cols_tile)
+            if (lce<lcs) cycle
+
+            lre = min(l_rows,(i+1)*l_rows_tile)
+
+              call timer%start("blas")
+              call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
+                         vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+              call timer%stop("blas")
+
+            if (i==0) cycle
+            lre = min(l_rows,i*l_rows_tile)
+              call timer%start("blas")
+              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
+                         umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+              call timer%stop("blas")
+          enddo
+
+        endif ! (l_cols>0 .and. l_rows>0)
+#endif /* if 0 */
 
          !Code for Algorithm 4
 
          n_way = 1
 #ifdef WITH_OPENMP
+#if REALCASE == 1
+         ! check whether this can also be done in complex case
          n_way = omp_get_max_threads()
+#endif
 #endif
          !umcCPU(1:l_cols,1:n_cols) = 0.d0
          !vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0
 #ifdef WITH_OPENMP
+#if REALCASE == 1
          !$omp parallel private( i,lcs,lce,lrs,lre)
 #endif
+#endif
          if (n_way > 1) then
+#ifdef WITH_OPENMP
+#if REALCASE == 1
            !$omp do
+#endif
+#endif
            do i=1,min(l_cols_tile, l_cols)
+#if REALCASE == 1
              umcCPU(i,1:n_cols) = CONST_0_0
+#endif
+#if COMPLEXCASE == 1
+             umcCPU(i,1:n_cols) = CONST_COMPLEX_0_0
+#endif
            enddo
-
+#ifdef WITH_OPENMP
+#if REALCASE == 1
            !$omp do
+#endif
+#endif
            do i=1,l_rows
+#if REALCASE == 1
              vmrCPU(i,n_cols+1:2*n_cols) = CONST_0_0
+#endif
+#if COMPLEXCASE == 1
+             vmrCPU(i,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+#endif
            enddo
            if (l_cols>0 .and. l_rows>0) then
 
@@ -1289,8 +1337,11 @@
              !This algorithm chosen because in this algoirhtm, the loop around the dgemm calls
              !is easily parallelized, and regardless of choise of algorithm,
              !the startup cost for parallelizing the dgemms inside the loop is too great
-
+#ifdef WITH_OPENMP
+#if REALCASE == 1
              !$omp do schedule(static,1)
+#endif
+#endif
              do i=0,(istep*nbw-1)/tile_size
                lcs = i*l_cols_tile+1                   ! local column start
                lce = min(l_cols, (i+1)*l_cols_tile)    ! local column end
@@ -1303,26 +1354,39 @@
                if ( lre > lrs .and. l_cols > lcs ) then
 	         call timer%start("blas")
                  call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
-                            CONST_1_0, a(lrs,lcs), ubound(a,dim=1),                 &
-                                  umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
-                            CONST_0_0, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
+                                     ONE, a(lrs,lcs), ubound(a,dim=1),                 &
+                                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
+                                     ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
 	         call timer%stop("blas")
                endif
 
                ! C1 += A10' B0
                if ( lce > lcs .and. i > 0 ) then
 	       	 call timer%start("blas")
-                 call PRECISION_GEMM('T', 'N', lce-lcs+1, n_cols, lrs-1,           &
-                            CONST_1_0, a(1,lcs),   ubound(a,dim=1),           &
-                                  vmrCPU(1,1),   ubound(vmrCPU,dim=1),   &
-                            CONST_0_0, umcCPU(lcs,1), ubound(umcCPU,dim=1))
-	       	 call timer%stop("blas")
+#if REALCASE == 1
+                 call PRECISION_GEMM('T', 'N',     &
+#endif
+#if COMPLEXCASE == 1
+                 call PRECISION_GEMM('T', 'N',     &
+#endif
+		                    lce-lcs+1, n_cols, lrs-1,              &
+                                    ONE, a(1,lcs),   ubound(a,dim=1),      &
+                                    vmrCPU(1,1),   ubound(vmrCPU,dim=1),   &
+                                    ZERO, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+                 call timer%stop("blas")
                endif
              enddo
            endif ! l_cols>0 .and. l_rows>0
          else ! n_way > 1
+#if REALCASE == 1
            umcCPU(1:l_cols,1:n_cols) = CONST_0_0
            vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_0_0
+#endif
+#if COMPLEXCASE == 1
+           umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
+	   vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+
+#endif
            if (l_cols>0 .and. l_rows>0) then
              do i=0,(istep*nbw-1)/tile_size
 
@@ -1331,116 +1395,31 @@
                if (lce<lcs) cycle
 	       call timer%start("blas")
                lre = min(l_rows,(i+1)*l_rows_tile)
-               call PRECISION_GEMM('T', 'N', lce-lcs+1, n_cols, lre, CONST_1_0, a(1,lcs), ubound(a,dim=1), &
-                            vmrCPU, ubound(vmrCPU,dim=1), CONST_1_0, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+#if REALCASE == 1
+               call PRECISION_GEMM('T', 'N',          &
+#endif
+#if COMPLEXCASE == 1
+               call PRECISION_GEMM('C', 'N',          &
+#endif
+	                           lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
+                                   vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
 	       call timer%stop("blas")
                if (i==0) cycle
                  lre = min(l_rows,i*l_rows_tile)
 	       	 call timer%start("blas")
-                 call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, CONST_1_0, a(1,lcs), lda, &
-                            umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), CONST_1_0, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
-	       	 call timer%stop("blas")
+                 call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
+                                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE,      &
+				     vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+                 call timer%stop("blas")
              enddo
            endif
          endif ! n_way > 1
 #ifdef WITH_OPENMP
+#if REALCASE == 1
         !$omp end parallel
 #endif
-#endif /* REALCASE == 1 */
+#endif
        endif ! do not useGPU version
-
-
-#if COMPLEXCASE == 1
-        if (useGPU) then
-          !umcCUDA(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
-          !vmrCUDA(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
-	else
-          umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
-          vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
-	endif
-
-        if (l_cols>0 .and. l_rows>0) then
-          if (useGPU) then
-           !! if (size(vmrCPU,dim=1)*size(vmrCPU,dim=2) .gt. vmr_size) then
-           !!   print *,"bandred_complex: vmr size 2 :",size(vmrCPU,dim=1)*size(vmrCPU,dim=2),vmr_size
-           !!   stop
-           !! endif
-           ! successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1,1)),vmr_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
-
-           ! if (.not.(successCUDA)) then
-           !   print *, "bandred_complex:  cuda memcpy vmr_dev failed ", istat
-           !   stop
-           ! endif
-           ! !if (size(umcCPU,dim=1)*size(umcCPU,dim=2) .gt. umc_size) then
-           ! !  print *,"bandred_complex: umc size 2 :",size(umcCPU,dim=1)*size(umcCPU,dim=2),umc_size
-           ! !  stop
-           ! !endif
-           ! successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
-           ! if (.not.(successCUDA)) then
-           !   print *, "bandred_complex:  cuda memcpy umc_dev failed  ", istat
-           !   stop
-           ! endif
-          endif
-          do i=0,(istep*nbw-1)/tile_size
-
-            lcs = i*l_cols_tile+1
-            lce = min(l_cols,(i+1)*l_cols_tile)
-            if (lce<lcs) cycle
-
-            lre = min(l_rows,(i+1)*l_rows_tile)
-
-            if (useGPU) then
-              !call timer%start("cublas")
-              !call cublas_PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, (a_dev + ((lcs-1)*lda* &
-              !          size_of_PRECISION_complex)), lda, &
-              !          vmr_dev, cur_l_rows, ONE, (umc_dev +(lcs-1)*size_of_PRECISION_complex), cur_l_cols)
-              !call timer%stop("cublas")
-            else
-              call timer%start("blas")
-              call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
-                         vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
-              call timer%stop("blas")
-            endif
-
-            if (i==0) cycle
-            lre = min(l_rows,i*l_rows_tile)
-            if (useGPU) then
-              !call timer%start("cublas")
-              !call cublas_PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, (a_dev+((lcs-1)*lda* &
-              !          size_of_PRECISION_complex)),lda,  &
-              !          (umc_dev+(cur_l_cols * n_cols+lcs-1)*size_of_PRECISION_complex), cur_l_cols,ONE,  &
-              !          (vmr_dev+(cur_l_rows * n_cols)*size_of_PRECISION_complex), cur_l_rows)
-              !call timer%stop("cublas")
-            else
-              call timer%start("blas")
-              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
-                         umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
-              call timer%stop("blas")
-            endif
-          enddo
-
-          if (useGPU) then
-!!            if (size(vmrCPU,dim=1)*size(vmrCPU,dim=2) .gt. vmr_size) then
-!!              print *,"bandred_complex: vmr size 3 :",size(vmrCPU,dim=1)*size(vmrCPU,dim=2),vmr_size
-!!              stop
-!!            endif
-!            successCUDA = cuda_memcpy(loc(vmrCUDA(1,1)),vmr_dev,vmr_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
-!            if (.not.(successCUDA)) then
-!              print *, "bandred_complex:  cuad memcpy failed vmrCUDA ", istat
-!              stop
-!            endif
-! !           if (size(umcCPU,dim=1)*size(umcCPU,dim=2) .gt. umc_size) then
-! !             print *,"bandred_complex: umc size 3 :",size(umcCPU,dim=1)*size(umcCPU,dim=2),umc_size
-! !             stop
-! !           endif
-!            successCUDA = cuda_memcpy(loc(umcCUDA(1,1)), umc_dev,umc_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
-!            if (.not.(successCUDA)) then
-!              print *, "bandred_complex:  cuad memcpy failed umcCUDA ", istat
-!              stop
-!            endif
-          endif ! useGPU
-        endif ! (l_cols>0 .and. l_rows>0)
-#endif /* COMPLEXCASE == 1 */
 
        ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
        ! on the processors containing the diagonal
