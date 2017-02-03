@@ -1471,8 +1471,9 @@
 					       mpi_comm_cols, istep*nbw, n_cols, nblk)
          endif
 
-#ifdef WITH_MPI
+
          if (l_cols>0) then
+#ifdef WITH_MPI
 #if REALCASE == 1
            allocate(tmpCUDA(l_cols * n_cols), stat=istat, errmsg=errorMessage)
 #endif
