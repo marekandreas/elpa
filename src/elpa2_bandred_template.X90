@@ -1723,7 +1723,6 @@
 
        else ! do not useGPU
 
-#if REALCASE == 1
          ! Or if we used the Algorithm 4
          if (tile_size < istep*nbw .or. n_way > 1) then
            call elpa_reduce_add_vectors_&
@@ -1738,13 +1737,22 @@
          if (l_cols>0) then
            allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
-             print *,"bandred_real: error when allocating tmpCPU "//errorMessage
+             print *,"bandred_&
+	     &MATH_DATATYPE&
+	     &: error when allocating tmpCPU "//errorMessage
              stop
            endif
 
 #ifdef WITH_MPI
            call timer%start("mpi_communication")
-           call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+           call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols,    &
+#if REALCASE == 1
+	                      MPI_REAL_PRECISION,               &
+#endif
+#if COMPLEXCASE == 1
+                              MPI_COMPLEX_PRECISION,            &
+#endif
+			      MPI_SUM, mpi_comm_rows, mpierr)
            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
            call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -1753,7 +1761,9 @@
 
            deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
-             print *,"bandred_real: error when deallocating tmpCPU "//errorMessage
+             print *,"bandred_&
+	     &MATH_DATATYPE&
+	     &: error when deallocating tmpCPU "//errorMessage
              stop
            endif
          endif
@@ -1761,25 +1771,57 @@
          ! U = U * Tmat**T
 	 call timer%start("blas")
 
-         call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', l_cols,n_cols, CONST_1_0, tmat(1,1,istep), ubound(tmat,dim=1), &
-                    umcCPU, ubound(umcCPU,dim=1))
+#if REALCASE == 1
+         call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit',     &
+#endif
+#if COMPLEXCASE == 1
+         call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit',         &
+#endif
+	                      l_cols,n_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), &
+                              umcCPU, ubound(umcCPU,dim=1))
 
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
 
-         call PRECISION_GEMM('T', 'N', n_cols, n_cols, l_cols, CONST_1_0, umcCPU, ubound(umcCPU,dim=1), umcCPU(1,n_cols+1), &
-                    ubound(umcCPU,dim=1), CONST_0_0, vav, ubound(vav,dim=1))
+#if REALCASE == 1
+         call PRECISION_GEMM('T', 'N',              &
+#endif
+#if COMPLEXCASE == 1
+         call PRECISION_GEMM('C', 'N',              &
+#endif
+	                     n_cols, n_cols, l_cols, ONE, umcCPU, ubound(umcCPU,dim=1), umcCPU(1,n_cols+1), &
+                             ubound(umcCPU,dim=1), ZERO, vav, ubound(vav,dim=1))
 
-         call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit', n_cols, n_cols, CONST_1_0, tmat(1,1,istep),    &
-                    ubound(tmat,dim=1), vav, ubound(vav,dim=1))
+#if REALCASE == 1
+         call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit',    &
+#endif
+#if COMPLEXCASE == 1
+         call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit',        &
+#endif
+	                     n_cols, n_cols, ONE, tmat(1,1,istep),    &
+                             ubound(tmat,dim=1), vav, ubound(vav,dim=1))
 	 call timer%stop("blas")
+
+#if REALCASE == 1
          call symm_matrix_allreduce_&
+#endif
+#if COMPLEXCASE == 1
+         call herm_matrix_allreduce_&
+#endif
          &PRECISION &
 	                            (n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
          ! U = U - 0.5 * V * VAV
 	 call timer%start("blas")
-         call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, -CONST_0_5, umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
-                     ubound(vav,dim=1), CONST_1_0, umcCPU, ubound(umcCPU,dim=1))
+         call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
+#if REALCASE == 1
+	                     -CONST_0_5,                           &
+#endif
+#if COMPLEXCASE == 1
+                              CONST_COMPLEX_PAIR_NEGATIVE_0_5,     &
+#endif
+			      umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
+                              ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
+
 	 call timer%stop("blas")
          ! Transpose umc -> umr (stored in vmr, second half)
          call elpa_transpose_vectors_&
@@ -1793,6 +1835,8 @@
          ! A = A - V*U**T - U*V**T
 
 #ifdef WITH_OPENMP
+
+#if REALCASE == 1
          !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
          n_threads = omp_get_num_threads()
          if (mod(n_threads, 2) == 0) then
@@ -1827,6 +1871,20 @@
        	   call timer%stop("blas")
          enddo
          !$omp end parallel
+#endif
+#if COMPLEXCASE == 1
+         do i=0,(istep*nbw-1)/tile_size
+           lcs = i*l_cols_tile+1
+           lce = min(l_cols,(i+1)*l_cols_tile)
+           lre = min(l_rows,(i+1)*l_rows_tile)
+           if (lce<lcs .or. lre<1) cycle
+             call timer%start("blas")
+             call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -ONE, &
+                         vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
+                         ONE, a(1,lcs), lda)
+             call timer%stop("blas")
+           enddo
+#endif
 
 #else /* WITH_OPENMP */
 
@@ -1836,131 +1894,20 @@
            lre = min(l_rows,(i+1)*l_rows_tile)
            if (lce<lcs .or. lre<1) cycle
 	   call timer%start("blas")
-           call PRECISION_GEMM('N', 'T', lre,lce-lcs+1, 2*n_cols, -CONST_1_0, &
-                       vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-                       CONST_1_0, a(1,lcs), lda)
+#if REALCASE == 1
+           call PRECISION_GEMM('N', 'T',        &
+#endif
+#if COMPLEXCASE == 1
+           call PRECISION_GEMM('N', 'C',        &
+#endif
+	                       lre,lce-lcs+1, 2*n_cols, -ONE, &
+                               vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
+                               ONE, a(1,lcs), lda)
 	   call timer%stop("blas")
          enddo
 #endif /* WITH_OPENMP */
-#endif /* REALCASE == 1 */
 
        endif ! useGPU
-
-
-#if COMPLEXCASE == 1
-      if (useGPU) then
-
-       else ! useGPU
-
-        if (tile_size < istep*nbw) then
-          call elpa_reduce_add_vectors_&
-          &MATH_DATATYPE&
-          &_&
-          &PRECISION &
-                                          (vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
-                                          umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                          istep*nbw, n_cols, nblk)
-        endif
-#ifdef WITH_MPI
-        if (l_cols>0) then
-          allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_complex: error when allocating tmpCPU "//errorMessage
-            stop
-          endif
-          call timer%start("mpi_communication")
-          call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-          call timer%stop("mpi_communication")
-
-          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-          deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_complex: error when deallocating tmpCPU "//errorMessage
-            stop
-          endif
-        endif
-
-#else /* WITH_MPI */
-
-!        if (l_cols>0) then
-!          allocate(tmp(l_cols,n_cols), stat=istat, errmsg=errorMessage)
-!          if (istat .ne. 0) then
-!            print *,"bandred_complex: error when allocating tmp "//errorMessage
-!            stop
-!          endif
-!          tmp(1:l_cols,1:n_cols) = umcCPU(1:l_cols,1:n_cols)
-!
-!          umcCPU(1:l_cols,1:n_cols) = tmp(1:l_cols,1:n_cols)
-!          deallocate(tmp, stat=istat, errmsg=errorMessage)
-!          if (istat .ne. 0) then
-!            print *,"bandred_complex: error when deallocating tmp "//errorMessage
-!            stop
-!          endif
-!        endif
-
-#endif /* WITH_MPI */
-
-       endif !use GPU
-
-
-        ! U = U * Tmat**T
-        if (useGPU) then
-        else ! not useGPU
-          call timer%start("blas")
-          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', l_cols, n_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), &
-                     umcCPU, ubound(umcCPU,dim=1))
-          call timer%stop("blas")
-        endif
-
-        ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-        if (useGPU) then
-
-        else ! useGPU
-          call timer%start("blas")
-          call PRECISION_GEMM('C', 'N', n_cols, n_cols, l_cols, ONE, umcCPU, ubound(umcCPU,dim=1), umcCPU(1,n_cols+1), &
-                     ubound(umcCPU,dim=1), ZERO, vav, ubound(vav,dim=1))
-          call PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit', n_cols, n_cols, ONE, tmat(1,1,istep), &
-                     ubound(tmat,dim=1), vav, ubound(vav,dim=1))
-          call timer%stop("blas")
-          call herm_matrix_allreduce_&
-          &PRECISION &
-                                    (n_cols,vav,nbw,nbw,mpi_comm_cols)
-        endif
-
-        ! U = U - 0.5 * V * VAV
-
-        if (useGPU) then
-        else ! not useGPU
-          call timer%start("blas")
-          call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols, CONST_COMPLEX_PAIR_NEGATIVE_0_5, umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), &
-                     vav, ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
-          call timer%stop("blas")
-          ! Transpose umc -> umr (stored in vmr, second half)
-          call elpa_transpose_vectors_&
-          &MATH_DATATYPE&
-          &_&
-          &PRECISION &
-	                                       (umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                                vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
-                                                1, istep*nbw, n_cols, nblk)
-        endif
-        ! A = A - V*U**T - U*V**T
-
-        do i=0,(istep*nbw-1)/tile_size
-          lcs = i*l_cols_tile+1
-          lce = min(l_cols,(i+1)*l_cols_tile)
-          lre = min(l_rows,(i+1)*l_rows_tile)
-          if (lce<lcs .or. lre<1) cycle
-            if (useGPU) then
-            else
-              call timer%start("blas")
-              call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -ONE, &
-                         vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-                         ONE, a(1,lcs), lda)
-              call timer%stop("blas")
-            endif
-          enddo
-#endif /* COMPLEXCASE */
 
        if (.not.(useGPU)) then
          if (allocated(vr)) then
