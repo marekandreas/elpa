@@ -65,9 +65,7 @@
     &_&
     &PRECISION &
     (na, a, &
-#if REALCASE == 1
      a_dev, &
-#endif
      lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, &
 #if REALCASE == 1
      tmat_dev, &
@@ -2027,14 +2025,14 @@
        endif
      endif
 
-!#if COMPLEXCASE == 1
-!       successCUDA = cuda_free(umc_dev)
-!       if (.not.(successCUDA)) then
-!         print *,"bandred_complex: error in cudaFree"
-!
-!         stop
-!       endif
-!#endif
+#if COMPLEXCASE == 1
+       successCUDA = cuda_free(umc_dev)
+       if (.not.(successCUDA)) then
+         print *,"bandred_complex: error in cudaFree"
+
+         stop
+       endif
+#endif
 
      if (useGPU) then
        successCUDA = cuda_free(vmr_dev)

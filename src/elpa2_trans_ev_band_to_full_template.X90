@@ -55,9 +55,7 @@
     &_&
     &PRECISION &
     (na, nqc, nblk, nbw, a, &
-#if REALCASE == 1
     a_dev,                  &
-#endif
     lda, tmat,              &
 #if REALCASE == 1
     tmat_dev,               &
@@ -158,9 +156,7 @@
 #endif
 #endif
 
-#if REALCASE == 1
       integer(kind=C_intptr_T)               :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
-#endif
 
       integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                       :: max_blocks_row, max_blocks_col, max_local_rows, &

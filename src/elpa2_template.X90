@@ -291,10 +291,8 @@
       &_&
       &PRECISION &
       (na, a, &
-#if REALCASE == 1
        a_dev, &
-#endif
-      lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+       lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
 #if REALCASE == 1
       tmat_dev,  &
 #endif
@@ -445,9 +443,7 @@
        &_&
        &PRECISION &
        (na, nev, nblk, nbw, a, &
-#if REALCASE == 1
         a_dev, &
-#endif
         lda, tmat, &
 #if REALCASE == 1
         tmat_dev,  &
