@@ -1506,7 +1506,7 @@
          successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*size_of_PRECISION_real, cudaMemcpyHostToDevice)
 #endif
 #if COMPLEXCASE == 1
-          successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
 #endif
          if (.not.(successCUDA)) then
            print *,"bandred_&
@@ -2027,14 +2027,14 @@
        endif
      endif
 
-#if COMPLEXCASE == 1
-       successCUDA = cuda_free(umc_dev)
-       if (.not.(successCUDA)) then
-         print *,"bandred_complex: error in cudaFree"
-
-         stop
-       endif
-#endif
+!#if COMPLEXCASE == 1
+!       successCUDA = cuda_free(umc_dev)
+!       if (.not.(successCUDA)) then
+!         print *,"bandred_complex: error in cudaFree"
+!
+!         stop
+!       endif
+!#endif
 
      if (useGPU) then
        successCUDA = cuda_free(vmr_dev)
