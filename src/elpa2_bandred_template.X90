@@ -67,9 +67,7 @@
     (na, a, &
      a_dev, &
      lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-#if REALCASE == 1
      tmat_dev, &
-#endif
      wantDebug, useGPU, success &
 #if REALCASE == 1
      , useQR)

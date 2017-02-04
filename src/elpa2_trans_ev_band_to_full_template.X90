@@ -57,9 +57,7 @@
     (na, nqc, nblk, nbw, a, &
     a_dev,                  &
     lda, tmat,              &
-#if REALCASE == 1
     tmat_dev,               &
-#endif
     q,                      &
 #if REALCASE == 1
     q_dev,                  &
