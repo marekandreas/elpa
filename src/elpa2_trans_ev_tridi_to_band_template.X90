@@ -3,9 +3,7 @@
     &_&
     &PRECISION &
     (na, nev, nblk, nbw, q,  &
-#if REALCASE == 1
     q_dev,                   &
-#endif
     ldq, matrixCols,         &
 #if REALCASE == 1
     hh_trans_real,           &
@@ -87,8 +85,9 @@
 #endif
 
       real(kind=REAL_DATATYPE), intent(in)     :: hh_trans_real(:,:)
-      integer(kind=c_intptr_t)                 :: q_dev
 #endif
+      integer(kind=c_intptr_t)                 :: q_dev
+
 #if COMPLEXCASE == 1
 #ifdef USE_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)           :: q(ldq,*)
@@ -2657,21 +2656,38 @@
 
 #endif /* WITH_MPI */
 
-#if REALCASE == 1
+!#if REALCASE == 1
      ! copy q to q_dev needed in trans_ev_band_to_full
-        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_real)
+        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*   &
+#if REALCASE == 1
+	                          size_of_PRECISION_real)
+#endif
+#if COMPLEXCASE == 1
+                                  size_of_PRECISION_complex)
+#endif
         if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
+          print *,"trans_ev_tridi_to_band_&
+	  &MAATH_DATATYPE&
+	  &: error in cudaMalloc"
           stop
         endif
 
         ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*    &
+#if REALCASE == 1
+	                          size_of_PRECISION_real,               &
+#endif
+#if COMPLEXCASE == 1
+                                  size_of_PRECISION_complex,            &
+#endif
+				  cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_real: error in cudaMalloc"
+          print *,"trans_ev_tridi_to_band_&
+	  &MATH_DATATYPE&
+	  &: error in cudaMalloc"
           stop
         endif
-#endif
+!#endif
 
      ! deallocate all working space
 

@@ -405,9 +405,7 @@
      &_&
      &PRECISION &
      (na, nev, nblk, nbw, q, &
-#if REALCASE == 1
      q_dev, &
-#endif
      ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU, &
      success, THIS_ELPA_KERNEL)
 
@@ -440,9 +438,7 @@
        &PRECISION &
        (na, nev, nblk, nbw, a, &
         a_dev, lda, tmat, tmat_dev,  q,  &
-#if REALCASE == 1
         q_dev, &
-#endif
         ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU &
 #if REALCASE == 1
         , useQRActual  &

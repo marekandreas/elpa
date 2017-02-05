@@ -55,9 +55,7 @@
     &_&
     &PRECISION &
     (na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, &
-#if REALCASE == 1
     q_dev,                  &
-#endif
      ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
 #if REALCASE == 1
      ,useQr)
@@ -313,17 +311,17 @@
 !        endif
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_complex)
-         if (.not.(successCUDA)) then
-           print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
-           stop
-         endif
-
-         successCUDA = cuda_memcpy(q_dev, loc(q),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
-          if (.not.(successCUDA)) then
-            print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-            stop
-          endif
+!         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_complex)
+!         if (.not.(successCUDA)) then
+!           print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
+!           stop
+!         endif
+!
+!         successCUDA = cuda_memcpy(q_dev, loc(q),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+!          if (.not.(successCUDA)) then
+!            print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
+!            stop
+!          endif
 #endif
 
         ! if MPI is NOT used the following steps could be done on the GPU and memory transfers could be avoided
