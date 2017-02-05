@@ -1973,15 +1973,15 @@
        endif
 
 !#ifdef WITH_MPI
-! it should be possible to keep tmat dev on the device and not copy it arround
-! this is not necessary tmat_dev is passed (unchanged) from one routine to the other
-       successCUDA = cuda_free(tmat_dev)
-       if (.not.(successCUDA)) then
-         print *,"bandred_&
-	 &MATH_DATATYPE&
-	 &: error in cudaFree"
-         stop
-       endif
+!! it should be possible to keep tmat dev on the device and not copy it arround
+!! this is not necessary tmat_dev is passed (unchanged) from one routine to the other
+!       successCUDA = cuda_free(tmat_dev)
+!       if (.not.(successCUDA)) then
+!         print *,"bandred_&
+!	 &MATH_DATATYPE&
+!	 &: error in cudaFree"
+!         stop
+!       endif
 !#endif
 
        successCUDA = cuda_free(vav_dev)

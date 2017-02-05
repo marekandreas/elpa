@@ -281,22 +281,22 @@
         endif
 
 !#ifdef WITH_MPI
-! it should be possible to keep tmat dev on the device and not copy it around
-! already existent on GPU
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* &
-#if REALCASE == 1
-	size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-        size_of_PRECISION_complex)
-#endif
-
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-	  &MATH_DATATYPE&
-	  &: error in cudaMalloc"
-          stop
-        endif
+!! it should be possible to keep tmat dev on the device and not copy it around
+!! already existent on GPU
+!        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* &
+!#if REALCASE == 1
+!	size_of_PRECISION_real)
+!#endif
+!#if COMPLEXCASE == 1
+!        size_of_PRECISION_complex)
+!#endif
+!
+!        if (.not.(successCUDA)) then
+!          print *,"trans_ev_band_to_full_&
+!	  &MATH_DATATYPE&
+!	  &: error in cudaMalloc"
+!          stop
+!        endif
 !#endif
 
 #if REALCASE == 1
@@ -564,24 +564,24 @@
 #endif /* WITH_MPI */
 
 !#ifdef WITH_MPI
-! it should be possible to keep tmat on the device and not copy it aroud
-!            ! copy to device, maybe this can be avoided tmat is input from bandred_real
-
-            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw* &
-#if REALCASE == 1
-	                              size_of_PRECISION_real,                  &
-#endif
-#if COMPLEXCASE == 1
-	                              size_of_PRECISION_complex,               &
-#endif
-				      cudaMemcpyHostToDevice)
-
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_&
-	      &MATH_DATATYPE&
-	      &: error in cudaMemcpy"
-              stop
-            endif
+!! it should be possible to keep tmat on the device and not copy it aroud
+!!            ! copy to device, maybe this can be avoided tmat is input from bandred_real
+!
+!            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw* &
+!#if REALCASE == 1
+!	                              size_of_PRECISION_real,                  &
+!#endif
+!#if COMPLEXCASE == 1
+!	                              size_of_PRECISION_complex,               &
+!#endif
+!				      cudaMemcpyHostToDevice)
+!
+!            if (.not.(successCUDA)) then
+!              print *,"trans_ev_band_to_full_&
+!	      &MATH_DATATYPE&
+!	      &: error in cudaMemcpy"
+!              stop
+!            endif
 !#endif /* WITH_MPI */
 
 	    call timer%start("cublas")
