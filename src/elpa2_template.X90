@@ -291,14 +291,12 @@
       &_&
       &PRECISION &
       (na, a, &
-       a_dev, &
-       lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-      tmat_dev,  &
-      wantDebug, do_useGPU, success &
+       a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+       tmat_dev,  wantDebug, do_useGPU, success &
 #if REALCASE == 1
-      , useQRActual &
+       , useQRActual &
 #endif
-      )
+       )
       if (.not.(success)) return
       ttt1 = MPI_Wtime()
       if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -441,10 +439,7 @@
        &_&
        &PRECISION &
        (na, nev, nblk, nbw, a, &
-        a_dev, &
-        lda, tmat, &
-        tmat_dev,  &
-        q,  &
+        a_dev, lda, tmat, tmat_dev,  q,  &
 #if REALCASE == 1
         q_dev, &
 #endif

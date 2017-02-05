@@ -54,11 +54,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (na, nqc, nblk, nbw, a, &
-    a_dev,                  &
-    lda, tmat,              &
-    tmat_dev,               &
-    q,                      &
+    (na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, &
 #if REALCASE == 1
     q_dev,                  &
 #endif
