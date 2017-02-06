@@ -47,26 +47,6 @@
 
 #include "config-f90.h"
 
-!#if REALCASE==1
-!
-!#ifdef DOUBLE_PRECISION_REAL
-!subroutine redist_band_real_double(lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab)
-!#else
-!subroutine redist_band_real_single(lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, r_ab)
-!#endif
-!
-!#endif /* REALCASE == 1 */
-!
-!#if COMPLEXCASE==1
-!
-!#ifdef DOUBLE_PRECISION_COMPLEX
-!subroutine redist_band_complex_double(lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, c_ab)
-!#else
-!subroutine redist_band_complex_single(lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, c_ab)
-!#endif
-!
-!#endif /* COMPLEXCASE == 1 */
-
 subroutine redist_band_&
 &MATH_DATATYPE&
 &_&
@@ -78,7 +58,7 @@ subroutine redist_band_&
 #if COMPLEXCASE == 1
             c_a, &
 #endif
-            lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, &
+            a_dev, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, &
 #if REALCASE == 1
             r_ab)
 #endif
@@ -93,22 +73,23 @@ subroutine redist_band_&
 #endif
    use elpa2_workload
    use precision
+   use iso_c_binding
    implicit none
 
-   integer(kind=ik), intent(in)     :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+   integer(kind=ik), intent(in)                :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
 #if REALCASE == 1
    real(kind=REAL_DATATYPE), intent(in)        :: r_a(lda, matrixCols)
 #endif
 #if COMPLEXCASE == 1
-   complex(kind=COMPLEX_DATATYPE), intent(in)     :: c_a(lda, matrixCols)
+   complex(kind=COMPLEX_DATATYPE), intent(in)  :: c_a(lda, matrixCols)
 #endif
 
 #if REALCASE == 1
    real(kind=REAL_DATATYPE), intent(out)       :: r_ab(:,:)
 #endif
-
+   integer(kind=c_intptr_t)                    :: a_dev
 #if COMPLEXCASE == 1
-   complex(kind=COMPLEX_DATATYPE), intent(out)    :: c_ab(:,:)
+   complex(kind=COMPLEX_DATATYPE), intent(out) :: c_ab(:,:)
 #endif
 
    integer(kind=ik), allocatable    :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), &

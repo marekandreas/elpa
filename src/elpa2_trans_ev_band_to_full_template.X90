@@ -55,8 +55,7 @@
     &_&
     &PRECISION &
     (na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, &
-    q_dev,                  &
-     ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
+     q_dev, ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
 #if REALCASE == 1
      ,useQr)
 #endif

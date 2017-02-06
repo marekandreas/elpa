@@ -56,7 +56,7 @@
     subroutine tridiag_band_complex_&
 #endif
     &PRECISION &
-    (na, nb, nblk, a, lda, d, e, matrixCols, &
+    (na, nb, nblk, aMatrix, a_dev, lda, d, e, matrixCols, &
 #if REALCASE == 1
     hh_trans_real, &
 #endif
@@ -74,7 +74,7 @@
     !
     !  nblk        blocksize of cyclic distribution, must be the same in both directions!
     !
-    !  a(lda,matrixCols)    Distributed system matrix reduced to banded form in the upper diagonal
+    !  aMatrix(lda,matrixCols)    Distributed system matrix reduced to banded form in the upper diagonal
     !
     !  lda         Leading dimension of a
     !  matrixCols  local columns of matrix a
@@ -98,23 +98,25 @@
 #endif
       use elpa2_workload
       use precision
+      use iso_c_binding
       implicit none
 
       integer(kind=ik), intent(in)                 ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE), intent(in)         :: a(lda,*)
+      real(kind=REAL_DATATYPE), intent(in)         :: aMatrix(lda,*)
 #else
-      real(kind=REAL_DATATYPE), intent(in)         :: a(lda,matrixCols)
+      real(kind=REAL_DATATYPE), intent(in)         :: aMatrix(lda,matrixCols)
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE),intent(in)    :: a(lda,*)
+      complex(kind=COMPLEX_DATATYPE),intent(in)    :: aMatrix(lda,*)
 #else
-      complex(kind=COMPLEX_DATATYPE), intent(in)   :: a(lda,matrixCols)
+      complex(kind=COMPLEX_DATATYPE), intent(in)   :: aMatrix(lda,matrixCols)
 #endif
 #endif /* COMPLEXCASE */
+      integer(kind=c_intptr_t)                     :: a_dev
       real(kind=REAL_DATATYPE), intent(out)        :: d(na), e(na) ! set only on PE 0
 #if REALCASE == 1
       real(kind=REAL_DATATYPE), intent(out), &
@@ -267,7 +269,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &(a, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab)
+      &(aMatrix, a_dev, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab)
 
       ! Calculate the workload for each sweep in the back transformation
       ! and the space requirements to hold the HH vectors
