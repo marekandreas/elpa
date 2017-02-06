@@ -2,16 +2,14 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (na, nev, nblk, nbw, q,  &
-    q_dev,                   &
-    ldq, matrixCols,         &
+    (na, nev, nblk, nbw, q, q_dev, ldq, matrixCols,         &
 #if REALCASE == 1
-    hh_trans_real,           &
+     hh_trans_real,           &
 #endif
 #if COMPLEXCASE == 1
-    hh_trans_complex,        &
+     hh_trans_complex,        &
 #endif
-    mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success, &
+     mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success, &
 #if REALCASE == 1
     THIS_REAL_ELPA_KERNEL)
 #endif
