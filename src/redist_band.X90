@@ -60,12 +60,12 @@ subroutine redist_band_&
 #endif
             a_dev, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, &
 #if REALCASE == 1
-            r_ab)
+            r_ab,  &
 #endif
 #if COMPLEXCASE == 1
-            c_ab)
+            c_ab,  &
 #endif
-
+            useGPU)
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #else
@@ -74,8 +74,10 @@ subroutine redist_band_&
    use elpa2_workload
    use precision
    use iso_c_binding
+   use cuda_functions
    implicit none
 
+   logical, intent(in)                         :: useGPU
    integer(kind=ik), intent(in)                :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
 #if REALCASE == 1
    real(kind=REAL_DATATYPE), intent(in)        :: r_a(lda, matrixCols)
@@ -105,11 +107,45 @@ subroutine redist_band_&
                                        nfact, np, npr, npc, mpierr, is, js
    integer(kind=ik)                 :: nblocks_total, il, jl, l_rows, l_cols, n_off
 
+   logical                                        :: successCUDA
    call timer%start("redist_band_&
    &MATH_DATATYPE&
    &" // &
    &PRECISION_SUFFIX &
    )
+
+   if (useGPU) then
+     ! copy a_dev to aMatrix
+     successCUDA = cuda_memcpy ( &
+#if REALCASE == 1
+                                loc(r_a),      &
+#endif
+#if COMPLEXCASE == 1
+                                loc(c_a(1,1)), &
+#endif
+                                a_dev, lda*matrixCols*  &
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+                                size_of_double_real_datatype,   &
+#else
+                                size_of_single_real_datatype,   &
+#endif
+#endif
+#if COMPLEXCASE ==1
+#ifdef DOUBLE_PRECISION_COMPLEX
+                                size_of_double_complex_datatype,&
+#else
+                                size_of_single_complex_datatype,&
+#endif
+#endif
+                                cudaMemcpyDeviceToHost)
+     if (.not.(successCUDA)) then
+       print *,"redist_band_&
+       &MATH_DATATYPE&
+       &: error in cudaMemcpy"
+       stop
+     endif
+   endif ! useGPU
 
    call timer%start("mpi_communication")
    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
