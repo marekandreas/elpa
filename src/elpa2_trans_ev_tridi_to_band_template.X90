@@ -3,13 +3,7 @@
     &_&
     &PRECISION &
     (na, nev, nblk, nbw, q, q_dev, ldq, matrixCols,         &
-#if REALCASE == 1
-     hh_trans_real,           &
-#endif
-#if COMPLEXCASE == 1
-     hh_trans_complex,        &
-#endif
-     mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success, &
+     hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success, &
 #if REALCASE == 1
     THIS_REAL_ELPA_KERNEL)
 #endif
@@ -82,7 +76,7 @@
       real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)
 #endif
 
-      real(kind=REAL_DATATYPE), intent(in)     :: hh_trans_real(:,:)
+      real(kind=REAL_DATATYPE), intent(in)     :: hh_trans(:,:)
 #endif
       integer(kind=c_intptr_t)                 :: q_dev
 
@@ -92,7 +86,7 @@
 #else
       complex(kind=COMPLEX_DATATYPE)           :: q(ldq,matrixCols)
 #endif
-      complex(kind=COMPLEX_DATATYPE)           :: hh_trans_complex(:,:)
+      complex(kind=COMPLEX_DATATYPE)           :: hh_trans(:,:)
 #endif
 
       integer(kind=ik)                         :: np_rows, my_prow, np_cols, my_pcol
@@ -1359,12 +1353,7 @@
         if (current_local_n > 1) then
           if (my_pcol == mod(sweep,np_cols)) then
             bcast_buffer(:,1:current_local_n) =    &
-#if REALCASE == 1
-                  hh_trans_real(:,current_tv_off+1:current_tv_off+current_local_n)
-#endif
-#if COMPLEXCASE == 1
-                  hh_trans_complex(:,current_tv_off+1:current_tv_off+current_local_n)
-#endif
+                  hh_trans(:,current_tv_off+1:current_tv_off+current_local_n)
             current_tv_off = current_tv_off + current_local_n
           endif
 
