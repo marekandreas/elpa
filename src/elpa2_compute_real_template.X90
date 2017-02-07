@@ -75,7 +75,7 @@
 
     subroutine band_band_real_&
 &PRECISION &
-                  (na, nb, nbCol, nb2, nb2Col, ab, ab2, d, e, mpi_comm)
+                  (na, nb, nbCol, nb2, nb2Col, ab, ab2, d, e, communicator)
     !-------------------------------------------------------------------------------
     ! band_band_real:
     ! Reduces a real symmetric banded matrix to a real symmetric matrix with smaller bandwidth. Householder transformations are not stored.
@@ -101,7 +101,7 @@
     !
     !  e(na)       Subdiagonal of tridiagonal matrix, set only on PE 0, set only if ab2 = 1 (output)
     !
-    !  mpi_comm
+    !  communicator
     !              MPI-Communicator for the total processor set
     !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
@@ -113,7 +113,7 @@
       use precision
       implicit none
 
-      integer(kind=ik), intent(in)             :: na, nb, nbCol, nb2, nb2Col, mpi_comm
+      integer(kind=ik), intent(in)             :: na, nb, nbCol, nb2, nb2Col, communicator
       real(kind=REAL_DATATYPE), intent(inout)  :: ab(2*nb,nbCol) ! removed assumed size
       real(kind=REAL_DATATYPE), intent(inout)  :: ab2(2*nb2,nb2Col) ! removed assumed size
       real(kind=REAL_DATATYPE), intent(out)    :: d(na), e(na) ! set only on PE 0
@@ -143,8 +143,8 @@
       call timer%start("band_band_real" // PRECISION_SUFFIX)
 
       call timer%start("mpi_communication")
-      call mpi_comm_rank(mpi_comm,my_pe,mpierr)
-      call mpi_comm_size(mpi_comm,n_pes,mpierr)
+      call mpi_comm_rank(communicator,my_pe,mpierr)
+      call mpi_comm_size(communicator,n_pes,mpierr)
       call timer%stop("mpi_communication")
 
       ! Total number of blocks in the band:
@@ -185,7 +185,7 @@
       if (nb2>1) then
         do i=0,nblocks2-1
 
-          call mpi_irecv(ab2(1,i*nb2+1), 2*nb2*nb2, MPI_REAL_PRECISION, 0, 3, mpi_comm, ireq_ab2(i+1), mpierr)
+          call mpi_irecv(ab2(1,i*nb2+1), 2*nb2*nb2, MPI_REAL_PRECISION, 0, 3, communicator, ireq_ab2(i+1), mpierr)
         enddo
       endif
       call timer%stop("mpi_communication")
@@ -221,7 +221,7 @@
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
 
-        call mpi_isend(ab_s, (nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+        call mpi_isend(ab_s, (nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, communicator, ireq_ab, mpierr)
         call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
       endif
@@ -265,7 +265,7 @@
             endif
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_send(ab_s2, 2*nb2*nb2, MPI_REAL_PRECISION, dest, 3, mpi_comm, mpierr)
+            call mpi_send(ab_s2, 2*nb2*nb2, MPI_REAL_PRECISION, dest, 3, communicator, mpierr)
             call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -284,7 +284,7 @@
             ! Receive Householder vectors from previous task, from PE owning subdiagonal
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_recv(hv, nb*nb2, MPI_REAL_PRECISION, my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+            call mpi_recv(hv, nb*nb2, MPI_REAL_PRECISION, my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
             call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -322,7 +322,7 @@
               !request last nb2 columns
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call mpi_recv(ab_r,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(ab_r,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
               call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -363,7 +363,7 @@
                 enddo
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
-                call mpi_isend(hv_s,nb*nb2, MPI_REAL_PRECISION, my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
+                call mpi_isend(hv_s,nb*nb2, MPI_REAL_PRECISION, my_pe+1, 2, communicator, ireq_hv, mpierr)
                 call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -390,7 +390,7 @@
               enddo
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call mpi_isend(ab_s,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+              call mpi_isend(ab_s,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, communicator, ireq_ab, mpierr)
               call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -432,7 +432,7 @@
 !          stop
 !        endif
 
-        call mpi_barrier(mpi_comm,mpierr)
+        call mpi_barrier(communicator,mpierr)
         call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */

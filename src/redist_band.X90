@@ -58,7 +58,7 @@ subroutine redist_band_&
 #if COMPLEXCASE == 1
             c_a, &
 #endif
-            a_dev, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_global, &
+            a_dev, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, &
 #if REALCASE == 1
             r_ab, useGPU)
 #endif
@@ -80,7 +80,7 @@ subroutine redist_band_&
    implicit none
 
    logical, intent(in)                         :: useGPU
-   integer(kind=ik), intent(in)                :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_global
+   integer(kind=ik), intent(in)                :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #if REALCASE == 1
    real(kind=REAL_DATATYPE), intent(in)        :: r_a(lda, matrixCols)
 #endif
@@ -152,9 +152,8 @@ subroutine redist_band_&
    endif ! useGPU
 
    call timer%start("mpi_communication")
-   print *, mpi_comm_global
-   call mpi_comm_rank(mpi_comm_global,my_pe,mpierr)
-   call mpi_comm_size(mpi_comm_global,n_pes,mpierr)
+   call mpi_comm_rank(communicator,my_pe,mpierr)
+   call mpi_comm_size(communicator,n_pes,mpierr)
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -174,10 +173,10 @@ subroutine redist_band_&
    call timer%start("mpi_communication")
 #ifdef WITH_OPENMP
    global_id_tmp(:,:) = global_id(:,:)
-   call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm_global, mpierr)
+   call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, communicator, mpierr)
    deallocate(global_id_tmp)
 #else
-   call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm_global, mpierr)
+   call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, communicator, mpierr)
 #endif
    call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
@@ -303,9 +302,9 @@ subroutine redist_band_&
 #if REALCASE==1
 
 #ifdef DOUBLE_PRECISION_REAL
-    call MPI_Alltoallv(r_sbuf, ncnt_s, nstart_s, MPI_REAL8, r_rbuf, ncnt_r, nstart_r, MPI_REAL8, mpi_comm_global, mpierr)
+    call MPI_Alltoallv(r_sbuf, ncnt_s, nstart_s, MPI_REAL8, r_rbuf, ncnt_r, nstart_r, MPI_REAL8, communicator, mpierr)
 #else
-    call MPI_Alltoallv(r_sbuf, ncnt_s, nstart_s, MPI_REAL4, r_rbuf, ncnt_r, nstart_r, MPI_REAL4, mpi_comm_global, mpierr)
+    call MPI_Alltoallv(r_sbuf, ncnt_s, nstart_s, MPI_REAL4, r_rbuf, ncnt_r, nstart_r, MPI_REAL4, communicator, mpierr)
 #endif
 
 #endif /* REALCASE==1 */
@@ -313,9 +312,9 @@ subroutine redist_band_&
 #if COMPLEXCASE==1
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-    call MPI_Alltoallv(c_sbuf, ncnt_s, nstart_s, MPI_COMPLEX16, c_rbuf, ncnt_r, nstart_r, MPI_COMPLEX16, mpi_comm_global, mpierr)
+    call MPI_Alltoallv(c_sbuf, ncnt_s, nstart_s, MPI_COMPLEX16, c_rbuf, ncnt_r, nstart_r, MPI_COMPLEX16, communicator, mpierr)
 #else
-    call MPI_Alltoallv(c_sbuf, ncnt_s, nstart_s, MPI_COMPLEX, c_rbuf, ncnt_r, nstart_r, MPI_COMPLEX, mpi_comm_global, mpierr)
+    call MPI_Alltoallv(c_sbuf, ncnt_s, nstart_s, MPI_COMPLEX, c_rbuf, ncnt_r, nstart_r, MPI_COMPLEX, communicator, mpierr)
 #endif
 
 #endif /* COMPLEXCASE==1 */
