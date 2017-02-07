@@ -114,38 +114,38 @@ subroutine redist_band_&
    &PRECISION_SUFFIX &
    )
 
-!   if (useGPU) then
-!     ! copy a_dev to aMatrix
-!     successCUDA = cuda_memcpy ( &
-!#if REALCASE == 1
-!                                loc(r_a),      &
-!#endif
-!#if COMPLEXCASE == 1
-!                                loc(c_a(1,1)), &
-!#endif
-!                                a_dev, lda*matrixCols*  &
-!#if REALCASE == 1
-!#ifdef DOUBLE_PRECISION_REAL
-!                                size_of_double_real_datatype,   &
-!#else
-!                                size_of_single_real_datatype,   &
-!#endif
-!#endif
-!#if COMPLEXCASE ==1
-!#ifdef DOUBLE_PRECISION_COMPLEX
-!                                size_of_double_complex_datatype,&
-!#else
-!                                size_of_single_complex_datatype,&
-!#endif
-!#endif
-!                                cudaMemcpyDeviceToHost)
-!     if (.not.(successCUDA)) then
-!       print *,"redist_band_&
-!       &MATH_DATATYPE&
-!       &: error in cudaMemcpy"
-!       stop
-!     endif
-!   endif ! useGPU
+   if (useGPU) then
+     ! copy a_dev to aMatrix
+     successCUDA = cuda_memcpy ( &
+#if REALCASE == 1
+                                loc(r_a),      &
+#endif
+#if COMPLEXCASE == 1
+                                loc(c_a(1,1)), &
+#endif
+                                a_dev, lda*matrixCols*  &
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+                                size_of_double_real_datatype,   &
+#else
+                                size_of_single_real_datatype,   &
+#endif
+#endif
+#if COMPLEXCASE ==1
+#ifdef DOUBLE_PRECISION_COMPLEX
+                                size_of_double_complex_datatype,&
+#else
+                                size_of_single_complex_datatype,&
+#endif
+#endif
+                                cudaMemcpyDeviceToHost)
+     if (.not.(successCUDA)) then
+       print *,"redist_band_&
+       &MATH_DATATYPE&
+       &: error in cudaMemcpy"
+       stop
+     endif
+   endif ! useGPU
 
    call timer%start("mpi_communication")
    call mpi_comm_rank(mpi_comm,my_pe,mpierr)
