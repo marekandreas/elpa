@@ -302,6 +302,7 @@
       if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
         write(error_unit,*) "Time " // "bandred_&
 	&MATH_DATATYPE&
+	&_&
 	&PRECISION " // "               :",ttt1-ttt0
 
     end if  ! matrix not already banded on input
@@ -323,7 +324,7 @@
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     (na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU)
+     (na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, do_useGPU)
 
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &

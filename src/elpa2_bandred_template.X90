@@ -1939,27 +1939,27 @@
      if (useGPU) then
        ! this is not needed since a_dev is passed along from one subroutine to the other
 
-       successCUDA = cuda_memcpy ( &
-#if REALCASE == 1
-                                   loc(a),      &
-#endif
-#if COMPLEXCASE == 1
-                                   loc(a(1,1)), &
-#endif
-                                   a_dev, lda*na_cols*  &
-#if REALCASE == 1
-                                   size_of_PRECISION_real,   &
-#endif
-#if COMPLEXCASE ==1
-                                   size_of_PRECISION_complex,&
-#endif
-                                   cudaMemcpyDeviceToHost)
-       if (.not.(successCUDA)) then
-         print *,"bandred_&
-	 &MATH_DATATYPE&
-	 &: error in cudaMemcpy"
-         stop
-       endif
+!       successCUDA = cuda_memcpy ( &
+!#if REALCASE == 1
+!                                   loc(a),      &
+!#endif
+!#if COMPLEXCASE == 1
+!                                   loc(a(1,1)), &
+!#endif
+!                                   a_dev, lda*na_cols*  &
+!#if REALCASE == 1
+!                                   size_of_PRECISION_real,   &
+!#endif
+!#if COMPLEXCASE ==1
+!                                   size_of_PRECISION_complex,&
+!#endif
+!                                   cudaMemcpyDeviceToHost)
+!       if (.not.(successCUDA)) then
+!         print *,"bandred_&
+!	 &MATH_DATATYPE&
+!	 &: error in cudaMemcpy"
+!         stop
+!       endif
 
 !       successCUDA = cuda_free(a_dev)
 !       if (.not.(successCUDA)) then

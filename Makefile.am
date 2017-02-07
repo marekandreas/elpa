@@ -26,6 +26,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/mod_precision.F90 \
         src/mod_mpi.F90 \
         src/mod_mpi_stubs.F90 \
+	src/mod_redist_band.F90 \
         src/mod_pack_unpack_real.F90 \
         src/mod_compute_hh_trafo_real.F90 \
         src/mod_compute_hh_trafo_complex.F90 \
@@ -513,6 +514,7 @@ EXTRA_elpa1_complex_invert_trm@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_he
 
 elpa2_test_real@SUFFIX@_SOURCES = test/Fortran/test_real2.F90
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_real@SUFFIX@_LDFLAGS = -static
 elpa2_test_real@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa2_test_real@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
