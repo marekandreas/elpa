@@ -635,9 +635,28 @@ AC_ARG_WITH([cuda-sdk-path],[AS_HELP_STRING([--with-cuda-sdk-path=PATH],[prefix 
             [CUDA_SDK_INSTALL_PATH=$withval],[with_cuda_sdk=auto])
 
 dnl setup nvcc flags and use them in later tests
+user_sets_gpu_compute_capability="no"
+AC_MSG_CHECKING(whether a GPU compute capability is specified)
+AC_ARG_WITH([GPU-compute-capability],
+            [AS_HELP_STRING([--with-GPU-compute-capability=value],
+	       	            [use compute capability "value" for GPU version (default sm_35)])],
+	    [user_sets_gpu_compute_capability="yes"],[cuda_compute_capability="sm_35"])
+AC_MSG_RESULT([${user_sets_gpu_compute_capability}])
+
+dnl sanity check whether compute capability setting by user is reasonable
+if test x"${user_sets_gpu_compute_capability}" = x"yes" ; then
+  dnl the user must set a value which starts with "sm_"
+  value=$(echo $withval | cut -c1-3)
+  if test x"${value}" = x"sm_" ; then
+    cuda_compute_capability=$withval
+  else
+    AC_MSG_ERROR([Unknown GPU compute capability set: ${withval}])
+  fi
+fi
+
 if test x"${want_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  CUDA_CFLAGS="$CUDA_CFLAGS -arch sm_35 -O2 -I$CUDA_INSTALL_PATH/include"
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
   NVCC="nvcc"
