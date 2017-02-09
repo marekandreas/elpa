@@ -650,6 +650,9 @@ module ELPA1_AUXILIARY
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
+#define REALCASE 1
+#define DOUBLE_PRECISION
+#include "precision_macros.h"
 
 !> \brief  elpa_solve_tridi_double: Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
 !> \details
@@ -671,29 +674,16 @@ module ELPA1_AUXILIARY
     function elpa_solve_tridi_double(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
           result(success)
 
-      use elpa1_compute, solve_tridi_double_private => solve_tridi_double
-      use precision
-
-      implicit none
-      integer(kind=ik)       :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=rk8)         :: d(na), e(na)
-#ifdef USE_ASSUMED_SIZE
-      real(kind=rk8)         :: q(ldq,*)
-#else
-      real(kind=rk8)         :: q(ldq,matrixCols)
-#endif
-      logical, intent(in)    :: wantDebug
-      logical :: success
-
-      success = .false.
-
-      call solve_tridi_double_private(na, nev, d, e, q, ldq, nblk, matrixCols, &
-                                      mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+#include "elpa_solve_tridi.X90"
 
     end function
 
 
 #ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#define SINGLE_PRECISION
+#include "precision_macros.h"
+
 !> \brief  elpa_solve_tridi_single: Solve tridiagonal eigensystem for a single-precision matrix with divide and conquer method
 !> \details
 !>
@@ -714,24 +704,7 @@ module ELPA1_AUXILIARY
     function elpa_solve_tridi_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                      mpi_comm_cols, wantDebug) result(success)
 
-      use elpa1_compute, solve_tridi_single_private => solve_tridi_single
-      use precision
-
-      implicit none
-      integer(kind=ik)       :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=rk4)         :: d(na), e(na)
-#ifdef USE_ASSUMED_SIZE
-      real(kind=rk4)         :: q(ldq,*)
-#else
-      real(kind=rk4)         :: q(ldq,matrixCols)
-#endif
-      logical, intent(in)    :: wantDebug
-      logical :: success
-
-      success = .false.
-
-      call solve_tridi_single_private(na, nev, d, e, q, ldq, nblk, matrixCols, &
-                                      mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+#include "elpa_solve_tridi.X90"
 
     end function
 
