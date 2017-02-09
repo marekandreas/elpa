@@ -4,6 +4,7 @@
 #undef  MATH_DATATYPE
 #undef  PRECISION
 #undef  PRECISION_STR
+#undef  REAL_DATATYPE
 
 #undef  PRECISION_GEMV
 #undef  PRECISION_TRMV
@@ -47,6 +48,7 @@
 #define  PRECISION double
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
+#define  REAL_DATATYPE rk8
 
 #define  PRECISION_GEMV DGEMV
 #define  PRECISION_TRMV DTRMV
@@ -87,6 +89,7 @@
 #define  PRECISION single
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
+#define  REAL_DATATYPE rk4
 
 #define  PRECISION_GEMV SGEMV
 #define  PRECISION_TRMV STRMV
@@ -129,6 +132,10 @@
 #undef DOUBLE_PRECISION_COMPLEX
 #undef  MATH_DATATYPE
 #undef  PRECISION
+#undef COMPLEX_DATATYPE
+/* in the complex case also sometime real valued variables are needed */
+#undef REAL_DATATYPE
+
 #undef  PRECISION_STR
 #undef  PRECISION_GEMV
 #undef  PRECISION_TRMV
@@ -182,6 +189,9 @@
 #define  PRECISION double
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
+#define COMPLEX_DATATYPE CK8
+#define REAL_DATATYPE RK8
+
 #define  PRECISION_GEMV ZGEMV
 #define  PRECISION_TRMV ZTRMV
 #define  PRECISION_GEMM ZGEMM
@@ -230,6 +240,9 @@
 #define  PRECISION single
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
+#define COMPLEX_DATATYPE CK4
+#define REAL_DATATYPE RK4
+
 #define  PRECISION_GEMV CGEMV
 #define  PRECISION_TRMV CTRMV
 #define  PRECISION_GEMM CGEMM

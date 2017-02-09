@@ -52,8 +52,6 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
-#include "precision_macros.h"
-
 #if REALCASE == 1
 
 !cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
