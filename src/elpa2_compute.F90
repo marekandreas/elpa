@@ -111,25 +111,16 @@ module ELPA2_compute
   contains
 
 ! real double precision
-#define DOUBLE_PRECISION_REAL 1
-#define REAL_DATATYPE rk8
-
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "precision_macros.h"
 #include "elpa2_compute_real_template.X90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
-
-#undef DOUBLE_PRECISION_REAL
-#undef REAL_DATATYPE
 
 ! real single precision
 #if defined(WANT_SINGLE_PRECISION_REAL)
 
-#undef DOUBLE_PRECISION_REAL
-#define REAL_DATATYPE rk4
-
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "precision_macros.h"
@@ -137,16 +128,9 @@ module ELPA2_compute
 #undef REALCASE
 #undef SINGLE_PRECISION
 
-#undef DOUBLE_PRECISION_REAL
-#undef REAL_DATATYPE
-
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
 ! complex double precision
-#define DOUBLE_PRECISION_COMPLEX 1
-#define REAL_DATATYPE rk8
-#define COMPLEX_DATATYPE ck8
-
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "precision_macros.h"
@@ -154,17 +138,8 @@ module ELPA2_compute
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
-#undef DOUBLE_PRECISION_COMPLEX
-#undef REAL_DATATYPE
-#undef COMPLEX_DATATYPE
-
-
 ! complex single precision
 #if defined(WANT_SINGLE_PRECISION_COMPLEX)
-
-#undef DOUBLE_PRECISION_COMPLEX
-#define REAL_DATATYPE rk4
-#define COMPLEX_DATATYPE ck4
 
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
@@ -172,10 +147,6 @@ module ELPA2_compute
 #include "elpa2_compute_complex_template.X90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
-
-#undef DOUBLE_PRECISION_COMPLEX
-#undef COMPLEX_DATATYPE
-#undef REAL_DATATYPE
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
