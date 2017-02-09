@@ -109,26 +109,22 @@
 
            if (my_pcol==pcol(n, nblk, np_cols)) then
              call timer%start("blas")
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-             call DTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
-#else
-             call STRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
-#endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-             call ZTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
-#else
-             call CTRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
-#endif
-#endif
+
+             call PRECISION_TRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
+
              call timer%stop("blas")
 
              if (info/=0) then
                if (wantDebug) write(error_unit,*) "elpa_invert_trm_&
 	       &MATH_DATATYPE&
+
+#if REALCASE == 1
 	       &: Error in DTRTRI"
+#endif
+#if COMPLEXCASE == 1
+	       &: Error in ZTRTRI"
+#endif
+
                success = .false.
                return
              endif
@@ -159,20 +155,14 @@
 
            call timer%start("blas")
            if (l_cols-l_colx+1>0) &
+	      call PRECISION_TRMM ('L', 'U', 'N', 'N', nb, l_cols-l_colx+1,  &
 #if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-               call DTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk8, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
-#else
-               call STRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, 1.0_rk4, tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
-#endif
+                                   CONST_1_0,   &
 #endif
 #if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-             call ZTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, (1.0_rk8,0.0_rk8), tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
-#else
-             call CTRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, (1.0_rk4,0.0_rk4), tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+                                   CONST_COMPLEX_PAIR_1_0, &
 #endif
-#endif
+                                   tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
            call timer%stop("blas")
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -218,16 +208,22 @@
 
          call timer%start("blas")
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
+           call PRECISION_GEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb,    &
 #if REALCASE == 1
-         call PRECISION_GEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -CONST_1_0,   &
-                             tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
-                             CONST_1_0,  a(1,l_col1), lda)
+                               -CONST_1_0,   &
 #endif
 #if COMPLEXCASE == 1
-           call PRECISION_GEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -CONST_COMPLEX_PAIR_1_0,        &
-                      tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
-                       CONST_COMPLEX_PAIR_1_0, a(1,l_col1), lda)
+                               -CONST_COMPLEX_PAIR_1_0,        &
 #endif
+                                tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), &
+#if REALCASE == 1
+                                CONST_1_0,   &
+#endif
+#if COMPLEXCASE == 1
+                                CONST_COMPLEX_PAIR_1_0,        &
+#endif
+                                 a(1,l_col1), lda)
+
          call timer%stop("blas")
 
        enddo
