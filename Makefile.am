@@ -66,6 +66,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/redist_band.X90 \
 	src/sanity.X90 \
 	src/elpa_cholesky_template.X90 \
+	src/elpa_invert_trm.X90 \
+	src/elpa_multiply_a_b.X90 \
         src/precision_macros.h
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
@@ -924,6 +926,8 @@ EXTRA_DIST = \
   src/redist_band.X90 \
   src/sanity.X90 \
   src/elpa_cholesky_template.X90 \
+  src/elpa_invert_trm.X90 \
+  src/elpa_multiply_a_b.X90 \
   src/elpa_qr/elpa_qrkernels.X90 \
   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/ev_tridi_band_gpu_c_v2_real_template.Xcu \
