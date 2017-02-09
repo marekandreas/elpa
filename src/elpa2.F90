@@ -360,7 +360,6 @@ module ELPA2
 
   contains
 
-#define DOUBLE_PRECISION_REAL
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "precision_macros.h"
@@ -407,7 +406,6 @@ module ELPA2
 #include "elpa2_template.X90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
-#undef DOUBLE_PRECISION_REAL
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
@@ -459,7 +457,6 @@ module ELPA2
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
-#define DOUBLE_PRECISION_COMPLEX 1
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "precision_macros.h"
@@ -504,7 +501,6 @@ module ELPA2
 #include "elpa2_template.X90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
-#undef DOUBLE_PRECISION_COMPLEX
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 

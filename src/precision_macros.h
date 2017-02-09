@@ -1,6 +1,7 @@
 #ifdef REALCASE
+#undef DOUBLE_PRECISION_REAL
+
 #undef  MATH_DATATYPE
-#define  MATH_DATATYPE real
 #undef  PRECISION
 #undef  PRECISION_STR
 
@@ -38,7 +39,11 @@
 #undef  MPI_REAL_PRECISION
 #undef  C_DATATYPE_KIND
 
+/* General definitions needed in single and real case */
+#define  MATH_DATATYPE real
+
 #ifdef DOUBLE_PRECISION
+#define DOUBLE_PRECISION_REAL
 #define  PRECISION double
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
@@ -74,9 +79,11 @@
 #define  size_of_PRECISION_real size_of_double_real_datatype
 #define  MPI_REAL_PRECISION MPI_REAL8
 #define  C_DATATYPE_KIND c_double
-#endif
+
+#endif /* DOUBLE_PRECISION */
 
 #ifdef SINGLE_PRECISION
+
 #define  PRECISION single
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
@@ -112,12 +119,15 @@
 #define  size_of_PRECISION_real size_of_single_real_datatype
 #define  MPI_REAL_PRECISION MPI_REAL4
 #define  C_DATATYPE_KIND c_float
-#endif
-#endif
+
+#endif /* SINGLE_PRECISION */
+
+#endif /* REALCASE */
 
 #ifdef COMPLEXCASE
+
+#undef DOUBLE_PRECISION_COMPLEX
 #undef  MATH_DATATYPE
-#define  MATH_DATATYPE complex
 #undef  PRECISION
 #undef  PRECISION_STR
 #undef  PRECISION_GEMV
@@ -162,7 +172,13 @@
 #undef  CONST_COMPLEX_1_0
 #undef  size_of_PRECISION_complex
 #undef  C_DATATYPE_KIND
+
+/* General definitions needed in single and double case */
+#define  MATH_DATATYPE complex
+
 #ifdef DOUBLE_PRECISION
+
+#define DOUBLE_PRECISION_COMPLEX
 #define  PRECISION double
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
@@ -207,7 +223,9 @@
 #define  CONST_COMPLEX_1_0 1.0_ck8
 #define  size_of_PRECISION_complex size_of_double_complex_datatype
 #define  C_DATATYPE_KIND c_double
-#endif
+
+#endif /* DOUBLE PRECISION */
+
 #ifdef SINGLE_PRECISION
 #define  PRECISION single
 #define  PRECISION_STR 'single'
@@ -253,5 +271,7 @@
 #define  CONST_COMPLEX_1_0 1.0_ck4
 #define  size_of_PRECISION_complex size_of_single_complex_datatype
 #define  C_DATATYPE_KIND c_float
-#endif
-#endif
+
+#endif /* SINGLE PRECISION */
+
+#endif /* COMPLEXCASE */
