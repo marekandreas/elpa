@@ -155,87 +155,44 @@ module ELPA1_COMPUTE
 
 ! real double precision first
 #define DOUBLE_PRECISION_REAL 1
-
-#define DATATYPE REAL(kind=rk8)
-#define BYTESIZE 8
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "precision_macros.h"
-#undef PRECISION
-#define PRECISION double
-#undef PRECISION_SUFFIX
-#define PRECISION_SUFFIX "_double"
+
 #include "elpa_transpose_vectors.X90"
 #include "elpa_reduce_add_vectors.X90"
-#undef DOUBLE_PRECISION_REAL
-#undef DATATYPE
-#undef BYTESIZE
-#undef REALCASE
 #undef DOUBLE_PRECISION
-#undef PRECISION
-#undef PRECISION_SUFFIX
+#undef REALCASE
 ! single precision
 #ifdef WANT_SINGLE_PRECISION_REAL
 
-#undef DOUBLE_PRECISION_REAL
-#define DATATYPE REAL(kind=rk4)
-#define BYTESIZE 4
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "precision_macros.h"
-#undef PRECISION
-#define PRECISION single
-#undef PRECISION_SUFFIX
-#define PRECISION_SUFFIX "_single"
+
 #include "elpa_transpose_vectors.X90"
 #include "elpa_reduce_add_vectors.X90"
-#undef DATATYPE
-#undef BYTESIZE
-#undef REALCASE
 #undef SINGLE_PRECISION
-#undef PRECISION
-#undef PRECISION_SUFFIX
-
+#undef REALCASE
 #endif
 
 ! double precision
-#define DOUBLE_PRECISION_COMPLEX 1
 
-#define DATATYPE COMPLEX(kind=ck8)
-#define BYTESIZE 16
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "precision_macros.h"
-#undef PRECISION
-#define PRECISION double
-#undef PRECISION_SUFFIX
-#define PRECISION_SUFFIX "_double"
 #include "elpa_transpose_vectors.X90"
 #include "elpa_reduce_add_vectors.X90"
-#undef DATATYPE
-#undef BYTESIZE
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
-#undef DOUBLE_PRECISION_COMPLEX
-#undef PRECISION
-#undef PRECISION_SUFFIX
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-#undef DOUBLE_PRECISION_COMPLEX
-#undef DOUBLE_PRECISION_REAL
-#define DATATYPE COMPLEX(kind=ck4)
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "precision_macros.h"
-#undef PRECISION
-#define PRECISION single
-#undef PRECISION_SUFFIX
-#define PRECISION_SUFFIX "_single"
 #include "elpa_transpose_vectors.X90"
 #include "elpa_reduce_add_vectors.X90"
-#undef DATATYPE
-#undef BYTESIZE
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 
