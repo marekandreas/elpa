@@ -1,94 +1,111 @@
+!   This file is part of ELPA.
+!
+!    The ELPA library was originally created by the ELPA consortium,
+!    consisting of the following organizations:
+!
+!    - Max Planck Computing and Data Facility (MPCDF), fomerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!      Informatik,
+!    - Technische Universität München, Lehrstuhl für Informatik mit
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
+!    - IBM Deutschland GmbH
+!
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of
+!    the ELPA consortium.
+!
+!    More information can be found here:
+!    http://elpa.mpcdf.mpg.de/
+!
+!    ELPA is free software: you can redistribute it and/or modify
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
+!    Software Foundation.
+!
+!    ELPA is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU Lesser General Public License for more details.
+!
+!    You should have received a copy of the GNU Lesser General Public License
+!    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+!
+!    ELPA reflects a substantial effort on the part of the original
+!    ELPA consortium, and we ask you to respect the spirit of the
+!    license that we chose: i.e., please contribute any changes you
+!    may have back to the original ELPA library distribution, and keep
+!    any derivatives of ELPA under the same license that we chose for
+!    the original distribution, the GNU Lesser General Public License.
+!
+!
+! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+!
+! Copyright of the original code rests with the authors inside the ELPA
+! consortium. The copyright of any additional modifications shall rest
+! with their original authors, but shall adhere to the licensing terms
+! distributed along with the original code in the file "COPYING".
+
+
+
+! ELPA2 -- 2-stage solver for ELPA
+!
+! Copyright of the original code rests with the authors inside the ELPA
+! consortium. The copyright of any additional modifications shall rest
+! with their original authors, but shall adhere to the licensing terms
+! distributed along with the original code in the file "COPYING".
+
 #include "config-f90.h"
 module redist
 
   public
 
   contains
-#define DOUBLE_PRECISION_REAL 1
 
-#define REAL_DATATYPE rk8
-#define BYTESIZE 8
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "precision_macros.h"
-#undef PRECISION_SUFFIX
-#define PRECISION_SUFFIX "_double"
-#define PRECISION double
 #include "redist_band.X90"
 
-#undef DOUBLE_PRECISION_REAL
-#undef REAL_DATATYPE
-#undef BYTESIZE
 #undef REALCASE
 #undef DOUBLE_PRECISION
-#undef PRECISION_SUFFIX
-#undef PRECISION
-
 
 ! single precision
 #ifdef WANT_SINGLE_PRECISION_REAL
 
-#undef DOUBLE_PRECISION_REAL
-#undef DOUBLE_PRECISION
-#define REAL_DATATYPE rk4
-#define BYTESIZE 4
 #define REALCASE 1
+#define SINGLE_PRECISION 1
 #include "precision_macros.h"
-#undef PRECISION_SUFFIX
-#define PRECISION_SUFFIX "_single"
-#undef PRECISION
-#define PRECISION single
 #include "redist_band.X90"
 
-#undef REAL_DATATYPE
-#undef BYTESIZE
 #undef REALCASE
-#undef PRECISION_SUFFIX
-#undef PRECISION
+#undef SINGLE_PRECISION
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
 ! double precision
-#define DOUBLE_PRECISION_COMPLEX 1
-
-#define COMPLEX_DATATYPE ck8
-#define BYTESIZE 16
 #define COMPLEXCASE 1
-#define DOUBLE_PRECISION
+#define DOUBLE_PRECISION 1
 #include "precision_macros.h"
-#undef PRECISION_SUFFIX
-#define PRECISION_SUFFIX "_double"
-#undef PRECISION
-#define PRECISION double
 #include "redist_band.X90"
 
-#undef COMPLEX_DATATYPE
-#undef BYTESIZE
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
-#undef DOUBLE_PRECISION_COMPLEX
-#undef PRECISION_SUFFIX
-#undef PRECISION
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-#undef DOUBLE_PRECISION_COMPLEX
-#undef DOUBLE_PRECISION_REAL
-#undef DOUBLE_PRECISION
-#define COMPLEX_DATATYPE ck4
 #define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+
 #include "precision_macros.h"
-#undef PRECISION_SUFFIX
-#define PRECISION_SUFFIX "_single"
-#undef PRECISION
-#define PRECISION single
 #include "redist_band.X90"
 
-#undef COMPLEX_DATATYPE
-#undef BYTESIZE
 #undef COMPLEXCASE
-#undef PRECISION_SUFFIX
-
+#undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 

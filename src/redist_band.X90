@@ -82,28 +82,28 @@ subroutine redist_band_&
    logical, intent(in)                         :: useGPU
    integer(kind=ik), intent(in)                :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #if REALCASE == 1
-   real(kind=REAL_DATATYPE), intent(in)        :: r_a(lda, matrixCols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)        :: r_a(lda, matrixCols)
 #endif
 #if COMPLEXCASE == 1
-   complex(kind=COMPLEX_DATATYPE), intent(in)  :: c_a(lda, matrixCols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)  :: c_a(lda, matrixCols)
 #endif
 
 #if REALCASE == 1
-   real(kind=REAL_DATATYPE), intent(out)       :: r_ab(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(out)       :: r_ab(:,:)
 #endif
 
 #if COMPLEXCASE == 1
-   complex(kind=COMPLEX_DATATYPE), intent(out) :: c_ab(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(out) :: c_ab(:,:)
 #endif
 
    integer(kind=ik), allocatable    :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), &
                                        global_id(:,:), global_id_tmp(:,:), block_limits(:)
 #if REALCASE == 1
-   real(kind=REAL_DATATYPE), allocatable       :: r_sbuf(:,:,:), r_rbuf(:,:,:), r_buf(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable       :: r_sbuf(:,:,:), r_rbuf(:,:,:), r_buf(:,:)
 #endif
 
 #if COMPLEXCASE == 1
-   complex(kind=COMPLEX_DATATYPE), allocatable    :: c_sbuf(:,:,:), c_rbuf(:,:,:), c_buf(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable    :: c_sbuf(:,:,:), c_rbuf(:,:,:), c_buf(:,:)
 #endif
    integer(kind=ik)                 :: i, j, my_pe, n_pes, my_prow, np_rows, my_pcol, np_cols, &
                                        nfact, np, npr, npc, mpierr, is, js
