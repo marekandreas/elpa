@@ -5,10 +5,10 @@
     (na, nev, nblk, nbw, q, q_dev, ldq, matrixCols,         &
      hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success, &
 #if REALCASE == 1
-    THIS_REAL_ELPA_KERNEL)
+     THIS_REAL_ELPA_KERNEL)
 #endif
 #if COMPLEXCASE == 1
-    THIS_COMPLEX_ELPA_KERNEL)
+     THIS_COMPLEX_ELPA_KERNEL)
 #endif
 
     !-------------------------------------------------------------------------------
@@ -1623,12 +1623,9 @@
                                bcast_buffer_dev, hh_dot_dev, hh_tau_dev, &
 #endif
                                kernel_flops, kernel_time, 0, current_local_n, i, my_thread, thread_width, &
-#if REALCASE == 1
-                               THIS_REAL_ELPA_KERNEL)
-#endif
-#if COMPLEXCASE == 1
-                               THIS_COMPLEX_ELPA_KERNEL)
-#endif
+                               THIS_&
+                               &MATH_DATATYPE&
+                               &_ELPA_KERNEL)
            enddo
 !$omp end parallel do
            call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1641,7 +1638,9 @@
 	   &(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
                                           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                           hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,          &
-                                          last_stripe_width, THIS_REAL_ELPA_KERNEL)
+                                          last_stripe_width, THIS_&
+                                                             &MATH_DATATYPE&
+                                                             &_ELPA_KERNEL)
 #endif
 #if COMPLEXCASE == 1
            if (useGPU) then
@@ -1654,7 +1653,9 @@
 	     &(aIntern, stripe_width, a_dim2, stripe_count,            &
                                                     a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                     0, current_local_n, i, last_stripe_width,                          &
-                                                    THIS_COMPLEX_ELPA_KERNEL)
+                                                    THIS_&
+                                                    &MATH_DATATYPE&
+                                                    &_ELPA_KERNEL)
            endif
 #endif /* COMPLEXCASE */
 #endif /* WITH_OPENMP */
@@ -1759,13 +1760,9 @@
             bcast_buffer_dev, hh_dot_dev, hh_tau_dev, &
 #endif
             kernel_flops, kernel_time, current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
-            thread_width, &
-#if REALCASE == 1
-            THIS_REAL_ELPA_KERNEL)
-#endif
-#if COMPLEXCASE == 1
-            THIS_COMPLEX_ELPA_KERNEL)
-#endif
+            thread_width, THIS_&
+                          &MATH_DATATYPE&
+                          &_ELPA_KERNEL)
         enddo
 !$omp end parallel do
         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1811,7 +1808,9 @@
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
                                        hh_tau_dev, kernel_flops, kernel_time,                                 &
                                        current_local_n - bottom_msg_length, bottom_msg_length, i,             &
-                                       last_stripe_width, THIS_REAL_ELPA_KERNEL)
+                                       last_stripe_width, THIS_&
+                                                          &MATH_DATATYPE&
+                                                          &_ELPA_KERNEL)
 #endif
 
 #if COMPLEXCASE == 1
@@ -1827,7 +1826,9 @@
 	  &(aIntern, stripe_width, a_dim2, stripe_count,              &
                                                   a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
                                                   current_local_n - bottom_msg_length, bottom_msg_length, i,         &
-                                                  last_stripe_width, THIS_COMPLEX_ELPA_KERNEL)
+                                                  last_stripe_width, THIS_&
+                                                                     &MATH_DATATYPE&
+                                                                     &_ELPA_KERNEL)
 
         endif
 
@@ -1909,12 +1910,9 @@
 #endif
           kernel_flops, kernel_time, top_msg_length,&
           current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
-#if REALCASE == 1
-          THIS_REAL_ELPA_KERNEL)
-#endif
-#if COMPLEXCASE == 1
-          THIS_COMPLEX_ELPA_KERNEL)
-#endif
+          THIS_&
+          &MATH_DATATYPE&
+          &_ELPA_KERNEL)
         enddo
 !$omp end parallel do
         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1928,7 +1926,9 @@
                                        a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time,  top_msg_length,                    &
                                        current_local_n-top_msg_length-bottom_msg_length, i,                       &
-                                       last_stripe_width, THIS_REAL_ELPA_KERNEL)
+                                       last_stripe_width, THIS_&
+                                                          &MATH_DATATYPE&
+                                                          &_ELPA_KERNEL)
 #endif
 #if COMPLEXCASE == 1
         if (useGPU) then
@@ -1942,7 +1942,9 @@
 	  &(aIntern, stripe_width, a_dim2, stripe_count,                  &
                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,   &
                                                  top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
-                                                 last_stripe_width, THIS_COMPLEX_ELPA_KERNEL)
+                                                 last_stripe_width, THIS_&
+                                                                    &MATH_DATATYPE&
+                                                                    &_ELPA_KERNEL)
         endif
 #endif /* COMPLEXCASE */
 #endif /* WITH_OPENMP */
@@ -2007,12 +2009,9 @@
             bcast_buffer_dev, hh_dot_dev, hh_tau_dev, &
 #endif
             kernel_flops, kernel_time, 0, top_msg_length, i, my_thread, thread_width, &
-#if REALCASE == 1
-            THIS_REAL_ELPA_KERNEL)
-#endif
-#if COMPLEXCASE == 1
-            THIS_COMPLEX_ELPA_KERNEL)
-#endif
+            THIS_&
+            &MATH_DATATYPE&
+            &_ELPA_KERNEL)
         enddo
 !$omp end parallel do
         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2025,7 +2024,9 @@
 	&(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
                                        a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
                                        hh_tau_dev, kernel_flops, kernel_time, 0, top_msg_length, i,               &
-                                       last_stripe_width, THIS_REAL_ELPA_KERNEL)
+                                       last_stripe_width, THIS_&
+                                                          &MATH_DATATYPE&
+                                                          &_ELPA_KERNEL)
 #endif
 #if COMPLEXCASE == 1
         if (useGPU) then
@@ -2038,7 +2039,9 @@
 	   &(aIntern, stripe_width, a_dim2, stripe_count,               &
                                                   a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
                                                   0, top_msg_length, i, last_stripe_width,                            &
-                                                  THIS_COMPLEX_ELPA_KERNEL)
+                                                  THIS_&
+                                                  &MATH_DATATYPE&
+                                                  &_ELPA_KERNEL)
          endif
 #endif
 
