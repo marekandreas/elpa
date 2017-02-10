@@ -182,7 +182,10 @@
       integer(kind=ik)                       :: istat
       character(200)                         :: errorMessage
       logical                                :: successCUDA
-
+      integer(kind=c_size_t), parameter      :: size_of_datatype = size_of_&
+                                                                   &PRECISION&
+                                                                   &_&
+                                                                   &MATH_DATATYPE
       call timer%start("trans_ev_band_to_full_&
       &MATH_DATATYPE&
       &_" // &
@@ -245,13 +248,7 @@
           stop
         endif
 
-        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw* &
-#if REALCASE == 1
-	size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-        size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
@@ -259,13 +256,7 @@
           stop
         endif
 
-        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw* &
-#if REALCASE == 1
-	size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-        size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
@@ -294,7 +285,7 @@
 
 #if REALCASE == 1
 ! q_dev already living on device
-!        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_real)
+!        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
 !          stop
@@ -324,13 +315,7 @@
 #endif
 
         ! if MPI is NOT used the following steps could be done on the GPU and memory transfers could be avoided
-        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)* &
-#if REALCASE == 1
-	                          size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
@@ -404,14 +389,7 @@
             nb = nb+l_rows
           enddo
 
-          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw* &
-#if REALCASE == 1
-	                            size_of_PRECISION_real), &
-#endif
-#if COMPLEXCASE == 1
-                                    size_of_PRECISION_complex), &
-#endif
-				    cudaMemcpyHostToDevice)
+          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), max_local_rows*nbw* size_of_datatype, cudaMemcpyHostToDevice)
 
           if (.not.(successCUDA)) then
             print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
@@ -440,7 +418,7 @@
             ! copy data from device to host for a later MPI_ALLREDUCE
 #if REALCASE == 1
             ! copy to host maybe this can be avoided this is needed if MPI is used (allreduce)
-            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
@@ -451,7 +429,7 @@
 ! check whether in the complex case this ist also only necessary for MPI
 
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, n_cols*l_cols*size_of_PRECISION_complex, &
+            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, n_cols*l_cols*size_of_datatype, &
                                        cudaMemcpyDeviceToHost)
 
             if (.not.(successCUDA)) then
@@ -476,13 +454,7 @@
 
             ! if MPI is not used (we do not need to transfer because of MPI_ALLREDUCE) we can set to zero on the device
 
-            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols* &
-#if REALCASE == 1
-                                      size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex)
-#endif
+            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols* size_of_datatype)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_&
 	      &MATH_DATATYPE&
@@ -495,7 +467,7 @@
           endif ! l_rows>0
 
           !#ifdef WITH_GPU_VERSION
-          !       istat = cuda_memcpy(loc(tmp1), tmp_dev, max_local_cols*nbw*size_of_real_datatype,cudaMemcpyDeviceToHost)
+          !       istat = cuda_memcpy(loc(tmp1), tmp_dev, max_local_cols*nbw*size_of_datatype,cudaMemcpyDeviceToHost)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
           !         stop
@@ -519,7 +491,7 @@
 #endif /* WITH_MPI */
 
            !#ifdef WITH_GPU_VERSION
-          !       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*size_of_real_datatype,cudaMemcpyHostToDevice)
+          !       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*size_of_datatype,cudaMemcpyHostToDevice)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
           !         stop
@@ -530,13 +502,7 @@
 #ifdef WITH_MPI
             ! after the mpi_allreduce we have to copy back to the device
             ! copy back to device
-            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols* &
-#if REALCASE == 1
-	                              size_of_PRECISION_real, &
-#endif
-#if COMPLEXCASE == 1
-	                              size_of_PRECISION_complex, &
-#endif
+            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols* size_of_datatype, &
 				      cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_&
@@ -548,7 +514,7 @@
 
 #if COMPLEXCASE == 1
             ! check whether this could be avoided like in the real case
-            successCUDA = cuda_memcpy(tmp_dev,loc(tmp1),l_cols*n_cols*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(tmp_dev,loc(tmp1),l_cols*n_cols*size_of_datatype,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
               stop
@@ -593,7 +559,7 @@
 #if REALCASE == 1
             ! copy to host maybe this can be avoided
             ! this is not necessary hvm is not used anymore
-            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_PRECISION_real),cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_datatype),cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
@@ -602,7 +568,7 @@
           endif ! l_rows > 0
 
           !#ifdef WITH_GPU_VERSION
-          !       istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_real_datatype),cudaMemcpyDeviceToHost)
+          !       istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_datatype),cudaMemcpyDeviceToHost)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
           !         stop
@@ -1022,14 +988,7 @@
         endif
 
          ! final transfer of q_dev
-         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols* &
-#if REALCASE == 1
-         size_of_PRECISION_real,    &
-#endif
-#if COMPLEXCASE == 1
-         size_of_PRECISION_complex, &
-#endif
-         cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
 
          if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&

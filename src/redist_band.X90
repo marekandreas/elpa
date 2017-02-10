@@ -111,6 +111,10 @@ subroutine redist_band_&
 
    logical                                        :: successCUDA
    integer(kind=c_intptr_t)                       :: a_dev
+   integer(kind=c_size_t), parameter              :: size_of_datatype = size_of_&
+                                                                        &PRECISION&
+                                                                        &_&
+                                                                        &MATH_DATATYPE
 
    call timer%start("redist_band_&
    &MATH_DATATYPE&
@@ -127,21 +131,7 @@ subroutine redist_band_&
 #if COMPLEXCASE == 1
                                 loc(c_a(1,1)), &
 #endif
-                                int(a_dev,kind=c_size_t), int(lda*matrixCols*  &
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-                                size_of_double_real_datatype,kind=c_size_t),   &
-#else
-                                size_of_single_real_datatype,kind=c_size_t),    &
-#endif
-#endif
-#if COMPLEXCASE ==1
-#ifdef DOUBLE_PRECISION_COMPLEX
-                                size_of_double_complex_datatype,kind=c_size_t), &
-#else
-                                size_of_single_complex_datatype,kind=c_size_t), &
-#endif
-#endif
+                                int(a_dev,kind=c_size_t), int(lda*matrixCols* size_of_datatype, kind=c_size_t), &
                                 cudaMemcpyDeviceToHost)
      if (.not.(successCUDA)) then
        print *,"redist_band_&

@@ -91,17 +91,21 @@
        use cuda_c_kernel
        use precision
        implicit none
-       integer(kind=ik), intent(in) :: n_offset, row_count
-       complex(kind=COMPLEX_DATATYPE)             :: rows(:,:)
-       integer(kind=ik)             :: max_idx
-       logical                      :: successCUDA
+       integer(kind=ik), intent(in)                :: n_offset, row_count
+       complex(kind=COMPLEX_DATATYPE)              :: rows(:,:)
+       integer(kind=ik)                            :: max_idx
+       logical                                     :: successCUDA
+       integer(kind=c_size_t), parameter           :: size_of_datatype = size_of_&
+                                                                        &PRECISION&
+                                                                        &_&
+                                                                        &MATH_DATATYPE
 
        max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
        call launch_my_pack_c_kernel_complex_&
        &PRECISION&
        &(row_count, n_offset, max_idx, stripe_width,a_dim2, stripe_count, &
                                             l_nev, aIntern_dev, row_group_dev)
-       successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev ,row_count * l_nev * size_of_PRECISION_complex, &
+       successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev ,row_count * l_nev * size_of_datatype, &
                                   cudaMemcpyDeviceToHost)
        if (.not.(successCUDA)) then
          print *,"pack_row_group_complex_gpu: error in cudaMemcpy"
@@ -121,9 +125,14 @@
        integer(kind=ik)                :: max_idx
        integer(kind=ik)                :: i
        logical                         :: successCUDA
+       integer(kind=c_size_t), parameter           :: size_of_datatype = size_of_&
+                                                                        &PRECISION&
+                                                                        &_&
+                                                                        &MATH_DATATYPE
+
 
        max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
-       successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev* size_of_PRECISION_complex , &
+       successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev* size_of_datatype , &
                                   cudaMemcpyHostToDevice)
        if (.not.(successCUDA)) then
          print *,"unpack_row_group_complex_gpu: error in cudaMemcpy"
@@ -178,15 +187,20 @@
 
       integer(kind=ik)             :: a_off
       integer(kind=c_size_t)       :: dev_offset, dev_offset_1, dev_offset_2
+      integer(kind=c_size_t), parameter           :: size_of_datatype = size_of_&
+                                                                        &PRECISION&
+                                                                        &_&
+                                                                        &MATH_DATATYPE
+
 
       if (ncols < 1) return
       ttt = mpi_wtime()
       nl = merge(stripe_width, last_stripe_width, istripe < stripe_count)
 
       dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * &
-                    size_of_PRECISION_complex
-      dev_offset_1 = (0 +  (  off-1 )* nbw) *size_of_PRECISION_complex
-      dev_offset_2 =( off-1 )*size_of_PRECISION_complex
+                    size_of_datatype
+      dev_offset_1 = (0 +  (  off-1 )* nbw) *size_of_datatype
+      dev_offset_2 =( off-1 )*size_of_datatype
 
 !      t1_compute_kernel =MPI_Wtime()
       call launch_compute_hh_trafo_c_kernel_complex_&

@@ -55,14 +55,14 @@ module cuda_functions
   integer(kind=ik) :: cudaHostRegisterMapped
   integer(kind=ik) :: cudaMemcpyDeviceToDevice
 
-  integer(kind=c_size_t), parameter :: size_of_double_real_datatype    = 8_rk8
+  integer(kind=c_size_t), parameter :: size_of_double_real    = 8_rk8
 #ifdef WANT_SINGLE_PRECISION_REAL
-  integer(kind=c_size_t), parameter :: size_of_single_real_datatype    = 4_rk4
+  integer(kind=c_size_t), parameter :: size_of_single_real    = 4_rk4
 #endif
 
-  integer(kind=c_size_t), parameter :: size_of_double_complex_datatype = 16_ck8
+  integer(kind=c_size_t), parameter :: size_of_double_complex = 16_ck8
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  integer(kind=c_size_t), parameter :: size_of_single_complex_datatype = 8_ck4
+  integer(kind=c_size_t), parameter :: size_of_single_complex = 8_ck4
 #endif
 
   ! functions to set and query the CUDA devices

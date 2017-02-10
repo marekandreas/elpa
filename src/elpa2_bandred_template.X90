@@ -219,6 +219,10 @@
 #endif
       integer(kind=ik)                            :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
                                                     ii, pp, transformChunkSize
+      integer(kind=c_size_t), parameter           :: size_of_datatype = size_of_&
+                                                                        &PRECISION&
+                                                                        &_&
+                                                                        &MATH_DATATYPE
 
       call timer%start("bandred_&
       &MATH_DATATYPE&
@@ -267,13 +271,7 @@
 #endif /* WITH_MPI */
 
         ! Here we convert the regular host array into a pinned host array
-        successCUDA = cuda_malloc(a_dev, lda*na_cols*  &
-#if REALCASE == 1
-	                          size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_malloc(a_dev, lda*na_cols* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"bandred_&
 	  &MATH_DATATYPE&
@@ -281,13 +279,7 @@
           stop
         endif
 
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*   &
-#if REALCASE == 1
-	                          size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"bandred_&
 	  &MATH_DATATYPE&
@@ -295,13 +287,7 @@
           stop
         endif
 
-        successCUDA = cuda_malloc(vav_dev, nbw*nbw*   &
-#if REALCASE == 1
-	                          size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_malloc(vav_dev, nbw*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"bandred_&
 	  &MATH_DATATYPE&
@@ -388,14 +374,7 @@
         cur_l_rows = 0
         cur_l_cols = 0
 
-        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)*   &
-#if REALCASE == 1
-	                          size_of_PRECISION_real,    &
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex, &
-#endif
-				  cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)* size_of_datatype, cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"bandred_&
 	  &MATH_DATATYPE&
@@ -474,13 +453,7 @@
 	      &: error when allocating vmrCUDA "//errorMessage
               stop
             endif
-            successCUDA = cuda_malloc(vmr_dev, vmr_size*    &
-#if REALCASE == 1
-	                              size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex)
-#endif
+            successCUDA = cuda_malloc(vmr_dev, vmr_size* size_of_datatype)
             if (.not.(successCUDA)) then
               print *,"bandred_&
 	      &MATH_DATATYPE&
@@ -523,13 +496,7 @@
               stop
             endif
 
-            successCUDA = cuda_malloc(umc_dev, umc_size*     &
-#if REALCASE == 1
-	                              size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex)
-#endif
+            successCUDA = cuda_malloc(umc_dev, umc_size* size_of_datatype)
             if (.not.(successCUDA)) then
               print *,"bandred_&
 	      &MATH_DATATYPE&
@@ -611,30 +578,31 @@
           if (my_pcol == cur_pcol) then
             successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), &
 #if REALCASE == 1
-                                            lda*size_of_PRECISION_real,         &
+                                            lda * size_of_datatype, &
 #endif
 #if COMPLEXCASE == 1
-                                        int(lda*size_of_PRECISION_complex,kind=c_size_t), &
+	                                    int((lda*size_of_datatype),kind=c_size_t), &
 #endif
 #if REALCASE == 1
-                                        (a_dev + ((lc_start-1) * lda*size_of_PRECISION_real)),    &
+                                            (a_dev + ((lc_start-1) * lda*size_of_datatype)),    &
 #endif
 #if COMPLEXCASE == 1
-                                        (a_dev + int( ( (lc_start-1) * lda*size_of_PRECISION_complex),kind=c_size_t )),      &
+                                            (a_dev + int( ( (lc_start-1) * lda*size_of_datatype),kind=c_size_t )),      &
 #endif
 #if REALCASE == 1
-                                        lda*size_of_PRECISION_real, lr_end*size_of_PRECISION_real, &
+                                            lda*size_of_datatype, lr_end*size_of_datatype, &
 #endif
 #if COMPLEXCASE == 1
-                                         int(lda*size_of_PRECISION_complex,kind=c_size_t),              &
-                                         int(lr_end*size_of_PRECISION_complex,kind=c_size_t),           &
+                                            int(lda*size_of_datatype,kind=c_size_t),              &
+                                            int(lr_end*size_of_datatype,kind=c_size_t),           &
 #endif
 #if REALCASE == 1
-                                         (lc_end - lc_start+1), cudaMemcpyDeviceToHost)
+                                             (lc_end - lc_start+1), cudaMemcpyDeviceToHost)
 #endif
 #if COMPLEXCASE == 1
-                                         int((lc_end - lc_start+1),kind=c_size_t),int(cudaMemcpyDeviceToHost,kind=c_int))
+                                             int((lc_end - lc_start+1),kind=c_size_t),int(cudaMemcpyDeviceToHost,kind=c_int))
 #endif
+
 
             if (.not.(successCUDA)) then
               print *,"bandred_&
@@ -979,23 +947,23 @@
            if (my_pcol == cur_pcol) then
              successCUDA = cuda_memcpy2d((a_dev+        &
 #if REALCASE == 1
-                                         ((lc_start-1)*lda*size_of_PRECISION_real)),          &
+                                         ((lc_start-1)*lda*size_of_datatype)),          &
 #endif
 #if COMPLEXCASE == 1
-                                         int(((lc_start-1)*lda*size_of_PRECISION_complex),kind=c_size_t)),    &
+                                         int(((lc_start-1)*lda*size_of_datatype),kind=c_size_t)),    &
 #endif
 #if REALCASE == 1
-                                         lda*size_of_PRECISION_real, loc(a(1, lc_start)),           &
+                                         lda*size_of_datatype, loc(a(1, lc_start)),    &
 #endif
 #if COMPLEXCASE == 1
-                                         int(lda*size_of_PRECISION_complex,kind=c_size_t), loc(a(1,lc_start)), &
+                                         int(lda*size_of_datatype,kind=c_size_t), loc(a(1,lc_start)), &
 #endif
 #if REALCASE == 1
-                                         lda*size_of_PRECISION_real,  lr_end*size_of_PRECISION_real, &
+                                         lda*size_of_datatype,  lr_end*size_of_datatype, &
 #endif
 #if COMPLEXCASE == 1
-                                         int(lda*size_of_PRECISION_complex,kind=c_size_t),           &
-                                         int(lr_end*size_of_PRECISION_complex,kind=c_size_t),        &
+                                         int(lda*size_of_datatype,kind=c_size_t),           &
+                                         int(lr_end*size_of_datatype,kind=c_size_t),        &
 #endif
 #if REALCASE == 1
                                          (lc_end - lc_start+1),cudaMemcpyHostToDevice)
@@ -1004,6 +972,7 @@
                                          int((lc_end - lc_start+1),kind=c_size_t), &
                                          int(cudaMemcpyHostToDevice,kind=c_int))
 #endif
+
              if (.not.(successCUDA)) then
                print *, "bandred_&
 	       &MATH_DATATYPE&
@@ -1126,24 +1095,28 @@
          vmrCUDA(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
 #endif
          if (l_cols>0 .and. l_rows>0) then
+           successCUDA = cuda_memcpy(vmr_dev,        &
 #if REALCASE == 1
-           successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*size_of_PRECISION_real,cudaMemcpyHostToDevice)
+                                     loc(vmrCUDA(1)),&
 #endif
 #if COMPLEXCASE == 1
-           successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1,1)),vmr_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+                                     loc(vmrCUDA(1,1)), &
 #endif
+                                     vmr_size*size_of_datatype,cudaMemcpyHostToDevice)
            if (.not.(successCUDA)) then
              print *,"bandred_&
 	     &MATH_DATATYPE&
 	     &: error in cudaMemcpy"
              stop
            endif
+           successCUDA = cuda_memcpy(umc_dev,    &
 #if REALCASE == 1
-           successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*size_of_PRECISION_real,cudaMemcpyHostToDevice)
+                                     loc(umcCUDA(1)), &
 #endif
 #if COMPLEXCASE == 1
-           successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+                                     loc(umcCUDA(1,1)), &
 #endif
+                                   umc_size*size_of_datatype,cudaMemcpyHostToDevice)
            if (.not.(successCUDA)) then
              print *,"bandred_&
 	     &MATH_DATATYPE&
@@ -1167,56 +1140,33 @@
 #endif
 	                                lce-lcs+1, n_cols, lre, &
                                         ONE, (a_dev + ((lcs-1)*lda* &
-#if REALCASE == 1
-					size_of_PRECISION_real)),   &
-#endif
-#if COMPLEXCASE == 1
-                                        size_of_PRECISION_complex)),&
-#endif
+                                        size_of_datatype)),         &
 					lda, vmr_dev,cur_l_rows, ONE, &
                                         (umc_dev+ (lcs-1)*            &
-#if REALCASE == 1
-					size_of_PRECISION_real),      &
-#endif
-#if COMPLEXCASE == 1
-                                        size_of_PRECISION_complex),   &
-#endif
+					size_of_datatype),      &
 					cur_l_cols)
 
              if(i==0) cycle
              lre = min(l_rows,i*l_rows_tile)
              call cublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
                                         (a_dev+ ((lcs-1)*lda*                 &
-#if REALCASE == 1
-					size_of_PRECISION_real)),             &
-#endif
-#if COMPLEXCASE == 1
-                                        size_of_PRECISION_complex)),          &
-#endif
+					size_of_datatype)),             &
 					lda, (umc_dev+(cur_l_cols * n_cols+lcs-1)* &
-#if REALCASE == 1
-					size_of_PRECISION_real),              &
-#endif
-#if COMPLEXCASE == 1
-                                        size_of_PRECISION_complex),           &
-#endif
+					size_of_datatype),              &
 					cur_l_cols, ONE, (vmr_dev+(cur_l_rows * n_cols)* &
-#if REALCASE == 1
-					size_of_PRECISION_real),              &
-#endif
-#if COMPLEXCASE == 1
-                                        size_of_PRECISION_complex),           &
-#endif
+					size_of_datatype),              &
 					cur_l_rows)
              call timer%stop("cublas")
            enddo
 
+           successCUDA = cuda_memcpy(     &
 #if REALCASE == 1
-           successCUDA = cuda_memcpy(loc(vmrCUDA(1)), vmr_dev,vmr_size*size_of_PRECISION_real,cudaMemcpyDeviceToHost)
+                                     loc(vmrCUDA(1)),    &
 #endif
 #if COMPLEXCASE == 1
-           successCUDA = cuda_memcpy(loc(vmrCUDA(1,1)),vmr_dev,vmr_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
+                                     loc(vmrCUDA(1,1)),    &
 #endif
+                                     vmr_dev,vmr_size*size_of_datatype,cudaMemcpyDeviceToHost)
            if (.not.(successCUDA)) then
              print *,"bandred_&
 	     &MATH_DATATYPE&
@@ -1224,12 +1174,14 @@
              stop
            endif
 
+           successCUDA = cuda_memcpy(    &
 #if REALCASE == 1
-           successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*size_of_PRECISION_real,cudaMemcpyDeviceToHost)
+                                     loc(umcCUDA(1)),    &
 #endif
 #if COMPLEXCASE == 1
-           successCUDA = cuda_memcpy(loc(umcCUDA(1,1)), umc_dev,umc_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
+                                     loc(umcCUDA(1,1)),    &
 #endif
+                                     umc_dev, umc_size*size_of_datatype,cudaMemcpyDeviceToHost)
            if (.not.(successCUDA)) then
              print *,"bandred_&
 	     &MATH_DATATYPE&
@@ -1495,24 +1447,21 @@
          endif ! l_cols
 
          ! U = U * Tmat**T
+         successCUDA = cuda_memcpy(umc_dev,    &
 #if REALCASE == 1
-         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*size_of_PRECISION_real, cudaMemcpyHostToDevice)
+                                   loc(umcCUDA(1)),   &
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+                                   loc(umcCUDA(1,1)),   &
 #endif
+                                   umc_size*size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
 	   &: error in cudaMemcpy"
            stop
          endif
-#if REALCASE == 1
-         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
-#endif
+         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
@@ -1531,12 +1480,7 @@
 	 call timer%start("cublas")
 
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-#if REALCASE == 1
-         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
-#endif
+         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
@@ -1552,12 +1496,7 @@
          call cublas_PRECISION_GEMM('C', 'N',             &
 #endif
 	                            n_cols, n_cols, l_cols, ONE, umc_dev, cur_l_cols, &
-#if REALCASE == 1
-				    (umc_dev+(cur_l_cols * n_cols )*size_of_PRECISION_real),cur_l_cols, &
-#endif
-#if COMPLEXCASE == 1
-                                    (umc_dev +( cur_l_cols *n_cols)*size_of_PRECISION_complex ), cur_l_cols, &
-#endif
+				    (umc_dev+(cur_l_cols * n_cols )*size_of_datatype),cur_l_cols, &
                                     ZERO, vav_dev, nbw)
 
 #if REALCASE == 1
@@ -1569,12 +1508,7 @@
 	                            n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
 	 call timer%stop("cublas")
 
-#if REALCASE == 1
-         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev,nbw*nbw*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
-#endif
+         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
@@ -1591,12 +1525,7 @@
          &PRECISION &
 	                          (n_cols,vav, nbw,nbw,mpi_comm_cols)
 
-#if REALCASE == 1
-         successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)),nbw*nbw*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
-#endif
+         successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
@@ -1615,22 +1544,19 @@
                                     CONST_COMPLEX_PAIR_NEGATIVE_0_5, &
 #endif
 				    (umc_dev+(cur_l_cols * n_cols )* &
-#if REALCASE == 1
-				     size_of_PRECISION_real),        &
-#endif
-#if COMPLEXCASE == 1
-                                     size_of_PRECISION_complex),     &
-#endif
+                                     size_of_datatype),   &
 				     cur_l_cols, vav_dev,nbw,        &
                                      ONE, umc_dev, cur_l_cols)
 	 call timer%stop("cublas")
 
+         successCUDA = cuda_memcpy(      &
 #if REALCASE == 1
-         successCUDA = cuda_memcpy(loc(umcCUDA(1)), umc_dev, umc_size*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+                                   loc(umcCUDA(1)),    &
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_memcpy(loc(umcCUDA(1,1)),umc_dev,umc_size*size_of_PRECISION_complex,cudaMemcpyDeviceToHost)
+                                   loc(umcCUDA(1,1)),    &
 #endif
+                                   umc_dev, umc_size*size_of_datatype, cudaMemcpyDeviceToHost)
 
          if (.not.(successCUDA)) then
            print *,"bandred_&
@@ -1655,12 +1581,14 @@
 #endif
                                             1, istep*nbw, n_cols, nblk)
 
+         successCUDA = cuda_memcpy(vmr_dev,       &
 #if REALCASE == 1
-         successCUDA = cuda_memcpy(vmr_dev, loc(vmrCUDA(1)), vmr_size*size_of_PRECISION_real, cudaMemcpyHostToDevice)
+                                   loc(vmrCUDA(1)),    &
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_memcpy(vmr_dev,loc(vmrCUDA(1,1)),vmr_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+                                   loc(vmrCUDA(1,1)),    &
 #endif
+                                   vmr_size*size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
@@ -1668,12 +1596,14 @@
            stop
          endif
 
+         successCUDA = cuda_memcpy(umc_dev,     &
 #if REALCASE == 1
-         successCUDA = cuda_memcpy(umc_dev, loc(umcCUDA(1)), umc_size*size_of_PRECISION_real, cudaMemcpyHostToDevice)
+                                   loc(umcCUDA(1)),    &
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_memcpy(umc_dev,loc(umcCUDA(1,1)),umc_size*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+                                   loc(umcCUDA(1,1)),    &
 #endif
+                                   umc_size*size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
@@ -1697,19 +1627,9 @@
 #endif
 	                              lre, lce-lcs+1, 2*n_cols, -ONE, &
                                       vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*  &
-#if REALCASE == 1
-				      size_of_PRECISION_real), &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex),  &
-#endif
+                                      size_of_datatype), &
 				      cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
-#if REALCASE == 1
-				      size_of_PRECISION_real), lda)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex),lda)
-#endif
+                                      size_of_datatype), lda)
 	   call timer%stop("cublas")
 
          enddo

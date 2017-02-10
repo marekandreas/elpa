@@ -226,6 +226,12 @@
 #ifndef WITH_MPI
       integer(kind=ik)                         :: j1
 #endif
+      integer(kind=c_size_t), parameter        :: size_of_datatype = size_of_&
+                                                                   &PRECISION&
+                                                                   &_&
+                                                                   &MATH_DATATYPE
+
+
 
       call timer%start("trans_ev_tridi_to_band_&
       &MATH_DATATYPE&
@@ -438,20 +444,8 @@
       a_dim2 = max_blk_size + nbw
 
       if (useGPU) then
-        num =  (stripe_width*a_dim2*stripe_count)*   &
-#if REALCASE == 1
-                size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                size_of_PRECISION_complex
-#endif
-        successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count*   &
-#if REALCASE == 1
-                                  size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex)
-#endif
+        num =  (stripe_width*a_dim2*stripe_count)* size_of_datatype
+        successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
@@ -467,13 +461,7 @@
           stop
         endif
 
-        num =  (l_nev)*    &
-#if REALCASE == 1
-                size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                size_of_PRECISION_complex
-#endif
+        num =  (l_nev)* size_of_datatype
         successCUDA = cuda_malloc( row_dev,num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
@@ -506,13 +494,7 @@
         row_group(:, :) = CONST_COMPLEX_0_0
 #endif
 
-        num =  (l_nev*nblk)*    &
-#if REALCASE == 1
-               size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-               size_of_PRECISION_complex
-#endif
+        num =  (l_nev*nblk)* size_of_datatype
         successCUDA = cuda_malloc(row_group_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
@@ -554,7 +536,9 @@
         ! allocate(aIntern(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
 
         ! aIntern(:,:,:,:) should be set to 0 in a parallel region, not here!
-#else
+
+#else /* WITH_OPENMP */
+
         if (posix_memalign(aIntern_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*  &
 #if REALCASE == 1
             C_SIZEOF(a_real)) /= 0) then
@@ -1189,13 +1173,7 @@
       bcast_buffer = 0
 #endif
       if (useGPU) then
-        num =  ( nbw * max_blk_size) *   &
-#if REALCASE == 1
-               size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-               size_of_PRECISION_complex
-#endif
+        num =  ( nbw * max_blk_size) * size_of_datatype
         successCUDA = cuda_malloc(bcast_buffer_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
@@ -1212,13 +1190,7 @@
           stop
         endif
 
-        num =  ((max_blk_size-1))*      &
-#if REALCASE == 1
-               size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-               size_of_PRECISION_complex
-#endif
+        num =  ((max_blk_size-1))* size_of_datatype
         successCUDA = cuda_malloc( hh_dot_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
@@ -1235,13 +1207,7 @@
           stop
         endif
 
-        num =  (max_blk_size)*    &
-#if REALCASE == 1
-               size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-               size_of_PRECISION_complex
-#endif
+        num =  (max_blk_size)* size_of_datatype
         successCUDA = cuda_malloc( hh_tau_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
@@ -1374,12 +1340,7 @@
           if (useGPU) then
             successCUDA =  cuda_memcpy(bcast_buffer_dev, loc(bcast_buffer(1,1)),  &
                                        nbw * current_local_n *    &
-#if REALCASE == 1
-                                       size_of_PRECISION_real ,   &
-#endif
-#if COMPLEXCASE == 1
-                                       size_of_PRECISION_complex , &
-#endif
+                                       size_of_datatype, &
                                        cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_&
@@ -1422,13 +1383,7 @@
           bcast_buffer(:,1) = CONST_COMPLEX_0_0
 #endif
           if (useGPU) then
-            successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw *    &
-#if REALCASE == 1
-                                      size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex)
-#endif
+            successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw * size_of_datatype)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_&
               &MATH_DATATYPE&
@@ -1526,21 +1481,9 @@
               n_off = current_local_n+a_off
 
               if (useGPU) then
-                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) *   &
-#if REALCASE == 1
-                             size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                             size_of_PRECISION_complex
-#endif
+                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * size_of_datatype
                 successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc(bottom_border_recv_buffer(1,1,i)), &
-                                           stripe_width*nbw*    &
-#if REALCASE == 1
-                                           size_of_PRECISION_real ,    &
-#endif
-#if COMPLEXCASE == 1
-                                           size_of_PRECISION_complex , &
-#endif
+                                           stripe_width*nbw*  size_of_datatype,    &
                                            cudaMemcpyHostToDevice)
                 if (.not.(successCUDA)) then
                   print *,"trans_ev_tridi_to_band_&
@@ -1635,22 +1578,10 @@
 #endif
 
              if (useGPU) then
-               dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *   &
-#if REALCASE == 1
-	                    size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                            size_of_PRECISION_complex
-#endif
+               dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
                !             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
                successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , loc(top_border_recv_buffer(1,1,i)),  &
-                                           stripe_width*top_msg_length*      &
-#if REALCASE == 1
-					   size_of_PRECISION_real ,  &
-#endif
-#if COMPLEXCASE == 1
-                                           size_of_PRECISION_complex , &
-#endif
+                                           stripe_width*top_msg_length* size_of_datatype,      &
 					   cudaMemcpyHostToDevice)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_&
@@ -1767,21 +1698,9 @@
 #else /* WITH_OPENMP */
 
              if (useGPU) then
-               dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *      &
-#if REALCASE == 1
-                             size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                             size_of_PRECISION_complex
-#endif
+               dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
                successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
-                                          stripe_width * bottom_msg_length *      &
-#if REALCASE == 1
-                                          size_of_PRECISION_real ,        &
-#endif
-#if COMPLEXCASE == 1
-                                          size_of_PRECISION_complex, &
-#endif
+                                          stripe_width * bottom_msg_length * size_of_datatype,      &
                                           cudaMemcpyDeviceToHost)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_&
@@ -1925,21 +1844,9 @@
           n_off = current_local_n+nbw-bottom_msg_length+a_off
 
           if (useGPU) then
-            dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *    &
-#if REALCASE == 1
-                         size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                         size_of_PRECISION_complex
-#endif
+            dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
             successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset,  &
-                                         stripe_width*bottom_msg_length*   &
-#if REALCASE == 1
-                                         size_of_PRECISION_real ,    &
-#endif
-#if COMPLEXCASE == 1
-                                         size_of_PRECISION_complex, &
-#endif
+                                         stripe_width*bottom_msg_length* size_of_datatype,  &
                                          cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_&
@@ -2058,21 +1965,9 @@
           call timer%stop("mpi_communication")
 #endif
           if (useGPU) then
-            dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *   &
-#if REALCASE == 1
-	                  size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                          size_of_PRECISION_complex
-#endif
+            dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
             successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc( top_border_recv_buffer(:,1,i)),  &
-                                       stripe_width * top_msg_length *   &
-#if REALCASE == 1
-				       size_of_PRECISION_real ,          &
-#endif
-#if COMPLEXCASE == 1
-                                       size_of_PRECISION_complex ,       &
-#endif
+                                       stripe_width * top_msg_length * size_of_datatype,   &
 				       cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_&
@@ -2235,21 +2130,9 @@
         call timer%stop("mpi_communication")
 #endif
         if (useGPU) then
-          dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) *    &
-#if REALCASE == 1
-	               size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                       size_of_PRECISION_complex
-#endif
+          dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
           successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), aIntern_dev + dev_offset, &
-                                     stripe_width*nbw *  &
-#if REALCASE == 1
-				     size_of_PRECISION_real ,    &
-#endif
-#if COMPLEXCASE == 1
-                                     size_of_PRECISION_complex , &
-#endif
+                                     stripe_width*nbw * size_of_datatype, &
 				     cudaMemcpyDeviceToHost)
           if (.not.(successCUDA)) then
             print *,"trans_ev_tridi_to_band_&
@@ -2554,31 +2437,13 @@
              do j = top_msg_length + 1, top_msg_length + next_local_n, chunk
                top = min(j + chunk, top_msg_length + next_local_n)
                this_chunk = top - j + 1
-               dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
-#if REALCASE == 1
-                             size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                             size_of_PRECISION_complex
-#endif
-               dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * &
-#if REALCASE == 1
-                             size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                             size_of_PRECISION_complex
-#endif
+               dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
+               dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
                ! it is not logical to set here always the value for the parameter
                ! "cudaMemcpyDeviceToDevice" do this ONCE at startup
                !               tmp = cuda_d2d(1)
                successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , aIntern_dev +dev_offset_1, &
-                                         stripe_width*this_chunk* &
-#if REALCASE == 1
-					 size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
-#endif
-#if COMPLEXCASE == 1
-                                         size_of_PRECISION_complex, cudaMemcpyDeviceToDevice)
-#endif
+                                         stripe_width*this_chunk* size_of_datatype, cudaMemcpyDeviceToDevice)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_&
 		 &MATH_DATATYPE&
@@ -2645,13 +2510,7 @@
 
 !#if REALCASE == 1
      ! copy q to q_dev needed in trans_ev_band_to_full
-        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*   &
-#if REALCASE == 1
-	                          size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_malloc(q_dev, ldq*matrixCols* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
 	  &MAATH_DATATYPE&
@@ -2660,13 +2519,7 @@
         endif
 
         ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*    &
-#if REALCASE == 1
-	                          size_of_PRECISION_real,               &
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex,            &
-#endif
+        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)* size_of_datatype,   &
 				  cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
@@ -2894,5 +2747,4 @@
     end subroutine trans_ev_tridi_to_band_real_&
     &PRECISION
 #endif
-
 

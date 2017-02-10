@@ -39,7 +39,6 @@
 #undef  CONST_1_0
 #undef  CONST_2_0
 #undef  CONST_8_0
-#undef  size_of_PRECISION_real
 #undef  MPI_REAL_PRECISION
 #undef  C_DATATYPE_KIND
 
@@ -85,7 +84,6 @@
 #define  CONST_1_0 1.0_rk8
 #define  CONST_2_0 2.0_rk8
 #define  CONST_8_0 8.0_rk8
-#define  size_of_PRECISION_real size_of_double_real_datatype
 #define  MPI_REAL_PRECISION MPI_REAL8
 #define  C_DATATYPE_KIND c_double
 
@@ -129,7 +127,6 @@
 #define  CONST_1_0 1.0_rk4
 #define  CONST_2_0 2.0_rk4
 #define  CONST_8_0 8.0_rk4
-#define  size_of_PRECISION_real size_of_single_real_datatype
 #define  MPI_REAL_PRECISION MPI_REAL4
 #define  C_DATATYPE_KIND c_float
 
@@ -190,7 +187,6 @@
 #undef  CONST_COMPLEX_PAIR_NEGATIVE_0_5
 #undef  CONST_COMPLEX_0_0
 #undef  CONST_COMPLEX_1_0
-#undef  size_of_PRECISION_complex
 #undef  C_DATATYPE_KIND
 
 /* General definitions needed in single and double case */
@@ -247,7 +243,6 @@
 #define  CONST_COMPLEX_PAIR_NEGATIVE_0_5 (-0.5_rk8,0.0_rk8)
 #define  CONST_COMPLEX_0_0 0.0_ck8
 #define  CONST_COMPLEX_1_0 1.0_ck8
-#define  size_of_PRECISION_complex size_of_double_complex_datatype
 #define  C_DATATYPE_KIND c_double
 
 #endif /* DOUBLE PRECISION */
@@ -301,7 +296,6 @@
 #define  CONST_COMPLEX_PAIR_NEGATIVE_0_5 (-0.5_rk4,0.0_rk4)
 #define  CONST_COMPLEX_0_0 0.0_ck4
 #define  CONST_COMPLEX_1_0 1.0_ck4
-#define  size_of_PRECISION_complex size_of_single_complex_datatype
 #define  C_DATATYPE_KIND c_float
 
 #endif /* SINGLE PRECISION */

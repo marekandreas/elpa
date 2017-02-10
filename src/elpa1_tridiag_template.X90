@@ -208,7 +208,10 @@
 #endif
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
-
+      integer(kind=c_size_t), parameter             :: size_of_datatype = size_of_&
+                                                                          &PRECISION&
+                                                                          &_&
+                                                                          &MATH_DATATYPE
       call timer%start("tridiag_&
       &MATH_DATATYPE&
       &_" // &
@@ -310,58 +313,23 @@
       &MATH_DATATYPE ", "uv_stored_cols", istat, errorMessage)
 
       if (useGPU) then
-         successCUDA = cuda_malloc(v_row_dev, max_local_rows * &
-#if REALCASE == 1
-                                   size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                   size_of_PRECISION_complex)
-#endif
+         successCUDA = cuda_malloc(v_row_dev, max_local_rows * size_of_datatype)
          check_alloc_cuda("tridiag", successCUDA)
 
-         successCUDA = cuda_malloc(u_row_dev, max_local_rows * &
-#if REALCASE == 1
-                                   size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                   size_of_PRECISION_complex)
-#endif
+         successCUDA = cuda_malloc(u_row_dev, max_local_rows * size_of_datatype)
+
          check_alloc_cuda("tridiag", successCUDA)
 
-         successCUDA = cuda_malloc(v_col_dev, max_local_cols * &
-#if REALCASE == 1
-                                   size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                   size_of_PRECISION_complex)
-#endif
+         successCUDA = cuda_malloc(v_col_dev, max_local_cols * size_of_datatype)
          check_alloc_cuda("tridiag", successCUDA)
 
-         successCUDA = cuda_malloc(u_col_dev, max_local_cols * &
-#if REALCASE == 1
-                                   size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                   size_of_PRECISION_complex)
-#endif
+         successCUDA = cuda_malloc(u_col_dev, max_local_cols * size_of_datatype)
          check_alloc_cuda("tridiag", successCUDA)
 
-         successCUDA = cuda_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * &
-#if REALCASE == 1
-                                   size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                   size_of_PRECISION_complex)
-#endif
+         successCUDA = cuda_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * size_of_datatype)
          check_alloc_cuda("tridiag", successCUDA)
 
-         successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * &
-#if REALCASE == 1
-                                   size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                   size_of_PRECISION_complex)
-#endif
+         successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
          check_alloc_cuda("tridiag", successCUDA)
       endif !useGPU
 
@@ -380,22 +348,10 @@
       if (useGPU) then
         ! allocate memmory for matrix A on the device and than copy the matrix
 
-        successCUDA = cuda_malloc(a_dev, lda * matrixCols * &
-#if REALCASE == 1
-                                  size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_datatype)
         check_alloc_cuda("tridiag", successCUDA)
 
-        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * &
-#if REALCASE == 1
-                                  size_of_PRECISION_real, cudaMemcpyHostToDevice)
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex, cudaMemcpyHostToDevice)
-#endif
+        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
         check_alloc_cuda("tridiag", successCUDA)
       endif
 
@@ -418,24 +374,10 @@
 
           ! copy l_cols + 1 column of A to v_row
           if (useGPU) then
-	    a_offset = l_cols * lda * &
-#if REALCASE == 1
-                       size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                       size_of_PRECISION_complex
-#endif
+	    a_offset = l_cols * lda * size_of_datatype
             ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
 
-            successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)* &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,  &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,  &
-#endif
-                                       cudaMemcpyDeviceToHost)
-
+            successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)* size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag", successCUDA)
           else
             v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
@@ -544,43 +486,17 @@
         u_row(1:l_rows) = 0
         if (l_rows > 0 .and. l_cols> 0 ) then
           if(useGPU) then
-            successCUDA = cuda_memset(u_col_dev, 0, l_cols * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex)
-#endif
+            successCUDA = cuda_memset(u_col_dev, 0, l_cols * size_of_datatype)
             check_memcpy_cuda("tridiag", successCUDA)
 
-            successCUDA = cuda_memset(u_row_dev, 0, l_rows * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex)
-#endif
+            successCUDA = cuda_memset(u_row_dev, 0, l_rows * size_of_datatype)
             check_memcpy_cuda("tridiag", successCUDA)
 
-            successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,            &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,         &
-#endif
-                                      cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * size_of_datatype, cudaMemcpyHostToDevice)
 
             check_memcpy_cuda("tridiag", successCUDA)
 
-            successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,            &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,         &
-#endif
-                                      cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag", successCUDA)
           endif ! useGU
 
@@ -664,13 +580,7 @@
 #else /* WITH_OPENMP */
 
               if (useGPU) then
-                a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
-#if REALCASE == 1
-                           size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                           size_of_PRECISION_complex
-#endif
+                a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * size_of_datatype
 	        call timer%start("cublas")
 #if REALCASE == 1
                 call cublas_PRECISION_GEMV('T',                        &
@@ -681,37 +591,17 @@
                                            l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                            ONE, a_dev + a_offset, lda,                   &
                                            v_row_dev + (l_row_beg - 1) *                 &
-#if REALCASE == 1
-					   size_of_PRECISION_real, 1,                    &
-#endif
-#if COMPLEXCASE == 1
-                                           size_of_PRECISION_complex, 1,                 &
-#endif
+                                           size_of_datatype, 1,                          &
                                            ONE, u_col_dev + (l_col_beg - 1) *            &
-#if REALCASE == 1
-					   size_of_PRECISION_real, 1)
-#endif
-#if COMPLEXCASE == 1
-                                           size_of_PRECISION_complex, 1)
-#endif
+                                           size_of_datatype, 1)
 
                if(i/=j) then
                   call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                              ONE, a_dev + a_offset, lda,                        &
                                              v_col_dev + (l_col_beg - 1) *                      &
-#if REALCASE == 1
-					     size_of_PRECISION_real, 1,                         &
-#endif
-#if COMPLEXCASE == 1
-                                             size_of_PRECISION_complex, 1,                      &
-#endif
+                                             size_of_datatype, 1,                          &
                                              ONE, u_row_dev + (l_row_beg - 1) *                 &
-#if REALCASE == 1
-					     size_of_PRECISION_real, 1)
-#endif
-#if COMPLEXCASE == 1
-                                             size_of_PRECISION_complex, 1)
-#endif
+                                             size_of_datatype, 1)
 
                 endif
 	        call timer%stop("cublas")
@@ -743,24 +633,10 @@
           enddo  ! i=0,(istep-2)/tile_size
 
           if (useGPU) then
-            successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,    &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex, &
-#endif
-                                      cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag", successCUDA)
 
-            successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,    &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex, &
-#endif
-                                      cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag", successCUDA)
           endif
 
@@ -909,26 +785,12 @@
           if (useGPU) then
             successCUDA = cuda_memcpy(vu_stored_rows_dev, loc(vu_stored_rows(1,1)), &
                                       max_local_rows * 2 * max_stored_uv *          &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,                       &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,                    &
-
-#endif
-                                      cudaMemcpyHostToDevice)
+                                      size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag", successCUDA)
 
             successCUDA = cuda_memcpy(uv_stored_cols_dev, loc(uv_stored_cols(1,1)), &
                                       max_local_cols * 2 * max_stored_uv *          &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,                       &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,                    &
-
-#endif
-                                      cudaMemcpyHostToDevice)
+                                      size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag", successCUDA)
           endif
 
@@ -950,28 +812,11 @@
 #endif
 	                                 l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
                                          ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
-#if REALCASE == 1
-                                         size_of_PRECISION_real,    &
-#endif
-#if COMPLEXCASE == 1
-                                         size_of_PRECISION_complex, &
-#endif
-
+                                         size_of_datatype,  &
                                          max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
-#if REALCASE == 1
-                                         size_of_PRECISION_real, &
-#endif
-#if COMPLEXCASE == 1
-                                         size_of_PRECISION_complex, &
-#endif
+                                         size_of_datatype,  &
                                          max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *            &
-#if REALCASE == 1
-                                         size_of_PRECISION_real, &
-#endif
-#if COMPLEXCASE == 1
-                                         size_of_PRECISION_complex, &
-#endif
-                                         lda)
+                                         size_of_datatype , lda)
 	      call timer%stop("cublas")
             else !useGPU
 	      call timer%start("blas")
@@ -996,24 +841,10 @@
         if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
           if (useGPU) then
             !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
-             a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * &
-#if REALCASE == 1
-                        size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                        size_of_PRECISION_complex
-#endif
+             a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * size_of_datatype
 
              successCUDA = cuda_memcpy(loc(a_mat(l_rows, l_cols)), a_dev + a_offset, &
-                                       1 *                                           &
-#if REALCASE == 1
-				       size_of_PRECISION_real,                       &
-#endif
-#if COMPLEXCASE == 1
-                                       size_of_PRECISION_complex,                    &
-
-#endif
-				       cudaMemcpyDeviceToHost)
+                                       1 *  size_of_datatype, cudaMemcpyDeviceToHost)
              check_memcpy_cuda("tridiag", successCUDA)
 
           endif
@@ -1026,15 +857,7 @@
           if (useGPU) then
             !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
              successCUDA = cuda_memcpy(a_dev + a_offset, loc(a_mat(l_rows, l_cols)), &
-                                       1 *                                           &
-#if REALCASE == 1
-				       size_of_PRECISION_real,                       &
-#endif
-#if COMPLEXCASE == 1
-                                       size_of_PRECISION_complex,                    &
-#endif
-
-				       cudaMemcpyHostToDevice)
+                                       1 * size_of_datatype, cudaMemcpyDeviceToHost)
              check_memcpy_cuda("tridiag", successCUDA)
           endif
         endif
@@ -1048,8 +871,8 @@
         if (my_prow==prow(1, nblk, np_rows)) then
           ! We use last l_cols value of loop above
           if(useGPU) then
-            successCUDA = cuda_memcpy(loc(aux3(1)), a_dev + (lda * (l_cols - 1)) * size_of_PRECISION_complex, &
-                                    1 * size_of_PRECISION_complex, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(aux3(1)), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
+                                    1 * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag", successCUDA)
             vrl = aux3(1)
           else !useGPU
@@ -1084,7 +907,7 @@
       if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
         if(useGPU) then
           successCUDA = cuda_memcpy(loc(aux3(1)), a_dev, &
-                                    1 * size_of_PRECISION_complex, cudaMemcpyDeviceToHost)
+                                    1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag", successCUDA)
           d_vec(1) = PRECISION_REAL(aux3(1))
         else !useGPU
@@ -1099,8 +922,8 @@
 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
         if(useGPU) then
-          successCUDA = cuda_memcpy(loc(e_vec(1)), a_dev + (lda * (l_cols - 1)) * size_of_PRECISION_real, &
-                                    1 * size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+          successCUDA = cuda_memcpy(loc(e_vec(1)), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
+                                    1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag", successCUDA)
         else !useGPU
           e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
@@ -1110,8 +933,7 @@
      ! Store d_vec(1)
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
         if(useGPU) then
-          successCUDA = cuda_memcpy(loc(d_vec(1)), a_dev, &
-                                    1 * size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+          successCUDA = cuda_memcpy(loc(d_vec(1)), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag", successCUDA)
         else !useGPU
           d_vec(1) = a_mat(1,1)
@@ -1218,51 +1040,6 @@
       &" // &
       &PRECISION_SUFFIX &
       )
-!#if REALCASE == 1
-!      call timer%stop("tridiag_real" // PRECISION_SUFFIX)
-!#endif
-!#if COMPLEXCASE == 1
-!      call timer%stop("tridiag_complex" // PRECISION_SUFFIX)
-!#endif
-!    contains
-!
-!       subroutine print_a(prow, pcol)
-!         implicit none
-!
-!         integer, intent(in)      :: prow, pcol
-!         integer                  :: i
-!
-!         if((my_prow == prow) .and. (my_pcol == pcol)) then
-!            write(*, '(A,2I4.2)') "MATRIX A :", prow, pcol
-!            do i=1,size(a_mat,1)
-!              write(*,'(20G12.4)') a_mat(i,:)
-!            enddo
-!          endif
-!
-!       end subroutine
-!
-!       subroutine print_a_dev(prow, pcol)
-!         implicit none
-!
-!         integer, intent(in)      :: prow, pcol
-!         integer                  :: i
-!         real(kind=REAL_DATATYPE) :: tmp(lda,matrixCols)
-!
-!
-!         tmp(:,:) = 0
-!
-!         if((my_prow == prow) .and. (my_pcol == pcol)) then
-!            successCUDA = cuda_memcpy(loc(tmp(1,1)), a_dev, lda * matrixCols * size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-!            check_memcpy_cuda("tridiag", successCUDA)
-!
-!            write(*, '(A,2I4.2)') "MATRIX A ON DEVICE:", prow, pcol
-!            do i=1,size(tmp,1)
-!              write(*,'(20G12.4)') tmp(i,:)
-!            enddo
-!          endif
-!
-!       end subroutine
-
     end subroutine tridiag_&
     &MATH_DATATYPE&
     &_&
