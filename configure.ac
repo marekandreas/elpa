@@ -616,6 +616,17 @@ if test x"${fortran_can_check_environment}" = x"yes" ; then
  AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can query environment variables])
 fi
 
+dnl check whether BAND_TO_FULL_BLOCKING is set
+AC_MSG_CHECKING(whether BAND_TO_FLULL_BLOCKING is requested)
+AC_ARG_ENABLE(band-to-full-blocking,[AS_HELP_STRING([--enable-band-to-full-blocking],
+	                                            [build ELPA2 with blocking in band_to_full])],
+	      want_band_to_full_blocking="yes", want_to_full_blocking="no")
+AC_MSG_RESULT([${want_band_to_full_blocking}])
+AM_CONDITIONAL([BAND_TO_FULL_BLOCKING],[test x"$want_band_to_full_blocking" = x"yes"])
+if test x"${want_band_to_full_blocking}" = x"yes"; then
+       AC_DEFINE([BAND_TO_FULL_BLOCKING], [1], [use blocking in band_to_full])
+fi
+
 dnl check whether GPU version is requested
 
 #CUDA_INSTALL_PATH="/usr/local/cuda/"
