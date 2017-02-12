@@ -249,7 +249,7 @@ if test x"${want_single_precision}" = x"yes" ; then
 fi
 
 dnl check whether on can compile with sse-gcc intrinsics
-AC_MSG_CHECKING(whether we can compile SSE with gcc intrinsics in C)
+AC_MSG_CHECKING(whether we can compile SSE3 with gcc intrinsics in C)
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  #include <x86intrin.h>
  int main(int argc, char **argv){
