@@ -113,6 +113,7 @@ if test x"$with_mpi" = x"yes"; then
     AC_MSG_ERROR([Could not compile an MPI Fortran program])
   fi
 fi
+
 if test x"${enable_openmp}" = x"yes"; then
   AX_ELPA_OPENMP
   if test "$ac_cv_prog_fc_openmp" = unsupported; then
@@ -1098,6 +1099,20 @@ AC_CONFIG_FILES([
   Doxyfile
   ${PKG_CONFIG_FILE}:elpa.pc.in
 ])
+
+AC_MSG_CHECKING([if workaround for Intel's broken preprocessor is needed])
+if test x"$FC" = x"mpiifort" ; then
+	need_manual_cpp=yes
+fi
+if test x"$FC" = x"ifort" ; then
+	need_manual_cpp=yes
+fi
+if test x"$need_manual_cpp" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	FC="\$(top_srcdir)/manual_cpp $FC"
+else
+	AC_MSG_RESULT([no])
+fi
 
 AC_OUTPUT
 
