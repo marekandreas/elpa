@@ -58,7 +58,8 @@ intel-double-precision-mpi-noomp-cuda-jobs:
     - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --disable-assumed-size
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - cat test-suite.log
 
 
 intel-double-precision-nompi-noomp-cuda-jobs:
@@ -72,7 +73,8 @@ intel-double-precision-nompi-noomp-cuda-jobs:
     - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - cat test-suite.log
 
       #gfortran-double-precision-mpi-noomp-jobs:
       #  tags:
@@ -125,7 +127,8 @@ intel-single-precision-mpi-noomp-cuda-jobs:
     - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - cat test-suite.log
 
       #intel-single-precision-mpi-noomp-cuda-runtime-choice-jobs:
       #  tags:
@@ -170,7 +173,8 @@ intel-single-precision-nompi-noomp-cuda-jobs:
     - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - cat test-suite.log
 
 
       #gfortran-single-precision-mpi-noomp-jobs:
