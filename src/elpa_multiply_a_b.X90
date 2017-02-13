@@ -76,7 +76,7 @@
         print *,"elpa_mult_at_b_&
 	&MATH_DATATYPE&
 	&: error when allocating aux_mat "//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
@@ -84,7 +84,7 @@
         print *,"elpa_mult_at_b_&
 	&MATH_DATATYPE&
 	&: error when allocating aux_bc "//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
@@ -92,7 +92,7 @@
         print *,"elpa_mult_at_b_&
         &MATH_DATATYPE&
         &: error when allocating lrs_save "//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
@@ -100,7 +100,7 @@
         print *,"elpa_mult_at_b_&
         &MATH_DATATYPE&
         &: error when allocating lre_save "//errorMessage
-        stop
+        stop 1
       endif
 
       a_lower = .false.
@@ -207,7 +207,7 @@
                print *,"elpa_mult_at_b_&
                &MATH_DATATYPE&
                &: error when allocating tmp1 "//errorMessage
-               stop
+               stop 1
               endif
 
               if (lrs<=lre) then
@@ -268,7 +268,7 @@
                print *,"elpa_mult_at_b_&
                &MATH_DATATYPE&
                &: error when deallocating tmp1 "//errorMessage
-               stop
+               stop 1
               endif
 
             endif
@@ -285,7 +285,7 @@
        print *,"elpa_mult_at_b_&
        &MATH_DATATYPE&
        &: error when deallocating aux_mat "//errorMessage
-       stop
+       stop 1
       endif
 
       call timer%stop("elpa_mult_at_b_&

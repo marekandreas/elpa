@@ -949,7 +949,7 @@
 #if COMPLEXCASE == 1
         print *,"tridiag_complex: error when deallocating tmp "//errorMessage
 #endif
-        stop
+        stop 1
       endif
 
       if (useGPU) then
@@ -983,14 +983,14 @@
 
       if (istat .ne. 0) then
         print *,"tridiag_real: error when allocating tmp "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 #if COMPLEXCASE == 1
       allocate(tmp_real(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_complex: error when allocating tmp_real "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 
@@ -1024,14 +1024,14 @@
       deallocate(tmp,  stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_real: error when deallocating tmp "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 #if COMPLEXCASE == 1
       deallocate(tmp_real, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_complex: error when deallocating tmp_real "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 

@@ -116,7 +116,7 @@
       allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"merge_systems: error when allocating z_p "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 
@@ -581,19 +581,19 @@
         allocate(ev(max_local_cols,MIN(max_strip,MAX(1,nqcols1))), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"merge_systems: error when allocating ev "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(qtmp1(MAX(1,l_rows),max_local_cols), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"merge_systems: error when allocating qtmp1 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(qtmp2(MAX(1,l_rows),MIN(max_strip,MAX(1,nqcols1))), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"merge_systems: error when allocating qtmp2 "//errorMessage
-          stop
+          stop 1
         endif
 
 !        if (useGPU) then
@@ -777,7 +777,7 @@
         deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"merge_systems: error when deallocating ev "//errorMessage
-          stop
+          stop 1
         endif
       endif
 
@@ -785,7 +785,7 @@
       deallocate(z_p, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"merge_systems: error when deallocating z_p "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 
@@ -849,7 +849,7 @@
           allocate(qtmp(l_rows,l_cols_out), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"resort_ev: error when allocating qtmp "//errorMessage
-            stop
+            stop 1
           endif
 
           nc = 0
@@ -904,7 +904,7 @@
           deallocate(qtmp, stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"resort_ev: error when deallocating qtmp "//errorMessage
-            stop
+            stop 1
           endif
         end subroutine resort_ev_&
 	&PRECISION

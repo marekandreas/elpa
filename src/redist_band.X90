@@ -137,7 +137,7 @@ subroutine redist_band_&
        print *,"redist_band_&
        &MATH_DATATYPE&
        &: error in cudaMemcpy"
-       stop
+       stop 1
      endif
    endif ! useGPU
 

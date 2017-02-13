@@ -89,7 +89,7 @@ module pack_unpack_real_gpu
                                  cudaMemcpyDeviceToHost)
       if (.not.(successCUDA)) then
         print *,"pack_row_group_real_gpu_double: error in cudaMemcpy"
-        stop
+        stop 1
       endif
       !write(*,*) cudaGetErrorString(istat)
 
@@ -125,7 +125,7 @@ module pack_unpack_real_gpu
                                  size_of_double_real, cudaMemcpyHostToDevice)
       if (.not.(successCUDA)) then
         print *,"unpack_row_group_real_gpu_double: error in cudaMemcpy"
-        stop
+        stop 1
       endif
       !write(*,*) cudaGetErrorString(istat)
 
@@ -277,7 +277,7 @@ module pack_unpack_real_gpu
                                  cudaMemcpyDeviceToHost)
       if (.not.(successCUDA)) then
         print *,"pack_row_group_real_gpu_single: error in cudaMemcpy"
-        stop
+        stop 1
       endif
       !write(*,*) cudaGetErrorString(istat)
 
@@ -313,7 +313,7 @@ module pack_unpack_real_gpu
                                  size_of_single_real, cudaMemcpyHostToDevice)
       if (.not.(successCUDA)) then
         print *,"unpack_row_group_real_gpu_single: error in cudaMemcpy"
-        stop
+        stop 1
       endif
       !write(*,*) cudaGetErrorString(istat)
 

@@ -109,7 +109,7 @@
                                   cudaMemcpyDeviceToHost)
        if (.not.(successCUDA)) then
          print *,"pack_row_group_complex_gpu: error in cudaMemcpy"
-         stop
+         stop 1
        endif
 
      end subroutine
@@ -136,7 +136,7 @@
                                   cudaMemcpyHostToDevice)
        if (.not.(successCUDA)) then
          print *,"unpack_row_group_complex_gpu: error in cudaMemcpy"
-         stop
+         stop 1
        endif
        call launch_my_unpack_c_kernel_complex_&
        &PRECISION&

@@ -435,7 +435,7 @@
         print *,"trans_ev_tridi_to_band_&
 	&MATH_DATATYPE&
 	&: error when allocating limits"//errorMessage
-        stop
+        stop 1
       endif
       call determine_workload(na, nbw, np_rows, limits)
 
@@ -450,7 +450,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMalloc"//errorMessage
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_memset(aIntern_dev , 0, num)
@@ -458,7 +458,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMemset"//errorMessage
-          stop
+          stop 1
         endif
 
         num =  (l_nev)* size_of_datatype
@@ -467,7 +467,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMalloc "
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_memset(row_dev , 0, num)
@@ -475,7 +475,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMemset "
-          stop
+          stop 1
         endif
 
         ! "row_group" and "row_group_dev" are needed for GPU optimizations
@@ -484,7 +484,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error when allocating row_group"//errorMessage
-          stop
+          stop 1
         endif
 
 #if REALCASE == 1
@@ -500,7 +500,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMalloc"//errorMessage
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_memset(row_group_dev , 0, num)
@@ -508,7 +508,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMemset"//errorMessage
-          stop
+          stop 1
         endif
 
       else ! GPUs are not used
@@ -529,7 +529,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error when allocating aIntern"//errorMessage
-          stop
+          stop 1
         endif
 
         call c_f_pointer(aIntern_ptr, aIntern, [stripe_width,a_dim2,stripe_count,max_threads])
@@ -547,7 +547,7 @@
             C_SIZEOF(a_complex)) /= 0) then
 #endif
           print *,"trans_ev_tridi_to_band_real: error when allocating aIntern"//errorMessage
-          stop
+          stop 1
         endif
 
         call c_f_pointer(aIntern_ptr, aIntern,[stripe_width,a_dim2,stripe_count] )
@@ -567,7 +567,7 @@
         print *,"trans_ev_tridi_to_band_&
         &MATH_DATATYPE&
         &: error when allocating row"//errorMessage
-        stop
+        stop 1
       endif
 
 #if REALCASE == 1
@@ -955,7 +955,7 @@
            print *,"trans_ev_tridi_to_band_&
            &MATH_DATATYPE&
            &: error in cudaDeviceSynchronize"//errorMessage
-           stop
+           stop 1
          endif
       endif
 
@@ -969,7 +969,7 @@
         print *,"trans_ev_tridi_to_band_&
         &MATH_DATATYPE&
         &: error when allocating result_buffer"//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(result_send_request(num_result_buffers), stat=istat, errmsg=errorMessage)
@@ -977,7 +977,7 @@
         print *,"trans_ev_tridi_to_band_&
         &MATH_DATATYPE&
         &: error when allocating result_send_request"//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(result_recv_request(num_result_buffers), stat=istat, errmsg=errorMessage)
@@ -985,7 +985,7 @@
         print *,"trans_ev_tridi_to_band_&
         &MATH_DATATYPE&
         &: error when allocating result_recv_request"//errorMessage
-        stop
+        stop 1
       endif
 
 #ifdef WITH_MPI
@@ -1026,7 +1026,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MPI_DATATYPE&
          &: error when allocating top_send_request"//errorMessage
-         stop
+         stop 1
        endif
 
       allocate(top_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
@@ -1034,7 +1034,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating top_recv_request"//errorMessage
-         stop
+         stop 1
        endif
 
       allocate(bottom_send_request(stripe_count), stat=istat, errmsg=errorMessage)
@@ -1042,7 +1042,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating bottom_send_request"//errorMessage
-         stop
+         stop 1
        endif
 
       allocate(bottom_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
@@ -1050,7 +1050,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating bottom_recv_request"//errorMessage
-         stop
+         stop 1
        endif
 
 #ifdef WITH_MPI
@@ -1066,7 +1066,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating top_border_send_buffer"//errorMessage
-         stop
+         stop 1
        endif
 
       allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
@@ -1074,7 +1074,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating top_border_recv_buffer"//errorMessage
-         stop
+         stop 1
        endif
 
       allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
@@ -1082,7 +1082,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating bottom_border_send_buffer"//errorMessage
-         stop
+         stop 1
        endif
 
       allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
@@ -1090,7 +1090,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating bottom_border_recv_buffer"//errorMessage
-         stop
+         stop 1
        endif
 
 #if REALCASE == 1
@@ -1114,7 +1114,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating top_border_send_bufer"//errorMessage
-         stop
+         stop 1
        endif
 
       allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
@@ -1122,7 +1122,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating top_border_recv_buffer"//errorMessage
-         stop
+         stop 1
        endif
 
       allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
@@ -1130,7 +1130,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating bottom_border_send_buffer"//errorMessage
-         stop
+         stop 1
        endif
 
       allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
@@ -1138,7 +1138,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating bottom_border_recv_buffer"//errorMessage
-         stop
+         stop 1
        endif
 
 #if REALCASE == 1
@@ -1163,7 +1163,7 @@
          print *,"trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &: error when allocating bcast_buffer"//errorMessage
-         stop
+         stop 1
        endif
 
 #if REALCASE == 1
@@ -1179,7 +1179,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_memset( bcast_buffer_dev, 0, num)
@@ -1187,7 +1187,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMemset"
-          stop
+          stop 1
         endif
 
         num =  ((max_blk_size-1))* size_of_datatype
@@ -1196,7 +1196,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_memset( hh_dot_dev, 0, num)
@@ -1204,7 +1204,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMemset"
-          stop
+          stop 1
         endif
 
         num =  (max_blk_size)* size_of_datatype
@@ -1213,7 +1213,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_memset( hh_tau_dev, 0, num)
@@ -1221,7 +1221,7 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMemset"
-          stop
+          stop 1
         endif
       endif ! useGPU
 
@@ -1270,7 +1270,7 @@
 
             if (useGPU) then
               print *,"trans_ev_tridi_to_band_real: not yet implemented"
-              stop
+              stop 1
             endif
 
             csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
@@ -1346,7 +1346,7 @@
               print *,"trans_ev_tridi_to_band_&
               &MATH_DATATYPE&
               &: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 
             call extract_hh_tau_&
@@ -1388,7 +1388,7 @@
               print *,"trans_ev_tridi_to_band_&
               &MATH_DATATYPE&
               &: error in cudaMemset"
-              stop
+              stop 1
             endif
 
             call extract_hh_tau_&
@@ -1411,7 +1411,7 @@
 #ifdef WITH_OPENMP
             if (useGPU) then
               print *,"trans_ev_tridi_to_band_real: not yet implemented"
-              stop
+              stop 1
             endif
 
             ! Get real stripe width for strip i;
@@ -1429,7 +1429,7 @@
 #ifdef WITH_OPENMP
               if (useGPU) then
                 print *,"trans_ev_tridi_to_band_real: not yet implemented"
-                stop
+                stop 1
               endif
 
 #ifdef WITH_MPI
@@ -1489,7 +1489,7 @@
                   print *,"trans_ev_tridi_to_band_&
                   &MATH_DATATYPE&
                   &: error in cudaMemcpy"
-                  stop
+                  stop 1
                 endif
 
               else
@@ -1504,7 +1504,7 @@
 
              if (useGPU) then
                print *,"trans_ev_tridi_to_band_real: not yet implemented"
-               stop
+               stop 1
              endif
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
@@ -1560,7 +1560,7 @@
                print *,"trans_ev_tridi_to_band_&
 	       &MATH_DATATYPE&
 	       &: not yet implemented"
-               stop
+               stop 1
              endif
 #ifdef WITH_MPI
              call timer%start("mpi_communication")
@@ -1587,7 +1587,7 @@
                  print *,"trans_ev_tridi_to_band_&
 		 &MATH_DATATYPE&
 		 &: error in cudaMemcpy"
-                 stop
+                 stop 1
                 endif
              else ! useGPU
                aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
@@ -1707,7 +1707,7 @@
                  print *,"trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
                  &: error in cudaMemcpy"
-                 stop
+                 stop 1
                endif
              else
                bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
@@ -1740,7 +1740,7 @@
 #ifdef WITH_OPENMP
          if (useGPU) then
            print *,"trans_ev_tridi_to_band_real: not yet implemented"
-           stop
+           stop 1
          endif
          call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
@@ -1853,7 +1853,7 @@
               print *,"trans_ev_tridi_to_band_&
               &MATH_DATATYPE&
               &: error cudaMemcpy"
-              stop
+              stop 1
             endif
           else
             bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
@@ -1975,7 +1975,7 @@
               print *,"trans_ev_tridi_to_band_&
 	      &MATH_DATATYPE&
 	      &: error in cudaMemcpy"
-              stop
+              stop 1
             endif
           else
             aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
@@ -2141,7 +2141,7 @@
             print *,"trans_ev_tridi_to_band_&
 	    &MATH_DATATYPE&
 	    &: error in cudaMemcpy"
-            stop
+            stop 1
           endif
 
         else
@@ -2417,7 +2417,7 @@
 #ifdef WITH_OPENMP
       if (useGPU) then
         print *,"trans_ev_tridi_to_band_real: not yet implemented"
-        stop
+        stop 1
       endif
 
       call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2451,7 +2451,7 @@
                  print *,"trans_ev_tridi_to_band_&
 		 &MATH_DATATYPE&
 		 &: error cudaMemcpy"
-                 stop
+                 stop 1
                endif
              enddo
            else ! not useGPU
@@ -2518,7 +2518,7 @@
           print *,"trans_ev_tridi_to_band_&
 	  &MAATH_DATATYPE&
 	  &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
         ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
@@ -2528,7 +2528,7 @@
           print *,"trans_ev_tridi_to_band_&
 	  &MATH_DATATYPE&
 	  &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 !#endif
 
@@ -2540,7 +2540,7 @@
 !       deallocate(aIntern, stat=istat, errmsg=errorMessage)
 !       if (istat .ne. 0) then
 !         print *,"trans_ev_tridi_to_band_real: error when deallocating aIntern "//errorMessage
-!         stop
+!         stop 1
 !       endif
      endif
 
@@ -2549,7 +2549,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating row "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(limits, stat=istat, errmsg=errorMessage)
@@ -2557,7 +2557,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating limits"//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(result_send_request, stat=istat, errmsg=errorMessage)
@@ -2565,7 +2565,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating result_send_request "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(result_recv_request, stat=istat, errmsg=errorMessage)
@@ -2573,7 +2573,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating result_recv_request "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(top_border_send_buffer, stat=istat, errmsg=errorMessage)
@@ -2581,7 +2581,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating top_border_send_buffer "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(top_border_recv_buffer, stat=istat, errmsg=errorMessage)
@@ -2589,7 +2589,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating top_border_recv_buffer "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(bottom_border_send_buffer, stat=istat, errmsg=errorMessage)
@@ -2597,7 +2597,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating bottom_border_send_buffer "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(bottom_border_recv_buffer, stat=istat, errmsg=errorMessage)
@@ -2605,7 +2605,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating bottom_border_recv_buffer "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(result_buffer, stat=istat, errmsg=errorMessage)
@@ -2613,7 +2613,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating result_buffer "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
@@ -2621,7 +2621,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating bcast_buffer "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(top_send_request, stat=istat, errmsg=errorMessage)
@@ -2629,7 +2629,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating top_send_request "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(top_recv_request, stat=istat, errmsg=errorMessage)
@@ -2637,7 +2637,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating top_recv_request "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(bottom_send_request, stat=istat, errmsg=errorMessage)
@@ -2645,7 +2645,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating bottom_send_request "//errorMessage
-       stop
+       stop 1
      endif
 
      deallocate(bottom_recv_request, stat=istat, errmsg=errorMessage)
@@ -2653,7 +2653,7 @@
        print *,"trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &: error when deallocating bottom_recv_request "//errorMessage
-       stop
+       stop 1
      endif
 
      if (useGPU) then
@@ -2661,7 +2661,7 @@
        successCUDA = cuda_free(aIntern_dev)
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
-         stop
+         stop 1
        endif
 #endif
        successCUDA = cuda_free(hh_dot_dev)
@@ -2669,7 +2669,7 @@
          print *,"trans_ev_tridi_to_band_&
 	 &MATH_DATATYPE&
 	 &real: error in cudaFree "//errorMessage
-         stop
+         stop 1
        endif
 
        successCUDA = cuda_free(hh_tau_dev)
@@ -2677,7 +2677,7 @@
          print *,"trans_ev_tridi_to_band_&
 	 &MATH_DATATYPE&
 	 &: error in cudaFree "//errorMessage
-         stop
+         stop 1
        endif
 
        successCUDA = cuda_free(row_dev)
@@ -2685,7 +2685,7 @@
          print *,"trans_ev_tridi_to_band_&
 	 &MATH_DATATYPE&
 	 &: error in cudaFree "//errorMessage
-         stop
+         stop 1
        endif
 
        deallocate(row_group, stat=istat, errmsg=errorMessage)
@@ -2693,7 +2693,7 @@
          print *,"trans_ev_tridi_to_band_&
 	 &MATH_DATATYPE&
 	 &: error when deallocating row_group "//errorMessage
-         stop
+         stop 1
        endif
 
        successCUDA = cuda_free(row_group_dev)
@@ -2701,7 +2701,7 @@
          print *,"trans_ev_tridi_to_band_&
 	 &MATH_DATATYPE&
 	 &: error in cudaFree "//errorMessage
-         stop
+         stop 1
        endif
 
        successCUDA =  cuda_free(bcast_buffer_dev)
@@ -2709,7 +2709,7 @@
          print *,"trans_ev_tridi_to_band_&
 	 &MATH_DATATYPE&
 	 &: error in cudaFree "//errorMessage
-         stop
+         stop 1
        endif
      endif ! useGPU
 

@@ -58,7 +58,7 @@
          print *,"elpa_invert_trm_&
 	 &MATH_DATATYPE&
 	 &: error when allocating tmp1 "//errorMessage
-         stop
+         stop 1
        endif
 
        allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
@@ -66,7 +66,7 @@
          print *,"elpa_invert_trm_&
 	 &MATH_DATATYPE&
 	 &: error when allocating tmp2 "//errorMessage
-         stop
+         stop 1
        endif
 
        tmp1 = 0
@@ -77,7 +77,7 @@
          print *,"elpa_invert_trm_&
 	 &MATH_DATATYPE&
 	 &: error when allocating tmat1 "//errorMessage
-         stop
+         stop 1
        endif
 
        allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
@@ -85,7 +85,7 @@
          print *,"elpa_invert_trm_&
 	 &MATH_DATATYPE&
 	 &: error when allocating tmat2 "//errorMessage
-         stop
+         stop 1
        endif
 
        tmat1 = 0
@@ -233,7 +233,7 @@
          print *,"elpa_invert_trm_&
 	 &MATH_DATATYPE&
 	 &: error when deallocating tmp1 "//errorMessage
-         stop
+         stop 1
        endif
 
 #undef REALCASE

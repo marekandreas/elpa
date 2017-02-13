@@ -506,7 +506,7 @@
         print *,"trans_ev_&
 	&MATH_DATATYPE&
 	&: error when deallocating hvm "//errorMessage
-        stop
+        stop 1
       endif
 
       if (useGPU) then
@@ -519,7 +519,7 @@
           print *,"trans_ev_&
 	  &MATH_DATATYPE&
 	  &: error when deallocating hvm1 "//errorMessage
-          stop
+          stop 1
         endif
 
         !deallocate(q_dev, tmp_dev, hvm_dev, tmat_dev)

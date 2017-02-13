@@ -71,7 +71,7 @@
       if (istat .ne. 0) then
         print *,"elpa_cholesky_&
 	&MATH_DATATYPE&: error when allocating tmp1 "//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
@@ -79,7 +79,7 @@
         print *,"elpa_cholesky_&
 	&MATH_DATATYPE&
 	&: error when allocating tmp2 "//errorMessage
-        stop
+        stop 1
       endif
 
       tmp1 = 0
@@ -90,7 +90,7 @@
         print *,"elpa_cholesky_&
 	&MATH_DATATYPE&
 	&: error when allocating tmatr "//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
@@ -98,7 +98,7 @@
         print *,"elpa_cholesky_&
 	&MATH_DATATYPE&
 	&: error when allocating tmatc "//errorMessage
-        stop
+        stop 1
       endif
 
       tmatr = 0
@@ -277,7 +277,7 @@
         print *,"elpa_cholesky_&
 	&MATH_DATATYPE&
 	&: error when deallocating tmp1 "//errorMessage
-        stop
+        stop 1
       endif
 
       ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)

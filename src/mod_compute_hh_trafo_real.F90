@@ -167,7 +167,7 @@ module compute_hh_trafo_real
 #else
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
            print *,"compute_hh_trafo_real GPU OPENMP: not yet implemented"
-           stop
+           stop 1
          endif
 
          if (istripe<stripe_count) then
@@ -751,7 +751,7 @@ module compute_hh_trafo_real
 #else
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
            print *,"compute_hh_trafo_real GPU OPENMP: not yet implemented"
-           stop
+           stop 1
          endif
 
          if (istripe<stripe_count) then

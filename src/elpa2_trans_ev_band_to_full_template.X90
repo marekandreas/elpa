@@ -221,7 +221,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp1 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(tmp2(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
@@ -229,7 +229,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp2 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvb(max_local_rows*nbw), stat=istat, errmsg=errorMessage)
@@ -237,7 +237,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvb "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
@@ -245,7 +245,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvm "//errorMessage
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw* size_of_datatype)
@@ -253,7 +253,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw* size_of_datatype)
@@ -261,7 +261,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
 !#ifdef WITH_MPI
@@ -279,7 +279,7 @@
 !          print *,"trans_ev_band_to_full_&
 !	  &MATH_DATATYPE&
 !	  &: error in cudaMalloc"
-!          stop
+!          stop 1
 !        endif
 !#endif
 
@@ -288,7 +288,7 @@
 !        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
-!          stop
+!          stop 1
 !        endif
   !      q_temp(:,:) = 0.0
   !      q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
@@ -297,20 +297,20 @@
 !        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
-!          stop
+!          stop 1
 !        endif
 #endif
 #if COMPLEXCASE == 1
 !         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_complex)
 !         if (.not.(successCUDA)) then
 !           print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
-!           stop
+!           stop 1
 !         endif
 !
 !         successCUDA = cuda_memcpy(q_dev, loc(q),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
 !          if (.not.(successCUDA)) then
 !            print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-!            stop
+!            stop 1
 !          endif
 #endif
 
@@ -320,7 +320,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
 #if REALCASE == 1
@@ -393,7 +393,7 @@
 
           if (.not.(successCUDA)) then
             print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-            stop
+            stop 1
 
           endif
 
@@ -421,7 +421,7 @@
             successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 #endif
 
@@ -434,7 +434,7 @@
 
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 #endif
 
@@ -459,7 +459,7 @@
               print *,"trans_ev_band_to_full_&
 	      &MATH_DATATYPE&
 	      &: error in cudaMemset"
-              stop
+              stop 1
              endif
 
 #endif /* WITH_MPI */
@@ -470,7 +470,7 @@
           !       istat = cuda_memcpy(loc(tmp1), tmp_dev, max_local_cols*nbw*size_of_datatype,cudaMemcpyDeviceToHost)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
-          !         stop
+          !         stop 1
           !       endif
           !#endif
 
@@ -494,7 +494,7 @@
           !       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*size_of_datatype,cudaMemcpyHostToDevice)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
-          !         stop
+          !         stop 1
           !       endif
           !#endif
 
@@ -508,7 +508,7 @@
               print *,"trans_ev_band_to_full_&
 	      &MATH_DATATYPE&
 	      &: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 #else /* WITH_MPI */
 
@@ -517,7 +517,7 @@
             successCUDA = cuda_memcpy(tmp_dev,loc(tmp1),l_cols*n_cols*size_of_datatype,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 #endif
 #endif /* WITH_MPI */
@@ -539,7 +539,7 @@
 !              print *,"trans_ev_band_to_full_&
 !	      &MATH_DATATYPE&
 !	      &: error in cudaMemcpy"
-!              stop
+!              stop 1
 !            endif
 !#endif /* WITH_MPI */
 
@@ -562,7 +562,7 @@
             successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_datatype),cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 #endif
           endif ! l_rows > 0
@@ -571,7 +571,7 @@
           !       istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_datatype),cudaMemcpyDeviceToHost)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
-          !         stop
+          !         stop 1
           !       endif
           !
           !#endif
@@ -594,7 +594,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp1 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(tmp2(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
@@ -602,7 +602,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp2 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvb(max_local_rows*cwy_blocking), stat=istat, errmsg=errorMessage)
@@ -610,7 +610,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvb "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvm(max_local_rows,cwy_blocking), stat=istat, errmsg=errorMessage)
@@ -618,7 +618,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvm "//errorMessage
-          stop
+          stop 1
         endif
 
 #else /* BAND_TO_FULL_BLOCKING */
@@ -628,14 +628,14 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp1 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(tmp2(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&: error when allocating tmp2 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvb(max_local_rows*nbw), stat=istat, errmsg=errorMessage)
@@ -643,7 +643,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvb "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
@@ -651,9 +651,9 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvm "//errorMessage
-          stop
+          stop 1
         endif
-#endif
+#endif /* BAND_TO_FULL_BLOCKING */
 
 #ifdef BAND_TO_FULL_BLOCKING
         allocate(tmat_complete(cwy_blocking,cwy_blocking), stat=istat, errmsg=errorMessage)
@@ -661,21 +661,21 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmat_complete "//errorMessage
-          stop
+          stop 1
         endif
         allocate(t_tmp(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating t_tmp "//errorMessage
-          stop
+          stop 1
         endif
         allocate(t_tmp2(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating t_tmp2 "//errorMessage
-          stop
+          stop 1
         endif
 #endif
 !        else
@@ -959,7 +959,7 @@
         print *,"trans_ev_band_to_full_&
 	&MATH_DATATYPE&
 	&: error when deallocating tmp1 tmp2 hvb "//errorMessage
-        stop
+        stop 1
       endif
 
       if (useGPU) then
@@ -968,7 +968,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
           &: error in cudaFree"
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_free(tmp_dev)
@@ -976,7 +976,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
           &: error in cudaFree"
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_free(tmat_dev)
@@ -984,7 +984,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
           &: error in cudaFree"
-          stop
+          stop 1
         endif
 
          ! final transfer of q_dev
@@ -994,7 +994,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
           &: error in cudamemcpu q_dev"
-          stop
+          stop 1
          endif
 
          !   q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
@@ -1004,18 +1004,18 @@
            print *,"trans_ev_band_to_full_&
 	   &MATH_DATATYPE&
            &: error in cudaFree"
-           stop
+           stop 1
          endif
 
          !   deallocate(q_temp, stat=istat, errmsg=errorMessage)
          !   if (istat .ne. 0) then
          !     print *,"error when deallocating q_temp "//errorMessage
-         !     stop
+         !     stop 1
          !   endif
          !   deallocate(tmat_temp, stat=istat, errmsg=errorMessage)
          !   if (istat .ne. 0) then
          !     print *,"trans_ev_band_to_full_real: error when deallocating tmat_temp "//errorMessage
-         !     stop
+         !     stop 1
          !   endif
 
       endif ! useGPU
@@ -1025,7 +1025,7 @@
         print *,"trans_ev_band_to_full_&
 	&MATH_DATATYPE&
 	&: error when deallocating hvm "//errorMessage
-        stop
+        stop 1
       endif
 
 #if BAND_TO_FULL_BLOCKING
@@ -1034,7 +1034,7 @@
         print *,"trans_ev_band_to_full_&
 	MATH_DATATYPE&
 	&: error when deallocating tmat_complete, t_tmp, t_tmp2 "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 

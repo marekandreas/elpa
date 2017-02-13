@@ -279,7 +279,7 @@
 	&_2stage_&
 	&PRECISION&
 	&" // ": error when allocating tmat "//errorMessage
-        stop
+        stop 1
       endif
 
       ! Reduction full -> band
@@ -315,7 +315,7 @@
        &MATH_DATATYPE&
        &_2stage_&
        &PRECISION " // ": error when allocating e "//errorMessage
-       stop
+       stop 1
      endif
 
      ttt0 = MPI_Wtime()
@@ -352,7 +352,7 @@
        print *,"solve_evp_&
        &MATH_DATATYPE&
        &_2stage: error when allocating q_real"//errorMessage
-       stop
+       stop 1
      endif
 #endif
 
@@ -383,7 +383,7 @@
        print *,"solve_evp_&
        &MATH_DATATYPE&
        &_2stage: error when deallocating e "//errorMessage
-       stop
+       stop 1
      endif
 
 #if COMPLEXCASE == 1
@@ -394,7 +394,7 @@
        print *,"solve_evp_&
        &MATH_DATATYPE&
        &_2stage: error when deallocating q_real"//errorMessage
-       stop
+       stop 1
      endif
 #endif
      ! Backtransform stage 1
@@ -425,7 +425,7 @@
        &MATH_DATATYPE&
        &_2stage_&
        &PRECISION " // ": error when deallocating hh_trans "//errorMessage
-       stop
+       stop 1
      endif
 
      if(present(bandwidth)) then
@@ -461,7 +461,7 @@
 	 &MATH_DATATYPE&
 	 _2stage_&
 	 &PRECISION " // ": error when deallocating tmat"//errorMessage
-         stop
+         stop 1
        endif
      endif ! not present(bandwidth)
 
