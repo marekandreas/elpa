@@ -617,14 +617,20 @@ if test x"${fortran_can_check_environment}" = x"yes" ; then
 fi
 
 dnl check whether BAND_TO_FULL_BLOCKING is set
+use_band_to_full_blocking=yes
 AC_MSG_CHECKING(whether BAND_TO_FLULL_BLOCKING is requested)
 AC_ARG_ENABLE(band-to-full-blocking,[AS_HELP_STRING([--enable-band-to-full-blocking],
-	                                            [build ELPA2 with blocking in band_to_full])],
+	                                            [build ELPA2 with blocking in band_to_full (default: enabled)])],
 	      want_band_to_full_blocking="yes", want_to_full_blocking="no")
 AC_MSG_RESULT([${want_band_to_full_blocking}])
-AM_CONDITIONAL([BAND_TO_FULL_BLOCKING],[test x"$want_band_to_full_blocking" = x"yes"])
-if test x"${want_band_to_full_blocking}" = x"yes"; then
-       AC_DEFINE([BAND_TO_FULL_BLOCKING], [1], [use blocking in band_to_full])
+
+if test x"${enableval}" = x"no" ; then
+  use_band_to_full_blocking=no
+fi
+
+AM_CONDITIONAL([BAND_TO_FULL_BLOCKING],[test x"$use_band_to_full_blocking" = x"yes"])
+if test x"${use_band_to_full_blocking}" = x"yes"; then
+       AC_DEFINE([BAND_TO_FULL_BLOCKING], [1], [use blocking in trans_ev_band_to_full])
 fi
 
 dnl check whether GPU version is requested
