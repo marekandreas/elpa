@@ -1940,17 +1940,16 @@
        endif
      endif
 
-#if COMPLEXCASE == 1
-       ! check this
-       if (useGPU) then
-         successCUDA = cuda_free(umc_dev)
-         if (.not.(successCUDA)) then
-           print *,"bandred_complex: error in cudaFree umc_dev 7a"
-
-           stop 1
-         endif
-       endif
-#endif
+!#if COMPLEXCASE == 1
+!       ! check this
+!       if (useGPU) then
+!         successCUDA = cuda_free(umc_dev)
+!         if (.not.(successCUDA)) then
+!           print *,"bandred_complex: error in cudaFree umc_dev 7a"
+!           stop
+!         endif
+!       endif
+!#endif
 
      if (useGPU) then
        successCUDA = cuda_free(vmr_dev)
@@ -1966,7 +1965,7 @@
          print *,"bandred_&
 	 &MATH_DATATYPE&
 	 &: error in cudaFree umc_dev 8"
-         stop 1
+         stop
        endif
 
        if (allocated(umcCUDA)) then

@@ -413,20 +413,22 @@
                                        q_dev, ldq , ZERO, tmp_dev, n_cols)
 	    call timer%stop("cublas")
 
+#if REALCASE == 1
 #ifdef WITH_MPI
 
             ! copy data from device to host for a later MPI_ALLREDUCE
-#if REALCASE == 1
             ! copy to host maybe this can be avoided this is needed if MPI is used (allreduce)
             successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop 1
             endif
-#endif
 
 #else /* WITH_MPI */
-! check whether in the complex case this ist also only necessary for MPI
+            ! in real case no copy needed. maybe also in complexcase ?
+#endif /* WITH_MPI */
+
+#endif /* REALCASE */
 
 #if COMPLEXCASE == 1
             successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, n_cols*l_cols*size_of_datatype, &
@@ -438,31 +440,14 @@
             endif
 #endif
 
-#endif /* WITH_MPI */
-
           else ! l_rows>0
 
-#ifdef WITH_MPI
 #if REALCASE == 1
             tmp1(1:l_cols*n_cols) = 0
 #endif
 #if COMPLEXCASE == 1
             tmp1(1:l_cols*n_cols) = CONST_COMPLEX_0_0
 #endif
-
-#else /* WITH_MPI */
-
-            ! if MPI is not used (we do not need to transfer because of MPI_ALLREDUCE) we can set to zero on the device
-
-            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols* size_of_datatype)
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_&
-	      &MATH_DATATYPE&
-	      &: error in cudaMemset"
-              stop 1
-             endif
-
-#endif /* WITH_MPI */
 
           endif ! l_rows>0
 
