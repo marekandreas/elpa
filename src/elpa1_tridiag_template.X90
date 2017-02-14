@@ -314,23 +314,23 @@
 
       if (useGPU) then
          successCUDA = cuda_malloc(v_row_dev, max_local_rows * size_of_datatype)
-         check_alloc_cuda("tridiag", successCUDA)
+         check_alloc_cuda("tridiag: v_row_dev", successCUDA)
 
          successCUDA = cuda_malloc(u_row_dev, max_local_rows * size_of_datatype)
 
-         check_alloc_cuda("tridiag", successCUDA)
+         check_alloc_cuda("tridiag: u_row_dev", successCUDA)
 
          successCUDA = cuda_malloc(v_col_dev, max_local_cols * size_of_datatype)
-         check_alloc_cuda("tridiag", successCUDA)
+         check_alloc_cuda("tridiag: v_col_dev", successCUDA)
 
          successCUDA = cuda_malloc(u_col_dev, max_local_cols * size_of_datatype)
-         check_alloc_cuda("tridiag", successCUDA)
+         check_alloc_cuda("tridiag: u_col_dev", successCUDA)
 
          successCUDA = cuda_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * size_of_datatype)
-         check_alloc_cuda("tridiag", successCUDA)
+         check_alloc_cuda("tridiag: vu_stored_rows_dev", successCUDA)
 
          successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
-         check_alloc_cuda("tridiag", successCUDA)
+         check_alloc_cuda("tridiag: vu_stored_rows_dev", successCUDA)
       endif !useGPU
 
 
@@ -349,10 +349,10 @@
         ! allocate memmory for matrix A on the device and than copy the matrix
 
         successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_datatype)
-        check_alloc_cuda("tridiag", successCUDA)
+        check_alloc_cuda("tridiag: a_dev", successCUDA)
 
         successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
-        check_alloc_cuda("tridiag", successCUDA)
+        check_alloc_cuda("tridiag: a_dev", successCUDA)
       endif
 
       ! main cycle of tridiagonalization
@@ -378,7 +378,7 @@
             ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
 
             successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)* size_of_datatype, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag a_dev 1", successCUDA)
           else
             v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
           endif
@@ -487,17 +487,17 @@
         if (l_rows > 0 .and. l_cols> 0 ) then
           if(useGPU) then
             successCUDA = cuda_memset(u_col_dev, 0, l_cols * size_of_datatype)
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: u_col_dev", successCUDA)
 
             successCUDA = cuda_memset(u_row_dev, 0, l_rows * size_of_datatype)
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: u_row_dev", successCUDA)
 
             successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * size_of_datatype, cudaMemcpyHostToDevice)
 
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: v_col_dev", successCUDA)
 
             successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * size_of_datatype, cudaMemcpyHostToDevice)
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: v_row_dev", successCUDA)
           endif ! useGU
 
 #if REALCASE == 1
@@ -634,10 +634,10 @@
 
           if (useGPU) then
             successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: u_col_dev 1", successCUDA)
 
             successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
           endif
 
 !              call PRECISION_SYMV('U', l_cols,  &
@@ -786,12 +786,12 @@
             successCUDA = cuda_memcpy(vu_stored_rows_dev, loc(vu_stored_rows(1,1)), &
                                       max_local_rows * 2 * max_stored_uv *          &
                                       size_of_datatype, cudaMemcpyHostToDevice)
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: vu_stored_rows_dev", successCUDA)
 
             successCUDA = cuda_memcpy(uv_stored_cols_dev, loc(uv_stored_cols(1,1)), &
                                       max_local_cols * 2 * max_stored_uv *          &
                                       size_of_datatype, cudaMemcpyHostToDevice)
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: uv_stored_cols_dev", successCUDA)
           endif
 
           do i = 0, (istep-2)/tile_size
@@ -845,7 +845,7 @@
 
              successCUDA = cuda_memcpy(loc(a_mat(l_rows, l_cols)), a_dev + a_offset, &
                                        1 *  size_of_datatype, cudaMemcpyDeviceToHost)
-             check_memcpy_cuda("tridiag", successCUDA)
+             check_memcpy_cuda("tridiag: a_dev 3", successCUDA)
 
           endif
           if (n_stored_vecs > 0) then
@@ -856,9 +856,12 @@
 
           if (useGPU) then
             !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
-             successCUDA = cuda_memcpy(a_dev + a_offset, loc(a_mat(l_rows, l_cols)), &
-                                       1 * size_of_datatype, cudaMemcpyDeviceToHost)
-             check_memcpy_cuda("tridiag", successCUDA)
+	    !successCUDA = cuda_threadsynchronize()
+            !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
+
+             successCUDA = cuda_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_size_t), &
+                                       int(1 * size_of_datatype, kind=c_size_t), cudaMemcpyDeviceToHost)
+             check_memcpy_cuda("tridiag: a_dev 4", successCUDA)
           endif
         endif
 
@@ -873,7 +876,7 @@
           if(useGPU) then
             successCUDA = cuda_memcpy(loc(aux3(1)), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: a_dev 5", successCUDA)
             vrl = aux3(1)
           else !useGPU
             vrl = a_mat(1,l_cols)
@@ -908,7 +911,7 @@
         if(useGPU) then
           successCUDA = cuda_memcpy(loc(aux3(1)), a_dev, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag", successCUDA)
+          check_memcpy_cuda("tridiag: a_dev 6", successCUDA)
           d_vec(1) = PRECISION_REAL(aux3(1))
         else !useGPU
           d_vec(1) = PRECISION_REAL(a_mat(1,1))
@@ -924,7 +927,7 @@
         if(useGPU) then
           successCUDA = cuda_memcpy(loc(e_vec(1)), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag", successCUDA)
+          check_memcpy_cuda("tridiag: a_dev 7", successCUDA)
         else !useGPU
           e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
         endif !useGPU
@@ -934,7 +937,7 @@
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
         if(useGPU) then
           successCUDA = cuda_memcpy(loc(d_vec(1)), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag", successCUDA)
+          check_memcpy_cuda("tridiag: a_dev 8", successCUDA)
         else !useGPU
           d_vec(1) = a_mat(1,1)
         endif !useGPU
@@ -955,25 +958,25 @@
       if (useGPU) then
         ! todo: should we leave a_mat on the device for further use?
         successCUDA = cuda_free(a_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: a_dev 9", successCUDA)
 
         successCUDA = cuda_free(v_row_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: v_row_dev", successCUDA)
 
         successCUDA = cuda_free(u_row_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: (u_row_dev", successCUDA)
 
         successCUDA = cuda_free(v_col_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: v_col_dev", successCUDA)
 
         successCUDA = cuda_free(u_col_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: u_col_dev ", successCUDA)
 
         successCUDA = cuda_free(vu_stored_rows_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: vu_stored_rows_dev ", successCUDA)
 
         successCUDA = cuda_free(uv_stored_cols_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag:uv_stored_cols_dev ", successCUDA)
       endif
 
       ! distribute the arrays d_vec and e_vec to all processors
