@@ -860,7 +860,7 @@
             !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
 
              successCUDA = cuda_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_size_t), &
-                                       int(1 * size_of_datatype, kind=c_size_t), cudaMemcpyDeviceToHost)
+                                       int(1 * size_of_datatype, kind=c_size_t), cudaMemcpyHostToDevice)
              check_memcpy_cuda("tridiag: a_dev 4", successCUDA)
           endif
         endif
