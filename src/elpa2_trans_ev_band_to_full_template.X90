@@ -1029,12 +1029,14 @@
       endif
 
 #if BAND_TO_FULL_BLOCKING
-      deallocate(tmat_complete, t_tmp, t_tmp2, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_band_to_full_&
-	MATH_DATATYPE&
-	&: error when deallocating tmat_complete, t_tmp, t_tmp2 "//errorMessage
-        stop 1
+      if (.not.(useGPU)) then
+        deallocate(tmat_complete, t_tmp, t_tmp2, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_&
+	  MATH_DATATYPE&
+	  &: error when deallocating tmat_complete, t_tmp, t_tmp2 "//errorMessage
+          stop 1
+        endif
       endif
 #endif
 
