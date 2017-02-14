@@ -275,7 +275,7 @@
         if (.not.(successCUDA)) then
           print *,"bandred_&
 	  &MATH_DATATYPE&
-	  &: error in cudaMalloc"
+	  &: error in cudaMalloc a_dev 1"
           stop 1
         endif
 
@@ -283,7 +283,7 @@
         if (.not.(successCUDA)) then
           print *,"bandred_&
 	  &MATH_DATATYPE&
-	  &: error in cudaMalloc"
+	  &: error in cudaMalloc tmat_dev 1"
           stop 1
         endif
 
@@ -291,7 +291,7 @@
         if (.not.(successCUDA)) then
           print *,"bandred_&
 	  &MATH_DATATYPE&
-	  &: error in cudaMalloc"
+	  &: error in cudaMalloc vav_dev 1"
           stop 1
         endif
       endif ! useGPU
@@ -378,7 +378,7 @@
         if (.not.(successCUDA)) then
           print *,"bandred_&
 	  &MATH_DATATYPE&
-	  &: error in cudaMemcpy"
+	  &: error in cudaMemcpy a_dev 2"
           stop 1
         endif
       endif ! useGPU
@@ -436,7 +436,7 @@
               successCUDA = cuda_free(vmr_dev)
               if (.not.(successCUDA)) then
                 print *,"bandred_&
-		&MATH_DATATYPE&: error in cuda_free"
+		&MATH_DATATYPE&: error in cuda_free vmr_dev 1"
                 stop 1
               endif
             endif
@@ -457,7 +457,7 @@
             if (.not.(successCUDA)) then
               print *,"bandred_&
 	      &MATH_DATATYPE&
-	      &: error in cudaMalloc: vmr_dev"
+	      &: error in cudaMalloc: vmr_dev2"
               stop 1
             endif
 
@@ -477,7 +477,7 @@
               if (.not.(successCUDA)) then
                  print *,"bandred_&
 		 &MATH_DATATYPE&
-		 &: error in cudaFree umc_dev"
+		 &: error in cudaFree umc_dev 1"
                  stop 1
               endif
 
@@ -500,7 +500,7 @@
             if (.not.(successCUDA)) then
               print *,"bandred_&
 	      &MATH_DATATYPE&
-	      &: error in cudaMalloc umc_dev"
+	      &: error in cudaMalloc umc_dev 2"
               stop 1
             endif
 
@@ -1106,7 +1106,7 @@
            if (.not.(successCUDA)) then
              print *,"bandred_&
 	     &MATH_DATATYPE&
-	     &: error in cudaMemcpy"
+	     &: error in cudaMemcpy vmr_dev 3"
              stop 1
            endif
            successCUDA = cuda_memcpy(umc_dev,    &
@@ -1120,7 +1120,7 @@
            if (.not.(successCUDA)) then
              print *,"bandred_&
 	     &MATH_DATATYPE&
-	     &: error in cudaMemcpy"
+	     &: error in cudaMemcpy umc_dev 3"
              stop 1
            endif
 
@@ -1170,7 +1170,7 @@
            if (.not.(successCUDA)) then
              print *,"bandred_&
 	     &MATH_DATATYPE&
-	     &: error in cudaMemcpy"
+	     &: error in cudaMemcpy vmr_dev 4"
              stop 1
            endif
 
@@ -1185,7 +1185,7 @@
            if (.not.(successCUDA)) then
              print *,"bandred_&
 	     &MATH_DATATYPE&
-	     &: error in cudaMemcpy"
+	     &: error in cudaMemcpy umc_dev 4"
              stop 1
            endif
 
@@ -1458,14 +1458,14 @@
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
-	   &: error in cudaMemcpy"
+	   &: error in cudaMemcpy umc_dev 5"
            stop 1
          endif
          successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
-	   &: error in cudaMemcpy"
+	   &: error in cudaMemcpy tmat_dev 2"
            stop 1
          endif
 
@@ -1484,7 +1484,7 @@
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
-	   &: error in cudaMemcpy"
+	   &: error in cudaMemcpy vav_dev 2"
            stop 1
          endif
 	 call timer%start("cublas")
@@ -1512,7 +1512,7 @@
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
-	   &: error in cudaMemcpy"
+	   &: error in cudaMemcpy vav_dev3"
            stop 1
          endif
 
@@ -1529,7 +1529,7 @@
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
-	   &: error in cudaMemcpy"
+	   &: error in cudaMemcpy vav_dev4"
            stop 1
          endif
 
@@ -1561,7 +1561,7 @@
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
-	   &: error in cudaMemcpy"
+	   &: error in cudaMemcpy umc_dev 6"
            stop 1
          endif
 
@@ -1592,7 +1592,7 @@
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
-	   &: error in cudaMemcpy"
+	   &: error in cudaMemcpy vmr_dev 5 "
            stop 1
          endif
 
@@ -1607,7 +1607,7 @@
          if (.not.(successCUDA)) then
            print *,"bandred_&
 	   &MATH_DATATYPE&
-	   &: error in cudaMemcpy"
+	   &: error in cudaMemcpy umc_dev 7"
            stop 1
          endif
 
@@ -1877,7 +1877,7 @@
 !       if (.not.(successCUDA)) then
 !         print *,"bandred_&
 !	 &MATH_DATATYPE&
-!	 &: error in cudaMemcpy"
+!	 &: error in cudaMemcpy a_dev 3"
 !         stop 1
 !       endif
 
@@ -1885,7 +1885,7 @@
 !       if (.not.(successCUDA)) then
 !         print *,"bandred_&
 !	 &MATH_DATATYPE&
-!	 &: error in cudaFree"
+!	 &: error in cudaFree a_dev 4"
 !         stop 1
 !       endif
 
@@ -1896,7 +1896,7 @@
 !       if (.not.(successCUDA)) then
 !         print *,"bandred_&
 !	 &MATH_DATATYPE&
-!	 &: error in cudaFree"
+!	 &: error in cudaFree tmat_dev 3"
 !         stop 1
 !       endif
 !#endif
@@ -1905,7 +1905,7 @@
        if (.not.(successCUDA)) then
          print *,"bandred_&
 	 &MATH_DATATYPE&
-	 &: error in cudaFree"
+	 &: error in cudaFree vav_dev 4"
          stop 1
        endif
      endif ! useGPU
@@ -1941,11 +1941,14 @@
      endif
 
 #if COMPLEXCASE == 1
-       successCUDA = cuda_free(umc_dev)
-       if (.not.(successCUDA)) then
-         print *,"bandred_complex: error in cudaFree"
+       ! check this
+       if (useGPU) then
+         successCUDA = cuda_free(umc_dev)
+         if (.not.(successCUDA)) then
+           print *,"bandred_complex: error in cudaFree umc_dev 7a"
 
-         stop 1
+           stop 1
+         endif
        endif
 #endif
 
@@ -1954,7 +1957,7 @@
        if (.not.(successCUDA)) then
          print *,"bandred_&
 	 &MATH_DATATYPE&
-	 &: error in cudaFree"
+	 &: error in cudaFree vmr_dev 6"
          stop 1
        endif
 
@@ -1962,7 +1965,7 @@
        if (.not.(successCUDA)) then
          print *,"bandred_&
 	 &MATH_DATATYPE&
-	 &: error in cudaFree"
+	 &: error in cudaFree umc_dev 8"
          stop 1
        endif
 
