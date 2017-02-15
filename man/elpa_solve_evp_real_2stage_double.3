@@ -1,4 +1,4 @@
-.TH "elpa_solve_evp_real_2stage_double" 3 "Tue Oct 18 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_solve_evp_real_2stage_double" 3 "Wed Jan 15 2017" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -12,7 +12,7 @@ use elpa1
 use elpa2
 .br
 .br
-.RI  "success = \fBelpa_solve_evp_real_2stage_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQR, useGPU)"
+.RI  "success = \fBelpa_solve_evp_real_2stage_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQR, useGPU, bandwidth)"
 .br
 .RI " "
 .br
@@ -49,13 +49,15 @@ use elpa2
 .br
 .RI "logical, intent(in), optional: \fBuseGPU\fP:        decide whether GPUs should be used or not"
 .br
+.RI "integer, intent(in), optional: \fBbandwidth\fP:     bandwidth of an already banded matrix"
+.br
 .RI "logical                        \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
 #include "elpa.h"
 
 .br
-.RI "success = \fBelpa_solve_evp_real_2stage_double\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQR, \fBint\fP useGPU);"
+.RI "success = \fBelpa_solve_evp_real_2stage_double\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQR, \fBint\fP useGPU, \fBint\fP bandwidth);"
 .br
 .RI " "
 .br
@@ -91,6 +93,8 @@ use elpa2
 .RI "int     \fBuseQR\fP:                 if set to 1 switch to QR-decomposition"
 .br
 .RI "int     \fBuseGPU\fP:                decide whether GPUs should be used or not"
+.br
+.RI "int     \fBbandwidth\fP:             bandwidth of an already banded matrix"
 .br
 .RI "int     \fBsuccess\fP:               return value indicating success (1) or failure (0)
 
