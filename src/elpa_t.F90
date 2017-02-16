@@ -1,267 +1,141 @@
 module elpa_type
  use iso_c_binding
+ use init_elpa
 
  private
 
- public :: elpa_create, elpa_t
+ public :: elpa_init, elpa_initialized, elpa_uninit, elpa_create, elpa_t, C_INT, C_DOUBLE, C_FLOAT
 
  type :: elpa_t
-   integer(kind=c_int) :: mpi_comm_rows, mpi_comm_cols, mpi_comm_global
+   private
+   integer(kind=c_int) :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols
    integer(kind=c_int) :: na, nev, local_nrows, local_ncols, nblk
-
-   integer(kind=c_int) :: real_kernel, complex_kernel
-
-   integer(kind=c_int) :: useQR, useGPU
-   character(6)        :: solver
-   character(8)        :: timings
    contains
-     generic, public :: set_option => elpa_set_option_string, elpa_set_option_integer
-     procedure, private :: elpa_set_option_string, elpa_set_option_integer
-     generic, public :: get_option => elpa_get_option_string, elpa_get_option_integer
-     procedure, private :: elpa_get_option_string, elpa_get_option_integer
+     generic, public :: set => elpa_set_string, elpa_set_integer
+     generic, public :: get => elpa_get_string, elpa_get_integer
 
-     procedure :: get_communicators => get_communicators
-     procedure :: solve_real_double => elpa_solve_real_double
+     procedure, private :: elpa_set_string, elpa_set_integer
+     procedure, private :: elpa_get_string, elpa_get_integer
 
+     procedure, public :: get_communicators => get_communicators
+     procedure, public :: solve => elpa_solve_real_double
  end type elpa_t
 
  contains
 
-   function elpa_create(na, nev, local_nrows, local_ncols, nblk) result(elpa)
-     use precision
-     use init_elpa
-     use elpa2_utilities, only : DEFAULT_REAL_ELPA_KERNEL, DEFAULT_COMPLEX_ELPA_KERNEL
-     implicit none
+   function elpa_create(self, na, nev, local_nrows, local_ncols, nblk, mpi_comm_parent, process_row, process_col) result(success)
+      use precision
+      use init_elpa
+      use elpa_mpi
+      use elpa_utilities, only : error_unit
+      use elpa2_utilities, only : DEFAULT_REAL_ELPA_KERNEL, DEFAULT_COMPLEX_ELPA_KERNEL
+      use elpa1, only : elpa_get_communicators
+      implicit none
 
       integer(kind=ik), intent(in) :: na, nev, local_nrows, local_ncols, nblk
-      type(elpa_t) :: elpa
+      integer, intent(in) :: mpi_comm_parent, process_row, process_col
+      type(elpa_t), intent(out) :: self
+      integer :: mpierr
+
+      logical :: success
+
+      success = .true.
 
       ! check whether init has ever been called
-      if (.not.(initDone))  then
-        print *,"ERROR: you must call elpa_init() once before creating instances of ELPA"
-        stop
+      if (.not.(elpa_initialized())) then
+        write(error_unit, *) "elpa_create(): you must call elpa_init() once before creating instances of ELPA"
+        success = .false.
+        return
       endif
 
-      elpa%na          = na
-      elpa%nev         = nev
-      elpa%local_nrows = local_nrows
-      elpa%local_ncols = local_ncols
-      elpa%nblk        = nblk
+      self%na          = na
+      self%nev         = nev
+      self%local_nrows = local_nrows
+      self%local_ncols = local_ncols
+      self%nblk        = nblk
 
-      ! some default values
-      elpa%solver         = "2stage"
-      elpa%real_kernel    = DEFAULT_REAL_ELPA_KERNEL
-      elpa%complex_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
-
-      elpa%useQR          = 0
-      elpa%useGPU         = 0
-      elpa%timings        = "none"
+      self%mpi_comm_parent = mpi_comm_parent
+      mpierr = elpa_get_communicators(mpi_comm_parent, process_row, process_col, self%mpi_comm_rows, self%mpi_comm_cols)
+      if (mpierr /= MPI_SUCCESS) then
+        write(error_unit, *) "elpa_create(): error constructing row and column communicators"
+        success = .false.
+        return
+      endif
 
     end function
 
-    function elpa_set_option_string(self, keyword, value) result(success)
+    function elpa_set_string(self, keyword, value) result(success)
       use iso_c_binding
       use elpa1, only : elpa_print_times
       implicit none
       class(elpa_t)            :: self
       character(*), intent(in) :: keyword
       character(*), intent(in) :: value
-      integer(kind=c_int)      :: success
+      logical                  :: success
 
-      success = 0
+      success = .false.
+    end function elpa_set_string
 
-      if (trim(keyword) .eq. "solver") then
-        if (trim(value) .eq. "1stage") then
-          self%solver = "1stage"
-          success = 1
-        else if (trim(value) .eq. "2stage") then
-          self%solver = "2stage"
-          success = 1
-        else if (trim(value) .eq. "auto") then
-          self%solver = "auto "
-          success = 1
-        else
-          print *," not allowed key/value pair: ",trim(keyword),"/",trim(value)
-          success = 0
-        endif
-      else if (trim(keyword) .eq. "timings") then
-        if (trim(value) .eq. "balanced") then
-          elpa_print_times = .true.
-          success = 1
-        else if (trim(value) .eq. "detailed") then
-          print *,"detailed timings not yet implemented"
-          elpa_print_times = .false.
-          success = 1
-        else if (trim(value) .eq. "none") then
-          elpa_print_times = .false.
-          success = 1
-        else
-          print *," not allowed key/value pair: ",trim(keyword),"/",trim(value)
-          success = 0
-        endif
-      else
-        print *," not allowed key/value pair: ",trim(keyword),"/",trim(value)
-        success = 0
-      endif
-
-    end function elpa_set_option_string
-
-    function elpa_set_option_integer(self, keyword, value) result(success)
+    function elpa_set_integer(self, keyword, value) result(success)
       use iso_c_binding
       use elpa2_utilities, only : check_allowed_real_kernels, check_allowed_complex_kernels
       implicit none
       class(elpa_t)                   :: self
       character(*), intent(in)        :: keyword
       integer(kind=c_int), intent(in) :: value
-      integer(kind=c_int)             :: success
+      logical                         :: success
 
-      success = 0
+      success = .false.
+    end function elpa_set_integer
 
-      if (trim(keyword) .eq. "real_kernel") then
-        if (.not.(check_allowed_real_kernels(value))) then
-          self%real_kernel = value
-          success = 1
-        else
-          print *,"Setting this real_kernel is not possible"
-          success = 0
-        endif
-      else if (trim(keyword) .eq. "complex_kernel" ) then
-        if (.not.(check_allowed_complex_kernels(value))) then
-          self%complex_kernel = value
-          success = 1
-        else
-          print *,"Setting this complex_kernel is not possible"
-          success = 0
-        endif
-      else if (trim(keyword) .eq. "use_qr") then
-        if (value .eq. 1) then
-          self%useQr = 1
-          success = 1
-        else if (value .eq. 0) then
-          self%useQr = 0
-          success = 1
-        else
-          print *," not allowed key/value pair: ",trim(keyword),"/",value
-          success = 0
-        endif
-      else if (trim(keyword) .eq. "use_gpu") then
-        if (value .eq. 1) then
-          self%useGPU = 1
-          success = 1
-        else if (value .eq. 0) then
-          self%useGPU = 0
-          success = 1
-        else
-          print *," not allowed key/value pair: ",trim(keyword),"/",value
-          success = 0
-        endif
-      else
-        print *," not allowed key/value pair: ",trim(keyword),"/",value
-        success = 0
-      endif
-
-    end function elpa_set_option_integer
-
-    function elpa_get_option_string(self, keyword, value) result(success)
+    function elpa_get_string(self, keyword, value) result(success)
       use iso_c_binding
       use elpa1, only : elpa_print_times
       implicit none
       class(elpa_t)               :: self
       character(*), intent(in)    :: keyword
       character(*), intent(inout) :: value
-      integer(kind=c_int)         :: success
+      logical                     :: success
 
-      success = 0
+      success = .false.
+    end function elpa_get_string
 
-      if (trim(keyword) .eq. "solver") then
-        value = trim(self%solver)
-        success = 1
-      else if (trim(keyword) .eq. "timings") then
-        if (elpa_print_times) then
-          value = "balanced"
-          success = 1
-        else
-          ! detailed not yet implemented
-          success = 1
-        endif
-      else
-        print *," not allowed key/value pair: ",trim(keyword),"/",trim(value)
-        success = 0
-      endif
-
-    end function elpa_get_option_string
-
-    function elpa_get_option_integer(self, keyword, value) result(success)
+    function elpa_get_integer(self, keyword, value) result(success)
       use iso_c_binding
       implicit none
       class(elpa_t)                      :: self
       character(*), intent(in)           :: keyword
       integer(kind=c_int), intent(inout) :: value
-      integer(kind=c_int)                :: success
+      logical                            :: success
 
-      success = 0
+      success = .false.
+    end function elpa_get_integer
 
-      if (trim(keyword) .eq. "real_kernel") then
-        value = self%real_kernel
-        success = 1
-      else if (trim(keyword) .eq. "complex_kernel" ) then
-        value = self%complex_kernel
-        success = 1
-      else if (trim(keyword) .eq. "use_qr") then
-        value = self%useQr
-        success = 1
-      else if (trim(keyword) .eq. "use_gpu") then
-        value =  self%useGPU
-        success = 1
-      else
-        print *," not allowed key/value pair: ",trim(keyword),"/",value
-        success = 0
-      endif
-
-    end function elpa_get_option_integer
-
-    function get_communicators(self, mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
+    subroutine get_communicators(self, mpi_comm_rows, mpi_comm_cols)
       use iso_c_binding
-      use elpa_mpi
-      use elpa1, only : elpa_get_communicators
       implicit none
-      class(elpa_t)                    :: self
+      class(elpa_t)                   :: self
 
-      integer(kind=c_int), intent(in)  :: mpi_comm_global, my_prow, my_pcol
       integer(kind=c_int), intent(out) :: mpi_comm_rows, mpi_comm_cols
-
-      integer(kind=c_int)              :: mpierr
-
-      mpierr = elpa_get_communicators(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols)
-
-      self%mpi_comm_rows   = mpi_comm_rows
-      self%mpi_comm_cols   = mpi_comm_cols
-      self%mpi_comm_global = mpi_comm_global
-    end function
+      mpi_comm_rows = self%mpi_comm_rows
+      mpi_comm_cols = self%mpi_comm_cols
+    end subroutine
 
     function elpa_solve_real_double(self, a, ev, q) result(success)
       use elpa
 
       use iso_c_binding
       implicit none
-      class(elpa_t)                    :: self
+      class(elpa_t)                   :: self
 
       real(kind=c_double) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols), &
                              ev(self%na)
-      integer(kind=c_int) :: success
+      logical :: success
 
-      logical :: successDummy
-
-      successDummy =  elpa_solve_evp_real_double(self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                 self%local_nrows,  self%nblk, self%local_ncols, &
-                                                 self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                 self%mpi_comm_global, method=trim(self%solver))
-
-      if (successDummy) then
-        success = 1
-      else
-        success = 0
-      endif
+      success = elpa_solve_evp_real_double(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                           self%local_nrows,  self%nblk, self%local_ncols, &
+                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                           self%mpi_comm_parent)
     end function
 
 
