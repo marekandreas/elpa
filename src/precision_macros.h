@@ -32,6 +32,7 @@
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
+#undef  cublas_PRECISION_SYMV
 #undef  PRECISION_SUFFIX
 
 #undef  CONST_0_0
@@ -79,6 +80,7 @@
 #define  cublas_PRECISION_GEMM cublas_DGEMM
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
+#define  cublas_PRECISION_SYMV cublas_DSYMV
 #define  CONST_0_0 0.0_rk8
 #define  CONST_0_5 0.5_rk8
 #define  CONST_1_0 1.0_rk8
@@ -122,6 +124,7 @@
 #define  cublas_PRECISION_GEMM cublas_SGEMM
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
+#define  cublas_PRECISION_SYMV cublas_SSYMV
 #define  CONST_0_0 0.0_rk4
 #define  CONST_0_5 0.5_rk4
 #define  CONST_1_0 1.0_rk4
@@ -170,6 +173,7 @@
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
+#undef  cublas_PRECISION_SYMV
 #undef  PRECISION_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
 #undef  MPI_COMPLEX_EXPLICIT_PRECISION
@@ -227,6 +231,7 @@
 #define  cublas_PRECISION_GEMM cublas_ZGEMM
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
+#define  cublas_PRECISION_SYMV cublas_ZSYMV
 #define  MPI_COMPLEX_PRECISION MPI_DOUBLE_COMPLEX
 #define  MPI_COMPLEX_EXPLICIT_PRECISION MPI_COMPLEX16
 #define  MPI_REAL_PRECISION MPI_REAL8
@@ -280,6 +285,7 @@
 #define  cublas_PRECISION_GEMM cublas_CGEMM
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV
+#define  cublas_PRECISION_SYMV cublas_CSYMV
 #define  MPI_COMPLEX_PRECISION MPI_COMPLEX
 #define  MPI_COMPLEX_EXPLICIT_PRECISION MPI_COMPLEX8
 #define  MPI_REAL_PRECISION MPI_REAL4
