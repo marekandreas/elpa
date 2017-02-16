@@ -2,6 +2,7 @@
 #undef DOUBLE_PRECISION_REAL
 
 #undef  MATH_DATATYPE
+#undef  BLAS_TRANS_OR_CONJ
 #undef  PRECISION
 #undef  PRECISION_STR
 #undef  REAL_DATATYPE
@@ -41,10 +42,12 @@
 #undef  CONST_2_0
 #undef  CONST_8_0
 #undef  MPI_REAL_PRECISION
+#undef  MPI_MATH_DATATYPE_PRECISION
 #undef  C_DATATYPE_KIND
 
 /* General definitions needed in single and real case */
 #define  MATH_DATATYPE real
+#define  BLAS_TRANS_OR_CONJ 'T'
 
 #ifdef DOUBLE_PRECISION
 #define DOUBLE_PRECISION_REAL
@@ -87,6 +90,7 @@
 #define  CONST_2_0 2.0_rk8
 #define  CONST_8_0 8.0_rk8
 #define  MPI_REAL_PRECISION MPI_REAL8
+#define  MPI_MATH_DATATYPE_PRECISION MPI_REAL8
 #define  C_DATATYPE_KIND c_double
 
 #endif /* DOUBLE_PRECISION */
@@ -131,6 +135,7 @@
 #define  CONST_2_0 2.0_rk4
 #define  CONST_8_0 8.0_rk4
 #define  MPI_REAL_PRECISION MPI_REAL4
+#define  MPI_MATH_DATATYPE_PRECISION MPI_REAL4
 #define  C_DATATYPE_KIND c_float
 
 #endif /* SINGLE_PRECISION */
@@ -141,6 +146,7 @@
 
 #undef DOUBLE_PRECISION_COMPLEX
 #undef  MATH_DATATYPE
+#undef  BLAS_TRANS_OR_CONJ
 #undef  PRECISION
 #undef COMPLEX_DATATYPE
 /* in the complex case also sometime real valued variables are needed */
@@ -176,6 +182,7 @@
 #undef  cublas_PRECISION_SYMV
 #undef  PRECISION_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
+#undef  MPI_MATH_DATATYPE_PRECISION
 #undef  MPI_COMPLEX_EXPLICIT_PRECISION
 #undef  MPI_REAL_PRECISION
 #undef  KIND_PRECISION
@@ -195,6 +202,7 @@
 
 /* General definitions needed in single and double case */
 #define  MATH_DATATYPE complex
+#define  BLAS_TRANS_OR_CONJ 'C'
 
 #ifdef DOUBLE_PRECISION
 
@@ -233,6 +241,7 @@
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
 #define  cublas_PRECISION_SYMV cublas_ZSYMV
 #define  MPI_COMPLEX_PRECISION MPI_DOUBLE_COMPLEX
+#define  MPI_MATH_DATATYPE_PRECISION MPI_DOUBLE_COMPLEX
 #define  MPI_COMPLEX_EXPLICIT_PRECISION MPI_COMPLEX16
 #define  MPI_REAL_PRECISION MPI_REAL8
 #define  KIND_PRECISION rk8
@@ -287,6 +296,7 @@
 #define  cublas_PRECISION_GEMV cublas_CGEMV
 #define  cublas_PRECISION_SYMV cublas_CSYMV
 #define  MPI_COMPLEX_PRECISION MPI_COMPLEX
+#define  MPI_MATH_DATATYPE_PRECISION MPI_COMPLEX
 #define  MPI_COMPLEX_EXPLICIT_PRECISION MPI_COMPLEX8
 #define  MPI_REAL_PRECISION MPI_REAL4
 #define  KIND_PRECISION rk4

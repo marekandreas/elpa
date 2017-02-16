@@ -413,14 +413,8 @@
 
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_allreduce(aux1, aux2, 2, &
-#if REALCASE == 1
-	    MPI_REAL_PRECISION,               &
-#endif
-#if COMPLEXCASE == 1
-            MPI_COMPLEX_PRECISION,            &
-#endif
-	    MPI_SUM, mpi_comm_rows, mpierr)
+            call mpi_allreduce(aux1, aux2, 2, MPI_MATH_DATATYPE_PRECISION, &
+                               MPI_SUM, mpi_comm_rows, mpierr)
             call timer%stop("mpi_communication")
 #else /* WITH_MPI */
           aux2 = aux1
@@ -456,13 +450,7 @@
 
 #ifdef WITH_MPI
          ! Broadcast the Householder vector (and tau) along columns
-         call MPI_Bcast(v_row, l_rows+1,       &
-#if REALCASE == 1
-                        MPI_REAL_PRECISION,    &
-#endif
-#if COMPLEXCASE == 1
-                        MPI_COMPLEX_PRECISION, &
-#endif
+         call MPI_Bcast(v_row, l_rows+1, MPI_MATH_DATATYPE_PRECISION,    &
                         pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif /* WITH_MPI */
 
@@ -558,13 +546,7 @@
 #ifdef WITH_OPENMP
               if (mod(n_iter,n_threads) == my_thread) then
 	        call timer%start("blas")
-#if REALCASE == 1
-                call PRECISION_GEMV('T',                    &
-#endif
-#if COMPLEXCASE == 1
-                call PRECISION_GEMV('C',                    &
-#endif
-		                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                     ONE, a_mat(l_row_beg,l_col_beg), lda,         &
                                     v_row(l_row_beg), 1, ONE, uc_p(l_col_beg,my_thread), 1)
 
@@ -581,13 +563,8 @@
 
               if (useGPU) then
                 a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * size_of_datatype
-	        call timer%start("cublas")
-#if REALCASE == 1
-                call cublas_PRECISION_GEMV('T',                        &
-#endif
-#if COMPLEXCASE == 1
-                call cublas_PRECISION_GEMV('C',                        &
-#endif
+                call timer%start("cublas")
+                call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
                                            l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                            ONE, a_dev + a_offset, lda,                   &
                                            v_row_dev + (l_row_beg - 1) *                 &
@@ -602,21 +579,15 @@
                                              size_of_datatype, 1,                          &
                                              ONE, u_row_dev + (l_row_beg - 1) *                 &
                                              size_of_datatype, 1)
-
                 endif
-	        call timer%stop("cublas")
+                call timer%stop("cublas")
               else ! useGPU
-	        call timer%start("blas")
-#if REALCASE == 1
-                call PRECISION_GEMV('T',           &
-#endif
-#if COMPLEXCASE == 1
-                call PRECISION_GEMV('C',           &
-#endif
-	                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                    ONE, a_mat(l_row_beg, l_col_beg), lda,         &
-                                    v_row(l_row_beg), 1,                           &
-                                    ONE, u_col(l_col_beg), 1)
+                call timer%start("blas")
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
+                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                            ONE, a_mat(l_row_beg, l_col_beg), lda,         &
+                            v_row(l_row_beg), 1,                           &
+                            ONE, u_col(l_col_beg), 1)
 
                 if (i/=j) then
 
@@ -699,13 +670,7 @@
           tmp(1:l_cols) = u_col(1:l_cols)
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call mpi_allreduce(tmp, u_col, l_cols,    &
-#if REALCASE == 1
-                             MPI_REAL_PRECISION,    &
-#endif
-#if COMPLEXCASE == 1
-                             MPI_COMPLEX_PRECISION, &
-#endif
+          call mpi_allreduce(tmp, u_col, l_cols, MPI_MATH_DATATYPE_PRECISION,    &
                              MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -735,10 +700,10 @@
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
 #if REALCASE == 1
-        call mpi_allreduce(x, vav, 1, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+        call mpi_allreduce(x, vav, 1, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
 #if COMPLEXCASE == 1
-        call mpi_allreduce(xc, vav, 1 , MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+        call mpi_allreduce(xc, vav, 1 , MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
         call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -803,34 +768,24 @@
               cycle
 
             if (useGPU) then
-	      call timer%start("cublas")
-#if REALCASE == 1
-              call cublas_PRECISION_GEMM('N', 'T',     &
-#endif
-#if COMPLEXCASE == 1
-              call cublas_PRECISION_GEMM('N', 'C',     &
-#endif
-	                                 l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
+              call timer%start("cublas")
+              call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+                                         l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
                                          ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
                                          size_of_datatype,  &
                                          max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
                                          size_of_datatype,  &
                                          max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *            &
                                          size_of_datatype , lda)
-	      call timer%stop("cublas")
+              call timer%stop("cublas")
             else !useGPU
-	      call timer%start("blas")
-#if REALCASE == 1
-              call PRECISION_GEMM('N', 'T',                &
-#endif
-#if COMPLEXCASE == 1
-              call PRECISION_GEMM('N', 'C',                &
-#endif
-	                           l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
+              call timer%start("blas")
+              call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
+                                   l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
                                    ONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
                                    uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),        &
                                    ONE, a_mat(l_row_beg,l_col_beg), lda)
-	      call timer%stop("blas")
+              call timer%stop("blas")
             endif !useGPU
           enddo
 
@@ -856,7 +811,7 @@
 
           if (useGPU) then
             !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
-	    !successCUDA = cuda_threadsynchronize()
+            !successCUDA = cuda_threadsynchronize()
             !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
 
              successCUDA = cuda_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_size_t), &
