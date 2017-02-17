@@ -97,6 +97,8 @@
       use precision
       implicit none
 
+      logical, parameter      :: new_GPU_multiply = .true.
+      
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                           :: useGPU
 
@@ -218,12 +220,21 @@
       PRECISION_SUFFIX &
       )
 
+
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
       call timer%stop("mpi_communication")
+
+      if((my_prow == 0) .and. (my_pcol == 0)) then
+        if( new_GPU_multiply) then
+          write(*,*) "mat vec multiply version 1"
+        else
+          write(*,*) "mat vec multiply version 0"
+        endif
+      endif
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
       ! seems that tile is a square submatrix, consisting by several blocks
@@ -546,7 +557,8 @@
 #ifdef WITH_OPENMP
               if (mod(n_iter,n_threads) == my_thread) then
 	        call timer%start("blas")
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                     ONE, a_mat(l_row_beg,l_col_beg), lda,         &
                                     v_row(l_row_beg), 1, ONE, uc_p(l_col_beg,my_thread), 1)
 
@@ -562,9 +574,10 @@
 #else /* WITH_OPENMP */
 
               if (useGPU) then
-                a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * size_of_datatype
-                call timer%start("cublas")
-                call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
+                if(.not. new_GPU_multiply) then 
+                  a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * size_of_datatype
+                  call timer%start("cublas")
+                  call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
                                            l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                            ONE, a_dev + a_offset, lda,                   &
                                            v_row_dev + (l_row_beg - 1) *                 &
@@ -572,15 +585,16 @@
                                            ONE, u_col_dev + (l_col_beg - 1) *            &
                                            size_of_datatype, 1)
 
-               if(i/=j) then
-                  call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+                  if(i/=j) then
+                    call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                              ONE, a_dev + a_offset, lda,                        &
                                              v_col_dev + (l_col_beg - 1) *                      &
                                              size_of_datatype, 1,                          &
                                              ONE, u_row_dev + (l_row_beg - 1) *                 &
                                              size_of_datatype, 1)
+                  endif
+                  call timer%stop("cublas")
                 endif
-                call timer%stop("cublas")
               else ! useGPU
                 call timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
@@ -604,6 +618,46 @@
           enddo  ! i=0,(istep-2)/tile_size
 
           if (useGPU) then
+            if(new_GPU_multiply) then 
+            
+                do i=0,(istep-2)/tile_size
+                    l_col_beg = i*l_cols_per_tile+1
+                    l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+                    if(l_col_end<l_col_beg) cycle
+                                            
+                    l_row_beg = 1
+                    l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
+                    
+                    a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
+                           size_of_datatype
+                                
+                    call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                               l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                               ONE, a_dev + a_offset, lda,  &
+                               v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
+                               ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
+                enddo
+                
+                do i=0,(istep-2)/tile_size
+                    l_col_beg = i*l_cols_per_tile+1
+                    l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+                    if(l_col_end<l_col_beg) cycle
+                    
+                    l_row_beg = 1
+                    l_row_end = min(l_rows,i*l_rows_per_tile)
+
+                    a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
+                           size_of_datatype
+                           
+                    call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, & 
+                               ONE, a_dev + a_offset, lda, &
+                               v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
+                               ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
+                enddo
+
+            
+            endif          
+          
             successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: u_col_dev 1", successCUDA)
 
