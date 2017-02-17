@@ -130,6 +130,20 @@ intel-single-precision-mpi-noomp-cuda-jobs:
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
     - cat test-suite.log
 
+intel-single-precision-mpi-noomp-cuda-larger-jobs:
+  tags:
+    - gpu
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
+    - cat test-suite.log
+
       #intel-single-precision-mpi-noomp-cuda-runtime-choice-jobs:
       #  tags:
       #    - gpu
@@ -176,6 +190,20 @@ intel-single-precision-nompi-noomp-cuda-jobs:
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
     - cat test-suite.log
 
+intel-single-precision-nompi-noomp-cuda-larger-jobs:
+  tags:
+    - gpu
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
+    - cat test-suite.log
+
 
       #gfortran-single-precision-mpi-noomp-jobs:
       #  tags:
@@ -216,6 +244,16 @@ intel-double-precision-nompi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+
+intel-double-precision-nompi-noomp-larger-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no FC=ifort
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1000 50 32' || { cat test-suite.log; exit 1; }
 
 intel-double-precision-nompi-noomp-assumed-size-jobs:
   tags:
@@ -379,6 +417,17 @@ intel-single-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+
+intel-single-precision-mpi-openmp-larger-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision
+    - make -j 8
+    - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
 
 intel-single-precision-mpi-openmp-assumed-size-jobs:
   tags:

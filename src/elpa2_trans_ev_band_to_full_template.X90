@@ -507,26 +507,19 @@
 #endif
 #endif /* WITH_MPI */
 
-!#ifdef WITH_MPI
-!! it should be possible to keep tmat on the device and not copy it aroud
-!!            ! copy to device, maybe this can be avoided tmat is input from bandred_real
-!
-!            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw* &
-!#if REALCASE == 1
-!	                              size_of_PRECISION_real,                  &
-!#endif
-!#if COMPLEXCASE == 1
-!	                              size_of_PRECISION_complex,               &
-!#endif
-!				      cudaMemcpyHostToDevice)
-!
-!            if (.not.(successCUDA)) then
-!              print *,"trans_ev_band_to_full_&
-!	      &MATH_DATATYPE&
-!	      &: error in cudaMemcpy"
-!              stop 1
-!            endif
-!#endif /* WITH_MPI */
+#ifdef WITH_MPI
+           ! IMPORTANT: even though tmat_dev is transfered from the previous rutine, we have to copy from tmat again 
+           ! tmat is 3-dimensional array, while tmat_dev contains only one 2-dimensional slice of it - and here we 
+           ! need to upload another slice
+           successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_datatype, cudaMemcpyHostToDevice)
+
+           if (.not.(successCUDA)) then
+             print *,"trans_ev_band_to_full_&
+	      &MATH_DATATYPE&
+	      &: error in cudaMemcpy"
+             stop 1
+           endif
+#endif /* WITH_MPI */
 
 	    call timer%start("cublas")
 #if REALCASE == 1
