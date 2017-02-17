@@ -507,7 +507,7 @@
 #endif
 #endif /* WITH_MPI */
 
-#ifdef WITH_MPI
+!#ifdef WITH_MPI
            ! IMPORTANT: even though tmat_dev is transfered from the previous rutine, we have to copy from tmat again 
            ! tmat is 3-dimensional array, while tmat_dev contains only one 2-dimensional slice of it - and here we 
            ! need to upload another slice
@@ -519,7 +519,7 @@
 	      &: error in cudaMemcpy"
              stop 1
            endif
-#endif /* WITH_MPI */
+!#endif /* WITH_MPI */
 
 	    call timer%start("cublas")
 #if REALCASE == 1
