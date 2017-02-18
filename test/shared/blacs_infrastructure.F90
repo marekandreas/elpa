@@ -156,4 +156,9 @@ module mod_blacs_infrastructure
 
     end subroutine
 
+    integer function index_l2g(idx_loc, nblk, iproc, nprocs)
+     index_l2g = nprocs * nblk * ((idx_loc-1) / nblk) + mod(idx_loc-1,nblk) + mod(nprocs+iproc, nprocs)*nblk + 1
+     return
+   end function
+
 end module

@@ -1,8 +1,81 @@
+#if 0
+!    This file is part of ELPA.
+!
+!    The ELPA library was originally created by the ELPA consortium,
+!    consisting of the following organizations:
+!
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!      Informatik,
+!    - Technische Universität München, Lehrstuhl für Informatik mit
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
+!    - IBM Deutschland GmbH
+!
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of
+!    the ELPA consortium.
+!
+!    More information can be found here:
+!    http://elpa.mpcdf.mpg.de/
+!
+!    ELPA is free software: you can redistribute it and/or modify
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
+!    Software Foundation.
+!
+!    ELPA is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU Lesser General Public License for more details.
+!
+!    You should have received a copy of the GNU Lesser General Public License
+!    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+!
+!    ELPA reflects a substantial effort on the part of the original
+!    ELPA consortium, and we ask you to respect the spirit of the
+!    license that we chose: i.e., please contribute any changes you
+!    may have back to the original ELPA library distribution, and keep
+!    any derivatives of ELPA under the same license that we chose for
+!    the original distribution, the GNU Lesser General Public License.
+!
+! Copyright of the original code rests with the authors inside the ELPA
+! consortium. The copyright of any additional modifications shall rest
+! with their original authors, but shall adhere to the licensing terms
+! distributed along with the original code in the file "COPYING".
+#endif
 
-    subroutine trans_ev_band_to_full_real_PRECISION(na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, q_dev, ldq, matrixCols, &
-                                                       numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU, useQR)
+
+    subroutine trans_ev_band_to_full_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION &
+    (na, nqc, nblk, nbw, a, &
+#if REALCASE == 1
+    a_dev,                  &
+#endif
+    lda, tmat,              &
+#if REALCASE == 1
+    tmat_dev,               &
+#endif
+    q,                      &
+#if REALCASE == 1
+    q_dev,                  &
+#endif
+     ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
+#if REALCASE == 1
+     ,useQr)
+#endif
+#if COMPLEXCASE == 1
+     )
+#endif
+
     !-------------------------------------------------------------------------------
-    !  trans_ev_band_to_full_real:
+    !  trans_ev_band_to_full_real/complex:
     !  Transforms the eigenvectors of a band matrix back to the eigenvectors of the original matrix
     !
     !  Parameters
@@ -15,13 +88,13 @@
     !
     !  nbw         semi bandwith
     !
-    !  a(lda,matrixCols)    Matrix containing the Householder vectors (i.e. matrix a after bandred_real)
+    !  a(lda,matrixCols)    Matrix containing the Householder vectors (i.e. matrix a after bandred_real/complex)
     !              Distribution is like in Scalapack.
     !
     !  lda         Leading dimension of a
     !  matrixCols  local columns of matrix a and q
     !
-    !  tmat(nbw,nbw,numBlocks) Factors returned by bandred_real
+    !  tmat(nbw,nbw,numBlocks) Factors returned by bandred_real/complex
     !
     !  q           On input: Eigenvectors of band matrix
     !              On output: Transformed eigenvectors
@@ -45,14 +118,49 @@
 
       implicit none
 
+      logical, intent(in)                    :: useGPU
+#if REALCASE == 1
+     logical, intent(in)                     :: useQR
+#endif
       integer(kind=ik)                       :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+#if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+      !real(kind=rk8)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 #else
       real(kind=REAL_DATATYPE)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      !real(kind=rk8)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+#endif
+#endif
+#if COMPLEXCASE == 1
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE)         :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+      !complex(kind=ck8)         :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+#else
+      complex(kind=COMPLEX_DATATYPE)         :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      !complex(kind=ck8)         :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+#endif
 #endif
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+       real(kind=REAL_DATATYPE), parameter   :: ZERO = 0.0_rk8, ONE = 1.0_rk8
+#else
+       real(kind=REAL_DATATYPE), parameter   :: ZERO = 0.0_rk4, ONE = 1.0_rk4
+#endif
+
+#endif
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+       complex(kind=COMPLEX_DATATYPE), parameter   :: ZERO = (0.0_rk8,0.0_rk8), ONE = (1.0_rk8,0.0_rk8)
+#else
+       complex(kind=COMPLEX_DATATYPE), parameter   :: ZERO = (0.0_rk4,0.0_rk4), ONE = (1.0_rk4,0.0_rk4)
+#endif
+#endif
+
+#if REALCASE == 1
       integer(kind=C_intptr_T)               :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
+#endif
 
       integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                       :: max_blocks_row, max_blocks_col, max_local_rows, &
@@ -60,8 +168,12 @@
       integer(kind=ik)                       :: l_cols, l_rows, l_colh, n_cols
       integer(kind=ik)                       :: istep, lc, ncol, nrow, nb, ns
 
+#if REALCASE ==1
       real(kind=REAL_DATATYPE), allocatable  :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
-
+#endif
+#if COMPLEXCASE == 1
+      complex(kind=COMPLEX_DATATYPE), allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+#endif
       ! hvm_dev is fist used and set in this routine
       ! q is changed in trans_ev_tridi on the host, copied to device and passed here. this can be adapted
       ! tmp_dev is first used in this routine
@@ -70,14 +182,19 @@
 
       integer(kind=ik)                       :: i
 
+#if REALCASE == 1
       real(kind=REAL_DATATYPE), allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
       integer(kind=ik)                       :: cwy_blocking, t_blocking, t_cols, t_rows
-      logical, intent(in)                    :: useQR, useGPU
+#endif
       integer(kind=ik)                       :: istat
       character(200)                         :: errorMessage
       logical                                :: successCUDA
 
-      call timer%start("trans_ev_band_to_full_real" // PRECISION_SUFFIX)
+      call timer%start("trans_ev_band_to_full_&
+      &MATH_DATATYPE&
+      &_" // &
+      &PRECISION_SUFFIX &
+      )
       call timer%start("mpi_communication")
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -86,6 +203,7 @@
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
       call timer%stop("mpi_communication")
+
       max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of A
       max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q!
 
@@ -94,59 +212,97 @@
 
       if (useGPU) then
 
+#if REALCASE == 1
         ! here the GPU and CPU version diverged: the CPU version now always uses the useQR path which
         ! is not implemented in the GPU version
+#endif
+
         allocate(tmp1(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_real: error when allocating tmp1 "//errorMessage
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+	  &: error when allocating tmp1 "//errorMessage
           stop
         endif
 
         allocate(tmp2(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_real: error when allocating tmp2 "//errorMessage
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+	  &: error when allocating tmp2 "//errorMessage
           stop
         endif
 
         allocate(hvb(max_local_rows*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_real: error when allocating hvb "//errorMessage
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+	  &: error when allocating hvb "//errorMessage
           stop
         endif
 
         allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_real: error when allocating hvm "//errorMessage
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+	  &: error when allocating hvm "//errorMessage
           stop
         endif
-        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw*size_of_PRECISION_real)
+
+        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw* &
+#if REALCASE == 1
+	size_of_PRECISION_real)
+#endif
+#if COMPLEXCASE == 1
+        size_of_PRECISION_complex)
+#endif
         if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+	  &: error in cudaMalloc"
           stop
         endif
-        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw*size_of_PRECISION_real)
+
+        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw* &
+#if REALCASE == 1
+	size_of_PRECISION_real)
+#endif
+#if COMPLEXCASE == 1
+        size_of_PRECISION_complex)
+#endif
         if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+	  &: error in cudaMalloc"
           stop
         endif
 
 !#ifdef WITH_MPI
 ! it should be possible to keep tmat dev on the device and not copy it around
 ! already existent on GPU
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_PRECISION_real)
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* &
+#if REALCASE == 1
+	size_of_PRECISION_real)
+#endif
+#if COMPLEXCASE == 1
+        size_of_PRECISION_complex)
+#endif
+
         if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+	  &: error in cudaMalloc"
           stop
         endif
 !#endif
 
+#if REALCASE == 1
 ! q_dev already living on device
 !        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_real)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
 !          stop
 !        endif
-
   !      q_temp(:,:) = 0.0
   !      q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
 
@@ -156,16 +312,44 @@
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
 !          stop
 !        endif
+#endif
+#if COMPLEXCASE == 1
+         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_complex)
+         if (.not.(successCUDA)) then
+           print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
+           stop
+         endif
+
+         successCUDA = cuda_memcpy(q_dev, loc(q),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+          if (.not.(successCUDA)) then
+            print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
+            stop
+          endif
+#endif
 
         ! if MPI is NOT used the following steps could be done on the GPU and memory transfers could be avoided
-        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)*size_of_PRECISION_real)
+        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)* &
+#if REALCASE == 1
+	                          size_of_PRECISION_real)
+#endif
+#if COMPLEXCASE == 1
+                                  size_of_PRECISION_complex)
+#endif
         if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+	  &: error in cudaMalloc"
           stop
         endif
+
+#if REALCASE == 1
         hvm = CONST_0_0   ! Must be set to 0 !!!
         hvb = CONST_0_0   ! Safety only
-
+#endif
+#if COMPLEXCASE == 1
+        hvm = CONST_COMPLEX_0_0   ! Must be set to 0 !!!
+        hvb = CONST_COMPLEX_0_0   ! Safety only
+#endif
         l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
         do istep=1,(na-1)/nbw
@@ -191,7 +375,15 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL_PRECISION, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+              call MPI_Bcast(hvb(ns+1), nb-ns,  &
+#if REALCASE == 1
+	                     MPI_REAL_PRECISION,&
+#endif
+#if COMPLEXCASE == 1
+                             MPI_COMPLEX_PRECISION, &
+#endif
+			     pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+
               call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -207,11 +399,23 @@
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
             hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
+#if REALCASE == 1
             if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = CONST_1_0
-
+#endif
+#if COMPLEXCASE == 1
+            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
+#endif
             nb = nb+l_rows
           enddo
-          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw*size_of_PRECISION_real),cudaMemcpyHostToDevice)
+
+          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw* &
+#if REALCASE == 1
+	                            size_of_PRECISION_real), &
+#endif
+#if COMPLEXCASE == 1
+                                    size_of_PRECISION_complex), &
+#endif
+				    cudaMemcpyHostToDevice)
 
           if (.not.(successCUDA)) then
             print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
@@ -225,36 +429,70 @@
 
           if (l_rows>0) then
 	    call timer%start("cublas")
-            call cublas_PRECISION_GEMM('T', 'N', n_cols, l_cols, l_rows, CONST_1_0, hvm_dev, max_local_rows, &
-                              q_dev, ldq , CONST_0_0, tmp_dev, n_cols)
+#if REALCASE == 1
+            call cublas_PRECISION_GEMM('T', 'N',        &
+#endif
+#if COMPLEXCASE == 1
+            call cublas_PRECISION_GEMM('C', 'N',        &
+#endif
+	                               n_cols, l_cols, l_rows, ONE, hvm_dev, max_local_rows, &
+                                       q_dev, ldq , ZERO, tmp_dev, n_cols)
 	    call timer%stop("cublas")
 
 #ifdef WITH_MPI
-            ! copy data from device to host for a later MPI_ALLREDUCE
 
+            ! copy data from device to host for a later MPI_ALLREDUCE
+#if REALCASE == 1
             ! copy to host maybe this can be avoided this is needed if MPI is used (allreduce)
             successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
             endif
+#endif
+
+#else /* WITH_MPI */
+! check whether in the complex case this ist also only necessary for MPI
+
+#if COMPLEXCASE == 1
+            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, n_cols*l_cols*size_of_PRECISION_complex, &
+                                       cudaMemcpyDeviceToHost)
+
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
+              stop
+            endif
+#endif
+
 #endif /* WITH_MPI */
 
           else ! l_rows>0
 
 #ifdef WITH_MPI
+#if REALCASE == 1
             tmp1(1:l_cols*n_cols) = 0
-#else
+#endif
+#if COMPLEXCASE == 1
+            tmp1(1:l_cols*n_cols) = CONST_COMPLEX_0_0
+#endif
+
+#else /* WITH_MPI */
 
             ! if MPI is not used (we do not need to transfer because of MPI_ALLREDUCE) we can set to zero on the device
-#ifdef WITH_GPU_VERSION
 
-            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols*size_of_PRECISION_real)
+            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols* &
+#if REALCASE == 1
+                                      size_of_PRECISION_real)
+#endif
+#if COMPLEXCASE == 1
+                                      size_of_PRECISION_complex)
+#endif
             if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_real: error in cudaMemset"
+              print *,"trans_ev_band_to_full_&
+	      &MATH_DATATYPE&
+	      &: error in cudaMemset"
               stop
              endif
-#endif
 
 #endif /* WITH_MPI */
 
@@ -267,14 +505,24 @@
           !         stop
           !       endif
           !#endif
+
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, &
+#if REALCASE == 1
+                             MPI_REAL_PRECISION,        &
+#endif
+#if COMPLEXCASE == 1
+                             MPI_COMPLEX_PRECISION,        &
+#endif
+                             MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
+
 #else /* WITH_MPI */
 !          tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
 #endif /* WITH_MPI */
-          !#ifdef WITH_GPU_VERSION
+
+           !#ifdef WITH_GPU_VERSION
           !       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*size_of_real_datatype,cudaMemcpyHostToDevice)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
@@ -286,28 +534,67 @@
 #ifdef WITH_MPI
             ! after the mpi_allreduce we have to copy back to the device
             ! copy back to device
-            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols*size_of_PRECISION_real,cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols* &
+#if REALCASE == 1
+	                              size_of_PRECISION_real, &
+#endif
+#if COMPLEXCASE == 1
+	                              size_of_PRECISION_complex, &
+#endif
+				      cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+              print *,"trans_ev_band_to_full_&
+	      &MATH_DATATYPE&
+	      &: error in cudaMemcpy"
               stop
             endif
+#else /* WITH_MPI */
+
+#if COMPLEXCASE == 1
+            ! check whether this could be avoided like in the real case
+            successCUDA = cuda_memcpy(tmp_dev,loc(tmp1),l_cols*n_cols*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+            if (.not.(successCUDA)) then
+              print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
+              stop
+            endif
+#endif
 #endif /* WITH_MPI */
 
 !#ifdef WITH_MPI
 ! it should be possible to keep tmat on the device and not copy it aroud
 !            ! copy to device, maybe this can be avoided tmat is input from bandred_real
 
-            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_PRECISION_real,cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw* &
+#if REALCASE == 1
+	                              size_of_PRECISION_real,                  &
+#endif
+#if COMPLEXCASE == 1
+	                              size_of_PRECISION_complex,               &
+#endif
+				      cudaMemcpyHostToDevice)
+
             if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+              print *,"trans_ev_band_to_full_&
+	      &MATH_DATATYPE&
+	      &: error in cudaMemcpy"
               stop
             endif
 !#endif /* WITH_MPI */
+
 	    call timer%start("cublas")
-            call cublas_PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_dev, nbw, tmp_dev, n_cols)
-            call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm_dev, max_local_rows, &
-                              tmp_dev, n_cols, CONST_1_0, q_dev, ldq)
+#if REALCASE == 1
+            call cublas_PRECISION_TRMM('L', 'U', 'T', 'N',       &
+#endif
+#if COMPLEXCASE == 1
+            call cublas_PRECISION_TRMM('L', 'U', 'C', 'N',      &
+#endif
+                                        n_cols, l_cols, ONE, tmat_dev, nbw, tmp_dev, n_cols)
+
+            call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, &
+                                       tmp_dev, n_cols, one, q_dev, ldq)
 	    call timer%stop("cublas")
+
+#if REALCASE == 1
             ! copy to host maybe this can be avoided
             ! this is not necessary hvm is not used anymore
             successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_PRECISION_real),cudaMemcpyDeviceToHost)
@@ -315,8 +602,9 @@
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
               stop
             endif
-
+#endif
           endif ! l_rows > 0
+
           !#ifdef WITH_GPU_VERSION
           !       istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_real_datatype),cudaMemcpyDeviceToHost)
           !       if (istat .ne. 0) then
@@ -327,8 +615,10 @@
           !#endif
         enddo ! istep
 
-      else ! do not useGPU
 
+
+      else ! do not useGPU
+#if REALCASE == 1
         ! t_blocking was formerly 2; 3 is a better choice
         t_blocking = 3 ! number of matrices T (tmat) which are aggregated into a new (larger) T matrix (tmat_complete) and applied at once
 
@@ -336,26 +626,101 @@
 !       if ( na >= ((t_blocking+1)*nbw) ) then
         cwy_blocking = t_blocking * nbw
 
-        allocate(tmp1(max_local_cols*cwy_blocking))
-        allocate(tmp2(max_local_cols*cwy_blocking))
-        allocate(hvb(max_local_rows*cwy_blocking))
-        allocate(hvm(max_local_rows,cwy_blocking))
-        allocate(tmat_complete(cwy_blocking,cwy_blocking))
-        allocate(t_tmp(cwy_blocking,nbw))
-        allocate(t_tmp2(cwy_blocking,nbw))
+        allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_real: error when allocating tmp1 "//errorMessage
+          stop
+        endif
+
+        allocate(tmp2(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_real: error when allocating tmp2 "//errorMessage
+          stop
+        endif
+
+        allocate(hvb(max_local_rows*cwy_blocking), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_real: error when allocating hvb "//errorMessage
+          stop
+        endif
+
+        allocate(hvm(max_local_rows,cwy_blocking), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_real: error when allocating hvm "//errorMessage
+          stop
+        endif
+
+#endif
+#if COMPLEXCASE == 1
+        allocate(tmp1(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_complex: error when allocating tmp1 "//errorMessage
+          stop
+        endif
+
+        allocate(tmp2(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_complex: error when allocating tmp2 "//errorMessage
+          stop
+        endif
+
+        allocate(hvb(max_local_rows*nbw), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_complex: error when allocating hvb "//errorMessage
+          stop
+        endif
+
+        allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_complex: error when allocating hvm "//errorMessage
+          stop
+        endif
+#endif
+
+#if REALCASE == 1
+        allocate(tmat_complete(cwy_blocking,cwy_blocking), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_real: error when allocating tmat_complete "//errorMessage
+          stop
+        endif
+        allocate(t_tmp(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_real: error when allocating t_tmp "//errorMessage
+          stop
+        endif
+        allocate(t_tmp2(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_real: error when allocating t_tmp2 "//errorMessage
+          stop
+        endif
+#endif
 !        else
 !          allocate(tmp1(max_local_cols*nbw))
 !          allocate(tmp2(max_local_cols*nbw))
 !          allocate(hvb(max_local_rows*nbw))
 !          allocate(hvm(max_local_rows,nbw))
 !        endif
+
+#if REALCASE == 1
         hvm = CONST_0_0   ! Must be set to 0 !!!
         hvb = CONST_0_0   ! Safety only
+#endif
+#if COMPLEXCASE == 1
+        hvm = CONST_COMPLEX_0_0   ! Must be set to 0 !!!
+        hvb = CONST_COMPLEX_0_0   ! Safety only
+#endif
         l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
 !       if ( na >= ((t_blocking+1)*nbw) ) then
 
+#if REALCASE == 1
         do istep=1,((na-1)/nbw-1)/t_blocking + 1
+#endif
+#if COMPLEXCASE == 1
+        do istep=1,(na-1)/nbw
+#endif
+
+#if REALCASE == 1
           ! This the call when using  na >= ((t_blocking+1)*nbw)
           !      n_cols = MIN(na,istep*cwy_blocking+nbw) - (istep-1)*cwy_blocking - nbw ! Number of columns in current step
           ! As an alternative we add some special case handling if na < cwy_blocking
@@ -367,13 +732,22 @@
           ELSE
             n_cols = MIN(na,istep*cwy_blocking+nbw) - (istep-1)*cwy_blocking - nbw ! Number of columns in current step
           END IF
+#endif
+#if COMPLEXCASE == 1
+          n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
+#endif
           ! Broadcast all Householder vectors for current step compressed in hvb
 
           nb = 0
           ns = 0
 
           do lc = 1, n_cols
+#if REALCASE == 1
             ncol = (istep-1)*cwy_blocking + nbw + lc ! absolute column number of householder vector
+#endif
+#if COMPLEXCASE == 1
+            ncol = istep*nbw + lc ! absolute column number of householder vector
+#endif
             nrow = ncol - nbw ! absolute number of pivot row
 
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
@@ -386,27 +760,45 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_REAL_PRECISION, pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+              call MPI_Bcast(hvb(ns+1), nb-ns,      &
+#if REALCASE == 1
+	                     MPI_REAL_PRECISION,    &
+#endif
+#if COMPLEXCASE == 1
+                             MPI_COMPLEX_PRECISION, &
+#endif
+			     pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+
               call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               ns = nb
             endif
-          enddo
+          enddo ! lc
 
           ! Expand compressed Householder vectors into matrix hvm
 
           nb = 0
           do lc = 1, n_cols
+#if REALCASE == 1
             nrow = (istep-1)*cwy_blocking + lc ! absolute number of pivot row
+#endif
+#if COMPLEXCASE == 1
+            nrow = (istep-1)*nbw+lc ! absolute number of pivot row
+#endif
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
             hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
+#if REALCASE == 1
             if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = CONST_1_0
-
+#endif
+#if COMPLEXCASE == 1
+            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
+#endif
             nb = nb+l_rows
           enddo
 
+#if REALCASE == 1
           l_rows = local_index(MIN(na,(istep+1)*cwy_blocking), my_prow, np_rows, nblk, -1)
 
           ! compute tmat2 out of tmat(:,:,)
@@ -454,31 +846,63 @@
 !              tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
              endif
           enddo
+#endif /* REALCASE == 1 */
+
+#if COMPLEXCASE == 1
+          l_rows = local_index(MIN(na,(istep+1)*nbw), my_prow, np_rows, nblk, -1)
+#endif
 
           ! Q = Q - V * T**T * V**T * Q
 
           if (l_rows>0) then
             call timer%start("blas")
 
-            call PRECISION_GEMM('T', 'N', n_cols, l_cols, l_rows, CONST_1_0, hvm, ubound(hvm,dim=1), &
-                       q, ldq, CONST_0_0, tmp1, n_cols)
+#if REALCASE == 1
+            call PRECISION_GEMM('T', 'N',         &
+#endif
+#if COMPLEXCASE == 1
+            call PRECISION_GEMM('C', 'N',         &
+#endif
+	                        n_cols, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
+                                q, ldq, ZERO, tmp1, n_cols)
 	    call timer%stop("blas")
 
           else ! l_rows>0
 
+#if REALCASE == 1
             tmp1(1:l_cols*n_cols) = CONST_0_0
+#endif
+#if COMPLEXCASE == 1
+            tmp1(1:l_cols*n_cols) = CONST_COMPLEX_0_0
+#endif
           endif ! l_rows>0
 
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows ,mpierr)
+          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols,  &
+#if REALCASE == 1
+	                     MPI_REAL_PRECISION,         &
+#endif
+#if COMPLEXCASE == 1
+	                     MPI_COMPLEX_PRECISION,       &
+
+#endif
+			     MPI_SUM, mpi_comm_rows ,mpierr)
 
           call timer%stop("mpi_communication")
+
 	  call timer%start("blas")
 
           if (l_rows>0) then
-            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_complete, cwy_blocking, tmp2, n_cols)
-            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm, ubound(hvm,dim=1), tmp2, n_cols, CONST_1_0, q, ldq)
+#if REALCASE == 1
+            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp2, n_cols)
+            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp2, n_cols, ONE, q, ldq)
+#endif
+#if COMPLEXCASE == 1
+            call PRECISION_TRMM('L', 'U', 'C', 'N', n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp2, n_cols)
+            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), &
+                                tmp2, n_cols, ONE, q, ldq)
+#endif
 
           endif
 	  call timer%stop("blas")
@@ -486,8 +910,15 @@
 !          tmp2 = tmp1
 	  call timer%start("blas")
           if (l_rows>0) then
-            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_complete, cwy_blocking, tmp1, n_cols)
-            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm, ubound(hvm,dim=1), tmp1, n_cols, CONST_1_0, q, ldq)
+#if REALCASE == 1
+            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp1, n_cols)
+            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp1, n_cols, ONE, q, ldq)
+#endif
+#if COMPLEXCASE == 1
+            call PRECISION_TRMM('L', 'U', 'C', 'N', n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp1, n_cols)
+            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), &
+                                tmp1, n_cols, ONE, q, ldq)
+#endif
           endif
 	  call timer%stop("blas")
 #endif /* WITH_MPI */
@@ -496,38 +927,58 @@
 !            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_complete, cwy_blocking, tmp2, n_cols)
 !            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm, ubound(hvm,dim=1), tmp2, n_cols, CONST_1_0, q, ldq)
 !          endif
+
         enddo ! istep
 
       endif ! useGPU
 
       deallocate(tmp1, tmp2, hvb, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"trans_ev_band_to_full_real: error when deallocating tmp1 tmp2 hvb "//errorMessage
+        print *,"trans_ev_band_to_full_&
+	&MATH_DATATYPE&
+	&: error when deallocating tmp1 tmp2 hvb "//errorMessage
         stop
       endif
 
       if (useGPU) then
         successCUDA = cuda_free(hvm_dev)
         if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_real: error in cudaFree"
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+          &: error in cudaFree"
           stop
         endif
 
         successCUDA = cuda_free(tmp_dev)
         if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_real: error in cudaFree"
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+          &: error in cudaFree"
           stop
         endif
 
         successCUDA = cuda_free(tmat_dev)
         if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_real: error in cudaFree"
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+          &: error in cudaFree"
           stop
         endif
+
          ! final transfer of q_dev
-         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols* &
+#if REALCASE == 1
+         size_of_PRECISION_real,    &
+#endif
+#if COMPLEXCASE == 1
+         size_of_PRECISION_complex, &
+#endif
+         cudaMemcpyDeviceToHost)
+
          if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_real: error in cudaFree"
+          print *,"trans_ev_band_to_full_&
+	  &MATH_DATATYPE&
+          &: error in cudamemcpu q_dev"
           stop
          endif
 
@@ -535,7 +986,9 @@
 
          successCUDA = cuda_free(q_dev)
          if (.not.(successCUDA)) then
-           print *,"trans_ev_band_to_full_real: error in cudaFree"
+           print *,"trans_ev_band_to_full_&
+	   &MATH_DATATYPE&
+           &: error in cudaFree"
            stop
          endif
 
@@ -554,21 +1007,31 @@
 
       deallocate(hvm, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"trans_ev_band_to_full_real: error when deallocating hvm "//errorMessage
+        print *,"trans_ev_band_to_full_&
+	&MATH_DATATYPE&
+	&: error when deallocating hvm "//errorMessage
         stop
       endif
 
+#if REALCASE == 1
       if (useQr) then
         deallocate(tmat_complete, t_tmp, t_tmp2, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_real: error when deallocating tmat_complete, t_tmp, t_tmp2 "//errorMessage
           stop
         endif
-
       endif
+#endif
 
-      call timer%stop("trans_ev_band_to_full_real" // PRECISION_SUFFIX)
+      call timer%stop("trans_ev_band_to_full_&
+      &MATH_DATATYPE&
+      &" // &
+      &PRECISION_SUFFIX&
+      )
 
-    end subroutine trans_ev_band_to_full_real_PRECISION
+    end subroutine trans_ev_band_to_full_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION
 
 
