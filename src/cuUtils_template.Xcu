@@ -1,3 +1,4 @@
+#if 0
 //    This file is part of ELPA.
 //
 //    The ELPA library was originally created by the ELPA consortium,
@@ -47,35 +48,71 @@
 //
 // This file was originally written by NVIDIA
 // and re-written by A. Marek, MPCDF
+#endif
+
+
+#include "config-f90.h"
 
 #include <cuda_runtime.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#if COMPLEXCASE == 1
 #include <cuComplex.h>
-#include "config-f90.h"
+#endif
+
 // Reset a reduction block
 // Limitation: the thread-block size must be a divider of the reduction block's size
+
+#if REALCASE == 1
+
+#ifdef DOUBLE_PRECISION_REAL
+__device__ void reset_shared_block_c_double ( double * s_block, int b_size)
+#else
+__device__ void reset_shared_block_c_single ( float * s_block, int b_size)
+#endif
+
+#endif
+
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 __device__ void reset_shared_block_c_complex_double ( cuDoubleComplex * s_block, int b_size)
 #else
 __device__ void reset_shared_block_c_complex_single ( cuFloatComplex * s_block, int b_size)
 #endif
+#endif
+
 {
     int i, t_idx, s_chunk ;
     t_idx = threadIdx.x;
     s_chunk = b_size / blockDim.x;
-    for(i = ((t_idx - 1) * s_chunk + 1) ; i < (t_idx * s_chunk); i++)
-       { s_block[i].x = 0.0 ;
-        s_block[i].y = 0.0 ;}
+    for(i = ((t_idx - 1) * s_chunk + 1) ; i < (t_idx * s_chunk); i++) {
+#if  REALCASE == 1
+      s_block[i] = 0.0 ;
+#endif
+#if COMPLEXCASE == 1
+      s_block[i].x = 0.0 ;
+      s_block[i].y = 0.0 ;
+#endif
+    }
     __syncthreads();
 }
 
 // Reset 2 reduction blocks without an explicit synchronization at the end
 // Limitation: : the thread-block size must be a divider of the reduction block's size
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+__device__ void reset_shared_block_pair_c_double( double *s_block_1, double *s_block_2, int b_size)
+#else
+__device__ void reset_shared_block_pair_c_single( float *s_block_1, float *s_block_2, int b_size)
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 __device__ void reset_shared_block_pair_c_complex_double( cuDoubleComplex *s_block_1, cuDoubleComplex *s_block_2, int b_size)
 #else
 __device__ void reset_shared_block_pair_c_complex_single( cuFloatComplex *s_block_1, cuFloatComplex *s_block_2, int b_size)
+#endif
 #endif
 {
     int i, t_idx, s_chunk;
@@ -83,23 +120,54 @@ __device__ void reset_shared_block_pair_c_complex_single( cuFloatComplex *s_bloc
     t_idx = threadIdx.x;
     s_chunk = b_size / blockDim.x;
     for(i = ((t_idx - 1) * s_chunk + 1); i < (t_idx * s_chunk); i++)
-    {    s_block_1[i].x = 0.0 ;
+    {
+#if REALCASE == 1
+        s_block_1[i] = 0.0 ;
+        s_block_2[i] = 0.0 ;
+#endif
+#if COMPLEXCASE == 1
+        s_block_1[i].x = 0.0 ;
         s_block_2[i].x= 0.0 ;
         s_block_1[i].y = 0.0 ;
         s_block_2[i].y= 0.0 ;
+#endif
     }
 }
+// Reset a reduction block
+// Limitation: the thread-block size must be a divider of the reduction block's size
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+__device__ void warp_reduce_c_double( double *s_block)
+#else
+__device__ void warp_reduce_c_single( float *s_block)
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 __device__ void warp_reduce_complex_double( cuDoubleComplex *s_block)
 #else
 __device__ void warp_reduce_complex_single( cuFloatComplex *s_block)
+#endif
 #endif
 {
     int t_idx ;
     t_idx = threadIdx.x;
     __syncthreads();
 
+#if REALCASE == 1
+        if (t_idx < 32)
+	{
+                s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 32] + s_block[t_idx + 64] + s_block[t_idx + 96] ;
+        if (t_idx < 8)
+                s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 8] + s_block[t_idx + 16] + s_block[t_idx + 24];
+        if (t_idx < 4)
+                s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 4];
+        if (t_idx < 1)
+                s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 1] + s_block[t_idx + 2] + s_block[t_idx + 3];
+	}
+#endif
+#if COMPLEXCASE == 1
 	if (t_idx < 32)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -135,12 +203,22 @@ __device__ void warp_reduce_complex_single( cuFloatComplex *s_block)
         }
         }
 #endif
+#endif /* COMPLEXCASE == 1 */
 }
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+__global__ void my_pack_c_kernel_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double* src, double* dst)
+#else
+__global__ void my_pack_c_kernel_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float* src, float* dst)
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void my_pack_c_kernel_complex_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex* src, cuDoubleComplex* dst)
 #else
 __global__ void my_pack_c_kernel_complex_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex* src, cuFloatComplex* dst)
+#endif
 #endif
 {
     int b_id, t_id ;
@@ -151,18 +229,32 @@ __global__ void my_pack_c_kernel_complex_single(const int n_offset, const int ma
     dst_ind = b_id * stripe_width + t_id;
     if (dst_ind < max_idx)
     {
-        // dimension of dst - lnev, nblk
-        // dimension of src - stripe_width,a_dim2,stripe_count
+	// dimension of dst - lnev, nblk
+	// dimension of src - stripe_width,a_dim2,stripe_count
+#if REALCASE == 1
+    	*(dst + dst_ind + (l_nev*blockIdx.x) ) = *(src + t_id + (stripe_width*(n_offset + blockIdx.x)) + ( b_id *stripe_width*a_dim2 ));
+#endif
+#if COMPLEXCASE == 1
 	dst[dst_ind + (l_nev*blockIdx.x)].x = src[t_id + (stripe_width*(n_offset + blockIdx.x)) + ( b_id *stripe_width*a_dim2)].x;
         dst[dst_ind + (l_nev*blockIdx.x)].y = src[t_id + (stripe_width*(n_offset + blockIdx.x)) + ( b_id *stripe_width*a_dim2)].y;
+#endif
      }
 
 }
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+__global__ void  my_unpack_c_kernel_double( const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double* src, double* dst)
+#else
+__global__ void  my_unpack_c_kernel_single( const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float* src, float* dst)
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  my_unpack_c_kernel_complex_double( const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex* src, cuDoubleComplex* dst)
 #else
 __global__ void  my_unpack_c_kernel_complex_single( const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex* src, cuFloatComplex* dst)
+#endif
 #endif
 {
     int b_id, t_id ;
@@ -173,27 +265,52 @@ __global__ void  my_unpack_c_kernel_complex_single( const int n_offset, const in
 
     src_ind = b_id * stripe_width + t_id;
     if (src_ind < max_idx)
-{	dst[ t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2 )].x = src[ src_ind  + (blockIdx.x) *l_nev ].x;
+#if REALCASE == 1
+	*(dst + (t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2 ))) = *(src + src_ind  + (blockIdx.x) *l_nev );
+#endif
+#if COMPLEXCASE == 1
+        dst[ t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2 )].x = src[ src_ind  + (blockIdx.x) *l_nev ].x;
 	dst[ t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2 )].y = src[ src_ind  + (blockIdx.x) *l_nev ].y;
-}
+#endif
+
 }
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+__global__ void extract_hh_tau_c_kernel_double(double* hh, double* hh_tau, const int nbw, const int n, int val)
+#else
+__global__ void extract_hh_tau_c_kernel_single(float* hh, float* hh_tau, const int nbw, const int n, int val)
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void extract_hh_tau_c_kernel_complex_double(cuDoubleComplex* hh, cuDoubleComplex* hh_tau, const int nbw, const int n, int val)
 #else
 __global__ void extract_hh_tau_c_kernel_complex_single(cuFloatComplex* hh, cuFloatComplex* hh_tau, const int nbw, const int n, int val)
 #endif
+#endif
 {
     int h_idx ;
-
     h_idx = (blockIdx.x) * blockDim.x + threadIdx.x;
 
     if (h_idx < n)
     {
-        //dimension of hh - (nbw, max_blk_size)
-        //dimension of hh_tau - max_blk_size
+	//dimension of hh - (nbw, max_blk_size)
+	//dimension of hh_tau - max_blk_size
+#if REALCASE == 1
+        *(hh_tau + h_idx ) = *(hh +  (h_idx * nbw)) ;
+#endif
+#if COMPLEXCASE == 1
         hh_tau[h_idx] = hh[h_idx * nbw] ;
+#endif
         //  Replace the first element in the HH reflector with 1.0 or 0.0
+#if REALCASE == 1
+	if( val == 0)
+        *(hh + (h_idx * nbw)) = 1.0;
+	else
+	*(hh + (h_idx * nbw)) = 0.0;
+#endif
+#if COMPLEXCASE == 1
         if( val == 0)
         {
          hh[(h_idx * nbw)].x = 1.0;
@@ -204,19 +321,35 @@ __global__ void extract_hh_tau_c_kernel_complex_single(cuFloatComplex* hh, cuFlo
         hh[(h_idx * nbw)].x = 0.0;
 	hh[h_idx*nbw].y =0.0;
         }
+#endif
      }
 }
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+__global__ void  compute_hh_dotp_c_kernel_double(double* hh, double* v_dot, const int nbw, const int n)
+{
+
+   __shared__ double hh_s[128] ;
+#else
+__global__ void  compute_hh_dotp_c_kernel_single(float* hh, float* v_dot, const int nbw, const int n)
+{
+
+   __shared__ float hh_s[128] ;
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  compute_hh_dotp_c_kernel_complex_double(cuDoubleComplex* hh, cuDoubleComplex* v_dot, const int nbw, const int n)
 {
    __shared__ cuDoubleComplex hh_s[128] ;
+
 #else
 __global__ void  compute_hh_dotp_c_kernel_complex_single(cuFloatComplex* hh, cuFloatComplex* v_dot, const int nbw, const int n)
 {
    __shared__ cuFloatComplex hh_s[128] ;
 #endif
-
+#endif
     int t_idx, v_idx;
 
     //  The vector index (v_idx) identifies the pair of HH reflectors from which the dot product is computed
@@ -225,128 +358,229 @@ __global__ void  compute_hh_dotp_c_kernel_complex_single(cuFloatComplex* hh, cuF
     //  The thread index indicates the position within the two HH reflectors
     t_idx = threadIdx.x ;
 
+//    //  The contents of the shared memory must be fully reset
+//     reset_shared_block_c(hh_s, 128);
+
+    //  Initialize the contents of the shared buffer (preparing for reduction)
     if (t_idx  > 0)
     {
+#if REALCASE == 1
+        *(hh_s + t_idx) = *(hh + t_idx + v_idx * nbw ) *  (*(hh + (t_idx - 1) +  (v_idx +1)* nbw)) ;
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
        hh_s[t_idx] = cuCmul(cuConj(hh[t_idx + v_idx * nbw]),   hh[ (t_idx - 1) +  (v_idx +1)* nbw]) ;
 #else
        hh_s[t_idx] = cuCmulf(cuConjf(hh[t_idx + v_idx * nbw]),   hh[ (t_idx - 1) +  (v_idx +1)* nbw]) ;
 #endif
+#endif
     }
     else
     {
+#if REALCASE == 1
+        *(hh_s + t_idx) = 0.0 ;
+#endif
+#if COMPLEXCASE == 1
         hh_s[t_idx].x = 0.0 ;
         hh_s[t_idx].y = 0.0;
+#endif
     }
+     //  Compute the dot product using a fast reduction
 
-  //  Compute the dot product using a fast reduction
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+     warp_reduce_c_double(hh_s);
+#else
+     warp_reduce_c_single(hh_s);
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
      warp_reduce_complex_double(hh_s);
 #else
      warp_reduce_complex_single(hh_s);
 #endif
      __syncthreads();
+#endif
 
       if(t_idx == 0)
-       {
-	v_dot[v_idx] = hh_s[0] ;
-	}
+      {
+#if REALCASE == 1
+      *(v_dot + v_idx) = *(hh_s) ;
+#endif
+#if COMPLEXCASE == 1
+      v_dot[v_idx] = hh_s[0] ;
+#endif
+      }
 
 }
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+extern "C" void launch_my_pack_c_kernel_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double* a_dev, double* row_group_dev)
+#else
+extern "C" void launch_my_pack_c_kernel_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float* a_dev, float* row_group_dev)
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_my_pack_c_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex* a_dev, cuDoubleComplex* row_group_dev)
 #else
 extern "C" void launch_my_pack_c_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex* a_dev, cuFloatComplex* row_group_dev)
 #endif
+#endif
 {
 
-        dim3  grid_size;
+	dim3  grid_size;
         grid_size = dim3(row_count, stripe_count, 1);
         cudaDeviceSynchronize();
         cudaError_t err = cudaGetLastError();
         if(err != cudaSuccess) printf("error prior to mypack kernel: %s, %d\n",cudaGetErrorString(err), err);
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+	my_pack_c_kernel_double<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev);
+#else
+	my_pack_c_kernel_single<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev);
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
         my_pack_c_kernel_complex_double<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev);
 #else
         my_pack_c_kernel_complex_single<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev);
 #endif
-        err = cudaGetLastError();
+#endif
+	 err = cudaGetLastError();
         if ( err!= cudaSuccess)
         {
                 printf("\n my pack_kernel failed  %s \n",cudaGetErrorString(err) );
         }
-}
 
+}
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+extern "C" void launch_compute_hh_dotp_c_kernel_double(double* bcast_buffer_dev, double* hh_dot_dev,const int nbw,const int n)
+#else
+extern "C" void launch_compute_hh_dotp_c_kernel_single(float* bcast_buffer_dev, float* hh_dot_dev,const int nbw,const int n)
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_compute_hh_dotp_c_kernel_complex_double(cuDoubleComplex* bcast_buffer_dev, cuDoubleComplex* hh_dot_dev,const int nbw,const int n)
 #else
 extern "C" void launch_compute_hh_dotp_c_kernel_complex_single(cuFloatComplex* bcast_buffer_dev, cuFloatComplex* hh_dot_dev,const int nbw,const int n)
 #endif
+#endif
 {
-        cudaDeviceSynchronize();
+	cudaDeviceSynchronize();
         cudaError_t err = cudaGetLastError();
         if(err != cudaSuccess) printf("error prior to compute_hh kernel: %s, %d\n",cudaGetErrorString(err), err);
+
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+        compute_hh_dotp_c_kernel_double<<< n-1, nbw >>>(bcast_buffer_dev, hh_dot_dev, nbw, n);
+#else
+        compute_hh_dotp_c_kernel_single<<< n-1, nbw >>>(bcast_buffer_dev, hh_dot_dev, nbw, n);
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
         compute_hh_dotp_c_kernel_complex_double<<< n-1, nbw >>>(bcast_buffer_dev, hh_dot_dev, nbw, n);
 #else
         compute_hh_dotp_c_kernel_complex_single<<< n-1, nbw >>>(bcast_buffer_dev, hh_dot_dev, nbw, n);
 #endif
-
-        err = cudaGetLastError();
+#endif
+	err = cudaGetLastError();
         if ( err!= cudaSuccess)
         {
                 printf("\n compute _kernel failed  %s \n",cudaGetErrorString(err) );
         }
-}
 
+}
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+extern "C" void launch_extract_hh_tau_c_kernel_double(double* bcast_buffer_dev, double* hh_tau_dev, const int nbw, const int n , const int is_zero)
+#else
+extern "C" void launch_extract_hh_tau_c_kernel_single(float* bcast_buffer_dev, float* hh_tau_dev, const int nbw, const int n , const int is_zero)
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_extract_hh_tau_c_kernel_complex_double(cuDoubleComplex* bcast_buffer_dev, cuDoubleComplex* hh_tau_dev, const int nbw, const int n , const int is_zero)
 #else
 extern "C" void launch_extract_hh_tau_c_kernel_complex_single(cuFloatComplex* bcast_buffer_dev, cuFloatComplex* hh_tau_dev, const int nbw, const int n , const int is_zero)
 #endif
+#endif
 {
-        int grid_size;
-        grid_size = 1 + (n - 1) / 256;
-        cudaDeviceSynchronize();
+	int grid_size;
+	grid_size = 1 + (n - 1) / 256;
+	cudaDeviceSynchronize();
         cudaError_t err = cudaGetLastError();
         if(err != cudaSuccess) printf("error prior to extract kernel: %s, %d\n",cudaGetErrorString(err), err);
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+	extract_hh_tau_c_kernel_double<<<grid_size,256>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
+#else
+	extract_hh_tau_c_kernel_single<<<grid_size,256>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
         extract_hh_tau_c_kernel_complex_double<<<grid_size,256>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
 #else
         extract_hh_tau_c_kernel_complex_single<<<grid_size,256>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
 #endif
-        err = cudaGetLastError();
-        if ( err!= cudaSuccess)
-        {
-                printf("\n  extract _kernel failed  %s \n",cudaGetErrorString(err) );
+#endif
+	err = cudaGetLastError();
+	if ( err!= cudaSuccess)
+       	{
+		printf("\n  extract _kernel failed  %s \n",cudaGetErrorString(err) );
         }
 
 }
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+extern "C" void launch_my_unpack_c_kernel_double( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, double* row_group_dev, double* a_dev)
+#else
+extern "C" void launch_my_unpack_c_kernel_single( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, float* row_group_dev, float* a_dev)
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 extern "C" void launch_my_unpack_c_kernel_complex_double( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex* row_group_dev, cuDoubleComplex* a_dev)
 #else
 extern "C" void launch_my_unpack_c_kernel_complex_single( const int row_count, const int n_offset, const int max_idx, const int stripe_width,const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex* row_group_dev, cuFloatComplex* a_dev)
 #endif
+#endif
 {
-
         dim3  grid_size;
-        grid_size = dim3(row_count, stripe_count, 1);
+	grid_size = dim3(row_count, stripe_count, 1);
         cudaDeviceSynchronize();
         cudaError_t err = cudaGetLastError();
         if(err != cudaSuccess) printf("error prior to unpack kernel: %s, %d\n",cudaGetErrorString(err), err);
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+        my_unpack_c_kernel_double<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev , a_dev);
+#else
+        my_unpack_c_kernel_single<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev , a_dev);
+#endif
+#endif
+#if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
         my_unpack_c_kernel_complex_double<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev , a_dev);
 #else
         my_unpack_c_kernel_complex_single<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev , a_dev);
 #endif
+#endif
         err = cudaGetLastError();
         if ( err != cudaSuccess)
         {
-            printf("\n  my_unpack_c_kernel failed  %s \n",cudaGetErrorString(err) );
+	    printf("\n  my_unpack_c_kernel failed  %s \n",cudaGetErrorString(err) );
         }
 }
+
+#if COMPLEXCASE == 1
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void compute_kernel_reduce_double( cuDoubleComplex* a_dev, int lda , int n ,int nbw ,  cuDoubleComplex *h1_dev )
@@ -368,8 +602,6 @@ __global__ void compute_kernel_reduce_single( cuFloatComplex* a_dev, int lda , i
 	}
     }
     __syncthreads();
-
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -397,8 +629,6 @@ __global__ void compute_kernel_reduce_1_single( cuFloatComplex* a_dev, int lda ,
 	}
     }
     __syncthreads();
-
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -474,9 +704,7 @@ __global__ void  dot_product_c_kernel_1_single(   cuFloatComplex*  ab_dev, cuFlo
 #endif
  	}
     }
-
    __syncthreads();
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -494,9 +722,7 @@ __global__ void  double_hh_transform_kernel_single( cuFloatComplex*  ab_dev, cuF
          ab_dev[ nb-t_id + (t_id+ns-1)*2*nb ] = cuCsubf(ab_dev[ nb-t_id + (t_id+ns-1)*2*nb],cuCmulf(hs_dev[0], cuConjf(hv_dev[t_id])));
 #endif
     }
-
    __syncthreads();
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -514,11 +740,8 @@ __global__ void  double_hh_transform_kernel_2_single( cuFloatComplex*  ab_dev, c
          ab_dev[ t_id + (ns-1)*2*nb ] = cuCsubf(cuCsubf(ab_dev[ t_id + (ns-1)*2*nb],cuCmulf(hd_dev[ t_id], cuConjf(hv_dev[0]))) , cuCmulf(hv_dev[ t_id], cuConjf(hd_dev[0])));
 
 #endif
-
     }
-
    __syncthreads();
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -527,7 +750,6 @@ extern "C" void launch_dot_product_kernel_double( cuDoubleComplex* hs_dev, cuDou
 extern "C" void launch_dot_product_kernel_single( cuFloatComplex* hs_dev, cuFloatComplex* hv_new_dev, cuFloatComplex tau_new_dev, cuFloatComplex*  x_dev, cuFloatComplex*  h_dev ,cuFloatComplex*  hv_dev,int nr )
 #endif
 {
-
         dim3  grid_size;
         grid_size = dim3(1,1, 1);
         cudaDeviceSynchronize();
@@ -542,9 +764,7 @@ extern "C" void launch_dot_product_kernel_single( cuFloatComplex* hs_dev, cuFloa
         if ( err != cudaSuccess)
         {
             printf("\n dot product kernel failed  %s \n",cudaGetErrorString(err) );
-
         }
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -567,9 +787,7 @@ extern "C" void launch_dot_product_kernel_1_single(  cuFloatComplex*  ab_dev, cu
         if ( err != cudaSuccess)
         {
             printf("\n dot product kernel failed  %s \n",cudaGetErrorString(err) );
-
         }
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -587,9 +805,7 @@ extern "C" void launch_dot_product_kernel_2_single(  cuFloatComplex*  ab_dev, cu
         if ( err != cudaSuccess)
         {
             printf("\n dot product kernel failed  %s \n",cudaGetErrorString(err) );
-
         }
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -612,9 +828,7 @@ extern "C" void launch_double_hh_transform_1_single( cuFloatComplex*  ab_dev, cu
         if ( err != cudaSuccess)
         {
             printf("\n dot product kernel failed  %s \n",cudaGetErrorString(err) );
-
         }
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -637,9 +851,7 @@ extern "C" void launch_double_hh_transform_2_single( cuFloatComplex*  ab_dev, cu
         if ( err != cudaSuccess)
         {
             printf("\n dot product kernel failed  %s \n",cudaGetErrorString(err) );
-
         }
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -648,7 +860,6 @@ extern "C" void launch_compute_kernel_reduce_double( cuDoubleComplex* a_dev, int
 extern "C" void launch_compute_kernel_reduce_single( cuFloatComplex* a_dev, int lda, int n,int nbw, cuFloatComplex* h_dev)
 #endif
 {
-
         dim3  grid_size;
         grid_size = dim3(1,1, 1);
         cudaDeviceSynchronize();
@@ -664,9 +875,7 @@ extern "C" void launch_compute_kernel_reduce_single( cuFloatComplex* a_dev, int 
         if ( err != cudaSuccess)
         {
             printf("\n dot product kernel failed  %s \n",cudaGetErrorString(err) );
-
         }
-
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -675,7 +884,6 @@ extern "C" void launch_compute_kernel_reduce_1_double( cuDoubleComplex* a_dev, i
 extern "C" void launch_compute_kernel_reduce_1_single( cuFloatComplex* a_dev, int lda, int n , cuFloatComplex* h_dev)
 #endif
 {
-
         dim3  grid_size;
         grid_size = dim3(1,1, 1);
         cudaDeviceSynchronize();
@@ -691,8 +899,16 @@ extern "C" void launch_compute_kernel_reduce_1_single( cuFloatComplex* a_dev, in
         if ( err != cudaSuccess)
         {
             printf("\n dot product kernel failed  %s \n",cudaGetErrorString(err) );
-
         }
 
 }
+#endif /* COMPLEXCASE == 1 */
 
+#ifndef MEMCPY_ALREADY_DEFINED
+extern "C" int cuda_MemcpyDeviceToDevice(int val)
+{
+      val = cudaMemcpyDeviceToDevice;
+      return val;
+}
+#define MEMCPY_ALREADY_DEFINED 1
+#endif

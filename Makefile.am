@@ -963,8 +963,7 @@ EXTRA_DIST = \
   src/elpa_qr/elpa_qrkernels.X90 \
   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/ev_tridi_band_gpu_c_v2_real_template.Xcu \
-  src/cuUtils_complex_template.Xcu \
-  src/cuUtils_real_template.Xcu \
+  src/cuUtils_template.Xcu \
   nvcc_wrap \
   test_project/Makefile.am \
   test_project/autogen.sh \
