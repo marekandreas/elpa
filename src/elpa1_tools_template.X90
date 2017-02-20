@@ -279,7 +279,7 @@
 
       real(kind=REAL_DATATYPE)                      :: BETA
 
-     call timer%start("hh_tranform_&
+     call timer%start("hh_transform_&
                       &MATH_DATATYPE&
 		      &" // &
 		      &PRECISION_SUFFIX )

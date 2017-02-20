@@ -188,7 +188,7 @@
                                                                    &MATH_DATATYPE
       call timer%start("trans_ev_band_to_full_&
       &MATH_DATATYPE&
-      &_" // &
+      &" // &
       &PRECISION_SUFFIX &
       )
       call timer%start("mpi_communication")
@@ -766,8 +766,9 @@
             if (t_cols <= 0) exit
             t_rows = (i - 1) * nbw
             tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
-	    call timer%start("blas")
+
             if (i > 1) then
+	      call timer%start("blas")
 #if REALCASE == 1
               call PRECISION_GEMM('T', 'N',      &
 #endif
