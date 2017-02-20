@@ -85,11 +85,11 @@ module pack_unpack_real_gpu
       ! Issue one single transfer call for all rows (device to host)
 !        rows(:, 1 : row_count) = row_group_dev(:, 1 : row_count)
 
-      successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev , row_count * l_nev * size_of_double_real_datatype , &
+      successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev , row_count * l_nev * size_of_double_real , &
                                  cudaMemcpyDeviceToHost)
       if (.not.(successCUDA)) then
         print *,"pack_row_group_real_gpu_double: error in cudaMemcpy"
-        stop
+        stop 1
       endif
       !write(*,*) cudaGetErrorString(istat)
 
@@ -122,10 +122,10 @@ module pack_unpack_real_gpu
        !      cudaMemcpyHostToDevice)
 
       successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev * &
-                                 size_of_double_real_datatype ,cudaMemcpyHostToDevice)
+                                 size_of_double_real, cudaMemcpyHostToDevice)
       if (.not.(successCUDA)) then
         print *,"unpack_row_group_real_gpu_double: error in cudaMemcpy"
-        stop
+        stop 1
       endif
       !write(*,*) cudaGetErrorString(istat)
 
@@ -273,11 +273,11 @@ module pack_unpack_real_gpu
       ! Issue one single transfer call for all rows (device to host)
 !        rows(:, 1 : row_count) = row_group_dev(:, 1 : row_count)
 
-      successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev , row_count * l_nev * size_of_single_real_datatype , &
+      successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev , row_count * l_nev * size_of_single_real, &
                                  cudaMemcpyDeviceToHost)
       if (.not.(successCUDA)) then
         print *,"pack_row_group_real_gpu_single: error in cudaMemcpy"
-        stop
+        stop 1
       endif
       !write(*,*) cudaGetErrorString(istat)
 
@@ -310,10 +310,10 @@ module pack_unpack_real_gpu
        !      cudaMemcpyHostToDevice)
 
       successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev * &
-                                 size_of_single_real_datatype ,cudaMemcpyHostToDevice)
+                                 size_of_single_real, cudaMemcpyHostToDevice)
       if (.not.(successCUDA)) then
         print *,"unpack_row_group_real_gpu_single: error in cudaMemcpy"
-        stop
+        stop 1
       endif
       !write(*,*) cudaGetErrorString(istat)
 

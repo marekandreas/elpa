@@ -52,7 +52,9 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
-subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+subroutine solve_tridi_&
+&PRECISION &
+( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, wantDebug, success )
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -104,7 +106,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
       allocate(limits(0:np_cols), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating limits "//errorMessage
-        stop
+        stop 1
       endif
 
       limits(0) = 0
@@ -141,7 +143,9 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
       else
         nev1 = MIN(nev,l_cols)
       endif
-      call solve_tridi_col_PRECISION(l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
+      call solve_tridi_col_&
+           &PRECISION &
+           (l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         matrixCols, mpi_comm_rows, wantDebug, success)
       if (.not.(success)) then
         call timer%stop("solve_tridi" // PRECISION_SUFFIX)
@@ -153,7 +157,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
         deallocate(limits, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"solve_tridi: error when deallocating limits "//errorMessage
-          stop
+          stop 1
         endif
 
         call timer%stop("solve_tridi" // PRECISION_SUFFIX)
@@ -167,13 +171,13 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
       allocate(l_col(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating l_col "//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(p_col(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating p_col "//errorMessage
-        stop
+        stop 1
       endif
 
       n = 0
@@ -191,13 +195,13 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
       allocate(l_col_bc(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating l_col_bc "//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(p_col_bc(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating p_col_bc "//errorMessage
-        stop
+        stop 1
       endif
 
       p_col_bc(:) = -1
@@ -215,7 +219,9 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
       enddo
 
       ! Recursively merge sub problems
-      call merge_recursive_PRECISION(0, np_cols, wantDebug, success)
+      call merge_recursive_&
+           &PRECISION &
+           (0, np_cols, wantDebug, success)
       if (.not.(success)) then
         call timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
@@ -224,14 +230,16 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
       deallocate(limits,l_col,p_col,l_col_bc,p_col_bc, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when deallocating l_col "//errorMessage
-        stop
+        stop 1
       endif
 
       call timer%stop("solve_tridi" // PRECISION_SUFFIX)
       return
 
       contains
-        recursive subroutine merge_recursive_PRECISION(np_off, nprocs, wantDebug, success)
+        recursive subroutine merge_recursive_&
+                  &PRECISION &
+           (np_off, nprocs, wantDebug, success)
            use precision
 #ifdef HAVE_DETAILED_TIMINGS
            use timings
@@ -264,9 +272,13 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
            np1 = nprocs/2
            np2 = nprocs-np1
 
-           if (np1 > 1) call merge_recursive_PRECISION(np_off, np1, wantDebug, success)
+           if (np1 > 1) call merge_recursive_&
+                        &PRECISION &
+           (np_off, np1, wantDebug, success)
            if (.not.(success)) return
-           if (np2 > 1) call merge_recursive_PRECISION(np_off+np1, np2, wantDebug, success)
+           if (np2 > 1) call merge_recursive_&
+                        &PRECISION &
+           (np_off+np1, np2, wantDebug, success)
            if (.not.(success)) return
 
            noff = limits(np_off)
@@ -316,22 +328,30 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
 
              ! Last merge, result distribution must be block cyclic, noff==0,
              ! p_col_bc is set so that only nev eigenvalues are calculated
-             call merge_systems_PRECISION(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
+             call merge_systems_&
+                  &PRECISION &
+                                 (nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
                                  l_col_bc, p_col_bc, np_off, nprocs, wantDebug, success )
              if (.not.(success)) return
            else
              ! Not last merge, leave dense column distribution
-             call merge_systems_PRECISION(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
+             call merge_systems_&
+                  &PRECISION &
+                                (nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
                                  l_col(noff+1), p_col(noff+1), np_off, nprocs, wantDebug, success )
              if (.not.(success)) return
            endif
-       end subroutine merge_recursive_PRECISION
+       end subroutine merge_recursive_&
+           &PRECISION
 
-    end subroutine solve_tridi_PRECISION
+    end subroutine solve_tridi_&
+        &PRECISION
 
-    subroutine solve_tridi_col_PRECISION( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
+    subroutine solve_tridi_col_&
+    &PRECISION &
+    ( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -390,7 +410,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
       allocate(limits(0:ndiv), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi_col: error when allocating limits "//errorMessage
-        stop
+        stop 1
       endif
 
       limits(0) = 0
@@ -427,7 +447,9 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
           noff = limits(n)        ! Start of subproblem
           nlen = limits(n+1)-noff ! Size of subproblem
 
-          call solve_tridi_single_problem_PRECISION(nlen,d(noff+1),e(noff+1), &
+          call solve_tridi_single_problem_&
+          &PRECISION &
+                                   (nlen,d(noff+1),e(noff+1), &
                                     q(nqoff+noff+1,noff+1),ubound(q,dim=1), wantDebug, success)
 
           if (.not.(success)) return
@@ -441,13 +463,13 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
         allocate(qmat1(max_size,max_size), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"solve_tridi_col: error when allocating qmat1 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(qmat2(max_size,max_size), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"solve_tridi_col: error when allocating qmat2 "//errorMessage
-          stop
+          stop 1
         endif
 
         qmat1 = 0 ! Make sure that all elements are defined
@@ -456,7 +478,9 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
 
           noff = limits(my_prow)        ! Start of subproblem
           nlen = limits(my_prow+1)-noff ! Size of subproblem
-          call solve_tridi_single_problem_PRECISION(nlen,d(noff+1),e(noff+1),qmat1, &
+          call solve_tridi_single_problem_&
+          &PRECISION &
+                                   (nlen,d(noff+1),e(noff+1),qmat1, &
                                     ubound(qmat1,dim=1), wantDebug, success)
 
           if (.not.(success)) return
@@ -480,9 +504,13 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
           do i=1,nlen
 
 #ifdef WITH_MPI
-            call distribute_global_column_PRECISION(qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+            call distribute_global_column_&
+            &PRECISION &
+                     (qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #else /* WITH_MPI */
-            call distribute_global_column_PRECISION(qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+            call distribute_global_column_&
+            &PRECISION &
+                     (qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #endif /* WITH_MPI */
           enddo
 
@@ -491,7 +519,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
         deallocate(qmat1, qmat2, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"solve_tridi_col: error when deallocating qmat2 "//errorMessage
-          stop
+          stop 1
         endif
 
       endif
@@ -501,7 +529,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
       allocate(l_col(na), p_col_i(na),  p_col_o(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi_col: error when allocating l_col "//errorMessage
-        stop
+        stop 1
       endif
 
       do i=1,na
@@ -525,7 +553,9 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
             ! Last merge, set p_col_o=-1 for unneeded (output) eigenvectors
             p_col_o(nev+1:na) = -1
           endif
-          call merge_systems_PRECISION(nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
+          call merge_systems_&
+          &PRECISION &
+                              (nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                                matrixCols, mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
                                l_col(noff+1), p_col_o(noff+1), 0, 1, wantDebug, success)
           if (.not.(success)) return
@@ -539,14 +569,17 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
       deallocate(limits, l_col, p_col_i, p_col_o, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi_col: error when deallocating l_col "//errorMessage
-        stop
+        stop 1
       endif
 
       call timer%stop("solve_tridi_col" // PRECISION_SUFFIX)
 
-    end subroutine solve_tridi_col_PRECISION
+    end subroutine solve_tridi_col_&
+    &PRECISION
 
-    recursive subroutine solve_tridi_single_problem_PRECISION(nlen, d, e, q, ldq, wantDebug, success)
+    recursive subroutine solve_tridi_single_problem_&
+    &PRECISION &
+              (nlen, d, e, q, ldq, wantDebug, success)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
@@ -578,7 +611,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
      allocate(ds(nlen), es(nlen), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"solve_tridi_single: error when allocating ds "//errorMessage
-       stop
+       stop 1
      endif
 
      ! Save d and e for the case that dstedc fails
@@ -593,7 +626,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
      allocate(work(lwork), iwork(liwork), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"solve_tridi_single: error when allocating work "//errorMessage
-       stop
+       stop 1
      endif
      call timer%start("blas")
      call PRECISION_STEDC('I', nlen, d, e, q, ldq, work, lwork, iwork, liwork, info)
@@ -624,7 +657,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
        deallocate(work,iwork,ds,es, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"solve_tridi_single: error when deallocating ds "//errorMessage
-         stop
+         stop 1
        endif
 
       ! Check if eigenvalues are monotonically increasing
@@ -647,7 +680,7 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
           allocate(qtmp(nlen), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"solve_tridi_single: error when allocating qtmp "//errorMessage
-            stop
+            stop 1
           endif
 
           dtmp = d(i+1)
@@ -665,12 +698,13 @@ subroutine solve_tridi_PRECISION( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_c
           deallocate(qtmp, stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"solve_tridi_single: error when deallocating qtmp "//errorMessage
-            stop
+            stop 1
           endif
 
        endif
      enddo
      call timer%stop("solve_tridi_single" // PRECISION_SUFFIX)
 
-    end subroutine solve_tridi_single_problem_PRECISION
+    end subroutine solve_tridi_single_problem_&
+    &PRECISION
 

@@ -1,16 +1,21 @@
-#if REALCASE == 1     
-  function solve_evp_real_2stage_PRECISION (na, nev, a, lda, ev, q, ldq, nblk, &
-                                 matrixCols, mpi_comm_rows, mpi_comm_cols,   &
-                                 mpi_comm_all, THIS_ELPA_KERNEL_API, useQR, useGPU, bandwidth) result(success)
-#elif COMPLEXCASE == 1      
-  function solve_evp_complex_2stage_PRECISION(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols,      &
-                                    mpi_comm_all, THIS_ELPA_KERNEL_API, useGPU, bandwidth) result(success)
+  function solve_evp_&
+  &MATH_DATATYPE&
+  &_&
+  &2stage_&
+  &PRECISION &
+  (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,   &
+#if REALCASE == 1
+   THIS_ELPA_KERNEL_API, useQR,   &
 #endif
+#if COMPLEXCASE == 1
+   THIS_ELPA_KERNEL_API,          &
+#endif
+   useGPU, bandwidth) result(success)
+
 #ifdef HAVE_DETAILED_TIMINGS
-    use timings
+   use timings
 #else
-    use timings_dummy
+   use timings_dummy
 #endif
    use elpa1_utilities, only : gpu_usage_via_environment_variable
    use elpa1_compute
@@ -23,7 +28,7 @@
    logical, intent(in), optional             :: useGPU
 #if REALCASE == 1
    logical, intent(in), optional             :: useQR
-#endif   
+#endif
    logical                                   :: useQRActual, useQREnvironment
 
    integer(kind=c_int), intent(in), optional :: bandwidth
@@ -62,7 +67,11 @@
    logical                                   :: do_useGPU
    integer(kind=c_int)                       :: numberOfGPUDevices
 
-    call timer%start(solve_evp_NUMBER_2stage_PRECISION_STR)
+    call timer%start("solve_evp_&
+    &MATH_DATATYPE&
+    &_2stage" // &
+    &PRECISION_SUFFIX &
+    )
 
     call timer%start("mpi_communication")
     call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
@@ -108,7 +117,7 @@
         return
       endif
     endif
-#endif
+#endif /* REALCASE */
 
     if (present(useGPU)) then
       if (useGPU) then
@@ -151,34 +160,72 @@
 
       if (my_pe == 0) then
         write(error_unit,*) " "
-        write(error_unit,*) "The choosen kernel ",UPCASENUMBER_ELPA_KERNEL_NAMES(THIS_ELPA_KERNEL)
+        write(error_unit,*) "The choosen kernel ", &
+	&MATH_DATATYPE&
+	&_ELPA_KERNEL_NAMES(THIS_ELPA_KERNEL)
         write(error_unit,*) "is not in the list of the allowed kernels!"
         write(error_unit,*) " "
         write(error_unit,*) "Allowed kernels are:"
-        do i=1,size(UPCASENUMBER_ELPA_KERNEL_NAMES(:))
-          if (AVAILABLE_UPCASENUMBER_ELPA_KERNELS(i) .ne. 0) then
-            write(error_unit,*) UPCASENUMBER_ELPA_KERNEL_NAMES(i)
+        do i=1,size( &
+	&MATH_DATATYPE&
+	&_ELPA_KERNEL_NAMES(:))
+          if (AVAILABLE_&
+	  &MATH_DATATYPE&
+	  &_ELPA_KERNELS(i) .ne. 0) then
+            write(error_unit,*) &
+#if REALCASE == 1
+	                        REAL_ELPA_KERNEL_NAMES(i)
+#endif
+#if COMPLEXCASE == 1
+	                        COMPLEX_ELPA_KERNEL_NAMES(i)
+#endif
           endif
         enddo
 
         write(error_unit,*) " "
         ! check whether generic kernel is defined
-         if (AVAILABLE_UPCASENUMBER_ELPA_KERNELS(UPCASENUMBER_ELPA_KERNEL_GENERIC) .eq. 1) then
-           write(error_unit,*) "The default kernel NUMBER_ELPA_KERNEL_GENERIC will be used !"
+         if (AVAILABLE_&
+	 &MATH_DATATYPE&
+	 &_ELPA_KERNELS( &
+#if REALCASE == 1
+	                REAL_ELPA_KERNEL_GENERIC ) .eq. 1) then
+#endif
+#if COMPLEXCASE == 1
+	                COMPLEX_ELPA_KERNEL_GENERIC ) .eq. 1) then
+
+#endif
+           write(error_unit,*) "The default kernel &
+	   &MATH_DATATYPE&
+	   &( &
+	   &_ELPA_KERNEL_GENERIC will be used !"
          else
-           write(error_unit,*) "As default kernel ",UPCASENUMBER_ELPA_KERNEL_NAMES(DEFAULT_UPCASENUMBER_ELPA_KERNEL)," will be used"
+           write(error_unit,*) "As default kernel ", &
+	   &MATH_DATATYPE&
+	   &_ELPA_KERNEL_NAMES(DEFAULT_&
+	   &MATH_DATATYPE&
+	   &_ELPA_KERNEL)," will be used"
          endif
       endif  ! my_pe == 0
-      if (AVAILABLE_UPCASENUMBER_ELPA_KERNELS(UPCASENUMBER_ELPA_KERNEL_GENERIC) .eq. 1) then
-        THIS_ELPA_KERNEL = UPCASENUMBER_ELPA_KERNEL_GENERIC
+      if (AVAILABLE_&
+      &MATH_DATATYPE&
+      &_ELPA_KERNELS( &
+      &MATH_DATATYPE&
+      &_ELPA_KERNEL_GENERIC) .eq. 1) then
+        THIS_ELPA_KERNEL = &
+	&MATH_DATATYPE&
+	&_ELPA_KERNEL_GENERIC
       else
-        THIS_ELPA_KERNEL = DEFAULT_UPCASENUMBER_ELPA_KERNEL
+        THIS_ELPA_KERNEL = DEFAULT_&
+	&MATH_DATATYPE&
+	&_ELPA_KERNEL
       endif
     endif
 
     ! check consistency between request for GPUs and defined kernel
     if (do_useGPU) then
-      if (THIS_ELPA_KERNEL .ne. UPCASENUMBER_ELPA_KERNEL_GPU) then
+      if (THIS_ELPA_KERNEL .ne. &
+      &MATH_DATATYPE&
+      &_ELPA_KERNEL_GPU) then
         write(error_unit,*) "GPU usage has been requested but compute kernel is defined as non-GPU! Aborting..."
         success = .false.
         return
@@ -222,30 +269,41 @@
         nbw = (31/nblk+1)*nblk
 #endif
       endif
-    
+
       num_blocks = (na-1)/nbw + 1
 
       allocate(tmat(nbw,nbw,num_blocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,solve_evp_NUMBER_2stage_PRECISION_STR//": error when allocating tmat "//errorMessage
-        stop
+        print *,"solve_evp_&
+	&MATH_DATATYPE&
+	&_2stage_&
+	&PRECISION&
+	&" // ": error when allocating tmat "//errorMessage
+        stop 1
       endif
 
       ! Reduction full -> band
 
       ttt0 = MPI_Wtime()
       ttts = ttt0
+      call bandred_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION &
+      (na, a, &
+       a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+       tmat_dev,  wantDebug, do_useGPU, success &
 #if REALCASE == 1
-      call bandred_real_PRECISION(na, a, a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
-          tmat, tmat_dev, wantDebug, do_useGPU, success, useQRActual)
-#elif COMPLEXCASE == 1
-      call bandred_complex_PRECISION(na, a, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, &
-          tmat, wantDebug, do_useGPU, success)
+       , useQRActual &
 #endif
+       )
       if (.not.(success)) return
       ttt1 = MPI_Wtime()
       if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-        write(error_unit,*) 'Time '//bandred_NUMBER_PRECISION_STR//'               :',ttt1-ttt0
+        write(error_unit,*) "Time " // "bandred_&
+	&MATH_DATATYPE&
+	&_&
+	&PRECISION " // "               :",ttt1-ttt0
 
     end if  ! matrix not already banded on input
 
@@ -253,18 +311,27 @@
 
      allocate(e(na), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,solve_evp_NUMBER_2stage_PRECISION_STR//": error when allocating e "//errorMessage
-       stop
+       print *,"solve_evp_&
+       &MATH_DATATYPE&
+       &_2stage_&
+       &PRECISION " // ": error when allocating e "//errorMessage
+       stop 1
      endif
 
      ttt0 = MPI_Wtime()
 
-     call tridiag_band_NUMBER_PRECISION(na, nbw, nblk, a, lda, ev, e, matrixCols, &
-                                 hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+     call tridiag_band_&
+     &MATH_DATATYPE&
+     &_&
+     &PRECISION&
+     (na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, do_useGPU)
 
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-       write(error_unit,*) 'Time '//tridiag_band_NUMBER_PRECISION_STR//'          :',ttt1-ttt0
+       write(error_unit,*) "Time " // "tridiag_band_&
+       &MATH_DATATYPE&
+       &_&
+       &PRECISION " // "          :",ttt1-ttt0
 
 #ifdef WITH_MPI
      call timer%start("mpi_communication")
@@ -275,28 +342,34 @@
      ttt1 = MPI_Wtime()
      time_evp_fwd = ttt1-ttts
 
-#if COMPLEXCASE == 1     
+#if COMPLEXCASE == 1
      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
      l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
      l_cols_nev = local_index(nev, my_pcol, np_cols, nblk, -1) ! Local columns corresponding to nev
 
      allocate(q_real(l_rows,l_cols), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"solve_evp_complex_2stage: error when allocating q_real"//errorMessage
-       stop
+       print *,"solve_evp_&
+       &MATH_DATATYPE&
+       &_2stage: error when allocating q_real"//errorMessage
+       stop 1
      endif
-#endif     
-     
+#endif
+
      ! Solve tridiagonal system
 
      ttt0 = MPI_Wtime()
+     call solve_tridi_&
+     &PRECISION &
+     (na, nev, ev, e, &
 #if REALCASE == 1
-     call solve_tridi_PRECISION(na, nev, ev, e, q, ldq, nblk, matrixCols, &
-                     mpi_comm_rows, mpi_comm_cols, wantDebug, success)
-#elif COMPLEXCASE == 1
-     call solve_tridi_PRECISION(na, nev, ev, e, q_real, ubound(q_real,dim=1), nblk, matrixCols, &
-                     mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+     q, ldq,   &
 #endif
+#if COMPLEXCASE == 1
+     q_real, ubound(q_real,dim=1), &
+#endif
+     nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+
      if (.not.(success)) return
 
      ttt1 = MPI_Wtime()
@@ -305,78 +378,101 @@
      time_evp_solve = ttt1-ttt0
      ttts = ttt1
 
-#if REALCASE == 1
      deallocate(e, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"solve_evp_real_2stage: error when deallocating e "//errorMessage
-       stop
+       print *,"solve_evp_&
+       &MATH_DATATYPE&
+       &_2stage: error when deallocating e "//errorMessage
+       stop 1
      endif
-#elif COMPLEXCASE == 1     
+
+#if COMPLEXCASE == 1
      q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 
-     deallocate(e, q_real, stat=istat, errmsg=errorMessage)
+     deallocate(q_real, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *,"solve_evp_complex_2stage: error when deallocating e, q_real"//errorMessage
-       stop
+       print *,"solve_evp_&
+       &MATH_DATATYPE&
+       &_2stage: error when deallocating q_real"//errorMessage
+       stop 1
      endif
 #endif
      ! Backtransform stage 1
 
      ttt0 = MPI_Wtime()
-#if REALCASE == 1
-     call trans_ev_tridi_to_band_real_PRECISION(na, nev, nblk, nbw, q, q_dev, ldq,  &
-                                     matrixCols, hh_trans, &
-                                     mpi_comm_rows, mpi_comm_cols, &
-                                     wantDebug, do_useGPU, success, THIS_ELPA_KERNEL)
-#elif COMPLEXCASE == 1
-    call trans_ev_tridi_to_band_complex_PRECISION(na, nev, nblk, nbw, q, ldq,  &
-                                       matrixCols, hh_trans, &
-                                       mpi_comm_rows, mpi_comm_cols, &
-                                       wantDebug, do_useGPU, success,THIS_ELPA_KERNEL)
-#endif
+
+     call trans_ev_tridi_to_band_&
+     &MATH_DATATYPE&
+     &_&
+     &PRECISION &
+     (na, nev, nblk, nbw, q, &
+     q_dev, &
+     ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU, &
+     success, THIS_ELPA_KERNEL)
 
      if (.not.(success)) return
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-       write(error_unit,*) 'Time '//trans_ev_tridi_to_band_NUMBER_PRECISION_STR//' :',ttt1-ttt0
+       write(error_unit,*) "Time " // "trans_ev_tridi_to_band_&
+       &MATH_DATATYPE&
+       &_&
+       &PRECISION " // " :",ttt1-ttt0
 
      ! We can now deallocate the stored householder vectors
      deallocate(hh_trans, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
-       print *, solve_evp_NUMBER_2stage_PRECISION_STR//": error when deallocating hh_trans "//errorMessage
-       stop
+       print *, "solve_evp_&
+       &MATH_DATATYPE&
+       &_2stage_&
+       &PRECISION " // ": error when deallocating hh_trans "//errorMessage
+       stop 1
      endif
 
-     if(present(bandwidth)) then 
+     if(present(bandwidth)) then
        time_evp_back = ttt1-ttts
      else
        ! Backtransform stage 2
        ttt0 = MPI_Wtime()
+       call trans_ev_band_to_full_&
+       &MATH_DATATYPE&
+       &_&
+       &PRECISION &
+       (na, nev, nblk, nbw, a, &
+        a_dev, lda, tmat, tmat_dev,  q,  &
+        q_dev, &
+        ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU &
 #if REALCASE == 1
-       call trans_ev_band_to_full_real_PRECISION(na, nev, nblk, nbw, a, a_dev, lda, tmat, tmat_dev,  &
-                           q, q_dev, ldq, matrixCols, num_blocks, &
-                           mpi_comm_rows, mpi_comm_cols, do_useGPU, useQRActual)
-#elif COMPLEXCASE == 1
-       call trans_ev_band_to_full_complex_PRECISION(na, nev, nblk, nbw, a, lda, tmat, &
-                           q, ldq, matrixCols, num_blocks, &
-                           mpi_comm_rows, mpi_comm_cols, do_useGPU)
-
+        , useQRActual  &
 #endif
+        )
 
        ttt1 = MPI_Wtime()
        if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-         write(error_unit,*) 'Time '//trans_ev_band_to_full_NUMBER_PRECISION_STR//' :',ttt1-ttt0
+         write(error_unit,*) "Time " // "trans_ev_band_to_full_&
+	 &MATH_DATATYPE&
+	 &_&
+	 &PRECISION " // " :",ttt1-ttt0
 
        time_evp_back = ttt1-ttts
 
        deallocate(tmat, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
-         print *,solve_evp_NUMBER_2stage_PRECISION_STR//": error when deallocating tmat"//errorMessage
-         stop
+         print *,"solve_evp_&
+	 &MATH_DATATYPE&
+	 _2stage_&
+	 &PRECISION " // ": error when deallocating tmat"//errorMessage
+         stop 1
        endif
      endif ! not present(bandwidth)
 
-     call timer%stop(solve_evp_NUMBER_2stage_PRECISION_STR)
+     call timer%stop("solve_evp_&
+     &MATH_DATATYPE&
+     &_2stage" // &
+     &PRECISION_SUFFIX &
+     )
 1    format(a,f10.3)
-    
-   end function solve_evp_NUMBER_2stage_PRECISION
+
+   end function solve_evp_&
+   &MATH_DATATYPE&
+   &_2stage_&
+   &PRECISION

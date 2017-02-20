@@ -113,6 +113,7 @@ if test x"$with_mpi" = x"yes"; then
     AC_MSG_ERROR([Could not compile an MPI Fortran program])
   fi
 fi
+
 if test x"${enable_openmp}" = x"yes"; then
   AX_ELPA_OPENMP
   if test "$ac_cv_prog_fc_openmp" = unsupported; then
@@ -250,7 +251,7 @@ if test x"${want_single_precision}" = x"yes" ; then
 fi
 
 dnl check whether on can compile with sse-gcc intrinsics
-AC_MSG_CHECKING(whether we can compile SSE with gcc intrinsics in C)
+AC_MSG_CHECKING(whether we can compile SSE3 with gcc intrinsics in C)
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  #include <x86intrin.h>
  int main(int argc, char **argv){
@@ -655,7 +656,7 @@ if test x"${have_mkl}" = x"yes" ; then
 else
 
   dnl first check blas
-  AC_SEARCH_LIBS([dgemm],[blas],[have_blas=yes],[have_blas=no])
+  AC_SEARCH_LIBS([dgemm],[openblas satlas blas],[have_blas=yes],[have_blas=no])
   AC_MSG_CHECKING([whether we can link a program with a blas lib])
   AC_MSG_RESULT([${have_blas}])
 
@@ -756,6 +757,23 @@ if test x"${fortran_can_check_environment}" = x"yes" ; then
  AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can query environment variables])
 fi
 
+dnl check whether BAND_TO_FULL_BLOCKING is set
+use_band_to_full_blocking=yes
+AC_MSG_CHECKING(whether BAND_TO_FLULL_BLOCKING is requested)
+AC_ARG_ENABLE(band-to-full-blocking,[AS_HELP_STRING([--enable-band-to-full-blocking],
+	                                            [build ELPA2 with blocking in band_to_full (default: enabled)])],
+	      want_band_to_full_blocking="yes", want_to_full_blocking="no")
+AC_MSG_RESULT([${want_band_to_full_blocking}])
+
+if test x"${enableval}" = x"no" ; then
+  use_band_to_full_blocking=no
+fi
+
+AM_CONDITIONAL([BAND_TO_FULL_BLOCKING],[test x"$use_band_to_full_blocking" = x"yes"])
+if test x"${use_band_to_full_blocking}" = x"yes"; then
+       AC_DEFINE([BAND_TO_FULL_BLOCKING], [1], [use blocking in trans_ev_band_to_full])
+fi
+
 dnl check whether GPU version is requested
 
 #CUDA_INSTALL_PATH="/usr/local/cuda/"
@@ -775,9 +793,28 @@ AC_ARG_WITH([cuda-sdk-path],[AS_HELP_STRING([--with-cuda-sdk-path=PATH],[prefix 
             [CUDA_SDK_INSTALL_PATH=$withval],[with_cuda_sdk=auto])
 
 dnl setup nvcc flags and use them in later tests
+user_sets_gpu_compute_capability="no"
+AC_MSG_CHECKING(whether a GPU compute capability is specified)
+AC_ARG_WITH([GPU-compute-capability],
+            [AS_HELP_STRING([--with-GPU-compute-capability=value],
+	       	            [use compute capability "value" for GPU version (default sm_35)])],
+	    [user_sets_gpu_compute_capability="yes"],[cuda_compute_capability="sm_35"])
+AC_MSG_RESULT([${user_sets_gpu_compute_capability}])
+
+dnl sanity check whether compute capability setting by user is reasonable
+if test x"${user_sets_gpu_compute_capability}" = x"yes" ; then
+  dnl the user must set a value which starts with "sm_"
+  value=$(echo $withval | cut -c1-3)
+  if test x"${value}" = x"sm_" ; then
+    cuda_compute_capability=$withval
+  else
+    AC_MSG_ERROR([Unknown GPU compute capability set: ${withval}])
+  fi
+fi
+
 if test x"${want_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  CUDA_CFLAGS="$CUDA_CFLAGS -arch sm_35 -O2 -I$CUDA_INSTALL_PATH/include"
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
   NVCC="nvcc"
@@ -1244,6 +1281,20 @@ AC_CONFIG_FILES([
   Doxyfile
   ${PKG_CONFIG_FILE}:elpa.pc.in
 ])
+
+AC_MSG_CHECKING([if workaround for Intel's broken preprocessor is needed])
+if test x"$FC" = x"mpiifort" ; then
+	need_manual_cpp=yes
+fi
+if test x"$FC" = x"ifort" ; then
+	need_manual_cpp=yes
+fi
+if test x"$need_manual_cpp" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	FC="\$(top_srcdir)/manual_cpp $FC"
+else
+	AC_MSG_RESULT([no])
+fi
 
 AC_OUTPUT
 

@@ -26,6 +26,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/mod_precision.F90 \
         src/mod_mpi.F90 \
         src/mod_mpi_stubs.F90 \
+	src/mod_redist_band.F90 \
         src/mod_pack_unpack_real.F90 \
         src/mod_compute_hh_trafo_real.F90 \
         src/mod_compute_hh_trafo_complex.F90 \
@@ -63,6 +64,11 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
         src/redist_band.X90 \
+	src/sanity.X90 \
+	src/elpa_cholesky_template.X90 \
+	src/elpa_invert_trm.X90 \
+	src/elpa_multiply_a_b.X90 \
+	src/elpa_solve_tridi.X90 \
         src/precision_macros.h
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
@@ -347,6 +353,7 @@ dist_files_DATA = \
   test/Fortran/test_complex2.F90 \
   test/Fortran/test_complex2_default.F90 \
   test/Fortran/test_complex2_api.F90 \
+  test/Fortran/test_complex2_banded.F90 \
   test/Fortran/test_complex.F90 \
   test/Fortran/test_real2.F90 \
   test/Fortran/test_real2_default.F90 \
@@ -388,6 +395,7 @@ noinst_PROGRAMS = \
   elpa2_test_complex_default@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
+  elpa2_test_complex_banded@SUFFIX@ \
   elpa_driver_real@SUFFIX@ \
   elpa_driver_complex@SUFFIX@ \
   elpa1_real_toeplitz@SUFFIX@ \
@@ -553,6 +561,7 @@ EXTRA_elpa1_complex_invert_trm@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_he
 
 elpa2_test_real@SUFFIX@_SOURCES = test/Fortran/test_real2.F90
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_real@SUFFIX@_LDFLAGS = -static
 elpa2_test_real@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa2_test_real@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
@@ -595,6 +604,12 @@ elpa2_test_complex_api@SUFFIX@_SOURCES = test/Fortran/test_complex2_api.F90
 elpa2_test_complex_api@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa2_test_complex_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
+elpa2_test_complex_banded@SUFFIX@_SOURCES = test/Fortran/test_complex2_banded.F90
+elpa2_test_complex_banded@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_complex_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa2_test_complex_banded@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 
 elpa_driver_real@SUFFIX@_SOURCES = test/Fortran/test_driver_real.F90
 elpa_driver_real@SUFFIX@_LDADD = $(build_lib)
@@ -777,6 +792,7 @@ check_SCRIPTS = \
   elpa2_test_real_api@SUFFIX@.sh \
   elpa2_test_real_banded@SUFFIX@.sh \
   elpa2_test_complex_api@SUFFIX@.sh \
+  elpa2_test_complex_banded@SUFFIX@.sh \
   elpa_driver_real@SUFFIX@.sh \
   elpa_driver_complex@SUFFIX@.sh \
   elpa1_real_toeplitz@SUFFIX@.sh \
@@ -913,7 +929,7 @@ CLEANFILES = \
   elpa2_test*\
   elpa2_real* \
   elpa1_real* \
-  *.sh \
+  elpa*.sh \
   *.i
 
 clean-local:
@@ -958,6 +974,11 @@ EXTRA_DIST = \
   src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
   src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
   src/redist_band.X90 \
+  src/sanity.X90 \
+  src/elpa_cholesky_template.X90 \
+  src/elpa_invert_trm.X90 \
+  src/elpa_multiply_a_b.X90 \
+  src/elpa_solve_tridi.X90 \
   src/elpa_qr/elpa_qrkernels.X90 \
   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/ev_tridi_band_gpu_c_v2_real_template.Xcu \

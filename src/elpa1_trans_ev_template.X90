@@ -160,6 +160,10 @@
 
       integer(kind=C_intptr_T)                      :: q_dev, tmp_dev, hvm_dev, tmat_dev
       logical                                       :: successCUDA
+      integer(kind=c_size_t), parameter             :: size_of_datatype = size_of_&
+                                                                          &PRECISION&
+                                                                          &_&
+                                                                          &MATH_DATATYPE
 
       call timer%start("trans_ev_&
       &MATH_DATATYPE&
@@ -242,40 +246,20 @@
 	&MATH_DATATYPE&
 	&", "hvm1", istat, errorMessage)
 
-        successCUDA = cuda_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_&
-	&PRECISION&
-	&_&
-	&MATH_DATATYPE&
-	&_datatype)
+        successCUDA = cuda_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_datatype)
         check_alloc_cuda("trans_ev", successCUDA)
 
-        successCUDA = cuda_malloc(hvm_dev, max_local_rows * max_stored_rows * size_of_&
-	&PRECISION&
-	&_&
-	&MATH_DATATYPE&
-	&_datatype)
+        successCUDA = cuda_malloc(hvm_dev, max_local_rows * max_stored_rows * size_of_datatype)
         check_alloc_cuda("trans_ev", successCUDA)
 
-        successCUDA = cuda_malloc(tmp_dev, max_local_cols * max_stored_rows * size_of_&
-	&PRECISION&
-	&_&
-	&MATH_DATATYPE&
-	&_datatype)
+        successCUDA = cuda_malloc(tmp_dev, max_local_cols * max_stored_rows * size_of_datatype)
         check_alloc_cuda("trans_ev", successCUDA)
 
-        successCUDA = cuda_malloc(q_dev, ldq * matrixCols * size_of_&
-	&PRECISION&
-	&_&
-	&MATH_DATATYPE&
-	&_datatype)
+        successCUDA = cuda_malloc(q_dev, ldq * matrixCols * size_of_datatype)
         check_alloc_cuda("trans_ev", successCUDA)
 
 !         q_dev = q_mat
-        successCUDA = cuda_memcpy(q_dev, loc(q_mat(1,1)), ldq * matrixCols * size_of_&
-	&PRECISION&
-	&_&
-	&MATH_DATATYPE&
-	&_datatype, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(q_dev, loc(q_mat(1,1)), ldq * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
         check_memcpy_cuda("trans_ev", successCUDA)
       endif  ! useGPU
 
@@ -401,21 +385,13 @@
 
             !hvm_dev(1:hvm_ubnd*nstor) = hvm1(1:hvm_ubnd*nstor)
             successCUDA = cuda_memcpy(hvm_dev, loc(hvm1(1)),   &
-                          hvm_ubnd * nstor * size_of_&
-	    &PRECISION&
-	    &_&
-	    &MATH_DATATYPE&
-	    &_datatype, cudaMemcpyHostToDevice)
+                          hvm_ubnd * nstor * size_of_datatype, cudaMemcpyHostToDevice)
 
             check_memcpy_cuda("trans_ev", successCUDA)
 
             !tmat_dev = tmat
             successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1)),   &
-                          max_stored_rows * max_stored_rows * size_of_&
-	    &PRECISION&
-	    &_&
-	    &MATH_DATATYPE&
-	    &_datatype, cudaMemcpyHostToDevice)
+                          max_stored_rows * max_stored_rows * size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("trans_ev", successCUDA)
           endif
 
@@ -451,11 +427,7 @@
           else !l_rows>0
 
             if (useGPU) then
-              successCUDA = cuda_memset(tmp_dev, 0, l_cols * nstor * size_of_&
-	      &PRECISION&
-	      &_&
-	      &MATH_DATATYPE&
-	      &_datatype)
+              successCUDA = cuda_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
               check_memcpy_cuda("trans_ev", successCUDA)
             else
               tmp1(1:l_cols*nstor) = 0
@@ -467,11 +439,7 @@
           ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
           if (useGPU) then
             successCUDA = cuda_memcpy(loc(tmp1(1)), tmp_dev,  &
-                          max_local_cols * max_stored_rows * size_of_&
-			  &PRECISION&
-			  &_&
-			  &MATH_DATATYPE&
-			  &_datatype, cudaMemcpyDeviceToHost)
+                          max_local_cols * max_stored_rows * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("trans_ev", successCUDA)
           endif
           call timer%start("mpi_communication")
@@ -487,11 +455,7 @@
           ! copy back tmp2 - after reduction...
           if (useGPU) then
             successCUDA = cuda_memcpy(tmp_dev, loc(tmp2(1)),  &
-                          max_local_cols * max_stored_rows * size_of_&
-			  &PRECISION&
-			  &_&
-			  &MATH_DATATYPE&
-			  &_datatype, cudaMemcpyHostToDevice)
+                          max_local_cols * max_stored_rows * size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("trans_ev", successCUDA)
           endif ! useGPU
 
@@ -542,16 +506,12 @@
         print *,"trans_ev_&
 	&MATH_DATATYPE&
 	&: error when deallocating hvm "//errorMessage
-        stop
+        stop 1
       endif
 
       if (useGPU) then
         !q_mat = q_dev
-        successCUDA = cuda_memcpy(loc(q_mat(1,1)), q_dev, ldq * matrixCols * size_of_&
-	              &PRECISION&
-		      &_&
-		      &MATH_DATATYPE&
-		      &_datatype, cudaMemcpyDeviceToHost)
+        successCUDA = cuda_memcpy(loc(q_mat(1,1)), q_dev, ldq * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
         check_memcpy_cuda("trans_ev", successCUDA)
 
         deallocate(hvm1, stat=istat, errmsg=errorMessage)
@@ -559,7 +519,7 @@
           print *,"trans_ev_&
 	  &MATH_DATATYPE&
 	  &: error when deallocating hvm1 "//errorMessage
-          stop
+          stop 1
         endif
 
         !deallocate(q_dev, tmp_dev, hvm_dev, tmat_dev)

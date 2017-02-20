@@ -50,19 +50,20 @@
 #endif
 
 #if REALCASE == 1
-    subroutine tridiag_band_real_PRECISION &
+    subroutine tridiag_band_real_&
 #endif
 #if COMPLEXCASE == 1
-    subroutine tridiag_band_complex_PRECISION &
+    subroutine tridiag_band_complex_&
 #endif
-    (na, nb, nblk, a, lda, d, e, matrixCols, &
+    &PRECISION &
+    (na, nb, nblk, aMatrix, a_dev, lda, d, e, matrixCols, &
 #if REALCASE == 1
     hh_trans_real, &
 #endif
 #if COMPLEXCASE == 1
     hh_trans_complex, &
 #endif
-    mpi_comm_rows, mpi_comm_cols, mpi_comm)
+    mpi_comm_rows, mpi_comm_cols, communicator, useGPU)
     !-------------------------------------------------------------------------------
     ! tridiag_band_real/complex:
     ! Reduces a real symmetric band matrix to tridiagonal form
@@ -73,7 +74,7 @@
     !
     !  nblk        blocksize of cyclic distribution, must be the same in both directions!
     !
-    !  a(lda,matrixCols)    Distributed system matrix reduced to banded form in the upper diagonal
+    !  aMatrix(lda,matrixCols)    Distributed system matrix reduced to banded form in the upper diagonal
     !
     !  lda         Leading dimension of a
     !  matrixCols  local columns of matrix a
@@ -87,7 +88,7 @@
     !  mpi_comm_rows
     !  mpi_comm_cols
     !              MPI-Communicators for rows/columns
-    !  mpi_comm
+    !  communicator
     !              MPI-Communicator for the total processor set
     !-------------------------------------------------------------------------------
 #ifdef HAVE_DETAILED_TIMINGS
@@ -97,23 +98,27 @@
 #endif
       use elpa2_workload
       use precision
+      use iso_c_binding
+      use redist
       implicit none
 
-      integer(kind=ik), intent(in)                 ::  na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm
+      logical, intent(in)                          :: useGPU
+      integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE), intent(in)         :: a(lda,*)
+      real(kind=REAL_DATATYPE), intent(in)         :: aMatrix(lda,*)
 #else
-      real(kind=REAL_DATATYPE), intent(in)         :: a(lda,matrixCols)
+      real(kind=REAL_DATATYPE), intent(in)         :: aMatrix(lda,matrixCols)
 #endif
-#endif
+#endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE),intent(in)    :: a(lda,*)
+      complex(kind=COMPLEX_DATATYPE),intent(in)    :: aMatrix(lda,*)
 #else
-      complex(kind=COMPLEX_DATATYPE), intent(in)   :: a(lda,matrixCols)
+      complex(kind=COMPLEX_DATATYPE), intent(in)   :: aMatrix(lda,matrixCols)
 #endif
-#endif
+#endif /* COMPLEXCASE */
+      integer(kind=c_intptr_t)                     :: a_dev
       real(kind=REAL_DATATYPE), intent(out)        :: d(na), e(na) ! set only on PE 0
 #if REALCASE == 1
       real(kind=REAL_DATATYPE), intent(out), &
@@ -170,15 +175,14 @@
 #ifndef WITH_MPI
       integer(kind=ik)                             :: startAddr
 #endif
-
       call timer%start("tridiag_band_&
       &MATH_DATATYPE&
-      &_" // &
+      &" // &
       &PRECISION_SUFFIX &
       )
       call timer%start("mpi_communication")
-      call mpi_comm_rank(mpi_comm,my_pe,mpierr)
-      call mpi_comm_size(mpi_comm,n_pes,mpierr)
+      call mpi_comm_rank(communicator,my_pe,mpierr)
+      call mpi_comm_size(communicator,n_pes,mpierr)
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
@@ -193,7 +197,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating global_id "//errorMessage
-        stop
+        stop 1
       endif
 
       global_id(:,:) = 0
@@ -205,23 +209,23 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating global_id_tmp "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 
 #ifdef WITH_MPI
       call timer%start("mpi_communication")
 #ifndef WITH_OPENMP
-      call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
+      call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, communicator, mpierr)
 #else
       global_id_tmp(:,:) = global_id(:,:)
-      call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, mpi_comm, mpierr)
+      call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, communicator, mpierr)
       deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when deallocating global_id_tmp "//errorMessage
-        stop
+        stop 1
       endif
 #endif /* WITH_OPENMP */
       call timer%stop("mpi_communication")
@@ -238,7 +242,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating block_limits"//errorMessage
-        stop
+        stop 1
       endif
 
       call divide_band(nblocks_total, n_pes, block_limits)
@@ -253,7 +257,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating ab"//errorMessage
-        stop
+        stop 1
       endif
 
       ab = 0 ! needed for lower half, the extra block should also be set to 0 for safety
@@ -262,12 +266,12 @@
       n_off = block_limits(my_pe)*nb
 
       ! Redistribute band in a to ab
-#if REALCASE == 1
-      call redist_band_real_PRECISION(a, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab)
-#endif
-#if COMPLEXCASE == 1
-      call redist_band_complex_PRECISION(a, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm, ab)
-#endif
+      call redist_band_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &(aMatrix, a_dev, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+
       ! Calculate the workload for each sweep in the back transformation
       ! and the space requirements to hold the HH vectors
 
@@ -276,7 +280,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating limits"//errorMessage
-        stop
+        stop 1
       endif
 
       call determine_workload(na, nb, np_rows, limits)
@@ -303,14 +307,14 @@
       allocate(hh_trans_real(nb,num_hh_vecs), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_real: error when allocating hh_trans_real"//errorMessage
-        stop
+        stop 1
       endif
 #endif
 #if COMPLEXCASE == 1
       allocate(hh_trans_complex(nb,num_hh_vecs), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_complex: error when allocating hh_trans_comples "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 
@@ -321,14 +325,14 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating ireq_hhr"//errorMessage
-        stop
+        stop 1
       endif
       allocate(ireq_hhs(nblocks), stat=istat, errmsg=errorMessage)    ! Send requests
       if (istat .ne. 0) then
         print *,"tridiag_band_&
 	&MATH_DATATYEP&
 	&: error when allocating ireq_hhs"//errorMessage
-        stop
+        stop 1
       endif
 
       num_hh_vecs = 0
@@ -350,12 +354,12 @@
 #endif
 	                 nb*local_size,                           &
 #if REALCASE == 1
-			 MPI_REAL_PRECISION,                      &
+			 MPI_REAL_PRECISION,                     &
 #endif
 #if COMPLEXCASE == 1
                         MPI_COMPLEX_EXPLICIT_PRECISION,           &
 #endif
-                        nt, 10+n-block_limits(nt), mpi_comm, ireq_hhr(num_chunks), mpierr)
+                        nt, 10+n-block_limits(nt), communicator, ireq_hhr(num_chunks), mpierr)
           call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -380,7 +384,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating hh_gath"//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(hh_send(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! send buffer for HH vectors
@@ -388,7 +392,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating hh_send"//errorMessage
-        stop
+        stop 1
       endif
 
 #if REALCASE == 1
@@ -406,7 +410,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating hh_cnt"//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(hh_dst(nblocks), stat=istat, errmsg=errorMessage)
@@ -414,7 +418,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating hh_dst"//errorMessage
-        stop
+        stop 1
       endif
 
       hh_cnt(:) = 1 ! The first transfomation vector is always 0 and not calculated at all
@@ -430,7 +434,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating snd_limits"//errorMessage
-        stop
+        stop 1
       endif
       do iblk=1,nblocks
         call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
@@ -455,7 +459,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating omp_block_limits"//errorMessage
-        stop
+        stop 1
       endif
 
       ! Get the OpenMP block limits
@@ -466,7 +470,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when allocating hv_t, tau_t"//errorMessage
-        stop
+        stop 1
       endif
 
 #if REALCASE == 1
@@ -497,19 +501,19 @@
 #if COMPLEXCASE == 1
                        MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-		       my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+		       my_pe-1, 1, communicator, ireq_ab, mpierr)
         call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
       endif
 
 #ifndef WITH_MPI
 #if REALCASE == 1
-          startAddr   = ubound(hh_trans_real,dim=2)
+          startAddr = ubound(hh_trans_real,dim=2)
 #endif
 #if COMPLEXCASE == 1
           startAddr = ubound(hh_trans_complex,dim=2)
 #endif
-#endif
+#endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP
       do istep=1,na-1-block_limits(my_pe)*nb
@@ -542,10 +546,6 @@
           if (istep < na-1) then
             ! Transform first column of remaining matrix
             vnorm2 = sum(ab(3:n+1,na_s-n_off)**2)
-            call hh_transform_real_PRECISION(ab(2,na_s-n_off),vnorm2,hf,tau)
-            hv(1) = CONST_1_0
-            hv(2:n) = ab(3:n+1,na_s-n_off)*hf
-          endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -554,11 +554,26 @@
           vnorm2 = sum(real(ab(3:n+1,na_s-n_off),kind=rk4)**2+aimag(ab(3:n+1,na_s-n_off))**2)
 #endif
           if (n<2) vnorm2 = 0. ! Safety only
-          call hh_transform_complex_PRECISION(ab(2,na_s-n_off),vnorm2,hf,tau)
+#endif /* COMPLEXCASE */
 
+#if REALCASE == 1
+            call hh_transform_real_&
+#endif
+#if COMPLEXCASE == 1
+          call hh_transform_complex_&
+#endif
+&PRECISION &
+                               (ab(2,na_s-n_off),vnorm2,hf,tau)
+
+#if REALCASE == 1
+            hv(1) = CONST_1_0
+            hv(2:n) = ab(3:n+1,na_s-n_off)*hf
+          endif
+#endif
+#if COMPLEXCASE == 1
           hv(1) = CONST_COMPLEX_1_0
           hv(2:n) = ab(3:n+1,na_s-n_off)*hf
-#endif /* COMPLEXCASE == 1 */
+#endif
           d(istep) = ab(1,na_s-n_off)
           e(istep) = ab(2,na_s-n_off)
           if (istep == na-1) then
@@ -585,7 +600,7 @@
 #if COMPLEXCASE == 1
                           MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-                          my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+                          my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
             call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -606,7 +621,7 @@
 #if COMPLEXCASE == 1
                           MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-                          my_pe-1, 2, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+                          my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
             call timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -752,9 +767,6 @@
 
 #if REALCASE == 1
                   vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
-                  call hh_transform_real_PRECISION(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
-
-                  hv_t(1   ,my_thread) = CONST_1_0
 #endif
 #if COMPLEXCASE == 1
 #ifdef  DOUBLE_PRECISION_COMPLEX
@@ -762,9 +774,21 @@
 #else
                   vnorm2 = sum(real(ab(nb+2:nb+nr,ns))**2+aimag(ab(nb+2:nb+nr,ns))**2)
 #endif
+#endif /* COMPLEXCASE */
 
-                  call hh_transform_complex_PRECISION(ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
+#if REALCASE == 1
+                  call hh_transform_real_&
+#endif
+#if COMPLEXCASE == 1
+                  call hh_transform_complex_&
+#endif
+                  &PRECISION &
+		                    (ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
 
+#if REALCASE == 1
+                  hv_t(1   ,my_thread) = CONST_1_0
+#endif
+#if COMPLEXCASE == 1
                   hv_t(1   ,my_thread) = CONST_COMPLEX_1_0
 #endif
                   hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
@@ -855,7 +879,7 @@
 #if COMPLEXCASE == 1
                                MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-			       my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+			       my_pe-1, 1, communicator, ireq_ab, mpierr)
                 call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -874,7 +898,7 @@
 #if COMPLEXCASE == 1
                               MPI_COMPLEX_EXPLICIT_PRECISION,  &
 #endif
-                              my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+                              my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
               endif
               call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -905,7 +929,7 @@
 #if COMPLEXCASE == 1
                                MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-                               my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
+                               my_pe+1, 2, communicator, ireq_hv, mpierr)
                 call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -968,7 +992,7 @@
                              MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
                              global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                             10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
+                             10+iblk, communicator, ireq_hhs(iblk), mpierr)
               call timer%stop("mpi_communication")
 #else /* WITH_MPI */
              ! do the post-poned irecv here
@@ -1044,7 +1068,7 @@
 #if COMPLEXCASE == 1
                             MPI_COMPLEX_EXPLICIT_PRECISION,  &
 #endif
-			    my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+			    my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
 #else /* WITH_OPENMP */
               call mpi_recv(ab(1,ne), nb+1,     &
 #if REALCASE == 1
@@ -1053,7 +1077,7 @@
 #if COMPLEXCASE == 1
                             MPI_COMPLEX_EXPLICIT_PRECISION,  &
 #endif
-	                    my_pe+1, 1, mpi_comm, MPI_STATUS_IGNORE, mpierr)
+	                    my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
 #endif /* WITH_OPENMP */
               call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -1107,8 +1131,6 @@
               if (nr>1) then
 #if  REALCASE == 1
                 vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
-                call hh_transform_real_PRECISION(ab(nb+1,ns),vnorm2,hf,tau_new)
-                hv_new(1) = CONST_1_0
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -1116,11 +1138,22 @@
 #else
                 vnorm2 = sum(real(ab(nb+2:nb+nr,ns),kind=rk4)**2+aimag(ab(nb+2:nb+nr,ns))**2)
 #endif
-
-                call hh_transform_complex_PRECISION(ab(nb+1,ns),vnorm2,hf,tau_new)
-
-                hv_new(1) = CONST_COMPLEX_1_0
 #endif /* COMPLEXCASE */
+
+#if REALCASE == 1
+                call hh_transform_real_&
+#endif
+#if COMPLEXCASE == 1
+                call hh_transform_complex_&
+#endif
+                &PRECISION &
+	                           (ab(nb+1,ns),vnorm2,hf,tau_new)
+#if REALCASE == 1
+                hv_new(1) = CONST_1_0
+#endif
+#if COMPLEXCASE == 1
+                hv_new(1) = CONST_COMPLEX_1_0
+#endif
                 hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
 #if REALCASE == 1
                 ab(nb+2:,ns) = CONST_0_0
@@ -1128,7 +1161,7 @@
 #if COMPLEXCASE == 1
                 ab(nb+2:,ns) = CONST_COMPLEX_0_0
 #endif
-              endif
+              endif ! nr > 1
 
               ! ... and send it away immediatly if this is the last block
 
@@ -1155,7 +1188,7 @@
 #if COMPLEXCASE == 1
                                MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-			       my_pe+1, 2, mpi_comm, ireq_hv, mpierr)
+			       my_pe+1, 2, communicator, ireq_hv, mpierr)
                 call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -1206,7 +1239,7 @@
 #if COMPLEXCASE == 1
                              MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-			    my_pe-1, 1, mpi_comm, ireq_ab, mpierr)
+			    my_pe-1, 1, communicator, ireq_ab, mpierr)
               call timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -1314,7 +1347,7 @@
                            MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
                            global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
-                           10+iblk, mpi_comm, ireq_hhs(iblk), mpierr)
+                           10+iblk, communicator, ireq_hhs(iblk), mpierr)
             call timer%stop("mpi_communication")
 #else /* WITH_MPI */
             ! do the post-poned irecv here
@@ -1353,7 +1386,7 @@
 !      allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)), stat=istat, errmsg=errorMessage)
 !      if (istat .ne. 0) then
 !        print *,"tridiag_band_real: error when allocating mpi_statuses"//errorMessage
-!        stop
+!        stop 1
 !      endif
 
       call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
@@ -1361,7 +1394,7 @@
 !      deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
 !      if (istat .ne. 0) then
 !        print *,"tridiag_band_real: error when deallocating mpi_statuses"//errorMessage
-!        stop
+!        stop 1
 !      endif
       call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
@@ -1382,7 +1415,7 @@
 
 #ifdef  WITH_MPI
       call timer%start("mpi_communication")
-      call mpi_barrier(mpi_comm,mpierr)
+      call mpi_barrier(communicator,mpierr)
       call timer%stop("mpi_communication")
 #endif
       deallocate(ab, stat=istat, errmsg=errorMessage)
@@ -1390,7 +1423,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when deallocating ab"//errorMessage
-        stop
+        stop 1
       endif
 
       deallocate(ireq_hhr, ireq_hhs, stat=istat, errmsg=errorMessage)
@@ -1398,7 +1431,7 @@
         print *,"tridiag_band_&
 	&MATH_DATATYPE&
 	&: error when deallocating ireq_hhr, ireq_hhs"//errorMessage
-        stop
+        stop 1
       endif
 
       deallocate(hh_cnt, hh_dst, stat=istat, errmsg=errorMessage)
@@ -1406,7 +1439,7 @@
          print *,"tridiag_band_&
 	 &MATH_DATATYPE&
 	 &: error when deallocating hh_cnt, hh_dst"//errorMessage
-         stop
+         stop 1
        endif
 
       deallocate(hh_gath, hh_send, stat=istat, errmsg=errorMessage)
@@ -1414,7 +1447,7 @@
          print *,"tridiag_band_&
 	 &MATH_DATATYPE&
 	 &: error when deallocating hh_gath, hh_send"//errorMessage
-         stop
+         stop 1
        endif
 
       deallocate(limits, snd_limits, stat=istat, errmsg=errorMessage)
@@ -1422,7 +1455,7 @@
          print *,"tridiag_band_&
 	 &MATH_DATATYPE&
 	 &: error when deallocating limits, send_limits"//errorMessage
-         stop
+         stop 1
        endif
 
       deallocate(block_limits, stat=istat, errmsg=errorMessage)
@@ -1430,7 +1463,7 @@
          print *,"tridiag_band_&
 	 &MATH_DATATYPE&
 	 &: error when deallocating block_limits"//errorMessage
-         stop
+         stop 1
        endif
 
       deallocate(global_id, stat=istat, errmsg=errorMessage)
@@ -1438,7 +1471,7 @@
          print *,"tridiag_band_&
 	 &MATH_DATATYPE&
 	 &: error when allocating global_id"//errorMessage
-         stop
+         stop 1
        endif
 
       call timer%stop("tridiag_band_&
@@ -1446,10 +1479,13 @@
       &" // &
       &PRECISION_SUFFIX&
       )
+
+! intel compiler bug makes these ifdefs necessary
 #if REALCASE == 1
-    end subroutine tridiag_band_real_PRECISION
+    end subroutine tridiag_band_real_&
 #endif
 #if COMPLEXCASE == 1
-    end subroutine tridiag_band_complex_PRECISION
+    end subroutine tridiag_band_complex_&
 #endif
+    &PRECISION
 

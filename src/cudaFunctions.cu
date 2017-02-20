@@ -69,6 +69,17 @@
 
 #ifdef WITH_GPU_VERSION
 extern "C" {
+
+  int cudaThreadSynchronizeFromC() {
+    cudaError_t cuerr = cudaThreadSynchronize();
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cudaThreadSynchronize: %s\n",cudaGetErrorString(cuerr));
+      return 0;
+    }
+    return 1;
+  }
+
+
   int cudaSetDeviceFromC(int n) {
 
     cudaError_t cuerr = cudaSetDevice(n);

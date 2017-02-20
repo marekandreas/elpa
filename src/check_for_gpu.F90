@@ -77,7 +77,7 @@ module mod_check_for_gpu
 
       if (.not.(success)) then
         print *,"error in cuda_getdevicecount"
-        stop
+        stop 1
       endif
 
       ! make sure that all nodes have the same number of GPU's, otherwise
@@ -108,7 +108,7 @@ module mod_check_for_gpu
 
         if (.not.(success)) then
           print *,"Cannot set CudaDevice"
-          stop
+          stop 1
         endif
         if (wantDebugMessage) then
           print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber

@@ -167,7 +167,7 @@ module compute_hh_trafo_real
 #else
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
            print *,"compute_hh_trafo_real GPU OPENMP: not yet implemented"
-           stop
+           stop 1
          endif
 
          if (istripe<stripe_count) then
@@ -189,7 +189,7 @@ module compute_hh_trafo_real
 #endif /* not WITH_OPENMP */
 
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-           dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_double_real_datatype
+           dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_double_real
            call launch_compute_hh_trafo_c_kernel_real_double(a_dev + dev_offset, bcast_buffer_dev, hh_dot_dev, &
                                                       hh_tau_dev, nl, nbw, stripe_width, off, ncols)
          else ! not CUDA kernel
@@ -884,7 +884,7 @@ module compute_hh_trafo_real
 #else
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
            print *,"compute_hh_trafo_real GPU OPENMP: not yet implemented"
-           stop
+           stop 1
          endif
 
          if (istripe<stripe_count) then
@@ -906,7 +906,7 @@ module compute_hh_trafo_real
 #endif /* not WITH_OPENMP */
 
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
-           dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_single_real_datatype
+           dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_single_real
            call launch_compute_hh_trafo_c_kernel_real_single(a_dev + dev_offset, bcast_buffer_dev, hh_dot_dev, &
                                                       hh_tau_dev, nl, nbw, stripe_width, off, ncols)
          else ! not CUDA kernel

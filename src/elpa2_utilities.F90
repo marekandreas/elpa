@@ -799,7 +799,7 @@ module ELPA2_utilities
 !#ifdef WITH_GPU_VERSION
 !      if (actual_kernel .ne. REAL_ELPA_KERNEL_GPU) then
 !        print *,"if build with GPU you cannot choose another real kernel"
-!        stop
+!        stop 1
 !      endif
 !#endif
 
@@ -860,7 +860,7 @@ module ELPA2_utilities
 !#ifdef WITH_GPU_VERSION
 !      if (actual_kernel .ne. COMPLEX_ELPA_KERNEL_GPU) then
 !        print *,"if build with GPU you cannot choose another complex kernel"
-!        stop
+!        stop 1
 !      endif
 !#endif
 

@@ -1,0 +1,32 @@
+#include "sanity.X90"
+
+      use elpa1_compute, solve_tridi_&
+                         &PRECISION&
+			 &_private => solve_tridi_&
+			 &PRECISION
+      use precision
+
+      implicit none
+      integer(kind=ik)         :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=REAL_DATATYPE) :: d(na), e(na)
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE) :: q(ldq,*)
+#else
+      real(kind=REAL_DATATYPE) :: q(ldq,matrixCols)
+#endif
+
+      logical, intent(in)      :: wantDebug
+      logical :: success
+
+      success = .false.
+
+      call solve_tridi_&
+      &PRECISION&
+      &_private(na, nev, d, e, q, ldq, nblk, matrixCols, &
+               mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+
+#undef REALCASE
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
+#undef SINGLE_PRECISION
+

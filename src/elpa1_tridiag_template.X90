@@ -82,13 +82,11 @@
 !> \param useGPU      If true,  GPU version of the subroutine will be used
 !>
 
-#if REALCASE == 1
-    subroutine tridiag_real_PRECISION (na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU)
-#endif
-#if COMPLEXCASE == 1
-    subroutine tridiag_complex_PRECISION(na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols,  &
-                                         d_vec, e_vec, tau, useGPU)
-#endif
+    subroutine tridiag_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION &
+    (na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU)
       use cuda_functions
       use iso_c_binding
 #ifdef HAVE_DETAILED_TIMINGS
@@ -99,6 +97,8 @@
       use precision
       implicit none
 
+      logical, parameter      :: new_GPU_multiply = .true.
+      
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                           :: useGPU
 
@@ -210,19 +210,31 @@
 #endif
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
+      integer(kind=c_size_t), parameter             :: size_of_datatype = size_of_&
+                                                                          &PRECISION&
+                                                                          &_&
+                                                                          &MATH_DATATYPE
+      call timer%start("tridiag_&
+      &MATH_DATATYPE&
+      &_" // &
+      PRECISION_SUFFIX &
+      )
 
-#if REALCASE == 1
-      call timer%start("tridiag_real" // PRECISION_SUFFIX)
-#endif
-#if COMPLEXCASE == 1
-      call timer%start("tridiag_complex" // PRECISION_SUFFIX)
-#endif
+
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
       call timer%stop("mpi_communication")
+
+      if((my_prow == 0) .and. (my_pcol == 0)) then
+        if( new_GPU_multiply) then
+          write(*,*) "mat vec multiply version 1"
+        else
+          write(*,*) "mat vec multiply version 0"
+        endif
+      endif
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
       ! seems that tile is a square submatrix, consisting by several blocks
@@ -265,61 +277,36 @@
       ! todo: probably one should read it as v_row = vector v distributed among rows
       !
       allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "tmp", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "tmp", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "tmp", istat, errorMessage)
 
       ! allocate v_row 1 element longer to allow store and broadcast tau together with it
       allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "v_row", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "v_row", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "v_row", istat, errorMessage)
 
       allocate(u_row(max_local_rows), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "u_row", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "u_row", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "u_row", istat, errorMessage)
+
       allocate(v_col(max_local_cols), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "v_col", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "v_col", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "v_col", istat, errorMessage)
+
       allocate(u_col(max_local_cols), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "u_col", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "u_col", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "u_col", istat, errorMessage)
 
 #ifdef WITH_OPENMP
       max_threads = omp_get_max_threads()
 
       allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "ur_p", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "ur_p", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "ur_p", istat, errorMessage)
+
       allocate(uc_p(max_local_cols,0:max_threads-1), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "uc_p", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "uc_p", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "uc_p", istat, errorMessage)
 #endif /* WITH_OPENMP */
 
       tmp = 0
@@ -329,67 +316,32 @@
       u_col = 0
 
       allocate(vu_stored_rows(max_local_rows,2*max_stored_uv), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "vu_stored_rows", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "vu_stored_rows", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "vu_stored_rows", istat, errorMessage)
+
       allocate(uv_stored_cols(max_local_cols,2*max_stored_uv), stat=istat, errmsg=errorMessage)
-#if REALCASE == 1
-      call check_alloc("tridiag_real", "uv_stored_cols", istat, errorMessage)
-#endif
-#if COMPLEXCASE == 1
-      call check_alloc("tridiag_complex", "uv_stored_cols", istat, errorMessage)
-#endif
+      call check_alloc("tridiag_&
+      &MATH_DATATYPE ", "uv_stored_cols", istat, errorMessage)
+
       if (useGPU) then
-#if REALCASE == 1
-         successCUDA = cuda_malloc(v_row_dev, max_local_rows * size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(v_row_dev, max_local_rows * size_of_PRECISION_complex)
-#endif
-         check_alloc_cuda("tridiag", successCUDA)
+         successCUDA = cuda_malloc(v_row_dev, max_local_rows * size_of_datatype)
+         check_alloc_cuda("tridiag: v_row_dev", successCUDA)
 
-#if REALCASE == 1
-         successCUDA = cuda_malloc(u_row_dev, max_local_rows * size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(u_row_dev, max_local_rows * size_of_PRECISION_complex)
-#endif
-         check_alloc_cuda("tridiag", successCUDA)
+         successCUDA = cuda_malloc(u_row_dev, max_local_rows * size_of_datatype)
 
-#if REALCASE == 1
-         successCUDA = cuda_malloc(v_col_dev, max_local_cols * size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(v_col_dev, max_local_cols * size_of_PRECISION_complex)
-#endif
-         check_alloc_cuda("tridiag", successCUDA)
+         check_alloc_cuda("tridiag: u_row_dev", successCUDA)
 
-#if REALCASE == 1
-         successCUDA = cuda_malloc(u_col_dev, max_local_cols * size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(u_col_dev, max_local_cols * size_of_PRECISION_complex)
-#endif
-         check_alloc_cuda("tridiag", successCUDA)
+         successCUDA = cuda_malloc(v_col_dev, max_local_cols * size_of_datatype)
+         check_alloc_cuda("tridiag: v_col_dev", successCUDA)
 
-#if REALCASE == 1
-         successCUDA = cuda_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * size_of_PRECISION_complex)
-#endif
-         check_alloc_cuda("tridiag", successCUDA)
+         successCUDA = cuda_malloc(u_col_dev, max_local_cols * size_of_datatype)
+         check_alloc_cuda("tridiag: u_col_dev", successCUDA)
 
-#if REALCASE == 1
-         successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_PRECISION_complex)
-#endif
-         check_alloc_cuda("tridiag", successCUDA)
+         successCUDA = cuda_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * size_of_datatype)
+         check_alloc_cuda("tridiag: vu_stored_rows_dev", successCUDA)
+
+         successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
+         check_alloc_cuda("tridiag: vu_stored_rows_dev", successCUDA)
       endif !useGPU
 
 
@@ -406,21 +358,12 @@
 
       if (useGPU) then
         ! allocate memmory for matrix A on the device and than copy the matrix
-#if REALCASE == 1
-        successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-        successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_PRECISION_complex)
-#endif
-        check_alloc_cuda("tridiag", successCUDA)
-#if REALCASE == 1
-        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_PRECISION_real, cudaMemcpyHostToDevice)
-#endif
-#if COMPLEXCASE == 1
-       successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_PRECISION_complex, &
-                                  cudaMemcpyHostToDevice)
-#endif
-        check_alloc_cuda("tridiag", successCUDA)
+
+        successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_datatype)
+        check_alloc_cuda("tridiag: a_dev", successCUDA)
+
+        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
+        check_alloc_cuda("tridiag: a_dev", successCUDA)
       endif
 
       ! main cycle of tridiagonalization
@@ -442,25 +385,11 @@
 
           ! copy l_cols + 1 column of A to v_row
           if (useGPU) then
-	    a_offset = l_cols * lda * &
-#if REALCASE == 1
-                       size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                       size_of_PRECISION_complex
-#endif
+	    a_offset = l_cols * lda * size_of_datatype
             ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
 
-            successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)* &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,  &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,  &
-#endif
-                                       cudaMemcpyDeviceToHost)
-
-            check_memcpy_cuda("tridiag", successCUDA)
+            successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)* size_of_datatype, cudaMemcpyDeviceToHost)
+            check_memcpy_cuda("tridiag a_dev 1", successCUDA)
           else
             v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
           endif
@@ -495,14 +424,8 @@
 
 #ifdef WITH_MPI
             call timer%start("mpi_communication")
-            call mpi_allreduce(aux1, aux2, 2, &
-#if REALCASE == 1
-	    MPI_REAL_PRECISION,               &
-#endif
-#if COMPLEXCASE == 1
-            MPI_COMPLEX_PRECISION,            &
-#endif
-	    MPI_SUM, mpi_comm_rows, mpierr)
+            call mpi_allreduce(aux1, aux2, 2, MPI_MATH_DATATYPE_PRECISION, &
+                               MPI_SUM, mpi_comm_rows, mpierr)
             call timer%stop("mpi_communication")
 #else /* WITH_MPI */
           aux2 = aux1
@@ -512,11 +435,13 @@
 
           ! Householder transformation
 #if REALCASE == 1
-          call hh_transform_real_PRECISION(vrl, vnorm2, xf, tau(istep))
+          call hh_transform_real_&
 #endif
 #if COMPLEXCASE == 1
-          call hh_transform_complex_PRECISION(vrl, vnorm2, xf, tau(istep))
+          call hh_transform_complex_&
 #endif
+               &PRECISION &
+                             (vrl, vnorm2, xf, tau(istep))
           ! Scale v_row and store Householder vector for back transformation
 
           v_row(1:l_rows) = v_row(1:l_rows) * xf
@@ -536,13 +461,7 @@
 
 #ifdef WITH_MPI
          ! Broadcast the Householder vector (and tau) along columns
-         call MPI_Bcast(v_row, l_rows+1,       &
-#if REALCASE == 1
-                        MPI_REAL_PRECISION,    &
-#endif
-#if COMPLEXCASE == 1
-                        MPI_COMPLEX_PRECISION, &
-#endif
+         call MPI_Bcast(v_row, l_rows+1, MPI_MATH_DATATYPE_PRECISION,    &
                         pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif /* WITH_MPI */
 
@@ -550,16 +469,13 @@
         tau(istep) =  v_row(l_rows+1)
 
         ! Transpose Householder vector v_row -> v_col
-#if REALCASE == 1
-        call elpa_transpose_vectors_real_PRECISION  (v_row, ubound(v_row,dim=1), mpi_comm_rows, &
-                                            v_col, ubound(v_col,dim=1), mpi_comm_cols, &
-                                            1, istep-1, 1, nblk)
-#endif
-#if COMPLEXCASE == 1
-        call elpa_transpose_vectors_complex_PRECISION  (v_row, ubound(v_row,dim=1), mpi_comm_rows, &
-                                            v_col, ubound(v_col,dim=1), mpi_comm_cols, &
-                                            1, istep-1, 1, nblk)
-#endif
+	call elpa_transpose_vectors_&
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION &
+                                   (v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
+				    1, istep-1, 1, nblk)
+
         ! Calculate u = (A + VU**T + UV**T)*v
 
         ! For cache efficiency, we use only the upper half of the matrix tiles for this,
@@ -569,44 +485,18 @@
         u_row(1:l_rows) = 0
         if (l_rows > 0 .and. l_cols> 0 ) then
           if(useGPU) then
-            successCUDA = cuda_memset(u_col_dev, 0, l_cols * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex)
-#endif
-            check_memcpy_cuda("tridiag", successCUDA)
+            successCUDA = cuda_memset(u_col_dev, 0, l_cols * size_of_datatype)
+            check_memcpy_cuda("tridiag: u_col_dev", successCUDA)
 
-            successCUDA = cuda_memset(u_row_dev, 0, l_rows * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex)
-#endif
-            check_memcpy_cuda("tridiag", successCUDA)
+            successCUDA = cuda_memset(u_row_dev, 0, l_rows * size_of_datatype)
+            check_memcpy_cuda("tridiag: u_row_dev", successCUDA)
 
-            successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,            &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,         &
-#endif
-                                      cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * size_of_datatype, cudaMemcpyHostToDevice)
 
-            check_memcpy_cuda("tridiag", successCUDA)
+            check_memcpy_cuda("tridiag: v_col_dev", successCUDA)
 
-            successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,            &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,         &
-#endif
-                                      cudaMemcpyHostToDevice)
-            check_memcpy_cuda("tridiag", successCUDA)
+            successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * size_of_datatype, cudaMemcpyHostToDevice)
+            check_memcpy_cuda("tridiag: v_row_dev", successCUDA)
           endif ! useGU
 
 #if REALCASE == 1
@@ -667,13 +557,8 @@
 #ifdef WITH_OPENMP
               if (mod(n_iter,n_threads) == my_thread) then
 	        call timer%start("blas")
-#if REALCASE == 1
-                call PRECISION_GEMV('T',                    &
-#endif
-#if COMPLEXCASE == 1
-                call PRECISION_GEMV('C',                    &
-#endif
-		                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                     ONE, a_mat(l_row_beg,l_col_beg), lda,         &
                                     v_row(l_row_beg), 1, ONE, uc_p(l_col_beg,my_thread), 1)
 
@@ -689,69 +574,34 @@
 #else /* WITH_OPENMP */
 
               if (useGPU) then
-                a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
-#if REALCASE == 1
-                           size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                           size_of_PRECISION_complex
-#endif
-	        call timer%start("cublas")
-#if REALCASE == 1
-                call cublas_PRECISION_GEMV('T',                        &
-#endif
-#if COMPLEXCASE == 1
-                call cublas_PRECISION_GEMV('C',                        &
-#endif
+                if(.not. new_GPU_multiply) then 
+                  a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * size_of_datatype
+                  call timer%start("cublas")
+                  call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
                                            l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                            ONE, a_dev + a_offset, lda,                   &
                                            v_row_dev + (l_row_beg - 1) *                 &
-#if REALCASE == 1
-					   size_of_PRECISION_real, 1,                    &
-#endif
-#if COMPLEXCASE == 1
-                                           size_of_PRECISION_complex, 1,                 &
-#endif
+                                           size_of_datatype, 1,                          &
                                            ONE, u_col_dev + (l_col_beg - 1) *            &
-#if REALCASE == 1
-					   size_of_PRECISION_real, 1)
-#endif
-#if COMPLEXCASE == 1
-                                           size_of_PRECISION_complex, 1)
-#endif
+                                           size_of_datatype, 1)
 
-               if(i/=j) then
-                  call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+                  if(i/=j) then
+                    call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
                                              ONE, a_dev + a_offset, lda,                        &
                                              v_col_dev + (l_col_beg - 1) *                      &
-#if REALCASE == 1
-					     size_of_PRECISION_real, 1,                         &
-#endif
-#if COMPLEXCASE == 1
-                                             size_of_PRECISION_complex, 1,                      &
-#endif
+                                             size_of_datatype, 1,                          &
                                              ONE, u_row_dev + (l_row_beg - 1) *                 &
-#if REALCASE == 1
-					     size_of_PRECISION_real, 1)
-#endif
-#if COMPLEXCASE == 1
-                                             size_of_PRECISION_complex, 1)
-#endif
-
+                                             size_of_datatype, 1)
+                  endif
+                  call timer%stop("cublas")
                 endif
-	        call timer%stop("cublas")
               else ! useGPU
-	        call timer%start("blas")
-#if REALCASE == 1
-                call PRECISION_GEMV('T',           &
-#endif
-#if COMPLEXCASE == 1
-                call PRECISION_GEMV('C',           &
-#endif
-	                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                    ONE, a_mat(l_row_beg, l_col_beg), lda,         &
-                                    v_row(l_row_beg), 1,                           &
-                                    ONE, u_col(l_col_beg), 1)
+                call timer%start("blas")
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
+                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                            ONE, a_mat(l_row_beg, l_col_beg), lda,         &
+                            v_row(l_row_beg), 1,                           &
+                            ONE, u_col(l_col_beg), 1)
 
                 if (i/=j) then
 
@@ -768,25 +618,51 @@
           enddo  ! i=0,(istep-2)/tile_size
 
           if (useGPU) then
-            successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,    &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex, &
-#endif
-                                      cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag", successCUDA)
+            if(new_GPU_multiply) then 
+            
+                do i=0,(istep-2)/tile_size
+                    l_col_beg = i*l_cols_per_tile+1
+                    l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+                    if(l_col_end<l_col_beg) cycle
+                                            
+                    l_row_beg = 1
+                    l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
+                    
+                    a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
+                           size_of_datatype
+                                
+                    call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                               l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                               ONE, a_dev + a_offset, lda,  &
+                               v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
+                               ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
+                enddo
+                
+                do i=0,(istep-2)/tile_size
+                    l_col_beg = i*l_cols_per_tile+1
+                    l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+                    if(l_col_end<l_col_beg) cycle
+                    
+                    l_row_beg = 1
+                    l_row_end = min(l_rows,i*l_rows_per_tile)
 
-            successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,    &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex, &
-#endif
-                                      cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag", successCUDA)
+                    a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
+                           size_of_datatype
+                           
+                    call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, & 
+                               ONE, a_dev + a_offset, lda, &
+                               v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
+                               ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
+                enddo
+
+            
+            endif          
+          
+            successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
+            check_memcpy_cuda("tridiag: u_col_dev 1", successCUDA)
+
+            successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
+            check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
           endif
 
 !              call PRECISION_SYMV('U', l_cols,  &
@@ -832,14 +708,14 @@
         ! global tile size is smaller than the global remaining matrix
 
         if (tile_size < istep-1) then
-#if REALCASE == 1
-          call elpa_reduce_add_vectors_real_PRECISION (u_row, ubound(u_row,dim=1), mpi_comm_rows, &
-                                        u_col, ubound(u_col,dim=1), mpi_comm_cols, istep-1, 1, nblk)
-#endif
-#if COMPLEXCASE == 1
-          call elpa_reduce_add_vectors_complex_PRECISION  (u_row, ubound(u_row,dim=1), mpi_comm_rows, &
-                                        u_col, ubound(u_col,dim=1), mpi_comm_cols, istep-1, 1, nblk)
-#endif
+
+	  call elpa_reduce_add_vectors_&
+	  &MATH_DATATYPE&
+	  &_&
+	  &PRECISION &
+          (u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
+	   mpi_comm_cols, istep-1, 1, nblk)
+
         endif
 
         ! Sum up all the u_col(:) parts, transpose u_col -> u_row
@@ -848,13 +724,7 @@
           tmp(1:l_cols) = u_col(1:l_cols)
 #ifdef WITH_MPI
           call timer%start("mpi_communication")
-          call mpi_allreduce(tmp, u_col, l_cols,    &
-#if REALCASE == 1
-                             MPI_REAL_PRECISION,    &
-#endif
-#if COMPLEXCASE == 1
-                             MPI_COMPLEX_PRECISION, &
-#endif
+          call mpi_allreduce(tmp, u_col, l_cols, MPI_MATH_DATATYPE_PRECISION,    &
                              MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -862,15 +732,13 @@
 #endif /* WITH_MPI */
         endif
 
-#if REALCASE == 1
-        call elpa_transpose_vectors_real_PRECISION (u_col, ubound(u_col,dim=1), mpi_comm_cols, &
-                                         u_row, ubound(u_row,dim=1), mpi_comm_rows, 1, istep-1, 1, nblk)
-#endif
-#if COMPLEXCASE == 1
-        call elpa_transpose_vectors_complex_PRECISION  (u_col, ubound(u_col,dim=1), mpi_comm_cols, &
-                                              u_row, ubound(u_row,dim=1), mpi_comm_rows, &
-                                              1, (istep-1), 1, nblk)
-#endif
+        call elpa_transpose_vectors_&
+	&MATH_DATATYPE&
+	&_&
+	&PRECISION &
+        (u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+	 mpi_comm_rows, 1, istep-1, 1, nblk)
+
         ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
 #if REALCASE == 1
         x = 0
@@ -886,10 +754,10 @@
 #ifdef WITH_MPI
         call timer%start("mpi_communication")
 #if REALCASE == 1
-        call mpi_allreduce(x, vav, 1, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+        call mpi_allreduce(x, vav, 1, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
 #if COMPLEXCASE == 1
-        call mpi_allreduce(xc, vav, 1 , MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+        call mpi_allreduce(xc, vav, 1 , MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
         call timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -936,27 +804,13 @@
           if (useGPU) then
             successCUDA = cuda_memcpy(vu_stored_rows_dev, loc(vu_stored_rows(1,1)), &
                                       max_local_rows * 2 * max_stored_uv *          &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,                       &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,                    &
-
-#endif
-                                      cudaMemcpyHostToDevice)
-            check_memcpy_cuda("tridiag", successCUDA)
+                                      size_of_datatype, cudaMemcpyHostToDevice)
+            check_memcpy_cuda("tridiag: vu_stored_rows_dev", successCUDA)
 
             successCUDA = cuda_memcpy(uv_stored_cols_dev, loc(uv_stored_cols(1,1)), &
                                       max_local_cols * 2 * max_stored_uv *          &
-#if REALCASE == 1
-                                      size_of_PRECISION_real,                       &
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex,                    &
-
-#endif
-                                      cudaMemcpyHostToDevice)
-            check_memcpy_cuda("tridiag", successCUDA)
+                                      size_of_datatype, cudaMemcpyHostToDevice)
+            check_memcpy_cuda("tridiag: uv_stored_cols_dev", successCUDA)
           endif
 
           do i = 0, (istep-2)/tile_size
@@ -968,51 +822,24 @@
               cycle
 
             if (useGPU) then
-	      call timer%start("cublas")
-#if REALCASE == 1
-              call cublas_PRECISION_GEMM('N', 'T',     &
-#endif
-#if COMPLEXCASE == 1
-              call cublas_PRECISION_GEMM('N', 'C',     &
-#endif
-	                                 l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
+              call timer%start("cublas")
+              call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+                                         l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
                                          ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
-#if REALCASE == 1
-                                         size_of_PRECISION_real,    &
-#endif
-#if COMPLEXCASE == 1
-                                         size_of_PRECISION_complex, &
-#endif
-
+                                         size_of_datatype,  &
                                          max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
-#if REALCASE == 1
-                                         size_of_PRECISION_real, &
-#endif
-#if COMPLEXCASE == 1
-                                         size_of_PRECISION_complex, &
-#endif
+                                         size_of_datatype,  &
                                          max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *            &
-#if REALCASE == 1
-                                         size_of_PRECISION_real, &
-#endif
-#if COMPLEXCASE == 1
-                                         size_of_PRECISION_complex, &
-#endif
-                                         lda)
-	      call timer%stop("cublas")
+                                         size_of_datatype , lda)
+              call timer%stop("cublas")
             else !useGPU
-	      call timer%start("blas")
-#if REALCASE == 1
-              call PRECISION_GEMM('N', 'T',                &
-#endif
-#if COMPLEXCASE == 1
-              call PRECISION_GEMM('N', 'C',                &
-#endif
-	                           l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
+              call timer%start("blas")
+              call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
+                                   l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
                                    ONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
                                    uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),        &
                                    ONE, a_mat(l_row_beg,l_col_beg), lda)
-	      call timer%stop("blas")
+              call timer%stop("blas")
             endif !useGPU
           enddo
 
@@ -1023,25 +850,11 @@
         if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
           if (useGPU) then
             !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
-             a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * &
-#if REALCASE == 1
-                        size_of_PRECISION_real
-#endif
-#if COMPLEXCASE == 1
-                        size_of_PRECISION_complex
-#endif
+             a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * size_of_datatype
 
              successCUDA = cuda_memcpy(loc(a_mat(l_rows, l_cols)), a_dev + a_offset, &
-                                       1 *                                           &
-#if REALCASE == 1
-				       size_of_PRECISION_real,                       &
-#endif
-#if COMPLEXCASE == 1
-                                       size_of_PRECISION_complex,                    &
-
-#endif
-				       cudaMemcpyDeviceToHost)
-             check_memcpy_cuda("tridiag", successCUDA)
+                                       1 *  size_of_datatype, cudaMemcpyDeviceToHost)
+             check_memcpy_cuda("tridiag: a_dev 3", successCUDA)
 
           endif
           if (n_stored_vecs > 0) then
@@ -1052,17 +865,12 @@
 
           if (useGPU) then
             !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
-             successCUDA = cuda_memcpy(a_dev + a_offset, loc(a_mat(l_rows, l_cols)), &
-                                       1 *                                           &
-#if REALCASE == 1
-				       size_of_PRECISION_real,                       &
-#endif
-#if COMPLEXCASE == 1
-                                       size_of_PRECISION_complex,                    &
-#endif
+            !successCUDA = cuda_threadsynchronize()
+            !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
 
-				       cudaMemcpyHostToDevice)
-             check_memcpy_cuda("tridiag", successCUDA)
+             successCUDA = cuda_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_size_t), &
+                                       int(1 * size_of_datatype, kind=c_size_t), cudaMemcpyHostToDevice)
+             check_memcpy_cuda("tridiag: a_dev 4", successCUDA)
           endif
         endif
 
@@ -1075,14 +883,21 @@
         if (my_prow==prow(1, nblk, np_rows)) then
           ! We use last l_cols value of loop above
           if(useGPU) then
-            successCUDA = cuda_memcpy(loc(aux3(1)), a_dev + (lda * (l_cols - 1)) * size_of_PRECISION_complex, &
-                                    1 * size_of_PRECISION_complex, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag", successCUDA)
+            successCUDA = cuda_memcpy(loc(aux3(1)), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
+                                    1 * size_of_datatype, cudaMemcpyDeviceToHost)
+            check_memcpy_cuda("tridiag: a_dev 5", successCUDA)
             vrl = aux3(1)
           else !useGPU
             vrl = a_mat(1,l_cols)
           endif !useGPU
-          call hh_transform_complex_PRECISION(vrl, CONST_REAL_0_0, xf, tau(2))
+#if REALCASE == 1
+          call hh_transform_real_&
+#endif
+#if COMPLEXCASE == 1
+          call hh_transform_complex_&
+#endif
+&PRECISION &
+	                     (vrl, CONST_REAL_0_0, xf, tau(2))
           e_vec(1) = vrl
 
           a_mat(1,l_cols) = 1. ! for consistency only
@@ -1104,8 +919,8 @@
       if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
         if(useGPU) then
           successCUDA = cuda_memcpy(loc(aux3(1)), a_dev, &
-                                    1 * size_of_PRECISION_complex, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag", successCUDA)
+                                    1 * size_of_datatype, cudaMemcpyDeviceToHost)
+          check_memcpy_cuda("tridiag: a_dev 6", successCUDA)
           d_vec(1) = PRECISION_REAL(aux3(1))
         else !useGPU
           d_vec(1) = PRECISION_REAL(a_mat(1,1))
@@ -1119,9 +934,9 @@
 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
         if(useGPU) then
-          successCUDA = cuda_memcpy(loc(e_vec(1)), a_dev + (lda * (l_cols - 1)) * size_of_PRECISION_real, &
-                                    1 * size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag", successCUDA)
+          successCUDA = cuda_memcpy(loc(e_vec(1)), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
+                                    1 * size_of_datatype, cudaMemcpyDeviceToHost)
+          check_memcpy_cuda("tridiag: a_dev 7", successCUDA)
         else !useGPU
           e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
         endif !useGPU
@@ -1130,9 +945,8 @@
      ! Store d_vec(1)
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
         if(useGPU) then
-          successCUDA = cuda_memcpy(loc(d_vec(1)), a_dev, &
-                                    1 * size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag", successCUDA)
+          successCUDA = cuda_memcpy(loc(d_vec(1)), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
+          check_memcpy_cuda("tridiag: a_dev 8", successCUDA)
         else !useGPU
           d_vec(1) = a_mat(1,1)
         endif !useGPU
@@ -1147,31 +961,31 @@
 #if COMPLEXCASE == 1
         print *,"tridiag_complex: error when deallocating tmp "//errorMessage
 #endif
-        stop
+        stop 1
       endif
 
       if (useGPU) then
         ! todo: should we leave a_mat on the device for further use?
         successCUDA = cuda_free(a_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: a_dev 9", successCUDA)
 
         successCUDA = cuda_free(v_row_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: v_row_dev", successCUDA)
 
         successCUDA = cuda_free(u_row_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: (u_row_dev", successCUDA)
 
         successCUDA = cuda_free(v_col_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: v_col_dev", successCUDA)
 
         successCUDA = cuda_free(u_col_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: u_col_dev ", successCUDA)
 
         successCUDA = cuda_free(vu_stored_rows_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag: vu_stored_rows_dev ", successCUDA)
 
         successCUDA = cuda_free(uv_stored_cols_dev)
-        check_dealloc_cuda("tridiag", successCUDA)
+        check_dealloc_cuda("tridiag:uv_stored_cols_dev ", successCUDA)
       endif
 
       ! distribute the arrays d_vec and e_vec to all processors
@@ -1181,14 +995,14 @@
 
       if (istat .ne. 0) then
         print *,"tridiag_real: error when allocating tmp "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 #if COMPLEXCASE == 1
       allocate(tmp_real(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_complex: error when allocating tmp_real "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 
@@ -1222,65 +1036,23 @@
       deallocate(tmp,  stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_real: error when deallocating tmp "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 #if COMPLEXCASE == 1
       deallocate(tmp_real, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_complex: error when deallocating tmp_real "//errorMessage
-        stop
+        stop 1
       endif
 #endif
 
-#if REALCASE == 1
-      call timer%stop("tridiag_real" // PRECISION_SUFFIX)
-#endif
-#if COMPLEXCASE == 1
-      call timer%stop("tridiag_complex" // PRECISION_SUFFIX)
-#endif
-!    contains
-!
-!       subroutine print_a(prow, pcol)
-!         implicit none
-!
-!         integer, intent(in)      :: prow, pcol
-!         integer                  :: i
-!
-!         if((my_prow == prow) .and. (my_pcol == pcol)) then
-!            write(*, '(A,2I4.2)') "MATRIX A :", prow, pcol
-!            do i=1,size(a_mat,1)
-!              write(*,'(20G12.4)') a_mat(i,:)
-!            enddo
-!          endif
-!
-!       end subroutine
-!
-!       subroutine print_a_dev(prow, pcol)
-!         implicit none
-!
-!         integer, intent(in)      :: prow, pcol
-!         integer                  :: i
-!         real(kind=REAL_DATATYPE) :: tmp(lda,matrixCols)
-!
-!
-!         tmp(:,:) = 0
-!
-!         if((my_prow == prow) .and. (my_pcol == pcol)) then
-!            successCUDA = cuda_memcpy(loc(tmp(1,1)), a_dev, lda * matrixCols * size_of_PRECISION_real, cudaMemcpyDeviceToHost)
-!            check_memcpy_cuda("tridiag", successCUDA)
-!
-!            write(*, '(A,2I4.2)') "MATRIX A ON DEVICE:", prow, pcol
-!            do i=1,size(tmp,1)
-!              write(*,'(20G12.4)') tmp(i,:)
-!            enddo
-!          endif
-!
-!       end subroutine
-
-#if REALCASE == 1
-    end subroutine tridiag_real_PRECISION
-#endif
-#if COMPLEXCASE == 1
-    end subroutine tridiag_complex_PRECISION
-#endif
+      call timer%stop("tridiag_&
+      &MATH_DATATYPE&
+      &" // &
+      &PRECISION_SUFFIX &
+      )
+    end subroutine tridiag_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION

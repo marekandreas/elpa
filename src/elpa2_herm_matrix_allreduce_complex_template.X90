@@ -1,12 +1,14 @@
 
-     subroutine herm_matrix_allreduce_PRECISION(n,a,lda,ldb,comm)
+     subroutine herm_matrix_allreduce_&
+     &PRECISION &
+                                    (n,a,lda,ldb,comm)
      !-------------------------------------------------------------------------------
      !  herm_matrix_allreduce: Does an mpi_allreduce for a hermitian matrix A.
      !  On entry, only the upper half of A needs to be set
      !  On exit, the complete matrix is set
 #ifdef HAVE_DETAILED_TIMINGS
        use timings
-#else 
+#else
        use timings_dummy
 #endif
 
@@ -60,6 +62,7 @@
 
        call timer%stop("herm_matrix_allreduce" // PRECISION_SUFFIX)
 
-     end subroutine herm_matrix_allreduce_PRECISION
+     end subroutine herm_matrix_allreduce_&
+     &PRECISION
 
 
