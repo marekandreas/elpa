@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -61,117 +61,30 @@
 module complex_generic_simple_kernel
 
   private
-  public single_hh_trafo_complex_generic_simple
-contains
-  subroutine single_hh_trafo_complex_generic_simple(q, hh, nb, nq, ldq)
-    use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
+  public single_hh_trafo_complex_generic_simple_double
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  public single_hh_trafo_complex_generic_simple_single
 #endif
-    implicit none
 
-    integer(kind=ik), intent(in)    :: nb, nq, ldq
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-    complex(kind=ck), intent(inout) :: q(ldq,*)
-    complex(kind=ck), intent(in)    :: hh(*)
-#else
-    complex(kind=ck), intent(inout) :: q(1:ldq,1:nb)
-    complex(kind=ck), intent(in)    :: hh(1:nb)
+  contains
+
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION_COMPLEX 1
+#define DATATYPE ck8
+#include "elpa2_kernels_simple_template.X90"
+#undef DOUBLE_PRECISION_COMPLEX
+#undef DATATYPE
+#undef COMPLEXCASE
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+#define COMPLEXCASE 1
+#undef DOUBLE_PRECISION_COMPLEX
+#define DATATYPE ck4
+#include "elpa2_kernels_simple_template.X90"
+#undef DOUBLE_PRECISION_COMPLEX
+#undef DATATYPE
+#undef COMPLEXCASE
 #endif
-    integer(kind=ik)                :: i
-    complex(kind=ck)                :: h1, tau1, x(nq)
 
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel complex generic simple: single_hh_trafo_complex_generic_simple")
-#endif
-    ! Just one Householder transformation
-
-    x(1:nq) = q(1:nq,1)
-
-    do i=2,nb
-       x(1:nq) = x(1:nq) + q(1:nq,i)*conjg(hh(i))
-    enddo
-
-    tau1 = hh(1)
-    x(1:nq) = x(1:nq)*(-tau1)
-
-    q(1:nq,1) = q(1:nq,1) + x(1:nq)
-
-    do i=2,nb
-       q(1:nq,i) = q(1:nq,i) + x(1:nq)*hh(i)
-    enddo
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel complex generic simple: single_hh_trafo_complex_generic_simple")
-#endif
-  end subroutine single_hh_trafo_complex_generic_simple
-
-  ! --------------------------------------------------------------------------------------------------
-  subroutine double_hh_trafo_complex_generic_simple(q, hh, nb, nq, ldq, ldh)
-    use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
-    implicit none
-
-    integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-    complex(kind=ck), intent(inout) :: q(ldq,*)
-    complex(kind=ck), intent(in)    :: hh(ldh,*)
-#else
-    complex(kind=ck), intent(inout) :: q(1:ldq,1:nb+1)
-    complex(kind=ck), intent(in)    :: hh(1:ldh,1:2)
-#endif
-    complex(kind=ck)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
-    integer(kind=ik)                :: i
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel complex generic simple: double_hh_trafo_complex_generic_simple")
-#endif
-    ! Calculate dot product of the two Householder vectors
-
-    s = conjg(hh(2,2))*1
-    do i=3,nb
-       s = s+(conjg(hh(i,2))*hh(i-1,1))
-    enddo
-
-    ! Do the Householder transformations
-
-    x(1:nq) = q(1:nq,2)
-
-    y(1:nq) = q(1:nq,1) + q(1:nq,2)*conjg(hh(2,2))
-
-    do i=3,nb
-       h1 = conjg(hh(i-1,1))
-       h2 = conjg(hh(i,2))
-       x(1:nq) = x(1:nq) + q(1:nq,i)*h1
-       y(1:nq) = y(1:nq) + q(1:nq,i)*h2
-    enddo
-
-    x(1:nq) = x(1:nq) + q(1:nq,nb+1)*conjg(hh(nb,1))
-
-    tau1 = hh(1,1)
-    tau2 = hh(1,2)
-
-    h1 = -tau1
-    x(1:nq) = x(1:nq)*h1
-    h1 = -tau2
-    h2 = -tau2*s
-    y(1:nq) = y(1:nq)*h1 + x(1:nq)*h2
-
-    q(1:nq,1) = q(1:nq,1) + y(1:nq)
-    q(1:nq,2) = q(1:nq,2) + x(1:nq) + y(1:nq)*hh(2,2)
-
-    do i=3,nb
-       h1 = hh(i-1,1)
-       h2 = hh(i,2)
-       q(1:nq,i) = q(1:nq,i) + x(1:nq)*h1 + y(1:nq)*h2
-    enddo
-
-    q(1:nq,nb+1) = q(1:nq,nb+1) + x(1:nq)*hh(nb,1)
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel complex generic simple: double_hh_trafo_complex_generic_simple")
-#endif
-  end subroutine double_hh_trafo_complex_generic_simple
 end module complex_generic_simple_kernel
 ! --------------------------------------------------------------------------------------------------

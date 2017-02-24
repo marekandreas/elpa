@@ -99,12 +99,12 @@ program test_all_real
    integer, external          :: numroc
 
    logical                    :: wantDebug
-   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:), &
+   real(kind=rk8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:), &
                                  d(:), e(:), ev_analytic(:)
-   real(kind=rk)              :: diagonalELement, subdiagonalElement
-   real(kind=rk)              :: tmp
+   real(kind=rk8)              :: diagonalELement, subdiagonalElement
+   real(kind=rk8)              :: tmp
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
-   real(kind=rk), parameter   :: pi = 3.141592653589793238462643383279_rk
+   real(kind=rk8), parameter   :: pi = 3.141592653589793238462643383279_rk8
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
@@ -116,10 +116,11 @@ program test_all_real
    integer(kind=ik)           :: j, this_kernel, qr
    logical                    :: this_qr
    integer(kind=ik)           :: loctmp ,rowLocal, colLocal
-   real(kind=rk)              :: tStart, tEnd
-   real(kind=rk)              :: maxerr
+   real(kind=rk8)              :: tStart, tEnd
+   real(kind=rk8)              :: maxerr
    integer                    :: this_real_kernel, this_complex_kernel
    logical                    :: complexKernelSet, realKernelSet
+   logical                    :: gpuAvailable
    !-------------------------------------------------------------------------------
 
    success = .true.
@@ -200,7 +201,7 @@ program test_all_real
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in get_elpa_communicators.
 
-   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -231,8 +232,8 @@ program test_all_real
 
    ! first the toeplitz test
    ! changeable numbers here would be nice
-   diagonalElement = 0.45_rk
-   subdiagonalElement =  0.78_rk
+   diagonalElement = 0.45_rk8
+   subdiagonalElement =  0.78_rk8
 
    d(:) = diagonalElement
    e(:) = subdiagonalElement
@@ -275,8 +276,8 @@ program test_all_real
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-   success = elpa_solve_tridi(na, nev, d, e, a, na_rows, nblk, na_cols, mpi_comm_rows, &
-                              mpi_comm_cols, wantDebug)
+   success = elpa_solve_tridi_double(na, nev, d, e, a, na_rows, nblk, na_cols, mpi_comm_rows, &
+                                      mpi_comm_cols, wantDebug)
 
    if (.not.(success)) then
       write(error_unit,*) "elpa_solve_tridi produced an error! Aborting..."
@@ -295,7 +296,7 @@ program test_all_real
 
    ! analytic solution
    do i=1, na
-     ev_analytic(i) = diagonalElement + 2.0_rk * subdiagonalElement *cos( pi*real(i,kind=rk)/ real(na+1,kind=rk) )
+     ev_analytic(i) = diagonalElement + 2.0_rk8 * subdiagonalElement *cos( pi*real(i,kind=rk8)/ real(na+1,kind=rk8) )
    enddo
 
    ! sort analytic solution:
@@ -322,10 +323,10 @@ program test_all_real
    enddo
 
    ! compute a simple error max of eigenvalues
-   maxerr = 0.0_rk
+   maxerr = 0.0_rk8
    maxerr = maxval( (d(:) - ev_analytic(:))/ev_analytic(:) , 1)
 
-   if (maxerr .gt. 8.e-13) then
+   if (maxerr .gt. 8.e-13_rk8) then
      if (myid .eq. 0) then
        print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
      endif
@@ -340,7 +341,7 @@ program test_all_real
    call timer%start("set up matrix")
 #endif
 
-   call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed,  a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -365,11 +366,11 @@ program test_all_real
 #endif
    tStart = mpi_wtime()
 
-   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                            na_cols, mpi_comm_rows, mpi_comm_cols)
+   success = elpa_solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                                               na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
+      write(error_unit,*) "elpa_solve_evp_real_1stage_double produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
@@ -425,7 +426,7 @@ program test_all_real
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
    if (status .eq. 1) then
 #ifdef WITH_MPI
@@ -461,8 +462,8 @@ program test_all_real
 
      tStart = mpi_wtime()
 
-     success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                     mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+     success = elpa_solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
      if (.not.(success)) then
        write(error_unit,*) "solve_evp_real_2stage with default kernel ",trim(elpa_get_actual_real_kernel_name()), &
@@ -493,7 +494,7 @@ program test_all_real
                     trim(elpa_get_actual_real_kernel_name()),' default kernel:',tEnd - tStart
      if (myid == 0) print *," "
 
-     status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+     status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
      if (myid == 0) print *," "
 
      if (status .eq. 1) then
@@ -536,9 +537,9 @@ program test_all_real
 
            tStart = mpi_wtime()
 
-           success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                           mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                           THIS_REAL_ELPA_KERNEL_API = this_kernel, useQR=this_qr)
+           success = elpa_solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
+                                                       THIS_REAL_ELPA_KERNEL_API = this_kernel, useQR=this_qr)
 
            if (.not.(success)) then
              if (qr .eq. 0) then
@@ -574,7 +575,7 @@ program test_all_real
                           trim(elpa_real_kernel_name(this_kernel)),' kernel:',tEnd - tStart
            if (myid == 0) print *," "
 
-           status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+           status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
            if (myid == 0) print *," "
 
            if (status .eq. 1) then
@@ -618,9 +619,9 @@ program test_all_real
 
        tStart = mpi_wtime()
 
-       success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                       THIS_REAL_ELPA_KERNEL_API = this_real_kernel, useQR=this_qr)
+       success = elpa_solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                                   mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
+                                                   THIS_REAL_ELPA_KERNEL_API = this_real_kernel, useQR=this_qr)
 
        if (.not.(success)) then
          if (qr .eq. 0) then
@@ -656,7 +657,7 @@ program test_all_real
                       trim(elpa_real_kernel_name(this_real_kernel)),' kernel:',tEnd - tStart
        if (myid == 0) print *," "
 
-       status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+       status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
        if (myid == 0) print *," "
 
        if (status .eq. 1) then

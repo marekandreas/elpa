@@ -112,11 +112,11 @@ program test_real
    integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol,j
 
    integer(kind=ik)           :: my_prowFromC, my_pcolFromC
-   integer, external          :: numroc
+   integer(kind=ik), external :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real(kind=rk8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
-   real(kind=rk), allocatable :: aFromC(:,:), evFromC(:), zFromC(:,:)
+   real(kind=rk8), allocatable :: aFromC(:,:), evFromC(:), zFromC(:,:)
 
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -251,9 +251,9 @@ program test_real
    my_pcolFromC = my_pcol
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators.
+   ! rows or columns of processes, these are set in elpa_get_communicators.
 
-   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    ! call here a c function, which via the c-interface in turn calls the
@@ -288,7 +288,7 @@ program test_real
 
    allocate(evFromC(na))
 
-   call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed,  a, z, as)
 
    aFromC = a
    zFromC = z
@@ -308,8 +308,8 @@ program test_real
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                          na_cols, mpi_comm_rows, mpi_comm_cols)
+   success = elpa_solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                          na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
@@ -339,8 +339,8 @@ program test_real
      print *," "
    end if
 
-   success = solve_elpa1_real_call_from_c(na, nev, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
-                                          na_cols, mpi_comm_rows_fromC, mpi_comm_cols_fromC )
+   success = solve_elpa1_real_call_from_c_double(na, nev, aFromC, na_rows, evFromC, zFromC, na_rows, nblk, &
+                                          na_cols, mpi_comm_rows_fromC, mpi_comm_cols_fromC, mpi_comm_world )
 
    if (myid==0) then
      print *," "
@@ -402,7 +402,7 @@ program test_real
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
    deallocate(a)
    deallocate(as)

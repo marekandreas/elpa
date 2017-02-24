@@ -98,7 +98,7 @@ program read_real
    integer(kind=ik)            :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer(kind=ik)            :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol, lenarg
 
-   integer, external           :: numroc
+   integer(kind=ik), external  :: numroc
 
    real(kind=rk)               :: err, errmax
    real(kind=rk), allocatable  :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
@@ -226,9 +226,9 @@ program read_real
    call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators
+   ! rows or columns of processes, these are set in elpa_get_communicators
 
-   call get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   call elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                mpi_comm_rows, mpi_comm_cols)
 
    ! Read matrix size
@@ -285,8 +285,8 @@ program read_real
    ! Calculate eigenvalues/eigenvectors
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   call solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                       mpi_comm_rows, mpi_comm_cols)
+   call elpa_solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                                   mpi_comm_rows, mpi_comm_cols)
 
    if(myid == 0) print *,'Time tridiag_real :',time_evp_fwd
    if(myid == 0) print *,'Time solve_tridi  :',time_evp_solve
@@ -373,7 +373,7 @@ end
 
 !-------------------------------------------------------------------------------
 subroutine read_matrix(iunit, na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols)
-
+   use precision
    implicit none
 #ifdef HAVE_MPI_MODULE
    use mpi
@@ -383,13 +383,13 @@ subroutine read_matrix(iunit, na, a, lda, nblk, my_prow, my_pcol, np_rows, np_co
    include 'mpif.h'
 #endif
 
-   integer, intent(in) :: iunit, na, lda, nblk, my_prow, my_pcol, np_rows, np_cols
-   real*8, intent(out) :: a(lda, *)
+   integer(kind=ik), intent(in)  :: iunit, na, lda, nblk, my_prow, my_pcol, np_rows, np_cols
+   real(kind=rk), intent(out)    :: a(lda, *)
 
-   integer i, j, lr, lc, myid, mpierr
-   integer, allocatable :: l_row(:), l_col(:)
+   integer(kind=ik)              :: i, j, lr, lc, myid, mpierr
+   integer(kind=ik), allocatable :: l_row(:), l_col(:)
 
-   real*8, allocatable :: col(:)
+   real(kind=rk), allocatable    :: col(:)
 
    ! allocate and set index arrays
 

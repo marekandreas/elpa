@@ -94,19 +94,19 @@ program test_solve_tridi
 
    integer, external          :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), d(:), e(:), ev_analytic(:), ev(:)
-   real(kind=rk)              :: diagonalELement, subdiagonalElement
+   real(kind=rk8), allocatable :: a(:,:), d(:), e(:), ev_analytic(:), ev(:)
+   real(kind=rk8)              :: diagonalELement, subdiagonalElement
 
-   real(kind=rk), allocatable :: tmp1(:,:), tmp2(:,:), as(:,:)
-   real(kind=rk)              :: tmp
+   real(kind=rk8), allocatable :: tmp1(:,:), tmp2(:,:), as(:,:)
+   real(kind=rk8)              :: tmp
    integer(kind=ik)           :: loctmp ,rowLocal, colLocal
 
 
-   real(kind=rk)              :: maxerr
+   real(kind=rk8)              :: maxerr
 
    logical                    :: wantDebug
 
-   real(kind=rk), parameter   :: pi = 3.141592653589793238462643383279_rk
+   real(kind=rk8), parameter   :: pi = 3.141592653589793238462643383279_rk8
 
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
@@ -200,9 +200,9 @@ program test_solve_tridi
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators.
+   ! rows or columns of processes, these are set in elpa_get_communicators.
 
-   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -230,12 +230,12 @@ program test_solve_tridi
    allocate(ev_analytic(na))
    allocate(ev(na))
 
-   a(:,:) = 0.0_rk
+   a(:,:) = 0.0_rk8
 
 
    ! changeable numbers here would be nice
-   diagonalElement = 0.45_rk
-   subdiagonalElement =  0.78_rk
+   diagonalElement = 0.45_rk8
+   subdiagonalElement =  0.78_rk8
 
    d(:) = diagonalElement
    e(:) = subdiagonalElement
@@ -279,7 +279,7 @@ program test_solve_tridi
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-   success = elpa_solve_tridi(na, nev, d, e, a, na_rows, nblk, na_cols, mpi_comm_rows, &
+   success = elpa_solve_tridi_double(na, nev, d, e, a, na_rows, nblk, na_cols, mpi_comm_rows, &
                               mpi_comm_cols, wantDebug)
 
    if (.not.(success)) then
@@ -331,7 +331,7 @@ program test_solve_tridi
 
    ! analytic solution
    do i=1, na
-     ev_analytic(i) = diagonalElement + 2.0_rk * subdiagonalElement *cos( pi*real(i,kind=rk)/ real(na+1,kind=rk) )
+     ev_analytic(i) = diagonalElement + 2.0_rk8 * subdiagonalElement *cos( pi*real(i,kind=rk8)/ real(na+1,kind=rk8) )
    enddo
 
    ! sort analytic solution:
@@ -358,7 +358,7 @@ program test_solve_tridi
    enddo
 
    ! compute a simple error max of eigenvalues
-   maxerr = 0.0_rk
+   maxerr = 0.0_rk8
    maxerr = maxval( (d(:) - ev_analytic(:))/ev_analytic(:) , 1)
 
    if (maxerr .gt. 8.e-13) then

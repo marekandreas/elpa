@@ -1,14 +1,18 @@
-This file contains the release notes for the ELPA 2016.05.003 version
+This file contains the release notes for the ELPA 2016.11.001 version
 
 What is new?
 -------------
-For changes since release ELPA 2016.05.002 please have a look at the Changelog file
+For detailed information about changes since release ELPA 2016.05.004 please have a look at the Changelog file
+Highlights are:
+- support of single and double precision (real and complex) calculations
+- GPU support for ELPA 1stage and ELPA 2stage
 
 
-a) ABI change
+ABI change
 ---------------------
 
-Since release 2016.05.001 the ABI has not changed
+Since release 2016.05.001 the ABI has not changed. Only additional interfaces habe been added, please have also a look
+at the DEPRECTATED_FEATURES file
 
 
 Any incompatibilities to previous version?
@@ -16,3 +20,4 @@ Any incompatibilities to previous version?
 
 As mentioned before, the ABI of ELPA was not changed; There is no
 incompatibility with the previous version ELPA 2016.05.002. There is, however, an incompatibility with older versions than ELPA 2015.11.001 !
+

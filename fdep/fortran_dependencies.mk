@@ -87,6 +87,11 @@ define is_clean
 $(if $(filter-out mostlyclean clean distclean maintainer-clean,$(MAKECMDGOALS)),0,1)
 endef
 
+define newline
+
+
+endef
+
 ifneq ($(call is_clean),1)
 include $(_f90_depfile)
 endif

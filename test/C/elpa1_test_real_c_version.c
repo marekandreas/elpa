@@ -54,6 +54,8 @@
 
 #include "test/shared/generated.h"
 
+#define DOUBLE_PRECISION_REAL 1
+
 int main(int argc, char** argv) {
    int myid;
    int nprocs;
@@ -77,12 +79,16 @@ int main(int argc, char** argv) {
 
    int na_rows, na_cols;
    double startVal;
-
+#ifdef DOUBLE_PRECISION_REAL
    double *a, *z, *as, *ev, *tmp1, *tmp2;
-
+#else
+   float *a, *z, *as, *ev, *tmp1, *tmp2;
+#endif
    int *iseed;
 
    int success;
+
+   int useGPU;
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -106,6 +112,12 @@ int main(int argc, char** argv) {
      printf("This is an example program with much less functionality\n");
      printf("as it's Fortran counterpart. It's only purpose is to show how \n");
      printf("to evoke ELPA1 from a c programm\n");
+     printf("\n");
+#ifdef DOUBLE_PRECISION_REAL
+     printf("The double precision version of ELPA1 is used\n");
+#else
+     printf("The single precision version of ELPA1 is used\n");
+#endif
      printf("\n");
 
    }
@@ -147,7 +159,7 @@ int main(int argc, char** argv) {
 #else
    my_mpi_comm_world =1 ;
 #endif
-   mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
+   mpierr = elpa_get_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
    if (myid == 0) {
      printf("\n");
@@ -171,7 +183,7 @@ int main(int argc, char** argv) {
      printf("Allocating matrices with na_rows=%d and na_cols=%d\n",na_rows, na_cols);
      printf("\n");
    }
-
+#ifdef DOUBLE_PRECISION_REAL
    a  = malloc(na_rows*na_cols*sizeof(double));
    z  = malloc(na_rows*na_cols*sizeof(double));
    as = malloc(na_rows*na_cols*sizeof(double));
@@ -181,11 +193,24 @@ int main(int argc, char** argv) {
 
    tmp1  = malloc(na_rows*na_cols*sizeof(double));
    tmp2 = malloc(na_rows*na_cols*sizeof(double));
+#else
+   a  = malloc(na_rows*na_cols*sizeof(float));
+   z  = malloc(na_rows*na_cols*sizeof(float));
+   as = malloc(na_rows*na_cols*sizeof(float));
+
+
+   ev = malloc(na*sizeof(float));
+
+   tmp1  = malloc(na_rows*na_cols*sizeof(float));
+   tmp2 = malloc(na_rows*na_cols*sizeof(float));
+#endif
 
    iseed = malloc(4096*sizeof(int));
-
-   prepare_matrix_real_from_fortran(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
-
+#ifdef DOUBLE_PRECISION_REAL
+   prepare_matrix_real_from_fortran_double_precision(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
+#else
+   prepare_matrix_real_from_fortran_single_precision(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
+#endif
    if (myid == 0) {
      printf("\n");
      printf("Entering ELPA 1stage real solver\n");
@@ -194,7 +219,13 @@ int main(int argc, char** argv) {
 #ifdef WITH_MPI
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
-   success = elpa_solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols);
+
+#ifdef DOUBLE_PRECISION_REAL
+   useGPU = 0;
+   success = elpa_solve_evp_real_1stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, useGPU);
+#else
+   success = elpa_solve_evp_real_1stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, useGPU);
+#endif
 
    if (success != 1) {
      printf("error in ELPA solve \n");
@@ -210,9 +241,12 @@ int main(int argc, char** argv) {
      printf("\n");
    }
 
+#ifdef DOUBLE_PRECISION_REAL
    /* check the results */
-   status = check_correctness_real_from_fortran(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
-
+   status = check_correctness_real_from_fortran_double_precision(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+#else
+   status = check_correctness_real_from_fortran_single_precision(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+#endif
    if (status !=0){
      printf("The computed EVs are not correct !\n");
    }

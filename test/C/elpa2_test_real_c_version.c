@@ -53,6 +53,8 @@
 #include <elpa/elpa.h>
 #include <test/shared/generated.h>
 
+#define DOUBLE_PRECISION_REAL 1
+
 int main(int argc, char** argv) {
    int myid;
    int nprocs;
@@ -76,14 +78,17 @@ int main(int argc, char** argv) {
 
    int na_rows, na_cols;
    double startVal;
-
+#ifdef DOUBLE_PRECISION_REAL
    double *a, *z, *as, *ev, *tmp1, *tmp2;
-
+#else
+   float *a, *z, *as, *ev, *tmp1, *tmp2;
+#endif
    int *iseed;
 
    int success;
 
-   int useQr, THIS_REAL_ELPA_KERNEL_API;
+   int useQr, THIS_REAL_ELPA_KERNEL_API, useGPU, bandwidth;
+
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -100,15 +105,19 @@ int main(int argc, char** argv) {
    if (myid == 0) {
      printf("This is the c version of an ELPA test-programm\n");
      printf("\n");
-     printf("It will call the 1stage ELPA real solver for an\n");
-     printf("of matrix size %d. It will compute %d eigenvalues\n",na,nev);
+     printf("It will call the 2stage ELPA real solver for an\n");
+     printf("matrix of size %d. It will compute %d eigenvalues\n",na,nev);
      printf("and uses a blocksize of %d\n",nblk);
      printf("\n");
      printf("This is an example program with much less functionality\n");
      printf("as it's Fortran counterpart. It's only purpose is to show how \n");
-     printf("to evoke ELPA1 from a c programm\n");
+     printf("to evoke ELPA2 from a c programm\n");
      printf("\n");
-
+#ifdef DOUBLE_PRECISION_REAL
+    printf(" Double precision version of ELPA2 is used. \n");
+#else
+    printf(" Single precision version of ELPA2 is used. \n");
+#endif
    }
 
    status = 0;
@@ -148,7 +157,7 @@ int main(int argc, char** argv) {
 #ifdef WITH_MPI
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
 #endif
-   mpierr = get_elpa_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
+   mpierr = elpa_get_communicators(my_mpi_comm_world, my_prow, my_pcol, &mpi_comm_rows, &mpi_comm_cols);
 
    if (myid == 0) {
      printf("\n");
@@ -172,7 +181,7 @@ int main(int argc, char** argv) {
      printf("Allocating matrices with na_rows=%d and na_cols=%d\n",na_rows, na_cols);
      printf("\n");
    }
-
+#ifdef DOUBLE_PRECISION_REAL
    a  = malloc(na_rows*na_cols*sizeof(double));
    z  = malloc(na_rows*na_cols*sizeof(double));
    as = malloc(na_rows*na_cols*sizeof(double));
@@ -182,11 +191,23 @@ int main(int argc, char** argv) {
 
    tmp1  = malloc(na_rows*na_cols*sizeof(double));
    tmp2 = malloc(na_rows*na_cols*sizeof(double));
+#else
+   a  = malloc(na_rows*na_cols*sizeof(float));
+   z  = malloc(na_rows*na_cols*sizeof(float));
+   as = malloc(na_rows*na_cols*sizeof(float));
 
+
+   ev = malloc(na*sizeof(float));
+
+   tmp1  = malloc(na_rows*na_cols*sizeof(float));
+   tmp2 = malloc(na_rows*na_cols*sizeof(float));
+#endif
    iseed = malloc(4096*sizeof(int));
-
-   prepare_matrix_real_from_fortran(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
-
+#ifdef DOUBLE_PRECISION_REAL
+   prepare_matrix_real_from_fortran_double_precision(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
+#else
+   prepare_matrix_real_from_fortran_single_precision(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
+#endif
    if (myid == 0) {
      printf("\n");
      printf("Entering ELPA 2stage real solver\n");
@@ -195,11 +216,15 @@ int main(int argc, char** argv) {
 #ifdef WITH_MPI
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
+   useGPU =0 ;
    useQr = 0;
+   bandwidth = -1;
    THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
-
-   success = elpa_solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr);
-
+#ifdef DOUBLE_PRECISION_REAL
+   success = elpa_solve_evp_real_2stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, bandwidth);
+#else
+   success = elpa_solve_evp_real_2stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, bandwidth);
+#endif
    if (success != 1) {
      printf("error in ELPA solve \n");
 #ifdef WITH_MPI
@@ -215,7 +240,11 @@ int main(int argc, char** argv) {
    }
 
    /* check the results */
-   status = check_correctness_real_from_fortran(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+#ifdef DOUBLE_PRECISION_REAL
+   status = check_correctness_real_from_fortran_double_precision(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+#else
+   status = check_correctness_real_from_fortran_single_precision(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+#endif
 
    if (status !=0){
      printf("The computed EVs are not correct !\n");

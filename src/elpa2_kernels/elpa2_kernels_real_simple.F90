@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -58,79 +58,38 @@
 
 #include "config-f90.h"
 
+#ifndef USE_ASSUMED_SIZE
 module real_generic_simple_kernel
 
   private
-  public double_hh_trafo_generic_simple
-contains
-  subroutine double_hh_trafo_generic_simple(q, hh, nb, nq, ldq, ldh)
-    use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
-    implicit none
+  public double_hh_trafo_generic_simple_double
 
-    integer(kind=ik), intent(in) :: nb, nq, ldq, ldh
-#ifdef DESPERATELY_WANT_ASSUMED_SIZE
-    real(kind=rk), intent(inout) :: q(ldq,*)
-    real(kind=rk), intent(in)    :: hh(ldh,*)
-#else
-    real(kind=rk), intent(inout) :: q(ldq,1:nb+1)
-    real(kind=rk), intent(in)    :: hh(ldh,2)
+#ifdef WANT_SINGLE_PRECISION_REAL
+ public double_hh_trafo_generic_simple_single
 #endif
 
-    real(kind=rk)                :: s, h1, h2, tau1, tau2, x(nq), y(nq)
-    integer(kind=ik)             :: i
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic simple: double_hh_trafo_generic_simple")
-#endif
-    ! Calculate dot product of the two Householder vectors
-
-    s = hh(2,2)*1
-    do i=3,nb
-       s = s+hh(i,2)*hh(i-1,1)
-    enddo
-
-    ! Do the Householder transformations
-
-    x(1:nq) = q(1:nq,2)
-
-    y(1:nq) = q(1:nq,1) + q(1:nq,2)*hh(2,2)
-
-    do i=3,nb
-       h1 = hh(i-1,1)
-       h2 = hh(i,2)
-       x(1:nq) = x(1:nq) + q(1:nq,i)*h1
-       y(1:nq) = y(1:nq) + q(1:nq,i)*h2
-    enddo
-
-    x(1:nq) = x(1:nq) + q(1:nq,nb+1)*hh(nb,1)
-
-    tau1 = hh(1,1)
-    tau2 = hh(1,2)
-
-    h1 = -tau1
-    x(1:nq) = x(1:nq)*h1
-    h1 = -tau2
-    h2 = -tau2*s
-    y(1:nq) = y(1:nq)*h1 + x(1:nq)*h2
-
-    q(1:nq,1) = q(1:nq,1) + y(1:nq)
-    q(1:nq,2) = q(1:nq,2) + x(1:nq) + y(1:nq)*hh(2,2)
-
-    do i=3,nb
-       h1 = hh(i-1,1)
-       h2 = hh(i,2)
-       q(1:nq,i) = q(1:nq,i) + x(1:nq)*h1 + y(1:nq)*h2
-    enddo
-
-    q(1:nq,nb+1) = q(1:nq,nb+1) + x(1:nq)*hh(nb,1)
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic simple: double_hh_trafo_generic_simple")
+  contains
 #endif
 
-  end subroutine double_hh_trafo_generic_simple
+#define REALCASE 1
+#define DOUBLE_PRECISION_REAL 1
+#define DATATYPE rk8
+#include "elpa2_kernels_simple_template.X90"
+#undef DOUBLE_PRECISION_REAL
+#undef DATATYPE
+#undef REALCASE
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#undef DOUBLE_PRECISION_REAL
+#define DATATYPE rk4
+#include "elpa2_kernels_simple_template.X90"
+#undef DOUBLE_PRECISION_REAL
+#undef DATATYPE
+#undef REALCASE
+#endif
+
+#ifndef USE_ASSUMED_SIZE
 end module real_generic_simple_kernel
+#endif
 ! --------------------------------------------------------------------------------------------------

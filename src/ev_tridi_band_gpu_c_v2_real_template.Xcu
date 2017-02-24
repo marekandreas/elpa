@@ -1,0 +1,352 @@
+//    This file is part of ELPA.
+//
+//    The ELPA library was originally created by the ELPA consortium,
+//    consisting of the following organizations:
+//
+//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+//      Informatik,
+//    - Technische Universität München, Lehrstuhl für Informatik mit
+//      Schwerpunkt Wissenschaftliches Rechnen ,
+//    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+//    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//      and
+//    - IBM Deutschland GmbH
+//
+//    This particular source code file contains additions, changes and
+//    enhancements authored by Intel Corporation which is not part of
+//    the ELPA consortium.
+//
+//    More information can be found here:
+//    http://elpa.mpcdf.mpg.de/
+//
+//    ELPA is free software: you can redistribute it and/or modify
+//    it under the terms of the version 3 of the license of the
+//    GNU Lesser General Public License as published by the Free
+//    Software Foundation.
+//
+//    ELPA is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//    You should have received a copy of the GNU Lesser General Public License
+//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+//
+//    ELPA reflects a substantial effort on the part of the original
+//    ELPA consortium, and we ask you to respect the spirit of the
+//    license that we chose: i.e., please contribute any changes you
+//    may have back to the original ELPA library distribution, and keep
+//    any derivatives of ELPA under the same license that we chose for
+//    the original distribution, the GNU Lesser General Public License.
+//
+//
+// --------------------------------------------------------------------------------------------------
+//
+// This file was originally written by NVIDIA
+// and re-written by A. Marek, MPCDF
+
+
+#include <stdio.h>
+#include <cuda_runtime.h>
+#include <stdlib.h>
+#include "config-f90.h"
+
+#if 0
+static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComplex r, int mask)
+{
+    double real = cuCreal(r) ;
+    double imag =  cuCimag(r);
+
+
+    int hr = __shfl_xor(__double2hiint(real), mask);
+    int lr = __shfl_xor(__double2loint(real), mask);
+
+    int hi = __shfl_xor(__double2hiint(imag), mask);
+    int li = __shfl_xor(__double2loint(imag), mask);
+
+
+
+    real =      __hiloint2double(hr, lr);
+    imag = __hiloint2double(hi, li);
+    return       make_cuDoubleComplex(real, imag);
+
+}
+#endif
+
+//#ifndef ALREADY_DEFINED_SYNC
+//// Synchronization wrapper, removing explicit synchronization when the thread-block is at most 32 threads (1 warp) in size
+//template <bool MUST_SYNC>
+//__device__ __forceinline__ void sync_threads()
+//{
+//    if (MUST_SYNC)
+//    {
+//        __syncthreads();
+//    }
+//}
+//#define ALREADY_DEFINED_SYNC 1
+//#endif
+
+// =========================
+// Backtransformation kernel
+// =========================
+
+// We use templates here to avoid additional branching based on the actual size of the thread-block
+template<unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
+#ifdef DOUBLE_PRECISION_REAL
+__global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel_double(double * const __restrict__ q, const double * const __restrict__ hh, const double * const __restrict__ hh_dot,
+    const double * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+#else
+__global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel_single(float * const __restrict__ q, const float * const __restrict__ hh, const float * const __restrict__ hh_dot,
+    const float * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+#endif
+
+{
+#ifdef DOUBLE_PRECISION_REAL
+    __shared__ double dotp_s[128];
+    __shared__ double q_s[129];
+#else
+    __shared__ float dotp_s[128];
+    __shared__ float q_s[129];
+#endif
+
+    int b_idx, t_idx, q_off, h_off, w_off, j, t_s, q_delta, hh_delta;
+#ifdef DOUBLE_PRECISION_REAL
+    double q_v_1, q_v_2, hh_v_1, hh_v_2, tau_1, tau_2, s_1, s_2, dot_p, hh_v_3, my_r1, my_r2;
+#else
+    float q_v_1, q_v_2, hh_v_1, hh_v_2, tau_1, tau_2, s_1, s_2, dot_p, hh_v_3, my_r1, my_r2;
+#endif
+    // The block index selects the eigenvector (EV) which the current block is responsible for
+    b_idx = blockIdx.x;
+
+    // The thread index selects the position inside the eigenvector selected above
+    t_idx = threadIdx.x;
+
+    // The warp offset for the current thread: 0 for the first warp, 32 for the second etc.
+    w_off = (t_idx >> 5) << 5;
+
+    // The entire contents of the shared reduction buffers must be reset
+
+#ifdef DOUBLE_PRECISION_REAL
+   reset_dotp_buffers_double(dotp_s);
+#else
+    reset_dotp_buffers_single(dotp_s);
+#endif
+
+    // Compute initial access indices
+    j = off + ncols - 1;
+    q_off = b_idx + (j + t_idx) * ldq;
+    h_off = j * nb + t_idx;
+    t_s = t_idx >> 1;
+    q_delta = ldq << 1;
+    hh_delta = nb << 1;
+
+    // Load the last EV components in the EV cache
+    if (t_idx > 0)
+    {
+        q_s[t_idx + 1] = q[q_off];
+    }
+
+    // Ensure the ring buffer and reduction buffers are initialized
+    sync_threads<HAVE_2_WARPS>();
+
+    while (j >= off + 1)
+    {
+        // Per-iteration GMem I/O reads are in order to improve cache hit ratio
+
+        // Read the corresponding compotents in the 2 Householder reflectors
+        hh_v_1 = __ldg(&hh[h_off]);
+        hh_v_2 = __ldg(&hh[h_off - nb]);
+        hh_v_3 = (t_idx == 0)? 0.0 : __ldg(&hh[h_off - 1]);
+
+        // Read the pre-computed dot-product of the 2 Householder reflectors
+        dot_p = __ldg(&hh_dot[j - 1]);
+
+        // Read the pre-computed values for "Tau" corresponding to the 2 Householder reflectors
+        tau_1 = __ldg(&hh_tau[j]);
+        tau_2 = __ldg(&hh_tau[j - 1]);
+
+        // Only read the new EV components (the others are already stored in the shared EV cache, q_s)
+        if (t_idx == 0)
+        {
+            q_s[0] = q[q_off - ldq];
+            q_s[1] = q[q_off];
+        }
+
+        // Fill the shared buffers for the dot products bewtween the EV subset and the Householder reflectors
+        q_v_1 = q_s[t_idx + 1];
+        q_v_2 = q_s[t_idx];
+
+        my_r1 = q_v_1 * hh_v_1 * tau_1;
+        my_r2 = q_v_2 * hh_v_2 * tau_2;
+
+        // After using "shfl_xor", both threads in a pair will hold the same values
+#ifdef DOUBLE_PRECISION_REAL
+        my_r1 += shfl_xor_double(my_r1, 1);
+        my_r2 += shfl_xor_double(my_r2, 1);
+#else
+        my_r1 += shfl_xor_single(my_r1, 1);
+        my_r2 += shfl_xor_single(my_r2, 1);
+#endif
+
+        // Now both threads in a pair can write to the same reduction buffer address without race-condition issues
+        dotp_s[t_s] = my_r1;
+        dotp_s[t_s + 64] = my_r2;
+
+        // Ensure the reduction buffers are fully populated
+        sync_threads<HAVE_2_WARPS>();
+
+        // Perform the 2 reductions using only the first warp (we assume the warp size is 32, valid up to CC 3.x)
+#ifdef DOUBLE_PRECISION_REAL
+        double_warp_reduce_double<REDUCE_START_OFFSET, HAVE_2_WARPS>(dotp_s, w_off);
+#else
+        float_warp_reduce_single<REDUCE_START_OFFSET, HAVE_2_WARPS>(dotp_s, w_off);
+#endif
+        // Ensure every thread will have access to the reduction results
+        sync_threads<HAVE_2_WARPS>();
+
+        // Each thread collects the reduction results
+        s_1 = dotp_s[0];
+        s_2 = dotp_s[64];
+
+        // Each thread updates its corresponding EV component
+        q_v_2 = q_v_2 - hh_v_3 * s_1 - hh_v_2 * s_2 + tau_2 * hh_v_2 * s_1 * dot_p;
+
+        if (t_idx == blockDim.x - 1)
+        {
+            // The last thread writes the last 2 EV components to the EV matrix
+            q[q_off] = q_v_1 - hh_v_1 * s_1;
+            q[q_off - ldq] = q_v_2;
+        }
+        else
+        {
+            // All other threads update the EV cache for the next iteration
+            q_s[t_idx + 2] = q_v_2;
+        }
+
+        sync_threads<HAVE_2_WARPS>();
+
+        // Update access indices
+        q_off -= q_delta;
+        h_off -= hh_delta;
+        j -= 2;
+    }
+
+    // Once the previous loop has finished, we have at most 1 more iteration to perform
+
+    if (j == off - 1)
+    {
+        // No iterations remain, so the final contents of the EV matrix are updated
+        if (t_idx < blockDim.x - 1)
+        {
+            q[q_off + ldq] = q_v_2;
+        }
+    }
+    else
+    {
+        // One iteration remains; it must be processed separately
+        if (t_idx == 0)
+        {
+            // Only one more EV element needs to be loaded
+            q_s[1] = q[q_off];
+        }
+
+        // As before, we first read the EV and Householder components
+        q_v_1 = q_s[t_idx + 1];
+        hh_v_1 = __ldg(&hh[h_off]);
+        tau_1 = __ldg(&hh_tau[j]);
+
+        // We prepare the reduction buffer
+        my_r1 = q_v_1 * hh_v_1 * tau_1;
+#ifdef DOUBLE_PRECISION_REAL
+        my_r1 += shfl_xor_double(my_r1, 1);
+#else
+        my_r1 += shfl_xor_single(my_r1, 1);
+#endif
+        dotp_s[t_s] = my_r1;
+
+        sync_threads<HAVE_2_WARPS>();
+
+        // We perform the reduction using the first warp only
+        if (t_idx < 32)
+        {
+#ifdef DOUBLE_PRECISION_REAL
+            dotp_s[t_idx] = warp_reduce_double<REDUCE_START_OFFSET>(dotp_s[t_idx] + dotp_s[t_idx + 32]);
+#else
+            dotp_s[t_idx] = warp_reduce_single<REDUCE_START_OFFSET>(dotp_s[t_idx] + dotp_s[t_idx + 32]);
+#endif
+        }
+
+        sync_threads<HAVE_2_WARPS>();
+
+        // The last EV components are written to the EV matrix
+        q[q_off] = q_v_1 - hh_v_1 * dotp_s[0];
+    }
+}
+
+// This is a host wrapper for calling the appropriate back-transformation kernel, based on the SCALAPACK block size
+#ifdef DOUBLE_PRECISION_REAL
+ extern "C" void launch_compute_hh_trafo_c_kernel_double(double * const q, const double * const hh, const double * const hh_dot,  const double * const hh_tau, const int nev, const int nb, const int ldq, const int off, const int ncols)
+#else
+ extern "C" void launch_compute_hh_trafo_c_kernel_single(float * const q, const float * const hh, const float * const hh_dot,  const float * const hh_tau, const int nev, const int nb, const int ldq, const int off, const int ncols)
+#endif
+{
+    switch (nb)
+    {
+        case 128:
+        case 64:
+#ifdef DOUBLE_PRECISION_REAL
+            compute_hh_trafo_c_kernel_double<16, true><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#else
+            compute_hh_trafo_c_kernel_single<16, true><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#endif
+            break;
+
+        case 32:
+#ifdef DOUBLE_PRECISION_REAL
+            compute_hh_trafo_c_kernel_double<8, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#else
+            compute_hh_trafo_c_kernel_single<8, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#endif
+            break;
+
+        case 16:
+#ifdef DOUBLE_PRECISION_REAL
+            compute_hh_trafo_c_kernel_double<4, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#else
+            compute_hh_trafo_c_kernel_single<4, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#endif
+            break;
+
+        case 8:
+#ifdef DOUBLE_PRECISION_REAL
+            compute_hh_trafo_c_kernel_double<2, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#else
+            compute_hh_trafo_c_kernel_single<2, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#endif
+            break;
+
+        case 4:
+#ifdef DOUBLE_PRECISION_REAL
+            compute_hh_trafo_c_kernel_double<1, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#else
+            compute_hh_trafo_c_kernel_single<1, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#endif
+            break;
+
+        case 2:
+        case 1:
+#ifdef DOUBLE_PRECISION_REAL
+            compute_hh_trafo_c_kernel_double<0, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#else
+            compute_hh_trafo_c_kernel_single<0, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+#endif
+            break;
+
+        default:
+            printf("Error: please use a power-of-2 SCALAPACK block size which is between 1 and 128.\n");
+    }
+}
+

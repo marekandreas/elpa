@@ -72,9 +72,10 @@ program test_real_example
 ! distributed along with the original code in the file "COPYING".
 !
 !-------------------------------------------------------------------------------
+
+   use iso_c_binding
    use ELPA1
    use elpa_utilities, only : error_unit
-   use iso_c_binding
 #ifdef HAVE_MPI_MODULE
    use mpi
    implicit none
@@ -89,27 +90,27 @@ program test_real_example
    ! nev:  Number of eigenvectors to be calculated
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
-   integer, parameter         :: ik = C_INT32_T
-   integer, parameter         :: rk = C_DOUBLE
+ !  integer, parameter         :: ik = C_INT32_T
+ !  integer, parameter         :: rk = C_DOUBLE
 
-   integer(kind=ik)           :: nblk
-   integer(kind=ik)           :: na, nev
+   integer           :: nblk
+   integer           :: na, nev
 
-   integer(kind=ik)           :: np_rows, np_cols, na_rows, na_cols
+   integer           :: np_rows, np_cols, na_rows, na_cols
 
-   integer(kind=ik)           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   integer           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    integer, external          :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), z(:,:), ev(:)
+   real(kind=c_double), allocatable :: a(:,:), z(:,:), ev(:)
 
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
+   integer           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
-   integer(kind=ik)           :: STATUS
+   integer           :: STATUS
    logical                    :: success
    character(len=8)           :: task_suffix
-   integer(kind=ik)           :: j
+   integer           :: j
 
    !-------------------------------------------------------------------------------
 
@@ -149,7 +150,6 @@ program test_real_example
    if (myid==0) then
      print '(a)','| Past BLACS_Gridinfo.'
    end if
-
    ! determine the neccessary size of the distributed matrices,
    ! we use the scalapack tools routine NUMROC
 
@@ -212,8 +212,8 @@ program test_real_example
    end if
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   success = solve_evp_real_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                            na_cols, mpi_comm_rows, mpi_comm_cols)
+   success = elpa_solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                            na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
       write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."

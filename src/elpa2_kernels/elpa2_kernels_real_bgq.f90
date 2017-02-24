@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -62,10 +62,10 @@ contains
     implicit none
 
     integer(kind=ik), intent(in) :: nb, nq, ldq, ldh
-    real(kind=rk), intent(inout) :: q(ldq,*)
-    real(kind=rk), intent(in)    :: hh(ldh,*)
+    real(kind=rk8), intent(inout) :: q(ldq,*)
+    real(kind=rk8), intent(in)    :: hh(ldh,*)
 
-    real(kind=rk)                :: s
+    real(kind=rk8)                :: s
     integer(kind=ik)             :: i
 
     ! Safety only:
@@ -114,8 +114,8 @@ contains
 
     integer(kind=ik), intent(in) :: nb, ldq, ldh
 
-    real(kind=rk), intent(inout) :: q(ldq,*)
-    real(kind=rk), intent(in)    :: hh(ldh,*), s
+    real(kind=rk8), intent(inout) :: q(ldq,*)
+    real(kind=rk8), intent(in)    :: hh(ldh,*), s
 
     VECTOR(REAL(8))::QPX_x1, QPX_x2, QPX_x3, QPX_x4, QPX_x5, QPX_x6
     VECTOR(REAL(8))::QPX_y1, QPX_y2, QPX_y3, QPX_y4, QPX_y5, QPX_y6
@@ -321,8 +321,8 @@ contains
 
     integer(kind=ik), intent(in) :: nb, ldq, ldh
 
-    real(kind=rk), intent(inout) :: q(ldq,*)
-    real(kind=rk), intent(in)    :: hh(ldh,*), s
+    real(kind=rk8), intent(inout) :: q(ldq,*)
+    real(kind=rk8), intent(in)    :: hh(ldh,*), s
 
     VECTOR(REAL(8))::QPX_x1, QPX_x2, QPX_x3, QPX_x4
     VECTOR(REAL(8))::QPX_y1, QPX_y2, QPX_y3, QPX_y4
@@ -478,8 +478,8 @@ contains
 
     integer(kind=ik), intent(in) :: nb, ldq, ldh
 
-    real(kind=rk), intent(inout) :: q(ldq,*)
-    real(kind=rk), intent(in)    :: hh(ldh,*), s
+    real(kind=rk8), intent(inout) :: q(ldq,*)
+    real(kind=rk8), intent(in)    :: hh(ldh,*), s
     integer(kind=ik)             :: i
     VECTOR(REAL(8))::QPX_x1, QPX_x2, QPX_y1, QPX_y2
     VECTOR(REAL(8))::QPX_q1, QPX_q2
@@ -584,8 +584,8 @@ contains
 
     integer(kind=ik), intent(in) :: nb, ldq, ldh
 
-    real(kind=rk), intent(inout) :: q(ldq,*)
-    real(kind=rk), intent(in)    :: hh(ldh,*), s
+    real(kind=rk8), intent(inout) :: q(ldq,*)
+    real(kind=rk8), intent(in)    :: hh(ldh,*), s
     integer(kind=ik)             :: i
     VECTOR(REAL(8))::QPX_x1, QPX_y1
     VECTOR(REAL(8))::QPX_q1

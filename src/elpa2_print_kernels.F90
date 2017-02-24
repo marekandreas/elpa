@@ -10,7 +10,7 @@
 !    - Technische Universität München, Lehrstuhl für Informatik mit
 !      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
-!    - Max-Plack-Institut für Mathematik in den Naturwissenschaftrn,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
@@ -55,6 +55,8 @@
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+!
+! This file was written by A. Marek, MPCDF
 
 #include "config-f90.h"
 

@@ -33,7 +33,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [6:0:2])
+AC_SUBST([ELPA_SO_VERSION], [8:0:0])
 #
 
 
@@ -97,6 +97,14 @@ AM_PROG_AS
 AM_PROG_CC_C_O
 
 # Fortran
+
+dnl check whether single precision is requested
+AC_MSG_CHECKING(whether ELPA library should contain also single precision functions)
+AC_ARG_ENABLE(single-precision,[AS_HELP_STRING([--enable-single-precision],
+	                                   [build with single precision])],
+              want_single_precision="yes", want_single_precision="no")
+AC_MSG_RESULT([${want_single_precision}])
+
 AC_LANG([Fortran])
 m4_include([m4/ax_prog_fc_mpi.m4])
 AX_PROG_FC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_f=yes],[found_mpi_f=no])
@@ -105,6 +113,7 @@ if test x"$with_mpi" = x"yes"; then
     AC_MSG_ERROR([Could not compile an MPI Fortran program])
   fi
 fi
+
 if test x"${enable_openmp}" = x"yes"; then
   AX_ELPA_OPENMP
   if test "$ac_cv_prog_fc_openmp" = unsupported; then
@@ -115,9 +124,9 @@ fi
 
 dnl check which MPI binray invokes a MPI job
 if test x"$with_mpi" = x"yes"; then
-  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun], [no])
+  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun], [no])
   if test x"$MPI_BINARY" = x"no"; then
-    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun])
+    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun])
   fi
 fi
 
@@ -155,6 +164,7 @@ install_complex_generic_simple=yes
 #want_avx=yes
 #want_avx2=yes
 #want_sse=yes
+#want_avx512=yes
 
 AC_LANG([C])
 
@@ -176,10 +186,10 @@ AM_CONDITIONAL([HAVE_REDIRECT],[test x"$enable_redirect" = x"yes"])
 
 dnl build with ftimings support
 AC_MSG_CHECKING(whether ELPA should be build with more detailed timing support)
-AC_ARG_ENABLE([timing],
+AC_ARG_ENABLE([timings],
 		AS_HELP_STRING([--enable-timing],
 			       [more detailed timing, default no.]),
-	      [],
+	      [enable_timings=yes],
 	      [enable_timings=no])
 AC_MSG_RESULT([${enable_timings}])
 
@@ -204,9 +214,9 @@ if test x"${enable_timings}" = x"yes"; then
   fi
 fi
 
-dnl SSE assembly kernel
-AC_MSG_CHECKING(whether SSE assembly kernel can be compiled)
-$CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64.s -o test.o 2>/dev/null
+AC_MSG_CHECKING(whether double-precision SSE assembly kernel can be compiled)
+
+$CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64_double_precision.s -o test.o 2>/dev/null
 if test "$?" == 0; then
   can_compile_sse_assembly=yes
   install_real_sse_assembly=yes
@@ -220,8 +230,28 @@ fi
 rm -f ./test.o
 AC_MSG_RESULT([${can_compile_sse_assembly}])
 
+if test x"${want_single_precision}" = x"yes" ; then
+  AC_MSG_CHECKING(whether single-precision SSE assembly kernel can be compiled)
+
+  $CC -c $srcdir/src/elpa2_kernels/elpa2_kernels_asm_x86_64_single_precision.s -o test.o 2>/dev/null
+  if test "$?" == 0; then
+    can_compile_sse_assembly=yes
+    install_real_sse_assembly=yes
+    install_complex_sse_assembly=yes
+  else
+    can_compile_sse_assembly=no
+    install_real_sse_assembly=no
+    install_complex_sse_assembly=no
+  fi
+  rm -f ./test.o
+  AC_MSG_RESULT([${can_compile_sse_assembly}])
+  if test x"${can_compile_sse_assembly}" = x"no" ; then
+    AC_MSG_WARN([Cannot compile single-precision SSE assembly kernel: disabling SSE assembly kernels alltogether])
+  fi
+fi
+
 dnl check whether on can compile with sse-gcc intrinsics
-AC_MSG_CHECKING(whether we can compile SSE with gcc intrinsics in C)
+AC_MSG_CHECKING(whether we can compile SSE3 with gcc intrinsics in C)
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
  #include <x86intrin.h>
  int main(int argc, char **argv){
@@ -255,22 +285,82 @@ else
   install_complex_sse_block2=no
 fi
 
-dnl check whether one can compile with avx - gcc intrinsics
+AC_MSG_CHECKING(whether --enable-avx is specified)
+AC_ARG_ENABLE([avx],
+		AS_HELP_STRING([--enable-avx],
+			       [check whether AVX kernels can be build, default yes]),
+	      [check_avx=no],
+	      [check_avx=yes])
+AC_MSG_RESULT([$check_avx])
+
+if test "${check_avx}" = "yes"; then
+  dnl check whether one can compile with avx - gcc intrinsics
+  dnl first pass: try with specified CFLAGS and CXXFLAGS
+  AC_MSG_CHECKING([whether we can compile AVX gcc intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <x86intrin.h>
+   int main(int argc, char **argv){
+   double* q;
+   __m256d a1_1 = _mm256_load_pd(q);
+   return 0;
+   }
+   ])],
+   [can_compile_avx=yes],
+   [can_compile_avx=no]
+  )
+  AC_MSG_RESULT([${can_compile_avx}])
+else
+  can_compile_avx=no
+fi
+
+#if test "${can_compile_avx}" = "yes" ; then
+#  AC_MSG_CHECKING([whether we can compile AVX gcc intrinsics in C++])
+#  AC_LANG_PUSH([C++])
+#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#   #include <x86intrin.h>
+#   int main(int argc, char **argv){
+#   double* q;
+#   __m256d a1_1 = _mm256_load_pd(q);
+#   return 0;
+#   }
+#   ])],
+#   [can_compile_avx=yes],
+#   [can_compile_avx=no]
+#  )
+#  AC_LANG_POP([C++])
+#  AC_MSG_RESULT([${can_compile_avx}])
+#  if test "${can_compile_avx}" = "no" ; then
+#    AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
+#  fi
+#fi
 
 dnl first pass: try with specified CFLAGS and CXXFLAGS
-AC_MSG_CHECKING([whether we can compile AVX intrinsics in C])
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([
- #include <x86intrin.h>
- int main(int argc, char **argv){
- double* q;
- __m256d a1_1 = _mm256_load_pd(q);
- return 0;
- }
- ])],
- [can_compile_avx=yes],
- [can_compile_avx=no]
-)
-AC_MSG_RESULT([${can_compile_avx}])
+
+AC_MSG_CHECKING(whether --enable-avx is specified)
+AC_ARG_ENABLE([avx],
+		AS_HELP_STRING([--enable-avx],
+			       [check whether AVX kernels can be build, default yes]),
+	      [check_avx=no],
+	      [check_avx=yes])
+AC_MSG_RESULT([$check_avx])
+
+if test "${check_avx}" = "yes"; then
+  AC_MSG_CHECKING([whether we can compile AVX intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <x86intrin.h>
+   int main(int argc, char **argv){
+   double* q;
+   __m256d a1_1 = _mm256_load_pd(q);
+   return 0;
+   }
+   ])],
+   [can_compile_avx=yes],
+   [can_compile_avx=no]
+  )
+  AC_MSG_RESULT([${can_compile_avx}])
+else
+  can_compile_avx=no
+fi
 
 dnl if test "${can_compile_avx}" = "yes" ; then
 dnl   AC_MSG_CHECKING([whether we can compile AVX intrinsics in C++])
@@ -293,20 +383,103 @@ dnl     AC_MSG_WARN([Cannot compile C++ with AVX: disabling AVX alltogether])
 dnl   fi
 dnl fi
 
-AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C])
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([
- #include <x86intrin.h>
- int main(int argc, char **argv){
- double* q;
- __m256d q1 = _mm256_load_pd(q);
- __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
- return 0;
- }
- ])],
- [can_compile_avx2=yes],
- [can_compile_avx2=no]
-)
-AC_MSG_RESULT([${can_compile_avx2}])
+AC_MSG_CHECKING(whether --enable-avx2 is specified)
+AC_ARG_ENABLE([avx2],
+		AS_HELP_STRING([--enable-avx2],
+			       [check whether AVX2 kernels can be build, default yes]),
+	      [check_avx2=no],
+	      [check_avx2=yes])
+AC_MSG_RESULT([$check_avx2])
+
+if test "${check_avx2}" = "yes"; then
+  AC_MSG_CHECKING([whether we can compile AVX2 gcc intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <x86intrin.h>
+   int main(int argc, char **argv){
+   double* q;
+   __m256d q1 = _mm256_load_pd(q);
+   __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+   return 0;
+   }
+   ])],
+   [can_compile_avx2=yes],
+   [can_compile_avx2=no]
+  )
+  AC_MSG_RESULT([${can_compile_avx2}])
+else
+  can_compile_avx2=no
+fi
+
+#if test "${can_compile_avx2}" = "yes" ; then
+#  AC_MSG_CHECKING([whether we can compile AVX2 gcc intrinsics in C++])
+#  AC_LANG_PUSH([C++])
+#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#   #include <x86intrin.h>
+#   int main(int argc, char **argv){
+#   double* q;
+#   __m256d q1 = _mm256_load_pd(q);
+#   __m256d y1 = _mm256_fmadd_pd(q1, q1, q1);
+#   return 0;
+#   }
+#   ])],
+#   [can_compile_avx2=yes],
+#   [can_compile_avx2=no]
+#  )
+#  AC_LANG_POP([C++])
+#  AC_MSG_RESULT([${can_compile_avx2}])
+#  if test "${can_compile_avx2}" = "no" ; then
+#    AC_MSG_WARN([Cannot compile C++ with AVX2!])
+#  fi
+#fi
+
+AC_MSG_CHECKING(whether --enable-avx512 is specified)
+AC_ARG_ENABLE([avx512],
+		AS_HELP_STRING([--enable-avx512],
+			       [check whether AVX512 kernels can be build, default yes]),
+	      [check_avx512=no],
+	      [check_avx512=yes])
+AC_MSG_RESULT([$check_avx512])
+
+if test "${check_avx512}" = "yes"; then
+  AC_MSG_CHECKING([whether we can compile AVX512 gcc intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <x86intrin.h>
+   int main(int argc, char **argv){
+   double* q;
+   __m512d q1 = _mm512_load_pd(q);
+   __m512d y1 = _mm512_fmadd_pd(q1, q1, q1);
+   return 0;
+   }
+   ])],
+   [can_compile_avx512=yes],
+   [can_compile_avx512=no]
+  )
+  AC_MSG_RESULT([${can_compile_avx512}])
+else
+  can_compile_avx512=no
+fi
+
+#if test "${can_compile_avx512}" = "yes" ; then
+#  AC_MSG_CHECKING([whether we can compile AVX512 gcc intrinsics in C++])
+#  AC_LANG_PUSH([C++])
+#  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#   #include <x86intrin.h>
+#   int main(int argc, char **argv){
+#   double* q;
+#   __m512d q1 = _mm512_load_pd(q);
+#   __m512d y1 = _mm512_fmadd_pd(q1, q1, q1);
+#   return 0;
+#   }
+#   ])],
+#   [can_compile_avx512=yes],
+#   [can_compile_avx512=no]
+#  )
+#  AC_LANG_POP([C++])
+#  AC_MSG_RESULT([${can_compile_avx512}])
+#  if test "${can_compile_avx512}" = "no" ; then
+#    AC_MSG_WARN([Cannot compile C++ with AVX512!])
+#  fi
+#fi
 
 dnl if test "${can_compile_avx2}" = "yes" ; then
 dnl   AC_MSG_CHECKING([whether we can compile AVX2 intrinsics in C++])
@@ -362,6 +535,23 @@ else
   install_complex_avx2_block2=no
 fi
 
+if test "${can_compile_avx512}" = "yes" ; then
+  install_real_avx512_block2=yes
+  install_real_avx512_block4=yes
+  install_real_avx512_block6=yes
+
+  install_complex_avx512_block1=yes
+  install_complex_avx512_block2=yes
+else
+  install_real_avx512_block2=no
+  install_real_avx512_block4=no
+  install_real_avx512_block6=no
+
+  install_complex_avx512_block1=no
+  install_complex_avx512_block2=no
+fi
+
+
 AM_CONDITIONAL([HAVE_SSE_ASSEMBLY],[test x"$can_compile_sse_assembly" = x"yes"])
 if test x"${can_compile_sse_assembly}" = x"yes" ; then
   AC_DEFINE([HAVE_SSE_ASSEMBLY],[1],[assembly SSE is supported on this CPU])
@@ -378,6 +568,10 @@ fi
 AM_CONDITIONAL([HAVE_AVX2],[test x"$can_compile_avx2" = x"yes"])
 if test x"${can_compile_avx2}" = x"yes" ; then
   AC_DEFINE([HAVE_AVX2],[1],[AVX2 is supported on this CPU])
+fi
+AM_CONDITIONAL([HAVE_AVX512],[test x"$can_compile_avx512" = x"yes"])
+if test x"${can_compile_avx512}" = x"yes" ; then
+  AC_DEFINE([HAVE_AVX512],[1],[AVX512 is supported on this CPU])
 fi
 
 dnl set the AVX optimization flags if this option is specified
@@ -462,7 +656,7 @@ if test x"${have_mkl}" = x"yes" ; then
 else
 
   dnl first check blas
-  AC_SEARCH_LIBS([dgemm],[blas],[have_blas=yes],[have_blas=no])
+  AC_SEARCH_LIBS([dgemm],[openblas satlas blas],[have_blas=yes],[have_blas=no])
   AC_MSG_CHECKING([whether we can link a program with a blas lib])
   AC_MSG_RESULT([${have_blas}])
 
@@ -563,6 +757,90 @@ if test x"${fortran_can_check_environment}" = x"yes" ; then
  AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can query environment variables])
 fi
 
+dnl check whether BAND_TO_FULL_BLOCKING is set
+use_band_to_full_blocking=yes
+AC_MSG_CHECKING(whether BAND_TO_FLULL_BLOCKING is requested)
+AC_ARG_ENABLE(band-to-full-blocking,[AS_HELP_STRING([--enable-band-to-full-blocking],
+	                                            [build ELPA2 with blocking in band_to_full (default: enabled)])],
+	      want_band_to_full_blocking="yes", want_to_full_blocking="no")
+AC_MSG_RESULT([${want_band_to_full_blocking}])
+
+if test x"${enableval}" = x"no" ; then
+  use_band_to_full_blocking=no
+fi
+
+AM_CONDITIONAL([BAND_TO_FULL_BLOCKING],[test x"$use_band_to_full_blocking" = x"yes"])
+if test x"${use_band_to_full_blocking}" = x"yes"; then
+       AC_DEFINE([BAND_TO_FULL_BLOCKING], [1], [use blocking in trans_ev_band_to_full])
+fi
+
+dnl check whether GPU version is requested
+
+#CUDA_INSTALL_PATH="/usr/local/cuda/"
+#CUDA_SDK_INSTALL_PATH="/usr/local/NVIDIA_GPU_Computing_SDK"
+
+AC_MSG_CHECKING(whether GPU support is requested)
+AC_ARG_ENABLE(gpu-support,[AS_HELP_STRING([--enable-gpu-support],
+	                                   [build ELPA2 with GPU-support])],
+              want_gpu="yes", want_gpu="no")
+AC_MSG_RESULT([${want_gpu}])
+
+
+AC_ARG_WITH([cuda-path],[AS_HELP_STRING([--with-cuda-path=PATH],[prefix where CUDA is installed @<:@default=auto@:>@])],
+            [CUDA_INSTALL_PATH=$withval], [with_cuda=auto])
+
+AC_ARG_WITH([cuda-sdk-path],[AS_HELP_STRING([--with-cuda-sdk-path=PATH],[prefix where CUDA SDK is installed @<:@default=auto@:>@])],
+            [CUDA_SDK_INSTALL_PATH=$withval],[with_cuda_sdk=auto])
+
+dnl setup nvcc flags and use them in later tests
+user_sets_gpu_compute_capability="no"
+AC_MSG_CHECKING(whether a GPU compute capability is specified)
+AC_ARG_WITH([GPU-compute-capability],
+            [AS_HELP_STRING([--with-GPU-compute-capability=value],
+	       	            [use compute capability "value" for GPU version (default sm_35)])],
+	    [user_sets_gpu_compute_capability="yes"],[cuda_compute_capability="sm_35"])
+AC_MSG_RESULT([${user_sets_gpu_compute_capability}])
+
+dnl sanity check whether compute capability setting by user is reasonable
+if test x"${user_sets_gpu_compute_capability}" = x"yes" ; then
+  dnl the user must set a value which starts with "sm_"
+  value=$(echo $withval | cut -c1-3)
+  if test x"${value}" = x"sm_" ; then
+    cuda_compute_capability=$withval
+  else
+    AC_MSG_ERROR([Unknown GPU compute capability set: ${withval}])
+  fi
+fi
+
+if test x"${want_gpu}" = x"yes" ; then
+  AC_LANG_PUSH([C])
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
+  LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
+  NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
+  NVCC="nvcc"
+  AC_SUBST(NVCC)
+  AC_SUBST(NVCCFLAGS)
+
+  dnl check whether nvcc compiler is found
+  AC_CHECK_PROG(nvcc_found,nvcc,yes,no)
+  if test x"${nvcc_found}" = x"no" ; then
+    AC_MSG_ERROR([nvcc not found; try to set the cuda-path or disable GPU support])
+  fi
+
+  dnl check whether we find cublas
+  AC_SEARCH_LIBS([cublasDgemm],[cublas],[have_cublas=yes],[have_cublas=no])
+  if test x"${have_cublas}" = x"no"; then
+    AC_MSG_ERROR([Could not link cublas; try to set the cuda-path or disable GPU support])
+  fi
+  AC_SEARCH_LIBS([cudaMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
+  if test x"${have_cudart}" = x"no"; then
+    AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable GPU support])
+  fi
+  AC_LANG_POP([C])
+  install_gpu=yes
+  can_compile_gpu=yes
+fi
+
 dnl now check which kernels can be compiled
 
 dnl the checks for SSE were already done before
@@ -570,7 +848,6 @@ dnl the checks for AVX were already done before
 
 dnl check BGP kernel
 AC_MSG_CHECKING([whether we can compile with BGP intrinsics])
-
 
 AC_LINK_IFELSE([AC_LANG_SOURCE([
   program test_bgp
@@ -644,102 +921,125 @@ if test x"${with_mpi}" = x"yes" ; then
   fi
 fi
 
+dnl default value
+use_specific_real_kernel=no
+use_specific_complex_kernel=no
+
+dnl GPU version only
+m4_include([m4/ax_elpa_gpu_version_only.m4])
+DEFINE_OPTION_GPU_SUPPORT_ONLY([gpu-version-only],[gpu-support],[install_gpu])
+
 dnl last check whether user wants to compile only a specific kernel
 dnl
-
 m4_include([m4/ax_elpa_specific_kernels.m4])
 
 dnl real kernels
-  dnl do not remove this variable it is needed in the macros
-  use_specific_real_kernel=no
+dnl do not remove this variable it is needed in the macros
 
-  dnl generic kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-kernel-only],[generic-kernel],[install_real_generic])
+dnl generic kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-kernel-only],[generic-kernel],[install_real_generic])
 
-  dnl generic-simple kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-simple-kernel-only],[generic-simple-kernel],[install_real_generic_simple])
+dnl generic-simple kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-generic-simple-kernel-only],[generic-simple-kernel],[install_real_generic_simple])
 
-  dnl sse kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-assembly-kernel-only],[sse-assembly-kernel],[install_real_sse_assembly])
+dnl sse kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-assembly-kernel-only],[sse-assembly-kernel],[install_real_sse_assembly])
 
-  dnl bgp kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgp-kernel-only],[bgp-kernel],[install_real_bgp])
+dnl bgp kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgp-kernel-only],[bgp-kernel],[install_real_bgp])
 
-  dnl bgq kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgq-kernel-only],[bgq-kernel],[install_real_bgq])
+dnl bgq kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-bgq-kernel-only],[bgq-kernel],[install_real_bgq])
 
-  dnl real-sse-block2 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block2-kernel-only],[real-sse-block2-kernel],[install_real_sse_block2])
+dnl real-sse-block2 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block2-kernel-only],[real-sse-block2-kernel],[install_real_sse_block2])
 
-  dnl real-sse-block4 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block4-kernel]-only,[real-sse-block4-kernel],[install_real_sse_block4])
+dnl real-sse-block4 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block4-kernel-only],[real-sse-block4-kernel],[install_real_sse_block4])
 
-  dnl real-sse-block6 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block6-kernel-only],[real-sse-block6-kernel],[install_real_sse_block6])
+dnl real-sse-block6 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-sse-block6-kernel-only],[real-sse-block6-kernel],[install_real_sse_block6])
 
-  dnl real-avx-block2 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block2-kernel-only],[real-avx-block2-kernel],[install_real_avx_block2])
+dnl real-avx-block2 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block2-kernel-only],[real-avx-block2-kernel],[install_real_avx_block2])
 
-  dnl real-avx-block4 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block4-kernel]-only,[real-avx-block4-kernel],[install_real_avx_block4])
+dnl real-avx-block4 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block4-kernel-only],[real-avx-block4-kernel],[install_real_avx_block4])
 
-  dnl real-avx-block6 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block6-kernel-only],[real-avx-block6-kernel],[install_real_avx_block6])
+dnl real-avx-block6 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx-block6-kernel-only],[real-avx-block6-kernel],[install_real_avx_block6])
 
-  dnl real-avx2-block2 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block2-kernel-only],[real-avx2-block2-kernel],[install_real_avx2_block2])
+dnl real-avx2-block2 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block2-kernel-only],[real-avx2-block2-kernel],[install_real_avx2_block2])
 
-  dnl real-avx2-block4 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block4-kernel]-only,[real-avx2-block4-kernel],[install_real_avx2_block4])
+dnl real-avx2-block4 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block4-kernel-only],[real-avx2-block4-kernel],[install_real_avx2_block4])
 
-  dnl real-avx2-block6 kernel
-  DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block6-kernel-only],[real-avx2-block6-kernel],[install_real_avx2_block6])
+dnl real-avx2-block6 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx2-block6-kernel-only],[real-avx2-block6-kernel],[install_real_avx2_block6])
 
+dnl real-avx512-block2 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx512-block2-kernel-only],[real-avx512-block2-kernel],[install_real_avx512_block2])
+
+dnl real-avx512-block4 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx512-block4-kernel-only],[real-avx512-block4-kernel],[install_real_avx512_block4])
+
+dnl real-avx512-block6 kernel
+DEFINE_OPTION_SPECIFIC_REAL_KERNEL([real-avx512-block6-kernel-only],[real-avx512-block6-kernel],[install_real_avx512_block6])
 
 
 dnl complex kernels
 
-  dnl do not remove this variable it is needed in the macros
-  use_specific_complex_kernel=no
+dnl generic kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-kernel-only],[generic-kernel],[install_complex_generic])
 
-  dnl generic kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-kernel-only],[generic-kernel],[install_complex_generic])
+dnl generic-simple kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-simple-kernel-only],[generic-simple-kernel],[install_complex_generic_simple])
 
-  dnl generic-simple kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-generic-simple-kernel-only],[generic-simple-kernel],[install_complex_generic_simple])
+dnl sse kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-assembly-kernel-only],[sse-assembly-kernel],[install_complex_sse_assembly])
 
-  dnl sse kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-assembly-kernel-only],[sse-assembly-kernel],[install_complex_sse_assembly])
+dnl complex-bqp kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgp-kernel-only],[bgp-kernel],[install_complex_bgp])
 
-  dnl complex-bqp kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgp-kernel-only],[bgp-kernel],[install_complex_bgp])
+dnl complex-bqq kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgq-kernel-only],[bgq-kernel],[install_complex_bgq])
 
-  dnl complex-bqq kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-bgq-kernel-only],[bgq-kernel],[install_complex_bgq])
+dnl complex-sse-block1 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-block1-kernel-only],[complex-sse-block1-kernel],[install_complex_sse_block1])
 
-  dnl complex-sse-block1 kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-block1-kernel-only],[complex-sse-block1-kernel],[install_complex_sse_block1])
+dnl complex-sse-block2 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-block2-kernel-only],[complex-sse-block2-kernel],[install_complex_sse_block2])
 
-  dnl complex-avx-block2 kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-sse-block2-kernel-only],[complex-sse-block2-kernel],[install_complex_sse_block2])
+dnl complex-avx-block1 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block1-kernel-only],[complex-avx-block1-kernel],[install_complex_avx_block1])
 
-  dnl complex-avx-block1 kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block1-kernel-only],[complex-avx-block1-kernel],[install_complex_avx_block1])
+dnl complex-avx-block2 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block2-kernel-only],[complex-avx-block2-kernel],[install_complex_avx_block2])
 
-  dnl complex-avx-block2 kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx-block2-kernel-only],[complex-avx-block2-kernel],[install_complex_avx_block2])
+dnl complex-avx2-block1 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx2-block1-kernel-only],[complex-avx2-block1-kernel],[install_complex_avx2_block1])
 
-  dnl complex-avx2-block1 kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx2-block1-kernel-only],[complex-avx2-block1-kernel],[install_complex_avx2_block1])
+dnl complex-avx2-block2 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx2-block2-kernel-only],[complex-avx2-block2-kernel],[install_complex_avx2_block2])
 
-  dnl complex-avx2-block2 kernel
-  DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx2-block2-kernel-only],[complex-avx2-block2-kernel],[install_complex_avx2_block2])
+dnl complex-avx512-block1 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx512-block1-kernel-only],[complex-avx512-block1-kernel],[install_complex_avx512_block1])
+
+dnl complex-avx512-block2 kernel
+DEFINE_OPTION_SPECIFIC_COMPLEX_KERNEL([complex-avx512-block2-kernel-only],[complex-avx512-block2-kernel],[install_complex_avx512_block2])
+
 
 
 dnl set the conditionals according to the previous tests
 
 if test x"${can_use_iso_fortran_env}" = x"yes" ; then
  AC_DEFINE([HAVE_ISO_FORTRAN_ENV],[1],[can use module iso_fortran_env])
+fi
+
+AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$install_gpu" = x"yes"])
+if test x"${install_gpu}" = x"yes" ; then
+  AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
 fi
 
 AM_CONDITIONAL([WITH_REAL_GENERIC_KERNEL],[test x"$install_real_generic" = x"yes"])
@@ -817,6 +1117,21 @@ if test x"${install_real_avx2_block6}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_AVX2_BLOCK6_KERNEL],[1],[can use real_avx2_block6 kernel])
 fi
 
+AM_CONDITIONAL([WITH_REAL_AVX512_BLOCK2_KERNEL],[test x"$install_real_avx512_block2" = x"yes"])
+if test x"${install_real_avx512_block2}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_AVX512_BLOCK2_KERNEL],[1],[can use real_avx512_block2 kernel])
+fi
+
+AM_CONDITIONAL([WITH_REAL_AVX512_BLOCK4_KERNEL],[test x"$install_real_avx512_block4" = x"yes"])
+if test x"${install_real_avx512_block4}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_AVX512_BLOCK4_KERNEL],[1],[can use real_avx512_block4 kernel])
+fi
+
+AM_CONDITIONAL([WITH_REAL_AVX512_BLOCK6_KERNEL],[test x"$install_real_avx512_block6" = x"yes"])
+if test x"${install_real_avx512_block6}" = x"yes" ; then
+ AC_DEFINE([WITH_REAL_AVX512_BLOCK6_KERNEL],[1],[can use real_avx512_block6 kernel])
+fi
+
 AM_CONDITIONAL([WITH_COMPLEX_SSE_BLOCK1_KERNEL],[test x"$install_complex_sse_block1" = x"yes"])
 if test x"${install_complex_sse_block1}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_SSE_BLOCK1_KERNEL],[1],[can use complex_sse_block1 kernel])
@@ -847,6 +1162,16 @@ if test x"${install_complex_avx2_block2}" = x"yes" ; then
  AC_DEFINE([WITH_COMPLEX_AVX2_BLOCK2_KERNEL],[1],[can use complex_avx2_block2 kernel])
 fi
 
+AM_CONDITIONAL([WITH_COMPLEX_AVX512_BLOCK1_KERNEL],[test x"$install_complex_avx512_block1" = x"yes"])
+if test x"${install_complex_avx512_block1}" = x"yes" ; then
+ AC_DEFINE([WITH_COMPLEX_AVX512_BLOCK1_KERNEL],[1],[can use complex_avx512_block1 kernel])
+fi
+
+AM_CONDITIONAL([WITH_COMPLEX_AVX512_BLOCK2_KERNEL],[test x"$install_complex_avx512_block2" = x"yes"])
+if test x"${install_complex_avx512_block2}" = x"yes" ; then
+ AC_DEFINE([WITH_COMPLEX_AVX512_BLOCK2_KERNEL],[1],[can use complex_avx512_block2 kernel])
+fi
+
 AM_CONDITIONAL([WITH_REAL_BGP_KERNEL],[test x"$install_real_bgp" = x"yes"])
 if test x"${install_real_bgp}" = x"yes" ; then
  AC_DEFINE([WITH_REAL_BGP_KERNEL],[1],[can use real BGP kernel])
@@ -858,9 +1183,9 @@ if test x"${install_real_bgq}" = x"yes" ; then
 fi
 
 if test x"${use_specific_complex_kernel}" = x"no" ; then
- AC_DEFINE([WITH_NO_SPECIFIC_COMPLEX_KERNEL],[1],[do not use only one specific complex kernel (set at compile time)])
+  AC_DEFINE([WITH_NO_SPECIFIC_COMPLEX_KERNEL],[1],[do not use only one specific complex kernel (set at compile time)])
 else
- AC_DEFINE([WITH_ONE_SPECIFIC_COMPLEX_KERNEL],[1],[use only one specific complex kernel (set at compile time)])
+  AC_DEFINE([WITH_ONE_SPECIFIC_COMPLEX_KERNEL],[1],[use only one specific complex kernel (set at compile time)])
 fi
 
 if test x"${use_specific_real_kernel}" = x"no" ; then
@@ -877,18 +1202,29 @@ DX_MAN_FEATURE(ON)
 DX_HTML_FEATURE(ON)
 DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
-DESPERATELY_WANT_ASSUMED_SIZE=no
-AC_MSG_CHECKING(whether --enable-assumed-size-arrays is specified)
+USE_ASSUMED_SIZE=yes
+AC_MSG_CHECKING(whether assumed size Fortran arrays should be used)
 AC_ARG_ENABLE([assumed-size],
-                AS_HELP_STRING([--enable-assumded-size-arrays],
-                               [use assumed-size Fortran arrays]),
-              [],
-              [DESPERATELY_WANT_ASSUMED_SIZE=no])
-AC_MSG_RESULT([${DESPERATELY_WANT_ASSUMED_SIZE}])
-AM_CONDITIONAL([WITH_DESPERATELY_WANT_ASSUMED_SIZE],[test x"$DESPERATELY_WANT_ASSUMED_SIZE" = x"yes"])
-if test x"${DESPERATELY_WANT_ASSUMED_SIZE}" = x"yes" ; then
-  AC_DEFINE([DESPERATELY_WANT_ASSUMED_SIZE],[1],[use assumed size Fortran arrays, even if not debuggable])
+                AS_HELP_STRING([--disable-assumed-size],
+			       [do NOT use assumed-size Fortran arrays]),
+			       [if test x"$enableval" = x"yes"; then
+                                  USE_ASSUMED_SIZE=yes
+				else
+			          USE_ASSUMED_SIZE=no
+				fi],
+              [USE_ASSUMED_SIZE=yes])
+AC_MSG_RESULT([${USE_ASSUMED_SIZE}])
+AM_CONDITIONAL([WITH_USE_ASSUMED_SIZE],[test x"$USE_ASSUMED_SIZE" = x"yes"])
+if test x"${USE_ASSUMED_SIZE}" = x"yes" ; then
+  AC_DEFINE([USE_ASSUMED_SIZE],[1],[for performance reasons use assumed size Fortran arrays, even if not debuggable])
 fi
+
+if test x"${want_single_precision}" = x"yes" ; then
+  AC_DEFINE([WANT_SINGLE_PRECISION_REAL],[1],[build also single-precision for real calculation])
+  AC_DEFINE([WANT_SINGLE_PRECISION_COMPLEX],[1],[build also single-precision for complex calculation])
+fi
+AM_CONDITIONAL([WANT_SINGLE_PRECISION_REAL],[test x"$want_single_precision" = x"yes"])
+AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" = x"yes"])
 
 AC_SUBST([MPI_BINARY])
 AC_SUBST([WITH_MKL])
@@ -946,6 +1282,20 @@ AC_CONFIG_FILES([
   ${PKG_CONFIG_FILE}:elpa.pc.in
 ])
 
+AC_MSG_CHECKING([if workaround for Intel's broken preprocessor is needed])
+if test x"$FC" = x"mpiifort" ; then
+	need_manual_cpp=yes
+fi
+if test x"$FC" = x"ifort" ; then
+	need_manual_cpp=yes
+fi
+if test x"$need_manual_cpp" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	FC="\$(top_srcdir)/manual_cpp $FC"
+else
+	AC_MSG_RESULT([no])
+fi
+
 AC_OUTPUT
 
 if test "${can_compile_avx}" = "no" ; then
@@ -958,5 +1308,21 @@ if test "${can_compile_avx2}" = "no" ; then
     AC_MSG_WARN([Could not compile AVX2 instructions])
 #  fi
 fi
+if test "${can_compile_avx512}" = "no" ; then
+#  if test x"${want_avx512}" = x"yes" ; then
+    AC_MSG_WARN([Could not compile AVX512 instructions])
+#  fi
+fi
 
+
+if test "${can_compile_sse}" = "no" ; then
+  AC_MSG_WARN([Could not compile SSE instructions])
+fi
+echo " "
+echo "***********************************************************************"
+echo "*  This is a prerelease of the ELPA library 2016.11.001.pre library!  *"
+echo "*  It contains an experimental API which will most likely change with *"
+echo "*  the next stable release.                                           *"
+echo "***********************************************************************"
+echo " "
 make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"

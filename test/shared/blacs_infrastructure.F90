@@ -96,7 +96,7 @@ module mod_blacs_infrastructure
                                           np_cols, na_rows, na_cols, sc_desc(1:9), &
                                           my_blacs_ctxt, info
 #ifdef WITH_MPI
-      integer, external                :: numroc
+      integer(kind=ik), external       :: numroc
       integer(kind=ik)                 :: mpierr
 
       ! determine the neccessary size of the distributed matrices,
@@ -122,10 +122,11 @@ module mod_blacs_infrastructure
         write(error_unit,*) 'Try reducing the number of MPI tasks...'
         call MPI_ABORT(mpi_comm_world, 1, mpierr)
       endif
-#else
+#else /* WITH_MPI */
       na_rows = na
       na_cols = na
-#endif
+#endif /* WITH_MPI */
+
     end subroutine
 
     !c> void set_up_blacs_descriptor_from_fortran(int na, int nblk, int my_prow, int my_pcol,
@@ -154,5 +155,10 @@ module mod_blacs_infrastructure
 
 
     end subroutine
+
+    integer function index_l2g(idx_loc, nblk, iproc, nprocs)
+     index_l2g = nprocs * nblk * ((idx_loc-1) / nblk) + mod(idx_loc-1,nblk) + mod(nprocs+iproc, nprocs)*nblk + 1
+     return
+   end function
 
 end module

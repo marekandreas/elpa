@@ -65,7 +65,7 @@
 !> the environment variable "REAL_ELPA_KERNEL" to an
 !> appropiate value.
 !>
-program test_real2
+program test_real2_default_kernel_qr_decomposition_double_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -82,9 +82,10 @@ program test_real2
    use precision
    use ELPA1
    use ELPA2
-   use elpa_utilities, only : error_unit
-   use elpa2_utilities
 
+   use mod_check_for_gpu, only : check_for_gpu
+   use elpa_utilities, only : error_unit
+   use elpa2_utilities, only : elpa_get_actual_real_kernel_name
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
@@ -122,15 +123,17 @@ program test_real2
 
    integer, external          :: numroc
 
-   real(kind=rk), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real(kind=rk8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
 
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
+   logical                    :: successELPA, success
+   integer(kind=ik)           :: numberOfDevices
+   logical                    :: gpuAvailable
    type(output_t)             :: write_to_file
-   logical                    :: success
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
 
@@ -142,22 +145,20 @@ program test_real2
    call read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
                               realKernelSet, complexKernelSet )
 
-   !if (COMMAND_ARGUMENT_COUNT() /= 0) then
-   !  write(error_unit,*) "This program does not support any command-line arguments"
-   !  stop 1
-   !endif
+!   if (COMMAND_ARGUMENT_COUNT() /= 0) then
+!     write(error_unit,*) "This program does not support any command-line arguments"
+!     stop 1
+!   endif
 
-!   ! override nblk
-!       nblk = 32
-!   !   na   = 4000
-!   !   nev  = 1500
-!
+!   nblk = 2
+!   na   = 4000
+!   nev  = 1500
+
 !   ! make sure na, nbl is even
 !   if (mod(nblk,2 ) .ne. 0) then
 !     nblk = nblk - 1
 !   endif
-!
-!
+
 !   ! make sure na is even
 !   if (mod(na,2) .ne. 0) then
 !     na = na - 1
@@ -171,7 +172,10 @@ program test_real2
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   status = 0
+   gpuAvailable = check_for_gpu(myid, numberOfDevices)
+
+   STATUS = 0
+
    if (nblk .lt. 64) then
      status = 1
      if (myid .eq. 0) print *,"At the moment QR decomposition need blocksize of at least 64"
@@ -184,7 +188,7 @@ program test_real2
 #endif
       call EXIT(0)
    endif
-#define DATATYPE REAL
+#define REALCASE
 #include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -211,7 +215,7 @@ program test_real2
 
    call timer%enable()
 
-   call timer%start("program")
+   call timer%start("program: test_real2_default_kernel_qr_decomposition_double_precision")
 #endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -229,6 +233,9 @@ program test_real2
    if(myid==0) then
       print *
       print '(a)','Standard eigenvalue problem - REAL version'
+      if (gpuAvailable) then
+        print *,"with GPU version"
+      endif
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
@@ -241,6 +248,12 @@ program test_real2
       print *
       print *, " The settings are: ",trim(elpa_get_actual_real_kernel_name())," as real kernel"
       print *
+#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+      print *," However, this version of ELPA was build with only one of all the available"
+      print *," kernels, thus it will not be successful to call ELPA with another "
+      print *," kernel than the one specified at compile time!"
+#endif
+      print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
       print *, " kernel via an environment variable! To change this re-install"
@@ -267,9 +280,9 @@ program test_real2
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators.
+   ! rows or columns of processes, these are set in elpa_get_communicators.
 
-   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -294,7 +307,7 @@ program test_real2
 
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, iseed,  a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed,  a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -318,12 +331,12 @@ program test_real2
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   success = solve_evp_real_2stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              na_cols,                                        &
-                              mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
+
+   successELPA = elpa_solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
                               useQR=.true.)
 
-   if (.not.(success)) then
+   if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
@@ -369,7 +382,7 @@ program test_real2
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
    deallocate(a)
    deallocate(as)
@@ -380,12 +393,12 @@ program test_real2
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
+   call timer%stop("program: test_real2_default_kernel_qr_decomposition_double_precision")
    print *," "
-   print *,"Timings program:"
-   call timer%print("program")
+   print *,"Timings program: test_real2_default_kernel_qr_decomposition_double_precision"
+   call timer%print("program: test_real2_default_kernel_qr_decomposition_double_precision")
    print *," "
-   print *,"End timings program"
+   print *,"End timings program: test_real2_default_kernel_qr_decomposition_double_precision"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

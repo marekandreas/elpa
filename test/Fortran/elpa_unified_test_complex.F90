@@ -97,9 +97,10 @@ program test_all_real
    integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    integer, external          :: numroc
-   real(kind=rk), allocatable    :: ev(:), xr(:,:)
-   complex(kind=ck), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
-   complex(kind=ck), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
+   real(kind=rk8), allocatable    :: ev(:), xr(:,:)
+   complex(kind=ck8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+   complex(kind=ck8), parameter   :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
+
    integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    integer(kind=ik)           :: STATUS
@@ -112,11 +113,14 @@ program test_all_real
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j, this_kernel
 
-   real(kind=rk)              :: tStart, tEnd
+   real(kind=rk8)              :: tStart, tEnd
 
    integer                    :: this_real_kernel, this_complex_kernel
    logical                    :: realKernelSet, complexKernelSet
+   logical                    :: gpuAvailable
    !-------------------------------------------------------------------------------
+
+#define DOUBLE_PRECISION_REAL 1
 
    success = .true.
 
@@ -129,7 +133,9 @@ program test_all_real
 
    STATUS = 0
 
-#define DATATYPE COMPLEX
+
+#define REALCASE
+#define ELPA1
 #include "elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -156,7 +162,7 @@ program test_all_real
 
   call timer%enable()
 
-  call timer%start("program")
+  call timer%start("program: test_real_double_precision")
 #endif
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
@@ -169,9 +175,17 @@ program test_all_real
 
    if(myid==0) then
       print *
-      print '(a)','Standard eigenvalue problem - REAL version'
+      print '(a)','Standard eigenvalue problem - ELPA1, REAL version'
       print *
-      print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
+      print '((a,i0))', 'Matrix size: ', na 
+      print '((a,i0))', 'Num eigenvectors: ', nev
+      print '((a,i0))', 'Blocksize: ', nblk 
+      print '((a,i0))', 'Num MPI proc: ', nprocs 
+      print '((a))', 'Using gpu: NO'
+      print '((a,i0))', 'Num gpu devices: ', 0
+      print '((a))', 'Number type: real'
+      print '((a))', 'Number precision: double'
+      print *
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
    endif
@@ -194,9 +208,9 @@ program test_all_real
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators.
+   ! rows or columns of processes, these are set in elpa_get_communicators.
 
-   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -222,7 +236,7 @@ program test_all_real
    allocate(ev(na))
 
    allocate(xr(na_rows,na_cols))
-   call prepare_matrix(na, myid, sc_desc, iseed,  xr, a, z, as)
+   call prepare_matrix_double(na, myid, sc_desc, iseed,  xr, a, z, as)
 
    deallocate(xr)
 #ifdef HAVE_DETAILED_TIMINGS
@@ -248,11 +262,11 @@ program test_all_real
 #endif
    tStart = mpi_wtime()
 
-   success = solve_evp_complex_1stage(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                            na_cols, mpi_comm_rows, mpi_comm_cols)
+   success = elpa_solve_evp_complex_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                                           na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
+      write(error_unit,*) "solve_evp_complex_1stage produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
@@ -308,7 +322,7 @@ program test_all_real
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
 
    if (status .eq. 1) then
 #ifdef WITH_MPI
@@ -343,9 +357,9 @@ program test_all_real
 
            tStart = mpi_wtime()
 
-           success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                           mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                           THIS_COMPLEX_ELPA_KERNEL_API = this_kernel)
+           success = elpa_solve_evp_complex_2stage_double(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                                          mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
+                                                          THIS_COMPLEX_ELPA_KERNEL_API = this_kernel)
 
            if (.not.(success)) then
              write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
@@ -408,9 +422,9 @@ program test_all_real
 
        tStart = mpi_wtime()
 
-       success = solve_evp_complex_2stage(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                       THIS_COMPLEX_ELPA_KERNEL_API = this_complex_kernel)
+       success = elpa_solve_evp_complex_2stage_double(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
+                                                      mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
+                                                      THIS_COMPLEX_ELPA_KERNEL_API = this_complex_kernel)
 
        if (.not.(success)) then
          write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_complex_kernel)), &
@@ -440,7 +454,7 @@ program test_all_real
                       trim(elpa_real_kernel_name(this_complex_kernel)),' kernel:',tEnd - tStart
        if (myid == 0) print *," "
 
-       status = check_correctness(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+       status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
        if (myid == 0) print *," "
 
        if (status .eq. 1) then
@@ -466,13 +480,13 @@ program test_all_real
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
+   call timer%stop("program: test_real_double_precision")
    print *," "
-   print *,"Timings program:"
+   print *,"Timings program: test_real_double_precision"
    print *," "
-   call timer%print("program")
+   call timer%print("program: test_real_double_precision")
    print *," "
-   print *,"End timings program"
+   print *,"End timings program: test_real_double_precision"
    print *," "
 #endif
 
