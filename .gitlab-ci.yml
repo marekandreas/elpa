@@ -2589,7 +2589,7 @@ static-build:
 # test distcheck
 distcheck:
   tags:
-    - cpu
+    - buildtest
   script:
     - ./autogen.sh
     - ./configure --with-mpi=no
@@ -2600,7 +2600,7 @@ distcheck:
 # test test_project
 test_project:
   tags:
-    - cpu
+    - buildtest
   script:
     - mkdir build
     - pushd build
@@ -2636,7 +2636,7 @@ test_project:
 
 test_project_intel:
   tags:
-    - cpu
+    - buildtest
   script:
     - mkdir build
     - pushd build
