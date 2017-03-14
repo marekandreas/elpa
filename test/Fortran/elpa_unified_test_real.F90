@@ -121,11 +121,12 @@ program test_all_real
    integer                    :: this_real_kernel, this_complex_kernel
    logical                    :: complexKernelSet, realKernelSet
    logical                    :: gpuAvailable
+   integer :: datatype
    !-------------------------------------------------------------------------------
 
    success = .true.
 
-   call read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
+   call read_input_parameters(datatype, na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
                               realKernelSet, complexKernelSet)
 
    !-------------------------------------------------------------------------------

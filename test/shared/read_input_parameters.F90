@@ -42,10 +42,123 @@
 !
 #include "config-f90.h"
 module mod_read_input_parameters
+  use output_types
+
+  implicit none
+  type input_options_t
+    integer        :: datatype
+    integer        :: na, nev, nblk
+    type(output_t) :: write_to_file
+    integer        :: this_real_kernel, this_complex_kernel
+    logical        :: realKernelIsSet, complexKernelIsSet
+    integer        :: useQrIsSet, useGPUIsSet
+  end type
+
+
+  interface read_input_parameters
+    module procedure read_input_parameters_general
+    module procedure read_input_parameters_special
+  end interface
+
+  interface parse_arguments
+    module procedure parse_arguments_general
+    module procedure parse_arguments_special
+  end interface
 
   contains
 
-    subroutine parse_arguments(command_line_argument, na, nev, nblk, write_to_file, &
+    subroutine parse_arguments_general(command_line_argument, input_options)
+
+      use elpa2_utilities
+
+      use precision
+      use output_types
+
+      implicit none
+
+      type(input_options_t)        :: input_options
+!      integer(kind=ik)             :: na, nev, nblk
+!      type(output_t)               :: write_to_file
+!      integer                      :: this_real_kernel, this_complex_kernel
+!      logical                      :: realKernelSet, complexKernelSet
+!      integer                      :: datatype
+      character(len=128)           :: command_line_argument
+
+      integer                      :: kernels
+!      integer(kind=ik)             :: useQrSet
+!      integer(kind=ik)             :: useGPUSet
+
+
+      if (command_line_argument == "--help") then
+        print *,"usage: elpa_unified_test [--help] [datatype={real|complex}] [na=number] [nev=number] "
+        print *,"                                  [nblk=size of block cyclic distribution] [--output_eigenvalues]"
+        print *,"                                  [--output_eigenvectors] [--real-kernel=name_of_kernel]"
+        print *,"                                  [--complex-kernel=name_of_kernel] [--use-gpu={0|1}]"
+        print *,"                                  [--use-qr={0,1}]"
+      endif
+
+
+      if (command_line_argument(1:11) == "--datatype=") then
+        if (command_line_argument(12:15) == "real") then
+          input_options%datatype=1
+        else
+          if (command_line_argument(12:18) == "complex") then
+            input_options%datatype=2
+          else
+            print *,"datatype unknown! use either --datatype=real or --datatpye=complex"
+            stop
+          endif
+        endif
+      endif
+
+      if (command_line_argument(1:3) == "na=") then
+        read(command_line_argument(4:), *) input_options%na
+      endif
+      if (command_line_argument(1:4) == "nev=") then
+        read(command_line_argument(5:), *) input_options%nev
+      endif
+      if (command_line_argument(1:5) == "nblk=") then
+        read(command_line_argument(6:), *) input_options%nblk
+      endif
+
+      if (command_line_argument(1:21)   == "--output_eigenvectors") then
+        input_options%write_to_file%eigenvectors = .true.
+      endif
+
+      if (command_line_argument(1:20)   == "--output_eigenvalues") then
+        input_options%write_to_file%eigenvalues = .true.
+      endif
+
+      if (command_line_argument(1:14) == "--real-kernel=") then
+        do kernels = 1, elpa_number_of_real_kernels()
+          if (  trim(command_line_argument(15:)) .eq. elpa_real_kernel_name(kernels)) then
+            input_options%this_real_kernel = kernels
+            print *,"Setting ELPA2 real kernel to ",elpa_real_kernel_name(kernels)
+            input_options%realKernelIsSet = .true.
+          endif
+        enddo
+      endif
+
+      if (command_line_argument(1:17) == "--complex-kernel=") then
+        do kernels = 1, elpa_number_of_complex_kernels()
+          if (  trim(command_line_argument(18:)) .eq. elpa_complex_kernel_name(kernels)) then
+            input_options%this_complex_kernel = kernels
+            print *,"Setting ELPA2 complex kernel to ",elpa_complex_kernel_name(kernels)
+            input_options%realKernelIsSet = .true.
+          endif
+        enddo
+      endif
+
+      if (command_line_argument(1:9) == "--use-qr=") then
+        read(command_line_argument(10:), *) input_options%useQrIsSet
+      endif
+
+      if (command_line_argument(1:10) == "--use-gpu=") then
+        read(command_line_argument(11:), *) input_options%useGPUIsSet
+      endif
+    end subroutine
+
+    subroutine parse_arguments_special(command_line_argument, na, nev, nblk, write_to_file, &
                                this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
 
       use elpa2_utilities
@@ -110,7 +223,146 @@ module mod_read_input_parameters
 
     end subroutine
 
-    subroutine read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, realKernelSet, &
+
+    subroutine read_input_parameters_general(input_options)
+      use ELPA_utilities, only : error_unit
+      use precision
+      use elpa_mpi
+      use elpa2_utilities
+      use output_types
+      implicit none
+
+      type(input_options_t)         :: input_options
+!      integer(kind=ik), intent(out) :: na, nev, nblk
+!
+!      type(output_t), intent(out)   :: write_to_file
+
+      ! Command line arguments
+      character(len=128)            :: arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10
+      integer(kind=ik)              :: mpierr, kernels
+      !this_real_kernel, this_complex_kernel, datatype
+      !logical                       :: realKernelSet, complexKernelSet
+      !integer(kind=ik)              :: useQrSet, useGPUSet
+
+      ! default parameters
+      input_options%datatype = 1
+      input_options%na = 4000
+      input_options%nev = 1500
+      input_options%nblk = 16
+
+      input_options%write_to_file%eigenvectors = .false.
+      input_options%write_to_file%eigenvalues  = .false.
+
+      input_options%this_real_kernel = DEFAULT_REAL_ELPA_KERNEL
+      input_options%this_complex_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
+      input_options%realKernelIsSet = .false.
+      input_options%complexKernelIsSet = .false.
+
+      input_options%useQrIsSet = 0
+
+      input_options%useGPUIsSet = 0
+
+      ! test na=1500 nev=50 nblk=16 --help --kernel --output_eigenvectors --output_eigenvalues
+      if (COMMAND_ARGUMENT_COUNT() .gt. 8) then
+        write(error_unit, '(a,i0,a)') "Invalid number (", COMMAND_ARGUMENT_COUNT(), ") of command line arguments!"
+        stop 1
+      endif
+
+      if (COMMAND_ARGUMENT_COUNT() .gt. 0) then
+
+        call get_COMMAND_ARGUMENT(1, arg1)
+
+        call parse_arguments_general(arg1, input_options)
+
+
+
+        if (COMMAND_ARGUMENT_COUNT() .ge. 2) then
+          ! argument 2
+          call get_COMMAND_ARGUMENT(2, arg2)
+
+          call parse_arguments_general(arg2, input_options)
+        endif
+
+        ! argument 3
+        if (COMMAND_ARGUMENT_COUNT() .ge. 3) then
+
+          call get_COMMAND_ARGUMENT(3, arg3)
+
+          call parse_arguments_general(arg3, input_options)
+        endif
+
+        ! argument 4
+        if (COMMAND_ARGUMENT_COUNT() .ge. 4) then
+
+          call get_COMMAND_ARGUMENT(4, arg4)
+
+          call parse_arguments_general(arg4, input_options)
+
+        endif
+
+        ! argument 5
+        if (COMMAND_ARGUMENT_COUNT() .ge. 5) then
+
+          call get_COMMAND_ARGUMENT(5, arg5)
+
+          call parse_arguments_general(arg5, input_options)
+        endif
+
+        ! argument 6
+        if (COMMAND_ARGUMENT_COUNT() .ge. 6) then
+
+          call get_COMMAND_ARGUMENT(6, arg6)
+
+          call parse_arguments_general(arg6, input_options)
+        endif
+
+        ! argument 7
+        if (COMMAND_ARGUMENT_COUNT() .ge. 7) then
+
+          call get_COMMAND_ARGUMENT(7, arg7)
+
+          call parse_arguments_general(arg7, input_options)
+
+        endif
+
+        ! argument 8
+        if (COMMAND_ARGUMENT_COUNT() .ge. 8) then
+
+          call get_COMMAND_ARGUMENT(8, arg8)
+
+          call parse_arguments_general(arg8, input_options)
+
+        endif
+
+        ! argument 9
+        if (COMMAND_ARGUMENT_COUNT() .ge. 9) then
+
+          call get_COMMAND_ARGUMENT(9, arg9)
+
+          call parse_arguments_general(arg8, input_options)
+
+        endif
+
+        ! argument 10
+        if (COMMAND_ARGUMENT_COUNT() .ge. 10) then
+
+          call get_COMMAND_ARGUMENT(10, arg10)
+
+          call parse_arguments_general(arg8, input_options)
+
+        endif
+
+      endif
+
+      if (input_options%useQrIsSet .eq. 1 .and. input_options%datatype .eq. 2) then
+        print *,"You cannot use QR-decomposition in complex case"
+        stop 1
+      endif
+
+    end subroutine
+
+    subroutine read_input_parameters_special(datatype, na, nev, nblk, write_to_file, this_real_kernel, &
+          this_complex_kernel, realKernelSet, &
                                      complexKernelSet)
       use ELPA_utilities, only : error_unit
       use precision
@@ -127,6 +379,7 @@ module mod_read_input_parameters
       character(len=128)            :: arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8
       integer(kind=ik)              :: mpierr, kernels, this_real_kernel, this_complex_kernel
       logical                       :: realKernelSet, complexKernelSet
+      integer                       :: datatype
 
       ! default parameters
       na = 4000
@@ -138,6 +391,7 @@ module mod_read_input_parameters
       this_complex_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
       realKernelSet = .false.
       complexKernelSet = .false.
+      datatype = 1
 
       ! test na=1500 nev=50 nblk=16 --help --kernel --output_eigenvectors --output_eigenvalues
       if (COMMAND_ARGUMENT_COUNT() .gt. 8) then
@@ -149,7 +403,7 @@ module mod_read_input_parameters
 
         call get_COMMAND_ARGUMENT(1, arg1)
 
-        call parse_arguments(arg1, na, nev, nblk, write_to_file, &
+        call parse_arguments_special(arg1, na, nev, nblk, write_to_file, &
                                this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
 
 
@@ -158,7 +412,7 @@ module mod_read_input_parameters
           ! argument 2
           call get_COMMAND_ARGUMENT(2, arg2)
 
-          call parse_arguments(arg2, na, nev, nblk, write_to_file, &
+          call parse_arguments_special(arg2, na, nev, nblk, write_to_file, &
                                this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
         endif
 
@@ -167,7 +421,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(3, arg3)
 
-          call parse_arguments(arg3, na, nev, nblk, write_to_file, &
+          call parse_arguments_special(arg3, na, nev, nblk, write_to_file, &
                                this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
         endif
 
@@ -176,7 +430,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(4, arg4)
 
-          call parse_arguments(arg4, na, nev, nblk, write_to_file, &
+          call parse_arguments_special(arg4, na, nev, nblk, write_to_file, &
                                this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
 
         endif
@@ -186,7 +440,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(5, arg5)
 
-          call parse_arguments(arg5, na, nev, nblk, write_to_file, &
+          call parse_arguments_special(arg5, na, nev, nblk, write_to_file, &
                                this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
         endif
 
@@ -195,7 +449,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(6, arg6)
 
-          call parse_arguments(arg6, na, nev, nblk, write_to_file, &
+          call parse_arguments_special(arg6, na, nev, nblk, write_to_file, &
                                this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
         endif
 
@@ -204,7 +458,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(7, arg7)
 
-          call parse_arguments(arg7, na, nev, nblk, write_to_file, &
+          call parse_arguments_special(arg7, na, nev, nblk, write_to_file, &
                                this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
 
         endif
@@ -214,11 +468,12 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(8, arg8)
 
-          call parse_arguments(arg8, na, nev, nblk, write_to_file, &
+          call parse_arguments_special(arg8, na, nev, nblk, write_to_file, &
                                this_real_kernel, this_complex_kernel, realKernelSet, complexKernelSet)
 
         endif
       endif
     end subroutine
+
 
 end module

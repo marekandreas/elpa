@@ -133,9 +133,11 @@ program test_real2
    integer(kind=ik)           :: numberOfDevices
    integer                    :: this_real_kernel, this_complex_kernel
    logical                    :: complexKernelSet, realKernelSet
+
+   integer :: datatype
    success = .true.
    gpuAvailable  = .false.
-   call read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
+   call read_input_parameters(datatype, na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
                               realKernelSet, complexKernelSet)
 
    !-------------------------------------------------------------------------------

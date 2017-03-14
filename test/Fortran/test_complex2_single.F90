@@ -142,13 +142,13 @@ program test_complex2_single_precision
    integer                       :: this_real_kernel, this_complex_kernel
    logical                       :: complexKernelSet, realKernelSet
    logical                       :: gpuAvailable
-
+   integer :: datatype
 #undef DOUBLE_PRECISION_COMPLEX
 
    successELPA   = .true.
    gpuAvailable  = .false.
 
-   call read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
+   call read_input_parameters(datatype, na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
                               realKernelSet, complexKernelSet)
       !-------------------------------------------------------------------------------
    !  MPI Initialization

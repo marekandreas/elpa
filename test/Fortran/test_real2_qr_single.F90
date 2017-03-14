@@ -138,6 +138,8 @@ program test_real2_default_kernel_qr_decomposition_single_precision
    integer(kind=ik)           :: j
    integer                    :: this_real_kernel, this_complex_kernel
    logical                    :: complexKernelSet, realKernelSet
+
+   integer :: datatype
 #undef DOUBLE_PRECISION_REAL
 
    successELPA   = .true.
@@ -145,7 +147,7 @@ program test_real2_default_kernel_qr_decomposition_single_precision
 
 
    !write_to_file = .false.
-   call read_input_parameters(na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
+   call read_input_parameters(datatype, na, nev, nblk, write_to_file, this_real_kernel, this_complex_kernel, &
                               realKernelSet, complexKernelSet)
 
    !if (COMMAND_ARGUMENT_COUNT() /= 0) then

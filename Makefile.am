@@ -361,6 +361,7 @@ dist_files_DATA = \
   test/Fortran/test_invert_trm_real.F90 \
   test/Fortran/test_cholesky_complex.F90 \
   test/Fortran/test_invert_trm_complex.F90 \
+  test/Fortran/elpa_tests.F90 \
   src/elpa2_print_kernels.F90
 
 #end needed
@@ -373,7 +374,8 @@ pkgconfig_DATA = @PKG_CONFIG_FILE@
 
 # programs
 bin_PROGRAMS = \
-  elpa2_print_kernels@SUFFIX@
+  elpa2_print_kernels@SUFFIX@ \
+  elpa_tests@SUFFIX@
 
 noinst_PROGRAMS = \
   elpa_unified_test_real@SUFFIX@ \
@@ -452,6 +454,10 @@ libelpatest@SUFFIX@_la_SOURCES += \
 	test/shared/redir.c \
 	test/shared/redirect.F90
 endif
+elpa_tests@SUFFIX@_SOURCES = test/Fortran/elpa_tests.F90
+elpa_tests@SUFFIX@_LDADD = $(build_lib)
+elpa_tests@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa_tests@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/C/elpa1_test_real_c_version.c
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
@@ -640,6 +646,7 @@ endif
 #  elpa2_test_real_default_kernel_qr_decomposition@SUFFIX@.sh
 
 check_SCRIPTS = \
+  elpa_tests@SUFFIX@.sh \
   elpa_unified_test_real@SUFFIX@.sh \
   elpa_unified_test_complex@SUFFIX@.sh \
   elpa1_test_real_with_c@SUFFIX@.sh \
