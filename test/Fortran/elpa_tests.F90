@@ -259,121 +259,131 @@ program test_all_real
 
    allocate(ev(na))
 
+   if (input_options%datatype .eq. 1) then
+     allocate(tmp1_real(na_rows,na_cols))
+     allocate(tmp2_real(na_rows,na_cols))
+   endif
+   if (input_options%datatype .eq. 2) then
+     allocate(tmp1_complex(na_rows,na_cols))
+     allocate(tmp2_complex(na_rows,na_cols))
+   endif
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("allocate arrays")
 #endif
-   ! first the toeplitz test only in real case
-   ! changeable numbers here would be nice
-   if (input_options%datatype .eq. 1) then
+   if (input_options%doSolveTridi) then
+     ! first the toeplitz test only in real case
+     ! changeable numbers here would be nice
+     if (input_options%datatype .eq. 1) then
 #ifdef HAVE_DETAILED_TIMINGS
-     call timer%start("set up matrix")
+       call timer%start("set up matrix")
 #endif
 
-     diagonalElement_real = 0.45_rk8
-     subdiagonalElement_real =  0.78_rk8
+       diagonalElement_real = 0.45_rk8
+       subdiagonalElement_real =  0.78_rk8
 
-     d_real(:) = diagonalElement_real
-     e_real(:) = subdiagonalElement_real
-
-
-     ! set up the diagonal and subdiagonals (for general solver test)
-     do i=1, na ! for diagonal elements
-       if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-         a_real(rowLocal,colLocal) = diagonalElement_real
-       endif
-     enddo
-
-     do i=1, na-1
-       if (map_global_array_index_to_local_index(i, i+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-         a_real(rowLocal,colLocal) = subdiagonalElement_real
-       endif
-     enddo
-
-     do i=2, na
-       if (map_global_array_index_to_local_index(i, i-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-         a_real(rowLocal,colLocal) = subdiagonalElement_real
-       endif
-     enddo
-
-     as_real = a_real
-
-#ifdef HAVE_DETAILED_TIMINGS
-     call timer%stop("set up matrix")
-#endif
-
-     !-------------------------------------------------------------------------------
-     ! Calculate eigenvalues/eigenvectors
-
-     if (myid==0) then
-       print '(a)','| Entering elpa_solve_tridi ... '
-       print *
-     end if
-
-#ifdef WITH_MPI
-     call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-
-     success = elpa_solve_tridi_double(na, nev, d_real, e_real, a_real, na_rows, nblk, na_cols, mpi_comm_rows, &
-                                       mpi_comm_cols, wantDebug)
-
-     if (.not.(success)) then
-       write(error_unit,*) "elpa_solve_tridi produced an error! Aborting..."
-#ifdef WITH_MPI
-       call MPI_ABORT(mpi_comm_world, 1, mpierr)
-#endif
-     endif
-
-     if (myid==0) then
-       print '(a)','| elpa_solve_tridi complete.'
-       print *
-     end if
+       d_real(:) = diagonalElement_real
+       e_real(:) = subdiagonalElement_real
 
 
-     ev = d_real
-
-     ! analytic solution
-     do i=1, na
-       ev_analytic_real(i) = diagonalElement_real + 2.0_rk8 * subdiagonalElement_real * &
-                              cos( pi*real(i,kind=rk8)/ real(na+1,kind=rk8) )
-     enddo
-
-     ! sort analytic solution:
-
-     ! this hack is neither elegant, nor optimized: for huge matrixes it might be expensive
-     ! a proper sorting algorithmus might be implemented here
-
-     tmp    = minval(ev_analytic_real)
-     loctmp = minloc(ev_analytic_real, 1)
-
-     ev_analytic_real(loctmp) = ev_analytic_real(1)
-     ev_analytic_real(1) = tmp
-
-     do i=2, na
-       tmp = ev_analytic_real(i)
-       do j= i, na
-         if (ev_analytic_real(j) .lt. tmp) then
-           tmp    = ev_analytic_real(j)
-           loctmp = j
+       ! set up the diagonal and subdiagonals (for general solver test)
+       do i=1, na ! for diagonal elements
+         if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+           a_real(rowLocal,colLocal) = diagonalElement_real
          endif
        enddo
-       ev_analytic_real(loctmp) = ev_analytic_real(i)
-       ev_analytic_real(i) = tmp
-     enddo
 
-     ! compute a simple error max of eigenvalues
-     maxerr = 0.0_rk8
-     maxerr = maxval( (d_real(:) - ev_analytic_real(:))/ev_analytic_real(:) , 1)
+       do i=1, na-1
+         if (map_global_array_index_to_local_index(i, i+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+           a_real(rowLocal,colLocal) = subdiagonalElement_real
+         endif
+       enddo
 
-     if (maxerr .gt. 8.e-13_rk8) then
-       if (myid .eq. 0) then
-         print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+       do i=2, na
+         if (map_global_array_index_to_local_index(i, i-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+           a_real(rowLocal,colLocal) = subdiagonalElement_real
+         endif
+       enddo
+
+       as_real = a_real
+
+#ifdef HAVE_DETAILED_TIMINGS
+       call timer%stop("set up matrix")
+#endif
+
+       !-------------------------------------------------------------------------------
+       ! Calculate eigenvalues/eigenvectors
+
+       if (myid==0) then
+         print '(a)','| Entering elpa_solve_tridi ... '
+         print *
+       end if
+
+#ifdef WITH_MPI
+       call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+       success = elpa_solve_tridi_double(na, nev, d_real, e_real, a_real, na_rows, nblk, na_cols, mpi_comm_rows, &
+                                         mpi_comm_cols, wantDebug)
+
+       if (.not.(success)) then
+         write(error_unit,*) "elpa_solve_tridi produced an error! Aborting..."
+#ifdef WITH_MPI
+         call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
        endif
 
-       status = 1
+       if (myid==0) then
+         print '(a)','| elpa_solve_tridi complete.'
+         print *
+       end if
 
-     endif
-   endif ! datatype == 1 for toeplitz
 
+       ev = d_real
+
+       ! analytic solution
+       do i=1, na
+         ev_analytic_real(i) = diagonalElement_real + 2.0_rk8 * subdiagonalElement_real * &
+                                cos( pi*real(i,kind=rk8)/ real(na+1,kind=rk8) )
+       enddo
+
+       ! sort analytic solution:
+
+       ! this hack is neither elegant, nor optimized: for huge matrixes it might be expensive
+       ! a proper sorting algorithmus might be implemented here
+
+       tmp    = minval(ev_analytic_real)
+       loctmp = minloc(ev_analytic_real, 1)
+
+       ev_analytic_real(loctmp) = ev_analytic_real(1)
+       ev_analytic_real(1) = tmp
+
+       do i=2, na
+         tmp = ev_analytic_real(i)
+         do j= i, na
+           if (ev_analytic_real(j) .lt. tmp) then
+             tmp    = ev_analytic_real(j)
+             loctmp = j
+           endif
+         enddo
+         ev_analytic_real(loctmp) = ev_analytic_real(i)
+         ev_analytic_real(i) = tmp
+       enddo
+
+       ! compute a simple error max of eigenvalues
+       maxerr = 0.0_rk8
+       maxerr = maxval( (d_real(:) - ev_analytic_real(:))/ev_analytic_real(:) , 1)
+
+       if (maxerr .gt. 8.e-13_rk8) then
+         if (myid .eq. 0) then
+           print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+         endif
+
+         status = 1
+
+       endif
+     endif ! datatype == 1 for toeplitz
+    endif ! doSolve-tridi
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("set up matrix")
@@ -398,77 +408,78 @@ program test_all_real
    end if
 
 
-   !-------------------------------------------------------------------------------
-   ! Calculate eigenvalues/eigenvectors
+   if (input_options%do1stage) then
+     !-------------------------------------------------------------------------------
+     ! Calculate eigenvalues/eigenvectors
 
-   if (myid==0) then
-     print '(a)','| Entering one-step ELPA solver ... '
-     print *
-   end if
+     if (myid==0) then
+       print '(a)','| Entering one-step ELPA solver ... '
+       print *
+     end if
 
-   if (input_options%useGPUIsSet .eq. 1) this_gpu = .true.
-   if (input_options%useGPUIsSet .eq. 0) this_gpu = .false.
+     if (input_options%useGPUIsSet .eq. 1) this_gpu = .true.
+     if (input_options%useGPUIsSet .eq. 0) this_gpu = .false.
 
 #ifdef WITH_MPI
-   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+     call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   tStart = mpi_wtime()
+     tStart = mpi_wtime()
 
-   if (input_options%datatype .eq. 1) then
-     success = elpa_solve_evp_real_1stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows, nblk, &
-                                                 na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU=this_gpu)
-   endif
-   if (input_options%datatype .eq. 2) then
-     success = elpa_solve_evp_complex_1stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows, nblk, &
-                                                    na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU=this_gpu)
-   endif
-
-   if (.not.(success)) then
      if (input_options%datatype .eq. 1) then
-       write(error_unit,*) "elpa_solve_evp_real_1stage_double produced an error! Aborting..."
+       success = elpa_solve_evp_real_1stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows, nblk, &
+                                                   na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU=this_gpu)
      endif
      if (input_options%datatype .eq. 2) then
-       write(error_unit,*) "elpa_solve_evp_complex_1stage_double produced an error! Aborting..."
+       success = elpa_solve_evp_complex_1stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows, nblk, &
+                                                      na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU=this_gpu)
      endif
 
+     if (.not.(success)) then
+       if (input_options%datatype .eq. 1) then
+         write(error_unit,*) "elpa_solve_evp_real_1stage_double produced an error! Aborting..."
+       endif
+       if (input_options%datatype .eq. 2) then
+         write(error_unit,*) "elpa_solve_evp_complex_1stage_double produced an error! Aborting..."
+       endif
+
 #ifdef WITH_MPI
-     call MPI_ABORT(mpi_comm_world, 1, mpierr)
+       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
-   endif
+     endif
 
 
-   if (myid==0) then
-     print '(a)','| One-step ELPA solver complete.'
-     print *
-   end if
+     if (myid==0) then
+       print '(a)','| One-step ELPA solver complete.'
+       print *
+     end if
 
-   if (input_options%datatype .eq. 1) then
-     if (myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
-     if (myid == 0) print *,'Time solve_tridi      :',time_evp_solve
-     if (myid == 0) print *,'Time trans_ev_real    :',time_evp_back
-     if (myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
-     if (myid == 0) print *," "
-   endif
-   if (input_options%datatype .eq. 2) then
-     if (myid == 0) print *,'Time tridiag_complex     :',time_evp_fwd
-     if (myid == 0) print *,'Time solve_tridi         :',time_evp_solve
-     if (myid == 0) print *,'Time trans_ev_complex    :',time_evp_back
-     if (myid == 0) print *,'Total time (sum above)   :',time_evp_back+time_evp_solve+time_evp_fwd
-     if (myid == 0) print *," "
-   endif
+     if (input_options%datatype .eq. 1) then
+       if (myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
+       if (myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+       if (myid == 0) print *,'Time trans_ev_real    :',time_evp_back
+       if (myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
+       if (myid == 0) print *," "
+     endif
+     if (input_options%datatype .eq. 2) then
+       if (myid == 0) print *,'Time tridiag_complex     :',time_evp_fwd
+       if (myid == 0) print *,'Time solve_tridi         :',time_evp_solve
+       if (myid == 0) print *,'Time trans_ev_complex    :',time_evp_back
+       if (myid == 0) print *,'Total time (sum above)   :',time_evp_back+time_evp_solve+time_evp_fwd
+       if (myid == 0) print *," "
+     endif
 #ifdef WITH_MPI
-   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+     call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-    tEnd = mpi_wtime()
-   if(myid == 0) print *," "
-   if (input_options%datatype .eq. 1) then
-     if(myid == 0) print *,'Total time for solve_evp_real_1stage:',tEnd - tStart
-   endif
-   if (input_options%datatype .eq. 2) then
-     if(myid == 0) print *,'Total time for solve_evp_complex_1stage:',tEnd - tStart
-   endif
+     tEnd = mpi_wtime()
+     if(myid == 0) print *," "
+     if (input_options%datatype .eq. 1) then
+       if(myid == 0) print *,'Total time for solve_evp_real_1stage:',tEnd - tStart
+     endif
+     if (input_options%datatype .eq. 2) then
+       if(myid == 0) print *,'Total time for solve_evp_complex_1stage:',tEnd - tStart
+     endif
 
-   if(myid == 0) print *," "
+     if(myid == 0) print *," "
 
 ! TODO write of output
 
@@ -496,121 +507,204 @@ program test_all_real
 !   endif
 
 
-   !-------------------------------------------------------------------------------
-   ! Test correctness of result (using plain scalapack routines)
-   if (input_options%datatype .eq. 1) then
-     allocate(tmp1_real(na_rows,na_cols))
-     allocate(tmp2_real(na_rows,na_cols))
-   endif
-   if (input_options%datatype .eq. 2) then
-     allocate(tmp1_complex(na_rows,na_cols))
-     allocate(tmp2_complex(na_rows,na_cols))
-   endif
+     !-------------------------------------------------------------------------------
+     ! Test correctness of result (using plain scalapack routines)
 
-   if (input_options%datatype .eq. 1) then
-     status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid, tmp1_real, tmp2_real)
-   endif
-   if (input_options%datatype .eq. 2) then
-     status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid, tmp1_complex, tmp2_complex)
-   endif
 
-   if (status .eq. 1) then
-#ifdef WITH_MPI
-     call blacs_gridexit(my_blacs_ctxt)
-     call mpi_finalize(mpierr)
-#endif
-
-     call EXIT(STATUS)
-   endif
-
-   if (input_options%datatype .eq. 1) then
-     ! real cases
-
-     if (.not.(input_options%realKernelIsSet)) then
-       ! start again with ELPA2 generic and so forth
-
-       ! first default kernel
-
-       if (myid .eq. 0) print *," "
-       if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", trim(elpa_get_actual_real_kernel_name())
-       if (myid .eq. 0) print *," "
-
-       a_real = as_real
-       z_real = a_real
-
-      if (input_options%useGPUIsSet .eq. 1) this_gpu = .true.
-      if (input_options%useGPUIsSet .eq. 0) this_gpu = .false.
-
-      if (input_options%useQrIsSet .eq. 1) this_qr = .true.
-      if (input_options%useQrIsSet .eq. 0) this_qr = .false.
-
-       if (myid==0) then
-         print *," "
-         print '(a)','| Entering two-stage ELPA solver ... '
-         print *
-       end if
-
-#ifdef WITH_MPI
-       call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-
-       tStart = mpi_wtime()
-
-       success = elpa_solve_evp_real_2stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows,  nblk, na_cols, &
-                                                   mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useQr=this_qr, useGPU=this_gpu)
-
-       if (.not.(success)) then
-         write(error_unit,*) "solve_evp_real_2stage with default kernel ",trim(elpa_get_actual_real_kernel_name()), &
-                             " produced an error! Aborting..."
-#ifdef WITH_MPI
-         call MPI_ABORT(mpi_comm_world, 1, mpierr)
-#endif
-       endif
-
-       if (myid==0) then
-         print '(a)','| Two-step ELPA solver complete.'
-         print *
-       end if
-
-       if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-       if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
-       if (myid == 0) print *,'Time transform back EVs :',time_evp_back
-       if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-       if (myid == 0) print *," "
-
-#ifdef WITH_MPI
-       call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-       tEnd = mpi_wtime()
-
-       if (myid == 0) print *," "
-       if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
-                      trim(elpa_get_actual_real_kernel_name()),' default kernel:',tEnd - tStart
-       if (myid == 0) print *," "
-
+     if (input_options%datatype .eq. 1) then
        status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid, tmp1_real, tmp2_real)
-       if (myid == 0) print *," "
+     endif
+     if (input_options%datatype .eq. 2) then
+       status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid, tmp1_complex, tmp2_complex)
+     endif
 
-       if (status .eq. 1) then
-         if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_get_actual_real_kernel_name()), &
-           ' kernel!'
+     if (status .eq. 1) then
 #ifdef WITH_MPI
-         call blacs_gridexit(my_blacs_ctxt)
-         call mpi_finalize(mpierr)
+       call blacs_gridexit(my_blacs_ctxt)
+       call mpi_finalize(mpierr)
 #endif
 
-         call EXIT(STATUS)
-       endif
-       if (myid .eq. 0) print *," "
+       call EXIT(STATUS)
+     endif
+   endif !do1Stage
+
+   if (input_options%do2Stage) then
+     if (input_options%datatype .eq. 1) then
+       ! real cases
+
+       if (.not.(input_options%realKernelIsSet)) then
+         ! start again with ELPA2 generic and so forth
+
+         ! first default kernel
+
+         if (myid .eq. 0) print *," "
+         if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", trim(elpa_get_actual_real_kernel_name())
+         if (myid .eq. 0) print *," "
+
+         a_real = as_real
+         z_real = a_real
+
+        if (input_options%useGPUIsSet .eq. 1) this_gpu = .true.
+        if (input_options%useGPUIsSet .eq. 0) this_gpu = .false.
+
+        if (input_options%useQrIsSet .eq. 1) this_qr = .true.
+        if (input_options%useQrIsSet .eq. 0) this_qr = .false.
+
+         if (myid==0) then
+           print *," "
+           print '(a)','| Entering two-stage ELPA solver ... '
+           print *
+         end if
+
+#ifdef WITH_MPI
+         call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+         tStart = mpi_wtime()
+
+         success = elpa_solve_evp_real_2stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows,  nblk, na_cols, &
+                                                     mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useQr=this_qr, useGPU=this_gpu)
+
+         if (.not.(success)) then
+           write(error_unit,*) "solve_evp_real_2stage with default kernel ",trim(elpa_get_actual_real_kernel_name()), &
+                               " produced an error! Aborting..."
+#ifdef WITH_MPI
+           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+         endif
+
+         if (myid==0) then
+           print '(a)','| Two-step ELPA solver complete.'
+           print *
+         end if
+
+         if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
+         if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
+         if (myid == 0) print *,'Time transform back EVs :',time_evp_back
+         if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
+         if (myid == 0) print *," "
+
+#ifdef WITH_MPI
+         call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+         tEnd = mpi_wtime()
+
+         if (myid == 0) print *," "
+         if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
+                        trim(elpa_get_actual_real_kernel_name()),' default kernel:',tEnd - tStart
+         if (myid == 0) print *," "
+
+         status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid, tmp1_real, tmp2_real)
+         if (myid == 0) print *," "
+
+         if (status .eq. 1) then
+           if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_get_actual_real_kernel_name()), &
+             ' kernel!'
+#ifdef WITH_MPI
+           call blacs_gridexit(my_blacs_ctxt)
+           call mpi_finalize(mpierr)
+#endif
+
+           call EXIT(STATUS)
+         endif
+         if (myid .eq. 0) print *," "
 
 
-       if (myid .eq. 0) print *," "
-       if (myid .eq. 0) print *,"Iterating over all available ELPA2 real kernels ..."
-       if (myid .eq. 0) print *," "
+         if (myid .eq. 0) print *," "
+         if (myid .eq. 0) print *,"Iterating over all available ELPA2 real kernels ..."
+         if (myid .eq. 0) print *," "
 
-       do this_kernel = 1 , elpa_number_of_real_kernels()
-         if (input_options%useGPUIsSet .eq. 1) this_gpu = .true.
-         if (input_options%useGPUIsSet .eq. 0) this_gpu = .false.
+         do this_kernel = 1 , elpa_number_of_real_kernels()
+           if (input_options%useGPUIsSet .eq. 1) this_gpu = .true.
+           if (input_options%useGPUIsSet .eq. 0) this_gpu = .false.
+
+           if (input_options%useQrIsSet .eq. 1) this_qr = .true.
+           if (input_options%useQrIsSet .eq. 0) this_qr = .false.
+
+
+           a_real = as_real
+           z_real = a_real
+           if (elpa_real_kernel_is_available(this_kernel)) then
+             if (input_options%useQrIsSet .eq. 0) then
+               if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel)),":"
+             else
+               if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel))," with qr decompostion:"
+             endif
+             if (myid==0) then
+               print *," "
+               print '(a)','| Entering two-stage ELPA solver ... '
+               print *
+             end if
+#ifdef WITH_MPI
+             call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+             tStart = mpi_wtime()
+
+             success = elpa_solve_evp_real_2stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows,  nblk, na_cols, &
+                                                         mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
+                                                         THIS_REAL_ELPA_KERNEL_API = this_kernel, useQR=this_qr, useGPU=this_gpu)
+
+             if (.not.(success)) then
+               if (input_options%useQrIsSet .eq. 0) then
+                 write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
+                                     " produced an error! Aborting..."
+               else
+                 write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
+                                     " and qr-decompostion produced an error! Aborting..."
+
+               endif
+#ifdef WITH_MPI
+                 call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+             endif
+
+             if (myid==0) then
+               print '(a)','| Two-step ELPA solver complete.'
+               print *
+             end if
+
+             if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
+             if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
+             if (myid == 0) print *,'Time transform back EVs :',time_evp_back
+             if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
+             if (myid == 0) print *," "
+#ifdef WITH_MPI
+             call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+             tEnd = mpi_wtime()
+
+             if (myid == 0) print *," "
+             if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
+                            trim(elpa_real_kernel_name(this_kernel)),' kernel:',tEnd - tStart
+             if (myid == 0) print *," "
+
+             status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid, tmp1_real, tmp2_real)
+             if (myid == 0) print *," "
+
+             if (status .eq. 1) then
+               if (input_options%useQrIsSet.eq. 0) then
+                 if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_kernel)), &
+                 ' kernel!'
+               else
+                 if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_kernel)), &
+                 ' kernel and qr-decompostion!'
+               endif
+#ifdef WITH_MPI
+               call blacs_gridexit(my_blacs_ctxt)
+               call mpi_finalize(mpierr)
+#endif
+
+               call EXIT(STATUS)
+             endif ! status == 1
+
+           endif ! elpa_real_kernel
+         enddo  ! kernel loop
+
+       else ! realKernelSet
+
+         if (input_options%useGPUIsSet .eq. 1) this_gpu=.true.
+         if (input_options%useGPUIsSet .eq. 0) this_gpu=.false.
 
          if (input_options%useQrIsSet .eq. 1) this_qr = .true.
          if (input_options%useQrIsSet .eq. 0) this_qr = .false.
@@ -618,11 +712,12 @@ program test_all_real
 
          a_real = as_real
          z_real = a_real
-         if (elpa_real_kernel_is_available(this_kernel)) then
-           if (input_options%useQrIsSet .eq. 0) then
-             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel)),":"
+         if (elpa_real_kernel_is_available(input_options%this_real_kernel)) then
+           if (input_options%useQrIsSet  .eq. 0) then
+             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(input_options%this_real_kernel)),":"
            else
-             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel))," with qr decompostion:"
+             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
+                 " with qr decompostion:"
            endif
            if (myid==0) then
              print *," "
@@ -637,19 +732,22 @@ program test_all_real
 
            success = elpa_solve_evp_real_2stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows,  nblk, na_cols, &
                                                        mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                                       THIS_REAL_ELPA_KERNEL_API = this_kernel, useQR=this_qr, useGPU=this_gpu)
+                                                       THIS_REAL_ELPA_KERNEL_API = input_options%this_real_kernel, useQR=this_qr, &
+                                                       useGPU=this_gpu)
 
            if (.not.(success)) then
-             if (input_options%useQrIsSet .eq. 0) then
-               write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
+             if (input_options%useQrIsSet  .eq. 0) then
+               write(error_unit,*) "solve_evp_real_2stage with kernel ", &
+                    trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
                                    " produced an error! Aborting..."
              else
-               write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(this_kernel)), &
+               write(error_unit,*) "solve_evp_real_2stage with kernel ", &
+                   trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
                                    " and qr-decompostion produced an error! Aborting..."
 
              endif
 #ifdef WITH_MPI
-               call MPI_ABORT(mpi_comm_world, 1, mpierr)
+             call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
            endif
 
@@ -670,18 +768,20 @@ program test_all_real
 
            if (myid == 0) print *," "
            if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
-                          trim(elpa_real_kernel_name(this_kernel)),' kernel:',tEnd - tStart
+                          trim(elpa_real_kernel_name(input_options%this_real_kernel)),' kernel:',tEnd - tStart
            if (myid == 0) print *," "
 
            status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid, tmp1_real, tmp2_real)
            if (myid == 0) print *," "
 
            if (status .eq. 1) then
-             if (input_options%useQrIsSet.eq. 0) then
-               if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_kernel)), &
+             if (input_options%useQrIsSet  .eq. 0) then
+               if (myid == 0) print *," ERROR in solve_evp_real2_stage with ", &
+                   trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
                ' kernel!'
              else
-               if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_real_kernel_name(this_kernel)), &
+               if (myid == 0) print *," ERROR in solve_evp_real2_stage with ", &
+                   trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
                ' kernel and qr-decompostion!'
              endif
 #ifdef WITH_MPI
@@ -690,54 +790,54 @@ program test_all_real
 #endif
 
              call EXIT(STATUS)
-           endif ! status == 1
+           endif
 
-         endif ! elpa_real_kernel
-       enddo  ! kernel loop
-
-     else ! realKernelSet
-
-       if (input_options%useGPUIsSet .eq. 1) this_gpu=.true.
-       if (input_options%useGPUIsSet .eq. 0) this_gpu=.false.
-
-       if (input_options%useQrIsSet .eq. 1) this_qr = .true.
-       if (input_options%useQrIsSet .eq. 0) this_qr = .false.
-
-
-       a_real = as_real
-       z_real = a_real
-       if (elpa_real_kernel_is_available(input_options%this_real_kernel)) then
-         if (input_options%useQrIsSet  .eq. 0) then
-           if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(input_options%this_real_kernel)),":"
-         else
-           if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
-               " with qr decompostion:"
          endif
+       endif ! realKernelSet
+     endif ! datatype == 1
+   endif ! do2Stage
+
+   if (input_options%do2stage) then
+     if (input_options%datatype .eq. 2) then
+       ! complex cases
+
+       if (.not.(input_options%complexKernelIsSet)) then
+         ! start again with ELPA2 generic and so forth
+
+         ! first default kernel
+
+         if (myid .eq. 0) print *," "
+         if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", trim(elpa_get_actual_complex_kernel_name())
+         if (myid .eq. 0) print *," "
+
+         a_complex = as_complex
+         z_complex = a_complex
+
          if (myid==0) then
            print *," "
            print '(a)','| Entering two-stage ELPA solver ... '
            print *
          end if
+
+         if (input_options%useGPUIsSet .eq. 1) this_gpu = .true.
+         if (input_options%useGPUIsSet .eq. 0) this_gpu = .false.
+
+         if (input_options%useQrIsSet .eq. 1) then
+           print *,"error: nr QR decomposition for complex case available!"
+           stop 1
+         endif
 #ifdef WITH_MPI
          call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
          tStart = mpi_wtime()
 
-         success = elpa_solve_evp_real_2stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows,  nblk, na_cols, &
-                                                     mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                                     THIS_REAL_ELPA_KERNEL_API = input_options%this_real_kernel, useQR=this_qr, &
-                                                     useGPU=this_gpu)
+         success = elpa_solve_evp_complex_2stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows,  nblk, na_cols, &
+                                                        mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU=this_gpu)
 
          if (.not.(success)) then
-           if (input_options%useQrIsSet  .eq. 0) then
-             write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
-                                 " produced an error! Aborting..."
-           else
-             write(error_unit,*) "solve_evp_real_2stage with kernel ",trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
-                                 " and qr-decompostion produced an error! Aborting..."
-
-           endif
+           write(error_unit,*) "solve_evp_complex_2stage with default kernel ",trim(elpa_get_actual_complex_kernel_name()), &
+                               " produced an error! Aborting..."
 #ifdef WITH_MPI
            call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
@@ -753,29 +853,23 @@ program test_all_real
          if (myid == 0) print *,'Time transform back EVs :',time_evp_back
          if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
          if (myid == 0) print *," "
+
 #ifdef WITH_MPI
          call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
          tEnd = mpi_wtime()
 
          if (myid == 0) print *," "
-         if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
-                        trim(elpa_real_kernel_name(input_options%this_real_kernel)),' kernel:',tEnd - tStart
+         if (myid == 0) print *,'Total time for solve_evp_complex_2stage with ', &
+                        trim(elpa_get_actual_complex_kernel_name()),' default kernel:',tEnd - tStart
          if (myid == 0) print *," "
 
-         status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid, tmp1_real, tmp2_real)
+         status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid, tmp1_complex, tmp2_complex)
          if (myid == 0) print *," "
 
          if (status .eq. 1) then
-           if (input_options%useQrIsSet  .eq. 0) then
-             if (myid == 0) print *," ERROR in solve_evp_real2_stage with ", &
-                 trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
+           if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ",trim(elpa_get_actual_complex_kernel_name()), &
              ' kernel!'
-           else
-             if (myid == 0) print *," ERROR in solve_evp_real2_stage with ", &
-                 trim(elpa_real_kernel_name(input_options%this_real_kernel)), &
-             ' kernel and qr-decompostion!'
-           endif
 #ifdef WITH_MPI
            call blacs_gridexit(my_blacs_ctxt)
            call mpi_finalize(mpierr)
@@ -783,119 +877,127 @@ program test_all_real
 
            call EXIT(STATUS)
          endif
+         if (myid .eq. 0) print *," "
 
-       endif
-     endif ! realKernelSet
-   endif ! datatype == 1
 
-   if (input_options%datatype .eq. 2) then
-     ! complex cases
+         if (myid .eq. 0) print *," "
+         if (myid .eq. 0) print *,"Iterating over all available ELPA2 complex kernels ..."
+         if (myid .eq. 0) print *," "
 
-     if (.not.(input_options%complexKernelIsSet)) then
-       ! start again with ELPA2 generic and so forth
+         do this_kernel = 1 , elpa_number_of_complex_kernels()
+           if (input_options%useGPUIsSet .eq. 1) this_gpu=.true.
+           if (input_options%useGPUIsSet .eq. 0) this_gpu=.false.
 
-       ! first default kernel
+           if (input_options%useQrIsSet .eq. 1) then
+             print *,"error: no QR-decomposition for complex case available!"
+             stop 1
+           endif
 
-       if (myid .eq. 0) print *," "
-       if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", trim(elpa_get_actual_complex_kernel_name())
-       if (myid .eq. 0) print *," "
-
-       a_complex = as_complex
-       z_complex = a_complex
-
-       if (myid==0) then
-         print *," "
-         print '(a)','| Entering two-stage ELPA solver ... '
-         print *
-       end if
-
-       if (input_options%useGPUIsSet .eq. 1) this_gpu = .true.
-       if (input_options%useGPUIsSet .eq. 0) this_gpu = .false.
-
-       if (input_options%useQrIsSet .eq. 1) then
-         print *,"error: nr QR decomposition for complex case available!"
-         stop 1
-       endif
+           a_complex = as_complex
+           z_complex = a_complex
+           if (elpa_complex_kernel_is_available(this_kernel)) then
+             if (input_options%useQrIsSet  .eq. 0) then
+               if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(this_kernel)),":"
+             else
+               if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(this_kernel))," with qr decompostion:"
+             endif
+             if (myid==0) then
+               print *," "
+               print '(a)','| Entering two-stage ELPA solver ... '
+               print *
+             end if
 #ifdef WITH_MPI
-       call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+             call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-       tStart = mpi_wtime()
+             tStart = mpi_wtime()
 
-       success = elpa_solve_evp_complex_2stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows,  nblk, na_cols, &
-                                                      mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU=this_gpu)
+             success = elpa_solve_evp_complex_2stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows,  nblk, na_cols, &
+                                                            mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
+                                                            THIS_COMPLEX_ELPA_KERNEL_API = this_kernel, useGPU=this_gpu)
 
-       if (.not.(success)) then
-         write(error_unit,*) "solve_evp_complex_2stage with default kernel ",trim(elpa_get_actual_complex_kernel_name()), &
-                             " produced an error! Aborting..."
+             if (.not.(success)) then
+               if (input_options%useQrIsSet  .eq. 0) then
+                 write(error_unit,*) "solve_evp_complex_2stage with kernel ",trim(elpa_complex_kernel_name(this_kernel)), &
+                                     " produced an error! Aborting..."
+               else
+                 write(error_unit,*) "solve_evp_complex_2stage with kernel ",trim(elpa_complex_kernel_name(this_kernel)), &
+                                     " and qr-decompostion produced an error! Aborting..."
+
+               endif
 #ifdef WITH_MPI
-         call MPI_ABORT(mpi_comm_world, 1, mpierr)
+               call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
-       endif
+             endif
 
-       if (myid==0) then
-         print '(a)','| Two-step ELPA solver complete.'
-         print *
-       end if
+             if (myid==0) then
+               print '(a)','| Two-step ELPA solver complete.'
+               print *
+             end if
 
-       if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-       if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
-       if (myid == 0) print *,'Time transform back EVs :',time_evp_back
-       if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-       if (myid == 0) print *," "
-
+             if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
+             if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
+             if (myid == 0) print *,'Time transform back EVs :',time_evp_back
+             if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
+             if (myid == 0) print *," "
 #ifdef WITH_MPI
-       call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+             call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-       tEnd = mpi_wtime()
+             tEnd = mpi_wtime()
 
-       if (myid == 0) print *," "
-       if (myid == 0) print *,'Total time for solve_evp_complex_2stage with ', &
-                      trim(elpa_get_actual_complex_kernel_name()),' default kernel:',tEnd - tStart
-       if (myid == 0) print *," "
+             if (myid == 0) print *," "
+             if (myid == 0) print *,'Total time for solve_evp_complex_2stage with ', &
+                              trim(elpa_complex_kernel_name(this_kernel)),' kernel:',tEnd - tStart
+             if (myid == 0) print *," "
 
-       status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid, tmp1_complex, tmp2_complex)
-       if (myid == 0) print *," "
+             status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid, tmp1_complex, tmp2_complex)
+             if (myid == 0) print *," "
 
-       if (status .eq. 1) then
-         if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ",trim(elpa_get_actual_complex_kernel_name()), &
-           ' kernel!'
+             if (status .eq. 1) then
+               if (input_options%useQrIsSet  .eq. 0) then
+                 if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ",trim(elpa_complex_kernel_name(this_kernel)), &
+                 ' kernel!'
+               else
+                 if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ",trim(elpa_complex_kernel_name(this_kernel)), &
+                 ' kernel and qr-decompostion!'
+               endif
 #ifdef WITH_MPI
-         call blacs_gridexit(my_blacs_ctxt)
-         call mpi_finalize(mpierr)
+               call blacs_gridexit(my_blacs_ctxt)
+               call mpi_finalize(mpierr)
 #endif
 
-         call EXIT(STATUS)
-       endif
-       if (myid .eq. 0) print *," "
+               call EXIT(STATUS)
+             endif
 
+           endif
+         enddo
 
-       if (myid .eq. 0) print *," "
-       if (myid .eq. 0) print *,"Iterating over all available ELPA2 complex kernels ..."
-       if (myid .eq. 0) print *," "
-
-       do this_kernel = 1 , elpa_number_of_complex_kernels()
-         if (input_options%useGPUIsSet .eq. 1) this_gpu=.true.
-         if (input_options%useGPUIsSet .eq. 0) this_gpu=.false.
-
-         if (input_options%useQrIsSet .eq. 1) then
-           print *,"error: no QR-decomposition for complex case available!"
-           stop 1
-         endif
+       else ! complexKernelSet
 
          a_complex = as_complex
          z_complex = a_complex
-         if (elpa_complex_kernel_is_available(this_kernel)) then
+         if (elpa_complex_kernel_is_available(input_options%this_complex_kernel)) then
            if (input_options%useQrIsSet  .eq. 0) then
-             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(this_kernel)),":"
+             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(input_options%this_complex_kernel)),":"
            else
-             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(this_kernel))," with qr decompostion:"
+             if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), &
+                 " with qr decompostion:"
            endif
            if (myid==0) then
              print *," "
              print '(a)','| Entering two-stage ELPA solver ... '
              print *
            end if
+
+           if (input_options%useGPUIsSet .eq. 1) this_gpu=.true.
+           if (input_options%useGPUIsSet .eq. 0) this_gpu=.false.
+
+           if (input_options%useQrIsSet .eq. 1) then
+             print *,"error: no QR-decomposition for complex case available!"
+             stop 1
+           endif
+
+
 #ifdef WITH_MPI
            call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
@@ -904,14 +1006,17 @@ program test_all_real
 
            success = elpa_solve_evp_complex_2stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows,  nblk, na_cols, &
                                                           mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                                          THIS_COMPLEX_ELPA_KERNEL_API = this_kernel, useGPU=this_gpu)
+                                                          THIS_COMPLEX_ELPA_KERNEL_API = input_options%this_complex_kernel, &
+                                                          useGPU=this_gpu)
 
            if (.not.(success)) then
              if (input_options%useQrIsSet  .eq. 0) then
-               write(error_unit,*) "solve_evp_complex_2stage with kernel ",trim(elpa_complex_kernel_name(this_kernel)), &
+               write(error_unit,*) "solve_evp_complex_2stage with kernel ", &
+                   trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), &
                                    " produced an error! Aborting..."
              else
-               write(error_unit,*) "solve_evp_complex_2stage with kernel ",trim(elpa_complex_kernel_name(this_kernel)), &
+               write(error_unit,*) "solve_evp_complex_2stage with kernel ", &
+                   trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), &
                                    " and qr-decompostion produced an error! Aborting..."
 
              endif
@@ -937,7 +1042,7 @@ program test_all_real
 
            if (myid == 0) print *," "
            if (myid == 0) print *,'Total time for solve_evp_complex_2stage with ', &
-                            trim(elpa_complex_kernel_name(this_kernel)),' kernel:',tEnd - tStart
+                          trim(elpa_complex_kernel_name(input_options%this_complex_kernel)),' kernel:',tEnd - tStart
            if (myid == 0) print *," "
 
            status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid, tmp1_complex, tmp2_complex)
@@ -945,11 +1050,11 @@ program test_all_real
 
            if (status .eq. 1) then
              if (input_options%useQrIsSet  .eq. 0) then
-               if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ",trim(elpa_complex_kernel_name(this_kernel)), &
-               ' kernel!'
+               if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ", &
+                 trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), ' kernel!'
              else
-               if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ",trim(elpa_complex_kernel_name(this_kernel)), &
-               ' kernel and qr-decompostion!'
+               if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ", &
+                 trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), ' kernel and qr-decompostion!'
              endif
 #ifdef WITH_MPI
              call blacs_gridexit(my_blacs_ctxt)
@@ -960,105 +1065,11 @@ program test_all_real
            endif
 
          endif
-       enddo
+       endif ! realKernelSet
+     endif ! datatype == 1
+   endif ! do2Stage
 
-     else ! complexKernelSet
-
-       a_complex = as_complex
-       z_complex = a_complex
-       if (elpa_complex_kernel_is_available(input_options%this_complex_kernel)) then
-         if (input_options%useQrIsSet  .eq. 0) then
-           if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(input_options%this_complex_kernel)),":"
-         else
-           if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), &
-               " with qr decompostion:"
-         endif
-         if (myid==0) then
-           print *," "
-           print '(a)','| Entering two-stage ELPA solver ... '
-           print *
-         end if
-
-         if (input_options%useGPUIsSet .eq. 1) this_gpu=.true.
-         if (input_options%useGPUIsSet .eq. 0) this_gpu=.false.
-
-         if (input_options%useQrIsSet .eq. 1) then
-           print *,"error: no QR-decomposition for complex case available!"
-           stop 1
-         endif
-
-
-#ifdef WITH_MPI
-         call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-
-         tStart = mpi_wtime()
-
-         success = elpa_solve_evp_complex_2stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows,  nblk, na_cols, &
-                                                        mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
-                                                        THIS_COMPLEX_ELPA_KERNEL_API = input_options%this_complex_kernel, &
-                                                        useGPU=this_gpu)
-
-         if (.not.(success)) then
-           if (input_options%useQrIsSet  .eq. 0) then
-             write(error_unit,*) "solve_evp_complex_2stage with kernel ", &
-                 trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), &
-                                 " produced an error! Aborting..."
-           else
-             write(error_unit,*) "solve_evp_complex_2stage with kernel ", &
-                 trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), &
-                                 " and qr-decompostion produced an error! Aborting..."
-
-           endif
-#ifdef WITH_MPI
-           call MPI_ABORT(mpi_comm_world, 1, mpierr)
-#endif
-         endif
-
-         if (myid==0) then
-           print '(a)','| Two-step ELPA solver complete.'
-           print *
-         end if
-
-         if (myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-         if (myid == 0) print *,'Time solve tridi        :',time_evp_solve
-         if (myid == 0) print *,'Time transform back EVs :',time_evp_back
-         if (myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-         if (myid == 0) print *," "
-#ifdef WITH_MPI
-         call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-#endif
-         tEnd = mpi_wtime()
-
-         if (myid == 0) print *," "
-         if (myid == 0) print *,'Total time for solve_evp_complex_2stage with ', &
-                        trim(elpa_complex_kernel_name(input_options%this_complex_kernel)),' kernel:',tEnd - tStart
-         if (myid == 0) print *," "
-
-         status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid, tmp1_complex, tmp2_complex)
-         if (myid == 0) print *," "
-
-         if (status .eq. 1) then
-           if (input_options%useQrIsSet  .eq. 0) then
-             if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ", &
-               trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), ' kernel!'
-           else
-             if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ", &
-               trim(elpa_complex_kernel_name(input_options%this_complex_kernel)), ' kernel and qr-decompostion!'
-           endif
-#ifdef WITH_MPI
-           call blacs_gridexit(my_blacs_ctxt)
-           call mpi_finalize(mpierr)
-#endif
-
-           call EXIT(STATUS)
-         endif
-
-       endif
-     endif ! realKernelSet
-   endif ! datatype == 1
-
-   if (input_options%datatype == 1) then
+   if (input_options%datatype .eq. 1) then
      deallocate(a_real)
      deallocate(as_real)
 
@@ -1067,7 +1078,7 @@ program test_all_real
      deallocate(tmp2_real)
    endif
 
-   if (input_options%datatype == 2) then
+   if (input_options%datatype .eq. 2) then
      deallocate(a_complex)
      deallocate(as_complex)
 

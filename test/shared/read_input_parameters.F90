@@ -52,6 +52,7 @@ module mod_read_input_parameters
     integer        :: this_real_kernel, this_complex_kernel
     logical        :: realKernelIsSet, complexKernelIsSet
     integer        :: useQrIsSet, useGPUIsSet
+    logical        :: doSolveTridi, do1stage, do2stage
   end type
 
 
@@ -85,6 +86,8 @@ module mod_read_input_parameters
       character(len=128)           :: command_line_argument
 
       integer                      :: kernels
+
+
 !      integer(kind=ik)             :: useQrSet
 !      integer(kind=ik)             :: useGPUSet
 
@@ -94,7 +97,7 @@ module mod_read_input_parameters
         print *,"                                  [nblk=size of block cyclic distribution] [--output_eigenvalues]"
         print *,"                                  [--output_eigenvectors] [--real-kernel=name_of_kernel]"
         print *,"                                  [--complex-kernel=name_of_kernel] [--use-gpu={0|1}]"
-        print *,"                                  [--use-qr={0,1}]"
+        print *,"                                  [--use-qr={0,1}] [--tests={all|solve-tridi|1stage|2stage}]"
       endif
 
 
@@ -156,6 +159,30 @@ module mod_read_input_parameters
       if (command_line_argument(1:10) == "--use-gpu=") then
         read(command_line_argument(11:), *) input_options%useGPUIsSet
       endif
+
+      if (command_line_argument(1:8) == "--tests=") then
+        if (command_line_argument(9:11) == "all") then
+          input_options%doSolveTridi=.true.
+          input_options%do1stage=.true.
+          input_options%do2stage=.true.
+        else if (command_line_argument(9:19) == "solve-tride") then
+          input_options%doSolveTridi=.true.
+          input_options%do1stage=.false.
+          input_options%do2stage=.false.
+        else if (command_line_argument(9:14) == "1stage") then
+          input_options%doSolveTridi=.false.
+          input_options%do1stage=.true.
+          input_options%do2stage=.false.
+        else if (command_line_argument(9:14) == "2stage") then
+          input_options%doSolveTridi=.false.
+          input_options%do1stage=.false.
+          input_options%do2stage=.true.
+        else
+           print *,"unknown test specified"
+           stop
+        endif
+      endif
+
     end subroutine
 
     subroutine parse_arguments_special(command_line_argument, na, nev, nblk, write_to_file, &
