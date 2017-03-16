@@ -6,7 +6,7 @@ elpa_tests \- Provide all tests for the ELPA library\&.
 
 .SH SYNOPSIS
 .br
-elpa_tests [--help] [datatype={real|complex}] [na=number] [nev=number] [nblk=size of block cyclic distribution] [--output_eigenvalues] [--output_eigenvectors] [--real-kernel=name_of_kernel] [--complex-kernel=name_of_kernel] [--use-gpu={0|1}] [--use-qr={0,1}] [--tests={all|solve-tridi|1stage|2stage}]
+elpa_tests [--help] [datatype={real|complex}] [na=number] [nev=number] [nblk=size of block cyclic distribution] [--output_eigenvalues] [--output_eigenvectors] [--real-kernel=name_of_kernel] [--complex-kernel=name_of_kernel] [--use-gpu={0|1}] [--use-qr={0,1}] [--tests={all|solve-tridi|1stage|2stage|cholesky|invert-triangular|transpose-mulitply}]
 .br
 
 .SH "Description"
@@ -42,7 +42,9 @@ If no options are set, default options are choses (and printed).
 .br
 .RI "--use-qr={0,1}                            use QR-decomposition in real 2stage step. Default no"
 .br
-.RI "--tests={all|solve-tridi|1stage|2stage}   if given, run only specified tests. Default is all"
+.RI "--tests={all|solve-tridi|1stage|2stage|   if given, run only specified tests. Default is all"
+.RI "         cholesky|invert-triangular|"
+.RI "         transpose-mulitply}"
 
 
 .SH "Author"
