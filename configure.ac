@@ -187,7 +187,7 @@ AM_CONDITIONAL([HAVE_REDIRECT],[test x"$enable_redirect" = x"yes"])
 dnl build with ftimings support
 AC_MSG_CHECKING(whether ELPA should be build with more detailed timing support)
 AC_ARG_ENABLE([timings],
-		AS_HELP_STRING([--enable-timing],
+		AS_HELP_STRING([--enable-timings],
 			       [more detailed timing, default no.]),
 	      [enable_timings=yes],
 	      [enable_timings=no])
