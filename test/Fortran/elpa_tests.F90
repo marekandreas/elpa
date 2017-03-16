@@ -103,11 +103,15 @@ program test_all_real
    real(kind=rk8), allocatable, target    :: a_real(:,:), z_real(:,:), tmp1_real(:,:), tmp2_real(:,:), as_real(:,:)
    complex(kind=ck8), allocatable, target :: a_complex(:,:), z_complex(:,:), tmp1_complex(:,:), tmp2_complex(:,:), as_complex(:,:)
 
+   real(kind=rk8), allocatable, target    :: b_real(:,:), bs_real(:,:), c_real(:,:)
+   complex(kind=ck8), allocatable, target :: b_complex(:,:), bs_complex(:,:), c_complex(:,:)
+
    complex(kind=ck8), parameter           :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
    real(kind=rk8), allocatable, target    :: d_real(:), e_real(:), ev_analytic_real(:)
    real(kind=rk8),  target                :: diagonalELement_real, subdiagonalElement_real
+   complex(kind=ck8)                      :: diagonalElement_complex
    real(kind=rk8), target                 :: tmp
-
+   real(kind=rk8)                         :: norm, normmax
 
    integer(kind=ik)                       :: iseed(4096) ! Random seed, size should be sufficient for every generator
    real(kind=rk8), parameter              :: pi = 3.141592653589793238462643383279_rk8
@@ -126,7 +130,11 @@ program test_all_real
    real(kind=rk8)                         :: tStart, tEnd
    real(kind=rk8)                         :: maxerr
    logical                                :: gpuAvailable
-
+#ifdef WITH_MPI
+   real(kind=rk8)                         :: pzlange, pdlange
+#else
+   real(kind=rk8)                         :: zlange, dlange
+#endif
 
    !-------------------------------------------------------------------------------
 
@@ -246,6 +254,15 @@ program test_all_real
      allocate(a_real (na_rows,na_cols))
      allocate(z_real (na_rows,na_cols))
      allocate(as_real(na_rows,na_cols))
+
+     if (input_options%doInvertTrm .or. input_options%doTransposeMultiply) then
+       allocate(b_real(na_rows,na_cols))
+       allocate(bs_real(na_rows,na_cols))
+     endif
+
+     if (input_options%doTransposeMultiply) then
+       allocate(c_real(na_rows,na_cols))
+     endif
    endif
    if (input_options%datatype .eq. 2) then
      allocate(a_complex (na_rows,na_cols))
@@ -253,6 +270,15 @@ program test_all_real
      allocate(as_complex(na_rows,na_cols))
 
      allocate(xr(na_rows,na_cols))
+
+     if (input_options%doInvertTrm .or. input_options%doTransposeMultiply) then
+       allocate(b_complex(na_rows,na_cols))
+       allocate(bs_complex(na_rows,na_cols))
+     endif
+
+     if (input_options%doTransposeMultiply) then
+       allocate(c_complex(na_rows,na_cols))
+     endif
    endif
 
    if (input_options%datatype .eq. 1) then
@@ -275,6 +301,34 @@ program test_all_real
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("allocate arrays")
 #endif
+
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("set up matrix")
+#endif
+
+   if (input_options%datatype .eq. 1) then
+     call prepare_matrix_double(na, myid, sc_desc, iseed,  a_real, z_real, as_real)
+
+     if (input_options%doInvertTrm) then
+       b_real(:,:) = a_real(:,:)
+       bs_real(:,:) = a_real(:,:)
+     endif
+   endif
+   if (input_options%datatype .eq. 2) then
+     call prepare_matrix_double(na, myid, sc_desc, iseed,  xr, a_complex, z_complex, as_complex)
+     if (input_options%doInvertTrm) then
+       b_complex(:,:) = a_complex(:,:)
+       bs_complex(:,:) = a_complex(:,:)
+     endif
+
+   endif
+
+
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("set up matrix")
+#endif
+
    if (input_options%doSolveTridi) then
      ! first the toeplitz test only in real case
      ! changeable numbers here would be nice
@@ -389,27 +443,520 @@ program test_all_real
      endif ! datatype == 1 for toeplitz
     endif ! doSolve-tridi
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("set up matrix")
+    if (input_options%doCholesky) then
+      if (input_options%datatype .eq. 1) then
+        a_real(:,:) = 0.0_rk8
+        diagonalElement_real = 2.546_rk8
+
+        do i = 1, na
+          if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+            a_real(rowLocal,colLocal) = diagonalElement_real * abs(cos( pi*real(i,kind=rk8)/ real(na+1,kind=rk8) ))
+          endif
+        enddo
+
+        as_real(:,:) = a_real(:,:)
+
+        if (myid==0) then
+          print '(a)','| Compute real cholesky decomposition ... '
+          print *
+        end if
+#ifdef WITH_MPI
+        call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-   if (input_options%datatype .eq. 1) then
-     call prepare_matrix_double(na, myid, sc_desc, iseed,  a_real, z_real, as_real)
-   endif
-   if (input_options%datatype .eq. 2) then
-     call prepare_matrix_double(na, myid, sc_desc, iseed,  xr, a_complex, z_complex, as_complex)
-   endif
+        success = elpa_cholesky_real_double(na, a_real, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, .true.)
+
+        if (.not.(success)) then
+          write(error_unit,*) "elpa_cholseky_real produced an error! Aborting..."
+#ifdef WITH_MPI
+          call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+        endif
 
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("set up matrix")
+        if (myid==0) then
+          print '(a)','| Real cholesky decomposition complete.'
+          print *
+        end if
+
+        tmp1_real(:,:) = 0.0_rk8
+#ifdef WITH_MPI
+        call pdtran(na, na, 1.0_rk8, a_real, 1, 1, sc_desc, 0.0_rk8, tmp1_real, 1, 1, sc_desc)
+#else
+        tmp1_real = transpose(a_real)
+#endif
+        ! tmp2 = a * a**T
+#ifdef WITH_MPI
+        call pdgemm("N","N", na, na, na, 1.0_rk8, a_real, 1, 1, sc_desc, tmp1_real, 1, 1, &
+                    sc_desc, 0.0_rk8, tmp2_real, 1, 1, sc_desc)
+#else
+        call dgemm("N","N", na, na, na, 1.0_rk8, a_real, na, tmp1_real, na, 0.0_rk8, tmp2_real, na)
 #endif
 
+        ! compare tmp2 with original matrix
+        tmp2_real(:,:) = tmp2_real(:,:) - as_real(:,:)
 
-   if (myid==0) then
-     print '(a)','| Starting the test ... '
-     print *
-   end if
+#ifdef WITH_MPI
+        norm = pdlange("M",na, na, tmp2_real, 1, 1, sc_desc, tmp1_real)
+#else
+        norm = dlange("M", na, na, tmp2_real, na_rows, tmp1_real)
+#endif
+
+#ifdef WITH_MPI
+        call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+        normmax = norm
+#endif
+        if (myid .eq. 0) then
+          print *," Maximum error of result: ", normmax
+        endif
+
+        if (normmax .gt. 5e-12_rk8) then
+             status = 1
+        endif
+
+      endif ! real case
+
+      if (input_options%datatype .eq. 2) then
+        a_complex(:,:) = CONE - CONE
+        diagonalElement_complex = (2.546_rk8, 0.0_rk8)
+        do i = 1, na
+          if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+            a_complex(rowLocal,colLocal) = diagonalElement_complex * abs(cos( pi*real(i,kind=rk8)/ real(na+1,kind=rk8) ))
+          endif
+        enddo
+        as_complex(:,:) = a_complex(:,:)
+
+        if (myid==0) then
+          print '(a)','| Compute complex cholesky decomposition ... '
+          print *
+        end if
+#ifdef WITH_MPI
+        call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+        success = elpa_cholesky_complex_double(na, a_complex, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, .true.)
+
+        if (.not.(success)) then
+          write(error_unit,*) " elpa_cholesky_complex produced an error! Aborting..."
+#ifdef WITH_MPI
+          call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+        endif
+
+
+        if (myid==0) then
+          print '(a)','| Solve cholesky decomposition complete.'
+          print *
+        end if
+
+        tmp1_complex(:,:) = 0.0_ck8
+
+        ! tmp1 = a**H
+#ifdef WITH_MPI
+        call pztranc(na, na, CONE, a_complex, 1, 1, sc_desc, CZERO, tmp1_complex, 1, 1, sc_desc)
+#else
+        tmp1_complex = transpose(conjg(a_complex))
+#endif
+        ! tmp2 = a * a**H
+#ifdef WITH_MPI
+        call pzgemm("N","N", na, na, na, CONE, a_complex, 1, 1, sc_desc, tmp1_complex, 1, 1, &
+                     sc_desc, CZERO, tmp2_complex, 1, 1, sc_desc)
+#else
+        call zgemm("N","N", na, na, na, CONE, a_complex, na, tmp1_complex, na, CZERO, tmp2_complex, na)
+#endif
+
+        ! compare tmp2 with c
+        tmp2_complex(:,:) = tmp2_complex(:,:) - as_complex(:,:)
+
+#ifdef WITH_MPI
+        norm = pzlange("M",na, na, tmp2_complex, 1, 1, sc_desc,tmp1_complex)
+#else
+        norm = zlange("M",na, na, tmp2_complex, na_rows, tmp1_complex)
+#endif
+#ifdef WITH_MPI
+        call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+        normmax = norm
+#endif
+        if (myid .eq. 0) then
+          print *," Maximum error of result: ", normmax
+        endif
+
+        if (normmax .gt. 5e-11_rk8) then
+             status = 1
+        endif
+
+      endif ! complex case
+
+
+    endif ! doCholesky
+
+
+    if (input_options%doInvertTrm) then
+      if (input_options%datatype .eq. 1) then
+
+        a_real(:,:) = 0.0_rk8
+        diagonalElement_real = 2.546_rk8
+
+        do i = 1, na
+          if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+            a_real(rowLocal,colLocal) = diagonalElement_real * abs(cos( pi*real(i,kind=rk8)/ real(na+1,kind=rk8) ))
+          endif
+        enddo
+
+        as_real(:,:) = a_real(:,:)
+
+        if (myid==0) then
+          print '(a)','| Setup an upper triangular matrix ... '
+          print *
+        end if
+#ifdef WITH_MPI
+        call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+        success = elpa_cholesky_real_double(na, a_real, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, .true.)
+
+        if (.not.(success)) then
+           write(error_unit,*) "elpa_cholseky_real produced an error! Aborting..."
+#ifdef WITH_MPI
+           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+        endif
+
+
+        if (myid==0) then
+          print '(a)','| Upper triangular matrix created.'
+          print *
+        end if
+
+        as_real(:,:) = a_real(:,:)
+
+        if (myid==0) then
+          print '(a)','| Invert the upper triangular matrix ... '
+          print *
+        end if
+#ifdef WITH_MPI
+        call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+        success = elpa_invert_trm_real_double(na, a_real, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, .true.)
+
+        if (.not.(success)) then
+          write(error_unit,*) "elpa_cholseky_real produced an error! Aborting..."
+#ifdef WITH_MPI
+          call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+        endif
+
+
+        if (myid==0) then
+          print '(a)','| Upper triangular matrix inverted.'
+          print *
+        end if
+
+
+        tmp1_real(:,:) = 0.0_rk8
+
+        ! tmp1 = as * a^-1 ! should give unity matrix
+
+#ifdef WITH_MPI
+        call pdgemm("N","N", na, na, na, 1.0_rk8, as_real, 1, 1, sc_desc, a_real, 1, 1, &
+                    sc_desc, 0.0_rk8, tmp1_real, 1, 1, sc_desc)
+#else
+        call dgemm("N","N", na, na, na, 1.0_rk8, as_real, na, a_real, na, 0.0_rk8, tmp1_real, na)
+#endif
+
+        ! check the quality of unity matrix
+
+        ! tmp2 = b * tmp1
+#ifdef WITH_MPI
+        call pdgemm("N","N", na, na, na, 1.0_rk8, b_real, 1, 1, sc_desc, tmp1_real, 1, 1, &
+                    sc_desc, 0.0_rk8, tmp2_real, 1, 1, sc_desc)
+#else
+        call dgemm("N","N", na, na, na, 1.0_rk8, b_real, na, tmp1_real, na, 0.0_rk8, tmp2_real, na)
+#endif
+
+        ! compare tmp2 with original matrix b
+        tmp2_real(:,:) = tmp2_real(:,:) - bs_real(:,:)
+
+#ifdef WITH_MPI
+        norm = pdlange("M",na, na, tmp2_real, 1, 1, sc_desc, bs_real)
+#else
+        norm = dlange("M", na, na, tmp2_real, na_rows, bs_real)
+#endif
+
+#ifdef WITH_MPI
+        call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+        normmax = norm
+#endif
+        if (myid .eq. 0) then
+          print *," Maximum error of result: ", normmax
+        endif
+
+        if (normmax .gt. 5e-12_rk8) then
+          status = 1
+        endif
+
+      endif ! realcase
+
+      if (input_options%datatype .eq. 2) then
+        a_complex(:,:) = CONE - CONE
+        diagonalElement_complex = (2.546_rk8, 0.0_rk8)
+        do i = 1, na
+          if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+            a_complex(rowLocal,colLocal) = diagonalElement_complex * abs(cos( pi*real(i,kind=rk8)/ real(na+1,kind=rk8) ))
+          endif
+        enddo
+        as_complex(:,:) = a_complex(:,:)
+
+        if (myid==0) then
+          print '(a)','| Setting up tridiagonal matrix ... '
+          print *
+        end if
+#ifdef WITH_MPI
+        call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+        success = elpa_cholesky_complex_double(na, a_complex, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, .true.)
+
+        if (.not.(success)) then
+          write(error_unit,*) " elpa_cholesky_complex produced an error! Aborting..."
+#ifdef WITH_MPI
+          call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+        endif
+
+        as_complex(:,:) = a_complex(:,:)
+
+        if (myid==0) then
+          print '(a)','| Setting up tridiagonal matrix complete.'
+          print *
+        end if
+
+        if (myid==0) then
+          print '(a)','| Inverting tridiagonal matrix ... '
+          print *
+        end if
+#ifdef WITH_MPI
+        call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+        success = elpa_invert_trm_complex_double(na, a_complex, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, .true.)
+
+        if (.not.(success)) then
+           write(error_unit,*) " elpa_invert_trm_complex produced an error! Aborting..."
+#ifdef WITH_MPI
+           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+        endif
+
+
+        if (myid==0) then
+          print '(a)','| Inversion of tridiagonal matrix complete.'
+          print *
+        end if
+
+
+        tmp1_complex(:,:) = 0.0_ck8
+
+        ! tmp1 = a * a^-1 ! should be unity matrix
+#ifdef WITH_MPI
+        call pzgemm("N","N", na, na, na, CONE, as_complex, 1, 1, sc_desc, a_complex, 1, 1, &
+                    sc_desc, CZERO, tmp1_complex, 1, 1, sc_desc)
+#else
+        call zgemm("N","N", na, na, na, CONE, as_complex, na, a_complex, na, CZERO, tmp1_complex, na)
+#endif
+
+        ! tmp2 = b * tmp1
+        tmp2_complex(:,:) = 0.0_ck8
+#ifdef WITH_MPI
+        call pzgemm("N","N", na, na, na, CONE, b_complex, 1, 1, sc_desc, tmp1_complex, 1, 1, &
+                    sc_desc, CZERO, tmp2_complex, 1, 1, sc_desc)
+#else
+        call zgemm("N","N", na, na, na, CONE, b_complex, na, tmp1_complex, na, CZERO, tmp2_complex, na)
+#endif
+
+        ! compare tmp2 with c
+        tmp2_complex(:,:) = tmp2_complex(:,:) - bs_complex(:,:)
+        tmp1_complex(:,:) = 0.0_ck8
+#ifdef WITH_MPI
+        norm = pzlange("M",na, na, tmp2_complex, 1, 1, sc_desc,tmp1_complex)
+#else
+        norm = zlange("M",na, na, tmp2_complex, na_rows, tmp1_complex)
+#endif
+#ifdef WITH_MPI
+        call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+        normmax = norm
+#endif
+        if (myid .eq. 0) then
+          print *," Maximum error of result: ", normmax
+        endif
+
+        if (normmax .gt. 5e-11_rk8) then
+          status = 1
+        endif
+
+      endif ! complexcase
+
+    endif ! input_options%doInvertTrm
+
+    if (input_options%doTransposeMultiply) then
+      if (input_options%datatype .eq. 1) then
+        b_real(:,:) = 2.0_rk8 * a_real(:,:)
+        c_real(:,:) = 0.0_rk8
+
+        if (myid==0) then
+          print '(a)','| Compute c= a**T * b ... '
+          print *
+        end if
+#ifdef WITH_MPI
+        call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+        success = elpa_mult_at_b_real_double("F","F", na, na, a_real, na_rows, na_cols, b_real, na_rows, &
+                                             na_cols, nblk, mpi_comm_rows, mpi_comm_cols, c_real,   &
+                                             na_rows, na_cols)
+
+        if (.not.(success)) then
+          write(error_unit,*) "elpa_mult_at_b_real produced an error! Aborting..."
+#ifdef WITH_MPI
+          call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+        endif
+
+
+        if (myid==0) then
+          print '(a)','| Solve c = a**T * b complete.'
+          print *
+        end if
+
+        tmp1_real(:,:) = 0.0_rk8
+
+        ! tmp1 = a**T
+#ifdef WITH_MPI
+        call pdtran(na, na, 1.0_rk8, a_real, 1, 1, sc_desc, 0.0_rk8, tmp1_real, 1, 1, sc_desc)
+#else
+        tmp1_real = transpose(a_real)
+#endif
+        ! tmp2 = tmp1 * b
+#ifdef WITH_MPI
+        call pdgemm("N","N", na, na, na, 1.0_rk8, tmp1_real, 1, 1, sc_desc, b_real, 1, 1, &
+                    sc_desc, 0.0_rk8, tmp2_real, 1, 1, sc_desc)
+#else
+        call dgemm("N","N", na, na, na, 1.0_rk8, tmp1_real, na, b_real, na, 0.0_rk8, tmp2_real, na)
+#endif
+
+        ! compare tmp2 with c
+        tmp2_real(:,:) = tmp2_real(:,:) - c_real(:,:)
+
+#ifdef WITH_MPI
+        norm = pdlange("M", na, na, tmp2_real, 1, 1, sc_desc, tmp1_real)
+#else
+        norm = dlange("M", na, na, tmp2_real, na_rows, tmp1_real)
+#endif
+
+#ifdef WITH_MPI
+        call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+        normmax = norm
+#endif
+        if (myid .eq. 0) then
+          print *," Maximum error of result: ", normmax
+        endif
+
+        if (normmax .gt. 5e-11_rk8) then
+             status = 1
+        endif
+
+      endif ! realcase
+
+      if (input_options%datatype .eq. 2) then
+        b_complex(:,:) = 2.0_ck8 * a_complex(:,:)
+        c_complex(:,:) = 0.0_ck8
+
+        if (myid==0) then
+          print '(a)','| Compute c= a**T * b ... '
+          print *
+        end if
+#ifdef WITH_MPI
+        call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+#endif
+
+        success = elpa_mult_ah_b_complex_double("F","F", na, na, a_complex, na_rows, na_cols, b_complex, na_rows, na_cols, &
+                                                nblk, mpi_comm_rows, mpi_comm_cols, c_complex, na_rows, na_cols)
+
+        if (.not.(success)) then
+          write(error_unit,*) " elpa_mult_at_b_complex produced an error! Aborting..."
+#ifdef WITH_MPI
+          call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#endif
+        endif
+
+        if (myid==0) then
+          print '(a)','| Solve c = a**T * b complete.'
+          print *
+        end if
+
+        tmp1_complex(:,:) = 0.0_ck8
+
+        ! tmp1 = a**T
+#ifdef WITH_MPI
+        call pztranc(na, na, CONE, a_complex, 1, 1, sc_desc, CZERO, tmp1_complex, 1, 1, sc_desc)
+#else
+        tmp1_complex = transpose(conjg(a_complex))
+#endif
+        ! tmp2 = tmp1 * b
+#ifdef WITH_MPI
+        call pzgemm("N","N", na, na, na, CONE, tmp1_complex, 1, 1, sc_desc, b_complex, 1, 1, &
+                    sc_desc, CZERO, tmp2_complex, 1, 1, sc_desc)
+#else
+        call zgemm("N","N", na, na, na, CONE, tmp1_complex, na, b_complex, na, CZERO, tmp2_complex, na)
+#endif
+
+        ! compare tmp2 with c
+        tmp2_complex(:,:) = tmp2_complex(:,:) - c_complex(:,:)
+
+#ifdef WITH_MPI
+        norm = pzlange("M",na, na, tmp2_complex, 1, 1, sc_desc,tmp1_complex)
+#else
+        norm = zlange("M",na, na, tmp2_complex, na_rows, tmp1_complex)
+#endif
+#ifdef WITH_MPI
+        call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+        normmax = norm
+#endif
+        if (myid .eq. 0) then
+          print *," Maximum error of result: ", normmax
+        endif
+
+        if (normmax .gt. 5e-11_rk8) then
+             status = 1
+        endif
+
+      endif ! complexcase
+
+
+    endif ! input_options%doTransposeMultiply
+
+!#ifdef HAVE_DETAILED_TIMINGS
+!   call timer%start("set up matrix")
+!#endif
+!
+!   if (input_options%datatype .eq. 0) then
+!     call prepare_matrix_double(na, myid, sc_desc, iseed,  a_real, z_real, as_real)
+!   endif
+!   if (input_options%datatype .eq. 1) then
+!     call prepare_matrix_double(na, myid, sc_desc, iseed,  xr, a_complex, z_complex, as_complex)
+!   endif
+!
+!
+!#ifdef HAVE_DETAILED_TIMINGS
+!   call timer%stop("set up matrix")
+!#endif
 
 
    if (input_options%do1stage) then
@@ -1080,6 +1627,15 @@ program test_all_real
      deallocate(z_real)
      deallocate(tmp1_real)
      deallocate(tmp2_real)
+
+     if (input_options%doInvertTrm .or. input_options%doTransposeMultiply) then
+       deallocate(b_real)
+       deallocate(bs_real)
+     endif
+
+     if (input_options%doTransposeMultiply) then
+       deallocate(c_real)
+     endif
    endif
 
    if (input_options%datatype .eq. 2) then
@@ -1090,6 +1646,14 @@ program test_all_real
      deallocate(tmp1_complex)
      deallocate(tmp2_complex)
 
+     if (input_options%doInvertTrm .or. input_options%doTransposeMultiply) then
+       deallocate(b_complex)
+       deallocate(bs_complex)
+     endif
+
+     if (input_options%doTransposeMultiply) then
+       deallocate(c_complex)
+     endif
      deallocate(xr)
    endif
 

@@ -53,7 +53,8 @@ module mod_read_input_parameters
     integer        :: this_real_kernel, this_complex_kernel
     logical        :: realKernelIsSet, complexKernelIsSet
     integer        :: useQrIsSet, useGPUIsSet
-    logical        :: doSolveTridi, do1stage, do2stage, justHelpMessage
+    logical        :: doSolveTridi, do1stage, do2stage, justHelpMessage, &
+                      doCholesky, doInvertTrm, doTransposeMultiply
   end type
 
   interface read_input_parameters
@@ -84,7 +85,8 @@ module mod_read_input_parameters
         print *,"                  [nblk=size of block cyclic distribution] [--output_eigenvalues]"
         print *,"                  [--output_eigenvectors] [--real-kernel=name_of_kernel]"
         print *,"                  [--complex-kernel=name_of_kernel] [--use-gpu={0|1}]"
-        print *,"                  [--use-qr={0,1}] [--tests={all|solve-tridi|1stage|2stage}]"
+        print *,"                  [--use-qr={0,1}] [--tests={all|solve-tridi|1stage|2stage|cholesky&
+            &|invert-triangular|transpose-mulitply}]"
         input_options%justHelpMessage=.true.
         return
       endif
@@ -154,18 +156,51 @@ module mod_read_input_parameters
           input_options%doSolveTridi=.true.
           input_options%do1stage=.true.
           input_options%do2stage=.true.
+          input_options%doCholesky=.true.
+          input_options%doInvertTrm=.true.
+          input_options%doTransposeMultiply=.true.
         else if (command_line_argument(9:19) == "solve-tride") then
           input_options%doSolveTridi=.true.
           input_options%do1stage=.false.
           input_options%do2stage=.false.
+          input_options%doCholesky=.false.
+          input_options%doInvertTrm=.false.
+          input_options%doTransposeMultiply=.false.
         else if (command_line_argument(9:14) == "1stage") then
           input_options%doSolveTridi=.false.
           input_options%do1stage=.true.
           input_options%do2stage=.false.
+          input_options%doCholesky=.false.
+          input_options%doInvertTrm=.false.
+          input_options%doTransposeMultiply=.false.
         else if (command_line_argument(9:14) == "2stage") then
           input_options%doSolveTridi=.false.
           input_options%do1stage=.false.
           input_options%do2stage=.true.
+          input_options%doCholesky=.false.
+          input_options%doInvertTrm=.false.
+          input_options%doTransposeMultiply=.false.
+        else if (command_line_argument(9:16) == "cholesky") then
+          input_options%doSolveTridi=.false.
+          input_options%do1stage=.false.
+          input_options%do2stage=.false.
+          input_options%doCholesky=.true.
+          input_options%doInvertTrm=.false.
+          input_options%doTransposeMultiply=.false.
+        else if (command_line_argument(9:25) == "invert-triangular") then
+          input_options%doSolveTridi=.false.
+          input_options%do1stage=.false.
+          input_options%do2stage=.false.
+          input_options%doCholesky=.false.
+          input_options%doInvertTrm=.true.
+          input_options%doTransposeMultiply=.false.
+        else if (command_line_argument(9:26) == "transpose-multiply") then
+          input_options%doSolveTridi=.false.
+          input_options%do1stage=.false.
+          input_options%do2stage=.false.
+          input_options%doCholesky=.false.
+          input_options%doInvertTrm=.false.
+          input_options%doTransposeMultiply=.true.
         else
            print *,"unknown test specified"
            stop
@@ -209,7 +244,9 @@ module mod_read_input_parameters
       input_options%do1Stage = .true.
       input_options%do2Stage = .true.
       input_options%doSolveTridi = .true.
-
+      input_options%doCholesky=.true.
+      input_options%doInvertTrm=.true.
+      input_options%doTransposeMultiply=.true.
       input_options%justHelpMessage=.false.
 
       ! test na=1500 nev=50 nblk=16 --help --kernel --output_eigenvectors --output_eigenvalues
