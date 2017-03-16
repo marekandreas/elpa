@@ -811,7 +811,6 @@ check_SCRIPTS = \
   elpa1_complex_invert_trm@SUFFIX@.sh \
   elpa1_complex_transpose_multiply@SUFFIX@.sh \
   elpa2_print_kernels@SUFFIX@ \
-  elpa_tests@SUFFIX@.sh \
   elpa1_test_real_c_version@SUFFIX@.sh \
   elpa1_test_complex_c_version@SUFFIX@.sh \
   elpa2_test_real_c_version@SUFFIX@.sh \
