@@ -80,11 +80,11 @@ module mod_read_input_parameters
 
 
       if (command_line_argument == "--help") then
-        print *,"usage: elpa_unified_test [--help] [datatype={real|complex}] [na=number] [nev=number] "
-        print *,"                                  [nblk=size of block cyclic distribution] [--output_eigenvalues]"
-        print *,"                                  [--output_eigenvectors] [--real-kernel=name_of_kernel]"
-        print *,"                                  [--complex-kernel=name_of_kernel] [--use-gpu={0|1}]"
-        print *,"                                  [--use-qr={0,1}] [--tests={all|solve-tridi|1stage|2stage}]"
+        print *,"usage: elpa_tests [--help] [datatype={real|complex}] [na=number] [nev=number] "
+        print *,"                  [nblk=size of block cyclic distribution] [--output_eigenvalues]"
+        print *,"                  [--output_eigenvectors] [--real-kernel=name_of_kernel]"
+        print *,"                  [--complex-kernel=name_of_kernel] [--use-gpu={0|1}]"
+        print *,"                  [--use-qr={0,1}] [--tests={all|solve-tridi|1stage|2stage}]"
       endif
 
 

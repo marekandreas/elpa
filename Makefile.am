@@ -325,6 +325,7 @@ dist_man_MANS = \
 	   man/elpa_solve_evp_real_single.3 \
 	   man/elpa_solve_evp_complex_double.3 \
 	   man/elpa_solve_evp_complex_single.3 \
+	   man/elpa_tests.1 \
 	   man/elpa2_print_kernels.1
 
 if WANT_SINGLE_PRECISION_REAL
