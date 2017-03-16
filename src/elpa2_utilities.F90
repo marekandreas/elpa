@@ -70,7 +70,7 @@ module ELPA2_utilities
 
   ! The following routines are public:
 
-  public :: get_actual_real_kernel_name, get_actual_complex_kernel_name
+  public :: elpa_get_actual_real_kernel_name, elpa_get_actual_complex_kernel_name
   public :: REAL_ELPA_KERNEL_GENERIC, REAL_ELPA_KERNEL_GENERIC_SIMPLE, &
             REAL_ELPA_KERNEL_BGP, REAL_ELPA_KERNEL_BGQ,                &
             REAL_ELPA_KERNEL_SSE, REAL_ELPA_KERNEL_SSE_BLOCK2,         &
@@ -95,7 +95,7 @@ module ELPA2_utilities
 
   public :: REAL_ELPA_KERNEL_NAMES, COMPLEX_ELPA_KERNEL_NAMES
 
-  public :: get_actual_complex_kernel, get_actual_real_kernel
+  public :: elpa_get_actual_complex_kernel, elpa_get_actual_real_kernel
 
   public :: check_allowed_complex_kernels, check_allowed_real_kernels
 
@@ -103,6 +103,10 @@ module ELPA2_utilities
 
   public :: print_available_real_kernels, print_available_complex_kernels
   public :: query_available_real_kernels, query_available_complex_kernels
+
+  public :: elpa_number_of_real_kernels, elpa_number_of_complex_kernels
+  public :: elpa_real_kernel_is_available, elpa_complex_kernel_is_available
+  public :: elpa_real_kernel_name, elpa_complex_kernel_name
 
   public :: qr_decomposition_via_environment_variable
 
@@ -661,6 +665,140 @@ module ELPA2_utilities
 
 !******
   contains
+    function elpa_number_of_real_kernels() result(number)
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#endif
+      implicit none
+
+      integer :: number
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("elpa_number_of_real_kernels")
+#endif
+
+      number = number_of_real_kernels
+
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("elpa_number_of_real_kernels")
+#endif
+      return
+
+    end function
+
+    function elpa_number_of_complex_kernels() result(number)
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#endif
+      implicit none
+
+      integer :: number
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("elpa_number_of_complex_kernels")
+#endif
+
+      number = number_of_complex_kernels
+
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("elpa_number_of_complex_kernels")
+#endif
+      return
+
+    end function
+
+   function elpa_real_kernel_is_available(THIS_ELPA_REAL_KERNEL) result(available)
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#endif
+      implicit none
+
+      integer, intent(in) :: THIS_ELPA_REAL_KERNEL
+      logical             :: available
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("elpa_real_kernel_is_available")
+#endif
+
+     available = .false.
+
+     if (AVAILABLE_REAL_ELPA_KERNELS(THIS_ELPA_REAL_KERNEL) .eq. 1) then
+       available = .true.
+     endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("elpa_real_kernel_is_available")
+#endif
+      return
+
+    end function
+
+   function elpa_complex_kernel_is_available(THIS_ELPA_COMPLEX_KERNEL) result(available)
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#endif
+      implicit none
+
+      integer, intent(in) :: THIS_ELPA_COMPLEX_KERNEL
+      logical             :: available
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("elpa_real_kernel_is_available")
+#endif
+
+     available = .false.
+
+     if (AVAILABLE_COMPLEX_ELPA_KERNELS(THIS_ELPA_COMPLEX_KERNEL) .eq. 1) then
+       available = .true.
+     endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("elpa_real_kernel_is_available")
+#endif
+      return
+
+    end function
+
+   function elpa_real_kernel_name(THIS_ELPA_REAL_KERNEL) result(name)
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#endif
+      implicit none
+
+      integer, intent(in) :: THIS_ELPA_REAL_KERNEL
+      character(35)        :: name
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("elpa_real_kernel_name")
+#endif
+
+
+     if (AVAILABLE_REAL_ELPA_KERNELS(THIS_ELPA_REAL_KERNEL) .eq. 1) then
+       name = trim(REAL_ELPA_KERNEL_NAMES(THIS_ELPA_REAL_KERNEL))
+     endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("elpa_real_kernel_name")
+#endif
+      return
+
+    end function
+
+   function elpa_complex_kernel_name(THIS_ELPA_COMPLEX_KERNEL) result(name)
+#ifdef HAVE_DETAILED_TIMINGS
+      use timings
+#endif
+      implicit none
+
+      integer, intent(in) :: THIS_ELPA_COMPLEX_KERNEL
+      character(35)       :: name
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%start("elpa_complex_kernel_name")
+#endif
+
+
+     if (AVAILABLE_COMPLEX_ELPA_KERNELS(THIS_ELPA_COMPLEX_KERNEL) .eq. 1) then
+       name = trim(COMPLEX_ELPA_KERNEL_NAMES(THIS_ELPA_COMPLEX_KERNEL))
+     endif
+#ifdef HAVE_DETAILED_TIMINGS
+      call timer%stop("elpa_complex_kernel_name")
+#endif
+      return
+
+    end function
+
     subroutine print_available_real_kernels
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -681,7 +819,7 @@ module ELPA2_utilities
       enddo
       write(*,*) " "
       write(*,*) " At the moment the following kernel would be choosen:"
-      write(*,*) get_actual_real_kernel_name()
+      write(*,*) elpa_get_actual_real_kernel_name()
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("print_available_real_kernels")
@@ -708,7 +846,7 @@ module ELPA2_utilities
       enddo
       write(error_unit,*) " "
       write(error_unit,*) " At the moment the following kernel would be choosen:"
-      write(error_unit,*) get_actual_real_kernel_name()
+      write(error_unit,*) elpa_get_actual_real_kernel_name()
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("query_available_real_kernels")
@@ -735,7 +873,7 @@ module ELPA2_utilities
       enddo
       write(*,*) " "
       write(*,*) " At the moment the following kernel would be choosen:"
-      write(*,*) get_actual_complex_kernel_name()
+      write(*,*) elpa_get_actual_complex_kernel_name()
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("print_available_complex_kernels")
@@ -762,7 +900,7 @@ module ELPA2_utilities
       enddo
       write(error_unit,*) " "
       write(error_unit,*) " At the moment the following kernel would be choosen:"
-      write(error_unit,*) get_actual_complex_kernel_name()
+      write(error_unit,*) elpa_get_actual_complex_kernel_name()
 
 #ifdef HAVE_DETAILED_TIMINGS
       call timer%stop("query_available_complex_kernels")
@@ -770,7 +908,7 @@ module ELPA2_utilities
 
     end subroutine query_available_complex_kernels
 
-    function get_actual_real_kernel() result(actual_kernel)
+    function elpa_get_actual_real_kernel() result(actual_kernel)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -780,7 +918,7 @@ module ELPA2_utilities
       integer(kind=ik) :: actual_kernel
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("get_actual_real_kernel")
+      call timer%start("elpa_get_actual_real_kernel")
 #endif
 
 
@@ -804,12 +942,12 @@ module ELPA2_utilities
 !#endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("get_actual_real_kernel")
+      call timer%stop("elpa_get_actual_real_kernel")
 #endif
 
-    end function get_actual_real_kernel
+    end function elpa_get_actual_real_kernel
 
-    function get_actual_real_kernel_name() result(actual_kernel_name)
+    function elpa_get_actual_real_kernel_name() result(actual_kernel_name)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -820,19 +958,19 @@ module ELPA2_utilities
       integer(kind=ik) :: actual_kernel
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("get_actual_real_kernel_name")
+      call timer%start("elpa_get_actual_real_kernel_name")
 #endif
 
-      actual_kernel = get_actual_real_kernel()
+      actual_kernel = elpa_get_actual_real_kernel()
       actual_kernel_name = REAL_ELPA_KERNEL_NAMES(actual_kernel)
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("get_actual_real_kernel_name")
+      call timer%stop("elpa_get_actual_real_kernel_name")
 #endif
 
-    end function get_actual_real_kernel_name
+    end function elpa_get_actual_real_kernel_name
 
-    function get_actual_complex_kernel() result(actual_kernel)
+    function elpa_get_actual_complex_kernel() result(actual_kernel)
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -841,7 +979,7 @@ module ELPA2_utilities
       integer(kind=ik) :: actual_kernel
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("get_actual_complex_kernel")
+      call timer%start("elpa_get_actual_complex_kernel")
 #endif
 
 
@@ -866,12 +1004,12 @@ module ELPA2_utilities
 
 
 #ifdef HAVE_DETAILED_TIMINGS
-     call timer%stop("get_actual_complex_kernel")
+     call timer%stop("elpa_get_actual_complex_kernel")
 #endif
 
-   end function get_actual_complex_kernel
+   end function elpa_get_actual_complex_kernel
 
-   function get_actual_complex_kernel_name() result(actual_kernel_name)
+   function elpa_get_actual_complex_kernel_name() result(actual_kernel_name)
 #ifdef HAVE_DETAILED_TIMINGS
      use timings
 #endif
@@ -881,17 +1019,17 @@ module ELPA2_utilities
      integer(kind=ik) :: actual_kernel
 
 #ifdef HAVE_DETAILED_TIMINGS
-     call timer%start("get_actual_complex_kernel_name")
+     call timer%start("elpa_get_actual_complex_kernel_name")
 #endif
 
-     actual_kernel = get_actual_complex_kernel()
+     actual_kernel = elpa_get_actual_complex_kernel()
      actual_kernel_name = COMPLEX_ELPA_KERNEL_NAMES(actual_kernel)
 
 #ifdef HAVE_DETAILED_TIMINGS
-     call timer%stop("get_actual_complex_kernel_name")
+     call timer%stop("elpa_get_actual_complex_kernel_name")
 #endif
 
-   end function get_actual_complex_kernel_name
+   end function elpa_get_actual_complex_kernel_name
 
    function check_allowed_real_kernels(THIS_REAL_ELPA_KERNEL) result(err)
 #ifdef HAVE_DETAILED_TIMINGS

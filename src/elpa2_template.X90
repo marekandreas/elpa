@@ -148,7 +148,7 @@
 
       ! if kernel is not choosen via api
       ! check whether set by environment variable
-      THIS_ELPA_KERNEL = get_actual_&
+      THIS_ELPA_KERNEL = elpa_get_actual_&
             &MATH_DATATYPE&
             &_kernel()
     endif
