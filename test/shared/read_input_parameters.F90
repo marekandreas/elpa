@@ -53,7 +53,7 @@ module mod_read_input_parameters
     integer        :: this_real_kernel, this_complex_kernel
     logical        :: realKernelIsSet, complexKernelIsSet
     integer        :: useQrIsSet, useGPUIsSet
-    logical        :: doSolveTridi, do1stage, do2stage
+    logical        :: doSolveTridi, do1stage, do2stage, justHelpMessage
   end type
 
   interface read_input_parameters
@@ -85,6 +85,8 @@ module mod_read_input_parameters
         print *,"                  [--output_eigenvectors] [--real-kernel=name_of_kernel]"
         print *,"                  [--complex-kernel=name_of_kernel] [--use-gpu={0|1}]"
         print *,"                  [--use-qr={0,1}] [--tests={all|solve-tridi|1stage|2stage}]"
+        input_options%justHelpMessage=.true.
+        return
       endif
 
 
@@ -207,6 +209,8 @@ module mod_read_input_parameters
       input_options%do1Stage = .true.
       input_options%do2Stage = .true.
       input_options%doSolveTridi = .true.
+
+      input_options%justHelpMessage=.false.
 
       ! test na=1500 nev=50 nblk=16 --help --kernel --output_eigenvectors --output_eigenvalues
       if (COMMAND_ARGUMENT_COUNT() .gt. 8) then

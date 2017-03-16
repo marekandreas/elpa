@@ -139,6 +139,10 @@ program test_all_real
    nev = input_options%nev
    nblk = input_options%nblk
 
+   if (input_options%justHelpMessage) then
+     call EXIT(0)
+   endif
+
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
