@@ -216,7 +216,7 @@
                                                                           &MATH_DATATYPE
       call timer%start("tridiag_&
       &MATH_DATATYPE&
-      &_" // &
+      &" // &
       PRECISION_SUFFIX &
       )
 

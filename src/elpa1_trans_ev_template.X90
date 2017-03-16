@@ -167,7 +167,7 @@
 
       call timer%start("trans_ev_&
       &MATH_DATATYPE&
-      &_" // &
+      &" // &
       &PRECISION_SUFFIX &
       )
 
