@@ -78,7 +78,7 @@ intel-double-precision-nompi-noomp-cuda-jobs:
 
       #gfortran-double-precision-mpi-noomp-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90
@@ -92,7 +92,7 @@ intel-double-precision-nompi-noomp-cuda-jobs:
       #
       #gfortran-double-precision-mpi-noomp-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-assumed-size FC=mpif90
@@ -207,7 +207,7 @@ intel-single-precision-nompi-noomp-cuda-larger-jobs:
 
       #gfortran-single-precision-mpi-noomp-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision FC=mpif90
@@ -221,7 +221,7 @@ intel-single-precision-nompi-noomp-cuda-larger-jobs:
       #
       #gfortran-single-precision-mpi-noomp-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --disable-assumed-size FC=mpif90
@@ -267,7 +267,7 @@ intel-double-precision-nompi-noomp-assumed-size-jobs:
 
       #gfortran-double-precision-nompi-noomp-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no
@@ -281,7 +281,7 @@ intel-double-precision-nompi-noomp-assumed-size-jobs:
       #
       #gfortran-double-precision-nompi-noomp-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no --disable-assumed-size
@@ -317,7 +317,7 @@ intel-single-precision-nompi-noomp-assumed-size-jobs:
 
       #gfortran-single-precision-nompi-noomp-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision
@@ -331,7 +331,7 @@ intel-single-precision-nompi-noomp-assumed-size-jobs:
       #
       #gfortran-single-precision-nompi-noomp-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --disable-assumed-size
@@ -392,7 +392,7 @@ gfortran-double-precision-mpi-openmp-assumed-size-jobs:
 
       #gfortran-double-precision-mpi-openmp-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure  FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
@@ -465,7 +465,7 @@ gfortran-single-precision-mpi-openmp-assumed-size-jobs:
 
       #gfortran-single-precision-mpi-openmp-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure  FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision
@@ -522,7 +522,7 @@ gfortran-double-precision-nompi-openmp-assumed-size-jobs:
 
       #gfortran-double-precision-nompi-openmp-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-openmp
@@ -580,7 +580,7 @@ gfortran-single-precision-nompi-openmp-assumed-size-jobs:
 
       #gfortran-single-precision-nompi-openmp-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp
@@ -604,7 +604,7 @@ intel-double-precision-mpi-noopenmp-ftimings-jobs:
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings
@@ -627,7 +627,7 @@ intel-single-precision-mpi-noopenmp-ftimings-jobs:
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings
@@ -650,7 +650,7 @@ intel-double-precision-nompi-noopenmp-ftimings-jobs:
 
       #gfortran-double-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no --with-ftimings
@@ -673,7 +673,7 @@ intel-single-precision-nompi-noopenmp-ftimings-jobs:
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings
@@ -687,7 +687,7 @@ intel-single-precision-nompi-noopenmp-ftimings-jobs:
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings --disable-assumed-size-arrays
@@ -726,7 +726,7 @@ gfortran-double-precision-nompi-openmp-ftimings-jobs:
 
       #gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --with-ftimings --enable-openmp
@@ -765,7 +765,7 @@ intel-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings
@@ -779,7 +779,7 @@ intel-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
       #
       #gfortran-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings --disable-assumed-size
@@ -842,7 +842,7 @@ gfortran-double-precision-nompi-openmp-ftimings-assumed-size-jobs:
 
       #gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timing --enable-openmp
@@ -881,7 +881,7 @@ intel-single-precision-nompi-openmp-ftimings-assumed-size-jobs:
 
       #gfortran-single-precision-nompi-openmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings
@@ -907,7 +907,7 @@ gfortran-single-precision-nompi-openmp-ftimings-assumed-size-arrays-jobs:
 
       #gfortran-single-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings
@@ -968,7 +968,7 @@ gfortran-double-precision-mpi-openmp-ftimings-assumed-size-jobs:
 
       #gfortran-double-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
@@ -1007,7 +1007,7 @@ intel-single-precision-mpi-openmp-ftimings-assumed-size-jobs:
 
       #gfortran-single-precision-mpi-openmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS=" -O3 -mavx" CXXFLAGS=" -O3 -mavx" FCFLAGS=" -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
@@ -1034,7 +1034,7 @@ gfortran-single-precision-mpi-openmp-ftimings-assumed-size-jobs:
 
       #gfortran-single-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
@@ -1072,7 +1072,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect
@@ -1086,7 +1086,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --disable-assumed-size
@@ -1135,7 +1135,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --enable-single-precision
@@ -1151,7 +1151,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --enable-single-precision --disable-assumed-size
@@ -1187,7 +1187,7 @@ intel-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
 
       #gfortran-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0
@@ -1201,7 +1201,7 @@ intel-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #
       #gfortran-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0 --disable-assumed-size
@@ -1217,7 +1217,7 @@ intel-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
 
       #intel-single-precision-no-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings FC=ifort
@@ -1243,7 +1243,7 @@ gfortran-single-precision-nompi-openmp-ftimings-jobs:
 
       #gfortran-single-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings
@@ -1254,7 +1254,7 @@ gfortran-single-precision-nompi-openmp-ftimings-jobs:
       #
       #gfortran-double-precision-mpi-openmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
@@ -1269,7 +1269,7 @@ gfortran-single-precision-nompi-openmp-ftimings-jobs:
 
       #gfortran-double-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
@@ -1308,7 +1308,7 @@ gfortran-single-precision-mpi-openmp-ftimings-jobs:
 
       #gfortran-single-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
@@ -1329,7 +1329,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect
@@ -1353,7 +1353,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --enable-single-precision
@@ -1365,7 +1365,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #
       #intel-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0 FC=ifort
@@ -1379,7 +1379,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-assumed-size-kernel:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0
@@ -1405,7 +1405,7 @@ intel-single-precision-nompi-noopenmp-ftimings-redirect-jobs:
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0 --enable-single-precision
@@ -1439,7 +1439,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-jobs:
 
       #gfortran-double-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings --with-redirect
@@ -1478,7 +1478,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-jobs:
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect
@@ -1495,7 +1495,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-jobs:
 
       #intel-double-precision-nompi-openmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-mpi=0 FC=ifort
@@ -1521,7 +1521,7 @@ gfortran-double-precision-nompi-openmp-ftimings-redirect-jobs:
 
       #gfortran-double-precision-nompi-openmp-ftimings-redirect-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --with-ftimings --with-redirect --with-mpi=0
@@ -1555,7 +1555,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-gene
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -1585,7 +1585,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-gener
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -1595,7 +1595,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-gener
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-generic-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
@@ -1611,7 +1611,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-gener
 
       #intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -1648,7 +1648,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-compl
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -1671,7 +1671,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-comple
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -1685,7 +1685,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-comple
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"   --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
@@ -1722,7 +1722,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -1741,7 +1741,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
@@ -1755,7 +1755,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
@@ -1781,7 +1781,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
@@ -1796,7 +1796,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_
       #
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
@@ -1825,7 +1825,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-ss
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
@@ -1850,7 +1850,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   tags:
-    - cpu
+    - coverage
   script:
     - ./autogen.sh
     - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only --enable-assumed-size
@@ -1913,7 +1913,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
@@ -1927,7 +1927,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only --disable-assumed-size
@@ -1942,7 +1942,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
 # real sse block6, complex avx block1
 #intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./autogen.sh
 #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
@@ -1968,7 +1968,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-a
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
@@ -1991,7 +1991,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-av
 
       #gfortran-single-precision-noopenmp-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
@@ -2005,7 +2005,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-av
       #
       #gfortran-double-precision-noopenmp-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"   --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only --disable-assumed-size
@@ -2042,7 +2042,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
@@ -2060,7 +2060,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
 #real avx block2, complex avx block2
 #intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./autogen.sh
 #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
@@ -2074,7 +2074,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
 #
 #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./autogen.sh
 #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
@@ -2084,7 +2084,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
 #
 #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-assumed-size-kernel:
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./autogen.sh
 #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only  --disable-assumed-size
@@ -2121,7 +2121,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-a
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
@@ -2144,7 +2144,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-av
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
@@ -2154,7 +2154,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-av
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx-block4-complex-avx_block2-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only  --disable-assumed-size
@@ -2238,7 +2238,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
 
       #gfortran-single-precision-mpi-nopenmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
@@ -2252,7 +2252,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only --disable-assumed-size
@@ -2458,7 +2458,7 @@ gfortran-set-kernel-via-environment-variable-mpi-openmp-job:
 
       #gfortran-set-kernel-via-environment-variable-mpi-openmp-special-gcov-job:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
@@ -2488,7 +2488,7 @@ intel-set-kernel-via-environment-variable-mpi-noopenmp-job:
 
       #gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"
@@ -2531,7 +2531,7 @@ gfortran-set-kernel-via-environment-variable-nompi-openmp-job:
 
       #gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --with-mpi=no
@@ -2561,7 +2561,7 @@ intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
 
       #gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no
@@ -2625,9 +2625,9 @@ test_project:
 
 ## print coverage results
 #total_coverage:
-#  stage: coverage
+#  stage: coverage-summary
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./ci_coverage_summary
 #  artifacts:
