@@ -46,6 +46,7 @@ intel-double-precision-mpi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-mpi-noomp-cuda-jobs:
   tags:
@@ -60,7 +61,7 @@ intel-double-precision-mpi-noomp-cuda-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
     - cat test-suite.log
-
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-nompi-noomp-cuda-jobs:
   tags:
@@ -75,6 +76,7 @@ intel-double-precision-nompi-noomp-cuda-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
     - cat test-suite.log
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-mpi-noomp-jobs:
       #  tags:
@@ -115,6 +117,7 @@ intel-single-precision-mpi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-mpi-noomp-cuda-jobs:
   tags:
@@ -129,6 +132,7 @@ intel-single-precision-mpi-noomp-cuda-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
     - cat test-suite.log
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-mpi-noomp-cuda-larger-jobs:
   tags:
@@ -143,6 +147,7 @@ intel-single-precision-mpi-noomp-cuda-larger-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
     - cat test-suite.log
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #intel-single-precision-mpi-noomp-cuda-runtime-choice-jobs:
       #  tags:
@@ -189,6 +194,7 @@ intel-single-precision-nompi-noomp-cuda-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
     - cat test-suite.log
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-nompi-noomp-cuda-larger-jobs:
   tags:
@@ -203,6 +209,7 @@ intel-single-precision-nompi-noomp-cuda-larger-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
     - cat test-suite.log
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
       #gfortran-single-precision-mpi-noomp-jobs:
@@ -244,6 +251,7 @@ intel-double-precision-nompi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-nompi-noomp-larger-jobs:
   tags:
@@ -254,6 +262,7 @@ intel-double-precision-nompi-noomp-larger-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1000 50 32' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-nompi-noomp-assumed-size-jobs:
   tags:
@@ -264,6 +273,7 @@ intel-double-precision-nompi-noomp-assumed-size-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-nompi-noomp-jobs:
       #  tags:
@@ -304,6 +314,7 @@ intel-single-precision-nompi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-nompi-noomp-assumed-size-jobs:
   tags:
@@ -314,6 +325,7 @@ intel-single-precision-nompi-noomp-assumed-size-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-nompi-noomp-jobs:
       #  tags:
@@ -356,6 +368,7 @@ intel-double-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -367,6 +380,7 @@ intel-double-precision-mpi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-double-precision-mpi-openmp-jobs:
   tags:
@@ -378,6 +392,7 @@ gfortran-double-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-double-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -389,6 +404,7 @@ gfortran-double-precision-mpi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-mpi-openmp-special-gcov-jobs:
       #  tags:
@@ -417,6 +433,7 @@ intel-single-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-mpi-openmp-larger-jobs:
   tags:
@@ -428,6 +445,7 @@ intel-single-precision-mpi-openmp-larger-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -439,6 +457,7 @@ intel-single-precision-mpi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-jobs:
   tags:
@@ -450,6 +469,7 @@ gfortran-single-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -461,6 +481,7 @@ gfortran-single-precision-mpi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
       #gfortran-single-precision-mpi-openmp-special-gcov-jobs:
@@ -486,6 +507,7 @@ intel-double-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -497,6 +519,7 @@ intel-double-precision-nompi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-double-precision-nompi-openmp-jobs:
   tags:
@@ -508,6 +531,7 @@ gfortran-double-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-double-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -519,6 +543,7 @@ gfortran-double-precision-nompi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-nompi-openmp-special-gcov-jobs:
       #  tags:
@@ -544,6 +569,7 @@ intel-single-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -555,6 +581,7 @@ intel-single-precision-nompi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-nompi-openmp-jobs:
   tags:
@@ -566,6 +593,7 @@ gfortran-single-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -577,6 +605,7 @@ gfortran-single-precision-nompi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-nompi-openmp-special-gcov-jobs:
       #  tags:
@@ -601,6 +630,7 @@ intel-double-precision-mpi-noopenmp-ftimings-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-jobs:
       #  tags:
@@ -624,6 +654,7 @@ intel-single-precision-mpi-noopenmp-ftimings-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-jobs:
       #  tags:
@@ -647,6 +678,7 @@ intel-double-precision-nompi-noopenmp-ftimings-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
@@ -670,6 +702,7 @@ intel-single-precision-nompi-noopenmp-ftimings-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
@@ -712,6 +745,7 @@ intel-double-precision-nompi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-double-precision-nompi-openmp-ftimings-jobs:
   tags:
@@ -723,6 +757,7 @@ gfortran-double-precision-nompi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
@@ -751,6 +786,7 @@ intel-single-precision-nompi-noopenmp-ftimings-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
   tags:
@@ -761,6 +797,7 @@ intel-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
@@ -804,6 +841,7 @@ intel-double-precision-nompi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-nompi-openmp-ftimings-assumed-size-jobs:
   tags:
@@ -815,6 +853,7 @@ intel-double-precision-nompi-openmp-ftimings-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
 gfortran-double-precision-nompi-openmp-ftimings-jobs:
@@ -827,6 +866,7 @@ gfortran-double-precision-nompi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-double-precision-nompi-openmp-ftimings-assumed-size-jobs:
   tags:
@@ -838,6 +878,7 @@ gfortran-double-precision-nompi-openmp-ftimings-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
       #gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
@@ -867,6 +908,7 @@ intel-single-precision-nompi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-nompi-openmp-ftimings-assumed-size-jobs:
   tags:
@@ -878,6 +920,7 @@ intel-single-precision-nompi-openmp-ftimings-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-nompi-openmp-ftimings-jobs:
       #  tags:
@@ -904,6 +947,7 @@ gfortran-single-precision-nompi-openmp-ftimings-assumed-size-arrays-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
@@ -932,6 +976,7 @@ intel-double-precision-mpi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-mpi-openmp-ftimings-assumed-size-jobs:
   tags:
@@ -943,6 +988,7 @@ intel-double-precision-mpi-openmp-ftimings-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-double-precision-mpi-openmp-ftimings-jobs:
   tags:
@@ -954,6 +1000,7 @@ gfortran-double-precision-mpi-openmp-ftimings-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-double-precision-mpi-openmp-ftimings-assumed-size-jobs:
   tags:
@@ -965,6 +1012,7 @@ gfortran-double-precision-mpi-openmp-ftimings-assumed-size-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
@@ -993,6 +1041,7 @@ intel-single-precision-mpi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-mpi-openmp-ftimings-assumed-size-jobs:
   tags:
@@ -1004,6 +1053,7 @@ intel-single-precision-mpi-openmp-ftimings-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-jobs:
       #  tags:
@@ -1030,6 +1080,7 @@ gfortran-single-precision-mpi-openmp-ftimings-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
       #gfortran-single-precision-mpi-openmp-ftimings-special-gcov-jobs:
@@ -1058,6 +1109,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
   tags:
@@ -1068,6 +1120,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
@@ -1109,6 +1162,7 @@ intel-double-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 # jobs for intel/gfortran single precision mpi and no openmp ftimings and redirect enabled
 
@@ -1121,6 +1175,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
   tags:
@@ -1131,6 +1186,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
@@ -1174,6 +1230,7 @@ intel-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
   tags:
@@ -1184,6 +1241,7 @@ intel-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
       #  tags:
@@ -1240,6 +1298,7 @@ gfortran-single-precision-nompi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
@@ -1294,6 +1353,7 @@ intel-single-precision-mpi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-jobs:
   tags:
@@ -1305,6 +1365,7 @@ gfortran-single-precision-mpi-openmp-ftimings-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
@@ -1326,6 +1387,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
@@ -1350,6 +1412,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
@@ -1402,6 +1465,7 @@ intel-single-precision-nompi-noopenmp-ftimings-redirect-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-redirect-jobs:
       #  tags:
@@ -1425,6 +1489,7 @@ intel-double-precision-mpi-openmp-ftimings-redirect-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-double-precision-mpi-openmp-ftimings-redirect-jobs:
   tags:
@@ -1436,6 +1501,7 @@ gfortran-double-precision-mpi-openmp-ftimings-redirect-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
       #  tags:
@@ -1464,6 +1530,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-jobs:
   tags:
@@ -1475,6 +1542,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
       #  tags:
@@ -1518,6 +1586,7 @@ gfortran-double-precision-nompi-openmp-ftimings-redirect-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-double-precision-nompi-openmp-ftimings-redirect-special-gcov-jobs:
       #  tags:
@@ -1541,6 +1610,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   tags:
@@ -1552,6 +1622,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-gene
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-special-gcov-jobs:
       #  tags:
@@ -1582,6 +1653,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-gener
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
       #  tags:
@@ -1634,6 +1706,7 @@ intel-double-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   tags:
@@ -1645,6 +1718,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-compl
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-special-gcov-jobs:
       #  tags:
@@ -1668,6 +1742,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-comple
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
       #  tags:
@@ -1708,6 +1783,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-ss
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   tags:
@@ -1719,6 +1795,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-special-gcov-jobs:
       #  tags:
@@ -1778,6 +1855,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
       #  tags:
@@ -1822,6 +1900,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-ss
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
       #  tags:
@@ -1847,6 +1926,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   tags:
@@ -1857,6 +1937,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-s
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16'
+    - grep -i -v  expected test-suite.log > /dev/null
     - ./ci_coverage_collect
   artifacts:
     paths:
@@ -1873,6 +1954,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     -  make check TEST_FLAGS='1000 500 128'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
   tags:
@@ -1885,6 +1967,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     -  make check TEST_FLAGS='1000 500 128'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 #real avx2 block2, complex avx2 block1 (emulated)
 
@@ -1898,6 +1981,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
 # real sse block4, complex sse block 2
@@ -1910,6 +1994,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
       #  tags:
@@ -1965,6 +2050,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-a
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-special-gcov-jobs:
       #  tags:
@@ -1988,6 +2074,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-av
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-noopenmp-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
       #  tags:
@@ -2028,6 +2115,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   tags:
@@ -2039,6 +2127,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-special-gcov-jobs:
       #  tags:
@@ -2107,6 +2196,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-jobs:
   tags:
@@ -2118,6 +2208,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-a
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-special-gcov-jobs:
       #  tags:
@@ -2141,6 +2232,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-av
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-jobs:
       #  tags:
@@ -2177,6 +2269,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-avx_
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-jobs:
   tags:
@@ -2188,6 +2281,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-a
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex-avx512_block2-kernel-jobs:
   tags:
@@ -2200,6 +2294,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     -  make check TEST_FLAGS='1000 500 128'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex-avx512_block2-kernel-jobs:
   tags:
@@ -2212,6 +2307,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     -  make check TEST_FLAGS='1000 500 128'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex-avx512_block1-kernel-jobs:
   tags:
@@ -2224,6 +2320,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     -  make check TEST_FLAGS='1000 500 128'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 #real avx block6 , complex block2
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-jobs:
@@ -2235,6 +2332,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-single-precision-mpi-nopenmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-jobs:
       #  tags:
@@ -2277,6 +2375,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
       #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block1-complex-avx2_block1-kernel-jobs:
   tags:
@@ -2289,6 +2388,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block1-complex-
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
       # - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
 #real avx2 block2, complex avx2 block1 (emulated)
@@ -2303,6 +2403,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-complex-a
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
       #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
 #real avx2 block4, complex avx2 block2 (emulated)
@@ -2318,6 +2419,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
       # - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
   tags:
@@ -2330,6 +2432,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
       # - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
 
@@ -2344,6 +2447,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-a
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
       ##gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
       ##  tags:
@@ -2369,6 +2473,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-jobs:
   tags:
@@ -2380,6 +2485,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
       ##gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-special-gcov-jobs:
       ##  tags:
@@ -2405,6 +2511,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block6-complex-a
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i -v  expected test-suite.log > /dev/null
 
       ##gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-jobs:
       ##  tags:
@@ -2428,6 +2535,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     -  make check TEST_FLAGS='1000 500 128'
+    - grep -i -v  expected test-suite.log > /dev/null
 
 
 intel-set-kernel-via-environment-variable-mpi-openmp-job:
@@ -2442,6 +2550,7 @@ intel-set-kernel-via-environment-variable-mpi-openmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-set-kernel-via-environment-variable-mpi-openmp-job:
   tags:
@@ -2455,6 +2564,7 @@ gfortran-set-kernel-via-environment-variable-mpi-openmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-set-kernel-via-environment-variable-mpi-openmp-special-gcov-job:
       #  tags:
@@ -2485,6 +2595,7 @@ intel-set-kernel-via-environment-variable-mpi-noopenmp-job:
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
       #  tags:
@@ -2515,6 +2626,7 @@ intel-set-kernel-via-environment-variable-nompi-openmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 gfortran-set-kernel-via-environment-variable-nompi-openmp-job:
   tags:
@@ -2528,6 +2640,7 @@ gfortran-set-kernel-via-environment-variable-nompi-openmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
       #  tags:
@@ -2558,6 +2671,7 @@ intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
       #gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
       #  tags:
@@ -2585,6 +2699,7 @@ static-build:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i -v  expected test-suite.log > /dev/null
 
 # test distcheck
 distcheck:
@@ -2595,7 +2710,6 @@ distcheck:
     - ./configure --with-mpi=no
     # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
     - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no" TEST_FLAGS='150 50 16' || { chmod u+rwX -R . ; exit 1 ; }
-
 
 # test test_project
 test_project:
