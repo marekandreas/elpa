@@ -54,7 +54,7 @@
 #include "config-f90.h"
 !> \brief Fortran module which provides the routines to the ELPA solver (1 and 2 stage)
 module ELPA
-  use, intrinsic :: iso_c_binding, only : c_double, c_int
+  use, intrinsic :: iso_c_binding, only : c_double, c_int, c_float, c_float_complex, c_double_complex
   use elpa1
   use elpa2
 
@@ -426,9 +426,9 @@ module ELPA
       integer(kind=c_int), intent(in)           :: nblk
       real(kind=c_double), intent(inout)        :: ev(na)
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=c_double), intent(inout)     :: a(lda,*), q(ldq,*)
+      complex(kind=c_double_complex), intent(inout)     :: a(lda,*), q(ldq,*)
 #else
-      complex(kind=c_double), intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
+      complex(kind=c_double_complex), intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
       integer(kind=c_int), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
       logical, intent(in), optional             :: useGPU
@@ -523,9 +523,9 @@ module ELPA
       integer(kind=c_int), intent(in)           :: nblk
       real(kind=c_float), intent(inout)        :: ev(na)
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=c_float), intent(inout)     :: a(lda,*), q(ldq,*)
+      complex(kind=c_float_complex), intent(inout)     :: a(lda,*), q(ldq,*)
 #else
-      complex(kind=c_float), intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
+      complex(kind=c_float_complex), intent(inout)     :: a(lda,matrixCols), q(ldq,matrixCols)
 #endif
       integer(kind=c_int), intent(in), optional :: THIS_COMPLEX_ELPA_KERNEL_API
       logical, intent(in), optional             :: useGPU

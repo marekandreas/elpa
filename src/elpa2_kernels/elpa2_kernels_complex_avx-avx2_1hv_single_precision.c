@@ -79,8 +79,8 @@ static  __forceinline void hh_trafo_complex_kernel_4_AVX_1hv_single(float comple
 !f>                             bind(C, name="single_hh_trafo_complex_avx_avx2_1hv_single")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq
-!f>     complex(kind=c_float)   :: q(*)
-!f>     complex(kind=c_float)   :: hh(pnb,2)
+!f>     complex(kind=c_float_complex)   :: q(*)
+!f>     complex(kind=c_float_complex)   :: hh(pnb,2)
 !f>   end subroutine
 !f> end interface
 !f>#endif

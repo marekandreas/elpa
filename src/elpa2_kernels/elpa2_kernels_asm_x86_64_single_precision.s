@@ -717,8 +717,8 @@ return1:
 # subroutine single_hh_trafo_complex_single(q, hh, nb, nq, ldq)
 #
 #   integer, intent(in) :: nb, nq, ldq
-#   complex*8, intent(inout) :: q(ldq,*)
-#   complex*8, intent(in) :: hh(*)
+#   complex(kind=c_float_complex), intent(inout) :: q(ldq,*)
+#   complex(kind=c_float_complex), intent(in) :: hh(*)
 #
 # Parameter mapping to registers
 #   parameter 1: %rdi : q
@@ -734,8 +734,8 @@ return1:
 #!f>    subroutine single_hh_trafo_complex_single(q, hh, nb, nq, ldq) bind(C,name="single_hh_trafo_complex_single")
 #!f>      use, intrinsic :: iso_c_binding
 #!f>      integer(kind=c_int)   :: nb, nq, ldq
-#!f>      complex(kind=c_float) :: q(*)
-#!f>      complex(kind=c_float) :: hh(nb,2)
+#!f>      complex(kind=c_float_complex) :: q(*)
+#!f>      complex(kind=c_float_complex) :: hh(nb,2)
 #!f>    end subroutine
 #!f>  end interface
 #!f>#endif

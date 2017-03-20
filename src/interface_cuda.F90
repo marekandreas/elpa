@@ -339,7 +339,7 @@ module cuda_routines
 !    character(1,C_CHAR),value            :: cta, ctb
 !    integer(C_INT),value                 :: m,n,k
 !    integer(C_INT), intent(in), value    :: lda,ldb,ldc
-!    complex(C_DOUBLE),value              :: alpha,beta
+!    complex(C_DOUBLE_COMPLEX),value              :: alpha,beta
 !    integer(C_SIZE_T), value             :: a, b, c
 !
 !  end subroutine cublas_zgemm
@@ -376,7 +376,7 @@ module cuda_routines
 !    character(1,C_CHAR),value            :: side, uplo, trans, diag
 !    integer(C_INT),value                 :: m,n
 !    integer(C_INT), intent(in), value    :: lda,ldb
-!    complex(C_DOUBLE), value             :: alpha
+!    complex(C_DOUBLE_complex), value             :: alpha
 !    integer(C_SIZE_T), value             :: a, b
 !
 !  end subroutine cublas_ztrmm
@@ -389,7 +389,7 @@ module cuda_routines
 !    character(1,C_CHAR),value            :: uplo, trans
 !    integer(C_INT),value                 :: n, k
 !    integer(C_INT), intent(in), value    :: lda,ldb
-!    complex(C_DOUBLE), value             :: alpha, beta
+!    complex(C_DOUBLE_COMPLEX), value             :: alpha, beta
 !    integer(c_size_t),value              :: a,b
 !
 !  end subroutine cublas_zherk

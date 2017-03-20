@@ -303,7 +303,7 @@ module cuda_functions
       character(1,C_CHAR),value              :: cta, ctb
       integer(kind=C_INT),value              :: m,n,k
       integer(kind=C_INT), intent(in), value :: lda,ldb,ldc
-      complex(kind=C_DOUBLE),value           :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX),value           :: alpha,beta
       integer(kind=C_intptr_T), value        :: a, b, c
 
     end subroutine cublas_zgemm_c
@@ -318,7 +318,7 @@ module cuda_functions
       character(1,C_CHAR),value              :: cta, ctb
       integer(kind=C_INT),value              :: m,n,k
       integer(kind=C_INT), intent(in), value :: lda,ldb,ldc
-      complex(kind=C_FLOAT),value            :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX),value            :: alpha,beta
       integer(kind=C_intptr_T), value        :: a, b, c
 
     end subroutine cublas_cgemm_c
@@ -333,7 +333,7 @@ module cuda_functions
       character(1,C_CHAR),value              :: side, uplo, trans, diag
       integer(kind=C_INT),value              :: m,n
       integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_DOUBLE), value          :: alpha
+      complex(kind=C_DOUBLE_COMPLEX), value          :: alpha
       integer(kind=C_intptr_T), value        :: a, b
 
     end subroutine cublas_ztrmm_c
@@ -348,7 +348,7 @@ module cuda_functions
       character(1,C_CHAR),value              :: side, uplo, trans, diag
       integer(kind=C_INT),value              :: m,n
       integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_FLOAT), value           :: alpha
+      complex(kind=C_FLOAT_COMPLEX), value           :: alpha
       integer(kind=C_intptr_T), value        :: a, b
 
     end subroutine cublas_ctrmm_c
@@ -391,7 +391,7 @@ module cuda_functions
       character(1,C_CHAR),value               :: cta
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_DOUBLE),value               :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX),value               :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, x, y
     end subroutine cublas_zgemv_c
   end interface
@@ -405,7 +405,7 @@ module cuda_functions
       character(1,C_CHAR),value               :: cta
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_FLOAT),value                :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX),value                :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, x, y
     end subroutine cublas_cgemv_c
   end interface
@@ -448,7 +448,7 @@ module cuda_functions
 !       character(1,C_CHAR),value               :: cta
 !       integer(kind=C_INT),value               :: n
 !       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-!       complex(kind=C_DOUBLE),value               :: alpha,beta
+!       complex(kind=C_DOUBLE_COMPLEX),value               :: alpha,beta
 !       integer(kind=C_intptr_T), value         :: a, x, y
 !     end subroutine cublas_zsymv_c
 !   end interface
@@ -462,7 +462,7 @@ module cuda_functions
 !       character(1,C_CHAR),value               :: cta
 !       integer(kind=C_INT),value               :: n
 !       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-!       complex(kind=C_FLOAT),value                :: alpha,beta
+!       complex(kind=C_FLOAT_COMPLEX),value                :: alpha,beta
 !       integer(kind=C_intptr_T), value         :: a, x, y
 !     end subroutine cublas_csymv_c
 !   end interface
@@ -744,7 +744,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE)          :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX)          :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
 #ifdef WITH_GPU_VERSION
       call cublas_zgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
@@ -759,7 +759,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT)           :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX)           :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
 #ifdef WITH_GPU_VERSION
       call cublas_cgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
@@ -774,7 +774,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE)          :: alpha
+      complex(kind=C_DOUBLE_COMPLEX)          :: alpha
       integer(kind=C_intptr_T)        :: a, b
 #ifdef WITH_GPU_VERSION
       call cublas_ztrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -789,7 +789,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT)           :: alpha
+      complex(kind=C_FLOAT_COMPLEX)           :: alpha
       integer(kind=C_intptr_T)        :: a, b
 #ifdef WITH_GPU_VERSION
       call cublas_ctrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -831,7 +831,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_DOUBLE)             :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
 #ifdef WITH_GPU_VERSION
       call cublas_zgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -845,7 +845,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_FLOAT)              :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
 #ifdef WITH_GPU_VERSION
       call cublas_cgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -888,7 +888,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_DOUBLE)             :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
 #ifdef WITH_GPU_VERSION
 !       call cublas_zsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -902,7 +902,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_FLOAT)              :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
 #ifdef WITH_GPU_VERSION
 !       call cublas_csymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)

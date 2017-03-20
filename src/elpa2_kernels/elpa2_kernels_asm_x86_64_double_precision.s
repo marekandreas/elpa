@@ -389,7 +389,7 @@
 #!f>      use, intrinsic :: iso_c_binding
 #!f>      integer(kind=c_int)  :: nb, nq, ldq, ldh
 #!f>      type(c_ptr), value   :: q
-#!f>      real(kind=c_double)  :: hh(nb,6)
+#!f>      real(kind=c_double_complex)  :: hh(nb,6)
 #!f>    end subroutine
 #!f>  end interface
 #!f>#endif
@@ -714,8 +714,8 @@ return1:
 #!f>    subroutine single_hh_trafo_complex_double(q, hh, nb, nq, ldq) bind(C,name="single_hh_trafo_complex_double")
 #!f>      use, intrinsic :: iso_c_binding
 #!f>      integer(kind=c_int)     :: nb, nq, ldq
-#!f>      complex(kind=c_double)  :: q(*)
-#!f>      complex(kind=c_double)  :: hh(nb,2)
+#!f>      complex(kind=c_double_complex)  :: q(*)
+#!f>      complex(kind=c_double_complex)  :: hh(nb,2)
 #!f>    end subroutine
 #!f>  end interface
 #!f>#endif
