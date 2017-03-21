@@ -188,34 +188,45 @@ extern "C" {
       return val;
   }
   
-  void CUBLASWINAPI cublasCgemv_elpa_wrapper (char trans, int m, int n, float complex alpha,
-                               const cuFloatComplex *A, int lda,  const cuFloatComplex *x, int incx,
-                               float complex beta, cuFloatComplex *y, int incy) {    
+  void cublasCgemv_elpa_wrapper (char trans, int m, int n, float complex alpha,
+                               const float complex *A, int lda,  const float complex *x, int incx,
+                               float complex beta, float complex *y, int incy) {    
 
-    cuFloatComplex alpha_casted = {crealf(alpha), cimagf(alpha)};
-    cuFloatComplex beta_casted = {crealf(beta), cimagf(beta)};
+    cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
+    cuFloatComplex beta_casted = *((cuFloatComplex*)(&beta));
     
-    cublasCgemv(trans, m, n, alpha_casted, A, lda, x, incx, beta_casted, y, incy);
-     
+    const cuFloatComplex* A_casted = (const cuFloatComplex*) A;
+    const cuFloatComplex* x_casted = (const cuFloatComplex*) x;
+    cuFloatComplex* y_casted = (cuFloatComplex*) y;
+    
+    cublasCgemv(trans, m, n, alpha_casted, A_casted, lda, x_casted, incx, beta_casted, y_casted, incy);     
   }
   
-  void CUBLASWINAPI cublasCgemm_elpa_wrapper (char transa, char transb, int m, int n, int k,
-                               float complex alpha, const cuComplex *A, int lda,
-                               const cuComplex *B, int ldb, float complex beta,
-                               cuComplex *C, int ldc) {
-    cuFloatComplex alpha_casted = {crealf(alpha), cimagf(alpha)};
-    cuFloatComplex beta_casted = {crealf(beta), cimagf(beta)};
+  void cublasCgemm_elpa_wrapper (char transa, char transb, int m, int n, int k,
+                               float complex alpha, const float complex *A, int lda,
+                               const float complex *B, int ldb, float complex beta,
+                               float complex *C, int ldc) {
     
-    cublasCgemm(transa, transb, m, n, k, alpha_casted, A, lda, B, ldb, beta_casted, C, ldc);
+    cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
+    cuFloatComplex beta_casted = *((cuFloatComplex*)(&beta));
+    
+    const cuFloatComplex* A_casted = (const cuFloatComplex*) A;
+    const cuFloatComplex* B_casted = (const cuFloatComplex*) B;
+    cuFloatComplex* C_casted = (cuFloatComplex*) C;
+    
+    cublasCgemm(transa, transb, m, n, k, alpha_casted, A_casted, lda, B_casted, ldb, beta_casted, C_casted, ldc);
   }
 
-  void CUBLASWINAPI cublasCtrmm_elpa_wrapper (char side, char uplo, char transa, char diag,
-                               int m, int n, float complex alpha, const cuComplex *A,
-                               int lda, cuComplex *B, int ldb){
+  void cublasCtrmm_elpa_wrapper (char side, char uplo, char transa, char diag,
+                               int m, int n, float complex alpha, const float complex *A,
+                               int lda, float complex *B, int ldb){
 
-    cuFloatComplex alpha_casted = {crealf(alpha), cimagf(alpha)};
+    cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
     
-    cublasCtrmm(side, uplo, transa, diag, m, n, alpha_casted, A, lda, B, ldb);
+    const cuFloatComplex* A_casted = (const cuFloatComplex*) A;
+    cuFloatComplex* B_casted = (cuFloatComplex*) B;    
+    
+    cublasCtrmm(side, uplo, transa, diag, m, n, alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
   
