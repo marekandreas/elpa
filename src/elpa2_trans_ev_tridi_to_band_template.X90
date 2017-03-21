@@ -45,14 +45,13 @@
       use timings_dummy
 #endif
       use elpa2_workload
+      use pack_unpack_cpu
 #if REALCASE == 1
-      use pack_unpack_real
       use pack_unpack_real_gpu
       use compute_hh_trafo_real
 
 #endif
 #if COMPLEXCASE == 1
-      use pack_unpack_complex
       use compute_hh_trafo_complex
 #endif
       use cuda_functions

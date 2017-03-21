@@ -27,10 +27,9 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/mod_mpi.F90 \
         src/mod_mpi_stubs.F90 \
 	src/mod_redist_band.F90 \
-        src/mod_pack_unpack_real.F90 \
+        src/mod_pack_unpack_cpu.F90 \
         src/mod_compute_hh_trafo_real.F90 \
         src/mod_compute_hh_trafo_complex.F90 \
-        src/mod_pack_unpack_complex.F90 \
         src/aligned_mem.F90 \
         src/elpa1_compute_private.F90 \
 	src/elpa2_determine_workload.F90 \
@@ -63,6 +62,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2_kernels/elpa2_kernels_real_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
+	src/pack_unpack_cpu.X90 \
         src/redist_band.X90 \
 	src/sanity.X90 \
 	src/elpa_cholesky_template.X90 \
@@ -981,6 +981,7 @@ EXTRA_DIST = \
   src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
   src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
   src/redist_band.X90 \
+  src/pack_unpack_cpu.X90 \
   src/sanity.X90 \
   src/elpa_cholesky_template.X90 \
   src/elpa_invert_trm.X90 \

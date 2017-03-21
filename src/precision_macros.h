@@ -45,7 +45,7 @@
 #undef  MPI_MATH_DATATYPE_PRECISION
 #undef  C_DATATYPE_KIND
 
-/* General definitions needed in single and real case */
+/* General definitions needed in single and double case */
 #define  MATH_DATATYPE real
 #define  BLAS_TRANS_OR_CONJ 'T'
 
