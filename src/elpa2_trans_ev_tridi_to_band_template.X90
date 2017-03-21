@@ -46,8 +46,8 @@
 #endif
       use elpa2_workload
       use pack_unpack_cpu
+      use pack_unpack_gpu
 #if REALCASE == 1
-      use pack_unpack_real_gpu
       use compute_hh_trafo_real
 
 #endif
@@ -730,11 +730,9 @@
 		&_gpu_&
 		&PRECISION &
 		                          ( &
-#if REALCASE == 1
 		                          row_group, row_group_dev, aIntern_dev, stripe_count, &
                                           stripe_width, last_stripe_width, a_dim2, l_nev,&
                                           row_group_size, nblk, unpack_idx, &
-#endif
                                            i - limits(ip), .false.)
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
@@ -792,11 +790,9 @@
 		 &_gpu_&
 		 &PRECISION &
 		              ( &
-#if REALCASE == 1
                                row_group, row_group_dev, aIntern_dev, stripe_count, &
                                stripe_width, last_stripe_width, a_dim2, l_nev,&
                                row_group_size, nblk, unpack_idx, &
-#endif
                                i - limits(ip), .false.)
 
 #if REALCASE == 1
@@ -810,9 +806,12 @@
 #else /* WITH_OPENMP */
 
 #if COMPLEXCASE == 1
+! why is an cuda call in the openmp region?
                 call unpack_and_prepare_row_group_complex_gpu_&
 		&PRECISION&
-		&(i - limits(ip),.false.)
+		&(row_group, row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+		  last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
+		  unpack_idx, i - limits(ip),.false.)
                 row_group(:, row_group_size) = q(src_offset, 1:l_nev)
 #endif
 
@@ -945,11 +944,9 @@
 		&_gpu_&
 		&PRECISION&
 		&( &
-#if REALCASE == 1
                   row_group, row_group_dev, aIntern_dev, stripe_count,  &
                   stripe_width, last_stripe_width, a_dim2, l_nev,       &
                   row_group_size, nblk, unpack_idx,                     &
-#endif
                   i - limits(my_prow), .false.)
 
 #ifdef WITH_MPI
@@ -1016,11 +1013,9 @@
 	&_gpu_&
 	&PRECISION&
 	&( &
-#if REALCASE == 1
           row_group, row_group_dev, aIntern_dev, stripe_count, &
           stripe_width, last_stripe_width, &
           a_dim2, l_nev, row_group_size, nblk, unpack_idx,     &
-#endif
           -1, .true.)
 
         successCUDA = cuda_devicesynchronize()
@@ -1427,23 +1422,18 @@
 	    &MATH_DATATYPE&
 	    &_gpu_&
 	    &PRECISION &
-#if REALCASE == 1
+!#if REALCASE == 1
                           (bcast_buffer_dev, hh_tau_dev, nbw, &
-#endif
-#if COMPLEXCASE == 1
-                          (                              nbw, &
-#endif
+!#endif
+!#if COMPLEXCASE == 1
+!                          (                              nbw, &
+!#endif
                            current_local_n, .false.)
 	    call compute_hh_dot_products_&
 	    &MATH_DATATYPE&
 	    &_gpu_&
 	    &PRECISION &
-#if REALCASE == 1
 	                   (bcast_buffer_dev, hh_dot_dev, nbw, &
-#endif
-#if COMPLEXCASE == 1
-                           (                              nbw, &
-#endif
                             current_local_n)
           endif ! useGPU
 
@@ -1470,9 +1460,7 @@
 	    &_gpu_&
 	    &PRECISION&
 	    &( &
-#if REALCASE == 1
 	      bcast_buffer_dev, hh_tau_dev, &
-#endif
 	      nbw, 1, .true.)
           endif ! useGPU
         endif ! (current_local_n > 1) then
@@ -1720,7 +1708,9 @@
            if (useGPU) then
              call compute_hh_trafo_complex_gpu_&
 	     &PRECISION&
-	     &(0, current_local_n, i, a_off, dev_offset, dev_offset_1, dev_offset_2)
+	     &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, 0, current_local_n, i, a_off, dev_offset, dev_offset_1, &
+	     dev_offset_2, a_dim2, &
+             kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
            else
              call compute_hh_trafo_complex_cpu_&
 	     &PRECISION&
@@ -1892,8 +1882,10 @@
         if (useGPU) then
           call compute_hh_trafo_complex_gpu_&
 	  &PRECISION&
-	  &(current_local_n -bottom_msg_length, bottom_msg_length, i, a_off, &
-                                                  dev_offset, dev_offset_1, dev_offset_2)
+	  &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, current_local_n -bottom_msg_length, bottom_msg_length, i, a_off, &
+                                                  dev_offset, dev_offset_1, dev_offset_2, &
+						  a_dim2, &
+       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
         else
           call compute_hh_trafo_complex_cpu_&
 	  &PRECISION&
@@ -2008,8 +2000,10 @@
         if (useGPU) then
           call compute_hh_trafo_complex_gpu_&
 	  &PRECISION&
-	  &(top_msg_length,current_local_n-top_msg_length-bottom_msg_length, &
-                                                 i, a_off, dev_offset, dev_offset_1, dev_offset_2)
+	  &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, top_msg_length,current_local_n-top_msg_length-bottom_msg_length, &
+                                                 i, a_off, dev_offset, dev_offset_1, dev_offset_2, &
+						 a_dim2, &
+       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
         else
           call compute_hh_trafo_complex_cpu_&
 	  &PRECISION&
@@ -2106,7 +2100,9 @@
         if (useGPU) then
           call compute_hh_trafo_complex_gpu_&
 	  &PRECISION&
-	  &(0, top_msg_length, i, a_off, dev_offset, dev_offset_1, dev_offset_2)
+	  &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, 0, top_msg_length, i, a_off, dev_offset, dev_offset_1, dev_offset_2, &
+	  a_dim2, &
+       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
          else
            call compute_hh_trafo_complex_cpu_&
 	   &PRECISION&
@@ -2308,9 +2304,7 @@
 	    &_gpu_&
 	    &PRECISION&
 	    &( &
-#if REALCASE == 1
               row_group_dev, aIntern_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
-#endif
               row_group(:, :), j * nblk + a_off, row_group_size)
 
             do i = 1, row_group_size
@@ -2351,10 +2345,8 @@
 	    &_gpu_&
 	    &PRECISION&
 	    &( &
-#if REALCASE == 1
               row_group_dev, aIntern_dev, stripe_count, stripe_width, &
               last_stripe_width, a_dim2, l_nev, &
-#endif
               result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
 
           else  ! useGPU
@@ -2596,15 +2588,16 @@
           stop 1
         endif
 
-        ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)* size_of_datatype,   &
-				  cudaMemcpyHostToDevice)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-	  &MATH_DATATYPE&
-	  &: error in cudaMalloc"
-          stop 1
-        endif
+          ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
+          successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)* size_of_datatype,   &
+          			  cudaMemcpyHostToDevice)
+          if (.not.(successCUDA)) then
+            print *,"trans_ev_tridi_to_band_&
+            &MATH_DATATYPE&
+            &: error in cudaMalloc"
+            stop 1
+          endif
+!        endif
 !#endif
      endif !use GPU
 
@@ -2797,33 +2790,30 @@
      )
 
      return
-#if COMPLEXCASE == 1
-     contains
-     ! The host wrapper for extracting "tau" from the HH reflectors (see the
-     ! kernel below)
-       subroutine extract_hh_tau_complex_gpu_&
-       &PRECISION&
-       &(nbw, n, is_zero)
-         use cuda_c_kernel
-         use precision
-         implicit none
-         integer(kind=ik), value :: nbw, n
-         logical, value          :: is_zero
-         integer(kind=ik)        :: val_is_zero
+!#if COMPLEXCASE == 1
+!     contains
+!     ! The host wrapper for extracting "tau" from the HH reflectors (see the
+!     ! kernel below)
+!       subroutine extract_hh_tau_complex_gpu_&
+!       &PRECISION&
+!       &(nbw, n, is_zero)
+!         use cuda_c_kernel
+!         use pack_unpack_gpu
+!         use precision
+!         implicit none
+!         integer(kind=ik), value :: nbw, n
+!         logical, value          :: is_zero
+!         integer(kind=ik)        :: val_is_zero
+!
+!         if (is_zero) then
+!           val_is_zero = 1
+!         else
+!           val_is_zero = 0
+!         endif
+!         call launch_extract_hh_tau_c_kernel_complex_&
+!	 &PRECISION&
+!	 &(bcast_buffer_dev,hh_tau_dev, nbw, n,val_is_zero)
+!       end subroutine
+!#endif /* COMPLEXCASE */
 
-         if (is_zero) then
-           val_is_zero = 1
-         else
-           val_is_zero = 0
-         endif
-         call launch_extract_hh_tau_c_kernel_complex_&
-	 &PRECISION&
-	 &(bcast_buffer_dev,hh_tau_dev, nbw, n,val_is_zero)
-       end subroutine
-#endif /* COMPLEXCASE */
-
-#if REALCASE == 1
-    end subroutine trans_ev_tridi_to_band_real_&
-    &PRECISION
-#endif
-
+    end subroutine

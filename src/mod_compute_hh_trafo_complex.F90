@@ -46,12 +46,13 @@ module compute_hh_trafo_complex
   use elpa_mpi
   implicit none
 
+  private
 #ifdef WITH_OPENMP
   public compute_hh_trafo_complex_cpu_openmp_double
 #else
   public compute_hh_trafo_complex_cpu_double
 #endif
-
+  public compute_hh_trafo_complex_gpu_double
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
 #ifdef WITH_OPENMP
@@ -59,7 +60,7 @@ module compute_hh_trafo_complex
 #else
   public compute_hh_trafo_complex_cpu_single
 #endif
-
+  public compute_hh_trafo_complex_gpu_single
 #endif
 
   contains
@@ -786,5 +787,26 @@ module compute_hh_trafo_complex
 #endif
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
+
+
+  !complex double precision
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "compute_hh_trafo_complex_gpu.X90"
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
+
+ ! complex single precision
+#if defined(WANT_SINGLE_PRECISION_COMPLEX)
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "compute_hh_trafo_complex_gpu.X90"
+#undef COMPLEXCASE
+#undef SINGLE_PRECISION
+#endif
+
+
 
 end module

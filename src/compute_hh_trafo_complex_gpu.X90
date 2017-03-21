@@ -1,0 +1,50 @@
+
+    subroutine compute_hh_trafo_complex_gpu_&
+    &PRECISION&
+    &(a_dev, bcast_buffer_dev, hh_tau_dev, off, ncols, istripe, a_off, dev_offset, dev_offset_1, dev_offset_2, a_dim2, &
+       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
+
+      use iso_c_binding
+      use cuda_c_kernel
+      use cuda_functions
+      use precision
+      implicit none
+      real(kind=c_double), intent(inout) :: kernel_time ! MPI_WTIME always needs double
+      integer(kind=lik)            :: kernel_flops
+      integer(kind=c_size_t)       :: a_dev, bcast_buffer_dev, hh_tau_dev
+      integer(kind=ik), intent(in) :: last_stripe_width
+      integer(kind=ik), intent(in) :: off, ncols, istripe
+      integer(kind=ik)             :: nl, a_dim2, n_times, nbw, stripe_count, stripe_width
+      real(kind=c_double)          :: ttt ! MPI_WTIME always needs double
+
+      integer(kind=ik)             :: a_off
+      integer(kind=c_size_t)       :: dev_offset, dev_offset_1, dev_offset_2
+      integer(kind=c_size_t), parameter           :: size_of_datatype = size_of_&
+                                                                        &PRECISION&
+                                                                        &_&
+                                                                        &MATH_DATATYPE
+
+
+      if (ncols < 1) return
+      ttt = mpi_wtime()
+      nl = merge(stripe_width, last_stripe_width, istripe < stripe_count)
+
+      dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * &
+                    size_of_datatype
+      dev_offset_1 = (0 +  (  off-1 )* nbw) *size_of_datatype
+      dev_offset_2 =( off-1 )*size_of_datatype
+
+!      t1_compute_kernel =MPI_Wtime()
+      call launch_compute_hh_trafo_c_kernel_complex_&
+      &PRECISION&
+      &(a_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
+                                                    hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
+
+!      time0 = time0 + time1
+!      t2_compute_kernel =MPI_Wtime()
+!      t0_compute_kernel =  t0_compute_kernel + t2_compute_kernel-t1_compute_kernel
+
+      kernel_flops = kernel_flops + 4 * int(nl, 8) * int(ncols, 8) * int(nbw,8)
+      kernel_time = kernel_time + mpi_wtime() - ttt
+      n_times =n_times +1
+    end subroutine

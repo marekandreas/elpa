@@ -40,7 +40,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/check_for_gpu.F90 \
         src/mod_cuda.F90 \
         src/interface_c_kernel.F90 \
-        src/mod_pack_unpack_real_gpu.F90 \
+        src/mod_pack_unpack_gpu.F90 \
         src/elpa_qr/qr_utils.F90 \
         src/elpa_qr/elpa_qrkernels.F90 \
         src/elpa_qr/elpa_pdlarfb.F90 \
@@ -63,6 +63,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
 	src/pack_unpack_cpu.X90 \
+	src/pack_unpack_gpu.X90 \
+	src/compute_hh_trafo_complex_gpu.X90 \
         src/redist_band.X90 \
 	src/sanity.X90 \
 	src/elpa_cholesky_template.X90 \
@@ -982,6 +984,8 @@ EXTRA_DIST = \
   src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
   src/redist_band.X90 \
   src/pack_unpack_cpu.X90 \
+  src/pack_unpack_gpu.X90 \
+  src/compute_hh_trafo_complex_gpu.X90 \
   src/sanity.X90 \
   src/elpa_cholesky_template.X90 \
   src/elpa_invert_trm.X90 \
