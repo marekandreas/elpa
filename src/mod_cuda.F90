@@ -310,7 +310,7 @@ module cuda_functions
   end interface
 
   interface
-    subroutine cublas_cgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) bind(C,name='cublasCgemm')
+    subroutine cublas_cgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) bind(C,name='cublasCgemm_elpa_wrapper')
 
       use iso_c_binding
 
@@ -340,7 +340,7 @@ module cuda_functions
   end interface
 
   interface
-    subroutine cublas_ctrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) bind(C,name='cublasCtrmm')
+    subroutine cublas_ctrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) bind(C,name='cublasCtrmm_elpa_wrapper')
 
       use iso_c_binding
 
@@ -397,7 +397,7 @@ module cuda_functions
   end interface
 
   interface
-    subroutine cublas_cgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasCgemv')
+    subroutine cublas_cgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasCgemv_elpa_wrapper')
 
       use iso_c_binding
 

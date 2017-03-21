@@ -56,6 +56,8 @@
 #include <time.h>
 #include <alloca.h>
 #include <stdint.h>
+#include <complex.h>
+#include <cublas.h>
 
 #include "config-f90.h"
 
@@ -185,5 +187,37 @@ extern "C" {
       int val = cudaHostRegisterMapped;
       return val;
   }
+  
+  void CUBLASWINAPI cublasCgemv_elpa_wrapper (char trans, int m, int n, float complex alpha,
+                               const cuFloatComplex *A, int lda,  const cuFloatComplex *x, int incx,
+                               float complex beta, cuFloatComplex *y, int incy) {    
+
+    cuFloatComplex alpha_casted = {crealf(alpha), cimagf(alpha)};
+    cuFloatComplex beta_casted = {crealf(beta), cimagf(beta)};
+    
+    cublasCgemv(trans, m, n, alpha_casted, A, lda, x, incx, beta_casted, y, incy);
+     
+  }
+  
+  void CUBLASWINAPI cublasCgemm_elpa_wrapper (char transa, char transb, int m, int n, int k,
+                               float complex alpha, const cuComplex *A, int lda,
+                               const cuComplex *B, int ldb, float complex beta,
+                               cuComplex *C, int ldc) {
+    cuFloatComplex alpha_casted = {crealf(alpha), cimagf(alpha)};
+    cuFloatComplex beta_casted = {crealf(beta), cimagf(beta)};
+    
+    cublasCgemm(transa, transb, m, n, k, alpha_casted, A, lda, B, ldb, beta_casted, C, ldc);
+  }
+
+  void CUBLASWINAPI cublasCtrmm_elpa_wrapper (char side, char uplo, char transa, char diag,
+                               int m, int n, float complex alpha, const cuComplex *A,
+                               int lda, cuComplex *B, int ldb){
+
+    cuFloatComplex alpha_casted = {crealf(alpha), cimagf(alpha)};
+    
+    cublasCtrmm(side, uplo, transa, diag, m, n, alpha_casted, A, lda, B, ldb);
+  }
+
+  
 }
 #endif /* WITH_GPU_VERSION */
