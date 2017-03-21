@@ -2585,12 +2585,13 @@
 
 #endif /* WITH_MPI */
 
+     if (useGPU) then
 !#if REALCASE == 1
      ! copy q to q_dev needed in trans_ev_band_to_full
         successCUDA = cuda_malloc(q_dev, ldq*matrixCols* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
-	  &MAATH_DATATYPE&
+	  &MATH_DATATYPE&
 	  &: error in cudaMalloc"
           stop 1
         endif
@@ -2605,6 +2606,7 @@
           stop 1
         endif
 !#endif
+     endif !use GPU
 
      ! deallocate all working space
 
