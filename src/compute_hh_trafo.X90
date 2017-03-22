@@ -736,7 +736,7 @@
 	       & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &PRECISION&
+	       &MATH_DATATYPE&
 	       &_sse_2hv_&
 	       &PRECISION&
 	       & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
