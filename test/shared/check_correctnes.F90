@@ -186,9 +186,9 @@ module mod_check_correctness
       if (myid==0) print *
       if (myid==0) print *,'Error Residual     :',errmax
 #ifdef DOUBLE_PRECISION_COMPLEX
-      if (errmax .gt. 5e-12_rk8) then
+      if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-      if (errmax .gt. 3e-3_rk4) then
+      if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
         status = 1
       endif
@@ -257,9 +257,9 @@ module mod_check_correctness
 
       if (myid==0) print *,'Error Orthogonality:',errmax
 #ifdef DOUBLE_PRECISION_COMPLEX
-      if (errmax .gt. 5e-12_rk8) then
+      if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-      if (errmax .gt. 9e-4_rk4) then
+      if (errmax .gt. 9e-4_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
         status = 1
       endif
@@ -427,10 +427,10 @@ module mod_check_correctness
       if (myid==0) print *
       if (myid==0) print *,'Error Residual     :',errmax
 #ifdef DOUBLE_PRECISION_COMPLEX
-      if (errmax .gt. 5e-12_rk8) then
+      if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
 !      if (errmax .gt. 8e-4_rk4) then
-      if (errmax .gt. 8e-2_rk4) then
+      if (errmax .gt. 8e-2_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
         status = 1
       endif
@@ -499,10 +499,10 @@ module mod_check_correctness
 
       if (myid==0) print *,'Error Orthogonality:',errmax
 #ifdef DOUBLE_PRECISION_COMPLEX
-      if (errmax .gt. 5e-12_rk8) then
+      if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
 !      if (errmax .gt. 6e-5_rk4) then
-      if (errmax .gt. 8e-2_rk4) then
+      if (errmax .gt. 8e-2_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
         status = 1
       endif
@@ -675,9 +675,9 @@ module mod_check_correctness
       if (myid==0) print *
       if (myid==0) print *,'Error Residual     :',errmax
 #ifdef DOUBLE_PRECISION_REAL
-      if (errmax .gt. 9e-12_rk8) then
+      if (errmax .gt. 9e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-      if (errmax .gt. 3e-3_rk4) then
+      if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
         status = 1
       endif
@@ -755,9 +755,9 @@ module mod_check_correctness
 #endif /* WITH_MPI */
       if (myid==0) print *,'Error Orthogonality:',errmax
 #ifdef DOUBLE_PRECISION_REAL
-      if (errmax .gt. 9e-12_rk8) then
+      if (errmax .gt. 9e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-      if (errmax .gt. 9e-4_rk4) then
+      if (errmax .gt. 9e-4_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
         status = 1
       endif
@@ -926,10 +926,10 @@ module mod_check_correctness
       if (myid==0) print *
       if (myid==0) print *,'Error Residual     :',errmax
 #ifdef DOUBLE_PRECISION_REAL
-      if (errmax .gt. 9e-12_rk8) then
+      if (errmax .gt. 9e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
 !      if (errmax .gt. 8e-4_rk4) then
-      if (errmax .gt. 8e-2_rk4) then
+      if (errmax .gt. 8e-2_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
         status = 1
       endif
@@ -1008,10 +1008,10 @@ module mod_check_correctness
       if (myid==0) print *,'Error Orthogonality:',errmax
 
 #ifdef DOUBLE_PRECISION_REAL
-      if (errmax .gt. 9e-12_rk8) then
+      if (errmax .gt. 9e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
 !     if (errmax .gt. 6e-5_rk4) then
-    if (errmax .gt. 8e-2_rk4) then
+    if (errmax .gt. 8e-2_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
         status = 1
       endif
