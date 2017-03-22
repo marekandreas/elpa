@@ -586,7 +586,8 @@
 #else
                call double_hh_trafo_&
 	       &MATH_DATATYPE&
-	       &_avx_avx2_2hv_&PRECISION&
+	       &_avx_avx2_2hv_&
+	       &PRECISION&
 	       & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
