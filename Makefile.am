@@ -29,7 +29,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
 	src/mod_redist_band.F90 \
         src/mod_pack_unpack_cpu.F90 \
         src/mod_compute_hh_trafo.F90 \
-        src/mod_compute_hh_trafo_complex.F90 \
         src/aligned_mem.F90 \
         src/elpa1_compute_private.F90 \
 	src/elpa2_determine_workload.F90 \
@@ -904,11 +903,8 @@ elpa2_compute.i: $(top_srcdir)/src/elpa2_compute.F90
 elpa2_kernels_real.i: $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90 -o $@
 
-mod_compute_hh_trafo_real.i: $(top_srcdir)/src/mod_compute_hh_trafo_real.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo_real.F90 -o $@
-
-mod_compute_hh_trafo_complex.i: $(top_srcdir)/src/mod_compute_hh_trafo_complex.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo_complex.F90 -o $@
+mod_compute_hh_trafo.i: $(top_srcdir)/src/mod_compute_hh_trafo.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo.F90 -o $@
 
 test_real.i: $(top_srcdir)/test/Fortran/test_real1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/test/Fortran/test_real1.F90 -o $@

@@ -41,7 +41,7 @@
 !
 ! This file was written by A. Marek, MPCDF
 
-module compute_hh_trafo_real
+module compute_hh_trafo
 #include "config-f90.h"
   use elpa_mpi
   implicit none
@@ -52,6 +52,14 @@ module compute_hh_trafo_real
   public compute_hh_trafo_real_cpu_double
 #endif
 
+#ifdef WITH_OPENMP
+  public compute_hh_trafo_complex_cpu_openmp_double
+#else
+  public compute_hh_trafo_complex_cpu_double
+#endif
+  public compute_hh_trafo_complex_gpu_double
+
+
 #ifdef WANT_SINGLE_PRECISION_REAL
 #ifdef WITH_OPENMP
   public compute_hh_trafo_real_cpu_openmp_single
@@ -60,6 +68,16 @@ module compute_hh_trafo_real
 #endif
 #endif
 
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+
+
+#ifdef WITH_OPENMP
+  public compute_hh_trafo_complex_cpu_openmp_single
+#else
+  public compute_hh_trafo_complex_cpu_single
+#endif
+  public compute_hh_trafo_complex_gpu_single
+#endif
   contains
 
   !real double precision
@@ -80,5 +98,41 @@ module compute_hh_trafo_real
 #undef SINGLE_PRECISION
 #endif
 
+  !complex double precision
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "compute_hh_trafo.X90"
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
+
+ ! complex single precision
+#if defined(WANT_SINGLE_PRECISION_COMPLEX)
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "compute_hh_trafo.X90"
+#undef COMPLEXCASE
+#undef SINGLE_PRECISION
+#endif
+
+
+  !complex double precision
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "compute_hh_trafo_complex_gpu.X90"
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
+
+ ! complex single precision
+#if defined(WANT_SINGLE_PRECISION_COMPLEX)
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "compute_hh_trafo_complex_gpu.X90"
+#undef COMPLEXCASE
+#undef SINGLE_PRECISION
+#endif
 
 end module

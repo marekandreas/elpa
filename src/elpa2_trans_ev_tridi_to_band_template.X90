@@ -47,13 +47,7 @@
       use elpa2_workload
       use pack_unpack_cpu
       use pack_unpack_gpu
-#if REALCASE == 1
-      use compute_hh_trafo_real
-
-#endif
-#if COMPLEXCASE == 1
-      use compute_hh_trafo_complex
-#endif
+      use compute_hh_trafo
       use cuda_functions
       use precision
       use iso_c_binding
