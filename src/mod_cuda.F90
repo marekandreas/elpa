@@ -55,14 +55,14 @@ module cuda_functions
   integer(kind=ik) :: cudaHostRegisterMapped
   integer(kind=ik) :: cudaMemcpyDeviceToDevice
 
-  integer(kind=c_size_t), parameter :: size_of_double_real    = 8_rk8
+  integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
 #ifdef WANT_SINGLE_PRECISION_REAL
-  integer(kind=c_size_t), parameter :: size_of_single_real    = 4_rk4
+  integer(kind=c_intptr_t), parameter :: size_of_single_real    = 4_rk4
 #endif
 
-  integer(kind=c_size_t), parameter :: size_of_double_complex = 16_ck8
+  integer(kind=c_intptr_t), parameter :: size_of_double_complex = 16_ck8
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  integer(kind=c_size_t), parameter :: size_of_single_complex = 8_ck4
+  integer(kind=c_intptr_t), parameter :: size_of_single_complex = 8_ck4
 #endif
 
   ! functions to set and query the CUDA devices
@@ -165,7 +165,7 @@ module cuda_functions
       implicit none
       integer(kind=C_intptr_t), value              :: dst
       integer(kind=C_intptr_t), value              :: src
-      integer(kind=C_SIZE_T), intent(in), value    :: size
+      integer(kind=c_intptr_t), intent(in), value    :: size
       integer(kind=C_INT), intent(in), value       :: dir
       integer(kind=C_INT)                          :: istat
 
@@ -181,11 +181,11 @@ module cuda_functions
       implicit none
 
       integer(kind=C_intptr_T), value              :: dst
-      integer(kind=C_SIZE_T), intent(in), value    :: dpitch
+      integer(kind=c_intptr_t), intent(in), value    :: dpitch
       integer(kind=C_intptr_T), value              :: src
-      integer(kind=C_SIZE_T), intent(in), value    :: spitch
-      integer(kind=C_SIZE_T), intent(in), value    :: width
-      integer(kind=C_SIZE_T), intent(in), value    :: height
+      integer(kind=c_intptr_t), intent(in), value    :: spitch
+      integer(kind=c_intptr_t), intent(in), value    :: width
+      integer(kind=c_intptr_t), intent(in), value    :: height
       integer(kind=C_INT), intent(in), value       :: dir
       integer(kind=C_INT)                          :: istat
 
@@ -215,7 +215,7 @@ module cuda_functions
       implicit none
 
       integer(kind=C_intptr_T)                    :: a
-      integer(kind=C_SIZE_T), intent(in), value   :: width_height
+      integer(kind=c_intptr_t), intent(in), value   :: width_height
       integer(kind=C_INT)                         :: istat
 
     end function cuda_malloc_c
@@ -231,7 +231,7 @@ module cuda_functions
 
       integer(kind=C_intptr_T), value            :: a
       integer(kind=C_INT), value                 :: val
-      integer(kind=C_SIZE_T), intent(in), value  :: size
+      integer(kind=c_intptr_t), intent(in), value  :: size
       integer(kind=C_INT)                        :: istat
 
     end function cuda_memset_c
@@ -535,7 +535,7 @@ module cuda_functions
      implicit none
 
      integer(kind=C_intptr_t)                  :: a
-     integer(kind=C_SIZE_T), intent(in)        :: width_height
+     integer(kind=c_intptr_t), intent(in)        :: width_height
      logical                                   :: success
 #ifdef WITH_GPU_VERSION
      success = cuda_malloc_c(a, width_height) /= 0
@@ -566,12 +566,12 @@ module cuda_functions
 
    integer(kind=c_intptr_t)                :: a
    integer(kind=ik)                        :: val
-   integer(kind=c_size_t), intent(in)      :: size
+   integer(kind=c_intptr_t), intent(in)      :: size
    integer(kind=C_INT)                     :: istat
 
    logical :: success
 #ifdef WITH_GPU_VERSION
-   success= cuda_memset_c(a, int(val,kind=c_int), int(size,kind=c_size_t)) /=0
+   success= cuda_memset_c(a, int(val,kind=c_int), int(size,kind=c_intptr_t)) /=0
 #else
    success = .true.
 #endif
@@ -645,7 +645,7 @@ module cuda_functions
       implicit none
       integer(kind=C_intptr_t)              :: dst
       integer(kind=C_intptr_t)              :: src
-      integer(kind=C_SIZE_T), intent(in)    :: size
+      integer(kind=c_intptr_t), intent(in)    :: size
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
 
@@ -663,11 +663,11 @@ module cuda_functions
       implicit none
 
       integer(kind=C_intptr_T)           :: dst
-      integer(kind=C_SIZE_T), intent(in) :: dpitch
+      integer(kind=c_intptr_t), intent(in) :: dpitch
       integer(kind=C_intptr_T)           :: src
-      integer(kind=C_SIZE_T), intent(in) :: spitch
-      integer(kind=C_SIZE_T), intent(in) :: width
-      integer(kind=C_SIZE_T), intent(in) :: height
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
       integer(kind=C_INT), intent(in)    :: dir
       logical                            :: success
 #ifdef WITH_GPU_VERSION

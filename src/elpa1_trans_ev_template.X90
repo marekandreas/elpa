@@ -160,7 +160,7 @@
 
       integer(kind=C_intptr_T)                      :: q_dev, tmp_dev, hvm_dev, tmat_dev
       logical                                       :: successCUDA
-      integer(kind=c_size_t), parameter             :: size_of_datatype = size_of_&
+      integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
                                                                           &PRECISION&
                                                                           &_&
                                                                           &MATH_DATATYPE

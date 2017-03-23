@@ -117,7 +117,7 @@
 
          integer(kind=c_intptr_t)           :: a_dev
          integer(kind=c_intptr_t)           :: bcast_buffer_dev
-         integer(kind=c_size_t)             :: dev_offset
+         integer(kind=c_intptr_t)             :: dev_offset
          integer(kind=c_intptr_t)           :: hh_dot_dev
          integer(kind=c_intptr_t)           :: hh_tau_dev
          ! Private variables in OMP regions (my_thread) should better be in the argument list!

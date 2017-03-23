@@ -182,7 +182,7 @@
       integer(kind=ik)                       :: istat
       character(200)                         :: errorMessage
       logical                                :: successCUDA
-      integer(kind=c_size_t), parameter      :: size_of_datatype = size_of_&
+      integer(kind=c_intptr_t), parameter      :: size_of_datatype = size_of_&
                                                                    &PRECISION&
                                                                    &_&
                                                                    &MATH_DATATYPE

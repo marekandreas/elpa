@@ -11,15 +11,15 @@
       implicit none
       real(kind=c_double), intent(inout) :: kernel_time ! MPI_WTIME always needs double
       integer(kind=lik)            :: kernel_flops
-      integer(kind=c_size_t)       :: a_dev, bcast_buffer_dev, hh_tau_dev
+      integer(kind=c_intptr_t)       :: a_dev, bcast_buffer_dev, hh_tau_dev
       integer(kind=ik), intent(in) :: last_stripe_width
       integer(kind=ik), intent(in) :: off, ncols, istripe
       integer(kind=ik)             :: nl, a_dim2, n_times, nbw, stripe_count, stripe_width
       real(kind=c_double)          :: ttt ! MPI_WTIME always needs double
 
       integer(kind=ik)             :: a_off
-      integer(kind=c_size_t)       :: dev_offset, dev_offset_1, dev_offset_2
-      integer(kind=c_size_t), parameter           :: size_of_datatype = size_of_&
+      integer(kind=c_intptr_t)       :: dev_offset, dev_offset_1, dev_offset_2
+      integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
                                                                         &PRECISION&
                                                                         &_&
                                                                         &MATH_DATATYPE

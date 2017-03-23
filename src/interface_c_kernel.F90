@@ -259,9 +259,9 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int), value     :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value  :: q
-      integer(kind=c_size_t), value  :: hh_dot
-      integer(C_SIZE_T), value       :: hh_tau ,hh
+      integer(kind=c_intptr_t), value  :: q
+      integer(kind=c_intptr_t), value  :: hh_dot
+      integer(c_intptr_t), value       :: hh_tau ,hh
     end subroutine
   end interface
 
@@ -274,9 +274,9 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int), value     :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value  :: q
-      integer(kind=c_size_t), value  :: hh_dot
-      integer(C_SIZE_T), value       :: hh_tau ,hh
+      integer(kind=c_intptr_t), value  :: q
+      integer(kind=c_intptr_t), value  :: hh_dot
+      integer(c_intptr_t), value       :: hh_tau ,hh
     end subroutine
   end interface
 
@@ -290,8 +290,8 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value :: q
-      integer(kind=c_size_t), value :: hh_tau ,hh
+      integer(kind=c_intptr_t), value :: q
+      integer(kind=c_intptr_t), value :: hh_tau ,hh
     end subroutine
   end interface
 
@@ -305,8 +305,8 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value :: q
-      integer(kind=c_size_t), value :: hh_tau ,hh
+      integer(kind=c_intptr_t), value :: q
+      integer(kind=c_intptr_t), value :: hh_tau ,hh
     end subroutine
   end interface
 
@@ -321,8 +321,8 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value :: q
-      integer(kind=c_size_t), value :: hh_tau ,hh, hh_dot
+      integer(kind=c_intptr_t), value :: q
+      integer(kind=c_intptr_t), value :: hh_tau ,hh, hh_dot
 
     end subroutine
   end interface
@@ -336,8 +336,8 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value :: q
-      integer(kind=c_size_t), value :: hh_tau ,hh, hh_dot
+      integer(kind=c_intptr_t), value :: q
+      integer(kind=c_intptr_t), value :: hh_tau ,hh, hh_dot
 
     end subroutine
   end interface
@@ -448,8 +448,8 @@ module cuda_c_kernel
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t), value :: hh
-      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_intptr_t), value :: hh
+      integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value    :: nb, n
       integer(kind=c_int), value    :: is_zero
 
@@ -463,8 +463,8 @@ module cuda_c_kernel
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t), value :: hh
-      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_intptr_t), value :: hh
+      integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value    :: nb, n
       integer(kind=c_int), value    :: is_zero
 
@@ -575,8 +575,8 @@ module cuda_c_kernel
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t), value :: hh
-      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_intptr_t), value :: hh
+      integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value    :: nb, n
       integer(kind=c_int), value    :: is_zero
 
@@ -592,8 +592,8 @@ module cuda_c_kernel
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t), value :: hh
-      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_intptr_t), value :: hh
+      integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value    :: nb, n
       integer(kind=c_int), value    :: is_zero
 
@@ -801,9 +801,9 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int)     :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t)  :: q
-      integer(kind=c_size_t)  :: hh_dot
-      integer(C_SIZE_T)       :: hh_tau ,hh
+      integer(kind=c_intptr_t)  :: q
+      integer(kind=c_intptr_t)  :: hh_dot
+      integer(c_intptr_t)       :: hh_tau ,hh
 #ifdef WITH_GPU_VERSION
       call launch_compute_hh_trafo_c_kernel_real_c_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 #endif
@@ -816,9 +816,9 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int)     :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t)  :: q
-      integer(kind=c_size_t)  :: hh_dot
-      integer(C_SIZE_T)       :: hh_tau ,hh
+      integer(kind=c_intptr_t)  :: q
+      integer(kind=c_intptr_t)  :: hh_dot
+      integer(c_intptr_t)       :: hh_tau ,hh
 #ifdef WITH_GPU_VERSION
       call launch_compute_hh_trafo_c_kernel_real_c_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 #endif
@@ -832,8 +832,8 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int)    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t) :: q
-      integer(kind=c_size_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh
 #ifdef WITH_GPU_VERSION
       call launch_compute_hh_trafo_c_kernel_complex_c_double(q, hh, hh_tau, nev, nb,ldq,off, ncols)
 #endif
@@ -846,8 +846,8 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int)    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t) :: q
-      integer(kind=c_size_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh
 #ifdef WITH_GPU_VERSION
       call launch_compute_hh_trafo_c_kernel_complex_c_single(q, hh, hh_tau, nev, nb,ldq,off, ncols)
 #endif
@@ -862,8 +862,8 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int)    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t) :: q
-      integer(kind=c_size_t) :: hh_tau ,hh, hh_dot
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh, hh_dot
 #ifdef WITH_GPU_VERSION
       call launch_compute_hh_trafo_c_kernel_complex_1_c_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 #endif
@@ -876,8 +876,8 @@ module cuda_c_kernel
 
       implicit none
       integer(kind=c_int)    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t) :: q
-      integer(kind=c_size_t) :: hh_tau ,hh, hh_dot
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh, hh_dot
 #ifdef WITH_GPU_VERSION
       call launch_compute_hh_trafo_c_kernel_complex_1_c_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 #endif
@@ -991,8 +991,8 @@ module cuda_c_kernel
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t) :: hh
-      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_intptr_t) :: hh
+      integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int)    :: nb, n
       integer(kind=c_int)    :: is_zero
 #ifdef WITH_GPU_VERSION
@@ -1006,8 +1006,8 @@ module cuda_c_kernel
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t) :: hh
-      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_intptr_t) :: hh
+      integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int)    :: nb, n
       integer(kind=c_int)    :: is_zero
 #ifdef WITH_GPU_VERSION
@@ -1121,8 +1121,8 @@ module cuda_c_kernel
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t) :: hh
-      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_intptr_t) :: hh
+      integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int)    :: nb, n
       integer(kind=c_int)    :: is_zero
 #ifdef WITH_GPU_VERSION
@@ -1136,8 +1136,8 @@ module cuda_c_kernel
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t) :: hh
-      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_intptr_t) :: hh
+      integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int)    :: nb, n
       integer(kind=c_int)    :: is_zero
 #ifdef WITH_GPU_VERSION

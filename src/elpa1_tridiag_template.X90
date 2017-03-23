@@ -155,7 +155,7 @@
 
       integer(kind=ik)                              :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
       integer(kind=ik)                              :: tile_size, l_rows_per_tile, l_cols_per_tile
-      integer(kind=c_size_t)                        :: a_offset
+      integer(kind=c_intptr_t)                        :: a_offset
 
 #ifdef WITH_OPENMP
       integer(kind=ik)                              :: my_thread, n_threads, max_threads, n_iter
@@ -208,7 +208,7 @@
 #endif
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
-      integer(kind=c_size_t), parameter             :: size_of_datatype = size_of_&
+      integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
                                                                           &PRECISION&
                                                                           &_&
                                                                           &MATH_DATATYPE
@@ -852,8 +852,8 @@
             !successCUDA = cuda_threadsynchronize()
             !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
 
-             successCUDA = cuda_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_size_t), &
-                                       int(1 * size_of_datatype, kind=c_size_t), cudaMemcpyHostToDevice)
+             successCUDA = cuda_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
+                                       int(1 * size_of_datatype, kind=c_intptr_t), cudaMemcpyHostToDevice)
              check_memcpy_cuda("tridiag: a_dev 4", successCUDA)
           endif
         endif

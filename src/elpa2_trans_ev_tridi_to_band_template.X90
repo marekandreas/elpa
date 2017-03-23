@@ -154,8 +154,8 @@
 
       integer(kind=c_intptr_t)                 :: aIntern_dev
       integer(kind=c_intptr_t)                 :: bcast_buffer_dev
-      integer(kind=c_size_t)                   :: num
-      integer(kind=c_size_t)                   :: dev_offset, dev_offset_1, dev_offset_2
+      integer(kind=c_intptr_t)                   :: num
+      integer(kind=c_intptr_t)                   :: dev_offset, dev_offset_1, dev_offset_2
       integer(kind=c_intptr_t)                 :: row_dev
       integer(kind=c_intptr_t)                 :: row_group_dev
       integer(kind=c_intptr_t)                 :: hh_tau_dev
@@ -225,7 +225,7 @@
 #ifndef WITH_MPI
       integer(kind=ik)                         :: j1
 #endif
-      integer(kind=c_size_t), parameter        :: size_of_datatype = size_of_&
+      integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                                    &PRECISION&
                                                                    &_&
                                                                    &MATH_DATATYPE
@@ -593,7 +593,7 @@
 #endif
 
 #ifdef WITH_OPENMP
-        if (posix_memalign(aIntern_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*max_threads*     &
+        if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*max_threads*     &
 #if REALCASE == 1
                C_SIZEOF(a_real)) /= 0) then
 #endif
@@ -613,7 +613,7 @@
 
 #else /* WITH_OPENMP */
 
-        if (posix_memalign(aIntern_ptr, 64_C_SIZE_T, stripe_width*a_dim2*stripe_count*  &
+        if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*  &
 #if REALCASE == 1
             C_SIZEOF(a_real)) /= 0) then
 #endif
