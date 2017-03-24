@@ -353,7 +353,7 @@
         check_alloc_cuda("tridiag: a_dev", successCUDA)
 
         successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
-        check_alloc_cuda("tridiag: a_dev", successCUDA)
+        check_memcpy_cuda("tridiag: a_dev", successCUDA)
       endif
 
       ! main cycle of tridiagonalization
