@@ -188,6 +188,20 @@ extern "C" {
       return val;
   }
   
+  void cublasZgemv_elpa_wrapper (char trans, int m, int n, double complex alpha,
+                               const double complex *A, int lda,  const double complex *x, int incx,
+                               double complex beta, double complex *y, int incy) {    
+
+    cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
+    cuDoubleComplex beta_casted = *((cuDoubleComplex*)(&beta));
+    
+    const cuDoubleComplex* A_casted = (const cuDoubleComplex*) A;
+    const cuDoubleComplex* x_casted = (const cuDoubleComplex*) x;
+    cuDoubleComplex* y_casted = (cuDoubleComplex*) y;
+    
+    cublasZgemv(trans, m, n, alpha_casted, A_casted, lda, x_casted, incx, beta_casted, y_casted, incy);     
+  }
+  
   void cublasCgemv_elpa_wrapper (char trans, int m, int n, float complex alpha,
                                const float complex *A, int lda,  const float complex *x, int incx,
                                float complex beta, float complex *y, int incy) {    
@@ -202,6 +216,21 @@ extern "C" {
     cublasCgemv(trans, m, n, alpha_casted, A_casted, lda, x_casted, incx, beta_casted, y_casted, incy);     
   }
   
+  void cublasZgemm_elpa_wrapper (char transa, char transb, int m, int n, int k,
+                               double complex alpha, const double complex *A, int lda,
+                               const double complex *B, int ldb, double complex beta,
+                               double complex *C, int ldc) {
+    
+    cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
+    cuDoubleComplex beta_casted = *((cuDoubleComplex*)(&beta));
+    
+    const cuDoubleComplex* A_casted = (const cuDoubleComplex*) A;
+    const cuDoubleComplex* B_casted = (const cuDoubleComplex*) B;
+    cuDoubleComplex* C_casted = (cuDoubleComplex*) C;
+    
+    cublasZgemm(transa, transb, m, n, k, alpha_casted, A_casted, lda, B_casted, ldb, beta_casted, C_casted, ldc);
+  }
+
   void cublasCgemm_elpa_wrapper (char transa, char transb, int m, int n, int k,
                                float complex alpha, const float complex *A, int lda,
                                const float complex *B, int ldb, float complex beta,
@@ -215,6 +244,18 @@ extern "C" {
     cuFloatComplex* C_casted = (cuFloatComplex*) C;
     
     cublasCgemm(transa, transb, m, n, k, alpha_casted, A_casted, lda, B_casted, ldb, beta_casted, C_casted, ldc);
+  }
+
+  void cublasZtrmm_elpa_wrapper (char side, char uplo, char transa, char diag,
+                               int m, int n, double complex alpha, const double complex *A,
+                               int lda, double complex *B, int ldb){
+
+    cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
+    
+    const cuDoubleComplex* A_casted = (const cuDoubleComplex*) A;
+    cuDoubleComplex* B_casted = (cuDoubleComplex*) B;    
+    
+    cublasZtrmm(side, uplo, transa, diag, m, n, alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
   void cublasCtrmm_elpa_wrapper (char side, char uplo, char transa, char diag,
