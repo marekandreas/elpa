@@ -58,43 +58,43 @@
 
 ! the intel compiler creates a temp copy of array q!
 ! this should be prevented if possible without using assumed size arrays
+  subroutine double_hh_trafo_&
+  &MATH_DATATYPE&
+  &_generic_&
+  &PRECISION&
+  & (q, hh, nb, nq, ldq, ldh)
 
-#ifdef DOUBLE_PRECISION_REAL
-  subroutine double_hh_trafo_generic_double(q, hh, nb, nq, ldq, ldh)
-#else
-  subroutine double_hh_trafo_generic_single(q, hh, nb, nq, ldq, ldh)
-#endif
     use precision
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
+#else
+    use timings_dummy
 #endif
     use iso_c_binding
     implicit none
 
-    integer(kind=ik), intent(in)      :: nb, nq, ldq, ldh
+    integer(kind=ik), intent(in)            :: nb, nq, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
-    real(kind=REAL_DATATYPE), intent(inout)      :: q(ldq,*)
-    real(kind=REAL_DATATYPE), intent(in)         :: hh(ldh,*)
+    real(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
+    real(kind=C_DATATYPE_KIND), intent(in)    :: hh(ldh,*)
 #else
-    real(kind=REAL_DATATYPE), intent(inout)      :: q(1:ldq,1:nb+1)
-    real(kind=REAL_DATATYPE), intent(in)         :: hh(1:ldh,1:6)
+    real(kind=C_DATATYPE_KIND), intent(inout) :: q(1:ldq,1:nb+1)
+    real(kind=C_DATATYPE_KIND), intent(in)    :: hh(1:ldh,1:6)
 #endif
 
-    real(kind=REAL_DATATYPE)                     :: s
-    integer(kind=ik)                  :: i
+    real(kind=C_DATATYPE_KIND)                :: s
+    integer(kind=ik)                        :: i
 
 !    equivalence(q(1,1),q_complex(1,1))
 
     ! Safety only:
-#ifdef DOUBLE_PRECISION_REAL
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic: double_hh_trafo_generic_double")
-#endif
-#else
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic: double_hh_trafo_generic_single")
-#endif
-#endif
+
+    call timer%start("kernel generic: double_hh_trafo_&
+                     &MATH_DATATYPE&
+		     &_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
+
     if(mod(ldq,4) /= 0) STOP 'double_hh_trafo: ldq not divisible by 4!'
 
     ! Calculate dot product of the two Householder vectors
@@ -113,86 +113,55 @@
     ! Always a multiple of 4 Q-rows is transformed, even if nq is smaller
 
     do i=1,nq-8,12
-#ifdef DOUBLE_PRECISION_REAL
 
 #ifdef USE_ASSUMED_SIZE
-       call hh_trafo_kernel_12_generic_double(q(i,1),hh, nb, ldq, ldh, s)
+       call hh_trafo_kernel_12_generic_&
+       &PRECISION&
+       & (q(i,1),hh, nb, ldq, ldh, s)
 #else
-       call hh_trafo_kernel_12_generic_double(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
+       call hh_trafo_kernel_12_generic_&
+       &PRECISION&
+       & (q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
 #endif
 
-#else /* DOUBLE_PRECISION_REAL */
-
-#ifdef USE_ASSUMED_SIZE
-       call hh_trafo_kernel_12_generic_single(q(i,1),hh, nb, ldq, ldh, s)
-#else
-       call hh_trafo_kernel_12_generic_single(q(i:ldq,1:nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
-#endif
-
-#endif /* DOUBLE_PRECISION_REAL */
     enddo
 
     ! i > nq-8 now, i.e. at most 8 rows remain
 
     if(nq-i+1 > 4) then
-#ifdef DOUBLE_PRECISION_REAL
 
 #ifdef USE_ASSUMED_SIZE
-       call hh_trafo_kernel_8_generic_double(q(i,1),hh, nb, ldq, ldh, s)
+       call hh_trafo_kernel_8_generic_&
+       &PRECISION&
+       & (q(i,1),hh, nb, ldq, ldh, s)
 #else
-       call hh_trafo_kernel_8_generic_double(q(i:ldq,1:nb+1), hh(1:ldh,1:2), nb, ldq, ldh, s)
+       call hh_trafo_kernel_8_generic_&
+       &PRECISION&
+       & (q(i:ldq,1:nb+1), hh(1:ldh,1:2), nb, ldq, ldh, s)
 #endif
-
-#else /* DOUBLE_PRECISION_REAL */
-
-#ifdef USE_ASSUMED_SIZE
-       call hh_trafo_kernel_8_generic_single(q(i,1),hh, nb, ldq, ldh, s)
-#else
-       call hh_trafo_kernel_8_generic_single(q(i:ldq,1:nb+1), hh(1:ldh,1:2), nb, ldq, ldh, s)
-#endif
-
-#endif /* DOUBLE_PRECISION_REAL */
-
 
     else if(nq-i+1 > 0) then
-#ifdef DOUBLE_PRECISION_REAL
 
 #ifdef USE_ASSUMED_SIZE
-       call hh_trafo_kernel_4_generic_double(q(i,1),hh, nb, ldq, ldh, s)
+       call hh_trafo_kernel_4_generic_&
+       &PRECISION&
+       & (q(i,1),hh, nb, ldq, ldh, s)
 #else
-       call hh_trafo_kernel_4_generic_double(q(i:ldq,1:+nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
+       call hh_trafo_kernel_4_generic_&
+       &PRECISION&
+       & (q(i:ldq,1:+nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
 #endif
 
-#else /* DOUBLE_PRECISION_REAL */
-
-#ifdef USE_ASSUMED_SIZE
-       call hh_trafo_kernel_4_generic_single(q(i,1),hh, nb, ldq, ldh, s)
-#else
-       call hh_trafo_kernel_4_generic_single(q(i:ldq,1:+nb+1),hh(1:ldh,1:2), nb, ldq, ldh, s)
-#endif
-
-#endif /* DOUBLE_PRECISION_REAL */
     endif
 
-#ifdef DOUBLE_PRECISION_REAL
+    call timer%stop("kernel generic: double_hh_trafo_&
+                     &MATH_DATATYPE&
+		     &_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
 
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic: double_hh_trafo_generic_double")
-#endif
+  end subroutine
 
-#else
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic: double_hh_trafo_generic_single")
-#endif
-
-#endif
-
-#ifdef DOUBLE_PRECISION_REAL
-  end subroutine double_hh_trafo_generic_double
-#else
-  end subroutine double_hh_trafo_generic_single
-#endif
   ! --------------------------------------------------------------------------------------------------
   ! The following kernels perform the Householder transformation on Q for 12/8/4 rows.
   ! Please note that Q is declared complex*16 here.
@@ -200,50 +169,44 @@
   ! (relevant for Intel SSE and BlueGene double hummer CPUs).
   ! --------------------------------------------------------------------------------------------------
 
-#ifdef DOUBLE_PRECISION_REAL
-  subroutine hh_trafo_kernel_12_generic_double(q, hh, nb, ldq, ldh, s)
-#else
-  subroutine hh_trafo_kernel_12_generic_single(q, hh, nb, ldq, ldh, s)
-#endif
+  subroutine hh_trafo_kernel_12_generic_&
+  &PRECISION&
+  & (q, hh, nb, ldq, ldh, s)
     use precision
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
+#else
+    use timings_dummy
 #endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
-    complex(kind=COMPLEX_DATATYPE), intent(inout) :: q(ldq/2,*)
-    real(kind=REAL_DATATYPE), intent(in)       :: hh(ldh,*)
+#ifdef PACK_REAL_TO_COMPLEX
+    complex(kind=SPECIAL_COMPLEX_DATATYPE), intent(inout) :: q(ldq/2,*)
 #else
-    real(kind=REAL_DATATYPE), intent(inout)    :: q(:,:)
-    real(kind=REAL_DATATYPE), intent(in)       :: hh(ldh,2)
+    real(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
 #endif
-    real(kind=REAL_DATATYPE), intent(in)       :: s
+    real(kind=C_DATATYPE_KIND), intent(in)    :: hh(ldh,*)
+#else
+    real(kind=C_DATATYPE_KIND), intent(inout) :: q(:,:)
+    real(kind=C_DATATYPE_KIND), intent(in)    :: hh(ldh,2)
+#endif
+    real(kind=C_DATATYPE_KIND), intent(in)    :: s
 
 #ifdef PACK_REAL_TO_COMPLEX
-    complex(kind=COMPLEX_DATATYPE)                :: x1, x2, x3, x4, x5, x6, y1, y2, y3, y4, y5, y6
+    complex(kind=SPECIAL_COMPLEX_DATATYPE)    :: x1, x2, x3, x4, x5, x6, y1, y2, y3, y4, y5, y6
 #else
-    real(kind=REAL_DATATYPE)                   :: x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, &
+    real(kind=C_DATATYPE_KIND)                :: x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, &
                                        y1, y2, y3, y4, y5, y6, y7, y8, y9, y10, y11, y12
 #endif
-    real(kind=REAL_DATATYPE)                   :: h1, h2, tau1, tau2
+    real(kind=C_DATATYPE_KIND)                   :: h1, h2, tau1, tau2
     integer(kind=ik)                :: i
 
 
-#ifdef DOUBLE_PRECISION_REAL
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic: hh_trafo_kernel_12_generic_double")
-#endif
-
-#else
-
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic: hh_trafo_kernel_12_generic_single")
-#endif
-
-#endif
+    call timer%start("kernel generic: hh_trafo_kernel_12_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
 
     x1  = q(1,2)
     x2  = q(2,2)
@@ -433,55 +396,49 @@
     q(12,nb+1) = q(12,nb+1) + x12*hh(nb,1)
 #endif
 
-#ifdef DOUBLE_PRECISION_REAL
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic: hh_trafo_kernel_12_generic_double")
-#endif
-#else
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic: hh_trafo_kernel_12_generic_single")
-#endif
+    call timer%stop("kernel generic: hh_trafo_kernel_12_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
 
-#endif
-#ifdef DOUBLE_PRECISION_REAL
-  end subroutine hh_trafo_kernel_12_generic_double
-#else
-  end subroutine hh_trafo_kernel_12_generic_single
-#endif
+  end subroutine
   ! --------------------------------------------------------------------------------------------------
 
-#ifdef DOUBLE_PRECISION_REAL
-  subroutine hh_trafo_kernel_8_generic_double(q, hh, nb, ldq, ldh, s)
-#else
-  subroutine hh_trafo_kernel_8_generic_single(q, hh, nb, ldq, ldh, s)
-#endif
+  subroutine hh_trafo_kernel_8_generic_&
+  &PRECISION&
+  & (q, hh, nb, ldq, ldh, s)
     use precision
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
+#else
+    use timings_dummy
 #endif
     implicit none
 
     integer(kind=ik), intent(in)     :: nb, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
-    complex(kind=COMPLEX_DATATYPE), intent(inout)  :: q(ldq/2,*)
-    real(kind=REAL_DATATYPE), intent(in)        :: hh(ldh,*)
-#else
-    real(kind=REAL_DATATYPE),   intent(inout)   :: q(:,:)
-    real(kind=REAL_DATATYPE), intent(in)        :: hh(ldh,2)
-#endif
-    real(kind=REAL_DATATYPE), intent(in)        :: s
 #ifdef PACK_REAL_TO_COMPLEX
-    complex(kind=COMPLEX_DATATYPE)                 :: x1, x2, x3, x4, y1, y2, y3, y4
+    complex(kind=SPECIAL_COMPLEX_DATATYPE), intent(inout)  :: q(ldq/2,*)
 #else
-    real(kind=REAL_DATATYPE)                    :: x1, x2, x3, x4, x5, x6, x7, x8, &
+    real(kind=C_DATATYPE_KIND), intent(inout)  :: q(ldq,*)
+#endif
+    real(kind=C_DATATYPE_KIND), intent(in)     :: hh(ldh,*)
+#else
+    real(kind=C_DATATYPE_KIND),   intent(inout):: q(:,:)
+    real(kind=C_DATATYPE_KIND), intent(in)     :: hh(ldh,2)
+#endif
+    real(kind=C_DATATYPE_KIND), intent(in)     :: s
+#ifdef PACK_REAL_TO_COMPLEX
+    complex(kind=SPECIAL_COMPLEX_DATATYPE)     :: x1, x2, x3, x4, y1, y2, y3, y4
+#else
+    real(kind=C_DATATYPE_KIND)                 :: x1, x2, x3, x4, x5, x6, x7, x8, &
                                         y1, y2, y3, y4, y5, y6, y7, y8
 #endif
-    real(kind=REAL_DATATYPE)                    :: h1, h2, tau1, tau2
+    real(kind=C_DATATYPE_KIND)                    :: h1, h2, tau1, tau2
     integer(kind=ik)                 :: i
 
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic: hh_trafo_kernel_8_generic_double")
-#endif
+    call timer%start("kernel generic: hh_trafo_kernel_8_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
     x1 = q(1,2)
     x2 = q(2,2)
     x3 = q(3,2)
@@ -623,62 +580,51 @@
     q(8,nb+1) = q(8,nb+1) + x8*hh(nb,1)
 #endif
 
-#ifdef DOUBLE_PRECISION_REAL
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic: hh_trafo_kernel_8_generic_double")
-#endif
-#else
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic: hh_trafo_kernel_8_generic_single")
-#endif
-#endif
 
-#ifdef DOUBLE_PRECISION_REAL
-  end subroutine hh_trafo_kernel_8_generic_double
-#else
-  end subroutine hh_trafo_kernel_8_generic_single
-#endif
+    call timer%stop("kernel generic: hh_trafo_kernel_8_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
+
+  end subroutine
   ! --------------------------------------------------------------------------------------------------
 
-#ifdef DOUBLE_PRECISION_REAL
-  subroutine hh_trafo_kernel_4_generic_double(q, hh, nb, ldq, ldh, s)
-#else
-  subroutine hh_trafo_kernel_4_generic_single(q, hh, nb, ldq, ldh, s)
-#endif
+  subroutine hh_trafo_kernel_4_generic_&
+  &PRECISION&
+  & (q, hh, nb, ldq, ldh, s)
 
     use precision
 #ifdef HAVE_DETAILED_TIMINGS
     use timings
+#else
+    use timings_dummy
 #endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
-    complex(kind=COMPLEX_DATATYPE), intent(inout) :: q(ldq/2,*)
-    real(kind=REAL_DATATYPE), intent(in)       :: hh(ldh,*)
+#ifdef PACK_REAL_TO_COMPLEX
+    complex(kind=SPECIAL_COMPLEX_DATATYPE), intent(inout) :: q(ldq/2,*)
 #else
-    real(kind=REAL_DATATYPE), intent(inout)    :: q(:,:) !q(1:ldq/2,1:nb+1)
-    real(kind=REAL_DATATYPE), intent(in)       :: hh(ldh,2)
+    real(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
 #endif
-    real(kind=REAL_DATATYPE), intent(in)       :: s
+    real(kind=C_DATATYPE_KIND), intent(in)    :: hh(ldh,*)
+#else
+    real(kind=C_DATATYPE_KIND), intent(inout) :: q(:,:) !q(1:ldq/2,1:nb+1)
+    real(kind=C_DATATYPE_KIND), intent(in)    :: hh(ldh,2)
+#endif
+    real(kind=C_DATATYPE_KIND), intent(in)    :: s
 
 #ifdef PACK_REAL_TO_COMPLEX
-    complex(kind=COMPLEX_DATATYPE)                :: x1, x2, y1, y2
+    complex(kind=SPECIAL_COMPLEX_DATATYPE)    :: x1, x2, y1, y2
 #else
-    real(kind=REAL_DATATYPE)                   :: x1, x2, x3, x4, y1, y2, y3, y4
+    real(kind=C_DATATYPE_KIND)                :: x1, x2, x3, x4, y1, y2, y3, y4
 #endif
-    real(kind=REAL_DATATYPE)                   :: h1, h2, tau1, tau2
+    real(kind=C_DATATYPE_KIND)                :: h1, h2, tau1, tau2
     integer(kind=ik)                :: i
 
-#ifdef DOUBLE_PRECISION_REAL
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic: hh_trafo_kernel_4_generic_double")
-#endif
-#else
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%start("kernel generic: hh_trafo_kernel_4_generic_single")
-#endif
-#endif
+    call timer%start("kernel generic: hh_trafo_kernel_4_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
     x1 = q(1,2)
     x2 = q(2,2)
 #ifndef PACK_REAL_TO_COMPLEX
@@ -776,18 +722,8 @@
     q(4,nb+1) = q(4,nb+1) + x4*hh(nb,1)
 #endif
 
-#ifdef DOUBLE_PRECISION_REAL
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic: hh_trafo_kernel_4_generic_double")
-#endif
-#else
-#ifdef HAVE_DETAILED_TIMINGS
-    call timer%stop("kernel generic: hh_trafo_kernel_4_generic_single")
-#endif
-#endif
+    call timer%stop("kernel generic: hh_trafo_kernel_4_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
 
-#ifdef DOUBLE_PRECISION_REAL
-  end subroutine hh_trafo_kernel_4_generic_double
-#else
-  end subroutine hh_trafo_kernel_4_generic_single
-#endif
+  end subroutine

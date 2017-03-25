@@ -4,6 +4,7 @@
 #undef  MATH_DATATYPE
 #undef  BLAS_TRANS_OR_CONJ
 #undef  PRECISION
+#undef  SPECIAL_COMPLEX_DATATYPE
 #undef  PRECISION_STR
 #undef  REAL_DATATYPE
 
@@ -55,7 +56,7 @@
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
 #define  REAL_DATATYPE rk8
-
+#define  SPECIAL_COMPLEX_DATATYPE ck8
 
 #define  PRECISION_TRTRI DTRTRI
 #define  PRECISION_POTRF DPOTRF
@@ -101,6 +102,7 @@
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
 #define  REAL_DATATYPE rk4
+#define  SPECIAL_COMPLEX_DATATYPE ck4
 
 #define  PRECISION_TRTRI STRTRI
 #define  PRECISION_POTRF SPOTRF
