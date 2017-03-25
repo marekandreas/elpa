@@ -401,11 +401,15 @@
 #ifdef WITH_OPENMP
 
 #ifdef USE_ASSUMED_SIZE
-                 call double_hh_trafo_generic_simple_&
+                 call double_hh_trafo_&
+		 &MATH_DATATYPE&
+		 &_generic_simple_&
 		 &PRECISION&
 		 & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
 #else
-                 call double_hh_trafo_generic_simple_&
+                 call double_hh_trafo_&
+		 &MATH_DATATYPE&
+		 &_generic_simple_&
 		 &PRECISION&
 		 & (a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
 
@@ -414,11 +418,15 @@
 #else /* WITH_OPENMP */
 
 #ifdef USE_ASSUMED_SIZE
-                 call double_hh_trafo_generic_simple_&
+                 call double_hh_trafo_&
+		 &MATH_DATATYPE&
+		 &_generic_simple_&
 		 &PRECISION&
 		 & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
 #else
-                 call double_hh_trafo_generic_simple_&
+                 call double_hh_trafo_&
+		 &MATH_DATATYPE&
+		 &_generic_simple_&
 		 &PRECISION&
 		 & (a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe), w, nbw, nl, stripe_width, nbw)
 
