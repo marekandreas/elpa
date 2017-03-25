@@ -41,7 +41,7 @@
 #
 # Author: Andreas Marek, MPCDF
 
-        .globl double_hh_trafo_single
+        .globl double_hh_trafo_real_single
         .globl single_hh_trafo_complex_single
 
 	.text
@@ -376,7 +376,7 @@
 #-------------------------------------------------------------------------------
 # FORTRAN Interface:
 #
-# subroutine double_hh_trafo(q, hh, nb, nq, ldq, ldh)
+# subroutine double_hh_trafo_real_single(q, hh, nb, nq, ldq, ldh)
 #
 #   integer, intent(in) :: nb, nq, ldq, ldh
 #   real*8, intent(inout) :: q(ldq,*)
@@ -394,7 +394,7 @@
 #!f>#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
 #!f>#ifdef WANT_SINGLE_PRECISION_REAL
 #!f>  interface
-#!f>    subroutine double_hh_trafo_single(q, hh, nb, nq, ldq, ldh) bind(C,name="double_hh_trafo_single")
+#!f>    subroutine double_hh_trafo_real_single(q, hh, nb, nq, ldq, ldh) bind(C,name="double_hh_trafo_real_single")
 #!f>      use, intrinsic :: iso_c_binding
 #!f>      integer(kind=c_int) :: nb, nq, ldq, ldh
 #!f>      type(c_ptr), value  :: q
@@ -404,7 +404,7 @@
 #!f>#endif
 #!f>#endif
         .align    16,0x90
-double_hh_trafo_single:
+double_hh_trafo_real_single:
 
         # Get integer parameters into corresponding registers
 

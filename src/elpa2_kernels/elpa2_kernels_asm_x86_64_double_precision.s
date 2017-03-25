@@ -54,7 +54,7 @@
 # distributed along with the original code in the file "COPYING".
 #
 # --------------------------------------------------------------------------------------------------
-        .globl double_hh_trafo_double
+        .globl double_hh_trafo_real_double
         .globl single_hh_trafo_complex_double
         .text
 
@@ -367,7 +367,7 @@
 #-------------------------------------------------------------------------------
 # FORTRAN Interface:
 #
-# subroutine double_hh_trafo(q, hh, nb, nq, ldq, ldh)
+# subroutine double_hh_trafo_real_double(q, hh, nb, nq, ldq, ldh)
 #
 #   integer, intent(in) :: nb, nq, ldq, ldh
 #   real*8, intent(inout) :: q(ldq,*)
@@ -385,7 +385,7 @@
 
 #!f>#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
 #!f>  interface
-#!f>    subroutine double_hh_trafo_double(q, hh, nb, nq, ldq, ldh) bind(C,name="double_hh_trafo_double")
+#!f>    subroutine double_hh_trafo_real_double(q, hh, nb, nq, ldq, ldh) bind(C,name="double_hh_trafo_real_double")
 #!f>      use, intrinsic :: iso_c_binding
 #!f>      integer(kind=c_int)  :: nb, nq, ldq, ldh
 #!f>      type(c_ptr), value   :: q
@@ -394,7 +394,7 @@
 #!f>  end interface
 #!f>#endif
         .align    16,0x90
-double_hh_trafo_double:
+double_hh_trafo_real_double:
 
         # Get integer parameters into corresponding registers
 
@@ -695,7 +695,7 @@ return1:
 #-------------------------------------------------------------------------------
 # FORTRAN Interface:
 #
-# subroutine single_hh_trafo_complex(q, hh, nb, nq, ldq)
+# subroutine single_hh_trafo_complex_double(q, hh, nb, nq, ldq)
 #
 #   integer, intent(in) :: nb, nq, ldq
 #   complex*16, intent(inout) :: q(ldq,*)
