@@ -488,12 +488,14 @@
                  &MATH_DATATYPE&
 		 &_&
 		 &PRECISION&
+		 &_sse_assembly&
 		 & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                  call double_hh_trafo_&
 		 &MATH_DATATYPE&
 		 &_&
 		 &PRECISION&
+		 &_sse_assembly&
 		 & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
@@ -517,12 +519,14 @@
 	      &MATH_DATATYPE&
 	      &_&
 	      &PRECISION&
+	      &_sse_assembly&
 	      & (a(1,j+off+a_off,istripe,my_thread), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
 	      &MATH_DATATYPE&
 	      &_&
 	      &PRECISION&
+	      &_sse_assembly&
 	      & (a(1,j+off+a_off,istripe), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo

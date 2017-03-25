@@ -54,8 +54,8 @@
 # distributed along with the original code in the file "COPYING".
 #
 # --------------------------------------------------------------------------------------------------
-        .globl double_hh_trafo_real_double
-        .globl single_hh_trafo_complex_double
+        .globl double_hh_trafo_real_double_sse_assembly
+        .globl single_hh_trafo_complex_double_sse_assembly
         .text
 
 #-------------------------------------------------------------------------------
@@ -367,7 +367,7 @@
 #-------------------------------------------------------------------------------
 # FORTRAN Interface:
 #
-# subroutine double_hh_trafo_real_double(q, hh, nb, nq, ldq, ldh)
+# subroutine double_hh_trafo_real_double_sse_assembly(q, hh, nb, nq, ldq, ldh)
 #
 #   integer, intent(in) :: nb, nq, ldq, ldh
 #   real*8, intent(inout) :: q(ldq,*)
@@ -385,7 +385,8 @@
 
 #!f>#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
 #!f>  interface
-#!f>    subroutine double_hh_trafo_real_double(q, hh, nb, nq, ldq, ldh) bind(C,name="double_hh_trafo_real_double")
+#!f>    subroutine double_hh_trafo_real_double_sse_assembly(q, hh, nb, nq, ldq, ldh) &
+#!f>      bind(C,name="double_hh_trafo_real_double_sse_assembly")
 #!f>      use, intrinsic :: iso_c_binding
 #!f>      integer(kind=c_int)  :: nb, nq, ldq, ldh
 #!f>      type(c_ptr), value   :: q
@@ -394,7 +395,7 @@
 #!f>  end interface
 #!f>#endif
         .align    16,0x90
-double_hh_trafo_real_double:
+double_hh_trafo_real_double_sse_assembly:
 
         # Get integer parameters into corresponding registers
 
@@ -695,7 +696,7 @@ return1:
 #-------------------------------------------------------------------------------
 # FORTRAN Interface:
 #
-# subroutine single_hh_trafo_complex_double(q, hh, nb, nq, ldq)
+# subroutine single_hh_trafo_complex_double_sse_assembly(q, hh, nb, nq, ldq)
 #
 #   integer, intent(in) :: nb, nq, ldq
 #   complex*16, intent(inout) :: q(ldq,*)
@@ -711,7 +712,8 @@ return1:
 #-------------------------------------------------------------------------------
 #!f>#ifdef WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
 #!f>  interface
-#!f>    subroutine single_hh_trafo_complex_double(q, hh, nb, nq, ldq) bind(C,name="single_hh_trafo_complex_double")
+#!f>    subroutine single_hh_trafo_complex_double_sse_assembly(q, hh, nb, nq, ldq) &
+#!f>      bind(C,name="single_hh_trafo_complex_double_sse_assembly")
 #!f>      use, intrinsic :: iso_c_binding
 #!f>      integer(kind=c_int)     :: nb, nq, ldq
 #!f>      complex(kind=c_double_complex)  :: q(*)
@@ -720,7 +722,7 @@ return1:
 #!f>  end interface
 #!f>#endif
         .align    16,0x90
-single_hh_trafo_complex_double:
+single_hh_trafo_complex_double_sse_assembly:
 
         # Get integer parameters into corresponding registers
 
