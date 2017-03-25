@@ -58,6 +58,7 @@
 
 #include "config-f90.h"
 
+#ifndef USE_ASSUMED_SIZE
 module complex_generic_simple_kernel
 
   private
@@ -67,7 +68,7 @@ module complex_generic_simple_kernel
 #endif
 
   contains
-
+#endif
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
@@ -85,5 +86,7 @@ module complex_generic_simple_kernel
 #undef SINGLE_PRECISION
 #endif
 
+#ifndef USE_ASSUMED_SIZE
 end module complex_generic_simple_kernel
+#endif
 ! --------------------------------------------------------------------------------------------------

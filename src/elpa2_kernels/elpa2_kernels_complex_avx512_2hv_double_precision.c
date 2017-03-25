@@ -74,7 +74,8 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_2hv_double(double com
 !f>                             bind(C, name="double_hh_trafo_complex_avx512_2hv_double")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
-!f>     complex(kind=c_double_complex)     :: q(*)
+!f>     ! complex(kind=c_double_complex)     :: q(*)
+!f>     type(c_ptr), value                   :: q
 !f>     complex(kind=c_double_complex)     :: hh(pnb,2)
 !f>   end subroutine
 !f> end interface

@@ -56,6 +56,7 @@
 
 #include "config-f90.h"
 
+#ifndef USE_ASSUMED_SIZE
 module complex_generic_kernel
 
   private
@@ -65,6 +66,7 @@ module complex_generic_kernel
 #endif
 
   contains
+#endif
 
 #define DOUBLE_PRECISION_COMPLEX 1
 #define COMPLEX_DATATYPE ck8
@@ -80,5 +82,8 @@ module complex_generic_kernel
 #undef COMPLEX_DATATYPE
 #endif
 
+#ifndef USE_ASSUMED_SIZE
 end module complex_generic_kernel
+#endif
+
 ! --------------------------------------------------------------------------------------------------

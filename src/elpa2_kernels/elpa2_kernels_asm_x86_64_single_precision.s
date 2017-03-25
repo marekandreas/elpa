@@ -735,9 +735,10 @@ return1:
 #!f>    subroutine single_hh_trafo_complex_single_sse_assembly(q, hh, nb, nq, ldq) &
 #!f>      bind(C,name="single_hh_trafo_complex_single_sse_assembly")
 #!f>      use, intrinsic :: iso_c_binding
-#!f>      integer(kind=c_int)   :: nb, nq, ldq
-#!f>      complex(kind=c_float_complex) :: q(*)
-#!f>      complex(kind=c_float_complex) :: hh(nb,2)
+#!f>      integer(kind=c_int)            :: nb, nq, ldq
+#!f>      !complex(kind=c_float_complex) :: q(*)
+#!f>      type(c_ptr), value             :: q
+#!f>      complex(kind=c_float_complex)  :: hh(nb,2)
 #!f>    end subroutine
 #!f>  end interface
 #!f>#endif

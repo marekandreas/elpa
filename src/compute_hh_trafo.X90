@@ -103,10 +103,10 @@
 
 #if COMPLEXCASE == 1
 
-#if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
+#if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL) && !(defined(USE_ASSUMED_SIZE))
            use complex_generic_simple_kernel !, only : single_hh_trafo_complex_generic_simple
 #endif
-#if defined(WITH_COMPLEX_GENERIC_KERNEL)
+#if defined(WITH_COMPLEX_GENERIC_KERNEL) && !(defined(USE_ASSUMED_SIZE))
            use complex_generic_kernel !, only : single_hh_trafo_complex_generic
 #endif
 
@@ -147,7 +147,8 @@
          real(kind=C_DATATYPE_KIND), pointer:: a(:,:,:)
 #endif
 #if COMPLEXCASE == 1
-          complex(kind=C_DATATYPE_KIND)      :: a(stripe_width,a_dim2,stripe_count)
+!          complex(kind=C_DATATYPE_KIND)      :: a(stripe_width,a_dim2,stripe_count)
+          complex(kind=C_DATATYPE_KIND),pointer :: a(:,:,:)
 #endif
 
 #else /* WITH_OPENMP */
@@ -157,7 +158,8 @@
          real(kind=C_DATATYPE_KIND), pointer:: a(:,:,:,:)
 #endif
 #if COMPLEXCASE == 1
-          complex(kind=C_DATATYPE_KIND)      :: a(stripe_width,a_dim2,stripe_count,max_threads)
+!          complex(kind=C_DATATYPE_KIND)      :: a(stripe_width,a_dim2,stripe_count,max_threads)
+          complex(kind=C_DATATYPE_KIND),pointer      :: a(:,:,:,:)
 #endif
 
 #endif /* WITH_OPENMP */
@@ -536,14 +538,14 @@
 	      &_&
 	      &PRECISION&
 	      &_sse_assembly&
-	      & (a(1,j+off+a_off,istripe,my_thread), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+	      & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
 	      &MATH_DATATYPE&
 	      &_&
 	      &PRECISION&
 	      &_sse_assembly&
-	      & (a(1,j+off+a_off,istripe), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
@@ -571,13 +573,13 @@
 	      &MATH_DATATYPE&
 	      &_sse_1hv_&
 	      &PRECISION&
-	      & (a(1,j+off+a_off,istripe,my_thread), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+	      & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
 	      &MATH_DATATYPE&
 	      &_sse_1hv_&
 	      &PRECISION&
-	      & (a(1,j+off+a_off,istripe), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
 #endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)) */
@@ -609,13 +611,13 @@
 	      &MATH_DATATYPE&
 	      &_avx_avx2_1hv_&
 	      &PRECISION&
-	      & (a(1,j+off+a_off,istripe,my_thread), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+	      & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
 	      &MATH_DATATYPE&
 	      &_avx_avx2_1hv_&
 	      &PRECISION&
-	      & (a(1,j+off+a_off,istripe), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
 #endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)) */
@@ -646,13 +648,13 @@
 	      &MATH_DATATYPE&
 	      &_avx512_1hv_&
 	      &PRECISION&
-	      & (a(1,j+off+a_off,istripe,my_thread), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+	      & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
 	      &MATH_DATATYPE&
 	      &_avx512_1hv_&
 	      &PRECISION&
-	      & (a(1,j+off+a_off,istripe), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
 #endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) ) */
@@ -715,13 +717,13 @@
 	       &MATH_DATATYPE&
 	       &_sse_2hv_&
 	       &PRECISION&
-	       & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+	       & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
 	       &MATH_DATATYPE&
 	       &_sse_2hv_&
 	       &PRECISION&
-	       & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
@@ -729,13 +731,13 @@
 	               &MATH_DATATYPE&
 		       &_sse_1hv_&
 		       &PRECISION&
-		       & (a(1,1+off+a_off,istripe,my_thread), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+		       & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
              if (j==1) call single_hh_trafo_&
 	               &MATH_DATATYPE&
 		       &_sse_1hv_&
 		       &PRECISION&
-		       & (a(1,1+off+a_off,istripe), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+		       & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
@@ -799,13 +801,13 @@
 	       &MATH_DATATYPE&
 	       &_avx_avx2_2hv_&
 	       &PRECISION&
-	       & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+	       & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
 	       &MATH_DATATYPE&
 	       &_avx_avx2_2hv_&
 	       &PRECISION&
-	       & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
@@ -813,13 +815,13 @@
 	               &MATH_DATATYPE&
 		       &_avx_avx2_1hv_&
 		       &PRECISION&
-		       & (a(1,1+off+a_off,istripe,my_thread), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+		       & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
              if (j==1) call single_hh_trafo_&
 	               &MATH_DATATYPE&
 		       &_avx_avx2_1hv_&
 		       &PRECISION&
-		       & (a(1,1+off+a_off,istripe), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+		       & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
@@ -882,13 +884,13 @@
 	       &MATH_DATATYPE&
 	       &_avx512_2hv_&
 	       &PRECISION&
-	       & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+	       & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
 	       &MATH_DATATYPE&
 	       &_avx512_2hv_&
 	       &PRECISION&
-	       & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
@@ -896,13 +898,13 @@
 	               &MATH_DATATYPE&
 		       &_avx512_1hv_&
 		       &PRECISION&
-		       & (a(1,1+off+a_off,istripe,my_thread), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+		       & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
              if (j==1) call single_hh_trafo_&
 	               &MATH_DATATYPE&
 		       &_avx512_1hv_&
 		       &PRECISION&
-		       & (a(1,1+off+a_off,istripe), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+		       & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
 #if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)

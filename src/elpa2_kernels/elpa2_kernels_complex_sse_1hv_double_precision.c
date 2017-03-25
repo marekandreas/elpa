@@ -84,7 +84,8 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_1hv_double(double comple
 !f>                             bind(C, name="single_hh_trafo_complex_sse_1hv_double")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq
-!f>     complex(kind=c_double_complex)     :: q(*)
+!f>     ! complex(kind=c_double_complex)     :: q(*)
+!f>     type(c_ptr), value                   :: q
 !f>     complex(kind=c_double_complex)     :: hh(pnb,2)
 !f>   end subroutine
 !f> end interface
