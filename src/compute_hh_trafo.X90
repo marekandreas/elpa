@@ -46,25 +46,20 @@
        subroutine compute_hh_trafo_&
        &MATH_DATATYPE&
 #ifdef WITH_OPENMP
-       &_cpu_openmp_&
+       &_openmp_&
 #else
-       &_cpu_&
+       &_&
 #endif
        &PRECISION &
-       (a, &
-#if REALCASE == 1
-       a_dev, &
-#endif
-       stripe_width, a_dim2, stripe_count,  &
+       (a, a_dev, stripe_width, a_dim2, stripe_count,  &
 #ifdef WITH_OPENMP
        max_threads, l_nev, &
 #endif
-       a_off, nbw, max_blk_size, bcast_buffer, &
+       a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
-       bcast_buffer_dev, hh_dot_dev, hh_tau_dev, &
+       hh_dot_dev, &
 #endif
-       kernel_flops, kernel_time, &
-       off, ncols, istripe, &
+       hh_tau_dev, kernel_flops, kernel_time, n_times, off, ncols, istripe, &
 #ifdef WITH_OPENMP
        my_thread, thread_width, &
 #else
@@ -112,10 +107,8 @@
 
 #endif /* COMPLEXCASE */
 
-#if REALCASE == 1
          use cuda_c_kernel
          use cuda_functions
-#endif
 
 #ifdef HAVE_DETAILED_TIMINGS
          use timings
@@ -171,19 +164,20 @@
          integer(kind=ik), intent(in)       :: THIS_COMPLEX_ELPA_KERNEL
 #endif
 
-#if REALCASE == 1
          integer(kind=c_intptr_t)           :: a_dev
 	 integer(kind=c_intptr_t)           :: bcast_buffer_dev
-         integer(kind=c_intptr_t)           :: hh_dot_dev
-         integer(kind=c_intptr_t)           :: hh_tau_dev
-         integer(kind=c_intptr_t)             :: dev_offset
+#if REALCASE == 1
+         integer(kind=c_intptr_t)           :: hh_dot_dev ! why not needed in complex case
 #endif
+         integer(kind=c_intptr_t)           :: hh_tau_dev
+         integer(kind=c_intptr_t)             :: dev_offset, dev_offset_1, dev_offset_2
+
          ! Private variables in OMP regions (my_thread) should better be in the argument list!
          integer(kind=ik)                   :: off, ncols, istripe
 #ifdef WITH_OPENMP
          integer(kind=ik)                   :: my_thread, noff
 #endif
-         integer(kind=ik)                   :: j, nl, jj, jjj
+         integer(kind=ik)                   :: j, nl, jj, jjj, n_times
 #if REALCASE == 1
          real(kind=C_DATATYPE_KIND)         :: w(nbw,6)
 #endif
@@ -198,13 +192,19 @@
            if (ncols < 1) return
          endif
 #endif
+#if COMPLEXCASE == 1
+         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GPU) then
+           ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
+           if (ncols < 1) return
+         endif
+#endif
 
          call timer%start("compute_hh_trafo_&
 	 &MATH_DATATYPE&
 #ifdef WITH_OPENMP
-         &_cpu_openmp" // &
+         &_openmp" // &
 #else
-         &_cpu" // &
+         &" // &
 #endif
          &PRECISION_SUFFIX &
          )
@@ -231,6 +231,14 @@
            stop 1
          endif
 #endif
+#if COMPLEXCASE == 1
+         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GPU) then
+           print *,"compute_hh_trafo_&
+	   &MATH_DATATYPE&
+	   &_GPU OPENMP: not yet implemented"
+           stop 1
+         endif
+#endif
          if (istripe<stripe_count) then
            nl = stripe_width
          else
@@ -240,9 +248,9 @@
              call timer%stop("compute_hh_trafo_&
 	     &MATH_DATATYPE&
 #ifdef WITH_OPENMP
-             &_cpu_openmp" // &
+             &_openmp" // &
 #else
-             &_cpu" // &
+             &" // &
 #endif
              &PRECISION_SUFFIX &
              )
@@ -253,6 +261,7 @@
 #endif /* not WITH_OPENMP */
 
 #if REALCASE == 1
+! GPU kernel real
          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
            dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_&
 	                &PRECISION&
@@ -263,8 +272,37 @@
 	   &_&
 	   &PRECISION&
 	   & (a_dev + dev_offset, bcast_buffer_dev, hh_dot_dev, hh_tau_dev, nl, nbw, stripe_width, off, ncols)
-         else ! not CUDA kernel
 #endif /* REALCASE */
+#if COMPLEXCASE == 1
+! GPU kernel complex
+         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GPU) then
+
+           dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * size_of_&
+	                &PRECISION&
+			&_&
+			&MATH_DATATYPE
+
+           dev_offset_1 = (0 +  (  off-1 )* nbw) * size_of_&
+	                &PRECISION&
+			&_&
+			&MATH_DATATYPE
+
+           dev_offset_2 =( off-1 )* size_of_&
+	                &PRECISION&
+			&_&
+			&MATH_DATATYPE
+
+           call launch_compute_hh_trafo_c_kernel_&
+	   &MATH_DATATYPE&
+	   &_&
+           &PRECISION&
+           &(a_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
+                                                         hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
+
+
+#endif /* COMPLEXCASE */
+
+         else ! not CUDA kernel
 
 #if REALCASE == 1
 #if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
@@ -1486,16 +1524,14 @@
 !no avx512 block6 complex kernel
 #endif /* COMPLEXCASE */
 
-#if REALCASE == 1
          endif ! GPU_KERNEL
-#endif
-
 
 #ifdef WITH_OPENMP
          if (my_thread==1) then
 #endif
            kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
            kernel_time = kernel_time + mpi_wtime()-ttt
+	   n_times = n_times + 1
 #ifdef WITH_OPENMP
          endif
 #endif
@@ -1503,9 +1539,9 @@
          call timer%stop("compute_hh_trafo_&
 	 &MATH_DATATYPE&
 #ifdef WITH_OPENMP
-         &_cpu_openmp" // &
+         &_openmp" // &
 #else
-         &_cpu" // &
+         &" // &
 #endif
          &PRECISION_SUFFIX &
          )

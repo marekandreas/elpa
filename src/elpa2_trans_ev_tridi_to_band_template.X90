@@ -156,9 +156,7 @@
       integer(kind=c_intptr_t)                 :: hh_dot_dev
       integer(kind=ik)                         :: row_group_size, unpack_idx
 
-#if COMPLEXCASE == 1
       integer(kind=ik)                         :: n_times
-#endif
       integer(kind=ik)                         :: top, chunk, this_chunk
 
 #if REALCASE == 1
@@ -1667,19 +1665,15 @@
 
 	     call compute_hh_trafo_&
 	     &MATH_DATATYPE&
-	     &_cpu_openmp_&
+	     &_openmp_&
 	     &PRECISION &
-                              (aIntern, &
+                              (aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+			       l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
-                               aIntern_dev, &
+                               hh_dot_dev, &
 #endif
-                               stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, nbw, &
-			       max_blk_size, bcast_buffer, &
-#if REALCASE == 1
-                               bcast_buffer_dev, hh_dot_dev, hh_tau_dev, &
-#endif
-                               kernel_flops, kernel_time, 0, current_local_n, i, my_thread, thread_width, &
-                               THIS_&
+                               hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, &
+			       i, my_thread, thread_width, THIS_&
                                &MATH_DATATYPE&
                                &_ELPA_KERNEL)
            enddo
@@ -1688,34 +1682,37 @@
 
 #else /* WITH_OPENMP */
 
-#if REALCASE == 1
-           call compute_hh_trafo_real_cpu_&
+           call compute_hh_trafo_&
+	   &MATH_DATATYPE&
+	   &_&
 	   &PRECISION&
-	   &(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
-                                          a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
-                                          hh_tau_dev, kernel_flops, kernel_time, 0, current_local_n, i,          &
-                                          last_stripe_width, THIS_&
-                                                             &MATH_DATATYPE&
-                                                             &_ELPA_KERNEL)
+	   & (aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
+#if REALCASE == 1
+	      hh_dot_dev, &
 #endif
-#if COMPLEXCASE == 1
-           if (useGPU) then
-             call compute_hh_trafo_complex_gpu_&
-	     &PRECISION&
-	     &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, 0, current_local_n, i, a_off, dev_offset, dev_offset_1, &
-	     dev_offset_2, a_dim2, &
-             kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
-           else
-             call compute_hh_trafo_complex_cpu_&
-	     &PRECISION&
-	     &(aIntern, stripe_width, a_dim2, stripe_count,            &
-                                                    a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
-                                                    0, current_local_n, i, last_stripe_width,                          &
-                                                    THIS_&
-                                                    &MATH_DATATYPE&
-                                                    &_ELPA_KERNEL)
-           endif
-#endif /* COMPLEXCASE */
+              hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i,          &
+              last_stripe_width, THIS_&
+                                 &MATH_DATATYPE&
+                                 &_ELPA_KERNEL)
+!#if COMPLEXCASE == 1
+!           if (useGPU) then
+!             call compute_hh_trafo_complex_gpu_&
+!	     &PRECISION&
+!	     &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, 0, current_local_n, i, a_off, dev_offset, dev_offset_1, &
+!	     dev_offset_2, a_dim2, &
+!             kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
+!           else
+!             call compute_hh_trafo_complex_&
+!	     &PRECISION&
+!	     &(aIntern, stripe_width, a_dim2, stripe_count,            &
+!                                                    a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
+!                                                    0, current_local_n, i, last_stripe_width,                          &
+!                                                    THIS_&
+!                                                    &MATH_DATATYPE&
+!                                                    &_ELPA_KERNEL)
+!           endif
+!#endif /* COMPLEXCASE */
 #endif /* WITH_OPENMP */
 
            !send_b        1
@@ -1807,18 +1804,15 @@
 
           call compute_hh_trafo_&
 	  &MATH_DATATYPE&
-	  &_cpu_openmp_&
+	  &_openmp_&
 	  &PRECISION&
-	  &(aIntern,   &
+	  & (aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+	    nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
-            aIntern_dev, &
+            hh_dot_dev,  &
 #endif
-            stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, nbw, max_blk_size,  bcast_buffer, &
-#if REALCASE == 1
-            bcast_buffer_dev, hh_dot_dev, hh_tau_dev, &
-#endif
-            kernel_flops, kernel_time, current_local_n - bottom_msg_length, bottom_msg_length, i, my_thread, &
-            thread_width, THIS_&
+            hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
+	    bottom_msg_length, i, my_thread, thread_width, THIS_&
                           &MATH_DATATYPE&
                           &_ELPA_KERNEL)
         enddo
@@ -1859,40 +1853,43 @@
 
 #else /* WITH_OPENMP */
 
-#if REALCASE == 1
-        call compute_hh_trafo_real_cpu_&
+        call compute_hh_trafo_&
+	&MATH_DATATYPE&
+	&_&
 	&PRECISION&
-	&(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
-                                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev, &
-                                       hh_tau_dev, kernel_flops, kernel_time,                                 &
-                                       current_local_n - bottom_msg_length, bottom_msg_length, i,             &
-                                       last_stripe_width, THIS_&
-                                                          &MATH_DATATYPE&
-                                                          &_ELPA_KERNEL)
+	& (aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
+#if REALCASE == 1
+	   hh_dot_dev, &
 #endif
+           hh_tau_dev, kernel_flops, kernel_time, n_times,                 &
+           current_local_n - bottom_msg_length, bottom_msg_length, i,             &
+           last_stripe_width, THIS_&
+                              &MATH_DATATYPE&
+                              &_ELPA_KERNEL)
 
-#if COMPLEXCASE == 1
-! the complex case and real case diverged here
-        if (useGPU) then
-          call compute_hh_trafo_complex_gpu_&
-	  &PRECISION&
-	  &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, current_local_n -bottom_msg_length, bottom_msg_length, i, a_off, &
-                                                  dev_offset, dev_offset_1, dev_offset_2, &
-						  a_dim2, &
-       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
-        else
-          call compute_hh_trafo_complex_cpu_&
-	  &PRECISION&
-	  &(aIntern, stripe_width, a_dim2, stripe_count,              &
-                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
-                                                  current_local_n - bottom_msg_length, bottom_msg_length, i,         &
-                                                  last_stripe_width, THIS_&
-                                                                     &MATH_DATATYPE&
-                                                                     &_ELPA_KERNEL)
-
-        endif
-
-#endif
+!#if COMPLEXCASE == 1
+!! the complex case and real case diverged here
+!        if (useGPU) then
+!          call compute_hh_trafo_complex_gpu_&
+!	  &PRECISION&
+!	  &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, current_local_n -bottom_msg_length, bottom_msg_length, i, a_off, &
+!                                                  dev_offset, dev_offset_1, dev_offset_2, &
+!						  a_dim2, &
+!       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
+!        else
+!          call compute_hh_trafo_complex_&
+!	  &PRECISION&
+!	  &(aIntern, stripe_width, a_dim2, stripe_count,              &
+!                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
+!                                                  current_local_n - bottom_msg_length, bottom_msg_length, i,         &
+!                                                  last_stripe_width, THIS_&
+!                                                                     &MATH_DATATYPE&
+!                                                                     &_ELPA_KERNEL)
+!
+!        endif
+!
+!#endif
 
         !send_b
 #ifdef WITH_MPI
@@ -1958,57 +1955,57 @@
         do my_thread = 1, max_threads
 	  call compute_hh_trafo_&
 	  &MATH_DATATYPE&
-	  &_cpu_openmp_&
+	  &_openmp_&
 	  &PRECISION&
-	  &(aIntern,   &
+	  & (aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
+	     nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
-          aIntern_dev, &
+             hh_dot_dev, &
 #endif
-          stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off,  nbw, max_blk_size, bcast_buffer, &
-#if REALCASE == 1
-          bcast_buffer_dev, hh_dot_dev, hh_tau_dev, &
-#endif
-          kernel_flops, kernel_time, top_msg_length,&
-          current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
-          THIS_&
-          &MATH_DATATYPE&
-          &_ELPA_KERNEL)
+             hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length,&
+             current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
+             THIS_&
+             &MATH_DATATYPE&
+             &_ELPA_KERNEL)
         enddo
 !$omp end parallel do
         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP */
 
-#if REALCASE == 1
-        call compute_hh_trafo_real_cpu_&
+        call compute_hh_trafo_&
+	&MATH_DATATYPE&
+	&_&
 	&PRECISION&
-	&(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
-                                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
-                                       hh_tau_dev, kernel_flops, kernel_time,  top_msg_length,                    &
-                                       current_local_n-top_msg_length-bottom_msg_length, i,                       &
-                                       last_stripe_width, THIS_&
-                                                          &MATH_DATATYPE&
-                                                          &_ELPA_KERNEL)
+	& (aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
+#if REALCASE == 1
+	   hh_dot_dev,     &
 #endif
-#if COMPLEXCASE == 1
-        if (useGPU) then
-          call compute_hh_trafo_complex_gpu_&
-	  &PRECISION&
-	  &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, top_msg_length,current_local_n-top_msg_length-bottom_msg_length, &
-                                                 i, a_off, dev_offset, dev_offset_1, dev_offset_2, &
-						 a_dim2, &
-       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
-        else
-          call compute_hh_trafo_complex_cpu_&
-	  &PRECISION&
-	  &(aIntern, stripe_width, a_dim2, stripe_count,                  &
-                                                 a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,   &
-                                                 top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
-                                                 last_stripe_width, THIS_&
-                                                                    &MATH_DATATYPE&
-                                                                    &_ELPA_KERNEL)
-        endif
-#endif /* COMPLEXCASE */
+           hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length,                    &
+           current_local_n-top_msg_length-bottom_msg_length, i,                       &
+           last_stripe_width, THIS_&
+                              &MATH_DATATYPE&
+                              &_ELPA_KERNEL)
+!#if COMPLEXCASE == 1
+!        if (useGPU) then
+!          call compute_hh_trafo_complex_gpu_&
+!	  &PRECISION&
+!	  &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, top_msg_length,current_local_n-top_msg_length-bottom_msg_length, &
+!                                                 i, a_off, dev_offset, dev_offset_1, dev_offset_2, &
+!						 a_dim2, &
+!       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
+!        else
+!          call compute_hh_trafo_complex_&
+!	  &PRECISION&
+!	  &(aIntern, stripe_width, a_dim2, stripe_count,                  &
+!                                                 a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,   &
+!                                                 top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
+!                                                 last_stripe_width, THIS_&
+!                                                                    &MATH_DATATYPE&
+!                                                                    &_ELPA_KERNEL)
+!        endif
+!#endif /* COMPLEXCASE */
 #endif /* WITH_OPENMP */
 
         !wait_t
@@ -2060,54 +2057,54 @@
           endif
           call compute_hh_trafo_&
 	  &MATH_DATATYPE&
-	  &_cpu_openmp_&
+	  &_openmp_&
 	  &PRECISION&
-	  &(aIntern,     &
+	  & (aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+	     nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
-            aIntern_dev, &
+             hh_dot_dev, &
 #endif
-            stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, nbw, max_blk_size,  bcast_buffer, &
-#if REALCASE == 1
-            bcast_buffer_dev, hh_dot_dev, hh_tau_dev, &
-#endif
-            kernel_flops, kernel_time, 0, top_msg_length, i, my_thread, thread_width, &
-            THIS_&
-            &MATH_DATATYPE&
-            &_ELPA_KERNEL)
+             hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, my_thread, &
+	     thread_width, THIS_&
+                           &MATH_DATATYPE&
+                           &_ELPA_KERNEL)
         enddo
 !$omp end parallel do
         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP */
 
-#if REALCASE == 1
-        call compute_hh_trafo_real_cpu_&
+        call compute_hh_trafo_&
+	&MATH_DATATYPE&
+	&_&
 	&PRECISION&
-	&(aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
-                                       a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, hh_dot_dev,     &
-                                       hh_tau_dev, kernel_flops, kernel_time, 0, top_msg_length, i,               &
-                                       last_stripe_width, THIS_&
-                                                          &MATH_DATATYPE&
-                                                          &_ELPA_KERNEL)
+	& (aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+           a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev,          &
+#if REALCASE == 1
+	   hh_dot_dev,     &
 #endif
-#if COMPLEXCASE == 1
-        if (useGPU) then
-          call compute_hh_trafo_complex_gpu_&
-	  &PRECISION&
-	  &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, 0, top_msg_length, i, a_off, dev_offset, dev_offset_1, dev_offset_2, &
-	  a_dim2, &
-       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
-         else
-           call compute_hh_trafo_complex_cpu_&
-	   &PRECISION&
-	   &(aIntern, stripe_width, a_dim2, stripe_count,               &
-                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
-                                                  0, top_msg_length, i, last_stripe_width,                            &
-                                                  THIS_&
-                                                  &MATH_DATATYPE&
-                                                  &_ELPA_KERNEL)
-         endif
-#endif
+           hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i,               &
+           last_stripe_width, THIS_&
+                              &MATH_DATATYPE&
+                              &_ELPA_KERNEL)
+!#if COMPLEXCASE == 1
+!        if (useGPU) then
+!          call compute_hh_trafo_complex_gpu_&
+!	  &PRECISION&
+!	  &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, 0, top_msg_length, i, a_off, dev_offset, dev_offset_1, dev_offset_2, &
+!	  a_dim2, &
+!       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
+!         else
+!           call compute_hh_trafo_complex_&
+!	   &PRECISION&
+!	   &(aIntern, stripe_width, a_dim2, stripe_count,               &
+!                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
+!                                                  0, top_msg_length, i, last_stripe_width,                            &
+!                                                  THIS_&
+!                                                  &MATH_DATATYPE&
+!                                                  &_ELPA_KERNEL)
+!         endif
+!#endif
 
 #endif /* WITH_OPENMP */
       endif
