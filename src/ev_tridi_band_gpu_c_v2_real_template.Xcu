@@ -89,6 +89,35 @@ static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComp
 //#define ALREADY_DEFINED_SYNC 1
 //#endif
 
+// Reset the entire contents of a shared reduction block; the thread block size must be a power-of-2
+#ifdef DOUBLE_PRECISION_REAL
+__device__ __forceinline__ void reset_dotp_buffers_double(double * const __restrict__ s_block)
+#else
+__device__ __forceinline__ void reset_dotp_buffers_single(float * const __restrict__ s_block)
+#endif
+{
+    if (blockDim.x >= 64)
+    {
+        int t_idx = threadIdx.x;
+
+        if (t_idx < 64)
+        {
+            s_block[t_idx] = s_block[t_idx + 64] = 0.0;
+        }
+    }
+    else
+    {
+        int s_chunk = 128 / blockDim.x;
+#ifdef DOUBLE_PRECISION_REAL
+        int s_chunk_size = s_chunk * sizeof(double);
+#else
+        int s_chunk_size = s_chunk * sizeof(float);
+#endif
+        // Each thread resets an equally-sized, contiguous portion of the buffer
+        memset(s_block + threadIdx.x * s_chunk, 0, s_chunk_size);
+    }
+}
+
 // =========================
 // Backtransformation kernel
 // =========================
