@@ -54,6 +54,9 @@
 #include <stdlib.h>
 #include "config-f90.h"
 
+#define BLOCK_CYCLIC_BLOCKSIZE 128
+#define GLOBAL_STRIPE_WIDTH 256
+
 #if 0
 static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComplex r, int mask)
 {
@@ -96,6 +99,7 @@ __device__ __forceinline__ void reset_dotp_buffers_double(double * const __restr
 __device__ __forceinline__ void reset_dotp_buffers_single(float * const __restrict__ s_block)
 #endif
 {
+    // attention
     if (blockDim.x >= 64)
     {
         int t_idx = threadIdx.x;
@@ -107,7 +111,7 @@ __device__ __forceinline__ void reset_dotp_buffers_single(float * const __restri
     }
     else
     {
-        int s_chunk = 128 / blockDim.x;
+        int s_chunk = BLOCK_CYCLIC_BLOCKSIZE / blockDim.x;
 #ifdef DOUBLE_PRECISION_REAL
         int s_chunk_size = s_chunk * sizeof(double);
 #else
@@ -125,20 +129,20 @@ __device__ __forceinline__ void reset_dotp_buffers_single(float * const __restri
 // We use templates here to avoid additional branching based on the actual size of the thread-block
 template<unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
 #ifdef DOUBLE_PRECISION_REAL
-__global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel_double(double * const __restrict__ q, const double * const __restrict__ hh, const double * const __restrict__ hh_dot,
+__global__ void __launch_bounds__( BLOCK_CYCLIC_BLOCKSIZE ) compute_hh_trafo_c_kernel_double(double * const __restrict__ q, const double * const __restrict__ hh, const double * const __restrict__ hh_dot,
     const double * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
 #else
-__global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel_single(float * const __restrict__ q, const float * const __restrict__ hh, const float * const __restrict__ hh_dot,
+__global__ void __launch_bounds__( BLOCK_CYCLIC_BLOCKSIZE ) compute_hh_trafo_c_kernel_single(float * const __restrict__ q, const float * const __restrict__ hh, const float * const __restrict__ hh_dot,
     const float * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
 #endif
 
 {
 #ifdef DOUBLE_PRECISION_REAL
-    __shared__ double dotp_s[128];
-    __shared__ double q_s[129];
+    __shared__ double dotp_s[BLOCK_CYCLIC_BLOCKSIZE];
+    __shared__ double q_s[BLOCK_CYCLIC_BLOCKSIZE+1];
 #else
-    __shared__ float dotp_s[128];
-    __shared__ float q_s[129];
+    __shared__ float dotp_s[BLOCK_CYCLIC_BLOCKSIZE];
+    __shared__ float q_s[BLOCK_CYCLIC_BLOCKSIZE+1];
 #endif
 
     int b_idx, t_idx, q_off, h_off, w_off, j, t_s, q_delta, hh_delta;
@@ -222,6 +226,7 @@ __global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel_single(float * 
 
         // Now both threads in a pair can write to the same reduction buffer address without race-condition issues
         dotp_s[t_s] = my_r1;
+	//attention
         dotp_s[t_s + 64] = my_r2;
 
         // Ensure the reduction buffers are fully populated
@@ -238,6 +243,8 @@ __global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel_single(float * 
 
         // Each thread collects the reduction results
         s_1 = dotp_s[0];
+
+	// attention
         s_2 = dotp_s[64];
 
         // Each thread updates its corresponding EV component
@@ -299,6 +306,7 @@ __global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel_single(float * 
         sync_threads<HAVE_2_WARPS>();
 
         // We perform the reduction using the first warp only
+	// attention
         if (t_idx < 32)
         {
 #ifdef DOUBLE_PRECISION_REAL
@@ -324,6 +332,7 @@ __global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel_single(float * 
 {
     switch (nb)
     {
+        // attention
         case 128:
         case 64:
 #ifdef DOUBLE_PRECISION_REAL
@@ -375,7 +384,7 @@ __global__ void __launch_bounds__(128) compute_hh_trafo_c_kernel_single(float * 
             break;
 
         default:
-            printf("Error: please use a power-of-2 SCALAPACK block size which is between 1 and 128.\n");
+            printf("Error: please use a power-of-2 SCALAPACK block size which is between 1 and BLOCK_CYCLIC_BLOCKSIZE .\n");
     }
 }
 

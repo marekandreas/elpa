@@ -61,6 +61,10 @@
 #include <cuComplex.h>
 #endif
 
+#define BLOCK_CYCLIC_BLOCKSIZE 128
+#define GLOBAL_STRIPE_WIDTH 256
+#define WARP_SIZE 32
+
 // Reset a reduction block
 // Limitation: the thread-block size must be a divider of the reduction block's size
 
@@ -156,6 +160,7 @@ __device__ void warp_reduce_complex_single( cuFloatComplex *s_block)
     __syncthreads();
 
 #if REALCASE == 1
+        // attention
         if (t_idx < 32)
 	{
                 s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 32] + s_block[t_idx + 64] + s_block[t_idx + 96] ;
@@ -168,6 +173,7 @@ __device__ void warp_reduce_complex_single( cuFloatComplex *s_block)
 	}
 #endif
 #if COMPLEXCASE == 1
+        // attention
 	if (t_idx < 32)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -330,24 +336,24 @@ __global__ void extract_hh_tau_c_kernel_complex_single(cuFloatComplex* hh, cuFlo
 __global__ void  compute_hh_dotp_c_kernel_double(double* hh, double* v_dot, const int nbw, const int n)
 {
 
-   __shared__ double hh_s[128] ;
+   __shared__ double hh_s[BLOCK_CYCLIC_BLOCKSIZE] ;
 #else
 __global__ void  compute_hh_dotp_c_kernel_single(float* hh, float* v_dot, const int nbw, const int n)
 {
 
-   __shared__ float hh_s[128] ;
+   __shared__ float hh_s[BLOCK_CYCLIC_BLOCKSIZE] ;
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 __global__ void  compute_hh_dotp_c_kernel_complex_double(cuDoubleComplex* hh, cuDoubleComplex* v_dot, const int nbw, const int n)
 {
-   __shared__ cuDoubleComplex hh_s[128] ;
+   __shared__ cuDoubleComplex hh_s[BLOCK_CYCLIC_BLOCKSIZE] ;
 
 #else
 __global__ void  compute_hh_dotp_c_kernel_complex_single(cuFloatComplex* hh, cuFloatComplex* v_dot, const int nbw, const int n)
 {
-   __shared__ cuFloatComplex hh_s[128] ;
+   __shared__ cuFloatComplex hh_s[BLOCK_CYCLIC_BLOCKSIZE] ;
 #endif
 #endif
     int t_idx, v_idx;
@@ -359,7 +365,7 @@ __global__ void  compute_hh_dotp_c_kernel_complex_single(cuFloatComplex* hh, cuF
     t_idx = threadIdx.x ;
 
 //    //  The contents of the shared memory must be fully reset
-//     reset_shared_block_c(hh_s, 128);
+//     reset_shared_block_c(hh_s, BLOCK_CYCLIC_BLOCKSIZE);
 
     //  Initialize the contents of the shared buffer (preparing for reduction)
     if (t_idx  > 0)
@@ -513,22 +519,22 @@ extern "C" void launch_extract_hh_tau_c_kernel_complex_single(cuFloatComplex* bc
 #endif
 {
 	int grid_size;
-	grid_size = 1 + (n - 1) / 256;
+	grid_size = 1 + (n - 1) / GLOBAL_STRIPE_WIDTH;
 	cudaDeviceSynchronize();
         cudaError_t err = cudaGetLastError();
         if(err != cudaSuccess) printf("error prior to extract kernel: %s, %d\n",cudaGetErrorString(err), err);
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-	extract_hh_tau_c_kernel_double<<<grid_size,256>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
+	extract_hh_tau_c_kernel_double<<<grid_size,GLOBAL_STRIPE_WIDTH>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
 #else
-	extract_hh_tau_c_kernel_single<<<grid_size,256>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
+	extract_hh_tau_c_kernel_single<<<grid_size,GLOBAL_STRIPE_WIDTH>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-        extract_hh_tau_c_kernel_complex_double<<<grid_size,256>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
+        extract_hh_tau_c_kernel_complex_double<<<grid_size,GLOBAL_STRIPE_WIDTH>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
 #else
-        extract_hh_tau_c_kernel_complex_single<<<grid_size,256>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
+        extract_hh_tau_c_kernel_complex_single<<<grid_size,GLOBAL_STRIPE_WIDTH>>>(bcast_buffer_dev,hh_tau_dev, nbw, n, is_zero);
 #endif
 #endif
 	err = cudaGetLastError();

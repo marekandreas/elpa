@@ -54,6 +54,11 @@
 #include <stdlib.h>
 #include <cuComplex.h>
 #include "config-f90.h"
+
+
+#define BLOCK_CYCLIC_BLOCKSIZE 128
+#define GLOBAL_STRIPE_WIDTH 256
+
 // ===========================================================================================================
 // Important:   due to the use of warp shuffling, the C version of the backtransformation kernel only works on
 //              devices with compute capability 3.x; for older devices, please use the Fortran kernel version
@@ -136,7 +141,7 @@ __device__ void warp_reduce_complex_1_single( cuFloatComplex *s_block)
     int t_idx ;
     t_idx = threadIdx.x;
     __syncthreads();
-
+    // attention
 #ifdef DOUBLE_PRECISION_COMPLEX
         if (t_idx < 32)
         {
@@ -187,7 +192,7 @@ __device__ void warp_reduce_complex_2_single( cuFloatComplex *s_block)
     int t_idx ;
     t_idx = threadIdx.x;
     __syncthreads();
-
+        // attention 
 #ifdef DOUBLE_PRECISION_COMPLEX
         if(t_idx < 64)
         {
@@ -312,6 +317,7 @@ __device__ __forceinline__ void float_warp_reduce_single(float * dotp_s, int w_o
     if (HAVE_2_WARPS)
     {
         // In this case, we have 2 warps, each doing 1 reduction
+	// attention
         if (t_idx < 64)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -324,6 +330,7 @@ __device__ __forceinline__ void float_warp_reduce_single(float * dotp_s, int w_o
     else
     {
         // In this case we have 1 warp that performs both reductions
+	// attention
         if (t_idx < 32)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -349,6 +356,7 @@ __device__ __forceinline__ void float_warp_reduce_complex_single(cuFloatComplex 
     if (HAVE_2_WARPS)
     {
         // In this case, we have 2 warps, each doing 1 reduction
+	//attention
         if (t_idx < 64)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -361,6 +369,7 @@ __device__ __forceinline__ void float_warp_reduce_complex_single(cuFloatComplex 
     else
     {
         // In this case we have 1 warp that performs both reductions
+	// attention
         if (t_idx < 32)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -393,6 +402,7 @@ __device__  void reset_dotp_buffers_complex_double( cuDoubleComplex  * const __r
 __device__  void reset_dotp_buffers_complex_single( cuFloatComplex  * const __restrict__ s_block)
 #endif
 {
+    // attention
     if (blockDim.x >= 64)
     {
         int t_idx = threadIdx.x;
@@ -406,7 +416,7 @@ __device__  void reset_dotp_buffers_complex_single( cuFloatComplex  * const __re
     }
     else
     {
-        int s_chunk = 128 / blockDim.x;
+        int s_chunk = BLOCK_CYCLIC_BLOCKSIZE / blockDim.x;
 #ifdef DOUBLE_PRECISION_COMPLEX
         int s_chunk_size = s_chunk * sizeof(cuDoubleComplex);
 #else
@@ -425,20 +435,20 @@ __device__  void reset_dotp_buffers_complex_2_double( cuDoubleComplex  * const _
 __device__  void reset_dotp_buffers_complex_2_single( cuFloatComplex  * const __restrict__ s_block)
 #endif
 {
-    if (blockDim.x >= 128)
+    if (blockDim.x >= BLOCK_CYCLIC_BLOCKSIZE)
     {
         int t_idx = threadIdx.x;
 
-        if (t_idx < 128)
+        if (t_idx < BLOCK_CYCLIC_BLOCKSIZE)
         {
-            s_block[t_idx].x = s_block[t_idx + 128].x = 0.0;
-            s_block[t_idx].y = s_block[t_idx + 128].y = 0.0;
+            s_block[t_idx].x = s_block[t_idx + BLOCK_CYCLIC_BLOCKSIZE].x = 0.0;
+            s_block[t_idx].y = s_block[t_idx + BLOCK_CYCLIC_BLOCKSIZE].y = 0.0;
 
         }
     }
     else
     {
-        int s_chunk = 256 / blockDim.x;
+        int s_chunk = GLOBAL_STRIPE_WIDTH / blockDim.x;
 #ifdef DOUBLE_PRECISION_COMPLEX
         int s_chunk_size = s_chunk * sizeof(cuDoubleComplex);
 #else
@@ -462,13 +472,13 @@ template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_ker
 #endif
 {
 #ifdef DOUBLE_PRECISION_COMPLEX
-    __shared__ cuDoubleComplex q_s[128];
-    __shared__ cuDoubleComplex dotp_s[128];
+    __shared__ cuDoubleComplex q_s[BLOCK_CYCLIC_BLOCKSIZE];
+    __shared__ cuDoubleComplex dotp_s[BLOCK_CYCLIC_BLOCKSIZE];
 
      cuDoubleComplex q_v2, tau ;
 #else
-    __shared__ cuFloatComplex q_s[128];
-    __shared__ cuFloatComplex dotp_s[128];
+    __shared__ cuFloatComplex q_s[BLOCK_CYCLIC_BLOCKSIZE];
+    __shared__ cuFloatComplex dotp_s[BLOCK_CYCLIC_BLOCKSIZE];
 
      cuFloatComplex q_v2, tau ;
 #endif
@@ -565,6 +575,7 @@ extern "C" void launch_compute_hh_trafo_c_kernel_complex_single( cuFloatComplex*
 
     switch (nb)
     {
+      // attention
       case  256:
        case 128:
         case 64:
@@ -616,7 +627,7 @@ extern "C" void launch_compute_hh_trafo_c_kernel_complex_single( cuFloatComplex*
 #endif
             break;
         default:
-            printf("Error: please use a power-of-2 SCALAPACK block size which is between 1 and 128.\n");
+            printf("Error: please use a power-of-2 SCALAPACK block size which is between 1 and BLOCK_CYCLIC_BLOCKSIZE.\n");
     }
 
 	cudaDeviceSynchronize();
