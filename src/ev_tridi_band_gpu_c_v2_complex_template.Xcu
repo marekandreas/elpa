@@ -64,27 +64,27 @@
 //              devices with compute capability 3.x; for older devices, please use the Fortran kernel version
 // ===========================================================================================================
 
-// Perform the equivalent of "__shfl_xor" on an 8-byte value
-#ifdef DOUBLE_PRECISION_COMPLEX
-static __device__ __forceinline__ double shfl_xor_double(double r, int mask)
-#else
-static __device__ __forceinline__ float shfl_xor_single(float r, int mask)
-#endif
-{
+//// Perform the equivalent of "__shfl_xor" on an 8-byte value
 //#ifdef DOUBLE_PRECISION_COMPLEX
-    int hi = __shfl_xor(__double2hiint(r), mask);
-    int lo = __shfl_xor(__double2loint(r), mask);
-
-    return __hiloint2double(hi, lo);
+//static __device__ __forceinline__ double shfl_xor_double(double r, int mask)
 //#else
-//    int hi = __shfl_xor(__float2hiint(r), mask);
-//    int lo = __shfl_xor(__float2loint(r), mask);
-//    int hi;
-//    int lo;
-    //exit(1);
-    //return __hiloint2float(hi, lo);
+//static __device__ __forceinline__ float shfl_xor_single(float r, int mask)
 //#endif
-}
+//{
+////#ifdef DOUBLE_PRECISION_COMPLEX
+//    int hi = __shfl_xor(__double2hiint(r), mask);
+//    int lo = __shfl_xor(__double2loint(r), mask);
+//
+//    return __hiloint2double(hi, lo);
+////#else
+////    int hi = __shfl_xor(__float2hiint(r), mask);
+////    int lo = __shfl_xor(__float2loint(r), mask);
+////    int hi;
+////    int lo;
+//    //exit(1);
+//    //return __hiloint2float(hi, lo);
+////#endif
+//}
 
 #if 0
 static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComplex r, int mask)
@@ -133,9 +133,9 @@ static __device__ __forceinline__ float shfl_down_single(float r, int offset)
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-__device__ void warp_reduce_complex_1_double( cuDoubleComplex *s_block)
+__device__ void warp_reduce_1_complex_double( cuDoubleComplex *s_block)
 #else
-__device__ void warp_reduce_complex_1_single( cuFloatComplex *s_block)
+__device__ void warp_reduce_1_complex_single( cuFloatComplex *s_block)
 #endif
 {
     int t_idx ;
@@ -184,15 +184,15 @@ __device__ void warp_reduce_complex_1_single( cuFloatComplex *s_block)
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-__device__ void warp_reduce_complex_2_double( cuDoubleComplex *s_block)
+__device__ void warp_reduce_2_complex_double( cuDoubleComplex *s_block)
 #else
-__device__ void warp_reduce_complex_2_single( cuFloatComplex *s_block)
+__device__ void warp_reduce_2_complex_single( cuFloatComplex *s_block)
 #endif
 {
     int t_idx ;
     t_idx = threadIdx.x;
     __syncthreads();
-        // attention 
+        // attention
 #ifdef DOUBLE_PRECISION_COMPLEX
         if(t_idx < 64)
         {
@@ -241,31 +241,11 @@ __device__ void warp_reduce_complex_2_single( cuFloatComplex *s_block)
 #endif
 }
 
-// Perform a reduction on a warp or the first part of it
 template <unsigned int REDUCE_START_OFFSET>
 #ifdef DOUBLE_PRECISION_COMPLEX
-__device__ __forceinline__ double warp_reduce_double(double r)
+__device__ __forceinline__ cuDoubleComplex warp_reduce_c_complex_double( cuDoubleComplex r)
 #else
-__device__ __forceinline__ float warp_reduce_single(float r)
-#endif
-{
-#pragma unroll
-    for (int i = REDUCE_START_OFFSET; i >= 1; i >>= 1)
-    {
-#ifdef DOUBLE_PRECISION_COMPLEX
-        r += shfl_down_double(r, i);
-#else
-        r += shfl_down_single(r, i);
-#endif
-    }
-
-    return r;
-}
-template <unsigned int REDUCE_START_OFFSET>
-#ifdef DOUBLE_PRECISION_COMPLEX
-__device__ __forceinline__ cuDoubleComplex warp_reduce_c_double( cuDoubleComplex r)
-#else
-__device__ __forceinline__ cuFloatComplex warp_reduce_c_single( cuFloatComplex r)
+__device__ __forceinline__ cuFloatComplex warp_reduce_c_complex_single( cuFloatComplex r)
 #endif
 {
 
@@ -303,47 +283,7 @@ __device__ __forceinline__ cuFloatComplex warp_reduce_c_single( cuFloatComplex r
 #endif
 }
 
-
-// Perform 2 reductions, using either 1 or 2 warps
-template <unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
-#ifdef DOUBLE_PRECISION_COMPLEX
-__device__ __forceinline__ void double_warp_reduce_double(double * dotp_s, int w_off)
-#else
-__device__ __forceinline__ void float_warp_reduce_single(float * dotp_s, int w_off)
-#endif
-{
-    int t_idx = threadIdx.x;
-
-    if (HAVE_2_WARPS)
-    {
-        // In this case, we have 2 warps, each doing 1 reduction
-	// attention
-        if (t_idx < 64)
-        {
-#ifdef DOUBLE_PRECISION_COMPLEX
-            dotp_s[w_off + t_idx] = warp_reduce_double<REDUCE_START_OFFSET>(dotp_s[w_off + t_idx] + dotp_s[w_off + t_idx + 32]);
-#else
-            dotp_s[w_off + t_idx] = warp_reduce_single<REDUCE_START_OFFSET>(dotp_s[w_off + t_idx] + dotp_s[w_off + t_idx + 32]);
-#endif
-        }
-    }
-    else
-    {
-        // In this case we have 1 warp that performs both reductions
-	// attention
-        if (t_idx < 32)
-        {
-#ifdef DOUBLE_PRECISION_COMPLEX
-            dotp_s[t_idx] = warp_reduce_double<REDUCE_START_OFFSET>(dotp_s[t_idx] + dotp_s[t_idx + 32]);
-            dotp_s[t_idx + 64] = warp_reduce_double<REDUCE_START_OFFSET>(dotp_s[t_idx + 64] + dotp_s[t_idx + 96]);
-#else
-            dotp_s[t_idx] = warp_reduce_single<REDUCE_START_OFFSET>(dotp_s[t_idx] + dotp_s[t_idx + 32]);
-            dotp_s[t_idx + 64] = warp_reduce_single<REDUCE_START_OFFSET>(dotp_s[t_idx + 64] + dotp_s[t_idx + 96]);
-#endif
-        }
-    }
-}
-
+#if 0
 template <unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
 #ifdef DOUBLE_PRECISION_COMPLEX
 __device__ __forceinline__ void double_warp_reduce_complex_double(cuDoubleComplex * dotp_s, int w_off)
@@ -360,9 +300,9 @@ __device__ __forceinline__ void float_warp_reduce_complex_single(cuFloatComplex 
         if (t_idx < 64)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
-            dotp_s[w_off + t_idx] = warp_reduce_c_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[w_off + t_idx] , dotp_s[w_off + t_idx + 32]));
+            dotp_s[w_off + t_idx] = warp_reduce_c_complex_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[w_off + t_idx] , dotp_s[w_off + t_idx + 32]));
 #else
-            dotp_s[w_off + t_idx] = warp_reduce_c_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[w_off + t_idx] , dotp_s[w_off + t_idx + 32]));
+            dotp_s[w_off + t_idx] = warp_reduce_c_complex_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[w_off + t_idx] , dotp_s[w_off + t_idx + 32]));
 #endif
         }
     }
@@ -373,20 +313,22 @@ __device__ __forceinline__ void float_warp_reduce_complex_single(cuFloatComplex 
         if (t_idx < 32)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
-            dotp_s[t_idx] = warp_reduce_c_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[t_idx] ,  dotp_s[t_idx + 32]));
-            dotp_s[t_idx + 64] = warp_reduce_c_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[t_idx + 64] ,  dotp_s[t_idx + 96]));
+            dotp_s[t_idx] = warp_reduce_c_complex_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[t_idx] ,  dotp_s[t_idx + 32]));
+            dotp_s[t_idx + 64] = warp_reduce_c_complex_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[t_idx + 64] ,  dotp_s[t_idx + 96]));
 #else
-            dotp_s[t_idx] = warp_reduce_c_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[t_idx] ,  dotp_s[t_idx + 32]));
-            dotp_s[t_idx + 64] = warp_reduce_c_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[t_idx + 64] ,  dotp_s[t_idx + 96]));
+            dotp_s[t_idx] = warp_reduce_c_complex_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[t_idx] ,  dotp_s[t_idx + 32]));
+            dotp_s[t_idx + 64] = warp_reduce_c_complex_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[t_idx + 64] ,  dotp_s[t_idx + 96]));
 #endif
         }
     }
 }
+#endif
+
 
 #ifndef ALREADY_DEFINED_SYNC
 // Synchronization wrapper, removing explicit synchronization when the thread-block is at most 32 threads (1 warp) in size
 template <bool MUST_SYNC>
-__device__ __forceinline__ void sync_threads()
+__device__ __forceinline__ void sync_real_threads()
 {
     if (MUST_SYNC)
     {
@@ -430,9 +372,9 @@ __device__  void reset_dotp_buffers_complex_single( cuFloatComplex  * const __re
     }
 }
 #ifdef DOUBLE_PRECISION_COMPLEX
-__device__  void reset_dotp_buffers_complex_2_double( cuDoubleComplex  * const __restrict__ s_block)
+__device__  void reset_dotp_buffers_2_complex_double( cuDoubleComplex  * const __restrict__ s_block)
 #else
-__device__  void reset_dotp_buffers_complex_2_single( cuFloatComplex  * const __restrict__ s_block)
+__device__  void reset_dotp_buffers_2_complex_single( cuFloatComplex  * const __restrict__ s_block)
 #endif
 {
     if (blockDim.x >= BLOCK_CYCLIC_BLOCKSIZE)
@@ -466,9 +408,9 @@ __device__  void reset_dotp_buffers_complex_2_single( cuFloatComplex  * const __
 // Backtransformation kernel
 // =========================
 #ifdef DOUBLE_PRECISION_COMPLEX
-template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_kernel_complex_2_2_double(cuDoubleComplex * const __restrict__  q, const cuDoubleComplex  * const __restrict__   hh,   const cuDoubleComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_kernel_2_2_complex_double(cuDoubleComplex * const __restrict__  q, const cuDoubleComplex  * const __restrict__   hh,   const cuDoubleComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
 #else
-template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_kernel_complex_2_2_single(cuFloatComplex * const __restrict__  q, const cuFloatComplex  * const __restrict__   hh,   const cuFloatComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_kernel_2_2_complex_single(cuFloatComplex * const __restrict__  q, const cuFloatComplex  * const __restrict__   hh,   const cuFloatComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
 #endif
 {
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -524,9 +466,9 @@ template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_ker
 #endif
         }
 #ifdef DOUBLE_PRECISION_COMPLEX
-        warp_reduce_complex_1_double( dotp_s);
+        warp_reduce_1_complex_double( dotp_s);
 #else
-        warp_reduce_complex_1_single( dotp_s);
+        warp_reduce_1_complex_single( dotp_s);
 #endif
 
         __syncthreads();
@@ -580,50 +522,50 @@ extern "C" void launch_compute_hh_trafo_c_kernel_complex_single( cuFloatComplex*
        case 128:
         case 64:
 #ifdef DOUBLE_PRECISION_COMPLEX
-	     compute_hh_trafo_c_kernel_complex_2_2_double<16><<<n_block, n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	     compute_hh_trafo_c_kernel_2_2_complex_double<16><<<n_block, n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-	     compute_hh_trafo_c_kernel_complex_2_2_single<16><<<n_block, n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	     compute_hh_trafo_c_kernel_2_2_complex_single<16><<<n_block, n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 32:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_complex_2_2_double<8><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_double<8><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_complex_2_2_single<8><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_single<8><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 16:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_complex_2_2_double<4><<<n_block ,n_thread>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_double<4><<<n_block ,n_thread>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_complex_2_2_single<4><<<n_block ,n_thread>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_single<4><<<n_block ,n_thread>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 8:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_complex_2_2_double<2><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_double<2><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_complex_2_2_single<2><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_single<2><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 4:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_complex_2_2_double<1><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_double<1><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_complex_2_2_single<1><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_single<1><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 2:
         case 1:
 #ifdef DOUBLE_PRECISION_COMPLEX
-	    compute_hh_trafo_c_kernel_complex_2_2_double<0><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	    compute_hh_trafo_c_kernel_2_2_complex_double<0><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-	    compute_hh_trafo_c_kernel_complex_2_2_single<0><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	    compute_hh_trafo_c_kernel_2_2_complex_single<0><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
         default:

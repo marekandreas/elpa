@@ -267,7 +267,7 @@
 	                &PRECISION&
 			&_&
 			&MATH_DATATYPE
-           call launch_compute_hh_trafo_c_kernel_&
+           call launch_compute_hh_trafo_gpu_kernel_&
 	   &MATH_DATATYPE&
 	   &_&
 	   &PRECISION&
@@ -292,7 +292,7 @@
 			&_&
 			&MATH_DATATYPE
 
-           call launch_compute_hh_trafo_c_kernel_&
+           call launch_compute_hh_trafo_gpu_kernel_&
 	   &MATH_DATATYPE&
 	   &_&
            &PRECISION&

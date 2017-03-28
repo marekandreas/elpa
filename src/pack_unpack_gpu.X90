@@ -75,7 +75,7 @@
 
 !      call my_pack_kernel<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, a_dev, row_group_dev)
 
-      call launch_my_pack_c_kernel_&
+      call launch_my_pack_gpu_kernel_&
       &MATH_DATATYPE&
       &_&
       &PRECISION &
@@ -156,7 +156,7 @@
       ! Use one kernel call to pack the entire row group
       !        call my_unpack_kernel<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, row_group_dev, a_dev)
 
-      call launch_my_unpack_c_kernel_&
+      call launch_my_unpack_gpu_kernel_&
       &MATH_DATATYPE&
       &_&
       &PRECISION &
@@ -228,7 +228,7 @@
       integer(kind=ik), value  :: nbw, n
 
       if (n .le. 1) return
-      call launch_compute_hh_dotp_c_kernel_&
+      call launch_compute_hh_dotp_gpu_kernel_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
@@ -257,7 +257,7 @@
        val_is_zero = 0
       endif
 
-      call launch_extract_hh_tau_c_kernel_&
+      call launch_extract_hh_tau_gpu_kernel_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
