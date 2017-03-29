@@ -64,27 +64,6 @@
 //              devices with compute capability 3.x; for older devices, please use the Fortran kernel version
 // ===========================================================================================================
 
-//// Perform the equivalent of "__shfl_xor" on an 8-byte value
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//static __device__ __forceinline__ double shfl_xor_double(double r, int mask)
-//#else
-//static __device__ __forceinline__ float shfl_xor_single(float r, int mask)
-//#endif
-//{
-////#ifdef DOUBLE_PRECISION_COMPLEX
-//    int hi = __shfl_xor(__double2hiint(r), mask);
-//    int lo = __shfl_xor(__double2loint(r), mask);
-//
-//    return __hiloint2double(hi, lo);
-////#else
-////    int hi = __shfl_xor(__float2hiint(r), mask);
-////    int lo = __shfl_xor(__float2loint(r), mask);
-////    int hi;
-////    int lo;
-//    //exit(1);
-//    //return __hiloint2float(hi, lo);
-////#endif
-//}
 
 #if 0
 static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComplex r, int mask)
@@ -111,25 +90,15 @@ static __device__ __forceinline__ cuDoubleComplex  shfl_xor_complex(cuDoubleComp
 
 // Perform the equivalent of "__shfl_down" on an 8-byte value
 #ifdef DOUBLE_PRECISION_COMPLEX
-static __device__ __forceinline__ double shfl_down_double(double r, int offset)
+static __device__ __forceinline__ double shfl_down_complex_double(double r, int offset)
 #else
-static __device__ __forceinline__ float shfl_down_single(float r, int offset)
+static __device__ __forceinline__ float shfl_down_complex_single(float r, int offset)
 #endif
 {
-//#ifdef DOUBLE_PRECISION_COMPLEX
     int hi = __shfl_down(__double2hiint(r), offset);
     int lo = __shfl_down(__double2loint(r), offset);
 
     return __hiloint2double(hi, lo);
-//#else
-//    //int hi = __shfl_down(__float2hiint(r), offset);
-  //  //int lo = __shfl_down(__float2loint(r), offset);
-
-   // //return __hiloint2float(hi, lo);
-   // int hi;
-   // int lo;
-   // //exit(1);
-//#endif
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -261,18 +230,18 @@ __device__ __forceinline__ cuFloatComplex warp_reduce_c_complex_single( cuFloatC
     for (int i = REDUCE_START_OFFSET; i >= 1; i >>= 1)
     {
 #ifdef DOUBLE_PRECISION_COMPLEX
-        real += shfl_down_double(real, i);
+        real += shfl_down_complex_double(real, i);
 #else
-        real += shfl_down_single(real, i);
+        real += shfl_down_complex_single(real, i);
 #endif
     }
 #pragma unroll
     for (int i = REDUCE_START_OFFSET; i >= 1; i >>= 1)
     {
 #ifdef DOUBLE_PRECISION_COMPLEX
-        imag += shfl_down_double(imag, i);
+        imag += shfl_down_complex_double(imag, i);
 #else
-        imag += shfl_down_single(imag, i);
+        imag += shfl_down_complex_single(imag, i);
 #endif
     }
 
@@ -283,7 +252,7 @@ __device__ __forceinline__ cuFloatComplex warp_reduce_c_complex_single( cuFloatC
 #endif
 }
 
-#if 0
+#if 0 /* not used anywhere */
 template <unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
 #ifdef DOUBLE_PRECISION_COMPLEX
 __device__ __forceinline__ void double_warp_reduce_complex_double(cuDoubleComplex * dotp_s, int w_off)
@@ -322,7 +291,7 @@ __device__ __forceinline__ void float_warp_reduce_complex_single(cuFloatComplex 
         }
     }
 }
-#endif
+#endif /* not used anywhere */
 
 
 #ifndef ALREADY_DEFINED_SYNC
