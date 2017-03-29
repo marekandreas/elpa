@@ -61,7 +61,7 @@
 #include <cuComplex.h>
 #endif
 
-#define BLOCK_CYCLIC_BLOCKSIZE 128
+#define BLOCK_CYCLIC_BLOCKSIZE 64
 #define GLOBAL_STRIPE_WIDTH 256
 #define WARP_SIZE 32
 
@@ -161,6 +161,7 @@ __device__ void warp_reduce_complex_single( cuFloatComplex *s_block)
 
 #if REALCASE == 1
         // attention
+#if BLOCK_CYCLIC_BLOCKSIZE == 128
         if (t_idx < 32)
 	{
                 s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 32] + s_block[t_idx + 64] + s_block[t_idx + 96] ;
@@ -171,8 +172,26 @@ __device__ void warp_reduce_complex_single( cuFloatComplex *s_block)
         if (t_idx < 1)
                 s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 1] + s_block[t_idx + 2] + s_block[t_idx + 3];
 	}
+#else /* BLOCK_CYCLIC_BLOCKSIZE == 128 */
+        if (t_idx < 32)
+	{
+                s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 32];
+        if (t_idx < 8)
+                s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 8] + s_block[t_idx + 16] + s_block[t_idx + 24];
+        if (t_idx < 4)
+                s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 4];
+        if (t_idx < 1)
+                s_block[t_idx] = s_block[t_idx] + s_block[t_idx + 1] + s_block[t_idx + 2] + s_block[t_idx + 3];
+	}
+
+#endif /* BLOCK_CYCLIC_BLOCKSIZE == 128 */
+
+
 #endif
 #if COMPLEXCASE == 1
+
+#if BLOCK_CYCLIC_BLOCKSSIZE == 128
+
         // attention
 	if (t_idx < 32)
         {
@@ -209,6 +228,47 @@ __device__ void warp_reduce_complex_single( cuFloatComplex *s_block)
         }
         }
 #endif
+
+#else /* BLOCK_CYCLIC_BLOCKSSIZE == 128 */
+	if (t_idx < 32)
+        {
+#ifdef DOUBLE_PRECISION_COMPLEX
+        s_block[t_idx] = (cuCadd(s_block[t_idx],s_block[t_idx + 32]) ) );
+        if (t_idx < 8)
+        {
+        s_block[t_idx] = cuCadd(cuCadd(s_block[t_idx],s_block[t_idx + 8] ) , cuCadd( s_block[t_idx + 16] , s_block[t_idx + 24] ) );
+
+        }
+        if (t_idx < 4)
+        {
+        s_block[t_idx] = cuCadd(s_block[t_idx] , s_block[t_idx + 4]) ;
+        }
+        if (t_idx < 1)
+        {
+        s_block[t_idx] = cuCadd(cuCadd(s_block[t_idx],s_block[t_idx + 1] ) , cuCadd( s_block[t_idx +2] , s_block[t_idx + 3] ) );
+        }
+        }
+#else
+        s_block[t_idx] = (cuCaddf(s_block[t_idx],s_block[t_idx + 32])  );
+        if (t_idx < 8)
+        {
+        s_block[t_idx] = cuCaddf(cuCaddf(s_block[t_idx],s_block[t_idx + 8] ) , cuCaddf( s_block[t_idx + 16] , s_block[t_idx + 24] ) );
+
+        }
+        if (t_idx < 4)
+        {
+        s_block[t_idx] = cuCaddf(s_block[t_idx] , s_block[t_idx + 4]) ;
+        }
+        if (t_idx < 1)
+        {
+        s_block[t_idx] = cuCaddf(cuCaddf(s_block[t_idx],s_block[t_idx + 1] ) , cuCaddf( s_block[t_idx +2] , s_block[t_idx + 3] ) );
+        }
+        }
+#endif
+
+#endif /* BLOCK_CYCLIC_BLOCKSSIZE == 128 */
+
+
 #endif /* COMPLEXCASE == 1 */
 }
 

@@ -54,7 +54,7 @@
 #include <stdlib.h>
 #include "config-f90.h"
 
-#define BLOCK_CYCLIC_BLOCKSIZE 128
+#define BLOCK_CYCLIC_BLOCKSIZE 64
 #define GLOBAL_STRIPE_WIDTH 256
 
 // Perform the equivalent of "__shfl_xor" on an 8-byte value
@@ -133,6 +133,8 @@ __device__ __forceinline__ void float_warp_reduce_real_single(float * dotp_s, in
         // attention
         if (t_idx < 32)
         {
+
+#if BLOCK_CYCLIC_BLOCKSIZE == 128
 #ifdef DOUBLE_PRECISION_REAL
             dotp_s[t_idx] = warp_reduce_real_double<REDUCE_START_OFFSET>(dotp_s[t_idx] + dotp_s[t_idx + 32]);
             dotp_s[t_idx + 64] = warp_reduce_real_double<REDUCE_START_OFFSET>(dotp_s[t_idx + 64] + dotp_s[t_idx + 96]);
@@ -140,6 +142,18 @@ __device__ __forceinline__ void float_warp_reduce_real_single(float * dotp_s, in
             dotp_s[t_idx] = warp_reduce_real_single<REDUCE_START_OFFSET>(dotp_s[t_idx] + dotp_s[t_idx + 32]);
             dotp_s[t_idx + 64] = warp_reduce_real_single<REDUCE_START_OFFSET>(dotp_s[t_idx + 64] + dotp_s[t_idx + 96]);
 #endif
+#else /* BLOCK_CYCLIC_BLOCKSIZE */
+#ifdef DOUBLE_PRECISION_REAL
+            dotp_s[t_idx] = warp_reduce_real_double<REDUCE_START_OFFSET>(dotp_s[t_idx] + dotp_s[t_idx + 32]);
+            //dotp_s[t_idx + 64] = warp_reduce_real_double<REDUCE_START_OFFSET>(dotp_s[t_idx + 64] + dotp_s[t_idx + 96]);
+#else
+            dotp_s[t_idx] = warp_reduce_real_single<REDUCE_START_OFFSET>(dotp_s[t_idx] + dotp_s[t_idx + 32]);
+            //dotp_s[t_idx + 64] = warp_reduce_real_single<REDUCE_START_OFFSET>(dotp_s[t_idx + 64] + dotp_s[t_idx + 96]);
+#endif
+
+#endif /* BLOCK_CYCLIC_BLOCKSIZE */
+
+
         }
     }
 }
@@ -279,7 +293,12 @@ __global__ void __launch_bounds__( BLOCK_CYCLIC_BLOCKSIZE ) compute_hh_trafo_c_k
         // Now both threads in a pair can write to the same reduction buffer address without race-condition issues
         dotp_s[t_s] = my_r1;
 	//attention
+#if BLOCK_CYCLIC_BLOCKSIZE == 128
         dotp_s[t_s + 64] = my_r2;
+#else
+        dotp_s[t_s + 32] = my_r2;
+
+#endif
 
         // Ensure the reduction buffers are fully populated
         sync_real_threads<HAVE_2_WARPS>();
@@ -297,7 +316,11 @@ __global__ void __launch_bounds__( BLOCK_CYCLIC_BLOCKSIZE ) compute_hh_trafo_c_k
         s_1 = dotp_s[0];
 
 	// attention
+#if BLOCK_CYCLIC_BLOCKSIZE == 128
         s_2 = dotp_s[64];
+#else
+        s_2 = dotp_s[32];
+#endif
 
         // Each thread updates its corresponding EV component
         q_v_2 = q_v_2 - hh_v_3 * s_1 - hh_v_2 * s_2 + tau_2 * hh_v_2 * s_1 * dot_p;
