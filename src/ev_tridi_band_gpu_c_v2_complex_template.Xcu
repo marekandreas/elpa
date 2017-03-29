@@ -477,12 +477,14 @@ extern "C" void launch_compute_hh_trafo_c_kernel_complex_single( cuFloatComplex*
 #endif
 {
 
+#if 0
 	cudaDeviceSynchronize();
         cudaError_t err = cudaGetLastError();
         if(err != cudaSuccess) printf("error prior to compute_ hh_ trafo c kernel: %s, %d\n",cudaGetErrorString(err), err);
-        dim3 n_block,n_thread;
+        dim3 n_block, n_thread;
 	n_block = dim3(nev,1,1);
 	n_thread = dim3(nb,1,1);
+#endif
 
     switch (nb)
     {
@@ -491,63 +493,64 @@ extern "C" void launch_compute_hh_trafo_c_kernel_complex_single( cuFloatComplex*
        case 128:
         case 64:
 #ifdef DOUBLE_PRECISION_COMPLEX
-	     compute_hh_trafo_c_kernel_2_2_complex_double<16><<<n_block, n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	     compute_hh_trafo_c_kernel_2_2_complex_double<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-	     compute_hh_trafo_c_kernel_2_2_complex_single<16><<<n_block, n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	     compute_hh_trafo_c_kernel_2_2_complex_single<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 32:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_2_2_complex_double<8><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_double<8><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_2_2_complex_single<8><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_single<8><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 16:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_2_2_complex_double<4><<<n_block ,n_thread>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_double<4><<<nev ,nb>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_2_2_complex_single<4><<<n_block ,n_thread>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_single<4><<<nev ,nb>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 8:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_2_2_complex_double<2><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_double<2><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_2_2_complex_single<2><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_single<2><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 4:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_2_2_complex_double<1><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_double<1><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_2_2_complex_single<1><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_c_kernel_2_2_complex_single<1><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 2:
         case 1:
 #ifdef DOUBLE_PRECISION_COMPLEX
-	    compute_hh_trafo_c_kernel_2_2_complex_double<0><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	    compute_hh_trafo_c_kernel_2_2_complex_double<0><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-	    compute_hh_trafo_c_kernel_2_2_complex_single<0><<<n_block ,n_thread>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	    compute_hh_trafo_c_kernel_2_2_complex_single<0><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
         default:
             printf("Error: please use a power-of-2 SCALAPACK block size which is between 1 and BLOCK_CYCLIC_BLOCKSIZE.\n");
     }
 
+#if 0
 	cudaDeviceSynchronize();
 	 err = cudaGetLastError();
         if ( err!= cudaSuccess)
         {
                 printf("\n compute hh trafo c kernel failed  %s \n",cudaGetErrorString(err) );
         }
-
+#endif
 
 }
 
