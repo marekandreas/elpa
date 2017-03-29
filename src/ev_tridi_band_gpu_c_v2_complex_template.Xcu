@@ -212,9 +212,9 @@ __device__ void warp_reduce_2_complex_single( cuFloatComplex *s_block)
 
 template <unsigned int REDUCE_START_OFFSET>
 #ifdef DOUBLE_PRECISION_COMPLEX
-__device__ __forceinline__ cuDoubleComplex warp_reduce_c_complex_double( cuDoubleComplex r)
+__device__ __forceinline__ cuDoubleComplex warp_reduce_complex_double( cuDoubleComplex r)
 #else
-__device__ __forceinline__ cuFloatComplex warp_reduce_c_complex_single( cuFloatComplex r)
+__device__ __forceinline__ cuFloatComplex warp_reduce_complex_single( cuFloatComplex r)
 #endif
 {
 
@@ -255,9 +255,9 @@ __device__ __forceinline__ cuFloatComplex warp_reduce_c_complex_single( cuFloatC
 #if 0 /* not used anywhere */
 template <unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
 #ifdef DOUBLE_PRECISION_COMPLEX
-__device__ __forceinline__ void double_warp_reduce_complex_double(cuDoubleComplex * dotp_s, int w_off)
+__device__ __forceinline__ void driver_warp_reduce_complex_double(cuDoubleComplex * dotp_s, int w_off)
 #else
-__device__ __forceinline__ void float_warp_reduce_complex_single(cuFloatComplex * dotp_s, int w_off)
+__device__ __forceinline__ void driver_warp_reduce_complex_single(cuFloatComplex * dotp_s, int w_off)
 #endif
 {
     int t_idx = threadIdx.x;
@@ -269,9 +269,9 @@ __device__ __forceinline__ void float_warp_reduce_complex_single(cuFloatComplex 
         if (t_idx < 64)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
-            dotp_s[w_off + t_idx] = warp_reduce_c_complex_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[w_off + t_idx] , dotp_s[w_off + t_idx + 32]));
+            dotp_s[w_off + t_idx] = warp_reduce_complex_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[w_off + t_idx] , dotp_s[w_off + t_idx + 32]));
 #else
-            dotp_s[w_off + t_idx] = warp_reduce_c_complex_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[w_off + t_idx] , dotp_s[w_off + t_idx + 32]));
+            dotp_s[w_off + t_idx] = warp_reduce_complex_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[w_off + t_idx] , dotp_s[w_off + t_idx + 32]));
 #endif
         }
     }
@@ -282,11 +282,11 @@ __device__ __forceinline__ void float_warp_reduce_complex_single(cuFloatComplex 
         if (t_idx < 32)
         {
 #ifdef DOUBLE_PRECISION_COMPLEX
-            dotp_s[t_idx] = warp_reduce_c_complex_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[t_idx] ,  dotp_s[t_idx + 32]));
-            dotp_s[t_idx + 64] = warp_reduce_c_complex_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[t_idx + 64] ,  dotp_s[t_idx + 96]));
+            dotp_s[t_idx] = warp_reduce_complex_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[t_idx] ,  dotp_s[t_idx + 32]));
+            dotp_s[t_idx + 64] = warp_reduce_complex_double<REDUCE_START_OFFSET>(cuCadd(dotp_s[t_idx + 64] ,  dotp_s[t_idx + 96]));
 #else
-            dotp_s[t_idx] = warp_reduce_c_complex_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[t_idx] ,  dotp_s[t_idx + 32]));
-            dotp_s[t_idx + 64] = warp_reduce_c_complex_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[t_idx + 64] ,  dotp_s[t_idx + 96]));
+            dotp_s[t_idx] = warp_reduce_complex_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[t_idx] ,  dotp_s[t_idx + 32]));
+            dotp_s[t_idx + 64] = warp_reduce_complex_single<REDUCE_START_OFFSET>(cuCaddf(dotp_s[t_idx + 64] ,  dotp_s[t_idx + 96]));
 #endif
         }
     }
@@ -377,9 +377,9 @@ __device__  void reset_dotp_buffers_2_complex_single( cuFloatComplex  * const __
 // Backtransformation kernel
 // =========================
 #ifdef DOUBLE_PRECISION_COMPLEX
-template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_kernel_2_2_complex_double(cuDoubleComplex * const __restrict__  q, const cuDoubleComplex  * const __restrict__   hh,   const cuDoubleComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_kernel_2_2_complex_double(cuDoubleComplex * const __restrict__  q, const cuDoubleComplex  * const __restrict__   hh,   const cuDoubleComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
 #else
-template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_c_kernel_2_2_complex_single(cuFloatComplex * const __restrict__  q, const cuFloatComplex  * const __restrict__   hh,   const cuFloatComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
+template<unsigned int REDUCE_START_OFFSET>__global__ void compute_hh_trafo_kernel_2_2_complex_single(cuFloatComplex * const __restrict__  q, const cuFloatComplex  * const __restrict__   hh,   const cuFloatComplex * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
 #endif
 {
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -493,50 +493,50 @@ extern "C" void launch_compute_hh_trafo_c_kernel_complex_single( cuFloatComplex*
        case 128:
         case 64:
 #ifdef DOUBLE_PRECISION_COMPLEX
-	     compute_hh_trafo_c_kernel_2_2_complex_double<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	     compute_hh_trafo_kernel_2_2_complex_double<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-	     compute_hh_trafo_c_kernel_2_2_complex_single<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	     compute_hh_trafo_kernel_2_2_complex_single<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 32:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_2_2_complex_double<8><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_2_2_complex_double<8><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_2_2_complex_single<8><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_2_2_complex_single<8><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 16:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_2_2_complex_double<4><<<nev ,nb>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_2_2_complex_double<4><<<nev ,nb>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_2_2_complex_single<4><<<nev ,nb>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_2_2_complex_single<4><<<nev ,nb>>>(q, hh,  hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 8:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_2_2_complex_double<2><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_2_2_complex_double<2><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_2_2_complex_single<2><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_2_2_complex_single<2><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 4:
 #ifdef DOUBLE_PRECISION_COMPLEX
-            compute_hh_trafo_c_kernel_2_2_complex_double<1><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_2_2_complex_double<1><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_2_2_complex_single<1><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_2_2_complex_single<1><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 2:
         case 1:
 #ifdef DOUBLE_PRECISION_COMPLEX
-	    compute_hh_trafo_c_kernel_2_2_complex_double<0><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	    compute_hh_trafo_kernel_2_2_complex_double<0><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #else
-	    compute_hh_trafo_c_kernel_2_2_complex_single<0><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
+	    compute_hh_trafo_kernel_2_2_complex_single<0><<<nev ,nb>>>(q, hh, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
         default:

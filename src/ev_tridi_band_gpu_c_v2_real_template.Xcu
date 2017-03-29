@@ -181,10 +181,10 @@ __device__ __forceinline__ void reset_dotp_buffers_real_single(float * const __r
 // We use templates here to avoid additional branching based on the actual size of the thread-block
 template<unsigned int REDUCE_START_OFFSET, bool HAVE_2_WARPS>
 #ifdef DOUBLE_PRECISION_REAL
-__global__ void __launch_bounds__( BLOCK_CYCLIC_BLOCKSIZE ) compute_hh_trafo_c_kernel_real_double(double * const __restrict__ q, const double * const __restrict__ hh, const double * const __restrict__ hh_dot,
+__global__ void __launch_bounds__( BLOCK_CYCLIC_BLOCKSIZE ) compute_hh_trafo_kernel_real_double(double * const __restrict__ q, const double * const __restrict__ hh, const double * const __restrict__ hh_dot,
     const double * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
 #else
-__global__ void __launch_bounds__( BLOCK_CYCLIC_BLOCKSIZE ) compute_hh_trafo_c_kernel_real_single(float * const __restrict__ q, const float * const __restrict__ hh, const float * const __restrict__ hh_dot,
+__global__ void __launch_bounds__( BLOCK_CYCLIC_BLOCKSIZE ) compute_hh_trafo_kernel_real_single(float * const __restrict__ q, const float * const __restrict__ hh, const float * const __restrict__ hh_dot,
     const float * const __restrict__ hh_tau, const int nb, const int ldq, const int off, const int ncols)
 #endif
 
@@ -388,50 +388,50 @@ __global__ void __launch_bounds__( BLOCK_CYCLIC_BLOCKSIZE ) compute_hh_trafo_c_k
         case 128:
         case 64:
 #ifdef DOUBLE_PRECISION_REAL
-            compute_hh_trafo_c_kernel_real_double<16, true><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_double<16, true><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_real_single<16, true><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_single<16, true><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 32:
 #ifdef DOUBLE_PRECISION_REAL
-            compute_hh_trafo_c_kernel_real_double<8, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_double<8, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_real_single<8, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_single<8, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 16:
 #ifdef DOUBLE_PRECISION_REAL
-            compute_hh_trafo_c_kernel_real_double<4, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_double<4, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_real_single<4, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_single<4, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 8:
 #ifdef DOUBLE_PRECISION_REAL
-            compute_hh_trafo_c_kernel_real_double<2, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_double<2, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_real_single<2, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_single<2, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 4:
 #ifdef DOUBLE_PRECISION_REAL
-            compute_hh_trafo_c_kernel_real_double<1, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_double<1, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_real_single<1, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_single<1, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
         case 2:
         case 1:
 #ifdef DOUBLE_PRECISION_REAL
-            compute_hh_trafo_c_kernel_real_double<0, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_double<0, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #else
-            compute_hh_trafo_c_kernel_real_single<0, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
+            compute_hh_trafo_kernel_real_single<0, false><<<nev, nb>>>(q, hh, hh_dot, hh_tau, nb, ldq, off, ncols);
 #endif
             break;
 
