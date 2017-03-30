@@ -42,14 +42,33 @@
 !
 #include "config-f90.h"
 
-#define assert(x) if (.not.(x)) error stop "Assertion failed"
+#define stringify_(x) "x"
+#define stringify(x) stringify_(x)
+#define assert(x) call x_assert(x, stringify(x), __FILE__, __LINE__)
 
-program test_inteface
+module assert
+  implicit none
+  contains
+    subroutine x_assert(condition, condition_string, file, line)
+      use elpa_utilities, only : error_unit
+      logical, intent(in) :: condition
+      character(len=*), intent(in) :: condition_string
+      character(len=*), intent(in) :: file
+      integer, intent(in) :: line
+
+      if (.not. condition) then
+        write(error_unit,'(a,i0)') "Assertion failed:" // condition_string // " at " // file // ":", line
+      end if
+    end subroutine
+end module
+
+program test_interface
 
    use precision
    use mod_setup_mpi
    use elpa_mpi
    use elpa_type
+   use assert
 
    implicit none
 
