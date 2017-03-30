@@ -164,7 +164,6 @@ module ELPA2
 !>
 !>  \param useQR (optional)                     use QR decomposition
 !>  \param useGPU (optional)                    decide whether to use GPUs or not
-!>  \param bandwidth (optional)                 the bandwidth of an allready banded-matrix
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
@@ -251,7 +250,6 @@ module ELPA2
 !>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
 !>
 !>  \param useGPU (optional)                    decide whether to use GPUs or not
-!>  \param bandwidth (optional)                 the bandwidth of an allready banded-matrix
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
@@ -307,7 +305,6 @@ module ELPA2
 !>
 !>  \param useQR (optional)                     use QR decomposition
 !>  \param useGPU (optional)                    decide whether to use GPUs or not
-!>  \param bandwidth (optional)                 the bandwidth of an allready banded-matrix
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
@@ -353,7 +350,6 @@ module ELPA2
 !>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
 !>
 !>  \param useGPU (optional)                    decide whether to use GPUs or not
-!>  \param bandwidth (optional)                 the bandwidth of an allready banded-matrix
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
