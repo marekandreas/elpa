@@ -59,13 +59,17 @@
    real(kind=c_double)                        :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
 
    integer(kind=c_int)                       :: i
-   logical                                   :: success
+   logical                                   :: success, successCUDA
    logical, save                             :: firstCall = .true.
    logical                                   :: wantDebug
    integer(kind=c_int)                       :: istat
    character(200)                            :: errorMessage
-   logical                                   :: do_useGPU
+   logical                                   :: do_useGPU, do_useGPU_trans_ev_tridi
    integer(kind=c_int)                       :: numberOfGPUDevices
+   integer(kind=c_intptr_t), parameter       :: size_of_datatype = size_of_&
+                                                                   &PRECISION&
+                                                                   &_&
+                                                                   &MATH_DATATYPE
 
     call timer%start("solve_evp_&
     &MATH_DATATYPE&
@@ -93,6 +97,8 @@
     success = .true.
 
     do_useGPU      = .false.
+    do_useGPU_trans_ev_tridi =.false.
+
 
 #if REALCASE == 1
     useQRActual = .false.
@@ -124,6 +130,7 @@
         if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
            do_useGPU = .true.
+
            ! set the neccessary parameters
            cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
            cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
@@ -223,6 +230,7 @@
 
     ! check consistency between request for GPUs and defined kernel
     if (do_useGPU) then
+      do_useGPU_trans_ev_tridi = .true.
       if (THIS_ELPA_KERNEL .ne. &
       &MATH_DATATYPE&
       &_ELPA_KERNEL_GPU) then
@@ -232,13 +240,26 @@
       endif
     endif
 
-    if (do_useGPU) then
-      if (nblk .ne. 128) then
-        write(error_unit,*) "In case of GPU usage the blocksize for ELPA 2stage has to be 128"
-        success = .false.
-        return
-      endif
-    endif
+!    if (do_useGPU) then
+!      if (nblk .ne. 128) then
+!        write(error_unit,*) "In case of GPU usage the blocksize for ELPA 2stage has to be 128"
+!        success = .false.
+!        return
+!      endif
+!    endif
+
+     if (do_useGPU) then
+       if (nblk .ne. 128) then
+         ! cannot run on GPU with this blocksize
+	 ! disable GPU usage for trans_ev_tridi
+
+         do_useGPU_trans_ev_tridi = .false.
+	 THIS_ELPA_KERNEL = MATH_DATATYPE&
+	                    &_ELPA_KERNEL_GENERIC
+	 ! no data transfer to GPU needed
+       endif
+     endif
+
 
     if(present(bandwidth)) then
       nbw = bandwidth
@@ -407,7 +428,7 @@
      &PRECISION &
      (na, nev, nblk, nbw, q, &
      q_dev, &
-     ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU, &
+     ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
      success, THIS_ELPA_KERNEL)
 
      if (.not.(success)) return
@@ -431,6 +452,14 @@
      if(present(bandwidth)) then
        time_evp_back = ttt1-ttts
      else
+
+       if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
+         ! copy to device if we want to continue on GPU
+         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
+
+         successCUDA = cuda_memcpy(q_dev, loc(q), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+       endif
+
        ! Backtransform stage 2
        ttt0 = MPI_Wtime()
        call trans_ev_band_to_full_&
