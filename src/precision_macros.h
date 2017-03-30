@@ -1,9 +1,16 @@
 #ifdef REALCASE
-#undef  MATH_DATATYPE
-#define  MATH_DATATYPE real
-#undef  PRECISION
-#undef  PRECISION_STR
+#undef DOUBLE_PRECISION_REAL
 
+#undef  MATH_DATATYPE
+#undef  BLAS_TRANS_OR_CONJ
+#undef  PRECISION
+#undef  SPECIAL_COMPLEX_DATATYPE
+#undef  PRECISION_STR
+#undef  REAL_DATATYPE
+
+#undef  PRECISION_TRTRI
+#undef  PRECISION_POTRF
+#undef  PRECISION_TRSM
 #undef  PRECISION_GEMV
 #undef  PRECISION_TRMV
 #undef  PRECISION_GEMM
@@ -27,6 +34,7 @@
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
+#undef  cublas_PRECISION_SYMV
 #undef  PRECISION_SUFFIX
 
 #undef  CONST_0_0
@@ -34,15 +42,25 @@
 #undef  CONST_1_0
 #undef  CONST_2_0
 #undef  CONST_8_0
-#undef  size_of_PRECISION_real
 #undef  MPI_REAL_PRECISION
+#undef  MPI_MATH_DATATYPE_PRECISION
 #undef  C_DATATYPE_KIND
 
+/* General definitions needed in single and double case */
+#define  MATH_DATATYPE real
+#define  BLAS_TRANS_OR_CONJ 'T'
+
 #ifdef DOUBLE_PRECISION
+#define DOUBLE_PRECISION_REAL
 #define  PRECISION double
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
+#define  REAL_DATATYPE rk8
+#define  SPECIAL_COMPLEX_DATATYPE ck8
 
+#define  PRECISION_TRTRI DTRTRI
+#define  PRECISION_POTRF DPOTRF
+#define  PRECISION_TRSM DTRSM
 #define  PRECISION_GEMV DGEMV
 #define  PRECISION_TRMV DTRMV
 #define  PRECISION_GEMM DGEMM
@@ -66,21 +84,29 @@
 #define  cublas_PRECISION_GEMM cublas_DGEMM
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
+#define  cublas_PRECISION_SYMV cublas_DSYMV
 #define  CONST_0_0 0.0_rk8
 #define  CONST_0_5 0.5_rk8
 #define  CONST_1_0 1.0_rk8
 #define  CONST_2_0 2.0_rk8
 #define  CONST_8_0 8.0_rk8
-#define  size_of_PRECISION_real size_of_double_real_datatype
 #define  MPI_REAL_PRECISION MPI_REAL8
+#define  MPI_MATH_DATATYPE_PRECISION MPI_REAL8
 #define  C_DATATYPE_KIND c_double
-#endif
+
+#endif /* DOUBLE_PRECISION */
 
 #ifdef SINGLE_PRECISION
+
 #define  PRECISION single
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
+#define  REAL_DATATYPE rk4
+#define  SPECIAL_COMPLEX_DATATYPE ck4
 
+#define  PRECISION_TRTRI STRTRI
+#define  PRECISION_POTRF SPOTRF
+#define  PRECISION_TRSM STRSM
 #define  PRECISION_GEMV SGEMV
 #define  PRECISION_TRMV STRMV
 #define  PRECISION_GEMM SGEMM
@@ -104,21 +130,33 @@
 #define  cublas_PRECISION_GEMM cublas_SGEMM
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
+#define  cublas_PRECISION_SYMV cublas_SSYMV
 #define  CONST_0_0 0.0_rk4
 #define  CONST_0_5 0.5_rk4
 #define  CONST_1_0 1.0_rk4
 #define  CONST_2_0 2.0_rk4
 #define  CONST_8_0 8.0_rk4
-#define  size_of_PRECISION_real size_of_single_real_datatype
 #define  MPI_REAL_PRECISION MPI_REAL4
+#define  MPI_MATH_DATATYPE_PRECISION MPI_REAL4
 #define  C_DATATYPE_KIND c_float
-#endif
-#endif
+
+#endif /* SINGLE_PRECISION */
+
+#endif /* REALCASE */
 
 #ifdef COMPLEXCASE
+
+#undef DOUBLE_PRECISION_COMPLEX
 #undef  MATH_DATATYPE
-#define  MATH_DATATYPE complex
+#undef  BLAS_TRANS_OR_CONJ
 #undef  PRECISION
+#undef COMPLEX_DATATYPE
+/* in the complex case also sometime real valued variables are needed */
+#undef REAL_DATATYPE
+
+#undef  PRECISION_TRTRI
+#undef  PRECISION_POTRF
+#undef  PRECISION_TRSM
 #undef  PRECISION_STR
 #undef  PRECISION_GEMV
 #undef  PRECISION_TRMV
@@ -143,8 +181,10 @@
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
+#undef  cublas_PRECISION_SYMV
 #undef  PRECISION_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
+#undef  MPI_MATH_DATATYPE_PRECISION
 #undef  MPI_COMPLEX_EXPLICIT_PRECISION
 #undef  MPI_REAL_PRECISION
 #undef  KIND_PRECISION
@@ -160,12 +200,24 @@
 #undef  CONST_COMPLEX_PAIR_NEGATIVE_0_5
 #undef  CONST_COMPLEX_0_0
 #undef  CONST_COMPLEX_1_0
-#undef  size_of_PRECISION_complex
 #undef  C_DATATYPE_KIND
+
+/* General definitions needed in single and double case */
+#define  MATH_DATATYPE complex
+#define  BLAS_TRANS_OR_CONJ 'C'
+
 #ifdef DOUBLE_PRECISION
+
+#define DOUBLE_PRECISION_COMPLEX
 #define  PRECISION double
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
+#define COMPLEX_DATATYPE CK8
+#define REAL_DATATYPE RK8
+
+#define  PRECISION_TRTRI ZTRTRI
+#define  PRECISION_POTRF ZPOTRF
+#define  PRECISION_TRSM ZTRSM
 #define  PRECISION_GEMV ZGEMV
 #define  PRECISION_TRMV ZTRMV
 #define  PRECISION_GEMM ZGEMM
@@ -189,7 +241,9 @@
 #define  cublas_PRECISION_GEMM cublas_ZGEMM
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
+#define  cublas_PRECISION_SYMV cublas_ZSYMV
 #define  MPI_COMPLEX_PRECISION MPI_DOUBLE_COMPLEX
+#define  MPI_MATH_DATATYPE_PRECISION MPI_DOUBLE_COMPLEX
 #define  MPI_COMPLEX_EXPLICIT_PRECISION MPI_COMPLEX16
 #define  MPI_REAL_PRECISION MPI_REAL8
 #define  KIND_PRECISION rk8
@@ -205,13 +259,20 @@
 #define  CONST_COMPLEX_PAIR_NEGATIVE_0_5 (-0.5_rk8,0.0_rk8)
 #define  CONST_COMPLEX_0_0 0.0_ck8
 #define  CONST_COMPLEX_1_0 1.0_ck8
-#define  size_of_PRECISION_complex size_of_double_complex_datatype
 #define  C_DATATYPE_KIND c_double
-#endif
+
+#endif /* DOUBLE PRECISION */
+
 #ifdef SINGLE_PRECISION
 #define  PRECISION single
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
+#define COMPLEX_DATATYPE CK4
+#define REAL_DATATYPE RK4
+
+#define  PRECISION_TRTRI CTRTRI
+#define  PRECISION_POTRF CPOTRF
+#define  PRECISION_TRSM CTRSM
 #define  PRECISION_GEMV CGEMV
 #define  PRECISION_TRMV CTRMV
 #define  PRECISION_GEMM CGEMM
@@ -235,7 +296,9 @@
 #define  cublas_PRECISION_GEMM cublas_CGEMM
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV
+#define  cublas_PRECISION_SYMV cublas_CSYMV
 #define  MPI_COMPLEX_PRECISION MPI_COMPLEX
+#define  MPI_MATH_DATATYPE_PRECISION MPI_COMPLEX
 #define  MPI_COMPLEX_EXPLICIT_PRECISION MPI_COMPLEX8
 #define  MPI_REAL_PRECISION MPI_REAL4
 #define  KIND_PRECISION rk4
@@ -251,7 +314,8 @@
 #define  CONST_COMPLEX_PAIR_NEGATIVE_0_5 (-0.5_rk4,0.0_rk4)
 #define  CONST_COMPLEX_0_0 0.0_ck4
 #define  CONST_COMPLEX_1_0 1.0_ck4
-#define  size_of_PRECISION_complex size_of_single_complex_datatype
 #define  C_DATATYPE_KIND c_float
-#endif
-#endif
+
+#endif /* SINGLE PRECISION */
+
+#endif /* COMPLEXCASE */

@@ -47,9 +47,10 @@
 module cuda_c_kernel
   implicit none
 
+#if 0 /* not used anywhere */
   interface
-    subroutine launch_dot_product_kernel_c_double(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr) &
-               bind(c,name="launch_dot_product_kernel_double")
+    subroutine launch_dot_product_kernel_c_complex_double(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr) &
+               bind(c,name="launch_dot_product_kernel_complex_double")
       use precision
       use iso_c_binding
 
@@ -63,8 +64,8 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-    subroutine launch_dot_product_kernel_c_single(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr) &
-               bind(c,name="launch_dot_product_kernel_single")
+    subroutine launch_dot_product_kernel_c_complex_single(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr) &
+               bind(c,name="launch_dot_product_kernel_complex_single")
       use precision
       use iso_c_binding
 
@@ -78,9 +79,13 @@ module cuda_c_kernel
 
 #endif
 
+#endif /* not used anywhere */
+
+#if 0 /* not used anywhere */
+
   interface
-    subroutine launch_dot_product_kernel_1_c_double(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns) &
-               bind(c, name="launch_dot_product_kernel_1_double")
+    subroutine launch_dot_product_kernel_1_c_complex_double(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns) &
+               bind(c, name="launch_dot_product_kernel_1_complex_double")
 
       use iso_c_binding
 
@@ -94,8 +99,8 @@ module cuda_c_kernel
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
   interface
-    subroutine launch_dot_product_kernel_1_c_single(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns) &
-               bind(c, name="launch_dot_product_kernel_1_single")
+    subroutine launch_dot_product_kernel_1_c_complex_single(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns) &
+               bind(c, name="launch_dot_product_kernel_1_complex_single")
 
       use iso_c_binding
 
@@ -107,10 +112,13 @@ module cuda_c_kernel
   end interface
 
 #endif
+#endif /* not used anywhere */
+
+#if 0 /* not used anywhere */
 
   interface
-    subroutine launch_dot_product_kernel_2_c_double(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne) &
-                bind(c,name="launch_dot_product_kernel_2_double")
+    subroutine launch_dot_product_kernel_2_c_complex_double(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne) &
+                bind(c,name="launch_dot_product_kernel_2_complex_double")
 
       use iso_c_binding
 
@@ -124,8 +132,8 @@ module cuda_c_kernel
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
   interface
-    subroutine launch_dot_product_kernel_2_c_single(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne) &
-                bind(c,name="launch_dot_product_kernel_2_single")
+    subroutine launch_dot_product_kernel_2_c_complex_single(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne) &
+                bind(c,name="launch_dot_product_kernel_2_complex_single")
 
       use iso_c_binding
 
@@ -137,10 +145,12 @@ module cuda_c_kernel
   end interface
 
 #endif
+#endif /* not used anywhere */
 
+#if 0 /* not used anywhere */
   interface
-    subroutine launch_double_hh_transform_1_c_double(ab_dev, hs_dev,hv_dev,nb,ns) &
-               bind(c,name="launch_double_hh_transform_1_double")
+    subroutine launch_double_hh_transform_1_c_complex_double(ab_dev, hs_dev,hv_dev,nb,ns) &
+               bind(c,name="launch_double_hh_transform_1_complex_double")
 
       use iso_c_binding
 
@@ -154,8 +164,8 @@ module cuda_c_kernel
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
   interface
-    subroutine launch_double_hh_transform_1_c_single(ab_dev, hs_dev,hv_dev,nb,ns) &
-               bind(c,name="launch_double_hh_transform_1_single")
+    subroutine launch_double_hh_transform_1_c_complex_single(ab_dev, hs_dev,hv_dev,nb,ns) &
+               bind(c,name="launch_double_hh_transform_1_complex_single")
 
       use iso_c_binding
 
@@ -167,10 +177,12 @@ module cuda_c_kernel
   end interface
 
 #endif
+#endif /* not used anywhere */
 
+#if 0 /* not used anywhere */
   interface
-    subroutine launch_double_hh_transform_2_c_double(ab_dev, hd_dev,hv_dev,nc,ns, nb) &
-               bind(c,name="launch_double_hh_transform_2_double")
+    subroutine launch_double_hh_transform_2_c_complex_double(ab_dev, hd_dev,hv_dev,nc,ns, nb) &
+               bind(c,name="launch_double_hh_transform_2_complex_double")
 
       use iso_c_binding
 
@@ -183,8 +195,8 @@ module cuda_c_kernel
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
   interface
-    subroutine launch_double_hh_transform_2_c_single(ab_dev, hd_dev,hv_dev,nc,ns, nb) &
-               bind(c,name="launch_double_hh_transform_2_single")
+    subroutine launch_double_hh_transform_2_c_complex_single(ab_dev, hd_dev,hv_dev,nc,ns, nb) &
+               bind(c,name="launch_double_hh_transform_2_complex_single")
 
       use iso_c_binding
 
@@ -195,10 +207,12 @@ module cuda_c_kernel
   end interface
 
 #endif
+#endif /* not used anywhere */
 
+#if 0 /* not used anywhere */
   interface
-    subroutine launch_compute_kernel_reduce_c_double(a_dev, lda, n, nbw, h1_dev) &
-               bind(c,name="launch_compute_kernel_reduce_double")
+    subroutine launch_compute_kernel_reduce_c_complex_double(a_dev, lda, n, nbw, h1_dev) &
+               bind(c,name="launch_compute_kernel_reduce_complex_double")
 
       use iso_c_binding
 
@@ -211,8 +225,8 @@ module cuda_c_kernel
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
   interface
-    subroutine launch_compute_kernel_reduce_c_single(a_dev, lda, n, nbw, h1_dev) &
-               bind(c,name="launch_compute_kernel_reduce_single")
+    subroutine launch_compute_kernel_reduce_c_complex_single(a_dev, lda, n, nbw, h1_dev) &
+               bind(c,name="launch_compute_kernel_reduce_complex_single")
 
       use iso_c_binding
 
@@ -222,10 +236,12 @@ module cuda_c_kernel
     end subroutine
   end interface
 #endif
+#endif /* not used anywhere */
 
+#if 0 /* not used anywhere */
   interface
-    subroutine launch_compute_kernel_reduce_1_c_double(a_dev, lda, n, h1_dev) &
-               bind(c,name="launch_compute_kernel_reduce_1_double")
+    subroutine launch_compute_kernel_reduce_1_c_complex_double(a_dev, lda, n, h1_dev) &
+               bind(c,name="launch_compute_kernel_reduce_1_complex_double")
 
       use iso_c_binding
 
@@ -238,8 +254,8 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-    subroutine launch_compute_kernel_reduce_1_c_single(a_dev, lda, n, h1_dev) &
-               bind(c,name="launch_compute_kernel_reduce_1_single")
+    subroutine launch_compute_kernel_reduce_1_c_complex_single(a_dev, lda, n, h1_dev) &
+               bind(c,name="launch_compute_kernel_reduce_1_complex_single")
 
       use iso_c_binding
 
@@ -250,63 +266,64 @@ module cuda_c_kernel
     end subroutine
   end interface
 #endif
+#endif /* not used anywhere */
 
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_real_c_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
-               bind(c,name="launch_compute_hh_trafo_c_kernel_double")
+    subroutine launch_compute_hh_trafo_c_kernel_real_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
+               bind(c,name="launch_compute_hh_trafo_c_kernel_real_double")
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int), value     :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value  :: q
-      integer(kind=c_size_t), value  :: hh_dot
-      integer(C_SIZE_T), value       :: hh_tau ,hh
+      integer(kind=c_intptr_t), value  :: q
+      integer(kind=c_intptr_t), value  :: hh_dot
+      integer(c_intptr_t), value       :: hh_tau ,hh
     end subroutine
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_real_c_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
-               bind(c,name="launch_compute_hh_trafo_c_kernel_single")
+    subroutine launch_compute_hh_trafo_c_kernel_real_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
+               bind(c,name="launch_compute_hh_trafo_c_kernel_real_single")
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int), value     :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value  :: q
-      integer(kind=c_size_t), value  :: hh_dot
-      integer(C_SIZE_T), value       :: hh_tau ,hh
+      integer(kind=c_intptr_t), value  :: q
+      integer(kind=c_intptr_t), value  :: hh_dot
+      integer(c_intptr_t), value       :: hh_tau ,hh
     end subroutine
   end interface
 
 #endif
 
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_complex_c_double(q, hh, hh_tau, nev, nb,ldq,off, ncols) &
+    subroutine launch_compute_hh_trafo_c_kernel_complex_double(q, hh, hh_tau, nev, nb,ldq,off, ncols) &
                bind(c,name="launch_compute_hh_trafo_c_kernel_complex_double")
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value :: q
-      integer(kind=c_size_t), value :: hh_tau ,hh
+      integer(kind=c_intptr_t), value :: q
+      integer(kind=c_intptr_t), value :: hh_tau ,hh
     end subroutine
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_complex_c_single(q, hh, hh_tau, nev, nb,ldq,off, ncols) &
+    subroutine launch_compute_hh_trafo_c_kernel_complex_single(q, hh, hh_tau, nev, nb,ldq,off, ncols) &
                bind(c,name="launch_compute_hh_trafo_c_kernel_complex_single")
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value :: q
-      integer(kind=c_size_t), value :: hh_tau ,hh
+      integer(kind=c_intptr_t), value :: q
+      integer(kind=c_intptr_t), value :: hh_tau ,hh
     end subroutine
   end interface
 
@@ -314,30 +331,30 @@ module cuda_c_kernel
 
 #if 0
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_complex_1_c_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
+    subroutine launch_compute_hh_trafo_c_kernel_complex_1_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
                 bind(c,name="launch_compute_hh_trafo_c_kernel_complex_1_double")
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value :: q
-      integer(kind=c_size_t), value :: hh_tau ,hh, hh_dot
+      integer(kind=c_intptr_t), value :: q
+      integer(kind=c_intptr_t), value :: hh_tau ,hh, hh_dot
 
     end subroutine
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_complex_1_c_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
+    subroutine launch_compute_hh_trafo_c_kernel_complex_1_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols) &
                 bind(c,name="launch_compute_hh_trafo_c_kernel_complex_1_single")
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int), value    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t), value :: q
-      integer(kind=c_size_t), value :: hh_tau ,hh, hh_dot
+      integer(kind=c_intptr_t), value :: q
+      integer(kind=c_intptr_t), value :: hh_tau ,hh, hh_dot
 
     end subroutine
   end interface
@@ -347,8 +364,8 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_my_unpack_c_kernel_real_c_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-                                                l_nev,row_group_dev, a_dev) bind(c,name="launch_my_unpack_c_kernel_double")
+    subroutine launch_my_unpack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+                                                l_nev,row_group_dev, a_dev) bind(c,name="launch_my_unpack_c_kernel_real_double")
 
       use iso_c_binding
 
@@ -362,8 +379,8 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_my_unpack_c_kernel_real_c_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-                                                l_nev,row_group_dev, a_dev) bind(c,name="launch_my_unpack_c_kernel_single")
+    subroutine launch_my_unpack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+                                                l_nev,row_group_dev, a_dev) bind(c,name="launch_my_unpack_c_kernel_real_single")
 
       use iso_c_binding
 
@@ -378,9 +395,9 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_my_pack_c_kernel_real_c_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
+    subroutine launch_my_pack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
                                                      stripe_count, l_nev, a_dev, &
-                                                     row_group_dev) bind(c,name="launch_my_pack_c_kernel_double")
+                                                     row_group_dev) bind(c,name="launch_my_pack_c_kernel_real_double")
 
       use iso_c_binding
 
@@ -394,9 +411,9 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_my_pack_c_kernel_real_c_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+    subroutine launch_my_pack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                                                      l_nev, a_dev, &
-                                              row_group_dev) bind(c,name="launch_my_pack_c_kernel_single")
+                                              row_group_dev) bind(c,name="launch_my_pack_c_kernel_real_single")
 
       use iso_c_binding
 
@@ -411,8 +428,8 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_compute_hh_dotp_c_kernel_real_c_double(bcast_buffer_dev, hh_dot_dev, nbw, n) &
-               bind(c,name="launch_compute_hh_dotp_c_kernel_double")
+    subroutine launch_compute_hh_dotp_c_kernel_real_double(bcast_buffer_dev, hh_dot_dev, nbw, n) &
+               bind(c,name="launch_compute_hh_dotp_c_kernel_real_double")
 
       use iso_c_binding
 
@@ -426,8 +443,8 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_compute_hh_dotp_c_kernel_real_c_single(bcast_buffer_dev, hh_dot_dev, nbw, n) &
-               bind(c,name="launch_compute_hh_dotp_c_kernel_single")
+    subroutine launch_compute_hh_dotp_c_kernel_real_single(bcast_buffer_dev, hh_dot_dev, nbw, n) &
+               bind(c,name="launch_compute_hh_dotp_c_kernel_real_single")
 
       use iso_c_binding
 
@@ -442,14 +459,14 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_extract_hh_tau_c_kernel_real_c_double(hh, hh_tau, nb, n, is_zero) &
-               bind(c,NAME="launch_extract_hh_tau_c_kernel_double")
+    subroutine launch_extract_hh_tau_c_kernel_real_double(hh, hh_tau, nb, n, is_zero) &
+               bind(c,NAME="launch_extract_hh_tau_c_kernel_real_double")
 
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t), value :: hh
-      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_intptr_t), value :: hh
+      integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value    :: nb, n
       integer(kind=c_int), value    :: is_zero
 
@@ -457,14 +474,14 @@ module cuda_c_kernel
   end interface
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_extract_hh_tau_c_kernel_real_c_single(hh, hh_tau, nb, n, is_zero) &
-               bind(c,NAME="launch_extract_hh_tau_c_kernel_single")
+    subroutine launch_extract_hh_tau_c_kernel_real_single(hh, hh_tau, nb, n, is_zero) &
+               bind(c,NAME="launch_extract_hh_tau_c_kernel_real_single")
 
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t), value :: hh
-      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_intptr_t), value :: hh
+      integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value    :: nb, n
       integer(kind=c_int), value    :: is_zero
 
@@ -473,7 +490,7 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_my_unpack_c_kernel_complex_c_double(row_count, n_offset, max_idx, stripe_width, a_dim2, &
+    subroutine launch_my_unpack_c_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, &
                                                           stripe_count, l_nev, &
                                                  row_group_dev, a_dev) bind(c,name="launch_my_unpack_c_kernel_complex_double")
 
@@ -490,7 +507,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
  interface
-    subroutine launch_my_unpack_c_kernel_complex_c_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+    subroutine launch_my_unpack_c_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
                                                  row_group_dev, a_dev) bind(c,name="launch_my_unpack_c_kernel_complex_single")
 
       use iso_c_binding
@@ -507,7 +524,7 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_my_pack_c_kernel_complex_c_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
+    subroutine launch_my_pack_c_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
                                                         stripe_count, l_nev, a_dev, &
                                                row_group_dev) bind(c,name="launch_my_pack_c_kernel_complex_double")
 
@@ -523,7 +540,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-    subroutine launch_my_pack_c_kernel_complex_c_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
+    subroutine launch_my_pack_c_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
                                                         stripe_count, l_nev, a_dev, &
                                                row_group_dev) bind(c,name="launch_my_pack_c_kernel_complex_single")
 
@@ -540,7 +557,7 @@ module cuda_c_kernel
 #endif
 
   interface
-   subroutine launch_compute_hh_dotp_c_kernel_complex_c_double(bcast_buffer_dev, hh_dot_dev, nbw,n) &
+   subroutine launch_compute_hh_dotp_c_kernel_complex_double(bcast_buffer_dev, hh_dot_dev, nbw,n) &
               bind(c,name="launch_compute_hh_dotp_c_kernel_complex_double")
 
      use iso_c_binding
@@ -554,7 +571,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-   subroutine launch_compute_hh_dotp_c_kernel_complex_c_single(bcast_buffer_dev, hh_dot_dev, nbw,n) &
+   subroutine launch_compute_hh_dotp_c_kernel_complex_single(bcast_buffer_dev, hh_dot_dev, nbw,n) &
               bind(c,name="launch_compute_hh_dotp_c_kernel_complex_single")
 
      use iso_c_binding
@@ -569,14 +586,14 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_extract_hh_tau_c_kernel_complex_c_double(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_kernel_complex_double(hh, hh_tau, nb, n, is_zero) &
                bind(c,name="launch_extract_hh_tau_c_kernel_complex_double")
 
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t), value :: hh
-      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_intptr_t), value :: hh
+      integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value    :: nb, n
       integer(kind=c_int), value    :: is_zero
 
@@ -586,14 +603,14 @@ module cuda_c_kernel
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
   interface
-    subroutine launch_extract_hh_tau_c_kernel_complex_c_single(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_kernel_complex_single(hh, hh_tau, nb, n, is_zero) &
                bind(c,name="launch_extract_hh_tau_c_kernel_complex_single")
 
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t), value :: hh
-      integer(kind=c_size_t), value :: hh_tau
+      integer(kind=c_intptr_t), value :: hh
+      integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value    :: nb, n
       integer(kind=c_int), value    :: is_zero
 
@@ -604,7 +621,8 @@ module cuda_c_kernel
 
   contains
 
-    subroutine launch_dot_product_kernel_double(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
+#if 0 /* not used anywhere */
+    subroutine launch_dot_product_kernel_complex_double(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
 
       use iso_c_binding
       use precision
@@ -613,12 +631,12 @@ module cuda_c_kernel
       integer(kind=C_intptr_T) :: hs_dev ,hv_new_dev,x_dev,h_dev, hv_dev
       complex(kind=ck8)         :: tau_new
 #ifdef WITH_GPU_VERSION
-      call launch_dot_product_kernel_c_double(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
+      call launch_dot_product_kernel_c_complex_double(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_dot_product_kernel_single(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
+    subroutine launch_dot_product_kernel_complex_single(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
 
       use iso_c_binding
       use precision
@@ -627,12 +645,16 @@ module cuda_c_kernel
       integer(kind=C_intptr_T) :: hs_dev ,hv_new_dev,x_dev,h_dev, hv_dev
       complex(kind=ck4)         :: tau_new
 #ifdef WITH_GPU_VERSION
-      call launch_dot_product_kernel_c_single(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
+      call launch_dot_product_kernel_c_complex_single(hs_dev, hv_new_dev, tau_new, x_dev, h_dev,hv_dev, nr)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_dot_product_kernel_1_double(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
+#endif /* not used anywhere */
+
+#if 0 /* not used anywhere */
+
+    subroutine launch_dot_product_kernel_1_complex_double(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
 
       use iso_c_binding
 
@@ -640,12 +662,12 @@ module cuda_c_kernel
       integer(kind=c_int)      ::  nb, nr, ns
       integer(kind=C_intptr_T) :: x_dev,h_dev, hv_dev, ab_dev, hs_dev,hv_new_dev
 #ifdef WITH_GPU_VERSION
-      call launch_dot_product_kernel_1_c_double(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
+      call launch_dot_product_kernel_1_c_complex_double(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_dot_product_kernel_1_single(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
+    subroutine launch_dot_product_kernel_1_complex_single(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
 
       use iso_c_binding
 
@@ -653,13 +675,16 @@ module cuda_c_kernel
       integer(kind=c_int)      ::  nb, nr, ns
       integer(kind=C_intptr_T) :: x_dev,h_dev, hv_dev, ab_dev, hs_dev,hv_new_dev
 #ifdef WITH_GPU_VERSION
-      call launch_dot_product_kernel_1_c_single(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
+      call launch_dot_product_kernel_1_c_complex_single(ab_dev, hs_dev, hv_new_dev, x_dev,h_dev,hv_dev,nb, nr, ns)
 #endif
     end subroutine
 
 #endif
 
-    subroutine launch_dot_product_kernel_2_double(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
+#endif /* not used anywhere */
+
+#if 0 /* not used anywhere */
+    subroutine launch_dot_product_kernel_2_complex_double(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
 
       use iso_c_binding
 
@@ -667,13 +692,13 @@ module cuda_c_kernel
       integer(kind=c_int)      ::  nb, nr, ne
       integer(kind=C_intptr_T) :: hd_dev,hv_dev, hs_dev, ab_dev
 #ifdef WITH_GPU_VERSION
-      call launch_dot_product_kernel_2_c_double(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
+      call launch_dot_product_kernel_2_c_complex_double(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-    subroutine launch_dot_product_kernel_2_single(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
+    subroutine launch_dot_product_kernel_2_complex_single(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
 
       use iso_c_binding
 
@@ -681,12 +706,15 @@ module cuda_c_kernel
       integer(kind=c_int)      ::  nb, nr, ne
       integer(kind=C_intptr_T) :: hd_dev,hv_dev, hs_dev, ab_dev
 #ifdef WITH_GPU_VERSION
-      call launch_dot_product_kernel_2_c_single(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
+      call launch_dot_product_kernel_2_c_complex_single(ab_dev, hs_dev, hv_dev,hd_dev,nb, nr, ne)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_double_hh_transform_1_double(ab_dev, hs_dev,hv_dev,nb,ns)
+#endif /* not used anywhere */
+
+#if 0 /* not used anywhere */
+    subroutine launch_double_hh_transform_1_complex_double(ab_dev, hs_dev,hv_dev,nb,ns)
 
       use iso_c_binding
 
@@ -694,12 +722,12 @@ module cuda_c_kernel
       integer(kind=c_int)      ::  nb, ns
       integer(kind=C_intptr_T) :: hv_dev, ab_dev,hs_dev
 #ifdef WITH_GPU_VERSION
-      call launch_double_hh_transform_1_c_double(ab_dev, hs_dev,hv_dev,nb,ns)
+      call launch_double_hh_transform_1_c_complex_double(ab_dev, hs_dev,hv_dev,nb,ns)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_double_hh_transform_1_single(ab_dev, hs_dev,hv_dev,nb,ns)
+    subroutine launch_double_hh_transform_1_complex_single(ab_dev, hs_dev,hv_dev,nb,ns)
 
       use iso_c_binding
 
@@ -707,13 +735,15 @@ module cuda_c_kernel
       integer(kind=c_int)      ::  nb, ns
       integer(kind=C_intptr_T) :: hv_dev, ab_dev,hs_dev
 #ifdef WITH_GPU_VERSION
-      call launch_double_hh_transform_1_c_single(ab_dev, hs_dev,hv_dev,nb,ns)
+      call launch_double_hh_transform_1_c_complex_single(ab_dev, hs_dev,hv_dev,nb,ns)
 #endif
     end subroutine
 
 #endif
+#endif /*  not used anywhere */
 
-    subroutine launch_double_hh_transform_2_double(ab_dev, hd_dev,hv_dev,nc,ns, nb)
+#if 0 /* not used anywhere */
+    subroutine launch_double_hh_transform_2_complex_double(ab_dev, hd_dev,hv_dev,nc,ns, nb)
 
       use iso_c_binding
 
@@ -721,13 +751,13 @@ module cuda_c_kernel
       integer(kind=c_int)      ::  nc, ns, nb
       integer(kind=C_intptr_T) :: hv_dev, ab_dev,hd_dev
 #ifdef WITH_GPU_VERSION
-      call launch_double_hh_transform_2_c_double(ab_dev, hd_dev,hv_dev,nc,ns, nb)
+      call launch_double_hh_transform_2_c_complex_double(ab_dev, hd_dev,hv_dev,nc,ns, nb)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-    subroutine launch_double_hh_transform_2_single(ab_dev, hd_dev,hv_dev,nc,ns, nb)
+    subroutine launch_double_hh_transform_2_complex_single(ab_dev, hd_dev,hv_dev,nc,ns, nb)
 
       use iso_c_binding
 
@@ -735,13 +765,15 @@ module cuda_c_kernel
       integer(kind=c_int)      ::  nc, ns, nb
       integer(kind=C_intptr_T) :: hv_dev, ab_dev,hd_dev
 #ifdef WITH_GPU_VERSION
-      call launch_double_hh_transform_2_c_single(ab_dev, hd_dev,hv_dev,nc,ns, nb)
+      call launch_double_hh_transform_2_c_complex_single(ab_dev, hd_dev,hv_dev,nc,ns, nb)
 #endif
     end subroutine
 
 #endif
+#endif /* not used anywhere */
 
-    subroutine launch_compute_kernel_reduce_double(a_dev, lda, n, nbw, h1_dev)
+#if 0 /* not used anywhere */
+    subroutine launch_compute_kernel_reduce_complex_double(a_dev, lda, n, nbw, h1_dev)
 
       use iso_c_binding
 
@@ -749,12 +781,12 @@ module cuda_c_kernel
       integer(kind=c_int)      :: n,lda,nbw
       integer(kind=C_intptr_T) :: h1_dev ,a_dev
 #ifdef WITH_GPU_VERSION
-      call launch_compute_kernel_reduce_c_double(a_dev, lda, n, nbw, h1_dev)
+      call launch_compute_kernel_reduce_c_complex_double(a_dev, lda, n, nbw, h1_dev)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_compute_kernel_reduce_single(a_dev, lda, n, nbw, h1_dev)
+    subroutine launch_compute_kernel_reduce_complex_single(a_dev, lda, n, nbw, h1_dev)
 
       use iso_c_binding
 
@@ -762,13 +794,16 @@ module cuda_c_kernel
       integer(kind=c_int)      :: n,lda,nbw
       integer(kind=C_intptr_T) :: h1_dev ,a_dev
 #ifdef WITH_GPU_VERSION
-      call launch_compute_kernel_reduce_c_single(a_dev, lda, n, nbw, h1_dev)
+      call launch_compute_kernel_reduce_c_complex_single(a_dev, lda, n, nbw, h1_dev)
 #endif
     end subroutine
 
 #endif
+#endif /* not used anywhere */
 
-    subroutine launch_compute_kernel_reduce_1_double(a_dev, lda, n, h1_dev)
+#if 0 /* not used anywhere */
+
+    subroutine launch_compute_kernel_reduce_1_complex_double(a_dev, lda, n, h1_dev)
 
       use iso_c_binding
 
@@ -776,12 +811,12 @@ module cuda_c_kernel
       integer(kind=c_int)      :: n,lda
       integer(kind=C_intptr_T) :: h1_dev ,a_dev
 #ifdef WITH_GPU_VERSION
-      call launch_compute_kernel_reduce_1_c_double(a_dev, lda, n, h1_dev)
+      call launch_compute_kernel_reduce_1_c_complex_double(a_dev, lda, n, h1_dev)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_compute_kernel_reduce_1_single(a_dev, lda, n, h1_dev)
+    subroutine launch_compute_kernel_reduce_1_complex_single(a_dev, lda, n, h1_dev)
 
       use iso_c_binding
 
@@ -789,104 +824,105 @@ module cuda_c_kernel
       integer(kind=c_int)      :: n,lda
       integer(kind=C_intptr_T) :: h1_dev ,a_dev
 #ifdef WITH_GPU_VERSION
-      call launch_compute_kernel_reduce_1_c_single(a_dev, lda, n, h1_dev)
+      call launch_compute_kernel_reduce_1_c_complex_single(a_dev, lda, n, h1_dev)
 #endif
     end subroutine
 
 #endif
+#endif /* not used anywhere */
 
-    subroutine launch_compute_hh_trafo_c_kernel_real_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_real_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int)     :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t)  :: q
-      integer(kind=c_size_t)  :: hh_dot
-      integer(C_SIZE_T)       :: hh_tau ,hh
+      integer(kind=c_intptr_t)  :: q
+      integer(kind=c_intptr_t)  :: hh_dot
+      integer(c_intptr_t)       :: hh_tau ,hh
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_real_c_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+      call launch_compute_hh_trafo_c_kernel_real_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_compute_hh_trafo_c_kernel_real_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_real_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int)     :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t)  :: q
-      integer(kind=c_size_t)  :: hh_dot
-      integer(C_SIZE_T)       :: hh_tau ,hh
+      integer(kind=c_intptr_t)  :: q
+      integer(kind=c_intptr_t)  :: hh_dot
+      integer(c_intptr_t)       :: hh_tau ,hh
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_real_c_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+      call launch_compute_hh_trafo_c_kernel_real_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 #endif
     end subroutine
 
 #endif
 
-    subroutine launch_compute_hh_trafo_c_kernel_complex_double(q, hh, hh_tau, nev, nb,ldq,off, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_complex_double(q, hh, hh_tau, nev, nb,ldq,off, ncols)
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int)    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t) :: q
-      integer(kind=c_size_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_complex_c_double(q, hh, hh_tau, nev, nb,ldq,off, ncols)
+      call launch_compute_hh_trafo_c_kernel_complex_double(q, hh, hh_tau, nev, nb,ldq,off, ncols)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_compute_hh_trafo_c_kernel_complex_single(q, hh, hh_tau, nev, nb,ldq,off, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_complex_single(q, hh, hh_tau, nev, nb,ldq,off, ncols)
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int)    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t) :: q
-      integer(kind=c_size_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_complex_c_single(q, hh, hh_tau, nev, nb,ldq,off, ncols)
+      call launch_compute_hh_trafo_c_kernel_complex_single(q, hh, hh_tau, nev, nb,ldq,off, ncols)
 #endif
     end subroutine
 
 #endif
 
 #if 0
-    subroutine launch_compute_hh_trafo_c_kernel_complex_1_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_1_complex_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int)    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t) :: q
-      integer(kind=c_size_t) :: hh_tau ,hh, hh_dot
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh, hh_dot
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_complex_1_c_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+      call launch_compute_hh_trafo_c_kernel_complex_1_double(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_compute_hh_trafo_c_kernel_complex_1_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_1_complex_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 
       use iso_c_binding
 
       implicit none
       integer(kind=c_int)    :: nev, nb, ldq, off, ncols
-      integer(kind=c_size_t) :: q
-      integer(kind=c_size_t) :: hh_tau ,hh, hh_dot
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh, hh_dot
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_complex_1_c_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
+      call launch_compute_hh_trafo_c_kernel_complex_1_single(q, hh, hh_dot, hh_tau, nev, nb, ldq, off, ncols)
 #endif
     end subroutine
 #endif
 
 #endif
 
-    subroutine launch_my_unpack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+    subroutine launch_my_unpack_gpu_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                                               l_nev,row_group_dev, a_dev)
 
       use iso_c_binding
@@ -896,14 +932,14 @@ module cuda_c_kernel
       integer(kind=c_int)       :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t)  :: a_dev, row_group_dev
 #ifdef WITH_GPU_VERSION
-      call launch_my_unpack_c_kernel_real_c_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+      call launch_my_unpack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                                             l_nev,row_group_dev, a_dev)
 #endif
 
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_my_unpack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+    subroutine launch_my_unpack_gpu_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                                               l_nev,row_group_dev, a_dev)
 
       use iso_c_binding
@@ -913,7 +949,7 @@ module cuda_c_kernel
       integer(kind=c_int)       :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t)  :: a_dev, row_group_dev
 #ifdef WITH_GPU_VERSION
-      call launch_my_unpack_c_kernel_real_c_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+      call launch_my_unpack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                                             l_nev,row_group_dev, a_dev)
 #endif
 
@@ -921,8 +957,8 @@ module cuda_c_kernel
 
 #endif
 
-    subroutine launch_my_pack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-                                       row_group_dev)
+    subroutine launch_my_pack_gpu_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
+                                                     stripe_count, l_nev, a_dev,  row_group_dev)
 
       use iso_c_binding
 
@@ -931,15 +967,16 @@ module cuda_c_kernel
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
 #ifdef WITH_GPU_VERSION
-      call launch_my_pack_c_kernel_real_c_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
+      call launch_my_pack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
                                        row_group_dev)
 #endif
 
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_my_pack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-                                       row_group_dev)
+    subroutine launch_my_pack_gpu_kernel_real_single(row_count, n_offset, max_idx,stripe_width, &
+                                                     a_dim2, stripe_count, l_nev, a_dev,        &
+                                                     row_group_dev)
 
       use iso_c_binding
 
@@ -948,7 +985,7 @@ module cuda_c_kernel
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
 #ifdef WITH_GPU_VERSION
-      call launch_my_pack_c_kernel_real_c_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
+      call launch_my_pack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
                                        row_group_dev)
 #endif
 
@@ -956,7 +993,7 @@ module cuda_c_kernel
 
 #endif
 
-    subroutine launch_compute_hh_dotp_c_kernel_real_double(bcast_buffer_dev, hh_dot_dev, nbw, n)
+    subroutine launch_compute_hh_dotp_gpu_kernel_real_double(bcast_buffer_dev, hh_dot_dev, nbw, n)
 
       use iso_c_binding
 
@@ -965,13 +1002,13 @@ module cuda_c_kernel
       integer(kind=c_intptr_t) :: hh_dot_dev
       integer(kind=c_int)      :: nbw, n
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_dotp_c_kernel_real_c_double(bcast_buffer_dev, hh_dot_dev, nbw, n)
+      call launch_compute_hh_dotp_c_kernel_real_double(bcast_buffer_dev, hh_dot_dev, nbw, n)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
-    subroutine launch_compute_hh_dotp_c_kernel_real_single(bcast_buffer_dev, hh_dot_dev, nbw, n)
+    subroutine launch_compute_hh_dotp_gpu_kernel_real_single(bcast_buffer_dev, hh_dot_dev, nbw, n)
 
       use iso_c_binding
 
@@ -980,45 +1017,45 @@ module cuda_c_kernel
       integer(kind=c_intptr_t) :: hh_dot_dev
       integer(kind=c_int)      :: nbw, n
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_dotp_c_kernel_real_c_single(bcast_buffer_dev, hh_dot_dev, nbw, n)
+      call launch_compute_hh_dotp_c_kernel_real_single(bcast_buffer_dev, hh_dot_dev, nbw, n)
 #endif
     end subroutine
 
 #endif
 
-    subroutine launch_extract_hh_tau_c_kernel_real_double(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_gpu_kernel_real_double(hh, hh_tau, nb, n, is_zero)
 
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t) :: hh
-      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_intptr_t) :: hh
+      integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int)    :: nb, n
       integer(kind=c_int)    :: is_zero
 #ifdef WITH_GPU_VERSION
-      call launch_extract_hh_tau_c_kernel_real_c_double(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_kernel_real_double(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_extract_hh_tau_c_kernel_real_single(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_gpu_kernel_real_single(hh, hh_tau, nb, n, is_zero)
 
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t) :: hh
-      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_intptr_t) :: hh
+      integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int)    :: nb, n
       integer(kind=c_int)    :: is_zero
 #ifdef WITH_GPU_VERSION
-      call launch_extract_hh_tau_c_kernel_real_c_single(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_kernel_real_single(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 
 #endif
 
-    subroutine launch_my_unpack_c_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-                                                 row_group_dev, a_dev)
+    subroutine launch_my_unpack_gpu_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, &
+                                                          a_dim2, stripe_count, l_nev, row_group_dev, a_dev)
 
       use iso_c_binding
 
@@ -1028,14 +1065,14 @@ module cuda_c_kernel
       integer(kind=c_int)       :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t)  :: a_dev, row_group_dev
 #ifdef WITH_GPU_VERSION
-      call launch_my_unpack_c_kernel_complex_c_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+      call launch_my_unpack_c_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
                                                  row_group_dev, a_dev)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_my_unpack_c_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-                                                 row_group_dev, a_dev)
+    subroutine launch_my_unpack_gpu_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, &
+                                                          a_dim2, stripe_count, l_nev, row_group_dev, a_dev)
 
       use iso_c_binding
 
@@ -1045,14 +1082,14 @@ module cuda_c_kernel
       integer(kind=c_int)       :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t)  :: a_dev, row_group_dev
 #ifdef WITH_GPU_VERSION
-      call launch_my_unpack_c_kernel_complex_c_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+      call launch_my_unpack_c_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
                                                  row_group_dev, a_dev)
 #endif
     end subroutine
 
 #endif
 
-    subroutine launch_my_pack_c_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
+    subroutine launch_my_pack_gpu_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
                                                       stripe_count, l_nev, a_dev, &
                                                row_group_dev)
 
@@ -1063,14 +1100,14 @@ module cuda_c_kernel
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
 #ifdef WITH_GPU_VERSION
-      call launch_my_pack_c_kernel_complex_c_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
+      call launch_my_pack_c_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
                                                row_group_dev)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-    subroutine launch_my_pack_c_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
+    subroutine launch_my_pack_gpu_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
                                                       stripe_count, l_nev, a_dev, &
                                                row_group_dev)
 
@@ -1080,15 +1117,15 @@ module cuda_c_kernel
       integer(kind=c_int)      :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
-#ifdef WITH_GPU_VERSION
-      call launch_my_pack_c_kernel_complex_c_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
+#ifdef WITH_GPU_VERSION 
+      call launch_my_pack_c_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
                                                row_group_dev)
 #endif
     end subroutine
 
 #endif
 
-    subroutine launch_compute_hh_dotp_c_kernel_complex_double(bcast_buffer_dev, hh_dot_dev, nbw,n)
+    subroutine launch_compute_hh_dotp_gpu_kernel_complex_double(bcast_buffer_dev, hh_dot_dev, nbw,n)
 
       use iso_c_binding
 
@@ -1097,12 +1134,12 @@ module cuda_c_kernel
       integer(kind=c_intptr_t) :: hh_dot_dev
       integer(kind=c_int)      :: nbw, n
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_dotp_c_kernel_complex_c_double(bcast_buffer_dev, hh_dot_dev, nbw,n)
+      call launch_compute_hh_dotp_c_kernel_complex_double(bcast_buffer_dev, hh_dot_dev, nbw,n)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_compute_hh_dotp_c_kernel_complex_single(bcast_buffer_dev, hh_dot_dev, nbw,n)
+    subroutine launch_compute_hh_dotp_gpu_kernel_complex_single(bcast_buffer_dev, hh_dot_dev, nbw,n)
 
       use iso_c_binding
 
@@ -1111,37 +1148,37 @@ module cuda_c_kernel
       integer(kind=c_intptr_t) :: hh_dot_dev
       integer(kind=c_int)      :: nbw, n
 #ifdef WITH_GPU_VERSION
-      call launch_compute_hh_dotp_c_kernel_complex_c_single(bcast_buffer_dev, hh_dot_dev, nbw,n)
+      call launch_compute_hh_dotp_c_kernel_complex_single(bcast_buffer_dev, hh_dot_dev, nbw,n)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_extract_hh_tau_c_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_gpu_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
 
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t) :: hh
-      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_intptr_t) :: hh
+      integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int)    :: nb, n
       integer(kind=c_int)    :: is_zero
 #ifdef WITH_GPU_VERSION
-      call launch_extract_hh_tau_c_kernel_complex_c_double(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_extract_hh_tau_c_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_gpu_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
 
       use iso_c_binding
 
       implicit none
-      integer(kind=c_size_t) :: hh
-      integer(kind=c_size_t) :: hh_tau
+      integer(kind=c_intptr_t) :: hh
+      integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int)    :: nb, n
       integer(kind=c_int)    :: is_zero
 #ifdef WITH_GPU_VERSION
-      call launch_extract_hh_tau_c_kernel_complex_c_single(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 #endif

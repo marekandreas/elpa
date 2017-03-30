@@ -718,7 +718,7 @@ module elpa_pdgeqrf
 
     ! incx == 1: column major
     ! incx != 1: row major
-    subroutine qr_pdlarfg_1dcomm_double(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm)
+    subroutine qr_pdlarfg_1dcomm_double(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,communicator)
 
       use precision
       use ELPA1
@@ -736,7 +736,7 @@ module elpa_pdgeqrf
       real(kind=rk8)                  :: x(*),work(*)
 
       ! input variables (global)
-      integer(kind=ik)               :: mpi_comm,nb,idx,n,rev
+      integer(kind=ik)               :: communicator,nb,idx,n,rev
 
       ! output variables (global)
       real(kind=rk8)                  :: tau
@@ -768,8 +768,8 @@ module elpa_pdgeqrf
 #endif
         return
        end if
-      call MPI_Comm_rank(mpi_comm, mpirank, mpierr)
-      call MPI_Comm_size(mpi_comm, mpiprocs, mpierr)
+      call MPI_Comm_rank(communicator, mpirank, mpierr)
+      call MPI_Comm_size(communicator, mpiprocs, mpierr)
       ! calculate expected work size and store in work(1)
       if (hgmode .eq. ichar('s')) then
         ! allreduce (MPI_SUM)
@@ -841,11 +841,11 @@ module elpa_pdgeqrf
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_allreduce(work(1),work(sendsize+1), &
                              sendsize,mpi_real8,mpi_sum, &
-                             mpi_comm,mpierr)
+                             communicator,mpierr)
 #else
         call mpi_allreduce(work(1),work(sendsize+1), &
                              sendsize,mpi_real4,mpi_sum, &
-                             mpi_comm,mpierr)
+                             communicator,mpierr)
 #endif
 
 #else
@@ -877,11 +877,11 @@ module elpa_pdgeqrf
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_alltoall(work(1),2,mpi_real8, &
                             work(sendsize+1),2,mpi_real8, &
-                            mpi_comm,mpierr)
+                            communicator,mpierr)
 #else
         call mpi_alltoall(work(1),2,mpi_real4, &
                             work(sendsize+1),2,mpi_real4, &
-                            mpi_comm,mpierr)
+                            communicator,mpierr)
 #endif
 
 #else
@@ -917,11 +917,11 @@ module elpa_pdgeqrf
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_allgather(work(1),sendsize,mpi_real8, &
                             work(sendsize+1),sendsize,mpi_real8, &
-                            mpi_comm,mpierr)
+                            communicator,mpierr)
 #else
         call mpi_allgather(work(1),sendsize,mpi_real4, &
                             work(sendsize+1),sendsize,mpi_real4, &
-                            mpi_comm,mpierr)
+                            communicator,mpierr)
 #endif
 
 #else
@@ -3464,7 +3464,7 @@ module elpa_pdgeqrf
 
     ! incx == 1: column major
     ! incx != 1: row major
-    subroutine qr_pdlarfg_1dcomm_single(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,mpi_comm)
+    subroutine qr_pdlarfg_1dcomm_single(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,communicator)
 
       use precision
       use ELPA1
@@ -3482,7 +3482,7 @@ module elpa_pdgeqrf
       real(kind=rk4)                  :: x(*),work(*)
 
       ! input variables (global)
-      integer(kind=ik)               :: mpi_comm,nb,idx,n,rev
+      integer(kind=ik)               :: communicator,nb,idx,n,rev
 
       ! output variables (global)
       real(kind=rk4)                  :: tau
@@ -3514,8 +3514,8 @@ module elpa_pdgeqrf
 #endif
         return
        end if
-      call MPI_Comm_rank(mpi_comm, mpirank, mpierr)
-      call MPI_Comm_size(mpi_comm, mpiprocs, mpierr)
+      call MPI_Comm_rank(communicator, mpirank, mpierr)
+      call MPI_Comm_size(communicator, mpiprocs, mpierr)
       ! calculate expected work size and store in work(1)
       if (hgmode .eq. ichar('s')) then
         ! allreduce (MPI_SUM)
@@ -3587,11 +3587,11 @@ module elpa_pdgeqrf
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_allreduce(work(1),work(sendsize+1), &
                              sendsize,mpi_real8,mpi_sum, &
-                             mpi_comm,mpierr)
+                             communicator,mpierr)
 #else
         call mpi_allreduce(work(1),work(sendsize+1), &
                              sendsize,mpi_real4,mpi_sum, &
-                             mpi_comm,mpierr)
+                             communicator,mpierr)
 #endif
 
 #else
@@ -3623,11 +3623,11 @@ module elpa_pdgeqrf
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_alltoall(work(1),2,mpi_real8, &
                             work(sendsize+1),2,mpi_real8, &
-                            mpi_comm,mpierr)
+                            communicator,mpierr)
 #else
         call mpi_alltoall(work(1),2,mpi_real4, &
                             work(sendsize+1),2,mpi_real4, &
-                            mpi_comm,mpierr)
+                            communicator,mpierr)
 #endif
 
 #else
@@ -3669,11 +3669,11 @@ module elpa_pdgeqrf
 #ifdef DOUBLE_PRECISION_REAL
         call mpi_allgather(work(1),sendsize,mpi_real8, &
                             work(sendsize+1),sendsize,mpi_real8, &
-                            mpi_comm,mpierr)
+                            communicator,mpierr)
 #else
         call mpi_allgather(work(1),sendsize,mpi_real4, &
                             work(sendsize+1),sendsize,mpi_real4, &
-                            mpi_comm,mpierr)
+                            communicator,mpierr)
 #endif
 
 #else

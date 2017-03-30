@@ -1,0 +1,57 @@
+#!/usr/bin/python
+from __future__ import print_function
+import os
+import sys
+import subprocess
+
+def cpp_arg(arg):
+    return arg.startswith("-I") or \
+           arg.startswith("-D") or \
+           arg.startswith("-U")
+
+
+def check_call(args, **kwargs):
+    if os.getenv("V") == "1":
+        print(" ".join(args))
+    return subprocess.check_call(args, **kwargs)
+
+def check_call_redirect(args, filename=None, **kwargs):
+    if os.getenv("V") == "1":
+        print(" ".join(args), ">", filename)
+    with open(filename, "wb") as fd:
+        try:
+            return subprocess.check_call(args, stdout=fd, **kwargs)
+        except subprocess.CalledProcessError as e:
+            os.remove(filename)
+            raise SystemExit(e.returncode)
+
+args = sys.argv[1:]
+cpp_args = filter(cpp_arg, args)
+
+files = filter(lambda q : q.endswith(".F90"), args)
+args = filter(lambda q : not q.endswith(".F90"), args)
+if len(files) > 1:
+    raise Exception("Specify exactly one .F90 file")
+elif len(files) == 0:
+    # No .F90 file specified, execute program as-is
+    os.execvp(args[0], args[0:])
+elif len(files) == 1:
+    file, = files
+
+tmp_filename = "manually_preprocessed_" + file.replace("/", "__")
+
+try:
+    output = args.index("-o")
+    outputname = args[output + 1]
+    tmp_filename += "-" + outputname.replace("/", "__") + ".F90"
+except ValueError:
+    pass
+
+# preprocess
+check_call_redirect(["cpp","-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)
+
+# compile
+check_call(args + [tmp_filename])
+
+# cleanup
+os.remove(tmp_filename)

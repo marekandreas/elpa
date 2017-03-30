@@ -234,6 +234,15 @@ program test_real2_choose_kernel_with_api_single_precision
 #ifdef WITH_REAL_GENERIC_SSE_ASSEMBLY_KERNEL
       print *, " The settings are: REAL_ELPA_KERNEL_SSE"
 #endif
+#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_SSE_BLOCK2"
+#endif
+#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_SSE_BLOCK4"
+#endif
+#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_SSE_BLOCK6"
+#endif
 #ifdef WITH_REAL_AVX_BLOCK2_KERNEL
       print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK2"
 #endif
@@ -242,6 +251,24 @@ program test_real2_choose_kernel_with_api_single_precision
 #endif
 #ifdef WITH_REAL_AVX_BLOCK6_KERNEL
       print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK6"
+#endif
+#ifdef WITH_REAL_AVX2_BLOCK2_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_AVX2_BLOCK2"
+#endif
+#ifdef WITH_REAL_AVX2_BLOCK4_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_AVX2_BLOCK4"
+#endif
+#ifdef WITH_REAL_AVX2_BLOCK6_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_AVX2_BLOCK6"
+#endif
+#ifdef WITH_REAL_AVX512_BLOCK2_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_AVX512_BLOCK2"
+#endif
+#ifdef WITH_REAL_AVX512_BLOCK4_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_AVX512_BLOCK4"
+#endif
+#ifdef WITH_REAL_AVX512_BLOCK6_KERNEL
+      print *, " The settings are: REAL_ELPA_KERNEL_AVX512_BLOCK6"
 #endif
 #ifdef WITH_REAL_BGP_KERNEL
       print *, " The settings are: REAL_ELPA_KERNEL_BGP"
@@ -330,7 +357,7 @@ program test_real2_choose_kernel_with_api_single_precision
                               na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
 #ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
-#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+#else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
 
 #ifdef WITH_REAL_GENERIC_KERNEL
                               REAL_ELPA_KERNEL_GENERIC)
@@ -343,7 +370,6 @@ program test_real2_choose_kernel_with_api_single_precision
 #ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
                               REAL_ELPA_KERNEL_SSE)
 #endif
-#ifdef WITH_ONE_SPECIFIC_REAL_KERNEL
 
 #ifdef WITH_REAL_SSE_BLOCK6_KERNEL
                               REAL_ELPA_KERNEL_SSE_BLOCK6)
@@ -381,46 +407,17 @@ program test_real2_choose_kernel_with_api_single_precision
 #endif
 #endif
 
-#else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
-
-#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK2)
+#ifdef WITH_REAL_AVX512_BLOCK6_KERNEL
+                              REAL_ELPA_KERNEL_AVX512_BLOCK6)
+#else
+#ifdef WITH_REAL_AVX512_BLOCK4_KERNEL
+                              REAL_ELPA_KERNEL_AVX512_BLOCK4)
+#else
+#ifdef WITH_REAL_AVX512_BLOCK2_KERNEL
+                              REAL_ELPA_KERNEL_AVX512_BLOCK2)
 #endif
-
-#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK4)
 #endif
-
-#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK6)
 #endif
-
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK2)
-#endif
-
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK4)
-#endif
-
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK6)
-#endif
-
-#ifdef WITH_REAL_AVX2_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_AVX2_BLOCK2)
-#endif
-
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_AVX2_BLOCK4)
-#endif
-
-#ifdef WITH_REAL_AVX2_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_AVX2_BLOCK6)
-#endif
-
-#endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
-
 #ifdef WITH_REAL_BGP_KERNEL
                               REAL_ELPA_KERNEL_BGP)
 #endif

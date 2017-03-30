@@ -1,6 +1,6 @@
 before_script:
   - export LANG=C
-  - module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools pkg-config
+  - if [ $HOST != "hydra03" -a $HOST != "hydra04" -a $HOST != "hydra05"  -a $HOST != "hydra06"  -a $HOST != "hydra07"  ] ; then module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools pkg-config ; fi
   - module list
   - export MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
   - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
@@ -46,8 +46,9 @@ intel-double-precision-mpi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-intel-double-precision-mpi-noomp-cuda-jobs:
+intel-double-precision-mpi-noomp-cuda-jobs-blocksize-32:
   tags:
     - gpu
   script:
@@ -58,8 +59,24 @@ intel-double-precision-mpi-noomp-cuda-jobs:
     - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --disable-assumed-size
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 32'
+    - cat test-suite.log
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
+intel-double-precision-mpi-noomp-cuda-jobs-blocksize-16:
+  tags:
+    - gpu
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --disable-assumed-size
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 16'
+    - cat test-suite.log
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-double-precision-nompi-noomp-cuda-jobs:
   tags:
@@ -72,11 +89,13 @@ intel-double-precision-nompi-noomp-cuda-jobs:
     - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - cat test-suite.log
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-mpi-noomp-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90
@@ -90,7 +109,7 @@ intel-double-precision-nompi-noomp-cuda-jobs:
       #
       #gfortran-double-precision-mpi-noomp-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-assumed-size FC=mpif90
@@ -113,6 +132,7 @@ intel-single-precision-mpi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-mpi-noomp-cuda-jobs:
   tags:
@@ -125,7 +145,40 @@ intel-single-precision-mpi-noomp-cuda-jobs:
     - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - cat test-suite.log
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+intel-single-precision-mpi-noomp-cuda-jobs-blocksize-64:
+  tags:
+    - gpu
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 64'
+    - cat test-suite.log
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+
+intel-single-precision-mpi-noomp-cuda-larger-jobs:
+  tags:
+    - gpu
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
+    - cat test-suite.log
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #intel-single-precision-mpi-noomp-cuda-runtime-choice-jobs:
       #  tags:
@@ -170,12 +223,29 @@ intel-single-precision-nompi-noomp-cuda-jobs:
     - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - cat test-suite.log
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+intel-single-precision-nompi-noomp-cuda-larger-jobs:
+  tags:
+    - gpu
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
+    - cat test-suite.log
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
       #gfortran-single-precision-mpi-noomp-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision FC=mpif90
@@ -189,7 +259,7 @@ intel-single-precision-nompi-noomp-cuda-jobs:
       #
       #gfortran-single-precision-mpi-noomp-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --disable-assumed-size FC=mpif90
@@ -212,6 +282,18 @@ intel-double-precision-nompi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+intel-double-precision-nompi-noomp-larger-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no FC=ifort
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1000 50 32' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-double-precision-nompi-noomp-assumed-size-jobs:
   tags:
@@ -222,10 +304,11 @@ intel-double-precision-nompi-noomp-assumed-size-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-nompi-noomp-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no
@@ -239,7 +322,7 @@ intel-double-precision-nompi-noomp-assumed-size-jobs:
       #
       #gfortran-double-precision-nompi-noomp-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no --disable-assumed-size
@@ -262,6 +345,7 @@ intel-single-precision-nompi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-nompi-noomp-assumed-size-jobs:
   tags:
@@ -272,10 +356,11 @@ intel-single-precision-nompi-noomp-assumed-size-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-nompi-noomp-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision
@@ -289,7 +374,7 @@ intel-single-precision-nompi-noomp-assumed-size-jobs:
       #
       #gfortran-single-precision-nompi-noomp-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --disable-assumed-size
@@ -314,6 +399,7 @@ intel-double-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-double-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -325,6 +411,7 @@ intel-double-precision-mpi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-double-precision-mpi-openmp-jobs:
   tags:
@@ -336,6 +423,7 @@ gfortran-double-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-double-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -347,10 +435,11 @@ gfortran-double-precision-mpi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-mpi-openmp-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure  FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
@@ -375,6 +464,19 @@ intel-single-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+intel-single-precision-mpi-openmp-larger-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision
+    - make -j 8
+    - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -386,6 +488,7 @@ intel-single-precision-mpi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-jobs:
   tags:
@@ -397,6 +500,7 @@ gfortran-single-precision-mpi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-assumed-size-jobs:
   tags:
@@ -408,11 +512,12 @@ gfortran-single-precision-mpi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
       #gfortran-single-precision-mpi-openmp-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure  FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision
@@ -433,6 +538,7 @@ intel-double-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-double-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -444,6 +550,7 @@ intel-double-precision-nompi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-double-precision-nompi-openmp-jobs:
   tags:
@@ -455,6 +562,7 @@ gfortran-double-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-double-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -466,10 +574,11 @@ gfortran-double-precision-nompi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-nompi-openmp-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-openmp
@@ -491,6 +600,7 @@ intel-single-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -502,6 +612,7 @@ intel-single-precision-nompi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-nompi-openmp-jobs:
   tags:
@@ -513,6 +624,7 @@ gfortran-single-precision-nompi-openmp-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-nompi-openmp-assumed-size-jobs:
   tags:
@@ -524,10 +636,11 @@ gfortran-single-precision-nompi-openmp-assumed-size-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-nompi-openmp-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp
@@ -544,17 +657,18 @@ intel-double-precision-mpi-noopenmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -567,17 +681,18 @@ intel-single-precision-mpi-noopenmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -590,17 +705,18 @@ intel-double-precision-nompi-noopenmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no --with-ftimings FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no --enable-timings FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no --with-ftimings
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no --enable-timings
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -613,17 +729,18 @@ intel-single-precision-nompi-noopenmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --enable-timings FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --enable-timings
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -634,10 +751,10 @@ intel-single-precision-nompi-noopenmp-ftimings-jobs:
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings --disable-assumed-size-arrays
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --enable-timings --disable-assumed-size-arrays
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -654,29 +771,31 @@ intel-double-precision-nompi-openmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --with-ftimings --enable-openmp FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timings --enable-openmp FC=ifort
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-double-precision-nompi-openmp-ftimings-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --with-ftimings --enable-openmp
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timings --enable-openmp
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --with-ftimings --enable-openmp
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timings --enable-openmp
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -694,28 +813,30 @@ intel-single-precision-nompi-noopenmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --enable-timings FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings --disable-assumed-size FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --enable-timings --disable-assumed-size FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --enable-timings
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'  || { cat test-suite.log; exit 1; }
@@ -726,10 +847,10 @@ intel-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
       #
       #gfortran-single-precision-nompi-noopenmp-ftimings-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --with-ftimings --disable-assumed-size
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=0 --enable-single-precision --enable-timings --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -746,22 +867,24 @@ intel-double-precision-nompi-openmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --with-ftimings --enable-openmp FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timings --enable-openmp FC=ifort
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-double-precision-nompi-openmp-ftimings-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --with-ftimings --enable-openmp --disable-assumed-size FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timings --enable-openmp --disable-assumed-size FC=ifort
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
 gfortran-double-precision-nompi-openmp-ftimings-jobs:
@@ -769,27 +892,29 @@ gfortran-double-precision-nompi-openmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --with-ftimings --enable-openmp
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timings --enable-openmp
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-double-precision-nompi-openmp-ftimings-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --with-ftimings --enable-openmp --disable-assumed-size
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timings --enable-openmp --disable-assumed-size
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
       #gfortran-double-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=no --enable-timing --enable-openmp
@@ -809,29 +934,31 @@ intel-single-precision-nompi-openmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --enable-timings FC=ifort
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-nompi-openmp-ftimings-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings --disable-assumed-size FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --enable-timings --disable-assumed-size FC=ifort
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-nompi-openmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings
+      #    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --enable-timings
       #    - make -j 8
       #    - export OMP_NUM_THREADS=2
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -846,18 +973,19 @@ gfortran-single-precision-nompi-openmp-ftimings-assumed-size-arrays-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings --disable-assumed-size
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --enable-timings --disable-assumed-size
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --enable-timings
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -874,51 +1002,55 @@ intel-double-precision-mpi-openmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-timings
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-double-precision-mpi-openmp-ftimings-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings --disable-assumed-size
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-timings --disable-assumed-size
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-double-precision-mpi-openmp-ftimings-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-timings
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-double-precision-mpi-openmp-ftimings-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings --disable-assumed-size
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-timings --disable-assumed-size
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-timings
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - export OMP_NUM_THREADS=1
@@ -935,29 +1067,31 @@ intel-single-precision-mpi-openmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-mpi-openmp-ftimings-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --disable-assumed-size
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --disable-assumed-size
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS=" -O3 -mavx" CXXFLAGS=" -O3 -mavx" FCFLAGS=" -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
+      #    - ./configure FC=mpif90 CFLAGS=" -O3 -mavx" CXXFLAGS=" -O3 -mavx" FCFLAGS=" -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings
       #    - make -j 8
       #    - export OMP_NUM_THREADS=2
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -972,19 +1106,20 @@ gfortran-single-precision-mpi-openmp-ftimings-assumed-size-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS=" -O3 -mavx" CXXFLAGS=" -O3 -mavx" FCFLAGS=" -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --disable-assumed-size
+    - ./configure FC=mpif90 CFLAGS=" -O3 -mavx" CXXFLAGS=" -O3 -mavx" FCFLAGS=" -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --disable-assumed-size
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
       #gfortran-single-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1001,28 +1136,30 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --disable-assumed-size
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --disable-assumed-size
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1033,10 +1170,10 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --disable-assumed-size
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1056,6 +1193,7 @@ intel-double-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # jobs for intel/gfortran single precision mpi and no openmp ftimings and redirect enabled
 
@@ -1064,28 +1202,30 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --enable-single-precision
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --enable-single-precision --disable-assumed-size
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --enable-single-precision --disable-assumed-size
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --enable-single-precision
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --enable-single-precision
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - export OMP_NUM_THREADS=1
@@ -1098,10 +1238,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --enable-single-precision --disable-assumed-size
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --enable-single-precision --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1117,27 +1257,29 @@ intel-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=ifort CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0
+    - ./configure FC=ifort CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-timings --enable-redirect --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=ifort CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0 --disable-assumed-size --with-mpi=0
+    - ./configure FC=ifort CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-timings --enable-redirect --with-mpi=0 --disable-assumed-size --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-mpi=0
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1148,10 +1290,10 @@ intel-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #
       #gfortran-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0 --disable-assumed-size
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-mpi=0 --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1164,10 +1306,10 @@ intel-double-precision-nompi-noopenmp-ftimings-redirect-assumed-size-jobs:
 
       #intel-single-precision-no-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings FC=ifort
+      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --enable-timings FC=ifort
       #    - make -j 8
       #    - export OMP_NUM_THREADS=2
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1182,18 +1324,19 @@ gfortran-single-precision-nompi-openmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --enable-timings
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-nompi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --with-ftimings
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --with-mpi=0 --enable-single-precision --enable-openmp --enable-timings
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1201,10 +1344,10 @@ gfortran-single-precision-nompi-openmp-ftimings-jobs:
       #
       #gfortran-double-precision-mpi-openmp-ftimings-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
+      #    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-timings
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - export OMP_NUM_THREADS=2
@@ -1216,10 +1359,10 @@ gfortran-single-precision-nompi-openmp-ftimings-jobs:
 
       #gfortran-double-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-timings
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - export OMP_NUM_THREADS=1
@@ -1236,29 +1379,31 @@ intel-single-precision-mpi-openmp-ftimings-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS=" -O3 -mavx" CXXFLAGS=" -O3 -mavx" FCFLAGS=" -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
+    - ./configure FC=mpif90 CFLAGS=" -O3 -mavx" CXXFLAGS=" -O3 -mavx" FCFLAGS=" -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1269,17 +1414,18 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1293,17 +1439,18 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --enable-single-precision
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --enable-single-precision
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --enable-single-precision
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1312,10 +1459,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
       #
       #intel-double-precision-nompi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0 FC=ifort
+      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-timings --enable-redirect --with-mpi=0 FC=ifort
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1326,10 +1473,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-jobs:
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-assumed-size-kernel:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-mpi=0
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1345,17 +1492,18 @@ intel-single-precision-nompi-noopenmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-ftimings --with-redirect --with-mpi=0 --enable-single-precision FC=ifort
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-timings --enable-redirect --with-mpi=0 --enable-single-precision FC=ifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-nompi-noopenmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-mpi=0 --enable-single-precision
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-mpi=0 --enable-single-precision
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1367,29 +1515,31 @@ intel-double-precision-mpi-openmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-double-precision-mpi-openmp-ftimings-redirect-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings --with-redirect
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-timings --enable-redirect
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --with-ftimings --with-redirect
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-timings --enable-redirect
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - export OMP_NUM_THREADS=1
@@ -1406,29 +1556,31 @@ intel-single-precision-mpi-openmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - export OMP_NUM_THREADS=1
@@ -1442,10 +1594,10 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-jobs:
 
       #intel-double-precision-nompi-openmp-ftimings-redirect-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-mpi=0 FC=ifort
+      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-mpi=0 FC=ifort
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - export OMP_NUM_THREADS=2
@@ -1460,18 +1612,19 @@ gfortran-double-precision-nompi-openmp-ftimings-redirect-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --with-ftimings --with-redirect --with-mpi=0
+    - ./configure FC=gfortran CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --enable-timings --enable-redirect --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-double-precision-nompi-openmp-ftimings-redirect-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --with-ftimings --with-redirect --with-mpi=0
+      #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --enable-timings --enable-redirect --with-mpi=0
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - export OMP_NUM_THREADS=1
@@ -1483,29 +1636,31 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-complex-generic-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1525,27 +1680,28 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-gener
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-generic-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-generic-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1558,10 +1714,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-complex-gener
 
       #intel-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=2
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1576,29 +1732,31 @@ intel-double-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1611,17 +1769,18 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-comple
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1632,10 +1791,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-comple
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-generic-simple-complex-generic-simple-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"   --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"   --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -1650,29 +1809,31 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-ss
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1681,17 +1842,17 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
       #    - cpu
       #  script:
       #    - ./autogen.sh
-      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+      #    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1702,10 +1863,10 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
 
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_assembly-complex-sse_assembly-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-real-generic-kernel-only --with-complex-generic-kernel-only --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1720,18 +1881,19 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=2
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1743,10 +1905,10 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_
       #
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1764,18 +1926,19 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-ss
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block2-kernel-only --with-complex-sse-block1-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1789,38 +1952,68 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
   tags:
-    - cpu
+    - coverage
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
+    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only --enable-assumed-size
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='1500 50 16'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
+intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block2-kernel-only  --with-complex-avx512-block1-kernel-only
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 128'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block2-kernel-only --with-complex-avx512-block1-kernel-only --enable-single-precision
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 128'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+#real avx2 block2, complex avx2 block1 (emulated)
+
+intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx2_block1-kernel-jobs:
+  tags:
+    - avx2
+  script:
+    - ./autogen.sh
+    - ./configure CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-real-avx2-block2-kernel-only --with-complex-avx2-block1-kernel-only --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-      #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-special-gcov-jobs:
-      #  tags:
-      #    - cpu
-      #  script:
-      #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
-      #    - make -j 8
-      #    - export OMP_NUM_THREADS=1
-      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-      #    - make check TEST_FLAGS='150 50 16'
-      ##    - ./test_scripts/get_coverage_summary.sh
-      #    - ./ci_coverage_collect
-      #  artifacts:
-      #    paths:
-      #      - coverage_data
 
 # real sse block4, complex sse block 2
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
@@ -1828,17 +2021,18 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -1849,10 +2043,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-sse_block2-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only --disable-assumed-size
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-real-sse-block4-kernel-only --with-complex-sse-block2-kernel-only --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1864,10 +2058,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
 # real sse block6, complex avx block1
 #intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./autogen.sh
-#    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
+#    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
 #    - make -j 8
 #    - export OMP_NUM_THREADS=2
 #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1882,18 +2076,19 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-a
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1906,17 +2101,18 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-av
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-noopenmp-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --enable-timings --enable-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -1927,10 +2123,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-av
       #
       #gfortran-double-precision-noopenmp-mpi-ftimings-redirect-real-sse_block6-complex-avx_block1-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"   --with-ftimings --with-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only --disable-assumed-size
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"   --enable-timings --enable-redirect --with-real-sse-block6-kernel-only --with-complex-avx-block1-kernel-only --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -1945,29 +2141,31 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1982,10 +2180,10 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
 #real avx block2, complex avx block2
 #intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./autogen.sh
-#    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
+#    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
 #    - make -j 8
 #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - make check TEST_FLAGS='150 50 16'
@@ -1996,20 +2194,20 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
 #
 #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-kernel-jobs:
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./autogen.sh
-#    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
+#    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only
 #    - make -j 8
 #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - make check TEST_FLAGS='150 50 16'
 #
 #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block2-complex-avx_block2-assumed-size-kernel:
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./autogen.sh
-#    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only  --disable-assumed-size
+#    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-real-avx-block2-kernel-only --with-complex-avx-block2-kernel-only  --disable-assumed-size
 #    - make -j 8
 #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - make check TEST_FLAGS='150 50 16'
@@ -2024,29 +2222,31 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-special-gcov-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2059,27 +2259,28 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-av
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-avx_block2-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx-block4-complex-avx_block2-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only  --disable-assumed-size
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-real-avx-block4-kernel-only --with-complex-avx-block2-kernel-only  --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2094,34 +2295,63 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-avx_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
+    - ./configure FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-      #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-special-gcov-jobs:
-      #  tags:
-      #    - cpu
-      #  script:
-      #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
-      #    - make -j 8
-      #    - export OMP_NUM_THREADS=1
-      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-      #    - make check TEST_FLAGS='150 50 16'
-      ##    - ./test_scripts/get_coverage_summary.sh
+intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex-avx512_block2-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block4-kernel-only --with-complex-avx512-block2-kernel-only
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 128'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex-avx512_block2-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block4-kernel-only --with-complex-avx512-block2-kernel-only --enable-single-precision
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 128'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex-avx512_block1-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block6-kernel-only --with-complex-avx512-block1-kernel-only
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 128'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 #real avx block6 , complex block2
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-jobs:
@@ -2129,17 +2359,18 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
     - cpu
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
+    - ./configure CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-nopenmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2150,10 +2381,10 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
       #
       #gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-avx_block2-kernel-assumed-size-jobs:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --with-ftimings --with-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only --disable-assumed-size
+      #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-real-avx-block6-kernel-only --with-complex-avx-block2-kernel-only --disable-assumed-size
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2166,117 +2397,96 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx2_block1-kernel-jobs:
   tags:
-    - emulated
+    - avx2
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2-block2-kernel-only --with-complex-avx2-block1-kernel-only --enable-single-precision
+    - ./configure CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-real-avx2-block2-kernel-only --with-complex-avx2-block1-kernel-only --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
+      #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block1-complex-avx2_block1-kernel-jobs:
   tags:
-    - emulated
+    - avx2
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2-block2-kernel-only --with-complex-avx2-block1-kernel-only --enable-single-precision
+    - ./configure FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-real-avx2-block2-kernel-only --with-complex-avx2-block1-kernel-only --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
+      # - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-      ##gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx2_block1-kernel-special-gcov-jobs:
-      ##  tags:
-      ##    - emulated
-      ##  script:
-      ##    - ./autogen.sh
-      ##    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2-block2-kernel-only --with-complex-avx2-block1-kernel-only --enable-single-precision
-      ##    - make -j 8
-      ##    - export OMP_NUM_THREADS=1
-      ##    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-      ##    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
-      ##      #    - ./test_scripts/get_coverage_summary.sh
 
 #real avx2 block2, complex avx2 block1 (emulated)
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-complex-avx2_block1-kernel-jobs:
   tags:
-    - emulated
+    - avx2
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2-block2-kernel-only --with-complex-avx2-block1-kernel-only --enable-single-precision
+    - ./configure CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-real-avx2-block2-kernel-only --with-complex-avx2-block1-kernel-only --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
-
-      ##gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-complex-avx2_block1-kernel-jobs:
-      ##  tags:
-      ##    - emulated
-      ##  script:
-      ##    - ./autogen.sh
-      ##    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2-block2-kernel-only --with-complex-avx2-block1-kernel-only --enable-single-precision
-      ##    - make -j 8
-      ##    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-      ##    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
-      ##      #    - ./test_scripts/get_coverage_summary.sh
+    - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
+      #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
 #real avx2 block4, complex avx2 block2 (emulated)
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
   tags:
-    - emulated
+    - avx2
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2-block4-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
+    - ./configure CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-real-avx2-block4-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
+      # - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
   tags:
-    - emulated
+    - avx2
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2-block4-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
+    - ./configure FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-real-avx2-block4-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
+      # - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-      ##gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-special-gcov-jobs:
-      ##  tags:
-      ##    - emulated
-      ##  script:
-      ##    - ./autogen.sh
-      ##    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2-block4-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
-      ##    - make -j 8
-      ##    - export OMP_NUM_THREADS=1
-      ##    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-      ##    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
-      ##      #    - ./test_scripts/get_coverage_summary.sh
 
 
 #real avx2 block4, complex avx2 block2 (emulated)
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
   tags:
-    - emulated
+    - avx2
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2-block4-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
+    - ./configure CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-real-avx2-block4-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+      #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       ##gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-avx2_block2-kernel-jobs:
       ##  tags:
       ##    - emulated
       ##  script:
       ##    - ./autogen.sh
-      ##    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2-block4-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
+      ##    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-real-avx2-block4-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
       ##    - make -j 8
       ##    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       ##    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
@@ -2287,32 +2497,36 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-a
 
 intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-jobs:
   tags:
-    - emulated
+    - avx2
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
+    - ./configure CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+      #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-jobs:
   tags:
-    - emulated
+    - avx2
   script:
     - ./autogen.sh
-    - ./configure FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
+    - ./configure FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+      #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       ##gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-special-gcov-jobs:
       ##  tags:
       ##    - emulated
       ##  script:
       ##    - ./autogen.sh
-      ##    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --with-ftimings --with-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
+      ##    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
       ##    - make -j 8
       ##    - export OMP_NUM_THREADS=1
       ##    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2324,27 +2538,40 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-jobs:
   tags:
-    - emulated
+    - avx2
   script:
     - ./autogen.sh
-    - ./configure CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
+    - ./configure CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+      #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
+    - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       ##gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block6-complex-avx2_block2-kernel-jobs:
       ##  tags:
       ##    - emulated
       ##  script:
       ##    - ./autogen.sh
-      ##    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --with-ftimings --with-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
+      ##    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-real-avx2-block6-kernel-only --with-complex-avx2-block2-kernel-only --enable-single-precision
       ##    - make -j 8
       ##    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       ##    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
       ###    - ./test_scripts/get_coverage_summary.sh
 
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex-avx512_block1-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block6-kernel-only  --enable-single-precision --with-complex-avx512-block1-kernel-only --enable-single-precision
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 128'
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-# testing of kernel settinv via environment
 
 intel-set-kernel-via-environment-variable-mpi-openmp-job:
   tags:
@@ -2358,6 +2585,7 @@ intel-set-kernel-via-environment-variable-mpi-openmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-set-kernel-via-environment-variable-mpi-openmp-job:
   tags:
@@ -2371,10 +2599,11 @@ gfortran-set-kernel-via-environment-variable-mpi-openmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-set-kernel-via-environment-variable-mpi-openmp-special-gcov-job:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp
@@ -2401,10 +2630,11 @@ intel-set-kernel-via-environment-variable-mpi-noopenmp-job:
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-set-kernel-via-environment-variable-mpi-noopenmp-job:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"
@@ -2431,6 +2661,7 @@ intel-set-kernel-via-environment-variable-nompi-openmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 gfortran-set-kernel-via-environment-variable-nompi-openmp-job:
   tags:
@@ -2444,10 +2675,11 @@ gfortran-set-kernel-via-environment-variable-nompi-openmp-job:
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - export OMP_NUM_THREADS=2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-set-kernel-via-environment-variable-nompi-openmp-special-gcov-job:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-openmp --with-mpi=no
@@ -2474,10 +2706,11 @@ intel-set-kernel-via-environment-variable-nompi-noopenmp-job:
     - export REAL_ELPA_KERNEL=REAL_ELPA_KERNEL_GENERIC
     - export COMPLEX_ELPA_KERNEL=COMPLEX_ELPA_KERNEL_GENERIC
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-set-kernel-via-environment-variable-nompi-noopenmp-job:
       #  tags:
-      #    - cpu
+      #    - coverage
       #  script:
       #    - ./autogen.sh
       #    - ./configure FC=gfortran CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no
@@ -2501,22 +2734,22 @@ static-build:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # test distcheck
 distcheck:
   tags:
-    - cpu
+    - buildtest
   script:
     - ./autogen.sh
     - ./configure --with-mpi=no
     # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
     - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no" TEST_FLAGS='150 50 16' || { chmod u+rwX -R . ; exit 1 ; }
 
-
 # test test_project
 test_project:
   tags:
-    - cpu
+    - buildtest
   script:
     - mkdir build
     - pushd build
@@ -2541,9 +2774,9 @@ test_project:
 
 ## print coverage results
 #total_coverage:
-#  stage: coverage
+#  stage: coverage-summary
 #  tags:
-#    - cpu
+#    - coverage
 #  script:
 #    - ./ci_coverage_summary
 #  artifacts:
@@ -2552,7 +2785,7 @@ test_project:
 
 test_project_intel:
   tags:
-    - cpu
+    - buildtest
   script:
     - mkdir build
     - pushd build

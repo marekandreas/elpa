@@ -105,8 +105,8 @@ module cuda_routines
        use iso_c_binding
        implicit none
 
-       integer(C_SIZE_T)                    :: a
-       integer(C_SIZE_T), intent(in), value :: width_height
+       integer(c_intptr_t)                    :: a
+       integer(c_intptr_t), intent(in), value :: width_height
        integer(C_INT)                       :: istat
 
      end function cuda_malloc_c
@@ -120,8 +120,8 @@ module cuda_routines
 !     use iso_c_binding
 !     implicit none
 !
-!     integer(C_SIZE_T)                    :: a
-!     integer(C_SIZE_T), intent(in), value :: size
+!     integer(c_intptr_t)                    :: a
+!     integer(c_intptr_t), intent(in), value :: size
 !     integer(C_INT)                       :: istat
 !
 !   end function cuda_hostalloc
@@ -132,8 +132,8 @@ module cuda_routines
 !     use iso_c_binding
 !
 !     implicit none
-!     integer(C_SIZE_T)                    :: a
-!     integer(C_SIZE_T), intent(in), value :: size
+!     integer(c_intptr_t)                    :: a
+!     integer(c_intptr_t), intent(in), value :: size
 !     integer(C_INT), intent(in),value     :: dir
 !     integer(C_INT)                       :: istat
 !   end function cuda_hostregister
@@ -146,8 +146,8 @@ module cuda_routines
 !     use iso_c_binding
 !
 !     implicit none
-!     integer(C_SIZE_T)                    :: a
-!     integer(C_SIZE_T), intent(in), value :: width_height
+!     integer(c_intptr_t)                    :: a
+!     integer(c_intptr_t), intent(in), value :: width_height
 !     integer(C_INT)                       :: istat
 !
 !   end function cuda_malloc_2d
@@ -160,10 +160,10 @@ module cuda_routines
 !     use iso_c_binding
 !
 !     implicit none
-!     integer(C_SIZE_T)         :: a
-!     integer(C_SIZE_T)         :: pitch
-!     integer(C_SIZE_T), value  :: width
-!     integer(C_SIZE_T), value  :: height
+!     integer(c_intptr_t)         :: a
+!     integer(c_intptr_t)         :: pitch
+!     integer(c_intptr_t), value  :: width
+!     integer(c_intptr_t), value  :: height
 !     integer(C_INT)            :: istat
 !
 !   end function cuda_malloc2d_pitch
@@ -177,8 +177,8 @@ module cuda_routines
 !
 !    implicit none
 !
-!    integer(C_SIZE_T)         :: a
-!    integer(C_SIZE_T), value  :: width_height_depth
+!    integer(c_intptr_t)         :: a
+!    integer(c_intptr_t), value  :: width_height_depth
 !    integer(C_INT)            :: istat
 !
 !  end function cuda_malloc_3d
@@ -191,7 +191,7 @@ module cuda_routines
       use iso_c_binding
 
       implicit none
-      integer(C_SIZE_T), value  :: a
+      integer(c_intptr_t), value  :: a
       integer(C_INT)            :: istat
 
     end function cuda_free_c
@@ -203,7 +203,7 @@ module cuda_routines
 !    use iso_c_binding
 !
 !    implicit none
-!    integer(C_SIZE_T)   :: a
+!    integer(c_intptr_t)   :: a
 !    integer(C_INT)      :: istat
 !  end function cuda_freehost
 
@@ -215,9 +215,9 @@ module cuda_routines
       use iso_c_binding
 
       implicit none
-      integer(C_SIZE_T), value              :: dst
-      integer(C_SIZE_T), value              :: src
-      integer(C_SIZE_T), intent(in), value  :: size
+      integer(c_intptr_t), value              :: dst
+      integer(c_intptr_t), value              :: src
+      integer(c_intptr_t), intent(in), value  :: size
       integer(C_INT), intent(in), value     :: dir
       integer(C_INT)                        :: istat
 
@@ -243,12 +243,12 @@ module cuda_routines
 
       implicit none
 
-      integer(C_SIZE_T), value              :: dst
-      integer(C_SIZE_T), intent(in), value  :: dpitch
-      integer(C_SIZE_T), value              :: src
-      integer(C_SIZE_T), intent(in), value  :: spitch
-      integer(C_SIZE_T), intent(in), value  :: width
-      integer(C_SIZE_T), intent(in), value  :: height
+      integer(c_intptr_t), value              :: dst
+      integer(c_intptr_t), intent(in), value  :: dpitch
+      integer(c_intptr_t), value              :: src
+      integer(c_intptr_t), intent(in), value  :: spitch
+      integer(c_intptr_t), intent(in), value  :: width
+      integer(c_intptr_t), intent(in), value  :: height
       integer(C_INT), intent(in), value     :: dir
       integer(C_INT)                        :: istat
 
@@ -263,14 +263,14 @@ module cuda_routines
 !
 !    implicit none
 !
-!    integer(C_SIZE_T), value                :: dst
-!    integer(C_SIZE_T), intent(in), value       :: dpitch
-!    integer(C_SIZE_T), value                :: src
-!    integer(C_SIZE_T), intent(in), value       :: spitch
-!    integer(C_SIZE_T), intent(in), value    :: width
-!    integer(C_SIZE_T), intent(in), value    :: height
+!    integer(c_intptr_t), value                :: dst
+!    integer(c_intptr_t), intent(in), value       :: dpitch
+!    integer(c_intptr_t), value                :: src
+!    integer(c_intptr_t), intent(in), value       :: spitch
+!    integer(c_intptr_t), intent(in), value    :: width
+!    integer(c_intptr_t), intent(in), value    :: height
 !    integer(C_INT), intent(in), value       :: dir
-!    integer(C_SIZE_T),value                 :: stream
+!    integer(c_intptr_t),value                 :: stream
 !    integer(C_INT)                          :: istat
 !  end function
 
@@ -285,10 +285,10 @@ module cuda_routines
 
    implicit none
 
-   integer(C_SIZE_T), value              :: a
+   integer(c_intptr_t), value              :: a
    !integer(C_INT)                       :: val
    integer(C_INT)                        :: val
-   integer(C_SIZE_T), intent(in), value  :: size
+   integer(c_intptr_t), intent(in), value  :: size
    integer(C_INT)                        :: istat
 
  end function cuda_memset_c
@@ -300,9 +300,9 @@ module cuda_routines
 !    use iso_c_binding
 !
 !    implicit none
-!    integer(C_SIZE_T)                    :: a
+!    integer(c_intptr_t)                    :: a
 !    integer(C_INT)                       :: val
-!    integer(C_SIZE_T), intent(in), value :: size
+!    integer(c_intptr_t), intent(in), value :: size
 !    integer(C_INT)                       :: istat
 !  end function c_memset
 !
@@ -316,7 +316,7 @@ module cuda_routines
 !    integer(C_INT),value                 :: m,n,k
 !    integer(C_INT), intent(in), value    :: lda,ldb,ldc
 !    real(C_DOUBLE),value                 :: alpha,beta
-!    integer(C_SIZE_T), value             :: a, b, c
+!    integer(c_intptr_t), value             :: a, b, c
 !  end subroutine cublas_dgemm
 !
 !  subroutine cublas_dtrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) bind(C,name='cublasDtrmm')
@@ -328,7 +328,7 @@ module cuda_routines
 !    integer(C_INT),value                 :: m,n
 !    integer(C_INT), intent(in), value    :: lda,ldb
 !    real(C_DOUBLE), value                :: alpha
-!    integer(C_SIZE_T), value             :: a, b
+!    integer(c_intptr_t), value             :: a, b
 !  end subroutine cublas_dtrmm
 !
 !  subroutine cublas_zgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) bind(C,name='cublasZgemm')
@@ -339,8 +339,8 @@ module cuda_routines
 !    character(1,C_CHAR),value            :: cta, ctb
 !    integer(C_INT),value                 :: m,n,k
 !    integer(C_INT), intent(in), value    :: lda,ldb,ldc
-!    complex(C_DOUBLE),value              :: alpha,beta
-!    integer(C_SIZE_T), value             :: a, b, c
+!    complex(C_DOUBLE_COMPLEX),value              :: alpha,beta
+!    integer(c_intptr_t), value             :: a, b, c
 !
 !  end subroutine cublas_zgemm
 !
@@ -352,7 +352,7 @@ module cuda_routines
 !    character(1,c_char),value       :: trans
 !    integer(c_int),value            :: m,n,lda,ldb,ldc
 !    complex(c_double_complex),value :: alpha,beta
-!    integer(c_size_t), value        :: a,b,c
+!    integer(c_intptr_t), value        :: a,b,c
 !
 !  end subroutine cublas_zgemv
 !
@@ -364,7 +364,7 @@ module cuda_routines
 !    character(1,c_char),value       :: trans
 !    integer(c_int),value            :: m,lda,ldb,ldc
 !    complex(c_double_complex),value :: alpha,beta
-!    integer(c_size_t), value        :: a,b,c
+!    integer(c_intptr_t), value        :: a,b,c
 !
 !  end subroutine cublas_zhemv
 !
@@ -376,8 +376,8 @@ module cuda_routines
 !    character(1,C_CHAR),value            :: side, uplo, trans, diag
 !    integer(C_INT),value                 :: m,n
 !    integer(C_INT), intent(in), value    :: lda,ldb
-!    complex(C_DOUBLE), value             :: alpha
-!    integer(C_SIZE_T), value             :: a, b
+!    complex(C_DOUBLE_complex), value             :: alpha
+!    integer(c_intptr_t), value             :: a, b
 !
 !  end subroutine cublas_ztrmm
 !
@@ -389,8 +389,8 @@ module cuda_routines
 !    character(1,C_CHAR),value            :: uplo, trans
 !    integer(C_INT),value                 :: n, k
 !    integer(C_INT), intent(in), value    :: lda,ldb
-!    complex(C_DOUBLE), value             :: alpha, beta
-!    integer(c_size_t),value              :: a,b
+!    complex(C_DOUBLE_COMPLEX), value             :: alpha, beta
+!    integer(c_intptr_t),value              :: a,b
 !
 !  end subroutine cublas_zherk
 !
@@ -402,7 +402,7 @@ module cuda_routines
 !    character(1,C_CHAR),value            :: uplo, trans, diag
 !    integer(C_INT),value                 :: n
 !    integer(C_INT), intent(in), value    :: lda,ldb
-!    integer(C_SIZE_T), value             :: a, b
+!    integer(c_intptr_t), value             :: a, b
 !
 !  end subroutine cublas_ztrmv
 !
@@ -416,7 +416,7 @@ module cuda_routines
 !    integer(C_INT),value                 :: n
 !    integer(C_INT), intent(in), value    :: lda,incx, incy
 !    complex(C_DOUBLE_COMPLEX), value     :: alpha
-!    integer(c_size_t),value              :: a,x,y
+!    integer(c_intptr_t),value              :: a,x,y
 !
 !  end subroutine cublas_zher2
 !
@@ -436,11 +436,11 @@ module cuda_routines
 !    use iso_c_binding
 !
 !    implicit none
-!    integer(C_SIZE_T), value            :: dst
-!    integer(C_SIZE_T), value            :: src
-!    integer(C_SIZE_T),intent(in),value  :: d_size
+!    integer(c_intptr_t), value            :: dst
+!    integer(c_intptr_t), value            :: src
+!    integer(c_intptr_t),intent(in),value  :: d_size
 !    integer(C_INT),intent(in),value     :: dir
-!    integer(c_size_t),value             :: stream
+!    integer(c_intptr_t),value             :: stream
 !    integer(C_INT)                      :: istat
 !
 !  end function
@@ -451,7 +451,7 @@ module cuda_routines
 !    use iso_c_binding
 !
 !    implicit none
-!    integer(C_SIZE_T) :: pstream
+!    integer(c_intptr_t) :: pstream
 !    integer(c_int)    :: istat
 !  end function
 !
@@ -461,7 +461,7 @@ module cuda_routines
 !    use iso_c_binding
 !
 !    implicit none
-!    integer(C_SIZE_T), value  :: pstream
+!    integer(c_intptr_t), value  :: pstream
 !    integer(c_int)            :: istat
 !
 !  end function
@@ -472,7 +472,7 @@ module cuda_routines
 !    use iso_c_binding
 !
 !    implicit none
-!    integer(C_SIZE_T),value  :: pstream
+!    integer(c_intptr_t),value  :: pstream
 !    integer(C_INT)           :: istat
 !
 !  end function
@@ -514,8 +514,8 @@ contains
     use iso_c_binding
     implicit none
 
-    integer(C_SIZE_T)             :: a
-    integer(C_SIZE_T), intent(in) :: width_height
+    integer(c_intptr_t)             :: a
+    integer(c_intptr_t), intent(in) :: width_height
 
 #ifdef WTIH_GPU_VERSION
     success = cuda_malloc_c(a,width_height) /= 0
@@ -529,9 +529,9 @@ contains
     use iso_c_binding
 
     implicit none
-    integer(C_SIZE_T)             :: dst
-    integer(C_SIZE_T)             :: src
-    integer(C_SIZE_T), intent(in) :: size
+    integer(c_intptr_t)             :: dst
+    integer(c_intptr_t)             :: src
+    integer(c_intptr_t), intent(in) :: size
     integer(C_INT), intent(in)    :: dir
 
 #ifdef WITH_GPU_VERSION
@@ -547,7 +547,7 @@ contains
     use iso_c_binding
 
     implicit none
-    integer(C_SIZE_T) :: a
+    integer(c_intptr_t) :: a
 
 #ifdef WITH_GPU_VERSION
     success = cuda_free_c(a) /= 0
@@ -563,12 +563,12 @@ contains
 
     implicit none
 
-    integer(C_SIZE_T)             :: dst
-    integer(C_SIZE_T), intent(in) :: dpitch
-    integer(C_SIZE_T)             :: src
-    integer(C_SIZE_T), intent(in) :: spitch
-    integer(C_SIZE_T), intent(in) :: width
-    integer(C_SIZE_T), intent(in) :: height
+    integer(c_intptr_t)             :: dst
+    integer(c_intptr_t), intent(in) :: dpitch
+    integer(c_intptr_t)             :: src
+    integer(c_intptr_t), intent(in) :: spitch
+    integer(c_intptr_t), intent(in) :: width
+    integer(c_intptr_t), intent(in) :: height
     integer(C_INT), intent(in)    :: dir
     integer(C_INT)                :: istat
 

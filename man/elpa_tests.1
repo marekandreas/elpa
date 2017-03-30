@@ -1,0 +1,56 @@
+.TH "elpa_tests" 1 "Thur Mar 17 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_tests \- Provide all tests for the ELPA library\&.
+
+.SH SYNOPSIS
+.br
+elpa_tests [--help] [datatype={real|complex}] [na=number] [nev=number] [nblk=size of block cyclic distribution] [--output_eigenvalues] [--output_eigenvectors] [--real-kernel=name_of_kernel] [--complex-kernel=name_of_kernel] [--use-gpu={0|1}] [--use-qr={0,1}] [--tests={all|solve-tridi|1stage|2stage|cholesky|invert-triangular|transpose-mulitply}]
+.br
+
+.SH "Description"
+.PP
+Provide in a configurable way all test for the ELPA library.
+.br
+It is possible to run all test which have been implemented in ELPA
+If no options are set, default options are choses (and printed).
+
+
+.SH "Options"
+.PP
+.br
+.RI "--help                                    print help information"
+.br
+.RI "dataype={real|complex}                    choose whether real or complex test cases are run. If not given, the default is real case."
+.br
+.RI "na=integer number                         choose the size of the matrix. If not given, the default na=4000 is set."
+.br
+.RI "nev=integer number                        choose number of eigenvalues/eigenvectors to compute. If not given, the default nev=1500 is set."
+.br.
+.RI "nblk=integer number                       set the size of the block cyclic distribution. If not given, the default nblk=16 is set."
+.br
+.RI "--output-eigenvalues                      if set, the computed eigenvalues will be stored in files. (default no)."
+.br
+.RI "--output-eigenvectors                     if set, the computed eigenvectors will be stored in files. (default no)."
+.br
+.RI "--real-kernel=string                      if given, use only this kernel for the real 2stage step. Available kernels can be querried with elpa2_print_kernels."
+.br
+.RI "--complex-kernel=string                   if given, use only this kernel for the complex 2stage step Available kernels can be querried with elpa2_print_kernels"
+.br
+.RI "--use-gpu={0|1}]                          switch on GPU usage. Fails, if GPUs are not available. Default no"
+.br
+.RI "--use-qr={0,1}                            use QR-decomposition in real 2stage step. Default no"
+.br
+.RI "--tests={all|solve-tridi|1stage|2stage|   if given, run only specified tests. Default is all"
+.RI "         cholesky|invert-triangular|"
+.RI "         transpose-mulitply}"
+
+
+.SH "Author"
+A. Marek, MPCDF
+.SH "Reporting bugs"
+Report bugs to the ELPA mail elpa-library@mpcdf.mpg.de
+.SH "SEE ALSO"
+	\fBelpa2_print_kernels\fP(1) \fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real_double\fP(3) \fBelpa_solve_evp_real_single\fP(3) \fBelpa_solve_evp_complex_double\fP(3) \fBelpa_solve_evp_complex_single\fP(3) \fBelpa_solve_evp_real_1stage_double\fP(3) \fBelpa_solve_evp_real_1stage_single\fP(3) \fBelpa_solve_evp_real_2stage_double\fP(3) \fBelpa_solve_evp_real_2stage_single\fP(3) \fBelpa_solve_evp_complex_2stage_double\fP(3) \fBelpa_solve_evp_complex_2stage_single\fP(3)
+

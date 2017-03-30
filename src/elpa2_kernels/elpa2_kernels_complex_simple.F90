@@ -58,6 +58,7 @@
 
 #include "config-f90.h"
 
+#ifndef USE_ASSUMED_SIZE
 module complex_generic_simple_kernel
 
   private
@@ -67,24 +68,25 @@ module complex_generic_simple_kernel
 #endif
 
   contains
+#endif
 
 #define COMPLEXCASE 1
-#define DOUBLE_PRECISION_COMPLEX 1
-#define DATATYPE ck8
+#define DOUBLE_PRECISION 1
+#include "../precision_macros.h"
 #include "elpa2_kernels_simple_template.X90"
-#undef DOUBLE_PRECISION_COMPLEX
-#undef DATATYPE
 #undef COMPLEXCASE
+#undef DOUBLE_PRECISION
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
-#undef DOUBLE_PRECISION_COMPLEX
-#define DATATYPE ck4
+#define SINGLE_PRECISION 1
+#include "../precision_macros.h"
 #include "elpa2_kernels_simple_template.X90"
-#undef DOUBLE_PRECISION_COMPLEX
-#undef DATATYPE
 #undef COMPLEXCASE
+#undef SINGLE_PRECISION
 #endif
 
+#ifndef USE_ASSUMED_SIZE
 end module complex_generic_simple_kernel
+#endif
 ! --------------------------------------------------------------------------------------------------

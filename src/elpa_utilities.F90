@@ -251,7 +251,7 @@ module ELPA_utilities
 
     if (istat .ne. 0) then
       print *, function_name, ": error when allocating ", variable_name, " ", errorMessage
-      stop
+      stop 1
     endif
  end subroutine
 
@@ -266,7 +266,7 @@ module ELPA_utilities
 
     if (.not.(successCUDA)) then
       print *, file_name, ":", line,  " error in cuda_malloc when allocating "
-      stop
+      stop 1
     endif
  end subroutine
 
@@ -281,7 +281,7 @@ module ELPA_utilities
 
     if (.not.(successCUDA)) then
       print *, file_name, ":", line,  " error in cuda_free when deallocating "
-      stop
+      stop 1
     endif
  end subroutine
 
@@ -296,7 +296,7 @@ module ELPA_utilities
 
     if (.not.(successCUDA)) then
       print *, file_name, ":", line,  " error in cuda_memcpy when copying "
-      stop
+      stop 1
     endif
  end subroutine
 

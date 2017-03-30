@@ -106,7 +106,7 @@ subroutine solve_tridi_&
       allocate(limits(0:np_cols), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating limits "//errorMessage
-        stop
+        stop 1
       endif
 
       limits(0) = 0
@@ -157,7 +157,7 @@ subroutine solve_tridi_&
         deallocate(limits, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"solve_tridi: error when deallocating limits "//errorMessage
-          stop
+          stop 1
         endif
 
         call timer%stop("solve_tridi" // PRECISION_SUFFIX)
@@ -171,13 +171,13 @@ subroutine solve_tridi_&
       allocate(l_col(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating l_col "//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(p_col(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating p_col "//errorMessage
-        stop
+        stop 1
       endif
 
       n = 0
@@ -195,13 +195,13 @@ subroutine solve_tridi_&
       allocate(l_col_bc(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating l_col_bc "//errorMessage
-        stop
+        stop 1
       endif
 
       allocate(p_col_bc(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when allocating p_col_bc "//errorMessage
-        stop
+        stop 1
       endif
 
       p_col_bc(:) = -1
@@ -230,7 +230,7 @@ subroutine solve_tridi_&
       deallocate(limits,l_col,p_col,l_col_bc,p_col_bc, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi: error when deallocating l_col "//errorMessage
-        stop
+        stop 1
       endif
 
       call timer%stop("solve_tridi" // PRECISION_SUFFIX)
@@ -410,7 +410,7 @@ subroutine solve_tridi_&
       allocate(limits(0:ndiv), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi_col: error when allocating limits "//errorMessage
-        stop
+        stop 1
       endif
 
       limits(0) = 0
@@ -463,13 +463,13 @@ subroutine solve_tridi_&
         allocate(qmat1(max_size,max_size), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"solve_tridi_col: error when allocating qmat1 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(qmat2(max_size,max_size), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"solve_tridi_col: error when allocating qmat2 "//errorMessage
-          stop
+          stop 1
         endif
 
         qmat1 = 0 ! Make sure that all elements are defined
@@ -519,7 +519,7 @@ subroutine solve_tridi_&
         deallocate(qmat1, qmat2, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"solve_tridi_col: error when deallocating qmat2 "//errorMessage
-          stop
+          stop 1
         endif
 
       endif
@@ -529,7 +529,7 @@ subroutine solve_tridi_&
       allocate(l_col(na), p_col_i(na),  p_col_o(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi_col: error when allocating l_col "//errorMessage
-        stop
+        stop 1
       endif
 
       do i=1,na
@@ -569,7 +569,7 @@ subroutine solve_tridi_&
       deallocate(limits, l_col, p_col_i, p_col_o, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_tridi_col: error when deallocating l_col "//errorMessage
-        stop
+        stop 1
       endif
 
       call timer%stop("solve_tridi_col" // PRECISION_SUFFIX)
@@ -611,7 +611,7 @@ subroutine solve_tridi_&
      allocate(ds(nlen), es(nlen), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"solve_tridi_single: error when allocating ds "//errorMessage
-       stop
+       stop 1
      endif
 
      ! Save d and e for the case that dstedc fails
@@ -626,7 +626,7 @@ subroutine solve_tridi_&
      allocate(work(lwork), iwork(liwork), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"solve_tridi_single: error when allocating work "//errorMessage
-       stop
+       stop 1
      endif
      call timer%start("blas")
      call PRECISION_STEDC('I', nlen, d, e, q, ldq, work, lwork, iwork, liwork, info)
@@ -657,7 +657,7 @@ subroutine solve_tridi_&
        deallocate(work,iwork,ds,es, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"solve_tridi_single: error when deallocating ds "//errorMessage
-         stop
+         stop 1
        endif
 
       ! Check if eigenvalues are monotonically increasing
@@ -680,7 +680,7 @@ subroutine solve_tridi_&
           allocate(qtmp(nlen), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"solve_tridi_single: error when allocating qtmp "//errorMessage
-            stop
+            stop 1
           endif
 
           dtmp = d(i+1)
@@ -698,7 +698,7 @@ subroutine solve_tridi_&
           deallocate(qtmp, stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"solve_tridi_single: error when deallocating qtmp "//errorMessage
-            stop
+            stop 1
           endif
 
        endif

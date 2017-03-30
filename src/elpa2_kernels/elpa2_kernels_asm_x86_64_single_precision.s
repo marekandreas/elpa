@@ -41,8 +41,8 @@
 #
 # Author: Andreas Marek, MPCDF
 
-        .globl double_hh_trafo_single
-        .globl single_hh_trafo_complex_single
+        .globl double_hh_trafo_real_single_sse_assembly
+        .globl single_hh_trafo_complex_single_sse_assembly
 
 	.text
 #-------------------------------------------------------------------------------
@@ -376,7 +376,7 @@
 #-------------------------------------------------------------------------------
 # FORTRAN Interface:
 #
-# subroutine double_hh_trafo(q, hh, nb, nq, ldq, ldh)
+# subroutine double_hh_trafo_real_single_sse_assembly(q, hh, nb, nq, ldq, ldh)
 #
 #   integer, intent(in) :: nb, nq, ldq, ldh
 #   real*8, intent(inout) :: q(ldq,*)
@@ -394,7 +394,8 @@
 #!f>#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
 #!f>#ifdef WANT_SINGLE_PRECISION_REAL
 #!f>  interface
-#!f>    subroutine double_hh_trafo_single(q, hh, nb, nq, ldq, ldh) bind(C,name="double_hh_trafo_single")
+#!f>    subroutine double_hh_trafo_real_single_sse_assembly(q, hh, nb, nq, ldq, ldh) &
+#!f>      bind(C,name="double_hh_trafo_real_single_sse_assembly")
 #!f>      use, intrinsic :: iso_c_binding
 #!f>      integer(kind=c_int) :: nb, nq, ldq, ldh
 #!f>      type(c_ptr), value  :: q
@@ -404,7 +405,7 @@
 #!f>#endif
 #!f>#endif
         .align    16,0x90
-double_hh_trafo_single:
+double_hh_trafo_real_single_sse_assembly:
 
         # Get integer parameters into corresponding registers
 
@@ -714,11 +715,11 @@ return1:
 #-------------------------------------------------------------------------------
 # FORTRAN Interface:
 #
-# subroutine single_hh_trafo_complex_single(q, hh, nb, nq, ldq)
+# subroutine single_hh_trafo_complex_single_sse_assembly(q, hh, nb, nq, ldq)
 #
 #   integer, intent(in) :: nb, nq, ldq
-#   complex*8, intent(inout) :: q(ldq,*)
-#   complex*8, intent(in) :: hh(*)
+#   complex(kind=c_float_complex), intent(inout) :: q(ldq,*)
+#   complex(kind=c_float_complex), intent(in) :: hh(*)
 #
 # Parameter mapping to registers
 #   parameter 1: %rdi : q
@@ -731,18 +732,20 @@ return1:
 #!f>#ifdef WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
 #!f>#ifdef WANT_SINGLE_PRECISION_COMPLEX
 #!f>  interface
-#!f>    subroutine single_hh_trafo_complex_single(q, hh, nb, nq, ldq) bind(C,name="single_hh_trafo_complex_single")
+#!f>    subroutine single_hh_trafo_complex_single_sse_assembly(q, hh, nb, nq, ldq) &
+#!f>      bind(C,name="single_hh_trafo_complex_single_sse_assembly")
 #!f>      use, intrinsic :: iso_c_binding
-#!f>      integer(kind=c_int)   :: nb, nq, ldq
-#!f>      complex(kind=c_float) :: q(*)
-#!f>      complex(kind=c_float) :: hh(nb,2)
+#!f>      integer(kind=c_int)            :: nb, nq, ldq
+#!f>      !complex(kind=c_float_complex) :: q(*)
+#!f>      type(c_ptr), value             :: q
+#!f>      complex(kind=c_float_complex)  :: hh(nb,2)
 #!f>    end subroutine
 #!f>  end interface
 #!f>#endif
 #!f>#endif
 
         .align    16,0x90
-single_hh_trafo_complex_single:
+single_hh_trafo_complex_single_sse_assembly:
 
         # Get integer parameters into corresponding registers
 

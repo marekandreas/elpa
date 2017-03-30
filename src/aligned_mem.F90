@@ -46,10 +46,10 @@ module aligned_mem
 
   interface
     function posix_memalign(memptr, alignment, size) result(error) bind(C, name="posix_memalign")
-      import c_int, c_size_t, c_ptr
+      import c_int, c_intptr_t, c_ptr
       integer(kind=c_int) :: error
       type(c_ptr), intent(inout) :: memptr
-      integer(kind=c_size_t), intent(in), value :: alignment, size
+      integer(kind=c_intptr_t), intent(in), value :: alignment, size
     end function
   end interface
 

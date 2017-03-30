@@ -62,31 +62,29 @@
 module real_generic_simple_kernel
 
   private
-  public double_hh_trafo_generic_simple_double
+  public double_hh_trafo_real_generic_simple_double
 
 #ifdef WANT_SINGLE_PRECISION_REAL
- public double_hh_trafo_generic_simple_single
+ public double_hh_trafo_real_generic_simple_single
 #endif
 
   contains
 #endif
 
 #define REALCASE 1
-#define DOUBLE_PRECISION_REAL 1
-#define DATATYPE rk8
+#define DOUBLE_PRECISION 1
+#include "../precision_macros.h"
 #include "elpa2_kernels_simple_template.X90"
-#undef DOUBLE_PRECISION_REAL
-#undef DATATYPE
 #undef REALCASE
+#undef DOUBLE_PRECISION
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
-#undef DOUBLE_PRECISION_REAL
-#define DATATYPE rk4
+#define SINGLE_PRECISION 1
+#include "../precision_macros.h"
 #include "elpa2_kernels_simple_template.X90"
-#undef DOUBLE_PRECISION_REAL
-#undef DATATYPE
 #undef REALCASE
+#undef SINGLE_PRECISION
 #endif
 
 #ifndef USE_ASSUMED_SIZE

@@ -55,17 +55,26 @@ module cuda_functions
   integer(kind=ik) :: cudaHostRegisterMapped
   integer(kind=ik) :: cudaMemcpyDeviceToDevice
 
-  integer(kind=c_size_t), parameter :: size_of_double_real_datatype    = 8_rk8
+  integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
 #ifdef WANT_SINGLE_PRECISION_REAL
-  integer(kind=c_size_t), parameter :: size_of_single_real_datatype    = 4_rk4
+  integer(kind=c_intptr_t), parameter :: size_of_single_real    = 4_rk4
 #endif
 
-  integer(kind=c_size_t), parameter :: size_of_double_complex_datatype = 16_ck8
+  integer(kind=c_intptr_t), parameter :: size_of_double_complex = 16_ck8
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  integer(kind=c_size_t), parameter :: size_of_single_complex_datatype = 8_ck4
+  integer(kind=c_intptr_t), parameter :: size_of_single_complex = 8_ck4
 #endif
 
   ! functions to set and query the CUDA devices
+
+  interface
+    function cuda_threadsynchronize_c() result(istat) &
+             bind(C,name="cudaThreadSynchronizeFromC")
+      use iso_c_binding
+      implicit none
+      integer(kind=C_INT)  :: istat
+    end function cuda_threadsynchronize_c
+  end interface
 
   interface
     function cuda_setdevice_c(n) result(istat) &
@@ -156,7 +165,7 @@ module cuda_functions
       implicit none
       integer(kind=C_intptr_t), value              :: dst
       integer(kind=C_intptr_t), value              :: src
-      integer(kind=C_SIZE_T), intent(in), value    :: size
+      integer(kind=c_intptr_t), intent(in), value    :: size
       integer(kind=C_INT), intent(in), value       :: dir
       integer(kind=C_INT)                          :: istat
 
@@ -172,11 +181,11 @@ module cuda_functions
       implicit none
 
       integer(kind=C_intptr_T), value              :: dst
-      integer(kind=C_SIZE_T), intent(in), value    :: dpitch
+      integer(kind=c_intptr_t), intent(in), value    :: dpitch
       integer(kind=C_intptr_T), value              :: src
-      integer(kind=C_SIZE_T), intent(in), value    :: spitch
-      integer(kind=C_SIZE_T), intent(in), value    :: width
-      integer(kind=C_SIZE_T), intent(in), value    :: height
+      integer(kind=c_intptr_t), intent(in), value    :: spitch
+      integer(kind=c_intptr_t), intent(in), value    :: width
+      integer(kind=c_intptr_t), intent(in), value    :: height
       integer(kind=C_INT), intent(in), value       :: dir
       integer(kind=C_INT)                          :: istat
 
@@ -206,7 +215,7 @@ module cuda_functions
       implicit none
 
       integer(kind=C_intptr_T)                    :: a
-      integer(kind=C_SIZE_T), intent(in), value   :: width_height
+      integer(kind=c_intptr_t), intent(in), value   :: width_height
       integer(kind=C_INT)                         :: istat
 
     end function cuda_malloc_c
@@ -222,7 +231,7 @@ module cuda_functions
 
       integer(kind=C_intptr_T), value            :: a
       integer(kind=C_INT), value                 :: val
-      integer(kind=C_SIZE_T), intent(in), value  :: size
+      integer(kind=c_intptr_t), intent(in), value  :: size
       integer(kind=C_INT)                        :: istat
 
     end function cuda_memset_c
@@ -286,7 +295,7 @@ module cuda_functions
   end interface
 
   interface
-    subroutine cublas_zgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) bind(C,name='cublasZgemm')
+    subroutine cublas_zgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) bind(C,name='cublasZgemm_elpa_wrapper')
 
       use iso_c_binding
 
@@ -294,14 +303,14 @@ module cuda_functions
       character(1,C_CHAR),value              :: cta, ctb
       integer(kind=C_INT),value              :: m,n,k
       integer(kind=C_INT), intent(in), value :: lda,ldb,ldc
-      complex(kind=C_DOUBLE),value           :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX),value           :: alpha,beta
       integer(kind=C_intptr_T), value        :: a, b, c
 
     end subroutine cublas_zgemm_c
   end interface
 
   interface
-    subroutine cublas_cgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) bind(C,name='cublasCgemm')
+    subroutine cublas_cgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) bind(C,name='cublasCgemm_elpa_wrapper')
 
       use iso_c_binding
 
@@ -309,14 +318,14 @@ module cuda_functions
       character(1,C_CHAR),value              :: cta, ctb
       integer(kind=C_INT),value              :: m,n,k
       integer(kind=C_INT), intent(in), value :: lda,ldb,ldc
-      complex(kind=C_FLOAT),value            :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX),value            :: alpha,beta
       integer(kind=C_intptr_T), value        :: a, b, c
 
     end subroutine cublas_cgemm_c
   end interface
 
   interface
-    subroutine cublas_ztrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) bind(C,name='cublasZtrmm')
+    subroutine cublas_ztrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) bind(C,name='cublasZtrmm_elpa_wrapper')
 
       use iso_c_binding
 
@@ -324,14 +333,14 @@ module cuda_functions
       character(1,C_CHAR),value              :: side, uplo, trans, diag
       integer(kind=C_INT),value              :: m,n
       integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_DOUBLE), value          :: alpha
+      complex(kind=C_DOUBLE_COMPLEX), value          :: alpha
       integer(kind=C_intptr_T), value        :: a, b
 
     end subroutine cublas_ztrmm_c
   end interface
 
   interface
-    subroutine cublas_ctrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) bind(C,name='cublasCtrmm')
+    subroutine cublas_ctrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) bind(C,name='cublasCtrmm_elpa_wrapper')
 
       use iso_c_binding
 
@@ -339,7 +348,7 @@ module cuda_functions
       character(1,C_CHAR),value              :: side, uplo, trans, diag
       integer(kind=C_INT),value              :: m,n
       integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_FLOAT), value           :: alpha
+      complex(kind=C_FLOAT_COMPLEX), value           :: alpha
       integer(kind=C_intptr_T), value        :: a, b
 
     end subroutine cublas_ctrmm_c
@@ -374,7 +383,7 @@ module cuda_functions
   end interface
 
   interface
-    subroutine cublas_zgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasZgemv')
+    subroutine cublas_zgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasZgemv_elpa_wrapper')
 
       use iso_c_binding
 
@@ -382,13 +391,13 @@ module cuda_functions
       character(1,C_CHAR),value               :: cta
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_DOUBLE),value               :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX),value               :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, x, y
     end subroutine cublas_zgemv_c
   end interface
 
   interface
-    subroutine cublas_cgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasCgemv')
+    subroutine cublas_cgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasCgemv_elpa_wrapper')
 
       use iso_c_binding
 
@@ -396,16 +405,85 @@ module cuda_functions
       character(1,C_CHAR),value               :: cta
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_FLOAT),value                :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX),value                :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, x, y
     end subroutine cublas_cgemv_c
   end interface
 
 
+  interface
+    subroutine cublas_dsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasDsymv')
+
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_DOUBLE),value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+    end subroutine cublas_dsymv_c
+  end interface
+
+  interface
+    subroutine cublas_ssymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasSsymv')
+
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_FLOAT),value                :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+    end subroutine cublas_ssymv_c
+  end interface
+
+!   interface
+!     subroutine cublas_zsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasZsymv')
+! 
+!       use iso_c_binding
+! 
+!       implicit none
+!       character(1,C_CHAR),value               :: cta
+!       integer(kind=C_INT),value               :: n
+!       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+!       complex(kind=C_DOUBLE_COMPLEX),value               :: alpha,beta
+!       integer(kind=C_intptr_T), value         :: a, x, y
+!     end subroutine cublas_zsymv_c
+!   end interface
+! 
+!   interface
+!     subroutine cublas_csymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy) bind(C,name='cublasCsymv')
+! 
+!       use iso_c_binding
+! 
+!       implicit none
+!       character(1,C_CHAR),value               :: cta
+!       integer(kind=C_INT),value               :: n
+!       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+!       complex(kind=C_FLOAT_COMPLEX),value                :: alpha,beta
+!       integer(kind=C_intptr_T), value         :: a, x, y
+!     end subroutine cublas_csymv_c
+!   end interface
+
 
   contains
 
     ! functions to set and query the CUDA devices
+
+    function cuda_threadsynchronize() result(success)
+      use iso_c_binding
+
+      implicit none
+
+      logical :: success
+#ifdef WITH_GPU_VERSION
+      success = cuda_threadsynchronize_c() /= 0
+#else
+      success = .true.
+#endif
+    end function cuda_threadsynchronize
 
     function cuda_setdevice(n) result(success)
       use iso_c_binding
@@ -457,7 +535,7 @@ module cuda_functions
      implicit none
 
      integer(kind=C_intptr_t)                  :: a
-     integer(kind=C_SIZE_T), intent(in)        :: width_height
+     integer(kind=c_intptr_t), intent(in)        :: width_height
      logical                                   :: success
 #ifdef WITH_GPU_VERSION
      success = cuda_malloc_c(a, width_height) /= 0
@@ -488,12 +566,12 @@ module cuda_functions
 
    integer(kind=c_intptr_t)                :: a
    integer(kind=ik)                        :: val
-   integer(kind=c_size_t), intent(in)      :: size
+   integer(kind=c_intptr_t), intent(in)      :: size
    integer(kind=C_INT)                     :: istat
 
    logical :: success
 #ifdef WITH_GPU_VERSION
-   success= cuda_memset_c(a, int(val,kind=c_int), int(size,kind=c_size_t)) /=0
+   success= cuda_memset_c(a, int(val,kind=c_int), int(size,kind=c_intptr_t)) /=0
 #else
    success = .true.
 #endif
@@ -560,7 +638,6 @@ module cuda_functions
 #endif
  end function
 
-
  function cuda_memcpy(dst, src, size, dir) result(success)
 
       use iso_c_binding
@@ -568,9 +645,10 @@ module cuda_functions
       implicit none
       integer(kind=C_intptr_t)              :: dst
       integer(kind=C_intptr_t)              :: src
-      integer(kind=C_SIZE_T), intent(in)    :: size
+      integer(kind=c_intptr_t), intent(in)    :: size
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
+
 #ifdef WITH_GPU_VERSION
         success = cuda_memcpy_c(dst, src, size, dir) /= 0
 #else
@@ -585,11 +663,11 @@ module cuda_functions
       implicit none
 
       integer(kind=C_intptr_T)           :: dst
-      integer(kind=C_SIZE_T), intent(in) :: dpitch
+      integer(kind=c_intptr_t), intent(in) :: dpitch
       integer(kind=C_intptr_T)           :: src
-      integer(kind=C_SIZE_T), intent(in) :: spitch
-      integer(kind=C_SIZE_T), intent(in) :: width
-      integer(kind=C_SIZE_T), intent(in) :: height
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
       integer(kind=C_INT), intent(in)    :: dir
       logical                            :: success
 #ifdef WITH_GPU_VERSION
@@ -666,7 +744,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE)          :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX)          :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
 #ifdef WITH_GPU_VERSION
       call cublas_zgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
@@ -681,7 +759,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT)           :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX)           :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
 #ifdef WITH_GPU_VERSION
       call cublas_cgemm_c(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
@@ -696,7 +774,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE)          :: alpha
+      complex(kind=C_DOUBLE_COMPLEX)          :: alpha
       integer(kind=C_intptr_T)        :: a, b
 #ifdef WITH_GPU_VERSION
       call cublas_ztrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -711,7 +789,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT)           :: alpha
+      complex(kind=C_FLOAT_COMPLEX)           :: alpha
       integer(kind=C_intptr_T)        :: a, b
 #ifdef WITH_GPU_VERSION
       call cublas_ctrmm_c(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -753,7 +831,7 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_DOUBLE)             :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
 #ifdef WITH_GPU_VERSION
       call cublas_zgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -767,12 +845,69 @@ module cuda_functions
       character(1,C_CHAR),value       :: cta
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_FLOAT)              :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
 #ifdef WITH_GPU_VERSION
       call cublas_cgemv_c(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine cublas_cgemv
+
+
+    subroutine cublas_dsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_DOUBLE)             :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+#ifdef WITH_GPU_VERSION
+      call cublas_dsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine cublas_dsymv
+
+    subroutine cublas_ssymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_FLOAT)              :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+#ifdef WITH_GPU_VERSION
+      call cublas_ssymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine cublas_ssymv
+
+    subroutine cublas_zsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      complex(kind=C_DOUBLE_COMPLEX)             :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+#ifdef WITH_GPU_VERSION
+!       call cublas_zsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine cublas_zsymv
+
+    subroutine cublas_csymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+      use iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      complex(kind=C_FLOAT_COMPLEX)              :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+#ifdef WITH_GPU_VERSION
+!       call cublas_csymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine cublas_csymv
 
 
 end module cuda_functions

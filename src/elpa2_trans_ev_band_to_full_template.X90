@@ -54,19 +54,8 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (na, nqc, nblk, nbw, a, &
-#if REALCASE == 1
-    a_dev,                  &
-#endif
-    lda, tmat,              &
-#if REALCASE == 1
-    tmat_dev,               &
-#endif
-    q,                      &
-#if REALCASE == 1
-    q_dev,                  &
-#endif
-     ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
+    (na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, &
+     q_dev, ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
 #if REALCASE == 1
      ,useQr)
 #endif
@@ -158,9 +147,7 @@
 #endif
 #endif
 
-#if REALCASE == 1
       integer(kind=C_intptr_T)               :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
-#endif
 
       integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                       :: max_blocks_row, max_blocks_col, max_local_rows, &
@@ -195,10 +182,13 @@
       integer(kind=ik)                       :: istat
       character(200)                         :: errorMessage
       logical                                :: successCUDA
-
+      integer(kind=c_intptr_t), parameter      :: size_of_datatype = size_of_&
+                                                                   &PRECISION&
+                                                                   &_&
+                                                                   &MATH_DATATYPE
       call timer%start("trans_ev_band_to_full_&
       &MATH_DATATYPE&
-      &_" // &
+      &" // &
       &PRECISION_SUFFIX &
       )
       call timer%start("mpi_communication")
@@ -231,7 +221,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp1 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(tmp2(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
@@ -239,7 +229,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp2 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvb(max_local_rows*nbw), stat=istat, errmsg=errorMessage)
@@ -247,7 +237,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvb "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
@@ -255,62 +245,50 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvm "//errorMessage
-          stop
+          stop 1
         endif
 
-        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw* &
-#if REALCASE == 1
-	size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-        size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
-        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw* &
-#if REALCASE == 1
-	size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-        size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
 !#ifdef WITH_MPI
-! it should be possible to keep tmat dev on the device and not copy it around
-! already existent on GPU
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* &
-#if REALCASE == 1
-	size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-        size_of_PRECISION_complex)
-#endif
-
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-	  &MATH_DATATYPE&
-	  &: error in cudaMalloc"
-          stop
-        endif
+!! it should be possible to keep tmat dev on the device and not copy it around
+!! already existent on GPU
+!        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* &
+!#if REALCASE == 1
+!	size_of_PRECISION_real)
+!#endif
+!#if COMPLEXCASE == 1
+!        size_of_PRECISION_complex)
+!#endif
+!
+!        if (.not.(successCUDA)) then
+!          print *,"trans_ev_band_to_full_&
+!	  &MATH_DATATYPE&
+!	  &: error in cudaMalloc"
+!          stop 1
+!        endif
 !#endif
 
 #if REALCASE == 1
 ! q_dev already living on device
-!        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_real)
+!        successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
-!          stop
+!          stop 1
 !        endif
   !      q_temp(:,:) = 0.0
   !      q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
@@ -319,36 +297,30 @@
 !        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
-!          stop
+!          stop 1
 !        endif
 #endif
 #if COMPLEXCASE == 1
-         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_complex)
-         if (.not.(successCUDA)) then
-           print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
-           stop
-         endif
-
-         successCUDA = cuda_memcpy(q_dev, loc(q),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
-          if (.not.(successCUDA)) then
-            print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-            stop
-          endif
+!         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_PRECISION_complex)
+!         if (.not.(successCUDA)) then
+!           print *,"trans_ev_band_to_full_complex: error in cudaMalloc"
+!           stop 1
+!         endif
+!
+!         successCUDA = cuda_memcpy(q_dev, loc(q),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+!          if (.not.(successCUDA)) then
+!            print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
+!            stop 1
+!          endif
 #endif
 
         ! if MPI is NOT used the following steps could be done on the GPU and memory transfers could be avoided
-        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)* &
-#if REALCASE == 1
-	                          size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                  size_of_PRECISION_complex)
-#endif
+        successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error in cudaMalloc"
-          stop
+          stop 1
         endif
 
 #if REALCASE == 1
@@ -417,18 +389,11 @@
             nb = nb+l_rows
           enddo
 
-          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), ((max_local_rows)*nbw* &
-#if REALCASE == 1
-	                            size_of_PRECISION_real), &
-#endif
-#if COMPLEXCASE == 1
-                                    size_of_PRECISION_complex), &
-#endif
-				    cudaMemcpyHostToDevice)
+          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), max_local_rows*nbw* size_of_datatype, cudaMemcpyHostToDevice)
 
           if (.not.(successCUDA)) then
             print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-            stop
+            stop 1
 
           endif
 
@@ -448,36 +413,35 @@
                                        q_dev, ldq , ZERO, tmp_dev, n_cols)
 	    call timer%stop("cublas")
 
+#if REALCASE == 1
 #ifdef WITH_MPI
 
             ! copy data from device to host for a later MPI_ALLREDUCE
-#if REALCASE == 1
             ! copy to host maybe this can be avoided this is needed if MPI is used (allreduce)
-            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_PRECISION_real, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-              stop
+              stop 1
             endif
-#endif
 
 #else /* WITH_MPI */
-! check whether in the complex case this ist also only necessary for MPI
+            ! in real case no copy needed. maybe also in complexcase ?
+#endif /* WITH_MPI */
+
+#endif /* REALCASE */
 
 #if COMPLEXCASE == 1
-            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, n_cols*l_cols*size_of_PRECISION_complex, &
+            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, n_cols*l_cols*size_of_datatype, &
                                        cudaMemcpyDeviceToHost)
 
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 #endif
 
-#endif /* WITH_MPI */
-
           else ! l_rows>0
 
-#ifdef WITH_MPI
 #if REALCASE == 1
             tmp1(1:l_cols*n_cols) = 0
 #endif
@@ -485,33 +449,13 @@
             tmp1(1:l_cols*n_cols) = CONST_COMPLEX_0_0
 #endif
 
-#else /* WITH_MPI */
-
-            ! if MPI is not used (we do not need to transfer because of MPI_ALLREDUCE) we can set to zero on the device
-
-            successCUDA = cuda_memset(tmp_dev, 0, l_cols*n_cols* &
-#if REALCASE == 1
-                                      size_of_PRECISION_real)
-#endif
-#if COMPLEXCASE == 1
-                                      size_of_PRECISION_complex)
-#endif
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_&
-	      &MATH_DATATYPE&
-	      &: error in cudaMemset"
-              stop
-             endif
-
-#endif /* WITH_MPI */
-
           endif ! l_rows>0
 
           !#ifdef WITH_GPU_VERSION
-          !       istat = cuda_memcpy(loc(tmp1), tmp_dev, max_local_cols*nbw*size_of_real_datatype,cudaMemcpyDeviceToHost)
+          !       istat = cuda_memcpy(loc(tmp1), tmp_dev, max_local_cols*nbw*size_of_datatype,cudaMemcpyDeviceToHost)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
-          !         stop
+          !         stop 1
           !       endif
           !#endif
 
@@ -532,10 +476,10 @@
 #endif /* WITH_MPI */
 
            !#ifdef WITH_GPU_VERSION
-          !       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*size_of_real_datatype,cudaMemcpyHostToDevice)
+          !       istat = cuda_memcpy(tmp_dev, loc(tmp2), max_local_cols*nbw*size_of_datatype,cudaMemcpyHostToDevice)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
-          !         stop
+          !         stop 1
           !       endif
           !#endif
 
@@ -543,51 +487,38 @@
 #ifdef WITH_MPI
             ! after the mpi_allreduce we have to copy back to the device
             ! copy back to device
-            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols* &
-#if REALCASE == 1
-	                              size_of_PRECISION_real, &
-#endif
-#if COMPLEXCASE == 1
-	                              size_of_PRECISION_complex, &
-#endif
+            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols* size_of_datatype, &
 				      cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_&
 	      &MATH_DATATYPE&
 	      &: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 #else /* WITH_MPI */
 
 #if COMPLEXCASE == 1
             ! check whether this could be avoided like in the real case
-            successCUDA = cuda_memcpy(tmp_dev,loc(tmp1),l_cols*n_cols*size_of_PRECISION_complex,cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(tmp_dev,loc(tmp1),l_cols*n_cols*size_of_datatype,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 #endif
 #endif /* WITH_MPI */
 
 !#ifdef WITH_MPI
-! it should be possible to keep tmat on the device and not copy it aroud
-!            ! copy to device, maybe this can be avoided tmat is input from bandred_real
+           ! IMPORTANT: even though tmat_dev is transfered from the previous rutine, we have to copy from tmat again 
+           ! tmat is 3-dimensional array, while tmat_dev contains only one 2-dimensional slice of it - and here we 
+           ! need to upload another slice
+           successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_datatype, cudaMemcpyHostToDevice)
 
-            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw* &
-#if REALCASE == 1
-	                              size_of_PRECISION_real,                  &
-#endif
-#if COMPLEXCASE == 1
-	                              size_of_PRECISION_complex,               &
-#endif
-				      cudaMemcpyHostToDevice)
-
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_&
+           if (.not.(successCUDA)) then
+             print *,"trans_ev_band_to_full_&
 	      &MATH_DATATYPE&
 	      &: error in cudaMemcpy"
-              stop
-            endif
+             stop 1
+           endif
 !#endif /* WITH_MPI */
 
 	    call timer%start("cublas")
@@ -606,19 +537,19 @@
 #if REALCASE == 1
             ! copy to host maybe this can be avoided
             ! this is not necessary hvm is not used anymore
-            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_PRECISION_real),cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_datatype),cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
-              stop
+              stop 1
             endif
 #endif
           endif ! l_rows > 0
 
           !#ifdef WITH_GPU_VERSION
-          !       istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_real_datatype),cudaMemcpyDeviceToHost)
+          !       istat = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_datatype),cudaMemcpyDeviceToHost)
           !       if (istat .ne. 0) then
           !         print *,"error in cudaMemcpy"
-          !         stop
+          !         stop 1
           !       endif
           !
           !#endif
@@ -641,7 +572,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp1 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(tmp2(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
@@ -649,7 +580,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp2 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvb(max_local_rows*cwy_blocking), stat=istat, errmsg=errorMessage)
@@ -657,7 +588,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvb "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvm(max_local_rows,cwy_blocking), stat=istat, errmsg=errorMessage)
@@ -665,7 +596,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvm "//errorMessage
-          stop
+          stop 1
         endif
 
 #else /* BAND_TO_FULL_BLOCKING */
@@ -675,14 +606,14 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmp1 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(tmp2(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&: error when allocating tmp2 "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvb(max_local_rows*nbw), stat=istat, errmsg=errorMessage)
@@ -690,7 +621,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvb "//errorMessage
-          stop
+          stop 1
         endif
 
         allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
@@ -698,9 +629,9 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating hvm "//errorMessage
-          stop
+          stop 1
         endif
-#endif
+#endif /* BAND_TO_FULL_BLOCKING */
 
 #ifdef BAND_TO_FULL_BLOCKING
         allocate(tmat_complete(cwy_blocking,cwy_blocking), stat=istat, errmsg=errorMessage)
@@ -708,21 +639,21 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating tmat_complete "//errorMessage
-          stop
+          stop 1
         endif
         allocate(t_tmp(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating t_tmp "//errorMessage
-          stop
+          stop 1
         endif
         allocate(t_tmp2(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
 	  &: error when allocating t_tmp2 "//errorMessage
-          stop
+          stop 1
         endif
 #endif
 !        else
@@ -835,8 +766,9 @@
             if (t_cols <= 0) exit
             t_rows = (i - 1) * nbw
             tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
-	    call timer%start("blas")
+
             if (i > 1) then
+	      call timer%start("blas")
 #if REALCASE == 1
               call PRECISION_GEMM('T', 'N',      &
 #endif
@@ -1006,7 +938,7 @@
         print *,"trans_ev_band_to_full_&
 	&MATH_DATATYPE&
 	&: error when deallocating tmp1 tmp2 hvb "//errorMessage
-        stop
+        stop 1
       endif
 
       if (useGPU) then
@@ -1015,7 +947,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
           &: error in cudaFree"
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_free(tmp_dev)
@@ -1023,7 +955,7 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
           &: error in cudaFree"
-          stop
+          stop 1
         endif
 
         successCUDA = cuda_free(tmat_dev)
@@ -1031,24 +963,17 @@
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
           &: error in cudaFree"
-          stop
+          stop 1
         endif
 
          ! final transfer of q_dev
-         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols* &
-#if REALCASE == 1
-         size_of_PRECISION_real,    &
-#endif
-#if COMPLEXCASE == 1
-         size_of_PRECISION_complex, &
-#endif
-         cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
 
          if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
 	  &MATH_DATATYPE&
           &: error in cudamemcpu q_dev"
-          stop
+          stop 1
          endif
 
          !   q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
@@ -1058,18 +983,18 @@
            print *,"trans_ev_band_to_full_&
 	   &MATH_DATATYPE&
            &: error in cudaFree"
-           stop
+           stop 1
          endif
 
          !   deallocate(q_temp, stat=istat, errmsg=errorMessage)
          !   if (istat .ne. 0) then
          !     print *,"error when deallocating q_temp "//errorMessage
-         !     stop
+         !     stop 1
          !   endif
          !   deallocate(tmat_temp, stat=istat, errmsg=errorMessage)
          !   if (istat .ne. 0) then
          !     print *,"trans_ev_band_to_full_real: error when deallocating tmat_temp "//errorMessage
-         !     stop
+         !     stop 1
          !   endif
 
       endif ! useGPU
@@ -1079,16 +1004,18 @@
         print *,"trans_ev_band_to_full_&
 	&MATH_DATATYPE&
 	&: error when deallocating hvm "//errorMessage
-        stop
+        stop 1
       endif
 
 #if BAND_TO_FULL_BLOCKING
-      deallocate(tmat_complete, t_tmp, t_tmp2, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_band_to_full_&
-	MATH_DATATYPE&
-	&: error when deallocating tmat_complete, t_tmp, t_tmp2 "//errorMessage
-        stop
+      if (.not.(useGPU)) then
+        deallocate(tmat_complete, t_tmp, t_tmp2, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_band_to_full_&
+	  MATH_DATATYPE&
+	  &: error when deallocating tmat_complete, t_tmp, t_tmp2 "//errorMessage
+          stop 1
+        endif
       endif
 #endif
 

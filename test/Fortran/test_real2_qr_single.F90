@@ -85,7 +85,7 @@ program test_real2_default_kernel_qr_decomposition_single_precision
 
    use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
-   use elpa2_utilities, only : get_actual_real_kernel_name
+   use elpa2_utilities, only : elpa_get_actual_real_kernel_name
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
@@ -252,7 +252,7 @@ program test_real2_default_kernel_qr_decomposition_single_precision
 #endif
       print *, "since the ELPA API call does not contain any kernel specification"
       print *
-      print *, " The settings are: ",trim(get_actual_real_kernel_name())," as real kernel"
+      print *, " The settings are: ",trim(elpa_get_actual_real_kernel_name())," as real kernel"
       print *
 #ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
       print *," However, this version of ELPA was build with only one of all the available"

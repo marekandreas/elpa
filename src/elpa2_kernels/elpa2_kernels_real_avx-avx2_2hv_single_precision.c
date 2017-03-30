@@ -860,6 +860,8 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 #endif
 }
 
+#if 0
+
 /**
  * Unrolled kernel that computes
  * 4 rows of Q simultaneously, a
@@ -958,6 +960,7 @@ __forceinline void hh_trafo_kernel_4_sse_instead_of_avx_2hv_single(float* q, flo
 	q1 = _mm_add_ps(q1, _mm_mul_ps(x1, h1));
 	_mm_store_ps(&q[nb*ldq],q1);
 }
+#endif
 
 /**
  * Unrolled kernel that computes

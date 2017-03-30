@@ -28,10 +28,9 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/mod_precision.F90 \
         src/mod_mpi.F90 \
         src/mod_mpi_stubs.F90 \
-        src/mod_pack_unpack_real.F90 \
-        src/mod_compute_hh_trafo_real.F90 \
-        src/mod_compute_hh_trafo_complex.F90 \
-        src/mod_pack_unpack_complex.F90 \
+	src/mod_redist_band.F90 \
+        src/mod_pack_unpack_cpu.F90 \
+        src/mod_compute_hh_trafo.F90 \
         src/aligned_mem.F90 \
         src/elpa1_compute_private.F90 \
 	src/elpa2_determine_workload.F90 \
@@ -42,7 +41,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/check_for_gpu.F90 \
         src/mod_cuda.F90 \
         src/interface_c_kernel.F90 \
-        src/mod_pack_unpack_real_gpu.F90 \
+        src/mod_pack_unpack_gpu.F90 \
         src/elpa_qr/qr_utils.F90 \
         src/elpa_qr/elpa_qrkernels.F90 \
         src/elpa_qr/elpa_pdlarfb.F90 \
@@ -64,7 +63,15 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2_kernels/elpa2_kernels_real_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
 	src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
+	src/pack_unpack_cpu.X90 \
+	src/pack_unpack_gpu.X90 \
+	src/compute_hh_trafo.X90 \
         src/redist_band.X90 \
+	src/sanity.X90 \
+	src/elpa_cholesky_template.X90 \
+	src/elpa_invert_trm.X90 \
+	src/elpa_multiply_a_b.X90 \
+	src/elpa_solve_tridi.X90 \
         src/precision_macros.h
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
@@ -161,6 +168,14 @@ endif
 endif
 endif
 
+if WITH_REAL_AVX512_BLOCK2_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx512_2hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx512_2hv_single_precision.c
+endif
+endif
+
+
 if WITH_REAL_SSE_BLOCK4_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
@@ -181,6 +196,15 @@ if WANT_SINGLE_PRECISION_REAL
 endif
 endif
 endif
+
+if WITH_REAL_AVX512_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx512_4hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx512_4hv_single_precision.c
+endif
+endif
+
+
 
 if WITH_REAL_SSE_BLOCK6_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_sse_6hv_double_precision.c
@@ -203,6 +227,14 @@ endif
 endif
 endif
 
+if WITH_REAL_AVX512_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx512_6hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_real_avx512_6hv_single_precision.c
+endif
+endif
+
+
 if WITH_COMPLEX_SSE_BLOCK1_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_1hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
@@ -224,6 +256,14 @@ endif
 endif
 endif
 
+
+if WITH_COMPLEX_AVX512_BLOCK1_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx512_1hv_double_precision.c
+if WANT_SINGLE_PRECISION_COMPLEX
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx512_1hv_single_precision.c
+endif
+endif
+
 if WITH_COMPLEX_SSE_BLOCK2_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_sse_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
@@ -242,6 +282,13 @@ if WITH_COMPLEX_AVX2_BLOCK2_KERNEL
 if WANT_SINGLE_PRECISION_COMPLEX
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx-avx2_2hv_single_precision.c
 endif
+endif
+endif
+
+if WITH_COMPLEX_AVX512_BLOCK2_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx512_2hv_double_precision.c
+if WANT_SINGLE_PRECISION_COMPLEX
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2_kernels/elpa2_kernels_complex_avx512_2hv_single_precision.c
 endif
 endif
 
@@ -281,6 +328,7 @@ dist_man_MANS = \
 	   man/elpa_solve_evp_real_single.3 \
 	   man/elpa_solve_evp_complex_double.3 \
 	   man/elpa_solve_evp_complex_single.3 \
+	   man/elpa_tests.1 \
 	   man/elpa2_print_kernels.1
 
 if WANT_SINGLE_PRECISION_REAL
@@ -309,6 +357,7 @@ dist_files_DATA = \
   test/Fortran/test_complex2.F90 \
   test/Fortran/test_complex2_default.F90 \
   test/Fortran/test_complex2_api.F90 \
+  test/Fortran/test_complex2_banded.F90 \
   test/Fortran/test_complex.F90 \
   test/Fortran/test_real2.F90 \
   test/Fortran/test_real2_default.F90 \
@@ -325,6 +374,7 @@ dist_files_DATA = \
   test/Fortran/test_cholesky_complex.F90 \
   test/Fortran/test_invert_trm_complex.F90 \
   test/Fortran/test_new_interface.F90 \
+  test/Fortran/elpa_tests.F90 \
   src/elpa2_print_kernels.F90
 
 #end needed
@@ -337,6 +387,7 @@ pkgconfig_DATA = @PKG_CONFIG_FILE@
 
 # programs
 bin_PROGRAMS = \
+  elpa_tests@SUFFIX@ \
   elpa2_print_kernels@SUFFIX@
 
 noinst_PROGRAMS = \
@@ -351,6 +402,7 @@ noinst_PROGRAMS = \
   elpa2_test_complex_default@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
+  elpa2_test_complex_banded@SUFFIX@ \
   elpa_driver_real@SUFFIX@ \
   elpa_driver_complex@SUFFIX@ \
   elpa1_real_toeplitz@SUFFIX@ \
@@ -522,6 +574,7 @@ EXTRA_elpa1_complex_invert_trm@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_he
 
 elpa2_test_real@SUFFIX@_SOURCES = test/Fortran/test_real2.F90
 elpa2_test_real@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_real@SUFFIX@_LDFLAGS = -static
 elpa2_test_real@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa2_test_real@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
@@ -565,6 +618,12 @@ elpa2_test_complex_api@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa2_test_complex_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
+elpa2_test_complex_banded@SUFFIX@_SOURCES = test/Fortran/test_complex2_banded.F90
+elpa2_test_complex_banded@SUFFIX@_LDADD = $(build_lib)
+elpa2_test_complex_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa2_test_complex_banded@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
+
 elpa_driver_real@SUFFIX@_SOURCES = test/Fortran/test_driver_real.F90
 elpa_driver_real@SUFFIX@_LDADD = $(build_lib)
 elpa_driver_real@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
@@ -578,6 +637,10 @@ EXTRA_elpa_driver_complex@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers
 elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2_print_kernels.F90
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 elpa2_print_kernels@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+
+elpa_tests@SUFFIX@_SOURCES = test/Fortran/elpa_tests.F90
+elpa_tests@SUFFIX@_LDADD = $(build_lib)
+elpa_tests@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 
 if WANT_SINGLE_PRECISION_REAL
 elpa1_test_real_single_precision@SUFFIX@_SOURCES = test/Fortran/test_real_single.F90
@@ -746,6 +809,7 @@ check_SCRIPTS = \
   elpa2_test_real_api@SUFFIX@.sh \
   elpa2_test_real_banded@SUFFIX@.sh \
   elpa2_test_complex_api@SUFFIX@.sh \
+  elpa2_test_complex_banded@SUFFIX@.sh \
   elpa_driver_real@SUFFIX@.sh \
   elpa_driver_complex@SUFFIX@.sh \
   elpa1_real_toeplitz@SUFFIX@.sh \
@@ -848,11 +912,8 @@ elpa2_compute.i: $(top_srcdir)/src/elpa2_compute.F90
 elpa2_kernels_real.i: $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/elpa2_kernels/elpa2_kernels_real.F90 -o $@
 
-mod_compute_hh_trafo_real.i: $(top_srcdir)/src/mod_compute_hh_trafo_real.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo_real.F90 -o $@
-
-mod_compute_hh_trafo_complex.i: $(top_srcdir)/src/mod_compute_hh_trafo_complex.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo_complex.F90 -o $@
+mod_compute_hh_trafo.i: $(top_srcdir)/src/mod_compute_hh_trafo.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/mod_compute_hh_trafo.F90 -o $@
 
 test_real.i: $(top_srcdir)/test/Fortran/test_real1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/test/Fortran/test_real1.F90 -o $@
@@ -883,7 +944,7 @@ CLEANFILES = \
   elpa2_test*\
   elpa2_real* \
   elpa1_real* \
-  *.sh \
+  elpa*.sh \
   *.i
 
 clean-local:
@@ -928,6 +989,14 @@ EXTRA_DIST = \
   src/elpa2_kernels/elpa2_kernels_complex_template.X90 \
   src/elpa2_kernels/elpa2_kernels_simple_template.X90 \
   src/redist_band.X90 \
+  src/pack_unpack_cpu.X90 \
+  src/pack_unpack_gpu.X90 \
+  src/compute_hh_trafo.X90 \
+  src/sanity.X90 \
+  src/elpa_cholesky_template.X90 \
+  src/elpa_invert_trm.X90 \
+  src/elpa_multiply_a_b.X90 \
+  src/elpa_solve_tridi.X90 \
   src/elpa_qr/elpa_qrkernels.X90 \
   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/ev_tridi_band_gpu_c_v2_real_template.Xcu \

@@ -214,7 +214,7 @@ program test_complex2_default_kernel_double_precision
 #endif
       print *, "since the ELPA API call does not contain any kernel specification"
       print *
-      print *, " The settings are: ",trim(get_actual_complex_kernel_name())," as complex kernel"
+      print *, " The settings are: ",trim(elpa_get_actual_complex_kernel_name())," as complex kernel"
       print *
 #ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
       print *," However, this version of ELPA was build with only one of all the available"

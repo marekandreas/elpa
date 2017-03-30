@@ -59,13 +59,17 @@
    real(kind=c_double)                        :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
 
    integer(kind=c_int)                       :: i
-   logical                                   :: success
+   logical                                   :: success, successCUDA
    logical, save                             :: firstCall = .true.
    logical                                   :: wantDebug
    integer(kind=c_int)                       :: istat
    character(200)                            :: errorMessage
-   logical                                   :: do_useGPU
+   logical                                   :: do_useGPU, do_useGPU_trans_ev_tridi
    integer(kind=c_int)                       :: numberOfGPUDevices
+   integer(kind=c_intptr_t), parameter       :: size_of_datatype = size_of_&
+                                                                   &PRECISION&
+                                                                   &_&
+                                                                   &MATH_DATATYPE
 
     call timer%start("solve_evp_&
     &MATH_DATATYPE&
@@ -93,6 +97,8 @@
     success = .true.
 
     do_useGPU      = .false.
+    do_useGPU_trans_ev_tridi =.false.
+
 
 #if REALCASE == 1
     useQRActual = .false.
@@ -124,6 +130,7 @@
         if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
            do_useGPU = .true.
+
            ! set the neccessary parameters
            cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
            cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
@@ -148,7 +155,7 @@
 
       ! if kernel is not choosen via api
       ! check whether set by environment variable
-      THIS_ELPA_KERNEL = get_actual_&
+      THIS_ELPA_KERNEL = elpa_get_actual_&
             &MATH_DATATYPE&
             &_kernel()
     endif
@@ -223,6 +230,7 @@
 
     ! check consistency between request for GPUs and defined kernel
     if (do_useGPU) then
+      do_useGPU_trans_ev_tridi = .true.
       if (THIS_ELPA_KERNEL .ne. &
       &MATH_DATATYPE&
       &_ELPA_KERNEL_GPU) then
@@ -232,13 +240,26 @@
       endif
     endif
 
-    if (do_useGPU) then
-      if (nblk .ne. 128) then
-        write(error_unit,*) "In case of GPU usage the blocksize for ELPA 2stage has to be 128"
-        success = .false.
-        return
-      endif
-    endif
+!    if (do_useGPU) then
+!      if (nblk .ne. 128) then
+!        write(error_unit,*) "In case of GPU usage the blocksize for ELPA 2stage has to be 128"
+!        success = .false.
+!        return
+!      endif
+!    endif
+
+     if (do_useGPU) then
+       if (nblk .ne. 128) then
+         ! cannot run on GPU with this blocksize
+	 ! disable GPU usage for trans_ev_tridi
+
+         do_useGPU_trans_ev_tridi = .false.
+	 THIS_ELPA_KERNEL = MATH_DATATYPE&
+	                    &_ELPA_KERNEL_GENERIC
+	 ! no data transfer to GPU needed
+       endif
+     endif
+
 
     if(present(bandwidth)) then
       nbw = bandwidth
@@ -279,7 +300,7 @@
 	&_2stage_&
 	&PRECISION&
 	&" // ": error when allocating tmat "//errorMessage
-        stop
+        stop 1
       endif
 
       ! Reduction full -> band
@@ -291,23 +312,18 @@
       &_&
       &PRECISION &
       (na, a, &
+       a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+       tmat_dev,  wantDebug, do_useGPU, success &
 #if REALCASE == 1
-       a_dev, &
+       , useQRActual &
 #endif
-      lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-#if REALCASE == 1
-      tmat_dev,  &
-#endif
-      wantDebug, do_useGPU, success &
-#if REALCASE == 1
-      , useQRActual &
-#endif
-      )
+       )
       if (.not.(success)) return
       ttt1 = MPI_Wtime()
       if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
         write(error_unit,*) "Time " // "bandred_&
 	&MATH_DATATYPE&
+	&_&
 	&PRECISION " // "               :",ttt1-ttt0
 
     end if  ! matrix not already banded on input
@@ -320,7 +336,7 @@
        &MATH_DATATYPE&
        &_2stage_&
        &PRECISION " // ": error when allocating e "//errorMessage
-       stop
+       stop 1
      endif
 
      ttt0 = MPI_Wtime()
@@ -329,7 +345,7 @@
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     (na, nbw, nblk, a, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all)
+     (na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, do_useGPU)
 
      ttt1 = MPI_Wtime()
      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
@@ -357,7 +373,7 @@
        print *,"solve_evp_&
        &MATH_DATATYPE&
        &_2stage: error when allocating q_real"//errorMessage
-       stop
+       stop 1
      endif
 #endif
 
@@ -388,7 +404,7 @@
        print *,"solve_evp_&
        &MATH_DATATYPE&
        &_2stage: error when deallocating e "//errorMessage
-       stop
+       stop 1
      endif
 
 #if COMPLEXCASE == 1
@@ -399,7 +415,7 @@
        print *,"solve_evp_&
        &MATH_DATATYPE&
        &_2stage: error when deallocating q_real"//errorMessage
-       stop
+       stop 1
      endif
 #endif
      ! Backtransform stage 1
@@ -411,10 +427,8 @@
      &_&
      &PRECISION &
      (na, nev, nblk, nbw, q, &
-#if REALCASE == 1
      q_dev, &
-#endif
-     ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU, &
+     ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
      success, THIS_ELPA_KERNEL)
 
      if (.not.(success)) return
@@ -432,12 +446,20 @@
        &MATH_DATATYPE&
        &_2stage_&
        &PRECISION " // ": error when deallocating hh_trans "//errorMessage
-       stop
+       stop 1
      endif
 
      if(present(bandwidth)) then
        time_evp_back = ttt1-ttts
      else
+
+       if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
+         ! copy to device if we want to continue on GPU
+         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
+
+         successCUDA = cuda_memcpy(q_dev, loc(q), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+       endif
+
        ! Backtransform stage 2
        ttt0 = MPI_Wtime()
        call trans_ev_band_to_full_&
@@ -445,17 +467,8 @@
        &_&
        &PRECISION &
        (na, nev, nblk, nbw, a, &
-#if REALCASE == 1
-        a_dev, &
-#endif
-        lda, tmat, &
-#if REALCASE == 1
-        tmat_dev,  &
-#endif
-        q,  &
-#if REALCASE == 1
+        a_dev, lda, tmat, tmat_dev,  q,  &
         q_dev, &
-#endif
         ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU &
 #if REALCASE == 1
         , useQRActual  &
@@ -477,7 +490,7 @@
 	 &MATH_DATATYPE&
 	 _2stage_&
 	 &PRECISION " // ": error when deallocating tmat"//errorMessage
-         stop
+         stop 1
        endif
      endif ! not present(bandwidth)
 
