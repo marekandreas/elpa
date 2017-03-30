@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 
    int success;
 
-   int useQr, THIS_REAL_ELPA_KERNEL_API, useGPU, bandwidth;
+   int useQr, THIS_REAL_ELPA_KERNEL_API, useGPU;
 
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
@@ -218,12 +218,11 @@ int main(int argc, char** argv) {
 #endif
    useGPU =0 ;
    useQr = 0;
-   bandwidth = -1;
    THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
 #ifdef DOUBLE_PRECISION_REAL
-   success = elpa_solve_evp_real_2stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, bandwidth);
+   success = elpa_solve_evp_real_2stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU);
 #else
-   success = elpa_solve_evp_real_2stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, bandwidth);
+   success = elpa_solve_evp_real_2stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU);
 #endif
    if (success != 1) {
      printf("error in ELPA solve \n");

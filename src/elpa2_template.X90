@@ -10,7 +10,7 @@
 #if COMPLEXCASE == 1
    THIS_ELPA_KERNEL_API,          &
 #endif
-   useGPU, bandwidth) result(success)
+   useGPU) result(success)
 
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
@@ -31,7 +31,7 @@
 #endif
    logical                                   :: useQRActual, useQREnvironment
 
-   integer(kind=c_int), intent(in), optional :: bandwidth
+   integer(kind=c_int)                       :: bandwidth
 
    integer(kind=c_int), intent(in), optional :: THIS_ELPA_KERNEL_API
    integer(kind=c_int)                       :: THIS_ELPA_KERNEL
@@ -260,8 +260,8 @@
        endif
      endif
 
-
-    if(present(bandwidth)) then
+    bandwidth = -1
+    if (bandwidth .ne. -1) then
       nbw = bandwidth
 
       if ((nbw == 0) .or. (mod(nbw, nblk) .ne. 0)) then
@@ -449,7 +449,7 @@
        stop 1
      endif
 
-     if(present(bandwidth)) then
+     if( bandwidth .ne. -1) then
        time_evp_back = ttt1-ttts
      else
 
@@ -492,7 +492,7 @@
 	 &PRECISION " // ": error when deallocating tmat"//errorMessage
          stop 1
        endif
-     endif ! not present(bandwidth)
+     endif
 
      call timer%stop("solve_evp_&
      &MATH_DATATYPE&
