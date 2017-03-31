@@ -602,9 +602,11 @@ end function elpa_get_communicators
 !>  \result                     success
 
 #define REALCASE 1
+#define SINGLE_PRECISION 1
 #include "precision_macros.h"
 #include "elpa1_template.X90"
 #undef REALCASE
+#undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
 !> \brief elpa_solve_evp_complex_1stage_double: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
@@ -689,10 +691,11 @@ end function elpa_get_communicators
 !>  \result                     success
 
 #define COMPLEXCASE 1
+#define SINGLE_PRECISION
 #include "precision_macros.h"
 #include "elpa1_template.X90"
 #undef COMPLEXCASE
-
+#undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 end module ELPA1

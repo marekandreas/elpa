@@ -20,7 +20,7 @@ function elpa_solve_evp_&
 
    integer(kind=c_int), intent(in)                 :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, &
                                                       mpi_comm_cols, mpi_comm_all
-   real(kind=C_DATATYPE_KIND), intent(out)         :: ev(na)
+   real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
    real(kind=C_DATATYPE_KIND), intent(inout)       :: a(lda,*)
