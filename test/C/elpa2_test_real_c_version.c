@@ -262,6 +262,8 @@ int main(int argc, char** argv) {
 
    free(tmp1);
    free(tmp2);
+   free(iseed);
+   free(ev);
 #ifdef WITH_MPI
    MPI_Finalize();
 #endif
