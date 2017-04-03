@@ -647,40 +647,12 @@
   !c> *\result success              int 1 on success, else 0
   !c> */
   !c> int elpa_solve_tridi_double(int na, int nev, double *d, double *e, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
-  function elpa_solve_tridi_wrapper_double(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
-           result(success) bind(C,name="elpa_solve_tridi_double")
-
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_solve_tridi_double
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, ldq, nblk, matrixCols,  mpi_comm_cols, mpi_comm_rows
-    integer(kind=c_int), value             :: wantDebug
-    real(kind=c_double)                    :: d(1:na), e(1:na)
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_double)                    :: q(ldq,*)
-#else
-    real(kind=c_double)                    :: q(1:ldq, 1:matrixCols)
-#endif
-    logical                                :: successFortran, wantDebugFortran
-
-    if (wantDebug .ne. 0) then
-      wantDebugFortran = .true.
-    else
-      wantDebugFortran = .false.
-    endif
-
-    successFortran = elpa_solve_tridi_double(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                      wantDebugFortran)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_solve_tridi_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
@@ -703,35 +675,12 @@
   !c> \result success              int 1 on success, else 0
   !c> */
   !c> int elpa_solve_tridi_single(int na, int nev, float *d, float *e, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
-  function elpa_solve_tridi_wrapper_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
-           result(success) bind(C,name="elpa_solve_tridi_single")
-
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_solve_tridi_single
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, ldq, nblk, matrixCols,  mpi_comm_cols, mpi_comm_rows
-    integer(kind=c_int), value             :: wantDebug
-    real(kind=c_float)                     :: d(1:na), e(1:na), q(1:ldq, 1:matrixCols)
-    logical                                :: successFortran, wantDebugFortran
-
-    if (wantDebug .ne. 0) then
-      wantDebugFortran = .true.
-    else
-      wantDebugFortran = .false.
-    endif
-
-    successFortran = elpa_solve_tridi_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                             mpi_comm_cols, wantDebugFortran)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_solve_tridi_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 

@@ -1,0 +1,41 @@
+  function elpa_solve_tridi_wrapper_&
+  &PRECISION&
+  & (na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
+     result(success) bind(C,name="elpa_solve_tridi_&
+     &PRECISION&
+     &")
+
+    use, intrinsic :: iso_c_binding
+    use elpa1_auxiliary, only : elpa_solve_tridi_&
+    &PRECISION
+
+    implicit none
+    integer(kind=c_int)                    :: success
+    integer(kind=c_int), value, intent(in) :: na, nev, ldq, nblk, matrixCols,  mpi_comm_cols, mpi_comm_rows
+    integer(kind=c_int), value             :: wantDebug
+    real(kind=C_DATATYPE_KIND)             :: d(1:na), e(1:na)
+#ifdef USE_ASSUMED_SIZE
+    real(kind=C_DATATYPE_KIND)             :: q(ldq,*)
+#else
+    real(kind=C_DATATYPE_KIND)             :: q(1:ldq, 1:matrixCols)
+#endif
+    logical                                :: successFortran, wantDebugFortran
+
+    if (wantDebug .ne. 0) then
+      wantDebugFortran = .true.
+    else
+      wantDebugFortran = .false.
+    endif
+
+    successFortran = elpa_solve_tridi_&
+    &PRECISION&
+    & (na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+       wantDebugFortran)
+
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+  end function
+
