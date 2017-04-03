@@ -247,8 +247,8 @@
 
         ! Rearrange eigenvectors
         call resort_ev_&
-	&PRECISION &
-	               (idx, na)
+        &PRECISION &
+                       (idx, na)
 
         call timer%stop("merge_systems" // PRECISION_SUFFIX)
 
@@ -341,8 +341,8 @@
             qtrans(1,1) = C; qtrans(1,2) =-S
             qtrans(2,1) = S; qtrans(2,2) = C
             call transform_columns_&
-	    &PRECISION &
-	                (idx(i), idx1(na1))
+            &PRECISION &
+                        (idx(i), idx1(na1))
             if (coltyp(idx(i))==1 .and. coltyp(idx1(na1))/=1) coltyp(idx1(na1)) = 2
             if (coltyp(idx(i))==3 .and. coltyp(idx1(na1))/=3) coltyp(idx1(na1)) = 2
 
@@ -383,22 +383,22 @@
         if (na1==1) then
           d(1) = d1(1) + rho*z1(1)**2 ! solve secular equation
         else ! na1==2
-	  call timer%start("blas")
+          call timer%start("blas")
           call PRECISION_LAED5(1, d1, z1, qtrans(1,1), rho, d(1))
           call PRECISION_LAED5(2, d1, z1, qtrans(1,2), rho, d(2))
-	  call timer%stop("blas")
+          call timer%stop("blas")
           call transform_columns_&
-	  &PRECISION&
-	  &(idx1(1), idx1(2))
+          &PRECISION&
+          &(idx1(1), idx1(2))
         endif
 
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
         ! Calculate arrangement of all eigenvalues  in output
-	call timer%start("blas")
+        call timer%start("blas")
         call PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
-	call timer%stop("blas")
+        call timer%stop("blas")
         ! Rearrange eigenvalues
 
         tmp = d
@@ -416,8 +416,8 @@
           endif
         enddo
         call resort_ev_&
-	&PRECISION&
-	&(idxq1, na)
+        &PRECISION&
+        &(idxq1, na)
       else if (na1>2) then
 
         ! Solve secular equation
@@ -439,16 +439,16 @@
 !$OMP DO
 #endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
-	  call timer%start("blas")
+          call timer%start("blas")
           call PRECISION_LAED4(na1, i, d1, z1, delta, rho, s, info) ! s is not used!
-	  call timer%stop("blas")
+          call timer%stop("blas")
           if (info/=0) then
             ! If DLAED4 fails (may happen especially for LAPACK versions before 3.2)
             ! use the more stable bisection algorithm in solve_secular_equation
             ! print *,'ERROR DLAED4 n=',na1,'i=',i,' Using Bisection'
             call solve_secular_equation_&
-	    &PRECISION&
-	    &(na1, i, d1, z1, delta, rho, s)
+            &PRECISION&
+            &(na1, i, d1, z1, delta, rho, s)
           endif
 
           ! Compute updated z
@@ -490,16 +490,16 @@
 #endif
 
         call global_product_&
-	&PRECISION&
-	(z, na1)
+        &PRECISION&
+        (z, na1)
         z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
 
         call global_gather_&
-	&PRECISION&
-	&(dbase, na1)
+        &PRECISION&
+        &(dbase, na1)
         call global_gather_&
-	&PRECISION&
-	&(ddiff, na1)
+        &PRECISION&
+        &(ddiff, na1)
         d(1:na1) = dbase(1:na1) - ddiff(1:na1)
 
         ! Calculate scale factors for eigenvectors
@@ -523,8 +523,8 @@
           ! in exactly this order, but we want to prevent compiler optimization
 !         ev_scale_val = ev_scale(i)
           call add_tmp_&
-	  &PRECISION&
-	  &(d1, dbase, ddiff, z, ev_scale(i), na1,i)
+          &PRECISION&
+          &(d1, dbase, ddiff, z, ev_scale(i), na1,i)
 !         ev_scale(i) = ev_scale_val
         enddo
 #ifdef WITH_OPENMP
@@ -535,12 +535,12 @@
 #endif
 
         call global_gather_&
-	&PRECISION&
-	&(ev_scale, na1)
+        &PRECISION&
+        &(ev_scale, na1)
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
-	call timer%start("blas")
+        call timer%start("blas")
         ! Calculate arrangement of all eigenvalues  in output
         call PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
         call timer%stop("blas")
@@ -550,8 +550,8 @@
           d(i) = tmp(idx(i))
         enddo
         call check_monotony_&
-	&PRECISION&
-	&(na,d,'Output', wantDebug, success)
+        &PRECISION&
+        &(na,d,'Output', wantDebug, success)
 
         if (.not.(success)) then
           call timer%stop("merge_systems" // PRECISION_SUFFIX)
@@ -720,8 +720,8 @@
               ! See above why we are doing it this way!
               tmp(1:nnzu) = d1u(1:nnzu)-dbase(j)
               call v_add_s_&
-	      &PRECISION&
-	      &(tmp,nnzu,ddiff(j))
+              &PRECISION&
+              &(tmp,nnzu,ddiff(j))
               ev(1:nnzu,i) = zu(1:nnzu) / tmp(1:nnzu) * ev_scale(j)
             enddo
 
@@ -736,7 +736,7 @@
               if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) &
                   call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu, CONST_1_0, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
                              CONST_1_0, qtmp2(1,1), ubound(qtmp2,dim=1))
-	      call timer%stop("blas")
+              call timer%stop("blas")
 !            endif ! useGPU
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
@@ -747,8 +747,8 @@
               ! See above why we are doing it this way!
               tmp(1:nnzl) = d1l(1:nnzl)-dbase(j)
               call v_add_s_&
-	      &PRECISION&
-	      &(tmp,nnzl,ddiff(j))
+              &PRECISION&
+              &(tmp,nnzl,ddiff(j))
               ev(1:nnzl,i) = zl(1:nnzl) / tmp(1:nnzl) * ev_scale(j)
             enddo
 
@@ -763,7 +763,7 @@
               if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
                  call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl, CONST_1_0, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
                             ubound(ev,dim=1), CONST_1_0, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
-	      call timer%stop("blas")
+              call timer%stop("blas")
 !            endif ! useGPU
              ! Put partial result into (output) Q
 
@@ -795,8 +795,8 @@
 
       contains
         subroutine add_tmp_&
-	&PRECISION&
-	&(d1, dbase, ddiff, z, ev_scale_value, na1,i)
+        &PRECISION&
+        &(d1, dbase, ddiff, z, ev_scale_value, na1,i)
           use precision
           implicit none
 
@@ -814,17 +814,17 @@
 
           tmp(1:na1) = d1(1:na1) -dbase(i)
           call v_add_s_&
-	  &PRECISION&
-	  &(tmp(1:na1),na1,ddiff(i))
+          &PRECISION&
+          &(tmp(1:na1),na1,ddiff(i))
           tmp(1:na1) = z(1:na1) / tmp(1:na1)
           ev_scale_value = CONST_1_0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
 
         end subroutine add_tmp_&
-	&PRECISION
+        &PRECISION
 
         subroutine resort_ev_&
-	&PRECISION&
-	&(idx_ev, nLength)
+        &PRECISION&
+        &(idx_ev, nLength)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #else
@@ -907,11 +907,11 @@
             stop 1
           endif
         end subroutine resort_ev_&
-	&PRECISION
+        &PRECISION
 
         subroutine transform_columns_&
-	&PRECISION&
-	&(col1, col2)
+        &PRECISION&
+        &(col1, col2)
 #ifdef HAVE_DETAILED_TIMINGS
           use timings
 #else
@@ -962,11 +962,11 @@
             q(l_rqs:l_rqe,lc2) = tmp(1:l_rows)*qtrans(1,2) + q(l_rqs:l_rqe,lc2)*qtrans(2,2)
           endif
         end subroutine transform_columns_&
-	&PRECISION
+        &PRECISION
 
         subroutine global_gather_&
-	&PRECISION&
-	&(z, n)
+        &PRECISION&
+        &(z, n)
           ! This routine sums up z over all processors.
           ! It should only be used for gathering distributed results,
           ! i.e. z(i) should be nonzero on exactly 1 processor column,
@@ -1024,11 +1024,11 @@
 #endif /* WITH_MPI */
           enddo
         end subroutine global_gather_&
-	&PRECISION
+        &PRECISION
 
         subroutine global_product_&
-	&PRECISION&
-	&(z, n)
+        &PRECISION&
+        &(z, n)
           ! This routine calculates the global product of z.
           use precision
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1105,11 +1105,11 @@
 
           endif
         end subroutine global_product_&
-	&PRECISION
+        &PRECISION
 
         subroutine check_monotony_&
-	&PRECISION&
-	&(n,d,text, wantDebug, success)
+        &PRECISION&
+        &(n,d,text, wantDebug, success)
         ! This is a test routine for checking if the eigenvalues are monotonically increasing.
         ! It is for debug purposes only, an error should never be triggered!
           use precision
@@ -1132,7 +1132,7 @@
             endif
           enddo
         end subroutine check_monotony_&
-	&PRECISION
+        &PRECISION
 
     end subroutine merge_systems_&
     &PRECISION
