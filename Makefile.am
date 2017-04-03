@@ -401,7 +401,6 @@ noinst_PROGRAMS = \
   elpa2_test_complex@SUFFIX@ \
   elpa2_test_complex_default@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
-  elpa2_test_complex_api@SUFFIX@ \
   elpa2_test_complex_banded@SUFFIX@ \
   elpa_driver_real@SUFFIX@ \
   elpa_driver_complex@SUFFIX@ \
