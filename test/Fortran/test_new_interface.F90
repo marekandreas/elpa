@@ -63,12 +63,12 @@ module assert
 end module
 
 program test_interface
-
    use precision
+   use assert
    use mod_setup_mpi
    use elpa_mpi
    use elpa_type
-   use assert
+   use mod_blacs_infrastructure
 
    implicit none
 
@@ -82,6 +82,9 @@ program test_interface
    integer :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
    integer :: mpierr
 
+   ! blacs
+   integer :: my_blacs_ctxt, sc_desc(9), info
+
    ! The Matrix
    real(kind=C_DOUBLE), allocatable :: a(:,:)
    ! eigenvectors
@@ -89,9 +92,9 @@ program test_interface
    ! eigenvalues
    real(kind=C_DOUBLE), allocatable :: ev(:)
 
-   logical :: success
+   integer :: success
 
-   character(len=8) :: solver
+   integer :: solver
    integer(kind=C_INT) :: qr
 
 
@@ -119,6 +122,9 @@ program test_interface
    my_prow = mod(myid, np_cols)
    my_pcol = myid / np_cols
 
+   call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+
    allocate(a (na_rows,na_cols))
    allocate(z (na_rows,na_cols))
    allocate(ev(na))
@@ -127,33 +133,34 @@ program test_interface
    z(:,:) = 0.0
    ev(:) = 0.0
 
-   call elpa_init()
+   if (elpa_init(20170403) /= ELPA_OK) then
+     error stop "ELPA API version not supported"
+   endif
 
-   success = elpa_create(e, na, nev, na_rows, na_cols, nblk, mpi_comm_world, my_prow, my_pcol)
-   assert(success)
+   e = elpa_create(na, nev, na_rows, na_cols, nblk, mpi_comm_world, my_prow, my_pcol, success)
+   assert(success == ELPA_OK)
 
-   success = e%get("QR", qr)
-   assert(success)
-   print *,"At the moment QR is set to: ", qr
+   qr = e%get("qr", success)
+   print *, "qr =", qr
+   assert(success == ELPA_OK)
 
-   success = e%get("solver", solver)
-   assert(success)
-   print *,"At the moment solver is set to: ", trim(solver)
+   solver = e%get("solver", success)
+   print *, "solver =", solver
+   assert(success == ELPA_OK)
 
-   ! set some options
-   success = e%set("solver","2stage")
-   assert(success)
-   success = e%set("real_kernel",1)
-   assert(success)
-   success = e%set("timings","balanced")
-   assert(success)
-   success = e%set("use_qr",0)
-   assert(success)
-   success = e%set("use_gpu",0)
-   assert(success)
+   call e%set("solver", ELPA_SOLVER_2STAGE, success)
+   assert(success == ELPA_OK)
 
-   success = e%solve(a, ev, z)
-   assert(success)
+   call e%set("real_kernel", ELPA_2STAGE_REAL_GENERIC, success)
+   assert(success == ELPA_OK)
+
+   call e%set("complex_kernel", ELPA_2STAGE_COMPLEX_GENERIC, success)
+   assert(success == ELPA_OK)
+
+   call e%solve(a, ev, z, success)
+   assert(success == ELPA_OK)
+
+   call e%destroy()
 
    call elpa_uninit()
 
@@ -161,6 +168,8 @@ program test_interface
    deallocate(z)
    deallocate(ev)
 
+#ifdef WITH_MPI
    call mpi_finalize(mpierr)
+#endif
 
 end program

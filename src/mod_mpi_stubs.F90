@@ -49,7 +49,7 @@ module elpa_mpi_stubs
 
   public
 
-  integer(kind=ik), parameter :: MPI_COMM_SELF=1, MPI_COMM_WORLD=1
+  integer(kind=ik), parameter :: MPI_COMM_SELF=1, MPI_COMM_WORLD=1, MPI_SUCCESS=0
 
   contains
     function MPI_WTIME() result(time)

@@ -17,7 +17,6 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa1_auxiliary.F90 \
         src/elpa1_utilities.F90 \
         src/elpa2_utilities.F90 \
-	src/elpa_init.F90 \
 	src/elpa_t.F90 \
         src/elpa_utilities.F90
 
@@ -45,7 +44,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa_qr/qr_utils.F90 \
         src/elpa_qr/elpa_qrkernels.F90 \
         src/elpa_qr/elpa_pdlarfb.F90 \
-        src/elpa_qr/elpa_pdgeqrf.F90
+        src/elpa_qr/elpa_pdgeqrf.F90 \
+	src/elpa_options.c
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa_reduce_add_vectors.X90 \
@@ -301,7 +301,7 @@ BUILT_SOURCES = $(generated_headers)
 # install public Fortran modules files in the include/ dir
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = $(wildcard modules/*)
-nobase_elpa_include_HEADERS += elpa/elpa.h elpa/elpa_kernel_constants.h elpa/elpa_generated.h
+nobase_elpa_include_HEADERS += elpa/elpa.h elpa/elpa_kernel_constants.h elpa/elpa_solver_constants.h elpa/elpa_constants.h elpa/elpa_generated.h
 
 dist_man_MANS = \
            man/solve_evp_real.3 \
