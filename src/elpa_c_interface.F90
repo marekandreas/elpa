@@ -812,36 +812,13 @@
   !c> */
 
   !c> int elpa_mult_ah_b_complex_double(char uplo_a, char uplo_c, int na, int ncb, double complex *a, int lda, int ldaCols, double complex *b, int ldb, int ldbCols, int nblk, int mpi_comm_rows, int mpi_comm_cols, double complex *c, int ldc, int ldcCols);
-  function elpa_mult_ah_b_complex_wrapper_double( uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                  nblk, mpi_comm_rows, &
-                                                mpi_comm_cols, c, ldc, ldcCols) result(success) &
-                                                bind(C,name="elpa_mult_ah_b_complex_double")
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_mult_ah_b_complex_double
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_mult_ah_b_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
-    implicit none
-
-    character(1,C_CHAR), value     :: uplo_a, uplo_c
-    integer(kind=c_int), value     :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-    integer(kind=c_int)            :: success
-    integer(kind=c_int), value     :: ldaCols, ldbCols, ldcCols
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_double_complex) :: a(lda,*), b(ldb,*), c(ldc,*)
-#else
-    complex(kind=c_double_complex) :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
-    logical                        :: successFortran
-
-    successFortran = elpa_mult_ah_b_complex_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
-                                                   mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-     endif
-
-  end function
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
@@ -880,36 +857,12 @@
   !c> */
 
   !c> int elpa_mult_ah_b_complex_single(char uplo_a, char uplo_c, int na, int ncb, complex *a, int lda, int ldaCols, complex *b, int ldb, int ldbCols, int nblk, int mpi_comm_rows, int mpi_comm_cols, complex *c, int ldc, int ldcCols);
-  function elpa_mult_ah_b_complex_wrapper_single( uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                 nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
-    result(success) bind(C,name="elpa_mult_ah_b_complex_single")
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_mult_ah_b_complex_single
-
-    implicit none
-
-    character(1,C_CHAR), value     :: uplo_a, uplo_c
-    integer(kind=c_int), value     :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-    integer(kind=c_int)            :: success
-    integer(kind=c_int), value     :: ldaCols, ldbCols, ldcCols
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_float_complex)  :: a(lda,*), b(ldb,*), c(ldc,*)
-#else
-    complex(kind=c_float_complex)  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
-    logical                        :: successFortran
-
-    successFortran = elpa_mult_ah_b_complex_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                  nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-     endif
-
-  end function
-
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_mult_ah_b_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
   !c> /*

@@ -58,6 +58,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa_driver_c_interface_template.X90 \
 	src/elpa_solve_tridi_c_interface_template.X90 \
         src/elpa_mult_at_b_c_interface_template.X90 \
+        src/elpa_mult_ah_b_c_interface_template.X90 \
 	src/elpa2_bandred_template.X90 \
 	src/elpa2_symm_matrix_allreduce_real_template.X90 \
 	src/elpa2_trans_ev_band_to_full_template.X90 \
@@ -983,6 +984,7 @@ EXTRA_DIST = \
   src/elpa_driver_c_interface_template.X90 \
   src/elpa_solve_tridi_c_interface_template.X90 \
   src/elpa_mult_at_b_c_interface_template.X90 \
+  src/elpa_mult_ah_b_c_interface_template.X90 \
   src/elpa2_tridiag_band_template.X90 \
   src/elpa2_trans_ev_band_to_full_template.X90 \
   src/elpa2_trans_ev_tridi_to_band_template.X90 \
