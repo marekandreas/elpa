@@ -1,0 +1,59 @@
+  function elpa_invert_trm_&
+  &MATH_DATATYPE&
+  &_wrapper_&
+  &PRECISION&
+  & (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
+        result(success) bind(C,name="elpa_invert_trm_&
+	&MATH_DATATYPE&
+	&_&
+	&PRECISION&
+	")
+   use, intrinsic :: iso_c_binding
+   use elpa1_auxiliary, only : elpa_invert_trm_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION
+
+   implicit none
+
+   integer(kind=c_int), value  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), value  :: wantDebug
+   integer(kind=c_int)         :: success
+#if REALCASE == 1
+#ifdef USE_ASSUMED_SIZE
+   real(kind=C_DATATYPE_KIND)  :: a(lda,*)
+#else
+   real(kind=C_DATATYPE_KIND)  :: a(lda,matrixCols)
+#endif
+#endif
+#if COMPLEXCASE == 1
+#ifdef USE_ASSUMED_SIZE
+   complex(kind=C_DATATYPE_KIND)  :: a(lda,*)
+#else
+   complex(kind=C_DATATYPE_KIND)  :: a(lda,matrixCols)
+#endif
+#endif
+
+   logical                     :: wantDebugFortran, successFortran
+
+   if (wantDebug .ne. 0) then
+     wantDebugFortran = .true.
+   else
+     wantDebugFortran = .false.
+   endif
+
+   successFortran = elpa_invert_trm_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   & (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
+
+   if (successFortran) then
+     success = 1
+   else
+     success = 0
+   endif
+
+ end function
+
+

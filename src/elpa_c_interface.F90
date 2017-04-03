@@ -883,38 +883,12 @@
   !c> */
 
   !c> int elpa_invert_trm_real_double(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
-  function elpa_invert_trm_real_wrapper_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
-        result(success) bind(C,name="elpa_invert_trm_real_double")
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_invert_trm_real_double
-
-   implicit none
-
-   integer(kind=c_int), value  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   integer(kind=c_int), value  :: wantDebug
-   integer(kind=c_int)         :: success
-#ifdef USE_ASSUMED_SIZE
-   real(kind=c_double)         :: a(lda,*)
-#else
-   real(kind=c_double)         :: a(lda,matrixCols)
-#endif
-   logical                     :: wantDebugFortran, successFortran
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_invert_trm_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
-
- end function
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_invert_trm_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
@@ -936,35 +910,13 @@
   !c> */
 
   !c> int elpa_invert_trm_real_single(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
-  function elpa_invert_trm_real_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
-        result(success) bind(C,name="elpa_invert_trm_real_single")
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_invert_trm_real_single
 
-   implicit none
-
-   integer(kind=c_int), value  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   integer(kind=c_int), value  :: wantDebug
-   integer(kind=c_int)         :: success
-   real(kind=c_float)          :: a(lda,matrixCols)
-
-   logical                     :: wantDebugFortran, successFortran
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_invert_trm_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
-
- end function
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_invert_trm_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -986,41 +938,12 @@
  !c> */
 
  !c> int elpa_invert_trm_complex_double(int na, double complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_invert_trm_complex_wrapper_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                                 mpi_comm_cols, wantDebug) result(success) &
-   bind(C,name="elpa_invert_trm_complex_double")
-
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_invert_trm_complex_double
-
-   implicit none
-
-   integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   integer(kind=c_int), value     :: wantDebug
-   integer(kind=c_int)            :: success
-#ifdef USE_ASSUMED_SIZE
-   complex(kind=c_double_complex) :: a(lda, *)
-#else
-   complex(kind=c_double_complex) :: a(lda, matrixCols)
-#endif
-   logical                        :: successFortran, wantDebugFortran
-
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_invert_trm_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                                   mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
- end function
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_invert_trm_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
  !c> /*
@@ -1041,37 +964,13 @@
  !c> */
 
  !c> int elpa_invert_trm_complex_single(int na, complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_invert_trm_complex_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                                 mpi_comm_cols, wantDebug) result(success) &
-   bind(C,name="elpa_invert_trm_complex_single")
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_invert_trm_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_invert_trm_complex_single
-
-   implicit none
-
-   integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   integer(kind=c_int), value     :: wantDebug
-   integer(kind=c_int)            :: success
-   complex(kind=c_float_complex)  :: a(lda, matrixCols)
-
-   logical                        :: successFortran, wantDebugFortran
-
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_invert_trm_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
- end function
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
