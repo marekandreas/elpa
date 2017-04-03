@@ -980,7 +980,7 @@ EXTRA_DIST = \
   src/elpa1_c_interface_template.X90 \
   src/elpa2_c_interface_template.X90 \
   src/elpa_driver_c_interface_template.X90 \
-  src/elpa_solve_c_interface_template.X90 \
+  src/elpa_solve_tridi_c_interface_template.X90 \
   src/elpa2_tridiag_band_template.X90 \
   src/elpa2_trans_ev_band_to_full_template.X90 \
   src/elpa2_trans_ev_tridi_to_band_template.X90 \
