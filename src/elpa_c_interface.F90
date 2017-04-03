@@ -721,35 +721,13 @@
   !c> */
 
   !c> int elpa_mult_at_b_real_double(char uplo_a, char uplo_c, int na, int ncb, double *a, int lda, int ldaCols, double *b, int ldb, int ldbCols, int nlbk, int mpi_comm_rows, int mpi_comm_cols, double *c, int ldc, int ldcCols);
-  function elpa_mult_at_b_real_wrapper_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                              nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
-                                              bind(C,name="elpa_mult_at_b_real_double") result(success)
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_mult_at_b_real_double
 
-    implicit none
-
-    character(1,C_CHAR), value  :: uplo_a, uplo_c
-    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc, &
-                                   ldaCols, ldbCols, ldcCols
-    integer(kind=c_int)         :: success
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_double)         :: a(lda,*), b(ldb,*), c(ldc,*)
-#else
-    real(kind=c_double)         :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
-    logical                     :: successFortran
-
-    successFortran = elpa_mult_at_b_real_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_mult_at_b_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   !c> /*
@@ -788,35 +766,14 @@
   !c> */
 
   !c> int elpa_mult_at_b_real_single(char uplo_a, char uplo_c, int na, int ncb, float *a, int lda, int ldaCols, float *b, int ldb, int ldbCols, int nlbk, int mpi_comm_rows, int mpi_comm_cols, float *c, int ldc, int ldcCols);
-  function elpa_mult_at_b_real_wrapper_float(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                             nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
-    bind(C,name="elpa_mult_at_b_real_float") result(success)
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_mult_at_b_real_single
 
-    implicit none
 
-    character(1,C_CHAR), value  :: uplo_a, uplo_c
-    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-    integer(kind=c_int)         :: success
-    integer(kind=c_int), value  :: ldaCols, ldbCols, ldCcols
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_float)          :: a(lda,*), b(ldb,*), c(ldc,*)
-#else
-    real(kind=c_float)          :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
-    logical                     :: successFortran
-
-    successFortran = elpa_mult_at_b_real_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                               nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_mult_at_b_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 

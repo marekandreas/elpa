@@ -1,0 +1,44 @@
+  function elpa_mult_at_b_&
+  &MATH_DATATYPE&
+  &_wrapper_&
+  &PRECISION&
+  & (uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
+     bind(C,name="elpa_mult_at_b_&
+     &MATH_DATATYPE&
+     &_&
+     &PRECISION&
+     ") result(success)
+    use, intrinsic :: iso_c_binding
+    use elpa1_auxiliary, only : elpa_mult_at_b_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION
+
+    implicit none
+
+    character(1,C_CHAR), value  :: uplo_a, uplo_c
+    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc, &
+                                   ldaCols, ldbCols, ldcCols
+    integer(kind=c_int)         :: success
+#ifdef USE_ASSUMED_SIZE
+    real(kind=C_DATATYPE_KIND)  :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
+    real(kind=C_DATATYPE_KIND)  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+#endif
+    logical                     :: successFortran
+
+    successFortran = elpa_mult_at_b_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
+
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+
+  end function
+
+
