@@ -120,9 +120,8 @@ program test_real2_single_precision
 
    integer(kind=ik), external :: numroc
 
-   real(kind=rk4), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:), ev(:)
+   real(kind=rk4), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
@@ -246,7 +245,7 @@ program test_real2_single_precision
 
    allocate(ev(na))
 
-   call prepare_matrix_single(na, myid, sc_desc, iseed,  a, z, as)
+   call prepare_matrix_single(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -311,17 +310,11 @@ program test_real2_single_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   allocate(tmp1(na_rows,na_cols))
-   allocate(tmp2(na_rows,na_cols))
-
-   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
-
    deallocate(z)
-   deallocate(tmp1)
-   deallocate(tmp2)
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS

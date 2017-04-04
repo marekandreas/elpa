@@ -68,7 +68,10 @@ program test_interface
    use mod_setup_mpi
    use elpa_mpi
    use elpa_type
+   use mod_prepare_matrix
+   use mod_read_input_parameters
    use mod_blacs_infrastructure
+   use mod_check_correctness
 
    implicit none
 
@@ -83,55 +86,50 @@ program test_interface
    integer :: mpierr
 
    ! blacs
-   integer :: my_blacs_ctxt, sc_desc(9), info
+   integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
-   real(kind=C_DOUBLE), allocatable :: a(:,:)
+   real(kind=C_DOUBLE), allocatable :: a(:,:), as(:,:)
    ! eigenvectors
    real(kind=C_DOUBLE), allocatable :: z(:,:)
    ! eigenvalues
    real(kind=C_DOUBLE), allocatable :: ev(:)
 
-   integer :: success
+   integer :: success, status
 
-   integer :: solver
-   integer(kind=C_INT) :: qr
+   integer(kind=c_int) :: solver
+   integer(kind=c_int) :: qr
 
-
+   type(output_t) :: write_to_file
    type(elpa_t) :: e
 
+   call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
-
-   na = 100
-   nblk = 16
-   nev = 25
-
-   !-------------------------------------------------------------------------------
-   ! Selection of number of processor rows/columns
-   ! We try to set up the grid square-like, i.e. start the search for possible
-   ! divisors of nprocs with a number next to the square root of nprocs
-   ! and decrement it until a divisor is found.
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
-   ! at the end of the above loop, nprocs is always divisible by np_cols
 
    np_rows = nprocs/np_cols
 
    my_prow = mod(myid, np_cols)
    my_pcol = myid / np_cols
 
+   call set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, np_cols, &
+                         nprow, npcol, my_prow, my_pcol)
+
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
 
-   allocate(a (na_rows,na_cols))
+   allocate(a (na_rows,na_cols), as(na_rows,na_cols))
    allocate(z (na_rows,na_cols))
    allocate(ev(na))
 
    a(:,:) = 0.0
    z(:,:) = 0.0
    ev(:) = 0.0
+
+   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
 
    if (elpa_init(20170403) /= ELPA_OK) then
      error stop "ELPA API version not supported"
@@ -164,7 +162,10 @@ program test_interface
 
    call elpa_uninit()
 
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
+
    deallocate(a)
+   deallocate(as)
    deallocate(z)
    deallocate(ev)
 

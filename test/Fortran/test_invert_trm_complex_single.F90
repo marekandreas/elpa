@@ -85,7 +85,7 @@ program test_invert_trm
 
    integer, external          :: numroc
 
-   real(kind=rk4), allocatable    :: ev(:), xr(:,:)
+   real(kind=rk4), allocatable    :: ev(:)
    complex(kind=ck4), allocatable :: a(:,:), b(:,:), c(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
    complex(kind=ck4), allocatable :: d(:), e(:), bs(:,:)
    complex(kind=rk4)              :: diagonalElement, subdiagonalElement
@@ -98,7 +98,6 @@ program test_invert_trm
    real(kind=rk4)              :: clange
 #endif
 
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
    complex(kind=ck4), parameter   :: pi = (3.141592653589793238462643383279_rk4, 0._rk4)
 
    integer(kind=ik)           :: STATUS
@@ -206,14 +205,12 @@ program test_invert_trm
    allocate(b (na_rows,na_cols))
    allocate(bs(na_rows,na_cols))
    allocate(c (na_rows,na_cols))
-
    allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
-
    allocate(ev(na))
-   allocate(xr(na_rows,na_cols))
-   call prepare_matrix_single(na, myid, sc_desc, iseed, xr, b, z, bs)
-   deallocate(xr)
+
+   call prepare_matrix_single(na, myid, sc_desc, b, z, bs)
+
    bs(:,:) = b(:,:)
 
     a(:,:) = CONE - CONE

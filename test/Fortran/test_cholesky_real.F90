@@ -96,7 +96,6 @@ program test_cholesky
 #else
    real(kind=rk8)              :: dlange
 #endif
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
    real(kind=rk8), parameter   :: pi = 3.141592653589793238462643383279_rk8
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP

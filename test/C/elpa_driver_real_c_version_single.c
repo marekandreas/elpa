@@ -77,9 +77,8 @@ int main(int argc, char** argv) {
    int na_rows, na_cols;
    float startVal;
 
-   float *a, *z, *as, *ev, *tmp1, *tmp2;
+   float *a, *z, *as, *ev;
 
-   int *iseed;
    int i;
    int useGPU;
    int success;
@@ -136,7 +135,7 @@ int main(int argc, char** argv) {
 #else
   my_mpi_comm_world = 1;
 #endif
-   set_up_blacsgrid_from_fortran(my_mpi_comm_world, &my_blacs_ctxt, &np_rows, &np_cols, &nprow, &npcol, &my_prow, &my_pcol);
+   set_up_blacsgrid_f(my_mpi_comm_world, &my_blacs_ctxt, &np_rows, &np_cols, &nprow, &npcol, &my_prow, &my_pcol);
 
    if (myid == 0) {
      printf("\n");
@@ -159,7 +158,7 @@ int main(int argc, char** argv) {
 
    sc_desc = malloc(9*sizeof(int));
 
-   set_up_blacs_descriptor_from_fortran(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info);
+   set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info);
 
    if (myid == 0) {
      printf("\n");
@@ -177,16 +176,9 @@ int main(int argc, char** argv) {
    a  = malloc(na_rows*na_cols*sizeof(float));
    z  = malloc(na_rows*na_cols*sizeof(float));
    as = malloc(na_rows*na_cols*sizeof(float));
-
-
    ev = malloc(na*sizeof(float));
 
-   tmp1  = malloc(na_rows*na_cols*sizeof(float));
-   tmp2 = malloc(na_rows*na_cols*sizeof(float));
-
-   iseed = malloc(4096*sizeof(int));
-
-   prepare_matrix_real_from_fortran_single_precision(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
+   prepare_matrix_real_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 
    if (myid == 0) {
      printf("\n");
@@ -198,7 +190,7 @@ int main(int argc, char** argv) {
 #endif
    useQr = 0;
    useGPU = 0;
-   THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
+   THIS_REAL_ELPA_KERNEL_API = ELPA_2STAGE_REAL_GENERIC;
 
    success = elpa_solve_evp_real_single(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "1stage");
 
@@ -231,7 +223,7 @@ int main(int argc, char** argv) {
 #endif
    useGPU = 0;
    useQr = 0;
-   THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
+   THIS_REAL_ELPA_KERNEL_API = ELPA_2STAGE_REAL_GENERIC;
 
    success = elpa_solve_evp_real_single(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "2stage");
 
@@ -262,7 +254,7 @@ int main(int argc, char** argv) {
 #endif
    useQr = 0;
    useGPU = 0;
-   THIS_REAL_ELPA_KERNEL_API = ELPA2_REAL_KERNEL_GENERIC;
+   THIS_REAL_ELPA_KERNEL_API = ELPA_2STAGE_REAL_GENERIC;
 
    success = elpa_solve_evp_real_single(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "auto");
 
@@ -278,10 +270,8 @@ int main(int argc, char** argv) {
      printf("\n");
    }
 
-
-
    /* check the results */
-   status = check_correctness_real_from_fortran_single_precision(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+   status = check_correctness_real_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
 
    if (status !=0){
      printf("The computed EVs are not correct !\n");
@@ -297,8 +287,6 @@ int main(int argc, char** argv) {
    free(z);
    free(as);
 
-   free(tmp1);
-   free(tmp2);
 #ifdef WITH_MPI
    MPI_Finalize();
 #endif

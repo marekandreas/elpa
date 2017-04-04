@@ -85,7 +85,7 @@ program test_transpose_multiply
 
    integer, external          :: numroc
 
-   real(kind=rk8), allocatable    :: ev(:), xr(:,:)
+   real(kind=rk8), allocatable    :: ev(:)
    complex(kind=ck8), allocatable :: a(:,:), b(:,:), c(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
    complex(kind=ck8), parameter   :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
    real(kind=rk8)              :: norm, normmax
@@ -94,9 +94,6 @@ program test_transpose_multiply
 #else
    real(kind=rk8)              :: zlange
 #endif
-
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
-
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
@@ -206,9 +203,7 @@ program test_transpose_multiply
    allocate(as(na_rows,na_cols))
 
    allocate(ev(na))
-   allocate(xr(na_rows,na_cols))
-   call prepare_matrix_double(na, myid, sc_desc, iseed, xr, a, z, as)
-   deallocate(xr)
+   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
    b(:,:) = 2.0_ck8 * a(:,:)
    c(:,:) = 0.0_ck8
 

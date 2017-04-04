@@ -85,7 +85,7 @@ program test_cholesky
 
    integer, external          :: numroc
 
-   real(kind=rk8), allocatable    :: ev(:), xr(:,:)
+   real(kind=rk8), allocatable    :: ev(:)
    complex(kind=ck8), allocatable :: a(:,:), b(:,:), c(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
    complex(kind=ck8), allocatable :: d(:), e(:)
    complex(kind=rk8)              :: diagonalElement, subdiagonalElement
@@ -98,7 +98,6 @@ program test_cholesky
    real(kind=rk8)              :: zlange
 #endif
 
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
    complex(kind=ck8), parameter   :: pi = (3.141592653589793238462643383279_rk8, 0.0_rk8)
 
    integer(kind=ik)           :: STATUS
@@ -210,9 +209,7 @@ program test_cholesky
    allocate(as(na_rows,na_cols))
 
    allocate(ev(na))
-!   allocate(xr(na_rows,na_cols))
-!   call prepare_matrix(na, myid, sc_desc, iseed, xr, a, z, as)
-!   deallocate(xr)
+!   call prepare_matrix(na, myid, sc_desc, a, z, as)
 !   b(:,:) = 2.0 * a(:,:)
 !   c(:,:) = 0.0
 

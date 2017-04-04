@@ -97,7 +97,7 @@ program test_solve_tridi
    real(kind=rk8), allocatable :: a(:,:), d(:), e(:), ev_analytic(:), ev(:)
    real(kind=rk8)              :: diagonalELement, subdiagonalElement
 
-   real(kind=rk8), allocatable :: tmp1(:,:), tmp2(:,:), as(:,:)
+   real(kind=rk8), allocatable :: as(:,:)
    real(kind=rk8)              :: tmp
    integer(kind=ik)           :: loctmp ,rowLocal, colLocal
 
@@ -107,8 +107,6 @@ program test_solve_tridi
    logical                    :: wantDebug
 
    real(kind=rk8), parameter   :: pi = 3.141592653589793238462643383279_rk8
-
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
@@ -368,18 +366,13 @@ program test_solve_tridi
    endif
 
    ! Test correctness of result (using plain scalapack routines)
-   allocate(tmp1(na_rows,na_cols))
-   allocate(tmp2(na_rows,na_cols))
-
-   status = check_correctness(na, nev, as, a, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness(na, nev, as, a, ev, sc_desc, myid)
 
    deallocate(a)
 
    deallocate(as)
    deallocate(d)
 
-   deallocate(tmp1)
-   deallocate(tmp2)
    deallocate(e)
    deallocate(ev)
    deallocate(ev_analytic)

@@ -80,11 +80,10 @@ int main(int argc, char** argv) {
    int na_rows, na_cols;
    double startVal;
 #ifdef DOUBLE_PRECISION_REAL
-   double *a, *z, *as, *ev, *tmp1, *tmp2;
+   double *a, *z, *as, *ev;
 #else
-   float *a, *z, *as, *ev, *tmp1, *tmp2;
+   float *a, *z, *as, *ev;
 #endif
-   int *iseed;
 
    int success;
 
@@ -144,7 +143,7 @@ int main(int argc, char** argv) {
 #ifdef WITH_MPI
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
 #endif
-   set_up_blacsgrid_from_fortran(my_mpi_comm_world, &my_blacs_ctxt, &np_rows, &np_cols, &nprow, &npcol, &my_prow, &my_pcol);
+   set_up_blacsgrid_f(my_mpi_comm_world, &my_blacs_ctxt, &np_rows, &np_cols, &nprow, &npcol, &my_prow, &my_pcol);
 
    if (myid == 0) {
      printf("\n");
@@ -169,7 +168,7 @@ int main(int argc, char** argv) {
 
    sc_desc = malloc(9*sizeof(int));
 
-   set_up_blacs_descriptor_from_fortran(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info);
+   set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info);
 
    if (myid == 0) {
      printf("\n");
@@ -187,29 +186,18 @@ int main(int argc, char** argv) {
    a  = malloc(na_rows*na_cols*sizeof(double));
    z  = malloc(na_rows*na_cols*sizeof(double));
    as = malloc(na_rows*na_cols*sizeof(double));
-
-
    ev = malloc(na*sizeof(double));
-
-   tmp1  = malloc(na_rows*na_cols*sizeof(double));
-   tmp2 = malloc(na_rows*na_cols*sizeof(double));
 #else
    a  = malloc(na_rows*na_cols*sizeof(float));
    z  = malloc(na_rows*na_cols*sizeof(float));
    as = malloc(na_rows*na_cols*sizeof(float));
-
-
    ev = malloc(na*sizeof(float));
-
-   tmp1  = malloc(na_rows*na_cols*sizeof(float));
-   tmp2 = malloc(na_rows*na_cols*sizeof(float));
 #endif
 
-   iseed = malloc(4096*sizeof(int));
 #ifdef DOUBLE_PRECISION_REAL
-   prepare_matrix_real_from_fortran_double_precision(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
+   prepare_matrix_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 #else
-   prepare_matrix_real_from_fortran_single_precision(na, myid, na_rows, na_cols, sc_desc, iseed, a, z, as);
+   prepare_matrix_real_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 #endif
    if (myid == 0) {
      printf("\n");
@@ -243,9 +231,9 @@ int main(int argc, char** argv) {
 
 #ifdef DOUBLE_PRECISION_REAL
    /* check the results */
-   status = check_correctness_real_from_fortran_double_precision(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+   status = check_correctness_real_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
 #else
-   status = check_correctness_real_from_fortran_single_precision(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, tmp1, tmp2);
+   status = check_correctness_real_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
 #endif
    if (status !=0){
      printf("The computed EVs are not correct !\n");
@@ -258,11 +246,8 @@ int main(int argc, char** argv) {
    free(a);
    free(z);
    free(as);
-
-   free(tmp1);
-   free(tmp2);
-   free(iseed);
    free(ev);
+
 #ifdef WITH_MPI
    MPI_Finalize();
 #endif

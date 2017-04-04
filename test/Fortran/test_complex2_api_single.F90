@@ -122,13 +122,11 @@ program test_complex2_choose_kernel_with_api_single_precision
 
    integer(kind=ik), external    :: numroc
 
-   real(kind=rk4), allocatable    :: ev(:), xr(:,:)
+   real(kind=rk4), allocatable    :: ev(:)
 
-   complex(kind=ck4), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+   complex(kind=ck4), allocatable :: a(:,:), z(:,:), as(:,:)
 
    complex(kind=ck4), parameter   :: CZERO = (0._rk4,0._rk4), CONE = (1._rk4,0._rk4)
-
-   integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
 
    integer(kind=ik)              :: STATUS
 #ifdef WITH_OPENMP
@@ -328,11 +326,8 @@ program test_complex2_choose_kernel_with_api_single_precision
    allocate(as(na_rows,na_cols))
 
    allocate(ev(na))
-   allocate(xr(na_rows,na_cols))
 
-   call prepare_matrix_single(na, myid, sc_desc, iseed, xr, a, z, as)
-
-   deallocate(xr)
+   call prepare_matrix_single(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -449,17 +444,12 @@ program test_complex2_choose_kernel_with_api_single_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   allocate(tmp1(na_rows,na_cols))
-   allocate(tmp2(na_rows,na_cols))
-
-   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
 
    deallocate(z)
-   deallocate(tmp1)
-   deallocate(tmp2)
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
