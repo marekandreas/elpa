@@ -54,6 +54,8 @@
 ! Author: Andreas Marek, MPCDF
 #endif
 
+#include "../sanity.X90"
+
 #if REALCASE == 1
 
 !cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
