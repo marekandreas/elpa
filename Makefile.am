@@ -36,8 +36,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/kernels/mod_fortran_interfaces.F90 \
         src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
         src/elpa_c_interface.F90 \
-        src/check_for_gpu.F90 \
-        src/mod_cuda.F90 \
+        src/GPU/check_for_gpu.F90 \
+        src/GPU/mod_cuda.F90 \
         src/interface_c_kernel.F90 \
         src/mod_pack_unpack_gpu.F90 \
         src/elpa_qr/qr_utils.F90 \
@@ -104,7 +104,7 @@ else
 endif
 
 if WITH_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES +=  src/cudaFunctions.cu src/cuUtils.cu src/ev_tridi_band_gpu_c_v2.cu
+  libelpa@SUFFIX@_private_la_SOURCES +=  src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/ev_tridi_band_gpu_c_v2.cu
   EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES +=   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu src/ev_tridi_band_gpu_c_v2_real_template.Xcu
 endif
 
@@ -932,8 +932,8 @@ read_input_parameters.i: $(top_srcdir)/test/shared_sources/read_input_parameters
 setup_mpi.i: $(top_srcdir)/test/shared_sources/setup_mpi.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/test/shared_sources/setup_mpi.F90 -o $@
 
-cuUtils.i: $(top_srcdir)/src/cuUtils.cu
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/cuUtils.cu -o $@
+cuUtils.i: $(top_srcdir)/src/GPU/cuUtils.cu
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/src/GPU/cuUtils.cu -o $@
 
 include doxygen.am
 
@@ -1008,7 +1008,7 @@ EXTRA_DIST = \
   src/elpa_qr/elpa_qrkernels.X90 \
   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/ev_tridi_band_gpu_c_v2_real_template.Xcu \
-  src/cuUtils_template.Xcu \
+  src/GPU/cuUtils_template.Xcu \
   nvcc_wrap \
   test_project/Makefile.am \
   test_project/autogen.sh \
