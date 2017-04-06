@@ -43,11 +43,9 @@
 ! --------------------------------------------------------------------------------------------------
 !
 ! This file contains the compute intensive kernels for the Householder transformations.
-!
-! This is the small and simple version (no hand unrolling of loops etc.) but for some
-! compilers this performs better than a sophisticated version with transformed and unrolled loops.
-!
 ! It should be compiled with the highest possible optimization level.
+!
+! On Intel use -O3 -xSSE4.2 (or the SSE level fitting to your CPU)
 !
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
@@ -55,17 +53,21 @@
 ! distributed along with the original code in the file "COPYING".
 !
 ! --------------------------------------------------------------------------------------------------
-
 #include "config-f90.h"
+#ifdef USE_ASSUMED_SIZE
+#define PACK_REAL_TO_COMPLEX
+#else
+#undef PACK_REAL_TO_COMPLEX
+#endif
 
 #ifndef USE_ASSUMED_SIZE
-module real_generic_simple_kernel
+module real_generic_kernel
 
   private
-  public double_hh_trafo_real_generic_simple_double
+  public double_hh_trafo_real_generic_double
 
 #ifdef WANT_SINGLE_PRECISION_REAL
- public double_hh_trafo_real_generic_simple_single
+  public double_hh_trafo_real_generic_single
 #endif
 
   contains
@@ -73,21 +75,21 @@ module real_generic_simple_kernel
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "../precision_macros.h"
-#include "elpa2_kernels_simple_template.X90"
+#include "../../precision_macros.h"
+#include "elpa2_kernels_real_template.X90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "../precision_macros.h"
-#include "elpa2_kernels_simple_template.X90"
+#include "../../precision_macros.h"
+#include "elpa2_kernels_real_template.X90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif
 
 #ifndef USE_ASSUMED_SIZE
-end module real_generic_simple_kernel
+end module real_generic_kernel
 #endif
 ! --------------------------------------------------------------------------------------------------

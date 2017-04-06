@@ -72,7 +72,7 @@ module complex_generic_simple_kernel
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa2_kernels_simple_template.X90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
@@ -80,7 +80,7 @@ module complex_generic_simple_kernel
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa2_kernels_simple_template.X90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION

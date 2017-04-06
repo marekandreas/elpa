@@ -50,6 +50,7 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 
+#include "../sanity.X90"
 
      subroutine herm_matrix_allreduce_&
      &PRECISION &

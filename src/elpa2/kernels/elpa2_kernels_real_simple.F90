@@ -15,9 +15,6 @@
 !      and
 !    - IBM Deutschland GmbH
 !
-!    This particular source code file contains additions, changes and
-!    enhancements authored by Intel Corporation which is not part of
-!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -43,79 +40,54 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+! --------------------------------------------------------------------------------------------------
+!
+! This file contains the compute intensive kernels for the Householder transformations.
+!
+! This is the small and simple version (no hand unrolling of loops etc.) but for some
+! compilers this performs better than a sophisticated version with transformed and unrolled loops.
+!
+! It should be compiled with the highest possible optimization level.
 !
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+!
+! --------------------------------------------------------------------------------------------------
 
+#include "config-f90.h"
 
-    subroutine symm_matrix_allreduce_&
-&PRECISION &
-                    (n,a,lda,ldb,comm)
-    !-------------------------------------------------------------------------------
-    !  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
-    !  On entry, only the upper half of A needs to be set
-    !  On exit, the complete matrix is set
-    !-------------------------------------------------------------------------------
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
+#ifndef USE_ASSUMED_SIZE
+module real_generic_simple_kernel
+
+  private
+  public double_hh_trafo_real_generic_simple_double
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+ public double_hh_trafo_real_generic_simple_single
 #endif
-      use precision
-      implicit none
-      integer(kind=ik)             :: n, lda, ldb, comm
-#ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)     :: a(lda,*)
-#else
-      real(kind=REAL_DATATYPE)     :: a(lda,ldb)
+
+  contains
 #endif
-      integer(kind=ik)             :: i, nc, mpierr
-      real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
-      call timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../precision_macros.h"
+#include "elpa2_kernels_simple_template.X90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
 
-      nc = 0
-      do i=1,n
-        h1(nc+1:nc+i) = a(1:i,i)
-        nc = nc+i
-      enddo
+#ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../../precision_macros.h"
+#include "elpa2_kernels_simple_template.X90"
+#undef REALCASE
+#undef SINGLE_PRECISION
+#endif
 
-#ifdef WITH_MPI
-      call timer%start("mpi_communication")
-      call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
-      call timer%stop("mpi_communication")
-      nc = 0
-      do i=1,n
-        a(1:i,i) = h2(nc+1:nc+i)
-        a(i,1:i-1) = a(1:i-1,i)
-        nc = nc+i
-      enddo
-
-#else /* WITH_MPI */
-!      h2=h1
-
-      nc = 0
-      do i=1,n
-        a(1:i,i) = h1(nc+1:nc+i)
-        a(i,1:i-1) = a(1:i-1,i)
-        nc = nc+i
-      enddo
-
-#endif /* WITH_MPI */
-!      nc = 0
-!      do i=1,n
-!        a(1:i,i) = h2(nc+1:nc+i)
-!        a(i,1:i-1) = a(1:i-1,i)
-!        nc = nc+i
-!      enddo
-
-      call timer%stop("symm_matrix_allreduce" // PRECISION_SUFFIX)
-
-    end subroutine symm_matrix_allreduce_&
-    &PRECISION
-
-
-
+#ifndef USE_ASSUMED_SIZE
+end module real_generic_simple_kernel
+#endif
+! --------------------------------------------------------------------------------------------------
