@@ -26,8 +26,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/helpers/mod_precision.F90 \
         src/helpers/mod_mpi.F90 \
         src/helpers/mod_mpi_stubs.F90 \
-	src/mod_redist_band.F90 \
-        src/mod_pack_unpack_cpu.F90 \
+	src/elpa2/mod_redist_band.F90 \
+        src/elpa2/mod_pack_unpack_cpu.F90 \
         src/elpa2/mod_compute_hh_trafo.F90 \
         src/helpers/aligned_mem.F90 \
         src/elpa1/elpa1_compute_private.F90 \
@@ -38,8 +38,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa_c_interface.F90 \
         src/GPU/check_for_gpu.F90 \
         src/GPU/mod_cuda.F90 \
-        src/interface_c_kernel.F90 \
-        src/mod_pack_unpack_gpu.F90 \
+        src/elpa2/GPU/interface_c_kernel.F90 \
+        src/elpa2/mod_pack_unpack_gpu.F90 \
         src/elpa2/qr/qr_utils.F90 \
         src/elpa2/qr/elpa_qrkernels.F90 \
         src/elpa2/qr/elpa_pdlarfb.F90 \
@@ -70,10 +70,10 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2/kernels/elpa2_kernels_real_template.X90 \
 	src/elpa2/kernels/elpa2_kernels_complex_template.X90 \
 	src/elpa2/kernels/elpa2_kernels_simple_template.X90 \
-	src/pack_unpack_cpu.X90 \
-	src/pack_unpack_gpu.X90 \
+	src/elpa2/pack_unpack_cpu.X90 \
+	src/elpa2/pack_unpack_gpu.X90 \
 	src/elpa2/compute_hh_trafo.X90 \
-        src/redist_band.X90 \
+        src/elpa2/redist_band.X90 \
 	src/sanity.X90 \
 	src/elpa1/elpa_cholesky_template.X90 \
 	src/elpa1/elpa_invert_trm.X90 \
@@ -104,8 +104,8 @@ else
 endif
 
 if WITH_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES +=  src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/ev_tridi_band_gpu_c_v2.cu
-  EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES +=   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu src/ev_tridi_band_gpu_c_v2_real_template.Xcu
+  libelpa@SUFFIX@_private_la_SOURCES +=  src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2.cu
+  EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES +=   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.Xcu src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu
 endif
 
 if !WITH_MPI
@@ -381,7 +381,7 @@ dist_files_DATA = \
   test/Fortran/test_cholesky_complex.F90 \
   test/Fortran/test_invert_trm_complex.F90 \
   test/Fortran/elpa_tests.F90 \
-  src/elpa2_print_kernels.F90
+  src/elpa2/elpa2_print_kernels.F90
 
 #end needed
 
@@ -634,7 +634,7 @@ elpa_driver_complex@SUFFIX@_LDADD = $(build_lib)
 elpa_driver_complex@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 EXTRA_elpa_driver_complex@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2_print_kernels.F90
+elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2/elpa2_print_kernels.F90
 elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
 elpa2_print_kernels@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 
@@ -996,9 +996,9 @@ EXTRA_DIST = \
   src/elpa2/kernels/elpa2_kernels_real_template.X90 \
   src/elpa2/kernels/elpa2_kernels_complex_template.X90 \
   src/elpa2/kernels/elpa2_kernels_simple_template.X90 \
-  src/redist_band.X90 \
-  src/pack_unpack_cpu.X90 \
-  src/pack_unpack_gpu.X90 \
+  src/elpa2/redist_band.X90 \
+  src/elpa2/pack_unpack_cpu.X90 \
+  src/elpa2/pack_unpack_gpu.X90 \
   src/elpa2/compute_hh_trafo.X90 \
   src/sanity.X90 \
   src/elpa1/elpa_cholesky_template.X90 \
@@ -1006,8 +1006,8 @@ EXTRA_DIST = \
   src/elpa1/elpa_multiply_a_b.X90 \
   src/elpa1/elpa_solve_tridi.X90 \
   src/elpa2/qr/elpa_qrkernels.X90 \
-  src/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
-  src/ev_tridi_band_gpu_c_v2_real_template.Xcu \
+  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
+  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu \
   src/GPU/cuUtils_template.Xcu \
   nvcc_wrap \
   test_project/Makefile.am \

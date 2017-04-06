@@ -1,9 +1,9 @@
-!   This file is part of ELPA.
+!    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Max Planck Computing and Data Facility (MPCDF), fomerly known as
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
 !      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
@@ -15,9 +15,6 @@
 !      and
 !    - IBM Deutschland GmbH
 !
-!    This particular source code file contains additions, changes and
-!    enhancements authored by Intel Corporation which is not part of
-!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -42,73 +39,71 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-!
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
-!
-! Copyright of the original code rests with the authors inside the ELPA
-! consortium. The copyright of any additional modifications shall rest
-! with their original authors, but shall adhere to the licensing terms
-! distributed along with the original code in the file "COPYING".
+! This file was written by A. Marek, MPCDF
 
-
-
-! ELPA2 -- 2-stage solver for ELPA
-!
-! Copyright of the original code rests with the authors inside the ELPA
-! consortium. The copyright of any additional modifications shall rest
-! with their original authors, but shall adhere to the licensing terms
-! distributed along with the original code in the file "COPYING".
-
+module pack_unpack_cpu
 #include "config-f90.h"
-module redist
+  implicit none
 
-  public
+  private
 
-  contains
-
-#define REALCASE 1
-#define DOUBLE_PRECISION 1
-#include "precision_macros.h"
-#include "redist_band.X90"
-
-#undef REALCASE
-#undef DOUBLE_PRECISION
-
-! single precision
-#ifdef WANT_SINGLE_PRECISION_REAL
-
-#define REALCASE 1
-#define SINGLE_PRECISION 1
-#include "precision_macros.h"
-#include "redist_band.X90"
-
-#undef REALCASE
-#undef SINGLE_PRECISION
-
-#endif /* WANT_SINGLE_PRECISION_REAL */
-
-! double precision
-#define COMPLEXCASE 1
-#define DOUBLE_PRECISION 1
-#include "precision_macros.h"
-#include "redist_band.X90"
-
-#undef COMPLEXCASE
-#undef DOUBLE_PRECISION
+#ifdef WITH_OPENMP
+  public pack_row_real_cpu_openmp_double, unpack_row_real_cpu_openmp_double
+  public pack_row_complex_cpu_openmp_double, unpack_row_complex_cpu_openmp_double
+#else
+  public pack_row_real_cpu_double, unpack_row_real_cpu_double
+  public pack_row_complex_cpu_double, unpack_row_complex_cpu_double
+#endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-#define COMPLEXCASE 1
-#define SINGLE_PRECISION 1
+#ifdef WITH_OPENMP
+  public pack_row_real_cpu_openmp_single, unpack_row_real_cpu_openmp_single
+  public pack_row_complex_cpu_openmp_single,  unpack_row_complex_cpu_openmp_single
+#else
+  public pack_row_real_cpu_single, unpack_row_real_cpu_single
+  public pack_row_complex_cpu_single, unpack_row_complex_cpu_single
+#endif
 
-#include "precision_macros.h"
-#include "redist_band.X90"
-
-#undef COMPLEXCASE
-#undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
+  contains
+
+  !real double precision
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../precision_macros.h"
+#include "pack_unpack_cpu.X90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
+
+ ! real single precision
+#if defined(WANT_SINGLE_PRECISION_REAL)
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../precision_macros.h"
+#include "pack_unpack_cpu.X90"
+#undef REALCASE
+#undef SINGLE_PRECISION
+#endif
+
+  !complex double precision
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "../precision_macros.h"
+#include "pack_unpack_cpu.X90"
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
+
+ ! complex single precision
+#if defined(WANT_SINGLE_PRECISION_COMPLEX)
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "../precision_macros.h"
+#include "pack_unpack_cpu.X90"
+#undef COMPLEXCASE
+#undef SINGLE_PRECISION
+#endif
 
 
-end module redist
-
+end module
