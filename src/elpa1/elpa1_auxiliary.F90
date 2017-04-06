@@ -283,7 +283,7 @@ module ELPA1_AUXILIARY
 
 #define REALCASE 1
 #define DOUBLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 
    function elpa_cholesky_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
@@ -295,7 +295,7 @@ module ELPA1_AUXILIARY
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  cholesky_real_single: Cholesky factorization of a single-precision real symmetric matrix
 !> \details
@@ -324,7 +324,7 @@ module ELPA1_AUXILIARY
 
 #define REALCASE 1
 #define DOUBLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 !> \brief  elpa_invert_trm_real_double: Inverts a double-precision real upper triangular matrix
 !> \details
 !> \param  na                   Order of matrix
@@ -346,7 +346,7 @@ module ELPA1_AUXILIARY
 #if WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_invert_trm_real_single: Inverts a single-precision real upper triangular matrix
 !> \details
@@ -371,7 +371,7 @@ module ELPA1_AUXILIARY
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_cholesky_complex_double: Cholesky factorization of a double-precision complex hermitian matrix
 !> \details
@@ -398,7 +398,7 @@ module ELPA1_AUXILIARY
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_cholesky_complex_single: Cholesky factorization of a single-precision complex hermitian matrix
 !> \details
@@ -425,7 +425,7 @@ module ELPA1_AUXILIARY
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_invert_trm_complex_double: Inverts a double-precision complex upper triangular matrix
 !> \details
@@ -449,7 +449,7 @@ module ELPA1_AUXILIARY
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_invert_trm_complex_single: Inverts a single-precision complex upper triangular matrix
 !> \details
@@ -474,7 +474,7 @@ module ELPA1_AUXILIARY
 
 #define REALCASE 1
 #define DOUBLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 !> \brief  mult_at_b_real_double: Performs C : = A**T * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
 !>                 B is a (na,ncb) matrix
@@ -515,7 +515,7 @@ module ELPA1_AUXILIARY
 #if WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_mult_at_b_real_single: Performs C : = A**T * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
@@ -561,7 +561,7 @@ module ELPA1_AUXILIARY
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_mult_ah_b_complex_double: Performs C : = A**H * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
@@ -606,7 +606,7 @@ module ELPA1_AUXILIARY
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_mult_ah_b_complex_single: Performs C : = A**H * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
@@ -653,7 +653,7 @@ module ELPA1_AUXILIARY
 
 #define REALCASE 1
 #define DOUBLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_solve_tridi_double: Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
 !> \details
@@ -683,7 +683,7 @@ module ELPA1_AUXILIARY
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
-#include "precision_macros.h"
+#include "../precision_macros.h"
 
 !> \brief  elpa_solve_tridi_single: Solve tridiagonal eigensystem for a single-precision matrix with divide and conquer method
 !> \details

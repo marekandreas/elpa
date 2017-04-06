@@ -12,10 +12,10 @@ noinst_LTLIBRARIES = libelpa@SUFFIX@_public.la
 libelpa@SUFFIX@_public_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@modules @FC_MODINC@private_modules
 libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa.F90 \
-        src/elpa1.F90 \
+        src/elpa1/elpa1.F90 \
         src/elpa2.F90 \
-	src/elpa1_auxiliary.F90 \
-        src/elpa1_utilities.F90 \
+	src/elpa1/elpa1_auxiliary.F90 \
+        src/elpa1/elpa1_utilities.F90 \
         src/elpa2_utilities.F90 \
         src/elpa_utilities.F90
 
@@ -30,7 +30,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/mod_pack_unpack_cpu.F90 \
         src/mod_compute_hh_trafo.F90 \
         src/aligned_mem.F90 \
-        src/elpa1_compute_private.F90 \
+        src/elpa1/elpa1_compute_private.F90 \
 	src/elpa2_determine_workload.F90 \
         src/elpa2_compute.F90 \
         src/elpa2_kernels/mod_fortran_interfaces.F90 \
@@ -46,12 +46,12 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa_qr/elpa_pdgeqrf.F90
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
-        src/elpa_reduce_add_vectors.X90 \
-        src/elpa_transpose_vectors.X90 \
-        src/elpa1_compute_template.X90 \
+        src/elpa1/elpa_reduce_add_vectors.X90 \
+        src/elpa1/elpa_transpose_vectors.X90 \
+        src/elpa1/elpa1_compute_template.X90 \
         src/elpa2_compute_real_template.X90 \
         src/elpa2_compute_complex_template.X90 \
-	src/elpa1_template.X90 \
+	src/elpa1/elpa1_template.X90 \
 	src/elpa2_template.X90 \
 	src/elpa1_c_interface_template.X90 \
 	src/elpa2_c_interface_template.X90 \
@@ -75,10 +75,10 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/compute_hh_trafo.X90 \
         src/redist_band.X90 \
 	src/sanity.X90 \
-	src/elpa_cholesky_template.X90 \
-	src/elpa_invert_trm.X90 \
-	src/elpa_multiply_a_b.X90 \
-	src/elpa_solve_tridi.X90 \
+	src/elpa1/elpa_cholesky_template.X90 \
+	src/elpa1/elpa_invert_trm.X90 \
+	src/elpa1/elpa_multiply_a_b.X90 \
+	src/elpa1/elpa_solve_tridi.X90 \
         src/precision_macros.h
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
@@ -966,20 +966,20 @@ EXTRA_DIST = \
   fdep/fortran_dependencies.pl \
   fdep/fortran_dependencies.mk \
   test/Fortran/elpa_print_headers.X90 \
-  src/elpa_reduce_add_vectors.X90 \
-  src/elpa_transpose_vectors.X90 \
-  src/elpa1_compute_template.X90 \
-  src/elpa1_merge_systems_real_template.X90 \
-  src/elpa1_solve_tridi_real_template.X90 \
-  src/elpa1_tools_template.X90 \
-  src/elpa1_trans_ev_template.X90 \
-  src/elpa1_tridiag_template.X90 \
+  src/elpa1/elpa_reduce_add_vectors.X90 \
+  src/elpa1/elpa_transpose_vectors.X90 \
+  src/elpa1/elpa1_compute_template.X90 \
+  src/elpa1/elpa1_merge_systems_real_template.X90 \
+  src/elpa1/elpa1_solve_tridi_real_template.X90 \
+  src/elpa1/elpa1_tools_template.X90 \
+  src/elpa1/elpa1_trans_ev_template.X90 \
+  src/elpa1/elpa1_tridiag_template.X90 \
   src/elpa2_compute_real_template.X90 \
   src/elpa2_compute_complex_template.X90 \
   src/elpa2_bandred_template.X90 \
   src/elpa2_herm_matrix_allreduce_complex_template.X90 \
   src/elpa2_symm_matrix_allreduce_real_template.X90 \
-  src/elpa1_template.X90 \
+  src/elpa1/elpa1_template.X90 \
   src/elpa2_template.X90 \
   src/elpa1_c_interface_template.X90 \
   src/elpa2_c_interface_template.X90 \
@@ -1001,10 +1001,10 @@ EXTRA_DIST = \
   src/pack_unpack_gpu.X90 \
   src/compute_hh_trafo.X90 \
   src/sanity.X90 \
-  src/elpa_cholesky_template.X90 \
-  src/elpa_invert_trm.X90 \
-  src/elpa_multiply_a_b.X90 \
-  src/elpa_solve_tridi.X90 \
+  src/elpa1/elpa_cholesky_template.X90 \
+  src/elpa1/elpa_invert_trm.X90 \
+  src/elpa1/elpa_multiply_a_b.X90 \
+  src/elpa1/elpa_solve_tridi.X90 \
   src/elpa_qr/elpa_qrkernels.X90 \
   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/ev_tridi_band_gpu_c_v2_real_template.Xcu \

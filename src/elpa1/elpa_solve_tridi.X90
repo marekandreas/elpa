@@ -54,7 +54,7 @@
 
 
 
-#include "sanity.X90"
+#include "../sanity.X90"
 
       use elpa1_compute, solve_tridi_&
                          &PRECISION&
