@@ -1,3 +1,4 @@
+#if 0
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
@@ -42,42 +43,61 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-!
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
-!
-! Copyright of the original code rests with the authors inside the ELPA
-! consortium. The copyright of any additional modifications shall rest
-! with their original authors, but shall adhere to the licensing terms
-! distributed along with the original code in the file "COPYING".
-!
-! Author: P. Kus, MPCDF
+! Author: Andreas Marek, MPCDF
+#endif
 
-#include "config-f90.h"
+  function solve_elpa1_evp_&
+  &MATH_DATATTYPE&
+  &_wrapper_&
+  &PRECISION&
+  & (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+     useGPU) result(success) bind(C,name="elpa_solve_evp_&
+     &MATH_DATATYPE&
+     &_1stage_&
+     &PRECISION&
+     &_precision")
 
-module timings_dummy
-  implicit none
-  
-  type, public :: timer_dummy_t
-      contains
-      procedure, pass :: start => timer_start
-      procedure, pass :: stop => timer_stop
-  end type 
+    use, intrinsic :: iso_c_binding
+    use elpa1
 
-  type(timer_dummy_t) :: timer
+    implicit none
+    integer(kind=c_int)                    :: success
+    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, mpi_comm_all
+    integer(kind=c_int), value, intent(in) :: useGPU
+    real(kind=C_DATATYPE_KIND)             :: ev(1:na)
 
-  contains
+#if REALCASE == 1
 
-  subroutine timer_start(self, name, replace)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in)  :: name
-    logical, intent(in), optional  :: replace
-    
-  end subroutine
-  
-  subroutine timer_stop(self, name)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in), optional :: name
-    
-  end subroutine
+#ifdef USE_ASSUMED_SIZE
+    real(kind=C_DATATYPE_KIND)             :: a(lda,*), q(ldq,*)
+#else
+    real(kind=C_DATATYPE_KIND)             :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
 
-end module timings_dummy
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+
+#ifdef USE_ASSUMED_SIZE
+    complex(kind=C_DATATYPE_KIND)          :: a(lda,*), q(ldq,*)
+#else
+    complex(kind=C_DATATYPE_KIND)          :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+#endif
+
+#endif /* COMPLEXCASE == 1 */
+    logical                                :: successFortran
+
+    successFortran = elpa_solve_evp_&
+    &MATH_DATATYPE&
+    &_1stage_&
+    &PRECISION &
+    & (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+       useGPU == 1)
+
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+
+  end function

@@ -1,0 +1,272 @@
+#if 0
+!    This file is part of ELPA.
+!
+!    The ELPA library was originally created by the ELPA consortium,
+!    consisting of the following organizations:
+!
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!      Informatik,
+!    - Technische Universität München, Lehrstuhl für Informatik mit
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
+!    - IBM Deutschland GmbH
+!
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of
+!    the ELPA consortium.
+!
+!    More information can be found here:
+!    http://elpa.mpcdf.mpg.de/
+!
+!    ELPA is free software: you can redistribute it and/or modify
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
+!    Software Foundation.
+!
+!    ELPA is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU Lesser General Public License for more details.
+!
+!    You should have received a copy of the GNU Lesser General Public License
+!    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+!
+!    ELPA reflects a substantial effort on the part of the original
+!    ELPA consortium, and we ask you to respect the spirit of the
+!    license that we chose: i.e., please contribute any changes you
+!    may have back to the original ELPA library distribution, and keep
+!    any derivatives of ELPA under the same license that we chose for
+!    the original distribution, the GNU Lesser General Public License.
+!
+!
+! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+!
+! Copyright of the original code rests with the authors inside the ELPA
+! consortium. The copyright of any additional modifications shall rest
+! with their original authors, but shall adhere to the licensing terms
+! distributed along with the original code in the file "COPYING".
+#endif
+
+#include "../sanity.X90"
+
+function elpa_solve_evp_&
+         &MATH_DATATYPE&
+	 &_1stage_&
+	 &PRECISION&
+	 & (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+            useGPU) result(success)
+   use precision
+   use cuda_functions
+   use mod_check_for_gpu
+#ifdef HAVE_DETAILED_TIMINGS
+   use timings
+#else
+   use timings_dummy
+#endif
+   use iso_c_binding
+   use elpa_mpi
+   use elpa1_compute
+   implicit none
+
+   integer(kind=c_int), intent(in)                 :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, &
+                                                      mpi_comm_cols, mpi_comm_all
+   real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
+#if REALCASE == 1
+#ifdef USE_ASSUMED_SIZE
+   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(lda,*)
+   real(kind=C_DATATYPE_KIND), intent(out)         :: q(ldq,*)
+#else
+   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(lda,matrixCols)
+   real(kind=C_DATATYPE_KIND), intent(out)         :: q(ldq,matrixCols)
+#endif
+   real(kind=C_DATATYPE_KIND), allocatable         :: tau(:)
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef USE_ASSUMED_SIZE
+   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(lda,*)
+   complex(kind=C_DATATYPE_KIND), intent(out)      :: q(ldq,*)
+#else
+   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(lda,matrixCols)
+   complex(kind=C_DATATYPE_KIND), intent(out)      :: q(ldq,matrixCols)
+#endif
+
+   real(kind=REAL_DATATYPE), allocatable           :: q_real(:,:)
+   complex(kind=C_DATATYPE_KIND), allocatable      :: tau(:)
+   integer(kind=c_int)                             :: l_cols, l_rows, l_cols_nev, np_rows, np_cols
+#endif /* COMPLEXCASE */
+
+   logical, intent(in), optional                   :: useGPU
+   logical                                         :: success
+
+   logical                                         :: do_useGPU
+   integer(kind=ik)                                :: numberOfGPUDevices
+
+   integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol, mpierr
+   real(kind=C_DATATYPE_KIND), allocatable         :: e(:)
+   real(kind=c_double)                             :: ttt0, ttt1 ! MPI_WTIME always needs double
+   logical, save                                   :: firstCall = .true.
+   logical                                         :: wantDebug
+   integer(kind=c_int)                             :: istat
+   character(200)                                  :: errorMessage
+
+   call timer%start("elpa_solve_evp_&
+   &MATH_DATATYPE&
+   &_1stage_&
+   &PRECISION&
+   &")
+
+   call timer%start("mpi_communication")
+
+   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
+
+   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+
+#if COMPLEXCASE == 1
+   call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+   call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+#endif
+
+   call timer%stop("mpi_communication")
+   success = .true.
+
+   wantDebug = .false.
+   if (firstCall) then
+     ! are debug messages desired?
+     wantDebug = debug_messages_via_environment_variable()
+     firstCall = .false.
+   endif
+
+   do_useGPU      = .false.
+
+   if (present(useGPU)) then
+     ! user defined GPU usage via the optional argument in the API call
+     if (useGPU) then
+       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+
+         do_useGPU = .true.
+         ! set the neccessary parameters
+         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+         cudaHostRegisterPortable = cuda_hostRegisterPortable()
+         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+       else
+         print *,"GPUs are requested but not detected! Aborting..."
+         success = .false.
+         return
+       endif
+     endif
+   else
+     ! check whether set by environment variable
+     do_useGPU = gpu_usage_via_environment_variable()
+   endif
+
+#if COMPLEXCASE == 1
+   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
+   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
+
+   l_cols_nev = local_index(nev, my_pcol, np_cols, nblk, -1) ! Local columns corresponding to nev
+
+   allocate(q_real(l_rows,l_cols), stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"solve_evp_&
+     &MATH_DATATYPE&
+     &_1stage_&
+     &PRECISION&
+     &" // ": error when allocating q_real "//errorMessage
+     stop 1
+   endif
+#endif
+
+   allocate(e(na), tau(na), stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"solve_evp_&
+     &MATH_DATATYPE&
+     &_1stage_&
+     &PRECISION&
+     &" // ": error when allocating e, tau "//errorMessage
+     stop 1
+   endif
+
+   ttt0 = MPI_Wtime()
+   call tridiag_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   & (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
+
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
+   time_evp_fwd = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+
+   call solve_tridi_&
+   &PRECISION&
+   & (na, nev, ev, e,  &
+#if REALCASE == 1
+      q, ldq,          &
+#endif
+#if COMPLEXCASE == 1
+      q_real, l_rows,  &
+#endif
+      nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+   if (.not.(success)) return
+
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi  :',ttt1-ttt0
+   time_evp_solve = ttt1-ttt0
+
+   ttt0 = MPI_Wtime()
+#if COMPLEXCASE == 1
+   q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
+#endif
+
+   call trans_ev_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   & (na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
+   ttt1 = MPI_Wtime()
+   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
+   time_evp_back = ttt1-ttt0
+
+#if COMPLEXCASE == 1
+   deallocate(q_real, stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"solve_evp_&
+     &MATH_DATATYPE&
+     &_1stage_&
+     &PRECISION&
+     &" // ": error when deallocating q_real "//errorMessage
+     stop 1
+   endif
+#endif
+
+   deallocate(e, tau, stat=istat, errmsg=errorMessage)
+   if (istat .ne. 0) then
+     print *,"solve_evp_&
+     &MATH_DATATYPE&
+     &_1stage_&
+     &PRECISION&
+     &" // ": error when deallocating e, tau "//errorMessage
+     stop 1
+   endif
+
+   call timer%stop("elpa_solve_evp_&
+   &MATH_DATATYPE&
+   &_1stage_&
+   &PRECISION&
+   &")
+
+end function
+
+

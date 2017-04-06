@@ -39,16 +39,6 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-!
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
-!
-! Copyright of the original code rests with the authors inside the ELPA
-! consortium. The copyright of any additional modifications shall rest
-! with their original authors, but shall adhere to the licensing terms
-! distributed along with the original code in the file "COPYING".
-
-
-
 ! ELPA2 -- 2-stage solver for ELPA
 !
 ! Copyright of the original code rests with the authors inside the ELPA

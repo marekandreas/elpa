@@ -15,9 +15,6 @@
 !      and
 !    - IBM Deutschland GmbH
 !
-!    This particular source code file contains additions, changes and
-!    enhancements authored by Intel Corporation which is not part of
-!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -49,35 +46,56 @@
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+
+
+
+! ELPA2 -- 2-stage solver for ELPA
 !
-! Author: P. Kus, MPCDF
+! Copyright of the original code rests with the authors inside the ELPA
+! consortium. The copyright of any additional modifications shall rest
+! with their original authors, but shall adhere to the licensing terms
+! distributed along with the original code in the file "COPYING".
+!
+! Author: Andreas Marek, MPCDF
 
 #include "config-f90.h"
 
-module timings_dummy
+module ELPA1_utilities
+  use ELPA_utilities
+  use precision
   implicit none
-  
-  type, public :: timer_dummy_t
-      contains
-      procedure, pass :: start => timer_start
-      procedure, pass :: stop => timer_stop
-  end type 
 
-  type(timer_dummy_t) :: timer
+  PRIVATE ! By default, all routines contained are private
 
+  ! The following routines are public:
+  public :: gpu_usage_via_environment_variable
+ !******
   contains
 
-  subroutine timer_start(self, name, replace)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in)  :: name
-    logical, intent(in), optional  :: replace
-    
-  end subroutine
-  
-  subroutine timer_stop(self, name)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in), optional :: name
-    
-  end subroutine
+   function gpu_usage_via_environment_variable() result(useGPU)
+#ifdef HAVE_DETAILED_TIMINGS
+     use timings
+#else
+     use timings_dummy
+#endif
+     use precision
+     implicit none
+     logical            :: useGPU
+     CHARACTER(len=255) :: ELPA_USE_GPU_ENVIRONMENT
 
-end module timings_dummy
+     call timer%start("gpu_usage_via_environment_variable")
+
+     useGPU = .false.
+#if defined(HAVE_ENVIRONMENT_CHECKING)
+     call get_environment_variable("ELPA_USE_GPU",ELPA_USE_GPU_ENVIRONMENT)
+#endif
+     if (trim(ELPA_USE_GPU_ENVIRONMENT) .eq. "YES" .or. trim(ELPA_USE_GPU_ENVIRONMENT) .eq. "yes") then
+       useGPU = .true.
+     endif
+
+     call timer%stop("gpu_usage_via_environment_variable")
+
+   end function gpu_usage_via_environment_variable
+!-------------------------------------------------------------------------------
+
+end module ELPA1_utilities

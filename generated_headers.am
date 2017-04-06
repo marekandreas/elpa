@@ -19,7 +19,7 @@ elpa/elpa_generated.h: $(top_srcdir)/src/elpa_c_interface.F90 | elpa
 test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.F90) | test/shared
 	$(call extract_interface,!c>)
 
-elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2_kernels/*.c) $(wildcard $(top_srcdir)/src/elpa2_kernels/*.s) | elpa
+elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2/kernels/*.c) $(wildcard $(top_srcdir)/src/elpa2/kernels/*.s) | elpa
 	$(call extract_interface,!f>)
 	$(call extract_interface,#!f>)
 

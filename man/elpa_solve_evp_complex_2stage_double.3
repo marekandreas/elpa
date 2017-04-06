@@ -12,7 +12,7 @@ use elpa1
 use elpa2
 .br
 .br
-.RI  "success = \fBelpa_solve_evp_real_2stage_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL, useGPU, bandwidth)"
+.RI  "success = \fBelpa_solve_evp_real_2stage_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL, useGPU)"
 .br
 .RI " "
 .br
@@ -47,8 +47,6 @@ use elpa2
 .br
 .RI "logical, intent(in), optional: \fBuseGPU\fP:               decide whether GPUs should be used or not"
 .br
-.RI "integer, intent(in), optional: \fBbandwidth\fP:            bandwidth of an already banded matrix"
-.br
 .RI "logical                    \fBsuccess\fP:                  return value indicating success or failure"
 .br
 .SS C INTERFACE
@@ -57,7 +55,7 @@ use elpa2
 #include <complex.h>
 
 .br
-.RI "success = \fBelpa_solve_evp_complex_2stage_double\fP (\fBint\fP na, \fBint\fP nev, \fB double complex *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble complex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_COMPLEX_KERNEL, \fBint\fP useGPU, \fBint\fP bandwidth);"
+.RI "success = \fBelpa_solve_evp_complex_2stage_double\fP (\fBint\fP na, \fBint\fP nev, \fB double complex *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble complex *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_COMPLEX_KERNEL, \fBint\fP useGPU);"
 .br
 .RI " "
 .br
@@ -91,8 +89,6 @@ use elpa2
 .RI "int             \fBTHIS_ELPA_COMPLEX_KERNEL\fp: choose the compute kernel for 2-stage solver"
 .br
 .RI "int             \fBuseGPU\fP:                   decide whether GPUs should be used or not"
-.br
-.RI "int             \fBbandwidth\fP:                bandwidth of an already banded matrix (-1 = matrix is not banded)"
 .br
 .RI "int             \fBsuccess\fP:                  return value indicating success (1) or failure (0)
 

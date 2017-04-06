@@ -50,34 +50,46 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !
-! Author: P. Kus, MPCDF
+! Author: A. Marek, MPCDF
 
-#include "config-f90.h"
+function elpa_solve_tridi_wrapper_&
+  &PRECISION&
+  & (na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
+     result(success) bind(C,name="elpa_solve_tridi_&
+     &PRECISION&
+     &")
 
-module timings_dummy
-  implicit none
-  
-  type, public :: timer_dummy_t
-      contains
-      procedure, pass :: start => timer_start
-      procedure, pass :: stop => timer_stop
-  end type 
+    use, intrinsic :: iso_c_binding
+    use elpa1_auxiliary, only : elpa_solve_tridi_&
+    &PRECISION
 
-  type(timer_dummy_t) :: timer
+    implicit none
+    integer(kind=c_int)                    :: success
+    integer(kind=c_int), value, intent(in) :: na, nev, ldq, nblk, matrixCols,  mpi_comm_cols, mpi_comm_rows
+    integer(kind=c_int), value             :: wantDebug
+    real(kind=C_DATATYPE_KIND)             :: d(1:na), e(1:na)
+#ifdef USE_ASSUMED_SIZE
+    real(kind=C_DATATYPE_KIND)             :: q(ldq,*)
+#else
+    real(kind=C_DATATYPE_KIND)             :: q(1:ldq, 1:matrixCols)
+#endif
+    logical                                :: successFortran, wantDebugFortran
 
-  contains
+    if (wantDebug .ne. 0) then
+      wantDebugFortran = .true.
+    else
+      wantDebugFortran = .false.
+    endif
 
-  subroutine timer_start(self, name, replace)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in)  :: name
-    logical, intent(in), optional  :: replace
-    
-  end subroutine
-  
-  subroutine timer_stop(self, name)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in), optional :: name
-    
-  end subroutine
+    successFortran = elpa_solve_tridi_&
+    &PRECISION&
+    & (na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+       wantDebugFortran)
 
-end module timings_dummy
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+  end function
+

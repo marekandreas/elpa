@@ -4,7 +4,7 @@ AC_PREREQ([2.69])
 AC_INIT([elpa],m4_esyscmd_s([awk '/^ *Version:/ {print $2;}' elpa.spec]), [elpa-library@mpcdf.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
-AC_CONFIG_SRCDIR([src/elpa1.F90])
+AC_CONFIG_SRCDIR([src/elpa.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 

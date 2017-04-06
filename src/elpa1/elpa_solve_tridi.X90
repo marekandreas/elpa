@@ -50,34 +50,39 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !
-! Author: P. Kus, MPCDF
+! Author: A. Marek, MPCDF
 
-#include "config-f90.h"
 
-module timings_dummy
-  implicit none
-  
-  type, public :: timer_dummy_t
-      contains
-      procedure, pass :: start => timer_start
-      procedure, pass :: stop => timer_stop
-  end type 
 
-  type(timer_dummy_t) :: timer
+#include "../sanity.X90"
 
-  contains
+      use elpa1_compute, solve_tridi_&
+                         &PRECISION&
+			 &_private => solve_tridi_&
+			 &PRECISION
+      use precision
 
-  subroutine timer_start(self, name, replace)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in)  :: name
-    logical, intent(in), optional  :: replace
-    
-  end subroutine
-  
-  subroutine timer_stop(self, name)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in), optional :: name
-    
-  end subroutine
+      implicit none
+      integer(kind=ik)         :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=REAL_DATATYPE) :: d(na), e(na)
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE) :: q(ldq,*)
+#else
+      real(kind=REAL_DATATYPE) :: q(ldq,matrixCols)
+#endif
 
-end module timings_dummy
+      logical, intent(in)      :: wantDebug
+      logical :: success
+
+      success = .false.
+
+      call solve_tridi_&
+      &PRECISION&
+      &_private(na, nev, d, e, q, ldq, nblk, matrixCols, &
+               mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+
+#undef REALCASE
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
+#undef SINGLE_PRECISION
+

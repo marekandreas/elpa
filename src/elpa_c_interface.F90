@@ -145,71 +145,22 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c>*/
-#define DOUBLE_PRECISION_REAL 1
-#ifdef DOUBLE_PRECISION_REAL
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+
+#if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_real_1stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 #else
   !c> int elpa_solve_evp_real_1stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 #endif
 
-#ifdef DOUBLE_PRECISION_REAL
-  function solve_elpa1_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU)      &
-                                  result(success) bind(C,name="elpa_solve_evp_real_1stage_double_precision")
-#else
-  function solve_elpa1_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU)      &
-                                  result(success) bind(C,name="elpa_solve_evp_real_1stage_single_precision")
-#endif
-
-    use, intrinsic :: iso_c_binding
-    use elpa1
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, mpi_comm_all
-    integer(kind=c_int), value, intent(in) :: useGPU
-#ifdef DOUBLE_PRECISION_REAL
-    real(kind=c_double)                    :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_double)                    :: a(lda,*), q(ldq,*)
-#else
-    real(kind=c_double)                    :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-#endif
-
-#else /* SINGLE_PRECISION */
-    real(kind=c_float)                     :: ev(1:na)
-
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_float)                     :: a(lda,*), q(ldq,*)
-#else
-    real(kind=c_float)                     :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
-#endif
-
-#endif
-    logical                                :: successFortran
-
-#ifdef DOUBLE_PRECISION_REAL
-    successFortran = elpa_solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU == 1)
-#else
-    successFortran = elpa_solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU == 1)
-#endif
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#include "elpa1_c_interface_template.X90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-#undef DOUBLE_PRECISION_REAL
+
   !c>  /*! \brief C interface to solve the single-precision real eigenvalue problem with 1-stage solver
   !c>  *
   !c> *  \param  na                   Order of matrix a
@@ -233,57 +184,21 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c>*/
-#ifdef DOUBLE_PRECISION_REAL
+#define REALCASE 1
+#undef DOUBLE_PRECISION
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+
+#if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_real_1stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 #else
   !c> int elpa_solve_evp_real_1stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 #endif
 
-#ifdef DOUBLE_PRECISION_REAL
-  function solve_elpa1_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  ueGPU)      &
-                                  result(success) bind(C,name="elpa_solve_evp_real_1stage_double_precision")
-#else
-  function solve_elpa1_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU)      &
-                                  result(success) bind(C,name="elpa_solve_evp_real_1stage_single_precision")
-#endif
-    use, intrinsic :: iso_c_binding
-    use elpa1
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, mpi_comm_all
-    integer(kind=c_int), value, intent(in) :: useGPU
-#ifdef DOUBLE_PRECISION_REAL
-    real(kind=c_double)                    :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
-#else
-    real(kind=c_float)                     :: a(1:lda,1:matrixCols), ev(1:na), q(1:ldq,1:matrixCols)
-#endif
-    logical                                :: successFortran
-
-#ifdef DOUBLE_PRECISION_REAL
-    successFortran = elpa_solve_evp_real_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU == 1)
-#else
-    successFortran = elpa_solve_evp_real_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU == 1)
-#endif
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
-
+#include "elpa1_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
 #endif /* WANT_SINGLE_PRECISION_REAL */
-
-
 
   !c> /*! \brief C interface to solve the double-precision complex eigenvalue problem with 1-stage solver
   !c> *
@@ -308,67 +223,20 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-#define DOUBLE_PRECISION_COMPLEX 1
-#ifdef DOUBLE_PRECISION_COMPLEX
+
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+
+#if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_complex_1stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 #else
   !c> int elpa_solve_evp_complex_1stage_single_precision(int na, int nev,  complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 #endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-  function solve_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU)      &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_1stage_double_precision")
-#else
-  function solve_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU)      &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_1stage_single_precision")
-#endif
-    use, intrinsic :: iso_c_binding
-    use elpa1
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, mpi_comm_all
-    integer(kind=c_int), value, intent(in) :: useGPU
-#ifdef DOUBLE_PRECISION_COMPLEX
-    real(kind=c_double)                    :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_double_complex)         :: a(lda,*), q(ldq,*)
-#else
-    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-#endif
-
-#else /* SINGLE_PRECISION */
-    real(kind=c_float)                     :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_float_complex)          :: a(lda,*), q(ldq,*)
-#else
-    complex(kind=c_float_complex)          :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-#endif
-
-#endif
-
-    logical                                :: successFortran
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-    successFortran = elpa_solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU == 1)
-#else
-    successFortran = elpa_solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU == 1)
-#endif
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#include "elpa1_c_interface_template.X90"
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
@@ -395,58 +263,21 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-#undef DOUBLE_PRECISION_COMPLEX
-#ifdef DOUBLE_PRECISION_COMPLEX
+#define COMPLEXCASE 1
+#undef DOUBLE_PRECISION
+#define SINGLE_PRECISION
+#include "precision_macros.h"
+
+#if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_complex_1stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 #else
   !c> int elpa_solve_evp_complex_1stage_single_precision(int na, int nev,  complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 #endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-  function solve_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU)      &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_1stage_double_precision")
-#else
-  function solve_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU)      &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_1stage_single_precision")
-#endif
-    use, intrinsic :: iso_c_binding
-    use elpa1
+#include "elpa1_c_interface_template.X90"
 
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, mpi_comm_all
-    integer(kind=c_int), value, intent(in) :: useGPU
-#ifdef DOUBLE_PRECISION_COMPLEX
-    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-    real(kind=c_double)                    :: ev(1:na)
-#else
-    complex(kind=c_float_complex)          :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-    real(kind=c_float)                     :: ev(1:na)
-#endif
-
-    logical                                :: successFortran
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-    successFortran = elpa_solve_evp_complex_1stage_double(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU == 1)
-#else
-    successFortran = elpa_solve_evp_complex_1stage_single(na, nev, a, lda, ev, q, ldq, nblk, &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,  &
-                                  useGPU == 1)
-#endif
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
-
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 
@@ -473,98 +304,22 @@
   !c> *  \param THIS_REAL_ELPA_KERNEL_API  specify used ELPA2 kernel via API
   !c> *  \param useQR                      use QR decomposition 1 = yes, 0 = no
   !c> *  \param useGPU                     use GPU (1=yes, 0=No)
-  !c> *  \param bandwidth                  bandwidth of already banded matrix (-1 = No banding)
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-#define DOUBLE_PRECISION_REAL 1
-#ifdef DOUBLE_PRECISION_REAL
-  !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, int bandwdith);
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+
+#if DOUBLE_PRECISION == 1
+  !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #else
-  !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, int bandwidth);
+  !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #endif
 
-#ifdef DOUBLE_PRECISION_REAL
-  function solve_elpa2_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,         &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                  THIS_REAL_ELPA_KERNEL_API, useQR, useGPU, bandwidth)    &
-                                  result(success) bind(C,name="elpa_solve_evp_real_2stage_double_precision")
-#else
-  function solve_elpa2_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,         &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                  THIS_REAL_ELPA_KERNEL_API, useQR, useGPU, bandwidth)    &
-                                  result(success) bind(C,name="elpa_solve_evp_real_2stage_double_precision")
-
-                                  result(success) bind(C,name="elpa_solve_evp_real_2stage_single_precision")
-#endif
-    use, intrinsic :: iso_c_binding
-    use elpa2
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
-                                              mpi_comm_all
-    integer(kind=c_int), value, intent(in) :: THIS_REAL_ELPA_KERNEL_API, useQR, useGPU, bandwidth
-#ifdef DOUBLE_PRECISION_REAL
-    real(kind=c_double)                    :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_double)                    :: a(lda,*), q(ldq,*)
-#else
-    real(kind=c_double)                    :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-#endif
-
-#else /* SINGLE_PRECISION */
-
-    real(kind=c_float)                     :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_float)                     :: a(1:lda,*), q(1:ldq,*)
-#else
-    real(kind=c_float)                     :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-#endif
-
-#endif
-
-    logical                                :: successFortran, useQRFortran
-
-    if (useQR .eq. 0) then
-      useQRFortran =.false.
-    else
-      useQRFortran = .true.
-    endif
-
-    if (bandwidth .eq. -1) then
-      ! no banded matrix
-
-#ifdef DOUBLE_PRECISION_REAL
-      successFortran = elpa_solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                                         mpi_comm_cols, mpi_comm_all,                                  &
-                                                         THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1)
-#else
-      successFortran = elpa_solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                                         mpi_comm_cols, mpi_comm_all,                                  &
-                                                         THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1)
-#endif
-    else
-      ! bandwidht given
-#ifdef DOUBLE_PRECISION_REAL
-      successFortran = elpa_solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                                         mpi_comm_cols, mpi_comm_all,                                  &
-                                                         THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1, bandwidth)
-#else
-      successFortran = elpa_solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                                         mpi_comm_cols, mpi_comm_all,                                  &
-                                                         THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1, bandwidth)
-#endif
-
-    endif
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#include "precision_macros.h"
+#include "elpa2_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
@@ -591,93 +346,24 @@
   !c> *  \param THIS_REAL_ELPA_KERNEL_API  specify used ELPA2 kernel via API
   !c> *  \param useQR                      use QR decomposition 1 = yes, 0 = no
   !c> *  \param useGPU                     use GPU (1=yes, 0=No)
-  !c> *  \param bandwidth                  bandwidth of already banded matrix (-1 = No banding)
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-#undef DOUBLE_PRECISION_REAL
-#ifdef DOUBLE_PRECISION_REAL
-  !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, int bandwith);
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#undef DOUBLE_PRECISION
+
+#if DOUBLE_PRECISION == 1
+  !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #else
-  !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, int bandwidth);
+  !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #endif
 
-#ifdef DOUBLE_PRECISION_REAL
-  function solve_elpa2_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,         &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                  THIS_REAL_ELPA_KERNEL_API, useQR, useGPU, bandwidth)    &
-                                  result(success) bind(C,name="elpa_solve_evp_real_2stage_double_precision")
-#else
-  function solve_elpa2_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,         &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                  THIS_REAL_ELPA_KERNEL_API, useQR, useGPU, bandwidth)    &
-                                  result(success) bind(C,name="elpa_solve_evp_real_2stage_single_precision")
-#endif
-    use, intrinsic :: iso_c_binding
-    use elpa2
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
-                                              mpi_comm_all
-    integer(kind=c_int), value, intent(in) :: THIS_REAL_ELPA_KERNEL_API, useQR, useGPU, bandwidth
-#ifdef DOUBLE_PRECISION_REAL
-    real(kind=c_double)                    ::  ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_double)                    :: a(1:lda,*), q(1:ldq,*)
-#else
-    real(kind=c_double)                    :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-#endif
-
-#else /* SINGLE_PRECISION */
-
-    real(kind=c_float)                     :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_float)                     :: a(1:lda,*), q(1:ldq,*)
-#else
-    real(kind=c_float)                     :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-#endif
-
-#endif
-    logical                                :: successFortran, useQRFortran
-
-    if (useQR .eq. 0) then
-      useQRFortran =.false.
-    else
-      useQRFortran = .true.
-    endif
-
-    if (bandwidth .eq. -1) then
-      ! matrix is not banded
-#ifdef DOUBLE_PRECISION_REAL
-      successFortran = elpa_solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                                         mpi_comm_cols, mpi_comm_all,                                  &
-                                                         THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1)
-#else
-      successFortran = elpa_solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                                         mpi_comm_cols, mpi_comm_all,                                  &
-                                                         THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1)
-#endif
-    else
-      ! bandwidth is given
-#ifdef DOUBLE_PRECISION_REAL
-      successFortran = elpa_solve_evp_real_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                                         mpi_comm_cols, mpi_comm_all,                                  &
-                                                         THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1, bandwidth)
-#else
-      successFortran = elpa_solve_evp_real_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                                         mpi_comm_cols, mpi_comm_all,                                  &
-                                                         THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1, bandwidth)
-#endif
-
-    endif
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#include "precision_macros.h"
+#include "elpa2_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -703,90 +389,23 @@
   !c> *  \param mpi_coll_all               MPI communicator for the total processor set
   !c> *  \param THIS_COMPLEX_ELPA_KERNEL_API  specify used ELPA2 kernel via API
   !c> *  \param useGPU                     use GPU (1=yes, 0=No)
-  !c> *  \param bandwidth                  bandwidth of already banded matrix (-1 = No banding)
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-#define DOUBLE_PRECISION_COMPLEX 1
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-  !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, int bandwidth);
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION  1
+
+#if DOUBLE_PRECISION == 1
+  !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #else
-  !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, int bandwidth);
+  !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-  function solve_elpa2_evp_complex_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,         &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
-                                  THIS_COMPLEX_ELPA_KERNEL_API, useGPU, bandwidth)           &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_2stage_double_precision")
-#else
-  function solve_elpa2_evp_complex_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,         &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
-                                  THIS_COMPLEX_ELPA_KERNEL_API, useGPU, bandwidth)           &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_2stage_single_precision")
-#endif
-
-    use, intrinsic :: iso_c_binding
-    use elpa2
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
-                                              mpi_comm_all
-    integer(kind=c_int), value, intent(in) :: THIS_COMPLEX_ELPA_KERNEL_API, useGPU, bandwidth
-#ifdef DOUBLE_PRECISION_COMPLEX
-    real(kind=c_double)                    :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_double_complex)         :: a(lda,*), q(ldq,*)
-#else
-    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-#endif
-
-#else /* SINGLE_PRECISION */
-    real(kind=c_float)                     :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_float_complex)          ::  a(lda,*), q(ldq,*)
-#else
-    complex(kind=c_float_complex)          :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-#endif
-
-#endif
-    logical                                :: successFortran
-
-
-    if (bandwidth .eq. -1) then
-      ! matrix is not banded
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      successFortran = elpa_solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                                            mpi_comm_rows, mpi_comm_cols, &
-                                                            mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1)
-#else
-      successFortran = elpa_solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                                            mpi_comm_rows, mpi_comm_cols, &
-                                                            mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1)
-#endif
-    else
-      ! matrix is banded
-#ifdef DOUBLE_PRECISION_COMPLEX
-      successFortran = elpa_solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                                            mpi_comm_rows, mpi_comm_cols, &
-                                                            mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1, bandwidth)
-#else
-      successFortran = elpa_solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                                            mpi_comm_rows, mpi_comm_cols, &
-                                                            mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1, bandwidth)
-#endif
-
-    endif
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#include "precision_macros.h"
+#include "elpa2_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
@@ -812,81 +431,25 @@
   !c> *  \param mpi_coll_all               MPI communicator for the total processor set
   !c> *  \param THIS_REAL_ELPA_KERNEL_API  specify used ELPA2 kernel via API
   !c> *  \param useGPU                     use GPU (1=yes, 0=No)
-  !c> *  \param bandwidth                  bandwidth of already banded matrix (-1 = No banding)
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-#undef DOUBLE_PRECISION_COMPLEX
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-  !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, int bandwidth);
+#define COMPLEXCASE 1
+#undef DOUBLE_PRECISION
+#define SINGLE_PRECISION 1
+#if DOUBLE_PRECISION == 1
+  !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #else
-  !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, int bandwidth);
+  !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #endif
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-  function solve_elpa2_evp_complex_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,         &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
-                                  THIS_COMPLEX_ELPA_KERNEL_API, useGPU, bandwidth)           &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_2stage_double_precision")
-#else
-  function solve_elpa2_evp_complex_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,         &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
-                                  THIS_COMPLEX_ELPA_KERNEL_API, useGPU, bandwidth)           &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_2stage_single_precision")
-#endif
+#include "precision_macros.h"
+#include "elpa2_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 
-    use, intrinsic :: iso_c_binding
-    use elpa2
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
-                                              mpi_comm_all
-    integer(kind=c_int), value, intent(in) :: THIS_COMPLEX_ELPA_KERNEL_API, useGPU, bandwidth
-#ifdef DOUBLE_PRECISION_COMPLEX
-    complex(kind=c_double_complex)         :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-    real(kind=c_double)                    :: ev(1:na)
-#else
-    complex(kind=c_float_complex)          :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
-    real(kind=c_float)                     :: ev(1:na)
-#endif
-    logical                                :: successFortran
-
-
-    if (bandwidth .eq. -1) then
-      ! matrix is not banded
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      successFortran = elpa_solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                                            mpi_comm_rows, mpi_comm_cols, &
-                                                            mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1)
-#else
-      successFortran = elpa_solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                                            mpi_comm_rows, mpi_comm_cols, &
-                                                            mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1)
-#endif
-    else
-      ! bandwidth is given
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      successFortran = elpa_solve_evp_complex_2stage_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                                            mpi_comm_rows, mpi_comm_cols, &
-                                                            mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1, bandwidth)
-#else
-      successFortran = elpa_solve_evp_complex_2stage_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, &
-                                                            mpi_comm_rows, mpi_comm_cols, &
-                                                            mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1, bandwidth)
-#endif
-
-    endif
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
   !c> /*! \brief C interface to driver function "elpa_solve_evp_real_double"
@@ -919,63 +482,17 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_real_double(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, char *method);
-  function elpa_solve_evp_real_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,    &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                  THIS_REAL_ELPA_KERNEL_API, useQR, useGPU, method)           &
-                                  result(success) bind(C,name="elpa_solve_evp_real_double")
-
-    use, intrinsic :: iso_c_binding
-    use elpa, only : elpa_solve_evp_real_double
-
-    implicit none
-    integer(kind=c_int)                      :: success
-    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
-                                                mpi_comm_all
-    integer(kind=c_int), value, intent(in)   :: THIS_REAL_ELPA_KERNEL_API, useQR, useGPU
-    real(kind=c_double)                      :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_double)                      :: a(lda,*), q(ldq,*)
 #else
-    real(kind=c_double)                      :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+  !c> int elpa_solve_evp_real_single(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, char *method);
 #endif
-    logical                                  :: successFortran, useQRFortran
-    character(kind=c_char,len=1), intent(in) :: method(*)
-    character(len=6)                         :: methodFortran
-    integer(kind=c_int)                      :: charCount
-
-    if (useQR .eq. 0) then
-      useQRFortran =.false.
-    else
-      useQRFortran = .true.
-    endif
-
-    charCount = 1
-    do
-      if (method(charCount) == c_null_char) exit
-      charCount = charCount + 1
-    enddo
-    charCount = charCount - 1
-
-    if (charCount .ge. 1)  then
-      methodFortran(1:charCount) = transfer(method(1:charCount), methodFortran)
-
-      successFortran = elpa_solve_evp_real_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                           mpi_comm_cols, mpi_comm_all,                                  &
-                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1, methodFortran)
-    else
-      successFortran = elpa_solve_evp_real_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                           mpi_comm_cols, mpi_comm_all,                                  &
-                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1)
-    endif
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#include "precision_macros.h"
+#include "elpa_driver_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   !c> /*! \brief C interface to driver function "elpa_solve_evp_real_single"
@@ -1008,63 +525,19 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-  !c> int elpa_solve_evp_real_single(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, char *method);
-  function elpa_solve_evp_real_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,    &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-                                  THIS_REAL_ELPA_KERNEL_API, useQR, useGPU, method)           &
-                                  result(success) bind(C,name="elpa_solve_evp_real_single")
-
-    use, intrinsic :: iso_c_binding
-    use elpa, only : elpa_solve_evp_real_single
-
-    implicit none
-    integer(kind=c_int)                      :: success
-    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
-                                                mpi_comm_all
-    integer(kind=c_int), value, intent(in)   :: THIS_REAL_ELPA_KERNEL_API, useQR, useGPU
-    real(kind=c_float)                       :: ev(1:na)
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_float)                       :: a(lda,*), q(ldq,*)
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#undef DOUBLE_PRECISION
+#if DOUBLE_PRECISION == 1
+  !c> int elpa_solve_evp_real_double(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, char *method);
 #else
-    real(kind=c_float)                       :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+  !c> int elpa_solve_evp_real_single(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, char *method);
 #endif
-    logical                                  :: successFortran, useQRFortran
-    character(kind=c_char,len=1), intent(in) :: method(*)
-    character(len=6)                         :: methodFortran
-    integer(kind=c_int)                      :: charCount
-
-    if (useQR .eq. 0) then
-      useQRFortran =.false.
-    else
-      useQRFortran = .true.
-    endif
-
-    charCount = 1
-    do
-      if (method(charCount) == c_null_char) exit
-      charCount = charCount + 1
-    enddo
-    charCount = charCount - 1
-
-    if (charCount .ge. 1)  then
-      methodFortran(1:charCount) = transfer(method(1:charCount), methodFortran)
-
-      successFortran = elpa_solve_evp_real_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                           mpi_comm_cols, mpi_comm_all,                                  &
-                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1, methodFortran)
-    else
-      successFortran = elpa_solve_evp_real_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                           mpi_comm_cols, mpi_comm_all,                                  &
-                                           THIS_REAL_ELPA_KERNEL_API, useQRFortran, useGPU == 1)
-    endif
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#include "precision_macros.h"
+#include "elpa_driver_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef DOUBLE_PRECISION
+#undef REALCASE
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
   !c> /*! \brief C interface to driver function "elpa_solve_evp_complex_double"
@@ -1096,56 +569,18 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_complex_double(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
-  function elpa_solve_evp_complex_wrapper_double(na, nev, a, lda, ev, q, ldq, nblk,    &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
-                                  THIS_COMPLEX_ELPA_KERNEL_API, useGPU, method)                  &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_double")
-
-    use, intrinsic :: iso_c_binding
-    use elpa, only : elpa_solve_evp_complex_double
-
-    implicit none
-    integer(kind=c_int)                      :: success
-    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
-                                                mpi_comm_all
-    integer(kind=c_int), value, intent(in)   :: THIS_COMPLEX_ELPA_KERNEL_API, useGPU
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_double_complex)           :: a(lda,*), q(ldq,*)
 #else
-    complex(kind=c_double_complex)           :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+  !c> int elpa_solve_evp_complex_single(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
 #endif
-    real(kind=c_double)                      :: ev(1:na)
-    character(kind=c_char,len=1), intent(in) :: method(*)
-    character(len=6)                         :: methodFortran
-    integer(kind=c_int)                      :: charCount
+#include "precision_macros.h"
+#include "elpa_driver_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
-    logical                                  :: successFortran
-
-
-    charCount = 1
-    do
-      if (method(charCount) == c_null_char) exit
-      charCount = charCount + 1
-    enddo
-    charCount = charCount - 1
-
-    if (charCount .ge. 1)  then
-      methodFortran(1:charCount) = transfer(method(1:charCount), methodFortran)
-      successFortran = elpa_solve_evp_complex_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                              mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1, methodFortran)
-    else
-      successFortran = elpa_solve_evp_complex_double(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                              mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1)
-    endif
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   !c> /*! \brief C interface to driver function "elpa_solve_evp_complex_single"
@@ -1177,56 +612,20 @@
   !c> *
   !c> *  \result                     int: 1 if error occured, otherwise 0
   !c> */
-  !c> int elpa_solve_evp_complex_single(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
-  function elpa_solve_evp_complex_wrapper_single(na, nev, a, lda, ev, q, ldq, nblk,    &
-                                  matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,    &
-                                  THIS_COMPLEX_ELPA_KERNEL_API, useGPU, method)                  &
-                                  result(success) bind(C,name="elpa_solve_evp_complex_single")
-
-    use, intrinsic :: iso_c_binding
-    use elpa, only : elpa_solve_evp_complex_single
-
-    implicit none
-    integer(kind=c_int)                      :: success
-    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
-                                                mpi_comm_all
-    integer(kind=c_int), value, intent(in)   :: THIS_COMPLEX_ELPA_KERNEL_API, useGPU
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_float_complex)            :: a(lda,*), q(ldq,*)
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#undef DOUBLE_PRECISION
+#if DOUBLE_PRECISION == 1
+  !c> int elpa_solve_evp_complex_double(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
 #else
-    complex(kind=c_float_complex)            :: a(1:lda,1:matrixCols), q(1:ldq,1:matrixCols)
+  !c> int elpa_solve_evp_complex_single(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
 #endif
-    real(kind=c_float)                       :: ev(1:na)
-    character(kind=c_char,len=1), intent(in) :: method(*)
-    character(len=6)                         :: methodFortran
-    integer(kind=c_int)                      :: charCount
+#include "precision_macros.h"
+#include "elpa_driver_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
-    logical                                  :: successFortran
-
-
-    charCount = 1
-    do
-      if (method(charCount) == c_null_char) exit
-      charCount = charCount + 1
-    enddo
-    charCount = charCount - 1
-
-    if (charCount .ge. 1)  then
-      methodFortran(1:charCount) = transfer(method(1:charCount), methodFortran)
-      successFortran = elpa_solve_evp_complex_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                              mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU == 1, methodFortran)
-    else
-      successFortran = elpa_solve_evp_complex_single(na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                              mpi_comm_all, THIS_COMPLEX_ELPA_KERNEL_API, useGPU ==1)
-    endif
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
   !c> /*
@@ -1248,40 +647,12 @@
   !c> *\result success              int 1 on success, else 0
   !c> */
   !c> int elpa_solve_tridi_double(int na, int nev, double *d, double *e, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
-  function elpa_solve_tridi_wrapper_double(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
-           result(success) bind(C,name="elpa_solve_tridi_double")
-
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_solve_tridi_double
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, ldq, nblk, matrixCols,  mpi_comm_cols, mpi_comm_rows
-    integer(kind=c_int), value             :: wantDebug
-    real(kind=c_double)                    :: d(1:na), e(1:na)
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_double)                    :: q(ldq,*)
-#else
-    real(kind=c_double)                    :: q(1:ldq, 1:matrixCols)
-#endif
-    logical                                :: successFortran, wantDebugFortran
-
-    if (wantDebug .ne. 0) then
-      wantDebugFortran = .true.
-    else
-      wantDebugFortran = .false.
-    endif
-
-    successFortran = elpa_solve_tridi_double(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                      wantDebugFortran)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_solve_tridi_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
@@ -1304,35 +675,12 @@
   !c> \result success              int 1 on success, else 0
   !c> */
   !c> int elpa_solve_tridi_single(int na, int nev, float *d, float *e, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
-  function elpa_solve_tridi_wrapper_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
-           result(success) bind(C,name="elpa_solve_tridi_single")
-
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_solve_tridi_single
-
-    implicit none
-    integer(kind=c_int)                    :: success
-    integer(kind=c_int), value, intent(in) :: na, nev, ldq, nblk, matrixCols,  mpi_comm_cols, mpi_comm_rows
-    integer(kind=c_int), value             :: wantDebug
-    real(kind=c_float)                     :: d(1:na), e(1:na), q(1:ldq, 1:matrixCols)
-    logical                                :: successFortran, wantDebugFortran
-
-    if (wantDebug .ne. 0) then
-      wantDebugFortran = .true.
-    else
-      wantDebugFortran = .false.
-    endif
-
-    successFortran = elpa_solve_tridi_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                             mpi_comm_cols, wantDebugFortran)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_solve_tridi_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -1373,35 +721,13 @@
   !c> */
 
   !c> int elpa_mult_at_b_real_double(char uplo_a, char uplo_c, int na, int ncb, double *a, int lda, int ldaCols, double *b, int ldb, int ldbCols, int nlbk, int mpi_comm_rows, int mpi_comm_cols, double *c, int ldc, int ldcCols);
-  function elpa_mult_at_b_real_wrapper_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                              nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
-                                              bind(C,name="elpa_mult_at_b_real_double") result(success)
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_mult_at_b_real_double
 
-    implicit none
-
-    character(1,C_CHAR), value  :: uplo_a, uplo_c
-    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc, &
-                                   ldaCols, ldbCols, ldcCols
-    integer(kind=c_int)         :: success
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_double)         :: a(lda,*), b(ldb,*), c(ldc,*)
-#else
-    real(kind=c_double)         :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
-    logical                     :: successFortran
-
-    successFortran = elpa_mult_at_b_real_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_mult_at_b_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   !c> /*
@@ -1440,35 +766,14 @@
   !c> */
 
   !c> int elpa_mult_at_b_real_single(char uplo_a, char uplo_c, int na, int ncb, float *a, int lda, int ldaCols, float *b, int ldb, int ldbCols, int nlbk, int mpi_comm_rows, int mpi_comm_cols, float *c, int ldc, int ldcCols);
-  function elpa_mult_at_b_real_wrapper_float(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                             nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
-    bind(C,name="elpa_mult_at_b_real_float") result(success)
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_mult_at_b_real_single
 
-    implicit none
 
-    character(1,C_CHAR), value  :: uplo_a, uplo_c
-    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-    integer(kind=c_int)         :: success
-    integer(kind=c_int), value  :: ldaCols, ldbCols, ldCcols
-#ifdef USE_ASSUMED_SIZE
-    real(kind=c_float)          :: a(lda,*), b(ldb,*), c(ldc,*)
-#else
-    real(kind=c_float)          :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
-    logical                     :: successFortran
-
-    successFortran = elpa_mult_at_b_real_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                               nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-    endif
-
-  end function
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_mult_at_b_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -1507,36 +812,13 @@
   !c> */
 
   !c> int elpa_mult_ah_b_complex_double(char uplo_a, char uplo_c, int na, int ncb, double complex *a, int lda, int ldaCols, double complex *b, int ldb, int ldbCols, int nblk, int mpi_comm_rows, int mpi_comm_cols, double complex *c, int ldc, int ldcCols);
-  function elpa_mult_ah_b_complex_wrapper_double( uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                  nblk, mpi_comm_rows, &
-                                                mpi_comm_cols, c, ldc, ldcCols) result(success) &
-                                                bind(C,name="elpa_mult_ah_b_complex_double")
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_mult_ah_b_complex_double
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_mult_ah_b_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
-    implicit none
-
-    character(1,C_CHAR), value     :: uplo_a, uplo_c
-    integer(kind=c_int), value     :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-    integer(kind=c_int)            :: success
-    integer(kind=c_int), value     :: ldaCols, ldbCols, ldcCols
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_double_complex) :: a(lda,*), b(ldb,*), c(ldc,*)
-#else
-    complex(kind=c_double_complex) :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
-    logical                        :: successFortran
-
-    successFortran = elpa_mult_ah_b_complex_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
-                                                   mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-     endif
-
-  end function
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
@@ -1575,36 +857,12 @@
   !c> */
 
   !c> int elpa_mult_ah_b_complex_single(char uplo_a, char uplo_c, int na, int ncb, complex *a, int lda, int ldaCols, complex *b, int ldb, int ldbCols, int nblk, int mpi_comm_rows, int mpi_comm_cols, complex *c, int ldc, int ldcCols);
-  function elpa_mult_ah_b_complex_wrapper_single( uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                 nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
-    result(success) bind(C,name="elpa_mult_ah_b_complex_single")
-    use, intrinsic :: iso_c_binding
-    use elpa1_auxiliary, only : elpa_mult_ah_b_complex_single
-
-    implicit none
-
-    character(1,C_CHAR), value     :: uplo_a, uplo_c
-    integer(kind=c_int), value     :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc
-    integer(kind=c_int)            :: success
-    integer(kind=c_int), value     :: ldaCols, ldbCols, ldcCols
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=c_float_complex)  :: a(lda,*), b(ldb,*), c(ldc,*)
-#else
-    complex(kind=c_float_complex)  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
-    logical                        :: successFortran
-
-    successFortran = elpa_mult_ah_b_complex_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                  nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
-
-    if (successFortran) then
-      success = 1
-    else
-      success = 0
-     endif
-
-  end function
-
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_mult_ah_b_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
   !c> /*
@@ -1625,38 +883,12 @@
   !c> */
 
   !c> int elpa_invert_trm_real_double(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
-  function elpa_invert_trm_real_wrapper_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
-        result(success) bind(C,name="elpa_invert_trm_real_double")
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_invert_trm_real_double
-
-   implicit none
-
-   integer(kind=c_int), value  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   integer(kind=c_int), value  :: wantDebug
-   integer(kind=c_int)         :: success
-#ifdef USE_ASSUMED_SIZE
-   real(kind=c_double)         :: a(lda,*)
-#else
-   real(kind=c_double)         :: a(lda,matrixCols)
-#endif
-   logical                     :: wantDebugFortran, successFortran
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_invert_trm_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
-
- end function
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_invert_trm_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
@@ -1678,35 +910,13 @@
   !c> */
 
   !c> int elpa_invert_trm_real_single(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
-  function elpa_invert_trm_real_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
-        result(success) bind(C,name="elpa_invert_trm_real_single")
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_invert_trm_real_single
 
-   implicit none
-
-   integer(kind=c_int), value  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   integer(kind=c_int), value  :: wantDebug
-   integer(kind=c_int)         :: success
-   real(kind=c_float)          :: a(lda,matrixCols)
-
-   logical                     :: wantDebugFortran, successFortran
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_invert_trm_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
-
- end function
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_invert_trm_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -1728,41 +938,12 @@
  !c> */
 
  !c> int elpa_invert_trm_complex_double(int na, double complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_invert_trm_complex_wrapper_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                                 mpi_comm_cols, wantDebug) result(success) &
-   bind(C,name="elpa_invert_trm_complex_double")
-
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_invert_trm_complex_double
-
-   implicit none
-
-   integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   integer(kind=c_int), value     :: wantDebug
-   integer(kind=c_int)            :: success
-#ifdef USE_ASSUMED_SIZE
-   complex(kind=c_double_complex) :: a(lda, *)
-#else
-   complex(kind=c_double_complex) :: a(lda, matrixCols)
-#endif
-   logical                        :: successFortran, wantDebugFortran
-
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_invert_trm_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                                   mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
- end function
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_invert_trm_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
  !c> /*
@@ -1783,37 +964,13 @@
  !c> */
 
  !c> int elpa_invert_trm_complex_single(int na, complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_invert_trm_complex_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                                 mpi_comm_cols, wantDebug) result(success) &
-   bind(C,name="elpa_invert_trm_complex_single")
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_invert_trm_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_invert_trm_complex_single
-
-   implicit none
-
-   integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-   integer(kind=c_int), value     :: wantDebug
-   integer(kind=c_int)            :: success
-   complex(kind=c_float_complex)  :: a(lda, matrixCols)
-
-   logical                        :: successFortran, wantDebugFortran
-
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_invert_trm_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
- end function
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
@@ -1837,38 +994,12 @@
  !c> */
 
  !c> int elpa_cholesky_real_double(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_cholesky_real_wrapper_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success) &
-       bind(C,name="elpa_cholesky_real_double")
-
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_cholesky_real_double
-
-   implicit none
-
-   integer(kind=c_int), value :: na, lda, nblk, matrixCols,  mpi_comm_rows, mpi_comm_cols, wantDebug
-   integer(kind=c_int)        :: success
-#ifdef USE_ASSUMED_SIZE
-   real(kind=c_double)        :: a(lda,*)
-#else
-   real(kind=c_double)        :: a(lda,matrixCols)
-#endif
-   logical                    :: successFortran, wantDebugFortran
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_cholesky_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
-
- end function
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_cholesky_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
@@ -1892,35 +1023,13 @@
  !c> */
 
  !c> int elpa_cholesky_real_single(int na, float *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_cholesky_real_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success) &
-       bind(C,name="elpa_cholesky_real_single")
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_cholesky_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
 
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_cholesky_real_single
-
-   implicit none
-
-   integer(kind=c_int), value :: na, lda, nblk, matrixCols,  mpi_comm_rows, mpi_comm_cols, wantDebug
-   integer(kind=c_int)        :: success
-   real(kind=c_float)         :: a(lda,matrixCols)
-
-   logical                    :: successFortran, wantDebugFortran
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_cholesky_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
-
- end function
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -1943,40 +1052,12 @@
  !c> */
 
  !c> int elpa_cholesky_complex_double(int na, double complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_cholesky_complex_wrapper_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                               mpi_comm_cols, wantDebug) result(success) &
-       bind(C,name="elpa_cholesky_complex_double")
-
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_cholesky_complex_double
-
-   implicit none
-
-   integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug
-   integer(kind=c_int)            :: success
-#ifdef USE_ASSUMED_SIZE
-   complex(kind=c_double_complex) :: a(lda,*)
-#else
-   complex(kind=c_double_complex) :: a(lda,matrixCols)
-#endif
-   logical                        :: wantDebugFortran, successFortran
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_cholesky_complex_double(na, a, lda, nblk, matrixCols, &
-                                                 mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
-
- end function
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_cholesky_c_interface_template.X90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
@@ -1999,36 +1080,10 @@
  !c> */
 
  !c> int elpa_cholesky_complex_single(int na, complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
- function elpa_cholesky_complex_wrapper_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                               wantDebug) result(success) &
-       bind(C,name="elpa_cholesky_complex_single")
-
-   use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_cholesky_complex_single
-
-   implicit none
-
-   integer(kind=c_int), value     :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug
-   integer(kind=c_int)            :: success
-
-   complex(kind=c_float_complex)  :: a(lda,matrixCols)
-
-   logical                        :: wantDebugFortran, successFortran
-
-   if (wantDebug .ne. 0) then
-     wantDebugFortran = .true.
-   else
-     wantDebugFortran = .false.
-   endif
-
-   successFortran = elpa_cholesky_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
-
-   if (successFortran) then
-     success = 1
-   else
-     success = 0
-   endif
-
- end function
-
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "precision_macros.h"
+#include "elpa_cholesky_c_interface_template.X90"
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */

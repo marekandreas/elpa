@@ -1,3 +1,4 @@
+#if 0
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
@@ -50,34 +51,36 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !
-! Author: P. Kus, MPCDF
+! Author: Andreas Marek, MPCDF
+#endif
 
-#include "config-f90.h"
+#include "../sanity.X90"
 
-module timings_dummy
-  implicit none
-  
-  type, public :: timer_dummy_t
-      contains
-      procedure, pass :: start => timer_start
-      procedure, pass :: stop => timer_stop
-  end type 
+#if REALCASE == 1
 
-  type(timer_dummy_t) :: timer
+!cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
+#define check_memcpy_cuda(file, success) call check_memcpy_CUDA_f(file, __LINE__, success)
+#define check_alloc_cuda(file, success) call check_alloc_CUDA_f(file, __LINE__, success)
+#define check_dealloc_cuda(file, success) call check_dealloc_CUDA_f(file, __LINE__, success)
 
-  contains
+#endif
 
-  subroutine timer_start(self, name, replace)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in)  :: name
-    logical, intent(in), optional  :: replace
-    
-  end subroutine
-  
-  subroutine timer_stop(self, name)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in), optional :: name
-    
-  end subroutine
+#if REALCASE == 1
 
-end module timings_dummy
+#include "elpa1_tridiag_template.X90"
+#include "elpa1_trans_ev_template.X90"
+#include "elpa1_solve_tridi_real_template.X90"
+#include "elpa1_merge_systems_real_template.X90"
+#include "elpa1_tools_template.X90"
+
+#endif
+
+#if COMPLEXCASE == 1
+
+#include "elpa1_tridiag_template.X90"
+#include "elpa1_trans_ev_template.X90"
+#include "elpa1_tools_template.X90"
+
+#define ALREADY_DEFINED 1
+
+#endif

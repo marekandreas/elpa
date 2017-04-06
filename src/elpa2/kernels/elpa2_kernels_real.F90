@@ -15,9 +15,6 @@
 !      and
 !    - IBM Deutschland GmbH
 !
-!    This particular source code file contains additions, changes and
-!    enhancements authored by Intel Corporation which is not part of
-!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -43,41 +40,56 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+! --------------------------------------------------------------------------------------------------
+!
+! This file contains the compute intensive kernels for the Householder transformations.
+! It should be compiled with the highest possible optimization level.
+!
+! On Intel use -O3 -xSSE4.2 (or the SSE level fitting to your CPU)
 !
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !
-! Author: P. Kus, MPCDF
-
+! --------------------------------------------------------------------------------------------------
 #include "config-f90.h"
+#ifdef USE_ASSUMED_SIZE
+#define PACK_REAL_TO_COMPLEX
+#else
+#undef PACK_REAL_TO_COMPLEX
+#endif
 
-module timings_dummy
-  implicit none
-  
-  type, public :: timer_dummy_t
-      contains
-      procedure, pass :: start => timer_start
-      procedure, pass :: stop => timer_stop
-  end type 
+#ifndef USE_ASSUMED_SIZE
+module real_generic_kernel
 
-  type(timer_dummy_t) :: timer
+  private
+  public double_hh_trafo_real_generic_double
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  public double_hh_trafo_real_generic_single
+#endif
 
   contains
+#endif
 
-  subroutine timer_start(self, name, replace)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in)  :: name
-    logical, intent(in), optional  :: replace
-    
-  end subroutine
-  
-  subroutine timer_stop(self, name)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in), optional :: name
-    
-  end subroutine
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../precision_macros.h"
+#include "elpa2_kernels_real_template.X90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
 
-end module timings_dummy
+#ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../../precision_macros.h"
+#include "elpa2_kernels_real_template.X90"
+#undef REALCASE
+#undef SINGLE_PRECISION
+#endif
+
+#ifndef USE_ASSUMED_SIZE
+end module real_generic_kernel
+#endif
+! --------------------------------------------------------------------------------------------------

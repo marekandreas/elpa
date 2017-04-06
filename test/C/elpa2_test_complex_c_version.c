@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
 
    int success;
 
-   int THIS_COMPLEX_ELPA_KERNEL_API, useGPU, bandwidth;
+   int THIS_COMPLEX_ELPA_KERNEL_API, useGPU;
 
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
@@ -211,12 +211,11 @@ int main(int argc, char** argv) {
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
    useGPU = 0;
-   bandwidth = -1;
    THIS_COMPLEX_ELPA_KERNEL_API = ELPA_2STAGE_COMPLEX_GENERIC;
 #ifdef DOUBLE_PRECISION_COMPLEX
-   success = elpa_solve_evp_complex_2stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API, useGPU, bandwidth);
+   success = elpa_solve_evp_complex_2stage_double_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API, useGPU);
 #else
-   success = elpa_solve_evp_complex_2stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API, useGPU, bandwidth);
+   success = elpa_solve_evp_complex_2stage_single_precision(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API, useGPU);
 #endif
 
    if (success != 1) {

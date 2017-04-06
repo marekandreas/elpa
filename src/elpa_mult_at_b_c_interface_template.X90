@@ -50,34 +50,50 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !
-! Author: P. Kus, MPCDF
+! Author: A. Marek, MPCDF
 
-#include "config-f90.h"
 
-module timings_dummy
-  implicit none
-  
-  type, public :: timer_dummy_t
-      contains
-      procedure, pass :: start => timer_start
-      procedure, pass :: stop => timer_stop
-  end type 
+function elpa_mult_at_b_&
+  &MATH_DATATYPE&
+  &_wrapper_&
+  &PRECISION&
+  & (uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) &
+     bind(C,name="elpa_mult_at_b_&
+     &MATH_DATATYPE&
+     &_&
+     &PRECISION&
+     ") result(success)
+    use, intrinsic :: iso_c_binding
+    use elpa1_auxiliary, only : elpa_mult_at_b_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION
 
-  type(timer_dummy_t) :: timer
+    implicit none
 
-  contains
+    character(1,C_CHAR), value  :: uplo_a, uplo_c
+    integer(kind=c_int), value  :: na, ncb, lda, ldb, nblk, mpi_comm_rows, mpi_comm_cols, ldc, &
+                                   ldaCols, ldbCols, ldcCols
+    integer(kind=c_int)         :: success
+#ifdef USE_ASSUMED_SIZE
+    real(kind=C_DATATYPE_KIND)  :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
+    real(kind=C_DATATYPE_KIND)  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+#endif
+    logical                     :: successFortran
 
-  subroutine timer_start(self, name, replace)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in)  :: name
-    logical, intent(in), optional  :: replace
-    
-  end subroutine
-  
-  subroutine timer_stop(self, name)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in), optional :: name
-    
-  end subroutine
+    successFortran = elpa_mult_at_b_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols)
 
-end module timings_dummy
+    if (successFortran) then
+      success = 1
+    else
+      success = 0
+    endif
+
+  end function
+
+

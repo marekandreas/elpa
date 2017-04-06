@@ -42,42 +42,64 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-!
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
-!
-! Copyright of the original code rests with the authors inside the ELPA
-! consortium. The copyright of any additional modifications shall rest
-! with their original authors, but shall adhere to the licensing terms
-! distributed along with the original code in the file "COPYING".
-!
-! Author: P. Kus, MPCDF
+! Author: A. Marek, MPCDF
 
-#include "config-f90.h"
+function elpa_cholesky_&
+ &MATH_DATATYPE&
+ &_wrapper_&
+ &PRECISION&
+ & (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success) &
+       bind(C,name="elpa_cholesky_&
+       &MATH_DATATYPE&
+       &_&
+       &PRECISION&
+       &")
 
-module timings_dummy
-  implicit none
-  
-  type, public :: timer_dummy_t
-      contains
-      procedure, pass :: start => timer_start
-      procedure, pass :: stop => timer_stop
-  end type 
+   use, intrinsic :: iso_c_binding
+   use elpa1_auxiliary, only : elpa_cholesky_&
+       &MATH_DATATYPE&
+       &_&
+       &PRECISION
 
-  type(timer_dummy_t) :: timer
+   implicit none
 
-  contains
+   integer(kind=c_int), value :: na, lda, nblk, matrixCols,  mpi_comm_rows, mpi_comm_cols, wantDebug
+   integer(kind=c_int)        :: success
+#if REALCASE == 1
+#ifdef USE_ASSUMED_SIZE
+   real(kind=C_DATATYPE_KIND) :: a(lda,*)
+#else
+   real(kind=C_DATATYPE_KIND) :: a(lda,matrixCols)
+#endif
+#endif
+#if COMPLEXCASE == 1
+#ifdef USE_ASSUMED_SIZE
+   complex(kind=C_DATATYPE_KIND) :: a(lda,*)
+#else
+   complex(kind=C_DATATYPE_KIND) :: a(lda,matrixCols)
+#endif
+#endif
 
-  subroutine timer_start(self, name, replace)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in)  :: name
-    logical, intent(in), optional  :: replace
-    
-  end subroutine
-  
-  subroutine timer_stop(self, name)
-    class(timer_dummy_t), intent(inout), target :: self
-    character(len=*), intent(in), optional :: name
-    
-  end subroutine
 
-end module timings_dummy
+   logical                    :: successFortran, wantDebugFortran
+
+   if (wantDebug .ne. 0) then
+     wantDebugFortran = .true.
+   else
+     wantDebugFortran = .false.
+   endif
+
+   successFortran = elpa_cholesky_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   & (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebugFortran)
+
+   if (successFortran) then
+     success = 1
+   else
+     success = 0
+   endif
+
+ end function
+
