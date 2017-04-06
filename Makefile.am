@@ -40,10 +40,10 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/GPU/mod_cuda.F90 \
         src/interface_c_kernel.F90 \
         src/mod_pack_unpack_gpu.F90 \
-        src/elpa_qr/qr_utils.F90 \
-        src/elpa_qr/elpa_qrkernels.F90 \
-        src/elpa_qr/elpa_pdlarfb.F90 \
-        src/elpa_qr/elpa_pdgeqrf.F90
+        src/elpa2/qr/qr_utils.F90 \
+        src/elpa2/qr/elpa_qrkernels.F90 \
+        src/elpa2/qr/elpa_pdlarfb.F90 \
+        src/elpa2/qr/elpa_pdgeqrf.F90
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa1/elpa_reduce_add_vectors.X90 \
@@ -1005,7 +1005,7 @@ EXTRA_DIST = \
   src/elpa1/elpa_invert_trm.X90 \
   src/elpa1/elpa_multiply_a_b.X90 \
   src/elpa1/elpa_solve_tridi.X90 \
-  src/elpa_qr/elpa_qrkernels.X90 \
+  src/elpa2/qr/elpa_qrkernels.X90 \
   src/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/ev_tridi_band_gpu_c_v2_real_template.Xcu \
   src/GPU/cuUtils_template.Xcu \
