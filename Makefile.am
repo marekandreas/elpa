@@ -23,13 +23,13 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_private_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
 libelpa@SUFFIX@_private_la_SOURCES = \
-        src/mod_precision.F90 \
-        src/mod_mpi.F90 \
-        src/mod_mpi_stubs.F90 \
+        src/helpers/mod_precision.F90 \
+        src/helpers/mod_mpi.F90 \
+        src/helpers/mod_mpi_stubs.F90 \
 	src/mod_redist_band.F90 \
         src/mod_pack_unpack_cpu.F90 \
         src/elpa2/mod_compute_hh_trafo.F90 \
-        src/aligned_mem.F90 \
+        src/helpers/aligned_mem.F90 \
         src/elpa1/elpa1_compute_private.F90 \
 	src/elpa2/elpa2_determine_workload.F90 \
         src/elpa2/elpa2_compute.F90 \
@@ -89,7 +89,7 @@ libelpa@SUFFIX@_la_SOURCES =
 
 if HAVE_DETAILED_TIMINGS
   libelpa@SUFFIX@_private_la_SOURCES += \
-        src/timer.F90 \
+        src/helpers/timer.F90 \
         src/ftimings/ftimings.F90 \
         src/ftimings/ftimings_type.F90 \
         src/ftimings/ftimings_value.F90 \
@@ -100,7 +100,7 @@ if HAVE_DETAILED_TIMINGS
         src/ftimings/papi.c
 else
   libelpa@SUFFIX@_private_la_SOURCES += \
-        src/timer_dummy.F90
+        src/helpers/timer_dummy.F90
 endif
 
 if WITH_GPU_VERSION
@@ -109,7 +109,7 @@ if WITH_GPU_VERSION
 endif
 
 if !WITH_MPI
-  libelpa@SUFFIX@_private_la_SOURCES += src/mod_time_c.F90
+  libelpa@SUFFIX@_private_la_SOURCES += src/helpers/mod_time_c.F90
 if !HAVE_DETAILED_TIMINGS
   libelpa@SUFFIX@_private_la_SOURCES += src/ftimings/time.c
 endif
@@ -887,8 +887,8 @@ TESTS = $(check_SCRIPTS)
 	@chmod +x $@
 
 # Preprocessed files (just used for manual inspection)
-mod_precision.i: $(top_srcdir)/src/mod_precision.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/mod_precision.F90 -o $@
+mod_precision.i: $(top_srcdir)/src/helpers/mod_precision.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/helpers/mod_precision.F90 -o $@
 
 elpa1_utilities.i: $(top_srcdir)/src/elpa1_utilities.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa1_utilities.F90 -o $@
