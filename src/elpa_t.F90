@@ -64,7 +64,10 @@ module elpa_type
 
      procedure, public :: get_communicators => get_communicators
      generic, public :: solve => elpa_solve_real_double, &
-                                 elpa_solve_complex_double
+                                 elpa_solve_real_single, &
+                                 elpa_solve_complex_double, &
+                                 elpa_solve_complex_single
+
 
      procedure, public :: destroy => elpa_destroy
 
@@ -72,7 +75,9 @@ module elpa_type
      procedure, private :: elpa_set_integer
      procedure, private :: elpa_get_integer
      procedure, private :: elpa_solve_real_double
+     procedure, private :: elpa_solve_real_single
      procedure, private :: elpa_solve_complex_double
+     procedure, private :: elpa_solve_complex_single
 
   end type elpa_t
 
@@ -274,6 +279,40 @@ module elpa_type
 
     end subroutine
 
+    subroutine elpa_solve_real_single(self, a, ev, q, success)
+      use elpa
+      use elpa_utilities, only : error_unit
+
+      use iso_c_binding
+      implicit none
+      class(elpa_t)       :: self
+
+      real(kind=c_float) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols), &
+                             ev(self%na)
+      integer, optional :: success
+      logical :: success_l
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+      success_l = elpa_solve_evp_real_single(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                             self%local_nrows,  self%nblk, self%local_ncols, &
+                                             self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                             self%mpi_comm_parent)
+
+      if (present(success)) then
+        if (success_l) then
+          success = ELPA_OK
+        else
+          success = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+#else
+      success = ELPA_ERROR
+#endif
+
+    end subroutine
+
 
     subroutine elpa_solve_complex_double(self, a, ev, q, success)
       use elpa
@@ -303,6 +342,43 @@ module elpa_type
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
+
+    end subroutine
+
+
+    subroutine elpa_solve_complex_single(self, a, ev, q, success)
+      use elpa
+      use elpa_utilities, only : error_unit
+
+      use iso_c_binding
+      implicit none
+      class(elpa_t)                  :: self
+
+      complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+      real(kind=c_float) :: ev(self%na)
+
+      integer, optional :: success
+      logical :: success_l
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+      success_l = elpa_solve_evp_complex_single(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                                self%local_nrows,  self%nblk, self%local_ncols, &
+                                                self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                                self%mpi_comm_parent)
+
+      if (present(success)) then
+        if (success_l) then
+          success = ELPA_OK
+        else
+          success = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+#else
+      success = ELPA_ERROR
+#endif
+
 
     end subroutine
 
