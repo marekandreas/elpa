@@ -64,380 +64,43 @@ module mod_prepare_matrix
 #endif
 
   contains
-#define DOUBLE_PRECISION_COMPLEX 1
 
-    subroutine prepare_matrix_complex_double(na, myid, sc_desc, a, z, as)
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../src/precision_macros.h"
+#include "prepare_matrix_template.X90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
-      use precision
-      implicit none
-
-      integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
-      complex(kind=ck8), intent(inout) :: z(:,:), a(:,:), as(:,:)
-
-      complex(kind=ck8), parameter     :: CONE = (1.0_rk8, 0.0_rk8)
-
-      real(kind=rk8) :: xr(size(a,dim=1), size(a,dim=2))
-
-      integer, allocatable :: iseed(:)
-      integer ::  n
-
-      ! for getting a hermitian test matrix A we get a random matrix Z
-      ! and calculate A = Z + Z**H
-
-      ! we want different random numbers on every process
-      ! (otherwise A might get rank deficient):
-
-      call random_seed(size=n)
-      allocate(iseed(n))
-      iseed(:) = myid
-      call random_seed(put=iseed)
-      call random_number(xr)
-
-      z(:,:) = xr(:,:)
-      call RANDOM_NUMBER(xr)
-      z(:,:) = z(:,:) + (0.0_rk8,1.0_rk8)*xr(:,:)
-
-      a(:,:) = z(:,:)
-
-      if (myid == 0) then
-        print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
-      endif
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call pztranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
-#else
-      call pctranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
-#endif
-
-#else /* WITH_MPI */
-      a = a + transpose(conjg(z))
-#endif /* WITH_MPI */
-
-      if (myid == 0) then
-        print '(a)','| Random matrix block has been symmetrized'
-      endif
-
-      ! save original matrix A for later accuracy checks
-
-      as = a
-
-      deallocate(iseed)
-
-    end subroutine
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void prepare_matrix_complex_double_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       complex double *a, complex double *z, complex double *as);
-#else
-    !c> void prepare_matrix_complex_single_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       complex *a, complex *z, complex *as);
-#endif
-#ifdef DOUBLE_PRECISION_COMPLEX
-    subroutine prepare_matrix_complex_wrapper_double&
-#else
-    subroutine prepare_matrix_complex_wrapper_single&
-#endif
-          (na, myid, na_rows, na_cols, sc_desc, a, z, as) &
-#ifdef DOUBLE_PRECISION_COMPLEX
-                                          bind(C, name="prepare_matrix_complex_double_f")
-#else
-                                          bind(C, name="prepare_matrix_complex_single_f")
-#endif
-      use iso_c_binding
-
-      implicit none
-
-      integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
-      integer(kind=c_int)           :: sc_desc(1:9)
-#ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=c_double)        :: &
-#else
-      complex(kind=c_float)         :: &
-#endif
-                                       z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
-                                       as(1:na_rows,1:na_cols)
-
-      call prepare_matrix_complex_double(na, myid, sc_desc, a, z, as)
-    end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
 
-#undef DOUBLE_PRECISION_COMPLEX
-
-    subroutine prepare_matrix_complex_single(na, myid, sc_desc, a, z, as)
-
-      use precision
-      implicit none
-
-      integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
-      complex(kind=ck4), intent(inout) :: z(:,:), a(:,:), as(:,:)
-
-      complex(kind=ck4), parameter     :: CONE = (1.0_rk4, 0.0_rk4)
-
-      real(kind=rk4) :: xr(size(a,dim=1), size(a,dim=2))
-      integer, allocatable :: iseed(:)
-      integer :: n
-
-      ! for getting a hermitian test matrix A we get a random matrix Z
-      ! and calculate A = Z + Z**H
-
-      ! we want different random numbers on every process
-      ! (otherwise A might get rank deficient):
-
-      call random_seed(size=n)
-      allocate(iseed(n))
-      iseed(:) = myid
-      call random_seed(put=iseed)
-      call random_number(xr)
-      z(:,:) = xr(:,:)
-      call random_number(xr)
-      z(:,:) = z(:,:) + (0.0_rk4,1.0_rk4)*xr(:,:)
-
-      a(:,:) = z(:,:)
-
-      if (myid == 0) then
-        print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
-      endif
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call pztranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
-#else
-      call pctranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
-#endif
-
-#else /* WITH_MPI */
-      a = a + transpose(conjg(z))
-#endif /* WITH_MPI */
-
-      if (myid == 0) then
-        print '(a)','| Random matrix block has been symmetrized'
-      endif
-
-      ! save original matrix A for later accuracy checks
-
-      as = a
-
-      deallocate(iseed)
-    end subroutine
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void prepare_matrix_complex_double_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       complex double *a, complex double *z, complex double *as);
-#else
-    !c> void prepare_matrix_complex_single_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       complex *a, complex *z, complex *as);
-#endif
-    subroutine prepare_matrix_complex_wrapper_single(na, myid, na_rows, na_cols, sc_desc, a, z, as) &
-#ifdef DOUBLE_PRECISION_COMPLEX
-                                          bind(C, name="prepare_matrix_complex_double_f")
-#else
-                                          bind(C, name="prepare_matrix_complex_single_f")
-#endif
-      use iso_c_binding
-
-      implicit none
-
-      integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
-      integer(kind=c_int)           :: sc_desc(1:9)
-#ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=c_double)        :: &
-#else
-      complex(kind=c_float)         :: &
-#endif
-                                       z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
-                                       as(1:na_rows,1:na_cols)
-
-      call prepare_matrix_complex_single(na, myid, sc_desc, a, z, as)
-    end subroutine
-
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "../../src/precision_macros.h"
+#include "prepare_matrix_template.X90"
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-#define DOUBLE_PRECISION_REAL 1
 
-    subroutine prepare_matrix_real_double(na, myid, sc_desc, a, z, as)
-
-      use precision
-      implicit none
-
-      integer(kind=ik), intent(in)     :: myid, na, sc_desc(:)
-      real(kind=rk8), intent(inout)     :: z(:,:), a(:,:), as(:,:)
-
-      integer, allocatable  :: iseed(:)
-      integer :: n
-
-      ! for getting a hermitian test matrix A we get a random matrix Z
-      ! and calculate A = Z + Z**H
-
-      ! we want different random numbers on every process
-      ! (otherwise A might get rank deficient):
-
-      call random_seed(size=n)
-      allocate(iseed(n))
-      iseed(:) = myid
-      call random_seed(put=iseed)
-      call random_number(z)
-
-      a(:,:) = z(:,:)
-
-      if (myid == 0) then
-        print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
-      endif
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-      call pdtran(na, na, 1.0_rk8, z, 1, 1, sc_desc, 1.0_rk8, a, 1, 1, sc_desc) ! A = A + Z**T
-#else
-      call pstran(na, na, 1.0_rk4, z, 1, 1, sc_desc, 1.0_rk4, a, 1, 1, sc_desc) ! A = A + Z**T
-#endif
-
-#else /* WITH_MPI */
-      a = a + transpose(z)
-#endif /* WITH_MPI */
-
-      if (myid == 0) then
-        print '(a)','| Random matrix block has been symmetrized'
-      endif
-
-      ! save original matrix A for later accuracy checks
-
-      as = a
-
-      deallocate(iseed)
-    end subroutine
-
-#ifdef DOUBLE_PRECISION_REAL
-    !c> void prepare_matrix_real_double_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       double *a, double *z, double *as);
-#else
-    !c> void prepare_matrix_real_single_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       float *a, float *z, float *as);
-#endif
-#ifdef DOUBLE_PRECISION_REAL
-    subroutine prepare_matrix_real_wrapper_double&
-#else
-    subroutine prepare_matrix_real_wrapper_single&
-#endif
-          (na, myid, na_rows, na_cols, sc_desc, a, z, as) &
-#ifdef DOUBLE_PRECISION_REAL
-                                          bind(C, name="prepare_matrix_real_double_f")
-#else
-                                          bind(C, name="prepare_matrix_real_single_f")
-#endif
-      use iso_c_binding
-
-      implicit none
-
-      integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
-      integer(kind=c_int)           :: sc_desc(1:9)
-#ifdef DOUBLE_PRECISION_REAL
-      real(kind=c_double)           :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
-                                       as(1:na_rows,1:na_cols)
-#else
-      real(kind=c_float)            :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
-                                       as(1:na_rows,1:na_cols)
-#endif
-      call prepare_matrix_real_double(na, myid, sc_desc, a, z, as)
-    end subroutine
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../src/precision_macros.h"
+#include "prepare_matrix_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
-#undef DOUBLE_PRECISION_REAL
 
-    subroutine prepare_matrix_real_single(na, myid, sc_desc, a, z, as)
-
-      use precision
-      implicit none
-
-      integer(kind=ik), intent(in)     :: myid, na, sc_desc(:)
-      real(kind=rk4), intent(inout)     :: z(:,:), a(:,:), as(:,:)
-
-      integer, allocatable :: iseed(:)
-      integer :: n
-
-      ! for getting a hermitian test matrix A we get a random matrix Z
-      ! and calculate A = Z + Z**H
-
-      ! we want different random numbers on every process
-      ! (otherwise A might get rank deficient):
-
-      call random_seed(size=n)
-      allocate(iseed(n))
-      iseed(:) = myid
-      call random_seed(put=iseed)
-      call random_number(z)
-
-      a(:,:) = z(:,:)
-
-      if (myid == 0) then
-        print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
-      endif
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-      call pdtran(na, na, 1.0_rk8, z, 1, 1, sc_desc, 1.0_rk8, a, 1, 1, sc_desc) ! A = A + Z**T
-#else
-      call pstran(na, na, 1.0_rk4, z, 1, 1, sc_desc, 1.0_rk4, a, 1, 1, sc_desc) ! A = A + Z**T
-#endif
-
-#else /* WITH_MPI */
-      a = a + transpose(z)
-#endif /* WITH_MPI */
-
-      if (myid == 0) then
-        print '(a)','| Random matrix block has been symmetrized'
-      endif
-
-      ! save original matrix A for later accuracy checks
-
-      as = a
-
-      deallocate(iseed)
-    end subroutine
-
-#ifdef DOUBLE_PRECISION_REAL
-    !c> void prepare_matrix_real_double_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       double *a, double *z, double *as);
-#else
-    !c> void prepare_matrix_real_single_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       float *a, float *z, float *as);
-#endif
-#ifdef DOUBLE_PRECISION_REAL
-    subroutine prepare_matrix_real_wrapper_double&
-#else
-    subroutine prepare_matrix_real_wrapper_single&
-#endif
-          (na, myid, na_rows, na_cols, sc_desc, a, z, as) &
-#ifdef DOUBLE_PRECISION_REAL
-                                          bind(C, name="prepare_matrix_real_double_f")
-#else
-                                          bind(C, name="prepare_matrix_real_single_f")
-#endif
-      use iso_c_binding
-
-      implicit none
-
-      integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
-      integer(kind=c_int)           :: sc_desc(1:9)
-#ifdef DOUBLE_PRECISION_REAL
-      real(kind=c_double)           :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
-                                       as(1:na_rows,1:na_cols)
-#else
-      real(kind=c_float)            :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
-                                       as(1:na_rows,1:na_cols)
-#endif
-      call prepare_matrix_real_single(na, myid, sc_desc, a, z, as)
-    end subroutine
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../../src/precision_macros.h"
+#include "prepare_matrix_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 

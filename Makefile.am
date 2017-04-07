@@ -490,6 +490,7 @@ libelpatest@SUFFIX@_la_SOURCES = \
 	test/shared/setup_mpi.F90 \
 	test/shared/blacs_infrastructure.F90 \
 	test/shared/prepare_matrix.F90 \
+	test/shared/prepare_matrix_template.X90 \
 	test/shared/mod_output_types.F90 \
 	test/shared/mod_from_c.F90 \
 	test/shared/call_elpa1.c
@@ -1018,6 +1019,7 @@ EXTRA_DIST = \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu \
   src/GPU/cuUtils_template.Xcu \
+  test/shared/prepare_matrix_template.X90\
   nvcc_wrap \
   test_project/Makefile.am \
   test_project/autogen.sh \
