@@ -42,25 +42,26 @@
 ! Author: A. Marek, MPCDF
 #include "config-f90.h"
 
-module mod_prepare_matrix
+module mod_check_correctness
 
-  interface prepare_matrix_double
-    module procedure prepare_matrix_complex_double
-    module procedure prepare_matrix_real_double
+
+  interface check_correctness_double
+    module procedure check_correctness_complex_double
+    module procedure check_correctness_real_double
   end interface
 
-  interface prepare_matrix
-    module procedure prepare_matrix_complex_double
-    module procedure prepare_matrix_real_double
+  interface check_correctness
+    module procedure check_correctness_complex_double
+    module procedure check_correctness_real_double
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  interface prepare_matrix_single
-    module procedure prepare_matrix_real_single
+  interface check_correctness_single
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    module procedure prepare_matrix_complex_single
+    module procedure check_correctness_complex_single
 #endif
-   end interface
+    module procedure check_correctness_real_single
+  end interface
 #endif
 
   contains
@@ -68,41 +69,38 @@ module mod_prepare_matrix
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../src/precision_macros.h"
-#include "prepare_matrix_template.X90"
+#include "check_correctness_template.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
-
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-
 
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../../src/precision_macros.h"
-#include "prepare_matrix_template.X90"
+#include "check_correctness_template.X90"
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../src/precision_macros.h"
-#include "prepare_matrix_template.X90"
+#include "check_correctness_template.X90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
-
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../../src/precision_macros.h"
-#include "prepare_matrix_template.X90"
+#include "check_correctness_template.X90"
 #undef SINGLE_PRECISION
 #undef REALCASE
+
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
 
-end module
+end module mod_check_correctness

@@ -486,7 +486,8 @@ libelpatest@SUFFIX@_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MO
 libelpatest@SUFFIX@_la_SOURCES = \
 	test/shared/util.F90 \
 	test/shared/read_input_parameters.F90  \
-	test/shared/check_correctnes.F90 \
+	test/shared/check_correctness.F90 \
+	test/shared/check_correctness_template.X90 \
 	test/shared/setup_mpi.F90 \
 	test/shared/blacs_infrastructure.F90 \
 	test/shared/prepare_matrix.F90 \
@@ -930,8 +931,8 @@ test_real.i: $(top_srcdir)/test/Fortran/test_real1.F90
 blacs_infrastructure.i: $(top_srcdir)/test/shared_sources/blacs_infrastructure.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/test/shared_sources/blacs_infrastructure.F90 -o $@
 
-check_correctnes.i: $(top_srcdir)/test/shared_sources/check_correctnes.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/test/shared_sources/check_correctnes.F90 -o $@
+check_correctness.i: $(top_srcdir)/test/shared_sources/check_correctness.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/test/shared_sources/check_correctness.F90 -o $@
 
 prepare_matrix.i: $(top_srcdir)/test/shared_sources/prepare_matrix.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -c $(top_srcdir)/test/shared_sources/prepare_matrix.F90 -o $@
@@ -1020,6 +1021,7 @@ EXTRA_DIST = \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu \
   src/GPU/cuUtils_template.Xcu \
   test/shared/prepare_matrix_template.X90\
+  test/shared/check_correctness_template.X90 \
   nvcc_wrap \
   test_project/Makefile.am \
   test_project/autogen.sh \
