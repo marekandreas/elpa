@@ -495,6 +495,7 @@ libelpatest@SUFFIX@_la_SOURCES = \
 	test/shared/setup_mpi.F90 \
 	test/shared/blacs_infrastructure.F90 \
 	test/shared/prepare_matrix.F90 \
+	test/shared/mod_assert.F90 \
 	test/shared/prepare_matrix_template.X90 \
 	test/shared/mod_output_types.F90 \
 	test/shared/mod_from_c.F90 \
