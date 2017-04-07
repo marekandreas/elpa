@@ -14,6 +14,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa.F90 \
         src/elpa1/elpa1.F90 \
         src/elpa2/elpa2.F90 \
+        src/elpa2/elpa2_new_interface.F90 \
 	src/elpa1/elpa1_auxiliary.F90 \
         src/elpa1/elpa1_utilities.F90 \
         src/elpa2/elpa2_utilities.F90 \
@@ -55,6 +56,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa2/elpa2_compute_complex_template.X90 \
 	src/elpa1/elpa1_template.X90 \
 	src/elpa2/elpa2_template.X90 \
+	src/elpa2/elpa2_template_new_interface.X90 \
 	src/elpa1_c_interface_template.X90 \
 	src/elpa2_c_interface_template.X90 \
 	src/elpa_driver_c_interface_template.X90 \
@@ -1014,6 +1016,7 @@ EXTRA_DIST = \
   src/elpa2/elpa2_symm_matrix_allreduce_real_template.X90 \
   src/elpa1/elpa1_template.X90 \
   src/elpa2/elpa2_template.X90 \
+  src/elpa2/elpa2_template_new_interface.X90 \
   src/elpa1_c_interface_template.X90 \
   src/elpa2_c_interface_template.X90 \
   src/elpa_driver_c_interface_template.X90 \

@@ -250,7 +250,7 @@ module elpa_type
 
 
     subroutine elpa_solve_real_double(self, a, ev, q, success)
-      use elpa
+      use elpa2_new
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -262,7 +262,7 @@ module elpa_type
       integer, optional :: success
       logical :: success_l
 
-      success_l = elpa_solve_evp_real_double(self%na, self%nev, a, self%local_nrows, ev, q,  &
+      success_l = elpa_solve_evp_real_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                              self%local_nrows,  self%nblk, self%local_ncols, &
                                              self%mpi_comm_rows, self%mpi_comm_cols,         &
                                              self%mpi_comm_parent)
@@ -280,7 +280,7 @@ module elpa_type
     end subroutine
 
     subroutine elpa_solve_real_single(self, a, ev, q, success)
-      use elpa
+      use elpa2_new
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -293,7 +293,7 @@ module elpa_type
       logical :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_solve_evp_real_single(self%na, self%nev, a, self%local_nrows, ev, q,  &
+      success_l = elpa_solve_evp_real_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                              self%local_nrows,  self%nblk, self%local_ncols, &
                                              self%mpi_comm_rows, self%mpi_comm_cols,         &
                                              self%mpi_comm_parent)
@@ -315,7 +315,7 @@ module elpa_type
 
 
     subroutine elpa_solve_complex_double(self, a, ev, q, success)
-      use elpa
+      use elpa2_new
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -328,7 +328,7 @@ module elpa_type
       integer, optional :: success
       logical :: success_l
 
-      success_l = elpa_solve_evp_complex_double(self%na, self%nev, a, self%local_nrows, ev, q,  &
+      success_l = elpa_solve_evp_complex_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                 self%local_nrows,  self%nblk, self%local_ncols, &
                                                 self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                 self%mpi_comm_parent)
@@ -347,7 +347,7 @@ module elpa_type
 
 
     subroutine elpa_solve_complex_single(self, a, ev, q, success)
-      use elpa
+      use elpa2_new
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -361,7 +361,7 @@ module elpa_type
       logical :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-      success_l = elpa_solve_evp_complex_single(self%na, self%nev, a, self%local_nrows, ev, q,  &
+      success_l = elpa_solve_evp_complex_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                 self%local_nrows,  self%nblk, self%local_ncols, &
                                                 self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                 self%mpi_comm_parent)
