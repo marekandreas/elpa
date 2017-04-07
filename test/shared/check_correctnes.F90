@@ -67,24 +67,26 @@ module mod_check_correctness
   contains
 
 #define DOUBLE_PRECISION_COMPLEX 1
-    function check_correctness_complex_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status)
+    function check_correctness_complex_double(na, nev, as, z, ev, sc_desc, myid) result(status)
 
       use elpa_mpi
       use precision
       implicit none
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, nev, myid
-      complex(kind=ck8), intent(in)     :: as(:,:), z(:,:)
-      complex(kind=ck8), intent(inout)  :: tmp1(:,:), tmp2(:,:)
-      real(kind=rk8)                    :: ev(:)
-      complex(kind=ck8)                 :: xc
-      integer(kind=ik)                 :: sc_desc(:), mpierr
-      complex(kind=ck8), parameter      :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
+      complex(kind=ck8), intent(in)    :: as(:,:), z(:,:)
+      real(kind=rk8)                   :: ev(:)
+      integer(kind=ik)                 :: sc_desc(:)
+
+      complex(kind=ck8), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      complex(kind=ck8)                :: xc
+      complex(kind=ck8), parameter     :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
       integer(kind=ik)                 :: i
-      real(kind=rk8)                    :: err, errmax
+      real(kind=rk8)                   :: err, errmax
 #ifndef WITH_MPI
-      complex(kind=ck8)                 :: zdotc, cdotc
+      complex(kind=ck8)                :: zdotc, cdotc
 #endif
+      integer :: mpierr
 
       status = 0
 
@@ -265,42 +267,43 @@ module mod_check_correctness
       endif
     end function
 
+
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> int check_correctness_complex_from_fortran_double_precision(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_complex_double_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         complex double *as, complex double *z, double *ev,
-    !c>                                         int sc_desc[9], int myid,
-    !c>                                         complex double *tmp1, complex double *tmp2);
+    !c>                                         int sc_desc[9], int myid);
 #else
-    !c> int check_correctness_complex_from_fortran_single_precision(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_complex_single_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         complex *as, complex *z, float *ev,
-    !c>                                         int sc_desc[9], int myid,
-    !c>                                         complex *tmp1, complex *tmp2);
+    !c>                                         int sc_desc[9], int myid);
 #endif
-    function check_correctness_complex_wrapper_double(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid, &
-                                                      tmp1, tmp2) result(status) &
 #ifdef DOUBLE_PRECISION_COMPLEX
-      bind(C,name="check_correctness_complex_from_fortran_double_precision")
+    function check_correctness_complex_double_f&
 #else
-      bind(C,name="check_correctness_complex_from_fortran_single_precision")
+    function check_correctness_complex_single_f&
+#endif
+          (na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid) result(status) &
+#ifdef DOUBLE_PRECISION_COMPLEX
+      bind(C,name="check_correctness_complex_double_f")
+#else
+      bind(C,name="check_correctness_complex_single_f")
 #endif
       use iso_c_binding
 
       implicit none
 
-      integer(kind=c_int)         :: status
-      integer(kind=c_int), value  :: na, nev, myid, na_rows, na_cols
+      integer(kind=c_int)            :: status
+      integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols
 #ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=c_double)      :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      complex(kind=c_double)      :: tmp1(1:na_rows,1:na_cols), tmp2(1:na_rows,1:na_cols)
-      real(kind=c_double)         :: ev(1:na)
+      complex(kind=c_double_complex) :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
+      real(kind=c_double)            :: ev(1:na)
 #else
-      complex(kind=c_float)       :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      complex(kind=c_float)       :: tmp1(1:na_rows,1:na_cols), tmp2(1:na_rows,1:na_cols)
-      real(kind=c_float)          :: ev(1:na)
+      complex(kind=c_float_complex)  :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
+      real(kind=c_float)             :: ev(1:na)
 #endif
-      integer(kind=c_int)         :: sc_desc(1:9)
+      integer(kind=c_int)            :: sc_desc(1:9)
 
-      status = check_correctness_complex_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+      status = check_correctness_complex_double(na, nev, as, z, ev, sc_desc, myid)
 
     end function
 
@@ -308,7 +311,7 @@ module mod_check_correctness
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
 #undef DOUBLE_PRECISION_COMPLEX
-    function check_correctness_complex_single(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status)
+    function check_correctness_complex_single(na, nev, as, z, ev, sc_desc, myid) result(status)
 
       use elpa_mpi
       use precision
@@ -316,7 +319,7 @@ module mod_check_correctness
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, nev, myid
       complex(kind=ck4), intent(in)     :: as(:,:), z(:,:)
-      complex(kind=ck4), intent(inout)  :: tmp1(:,:), tmp2(:,:)
+      complex(kind=ck4), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
       real(kind=rk4)                    :: ev(:)
       complex(kind=ck4)                 :: xc
       integer(kind=ik)                 :: sc_desc(:), mpierr
@@ -509,24 +512,25 @@ module mod_check_correctness
     end function
 
 
-
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> int check_correctness_complex_from_fortran_double_precision(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_complex_double_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         complex double *as, complex double *z, double *ev,
-    !c>                                         int sc_desc[9], int myid,
-    !c>                                         complex double *tmp1, complex double *tmp2);
+    !c>                                         int sc_desc[9], int myid);
 #else
-    !c> int check_correctness_complex_from_fortran_single_precision(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_complex_single_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         complex *as, complex *z, float *ev,
-    !c>                                         int sc_desc[9], int myid,
-    !c>                                         complex *tmp1, complex *tmp2);
+    !c>                                         int sc_desc[9], int myid);
 #endif
-    function check_correctness_complex_wrapper_single(na, nev, na_rows, na_cols, as, z, ev, sc_desc, &
-                                                      myid, tmp1, tmp2) result(status) &
 #ifdef DOUBLE_PRECISION_COMPLEX
-      bind(C,name="check_correctness_complex_from_fortran_double_precision")
+    function check_correctness_complex_double_f&
 #else
-      bind(C,name="check_correctness_complex_from_fortran_single_precision")
+    function check_correctness_complex_single_f&
+#endif
+          (na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid) result(status) &
+#ifdef DOUBLE_PRECISION_COMPLEX
+      bind(C,name="check_correctness_complex_double_f")
+#else
+      bind(C,name="check_correctness_complex_single_f")
 #endif
       use iso_c_binding
 
@@ -536,42 +540,41 @@ module mod_check_correctness
       integer(kind=c_int), value  :: na, nev, myid, na_rows, na_cols
 #ifdef DOUBLE_PRECISION_COMPLEX
       complex(kind=c_double)      :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      complex(kind=c_double)      :: tmp1(1:na_rows,1:na_cols), tmp2(1:na_rows,1:na_cols)
       real(kind=c_double)         :: ev(1:na)
 #else
       complex(kind=c_float)       :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      complex(kind=c_float)       :: tmp1(1:na_rows,1:na_cols), tmp2(1:na_rows,1:na_cols)
       real(kind=c_float)          :: ev(1:na)
 #endif
       integer(kind=c_int)         :: sc_desc(1:9)
 
-      status = check_correctness_complex_single(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+      status = check_correctness_complex_single(na, nev, as, z, ev, sc_desc, myid)
 
     end function
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 #define DOUBLE_PRECISION_REAL 1
-    function check_correctness_real_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status)
+    function check_correctness_real_double(na, nev, as, z, ev, sc_desc, myid) result(status)
 
       use elpa_mpi
       use precision
       implicit none
       integer(kind=ik)               :: status
       integer(kind=ik), intent(in)   :: na, nev, myid
-      real(kind=rk8), intent(in)      :: as(:,:), z(:,:)
-      real(kind=rk8), intent(inout)   :: tmp1(:,:), tmp2(:,:)
-      real(kind=rk8)                  :: ev(:)
+      real(kind=rk8), intent(in)     :: as(:,:), z(:,:)
+      real(kind=rk8)                 :: ev(:)
       integer(kind=ik)               :: sc_desc(:), mpierr
 
+      real(kind=rk8), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+
       integer(kind=ik)               :: i
-      real(kind=rk8)                  :: err, errmax
+      real(kind=rk8)                 :: err, errmax
 #ifndef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-      real(kind=rk8)                  :: dnrm2
+      real(kind=rk8)                 :: dnrm2
 #else
-      real(kind=rk8)                  :: snrm2
+      real(kind=rk8)                 :: snrm2
 #endif
 
 #endif
@@ -764,22 +767,24 @@ module mod_check_correctness
     end function
 
 #ifdef DOUBLE_PRECISION_REAL
-    !c> int check_correctness_real_from_fortran_double_precision(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_real_double_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         double *as, double *z, double *ev,
-    !c>                                         int sc_desc[9], int myid,
-    !c>                                         double *tmp1, double *tmp2);
+    !c>                                         int sc_desc[9], int myid);
 #else
-    !c> int check_correctness_real_from_fortran_single_precision(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_real_single_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         float *as, float *z, float *ev,
-    !c>                                         int sc_desc[9], int myid,
-    !c>                                         float *tmp1, float *tmp2);
+    !c>                                         int sc_desc[9], int myid);
 #endif
-    function check_correctness_real_wrapper_double(na, nev, na_rows, na_cols, as, z, ev, sc_desc, &
-                                                   myid, tmp1, tmp2) result(status) &
 #ifdef DOUBLE_PRECISION_REAL
-      bind(C,name="check_correctness_real_from_fortran_double_precision")
+    function check_correctness_real_double_f &
 #else
-      bind(C,name="check_correctness_real_from_fortran_single_precision")
+    function check_correctness_real_single_f &
+#endif
+          (na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid) result(status) &
+#ifdef DOUBLE_PRECISION_REAL
+      bind(C,name="check_correctness_real_double_f")
+#else
+      bind(C,name="check_correctness_real_single_f")
 #endif
       use iso_c_binding
 
@@ -789,42 +794,40 @@ module mod_check_correctness
       integer(kind=c_int), value  :: na, nev, myid, na_rows, na_cols
 #ifdef DOUBLE_PRECISION_REAL
       real(kind=c_double)         :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      real(kind=c_double)         :: tmp1(1:na_rows,1:na_cols), tmp2(1:na_rows,1:na_cols)
       real(kind=c_double)         :: ev(1:na)
 #else
       real(kind=c_float)          :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      real(kind=c_float)          :: tmp1(1:na_rows,1:na_cols), tmp2(1:na_rows,1:na_cols)
       real(kind=c_float)          :: ev(1:na)
 #endif
       integer(kind=c_int)         :: sc_desc(1:9)
 
-      status = check_correctness_real_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+      status = check_correctness_real_double(na, nev, as, z, ev, sc_desc, myid)
 
     end function
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
 #undef DOUBLE_PRECISION_REAL
-    function check_correctness_real_single(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2) result(status)
+    function check_correctness_real_single(na, nev, as, z, ev, sc_desc, myid) result(status)
 
       use elpa_mpi
       use precision
       implicit none
       integer(kind=ik)               :: status
       integer(kind=ik), intent(in)   :: na, nev, myid
-      real(kind=rk4), intent(in)      :: as(:,:), z(:,:)
-      real(kind=rk4), intent(inout)   :: tmp1(:,:), tmp2(:,:)
-      real(kind=rk4)                  :: ev(:)
+      real(kind=rk4), intent(in)     :: as(:,:), z(:,:)
+      real(kind=rk4)                 :: ev(:)
       integer(kind=ik)               :: sc_desc(:), mpierr
 
+      real(kind=rk4), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
       integer(kind=ik)               :: i
-      real(kind=rk4)                  :: err, errmax
+      real(kind=rk4)                 :: err, errmax
 #ifndef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-      real(kind=rk8)                  :: dnrm2
+      real(kind=rk8)                 :: dnrm2
 #else
-      real(kind=rk4)                  :: snrm2
+      real(kind=rk4)                 :: snrm2
 #endif
 
 #endif
@@ -1019,22 +1022,24 @@ module mod_check_correctness
     end function
 
 #ifdef DOUBLE_PRECISION_REAL
-    !c> int check_correctness_real_from_fortran_double_precision(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_real_double_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         double *as, double *z, double *ev,
-    !c>                                         int sc_desc[9], int myid,
-    !c>                                         double *tmp1, double *tmp2);
+    !c>                                         int sc_desc[9], int myid);
 #else
-    !c> int check_correctness_real_from_fortran_single_precision(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_real_single_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         float *as, float *z, float *ev,
-    !c>                                         int sc_desc[9], int myid,
-    !c>                                         float *tmp1, float *tmp2);
+    !c>                                         int sc_desc[9], int myid);
 #endif
-    function check_correctness_real_wrapper_single(na, nev, na_rows, na_cols, as, z, ev, sc_desc, &
-                                                   myid, tmp1, tmp2) result(status) &
 #ifdef DOUBLE_PRECISION_REAL
-      bind(C,name="check_correctness_real_from_fortran_double_precision")
+    function check_correctness_real_double_f&
 #else
-      bind(C,name="check_correctness_real_from_fortran_single_precision")
+    function check_correctness_real_single_f&
+#endif
+          (na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid) result(status) &
+#ifdef DOUBLE_PRECISION_REAL
+      bind(C,name="check_correctness_real_double_f")
+#else
+      bind(C,name="check_correctness_real_single_f")
 #endif
       use iso_c_binding
 
@@ -1044,16 +1049,14 @@ module mod_check_correctness
       integer(kind=c_int), value  :: na, nev, myid, na_rows, na_cols
 #ifdef DOUBLE_PRECISION_REAL
       real(kind=c_double)         :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      real(kind=c_double)         :: tmp1(1:na_rows,1:na_cols), tmp2(1:na_rows,1:na_cols)
       real(kind=c_double)         :: ev(1:na)
 #else
       real(kind=c_float)          :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      real(kind=c_float)          :: tmp1(1:na_rows,1:na_cols), tmp2(1:na_rows,1:na_cols)
       real(kind=c_float)          :: ev(1:na)
 #endif
       integer(kind=c_int)         :: sc_desc(1:9)
 
-      status = check_correctness_real_single(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+      status = check_correctness_real_single(na, nev, as, z, ev, sc_desc, myid)
 
     end function
 

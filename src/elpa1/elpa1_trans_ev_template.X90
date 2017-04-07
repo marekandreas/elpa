@@ -244,9 +244,9 @@
       if (useGPU) then
         ! todo: this is used only for copying hmv to device.. it should be possible to go without it
         allocate(hvm1(max_local_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
-	call check_alloc("trans_ev_&
-	&MATH_DATATYPE&
-	&", "hvm1", istat, errorMessage)
+        call check_alloc("trans_ev_&
+        &MATH_DATATYPE&
+        &", "hvm1", istat, errorMessage)
 
         successCUDA = cuda_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_datatype)
         check_alloc_cuda("trans_ev", successCUDA)
@@ -294,13 +294,13 @@
         if (nb>0) &
           call MPI_Bcast(hvb, nb, &
 #if REALCASE == 1
-	  &MPI_REAL_PRECISION&
+          &MPI_REAL_PRECISION&
 #endif
 
 #if COMPLEXCASE == 1
           &MPI_COMPLEX_PRECISION&
 #endif
-	  , cur_pcol, mpi_comm_cols, mpierr)
+          , cur_pcol, mpi_comm_cols, mpierr)
         call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
@@ -322,7 +322,7 @@
           ! This can be done in different ways, we use dsyrk or zherk
 
           tmat = 0
-	  call timer%start("blas")
+          call timer%start("blas")
           if (l_rows>0) &
 #if REALCASE == 1
             call PRECISION_SYRK('U', 'T',   &
@@ -330,8 +330,8 @@
 #if COMPLEXCASE == 1
             call PRECISION_HERK('U', 'C',   &
 #endif
-	                         nstor, l_rows, ONE, hvm, ubound(hvm,dim=1), ZERO, tmat, max_stored_rows)
-	  call timer%stop("blas")
+                                 nstor, l_rows, ONE, hvm, ubound(hvm,dim=1), ZERO, tmat, max_stored_rows)
+          call timer%stop("blas")
           nc = 0
           do n = 1, nstor-1
             h1(nc+1:nc+n) = tmat(1:n,n+1)
@@ -346,7 +346,7 @@
 #if COMPLEXCASE == 1
           &MPI_COMPLEX_PRECISION&
 #endif
-	  &, MPI_SUM, mpi_comm_rows, mpierr)
+          &, MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -358,24 +358,24 @@
           nc = 0
           tmat(1,1) = tau(ice-nstor+1)
           do n = 1, nstor-1
-	    call timer%start("blas")
+            call timer%start("blas")
 #if REALCASE == 1
             call PRECISION_TRMV('L', 'T', 'N',    &
 #endif
 #if COMPLEXCASE == 1
             call PRECISION_TRMV('L', 'C', 'N',    &
 #endif
-                      	        n, tmat, max_stored_rows, h2(nc+1), 1)
-	    call timer%stop("blas")
+                                n, tmat, max_stored_rows, h2(nc+1), 1)
+            call timer%stop("blas")
 
             tmat(n+1,1:n) = &
 #if REALCASE == 1
-	    -h2(nc+1:nc+n)  &
+            -h2(nc+1:nc+n)  &
 #endif
 #if COMPLEXCASE == 1
             -conjg(h2(nc+1:nc+n)) &
 #endif
-	    *tau(ice-nstor+n+1)
+            *tau(ice-nstor+n+1)
 
             tmat(n+1,n+1) = tau(ice-nstor+n+1)
             nc = nc+n
@@ -401,7 +401,7 @@
 
           if (l_rows>0) then
             if (useGPU) then
-	      call timer%start("cublas")
+              call timer%start("cublas")
 #if REALCASE == 1
               call cublas_PRECISION_GEMM('T', 'N',     &
 #endif
@@ -410,18 +410,18 @@
 #endif
                                          nstor, l_cols, l_rows, ONE, hvm_dev, hvm_ubnd,  &
                                          q_dev, ldq,  ZERO, tmp_dev, nstor)
-	      call timer%stop("cublas")
+              call timer%stop("cublas")
 
             else ! useGPU
 
-	      call timer%start("blas")
+              call timer%start("blas")
 #if REALCASE == 1
               call PRECISION_GEMM('T', 'N',           &
 #endif
 #if COMPLEXCASE == 1
               call PRECISION_GEMM('C', 'N',           &
 #endif
-             	                  nstor, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
+                                  nstor, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
                                   q_mat, ldq, ZERO, tmp1, nstor)
               call timer%stop("blas")
             endif ! useGPU
@@ -452,7 +452,7 @@
 #if COMPLEXCASE == 1
           &MPI_COMPLEX_PRECISION&
 #endif
-	  &, MPI_SUM, mpi_comm_rows, mpierr)
+          &, MPI_SUM, mpi_comm_rows, mpierr)
           call timer%stop("mpi_communication")
           ! copy back tmp2 - after reduction...
           if (useGPU) then
@@ -468,33 +468,33 @@
 
           if (l_rows>0) then
             if (useGPU) then
-	      call timer%start("cublas")
+              call timer%start("cublas")
               call cublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
-	                                 nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
+                                         nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
                                          tmp_dev, nstor)
 
               call cublas_PRECISION_GEMM('N', 'N' ,l_rows ,l_cols ,nstor,  &
                                          -ONE, hvm_dev, hvm_ubnd, tmp_dev, nstor,   &
                                          ONE, q_dev, ldq)
-  	      call timer%stop("cublas")
+              call timer%stop("cublas")
             else !useGPU
 #ifdef WITH_MPI
               ! tmp2 = tmat * tmp2
-	      call timer%start("blas")
+              call timer%start("blas")
               call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
                                   ONE, tmat, max_stored_rows, tmp2, nstor)
               !q_mat = q_mat - hvm*tmp2
               call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
                                   -ONE, hvm, ubound(hvm,dim=1), tmp2, nstor, ONE, q_mat, ldq)
-	      call timer%stop("blas")
+              call timer%stop("blas")
 #else /* WITH_MPI */
-	      call timer%start("blas")
+              call timer%start("blas")
 
               call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
                                   ONE, tmat, max_stored_rows, tmp1, nstor)
               call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
                                   -ONE, hvm, ubound(hvm,dim=1), tmp1, nstor, ONE, q_mat, ldq)
-	      call timer%stop("blas")
+              call timer%stop("blas")
 #endif /* WITH_MPI */
             endif ! useGPU
           endif  ! l_rows>0
@@ -506,8 +506,8 @@
       deallocate(tmat, h1, h2, tmp1, tmp2, hvb, hvm, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"trans_ev_&
-	&MATH_DATATYPE&
-	&: error when deallocating hvm "//errorMessage
+        &MATH_DATATYPE&
+        &: error when deallocating hvm "//errorMessage
         stop 1
       endif
 
@@ -519,8 +519,8 @@
         deallocate(hvm1, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_&
-	  &MATH_DATATYPE&
-	  &: error when deallocating hvm1 "//errorMessage
+          &MATH_DATATYPE&
+          &: error when deallocating hvm1 "//errorMessage
           stop 1
         endif
 

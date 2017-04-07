@@ -17,6 +17,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa1/elpa1_auxiliary.F90 \
         src/elpa1/elpa1_utilities.F90 \
         src/elpa2/elpa2_utilities.F90 \
+	src/elpa_t.F90 \
         src/elpa_utilities.F90
 
 # internal parts
@@ -43,7 +44,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/qr/qr_utils.F90 \
         src/elpa2/qr/elpa_qrkernels.F90 \
         src/elpa2/qr/elpa_pdlarfb.F90 \
-        src/elpa2/qr/elpa_pdgeqrf.F90
+        src/elpa2/qr/elpa_pdgeqrf.F90 \
+	src/elpa_options.c
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa1/elpa_reduce_add_vectors.X90 \
@@ -308,7 +310,7 @@ BUILT_SOURCES = $(generated_headers)
 # install public Fortran modules files in the include/ dir
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = $(wildcard modules/*)
-nobase_elpa_include_HEADERS += elpa/elpa.h elpa/elpa_kernel_constants.h elpa/elpa_generated.h
+nobase_elpa_include_HEADERS += elpa/elpa.h elpa/elpa_kernel_constants.h elpa/elpa_solver_constants.h elpa/elpa_constants.h elpa/elpa_generated.h
 
 dist_man_MANS = \
            man/solve_evp_real.3 \
@@ -380,6 +382,7 @@ dist_files_DATA = \
   test/Fortran/test_invert_trm_real.F90 \
   test/Fortran/test_cholesky_complex.F90 \
   test/Fortran/test_invert_trm_complex.F90 \
+  test/Fortran/test_new_interface.F90 \
   test/Fortran/elpa_tests.F90 \
   src/elpa2/elpa2_print_kernels.F90
 
@@ -407,7 +410,6 @@ noinst_PROGRAMS = \
   elpa2_test_complex@SUFFIX@ \
   elpa2_test_complex_default@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
-  elpa2_test_complex_api@SUFFIX@ \
   elpa2_test_complex_banded@SUFFIX@ \
   elpa_driver_real@SUFFIX@ \
   elpa_driver_complex@SUFFIX@ \
@@ -424,6 +426,7 @@ noinst_PROGRAMS = \
   elpa2_test_real_c_version@SUFFIX@ \
   elpa2_test_complex_c_version@SUFFIX@ \
   elpa_driver_real_c_version@SUFFIX@ \
+  elpa_test_new_interface@SUFFIX@ \
   elpa_driver_complex_c_version@SUFFIX@
 
 if WANT_SINGLE_PRECISION_COMPLEX
@@ -496,6 +499,11 @@ libelpatest@SUFFIX@_la_SOURCES += \
 	test/shared/redir.c \
 	test/shared/redirect.F90
 endif
+elpa_test_new_interface@SUFFIX@_SOURCES = test/Fortran/test_new_interface.F90
+elpa_test_new_interface@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
+elpa_test_new_interface@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@private_modules @FC_MODINC@private_modules
+EXTRA_elpa_test_new_interface@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 
 elpa1_test_real_c_version@SUFFIX@_SOURCES = test/C/elpa1_test_real_c_version.c
 elpa1_test_real_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
@@ -826,6 +834,7 @@ check_SCRIPTS = \
   elpa2_test_real_c_version@SUFFIX@.sh \
   elpa2_test_complex_c_version@SUFFIX@.sh \
   elpa_driver_real_c_version@SUFFIX@.sh \
+  elpa_test_new_interface@SUFFIX@.sh \
   elpa_driver_complex_c_version@SUFFIX@.sh
 
 if WANT_SINGLE_PRECISION_REAL

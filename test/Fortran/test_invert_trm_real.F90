@@ -96,7 +96,6 @@ program test_invert_trm
 #else
    real(kind=rk8)              :: dlange
 #endif
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
    real(kind=rk8), parameter   :: pi = 3.141592653589793238462643383279_rk8
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
@@ -212,7 +211,7 @@ program test_invert_trm
    allocate(d (na))
    allocate(e (na))
 
-   call prepare_matrix_double(na, myid, sc_desc, iseed,  b, z, bs)
+   call prepare_matrix_double(na, myid, sc_desc, b, z, bs)
    bs(:,:) = b(:,:)
 
    a(:,:) = 0.0_rk8

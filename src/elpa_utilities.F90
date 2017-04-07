@@ -48,6 +48,7 @@
 ! Author: Andreas Marek, MPCDF
 
 #include "config-f90.h"
+#include <elpa/elpa_solver_constants.h>
 
 module ELPA_utilities
 
@@ -68,7 +69,6 @@ module ELPA_utilities
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter :: error_unit = 0
 #endif
-
 
   !******
   contains

@@ -141,7 +141,7 @@ subroutine elpa_reduce_add_vectors_&
 #endif
          do lc=1,nvc
             do i = n, nblks_tot-1, lcm_s_t
-	       k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+               k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                ns = (i/nps)*nblk ! local start of block i
                nl = min(nvr-i*nblk,nblk) ! length
                aux1(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
@@ -184,7 +184,7 @@ subroutine elpa_reduce_add_vectors_&
 #endif
             do lc=1,nvc
                do i = n, nblks_tot-1, lcm_s_t
-	          k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+                  k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                   ns = (i/npt)*nblk ! local start of block i
                   nl = min(nvr-i*nblk,nblk) ! length
                   vmat_t(ns+1:ns+nl,lc) = vmat_t(ns+1:ns+nl,lc) + aux2(k+1:k+nl)

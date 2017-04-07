@@ -118,12 +118,9 @@ program test_complex2
    integer, external             :: numroc
 
    complex(kind=ck8), parameter   :: CZERO = (0.d0,0.d0), CONE = (1.d0,0.d0)
-   real(kind=rk8), allocatable    :: ev(:), xr(:,:)
+   real(kind=rk8), allocatable    :: ev(:)
 
-   complex(kind=ck8), allocatable :: a(:,:), z(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
-
-
-   integer(kind=ik)              :: iseed(4096) ! Random seed, size should be sufficient for every generator
+   complex(kind=ck8), allocatable :: a(:,:), z(:,:), as(:,:)
 
    integer(kind=ik)              :: STATUS
 #ifdef WITH_OPENMP
@@ -245,12 +242,8 @@ program test_complex2
    allocate(as(na_rows,na_cols))
 
    allocate(ev(na))
-   allocate(xr(na_rows,na_cols))
 
-   call prepare_matrix_double(na, myid, sc_desc, iseed, xr, a, z, as)
-
-   deallocate(xr)
-
+   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -370,17 +363,12 @@ program test_complex2
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   allocate(tmp1(na_rows,na_cols))
-   allocate(tmp2(na_rows,na_cols))
-
-   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid, tmp1, tmp2)
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
 
    deallocate(z)
-   deallocate(tmp1)
-   deallocate(tmp2)
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS

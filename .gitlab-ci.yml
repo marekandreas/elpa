@@ -1,5 +1,6 @@
 before_script:
   - export LANG=C
+  - ulimit -s unlimited
   - if [ $HOST != "hydra03" -a $HOST != "hydra04" -a $HOST != "hydra05"  -a $HOST != "hydra06"  -a $HOST != "hydra07"  ] ; then module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools pkg-config ; fi
   - module list
   - export MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"

@@ -94,8 +94,6 @@ program test_transpose_multiply
    real(kind=rk4)              :: slange
 #endif
 
-   integer(kind=ik)           :: iseed(4096) ! Random seed, size should be sufficient for every generator
-
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
@@ -206,8 +204,7 @@ program test_transpose_multiply
 
    allocate(ev(na))
 
-   call prepare_matrix_single(na, myid, sc_desc, iseed,  a, z, as)
-
+   call prepare_matrix_single(na, myid, sc_desc, a, z, as)
 
    b(:,:) = 2.0_rk4 * a(:,:)
    c(:,:) = 0.0_rk4

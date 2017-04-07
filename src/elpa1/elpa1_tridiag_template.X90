@@ -387,12 +387,12 @@
           endif
 
             if (n_stored_vecs > 0 .and. l_rows > 0) then
-	      call timer%start("blas")
+              call timer%start("blas")
 #if COMPLEXCASE == 1
               aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
               call PRECISION_GEMV('N',   &
-	                          l_rows, 2*n_stored_vecs,                                  &
+                                  l_rows, 2*n_stored_vecs,                                  &
                                   ONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),        &
 #if REALCASE == 1
                                   uv_stored_cols(l_cols+1,1), ubound(uv_stored_cols,dim=1), &
@@ -402,7 +402,7 @@
 
 #endif
                                   ONE, v_row, 1)
-	       call timer%stop("blas")
+               call timer%stop("blas")
 
             endif
 
@@ -650,7 +650,7 @@
 #if COMPLEXCASE == 1
             call PRECISION_GEMV('C',     &
 #endif
-	                        l_rows, 2*n_stored_vecs,   &
+                                l_rows, 2*n_stored_vecs,   &
                                 ONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),   &
                                 v_row,  1, ZERO, aux, 1)
 
@@ -669,12 +669,12 @@
 
         if (tile_size < istep-1) then
 
-	  call elpa_reduce_add_vectors_&
-	  &MATH_DATATYPE&
-	  &_&
-	  &PRECISION &
+          call elpa_reduce_add_vectors_&
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION &
           (u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
-	   mpi_comm_cols, istep-1, 1, nblk)
+           mpi_comm_cols, istep-1, 1, nblk)
 
         endif
 
@@ -693,11 +693,11 @@
         endif
 
         call elpa_transpose_vectors_&
-	&MATH_DATATYPE&
-	&_&
-	&PRECISION &
+        &MATH_DATATYPE&
+        &_&
+        &PRECISION &
         (u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-	 mpi_comm_rows, 1, istep-1, 1, nblk)
+         mpi_comm_rows, 1, istep-1, 1, nblk)
 
         ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
 #if REALCASE == 1
