@@ -260,13 +260,33 @@ module elpa_type
 
       real(kind=c_double) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols), &
                              ev(self%na)
-      integer, optional :: success
-      logical :: success_l
+      integer, optional   :: success
+      integer(kind=c_int) :: success_internal
+      logical             :: success_l
 
-      success_l = elpa_solve_evp_real_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                             self%local_nrows,  self%nblk, self%local_ncols, &
-                                             self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                             self%mpi_comm_parent)
+      if (self%get("solver",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry solver"
+          stop
+        endif
+        success_l = elpa_solve_evp_real_1stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                                          self%local_nrows,  self%nblk, self%local_ncols, &
+                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                                          self%mpi_comm_parent)
+
+      else if (self%get("solver",success_internal) .eq. 2) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry solver"
+          stop
+        endif
+        success_l = elpa_solve_evp_real_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                                          self%local_nrows,  self%nblk, self%local_ncols, &
+                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                                          self%mpi_comm_parent)
+      else
+        print *,"unknown solver"
+        stop
+      endif
 
       if (present(success)) then
         if (success_l) then
@@ -289,16 +309,36 @@ module elpa_type
       implicit none
       class(elpa_t)       :: self
 
-      real(kind=c_float) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols), &
+      real(kind=c_float)  :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols), &
                              ev(self%na)
-      integer, optional :: success
-      logical :: success_l
+      integer, optional   :: success
+      integer(kind=c_int) :: success_internal
+      logical             :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_solve_evp_real_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                             self%local_nrows,  self%nblk, self%local_ncols, &
-                                             self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                             self%mpi_comm_parent)
+      if (self%get("solver",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry solver"
+          stop
+        endif
+        success_l = elpa_solve_evp_real_1stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                                          self%local_nrows,  self%nblk, self%local_ncols, &
+                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                                          self%mpi_comm_parent)
+
+      else if (self%get("solver",success_internal) .eq. 2) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry solver"
+          stop
+        endif
+        success_l = elpa_solve_evp_real_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                                          self%local_nrows,  self%nblk, self%local_ncols, &
+                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                                          self%mpi_comm_parent)
+      else
+        print *,"unknown solver"
+        stop
+      endif
 
       if (present(success)) then
         if (success_l) then
@@ -326,15 +366,36 @@ module elpa_type
       class(elpa_t)                  :: self
 
       complex(kind=c_double_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
-      real(kind=c_double) :: ev(self%na)
+      real(kind=c_double)            :: ev(self%na)
 
-      integer, optional :: success
-      logical :: success_l
+      integer, optional              :: success
+      integer(kind=c_int)            :: success_internal
+      logical                        :: success_l
 
-      success_l = elpa_solve_evp_complex_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                self%local_nrows,  self%nblk, self%local_ncols, &
-                                                self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                self%mpi_comm_parent)
+ 
+      if (self%get("solver",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry solver"
+          stop
+        endif
+        success_l = elpa_solve_evp_complex_1stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                                          self%local_nrows,  self%nblk, self%local_ncols, &
+                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                                          self%mpi_comm_parent)
+
+      else if (self%get("solver",success_internal) .eq. 2) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry solver"
+          stop
+        endif
+        success_l = elpa_solve_evp_complex_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                                          self%local_nrows,  self%nblk, self%local_ncols, &
+                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                                          self%mpi_comm_parent)
+      else
+        print *,"unknown solver"
+        stop
+      endif
 
       if (present(success)) then
         if (success_l) then
@@ -356,19 +417,39 @@ module elpa_type
 
       use iso_c_binding
       implicit none
-      class(elpa_t)                  :: self
+      class(elpa_t)                 :: self
 
       complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
-      real(kind=c_float) :: ev(self%na)
+      real(kind=c_float)            :: ev(self%na)
 
-      integer, optional :: success
-      logical :: success_l
+      integer, optional             :: success
+      integer(kind=c_int)           :: success_internal
+      logical                       :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-      success_l = elpa_solve_evp_complex_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                self%local_nrows,  self%nblk, self%local_ncols, &
-                                                self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                self%mpi_comm_parent)
+      if (self%get("solver",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry solver"
+          stop
+        endif
+        success_l = elpa_solve_evp_complex_1stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                                          self%local_nrows,  self%nblk, self%local_ncols, &
+                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                                          self%mpi_comm_parent)
+
+      else if (self%get("solver",success_internal) .eq. 2) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry solver"
+          stop
+        endif
+        success_l = elpa_solve_evp_complex_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+                                                          self%local_nrows,  self%nblk, self%local_ncols, &
+                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
+                                                          self%mpi_comm_parent)
+      else
+        print *,"unknown solver"
+        stop
+      endif
 
       if (present(success)) then
         if (success_l) then
