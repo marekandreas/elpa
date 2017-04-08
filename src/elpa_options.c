@@ -49,6 +49,22 @@ int qr_valid(elpa_options_t options, int value) {
         }
 }
 
+/* GPU */
+int gpu_cardinality() {
+        return 2;
+}
+
+const int gpu_enumerate_option(unsigned int n) {
+        return n;
+}
+
+int gpu_valid(elpa_options_t options, int value) {
+        if (value >= 0 && value < gpu_cardinality()) {
+                return ELPA_OK;
+        } else {
+                return ELPA_ERROR;
+        }
+}
 
 /* Solver */
 int solver_cardinality() {
@@ -108,6 +124,7 @@ int complex_kernel_valid(elpa_options_t options, int value) {
 
 elpa_int_option_t elpa_int_options[] = {
         {"qr", 0, qr_cardinality, qr_enumerate_option, qr_valid},
+        {"gpu", 0, gpu_cardinality, gpu_enumerate_option, gpu_valid},
         {"solver", ELPA_SOLVER_1STAGE, solver_cardinality, solver_enumerate_option, solver_valid},
         {"real_kernel", ELPA_2STAGE_REAL_DEFAULT, real_kernel_cardinality, real_kernel_enumerate_option, real_kernel_valid},
         {"complex_kernel", ELPA_2STAGE_COMPLEX_DEFAULT, complex_kernel_cardinality, complex_kernel_enumerate_option, complex_kernel_valid},
