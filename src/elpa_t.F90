@@ -49,8 +49,8 @@ module elpa_type
 
   type :: elpa_t
    private
-   type(c_ptr) :: options = C_NULL_PTR
-   integer :: mpi_comm_parent = 0
+   type(c_ptr)         :: options = C_NULL_PTR
+   integer             :: mpi_comm_parent = 0
    integer(kind=c_int) :: mpi_comm_rows = 0
    integer(kind=c_int) :: mpi_comm_cols = 0
    integer(kind=c_int) :: na = 0
@@ -105,10 +105,10 @@ module elpa_type
   interface
     function get_int_option(options, name, success) result(value) bind(C, name="get_int_option")
       import c_ptr, c_char, c_int
-      type(c_ptr), value :: options
+      type(c_ptr), value                 :: options
       character(kind=c_char), intent(in) :: name(*)
-      integer(kind=c_int) :: value
-      integer(kind=c_int), optional :: success
+      integer(kind=c_int)                :: value
+      integer(kind=c_int), optional      :: success
     end function
   end interface
 
@@ -116,10 +116,10 @@ module elpa_type
   interface
     function set_int_option(options, name, value) result(success) bind(C, name="set_int_option")
       import c_ptr, c_char, c_int
-      type(c_ptr), value :: options
-      character(kind=c_char), intent(in) :: name(*)
+      type(c_ptr), value                     :: options
+      character(kind=c_char), intent(in)     :: name(*)
       integer(kind=c_int), intent(in), value :: value
-      integer(kind=c_int) :: success
+      integer(kind=c_int)                    :: success
     end function
   end interface
 
@@ -131,7 +131,7 @@ module elpa_type
       use elpa_utilities, only : error_unit
       implicit none
       integer, intent(in) :: api_version
-      integer :: success
+      integer             :: success
 
       if (earliest_api_version <= api_version .and. api_version <= current_api_version) then
         initDone = .true.
@@ -157,15 +157,15 @@ module elpa_type
       use precision
       use elpa_mpi
       use elpa_utilities, only : error_unit
-      use elpa1, only : elpa_get_communicators
+      use elpa1_new, only : elpa_get_communicators_new
       implicit none
 
       integer(kind=ik), intent(in) :: na, nev, local_nrows, local_ncols, nblk
-      integer, intent(in) :: mpi_comm_parent, process_row, process_col
-      type(elpa_t) :: obj
-      integer :: mpierr
+      integer, intent(in)          :: mpi_comm_parent, process_row, process_col
+      type(elpa_t)                 :: obj
+      integer                      :: mpierr
 
-      integer, optional :: success
+      integer, optional            :: success
 
       ! check whether init has ever been called
       if (.not.(elpa_initialized())) then
@@ -184,7 +184,7 @@ module elpa_type
       obj%nblk        = nblk
 
       obj%mpi_comm_parent = mpi_comm_parent
-      mpierr = elpa_get_communicators(mpi_comm_parent, process_row, process_col, obj%mpi_comm_rows, obj%mpi_comm_cols)
+      mpierr = elpa_get_communicators_new(mpi_comm_parent, process_row, process_col, obj%mpi_comm_rows, obj%mpi_comm_cols)
       if (mpierr /= MPI_SUCCESS) then
         write(error_unit, *) "elpa_create(): error constructing row and column communicators"
         if(present(success)) then
@@ -241,7 +241,7 @@ module elpa_type
     subroutine get_communicators(self, mpi_comm_rows, mpi_comm_cols)
       use iso_c_binding
       implicit none
-      class(elpa_t)                   :: self
+      class(elpa_t)                    :: self
 
       integer(kind=c_int), intent(out) :: mpi_comm_rows, mpi_comm_cols
       mpi_comm_rows = self%mpi_comm_rows
@@ -258,8 +258,12 @@ module elpa_type
       implicit none
       class(elpa_t)       :: self
 
-      real(kind=c_double) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols), &
-                             ev(self%na)
+!#ifdef USE_ASSUMED_SIZE
+!      real(kind=c_double) :: a(self%local_nrows, *), q(self%local_nrows, *)
+!#else
+      real(kind=c_double) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+!#endif
+      real(kind=c_double) :: ev(self%na)
       integer, optional   :: success
       integer(kind=c_int) :: success_internal
       logical             :: success_l
@@ -321,9 +325,12 @@ module elpa_type
       use iso_c_binding
       implicit none
       class(elpa_t)       :: self
-
-      real(kind=c_float)  :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols), &
-                             ev(self%na)
+!#ifdef USE_ASSUMED_SIZE
+!      real(kind=c_float)  :: a(self%local_nrows, *), q(self%local_nrows, *)
+!#else
+      real(kind=c_float)  :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+!#endif
+      real(kind=c_float)  :: ev(self%na)
       integer, optional   :: success
       integer(kind=c_int) :: success_internal
       logical             :: success_l
@@ -392,7 +399,11 @@ module elpa_type
       implicit none
       class(elpa_t)                  :: self
 
+!#ifdef USE_ASSUMED_SIZE
+!      complex(kind=c_double_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
+!#else
       complex(kind=c_double_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+!#endif
       real(kind=c_double)            :: ev(self%na)
 
       integer, optional              :: success
@@ -457,8 +468,11 @@ module elpa_type
       use iso_c_binding
       implicit none
       class(elpa_t)                 :: self
-
+!#ifdef USE_ASSUMED_SIZE
+!      complex(kind=c_float_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
+!#else
       complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+!#endif
       real(kind=c_float)            :: ev(self%na)
 
       integer, optional             :: success

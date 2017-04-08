@@ -416,7 +416,7 @@ end subroutine qr_pdlarft_tree_merge_1dcomm_double
 ! - assume right positions for v
 subroutine qr_pdlarfl_1dcomm_double(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,mpicomm)
     use precision
-    use ELPA1
+    use elpa1_new
     use qr_utils_mod
 
     implicit none
@@ -500,7 +500,7 @@ end subroutine qr_pdlarfl_1dcomm_double
 
 subroutine qr_pdlarfl2_tmatrix_1dcomm_double(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,idx,mb,rev,mpicomm)
     use precision
-    use ELPA1
+    use elpa1_new
     use qr_utils_mod
 
     implicit none
@@ -1171,7 +1171,7 @@ end subroutine qr_pdlarft_tree_merge_1dcomm_single
 ! - assume right positions for v
 subroutine qr_pdlarfl_1dcomm_single(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,mpicomm)
     use precision
-    use ELPA1
+    use elpa1_new
     use qr_utils_mod
 
     implicit none
@@ -1255,7 +1255,7 @@ end subroutine qr_pdlarfl_1dcomm_single
 
 subroutine qr_pdlarfl2_tmatrix_1dcomm_single(v,ldv,baseidx,a,lda,t,ldt,work,lwork,m,n,idx,mb,rev,mpicomm)
     use precision
-    use ELPA1
+    use elpa1_new
     use qr_utils_mod
 
     implicit none

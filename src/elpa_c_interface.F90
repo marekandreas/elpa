@@ -56,14 +56,14 @@
                                           mpi_comm_rows, mpi_comm_cols)     &
                                           result(mpierr) bind(C,name="get_elpa_row_col_comms")
     use, intrinsic :: iso_c_binding
-    use elpa1, only : get_elpa_row_col_comms
+    use elpa1, only : elpa_get_communicators
 
     implicit none
     integer(kind=c_int)         :: mpierr
     integer(kind=c_int), value  :: mpi_comm_world, my_prow, my_pcol
     integer(kind=c_int)         :: mpi_comm_rows, mpi_comm_cols
 
-    mpierr = get_elpa_row_col_comms(mpi_comm_world, my_prow, my_pcol, &
+    mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                     mpi_comm_rows, mpi_comm_cols)
 
   end function
@@ -82,14 +82,14 @@
                                           mpi_comm_rows, mpi_comm_cols)     &
                                           result(mpierr) bind(C,name="get_elpa_communicators")
     use, intrinsic :: iso_c_binding
-    use elpa1, only : get_elpa_communicators
+    use elpa1, only : elpa_get_communicators
 
     implicit none
     integer(kind=c_int)         :: mpierr
     integer(kind=c_int), value  :: mpi_comm_world, my_prow, my_pcol
     integer(kind=c_int)         :: mpi_comm_rows, mpi_comm_cols
 
-    mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
+    mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                     mpi_comm_rows, mpi_comm_cols)
 
   end function
