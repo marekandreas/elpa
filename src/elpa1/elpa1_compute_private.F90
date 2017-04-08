@@ -68,6 +68,7 @@ module ELPA1_COMPUTE
   public :: trans_ev_real
 
   public :: solve_tridi_double
+  public :: solve_tridi_double_new
 
   interface tridiag_real
     module procedure tridiag_real_double
@@ -81,6 +82,7 @@ module ELPA1_COMPUTE
   public :: tridiag_real_single        ! Transform real single-precision symmetric matrix to tridiagonal form
   public :: trans_ev_real_single       ! Transform real  single-precision eigenvectors of a tridiagonal matrix back
   public :: solve_tridi_single
+  public :: solve_tridi_single_new
 #endif
 
   public :: tridiag_complex_double            ! Transform complex hermitian matrix to tridiagonal form

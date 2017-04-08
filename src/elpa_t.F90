@@ -251,6 +251,7 @@ module elpa_type
 
     subroutine elpa_solve_real_double(self, a, ev, q, success)
       use elpa2_new
+      use elpa1_new
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -281,6 +282,7 @@ module elpa_type
 
     subroutine elpa_solve_real_single(self, a, ev, q, success)
       use elpa2_new
+      use elpa1_new
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -316,6 +318,7 @@ module elpa_type
 
     subroutine elpa_solve_complex_double(self, a, ev, q, success)
       use elpa2_new
+      use elpa1_new
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -348,6 +351,7 @@ module elpa_type
 
     subroutine elpa_solve_complex_single(self, a, ev, q, success)
       use elpa2_new
+      use elpa1_new
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
