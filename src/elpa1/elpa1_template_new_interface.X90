@@ -58,8 +58,8 @@ function elpa_solve_evp_&
          &MATH_DATATYPE&
 	 &_1stage_&
 	 &PRECISION&
-	 &_new (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-            useGPU) result(success)
+	 &_new ( na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+	        mpi_comm_cols, mpi_comm_all, useGPU) result(success)
    use precision
    use cuda_functions
    use mod_check_for_gpu
@@ -101,7 +101,7 @@ function elpa_solve_evp_&
    integer(kind=c_int)                             :: l_cols, l_rows, l_cols_nev, np_rows, np_cols
 #endif /* COMPLEXCASE */
 
-   logical, intent(in), optional                   :: useGPU
+   logical, intent(in)                             :: useGPU
    logical                                         :: success
 
    logical                                         :: do_useGPU
@@ -146,12 +146,29 @@ function elpa_solve_evp_&
 
    do_useGPU      = .false.
 
-   if (present(useGPU)) then
-     ! user defined GPU usage via the optional argument in the API call
-     if (useGPU) then
+
+   if (useGPU) then
+     if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+
+       do_useGPU = .true.
+       ! set the neccessary parameters
+       cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+       cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+       cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+       cudaHostRegisterPortable = cuda_hostRegisterPortable()
+       cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+     else
+       print *,"GPUs are requested but not detected! Aborting..."
+       success = .false.
+       return
+     endif
+   else
+     ! check whether set by environment variable
+     do_useGPU = gpu_usage_via_environment_variable()
+
+     if (do_useGPU) then
        if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
-         do_useGPU = .true.
          ! set the neccessary parameters
          cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
          cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
@@ -164,9 +181,6 @@ function elpa_solve_evp_&
          return
        endif
      endif
-   else
-     ! check whether set by environment variable
-     do_useGPU = gpu_usage_via_environment_variable()
    endif
 
 #if COMPLEXCASE == 1

@@ -264,6 +264,19 @@ module elpa_type
       integer(kind=c_int) :: success_internal
       logical             :: success_l
 
+      logical             :: useGPU
+
+      if (self%get("gpu",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry gpu"
+          stop
+        endif
+
+        useGPU = .true.
+      else
+        useGPU = .false.
+      endif
+
       if (self%get("solver",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
@@ -272,7 +285,7 @@ module elpa_type
         success_l = elpa_solve_evp_real_1stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent)
+                                                          self%mpi_comm_parent, useGPU)
 
       else if (self%get("solver",success_internal) .eq. 2) then
         if (success_internal .ne. ELPA_OK) then
@@ -282,7 +295,7 @@ module elpa_type
         success_l = elpa_solve_evp_real_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent)
+                                                          self%mpi_comm_parent, useGPU)
       else
         print *,"unknown solver"
         stop
@@ -315,7 +328,21 @@ module elpa_type
       integer(kind=c_int) :: success_internal
       logical             :: success_l
 
+      logical             :: useGPU
+
 #ifdef WANT_SINGLE_PRECISION_REAL
+
+      if (self%get("gpu",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry gpu"
+          stop
+        endif
+
+        useGPU = .true.
+      else
+        useGPU = .false.
+      endif
+
       if (self%get("solver",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
@@ -324,7 +351,7 @@ module elpa_type
         success_l = elpa_solve_evp_real_1stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent)
+                                                          self%mpi_comm_parent, useGPU)
 
       else if (self%get("solver",success_internal) .eq. 2) then
         if (success_internal .ne. ELPA_OK) then
@@ -334,7 +361,7 @@ module elpa_type
         success_l = elpa_solve_evp_real_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent)
+                                                          self%mpi_comm_parent, useGPU)
       else
         print *,"unknown solver"
         stop
@@ -372,7 +399,19 @@ module elpa_type
       integer(kind=c_int)            :: success_internal
       logical                        :: success_l
 
- 
+      logical                        :: useGPU
+
+      if (self%get("gpu",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry gpu"
+          stop
+        endif
+
+        useGPU = .true.
+      else
+        useGPU = .false.
+      endif
+
       if (self%get("solver",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
@@ -381,7 +420,7 @@ module elpa_type
         success_l = elpa_solve_evp_complex_1stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent)
+                                                          self%mpi_comm_parent, useGPU)
 
       else if (self%get("solver",success_internal) .eq. 2) then
         if (success_internal .ne. ELPA_OK) then
@@ -391,7 +430,7 @@ module elpa_type
         success_l = elpa_solve_evp_complex_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent)
+                                                          self%mpi_comm_parent, useGPU)
       else
         print *,"unknown solver"
         stop
@@ -426,7 +465,20 @@ module elpa_type
       integer(kind=c_int)           :: success_internal
       logical                       :: success_l
 
+      logical                       :: useGPU
+
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
+      if (self%get("gpu",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry gpu"
+          stop
+        endif
+
+        useGPU = .true.
+      else
+        useGPU = .false.
+      endif
+
       if (self%get("solver",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
@@ -435,7 +487,7 @@ module elpa_type
         success_l = elpa_solve_evp_complex_1stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent)
+                                                          self%mpi_comm_parent, useGPU)
 
       else if (self%get("solver",success_internal) .eq. 2) then
         if (success_internal .ne. ELPA_OK) then
@@ -445,7 +497,7 @@ module elpa_type
         success_l = elpa_solve_evp_complex_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent)
+                                                          self%mpi_comm_parent, useGPU)
       else
         print *,"unknown solver"
         stop

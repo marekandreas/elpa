@@ -55,13 +55,14 @@
   &2stage_&
   &PRECISION&
   &_new (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,   &
+         useGPU, &
 #if REALCASE == 1
-   THIS_ELPA_KERNEL_API, useQR,   &
+   THIS_ELPA_KERNEL_API, useQR   &
 #endif
 #if COMPLEXCASE == 1
-   THIS_ELPA_KERNEL_API,          &
+   THIS_ELPA_KERNEL_API          &
 #endif
-   useGPU) result(success)
+   &) result(success)
 
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
@@ -76,7 +77,7 @@
    use mod_check_for_gpu
    use iso_c_binding
    implicit none
-   logical, intent(in), optional             :: useGPU
+   logical, intent(in)                       :: useGPU
 #if REALCASE == 1
    logical, intent(in), optional             :: useQR
 #endif
@@ -176,11 +177,27 @@
     endif
 #endif /* REALCASE */
 
-    if (present(useGPU)) then
-      if (useGPU) then
-        if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+    if (useGPU) then
+      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
-           do_useGPU = .true.
+         do_useGPU = .true.
+
+         ! set the neccessary parameters
+         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+         cudaHostRegisterPortable = cuda_hostRegisterPortable()
+         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+      else
+        print *,"GPUs are requested but not detected! Aborting..."
+        success = .false.
+        return
+      endif
+    else
+      ! check whether set by environment variable
+      do_useGPU = gpu_usage_via_environment_variable()
+      if (do_useGPU) then
+        if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
            ! set the neccessary parameters
            cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
@@ -194,10 +211,7 @@
           return
         endif
       endif
-    else
-      ! check whether set by environment variable
-      do_useGPU = gpu_usage_via_environment_variable()
-   endif
+    endif
 
     if (present(THIS_ELPA_KERNEL_API)) then
       ! user defined kernel via the optional argument in the API call
