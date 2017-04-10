@@ -44,7 +44,7 @@
 
 #define stringify_(x) "x"
 #define stringify(x) stringify_(x)
-#define assert(x) call x_assert(x, stringify(x), __FILE__, __LINE__)
+#define assert(x) call x_assert(x, stringify(x), "test_new_interface_complex_1stage_gpu.F90", __LINE__)
 
 program test_interface
    use precision
