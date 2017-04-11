@@ -104,8 +104,8 @@
       call timer%start("elpa_mult_at_b_&
       &MATH_DATATYPE&
       &_&
-      &PRECISION &
-      ")
+      &PRECISION&
+      &_new")
 
       success = .true.
 
@@ -346,8 +346,8 @@
       call timer%stop("elpa_mult_at_b_&
       &MATH_DATATYPE&
       &_&
-      &PRECISION &
-      ")
+      &PRECISION&
+      &_new")
 
 #undef REALCASE
 #undef COMPLEXCASE

@@ -70,6 +70,13 @@ module ELPA2_new
 
   public :: elpa_solve_evp_real_2stage_double_new          !< Driver routine for real double-precision 2-stage eigenvalue problem
   public :: elpa_solve_evp_complex_2stage_double_new       !< Driver routine for complex double-precision 2-stage eigenvalue problem
+#ifdef WANT_SINGLE_PRECISION_REAL
+  public :: elpa_solve_evp_real_2stage_single_new          !< Driver routine for real single-precision 2-stage eigenvalue problem
+#endif
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  public :: elpa_solve_evp_complex_2stage_single_new       !< Driver routine for complex single-precision 2-stage eigenvalue problem
+#endif
 
   contains
 

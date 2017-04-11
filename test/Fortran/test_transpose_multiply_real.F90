@@ -222,7 +222,6 @@ program test_transpose_multiply
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-
    success = elpa_mult_at_b_real_double("F","F", na, na, a, na_rows, na_cols, b, na_rows, &
                                         na_cols, nblk, mpi_comm_rows, mpi_comm_cols, c,   &
                                         na_rows, na_cols)

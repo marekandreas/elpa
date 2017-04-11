@@ -1,4 +1,5 @@
 #include <elpa/elpa_constants.h>
+#include "config-f90.h"
 
 module elpa_type
   use, intrinsic :: iso_c_binding
@@ -47,6 +48,11 @@ module elpa_type
 
   public :: elpa_init, elpa_initialized, elpa_uninit, elpa_create, elpa_t, c_int, c_double, c_float
 
+  interface elpa_create
+    module procedure elpa_create_generic
+    module procedure elpa_create_special
+  end interface
+
   type :: elpa_t
    private
    type(c_ptr)         :: options = C_NULL_PTR
@@ -63,6 +69,10 @@ module elpa_type
      generic, public :: get => elpa_get_integer
 
      procedure, public :: get_communicators => get_communicators
+
+     procedure, public :: set_comm_rows
+     procedure, public :: set_comm_cols
+
      generic, public :: solve => elpa_solve_real_double, &
                                  elpa_solve_real_single, &
                                  elpa_solve_complex_double, &
@@ -162,7 +172,8 @@ module elpa_type
     end subroutine
 
 
-    function elpa_create(na, nev, local_nrows, local_ncols, nblk, mpi_comm_parent, process_row, process_col, success) result(obj)
+    function elpa_create_generic(na, nev, local_nrows, local_ncols, nblk, mpi_comm_parent, &
+                                 process_row, process_col, success) result(obj)
       use precision
       use elpa_mpi
       use elpa_utilities, only : error_unit
@@ -208,6 +219,58 @@ module elpa_type
 
     end function
 
+    function elpa_create_special(na, nev, local_nrows, local_ncols, nblk, success) result(obj)
+      use precision
+      use elpa_mpi
+      use elpa_utilities, only : error_unit
+      use elpa1_new, only : elpa_get_communicators_new
+      implicit none
+
+      integer(kind=ik), intent(in) :: na, nev, local_nrows, local_ncols, nblk
+      !integer, intent(in)          :: mpi_comm_rows, mpi_comm_cols, process_row, process_col
+      type(elpa_t)                 :: obj
+      integer                      :: mpierr
+
+      integer                      :: success
+
+      ! check whether init has ever been called
+      if (.not.(elpa_initialized())) then
+        write(error_unit, *) "elpa_create(): you must call elpa_init() once before creating instances of ELPA"
+        success = ELPA_ERROR
+        return
+      endif
+
+      obj%options     = elpa_allocate_options()
+      obj%na          = na
+      obj%nev         = nev
+      obj%local_nrows = local_nrows
+      obj%local_ncols = local_ncols
+      obj%nblk        = nblk
+
+      !obj%mpi_comm_rows = mpi_comm_rows
+      !obj%mpi_comm_cols = mpi_comm_rows
+      success = ELPA_OK
+
+    end function
+    subroutine set_comm_rows(self, mpi_comm_rows)
+      use iso_c_binding
+      implicit none
+
+      integer, intent(in) :: mpi_comm_rows
+      class(elpa_t)       :: self
+      self%mpi_comm_rows = mpi_comm_rows
+
+    end subroutine
+
+    subroutine set_comm_cols(self, mpi_comm_cols)
+      use iso_c_binding
+      implicit none
+
+      integer, intent(in) :: mpi_comm_cols
+      class(elpa_t)       :: self
+
+      self%mpi_comm_cols = mpi_comm_cols
+    end subroutine
 
     subroutine elpa_set_integer(self, name, value, success)
       use iso_c_binding
@@ -475,14 +538,15 @@ module elpa_type
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
+      use precision
       implicit none
       class(elpa_t)                 :: self
 !#ifdef USE_ASSUMED_SIZE
 !      complex(kind=c_float_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
 !#else
-      complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+      complex(kind=ck4) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 !#endif
-      real(kind=c_float)            :: ev(self%na)
+      real(kind=rk4)            :: ev(self%na)
 
       integer, optional             :: success
       integer(kind=c_int)           :: success_internal
@@ -546,14 +610,15 @@ module elpa_type
                                           c, ldc, ldcCols, success)
       use iso_c_binding
       use elpa1_auxiliary_new
+      use precision
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
 !#ifdef USE_ASSUMED_SIZE
 !      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
 !#else
-      real(kind=c_double)             :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      real(kind=rk8)                  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 !#endif      
       integer, optional               :: success
       logical                         :: success_l
@@ -575,14 +640,15 @@ module elpa_type
                                           c, ldc, ldcCols, success)
       use iso_c_binding
       use elpa1_auxiliary_new
+      use precision
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
 !#ifdef USE_ASSUMED_SIZE
 !      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
 !#else
-      real(kind=c_float)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      real(kind=rk4)                  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 !#endif      
       integer, optional               :: success
       logical                         :: success_l
@@ -605,14 +671,15 @@ module elpa_type
                                           c, ldc, ldcCols, success)
       use iso_c_binding
       use elpa1_auxiliary_new
+      use precision
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
 !#ifdef USE_ASSUMED_SIZE
 !      complex(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
 !#else
-      complex(kind=c_double_complex)  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      complex(kind=ck8)               :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 !#endif      
       integer, optional               :: success
       logical                         :: success_l
@@ -634,14 +701,15 @@ module elpa_type
                                           c, ldc, ldcCols, success)
       use iso_c_binding
       use elpa1_auxiliary_new
+      use precision
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
 !#ifdef USE_ASSUMED_SIZE
 !      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
 !#else
-      complex(kind=c_float_complex)   :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      complex(kind=ck4)               :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 !#endif      
       integer, optional               :: success
       logical                         :: success_l
