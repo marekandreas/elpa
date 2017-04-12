@@ -32,6 +32,23 @@ typedef struct {
 /** OPTIONS **/
 
 
+/* wantDebug */
+int wantDebug_cardinality() {
+        return 2;
+}
+
+const int wantDebug_enumerate_option(unsigned int n) {
+        return n;
+}
+
+int wantDebug_valid(elpa_options_t options, int value) {
+        if (value >= 0 && value < wantDebug_cardinality()) {
+                return ELPA_OK;
+        } else {
+                return ELPA_ERROR;
+        }
+}
+
 /* QR */
 int qr_cardinality() {
         return 2;
@@ -123,6 +140,7 @@ int complex_kernel_valid(elpa_options_t options, int value) {
 
 
 elpa_int_option_t elpa_int_options[] = {
+        {"wantDebug", 0, wantDebug_cardinality, wantDebug_enumerate_option, wantDebug_valid},
         {"qr", 0, qr_cardinality, qr_enumerate_option, qr_valid},
         {"gpu", 0, gpu_cardinality, gpu_enumerate_option, gpu_valid},
         {"solver", ELPA_SOLVER_1STAGE, solver_cardinality, solver_enumerate_option, solver_valid},

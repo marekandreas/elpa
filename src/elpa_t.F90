@@ -81,6 +81,10 @@ module elpa_type
                                         elpa_multiply_ah_b_double, &
                                         elpa_multiply_at_b_single, &
                                         elpa_multiply_ah_b_single
+     generic, public :: cholesky => elpa_cholesky_real_double, &
+                                  elpa_cholesky_real_single, &
+                                  elpa_cholesky_complex_double, &
+                                  elpa_cholesky_complex_single
 
 
 
@@ -89,15 +93,21 @@ module elpa_type
      ! privates:
      procedure, private :: elpa_set_integer
      procedure, private :: elpa_get_integer
+
      procedure, private :: elpa_solve_real_double
      procedure, private :: elpa_solve_real_single
      procedure, private :: elpa_solve_complex_double
      procedure, private :: elpa_solve_complex_single
+
      procedure, private :: elpa_multiply_at_b_double
      procedure, private :: elpa_multiply_at_b_single
      procedure, private :: elpa_multiply_ah_b_double
      procedure, private :: elpa_multiply_ah_b_single
 
+     procedure, private :: elpa_cholesky_real_double
+     procedure, private :: elpa_cholesky_real_single
+     procedure, private :: elpa_cholesky_complex_double
+     procedure, private :: elpa_cholesky_complex_single
   end type elpa_t
 
   logical :: initDone = .false.
@@ -729,6 +739,172 @@ module elpa_type
 #endif
     end subroutine
 
+    subroutine elpa_cholesky_real_double (self, a, success)
+      use iso_c_binding
+      use elpa1_auxiliary_new
+      use precision
+      implicit none
+      class(elpa_t)                   :: self
+!#ifdef USE_ASSUMED_SIZE
+!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
+!#else
+      real(kind=rk8)                  :: a(self%local_nrows,self%local_ncols)
+!#endif
+      integer, optional               :: success
+      logical                         :: success_l
+      integer(kind=c_int)             :: success_internal
+      logical                         :: wantDebugIntern
+
+      if (self%get("wantDebug",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry wantDebug"
+          stop
+        endif
+
+        wantDebugIntern = .true.
+      else
+        wantDebugIntern = .false.
+      endif
+
+      success_l = elpa_cholesky_real_double_new (self%na, a, self%local_nrows, self%nblk, &
+                                                 self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                 wantDebugIntern)
+      if (present(success)) then
+        if (success_l) then
+          success = ELPA_OK
+        else
+          success = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
+      endif
+    end subroutine
+
+    subroutine elpa_cholesky_real_single (self, a, success)
+      use iso_c_binding
+      use elpa1_auxiliary_new
+      use precision
+      implicit none
+      class(elpa_t)                   :: self
+!#ifdef USE_ASSUMED_SIZE
+!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
+!#else
+      real(kind=rk4)                  :: a(self%local_nrows,self%local_ncols)
+!#endif
+      integer, optional               :: success
+      logical                         :: success_l
+      integer(kind=c_int)             :: success_internal
+      logical                         :: wantDebugIntern
+
+      if (self%get("wantDebug",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry wantDebug"
+          stop
+        endif
+
+        wantDebugIntern = .true.
+      else
+        wantDebugIntern = .false.
+      endif
+
+#if WANT_SINGLE_PRECISION_REAL
+      success_l = elpa_cholesky_real_single_new (self%na, a, self%local_nrows, self%nblk, &
+                                                 self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                 wantDebugIntern)
+#endif
+      if (present(success)) then
+        if (success_l) then
+          success = ELPA_OK
+        else
+          success = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
+      endif
+    end subroutine
+
+    subroutine elpa_cholesky_complex_double (self, a, success)
+      use iso_c_binding
+      use elpa1_auxiliary_new
+      use precision
+      implicit none
+      class(elpa_t)                   :: self
+!#ifdef USE_ASSUMED_SIZE
+!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
+!#else
+      complex(kind=ck8)                  :: a(self%local_nrows,self%local_ncols)
+!#endif
+      integer, optional               :: success
+      logical                         :: success_l
+      integer(kind=c_int)             :: success_internal
+      logical                         :: wantDebugIntern
+
+      if (self%get("wantDebug",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry wantDebug"
+          stop
+        endif
+
+        wantDebugIntern = .true.
+      else
+        wantDebugIntern = .false.
+      endif
+
+      success_l = elpa_cholesky_complex_double_new (self%na, a, self%local_nrows, self%nblk, &
+                                                 self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                 wantDebugIntern)
+      if (present(success)) then
+        if (success_l) then
+          success = ELPA_OK
+        else
+          success = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
+      endif
+    end subroutine
+
+    subroutine elpa_cholesky_complex_single (self, a, success)
+      use iso_c_binding
+      use elpa1_auxiliary_new
+      use precision
+      implicit none
+      class(elpa_t)                   :: self
+!#ifdef USE_ASSUMED_SIZE
+!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
+!#else
+      complex(kind=ck4)                  :: a(self%local_nrows,self%local_ncols)
+!#endif
+      integer, optional               :: success
+      logical                         :: success_l
+      integer(kind=c_int)             :: success_internal
+      logical                         :: wantDebugIntern
+
+      if (self%get("wantDebug",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry wantDebug"
+          stop
+        endif
+
+        wantDebugIntern = .true.
+      else
+        wantDebugIntern = .false.
+      endif
+#if WANT_SINGLE_PRECISION_REAL
+      success_l = elpa_cholesky_complex_single_new (self%na, a, self%local_nrows, self%nblk, &
+                                                 self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                 wantDebugIntern)
+#endif
+      if (present(success)) then
+        if (success_l) then
+          success = ELPA_OK
+        else
+          success = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
+      endif
+    end subroutine
 
 
 
