@@ -113,6 +113,13 @@ module mod_check_for_gpu
         if (wantDebugMessage) then
           print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
         endif
+        
+        success = cublas_create(cublasHandle)
+        if (.not.(success)) then
+          print *,"Cannot create cublas handle"
+          stop 1
+        endif
+        
       endif
 
     end function

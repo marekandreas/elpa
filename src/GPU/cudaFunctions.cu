@@ -57,7 +57,7 @@
 #include <alloca.h>
 #include <stdint.h>
 #include <complex.h>
-#include <cublas.h>
+#include <cublas_v2.h>
 
 #include "config-f90.h"
 
@@ -71,6 +71,46 @@
 
 #ifdef WITH_GPU_VERSION
 extern "C" {
+  
+    int cublasCreateFromC(intptr_t **cublas_handle) {
+//     printf("in c: %p\n", *cublas_handle);
+    *cublas_handle = (intptr_t*) malloc(sizeof(cublasHandle_t));
+//     printf("in c: %p\n", *cublas_handle);
+    cublasStatus_t status = cublasCreate((cublasHandle_t*) *cublas_handle);
+    if (status == CUBLAS_STATUS_SUCCESS) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else if (status == CUBLAS_STATUS_NOT_INITIALIZED) {
+      errormessage("Error in cublasCreate: %s\n", "the CUDA Runtime initialization failed");
+      return 0;      
+    }       
+    else if (status == CUBLAS_STATUS_ALLOC_FAILED) {
+      errormessage("Error in cublasCreate: %s\n", "the resources could not be allocated");
+      return 0;
+    }
+    else{
+      errormessage("Error in cublasCreate: %s\n", "unknown error");
+      return 0;
+    }                
+  }
+
+  int cublasDestroyFromC(intptr_t *cublas_handle) {
+    cublasStatus_t status = cublasDestroy(*((cublasHandle_t*) *cublas_handle));
+    *cublas_handle = (intptr_t) NULL;
+    if (status == CUBLAS_STATUS_SUCCESS) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else if (status == CUBLAS_STATUS_NOT_INITIALIZED) {
+      errormessage("Error in cublasDestroy: %s\n", "the library has not been initialized");
+      return 0;      
+    }       
+    else{
+      errormessage("Error in cublasCreate: %s\n", "unknown error");
+      return 0;
+    }                
+  }
 
   int cudaThreadSynchronizeFromC() {
     cudaError_t cuerr = cudaThreadSynchronize();
@@ -188,7 +228,85 @@ extern "C" {
       return val;
   }
   
-  void cublasZgemv_elpa_wrapper (char trans, int m, int n, double complex alpha,
+  cublasOperation_t operation_new_api(char trans) {
+    if (trans == 'N' || trans == 'n') {
+      return CUBLAS_OP_N;
+    }
+    else if (trans == 'T' || trans == 't') {
+      return CUBLAS_OP_T;
+    }
+    else if (trans == 'C' || trans == 'c') {
+      return CUBLAS_OP_C;
+    }
+    else {
+      errormessage("Error when transfering %c to cublasOperation_t\n",trans);
+      // or abort?
+      return CUBLAS_OP_N;
+    }
+  }
+
+
+  cublasFillMode_t fill_mode_new_api(char uplo) {
+    if (uplo == 'L' || uplo == 'l') {
+      return CUBLAS_FILL_MODE_LOWER;
+    }
+    else if(uplo == 'U' || uplo == 'u') {
+      return CUBLAS_FILL_MODE_UPPER;
+    }
+    else {
+      errormessage("Error when transfering %c to cublasFillMode_t\n", uplo);
+      // or abort?
+      return CUBLAS_FILL_MODE_LOWER;
+    }
+  }
+  
+  cublasSideMode_t side_mode_new_api(char side) {
+    if (side == 'L' || side == 'l') {
+      return CUBLAS_SIDE_LEFT;
+    }    
+    else if (side == 'R' || side == 'r') {
+      return CUBLAS_SIDE_RIGHT;
+    }
+    else{
+      errormessage("Error when transfering %c to cublasSideMode_t\n", side);
+      // or abort?
+      return CUBLAS_SIDE_LEFT;
+    }
+  }
+  
+  cublasDiagType_t diag_type_new_api(char diag) {
+    if (diag == 'N' || diag == 'n') {
+      return CUBLAS_DIAG_NON_UNIT;
+    }
+    else if (diag == 'U' || diag == 'u') {
+      return CUBLAS_DIAG_UNIT;
+    }
+    else {
+      errormessage("Error when transfering %c to cublasDiagMode_t\n", diag);
+      // or abort?
+      return CUBLAS_DIAG_NON_UNIT;
+    }
+  }
+      
+
+  
+  void cublasDgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, double alpha,
+                               const double *A, int lda,  const double *x, int incx,
+                               double beta, double *y, int incy) {    
+    
+    cublasDgemv(*((cublasHandle_t*)handle), operation_new_api(trans), 
+                m, n, &alpha, A, lda, x, incx, &beta, y, incy);     
+  }
+  
+  void cublasSgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, float alpha,
+                               const float *A, int lda,  const float *x, int incx,
+                               float beta, float *y, int incy) {    
+    
+    cublasSgemv(*((cublasHandle_t*)handle), operation_new_api(trans), 
+                m, n, &alpha, A, lda, x, incx, &beta, y, incy);     
+  }
+  
+  void cublasZgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, double complex alpha,
                                const double complex *A, int lda,  const double complex *x, int incx,
                                double complex beta, double complex *y, int incy) {    
 
@@ -199,10 +317,11 @@ extern "C" {
     const cuDoubleComplex* x_casted = (const cuDoubleComplex*) x;
     cuDoubleComplex* y_casted = (cuDoubleComplex*) y;
     
-    cublasZgemv(trans, m, n, alpha_casted, A_casted, lda, x_casted, incx, beta_casted, y_casted, incy);     
+    cublasZgemv(*((cublasHandle_t*)handle), operation_new_api(trans), 
+                m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);     
   }
   
-  void cublasCgemv_elpa_wrapper (char trans, int m, int n, float complex alpha,
+  void cublasCgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, float complex alpha,
                                const float complex *A, int lda,  const float complex *x, int incx,
                                float complex beta, float complex *y, int incy) {    
 
@@ -213,10 +332,30 @@ extern "C" {
     const cuFloatComplex* x_casted = (const cuFloatComplex*) x;
     cuFloatComplex* y_casted = (cuFloatComplex*) y;
     
-    cublasCgemv(trans, m, n, alpha_casted, A_casted, lda, x_casted, incx, beta_casted, y_casted, incy);     
+    cublasCgemv(*((cublasHandle_t*)handle), operation_new_api(trans), 
+                m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);     
   }
   
-  void cublasZgemm_elpa_wrapper (char transa, char transb, int m, int n, int k,
+  
+  void cublasDgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
+                               double alpha, const double *A, int lda,
+                               const double *B, int ldb, double beta,
+                               double *C, int ldc) {
+    
+    cublasDgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb), 
+                m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+  }
+
+  void cublasSgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
+                               float alpha, const float *A, int lda,
+                               const float *B, int ldb, float beta,
+                               float *C, int ldc) {
+    
+    cublasSgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb), 
+                m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+  }
+
+  void cublasZgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
                                double complex alpha, const double complex *A, int lda,
                                const double complex *B, int ldb, double complex beta,
                                double complex *C, int ldc) {
@@ -228,10 +367,11 @@ extern "C" {
     const cuDoubleComplex* B_casted = (const cuDoubleComplex*) B;
     cuDoubleComplex* C_casted = (cuDoubleComplex*) C;
     
-    cublasZgemm(transa, transb, m, n, k, alpha_casted, A_casted, lda, B_casted, ldb, beta_casted, C_casted, ldc);
+    cublasZgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb), 
+                m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
-  void cublasCgemm_elpa_wrapper (char transa, char transb, int m, int n, int k,
+  void cublasCgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
                                float complex alpha, const float complex *A, int lda,
                                const float complex *B, int ldb, float complex beta,
                                float complex *C, int ldc) {
@@ -243,10 +383,32 @@ extern "C" {
     const cuFloatComplex* B_casted = (const cuFloatComplex*) B;
     cuFloatComplex* C_casted = (cuFloatComplex*) C;
     
-    cublasCgemm(transa, transb, m, n, k, alpha_casted, A_casted, lda, B_casted, ldb, beta_casted, C_casted, ldc);
+    cublasCgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb), 
+                m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
-  void cublasZtrmm_elpa_wrapper (char side, char uplo, char transa, char diag,
+  
+  // todo: new CUBLAS API diverged from standard BLAS api for these functions
+  // todo: it provides out-of-place (and apparently more efficient) implementation
+  // todo: by passing B twice (in place of C as well), we should fall back to in-place algorithm
+  
+  void cublasDtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+                               int m, int n, double alpha, const double *A,
+                               int lda, double *B, int ldb){
+
+    cublasDtrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa), 
+                diag_type_new_api(diag), m, n, &alpha, A, lda, B, ldb, B, ldb);
+  }
+
+  void cublasStrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+                               int m, int n, float alpha, const float *A,
+                               int lda, float *B, int ldb){
+
+    cublasStrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa), 
+                diag_type_new_api(diag), m, n, &alpha, A, lda, B, ldb, B, ldb);
+  }
+
+  void cublasZtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
                                int m, int n, double complex alpha, const double complex *A,
                                int lda, double complex *B, int ldb){
 
@@ -255,10 +417,11 @@ extern "C" {
     const cuDoubleComplex* A_casted = (const cuDoubleComplex*) A;
     cuDoubleComplex* B_casted = (cuDoubleComplex*) B;    
     
-    cublasZtrmm(side, uplo, transa, diag, m, n, alpha_casted, A_casted, lda, B_casted, ldb);
+    cublasZtrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa), 
+                diag_type_new_api(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb, B_casted, ldb);
   }
 
-  void cublasCtrmm_elpa_wrapper (char side, char uplo, char transa, char diag,
+  void cublasCtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
                                int m, int n, float complex alpha, const float complex *A,
                                int lda, float complex *B, int ldb){
 
@@ -267,7 +430,8 @@ extern "C" {
     const cuFloatComplex* A_casted = (const cuFloatComplex*) A;
     cuFloatComplex* B_casted = (cuFloatComplex*) B;    
     
-    cublasCtrmm(side, uplo, transa, diag, m, n, alpha_casted, A_casted, lda, B_casted, ldb);
+    cublasCtrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa), 
+                diag_type_new_api(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb, B_casted, ldb);
   }
 
   
