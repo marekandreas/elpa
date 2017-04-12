@@ -115,8 +115,10 @@ function elpa_solve_evp_&
 
    success = .true.
    if (elpa_init(20170403) /= ELPA_OK) then
+     print *,  "ELPA API version not supported"
+     stop
      success = .false.
-     error stop "ELPA API version not supported"
+     return
    endif
 
    elpa1stage = elpa_create(na, nev, lda, matrixCols, nblk, mpi_comm_all, &

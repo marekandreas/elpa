@@ -69,8 +69,8 @@ function elpa_solve_evp_&
 
     implicit none
     integer(kind=c_int)                      :: success
-    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_cols, mpi_comm_rows, &
-                                                mpi_comm_all
+    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, & 
+                                                mpi_comm_cols, mpi_comm_rows, mpi_comm_all
     integer(kind=c_int), value, intent(in)   :: useGPU
 #if REALCASE == 1
     integer(kind=c_int), value, intent(in)   :: THIS_REAL_ELPA_KERNEL_API, useQR
