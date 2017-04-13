@@ -74,7 +74,7 @@ program test_real_gpu_version_single_precision
 !
 !-------------------------------------------------------------------------------
    use precision
-   use ELPA1
+   use elpa1_legacy
    
    use mod_check_for_gpu, only : check_for_gpu
       

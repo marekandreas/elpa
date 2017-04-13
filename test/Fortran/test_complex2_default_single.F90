@@ -78,7 +78,7 @@ program test_complex2_default_kernel_single_precision
 ! distributed along with the original code in the file "COPYING".
 !-------------------------------------------------------------------------------
    use precision
-   use ELPA1
+   use elpa1_legacy
    use ELPA2
    use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit

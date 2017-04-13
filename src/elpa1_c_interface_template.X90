@@ -58,7 +58,7 @@
      &_precision")
 
     use, intrinsic :: iso_c_binding
-    use elpa1
+    use elpa1_legacy
 
     implicit none
     integer(kind=c_int)                    :: success

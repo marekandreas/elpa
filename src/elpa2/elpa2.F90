@@ -59,7 +59,7 @@ module ELPA2
 ! Version 1.1.2, 2011-02-21
 
   use elpa_utilities
-  use elpa1, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
+  use elpa1_legacy, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
   use elpa2_utilities
 
   implicit none

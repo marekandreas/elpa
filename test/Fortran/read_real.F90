@@ -62,7 +62,7 @@ program read_real
 !-------------------------------------------------------------------------------
 
    use precision
-   use ELPA1
+   use elpa1_legacy
    use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
    use test_util

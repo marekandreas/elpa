@@ -46,7 +46,7 @@
 program test_cholesky
 
    use precision
-   use ELPA1
+   use elpa1_legacy
    use elpa_utilities
 #ifdef WITH_OPENMP
    use test_util

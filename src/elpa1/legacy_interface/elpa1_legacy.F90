@@ -81,7 +81,7 @@
 #include "config-f90.h"
 
 !> \brief Fortran module which provides the routines to use the one-stage ELPA solver
-module ELPA1
+module ELPA1_legacy
   use, intrinsic :: iso_c_binding
   use elpa_utilities
   use elpa1_auxiliary_legacy
@@ -559,8 +559,8 @@ end function elpa_get_communicators
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "../precision_macros.h"
-#include "elpa1_template.X90"
+#include "../../precision_macros.h"
+#include "./elpa1_template_legacy.X90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -603,8 +603,8 @@ end function elpa_get_communicators
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "../precision_macros.h"
-#include "elpa1_template.X90"
+#include "../../precision_macros.h"
+#include "./elpa1_template_legacy.X90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */
@@ -646,8 +646,8 @@ end function elpa_get_communicators
 !>  \result                     success
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "../precision_macros.h"
-#include "elpa1_template.X90"
+#include "../../precision_macros.h"
+#include "./elpa1_template_legacy.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -692,10 +692,10 @@ end function elpa_get_communicators
 
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
-#include "../precision_macros.h"
-#include "elpa1_template.X90"
+#include "../../precision_macros.h"
+#include "./elpa1_template_legacy.X90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-end module ELPA1
+end module ELPA1_legacy

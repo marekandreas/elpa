@@ -74,7 +74,7 @@ program test_real_example
 !-------------------------------------------------------------------------------
 
    use iso_c_binding
-   use ELPA1
+   use elpa1_legacy
    use elpa_utilities, only : error_unit
 #ifdef HAVE_MPI_MODULE
    use mpi
