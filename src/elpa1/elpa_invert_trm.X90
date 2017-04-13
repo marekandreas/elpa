@@ -127,7 +127,7 @@
        call elpaAPI%invert_trm(a, successInternal)
 
        if (successInternal .ne. ELPA_OK) then
-         print *, "Cannot run cholesky"
+         print *, "Cannot run invert_trm"
          stop
          success = .false.
          return
