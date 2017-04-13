@@ -135,6 +135,8 @@ module elpa_type
                                       elpa_invert_trm_single_real, &
                                       elpa_invert_trm_double_complex, &
                                       elpa_invert_trm_single_complex
+     generic, public :: solve_tridi => elpa_solve_tridi_double_real, &
+                                       elpa_solve_tridi_single_real
 
 
 
@@ -163,6 +165,9 @@ module elpa_type
      procedure, private :: elpa_invert_trm_single_real
      procedure, private :: elpa_invert_trm_double_complex
      procedure, private :: elpa_invert_trm_single_complex
+
+     procedure, private :: elpa_solve_tridi_double_real
+     procedure, private :: elpa_solve_tridi_single_real
   end type elpa_t
 
   logical :: initDone = .false.
@@ -998,7 +1003,7 @@ module elpa_type
           success = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
     end subroutine
 
@@ -1040,7 +1045,7 @@ module elpa_type
           success = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
     end subroutine
 
@@ -1080,7 +1085,7 @@ module elpa_type
           success = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
     end subroutine
 
@@ -1122,12 +1127,98 @@ module elpa_type
           success = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
     end subroutine
 
+    subroutine elpa_solve_tridi_double_real (self, d, e, q, success)
+      use iso_c_binding
+      use elpa1_auxiliary_new
+      use precision
+      implicit none
+      class(elpa_t)                   :: self
+      real(kind=rk8)                  :: d(self%na), e(self%na)
+!#ifdef USE_ASSUMED_SIZE
+!      real(kind=rk8)                  :: q(self%local_nrows,*)
+!#else
+      real(kind=rk8)                  :: q(self%local_nrows,self%local_ncols)
+!#endif
 
+      integer, optional               :: success
+      logical                         :: success_l
+      integer(kind=c_int)             :: success_internal
+      logical                         :: wantDebugIntern
 
+      if (self%get("wantDebug",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry wantDebug"
+          stop
+        endif
+
+        wantDebugIntern = .true.
+      else
+        wantDebugIntern = .false.
+      endif
+
+      success_l = elpa_solve_tridi_double_new(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
+                                              self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols,&
+                                              wantDebugIntern)
+      if (present(success)) then
+        if (success_l) then
+          success = ELPA_OK
+        else
+          success = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
+      endif
+
+    end subroutine
+
+    subroutine elpa_solve_tridi_single_real (self, d, e, q, success)
+      use iso_c_binding
+      use elpa1_auxiliary_new
+      use precision
+      implicit none
+      class(elpa_t)                   :: self
+      real(kind=rk4)                  :: d(self%na), e(self%na)
+!#ifdef USE_ASSUMED_SIZE
+!      real(kind=rk4)                  :: q(self%local_nrows,*)
+!#else
+      real(kind=rk4)                  :: q(self%local_nrows,self%local_ncols)
+!#endif
+
+      integer, optional               :: success
+      logical                         :: success_l
+      integer(kind=c_int)             :: success_internal
+      logical                         :: wantDebugIntern
+
+      if (self%get("wantDebug",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry wantDebug"
+          stop
+        endif
+
+        wantDebugIntern = .true.
+      else
+        wantDebugIntern = .false.
+      endif
+#ifdef WANT_SINGLE_PRECISION_REAL
+      success_l = elpa_solve_tridi_single_new(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
+                                              self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols,&
+                                              wantDebugIntern)
+#endif
+      if (present(success)) then
+        if (success_l) then
+          success = ELPA_OK
+        else
+          success = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
+      endif
+
+    end subroutine
 
 
 
