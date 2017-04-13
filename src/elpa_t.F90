@@ -81,10 +81,10 @@ module elpa_type
                                         elpa_multiply_ah_b_double, &
                                         elpa_multiply_at_b_single, &
                                         elpa_multiply_ah_b_single
-     generic, public :: cholesky => elpa_cholesky_real_double, &
-                                  elpa_cholesky_real_single, &
-                                  elpa_cholesky_complex_double, &
-                                  elpa_cholesky_complex_single
+     generic, public :: cholesky => elpa_cholesky_double_real, &
+                                    elpa_cholesky_single_real, &
+                                    elpa_cholesky_double_complex, &
+                                    elpa_cholesky_single_complex
 
 
 
@@ -104,10 +104,10 @@ module elpa_type
      procedure, private :: elpa_multiply_ah_b_double
      procedure, private :: elpa_multiply_ah_b_single
 
-     procedure, private :: elpa_cholesky_real_double
-     procedure, private :: elpa_cholesky_real_single
-     procedure, private :: elpa_cholesky_complex_double
-     procedure, private :: elpa_cholesky_complex_single
+     procedure, private :: elpa_cholesky_double_real
+     procedure, private :: elpa_cholesky_single_real
+     procedure, private :: elpa_cholesky_double_complex
+     procedure, private :: elpa_cholesky_single_complex
   end type elpa_t
 
   logical :: initDone = .false.
@@ -739,7 +739,7 @@ module elpa_type
 #endif
     end subroutine
 
-    subroutine elpa_cholesky_real_double (self, a, success)
+    subroutine elpa_cholesky_double_real (self, a, success)
       use iso_c_binding
       use elpa1_auxiliary_new
       use precision
@@ -766,6 +766,7 @@ module elpa_type
         wantDebugIntern = .false.
       endif
 
+
       success_l = elpa_cholesky_real_double_new (self%na, a, self%local_nrows, self%nblk, &
                                                  self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                  wantDebugIntern)
@@ -780,7 +781,7 @@ module elpa_type
       endif
     end subroutine
 
-    subroutine elpa_cholesky_real_single (self, a, success)
+    subroutine elpa_cholesky_single_real(self, a, success)
       use iso_c_binding
       use elpa1_auxiliary_new
       use precision
@@ -823,7 +824,7 @@ module elpa_type
       endif
     end subroutine
 
-    subroutine elpa_cholesky_complex_double (self, a, success)
+    subroutine elpa_cholesky_double_complex (self, a, success)
       use iso_c_binding
       use elpa1_auxiliary_new
       use precision
@@ -864,7 +865,7 @@ module elpa_type
       endif
     end subroutine
 
-    subroutine elpa_cholesky_complex_single (self, a, success)
+    subroutine elpa_cholesky_single_complex (self, a, success)
       use iso_c_binding
       use elpa1_auxiliary_new
       use precision

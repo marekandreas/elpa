@@ -56,18 +56,18 @@
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #if REALCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)      :: a(lda,*)
-#else
+!#ifdef USE_ASSUMED_SIZE
+!      real(kind=REAL_DATATYPE)      :: a(lda,*)
+!#else
       real(kind=REAL_DATATYPE)      :: a(lda,matrixCols)
-#endif
+!#endif
 #endif
 #if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
-#else
+!#ifdef USE_ASSUMED_SIZE
+!      complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
+!#else
       complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
-#endif
+!#endif
 #endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -89,8 +89,8 @@
       call timer%start("elpa_cholesky_&
       &MATH_DATATYPE&
       &_&
-      &PRECISION &
-      ")
+      &PRECISION&
+      &_new")
 
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -338,7 +338,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      ")
+      &_new")
 
 #undef REALCASE
 #undef COMPLEXCASE
