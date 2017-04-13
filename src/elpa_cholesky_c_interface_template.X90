@@ -56,7 +56,7 @@ function elpa_cholesky_&
        &")
 
    use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_cholesky_&
+   use elpa1_auxiliary_legacy, only : elpa_cholesky_&
        &MATH_DATATYPE&
        &_&
        &PRECISION

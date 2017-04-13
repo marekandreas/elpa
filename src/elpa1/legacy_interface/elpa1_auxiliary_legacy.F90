@@ -54,7 +54,7 @@
 #include "config-f90.h"
 
 !> \brief Fortran module which provides helper routines for matrix calculations
-module ELPA1_AUXILIARY
+module ELPA1_AUXILIARY_legacy
   use elpa_utilities
 
   implicit none
@@ -283,19 +283,19 @@ module ELPA1_AUXILIARY
 
 #define REALCASE 1
 #define DOUBLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 
    function elpa_cholesky_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                             wantDebug) result(success)
-#include "elpa_cholesky_template.X90"
+#include "./elpa_cholesky_template_legacy.X90"
 
     end function elpa_cholesky_real_double
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  cholesky_real_single: Cholesky factorization of a single-precision real symmetric matrix
 !> \details
@@ -316,7 +316,7 @@ module ELPA1_AUXILIARY
 
    function elpa_cholesky_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                             wantDebug) result(success)
-#include "elpa_cholesky_template.X90"
+#include "./elpa_cholesky_template_legacy.X90"
 
     end function elpa_cholesky_real_single
 
@@ -324,7 +324,7 @@ module ELPA1_AUXILIARY
 
 #define REALCASE 1
 #define DOUBLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 !> \brief  elpa_invert_trm_real_double: Inverts a double-precision real upper triangular matrix
 !> \details
 !> \param  na                   Order of matrix
@@ -340,13 +340,13 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
     function elpa_invert_trm_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "elpa_invert_trm.X90"
+#include "./elpa_invert_trm_legacy.X90"
      end function elpa_invert_trm_real_double
 
 #if WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_invert_trm_real_single: Inverts a single-precision real upper triangular matrix
 !> \details
@@ -363,7 +363,7 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
     function elpa_invert_trm_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "elpa_invert_trm.X90"
+#include "./elpa_invert_trm_legacy.X90"
     end function elpa_invert_trm_real_single
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
@@ -371,7 +371,7 @@ module ELPA1_AUXILIARY
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_cholesky_complex_double: Cholesky factorization of a double-precision complex hermitian matrix
 !> \details
@@ -390,7 +390,7 @@ module ELPA1_AUXILIARY
 !> \result succes               logical, reports success or failure
     function elpa_cholesky_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 
-#include "elpa_cholesky_template.X90"
+#include "./elpa_cholesky_template_legacy.X90"
 
     end function elpa_cholesky_complex_double
 
@@ -398,7 +398,7 @@ module ELPA1_AUXILIARY
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_cholesky_complex_single: Cholesky factorization of a single-precision complex hermitian matrix
 !> \details
@@ -417,7 +417,7 @@ module ELPA1_AUXILIARY
 !> \result succes               logical, reports success or failure
     function elpa_cholesky_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 
-#include "elpa_cholesky_template.X90"
+#include "./elpa_cholesky_template_legacy.X90"
 
     end function elpa_cholesky_complex_single
 
@@ -425,7 +425,7 @@ module ELPA1_AUXILIARY
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_invert_trm_complex_double: Inverts a double-precision complex upper triangular matrix
 !> \details
@@ -443,13 +443,13 @@ module ELPA1_AUXILIARY
 !> \result succes               logical, reports success or failure
 
      function elpa_invert_trm_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "elpa_invert_trm.X90"
+#include "./elpa_invert_trm_legacy.X90"
     end function elpa_invert_trm_complex_double
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_invert_trm_complex_single: Inverts a single-precision complex upper triangular matrix
 !> \details
@@ -467,14 +467,14 @@ module ELPA1_AUXILIARY
 !> \result succes               logical, reports success or failure
 
     function elpa_invert_trm_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "elpa_invert_trm.X90"
+#include "./elpa_invert_trm_legacy.X90"
     end function elpa_invert_trm_complex_single
 
 #endif /* WANT_SINGE_PRECISION_COMPLEX */
 
 #define REALCASE 1
 #define DOUBLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 !> \brief  mult_at_b_real_double: Performs C : = A**T * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
 !>                 B is a (na,ncb) matrix
@@ -509,13 +509,13 @@ module ELPA1_AUXILIARY
 
     function elpa_mult_at_b_real_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                               mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
-#include "elpa_multiply_a_b.X90"
+#include "./elpa_multiply_a_b_legacy.X90"
     end function elpa_mult_at_b_real_double
 
 #if WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_mult_at_b_real_single: Performs C : = A**T * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
@@ -552,7 +552,7 @@ module ELPA1_AUXILIARY
     function elpa_mult_at_b_real_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                               mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 
-#include "elpa_multiply_a_b.X90"
+#include "./elpa_multiply_a_b_legacy.X90"
 
     end function elpa_mult_at_b_real_single
 
@@ -561,7 +561,7 @@ module ELPA1_AUXILIARY
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_mult_ah_b_complex_double: Performs C : = A**H * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
@@ -599,14 +599,14 @@ module ELPA1_AUXILIARY
 
     function elpa_mult_ah_b_complex_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                                  mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
-#include "elpa_multiply_a_b.X90"
+#include "./elpa_multiply_a_b_legacy.X90"
 
     end function elpa_mult_ah_b_complex_double
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_mult_ah_b_complex_single: Performs C : = A**H * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
@@ -645,7 +645,7 @@ module ELPA1_AUXILIARY
     function elpa_mult_ah_b_complex_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                                  mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 
-#include "elpa_multiply_a_b.X90"
+#include "./elpa_multiply_a_b_legacy.X90"
 
     end function elpa_mult_ah_b_complex_single
 
@@ -653,7 +653,7 @@ module ELPA1_AUXILIARY
 
 #define REALCASE 1
 #define DOUBLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_solve_tridi_double: Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
 !> \details
@@ -675,7 +675,7 @@ module ELPA1_AUXILIARY
     function elpa_solve_tridi_double(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
           result(success)
 
-#include "elpa_solve_tridi.X90"
+#include "./elpa_solve_tridi_legacy.X90"
 
     end function
 
@@ -683,7 +683,7 @@ module ELPA1_AUXILIARY
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
-#include "../precision_macros.h"
+#include "../../precision_macros.h"
 
 !> \brief  elpa_solve_tridi_single: Solve tridiagonal eigensystem for a single-precision matrix with divide and conquer method
 !> \details
@@ -705,7 +705,7 @@ module ELPA1_AUXILIARY
     function elpa_solve_tridi_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                      mpi_comm_cols, wantDebug) result(success)
 
-#include "elpa_solve_tridi.X90"
+#include "./elpa_solve_tridi_legacy.X90"
 
     end function
 
@@ -714,5 +714,4 @@ module ELPA1_AUXILIARY
 
 
 
-end module elpa1_auxiliary
-
+end module elpa1_auxiliary_legacy

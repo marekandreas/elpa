@@ -16,7 +16,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
         src/elpa1/elpa1_new_interface.F90 \
         src/elpa2/elpa2.F90 \
         src/elpa2/elpa2_new_interface.F90 \
-	src/elpa1/elpa1_auxiliary.F90 \
+	src/elpa1/legacy_interface/elpa1_auxiliary_legacy.F90 \
 	src/elpa1/elpa1_auxiliary_new_interface.F90 \
         src/elpa1/elpa1_utilities.F90 \
         src/elpa2/elpa2_utilities.F90 \
@@ -82,13 +82,13 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2/compute_hh_trafo.X90 \
         src/elpa2/redist_band.X90 \
 	src/sanity.X90 \
-	src/elpa1/elpa_cholesky_template.X90 \
+	src/elpa1/legacy_interface/elpa_cholesky_template_legacy.X90 \
 	src/elpa1/elpa_cholesky_template_new_interface.X90 \
-	src/elpa1/elpa_invert_trm.X90 \
+	src/elpa1/legacy_interface/elpa_invert_trm_legacy.X90 \
 	src/elpa1/elpa_invert_trm_new_interface.X90 \
-	src/elpa1/elpa_multiply_a_b.X90 \
+	src/elpa1/legacy_interface/elpa_multiply_a_b_legacy.X90 \
 	src/elpa1/elpa_multiply_a_b_new_interface.X90 \
-	src/elpa1/elpa_solve_tridi.X90 \
+	src/elpa1/legacy_interface/elpa_solve_tridi_legacy.X90 \
 	src/elpa1/elpa_solve_tridi_new_interface.X90 \
         src/precision_macros.h
 
@@ -1133,13 +1133,13 @@ EXTRA_DIST = \
   src/elpa2/pack_unpack_gpu.X90 \
   src/elpa2/compute_hh_trafo.X90 \
   src/sanity.X90 \
-  src/elpa1/elpa_cholesky_template.X90 \
+  src/elpa1/legacy_interface/elpa_cholesky_template_legacy.X90 \
   src/elpa1/elpa_cholesky_template_new_interface.X90 \
-  src/elpa1/elpa_invert_trm.X90 \
+  src/elpa1/legacy_interface/elpa_invert_trm_legacy.X90 \
   src/elpa1/elpa_invert_trm_new_interface.X90 \
-  src/elpa1/elpa_multiply_a_b.X90 \
+  src/elpa1/legacy_interface/elpa_multiply_a_b_legacy.X90 \
   src/elpa1/elpa_multiply_a_b_new_interface.X90 \
-  src/elpa1/elpa_solve_tridi.X90 \
+  src/elpa1/legacy_interface/elpa_solve_tridi_legacy.X90 \
   src/elpa1/elpa_solve_tridi_new_interface.X90 \
   src/elpa2/qr/elpa_qrkernels.X90 \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.Xcu \

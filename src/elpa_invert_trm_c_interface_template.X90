@@ -63,7 +63,7 @@ function elpa_invert_trm_&
 	&PRECISION&
 	")
    use, intrinsic :: iso_c_binding
-   use elpa1_auxiliary, only : elpa_invert_trm_&
+   use elpa1_auxiliary_legacy, only : elpa_invert_trm_&
    &MATH_DATATYPE&
    &_&
    &PRECISION
