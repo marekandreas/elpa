@@ -147,7 +147,7 @@
   !c>*/
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 
 #if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_real_1stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
@@ -187,7 +187,7 @@
 #define REALCASE 1
 #undef DOUBLE_PRECISION
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 
 #if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_real_1stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
@@ -226,7 +226,7 @@
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 
 #if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_complex_1stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
@@ -266,7 +266,7 @@
 #define COMPLEXCASE 1
 #undef DOUBLE_PRECISION
 #define SINGLE_PRECISION
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 
 #if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_complex_1stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
@@ -301,7 +301,7 @@
   !c> int elpa_solve_tridi_double(int na, int nev, double *d, double *e, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_solve_tridi_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -329,7 +329,7 @@
   !c> int elpa_solve_tridi_single(int na, int nev, float *d, float *e, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_solve_tridi_c_interface_template.X90"
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -376,7 +376,7 @@
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_mult_at_b_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -422,7 +422,7 @@
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_mult_at_b_c_interface_template.X90"
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -466,7 +466,7 @@
   !c> int elpa_mult_ah_b_complex_double(char uplo_a, char uplo_c, int na, int ncb, double complex *a, int lda, int ldaCols, double complex *b, int ldb, int ldbCols, int nblk, int mpi_comm_rows, int mpi_comm_cols, double complex *c, int ldc, int ldcCols);
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_mult_ah_b_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -511,7 +511,7 @@
   !c> int elpa_mult_ah_b_complex_single(char uplo_a, char uplo_c, int na, int ncb, complex *a, int lda, int ldaCols, complex *b, int ldb, int ldbCols, int nblk, int mpi_comm_rows, int mpi_comm_cols, complex *c, int ldc, int ldcCols);
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_mult_ah_b_c_interface_template.X90"
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
@@ -537,7 +537,7 @@
   !c> int elpa_invert_trm_real_double(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_invert_trm_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -565,7 +565,7 @@
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_invert_trm_c_interface_template.X90"
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -592,7 +592,7 @@
  !c> int elpa_invert_trm_complex_double(int na, double complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_invert_trm_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -618,7 +618,7 @@
  !c> int elpa_invert_trm_complex_single(int na, complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_invert_trm_c_interface_template.X90"
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
@@ -648,7 +648,7 @@
  !c> int elpa_cholesky_real_double(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_cholesky_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -677,7 +677,7 @@
  !c> int elpa_cholesky_real_single(int na, float *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_cholesky_c_interface_template.X90"
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -706,7 +706,7 @@
  !c> int elpa_cholesky_complex_double(int na, double complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_cholesky_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -734,7 +734,7 @@
  !c> int elpa_cholesky_complex_single(int na, complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
-#include "precision_macros.h"
+#include "../../precision_macros.h"
 #include "elpa_cholesky_c_interface_template.X90"
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
