@@ -39,7 +39,9 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/elpa2_compute.F90 \
         src/elpa2/kernels/mod_fortran_interfaces.F90 \
         src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
-        src/elpa_c_interface.F90 \
+        src/elpa_driver_c_interface.F90 \
+        src/elpa_1stage_c_interface.F90 \
+        src/elpa_2stage_c_interface.F90 \
         src/GPU/check_for_gpu.F90 \
         src/GPU/mod_cuda.F90 \
         src/elpa2/GPU/interface_c_kernel.F90 \
@@ -1157,7 +1159,13 @@ EXTRA_DIST = \
   elpa.spec
 
 ## Rules to re-generated the headers
-#elpa/elpa_generated.h: $(top_srcdir)/src/elpa_c_interface.F90
+#elpa/elpa_generated.h: $(top_srcdir)/src/elpa_driver_c_interface.F90
+#	grep -h "^ *!c>" $^ | sed 's/^ *!c>//;' > $@ || { rm $@; exit 1; }
+#
+#elpa/elpa_generated.h: $(top_srcdir)/src/elpa_1stage_c_interface.F90
+#	grep -h "^ *!c>" $^ | sed 's/^ *!c>//;' > $@ || { rm $@; exit 1; }
+#
+#elpa/elpa_generated.h: $(top_srcdir)/src/elpa_2stage_c_interface.F90
 #	grep -h "^ *!c>" $^ | sed 's/^ *!c>//;' > $@ || { rm $@; exit 1; }
 #
 #test/shared_sources/generated.h: $(wildcard $(top_srcdir)/test/shared_sources/*.F90)
