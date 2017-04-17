@@ -14,7 +14,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa.F90 \
         src/elpa1/legacy_interface/elpa1_legacy.F90 \
         src/elpa1/elpa1_new_interface.F90 \
-        src/elpa2/elpa2.F90 \
+        src/elpa2/legacy_interface/elpa2_legacy.F90 \
         src/elpa2/elpa2_new_interface.F90 \
 	src/elpa1/legacy_interface/elpa1_auxiliary_legacy.F90 \
 	src/elpa1/elpa1_auxiliary_new_interface.F90 \
@@ -60,7 +60,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa2/elpa2_compute_complex_template.X90 \
 	src/elpa1/legacy_interface/elpa1_template_legacy.X90 \
 	src/elpa1/elpa1_template_new_interface.X90 \
-	src/elpa2/elpa2_template.X90 \
+	src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
 	src/elpa2/elpa2_template_new_interface.X90 \
 	src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
 	src/elpa2_c_interface_template.X90 \
@@ -1027,8 +1027,8 @@ elpa1_utilities.i: $(top_srcdir)/src/elpa1_utilities.F90
 elpa2_utilities.i: $(top_srcdir)/src/elpa2/elpa2_utilities.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa2/elpa2_utilities.F90 -o $@
 
-elpa2.i: $(top_srcdir)/src/elpa2/elpa2.F90
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa2/elpa2.F90 -o $@
+elpa2.i: $(top_srcdir)/src/elpa2/legacy_interface/elpa2_legacy.F90
+	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa2/legacy_interface/elpa2_legacy.F90 -o $@
 
 elpa1.i: $(top_srcdir)/src/elpa1.F90
 	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -c $(top_srcdir)/src/elpa1.F90 -o $@
@@ -1113,7 +1113,7 @@ EXTRA_DIST = \
   src/elpa2/elpa2_symm_matrix_allreduce_real_template.X90 \
   src/elpa1/legacy_interface/elpa1_template_legacy.X90 \
   src/elpa1/elpa1_template_new_interface.X90 \
-  src/elpa2/elpa2_template.X90 \
+  src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
   src/elpa2/elpa2_template_new_interface.X90 \
   src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
   src/elpa2_c_interface_template.X90 \
