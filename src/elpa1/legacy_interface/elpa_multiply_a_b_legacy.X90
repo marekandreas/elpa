@@ -121,8 +121,10 @@
       !l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
 
       if (elpa_init(20170403) /= ELPA_OK) then
+        print *, "ELPA API version not supported"
         success = .false.
-        error stop "ELPA API version not supported"
+        stop 
+        return
       endif
 
       nev = 10
