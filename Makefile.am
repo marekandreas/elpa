@@ -21,7 +21,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
         src/elpa1/elpa1_utilities.F90 \
         src/elpa2/elpa2_utilities.F90 \
 	src/elpa_t.F90 \
-        src/elpa_utilities.F90
+        src/general/elpa_utilities.F90
 
 # internal parts
 noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
