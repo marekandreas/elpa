@@ -83,7 +83,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2/pack_unpack_gpu.X90 \
 	src/elpa2/compute_hh_trafo.X90 \
         src/elpa2/redist_band.X90 \
-	src/sanity.X90 \
+	src/general/sanity.X90 \
 	src/elpa1/legacy_interface/elpa_cholesky_template_legacy.X90 \
 	src/elpa1/elpa_cholesky_template_new_interface.X90 \
 	src/elpa1/legacy_interface/elpa_invert_trm_legacy.X90 \
@@ -92,7 +92,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa1/elpa_multiply_a_b_new_interface.X90 \
 	src/elpa1/legacy_interface/elpa_solve_tridi_legacy.X90 \
 	src/elpa1/elpa_solve_tridi_new_interface.X90 \
-        src/precision_macros.h
+        src/general/precision_macros.h
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
 libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION)
@@ -1134,7 +1134,7 @@ EXTRA_DIST = \
   src/elpa2/pack_unpack_cpu.X90 \
   src/elpa2/pack_unpack_gpu.X90 \
   src/elpa2/compute_hh_trafo.X90 \
-  src/sanity.X90 \
+  src/general/sanity.X90 \
   src/elpa1/legacy_interface/elpa_cholesky_template_legacy.X90 \
   src/elpa1/elpa_cholesky_template_new_interface.X90 \
   src/elpa1/legacy_interface/elpa_invert_trm_legacy.X90 \

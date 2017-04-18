@@ -42,7 +42,7 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 
-#include "../sanity.X90"
+#include "../general/sanity.X90"
      use elpa1_compute
      use elpa_utilities
      use elpa_mpi

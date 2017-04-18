@@ -49,7 +49,7 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
-#include "../sanity.X90"
+#include "../general/sanity.X90"
 
     subroutine trans_ev_band_to_full_&
     &MATH_DATATYPE&

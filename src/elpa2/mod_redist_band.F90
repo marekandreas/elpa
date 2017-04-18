@@ -68,7 +68,7 @@ module redist
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "../precision_macros.h"
+#include "../general/precision_macros.h"
 #include "redist_band.X90"
 
 #undef REALCASE
@@ -79,7 +79,7 @@ module redist
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "../precision_macros.h"
+#include "../general/precision_macros.h"
 #include "redist_band.X90"
 
 #undef REALCASE
@@ -90,7 +90,7 @@ module redist
 ! double precision
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "../precision_macros.h"
+#include "../general/precision_macros.h"
 #include "redist_band.X90"
 
 #undef COMPLEXCASE
@@ -101,7 +101,7 @@ module redist
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 
-#include "../precision_macros.h"
+#include "../general/precision_macros.h"
 #include "redist_band.X90"
 
 #undef COMPLEXCASE

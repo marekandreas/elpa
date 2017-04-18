@@ -79,7 +79,7 @@ module compute_hh_trafo
   !real double precision
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "../precision_macros.h"
+#include "../general/precision_macros.h"
 #include "compute_hh_trafo.X90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
@@ -88,7 +88,7 @@ module compute_hh_trafo
 #if defined(WANT_SINGLE_PRECISION_REAL)
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "../precision_macros.h"
+#include "../general/precision_macros.h"
 #include "compute_hh_trafo.X90"
 #undef REALCASE
 #undef SINGLE_PRECISION
@@ -97,7 +97,7 @@ module compute_hh_trafo
   !complex double precision
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "../precision_macros.h"
+#include "../general/precision_macros.h"
 #include "compute_hh_trafo.X90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
@@ -106,7 +106,7 @@ module compute_hh_trafo
 #if defined(WANT_SINGLE_PRECISION_COMPLEX)
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
-#include "../precision_macros.h"
+#include "../general/precision_macros.h"
 #include "compute_hh_trafo.X90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
@@ -116,7 +116,7 @@ module compute_hh_trafo
 !  !complex double precision
 !#define COMPLEXCASE 1
 !#define DOUBLE_PRECISION 1
-!#include "../precision_macros.h"
+!#include "../general/precision_macros.h"
 !#include "compute_hh_trafo_complex_gpu.X90"
 !#undef COMPLEXCASE
 !#undef DOUBLE_PRECISION
@@ -125,7 +125,7 @@ module compute_hh_trafo
 !#if defined(WANT_SINGLE_PRECISION_COMPLEX)
 !#define COMPLEXCASE 1
 !#define SINGLE_PRECISION 1
-!#include "../precision_macros.h"
+!#include "../general/precision_macros.h"
 !#include "compute_hh_trafo_complex_gpu.X90"
 !#undef COMPLEXCASE
 !#undef SINGLE_PRECISION

@@ -53,7 +53,7 @@
 ! Author: A. Marek, MPCDF
 
 
-#include "../../sanity.X90"
+#include "../../general/sanity.X90"
       use elpa_type
 #ifdef HAVE_DETAILED_TIMINGS
       use timings

@@ -81,7 +81,7 @@
 !>
 !> \param useGPU      If true,  GPU version of the subroutine will be used
 !>
-#include "../sanity.X90"
+#include "../general/sanity.X90"
 
     subroutine tridiag_&
     &MATH_DATATYPE&

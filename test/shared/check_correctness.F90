@@ -68,7 +68,7 @@ module mod_check_correctness
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-#include "../../src/precision_macros.h"
+#include "../../src/general/precision_macros.h"
 #include "check_correctness_template.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -77,7 +77,7 @@ module mod_check_correctness
 
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
-#include "../../src/precision_macros.h"
+#include "../../src/general/precision_macros.h"
 #include "check_correctness_template.X90"
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
@@ -85,7 +85,7 @@ module mod_check_correctness
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "../../src/precision_macros.h"
+#include "../../src/general/precision_macros.h"
 #include "check_correctness_template.X90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -94,7 +94,7 @@ module mod_check_correctness
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "../../src/precision_macros.h"
+#include "../../src/general/precision_macros.h"
 #include "check_correctness_template.X90"
 #undef SINGLE_PRECISION
 #undef REALCASE

@@ -54,7 +54,7 @@
 ! Author: Andreas Marek, MPCDF
 #endif
 
-#include "../sanity.X90"
+#include "../general/sanity.X90"
 
 #define COMPLEXCASE 1
 #undef REALCASE

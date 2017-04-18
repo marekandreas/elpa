@@ -75,7 +75,7 @@ module real_generic_kernel
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#include "../../precision_macros.h"
+#include "../../general/precision_macros.h"
 #include "elpa2_kernels_real_template.X90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
@@ -83,7 +83,7 @@ module real_generic_kernel
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-#include "../../precision_macros.h"
+#include "../../general/precision_macros.h"
 #include "elpa2_kernels_real_template.X90"
 #undef REALCASE
 #undef SINGLE_PRECISION
