@@ -39,7 +39,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/elpa2_compute.F90 \
         src/elpa2/kernels/mod_fortran_interfaces.F90 \
         src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
-        src/elpa_driver_c_interface.F90 \
+        src/elpa_driver/legacy_interface/elpa_driver_c_interface_legacy.F90 \
         src/elpa1/legacy_interface/elpa_1stage_c_interface_legacy.F90 \
         src/elpa2/legacy_interface/elpa_2stage_c_interface.F90 \
         src/GPU/check_for_gpu.F90 \
@@ -64,7 +64,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2/elpa2_template_new_interface.X90 \
 	src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
 	src/elpa2/legacy_interface/elpa2_c_interface_template.X90 \
-	src/elpa_driver_c_interface_template.X90 \
+	src/elpa_driver/legacy_interface/elpa_driver_c_interface_template_legacy.X90 \
 	src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
         src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
         src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.X90 \
@@ -1117,7 +1117,7 @@ EXTRA_DIST = \
   src/elpa2/elpa2_template_new_interface.X90 \
   src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
   src/elpa2/legacy_interface/elpa2_c_interface_template.X90 \
-  src/elpa_driver_c_interface_template.X90 \
+  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template_legacy.X90 \
   src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.X90 \

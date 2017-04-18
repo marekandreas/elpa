@@ -79,8 +79,8 @@
 #else
   !c> int elpa_solve_evp_real_single(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, char *method);
 #endif
-#include "./general/precision_macros.h"
-#include "elpa_driver_c_interface_template.X90"
+#include "../../general/precision_macros.h"
+#include "./elpa_driver_c_interface_template_legacy.X90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -123,8 +123,8 @@
 #else
   !c> int elpa_solve_evp_real_single(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU, char *method);
 #endif
-#include "./general/precision_macros.h"
-#include "elpa_driver_c_interface_template.X90"
+#include "../../general/precision_macros.h"
+#include "elpa_driver_c_interface_template_legacy.X90"
 #undef SINGLE_PRECISION
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -167,8 +167,8 @@
 #else
   !c> int elpa_solve_evp_complex_single(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
 #endif
-#include "./general/precision_macros.h"
-#include "elpa_driver_c_interface_template.X90"
+#include "../../general/precision_macros.h"
+#include "./elpa_driver_c_interface_template_legacy.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -212,8 +212,8 @@
 #else
   !c> int elpa_solve_evp_complex_single(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
 #endif
-#include "./general/precision_macros.h"
-#include "elpa_driver_c_interface_template.X90"
+#include "../../general/precision_macros.h"
+#include "./elpa_driver_c_interface_template_legacy.X90"
 #undef SINGLE_PRECISION
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
