@@ -72,9 +72,9 @@
 #ifdef WITH_GPU_VERSION
 extern "C" {
   
-    int cublasCreateFromC(intptr_t **cublas_handle) {
+    int cublasCreateFromC(intptr_t *cublas_handle) {
 //     printf("in c: %p\n", *cublas_handle);
-    *cublas_handle = (intptr_t*) malloc(sizeof(cublasHandle_t));
+    *cublas_handle = (intptr_t) malloc(sizeof(cublasHandle_t));
 //     printf("in c: %p\n", *cublas_handle);
     cublasStatus_t status = cublasCreate((cublasHandle_t*) *cublas_handle);
     if (status == CUBLAS_STATUS_SUCCESS) {
