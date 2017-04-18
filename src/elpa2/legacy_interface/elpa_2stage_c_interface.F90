@@ -77,8 +77,8 @@
   !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #endif
 
-#include "precision_macros.h"
-#include "elpa2_c_interface_template.X90"
+#include "../../precision_macros.h"
+#include "./elpa2_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -120,8 +120,8 @@
   !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #endif
 
-#include "precision_macros.h"
-#include "elpa2_c_interface_template.X90"
+#include "../../precision_macros.h"
+#include "./elpa2_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -164,8 +164,8 @@
   !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #endif
 
-#include "precision_macros.h"
-#include "elpa2_c_interface_template.X90"
+#include "../../precision_macros.h"
+#include "./elpa2_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -207,8 +207,8 @@
   !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #endif
 
-#include "precision_macros.h"
-#include "elpa2_c_interface_template.X90"
+#include "../../precision_macros.h"
+#include "./elpa2_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE

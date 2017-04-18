@@ -74,9 +74,9 @@ program test_complex_gpu_version_double_precision
 !-------------------------------------------------------------------------------
    use precision
    use elpa1_legacy
-   
+
    use mod_check_for_gpu, only : check_for_gpu
-   
+
    use elpa_utilities, only : error_unit
    use elpa1_utilities
 #ifdef WITH_OPENMP

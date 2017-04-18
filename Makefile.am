@@ -41,7 +41,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
         src/elpa_driver_c_interface.F90 \
         src/elpa1/legacy_interface/elpa_1stage_c_interface_legacy.F90 \
-        src/elpa_2stage_c_interface.F90 \
+        src/elpa2/legacy_interface/elpa_2stage_c_interface.F90 \
         src/GPU/check_for_gpu.F90 \
         src/GPU/mod_cuda.F90 \
         src/elpa2/GPU/interface_c_kernel.F90 \
@@ -63,7 +63,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 	src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
 	src/elpa2/elpa2_template_new_interface.X90 \
 	src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
-	src/elpa2_c_interface_template.X90 \
+	src/elpa2/legacy_interface/elpa2_c_interface_template.X90 \
 	src/elpa_driver_c_interface_template.X90 \
 	src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
         src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
@@ -1116,7 +1116,7 @@ EXTRA_DIST = \
   src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
   src/elpa2/elpa2_template_new_interface.X90 \
   src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
-  src/elpa2_c_interface_template.X90 \
+  src/elpa2/legacy_interface/elpa2_c_interface_template.X90 \
   src/elpa_driver_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
@@ -1165,7 +1165,7 @@ EXTRA_DIST = \
 #elpa/elpa_generated.h: $(top_srcdir)/src/elpa1/legacy_interface/elpa_1stage_c_interface_legacy.F90
 #	grep -h "^ *!c>" $^ | sed 's/^ *!c>//;' > $@ || { rm $@; exit 1; }
 #
-#elpa/elpa_generated.h: $(top_srcdir)/src/elpa_2stage_c_interface.F90
+#elpa/elpa_generated.h: $(top_srcdir)/src/elpa2/legacy_interface/elpa_2stage_c_interface.F90
 #	grep -h "^ *!c>" $^ | sed 's/^ *!c>//;' > $@ || { rm $@; exit 1; }
 #
 #test/shared_sources/generated.h: $(wildcard $(top_srcdir)/test/shared_sources/*.F90)
