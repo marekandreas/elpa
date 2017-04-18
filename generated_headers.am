@@ -19,7 +19,7 @@ elpa/elpa_generated.h: $(top_srcdir)/src/elpa_driver/legacy_interface/elpa_drive
 elpa/elpa_generated.h: $(top_srcdir)/src/elpa1/legacy_interface/elpa_1stage_c_interface_legacy.F90 | elpa
 	$(call extract_interface,!c>)
 
-elpa/elpa_generated.h: $(top_srcdir)/src/elpa2/legacy_interface/elpa_2stage_c_interface.F90 | elpa
+elpa/elpa_generated.h: $(top_srcdir)/src/elpa2/legacy_interface/elpa_2stage_c_interface_legacy.F90 | elpa
 	$(call extract_interface,!c>)
 
 test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.*90) | test/shared
