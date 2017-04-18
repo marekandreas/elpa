@@ -11,7 +11,7 @@ AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 noinst_LTLIBRARIES = libelpa@SUFFIX@_public.la
 libelpa@SUFFIX@_public_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@modules @FC_MODINC@private_modules
 libelpa@SUFFIX@_public_la_SOURCES = \
-	src/elpa.F90 \
+	src/elpa_driver/legacy_interface/elpa_legacy.F90 \
         src/elpa1/legacy_interface/elpa1_legacy.F90 \
         src/elpa1/elpa1_new_interface.F90 \
         src/elpa2/legacy_interface/elpa2_legacy.F90 \
