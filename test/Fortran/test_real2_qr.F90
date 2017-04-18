@@ -81,7 +81,7 @@ program test_real2_default_kernel_qr_decomposition_double_precision
 !-------------------------------------------------------------------------------
    use precision
    use elpa1_legacy
-   use ELPA2
+   use elpa2_legacy
 
    use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit

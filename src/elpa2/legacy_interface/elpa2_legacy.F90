@@ -54,7 +54,7 @@
 
 #include "config-f90.h"
 !> \brief Fortran module which provides the routines to use the 2-stage ELPA solver
-module ELPA2
+module elpa2_legacy
 
 ! Version 1.1.2, 2011-02-21
 
@@ -543,4 +543,4 @@ module ELPA2
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-end module ELPA2
+end module elpa2_legacy

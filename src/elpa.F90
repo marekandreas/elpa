@@ -56,7 +56,7 @@
 module ELPA
   use, intrinsic :: iso_c_binding, only : c_double, c_int, c_float, c_float_complex, c_double_complex
   use elpa1_legacy
-  use elpa2
+  use elpa2_legacy
 
   implicit none
 

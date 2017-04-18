@@ -79,7 +79,7 @@ program test_complex2_default_kernel_double_precision
 !-------------------------------------------------------------------------------
    use precision
    use elpa1_legacy
-   use ELPA2
+   use elpa2_legacy
 
    use mod_check_for_gpu, only : check_for_gpu
 

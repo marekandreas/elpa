@@ -80,11 +80,11 @@ program test_complex2_gpu_version_double_precision
 
    use precision
    use elpa1_legacy
-   use ELPA2
+   use elpa2_legacy
 
    use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
-   use elpa2_utilities
+   use elpa2_legacy
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
