@@ -68,8 +68,8 @@
 program print_available_elpa2_kernels
 
    use precision
-   use elpa1_legacy
-   use elpa2_legacy
+   use elpa1
+   use elpa2
 
    use elpa2_utilities
 

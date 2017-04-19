@@ -54,36 +54,36 @@
 #include "config-f90.h"
 
 !> \brief Fortran module which provides helper routines for matrix calculations
-module ELPA1_AUXILIARY_new
+module elpa1_auxiliary_impl
   use elpa_utilities
 
   implicit none
 
-  public :: elpa_mult_at_b_real_double_new      !< Multiply double-precision real matrices A**T * B
+  public :: elpa_mult_at_b_real_double_impl      !< Multiply double-precision real matrices A**T * B
 
-  public :: elpa_mult_ah_b_complex_double_new   !< Multiply double-precision complex matrices A**H * B
+  public :: elpa_mult_ah_b_complex_double_impl   !< Multiply double-precision complex matrices A**H * B
 
-  public :: elpa_invert_trm_real_double_new     !< Invert double-precision real triangular matrix
+  public :: elpa_invert_trm_real_double_impl    !< Invert double-precision real triangular matrix
 
-  public :: elpa_invert_trm_complex_double_new  !< Invert double-precision complex triangular matrix
+  public :: elpa_invert_trm_complex_double_impl  !< Invert double-precision complex triangular matrix
 
-  public :: elpa_cholesky_real_double_new       !< Cholesky factorization of a double-precision real matrix
+  public :: elpa_cholesky_real_double_impl       !< Cholesky factorization of a double-precision real matrix
 
-  public :: elpa_cholesky_complex_double_new    !< Cholesky factorization of a double-precision complex matrix
+  public :: elpa_cholesky_complex_double_impl    !< Cholesky factorization of a double-precision complex matrix
 
-  public :: elpa_solve_tridi_double_new         !< Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
+  public :: elpa_solve_tridi_double_impl         !< Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_cholesky_real_single_new       !< Cholesky factorization of a single-precision real matrix
-  public :: elpa_invert_trm_real_single_new     !< Invert single-precision real triangular matrix
-  public :: elpa_mult_at_b_real_single_new      !< Multiply single-precision real matrices A**T * B
-  public :: elpa_solve_tridi_single_new         !< Solve tridiagonal eigensystem for a single-precision matrix with divide and conquer method
+  public :: elpa_cholesky_real_single_impl       !< Cholesky factorization of a single-precision real matrix
+  public :: elpa_invert_trm_real_single_impl     !< Invert single-precision real triangular matrix
+  public :: elpa_mult_at_b_real_single_impl      !< Multiply single-precision real matrices A**T * B
+  public :: elpa_solve_tridi_single_impl         !< Solve tridiagonal eigensystem for a single-precision matrix with divide and conquer method
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_cholesky_complex_single_new    !< Cholesky factorization of a single-precision complex matrix
-  public :: elpa_invert_trm_complex_single_new  !< Invert single-precision complex triangular matrix
-  public :: elpa_mult_ah_b_complex_single_new   !< Multiply single-precision complex matrices A**H * B
+  public :: elpa_cholesky_complex_single_impl    !< Cholesky factorization of a single-precision complex matrix
+  public :: elpa_invert_trm_complex_single_impl  !< Invert single-precision complex triangular matrix
+  public :: elpa_mult_ah_b_complex_single_impl   !< Multiply single-precision complex matrices A**H * B
 #endif
 
   contains
@@ -92,22 +92,22 @@ module ELPA1_AUXILIARY_new
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
 
-   function elpa_cholesky_real_double_new (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+   function elpa_cholesky_real_double_impl (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                             wantDebug) result(success)
 #include "elpa_cholesky_template_new_interface.X90"
 
-    end function elpa_cholesky_real_double_new
+    end function elpa_cholesky_real_double_impl
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
 
-   function elpa_cholesky_real_single_new(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+   function elpa_cholesky_real_single_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                             wantDebug) result(success)
 #include "elpa_cholesky_template_new_interface.X90"
 
-    end function elpa_cholesky_real_single_new
+    end function elpa_cholesky_real_single_impl
 
 #endif /* WANT_SINGLE_PRECSION_REAL */
 
@@ -128,17 +128,17 @@ module ELPA1_AUXILIARY_new
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
-    function elpa_invert_trm_real_double_new(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
+    function elpa_invert_trm_real_double_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
                                              mpi_comm_cols, wantDebug) result(success)
 #include "elpa_invert_trm_new_interface.X90"
-     end function elpa_invert_trm_real_double_new
+     end function elpa_invert_trm_real_double_impl
 
 #if WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_invert_trm_real_single_new: Inverts a single-precision real upper triangular matrix
+!> \brief  elpa_invert_trm_real_single_impl: Inverts a single-precision real upper triangular matrix
 !> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
@@ -152,10 +152,10 @@ module ELPA1_AUXILIARY_new
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
-    function elpa_invert_trm_real_single_new(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
+    function elpa_invert_trm_real_single_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
                                              mpi_comm_cols, wantDebug) result(success)
 #include "elpa_invert_trm_new_interface.X90"
-    end function elpa_invert_trm_real_single_new
+    end function elpa_invert_trm_real_single_impl
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -164,7 +164,7 @@ module ELPA1_AUXILIARY_new
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_cholesky_complex_double_new: Cholesky factorization of a double-precision complex hermitian matrix
+!> \brief  elpa_cholesky_complex_double_impl: Cholesky factorization of a double-precision complex hermitian matrix
 !> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
@@ -179,11 +179,12 @@ module ELPA1_AUXILIARY_new
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
-    function elpa_cholesky_complex_double_new(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
+    function elpa_cholesky_complex_double_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                               wantDebug) result(success)
 
 #include "elpa_cholesky_template_new_interface.X90"
 
-    end function elpa_cholesky_complex_double_new
+    end function elpa_cholesky_complex_double_impl
 
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
@@ -191,7 +192,7 @@ module ELPA1_AUXILIARY_new
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_cholesky_complex_single_new: Cholesky factorization of a single-precision complex hermitian matrix
+!> \brief  elpa_cholesky_complex_single_impl: Cholesky factorization of a single-precision complex hermitian matrix
 !> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
@@ -206,11 +207,12 @@ module ELPA1_AUXILIARY_new
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
-    function elpa_cholesky_complex_single_new(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
+    function elpa_cholesky_complex_single_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                               wantDebug) result(success)
 
 #include "elpa_cholesky_template_new_interface.X90"
 
-    end function elpa_cholesky_complex_single_new
+    end function elpa_cholesky_complex_single_impl
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
@@ -218,7 +220,7 @@ module ELPA1_AUXILIARY_new
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_invert_trm_complex_double_new: Inverts a double-precision complex upper triangular matrix
+!> \brief  elpa_invert_trm_complex_double_impl: Inverts a double-precision complex upper triangular matrix
 !> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
@@ -233,17 +235,17 @@ module ELPA1_AUXILIARY_new
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
 
-     function elpa_invert_trm_complex_double_new(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
+     function elpa_invert_trm_complex_double_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
                                                  mpi_comm_cols, wantDebug) result(success)
 #include "elpa_invert_trm_new_interface.X90"
-    end function elpa_invert_trm_complex_double_new
+    end function elpa_invert_trm_complex_double_impl
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_invert_trm_complex_single_new: Inverts a single-precision complex upper triangular matrix
+!> \brief  elpa_invert_trm_complex_single_impl: Inverts a single-precision complex upper triangular matrix
 !> \details
 !> \param  na                   Order of matrix
 !> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
@@ -258,27 +260,27 @@ module ELPA1_AUXILIARY_new
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
 
-    function elpa_invert_trm_complex_single_new(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
+    function elpa_invert_trm_complex_single_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
                                                 mpi_comm_cols, wantDebug) result(success)
 #include "elpa_invert_trm_new_interface.X90"
-    end function elpa_invert_trm_complex_single_new
+    end function elpa_invert_trm_complex_single_impl
 
 #endif /* WANT_SINGE_PRECISION_COMPLEX */
 
 #define REALCASE 1
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
-    function elpa_mult_at_b_real_double_new(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
+    function elpa_mult_at_b_real_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                               mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 #include "elpa_multiply_a_b_new_interface.X90"
-    end function elpa_mult_at_b_real_double_new
+    end function elpa_mult_at_b_real_double_impl
 
 #if WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_mult_at_b_real_single_new: Performs C : = A**T * B
+!> \brief  elpa_mult_at_b_real_single_impl: Performs C : = A**T * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
 !>                 B is a (na,ncb) matrix
 !>                 C is a (na,ncb) matrix where optionally only the upper or lower
@@ -310,12 +312,12 @@ module ELPA1_AUXILIARY_new
 !> \param ldc                   leading dimension of matrix c
 !> \result success
 
-    function elpa_mult_at_b_real_single_new(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
+    function elpa_mult_at_b_real_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                               mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 
 #include "elpa_multiply_a_b_new_interface.X90"
 
-    end function elpa_mult_at_b_real_single_new
+    end function elpa_mult_at_b_real_single_impl
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -324,7 +326,7 @@ module ELPA1_AUXILIARY_new
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_mult_ah_b_complex_double_new: Performs C : = A**H * B
+!> \brief  elpa_mult_ah_b_complex_double_impl: Performs C : = A**H * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
 !>                 B is a (na,ncb) matrix
 !>                 C is a (na,ncb) matrix where optionally only the upper or lower
@@ -358,18 +360,18 @@ module ELPA1_AUXILIARY_new
 !> \param ldc                   leading dimension of matrix c
 !> \result success
 
-    function elpa_mult_ah_b_complex_double_new(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
+    function elpa_mult_ah_b_complex_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                                  mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 #include "elpa_multiply_a_b_new_interface.X90"
 
-    end function elpa_mult_ah_b_complex_double_new
+    end function elpa_mult_ah_b_complex_double_impl
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_mult_ah_b_complex_single_new: Performs C : = A**H * B
+!> \brief  elpa_mult_ah_b_complex_single_impl: Performs C : = A**H * B
 !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
 !>                 B is a (na,ncb) matrix
 !>                 C is a (na,ncb) matrix where optionally only the upper or lower
@@ -403,12 +405,12 @@ module ELPA1_AUXILIARY_new
 !> \param ldc                   leading dimension of matrix c
 !> \result success
 
-    function elpa_mult_ah_b_complex_single_new(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
+    function elpa_mult_ah_b_complex_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                                  mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 
 #include "elpa_multiply_a_b_new_interface.X90"
 
-    end function elpa_mult_ah_b_complex_single_new
+    end function elpa_mult_ah_b_complex_single_impl
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
@@ -416,7 +418,7 @@ module ELPA1_AUXILIARY_new
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_solve_tridi_double_new: Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
+!> \brief  elpa_solve_tridi_double_impl: Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
 !> \details
 !>
 !> \param na                    Matrix dimension
@@ -433,7 +435,7 @@ module ELPA1_AUXILIARY_new
 !> \param wantDebug             logical, give more debug information if .true.
 !> \result success              logical, .true. on success, else .false.
 
-    function elpa_solve_tridi_double_new(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
+    function elpa_solve_tridi_double_impl(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
           result(success)
 
 #include "elpa_solve_tridi_new_interface.X90"
@@ -446,7 +448,7 @@ module ELPA1_AUXILIARY_new
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_solve_tridi_single_new: Solve tridiagonal eigensystem for a single-precision matrix with divide and conquer method
+!> \brief  elpa_solve_tridi_single_impl: Solve tridiagonal eigensystem for a single-precision matrix with divide and conquer method
 !> \details
 !>
 !> \param na                    Matrix dimension
@@ -463,7 +465,7 @@ module ELPA1_AUXILIARY_new
 !> \param wantDebug             logical, give more debug information if .true.
 !> \result success              logical, .true. on success, else .false.
 
-    function elpa_solve_tridi_single_new(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+    function elpa_solve_tridi_single_impl(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                      mpi_comm_cols, wantDebug) result(success)
 
 #include "elpa_solve_tridi_new_interface.X90"
@@ -475,5 +477,5 @@ module ELPA1_AUXILIARY_new
 
 
 
-end module elpa1_auxiliary_new
+end module elpa1_auxiliary_impl
 

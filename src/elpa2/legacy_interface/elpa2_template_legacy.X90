@@ -101,7 +101,7 @@
     &MATH_DATATYPE&
     &_2stage_&
     &PRECISION&
-    &_legacy")
+    &_legacy_interface")
 
     call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
     call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -214,7 +214,7 @@
      &MATH_DATATYPE&
      &_2stage_&
      &PRECISION&
-     &_legacy")
+     &_legacy_interface")
 
    end function solve_evp_&
    &MATH_DATATYPE&

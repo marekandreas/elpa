@@ -74,7 +74,7 @@ program test_real_single_precision
 !
 !-------------------------------------------------------------------------------
    use precision
-   use elpa1_legacy
+   use elpa1
    use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
    use test_util

@@ -74,7 +74,7 @@ program test_real
 !
 !-------------------------------------------------------------------------------
    use precision
-   use elpa1_legacy
+   use elpa1
    use elpa_utilities, only : error_unit
    use from_c
 #ifdef WITH_OPENMP

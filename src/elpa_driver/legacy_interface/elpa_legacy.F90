@@ -55,8 +55,8 @@
 !> \brief Fortran module which provides the routines to the ELPA solver (1 and 2 stage)
 module ELPA
   use, intrinsic :: iso_c_binding, only : c_double, c_int, c_float, c_float_complex, c_double_complex
-  use elpa1_legacy
-  use elpa2_legacy
+  use elpa1
+  use elpa2
 
   implicit none
 

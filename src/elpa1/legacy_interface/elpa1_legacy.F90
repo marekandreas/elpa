@@ -81,10 +81,10 @@
 #include "config-f90.h"
 
 !> \brief Fortran module which provides the routines to use the one-stage ELPA solver
-module ELPA1_legacy
+module elpa1
   use, intrinsic :: iso_c_binding
   use elpa_utilities
-  use elpa1_auxiliary_legacy
+  use elpa1_auxiliary
   use elpa1_utilities
 
   implicit none
@@ -698,4 +698,4 @@ end function elpa_get_communicators
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-end module ELPA1_legacy
+end module elpa1

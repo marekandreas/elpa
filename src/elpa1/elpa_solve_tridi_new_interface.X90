@@ -58,9 +58,9 @@
 
       use elpa1_compute, solve_tridi_&
                          &PRECISION&
-			 &_private_new => solve_tridi_&
+			 &_private_impl => solve_tridi_&
 			 &PRECISION&
-			 &_new
+			 &_impl
       use precision
 
       implicit none
@@ -79,7 +79,7 @@
 
       call solve_tridi_&
       &PRECISION&
-      &_private_new(na, nev, d, e, q, ldq, nblk, matrixCols, &
+      &_private_impl(na, nev, d, e, q, ldq, nblk, matrixCols, &
                mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
 #undef REALCASE

@@ -107,8 +107,8 @@
       call timer%start("elpa_mult_at_b_&
       &MATH_DATATYPE&
       &_&
-      &PRECISION &
-      ")
+      &PRECISION&
+      &_legacy_interface")
 
       success = .true.
 
@@ -123,7 +123,7 @@
       if (elpa_init(20170403) /= ELPA_OK) then
         print *, "ELPA API version not supported"
         success = .false.
-        stop 
+        stop
         return
       endif
 
@@ -156,8 +156,8 @@
       call timer%stop("elpa_mult_at_b_&
       &MATH_DATATYPE&
       &_&
-      &PRECISION &
-      ")
+      &PRECISION&
+      &_legacy_interface")
 
 #undef REALCASE
 #undef COMPLEXCASE

@@ -108,7 +108,7 @@ function elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
-   &_legacy")
+   &_legacy_interface")
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -174,7 +174,7 @@ function elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
-   &_legacy")
+   &_legacy_interface")
 
 end function
 

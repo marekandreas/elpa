@@ -54,7 +54,7 @@
   &_&
   &2stage_&
   &PRECISION&
-  &_new (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,   &
+  &_impl (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,   &
          useGPU, &
 #if REALCASE == 1
    THIS_ELPA_KERNEL_API, useQR   &
@@ -570,4 +570,4 @@
    &MATH_DATATYPE&
    &_2stage_&
    &PRECISION&
-   &_new
+   &_impl

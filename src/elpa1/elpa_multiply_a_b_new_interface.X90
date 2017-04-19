@@ -105,7 +105,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &_new")
+      &")
 
       success = .true.
 
@@ -347,7 +347,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &_new")
+      &")
 
 #undef REALCASE
 #undef COMPLEXCASE

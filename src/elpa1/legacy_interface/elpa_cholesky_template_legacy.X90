@@ -94,8 +94,8 @@
       call timer%start("elpa_cholesky_&
       &MATH_DATATYPE&
       &_&
-      &PRECISION &
-      ")
+      &PRECISION&
+      &_legacy_interface")
 
       success = .true.
 
@@ -136,7 +136,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      ")
+      &_legacy_interface")
 
 #undef REALCASE
 #undef COMPLEXCASE

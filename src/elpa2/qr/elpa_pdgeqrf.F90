@@ -71,7 +71,7 @@ module elpa_pdgeqrf
                                   work, workLength, lwork, m, n, mb, nb, rowidx, colidx, &
                                   rev, trans, PQRPARAM, mpicomm_rows, mpicomm_cols, blockheuristic)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -388,7 +388,7 @@ module elpa_pdgeqrf
     subroutine qr_pdgeqrf_1dcomm_double(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans, &
           PQRPARAM,mpicomm,blockheuristic)
       use precision
-      use elpa1_new
+      use elpa1_impl
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -528,7 +528,7 @@ module elpa_pdgeqrf
     subroutine qr_pdgeqr2_1dcomm_double(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev, &
           trans,PQRPARAM,mpicomm,blockheuristic)
       use precision
-      use elpa1_new
+      use elpa1_impl
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -721,7 +721,7 @@ module elpa_pdgeqrf
     subroutine qr_pdlarfg_1dcomm_double(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,communicator)
 
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -1153,7 +1153,7 @@ module elpa_pdgeqrf
 
     subroutine qr_pdlarfg2_1dcomm_seed_double(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -1353,7 +1353,7 @@ module elpa_pdgeqrf
     ! id=1: second vector
     subroutine qr_pdlarfg2_1dcomm_vector_double(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -1449,7 +1449,7 @@ module elpa_pdgeqrf
 
     subroutine qr_pdlarfg2_1dcomm_update_double(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -1688,7 +1688,7 @@ module elpa_pdgeqrf
 
     subroutine qr_pdlarfgk_1dcomm_seed_double(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -2202,7 +2202,7 @@ module elpa_pdgeqrf
     !rank: actual rank (k >= rank)
     subroutine qr_pdlarfgk_1dcomm_vector_double(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -2311,7 +2311,7 @@ module elpa_pdgeqrf
     ! computed
     subroutine qr_pdlarfgk_1dcomm_update_double(a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -2548,7 +2548,7 @@ module elpa_pdgeqrf
     !direction=1: unpack from work buffer
     subroutine qr_pdgeqrf_pack_unpack_double(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -2614,7 +2614,7 @@ module elpa_pdgeqrf
     !direction=1: unpack from work buffer
     subroutine qr_pdgeqrf_pack_unpack_tmatrix_double(tau,t,ldt,work,lwork,n,direction)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -2756,7 +2756,7 @@ module elpa_pdgeqrf
 
     subroutine qr_pdlarfg_copy_1dcomm_double(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -2818,7 +2818,7 @@ module elpa_pdgeqrf
                                   work, workLength, lwork, m, n, mb, nb, rowidx, colidx, &
                                   rev, trans, PQRPARAM, mpicomm_rows, mpicomm_cols, blockheuristic)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -3135,7 +3135,7 @@ module elpa_pdgeqrf
     subroutine qr_pdgeqrf_1dcomm_single(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx, &
           rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
       use precision
-      use elpa1_new
+      use elpa1_impl
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -3275,7 +3275,7 @@ module elpa_pdgeqrf
     subroutine qr_pdgeqr2_1dcomm_single(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx, &
           rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
       use precision
-      use elpa1_new
+      use elpa1_impl
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
 #endif
@@ -3467,7 +3467,7 @@ module elpa_pdgeqrf
     subroutine qr_pdlarfg_1dcomm_single(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,communicator)
 
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -3905,7 +3905,7 @@ module elpa_pdgeqrf
 
     subroutine qr_pdlarfg2_1dcomm_seed_single(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -4108,7 +4108,7 @@ module elpa_pdgeqrf
     ! id=1: second vector
     subroutine qr_pdlarfg2_1dcomm_vector_single(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -4204,7 +4204,7 @@ module elpa_pdgeqrf
 
     subroutine qr_pdlarfg2_1dcomm_update_single(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -4444,7 +4444,7 @@ module elpa_pdgeqrf
 
     subroutine qr_pdlarfgk_1dcomm_seed_single(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -4958,7 +4958,7 @@ module elpa_pdgeqrf
     !rank: actual rank (k >= rank)
     subroutine qr_pdlarfgk_1dcomm_vector_single(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -5066,7 +5066,7 @@ module elpa_pdgeqrf
     ! computed
     subroutine qr_pdlarfgk_1dcomm_update_single(a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -5303,7 +5303,7 @@ module elpa_pdgeqrf
     !direction=1: unpack from work buffer
     subroutine qr_pdgeqrf_pack_unpack_single(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -5369,7 +5369,7 @@ module elpa_pdgeqrf
     !direction=1: unpack from work buffer
     subroutine qr_pdgeqrf_pack_unpack_tmatrix_single(tau,t,ldt,work,lwork,n,direction)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
@@ -5471,7 +5471,7 @@ module elpa_pdgeqrf
 
     subroutine qr_pdlarfg_copy_1dcomm_single(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
       use precision
-      use elpa1_new
+      use elpa1_impl
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings

@@ -247,7 +247,7 @@ module elpa_type
       use precision
       use elpa_mpi
       use elpa_utilities, only : error_unit
-      use elpa1_new, only : elpa_get_communicators_new
+      use elpa1_impl, only : elpa_get_communicators_impl
       implicit none
 
       integer(kind=ik), intent(in) :: na, nev, local_nrows, local_ncols, nblk
@@ -274,7 +274,7 @@ module elpa_type
       obj%nblk        = nblk
 
       obj%mpi_comm_parent = mpi_comm_parent
-      mpierr = elpa_get_communicators_new(mpi_comm_parent, process_row, process_col, obj%mpi_comm_rows, obj%mpi_comm_cols)
+      mpierr = elpa_get_communicators_impl(mpi_comm_parent, process_row, process_col, obj%mpi_comm_rows, obj%mpi_comm_cols)
       if (mpierr /= MPI_SUCCESS) then
         write(error_unit, *) "elpa_create(): error constructing row and column communicators"
         if(present(success)) then
@@ -293,7 +293,7 @@ module elpa_type
       use precision
       use elpa_mpi
       use elpa_utilities, only : error_unit
-      use elpa1_new, only : elpa_get_communicators_new
+      use elpa1_impl, only : elpa_get_communicators_impl
       implicit none
 
       integer(kind=ik), intent(in) :: na, nev, local_nrows, local_ncols, nblk
@@ -392,8 +392,8 @@ module elpa_type
 
 
     subroutine elpa_solve_real_double(self, a, ev, q, success)
-      use elpa2_new
-      use elpa1_new
+      use elpa2_impl
+      use elpa1_impl
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -428,7 +428,7 @@ module elpa_type
           print *,"Could not querry solver"
           stop
         endif
-        success_l = elpa_solve_evp_real_1stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+        success_l = elpa_solve_evp_real_1stage_double_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, useGPU)
@@ -438,7 +438,7 @@ module elpa_type
           print *,"Could not querry solver"
           stop
         endif
-        success_l = elpa_solve_evp_real_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+        success_l = elpa_solve_evp_real_2stage_double_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, useGPU)
@@ -460,8 +460,8 @@ module elpa_type
     end subroutine
 
     subroutine elpa_solve_real_single(self, a, ev, q, success)
-      use elpa2_new
-      use elpa1_new
+      use elpa2_impl
+      use elpa1_impl
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -497,7 +497,7 @@ module elpa_type
           print *,"Could not querry solver"
           stop
         endif
-        success_l = elpa_solve_evp_real_1stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+        success_l = elpa_solve_evp_real_1stage_single_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, useGPU)
@@ -507,7 +507,7 @@ module elpa_type
           print *,"Could not querry solver"
           stop
         endif
-        success_l = elpa_solve_evp_real_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+        success_l = elpa_solve_evp_real_2stage_single_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, useGPU)
@@ -533,8 +533,8 @@ module elpa_type
 
 
     subroutine elpa_solve_complex_double(self, a, ev, q, success)
-      use elpa2_new
-      use elpa1_new
+      use elpa2_impl
+      use elpa1_impl
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -570,7 +570,7 @@ module elpa_type
           print *,"Could not querry solver"
           stop
         endif
-        success_l = elpa_solve_evp_complex_1stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+        success_l = elpa_solve_evp_complex_1stage_double_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, useGPU)
@@ -580,7 +580,7 @@ module elpa_type
           print *,"Could not querry solver"
           stop
         endif
-        success_l = elpa_solve_evp_complex_2stage_double_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+        success_l = elpa_solve_evp_complex_2stage_double_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, useGPU)
@@ -603,8 +603,8 @@ module elpa_type
 
 
     subroutine elpa_solve_complex_single(self, a, ev, q, success)
-      use elpa2_new
-      use elpa1_new
+      use elpa2_impl
+      use elpa1_impl
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
@@ -641,7 +641,7 @@ module elpa_type
           print *,"Could not querry solver"
           stop
         endif
-        success_l = elpa_solve_evp_complex_1stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+        success_l = elpa_solve_evp_complex_1stage_single_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, useGPU)
@@ -651,7 +651,7 @@ module elpa_type
           print *,"Could not querry solver"
           stop
         endif
-        success_l = elpa_solve_evp_complex_2stage_single_new(self%na, self%nev, a, self%local_nrows, ev, q,  &
+        success_l = elpa_solve_evp_complex_2stage_single_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, useGPU)
@@ -679,7 +679,7 @@ module elpa_type
     subroutine elpa_multiply_at_b_double (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -693,7 +693,7 @@ module elpa_type
       integer, optional               :: success
       logical                         :: success_l
 
-      success_l = elpa_mult_at_b_real_double_new(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
+      success_l = elpa_mult_at_b_real_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
                               self%mpi_comm_rows, self%mpi_comm_cols, c, ldc, ldcCols)
       if (present(success)) then
         if (success_l) then
@@ -709,7 +709,7 @@ module elpa_type
     subroutine elpa_multiply_at_b_single (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -723,7 +723,7 @@ module elpa_type
       integer, optional               :: success
       logical                         :: success_l
 #ifdef WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_mult_at_b_real_single_new(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
+      success_l = elpa_mult_at_b_real_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
                               self%mpi_comm_rows, self%mpi_comm_cols, c, ldc, ldcCols)
       if (present(success)) then
         if (success_l) then
@@ -740,7 +740,7 @@ module elpa_type
     subroutine elpa_multiply_ah_b_double (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -754,7 +754,7 @@ module elpa_type
       integer, optional               :: success
       logical                         :: success_l
 
-      success_l = elpa_mult_ah_b_complex_double_new(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
+      success_l = elpa_mult_ah_b_complex_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
                               self%mpi_comm_rows, self%mpi_comm_cols, c, ldc, ldcCols)
       if (present(success)) then
         if (success_l) then
@@ -770,7 +770,7 @@ module elpa_type
     subroutine elpa_multiply_ah_b_single (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -785,7 +785,7 @@ module elpa_type
       logical                         :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-      success_l = elpa_mult_ah_b_complex_single_new(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
+      success_l = elpa_mult_ah_b_complex_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
                               self%mpi_comm_rows, self%mpi_comm_cols, c, ldc, ldcCols)
       if (present(success)) then
         if (success_l) then
@@ -801,7 +801,7 @@ module elpa_type
 
     subroutine elpa_cholesky_double_real (self, a, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -827,7 +827,7 @@ module elpa_type
       endif
 
 
-      success_l = elpa_cholesky_real_double_new (self%na, a, self%local_nrows, self%nblk, &
+      success_l = elpa_cholesky_real_double_impl (self%na, a, self%local_nrows, self%nblk, &
                                                  self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                  wantDebugIntern)
       if (present(success)) then
@@ -843,7 +843,7 @@ module elpa_type
 
     subroutine elpa_cholesky_single_real(self, a, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -869,7 +869,7 @@ module elpa_type
       endif
 
 #if WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_cholesky_real_single_new (self%na, a, self%local_nrows, self%nblk, &
+      success_l = elpa_cholesky_real_single_impl (self%na, a, self%local_nrows, self%nblk, &
                                                  self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                  wantDebugIntern)
 #endif
@@ -886,7 +886,7 @@ module elpa_type
 
     subroutine elpa_cholesky_double_complex (self, a, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -911,7 +911,7 @@ module elpa_type
         wantDebugIntern = .false.
       endif
 
-      success_l = elpa_cholesky_complex_double_new (self%na, a, self%local_nrows, self%nblk, &
+      success_l = elpa_cholesky_complex_double_impl (self%na, a, self%local_nrows, self%nblk, &
                                                  self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                  wantDebugIntern)
       if (present(success)) then
@@ -927,7 +927,7 @@ module elpa_type
 
     subroutine elpa_cholesky_single_complex (self, a, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -952,7 +952,7 @@ module elpa_type
         wantDebugIntern = .false.
       endif
 #if WANT_SINGLE_PRECISION_COMPLEX
-      success_l = elpa_cholesky_complex_single_new (self%na, a, self%local_nrows, self%nblk, &
+      success_l = elpa_cholesky_complex_single_impl (self%na, a, self%local_nrows, self%nblk, &
                                                  self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                  wantDebugIntern)
 #endif
@@ -969,7 +969,7 @@ module elpa_type
 
     subroutine elpa_invert_trm_double_real (self, a, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -993,7 +993,7 @@ module elpa_type
       else
         wantDebugIntern = .false.
       endif
-      success_l = elpa_invert_trm_real_double_new (self%na, a, self%local_nrows, self%nblk, &
+      success_l = elpa_invert_trm_real_double_impl (self%na, a, self%local_nrows, self%nblk, &
                                                    self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                    wantDebugIntern)
       if (present(success)) then
@@ -1009,7 +1009,7 @@ module elpa_type
 
     subroutine elpa_invert_trm_single_real (self, a, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -1034,7 +1034,7 @@ module elpa_type
         wantDebugIntern = .false.
       endif
 #if WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_invert_trm_real_single_new (self%na, a, self%local_nrows, self%nblk, &
+      success_l = elpa_invert_trm_real_single_impl (self%na, a, self%local_nrows, self%nblk, &
                                                    self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                    wantDebugIntern)
 #endif
@@ -1051,7 +1051,7 @@ module elpa_type
 
     subroutine elpa_invert_trm_double_complex (self, a, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -1075,7 +1075,7 @@ module elpa_type
       else
         wantDebugIntern = .false.
       endif
-      success_l = elpa_invert_trm_complex_double_new (self%na, a, self%local_nrows, self%nblk, &
+      success_l = elpa_invert_trm_complex_double_impl (self%na, a, self%local_nrows, self%nblk, &
                                                    self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                    wantDebugIntern)
       if (present(success)) then
@@ -1091,7 +1091,7 @@ module elpa_type
 
     subroutine elpa_invert_trm_single_complex (self, a, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -1116,7 +1116,7 @@ module elpa_type
         wantDebugIntern = .false.
       endif
 #if WANT_SINGLE_PRECISION_COMPLEX
-      success_l = elpa_invert_trm_complex_single_new (self%na, a, self%local_nrows, self%nblk, &
+      success_l = elpa_invert_trm_complex_single_impl (self%na, a, self%local_nrows, self%nblk, &
                                                    self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                    wantDebugIntern)
 #endif
@@ -1133,7 +1133,7 @@ module elpa_type
 
     subroutine elpa_solve_tridi_double_real (self, d, e, q, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -1160,7 +1160,7 @@ module elpa_type
         wantDebugIntern = .false.
       endif
 
-      success_l = elpa_solve_tridi_double_new(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
+      success_l = elpa_solve_tridi_double_impl(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
                                               self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols,&
                                               wantDebugIntern)
       if (present(success)) then
@@ -1177,7 +1177,7 @@ module elpa_type
 
     subroutine elpa_solve_tridi_single_real (self, d, e, q, success)
       use iso_c_binding
-      use elpa1_auxiliary_new
+      use elpa1_auxiliary_impl
       use precision
       implicit none
       class(elpa_t)                   :: self
@@ -1204,7 +1204,7 @@ module elpa_type
         wantDebugIntern = .false.
       endif
 #ifdef WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_solve_tridi_single_new(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
+      success_l = elpa_solve_tridi_single_impl(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
                                               self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols,&
                                               wantDebugIntern)
 #endif

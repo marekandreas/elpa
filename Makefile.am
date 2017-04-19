@@ -13,9 +13,7 @@ libelpa@SUFFIX@_public_la_FCFLAGS = $(AM_FCFLAGS) @FC_MODOUT@modules @FC_MODINC@
 libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa_driver/legacy_interface/elpa_legacy.F90 \
         src/elpa1/legacy_interface/elpa1_legacy.F90 \
-        src/elpa1/elpa1_new_interface.F90 \
         src/elpa2/legacy_interface/elpa2_legacy.F90 \
-        src/elpa2/elpa2_new_interface.F90 \
 	src/elpa1/legacy_interface/elpa1_auxiliary_legacy.F90 \
 	src/elpa1/elpa1_auxiliary_new_interface.F90 \
         src/elpa1/elpa1_utilities.F90 \
@@ -50,6 +48,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/qr/elpa_qrkernels.F90 \
         src/elpa2/qr/elpa_pdlarfb.F90 \
         src/elpa2/qr/elpa_pdgeqrf.F90 \
+	src/elpa1/elpa1_new_interface.F90 \
+	src/elpa2/elpa2_new_interface.F90 \
 	src/elpa_options.c
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \

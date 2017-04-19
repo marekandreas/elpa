@@ -56,7 +56,7 @@
 
 subroutine solve_tridi_&
 &PRECISION&
-&_new ( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+&_impl ( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, wantDebug, success )
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -147,7 +147,7 @@ subroutine solve_tridi_&
       endif
       call solve_tridi_col_&
            &PRECISION&
-           &_new (l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
+           &_impl (l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         matrixCols, mpi_comm_rows, wantDebug, success)
       if (.not.(success)) then
         call timer%stop("solve_tridi" // PRECISION_SUFFIX)
@@ -350,11 +350,11 @@ subroutine solve_tridi_&
 
     end subroutine solve_tridi_&
         &PRECISION&
-	&_new
+	&_impl
 
     subroutine solve_tridi_col_&
     &PRECISION&
-    &_new ( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
+    &_impl ( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -452,7 +452,7 @@ subroutine solve_tridi_&
 
           call solve_tridi_single_problem_&
           &PRECISION&
-	  &_new &
+	  &_impl &
                                    (nlen,d(noff+1),e(noff+1), &
                                     q(nqoff+noff+1,noff+1),ubound(q,dim=1), wantDebug, success)
 
@@ -484,7 +484,7 @@ subroutine solve_tridi_&
           nlen = limits(my_prow+1)-noff ! Size of subproblem
           call solve_tridi_single_problem_&
           &PRECISION&
-	  &_new &
+	  &_impl &
                                    (nlen,d(noff+1),e(noff+1),qmat1, &
                                     ubound(qmat1,dim=1), wantDebug, success)
 
@@ -581,11 +581,11 @@ subroutine solve_tridi_&
 
     end subroutine solve_tridi_col_&
     &PRECISION&
-    &_new
+    &_impl
 
     recursive subroutine solve_tridi_single_problem_&
     &PRECISION&
-    &_new (nlen, d, e, q, ldq, wantDebug, success)
+    &_impl (nlen, d, e, q, ldq, wantDebug, success)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
@@ -713,5 +713,5 @@ subroutine solve_tridi_&
 
     end subroutine solve_tridi_single_problem_&
     &PRECISION&
-    &_new
+    &_impl
 

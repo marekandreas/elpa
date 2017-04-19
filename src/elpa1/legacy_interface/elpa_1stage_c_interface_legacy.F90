@@ -56,7 +56,7 @@
                                           mpi_comm_rows, mpi_comm_cols)     &
                                           result(mpierr) bind(C,name="get_elpa_row_col_comms")
     use, intrinsic :: iso_c_binding
-    use elpa1_legacy, only : elpa_get_communicators
+    use elpa1, only : elpa_get_communicators
 
     implicit none
     integer(kind=c_int)         :: mpierr
@@ -82,7 +82,7 @@
                                           mpi_comm_rows, mpi_comm_cols)     &
                                           result(mpierr) bind(C,name="get_elpa_communicators")
     use, intrinsic :: iso_c_binding
-    use elpa1_legacy, only : elpa_get_communicators
+    use elpa1, only : elpa_get_communicators
 
     implicit none
     integer(kind=c_int)         :: mpierr
@@ -109,7 +109,7 @@
                                           mpi_comm_rows, mpi_comm_cols)     &
                                           result(mpierr) bind(C,name="elpa_get_communicators")
     use, intrinsic :: iso_c_binding
-    use elpa1_legacy, only : elpa_get_communicators
+    use elpa1, only : elpa_get_communicators
 
     implicit none
     integer(kind=c_int)         :: mpierr

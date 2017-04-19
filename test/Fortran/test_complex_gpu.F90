@@ -73,7 +73,7 @@ program test_complex_gpu_version_double_precision
 ! distributed along with the original code in the file "COPYING".
 !-------------------------------------------------------------------------------
    use precision
-   use elpa1_legacy
+   use elpa1
 
    use mod_check_for_gpu, only : check_for_gpu
 

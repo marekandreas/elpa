@@ -90,7 +90,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &_new")
+      &")
 
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -338,7 +338,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &_new")
+      &")
 
 #undef REALCASE
 #undef COMPLEXCASE

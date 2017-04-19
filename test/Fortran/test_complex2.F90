@@ -78,8 +78,8 @@ program test_complex2_double_precision
 ! distributed along with the original code in the file "COPYING".
 !-------------------------------------------------------------------------------
    use precision
-   use elpa1_legacy
-   use elpa2_legacy
+   use elpa1
+   use elpa2
    use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
 

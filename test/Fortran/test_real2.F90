@@ -79,8 +79,8 @@ program test_real2_double_precision
 !
 !-------------------------------------------------------------------------------
    use precision
-   use elpa1_legacy
-   use elpa2_legacy
+   use elpa1
+   use elpa2
 
    use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit

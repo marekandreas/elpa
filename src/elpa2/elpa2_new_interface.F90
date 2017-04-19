@@ -54,12 +54,12 @@
 
 #include "config-f90.h"
 !> \brief Fortran module which provides the routines to use the 2-stage ELPA solver
-module ELPA2_new
+module elpa2_impl
 
 ! Version 1.1.2, 2011-02-21
 
   use elpa_utilities
-  use elpa1_new, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
+  use elpa1_impl, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
   use elpa2_utilities
 
   implicit none
@@ -68,14 +68,14 @@ module ELPA2_new
 
   ! The following routines are public:
 
-  public :: elpa_solve_evp_real_2stage_double_new          !< Driver routine for real double-precision 2-stage eigenvalue problem
-  public :: elpa_solve_evp_complex_2stage_double_new       !< Driver routine for complex double-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_real_2stage_double_impl          !< Driver routine for real double-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_2stage_double_impl       !< Driver routine for complex double-precision 2-stage eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_evp_real_2stage_single_new          !< Driver routine for real single-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_real_2stage_single_impl          !< Driver routine for real single-precision 2-stage eigenvalue problem
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_solve_evp_complex_2stage_single_new       !< Driver routine for complex single-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_2stage_single_impl       !< Driver routine for complex single-precision 2-stage eigenvalue problem
 #endif
 
   contains
@@ -84,7 +84,7 @@ module ELPA2_new
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 !-------------------------------------------------------------------------------
-!>  \brief elpasolve_evp_real_2stage_double_new: Fortran function to solve the double-precision real eigenvalue problem with a 2 stage approach
+!>  \brief elpasolve_evp_real_2stage_double_impl: Fortran function to solve the double-precision real eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
@@ -132,7 +132,7 @@ module ELPA2_new
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
 !-------------------------------------------------------------------------------
-!>  \brief elpa_solve_evp_real_2stage_single_new: Fortran function to solve the single-precision real eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_evp_real_2stage_single_impl: Fortran function to solve the single-precision real eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
@@ -180,7 +180,7 @@ module ELPA2_new
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-!>  \brief elpa_solve_evp_complex_2stage_double_new: Fortran function to solve the double-precision complex eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_evp_complex_2stage_double_impl: Fortran function to solve the double-precision complex eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
@@ -227,7 +227,7 @@ module ELPA2_new
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
 
-!>  \brief elpa_solve_evp_complex_2stage_single_new: Fortran function to solve the single-precision complex eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_evp_complex_2stage_single_impl: Fortran function to solve the single-precision complex eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
@@ -271,4 +271,4 @@ module ELPA2_new
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-end module ELPA2_new
+end module elpa2_impl

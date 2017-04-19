@@ -81,10 +81,10 @@
 #include "config-f90.h"
 
 !> \brief Fortran module which provides the routines to use the one-stage ELPA solver
-module ELPA1_new
+module elpa1_impl
   use, intrinsic :: iso_c_binding
   use elpa_utilities
-  use elpa1_auxiliary_new
+  use elpa1_auxiliary_impl
   use elpa1_utilities
 
   implicit none
@@ -92,46 +92,46 @@ module ELPA1_new
   ! The following routines are public:
   private
 
-  public :: elpa_get_communicators_new               !< Sets MPI row/col communicators as needed by ELPA
+  public :: elpa_get_communicators_impl               !< Sets MPI row/col communicators as needed by ELPA
 
-  public :: elpa_solve_evp_real_1stage_double_new    !< Driver routine for real double-precision 1-stage eigenvalue problem
+  public :: elpa_solve_evp_real_1stage_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_evp_real_1stage_single_new    !< Driver routine for real single-precision 1-stage eigenvalue problem
+  public :: elpa_solve_evp_real_1stage_single_impl    !< Driver routine for real single-precision 1-stage eigenvalue problem
 
 #endif
-  public :: elpa_solve_evp_complex_1stage_double_new !< Driver routine for complex 1-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_1stage_double_impl !< Driver routine for complex 1-stage eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_solve_evp_complex_1stage_single_new !< Driver routine for complex 1-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_1stage_single_impl !< Driver routine for complex 1-stage eigenvalue problem
 #endif
 
   ! imported from elpa1_auxilliary
 
-  public :: elpa_mult_at_b_real_double_new       !< Multiply double-precision real matrices A**T * B
+  public :: elpa_mult_at_b_real_double_impl       !< Multiply double-precision real matrices A**T * B
 
-  public :: elpa_mult_ah_b_complex_double_new    !< Multiply double-precision complex matrices A**H * B
+  public :: elpa_mult_ah_b_complex_double_impl    !< Multiply double-precision complex matrices A**H * B
 
-  public :: elpa_invert_trm_real_double_new      !< Invert double-precision real triangular matrix
+  public :: elpa_invert_trm_real_double_impl      !< Invert double-precision real triangular matrix
 
-  public :: elpa_invert_trm_complex_double_new   !< Invert double-precision complex triangular matrix
+  public :: elpa_invert_trm_complex_double_impl   !< Invert double-precision complex triangular matrix
 
-  public :: elpa_cholesky_real_double_new        !< Cholesky factorization of a double-precision real matrix
+  public :: elpa_cholesky_real_double_impl        !< Cholesky factorization of a double-precision real matrix
 
-  public :: elpa_cholesky_complex_double_new     !< Cholesky factorization of a double-precision complex matrix
+  public :: elpa_cholesky_complex_double_impl     !< Cholesky factorization of a double-precision complex matrix
 
-  public :: elpa_solve_tridi_double_new          !< Solve a double-precision tridiagonal eigensystem with divide and conquer method
+  public :: elpa_solve_tridi_double_impl          !< Solve a double-precision tridiagonal eigensystem with divide and conquer method
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_mult_at_b_real_single_new       !< Multiply single-precision real matrices A**T * B
-  public :: elpa_invert_trm_real_single_new      !< Invert single-precision real triangular matrix
-  public :: elpa_cholesky_real_single_new        !< Cholesky factorization of a single-precision real matrix
-  public :: elpa_solve_tridi_single_new          !< Solve a single-precision tridiagonal eigensystem with divide and conquer method
+  public :: elpa_mult_at_b_real_single_impl       !< Multiply single-precision real matrices A**T * B
+  public :: elpa_invert_trm_real_single_impl      !< Invert single-precision real triangular matrix
+  public :: elpa_cholesky_real_single_impl        !< Cholesky factorization of a single-precision real matrix
+  public :: elpa_solve_tridi_single_impl          !< Solve a single-precision tridiagonal eigensystem with divide and conquer method
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_mult_ah_b_complex_single_new    !< Multiply single-precision complex matrices A**H * B
-  public :: elpa_invert_trm_complex_single_new   !< Invert single-precision complex triangular matrix
-  public :: elpa_cholesky_complex_single_new     !< Cholesky factorization of a single-precision complex matrix
+  public :: elpa_mult_ah_b_complex_single_impl    !< Multiply single-precision complex matrices A**H * B
+  public :: elpa_invert_trm_complex_single_impl   !< Invert single-precision complex triangular matrix
+  public :: elpa_cholesky_complex_single_impl     !< Cholesky factorization of a single-precision complex matrix
 #endif
 
   ! Timing results, set by every call to solve_evp_xxx
@@ -143,7 +143,7 @@ module ELPA1_new
   logical, public :: elpa_print_times = .false. !< Set elpa_print_times to .true. for explicit timing outputs
 
 
-!> \brief elpa_solve_evp_real_1stage_double_new: Fortran function to solve the real eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_real"
+!> \brief elpa_solve_evp_real_1stage_double_impl: Fortran function to solve the real eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_real"
 !>
 !  Parameters
 !
@@ -200,7 +200,7 @@ contains
 !> \result mpierr            integer error value of mpi_comm_split function
 
 
-function elpa_get_communicators_new(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
+function elpa_get_communicators_impl(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
    ! use precision
    use elpa_mpi
    use iso_c_binding
@@ -219,10 +219,10 @@ function elpa_get_communicators_new(mpi_comm_global, my_prow, my_pcol, mpi_comm_
    call mpi_comm_split(mpi_comm_global,my_pcol,my_prow,mpi_comm_rows,mpierr)
    call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols,mpierr)
 
-end function elpa_get_communicators_new
+end function elpa_get_communicators_impl
 
 
-!> \brief elpa_solve_evp_real_1stage_double_new: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_real_1stage_double_impl: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
 !
@@ -266,7 +266,7 @@ end function elpa_get_communicators_new
 #undef DOUBLE_PRECISION
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-!> \brief elpa_solve_evp_real_1stage_single_new: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_real_1stage_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
 !
@@ -310,7 +310,7 @@ end function elpa_get_communicators_new
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
-!> \brief elpa_solve_evp_complex_1stage_double_new: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_complex_1stage_double_impl: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
 !
@@ -355,7 +355,7 @@ end function elpa_get_communicators_new
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-!> \brief elpa_solve_evp_complex_1stage_single_new: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_complex_1stage_single_impl: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
 !>
 !  Parameters
 !
@@ -399,4 +399,4 @@ end function elpa_get_communicators_new
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-end module ELPA1_new
+end module ELPA1_impl

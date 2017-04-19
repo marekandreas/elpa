@@ -54,12 +54,12 @@
 
 #include "config-f90.h"
 !> \brief Fortran module which provides the routines to use the 2-stage ELPA solver
-module elpa2_legacy
+module elpa2
 
 ! Version 1.1.2, 2011-02-21
 
   use elpa_utilities
-  use elpa1_legacy, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
+  use elpa1, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
   use elpa2_utilities
 
   implicit none
@@ -543,4 +543,4 @@ module elpa2_legacy
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-end module elpa2_legacy
+end module elpa2

@@ -57,8 +57,8 @@ program test_all_real
 !
 !-------------------------------------------------------------------------------
    use precision
-   use elpa1_legacy
-   use elpa2_legacy
+   use elpa1
+   use elpa2
    use elpa_utilities, only : error_unit, map_global_array_index_to_local_index
    use elpa2_utilities
 #ifdef WITH_OPENMP

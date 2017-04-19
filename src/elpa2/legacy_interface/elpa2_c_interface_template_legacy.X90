@@ -62,7 +62,7 @@ function solve_elpa2_evp_&
     &PRECISION&
     &_precision")
     use, intrinsic :: iso_c_binding
-    use elpa2_legacy
+    use elpa2
 
     implicit none
     integer(kind=c_int)                    :: success

@@ -58,7 +58,7 @@ function elpa_solve_evp_&
          &MATH_DATATYPE&
 	 &_1stage_&
 	 &PRECISION&
-	 &_new ( na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+	 &_impl ( na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
 	        mpi_comm_cols, mpi_comm_all, useGPU) result(success)
    use precision
    use cuda_functions
@@ -119,7 +119,7 @@ function elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
-   &_new")
+   &")
 
    call timer%start("mpi_communication")
 
@@ -279,7 +279,7 @@ function elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
-   &_new")
+   &")
 
 end function
 
