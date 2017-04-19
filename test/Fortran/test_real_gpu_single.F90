@@ -79,7 +79,7 @@ program test_real_gpu_version_single_precision
    use mod_check_for_gpu, only : check_for_gpu
 
    use elpa_utilities, only : error_unit
-   use elpa1_utilities
+   !use elpa1_utilities
 #ifdef WITH_OPENMP
    use test_util
 #endif

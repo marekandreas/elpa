@@ -14,9 +14,9 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa_driver/legacy_interface/elpa_legacy.F90 \
         src/elpa1/legacy_interface/elpa1_legacy.F90 \
         src/elpa2/legacy_interface/elpa2_legacy.F90 \
+        src/elpa2/elpa2_utilities.F90 \
 	src/elpa1/legacy_interface/elpa1_auxiliary_legacy.F90 \
 	src/elpa1/elpa1_auxiliary_new_interface.F90 \
-        src/elpa2/elpa2_utilities.F90 \
 	src/elpa_t.F90 \
         src/general/elpa_utilities.F90
 

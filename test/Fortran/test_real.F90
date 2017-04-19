@@ -76,7 +76,7 @@ program test_real_double_precision
    use precision
    use elpa1
    use elpa_utilities, only : error_unit
-   use elpa1_utilities
+   !use elpa1_utilities
 #ifdef WITH_OPENMP
    use test_util
 #endif
