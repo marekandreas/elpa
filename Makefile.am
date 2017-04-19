@@ -16,7 +16,6 @@ libelpa@SUFFIX@_public_la_SOURCES = \
         src/elpa2/legacy_interface/elpa2_legacy.F90 \
 	src/elpa1/legacy_interface/elpa1_auxiliary_legacy.F90 \
 	src/elpa1/elpa1_auxiliary_new_interface.F90 \
-        src/elpa1/elpa1_utilities.F90 \
         src/elpa2/elpa2_utilities.F90 \
 	src/elpa_t.F90 \
         src/general/elpa_utilities.F90
@@ -32,6 +31,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/mod_pack_unpack_cpu.F90 \
         src/elpa2/mod_compute_hh_trafo.F90 \
         src/helpers/aligned_mem.F90 \
+        src/elpa1/elpa1_utilities.F90 \
         src/elpa1/elpa1_compute_private.F90 \
 	src/elpa2/elpa2_determine_workload.F90 \
         src/elpa2/elpa2_compute.F90 \

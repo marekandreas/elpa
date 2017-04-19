@@ -60,8 +60,8 @@
 
 #include "config-f90.h"
 
-module ELPA1_utilities
-  use ELPA_utilities
+module elpa1_utilities
+  use elpa_utilities
   use precision
   implicit none
 
@@ -98,4 +98,4 @@ module ELPA1_utilities
    end function gpu_usage_via_environment_variable
 !-------------------------------------------------------------------------------
 
-end module ELPA1_utilities
+end module elpa1_utilities
