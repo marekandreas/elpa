@@ -108,7 +108,7 @@ void quad_hh_trafo_real_sse_4hv_double(double* q, double* hh, int* pnb, int* pnq
 	double s_2_4 = hh[(ldh*3)+2];
 	double s_3_4 = hh[(ldh*3)+1];
 
-	// calculate scalar product of first and fourth householder vector
+	// calculate scalar product of first and fourth householder Vector
 	// loop counter = 2
 	s_1_2 += hh[2-1] * hh[(2+ldh)];
 	s_2_3 += hh[(ldh)+2-1] * hh[2+(ldh*2)];
@@ -182,7 +182,7 @@ void quad_hh_trafo_real_sse_4hv_double(double* q, double* hh, int* pnb, int* pnq
 //	double s_2_4 = hh[(ldh*3)+2];
 //	double s_3_4 = hh[(ldh*3)+1];
 //
-//	// calculate scalar product of first and fourth householder vector
+//	// calculate scalar product of first and fourth householder Vector
 //	// loop counter = 2
 //	s_1_2 += hh[2-1] * hh[(2+ldh)];
 //	s_2_3 += hh[(ldh)+2-1] * hh[2+(ldh*2)];
@@ -228,7 +228,7 @@ void quad_hh_trafo_real_sse_4hv_double(double* q, double* hh, int* pnb, int* pnq
 /**
  * Unrolled kernel that computes
  * 6 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
 __forceinline void hh_trafo_kernel_6_SSE_4hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
@@ -586,7 +586,7 @@ __forceinline void hh_trafo_kernel_6_SSE_4hv_double(double* q, double* hh, int n
 /**
  * Unrolled kernel that computes
  * 4 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
 __forceinline void hh_trafo_kernel_4_SSE_4hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)
@@ -830,7 +830,7 @@ __forceinline void hh_trafo_kernel_4_SSE_4hv_double(double* q, double* hh, int n
 /**
  * Unrolled kernel that computes
  * 2 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
 __forceinline void hh_trafo_kernel_2_SSE_4hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s_1_2, double s_1_3, double s_2_3, double s_1_4, double s_2_4, double s_3_4)

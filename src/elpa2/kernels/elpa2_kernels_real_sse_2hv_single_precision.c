@@ -118,7 +118,7 @@ void double_hh_trafo_real_sse_2hv_single(float* q, float* hh, int* pnb, int* pnq
 /**
  * Unrolled kernel that computes
  * 12 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_12_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
@@ -279,7 +279,7 @@ void double_hh_trafo_real_sse_2hv_single(float* q, float* hh, int* pnb, int* pnq
 /**
  * Unrolled kernel that computes
  * 8 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
 __forceinline void hh_trafo_kernel_8_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
@@ -398,7 +398,7 @@ __forceinline void hh_trafo_kernel_8_SSE_2hv_single(float* q, float* hh, int nb,
 /**
  * Unrolled kernel that computes
  * 4 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
 __forceinline void hh_trafo_kernel_4_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)

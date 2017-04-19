@@ -411,7 +411,7 @@ subroutine qr_pdlarft_tree_merge_1dcomm_double(m,mb,n,blocksize,treeorder,v,ldv,
 
 end subroutine qr_pdlarft_tree_merge_1dcomm_double
 
-! apply householder vector to the left
+! apply householder Vector to the left
 ! - assume unitary matrix
 ! - assume right positions for v
 subroutine qr_pdlarfl_1dcomm_double(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,mpicomm)
@@ -541,7 +541,7 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm_double(v,ldv,baseidx,a,lda,t,ldt,work,lwor
     dgemv1_offset = 1
     dgemv2_offset = dgemv1_offset + n
 
-        ! in 2x2 matrix case only one householder vector was generated
+        ! in 2x2 matrix case only one householder Vector was generated
         if (idx .le. 2) then
             call qr_pdlarfl_1dcomm_double(v(1,2),1,baseidx,a,lda,t(2,2), &
                                     work,lwork,m,n,idx,mb,rev,mpicomm)
@@ -584,7 +584,7 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm_double(v,ldv,baseidx,a,lda,t,ldt,work,lwor
 #else
         work(sendsize+1:sendsize+1+sendsize-1) = work(1:sendsize)
 #endif
-        ! update second vector
+        ! update second Vector
 #ifdef DOUBLE_PRECISION_REAL
         call daxpy(n,t(1,2),work(sendsize+dgemv1_offset),1,work(sendsize+dgemv2_offset),1)
 #else
@@ -1166,7 +1166,7 @@ subroutine qr_pdlarft_tree_merge_1dcomm_single(m,mb,n,blocksize,treeorder,v,ldv,
 
 end subroutine qr_pdlarft_tree_merge_1dcomm_single
 
-! apply householder vector to the left
+! apply householder Vector to the left
 ! - assume unitary matrix
 ! - assume right positions for v
 subroutine qr_pdlarfl_1dcomm_single(v,incv,baseidx,a,lda,tau,work,lwork,m,n,idx,mb,rev,mpicomm)
@@ -1296,7 +1296,7 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm_single(v,ldv,baseidx,a,lda,t,ldt,work,lwor
     dgemv1_offset = 1
     dgemv2_offset = dgemv1_offset + n
 
-        ! in 2x2 matrix case only one householder vector was generated
+        ! in 2x2 matrix case only one householder Vector was generated
         if (idx .le. 2) then
             call qr_pdlarfl_1dcomm_single(v(1,2),1,baseidx,a,lda,t(2,2), &
                                     work,lwork,m,n,idx,mb,rev,mpicomm)
@@ -1339,7 +1339,7 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm_single(v,ldv,baseidx,a,lda,t,ldt,work,lwor
 #else
         work(sendsize+1:sendsize+1+sendsize-1) = work(1:sendsize)
 #endif
-        ! update second vector
+        ! update second Vector
 #ifdef DOUBLE_PRECISION_REAL
         call daxpy(n,t(1,2),work(sendsize+dgemv1_offset),1,work(sendsize+dgemv2_offset),1)
 #else

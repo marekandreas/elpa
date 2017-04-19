@@ -126,7 +126,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 /**
  * Unrolled kernel that computes
  * 64 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_64_AVX512_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
@@ -283,7 +283,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 /**
  * Unrolled kernel that computes
  * 48 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_48_AVX512_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
@@ -441,7 +441,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 /**
  * Unrolled kernel that computes
  * 32 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_32_AVX512_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
@@ -599,7 +599,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 /**
  * Unrolled kernel that computes
  * 16 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_16_AVX512_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)

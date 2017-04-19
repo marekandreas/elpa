@@ -344,7 +344,7 @@
           ns = 0
 
           do lc = 1, n_cols
-            ncol = istep*nbw + lc ! absolute column number of householder vector
+            ncol = istep*nbw + lc ! absolute column number of householder Vector
             nrow = ncol - nbw ! absolute number of pivot row
 
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
@@ -704,9 +704,9 @@
 
           do lc = 1, n_cols
 #ifdef BAND_TO_FULL_BLOCKING
-            ncol = (istep-1)*cwy_blocking + nbw + lc ! absolute column number of householder vector
+            ncol = (istep-1)*cwy_blocking + nbw + lc ! absolute column number of householder Vector
 #else
-            ncol = istep*nbw + lc ! absolute column number of householder vector
+            ncol = istep*nbw + lc ! absolute column number of householder Vector
 #endif
             nrow = ncol - nbw ! absolute number of pivot row
 

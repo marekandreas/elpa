@@ -96,7 +96,7 @@ void quad_hh_trafo_real_avx512_4hv_single(float* q, float* hh, int* pnb, int* pn
 	float s_2_4 = hh[(ldh*3)+2];
 	float s_3_4 = hh[(ldh*3)+1];
 
-	// calculate scalar product of first and fourth householder vector
+	// calculate scalar product of first and fourth householder Vector
 	// loop counter = 2
 	s_1_2 += hh[2-1] * hh[(2+ldh)];
 	s_2_3 += hh[(ldh)+2-1] * hh[2+(ldh*2)];
@@ -147,7 +147,7 @@ void quad_hh_trafo_real_avx512_4hv_single(float* q, float* hh, int* pnb, int* pn
 /**
  * Unrolled kernel that computes
  * 24 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
 __forceinline void hh_trafo_kernel_48_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
@@ -508,7 +508,7 @@ __forceinline void hh_trafo_kernel_48_AVX_4hv_single(float* q, float* hh, int nb
 /**
  * Unrolled kernel that computes
  * 32 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
 __forceinline void hh_trafo_kernel_32_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)
@@ -770,7 +770,7 @@ __forceinline void hh_trafo_kernel_32_AVX_4hv_single(float* q, float* hh, int nb
 /**
  * Unrolled kernel that computes
  * 16 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
 __forceinline void hh_trafo_kernel_16_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4)

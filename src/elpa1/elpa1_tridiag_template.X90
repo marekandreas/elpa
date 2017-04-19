@@ -174,8 +174,8 @@
 
 #if REALCASE == 1
       real(kind=REAL_DATATYPE), allocatable         :: tmp(:), &
-                                                       v_row(:), &   ! used to store calculated Householder vector
-                                                       v_col(:), &   ! the same vector, but transposed - differently distributed among MPI tasks
+                                                       v_row(:), &   ! used to store calculated Householder Vector
+                                                       v_col(:), &   ! the same Vector, but transposed - differently distributed among MPI tasks
                                                        u_row(:), &
                                                        u_col(:)
 #endif
@@ -183,8 +183,8 @@
       complex(kind=COMPLEX_DATATYPE), allocatable   :: tmp(:), v_row(:), v_col(:), u_row(:), u_col(:)
 #endif
       ! the following two matrices store pairs of vectors v and u calculated in each step
-      ! at most max_stored_uv vector pairs are stored, than the matrix A_i is explicitli updated
-      ! u and v are stored both in row and vector forms
+      ! at most max_stored_uv Vector pairs are stored, than the matrix A_i is explicitli updated
+      ! u and v are stored both in row and Vector forms
       ! pattern: v1,u1,v2,u2,v3,u3,....
       ! todo: It is little bit confusing, I think, that variables _row actually store columns and vice versa
 #if REALCASE == 1
@@ -266,7 +266,7 @@
       ! allocate memmory for vectors
       ! todo: It is little bit confusing, I think, that variables _row actually store columns and vice versa
       ! todo: if something has length max_local_rows, it is actually a column, no?
-      ! todo: probably one should read it as v_row = vector v distributed among rows
+      ! todo: probably one should read it as v_row = Vector v distributed among rows
       !
       allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
       call check_alloc("tridiag_&
@@ -359,7 +359,7 @@
       endif
 
       ! main cycle of tridiagonalization
-      ! in each step, 1 Householder vector is calculated
+      ! in each step, 1 Householder Vector is calculated
       do istep = na, 3 ,-1
 
         ! Calculate number of local rows and columns of the still remaining matrix
@@ -367,12 +367,12 @@
         l_rows = local_index(istep-1, my_prow, np_rows, nblk, -1)
         l_cols = local_index(istep-1, my_pcol, np_cols, nblk, -1)
 
-        ! Calculate vector for Householder transformation on all procs
+        ! Calculate Vector for Householder transformation on all procs
         ! owning column istep
 
         if (my_pcol == pcol(istep, nblk, np_cols)) then
 
-          ! Get vector to be transformed; distribute last element and norm of
+          ! Get Vector to be transformed; distribute last element and norm of
           ! remaining elements to all procs in current column
 
           ! copy l_cols + 1 column of A to v_row
@@ -434,7 +434,7 @@
 #endif
                &PRECISION &
                              (vrl, vnorm2, xf, tau(istep))
-          ! Scale v_row and store Householder vector for back transformation
+          ! Scale v_row and store Householder Vector for back transformation
 
           v_row(1:l_rows) = v_row(1:l_rows) * xf
           if (my_prow == prow(istep-1, nblk, np_rows)) then
@@ -444,7 +444,7 @@
             e_vec(istep-1) = vrl
           endif
 
-          ! store Householder vector for back transformation
+          ! store Householder Vector for back transformation
           a_mat(1:l_rows,l_cols+1) = v_row(1:l_rows)
 
           ! add tau after the end of actuall v_row, to be broadcasted with it
@@ -452,7 +452,7 @@
          endif !(my_pcol == pcol(istep, nblk, np_cols))
 
 #ifdef WITH_MPI
-         ! Broadcast the Householder vector (and tau) along columns
+         ! Broadcast the Householder Vector (and tau) along columns
          call MPI_Bcast(v_row, l_rows+1, MPI_MATH_DATATYPE_PRECISION,    &
                         pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
 #endif /* WITH_MPI */
@@ -460,7 +460,7 @@
         !recover tau, which has been broadcasted together with v_row
         tau(istep) =  v_row(l_rows+1)
 
-        ! Transpose Householder vector v_row -> v_col
+        ! Transpose Householder Vector v_row -> v_col
         call elpa_transpose_vectors_&
              &MATH_DATATYPE&
              &_&
@@ -533,7 +533,7 @@
 
               ! multiplication by blocks is efficient only for CPU
               ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
-              ! CPU implementation) or by one large matrix vector multiply
+              ! CPU implementation) or by one large matrix Vector multiply
               if (.not. useGPU) then
                 call timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
@@ -755,7 +755,7 @@
 #endif
         enddo
 
-        ! We have calculated another Hauseholder vector, number of implicitly stored increased
+        ! We have calculated another Hauseholder Vector, number of implicitly stored increased
         n_stored_vecs = n_stored_vecs+1
 
         ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T

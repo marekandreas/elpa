@@ -646,7 +646,7 @@
 #endif /* REALCASE == 1 */
          do lc = n_cols, 1, -1
 
-           ncol = istep*nbw + lc ! absolute column number of householder vector
+           ncol = istep*nbw + lc ! absolute column number of householder Vector
            nrow = ncol - nbw ! Absolute number of pivot row
 
            lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
@@ -660,10 +660,10 @@
 
            if (my_pcol==cur_pcol) then
 
-             ! Get vector to be transformed; distribute last element and norm of
+             ! Get Vector to be transformed; distribute last element and norm of
              ! remaining elements to all procs in current column
 
-             vr(1:lr) = a(1:lr,lch) ! vector to be transformed
+             vr(1:lr) = a(1:lr,lch) ! Vector to be transformed
 
              if (my_prow==prow(nrow, nblk, np_rows)) then
                aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
@@ -706,7 +706,7 @@
 #endif
              &PRECISION &
                               (vrl, vnorm2, xf, tau)
-             ! Scale vr and store Householder vector for back transformation
+             ! Scale vr and store Householder Vector for back transformation
 
              vr(1:lr) = vr(1:lr) * xf
              if (my_prow==prow(nrow, nblk, np_rows)) then
@@ -724,7 +724,7 @@
 
            endif
 
-           ! Broadcast Householder vector and tau along columns
+           ! Broadcast Householder Vector and tau along columns
 
            vr(lr+1) = tau
 #ifdef WITH_MPI
@@ -759,7 +759,7 @@
 #if COMPLEXCASE == 1
            tmat(lc,lc,istep) = conjg(tau) ! Store tau in diagonal of tmat
 #endif
-           ! Transform remaining columns in current block with Householder vector
+           ! Transform remaining columns in current block with Householder Vector
            ! Local dot product
 
 #if REALCASE == 1

@@ -343,7 +343,7 @@
                 ab(nb+2:,ns+i-1) = CONST_0_0
               enddo
 
-              !send hh-vector
+              !send hh-Vector
               if (iblk==nblocks) then
 #ifdef WITH_MPI
                 call timer%start("mpi_communication")
@@ -402,7 +402,7 @@
 	      &(nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
             endif
 
-            ! Use new HH vector for the next block
+            ! Use new HH Vector for the next block
             hv(:,:) = hv_new(:,:)
             tau = tau_new
           enddo

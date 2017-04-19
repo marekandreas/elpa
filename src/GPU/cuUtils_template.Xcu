@@ -358,7 +358,7 @@ __global__ void  compute_hh_dotp_c_kernel_complex_single(cuFloatComplex* hh, cuF
 #endif
     int t_idx, v_idx;
 
-    //  The vector index (v_idx) identifies the pair of HH reflectors from which the dot product is computed
+    //  The Vector index (v_idx) identifies the pair of HH reflectors from which the dot product is computed
     v_idx = blockIdx.x  ;
 
     //  The thread index indicates the position within the two HH reflectors

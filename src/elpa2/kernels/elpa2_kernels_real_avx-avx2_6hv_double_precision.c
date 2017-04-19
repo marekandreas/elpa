@@ -147,7 +147,7 @@ void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int
 	scalarprods[13] = hh[(ldh*5)+2];
 	scalarprods[14] = hh[(ldh*5)+1];
 
-	// calculate scalar product of first and fourth householder vector
+	// calculate scalar product of first and fourth householder Vector
 	// loop counter = 2
 	scalarprods[0] += hh[1] * hh[(2+ldh)];
 	scalarprods[2] += hh[(ldh)+1] * hh[2+(ldh*2)];
@@ -317,7 +317,7 @@ void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int
 //	scalarprods[13] = hh[(ldh*5)+2];
 //	scalarprods[14] = hh[(ldh*5)+1];
 //
-//	// calculate scalar product of first and fourth householder vector
+//	// calculate scalar product of first and fourth householder Vector
 //	// loop counter = 2
 //	scalarprods[0] += hh[1] * hh[(2+ldh)];
 //	scalarprods[2] += hh[(ldh)+1] * hh[2+(ldh*2)];
@@ -415,7 +415,7 @@ void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int
 /**
  * Unrolled kernel that computes
  * 8 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
 __forceinline void hh_trafo_kernel_8_AVX_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
@@ -1188,7 +1188,7 @@ __forceinline void hh_trafo_kernel_8_AVX_6hv_double(double* q, double* hh, int n
 /**
  * Unrolled kernel that computes
  * 4 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
 __forceinline void hh_trafo_kernel_4_AVX_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)

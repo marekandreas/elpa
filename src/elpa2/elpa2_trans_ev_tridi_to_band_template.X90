@@ -1486,7 +1486,7 @@
 
         else ! (current_local_n > 1) then
 
-          ! for current_local_n == 1 the one and only HH vector is 0 and not stored in hh_trans_real/complex
+          ! for current_local_n == 1 the one and only HH Vector is 0 and not stored in hh_trans_real/complex
 #if REALCASE == 1
           bcast_buffer(:,1) = CONST_0_0
 #endif

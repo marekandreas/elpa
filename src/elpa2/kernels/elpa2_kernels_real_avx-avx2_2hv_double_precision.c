@@ -156,7 +156,7 @@ void double_hh_trafo_real_avx_avx2_2hv_double(double* q, double* hh, int* pnb, i
 /**
  * Unrolled kernel that computes
  * 24 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_24_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
@@ -470,7 +470,7 @@ void double_hh_trafo_real_avx_avx2_2hv_double(double* q, double* hh, int* pnb, i
 /**
  * Unrolled kernel that computes
  * 16 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_16_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
@@ -704,7 +704,7 @@ void double_hh_trafo_real_avx_avx2_2hv_double(double* q, double* hh, int* pnb, i
 /**
  * Unrolled kernel that computes
  * 8 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_8_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
@@ -858,7 +858,7 @@ void double_hh_trafo_real_avx_avx2_2hv_double(double* q, double* hh, int* pnb, i
 /**
  * Unrolled kernel that computes
  * 4 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_4_AVX_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)

@@ -137,7 +137,7 @@
     !         order, D(I) < D(J)  for I < J.
     !
     !  Z      (input) DOUBLE PRECISION array, dimension (N)
-    !         The components of the updating vector.
+    !         The components of the updating Vector.
     !
     !  DELTA  (output) DOUBLE PRECISION array, dimension (N)
     !         DELTA contains (D(j) - lambda_I) in its  j-th component.

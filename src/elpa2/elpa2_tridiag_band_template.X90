@@ -295,7 +295,7 @@
         call determine_workload(nx, nb, np_rows, limits)
         local_size = limits(my_prow+1) - limits(my_prow)
         ! add to number of householder vectors
-        ! please note: for nx==1 the one and only HH vector is 0 and is neither calculated nor send below!
+        ! please note: for nx==1 the one and only HH Vector is 0 and is neither calculated nor send below!
         if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
           num_hh_vecs = num_hh_vecs + local_size
           num_chunks  = num_chunks+1
@@ -423,7 +423,7 @@
         stop 1
       endif
 
-      hh_cnt(:) = 1 ! The first transfomation vector is always 0 and not calculated at all
+      hh_cnt(:) = 1 ! The first transfomation Vector is always 0 and not calculated at all
       hh_dst(:) = 0 ! PE number for receive
 #ifdef WITH_MPI
       ireq_ab = MPI_REQUEST_NULL
@@ -589,7 +589,7 @@
           endif
         else
           if (na>na_s) then
-            ! Receive Householder vector from previous task, from PE owning subdiagonal
+            ! Receive Householder Vector from previous task, from PE owning subdiagonal
 
 #ifdef WITH_OPENMP
 
@@ -701,7 +701,7 @@
                 hv = hv_t(:,my_thread)
                 tau = tau_t(my_thread)
 
-                ! Store Householder vector for back transformation
+                ! Store Householder Vector for back transformation
 
                 hh_cnt(iblk) = hh_cnt(iblk) + 1
 
@@ -911,7 +911,7 @@
             else
               ! We are at the end of all blocks
 
-              ! Send last HH vector and TAU to next PE if it has been calculated above
+              ! Send last HH Vector and TAU to next PE if it has been calculated above
               ne = na_s + nblocks*nb - (max_threads-1) - 1
               if (istep>=max_threads .and. ne < na) then
 #ifdef WITH_MPI
@@ -937,7 +937,7 @@
 #endif /* WITH_MPI */
               endif
 
-              ! "Send" HH vector and TAU to next OpenMP thread
+              ! "Send" HH Vector and TAU to next OpenMP thread
               do my_thread = max_threads, 2, -1
                 hv_t(:,my_thread) = hv_t(:,my_thread-1)
                 tau_t(my_thread)  = tau_t(my_thread-1)
@@ -953,7 +953,7 @@
           ! The following code is structured in a way to keep waiting times for
           ! other PEs at a minimum, especially if there is only one block.
           ! For this reason, it requests the last column as late as possible
-          ! and sends the Householder vector and the first column as early
+          ! and sends the Householder Vector and the first column as early
           ! as possible.
 
 #endif /* WITH_OPENMP */
@@ -964,7 +964,7 @@
 
             if (ns+n_off>na) exit
 
-            ! Store Householder vector for back transformation
+            ! Store Householder Vector for back transformation
 
             hh_cnt(iblk) = hh_cnt(iblk) + 1
 
@@ -1020,14 +1020,14 @@
             ! The following code is structured in a way to keep waiting times for
             ! other PEs at a minimum, especially if there is only one block.
             ! For this reason, it requests the last column as late as possible
-            ! and sends the Householder vector and the first column as early
+            ! and sends the Householder Vector and the first column as early
             ! as possible.
 #endif /* WITH_OPENMP */
             nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
             nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
                                           ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
-            ! Multiply diagonal block and subdiagonal block with Householder vector
+            ! Multiply diagonal block and subdiagonal block with Householder Vector
 
             if (iblk==nblocks .and. nc==nb) then
 
@@ -1312,7 +1312,7 @@
               endif
             endif
 
-            ! Use new HH vector for the next block
+            ! Use new HH Vector for the next block
             hv(:) = hv_new(:)
             tau = tau_new
 

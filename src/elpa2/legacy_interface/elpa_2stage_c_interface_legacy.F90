@@ -72,9 +72,11 @@
 #define DOUBLE_PRECISION 1
 
 #if DOUBLE_PRECISION == 1
-  !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
+  !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, 
+  !c> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #else
-  !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
+  !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, 
+  !c> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #endif
 
 #include "../../general/precision_macros.h"
@@ -115,9 +117,11 @@
 #undef DOUBLE_PRECISION
 
 #if DOUBLE_PRECISION == 1
-  !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
+  !c> int elpa_solve_evp_real_2stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, 
+  !c> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #else
-  !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
+  !c> int elpa_solve_evp_real_2stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, 
+  !c> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 #endif
 
 #include "../../general/precision_macros.h"
@@ -159,9 +163,11 @@
 #define DOUBLE_PRECISION  1
 
 #if DOUBLE_PRECISION == 1
-  !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
+  !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, 
+  !c> int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #else
-  !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
+  !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, 
+  !c> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #endif
 
 #include "../../general/precision_macros.h"
@@ -202,9 +208,11 @@
 #undef DOUBLE_PRECISION
 #define SINGLE_PRECISION 1
 #if DOUBLE_PRECISION == 1
-  !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
+  !c> int elpa_solve_evp_complex_2stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, 
+  !c> int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #else
-  !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
+  !c> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, 
+  !c> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 #endif
 
 #include "../../general/precision_macros.h"

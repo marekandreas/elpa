@@ -153,7 +153,7 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 /**
  * Unrolled kernel that computes
  * 24 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_24_AVX_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
@@ -470,7 +470,7 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 /**
  * Unrolled kernel that computes
  * 16 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_16_AVX_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
@@ -707,7 +707,7 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 /**
  * Unrolled kernel that computes
  * 8 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_8_AVX_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
@@ -865,7 +865,7 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 /**
  * Unrolled kernel that computes
  * 4 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
 __forceinline void hh_trafo_kernel_4_sse_instead_of_avx_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
@@ -965,7 +965,7 @@ __forceinline void hh_trafo_kernel_4_sse_instead_of_avx_2hv_single(float* q, flo
 /**
  * Unrolled kernel that computes
  * 4 rows of Q simultaneously, a
- * matrix vector product with two householder
+ * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
  __forceinline void hh_trafo_kernel_4_AVX_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)

@@ -181,7 +181,7 @@ module elpa_pdgeqrf
 
       ! clear v buffer: just ensure that there is no junk in the upper triangle
       ! part, otherwise pdlarfb gets some problems
-      ! pdlarfl(2) do not have these problems as they are working more on a vector
+      ! pdlarfl(2) do not have these problems as they are working more on a Vector
       ! basis
 #ifdef DOUBLE_PRECISION_REAL
       v(1:ldv,1:total_cols) = 0.0_rk8
@@ -273,7 +273,7 @@ module elpa_pdgeqrf
 
           !print *,'generated tau:', tau(offset)
         else
-          ! vector exchange part
+          ! Vector exchange part
 
           ! determine broadcast size
           call qr_pdgeqrf_pack_unpack_double(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
@@ -1097,7 +1097,7 @@ module elpa_pdgeqrf
 
       call qr_pdlarfg2_1dcomm_update_double(v(1,2),1,baseidx,a(1,1),lda,work(seed_offset),m,idx,mb,rev,mpicomm)
 
-      ! check for 2x2 matrix case => only one householder vector will be
+      ! check for 2x2 matrix case => only one householder Vector will be
       ! generated
       if (idx .gt. 2) then
         if (accurate .eqv. .true.) then
@@ -1318,7 +1318,7 @@ module elpa_pdgeqrf
       second = dot22 + top22*top22 + top12*top12
       first_second = dot12 + top11*top12
 
-      ! zero Householder vector (zero norm) case
+      ! zero Householder Vector (zero norm) case
 #ifdef DOUBLE_PRECISION_REAL
       if (first*second .eq. 0.0_rk8) then
 #else
@@ -1349,8 +1349,8 @@ module elpa_pdgeqrf
 
     end function qr_pdlarfg2_1dcomm_check_double
 
-    ! id=0: first vector
-    ! id=1: second vector
+    ! id=0: first Vector
+    ! id=1: second Vector
     subroutine qr_pdlarfg2_1dcomm_vector_double(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
       use precision
       use elpa1_impl
@@ -1482,7 +1482,7 @@ module elpa_pdgeqrf
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
 
       ! seed should be updated by previous householder generation
-      ! Update inner product of this column and next column vector
+      ! Update inner product of this column and next column Vector
       top11 = seed(1)
       dot11 = seed(2)
       top12 = seed(3)
@@ -1497,7 +1497,7 @@ module elpa_pdgeqrf
                                 local_size,baseoffset,local_offset)
       baseoffset = baseoffset * incv
 
-      ! zero Householder vector (zero norm) case
+      ! zero Householder Vector (zero norm) case
 #ifdef DOUBLE_PRECISION_REAL
       if (beta .eq. 0.0_rk8) then
 #else
@@ -1523,18 +1523,18 @@ module elpa_pdgeqrf
       ! calculate coefficient
       COEFF = z / (top11 + beta)
 
-      ! update inner product of next vector
+      ! update inner product of next Vector
       dot22 = dot22 - coeff * (2*dot12 - coeff*dot11)
 
-      ! update dot12 value to represent update with first vector
+      ! update dot12 value to represent update with first Vector
       ! (needed for T matrix)
       dot12 = dot12 - COEFF * dot11
 
-      ! update top element of next vector
+      ! update top element of next Vector
       top22 = top22 - coeff * top21
       seed(6) = top22
 
-      ! restore separated dot22 for vector generation
+      ! restore separated dot22 for Vector generation
       seed(7) = dot22  - top22*top22
 
       !------------------------------------------------------
@@ -1550,7 +1550,7 @@ module elpa_pdgeqrf
 
     end subroutine qr_pdlarfg2_1dcomm_update_double
 
-    ! run this function after second vector
+    ! run this function after second Vector
     subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix_double(seed,tau,t,ldt)
       use precision
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1948,7 +1948,7 @@ module elpa_pdgeqrf
         diagonal_square = abs(work(i,i))
         diagonal_root  = sqrt(diagonal_square)
 
-        ! zero Householder vector (zero norm) case
+        ! zero Householder Vector (zero norm) case
 #ifdef DOUBLE_PRECISION_REAL
         if ((abs(diagonal_square) .eq. 0.0_rk8) .or. (abs(diagonal_root) .eq. 0.0_rk8)) then
 #else
@@ -1961,10 +1961,10 @@ module elpa_pdgeqrf
           return
         end if
 
-        ! check if relative error is bounded for each Householder vector
+        ! check if relative error is bounded for each Householder Vector
         ! Householder i is stable iff Househoulder i-1 is "stable" and the accuracy criterion
         ! holds.
-        ! first Householder vector is considered as "stable".
+        ! first Householder Vector is considered as "stable".
 
         do j=i+1,k
           work(i,j) = work(i,j) / diagonal_root
@@ -2008,7 +2008,7 @@ module elpa_pdgeqrf
 
     end subroutine qr_pdlarfgk_1dcomm_check_improved_double
 
-    ! TODO: zero Householder vector (zero norm) case
+    ! TODO: zero Householder Vector (zero norm) case
     ! - check alpha values as well (from seedC)
     subroutine qr_pdlarfgk_1dcomm_check_double(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
       use precision
@@ -2101,7 +2101,7 @@ module elpa_pdgeqrf
 
       ! work contains now the full inner product of the global (sub-)matrix
       do icol=1,k
-        ! zero Householder vector (zero norm) case
+        ! zero Householder Vector (zero norm) case
 #ifdef DOUBLE_PRECISION_REAL
         if (abs(work(icol,icol)) .eq. 0.0_rk8) then
 #else
@@ -2289,7 +2289,7 @@ module elpa_pdgeqrf
 
 #endif
         ! do not update local part here due to
-        ! dependency of c vector during update process
+        ! dependency of c Vector during update process
 
         ! TODO: reimplement norm rescale method of
         ! original PDLARFG using mpi?
@@ -2383,7 +2383,7 @@ module elpa_pdgeqrf
       alpha = seedC(k-sidx+1,k-sidx+1)
       beta = tau(k-sidx+1)
 
-      ! zero Householder vector (zero norm) case
+      ! zero Householder Vector (zero norm) case
       !print *,'k update: alpha,beta',alpha,beta
 #ifdef DOUBLE_PRECISION_REAL
       if ((beta .eq. 0.0_rk8) .or. (alpha .eq. 0.0_rk8))  then
@@ -2404,14 +2404,14 @@ module elpa_pdgeqrf
       tau(k-sidx+1) = (beta+alpha) / beta
 
       ! ---------------------------------------
-      ! calculate c vector (extra vector or encode in seedC/seedD?
+      ! calculate c Vector (extra Vector or encode in seedC/seedD?
       work(coffset:coffset+buffersize-1) = seedD(1:buffersize,k-sidx+1)
 #ifdef DOUBLE_PRECISION_REAL
       call dgemv("Trans", buffersize+1, buffersize, &
                  1.0_rk8,seedC(1,1),k,seedC(1,k-sidx+1),1, &
                  1.0_rk8,work(coffset),1)
 
-      ! calculate z using tau,seedD,seedC and c vector
+      ! calculate z using tau,seedD,seedC and c Vector
       work(zoffset:zoffset+buffersize-1) = seedC(k-sidx+1,1:buffersize)
       call daxpy(buffersize, 1.0_rk8/beta, work(coffset), 1, work(zoffset), 1)
 
@@ -2420,7 +2420,7 @@ module elpa_pdgeqrf
       call dscal(buffersize, 1.0_rk8/(alpha+beta), seedC(1,k-sidx+1),1)
       call dger(buffersize, buffersize, -1.0_rk8, seedC(1,k-sidx+1),1, work(zoffset), 1, seedC(1,1), k)
 
-      ! update A global (householder vector already generated by pdlarfgk)
+      ! update A global (householder Vector already generated by pdlarfgk)
       mpirank_top = MOD(lidx/nb,mpiprocs)
       if (mpirank .eq. mpirank_top) then
         ! handle first row separately
@@ -2433,11 +2433,11 @@ module elpa_pdgeqrf
                 a(localoffset,1),lda)
 
       ! update D (symmetric) => two buffer vectors of size rank
-      ! generate y vector
+      ! generate y Vector
       work(yoffset:yoffset+buffersize-1) = 0._rk8
       call daxpy(buffersize,1.0_rk8/(alpha+beta),work(zoffset),1,work(yoffset),1)
 
-      ! generate v vector
+      ! generate v Vector
       work(voffset:voffset+buffersize-1) = seedD(1:buffersize,k-sidx+1)
       call daxpy(buffersize, -0.5_rk8*seedD(k-sidx+1,k-sidx+1), work(yoffset), 1, work(voffset),1)
 
@@ -2456,7 +2456,7 @@ module elpa_pdgeqrf
                  1.0_rk4,seedC(1,1),k,seedC(1,k-sidx+1),1, &
                  1.0_rk4,work(coffset),1)
 
-      ! calculate z using tau,seedD,seedC and c vector
+      ! calculate z using tau,seedD,seedC and c Vector
       work(zoffset:zoffset+buffersize-1) = seedC(k-sidx+1,1:buffersize)
       call saxpy(buffersize, 1.0_rk4/beta, work(coffset), 1, work(zoffset), 1)
 
@@ -2465,7 +2465,7 @@ module elpa_pdgeqrf
       call sscal(buffersize, 1.0_rk4/(alpha+beta), seedC(1,k-sidx+1),1)
       call sger(buffersize, buffersize, -1.0_rk4, seedC(1,k-sidx+1),1, work(zoffset), 1, seedC(1,1), k)
 
-      ! update A global (householder vector already generated by pdlarfgk)
+      ! update A global (householder Vector already generated by pdlarfgk)
       mpirank_top = MOD(lidx/nb,mpiprocs)
       if (mpirank .eq. mpirank_top) then
         ! handle first row separately
@@ -2478,11 +2478,11 @@ module elpa_pdgeqrf
                 a(localoffset,1),lda)
 
       ! update D (symmetric) => two buffer vectors of size rank
-      ! generate y vector
+      ! generate y Vector
       work(yoffset:yoffset+buffersize-1) = 0._rk4
       call saxpy(buffersize,1.0_rk4/(alpha+beta),work(zoffset),1,work(yoffset),1)
 
-      ! generate v vector
+      ! generate v Vector
       work(voffset:voffset+buffersize-1) = seedD(1:buffersize,k-sidx+1)
       call saxpy(buffersize, -0.5_rk4*seedD(k-sidx+1,k-sidx+1), work(yoffset), 1, work(voffset),1)
 
@@ -2522,7 +2522,7 @@ module elpa_pdgeqrf
       !print *,'reversed on the fly T generation NYI'
 
       do icol=1,actualk-1
-        ! calculate inner product of householder vector parts in seedC
+        ! calculate inner product of householder Vector parts in seedC
         ! (actually calculating more than necessary, if actualk < k)
         ! => a lot of junk from row 1 to row k-actualk
 #ifdef DOUBLE_PRECISION_REAL
@@ -2582,7 +2582,7 @@ module elpa_pdgeqrf
 
       ! rough approximate for buffer size
       if (lwork .eq. -1) then
-        buffersize = local_size * n ! vector elements
+        buffersize = local_size * n ! Vector elements
         work(1) = DBLE(buffersize)
 #ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("qr_pdgeqrf_pack_unpack_double")
@@ -2795,7 +2795,7 @@ module elpa_pdgeqrf
         v((irow-1)*incv+v_offset) = x((irow-1)*incx+x_offset)
       end do
 
-      ! replace top element to build an unitary vector
+      ! replace top element to build an unitary Vector
       mpirank_top = MOD((idx-1)/nb,mpiprocs)
       if (mpirank .eq. mpirank_top) then
 #ifdef DOUBLE_PRECISION_REAL
@@ -2928,7 +2928,7 @@ module elpa_pdgeqrf
 
       ! clear v buffer: just ensure that there is no junk in the upper triangle
       ! part, otherwise pdlarfb gets some problems
-      ! pdlarfl(2) do not have these problems as they are working more on a vector
+      ! pdlarfl(2) do not have these problems as they are working more on a Vector
       ! basis
 #ifdef DOUBLE_PRECISION_REAL
       v(1:ldv,1:total_cols) = 0.0_rk8
@@ -3020,7 +3020,7 @@ module elpa_pdgeqrf
 
           !print *,'generated tau:', tau(offset)
         else
-          ! vector exchange part
+          ! Vector exchange part
 
           ! determine broadcast size
           call qr_pdgeqrf_pack_unpack_single(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
@@ -3849,7 +3849,7 @@ module elpa_pdgeqrf
 
       call qr_pdlarfg2_1dcomm_update_single(v(1,2),1,baseidx,a(1,1),lda,work(seed_offset),m,idx,mb,rev,mpicomm)
 
-      ! check for 2x2 matrix case => only one householder vector will be
+      ! check for 2x2 matrix case => only one householder Vector will be
       ! generated
       if (idx .gt. 2) then
         if (accurate .eqv. .true.) then
@@ -4073,7 +4073,7 @@ module elpa_pdgeqrf
       second = dot22 + top22*top22 + top12*top12
       first_second = dot12 + top11*top12
 
-      ! zero Householder vector (zero norm) case
+      ! zero Householder Vector (zero norm) case
 #ifdef DOUBLE_PRECISION_REAL
       if (first*second .eq. 0.0_rk8) then
 #else
@@ -4104,8 +4104,8 @@ module elpa_pdgeqrf
 
     end function qr_pdlarfg2_1dcomm_check_single
 
-    ! id=0: first vector
-    ! id=1: second vector
+    ! id=0: first Vector
+    ! id=1: second Vector
     subroutine qr_pdlarfg2_1dcomm_vector_single(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
       use precision
       use elpa1_impl
@@ -4237,7 +4237,7 @@ module elpa_pdgeqrf
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
 
       ! seed should be updated by previous householder generation
-      ! Update inner product of this column and next column vector
+      ! Update inner product of this column and next column Vector
       top11 = seed(1)
       dot11 = seed(2)
       top12 = seed(3)
@@ -4252,7 +4252,7 @@ module elpa_pdgeqrf
                                 local_size,baseoffset,local_offset)
       baseoffset = baseoffset * incv
 
-      ! zero Householder vector (zero norm) case
+      ! zero Householder Vector (zero norm) case
 #ifdef DOUBLE_PRECISION_REAL
       if (beta .eq. 0.0_rk8) then
 #else
@@ -4278,18 +4278,18 @@ module elpa_pdgeqrf
       ! calculate coefficient
       COEFF = z / (top11 + beta)
 
-      ! update inner product of next vector
+      ! update inner product of next Vector
       dot22 = dot22 - coeff * (2*dot12 - coeff*dot11)
 
-      ! update dot12 value to represent update with first vector
+      ! update dot12 value to represent update with first Vector
       ! (needed for T matrix)
       dot12 = dot12 - COEFF * dot11
 
-      ! update top element of next vector
+      ! update top element of next Vector
       top22 = top22 - coeff * top21
       seed(6) = top22
 
-      ! restore separated dot22 for vector generation
+      ! restore separated dot22 for Vector generation
       seed(7) = dot22  - top22*top22
 
       !------------------------------------------------------
@@ -4305,7 +4305,7 @@ module elpa_pdgeqrf
 
     end subroutine qr_pdlarfg2_1dcomm_update_single
 
-    ! run this function after second vector
+    ! run this function after second Vector
     subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix_single(seed,tau,t,ldt)
       use precision
 #ifdef HAVE_DETAILED_TIMINGS
@@ -4704,7 +4704,7 @@ module elpa_pdgeqrf
         diagonal_square = abs(work(i,i))
         diagonal_root  = sqrt(diagonal_square)
 
-        ! zero Householder vector (zero norm) case
+        ! zero Householder Vector (zero norm) case
 #ifdef DOUBLE_PRECISION_REAL
         if ((abs(diagonal_square) .eq. 0.0_rk8) .or. (abs(diagonal_root) .eq. 0.0_rk8)) then
 #else
@@ -4717,10 +4717,10 @@ module elpa_pdgeqrf
           return
         end if
 
-        ! check if relative error is bounded for each Householder vector
+        ! check if relative error is bounded for each Householder Vector
         ! Householder i is stable iff Househoulder i-1 is "stable" and the accuracy criterion
         ! holds.
-        ! first Householder vector is considered as "stable".
+        ! first Householder Vector is considered as "stable".
 
         do j=i+1,k
           work(i,j) = work(i,j) / diagonal_root
@@ -4764,7 +4764,7 @@ module elpa_pdgeqrf
 
     end subroutine qr_pdlarfgk_1dcomm_check_improved_single
 
-    ! TODO: zero Householder vector (zero norm) case
+    ! TODO: zero Householder Vector (zero norm) case
     ! - check alpha values as well (from seedC)
     subroutine qr_pdlarfgk_1dcomm_check_single(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
       use precision
@@ -4857,7 +4857,7 @@ module elpa_pdgeqrf
 
       ! work contains now the full inner product of the global (sub-)matrix
       do icol=1,k
-        ! zero Householder vector (zero norm) case
+        ! zero Householder Vector (zero norm) case
 #ifdef DOUBLE_PRECISION_REAL
         if (abs(work(icol,icol)) .eq. 0.0_rk8) then
 #else
@@ -5044,7 +5044,7 @@ module elpa_pdgeqrf
 
 #endif
         ! do not update local part here due to
-        ! dependency of c vector during update process
+        ! dependency of c Vector during update process
 
         ! TODO: reimplement norm rescale method of
         ! original PDLARFG using mpi?
@@ -5138,7 +5138,7 @@ module elpa_pdgeqrf
       alpha = seedC(k-sidx+1,k-sidx+1)
       beta = tau(k-sidx+1)
 
-      ! zero Householder vector (zero norm) case
+      ! zero Householder Vector (zero norm) case
       !print *,'k update: alpha,beta',alpha,beta
 #ifdef DOUBLE_PRECISION_REAL
       if ((beta .eq. 0.0_rk8) .or. (alpha .eq. 0.0_rk8))  then
@@ -5159,14 +5159,14 @@ module elpa_pdgeqrf
       tau(k-sidx+1) = (beta+alpha) / beta
 
       ! ---------------------------------------
-      ! calculate c vector (extra vector or encode in seedC/seedD?
+      ! calculate c Vector (extra Vector or encode in seedC/seedD?
       work(coffset:coffset+buffersize-1) = seedD(1:buffersize,k-sidx+1)
 #ifdef DOUBLE_PRECISION_REAL
       call dgemv("Trans", buffersize+1, buffersize, &
                  1.0_rk8,seedC(1,1),k,seedC(1,k-sidx+1),1, &
                  1.0_rk8,work(coffset),1)
 
-      ! calculate z using tau,seedD,seedC and c vector
+      ! calculate z using tau,seedD,seedC and c Vector
       work(zoffset:zoffset+buffersize-1) = seedC(k-sidx+1,1:buffersize)
       call daxpy(buffersize, 1.0_rk8/beta, work(coffset), 1, work(zoffset), 1)
 
@@ -5175,7 +5175,7 @@ module elpa_pdgeqrf
       call dscal(buffersize, 1.0_rk8/(alpha+beta), seedC(1,k-sidx+1),1)
       call dger(buffersize, buffersize, -1.0_rk8, seedC(1,k-sidx+1),1, work(zoffset), 1, seedC(1,1), k)
 
-      ! update A global (householder vector already generated by pdlarfgk)
+      ! update A global (householder Vector already generated by pdlarfgk)
       mpirank_top = MOD(lidx/nb,mpiprocs)
       if (mpirank .eq. mpirank_top) then
         ! handle first row separately
@@ -5188,11 +5188,11 @@ module elpa_pdgeqrf
                 a(localoffset,1),lda)
 
       ! update D (symmetric) => two buffer vectors of size rank
-      ! generate y vector
+      ! generate y Vector
       work(yoffset:yoffset+buffersize-1) = 0._rk8
       call daxpy(buffersize,1.0_rk8/(alpha+beta),work(zoffset),1,work(yoffset),1)
 
-      ! generate v vector
+      ! generate v Vector
       work(voffset:voffset+buffersize-1) = seedD(1:buffersize,k-sidx+1)
       call daxpy(buffersize, -0.5_rk8*seedD(k-sidx+1,k-sidx+1), work(yoffset), 1, work(voffset),1)
 
@@ -5211,7 +5211,7 @@ module elpa_pdgeqrf
                  1.0_rk4,seedC(1,1),k,seedC(1,k-sidx+1),1, &
                  1.0_rk4,work(coffset),1)
 
-      ! calculate z using tau,seedD,seedC and c vector
+      ! calculate z using tau,seedD,seedC and c Vector
       work(zoffset:zoffset+buffersize-1) = seedC(k-sidx+1,1:buffersize)
       call saxpy(buffersize, 1.0_rk4/beta, work(coffset), 1, work(zoffset), 1)
 
@@ -5220,7 +5220,7 @@ module elpa_pdgeqrf
       call sscal(buffersize, 1.0_rk4/(alpha+beta), seedC(1,k-sidx+1),1)
       call sger(buffersize, buffersize, -1.0_rk4, seedC(1,k-sidx+1),1, work(zoffset), 1, seedC(1,1), k)
 
-      ! update A global (householder vector already generated by pdlarfgk)
+      ! update A global (householder Vector already generated by pdlarfgk)
       mpirank_top = MOD(lidx/nb,mpiprocs)
       if (mpirank .eq. mpirank_top) then
         ! handle first row separately
@@ -5233,11 +5233,11 @@ module elpa_pdgeqrf
                 a(localoffset,1),lda)
 
       ! update D (symmetric) => two buffer vectors of size rank
-      ! generate y vector
+      ! generate y Vector
       work(yoffset:yoffset+buffersize-1) = 0._rk4
       call saxpy(buffersize,1.0_rk4/(alpha+beta),work(zoffset),1,work(yoffset),1)
 
-      ! generate v vector
+      ! generate v Vector
       work(voffset:voffset+buffersize-1) = seedD(1:buffersize,k-sidx+1)
       call saxpy(buffersize, -0.5_rk4*seedD(k-sidx+1,k-sidx+1), work(yoffset), 1, work(voffset),1)
 
@@ -5277,7 +5277,7 @@ module elpa_pdgeqrf
       !print *,'reversed on the fly T generation NYI'
 
       do icol=1,actualk-1
-        ! calculate inner product of householder vector parts in seedC
+        ! calculate inner product of householder Vector parts in seedC
         ! (actually calculating more than necessary, if actualk < k)
         ! => a lot of junk from row 1 to row k-actualk
 #ifdef DOUBLE_PRECISION_REAL
@@ -5337,7 +5337,7 @@ module elpa_pdgeqrf
 
       ! rough approximate for buffer size
       if (lwork .eq. -1) then
-        buffersize = local_size * n ! vector elements
+        buffersize = local_size * n ! Vector elements
         work(1) = DBLE(buffersize)
 #ifdef HAVE_DETAILED_TIMINGS
         call timer%stop("qr_pdgeqrf_pack_unpack_single")
@@ -5510,7 +5510,7 @@ module elpa_pdgeqrf
         v((irow-1)*incv+v_offset) = x((irow-1)*incx+x_offset)
       end do
 
-      ! replace top element to build an unitary vector
+      ! replace top element to build an unitary Vector
       mpirank_top = MOD((idx-1)/nb,mpiprocs)
       if (mpirank .eq. mpirank_top) then
 #ifdef DOUBLE_PRECISION_REAL

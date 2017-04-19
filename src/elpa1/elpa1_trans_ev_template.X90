@@ -275,8 +275,8 @@
         nb = 0
         do ic = ics, ice
 
-          l_colh = local_index(ic  , my_pcol, np_cols, nblk, -1) ! Column of Householder vector
-          l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder vector
+          l_colh = local_index(ic  , my_pcol, np_cols, nblk, -1) ! Column of Householder Vector
+          l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
 
 
           if (my_pcol == cur_pcol) then
@@ -306,7 +306,7 @@
 
         nb = 0
         do ic = ics, ice
-          l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder vector
+          l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
           hvm(1:l_rows,nstor+1) = hvb(nb+1:nb+l_rows)
           if (useGPU) then
             hvm_ubnd = l_rows
