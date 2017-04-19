@@ -245,7 +245,7 @@ program test_real_double_precision
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-
+   elpa_print_times = .true.
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 

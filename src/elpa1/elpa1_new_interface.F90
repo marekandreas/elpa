@@ -136,13 +136,6 @@ module elpa1_impl
 
   ! Timing results, set by every call to solve_evp_xxx
 
-  real(kind=c_double), public :: time_evp_fwd    !< time for forward transformations (to tridiagonal form)
-  real(kind=c_double), public :: time_evp_solve  !< time for solving the tridiagonal system
-  real(kind=c_double), public :: time_evp_back   !< time for back transformations of eigenvectors
-
-  logical, public :: elpa_print_times = .false. !< Set elpa_print_times to .true. for explicit timing outputs
-
-
 !> \brief elpa_solve_evp_real_1stage_double_impl: Fortran function to solve the real eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_real"
 !>
 !  Parameters

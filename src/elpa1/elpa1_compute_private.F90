@@ -52,7 +52,7 @@
 
 #include "config-f90.h"
 !> \brief Fortran module which contains the source of ELPA 1stage
-module ELPA1_COMPUTE
+module elpa1_compute
   use elpa_utilities
 #ifdef HAVE_DETAILED_TIMINGS
   use timings
@@ -245,4 +245,4 @@ module ELPA1_COMPUTE
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-end module ELPA1_compute
+end module elpa1_compute

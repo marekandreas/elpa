@@ -136,9 +136,6 @@ program test_interface
    call e%set("real_kernel", ELPA_2STAGE_REAL_GENERIC, success)
    assert(success == ELPA_OK)
 
-   call e%set("complex_kernel", ELPA_2STAGE_COMPLEX_GENERIC, success)
-   assert(success == ELPA_OK)
-
    call e%solve(a, ev, z, success)
    assert(success == ELPA_OK)
 

@@ -77,6 +77,23 @@ typedef struct {
 
 /** OPTIONS **/
 
+/* summary timings */
+int summary_timings_cardinality() {
+        return 2;
+}
+
+const int summary_timings_enumerate_option(unsigned int n) {
+        return n;
+}
+
+int summary_timings_valid(elpa_options_t options, int value) {
+        if (value >= 0 && value < summary_timings_cardinality()) {
+                return ELPA_OK;
+        } else {
+                return ELPA_ERROR;
+        }
+}
+
 
 /* wantDebug */
 int wantDebug_cardinality() {
@@ -186,6 +203,7 @@ int complex_kernel_valid(elpa_options_t options, int value) {
 
 
 elpa_int_option_t elpa_int_options[] = {
+        {"summary_timings", 0, summary_timings_cardinality, summary_timings_enumerate_option, summary_timings_valid},
         {"wantDebug", 0, wantDebug_cardinality, wantDebug_enumerate_option, wantDebug_valid},
         {"qr", 0, qr_cardinality, qr_enumerate_option, qr_valid},
         {"gpu", 0, gpu_cardinality, gpu_enumerate_option, gpu_valid},

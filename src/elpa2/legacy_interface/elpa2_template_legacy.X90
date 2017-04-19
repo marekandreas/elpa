@@ -198,12 +198,28 @@
     endif
 #endif
 
+    if (elpa_print_times) then
+      call elpa2stage%set("summary_timings", 1,successInternal)
+      if (successInternal .ne. ELPA_OK) then
+        print *, "Cannot set summary_timings"
+        stop
+        success = .false.
+        return
+      endif
+    endif
+
     call elpa2stage%solve(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
     if (successInternal .ne. ELPA_OK) then
       print *, "Cannot solve with ELPA 2stage"
       stop
       success = .false.
       return
+    endif
+
+    if (elpa_print_times) then
+      time_evp_fwd = elpa2stage%time_evp_fwd
+      time_evp_solve = elpa2stage%time_evp_solve
+      time_evp_back = elpa2stage%time_evp_back
     endif
 
     call elpa2stage%destroy()

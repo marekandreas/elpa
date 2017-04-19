@@ -57,7 +57,7 @@
     &_&
     &PRECISION &
     (na, nev, nblk, nbw, q, q_dev, ldq, matrixCols,         &
-     hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success, &
+     hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, summary_timings, success, &
 #if REALCASE == 1
      THIS_REAL_ELPA_KERNEL)
 #endif
@@ -271,12 +271,12 @@
 #ifndef WITH_MPI
       integer(kind=ik)                         :: j1
 #endif
-      integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
+      integer(kind=c_intptr_t), parameter      :: size_of_datatype = size_of_&
                                                                    &PRECISION&
                                                                    &_&
                                                                    &MATH_DATATYPE
 
-
+      logical                                  :: summary_timings
 
       call timer%start("trans_ev_tridi_to_band_&
       &MATH_DATATYPE&
@@ -2617,7 +2617,7 @@
 
 #else /* WITH_MPI */
 
-     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+     if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
          write(error_unit,'(" Kernel time:",f10.3," MFlops: ",es12.5)')  kernel_time, kernel_flops/kernel_time*1.d-6
 
 #endif /* WITH_MPI */

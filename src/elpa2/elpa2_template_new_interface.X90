@@ -55,7 +55,7 @@
   &2stage_&
   &PRECISION&
   &_impl (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,   &
-         useGPU, &
+         time_evp_fwd, time_evp_solve, time_evp_back, summary_timings, useGPU, &
 #if REALCASE == 1
    THIS_ELPA_KERNEL_API, useQR   &
 #endif
@@ -107,6 +107,8 @@
 #if COMPLEXCASE == 1
    real(kind=C_DATATYPE_KIND), allocatable   :: q_real(:,:)
 #endif
+   real(kind=c_double)                       :: time_evp_fwd, time_evp_solve, time_evp_back
+   logical, intent(in)                       :: summary_timings
    integer(kind=c_intptr_t)                  :: tmat_dev, q_dev, a_dev
    real(kind=c_double)                        :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
 
@@ -385,7 +387,7 @@
        )
       if (.not.(success)) return
       ttt1 = MPI_Wtime()
-      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+      if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
         write(error_unit,*) "Time " // "bandred_&
 	&MATH_DATATYPE&
 	&_&
@@ -413,7 +415,7 @@
      (na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, do_useGPU)
 
      ttt1 = MPI_Wtime()
-     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+     if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
        write(error_unit,*) "Time " // "tridiag_band_&
        &MATH_DATATYPE&
        &_&
@@ -459,7 +461,7 @@
      if (.not.(success)) return
 
      ttt1 = MPI_Wtime()
-     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+     if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
      write(error_unit,*) 'Time solve_tridi                :',ttt1-ttt0
      time_evp_solve = ttt1-ttt0
      ttts = ttt1
@@ -494,11 +496,11 @@
      (na, nev, nblk, nbw, q, &
      q_dev, &
      ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
-     success, THIS_ELPA_KERNEL)
+     summary_timings, success, THIS_ELPA_KERNEL)
 
      if (.not.(success)) return
      ttt1 = MPI_Wtime()
-     if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+     if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
        write(error_unit,*) "Time " // "trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &_&
@@ -541,7 +543,7 @@
         )
 
        ttt1 = MPI_Wtime()
-       if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+       if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
          write(error_unit,*) "Time " // "trans_ev_band_to_full_&
 	 &MATH_DATATYPE&
 	 &_&
