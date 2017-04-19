@@ -73,9 +73,9 @@ program test_interface
    integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
-   real(kind=C_DOUBLE_COMPLEX), allocatable :: a(:,:), as(:,:)
+   complex(kind=C_DOUBLE_COMPLEX), allocatable :: a(:,:), as(:,:)
    ! eigenvectors
-   real(kind=C_DOUBLE_COMPLEX), allocatable :: z(:,:)
+   complex(kind=C_DOUBLE_COMPLEX), allocatable :: z(:,:)
    ! eigenvalues
    real(kind=C_DOUBLE), allocatable :: ev(:)
 

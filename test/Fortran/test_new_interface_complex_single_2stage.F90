@@ -73,9 +73,9 @@ program test_interface
    integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
-   real(kind=C_FLOAT_COMPLEX), allocatable :: a(:,:), as(:,:)
+   complex(kind=C_FLOAT_COMPLEX), allocatable :: a(:,:), as(:,:)
    ! eigenvectors
-   real(kind=C_FLOAT_COMPLEX), allocatable :: z(:,:)
+   complex(kind=C_FLOAT_COMPLEX), allocatable :: z(:,:)
    ! eigenvalues
    real(kind=C_FLOAT), allocatable :: ev(:)
 
@@ -127,7 +127,6 @@ program test_interface
    assert(success == ELPA_OK)
 
    solver = e%get("solver", success)
-   print *, "solver =", solver
    assert(success == ELPA_OK)
 
    call e%set("solver", ELPA_SOLVER_2STAGE, success)

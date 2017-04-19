@@ -135,11 +135,8 @@ program test_interface
 
    call e%set("gpu", 1, success)
    assert(success == ELPA_OK)
- 
-   call e%set("real_kernel", ELPA_2STAGE_REAL_GPU, success)
-   assert(success == ELPA_OK)
 
-   call e%set("complex_kernel", ELPA_2STAGE_COMPLEX_GENERIC, success)
+   call e%set("real_kernel", ELPA_2STAGE_REAL_GPU, success)
    assert(success == ELPA_OK)
 
    call e%solve(a, ev, z, success)
