@@ -154,7 +154,8 @@ program test_interface
 
 
    if (elpa_init(20170403) /= ELPA_OK) then
-     error stop "ELPA API version not supported"
+     print *, "ELPA API version not supported"
+     stop
    endif
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("prepare_elpa")

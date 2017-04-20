@@ -83,7 +83,8 @@ module mod_setup_mpi
 
 #ifdef WITH_MPI
       if (nprocs <= 1) then
-        error stop "The test programs must be run with more than 1 task to ensure that usage with MPI is actually tested"
+        print *, "The test programs must be run with more than 1 task to ensure that usage with MPI is actually tested"
+        stop
       endif
 #endif
 
