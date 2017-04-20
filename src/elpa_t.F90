@@ -416,7 +416,8 @@ module elpa_type
       integer(kind=c_int) :: success_internal
       logical             :: success_l, summary_timings
 
-      logical             :: useGPU
+      logical             :: useGPU, useQR
+      integer(kind=c_int) :: THIS_ELPA_KERNEL_API
 
       if (self%get("summary_timings",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
@@ -441,6 +442,25 @@ module elpa_type
         useGPU = .false.
       endif
 
+      if (self%get("qr",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry qr"
+          stop
+        endif
+
+        useQR = .true.
+      else
+        useQR = .false.
+      endif
+
+
+      THIS_ELPA_KERNEL_API = self%get("real_kernel",success_internal)
+      if (success_internal .ne. ELPA_OK) then
+        print *,"Could not querry kernel"
+        stop
+      endif
+
+
       if (self%get("solver",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
@@ -461,7 +481,8 @@ module elpa_type
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings, useGPU)
+                                                          time_evp_solve, time_evp_back, summary_timings, useGPU, &
+                                                          THIS_ELPA_KERNEL_API, useQR)
       else
         print *,"unknown solver"
         stop
@@ -514,8 +535,8 @@ module elpa_type
       integer(kind=c_int) :: success_internal
       logical             :: success_l, summary_timings
 
-      logical             :: useGPU
-
+      logical             :: useGPU, useQR
+      integer(kind=c_int) :: THIS_ELPA_KERNEL_API
 #ifdef WANT_SINGLE_PRECISION_REAL
       if (self%get("timings",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
@@ -539,6 +560,23 @@ module elpa_type
         useGPU = .false.
       endif
 
+      if (self%get("qr",success_internal) .eq. 1) then
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry qr"
+          stop
+        endif
+
+        useQR = .true.
+      else
+        useQR = .false.
+      endif
+
+      THIS_ELPA_KERNEL_API = self%get("real_kernel",success_internal)
+      if (success_internal .ne. ELPA_OK) then
+        print *,"Could not querry kernel"
+        stop
+      endif
+
       if (self%get("solver",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
@@ -559,7 +597,8 @@ module elpa_type
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings, useGPU)
+                                                          time_evp_solve, time_evp_back, summary_timings, useGPU, &
+                                                          THIS_ELPA_KERNEL_API, useQR)
       else
         print *,"unknown solver"
         stop
@@ -621,6 +660,7 @@ module elpa_type
       logical                        :: success_l, summary_timings
 
       logical                        :: useGPU
+      integer(kind=c_int) :: THIS_ELPA_KERNEL_API
       if (self%get("timings",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry summary timings"
@@ -643,6 +683,12 @@ module elpa_type
         useGPU = .false.
       endif
 
+      THIS_ELPA_KERNEL_API = self%get("real_kernel",success_internal)
+      if (success_internal .ne. ELPA_OK) then
+        print *,"Could not querry kernel"
+        stop
+      endif
+
       if (self%get("solver",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
@@ -663,7 +709,8 @@ module elpa_type
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent, time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings, useGPU)
+                                                          time_evp_solve, time_evp_back, summary_timings, useGPU, &
+                                                          THIS_ELPA_KERNEL_API)
       else
         print *,"unknown solver"
         stop
@@ -719,7 +766,7 @@ module elpa_type
       logical                       :: success_l, summary_timings
 
       logical                       :: useGPU
-
+      integer(kind=c_int) :: THIS_ELPA_KERNEL_API
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
       if (self%get("summary_timings",success_internal) .eq. 1) then
@@ -744,6 +791,12 @@ module elpa_type
         useGPU = .false.
       endif
 
+      THIS_ELPA_KERNEL_API = self%get("real_kernel",success_internal)
+      if (success_internal .ne. ELPA_OK) then
+        print *,"Could not querry kernel"
+        stop
+      endif
+
       if (self%get("solver",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
@@ -764,7 +817,8 @@ module elpa_type
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
                                                           self%mpi_comm_rows, self%mpi_comm_cols,         &
                                                           self%mpi_comm_parent,  time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings, useGPU)
+                                                          time_evp_solve, time_evp_back, summary_timings, useGPU, &
+                                                          THIS_ELPA_KERNEL_API)
       else
         print *,"unknown solver"
         stop
