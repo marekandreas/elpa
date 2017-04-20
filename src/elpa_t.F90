@@ -683,7 +683,7 @@ module elpa_type
         useGPU = .false.
       endif
 
-      THIS_ELPA_KERNEL_API = self%get("real_kernel",success_internal)
+      THIS_ELPA_KERNEL_API = self%get("complex_kernel",success_internal)
       if (success_internal .ne. ELPA_OK) then
         print *,"Could not querry kernel"
         stop
@@ -791,7 +791,7 @@ module elpa_type
         useGPU = .false.
       endif
 
-      THIS_ELPA_KERNEL_API = self%get("real_kernel",success_internal)
+      THIS_ELPA_KERNEL_API = self%get("complex_kernel",success_internal)
       if (success_internal .ne. ELPA_OK) then
         print *,"Could not querry kernel"
         stop
