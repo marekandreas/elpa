@@ -179,46 +179,7 @@ module elpa_type
   integer, parameter :: earliest_api_version = 20170403
   integer, parameter :: current_api_version  = 20170403
 
-  interface
-    function elpa_allocate_options() result(options) bind(C, name="elpa_allocate_options")
-      import c_ptr
-      type(c_ptr) :: options
-    end function
-  end interface
-
-
-  interface
-    subroutine elpa_free_options(options) bind(C, name="elpa_free_options")
-      import c_ptr
-      type(c_ptr), value :: options
-    end subroutine
-  end interface
-
-
-  interface
-    function get_int_option(options, name, success) result(value) bind(C, name="get_int_option")
-      import c_ptr, c_char, c_int
-      type(c_ptr), value                 :: options
-      character(kind=c_char), intent(in) :: name(*)
-      integer(kind=c_int)                :: value
-      integer(kind=c_int), optional      :: success
-    end function
-  end interface
-
-
-  interface
-    function set_int_option(options, name, value) result(success) bind(C, name="set_int_option")
-      import c_ptr, c_char, c_int
-      type(c_ptr), value                     :: options
-      character(kind=c_char), intent(in)     :: name(*)
-      integer(kind=c_int), intent(in), value :: value
-      integer(kind=c_int)                    :: success
-    end function
-  end interface
-
-
   contains
-
 
     function elpa_init(api_version) result(success)
       use elpa_utilities, only : error_unit
@@ -252,6 +213,7 @@ module elpa_type
       use elpa_mpi
       use elpa_utilities, only : error_unit
       use elpa1_impl, only : elpa_get_communicators_impl
+      use elpa_generated_fortran_interfaces
       implicit none
 
       integer(kind=ik), intent(in) :: na, nev, local_nrows, local_ncols, nblk
@@ -298,6 +260,7 @@ module elpa_type
       use elpa_mpi
       use elpa_utilities, only : error_unit
       use elpa1_impl, only : elpa_get_communicators_impl
+      use elpa_generated_fortran_interfaces
       implicit none
 
       integer(kind=ik), intent(in) :: na, nev, local_nrows, local_ncols, nblk
@@ -348,6 +311,7 @@ module elpa_type
 
     subroutine elpa_set_integer(self, name, value, success)
       use iso_c_binding
+      use elpa_generated_fortran_interfaces
       use elpa_utilities, only : error_unit
       implicit none
       class(elpa_t)                   :: self
@@ -356,7 +320,7 @@ module elpa_type
       integer, optional               :: success
       integer                         :: actual_success
 
-      actual_success = set_int_option(self%options, name // c_null_char, value)
+      actual_success = elpa_set_int_entry(self%options, name // c_null_char, value)
 
       if (present(success)) then
         success = actual_success
@@ -371,6 +335,7 @@ module elpa_type
 
     function elpa_get_integer(self, name, success) result(value)
       use iso_c_binding
+      use elpa_generated_fortran_interfaces
       implicit none
       class(elpa_t)                  :: self
       character(*), intent(in)       :: name
@@ -379,7 +344,7 @@ module elpa_type
       integer(kind=c_int), target    :: int_success
       type(c_ptr) :: c_success_ptr
 
-      value = get_int_option(self%options, name // c_null_char, success)
+      value = elpa_get_int_entry(self%options, name // c_null_char, success)
 
     end function
 
@@ -1404,8 +1369,9 @@ module elpa_type
 
 
     subroutine elpa_destroy(self)
+      use elpa_generated_fortran_interfaces
       class(elpa_t) :: self
-      call elpa_free_options(self%options)
+      call elpa_free_index(self%options)
     end subroutine
 
 end module

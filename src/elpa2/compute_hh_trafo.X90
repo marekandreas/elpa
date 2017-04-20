@@ -115,10 +115,7 @@
 #else
          use timings_dummy
 #endif
-
-#if defined(HAVE_AVX) || defined(HAVE_AVX2) || defined(HAVE_SSE_INTRINSICS) || defined(HAVE_SSE_ASSEMBLY) || defined(HAVE_AVX512)
-         use kernel_interfaces
-#endif
+         use elpa_generated_fortran_interfaces
          implicit none
          real(kind=c_double), intent(inout) :: kernel_time  ! MPI_WTIME always needs double
          integer(kind=lik)                  :: kernel_flops

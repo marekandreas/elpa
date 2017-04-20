@@ -1,5 +1,5 @@
 define extract_interface
-	@echo "Generating $@...";
+	@echo "Extracting interface marked with '$1' from $@...";
 	@grep -h "^ *$1" $^ | sed 's/^ *$1//;' >> $@ || { rm $@; exit 1; }
 endef
 
@@ -16,12 +16,15 @@ config-f90.h: config.h
 elpa/elpa_generated.h: $(top_srcdir)/src/elpa_driver/legacy_interface/elpa_driver_c_interface_legacy.F90 \
                        $(top_srcdir)/src/elpa1/legacy_interface/elpa_1stage_c_interface_legacy.F90 \
                        $(top_srcdir)/src/elpa2/legacy_interface/elpa_2stage_c_interface_legacy.F90 | elpa
+	@rm -f $@
 	$(call extract_interface,!c>)
 
 test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.*90) | test/shared
+	@rm -f $@
 	$(call extract_interface,!c>)
 
-elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2/kernels/*.c) $(wildcard $(top_srcdir)/src/elpa2/kernels/*.s) | elpa
+elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2/kernels/*.c $(top_srcdir)/src/elpa2/kernels/*.s $(top_srcdir)/src/*.[ch]) | elpa
+	@rm -f $@
 	$(call extract_interface,!f>)
 	$(call extract_interface,#!f>)
 

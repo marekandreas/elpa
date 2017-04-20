@@ -27,6 +27,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/helpers/mod_precision.F90 \
         src/helpers/mod_mpi.F90 \
         src/helpers/mod_mpi_stubs.F90 \
+        src/elpa_generated_fortran_interfaces.F90 \
 	src/elpa2/mod_redist_band.F90 \
         src/elpa2/mod_pack_unpack_cpu.F90 \
         src/elpa2/mod_compute_hh_trafo.F90 \
@@ -35,7 +36,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa1/elpa1_compute_private.F90 \
 	src/elpa2/elpa2_determine_workload.F90 \
         src/elpa2/elpa2_compute.F90 \
-        src/elpa2/kernels/mod_fortran_interfaces.F90 \
         src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
         src/elpa_driver/legacy_interface/elpa_driver_c_interface_legacy.F90 \
         src/elpa1/legacy_interface/elpa_1stage_c_interface_legacy.F90 \
@@ -50,6 +50,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/qr/elpa_pdgeqrf.F90 \
 	src/elpa1/elpa1_new_interface.F90 \
 	src/elpa2/elpa2_new_interface.F90 \
+	src/elpa_index.c \
 	src/elpa_options.c
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
