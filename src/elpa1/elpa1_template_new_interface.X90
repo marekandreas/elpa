@@ -72,6 +72,7 @@ function elpa_solve_evp_&
    use iso_c_binding
    use elpa_mpi
    use elpa1_compute
+   use elpa1_utilities, only : gpu_usage_via_environment_variable
    implicit none
 
    integer(kind=c_int), intent(in)                 :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, &

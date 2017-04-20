@@ -75,7 +75,7 @@ program test_real_example
 
    use iso_c_binding
    use elpa1
-   use elpa_utilities, only : error_unit
+   !use elpa_utilities, only : error_unit
 #ifdef HAVE_MPI_MODULE
    use mpi
    implicit none
@@ -112,6 +112,7 @@ program test_real_example
    character(len=8)           :: task_suffix
    integer           :: j
 
+   integer, parameter :: error_unit = 0
    !-------------------------------------------------------------------------------
 
 

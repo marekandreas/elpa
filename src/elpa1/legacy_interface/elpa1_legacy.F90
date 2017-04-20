@@ -85,7 +85,7 @@ module elpa1
   use, intrinsic :: iso_c_binding
   use elpa_utilities
   use elpa1_auxiliary
-  use elpa1_utilities
+  !use elpa1_utilities
 
   implicit none
 
