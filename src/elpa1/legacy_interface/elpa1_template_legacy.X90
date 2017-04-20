@@ -116,7 +116,6 @@ function elpa_solve_evp_&
    success = .true.
    if (elpa_init(20170403) /= ELPA_OK) then
      print *,  "ELPA API version not supported"
-     stop
      success = .false.
      return
    endif
@@ -126,14 +125,12 @@ function elpa_solve_evp_&
    if (successInternal .ne. ELPA_OK) then
      print *, "Cannot create elpa object"
      success = .false.
-     stop
      return
    endif
 
    call elpa1stage%set("solver", ELPA_SOLVER_1STAGE, successInternal)
    if (successInternal .ne. ELPA_OK) then
      print *, "Cannot set ELPA 1stage solver"
-     stop
      success = .false.
      return
    endif
@@ -143,7 +140,6 @@ function elpa_solve_evp_&
        call elpa1stage%set("gpu", 1, successInternal)
        if (successInternal .ne. ELPA_OK) then
          print *, "Cannot set gpu"
-         stop
          success = .false.
          return
        endif
@@ -151,7 +147,6 @@ function elpa_solve_evp_&
        call elpa1stage%set("gpu", 0, successInternal)
        if (successInternal .ne. ELPA_OK) then
          print *, "Cannot set gpu"
-         stop
          success = .false.
          return
        endif
@@ -162,7 +157,6 @@ function elpa_solve_evp_&
      call elpa1stage%set("summary_timings", 1,successInternal)
      if (successInternal .ne. ELPA_OK) then
        print *, "Cannot set summary_timings"
-       stop
        success = .false.
        return
      endif
@@ -171,7 +165,6 @@ function elpa_solve_evp_&
    call elpa1stage%solve(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
    if (successInternal .ne. ELPA_OK) then
      print *, "Cannot solve with ELPA 1stage"
-     stop
      success = .false.
      return
    endif
