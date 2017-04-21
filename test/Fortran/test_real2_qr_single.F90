@@ -125,7 +125,7 @@ program test_real2_default_kernel_qr_decomposition_single_precision
 
    real(kind=rk4), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 
-   integer(kind=ik)           :: STATUS
+   integer(kind=ik)           :: ret
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
@@ -178,19 +178,20 @@ program test_real2_default_kernel_qr_decomposition_single_precision
 
    gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
-   STATUS = 0
+   ret = 0
 
    if (nblk .lt. 64) then
-     status = 1
-     if (myid .eq. 0) print *,"At the moment QR decomposition need blocksize of at least 64"
-     if (na .lt. 64) then
-       if (myid .eq. 0) print *,"This is why the matrix size must also be at least 64 or only 1 MPI task can be used"
+     ret = 1
+     if (myid .eq. 0) then
+       print *,"At the moment QR decomposition need blocksize of at least 64"
      endif
-
+     if ((na .lt. 64) .and. (myid .eq. 0)) then
+       print *,"This is why the matrix size must also be at least 64 or only 1 MPI task can be used"
+     endif
 #ifdef WITH_MPI
-      call mpi_finalize(mpierr)
+     call mpi_finalize(mpierr)
 #endif
-      call EXIT(0)
+     stop 77
    endif
 
 #define REALCASE
@@ -384,7 +385,7 @@ program test_real2_default_kernel_qr_decomposition_single_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
+   ret = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
@@ -403,7 +404,7 @@ program test_real2_default_kernel_qr_decomposition_single_precision
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
-   call EXIT(STATUS)
+   call exit(ret)
 end
 
 !-------------------------------------------------------------------------------
