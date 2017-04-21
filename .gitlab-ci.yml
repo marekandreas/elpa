@@ -2774,7 +2774,7 @@ test_project:
     - popd
 
 # test test_project_2stage
-test_project:
+test_project_2stage:
   tags:
     - buildtest
   script:
@@ -2791,7 +2791,7 @@ test_project:
     - ../configure PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
+    - ./test_real2
     - make distclean
     - popd
     - pushd build
@@ -2853,7 +2853,7 @@ test_project_2stage_intel:
     - ../configure PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
+    - ./test_real2
     - make distclean
     - popd
     - pushd build
