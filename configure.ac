@@ -115,6 +115,8 @@ if test x"$with_mpi" = x"yes"; then
   fi
 fi
 
+AC_FC_SRCEXT([F90])
+
 if test x"${enable_openmp}" = x"yes"; then
   AX_ELPA_OPENMP
   if test "$ac_cv_prog_fc_openmp" = unsupported; then
@@ -1283,13 +1285,12 @@ AC_CONFIG_FILES([
   ${PKG_CONFIG_FILE}:elpa.pc.in
 ])
 
-AC_MSG_CHECKING([if workaround for Intel's broken preprocessor is needed])
-if test x"$FC" = x"mpiifort" ; then
-	need_manual_cpp=yes
-fi
-if test x"$FC" = x"ifort" ; then
-	need_manual_cpp=yes
-fi
+m4_include([m4/ax_fc_check_define.m4])
+AC_MSG_CHECKING([if workaround for broken preprocessor is needed])
+
+need_manual_cpp=no
+AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[need_manual_cpp=yes],[])
+AX_FC_CHECK_DEFINE([__PGI],[need_manual_cpp=yes],[])
 if test x"$need_manual_cpp" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	FC="\$(top_srcdir)/manual_cpp $FC"
