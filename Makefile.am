@@ -1128,6 +1128,7 @@ EXTRA_DIST = \
   src/elpa2/elpa2_trans_ev_band_to_full_template.X90 \
   src/elpa2/elpa2_trans_ev_tridi_to_band_template.X90 \
   src/general/precision_macros.h \
+  src/elpa_index.h \
   src/elpa2/kernels/elpa2_kernels_real_template.X90 \
   src/elpa2/kernels/elpa2_kernels_complex_template.X90 \
   src/elpa2/kernels/elpa2_kernels_simple_template.X90 \
