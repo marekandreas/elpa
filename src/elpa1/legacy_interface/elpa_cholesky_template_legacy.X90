@@ -57,21 +57,21 @@
 
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #if REALCASE == 1
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)      :: a(lda,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE)      :: a(lda,*)
+#else
       real(kind=REAL_DATATYPE)      :: a(lda,matrixCols)
-!#endif
+#endif
 #endif
 #if COMPLEXCASE == 1
-!#ifdef USE_ASSUMED_SIZE
-!      complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
+#else
       complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
-!#endif
+#endif
 #endif
 !      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
-       integer(kind=ik)              :: nev  
+       integer(kind=ik)              :: nev
 !      integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
 !      integer(kind=ik)              :: n, nc, i, info
 !      integer(kind=ik)              :: lcs, lce, lrs, lre
@@ -118,7 +118,7 @@
       call elpaAPI%set_comm_rows(mpi_comm_rows)
       call elpaAPI%set_comm_cols(mpi_comm_cols)
 
-      call elpaAPI%cholesky(a, successInternal)
+      call elpaAPI%cholesky(a(1:lda,1:matrixCols), successInternal)
 
       if (successInternal .ne. ELPA_OK) then
         print *, "Cannot run cholesky"

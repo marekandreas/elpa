@@ -66,19 +66,19 @@
 
        integer(kind=ik)             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #if  REALCASE ==  1
-!#ifdef USE_ASSUMED_SIZE
-!       real(kind=REAL_DATATYPE)     :: a(lda,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+       real(kind=REAL_DATATYPE)     :: a(lda,*)
+#else
        real(kind=REAL_DATATYPE)     :: a(lda,matrixCols)
-!#endif
+#endif
 #endif
 
 #if COMPLEXCASE == 1
-!#ifdef USE_ASSUMED_SIZE
-!       complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+       complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
+#else
        complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
-!#endif
+#endif
 #endif
 
  !      integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -126,7 +126,7 @@
        call elpaAPI%set_comm_rows(mpi_comm_rows)
        call elpaAPI%set_comm_cols(mpi_comm_cols)
 
-       call elpaAPI%invert_trm(a, successInternal)
+       call elpaAPI%invert_trm(a(1:lda,1:matrixCols), successInternal)
 
        if (successInternal .ne. ELPA_OK) then
          print *, "Cannot run invert_trm"

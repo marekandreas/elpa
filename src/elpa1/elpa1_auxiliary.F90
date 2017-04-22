@@ -97,6 +97,8 @@ module elpa1_auxiliary_impl
 #include "elpa_cholesky_template.X90"
 
     end function elpa_cholesky_real_double_impl
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
@@ -108,6 +110,8 @@ module elpa1_auxiliary_impl
 #include "elpa_cholesky_template.X90"
 
     end function elpa_cholesky_real_single_impl
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECSION_REAL */
 
@@ -132,6 +136,8 @@ module elpa1_auxiliary_impl
                                              mpi_comm_cols, wantDebug) result(success)
 #include "elpa_invert_trm.X90"
      end function elpa_invert_trm_real_double_impl
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #if WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
@@ -156,6 +162,8 @@ module elpa1_auxiliary_impl
                                              mpi_comm_cols, wantDebug) result(success)
 #include "elpa_invert_trm.X90"
     end function elpa_invert_trm_real_single_impl
+#undef SINGLE_PRECISION
+#undef REALCASE
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -185,7 +193,8 @@ module elpa1_auxiliary_impl
 #include "elpa_cholesky_template.X90"
 
     end function elpa_cholesky_complex_double_impl
-
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
@@ -213,6 +222,8 @@ module elpa1_auxiliary_impl
 #include "elpa_cholesky_template.X90"
 
     end function elpa_cholesky_complex_single_impl
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
@@ -239,6 +250,8 @@ module elpa1_auxiliary_impl
                                                  mpi_comm_cols, wantDebug) result(success)
 #include "elpa_invert_trm.X90"
     end function elpa_invert_trm_complex_double_impl
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
@@ -264,6 +277,8 @@ module elpa1_auxiliary_impl
                                                 mpi_comm_cols, wantDebug) result(success)
 #include "elpa_invert_trm.X90"
     end function elpa_invert_trm_complex_single_impl
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 
 #endif /* WANT_SINGE_PRECISION_COMPLEX */
 
@@ -274,6 +289,8 @@ module elpa1_auxiliary_impl
                               mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 #include "elpa_multiply_a_b.X90"
     end function elpa_mult_at_b_real_double_impl
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #if WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
@@ -318,7 +335,8 @@ module elpa1_auxiliary_impl
 #include "elpa_multiply_a_b.X90"
 
     end function elpa_mult_at_b_real_single_impl
-
+#undef SINGLE_PRECISION
+#undef REALCASE
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
 
@@ -365,6 +383,8 @@ module elpa1_auxiliary_impl
 #include "elpa_multiply_a_b.X90"
 
     end function elpa_mult_ah_b_complex_double_impl
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
@@ -411,7 +431,8 @@ module elpa1_auxiliary_impl
 #include "elpa_multiply_a_b.X90"
 
     end function elpa_mult_ah_b_complex_single_impl
-
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 #define REALCASE 1
@@ -441,7 +462,8 @@ module elpa1_auxiliary_impl
 #include "elpa_solve_tridi_impl_public.X90"
 
     end function
-
+#undef DOUBLE_PRECISION
+#undef REALCASE
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
@@ -471,7 +493,8 @@ module elpa1_auxiliary_impl
 #include "elpa_solve_tridi_impl_public.X90"
 
     end function
-
+#undef SINGLE_PRECISION
+#undef REALCASE
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
 

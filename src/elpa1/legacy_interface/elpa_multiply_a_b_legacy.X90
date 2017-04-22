@@ -70,18 +70,18 @@
       integer(kind=ik), intent(in)  :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, nblk
       integer(kind=ik)              :: ncb, mpi_comm_rows, mpi_comm_cols
 #if REALCASE == 1
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
       real(kind=REAL_DATATYPE)                 :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-!#endif
+#endif
 #endif
 #if COMPLEXCASE == 1
-!#ifdef USE_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
       complex(kind=COMPLEX_DATATYPE)           ::  a(lda,*), b(ldb,*), c(ldc,*)
-!#else
-!      complex(kind=COMPLEX_DATATYPE)           :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-!#endif
+#else
+      complex(kind=COMPLEX_DATATYPE)           :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+#endif
 #endif
   !    integer(kind=ik)                         :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)                         :: nev

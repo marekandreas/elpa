@@ -70,11 +70,11 @@
       implicit none
       integer(kind=ik)         :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE) :: d(na), e(na)
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE) :: q(ldq,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE) :: q(ldq,*)
+#else
       real(kind=REAL_DATATYPE) :: q(ldq,matrixCols)
-!#endif
+#endif
 
       logical, intent(in)      :: wantDebug
       logical :: success
@@ -105,7 +105,7 @@
       call elpaAPI%set_comm_rows(mpi_comm_rows)
       call elpaAPI%set_comm_cols(mpi_comm_cols)
 
-      call elpaAPI%solve_tridi(d, e, q, successInternal)
+      call elpaAPI%solve_tridi(d(1:na), e(1:na), q(1:ldq,1:matrixCols), successInternal)
 
       if (successInternal .ne. ELPA_OK) then
         print *, "Cannot run solve_tridi"

@@ -369,11 +369,11 @@ module elpa_type
       implicit none
       class(elpa_t)       :: self
 
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=c_double) :: a(self%local_nrows, *), q(self%local_nrows, *)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=c_double) :: a(self%local_nrows, *), q(self%local_nrows, *)
+#else
       real(kind=c_double) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
-!#endif
+#endif
       real(kind=c_double) :: ev(self%na)
 
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
@@ -488,11 +488,11 @@ module elpa_type
       use iso_c_binding
       implicit none
       class(elpa_t)       :: self
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=c_float)  :: a(self%local_nrows, *), q(self%local_nrows, *)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=c_float)  :: a(self%local_nrows, *), q(self%local_nrows, *)
+#else
       real(kind=c_float)  :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
-!#endif
+#endif
       real(kind=c_float)  :: ev(self%na)
 
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
@@ -613,11 +613,11 @@ module elpa_type
       implicit none
       class(elpa_t)                  :: self
 
-!#ifdef USE_ASSUMED_SIZE
-!      complex(kind=c_double_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=c_double_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
+#else
       complex(kind=c_double_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
-!#endif
+#endif
       real(kind=c_double)            :: ev(self%na)
 
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
@@ -720,12 +720,12 @@ module elpa_type
       use precision
       implicit none
       class(elpa_t)                 :: self
-!#ifdef USE_ASSUMED_SIZE
-!      complex(kind=c_float_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
-!#else
-      complex(kind=ck4) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
-!#endif
-      real(kind=rk4)            :: ev(self%na)
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=ck4)             :: a(self%local_nrows, *), q(self%local_nrows, *)
+#else
+      complex(kind=ck4)             :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=rk4)                :: ev(self%na)
 
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
       integer, optional             :: success
@@ -834,11 +834,11 @@ module elpa_type
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=rk8)                  :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
       real(kind=rk8)                  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-!#endif
+#endif
       integer, optional               :: success
       logical                         :: success_l
 
@@ -864,11 +864,11 @@ module elpa_type
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=rk4)                  :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
       real(kind=rk4)                  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-!#endif
+#endif
       integer, optional               :: success
       logical                         :: success_l
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -898,11 +898,11 @@ module elpa_type
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
-!#ifdef USE_ASSUMED_SIZE
-!      complex(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=ck8)               :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
       complex(kind=ck8)               :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-!#endif      
+#endif
       integer, optional               :: success
       logical                         :: success_l
 
@@ -928,11 +928,11 @@ module elpa_type
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=ck4)               :: a(lda,*), b(ldb,*), c(ldc,*)
+#else
       complex(kind=ck4)               :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-!#endif      
+#endif
       integer, optional               :: success
       logical                         :: success_l
 
@@ -960,11 +960,11 @@ module elpa_type
       use precision
       implicit none
       class(elpa_t)                   :: self
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=rk8)                  :: a(self%local_nrows,*)
+#else
       real(kind=rk8)                  :: a(self%local_nrows,self%local_ncols)
-!#endif
+#endif
       integer, optional               :: success
       logical                         :: success_l
       integer(kind=c_int)             :: success_internal
@@ -1002,11 +1002,11 @@ module elpa_type
       use precision
       implicit none
       class(elpa_t)                   :: self
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=rk4)                  :: a(self%local_nrows,*)
+#else
       real(kind=rk4)                  :: a(self%local_nrows,self%local_ncols)
-!#endif
+#endif
       integer, optional               :: success
       logical                         :: success_l
       integer(kind=c_int)             :: success_internal
@@ -1048,11 +1048,11 @@ module elpa_type
       use precision
       implicit none
       class(elpa_t)                   :: self
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
-!#else
-      complex(kind=ck8)                  :: a(self%local_nrows,self%local_ncols)
-!#endif
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=ck8)               :: a(self%local_nrows,*)
+#else
+      complex(kind=ck8)               :: a(self%local_nrows,self%local_ncols)
+#endif
       integer, optional               :: success
       logical                         :: success_l
       integer(kind=c_int)             :: success_internal
@@ -1089,11 +1089,11 @@ module elpa_type
       use precision
       implicit none
       class(elpa_t)                   :: self
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
-!#else
-      complex(kind=ck4)                  :: a(self%local_nrows,self%local_ncols)
-!#endif
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=ck4)               :: a(self%local_nrows,*)
+#else
+      complex(kind=ck4)               :: a(self%local_nrows,self%local_ncols)
+#endif
       integer, optional               :: success
       logical                         :: success_l
       integer(kind=c_int)             :: success_internal
@@ -1134,11 +1134,11 @@ module elpa_type
       use precision
       implicit none
       class(elpa_t)                   :: self
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=rk8)                  :: a(self%local_nrows,*)
+#else
       real(kind=rk8)                  :: a(self%local_nrows,self%local_ncols)
-!#endif
+#endif
       integer, optional               :: success
       logical                         :: success_l
       integer(kind=c_int)             :: success_internal
@@ -1174,11 +1174,11 @@ module elpa_type
       use precision
       implicit none
       class(elpa_t)                   :: self
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=rk4)                  :: a(self%local_nrows,*)
+#else
       real(kind=rk4)                  :: a(self%local_nrows,self%local_ncols)
-!#endif
+#endif
       integer, optional               :: success
       logical                         :: success_l
       integer(kind=c_int)             :: success_internal
@@ -1219,11 +1219,11 @@ module elpa_type
       use precision
       implicit none
       class(elpa_t)                   :: self
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
-!#else
-      complex(kind=ck8)                  :: a(self%local_nrows,self%local_ncols)
-!#endif
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=ck8)               :: a(self%local_nrows,*)
+#else
+      complex(kind=ck8)               :: a(self%local_nrows,self%local_ncols)
+#endif
       integer, optional               :: success
       logical                         :: success_l
       integer(kind=c_int)             :: success_internal
@@ -1259,11 +1259,11 @@ module elpa_type
       use precision
       implicit none
       class(elpa_t)                   :: self
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=REAL_DATATYPE)                 :: a(lda,*)
-!#else
-      complex(kind=ck4)                  :: a(self%local_nrows,self%local_ncols)
-!#endif
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=ck4)               :: a(self%local_nrows,*)
+#else
+      complex(kind=ck4)               :: a(self%local_nrows,self%local_ncols)
+#endif
       integer, optional               :: success
       logical                         :: success_l
       integer(kind=c_int)             :: success_internal
@@ -1305,11 +1305,11 @@ module elpa_type
       implicit none
       class(elpa_t)                   :: self
       real(kind=rk8)                  :: d(self%na), e(self%na)
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=rk8)                  :: q(self%local_nrows,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=rk8)                  :: q(self%local_nrows,*)
+#else
       real(kind=rk8)                  :: q(self%local_nrows,self%local_ncols)
-!#endif
+#endif
 
       integer, optional               :: success
       logical                         :: success_l
@@ -1349,11 +1349,11 @@ module elpa_type
       implicit none
       class(elpa_t)                   :: self
       real(kind=rk4)                  :: d(self%na), e(self%na)
-!#ifdef USE_ASSUMED_SIZE
-!      real(kind=rk4)                  :: q(self%local_nrows,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+      real(kind=rk4)                  :: q(self%local_nrows,*)
+#else
       real(kind=rk4)                  :: q(self%local_nrows,self%local_ncols)
-!#endif
+#endif
 
       integer, optional               :: success
       logical                         :: success_l
