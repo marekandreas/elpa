@@ -64,7 +64,7 @@
 !> the environment variable "REAL_ELPA_KERNEL" to an
 !> appropiate value.
 !>
-program test_real2_choose_kernel_with_api_double_precision
+program test_real2_gpu_version_single_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -123,7 +123,7 @@ program test_real2_choose_kernel_with_api_double_precision
 
    integer(kind=ik), external :: numroc
 
-   real(kind=rk8), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
+   real(kind=rk4), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
@@ -135,6 +135,7 @@ program test_real2_choose_kernel_with_api_double_precision
    type(output_t)             :: write_to_file
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
+   logical                    :: useGPU
 
 #define DOUBLE_PRECISION_REAL 1
 
@@ -152,7 +153,7 @@ program test_real2_choose_kernel_with_api_double_precision
    STATUS = 0
 
 #define REALCASE
-#include "elpa_print_headers.X90"
+#include "../elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -178,7 +179,7 @@ program test_real2_choose_kernel_with_api_double_precision
 
   call timer%enable()
 
-  call timer%start("program: test_real2_choose_kernel_with_api_double_precision")
+  call timer%start("program: test_real2_gpu_version_single_precision")
 #endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -203,86 +204,14 @@ program test_real2_choose_kernel_with_api_double_precision
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is an example how to determine the ELPA2 kernel with"
-      print *, "an api call. Note, however, that setting the kernel via"
-      print *, "an environment variable will always take precedence over"
-      print *, "everything else! "
+      print *, "This is a test for the real-valued single-precision GPU version of ELPA2"
       print *
-#ifdef WITH_ONE_SPECIFIC_REAL_KERNEL
-      print *," However, this version of ELPA was build with only one of all the available"
-      print *," kernels, thus it will not be successful to call ELPA with another "
-      print *," kernel than the one specified at compile time!"
-#endif
-     print *," "
+      print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
       print *, " kernel via an environment variable! To change this re-install"
       print *, " the library and have a look at the log files"
 #endif
-
-#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
-#else /*  WITH_ONE_SPECIFIC_REAL_KERNEL */
-
-#ifdef WITH_REAL_GENERIC_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC"
-#endif
-#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
-#endif
-#ifdef WITH_REAL_GENERIC_SSE_ASSEMBLY_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_SSE"
-#endif
-#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_SSE_BLOCK2"
-#endif
-#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_SSE_BLOCK4"
-#endif
-#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_SSE_BLOCK6"
-#endif
-
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK2"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK4"
-#endif
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX_BLOCK6"
-#endif
-#ifdef WITH_REAL_AVX2_BLOCK2_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX2_BLOCK2"
-#endif
-#ifdef WITH_REAL_AVX2_BLOCK4_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX2_BLOCK4"
-#endif
-#ifdef WITH_REAL_AVX2_BLOCK6_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX2_BLOCK6"
-#endif
-#ifdef WITH_REAL_AVX512_BLOCK2_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX512_BLOCK2"
-#endif
-#ifdef WITH_REAL_AVX512_BLOCK4_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX512_BLOCK4"
-#endif
-#ifdef WITH_REAL_AVX512_BLOCK6_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_AVX512_BLOCK6"
-#endif
-
-#ifdef WITH_REAL_BGP_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_BGP"
-#endif
-#ifdef WITH_REAL_BGQ_KERNEL
-      print *, " The settings are: REAL_ELPA_KERNEL_BGQ"
-#endif
-#ifdef WITH_GPU_VERSION
-      print *, " The settings are: REAL_ELPA_GPU"
-#endif
-
-#endif  /*  WITH_ONE_SPECIFIC_REAL_KERNEL */
-
       print *
 
 
@@ -333,7 +262,7 @@ program test_real2_choose_kernel_with_api_double_precision
 
    allocate(ev(na))
 
-   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
+   call prepare_matrix_single(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -354,85 +283,11 @@ program test_real2_choose_kernel_with_api_double_precision
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   successELPA = elpa_solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   useGPU = .true. 
+   successELPA = elpa_solve_evp_real_2stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
-                             REAL_ELPA_KERNEL_GENERIC_SIMPLE)
-#else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+                              REAL_ELPA_KERNEL_GPU, useGPU=useGPU)
 
-#ifdef WITH_REAL_GENERIC_KERNEL
-                              REAL_ELPA_KERNEL_GENERIC)
-#endif
-
-#ifdef WITH_REAL_GENERIC_SIMPLE_KERNEL
-                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
-#endif
-
-#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
-                              REAL_ELPA_KERNEL_SSE)
-#endif
-
-#ifdef WITH_REAL_SSE_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK6)
-#else
-#ifdef WITH_REAL_SSE_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK4)
-#else
-#ifdef WITH_REAL_SSE_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_SSE_BLOCK2)
-#endif
-#endif
-#endif
-
-#ifdef WITH_REAL_AVX_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK6)
-#else
-#ifdef WITH_REAL_AVX_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK4)
-#else
-#ifdef WITH_REAL_AVX_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_AVX_BLOCK2)
-#endif
-#endif
-#endif
-
-#ifdef WITH_REAL_AVX2_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_AVX2_BLOCK6)
-#else
-#ifdef WITH_REAL_AVX2_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_AVX2_BLOCK4)
-#else
-#ifdef WITH_REAL_AVX2_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_AVX2_BLOCK2)
-#endif
-#endif
-#endif
-
-#ifdef WITH_REAL_AVX512_BLOCK6_KERNEL
-                              REAL_ELPA_KERNEL_AVX512_BLOCK6)
-#else
-#ifdef WITH_REAL_AVX512_BLOCK4_KERNEL
-                              REAL_ELPA_KERNEL_AVX512_BLOCK4)
-#else
-#ifdef WITH_REAL_AVX512_BLOCK2_KERNEL
-                              REAL_ELPA_KERNEL_AVX512_BLOCK2)
-#endif
-#endif
-#endif
-
-#ifdef WITH_REAL_BGP_KERNEL
-                              REAL_ELPA_KERNEL_BGP)
-#endif
-
-#ifdef WITH_REAL_BGQ_KERNEL
-                              REAL_ELPA_KERNEL_BGQ)
-#endif
-
-#ifdef WITH_GPU_VERSION
-                              REAL_ELPA_KERNEL_GPU)
-#endif
-
-#endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
 
    if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
@@ -477,21 +332,20 @@ program test_real2_choose_kernel_with_api_double_precision
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
 
-   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
+   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
-
    deallocate(z)
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program: test_real2_choose_kernel_with_api_double_precision")
+   call timer%stop("program: test_real2_gpu_version_single_precision")
    print *," "
-   print *,"Timings program: test_real2_choose_kernel_with_api_double_precision"
-   call timer%print("program: test_real2_choose_kernel_with_api_double_precision")
+   print *,"Timings program: test_real2_gpu_version_single_precision"
+   call timer%print("program: test_real2_gpu_version_single_precision")
    print *," "
-   print *,"End timings program: test_real2_choose_kernel_with_api_double_precision"
+   print *,"End timings program: test_real2_gpu_version_single_precision"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

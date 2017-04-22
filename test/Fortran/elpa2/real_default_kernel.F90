@@ -60,12 +60,11 @@
 !> an ascii file.
 !>
 !> The real ELPA 2 kernel is set as the default kernel.
-!> In this test case the qr_decomposition is used.
 !> However, this can be overriden by setting
 !> the environment variable "REAL_ELPA_KERNEL" to an
 !> appropiate value.
 !>
-program test_real2_default_kernel_qr_decomposition_double_precision
+program test_real2_default_kernel_double_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -122,11 +121,11 @@ program test_real2_default_kernel_qr_decomposition_double_precision
    integer(kind=ik)           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer, external          :: numroc
+   integer(kind=ik), external :: numroc
 
    real(kind=rk8), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 
-   integer(kind=ik)           :: ret
+   integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
@@ -139,60 +138,20 @@ program test_real2_default_kernel_qr_decomposition_double_precision
 
 #define DOUBLE_PRECISION_REAL 1
 
-   successELPA   = .true.
+   successELPA = .true.
    gpuAvailable  = .false.
 
-   !write_to_file = .false.
    call read_input_parameters(na, nev, nblk, write_to_file)
-
-!   if (COMMAND_ARGUMENT_COUNT() /= 0) then
-!     write(error_unit,*) "This program does not support any command-line arguments"
-!     stop 1
-!   endif
-
-!   nblk = 2
-!   na   = 4000
-!   nev  = 1500
-
-!   ! make sure na, nbl is even
-!   if (mod(nblk,2 ) .ne. 0) then
-!     nblk = nblk - 1
-!   endif
-
-!   ! make sure na is even
-!   if (mod(na,2) .ne. 0) then
-!     na = na - 1
-!   endif
-!   ! make sure na is at least 34
-!   if (na .lt. 34) then
-!     na = 34
-!   endif
-
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
    gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
-   ret = 0
-
-   if (nblk .lt. 64) then
-     ret = 1
-     if (myid .eq. 0) then
-       print *,"At the moment QR decomposition need blocksize of at least 64"
-     endif
-     if ((na .lt. 64) .and. (myid .eq. 0)) then
-       print *,"This is why the matrix size must also be at least 64 or only 1 MPI task can be used"
-     endif
-#ifdef WITH_MPI
-     call mpi_finalize(mpierr)
-#endif
-     stop 77
-   endif
-
+   STATUS = 0
 
 #define REALCASE
-#include "elpa_print_headers.X90"
+#include "../elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -216,9 +175,9 @@ program test_real2_default_kernel_qr_decomposition_double_precision
                 print_max_allocated_memory=.true.)
 
 
-   call timer%enable()
+  call timer%enable()
 
-   call timer%start("program: test_real2_default_kernel_qr_decomposition_double_precision")
+  call timer%start("program: test_real2_default_kernel_double_precision")
 #endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -262,7 +221,6 @@ program test_real2_default_kernel_qr_decomposition_double_precision
       print *, " kernel via an environment variable! To change this re-install"
       print *, " the library and have a look at the log files"
 #endif
-      print *, " The qr-decomposition is used via the api call"
    endif
 
    !-------------------------------------------------------------------------------
@@ -334,10 +292,8 @@ program test_real2_default_kernel_qr_decomposition_double_precision
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-
    successELPA = elpa_solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
-                              useQR=.true.)
+                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
@@ -357,7 +313,7 @@ program test_real2_default_kernel_qr_decomposition_double_precision
    if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
 
    if(write_to_file%eigenvectors) then
-     write(unit = task_suffix, fmt = '(i8.8)') myid
+      write(unit = task_suffix, fmt = '(i8.8)') myid
      open(17,file="EVs_real2_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
      write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
 
@@ -368,10 +324,9 @@ program test_real2_default_kernel_qr_decomposition_double_precision
      enddo
      close(17)
    endif
-
    if(write_to_file%eigenvalues) then
       if (myid == 0) then
-         open(17,file="EVs_real2_out.txt",form='formatted',status='new')
+         open(17,file="Eigenvalues_real2_out.txt",form='formatted',status='new')
          do i=1,na
             write(17,*) i,ev(i)
          enddo
@@ -382,7 +337,8 @@ program test_real2_default_kernel_qr_decomposition_double_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   ret = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
+
+   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
@@ -391,18 +347,18 @@ program test_real2_default_kernel_qr_decomposition_double_precision
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program: test_real2_default_kernel_qr_decomposition_double_precision")
+   call timer%stop("program: test_real2_default_kernel_double_precision")
    print *," "
-   print *,"Timings program: test_real2_default_kernel_qr_decomposition_double_precision"
-   call timer%print("program: test_real2_default_kernel_qr_decomposition_double_precision")
+   print *,"Timings program: test_real2_default_kernel_double_precision"
+   call timer%print("program: test_real2_default_kernel_double_precision")
    print *," "
-   print *,"End timings program: test_real2_default_kernel_qr_decomposition_double_precision"
+   print *,"End timings program: test_real2_default_kernel_double_precision"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
-   call exit(ret)
+   call EXIT(STATUS)
 end
 
 !-------------------------------------------------------------------------------

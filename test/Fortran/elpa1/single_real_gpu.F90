@@ -59,7 +59,7 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-program test_real_gpu_version_double_precision
+program test_real_gpu_version_single_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -117,7 +117,7 @@ program test_real_gpu_version_double_precision
 
    integer(kind=ik), external :: numroc
 
-   real(kind=rk8), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
+   real(kind=rk4), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
@@ -133,7 +133,7 @@ program test_real_gpu_version_double_precision
    logical                    :: useGPU
    !-------------------------------------------------------------------------------
 
-#define DOUBLE_PRECISION_REAL 1
+#undef DOUBLE_PRECISION_REAL
 
    success = .true.
 
@@ -149,7 +149,7 @@ program test_real_gpu_version_double_precision
 
 #define REALCASE
 #define ELPA1
-#include "elpa_print_headers.X90"
+#include "../elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -175,7 +175,7 @@ program test_real_gpu_version_double_precision
 
   call timer%enable()
 
-  call timer%start("program: test_real_gpu_version_double_precision")
+  call timer%start("program: test_real_gpu_version_single_precision")
 #endif
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
@@ -201,7 +201,7 @@ program test_real_gpu_version_double_precision
       endif
       print '((a,i0))', 'Num gpu devices: ', numberOfDevices
       print '((a))', 'Number type: real'
-      print '((a))', 'Number precision: double'
+      print '((a))', 'Number precision: single'
       print *
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
@@ -252,7 +252,7 @@ program test_real_gpu_version_double_precision
 
    allocate(ev(na))
 
-   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
+   call prepare_matrix_single(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -269,7 +269,7 @@ program test_real_gpu_version_double_precision
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
    useGPU = .true.
-   success = solve_evp_real_1stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_real_1stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                             na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU)
 
    if (.not.(success)) then
@@ -316,7 +316,7 @@ program test_real_gpu_version_double_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
+   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
@@ -324,13 +324,13 @@ program test_real_gpu_version_double_precision
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program: test_real_gpu_version_double_precision")
+   call timer%stop("program: test_real_gpu_version_single_precision")
    print *," "
-   print *,"Timings program: test_real_gpu_version_double_precision"
+   print *,"Timings program:"
    print *," "
-   call timer%print("program: test_real_gpu_version_double_precision")
+   call timer%print("program: test_real_gpu_version_single_precision")
    print *," "
-   print *,"End timings program: test_real_gpu_version_double_precision"
+   print *,"End timings program"
    print *," "
 #endif
 

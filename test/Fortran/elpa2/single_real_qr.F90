@@ -59,12 +59,13 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-!> The complex ELPA 2 kernel is set in this program via
-!> the API call. However, this can be overriden by setting
+!> The real ELPA 2 kernel is set as the default kernel.
+!> In this test case the qr_decomposition is used.
+!> However, this can be overriden by setting
 !> the environment variable "REAL_ELPA_KERNEL" to an
 !> appropiate value.
 !>
-program test_real2_gpu_version_single_precision
+program test_real2_default_kernel_qr_decomposition_single_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -83,9 +84,9 @@ program test_real2_gpu_version_single_precision
    use elpa2
 
    use mod_check_for_gpu, only : check_for_gpu
-
    use elpa_utilities, only : error_unit
    use elpa2_utilities
+   use elpa2_utilities_private, only : elpa_get_actual_real_kernel_name
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
@@ -121,11 +122,11 @@ program test_real2_gpu_version_single_precision
    integer(kind=ik)           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer(kind=ik), external :: numroc
+   integer, external          :: numroc
 
    real(kind=rk4), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 
-   integer(kind=ik)           :: STATUS
+   integer(kind=ik)           :: ret
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
@@ -135,14 +136,42 @@ program test_real2_gpu_version_single_precision
    type(output_t)             :: write_to_file
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
-   logical                    :: useGPU
 
-#define DOUBLE_PRECISION_REAL 1
+#undef DOUBLE_PRECISION_REAL
 
    successELPA   = .true.
    gpuAvailable  = .false.
 
+
+   !write_to_file = .false.
    call read_input_parameters(na, nev, nblk, write_to_file)
+
+   !if (COMMAND_ARGUMENT_COUNT() /= 0) then
+   !  write(error_unit,*) "This program does not support any command-line arguments"
+   !  stop 1
+   !endif
+
+!   ! override nblk
+!      nblk = 2
+!      na   = 4000
+!      nev  = 1500
+!!       nblk = 32
+!   !   na   = 4000
+!   !   nev  = 1500
+!
+!   ! make sure na, nbl is even
+!   if (mod(nblk,2 ) .ne. 0) then
+!     nblk = nblk - 1
+!   endif
+!
+!   ! make sure na is even
+!   if (mod(na,2) .ne. 0) then
+!     na = na - 1
+!   endif
+!   ! make sure na is at least 34
+!   if (na .lt. 34) then
+!     na = 34
+!   endif
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
@@ -150,10 +179,24 @@ program test_real2_gpu_version_single_precision
 
    gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
-   STATUS = 0
+   ret = 0
+
+   if (nblk .lt. 64) then
+     ret = 1
+     if (myid .eq. 0) then
+       print *,"At the moment QR decomposition need blocksize of at least 64"
+     endif
+     if ((na .lt. 64) .and. (myid .eq. 0)) then
+       print *,"This is why the matrix size must also be at least 64 or only 1 MPI task can be used"
+     endif
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+   endif
 
 #define REALCASE
-#include "elpa_print_headers.X90"
+#include "../elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -177,9 +220,9 @@ program test_real2_gpu_version_single_precision
                 print_max_allocated_memory=.true.)
 
 
-  call timer%enable()
+   call timer%enable()
 
-  call timer%start("program: test_real2_gpu_version_single_precision")
+   call timer%start("program: test_real2_default_kernel_qr_decomposition_single_precision")
 #endif
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -198,23 +241,32 @@ program test_real2_gpu_version_single_precision
       print *
       print '(a)','Standard eigenvalue problem - REAL version'
       if (gpuAvailable) then
-        print *,"with GPU Version"
+        print *,"with GPU version"
       endif
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is a test for the real-valued single-precision GPU version of ELPA2"
+      print *, "This is an example how ELPA2 chooses a default kernel,"
+#ifdef HAVE_ENVIRONMENT_CHECKING
+      print *, "or takes the kernel defined in the environment variable,"
+#endif
+      print *, "since the ELPA API call does not contain any kernel specification"
       print *
+      print *, " The settings are: ",trim(elpa_get_actual_real_kernel_name())," as real kernel"
+      print *
+#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+      print *," However, this version of ELPA was build with only one of all the available"
+      print *," kernels, thus it will not be successful to call ELPA with another "
+      print *," kernel than the one specified at compile time!"
+#endif
       print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
       print *, " kernel via an environment variable! To change this re-install"
       print *, " the library and have a look at the log files"
 #endif
-      print *
-
-
+      print *, " The qr-decomposition is used via the api call"
    endif
 
    !-------------------------------------------------------------------------------
@@ -279,15 +331,17 @@ program test_real2_gpu_version_single_precision
    end if
 
 
-   ! ELPA is called with a kernel specification in the API
+   ! ELPA is called without any kernel specification in the API,
+   ! furthermore, if the environment variable is not set, the
+   ! default kernel is called. Otherwise, the kernel defined in the
+   ! environment variable
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   useGPU = .true. 
-   successELPA = elpa_solve_evp_real_2stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-                              REAL_ELPA_KERNEL_GPU, useGPU=useGPU)
 
+   successELPA = elpa_solve_evp_real_2stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world,   &
+                              useQR=.true.)
 
    if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
@@ -321,7 +375,7 @@ program test_real2_gpu_version_single_precision
 
    if(write_to_file%eigenvalues) then
       if (myid == 0) then
-         open(17,file="Eigenvalues_real2_out.txt",form='formatted',status='new')
+         open(17,file="EVs_real2_out.txt",form='formatted',status='new')
          do i=1,na
             write(17,*) i,ev(i)
          enddo
@@ -329,10 +383,10 @@ program test_real2_gpu_version_single_precision
       endif
    endif
 
+
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-
-   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
+   ret = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
@@ -340,18 +394,18 @@ program test_real2_gpu_version_single_precision
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program: test_real2_gpu_version_single_precision")
+   call timer%stop("program: test_real2_default_kernel_qr_decomposition_single_precision")
    print *," "
-   print *,"Timings program: test_real2_gpu_version_single_precision"
-   call timer%print("program: test_real2_gpu_version_single_precision")
+   print *,"Timings program: test_real2_default_kernel_qr_decomposition_single_precision"
+   call timer%print("program: test_real2_default_kernel_qr_decomposition_single_precision")
    print *," "
-   print *,"End timings program: test_real2_gpu_version_single_precision"
+   print *,"End timings program: test_real2_default_kernel_qr_decomposition_single_precision"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
-   call EXIT(STATUS)
+   call exit(ret)
 end
 
 !-------------------------------------------------------------------------------

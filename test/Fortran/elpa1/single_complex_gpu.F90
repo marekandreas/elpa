@@ -43,7 +43,7 @@
 #include "config-f90.h"
 !>
 !> Fortran test programm to demonstrates the use of
-!> ELPA 2 complex case library.
+!> ELPA 1 complex case library.
 !> If "HAVE_REDIRECT" was defined at build time
 !> the stdout and stderr output of each MPI task
 !> can be redirected to files if the environment
@@ -59,12 +59,7 @@
 !> "output", which specifies that the EV's are written to
 !> an ascii file.
 !>
-!> The complex ELPA 2 kernel is set as the default kernel.
-!> However, this can be overriden by setting
-!> the environment variable "COMPLEX_ELPA_KERNEL" to an
-!> appropiate value.
-!>
-program test_complex2_default_kernel_double_precision
+program test_complex_gpu_version_single_precision
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - COMPLEX version
@@ -79,31 +74,29 @@ program test_complex2_default_kernel_double_precision
 !-------------------------------------------------------------------------------
    use precision
    use elpa1
-   use elpa2
 
    use mod_check_for_gpu, only : check_for_gpu
 
    use elpa_utilities, only : error_unit
-   use elpa2_utilities
-   use elpa2_utilities_private
+   !use elpa1_utilities
+#ifdef WITH_OPENMP
+   use test_util
+#endif
+
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
    use elpa_mpi
-#ifdef WITH_OPENMP
-   use test_util
-#endif
-
 #ifdef HAVE_REDIRECT
-  use redirect
+   use redirect
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
  use timings
 #endif
- use output_types
+  use output_types
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -121,41 +114,40 @@ program test_complex2_default_kernel_double_precision
    integer(kind=ik)              :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer(kind=ik)              :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer(kind=ik), external    :: numroc
+   real(kind=rk4), allocatable    :: ev(:)
 
-   real(kind=rk8), allocatable    :: ev(:)
+   complex(kind=ck4), allocatable :: a(:,:), z(:,:), as(:,:)
 
-   complex(kind=ck8), allocatable :: a(:,:), z(:,:), as(:,:)
-
-   complex(kind=ck8), parameter   :: CZERO = (0._rk8,0._rk8), CONE = (1._rk8,0._rk8)
+   complex(kind=ck4), parameter   :: CZERO = (0._rk4,0.0_rk4), CONE = (1._rk4,0._rk4)
 
    integer(kind=ik)              :: STATUS
 #ifdef WITH_OPENMP
    integer(kind=ik)              :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
-   logical                       :: successELPA, success
    integer(kind=ik)              :: numberOfDevices
    logical                       :: gpuAvailable
    type(output_t)                :: write_to_file
+   logical                       :: success
    character(len=8)              :: task_suffix
    integer(kind=ik)              :: j
-
-#define DOUBLE_PRECISION_COMPLEX 1
+   logical                       :: useGPU
+#undef DOUBLE_PRECISION_COMPLEX
 
    success = .true.
-
-   successELPA   = .true.
-   gpuAvailable  = .false.
+   ! read input parameters if they are provided
    call read_input_parameters(na, nev, nblk, write_to_file)
+
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
+
    gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
 
 #define COMPLEXCASE
-#include "elpa_print_headers.X90"
+#define ELPA1
+#include "../elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -181,7 +173,7 @@ program test_complex2_default_kernel_double_precision
 
   call timer%enable()
 
-  call timer%start("program: test_complex2_default_kernel_double_precision")
+  call timer%start("program: test_complex_gpu_version_single_precision")
 #endif
 
    !-------------------------------------------------------------------------------
@@ -200,34 +192,22 @@ program test_complex2_default_kernel_double_precision
    if(myid==0) then
       print *
       print '(a)','Standard eigenvalue problem - COMPLEX version'
-      if (gpuAvailable) then
-        print *," with GPU version"
-      endif
       print *
-      print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
+      print '((a,i0))', 'Matrix size: ', na 
+      print '((a,i0))', 'Num eigenvectors: ', nev
+      print '((a,i0))', 'Blocksize: ', nblk 
+      print '((a,i0))', 'Num MPI proc: ', nprocs 
+      if (gpuAvailable) then
+        print '((a))', 'Using gpu: YES'
+      else
+        print '((a))', 'Using gpu: NO, not available'
+      endif
+      print '((a,i0))', 'Num gpu devices: ', numberOfDevices
+      print '((a))', 'Number type: complex'
+      print '((a))', 'Number precision: single'
+      print *
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is an example how ELPA2 chooses a default kernel,"
-#ifdef HAVE_ENVIRONMENT_CHECKING
-      print *, "or takes the kernel defined in the environment variable,"
-#endif
-      print *, "since the ELPA API call does not contain any kernel specification"
-      print *
-      print *, " The settings are: ",trim(elpa_get_actual_complex_kernel_name())," as complex kernel"
-      print *
-#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-      print *," However, this version of ELPA was build with only one of all the available"
-      print *," kernels, thus it will not be successful to call ELPA with another "
-      print *," kernel than the one specified at compile time!"
-#endif
-      print *," "
-#ifndef HAVE_ENVIRONMENT_CHECKING
-      print *, " Notice that it is not possible with this build to set the "
-      print *, " kernel via an environment variable! To change this re-install"
-      print *, " the library and have a look at the log files"
-#endif
-
-
    endif
 
    !-------------------------------------------------------------------------------
@@ -248,9 +228,9 @@ program test_complex2_default_kernel_double_precision
    end if
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in elpa_get_communicators
+   ! rows or columns of processes, these are set in get_elpa_communicators.
 
-   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
+   mpierr = get_elpa_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 
    if (myid==0) then
@@ -266,8 +246,10 @@ program test_complex2_default_kernel_double_precision
    if (myid==0) then
      print '(a)','| Past scalapack descriptor setup.'
    end if
+
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("set up matrix")
 #endif
@@ -277,48 +259,45 @@ program test_complex2_default_kernel_double_precision
 
    allocate(ev(na))
 
-   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
+   call prepare_matrix_single(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-   ! set print flag in elpa1
-   elpa_print_times = .true.
-
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
    if (myid==0) then
-     print '(a)','| Entering two-stage ELPA solver ... '
+     print '(a)','| Entering one-step ELPA solver ... '
      print *
    end if
-
-
-   ! ELPA is called without any kernel specification in the API,
-   ! furthermore, if the environment variable is not set, the
-   ! default kernel is called. Otherwise, the kernel defined in the
-   ! environment variable
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   successELPA = elpa_solve_evp_complex_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                                 na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+   useGPU = .true. 
+   success = solve_evp_complex_1stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+                               na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU)
 
-   if (.not.(successELPA)) then
-      write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."
+   if (.not.(success)) then
+      write(error_unit,*) "solve_evp_complex produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
    endif
 
-   if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-   if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
-   if(myid == 0) print *,'Time transform back EVs :',time_evp_back
-   if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
+   if (myid==0) then
+     print '(a)','| One-step ELPA solver complete.'
+     print *
+   end if
+
+   if(myid == 0) print *,'Time tridiag_complex  :',time_evp_fwd
+   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+   if(myid == 0) print *,'Time trans_ev_complex :',time_evp_back
+   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
 
    if(write_to_file%eigenvectors) then
      write(unit = task_suffix, fmt = '(i8.8)') myid
-     open(17,file="EVs_complex2_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
+     open(17,file="EVs_complex_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
      write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
 
      do i=1,na_rows
@@ -331,7 +310,7 @@ program test_complex2_default_kernel_double_precision
 
    if(write_to_file%eigenvalues) then
       if (myid == 0) then
-         open(17,file="Eigenvalues_complex2_out.txt",form='formatted',status='new')
+         open(17,file="Eigenvalues_complex_out.txt",form='formatted',status='new')
          do i=1,na
             write(17,*) i,ev(i)
          enddo
@@ -342,7 +321,7 @@ program test_complex2_default_kernel_double_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
+   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
@@ -351,12 +330,12 @@ program test_complex2_default_kernel_double_precision
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program: test_complex2_default_kernel_double_precision")
+   call timer%stop("program: test_complex_gpu_version_single_precision")
    print *," "
-   print *,"Timings program: test_complex2_default_kernel_double_precision"
-   call timer%print("program: test_complex2_default_kernel_double_precision")
+   print *,"Timings program: test_complex_gpu_version_single_precision"
+   call timer%print("program: test_complex_gpu_version_single_precision")
    print *," "
-   print *,"End timings program: test_complex2_default_kernel_double_precision"
+   print *,"End timings program: test_complex_gpu_version_single_precisionn"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

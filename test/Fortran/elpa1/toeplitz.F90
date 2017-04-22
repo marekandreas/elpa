@@ -43,34 +43,10 @@
 #include "config-f90.h"
 !>
 !> Fortran test programm to demonstrates the use of
-!> ELPA 2 real case library.
-!> If "HAVE_REDIRECT" was defined at build time
-!> the stdout and stderr output of each MPI task
-!> can be redirected to files if the environment
-!> variable "REDIRECT_ELPA_TEST_OUTPUT" is set
-!> to "true".
+!> the elpa_solve_tridi library function
 !>
-!> By calling executable [arg1] [arg2] [arg3] [arg4]
-!> one can define the size (arg1), the number of
-!> Eigenvectors to compute (arg2), and the blocking (arg3).
-!> If these values are not set default values (4000, 1500, 16)
-!> are choosen.
-!> If these values are set the 4th argument can be
-!> "output", which specifies that the EV's are written to
-!> an ascii file.
-!>
-!> The real ELPA 2 kernel is set as the default kernel.
-!> However, this can be overriden by setting
-!> the environment variable "REAL_ELPA_KERNEL" to an
-!> appropiate value.
-!>
-program test_real2_default_kernel_double_precision
+program test_solve_tridi
 
-!-------------------------------------------------------------------------------
-! Standard eigenvalue problem - REAL version
-!
-! This program demonstrates the use of the ELPA module
-! together with standard scalapack routines
 !
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
@@ -80,30 +56,26 @@ program test_real2_default_kernel_double_precision
 !-------------------------------------------------------------------------------
    use precision
    use elpa1
-   use elpa2
+   use elpa_utilities
+#ifdef WITH_OPENMP
+   use test_util
+#endif
 
-   use mod_check_for_gpu, only : check_for_gpu
-   use elpa_utilities, only : error_unit
-   use elpa2_utilities
-   use elpa2_utilities_private, only : elpa_get_actual_real_kernel_name
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
    use mod_blacs_infrastructure
    use mod_prepare_matrix
+
    use elpa_mpi
-#ifdef WITH_OPENMP
-   use test_util
-#endif
-
 #ifdef HAVE_REDIRECT
-  use redirect
+   use redirect
 #endif
-
 #ifdef HAVE_DETAILED_TIMINGS
- use timings
+  use timings
 #endif
- use output_types
+  use output_types
+
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -112,7 +84,6 @@ program test_real2_default_kernel_double_precision
    ! nev:  Number of eigenvectors to be calculated
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
-
    integer(kind=ik)           :: nblk
    integer(kind=ik)           :: na, nev
 
@@ -121,37 +92,46 @@ program test_real2_default_kernel_double_precision
    integer(kind=ik)           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
-   integer(kind=ik), external :: numroc
+   integer, external          :: numroc
 
-   real(kind=rk8), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
+   real(kind=rk8), allocatable :: a(:,:), d(:), e(:), ev_analytic(:), ev(:)
+   real(kind=rk8)              :: diagonalELement, subdiagonalElement
+
+   real(kind=rk8), allocatable :: as(:,:)
+   real(kind=rk8)              :: tmp
+   integer(kind=ik)           :: loctmp ,rowLocal, colLocal
+
+
+   real(kind=rk8)              :: maxerr
+
+   logical                    :: wantDebug
+
+   real(kind=rk8), parameter   :: pi = 3.141592653589793238462643383279_rk8
 
    integer(kind=ik)           :: STATUS
 #ifdef WITH_OPENMP
-   integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
+                                 provided_mpi_thread_level
 #endif
-   logical                    :: successELPA, success
-   integer(kind=ik)           :: numberOfDevices
-   logical                    :: gpuAvailable
    type(output_t)             :: write_to_file
+   logical                    :: success
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
+   !-------------------------------------------------------------------------------
 
-#define DOUBLE_PRECISION_REAL 1
-
-   successELPA = .true.
-   gpuAvailable  = .false.
+   success = .true.
 
    call read_input_parameters(na, nev, nblk, write_to_file)
+
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
-
    STATUS = 0
 
-#define REALCASE
-#include "elpa_print_headers.X90"
+!#define DATATYPE REAL
+!#define ELPA1
+!#include "../elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
@@ -177,50 +157,24 @@ program test_real2_default_kernel_double_precision
 
   call timer%enable()
 
-  call timer%start("program: test_real2_default_kernel_double_precision")
+  call timer%start("program")
 #endif
-   !-------------------------------------------------------------------------------
-   ! Selection of number of processor rows/columns
-   ! We try to set up the grid square-like, i.e. start the search for possible
-   ! divisors of nprocs with a number next to the square root of nprocs
-   ! and decrement it until a divisor is found.
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
+
    ! at the end of the above loop, nprocs is always divisible by np_cols
 
    np_rows = nprocs/np_cols
 
    if(myid==0) then
       print *
-      print '(a)','Standard eigenvalue problem - REAL version'
-      if (gpuAvailable) then
-        print *,"with GPU version"
-      endif
+      print '(a)','Test program for elpa_solve_tridi with a Toeplitz matrix'
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
       print *
-      print *, "This is an example how ELPA2 chooses a default kernel,"
-#ifdef HAVE_ENVIRONMENT_CHECKING
-      print *, "or takes the kernel defined in the environment variable,"
-#endif
-      print *, "since the ELPA API call does not contain any kernel specification"
-      print *
-      print *, " The settings are: ",trim(elpa_get_actual_real_kernel_name())," as real kernel"
-      print *
-#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-      print *," However, this version of ELPA was build with only one of all the available"
-      print *," kernels, thus it will not be successful to call ELPA with another "
-      print *," kernel than the one specified at compile time!"
-#endif
-      print *," "
-#ifndef HAVE_ENVIRONMENT_CHECKING
-      print *, " Notice that it is not possible with this build to set the "
-      print *, " kernel via an environment variable! To change this re-install"
-      print *, " the library and have a look at the log files"
-#endif
    endif
 
    !-------------------------------------------------------------------------------
@@ -258,107 +212,190 @@ program test_real2_default_kernel_double_precision
    end if
 
    !-------------------------------------------------------------------------------
-   ! Allocate matrices and set up a test matrix for the eigenvalue problem
+   ! Allocate matrices and set up a test toeplitz matrix for solve_tridi
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("set up matrix")
 #endif
    allocate(a (na_rows,na_cols))
-   allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
 
+   allocate(d (na))
+   allocate(e (na))
+   allocate(ev_analytic(na))
    allocate(ev(na))
 
-   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
+   a(:,:) = 0.0_rk8
+
+
+   ! changeable numbers here would be nice
+   diagonalElement = 0.45_rk8
+   subdiagonalElement =  0.78_rk8
+
+   d(:) = diagonalElement
+   e(:) = subdiagonalElement
+
+
+   ! set up the diagonal and subdiagonals (for general solver test)
+   do i=1, na ! for diagonal elements
+     if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = diagonalElement
+     endif
+   enddo
+
+   do i=1, na-1
+     if (map_global_array_index_to_local_index(i, i+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = subdiagonalElement
+     endif
+   enddo
+
+   do i=2, na
+     if (map_global_array_index_to_local_index(i, i-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+       a(rowLocal,colLocal) = subdiagonalElement
+     endif
+   enddo
+
+   as = a
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-   ! set print flag in elpa1
-   elpa_print_times = .true.
+
 
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
 
    if (myid==0) then
-     print '(a)','| Entering two-stage ELPA solver ... '
+     print '(a)','| Entering elpa_solve_tridi ... '
      print *
    end if
 
-
-   ! ELPA is called without any kernel specification in the API,
-   ! furthermore, if the environment variable is not set, the
-   ! default kernel is called. Otherwise, the kernel defined in the
-   ! environment variable
 #ifdef WITH_MPI
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-   successELPA = elpa_solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                              na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
-   if (.not.(successELPA)) then
-      write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
+   success = elpa_solve_tridi_double(na, nev, d, e, a, na_rows, nblk, na_cols, mpi_comm_rows, &
+                              mpi_comm_cols, wantDebug)
+
+   if (.not.(success)) then
+      write(error_unit,*) "elpa_solve_tridi produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
 #endif
    endif
 
    if (myid==0) then
-     print '(a)','| Two-step ELPA solver complete.'
+     print '(a)','| elpa_solve_tridi complete.'
      print *
    end if
 
-   if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-   if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
-   if(myid == 0) print *,'Time transform back EVs :',time_evp_back
-   if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
 
-   if(write_to_file%eigenvectors) then
-      write(unit = task_suffix, fmt = '(i8.8)') myid
-     open(17,file="EVs_real2_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
-     write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
+   ev = d
 
-     do i=1,na_rows
-       do j=1,na_cols
-         write(17,*) "row=",i," col=",j," element of eigenvector=",z(i,j)
-       enddo
-     enddo
-     close(17)
-   endif
-   if(write_to_file%eigenvalues) then
-      if (myid == 0) then
-         open(17,file="Eigenvalues_real2_out.txt",form='formatted',status='new')
-         do i=1,na
-            write(17,*) i,ev(i)
-         enddo
-         close(17)
-      endif
-   endif
-
-
+!
+!   if(myid == 0) print *,'Time tridiag_real     :',time_evp_fwd
+!   if(myid == 0) print *,'Time solve_tridi      :',time_evp_solve
+!   if(myid == 0) print *,'Time trans_ev_real    :',time_evp_back
+!   if(myid == 0) print *,'Total time (sum above):',time_evp_back+time_evp_solve+time_evp_fwd
+!
+!   if(write_to_file%eigenvectors) then
+!     write(unit = task_suffix, fmt = '(i8.8)') myid
+!     open(17,file="EVs_real_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
+!     write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
+!
+!     do i=1,na_rows
+!       do j=1,na_cols
+!         write(17,*) "row=",i," col=",j," element of eigenvector=",z(i,j)
+!       enddo
+!     enddo
+!     close(17)
+!   endif
+!
+!   if(write_to_file%eigenvalues) then
+!      if (myid == 0) then
+!         open(17,file="Eigenvalues_real_out.txt",form='formatted',status='new')
+!         do i=1,na
+!            write(17,*) i,ev(i)
+!         enddo
+!         close(17)
+!      endif
+!   endif
+!
+!
    !-------------------------------------------------------------------------------
-   ! Test correctness of result (using plain scalapack routines)
 
-   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
+   ! analytic solution
+   do i=1, na
+     ev_analytic(i) = diagonalElement + 2.0_rk8 * subdiagonalElement *cos( pi*real(i,kind=rk8)/ real(na+1,kind=rk8) )
+   enddo
+
+   ! sort analytic solution:
+
+   ! this hack is neihter elegant, nor optimized: for huge matrixes it might be expensive
+   ! a proper sorting algorithmus might be implemented here
+
+   tmp    = minval(ev_analytic)
+   loctmp = minloc(ev_analytic, 1)
+
+   ev_analytic(loctmp) = ev_analytic(1)
+   ev_analytic(1) = tmp
+
+   do i=2, na
+     tmp = ev_analytic(i)
+     do j= i, na
+       if (ev_analytic(j) .lt. tmp) then
+         tmp    = ev_analytic(j)
+         loctmp = j
+       endif
+     enddo
+     ev_analytic(loctmp) = ev_analytic(i)
+     ev_analytic(i) = tmp
+   enddo
+
+   ! compute a simple error max of eigenvalues
+   maxerr = 0.0_rk8
+   maxerr = maxval( (d(:) - ev_analytic(:))/ev_analytic(:) , 1)
+
+   if (maxerr .gt. 8.e-13) then
+     if (myid .eq. 0) then
+       print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+     endif
+
+   status = 1
+
+   endif
+
+   ! Test correctness of result (using plain scalapack routines)
+   status = check_correctness(na, nev, as, a, ev, sc_desc, myid)
 
    deallocate(a)
-   deallocate(as)
 
-   deallocate(z)
+   deallocate(as)
+   deallocate(d)
+
+   deallocate(e)
    deallocate(ev)
+   deallocate(ev_analytic)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program: test_real2_default_kernel_double_precision")
+   call timer%stop("program")
    print *," "
-   print *,"Timings program: test_real2_default_kernel_double_precision"
-   call timer%print("program: test_real2_default_kernel_double_precision")
+   print *,"Timings program:"
    print *," "
-   print *,"End timings program: test_real2_default_kernel_double_precision"
+   call timer%print("program")
+   print *," "
+   print *,"End timings program"
+   print *," "
 #endif
+
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
+
    call EXIT(STATUS)
+
+
 end
 
 !-------------------------------------------------------------------------------

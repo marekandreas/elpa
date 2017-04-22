@@ -139,7 +139,7 @@ program test_complex_double_precision
 
 #define COMPLEXCASE
 #define ELPA1
-#include "elpa_print_headers.X90"
+#include "../elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
