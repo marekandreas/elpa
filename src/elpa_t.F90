@@ -502,6 +502,7 @@ module elpa_type
 
       logical             :: useGPU, useQR
       integer(kind=c_int) :: THIS_ELPA_KERNEL_API
+
 #ifdef WANT_SINGLE_PRECISION_REAL
       if (self%get("timings",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
@@ -596,6 +597,7 @@ module elpa_type
         self%time_evp_back = -1.0
       endif
 #else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
       success = ELPA_ERROR
 #endif
 
@@ -816,6 +818,7 @@ module elpa_type
       endif
 
 #else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
       success = ELPA_ERROR
 #endif
 
@@ -865,7 +868,7 @@ module elpa_type
 !      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
 !#else
       real(kind=rk4)                  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
-!#endif      
+!#endif
       integer, optional               :: success
       logical                         :: success_l
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -880,6 +883,9 @@ module elpa_type
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
       endif
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      success = ELPA_ERROR
 #endif
     end subroutine
 
@@ -942,6 +948,9 @@ module elpa_type
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
       endif
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      success = ELPA_ERROR
 #endif
     end subroutine
 
@@ -1018,6 +1027,9 @@ module elpa_type
       success_l = elpa_cholesky_real_single_impl (self%na, a, self%local_nrows, self%nblk, &
                                                  self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                  wantDebugIntern)
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      success = ELPA_ERROR
 #endif
       if (present(success)) then
         if (success_l) then
@@ -1101,6 +1113,9 @@ module elpa_type
       success_l = elpa_cholesky_complex_single_impl (self%na, a, self%local_nrows, self%nblk, &
                                                  self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                  wantDebugIntern)
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      success = ELPA_ERROR
 #endif
       if (present(success)) then
         if (success_l) then
@@ -1183,6 +1198,9 @@ module elpa_type
       success_l = elpa_invert_trm_real_single_impl (self%na, a, self%local_nrows, self%nblk, &
                                                    self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                    wantDebugIntern)
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      success = ELPA_ERROR
 #endif
       if (present(success)) then
         if (success_l) then
@@ -1265,6 +1283,9 @@ module elpa_type
       success_l = elpa_invert_trm_complex_single_impl (self%na, a, self%local_nrows, self%nblk, &
                                                    self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
                                                    wantDebugIntern)
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      success = ELPA_ERROR
 #endif
       if (present(success)) then
         if (success_l) then
@@ -1353,6 +1374,9 @@ module elpa_type
       success_l = elpa_solve_tridi_single_impl(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
                                               self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols,&
                                               wantDebugIntern)
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      success = ELPA_ERROR
 #endif
       if (present(success)) then
         if (success_l) then
