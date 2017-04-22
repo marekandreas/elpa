@@ -16,7 +16,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
         src/elpa2/legacy_interface/elpa2_legacy.F90 \
         src/elpa2/elpa2_utilities.F90 \
 	src/elpa1/legacy_interface/elpa1_auxiliary_legacy.F90 \
-	src/elpa1/elpa1_auxiliary_new_interface.F90 \
+	src/elpa1/elpa1_auxiliary.F90 \
 	src/elpa_t.F90 \
         src/general/elpa_utilities.F90
 
@@ -48,8 +48,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/qr/elpa_qrkernels.F90 \
         src/elpa2/qr/elpa_pdlarfb.F90 \
         src/elpa2/qr/elpa_pdgeqrf.F90 \
-	src/elpa1/elpa1_new_interface.F90 \
-	src/elpa2/elpa2_new_interface.F90 \
+	src/elpa1/elpa1.F90 \
+	src/elpa2/elpa2.F90 \
 	src/elpa_index.c \
 	src/elpa_options.c
 
@@ -60,9 +60,9 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa2/elpa2_compute_real_template.X90 \
         src/elpa2/elpa2_compute_complex_template.X90 \
 	src/elpa1/legacy_interface/elpa1_template_legacy.X90 \
-	src/elpa1/elpa1_template_new_interface.X90 \
+	src/elpa1/elpa1_template.X90 \
 	src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
-	src/elpa2/elpa2_template_new_interface.X90 \
+	src/elpa2/elpa2_template.X90 \
 	src/elpa1/legacy_interface/elpa1_c_interface_template_legacy.X90 \
 	src/elpa2/legacy_interface/elpa2_c_interface_template_legacy.X90 \
 	src/elpa_driver/legacy_interface/elpa_driver_c_interface_template_legacy.X90 \
@@ -86,13 +86,13 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa2/redist_band.X90 \
 	src/general/sanity.X90 \
 	src/elpa1/legacy_interface/elpa_cholesky_template_legacy.X90 \
-	src/elpa1/elpa_cholesky_template_new_interface.X90 \
+	src/elpa1/elpa_cholesky_template.X90 \
 	src/elpa1/legacy_interface/elpa_invert_trm_legacy.X90 \
-	src/elpa1/elpa_invert_trm_new_interface.X90 \
+	src/elpa1/elpa_invert_trm.X90 \
 	src/elpa1/legacy_interface/elpa_multiply_a_b_legacy.X90 \
-	src/elpa1/elpa_multiply_a_b_new_interface.X90 \
+	src/elpa1/elpa_multiply_a_b.X90 \
 	src/elpa1/legacy_interface/elpa_solve_tridi_legacy.X90 \
-	src/elpa1/elpa_solve_tridi_new_interface.X90 \
+	src/elpa1/elpa_solve_tridi_impl_public.X90 \
         src/general/precision_macros.h
 
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
@@ -1102,8 +1102,8 @@ EXTRA_DIST = \
   src/elpa1/elpa_transpose_vectors.X90 \
   src/elpa1/elpa1_compute_template.X90 \
   src/elpa1/elpa1_merge_systems_real_template.X90 \
+  src/elpa1/elpa1_solve_tridi_real_template_legacy.X90 \
   src/elpa1/elpa1_solve_tridi_real_template.X90 \
-  src/elpa1/elpa1_solve_tridi_real_template_new_interface.X90 \
   src/elpa1/elpa1_tools_template.X90 \
   src/elpa1/elpa1_trans_ev_template.X90 \
   src/elpa1/elpa1_tridiag_template.X90 \
@@ -1113,9 +1113,9 @@ EXTRA_DIST = \
   src/elpa2/elpa2_herm_matrix_allreduce_complex_template.X90 \
   src/elpa2/elpa2_symm_matrix_allreduce_real_template.X90 \
   src/elpa1/legacy_interface/elpa1_template_legacy.X90 \
-  src/elpa1/elpa1_template_new_interface.X90 \
+  src/elpa1/elpa1_template.X90 \
   src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
-  src/elpa2/elpa2_template_new_interface.X90 \
+  src/elpa2/elpa2_template.X90 \
   src/elpa1/legacy_interface/elpa1_c_interface_template_legacy.X90 \
   src/elpa2/legacy_interface/elpa2_c_interface_template_legacy.X90 \
   src/elpa_driver/legacy_interface/elpa_driver_c_interface_template_legacy.X90 \
@@ -1138,13 +1138,13 @@ EXTRA_DIST = \
   src/elpa2/compute_hh_trafo.X90 \
   src/general/sanity.X90 \
   src/elpa1/legacy_interface/elpa_cholesky_template_legacy.X90 \
-  src/elpa1/elpa_cholesky_template_new_interface.X90 \
+  src/elpa1/elpa_cholesky_template.X90 \
   src/elpa1/legacy_interface/elpa_invert_trm_legacy.X90 \
-  src/elpa1/elpa_invert_trm_new_interface.X90 \
+  src/elpa1/elpa_invert_trm.X90 \
   src/elpa1/legacy_interface/elpa_multiply_a_b_legacy.X90 \
-  src/elpa1/elpa_multiply_a_b_new_interface.X90 \
+  src/elpa1/elpa_multiply_a_b.X90 \
   src/elpa1/legacy_interface/elpa_solve_tridi_legacy.X90 \
-  src/elpa1/elpa_solve_tridi_new_interface.X90 \
+  src/elpa1/elpa_solve_tridi_impl_public.X90 \
   src/elpa2/qr/elpa_qrkernels.X90 \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu \
