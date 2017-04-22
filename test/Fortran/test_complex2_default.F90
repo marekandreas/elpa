@@ -85,6 +85,7 @@ program test_complex2_default_kernel_double_precision
 
    use elpa_utilities, only : error_unit
    use elpa2_utilities
+   use elpa2_utilities_private
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi

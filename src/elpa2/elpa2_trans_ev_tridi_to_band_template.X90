@@ -98,6 +98,7 @@
 #else
       use timings_dummy
 #endif
+      use elpa2_utilities
       use elpa2_workload
       use pack_unpack_cpu
       use pack_unpack_gpu

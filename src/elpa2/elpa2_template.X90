@@ -72,6 +72,7 @@
    use elpa1_utilities, only : gpu_usage_via_environment_variable
    use elpa1_compute
    use elpa2_compute
+   use elpa2_utilities_private
    use elpa_mpi
    use cuda_functions
    use mod_check_for_gpu

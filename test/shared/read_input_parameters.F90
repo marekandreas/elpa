@@ -67,6 +67,7 @@ module mod_read_input_parameters
     subroutine parse_arguments(command_line_argument, input_options)
 
       use elpa2_utilities
+      use elpa2_utilities_private
 
       use precision
       use output_types

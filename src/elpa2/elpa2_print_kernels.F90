@@ -72,6 +72,7 @@ program print_available_elpa2_kernels
    use elpa2
 
    use elpa2_utilities
+   use elpa2_utilities_private
 
    implicit none
 

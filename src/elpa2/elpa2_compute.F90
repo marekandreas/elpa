@@ -61,7 +61,7 @@ module ELPA2_compute
   use ELPA_utilities
   USE ELPA1_compute
   !use elpa1_impl, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
-  use elpa2_utilities
+  !use elpa2_utilities
   use elpa_pdgeqrf
   use precision
   use elpa_mpi
