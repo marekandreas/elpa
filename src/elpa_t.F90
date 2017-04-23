@@ -42,7 +42,7 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! This file has been rewritten by L. Huedepohl and A. Marek, MPCDF
+! This file has been written by L. Huedepohl and A. Marek, MPCDF
 
 
 #include <elpa/elpa_constants.h>

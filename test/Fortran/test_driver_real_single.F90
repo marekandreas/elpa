@@ -79,7 +79,7 @@ program test_real2
 !
 !-------------------------------------------------------------------------------
    use precision
-   use ELPA
+   use elpa_driver
    use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
    use test_util

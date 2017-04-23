@@ -1,4 +1,4 @@
-.TH "elpa_solve_evp_real_double" 3 "Mon Oct 10 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_solve_evp_real_double" 3 "Sun Mar 24 2017" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -8,7 +8,7 @@ elpa_solve_evp_real_double \- solve the real eigenvalue problem
 .SH SYNOPSIS
 .br
 .SS FORTRAN INTERFACE
-use elpa
+use elpa_driver
 .br
 .br
 .RI  "success = \fBelpa_solve_evp_real_double\fP (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQr, useGPU, method=method)"

@@ -78,7 +78,7 @@ program test_complex2
 ! distributed along with the original code in the file "COPYING".
 !-------------------------------------------------------------------------------
    use precision
-   use ELPA
+   use elpa_driver
    use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
    use test_util

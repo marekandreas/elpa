@@ -62,14 +62,14 @@ function elpa_solve_evp_&
     &")
 
     use, intrinsic :: iso_c_binding
-    use elpa, only : elpa_solve_evp_&
+    use elpa_driver, only : elpa_solve_evp_&
     &MATH_DATATYPE&
     &_&
     &PRECISION
 
     implicit none
     integer(kind=c_int)                      :: success
-    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, & 
+    integer(kind=c_int), value, intent(in)   :: na, nev, lda, ldq, nblk, matrixCols, &
                                                 mpi_comm_cols, mpi_comm_rows, mpi_comm_all
     integer(kind=c_int), value, intent(in)   :: useGPU
 #if REALCASE == 1
