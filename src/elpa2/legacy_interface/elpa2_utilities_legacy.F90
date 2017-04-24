@@ -356,9 +356,11 @@ module elpa2_utilities
       call timer%start("elpa_real_kernel_name")
 
 
-     if (AVAILABLE_REAL_ELPA_KERNELS(THIS_ELPA_REAL_KERNEL) .eq. 1) then
-       name = trim(REAL_ELPA_KERNEL_NAMES(THIS_ELPA_REAL_KERNEL))
-     endif
+      if (AVAILABLE_REAL_ELPA_KERNELS(THIS_ELPA_REAL_KERNEL) .eq. 1) then
+        name = trim(REAL_ELPA_KERNEL_NAMES(THIS_ELPA_REAL_KERNEL))
+      else
+        name = ""
+      endif
       call timer%stop("elpa_real_kernel_name")
       return
 
@@ -377,9 +379,12 @@ module elpa2_utilities
       call timer%start("elpa_complex_kernel_name")
 
 
-     if (AVAILABLE_COMPLEX_ELPA_KERNELS(THIS_ELPA_COMPLEX_KERNEL) .eq. 1) then
-       name = trim(COMPLEX_ELPA_KERNEL_NAMES(THIS_ELPA_COMPLEX_KERNEL))
-     endif
+      if (AVAILABLE_COMPLEX_ELPA_KERNELS(THIS_ELPA_COMPLEX_KERNEL) .eq. 1) then
+        name = trim(COMPLEX_ELPA_KERNEL_NAMES(THIS_ELPA_COMPLEX_KERNEL))
+      else
+        name = ""
+      endif
+
       call timer%stop("elpa_complex_kernel_name")
       return
 

@@ -16,7 +16,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa_driver/legacy_interface/elpa_legacy.F90 \
         src/elpa1/legacy_interface/elpa1_legacy.F90 \
         src/elpa2/legacy_interface/elpa2_legacy.F90 \
-        src/elpa2/elpa2_utilities.F90 \
+        src/elpa2/legacy_interface/elpa2_utilities_legacy.F90 \
 	src/elpa1/legacy_interface/elpa1_auxiliary_legacy.F90 \
 	src/elpa1/elpa1_auxiliary.F90 \
 	src/elpa_t.F90 \
@@ -30,7 +30,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/helpers/mod_mpi.F90 \
         src/helpers/mod_mpi_stubs.F90 \
         src/elpa_generated_fortran_interfaces.F90 \
-        src/elpa2/elpa2_utilities_private.F90 \
+        src/elpa2/legacy_interface/elpa2_utilities_private_legacy.F90 \
 	src/elpa2/mod_redist_band.F90 \
         src/elpa2/mod_pack_unpack_cpu.F90 \
         src/elpa2/mod_compute_hh_trafo.F90 \
