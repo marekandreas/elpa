@@ -5,6 +5,8 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 AM_FCFLAGS = $(SCALAPACK_FCFLAGS) @FC_MODINC@modules
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
 
+FCLD = @ACTUAL_FC@
+
 # libelpa
 
 # parts with public interface

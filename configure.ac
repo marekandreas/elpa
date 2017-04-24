@@ -1291,6 +1291,8 @@ AC_MSG_CHECKING([if workaround for broken preprocessor is needed])
 need_manual_cpp=no
 AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[need_manual_cpp=yes],[])
 AX_FC_CHECK_DEFINE([__PGI],[need_manual_cpp=yes],[])
+ACTUAL_FC="$FC"
+AC_SUBST([ACTUAL_FC])
 if test x"$need_manual_cpp" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	FC="\$(top_srcdir)/manual_cpp $FC"
