@@ -100,7 +100,7 @@
 #endif
 
           call timer%start("pack_row_&
-	  &MATH_DATATPE&
+	  &MATH_DATATYPE&
 #ifdef WITH_OPENMP
           &_cpu_openmp" // &
 #else
@@ -127,7 +127,7 @@
 #endif
 
           call timer%stop("pack_row_&
-	  &MATH_DATATPE&
+	  &MATH_DATATYPE&
 #ifdef WITH_OPENMP
           &_cpu_openmp" // &
 #else
