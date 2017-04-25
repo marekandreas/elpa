@@ -1,7 +1,8 @@
 before_script:
   - export LANG=C
   - ulimit -s unlimited
-  - if [ $HOST != "hydra03" -a $HOST != "hydra04" -a $HOST != "hydra05"  -a $HOST != "hydra06"  -a $HOST != "hydra07"  ] ; then module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools pkg-config ; fi
+  - if [ $HOST != "hydra03" -a $HOST != "hydra04" -a $HOST != "hydra05"  -a $HOST != "hydra06"  -a $HOST != "hydra07"  -a $HOST != "knl1" -a $HOST != "knl2" -a $HOST != "knl3" -a $HOST != "knl4" ] ; then module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools pkg-config ; fi
+  - if [$HOST == "knl1" -o $HOST == "knl2" -o $HOST == "knl3" -o $HOST == "knl4" ] ; then module load impi/5.1.3 intel/17.0 gcc/6.3 mkl/2017 autotools pkg-config ; fi
   - module list
   - export MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
   - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
@@ -90,7 +91,7 @@ intel-double-precision-nompi-noomp-cuda-jobs:
     - ./configure FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2" CXXFLAGS="-O2" FCFLAGS="-O1" --enable-gpu-support --with-cuda-path=$CUDA_HOME/ --with-mpi=0
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 16'
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
@@ -2024,7 +2025,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-s
     paths:
       - coverage_data
 
-intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
+pure-intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
   tags:
     - KNL
   script:
@@ -2034,10 +2035,36 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    -  make check TEST_FLAGS='1000 500 128' || { cat test-suite.log; exit 1; }
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
+intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpiifort CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block2-kernel-only  --with-complex-avx512-block1-kernel-only
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block2-kernel-only  --with-complex-avx512-block1-kernel-only
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+pure-intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
   tags:
     - KNL
   script:
@@ -2047,7 +2074,33 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    -  make check TEST_FLAGS='1000 500 128' || { cat test-suite.log; exit 1; }
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpiifort CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block2-kernel-only --with-complex-avx512-block1-kernel-only --enable-single-precision
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - ./configure FC=mpif90 CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-real-avx512-block2-kernel-only --with-complex-avx512-block1-kernel-only --enable-single-precision
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export OMP_NUM_THREADS=1
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex-avx512_block1-kernel-debug-jobs:
@@ -2060,7 +2113,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    -  make check TEST_FLAGS='1000 500 128' || { cat test-suite.log; exit 1; }
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 #real avx2 block2, complex avx2 block1 (emulated)
@@ -2398,7 +2451,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    -  make check TEST_FLAGS='1000 500 128' || { cat test-suite.log; exit 1; }
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex-avx512_block2-kernel-jobs:
@@ -2411,7 +2464,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    -  make check TEST_FLAGS='1000 500 128' || { cat test-suite.log; exit 1; }
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex-avx512_block1-kernel-jobs:
@@ -2424,7 +2477,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    -  make check TEST_FLAGS='1000 500 128' || { cat test-suite.log; exit 1; }
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 #real avx block6 , complex block2
@@ -2643,7 +2696,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex
     - make -j 8
     - export OMP_NUM_THREADS=1
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    -  make check TEST_FLAGS='1000 500 128' || { cat test-suite.log; exit 1; }
+    -  make check TEST_FLAGS='1000 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
