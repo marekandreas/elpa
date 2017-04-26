@@ -1300,6 +1300,20 @@ else
 	AC_MSG_RESULT([no])
 fi
 
+
+dnl PGI compiler uses -module to specify module output
+dnl directory. This clashes with libtools -module link option
+dnl => escape it for libtool with -Xcompiler -module
+AC_MSG_CHECKING([whether we have to escape '-module' for libtool])
+if test x"$FC_MODOUT" = x'-module ' ; then
+        FC_MODOUT="-Xcompiler $FC_MODOUT -Xcompiler \$(ac_empty)"
+        FC="\$(top_srcdir)/remove_xcompiler $FC"
+        AC_MSG_RESULT([yes])
+else
+        AC_MSG_RESULT([no])
+fi
+
+
 AC_OUTPUT
 
 if test "${can_compile_avx}" = "no" ; then
