@@ -1227,8 +1227,8 @@ AC_MSG_CHECKING(whether legacy interface is requested)
 AC_ARG_ENABLE([legacy-interface],
 		AS_HELP_STRING([--enable-legacy-interface],
 			       [check whether legacy interface should be provided, default yes]),
-	      [provide_legacy_interface=yes],
-	      [provide_legacy_interface=no])
+	      [provide_legacy_interface=${enableval}],
+	      [provide_legacy_interface=yes])
 AC_MSG_RESULT([$provide_legacy_interface])
 if test x"${enableval}" = x"no" ; then
   provide_legacy_interface=no
