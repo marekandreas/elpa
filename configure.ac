@@ -1222,12 +1222,29 @@ if test x"${USE_ASSUMED_SIZE}" = x"yes" ; then
   AC_DEFINE([USE_ASSUMED_SIZE],[1],[for performance reasons use assumed size Fortran arrays, even if not debuggable])
 fi
 
+dnl check for legacy interface
+AC_MSG_CHECKING(whether legacy interface is requested)
+AC_ARG_ENABLE([legacy-interface],
+		AS_HELP_STRING([--enable-legacy-interface],
+			       [check whether legacy interface should be provided, default yes]),
+	      [provide_legacy_interface=yes],
+	      [provide_legacy_interface=no])
+AC_MSG_RESULT([$provide_legacy_interface])
+if test x"${enableval}" = x"no" ; then
+  provide_legacy_interface=no
+fi
+
 if test x"${want_single_precision}" = x"yes" ; then
   AC_DEFINE([WANT_SINGLE_PRECISION_REAL],[1],[build also single-precision for real calculation])
   AC_DEFINE([WANT_SINGLE_PRECISION_COMPLEX],[1],[build also single-precision for complex calculation])
 fi
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_REAL],[test x"$want_single_precision" = x"yes"])
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" = x"yes"])
+
+AM_CONDITIONAL([WITH_LEGACY_INTERFACE],[test x"$provide_legacy_interface" = x"yes"])
+if test x"${provide_legacy_interface}" = x"yes"; then
+	AC_DEFINE([WITH_LEGACY_INTERFACE], [1], [provide legacy interface])
+fi
 
 AC_SUBST([MPI_BINARY])
 AC_SUBST([WITH_MKL])
@@ -1313,7 +1330,6 @@ else
         AC_MSG_RESULT([no])
 fi
 
-
 AC_OUTPUT
 
 if test "${can_compile_avx}" = "no" ; then
@@ -1344,3 +1360,4 @@ echo "*  the next stable release.                                           *"
 echo "***********************************************************************"
 echo " "
 make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"
+
