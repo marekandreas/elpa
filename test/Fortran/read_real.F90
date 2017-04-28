@@ -136,7 +136,7 @@ program read_real
        print *," "
        if (create_directories() .ne. 1) then
          write(error_unit,*) "Unable to create directory for stdout and stderr!"
-         stop
+         stop 1
        endif
      endif
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
@@ -239,7 +239,7 @@ program read_real
    if(na<=0 .or. na>10000000) then
       if(myid==0) write(error_unit,*) 'Illegal value for matrix size: ',na
       call mpi_finalize(mpierr)
-      stop
+      stop 1
    endif
    if(myid==0) print *,'Matrix size: ',na
 

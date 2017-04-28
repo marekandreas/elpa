@@ -198,7 +198,7 @@ program test_real
        print *," "
        if (create_directories() .ne. 1) then
          write(error_unit,*) "Unable to create directory for stdout and stderr!"
-         stop
+         stop 1
        endif
       endif
 #ifdef WITH_MPI

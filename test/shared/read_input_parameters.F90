@@ -101,7 +101,7 @@ module mod_read_input_parameters
             input_options%datatype=2
           else
             print *,"datatype unknown! use either --datatype=real or --datatpye=complex"
-            stop
+            stop 1
           endif
         endif
       endif
@@ -204,7 +204,7 @@ module mod_read_input_parameters
           input_options%doTransposeMultiply=.true.
         else
            print *,"unknown test specified"
-           stop
+           stop 1
         endif
       endif
 
