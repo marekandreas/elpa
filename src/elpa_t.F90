@@ -1,3 +1,6 @@
+!
+!    Copyright 2017, L. Hüdepohl and A. Marek, MPCDF
+!
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
@@ -42,113 +45,68 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! This file has been written by L. Huedepohl and A. Marek, MPCDF
-
-
-#include <elpa/elpa_constants.h>
 #include "config-f90.h"
 
 module elpa_type
+  use elpa_constants
   use, intrinsic :: iso_c_binding
 
-  integer, parameter :: ELPA_SOLVER_1STAGE = ELPA_C_SOLVER_1STAGE
-  integer, parameter :: ELPA_SOLVER_2STAGE = ELPA_C_SOLVER_2STAGE
-
-  integer, parameter :: ELPA_2STAGE_REAL_GENERIC           = ELPA_C_2STAGE_REAL_GENERIC
-  integer, parameter :: ELPA_2STAGE_REAL_GENERIC_SIMPLE    = ELPA_C_2STAGE_REAL_GENERIC_SIMPLE
-  integer, parameter :: ELPA_2STAGE_REAL_BGP               = ELPA_C_2STAGE_REAL_BGP
-  integer, parameter :: ELPA_2STAGE_REAL_BGQ               = ELPA_C_2STAGE_REAL_BGQ
-  integer, parameter :: ELPA_2STAGE_REAL_SSE               = ELPA_C_2STAGE_REAL_SSE
-  integer, parameter :: ELPA_2STAGE_REAL_SSE_BLOCK2        = ELPA_C_2STAGE_REAL_SSE_BLOCK2
-  integer, parameter :: ELPA_2STAGE_REAL_SSE_BLOCK4        = ELPA_C_2STAGE_REAL_SSE_BLOCK4
-  integer, parameter :: ELPA_2STAGE_REAL_SSE_BLOCK6        = ELPA_C_2STAGE_REAL_SSE_BLOCK6
-  integer, parameter :: ELPA_2STAGE_REAL_AVX_BLOCK2        = ELPA_C_2STAGE_REAL_AVX_BLOCK2
-  integer, parameter :: ELPA_2STAGE_REAL_AVX_BLOCK4        = ELPA_C_2STAGE_REAL_AVX_BLOCK4
-  integer, parameter :: ELPA_2STAGE_REAL_AVX_BLOCK6        = ELPA_C_2STAGE_REAL_AVX_BLOCK6
-  integer, parameter :: ELPA_2STAGE_REAL_AVX2_BLOCK2       = ELPA_C_2STAGE_REAL_AVX2_BLOCK2
-  integer, parameter :: ELPA_2STAGE_REAL_AVX2_BLOCK4       = ELPA_C_2STAGE_REAL_AVX2_BLOCK4
-  integer, parameter :: ELPA_2STAGE_REAL_AVX512_BLOCK2     = ELPA_C_2STAGE_REAL_AVX512_BLOCK2
-  integer, parameter :: ELPA_2STAGE_REAL_AVX512_BLOCK4     = ELPA_C_2STAGE_REAL_AVX512_BLOCK4
-  integer, parameter :: ELPA_2STAGE_REAL_AVX512_BLOCK6     = ELPA_C_2STAGE_REAL_AVX512_BLOCK6
-  integer, parameter :: ELPA_2STAGE_REAL_GPU               = ELPA_C_2STAGE_REAL_GPU
-  integer, parameter :: ELPA_2STAGE_REAL_DEFAULT           = ELPA_C_2STAGE_REAL_DEFAULT
-
-  integer, parameter :: ELPA_2STAGE_COMPLEX_GENERIC        = ELPA_C_2STAGE_COMPLEX_GENERIC
-  integer, parameter :: ELPA_2STAGE_COMPLEX_GENERIC_SIMPLE = ELPA_C_2STAGE_COMPLEX_GENERIC_SIMPLE
-  integer, parameter :: ELPA_2STAGE_COMPLEX_BGP            = ELPA_C_2STAGE_COMPLEX_BGP
-  integer, parameter :: ELPA_2STAGE_COMPLEX_BGQ            = ELPA_C_2STAGE_COMPLEX_BGQ
-  integer, parameter :: ELPA_2STAGE_COMPLEX_SSE            = ELPA_C_2STAGE_COMPLEX_SSE
-  integer, parameter :: ELPA_2STAGE_COMPLEX_SSE_BLOCK1     = ELPA_C_2STAGE_COMPLEX_SSE_BLOCK1
-  integer, parameter :: ELPA_2STAGE_COMPLEX_SSE_BLOCK2     = ELPA_C_2STAGE_COMPLEX_SSE_BLOCK2
-  integer, parameter :: ELPA_2STAGE_COMPLEX_AVX_BLOCK1     = ELPA_C_2STAGE_COMPLEX_AVX_BLOCK1
-  integer, parameter :: ELPA_2STAGE_COMPLEX_AVX_BLOCK2     = ELPA_C_2STAGE_COMPLEX_AVX_BLOCK2
-  integer, parameter :: ELPA_2STAGE_COMPLEX_AVX2_BLOCK1    = ELPA_C_2STAGE_COMPLEX_AVX2_BLOCK1
-  integer, parameter :: ELPA_2STAGE_COMPLEX_AVX2_BLOCK2    = ELPA_C_2STAGE_COMPLEX_AVX2_BLOCK2
-  integer, parameter :: ELPA_2STAGE_COMPLEX_AVX512_BLOCK1  = ELPA_C_2STAGE_COMPLEX_AVX512_BLOCK1
-  integer, parameter :: ELPA_2STAGE_COMPLEX_AVX512_BLOCK2  = ELPA_C_2STAGE_COMPLEX_AVX512_BLOCK2
-  integer, parameter :: ELPA_2STAGE_COMPLEX_GPU            = ELPA_C_2STAGE_COMPLEX_GPU
-  integer, parameter :: ELPA_2STAGE_COMPLEX_DEFAULT        = ELPA_C_2STAGE_COMPLEX_DEFAULT
-
-  integer, parameter :: ELPA_OK    = ELPA_C_OK
-  integer, parameter :: ELPA_ERROR = ELPA_C_ERROR
-
-  public :: elpa_init, elpa_initialized, elpa_uninit, elpa_create, elpa_t, c_int, c_double, c_float
-
-  interface elpa_create
-    module procedure elpa_create_generic
-    module procedure elpa_create_special
-  end interface
+  public :: elpa_init, elpa_initialized, elpa_uninit, elpa_allocate, elpa_t, c_int, c_double, c_float
 
   type :: elpa_t
    private
-   type(c_ptr)         :: options = C_NULL_PTR
-   integer             :: mpi_comm_parent = 0
-   integer(kind=c_int) :: mpi_comm_rows = 0
-   integer(kind=c_int) :: mpi_comm_cols = 0
-   integer(kind=c_int) :: na = 0
-   integer(kind=c_int) :: nev = 0
-   integer(kind=c_int) :: local_nrows = 0
-   integer(kind=c_int) :: local_ncols = 0
-   integer(kind=c_int) :: nblk = 0
-   real(kind=c_double), public  :: time_evp_fwd
-   real(kind=c_double), public  :: time_evp_solve
-   real(kind=c_double), public  :: time_evp_back
+   type(c_ptr)         :: index = C_NULL_PTR
+
+   integer(kind=c_int), pointer :: na => NULL()
+   integer(kind=c_int), pointer :: nev => NULL()
+   integer(kind=c_int), pointer :: local_nrows => NULL()
+   integer(kind=c_int), pointer :: local_ncols => NULL()
+   integer(kind=c_int), pointer :: nblk => NULL()
 
    contains
-     generic, public :: set => elpa_set_integer
-     generic, public :: get => elpa_get_integer
+     procedure, public :: setup => elpa_setup
 
-     procedure, public :: get_communicators => get_communicators
+     generic, public   :: set => elpa_set_integer, &
+                                 elpa_set_double
 
-     procedure, public :: set_comm_rows
-     procedure, public :: set_comm_cols
+     procedure, public :: get => elpa_get_integer
+     procedure, public :: is_set => elpa_is_set_integer
+     !procedure, public :: get_double => elpa_get_double
+     !procedure, public :: is_set_double => elpa_is_set_double
 
-     generic, public :: solve => elpa_solve_real_double, &
-                                 elpa_solve_real_single, &
-                                 elpa_solve_complex_double, &
-                                 elpa_solve_complex_single
-     generic, public :: multiply_a_b => elpa_multiply_at_b_double, &
-                                        elpa_multiply_ah_b_double, &
-                                        elpa_multiply_at_b_single, &
-                                        elpa_multiply_ah_b_single
-     generic, public :: cholesky => elpa_cholesky_double_real, &
-                                    elpa_cholesky_single_real, &
-                                    elpa_cholesky_double_complex, &
-                                    elpa_cholesky_single_complex
-     generic, public :: invert_trm => elpa_invert_trm_double_real, &
-                                      elpa_invert_trm_single_real, &
-                                      elpa_invert_trm_double_complex, &
-                                      elpa_invert_trm_single_complex
-     generic, public :: solve_tridi => elpa_solve_tridi_double_real, &
-                                       elpa_solve_tridi_single_real
+     generic, public :: solve => &
+         elpa_solve_real_double, &
+         elpa_solve_real_single, &
+         elpa_solve_complex_double, &
+         elpa_solve_complex_single
 
+     generic, public :: hermitian_multiply => &
+         elpa_multiply_at_b_double, &
+         elpa_multiply_ah_b_double, &
+         elpa_multiply_at_b_single, &
+         elpa_multiply_ah_b_single
 
+     generic, public :: cholesky => &
+         elpa_cholesky_double_real, &
+         elpa_cholesky_single_real, &
+         elpa_cholesky_double_complex, &
+         elpa_cholesky_single_complex
+
+     generic, public :: invert_tridiagonal => &
+         elpa_invert_trm_double_real, &
+         elpa_invert_trm_single_real, &
+         elpa_invert_trm_double_complex, &
+         elpa_invert_trm_single_complex
+
+     generic, public :: solve_tridi => &
+         elpa_solve_tridi_double_real, &
+         elpa_solve_tridi_single_real
 
      procedure, public :: destroy => elpa_destroy
 
      ! privates:
      procedure, private :: elpa_set_integer
-     procedure, private :: elpa_get_integer
+     procedure, private :: elpa_set_double
 
      procedure, private :: elpa_solve_real_double
      procedure, private :: elpa_solve_real_single
@@ -172,6 +130,9 @@ module elpa_type
 
      procedure, private :: elpa_solve_tridi_double_real
      procedure, private :: elpa_solve_tridi_single_real
+
+     procedure, private :: associate_int => elpa_associate_int
+
   end type elpa_t
 
   logical :: initDone = .false.
@@ -207,47 +168,32 @@ module elpa_type
     end subroutine
 
 
-    function elpa_create_generic(na, nev, local_nrows, local_ncols, nblk, mpi_comm_parent, &
-                                 process_row, process_col, success) result(obj)
+    function elpa_allocate(success) result(obj)
       use precision
-      use elpa_mpi
       use elpa_utilities, only : error_unit
-      use elpa1_impl, only : elpa_get_communicators_impl
       use elpa_generated_fortran_interfaces
       implicit none
 
-      integer(kind=ik), intent(in) :: na, nev, local_nrows, local_ncols, nblk
-      integer, intent(in)          :: mpi_comm_parent, process_row, process_col
       type(elpa_t)                 :: obj
-      integer                      :: mpierr
-
       integer, optional            :: success
 
       ! check whether init has ever been called
       if (.not.(elpa_initialized())) then
-        write(error_unit, *) "elpa_create(): you must call elpa_init() once before creating instances of ELPA"
+        write(error_unit, *) "elpa_allocate(): you must call elpa_init() once before creating instances of ELPA"
         if(present(success)) then
           success = ELPA_ERROR
         endif
         return
       endif
 
-      obj%options     = elpa_allocate_options()
-      obj%na          = na
-      obj%nev         = nev
-      obj%local_nrows = local_nrows
-      obj%local_ncols = local_ncols
-      obj%nblk        = nblk
+      obj%index = elpa_index_instance()
 
-      obj%mpi_comm_parent = mpi_comm_parent
-      mpierr = elpa_get_communicators_impl(mpi_comm_parent, process_row, process_col, obj%mpi_comm_rows, obj%mpi_comm_cols)
-      if (mpierr /= MPI_SUCCESS) then
-        write(error_unit, *) "elpa_create(): error constructing row and column communicators"
-        if(present(success)) then
-          success = ELPA_ERROR
-        endif
-        return
-      endif
+      ! Associate some important integer pointers for convenience
+      obj%na = obj%associate_int("na")
+      obj%nev = obj%associate_int("nev")
+      obj%local_nrows = obj%associate_int("local_nrows")
+      obj%local_ncols = obj%associate_int("local_ncols")
+      obj%nblk = obj%associate_int("nblk")
 
       if(present(success)) then
         success = ELPA_OK
@@ -255,59 +201,36 @@ module elpa_type
 
     end function
 
-    function elpa_create_special(na, nev, local_nrows, local_ncols, nblk, success) result(obj)
-      use precision
-      use elpa_mpi
-      use elpa_utilities, only : error_unit
+    function elpa_setup(self) result(success)
       use elpa1_impl, only : elpa_get_communicators_impl
-      use elpa_generated_fortran_interfaces
-      implicit none
+      class(elpa_t), intent(inout) :: self
+      integer :: success
+      integer :: mpi_comm_rows, mpi_comm_cols, mpierr
 
-      integer(kind=ik), intent(in) :: na, nev, local_nrows, local_ncols, nblk
-      !integer, intent(in)          :: mpi_comm_rows, mpi_comm_cols, process_row, process_col
-      type(elpa_t)                 :: obj
-      integer                      :: mpierr
+      success = ELPA_ERROR
 
-      integer                      :: success
+      if (self%is_set("mpi_comm_parent") == ELPA_OK .and. &
+          self%is_set("process_row") == ELPA_OK .and. &
+          self%is_set("process_col") == ELPA_OK) then
 
-      ! check whether init has ever been called
-      if (.not.(elpa_initialized())) then
-        write(error_unit, *) "elpa_create(): you must call elpa_init() once before creating instances of ELPA"
-        success = ELPA_ERROR
-        return
+        mpierr = elpa_get_communicators_impl(&
+                        self%get("mpi_comm_parent"), &
+                        self%get("process_row"), &
+                        self%get("process_col"), &
+                        mpi_comm_rows, &
+                        mpi_comm_cols)
+
+        call self%set("mpi_comm_rows", mpi_comm_rows)
+        call self%set("mpi_comm_cols", mpi_comm_cols)
+
+        success = ELPA_OK
       endif
 
-      obj%options     = elpa_allocate_options()
-      obj%na          = na
-      obj%nev         = nev
-      obj%local_nrows = local_nrows
-      obj%local_ncols = local_ncols
-      obj%nblk        = nblk
-
-      !obj%mpi_comm_rows = mpi_comm_rows
-      !obj%mpi_comm_cols = mpi_comm_rows
-      success = ELPA_OK
+      if (self%is_set("mpi_comm_rows") == ELPA_OK .and. self%is_set("mpi_comm_cols") == ELPA_OK) then
+        success = ELPA_OK
+      endif
 
     end function
-    subroutine set_comm_rows(self, mpi_comm_rows)
-      use iso_c_binding
-      implicit none
-
-      integer, intent(in) :: mpi_comm_rows
-      class(elpa_t)       :: self
-      self%mpi_comm_rows = mpi_comm_rows
-
-    end subroutine
-
-    subroutine set_comm_cols(self, mpi_comm_cols)
-      use iso_c_binding
-      implicit none
-
-      integer, intent(in) :: mpi_comm_cols
-      class(elpa_t)       :: self
-
-      self%mpi_comm_cols = mpi_comm_cols
-    end subroutine
 
     subroutine elpa_set_integer(self, name, value, success)
       use iso_c_binding
@@ -320,7 +243,7 @@ module elpa_type
       integer, optional               :: success
       integer                         :: actual_success
 
-      actual_success = elpa_set_int_entry(self%options, name // c_null_char, value)
+      actual_success = elpa_index_set_int_value(self%index, name // c_null_char, value)
 
       if (present(success)) then
         success = actual_success
@@ -341,30 +264,82 @@ module elpa_type
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
       integer, intent(out), optional :: success
-      integer(kind=c_int), target    :: int_success
+
+      value = elpa_index_get_int_value(self%index, name // c_null_char, success)
+
+    end function
+
+    function elpa_is_set_integer(self, name) result(success)
+      use iso_c_binding
+      use elpa_generated_fortran_interfaces
+      implicit none
+      class(elpa_t)            :: self
+      character(*), intent(in) :: name
+      integer                  :: success
+
+      success = elpa_index_int_value_is_set(self%index, name // c_null_char)
+
+    end function
+
+    subroutine elpa_set_double(self, name, value, success)
+      use iso_c_binding
+      use elpa_generated_fortran_interfaces
+      use elpa_utilities, only : error_unit
+      implicit none
+      class(elpa_t)                   :: self
+      character(*), intent(in)        :: name
+      real(kind=c_double), intent(in) :: value
+      integer, optional               :: success
+      integer                         :: actual_success
+
+      actual_success = elpa_index_set_double_value(self%index, name // c_null_char, value)
+
+      if (present(success)) then
+        success = actual_success
+
+      else if (actual_success /= ELPA_OK) then
+        write(error_unit,'(a,a,es12.5,a)') "ELPA: Error setting option '", name, "' to value ", value, &
+                "and you did not check for errors!"
+
+      end if
+    end subroutine
+
+
+    function elpa_get_double(self, name, success) result(value)
+      use iso_c_binding
+      use elpa_generated_fortran_interfaces
+      implicit none
+      class(elpa_t)                  :: self
+      character(*), intent(in)       :: name
+      real(kind=c_double)            :: value
+      integer, intent(out), optional :: success
       type(c_ptr) :: c_success_ptr
 
-      value = elpa_get_int_entry(self%options, name // c_null_char, success)
+      value = elpa_index_get_double_value(self%index, name // c_null_char, success)
 
     end function
 
 
-    subroutine get_communicators(self, mpi_comm_rows, mpi_comm_cols)
+    function elpa_associate_int(self, name) result(value)
       use iso_c_binding
+      use elpa_generated_fortran_interfaces
       implicit none
-      class(elpa_t)                    :: self
+      class(elpa_t)                  :: self
+      character(*), intent(in)       :: name
+      integer(kind=c_int), pointer   :: value
 
-      integer(kind=c_int), intent(out) :: mpi_comm_rows, mpi_comm_cols
-      mpi_comm_rows = self%mpi_comm_rows
-      mpi_comm_cols = self%mpi_comm_cols
-    end subroutine
+      type(c_ptr)                    :: value_p
+
+      value_p = elpa_index_get_int_loc(self%index, name // c_null_char)
+      call c_f_pointer(value_p, value)
+    end function
 
 
     subroutine elpa_solve_real_double(self, a, ev, q, success)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
-
+      use precision
       use iso_c_binding
       implicit none
       class(elpa_t)       :: self
@@ -382,7 +357,7 @@ module elpa_type
       logical             :: success_l, summary_timings
 
       logical             :: useGPU, useQR
-      integer(kind=c_int) :: THIS_ELPA_KERNEL_API
+      integer(kind=c_int) :: kernel
 
       if (self%get("summary_timings",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
@@ -419,35 +394,33 @@ module elpa_type
       endif
 
 
-      THIS_ELPA_KERNEL_API = self%get("real_kernel",success_internal)
-      if (success_internal .ne. ELPA_OK) then
-        print *,"Could not querry kernel"
-        stop
-      endif
-
-
       if (self%get("solver",success_internal) .eq. 1) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
           stop
         endif
         success_l = elpa_solve_evp_real_1stage_double_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                          self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent, useGPU, time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings)
+                                                           self%local_nrows,  self%nblk, self%local_ncols, &
+                                                           self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
+                                                           self%get("mpi_comm_parent"), useGPU, time_evp_fwd,     &
+                                                           time_evp_solve, time_evp_back, summary_timings)
 
       else if (self%get("solver",success_internal) .eq. 2) then
         if (success_internal .ne. ELPA_OK) then
           print *,"Could not querry solver"
           stop
         endif
+        kernel = self%get("real_kernel",success_internal)
+        if (success_internal .ne. ELPA_OK) then
+          print *,"Could not querry kernel"
+          stop
+        endif
         success_l = elpa_solve_evp_real_2stage_double_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                          self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent, time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings, useGPU, &
-                                                          THIS_ELPA_KERNEL_API, useQR)
+                                                           self%local_nrows,  self%nblk, self%local_ncols, &
+                                                           self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
+                                                           self%get("mpi_comm_parent"), time_evp_fwd,     &
+                                                           time_evp_solve, time_evp_back, summary_timings, useGPU, &
+                                                           kernel, useQR)
       else
         print *,"unknown solver"
         stop
@@ -469,22 +442,23 @@ module elpa_type
           stop
         endif
 
-        self%time_evp_fwd = time_evp_fwd
-        self%time_evp_solve = time_evp_solve
-        self%time_evp_back = time_evp_back
+        call self%set("time_evp_fwd", time_evp_fwd)
+        call self%set("time_evp_solve", time_evp_solve)
+        call self%set("time_evp_back", time_evp_back)
       else
 
-        self%time_evp_fwd = -1.0
-        self%time_evp_solve = -1.0
-        self%time_evp_back = -1.0
+        call self%set("time_evp_fwd", -1.0_rk8)
+        call self%set("time_evp_solve", -1.0_rk8)
+        call self%set("time_evp_back", -1.0_rk8)
       endif
     end subroutine
+
 
     subroutine elpa_solve_real_single(self, a, ev, q, success)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
-
+      use precision
       use iso_c_binding
       implicit none
       class(elpa_t)       :: self
@@ -550,8 +524,8 @@ module elpa_type
         endif
         success_l = elpa_solve_evp_real_1stage_single_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent, useGPU, time_evp_fwd,     &
+                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
+                                                          self%get("mpi_comm_parent"), useGPU, time_evp_fwd,     &
                                                           time_evp_solve, time_evp_back, summary_timings)
 
       else if (self%get("solver",success_internal) .eq. 2) then
@@ -561,8 +535,8 @@ module elpa_type
         endif
         success_l = elpa_solve_evp_real_2stage_single_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent, time_evp_fwd,     &
+                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
+                                                          self%get("mpi_comm_parent"), time_evp_fwd,     &
                                                           time_evp_solve, time_evp_back, summary_timings, useGPU, &
                                                           THIS_ELPA_KERNEL_API, useQR)
       else
@@ -587,20 +561,19 @@ module elpa_type
           stop
         endif
 
-        self%time_evp_fwd = time_evp_fwd
-        self%time_evp_solve = time_evp_solve
-        self%time_evp_back = time_evp_back
+        call self%set("time_evp_fwd", time_evp_fwd)
+        call self%set("time_evp_solve", time_evp_solve)
+        call self%set("time_evp_back", time_evp_back)
       else
 
-        self%time_evp_fwd = -1.0
-        self%time_evp_solve = -1.0
-        self%time_evp_back = -1.0
+        call self%set("time_evp_fwd", -1.0_rk8)
+        call self%set("time_evp_solve", -1.0_rk8)
+        call self%set("time_evp_back", -1.0_rk8)
       endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       success = ELPA_ERROR
 #endif
-
     end subroutine
 
 
@@ -608,7 +581,7 @@ module elpa_type
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
-
+      use precision
       use iso_c_binding
       implicit none
       class(elpa_t)                  :: self
@@ -663,8 +636,8 @@ module elpa_type
         endif
         success_l = elpa_solve_evp_complex_1stage_double_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent, useGPU, time_evp_fwd,     &
+                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
+                                                          self%get("mpi_comm_parent"), useGPU, time_evp_fwd,     &
                                                           time_evp_solve, time_evp_back, summary_timings)
 
       else if (self%get("solver",success_internal) .eq. 2) then
@@ -674,8 +647,8 @@ module elpa_type
         endif
         success_l = elpa_solve_evp_complex_2stage_double_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent, time_evp_fwd,     &
+                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
+                                                          self%get("mpi_comm_parent"), time_evp_fwd,     &
                                                           time_evp_solve, time_evp_back, summary_timings, useGPU, &
                                                           THIS_ELPA_KERNEL_API)
       else
@@ -699,14 +672,14 @@ module elpa_type
           stop
         endif
 
-        self%time_evp_fwd = time_evp_fwd
-        self%time_evp_solve = time_evp_solve
-        self%time_evp_back = time_evp_back
+        call self%set("time_evp_fwd", time_evp_fwd)
+        call self%set("time_evp_solve", time_evp_solve)
+        call self%set("time_evp_back", time_evp_back)
       else
 
-        self%time_evp_fwd = -1.0
-        self%time_evp_solve = -1.0
-        self%time_evp_back = -1.0
+        call self%set("time_evp_fwd", -1.0_rk8)
+        call self%set("time_evp_solve", -1.0_rk8)
+        call self%set("time_evp_back", -1.0_rk8)
       endif
     end subroutine
 
@@ -771,8 +744,8 @@ module elpa_type
         endif
         success_l = elpa_solve_evp_complex_1stage_single_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent, useGPU, time_evp_fwd,     &
+                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
+                                                          self%get("mpi_comm_parent"), useGPU, time_evp_fwd,     &
                                                           time_evp_solve, time_evp_back, summary_timings)
 
       else if (self%get("solver",success_internal) .eq. 2) then
@@ -782,8 +755,8 @@ module elpa_type
         endif
         success_l = elpa_solve_evp_complex_2stage_single_impl(self%na, self%nev, a, self%local_nrows, ev, q,  &
                                                           self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%mpi_comm_rows, self%mpi_comm_cols,         &
-                                                          self%mpi_comm_parent,  time_evp_fwd,     &
+                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
+                                                          self%get("mpi_comm_parent"),  time_evp_fwd,     &
                                                           time_evp_solve, time_evp_back, summary_timings, useGPU, &
                                                           THIS_ELPA_KERNEL_API)
       else
@@ -807,23 +780,22 @@ module elpa_type
           stop
         endif
 
-        self%time_evp_fwd = time_evp_fwd
-        self%time_evp_solve = time_evp_solve
-        self%time_evp_back = time_evp_back
+        call self%set("time_evp_fwd", time_evp_fwd)
+        call self%set("time_evp_solve", time_evp_solve)
+        call self%set("time_evp_back", time_evp_back)
       else
 
-        self%time_evp_fwd = -1.0
-        self%time_evp_solve = -1.0
-        self%time_evp_back = -1.0
+        call self%set("time_evp_fwd", -1.0_rk8)
+        call self%set("time_evp_solve", -1.0_rk8)
+        call self%set("time_evp_back", -1.0_rk8)
       endif
 
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       success = ELPA_ERROR
 #endif
-
-
     end subroutine
+
 
     subroutine elpa_multiply_at_b_double (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, success)
@@ -843,7 +815,7 @@ module elpa_type
       logical                         :: success_l
 
       success_l = elpa_mult_at_b_real_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
-                              self%mpi_comm_rows, self%mpi_comm_cols, c, ldc, ldcCols)
+                              self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
       if (present(success)) then
         if (success_l) then
           success = ELPA_OK
@@ -854,6 +826,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_multiply_at_b_single (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, success)
@@ -873,7 +846,7 @@ module elpa_type
       logical                         :: success_l
 #ifdef WANT_SINGLE_PRECISION_REAL
       success_l = elpa_mult_at_b_real_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
-                              self%mpi_comm_rows, self%mpi_comm_cols, c, ldc, ldcCols)
+                              self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
       if (present(success)) then
         if (success_l) then
           success = ELPA_OK
@@ -888,6 +861,7 @@ module elpa_type
       success = ELPA_ERROR
 #endif
     end subroutine
+
 
     subroutine elpa_multiply_ah_b_double (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, success)
@@ -907,7 +881,7 @@ module elpa_type
       logical                         :: success_l
 
       success_l = elpa_mult_ah_b_complex_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
-                              self%mpi_comm_rows, self%mpi_comm_cols, c, ldc, ldcCols)
+                              self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
       if (present(success)) then
         if (success_l) then
           success = ELPA_OK
@@ -918,6 +892,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_multiply_ah_b_single (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, success)
@@ -938,7 +913,7 @@ module elpa_type
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_mult_ah_b_complex_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
-                              self%mpi_comm_rows, self%mpi_comm_cols, c, ldc, ldcCols)
+                              self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
       if (present(success)) then
         if (success_l) then
           success = ELPA_OK
@@ -953,6 +928,7 @@ module elpa_type
       success = ELPA_ERROR
 #endif
     end subroutine
+
 
     subroutine elpa_cholesky_double_real (self, a, success)
       use iso_c_binding
@@ -983,7 +959,7 @@ module elpa_type
 
 
       success_l = elpa_cholesky_real_double_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                 self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                 self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                  wantDebugIntern)
       if (present(success)) then
         if (success_l) then
@@ -995,6 +971,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_cholesky_single_real(self, a, success)
       use iso_c_binding
@@ -1025,7 +1002,7 @@ module elpa_type
 
 #if WANT_SINGLE_PRECISION_REAL
       success_l = elpa_cholesky_real_single_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                 self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                 self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                  wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
@@ -1041,6 +1018,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_cholesky_double_complex (self, a, success)
       use iso_c_binding
@@ -1070,7 +1048,7 @@ module elpa_type
       endif
 
       success_l = elpa_cholesky_complex_double_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                 self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                 self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                  wantDebugIntern)
       if (present(success)) then
         if (success_l) then
@@ -1082,6 +1060,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_cholesky_single_complex (self, a, success)
       use iso_c_binding
@@ -1111,7 +1090,7 @@ module elpa_type
       endif
 #if WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_cholesky_complex_single_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                 self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                 self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                  wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
@@ -1127,6 +1106,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_invert_trm_double_real (self, a, success)
       use iso_c_binding
@@ -1155,7 +1135,7 @@ module elpa_type
         wantDebugIntern = .false.
       endif
       success_l = elpa_invert_trm_real_double_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                   self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                   self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                    wantDebugIntern)
       if (present(success)) then
         if (success_l) then
@@ -1167,6 +1147,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_invert_trm_single_real (self, a, success)
       use iso_c_binding
@@ -1196,7 +1177,7 @@ module elpa_type
       endif
 #if WANT_SINGLE_PRECISION_REAL
       success_l = elpa_invert_trm_real_single_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                   self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                   self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                    wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
@@ -1212,6 +1193,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_invert_trm_double_complex (self, a, success)
       use iso_c_binding
@@ -1240,7 +1222,7 @@ module elpa_type
         wantDebugIntern = .false.
       endif
       success_l = elpa_invert_trm_complex_double_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                   self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                   self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                    wantDebugIntern)
       if (present(success)) then
         if (success_l) then
@@ -1252,6 +1234,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_invert_trm_single_complex (self, a, success)
       use iso_c_binding
@@ -1281,7 +1264,7 @@ module elpa_type
       endif
 #if WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_invert_trm_complex_single_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                   self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols, &
+                                                   self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                    wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
@@ -1297,6 +1280,7 @@ module elpa_type
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
     end subroutine
+
 
     subroutine elpa_solve_tridi_double_real (self, d, e, q, success)
       use iso_c_binding
@@ -1328,7 +1312,7 @@ module elpa_type
       endif
 
       success_l = elpa_solve_tridi_double_impl(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
-                                              self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols,&
+                                              self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),&
                                               wantDebugIntern)
       if (present(success)) then
         if (success_l) then
@@ -1339,8 +1323,8 @@ module elpa_type
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
       endif
-
     end subroutine
+
 
     subroutine elpa_solve_tridi_single_real (self, d, e, q, success)
       use iso_c_binding
@@ -1372,7 +1356,7 @@ module elpa_type
       endif
 #ifdef WANT_SINGLE_PRECISION_REAL
       success_l = elpa_solve_tridi_single_impl(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
-                                              self%local_ncols, self%mpi_comm_rows, self%mpi_comm_cols,&
+                                              self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),&
                                               wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
@@ -1387,16 +1371,14 @@ module elpa_type
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
       endif
-
     end subroutine
-
 
 
     subroutine elpa_destroy(self)
       use elpa_generated_fortran_interfaces
       class(elpa_t) :: self
-      call elpa_free_index(self%options)
+      call elpa_free_index(self%index)
     end subroutine
 
-end module
 
+end module

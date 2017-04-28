@@ -42,7 +42,7 @@
 
 #include "config-f90.h"
 module precision
-  use iso_c_binding, only : C_FLOAT, C_DOUBLE, C_FLOAT_COMPLEX, C_DOUBLE_COMPLEX, C_INT32_T, C_INT64_T
+  use iso_c_binding, only : C_FLOAT, C_DOUBLE, C_FLOAT_COMPLEX, C_DOUBLE_COMPLEX, C_INT32_T, C_INT64_T, C_INT
 
   implicit none
   integer, parameter :: rk8  = C_DOUBLE

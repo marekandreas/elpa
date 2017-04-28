@@ -89,7 +89,7 @@
 !      integer(kind=ik)              :: istat
 !      character(200)                :: errorMessage
 
-      type(elpa_t)                 :: elpaAPI
+      type(elpa_t)                 :: e
 
       call timer%start("elpa_cholesky_&
       &MATH_DATATYPE&
@@ -99,15 +99,25 @@
 
       success = .true.
 
-     if (elpa_init(20170403) /= ELPA_OK) then
+      if (elpa_init(20170403) /= ELPA_OK) then
         print *, "ELPA API version not supported"
         success = .false.
         stop
         return
       endif
 
-      nev = 10
-      elpaAPI = elpa_create(na, nev, lda, matrixCols, nblk, successInternal)
+      e = elpa_allocate()
+
+      call e%set("na", na)
+      call e%set("local_nrows", lda)
+      call e%set("local_ncols", matrixCols)
+      call e%set("nblk", nblk)
+
+      call e%set("mpi_comm_rows", mpi_comm_rows)
+      call e%set("mpi_comm_cols", mpi_comm_cols)
+
+      call e%setup(successInternal)
+
       if (successInternal .ne. ELPA_OK) then
         print *, "Cannot create elpa object"
         success = .false.
@@ -115,10 +125,8 @@
         return
       endif
 
-      call elpaAPI%set_comm_rows(mpi_comm_rows)
-      call elpaAPI%set_comm_cols(mpi_comm_cols)
 
-      call elpaAPI%cholesky(a(1:lda,1:matrixCols), successInternal)
+      call e%cholesky(a(1:lda,1:matrixCols), successInternal)
 
       if (successInternal .ne. ELPA_OK) then
         print *, "Cannot run cholesky"
@@ -128,7 +136,7 @@
       else
         success =.true.
       endif
-      call elpaAPI%destroy()
+      call e%destroy()
 
       call elpa_uninit()
 

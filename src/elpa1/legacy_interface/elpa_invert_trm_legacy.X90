@@ -81,9 +81,9 @@
 #endif
 #endif
 
- !      integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
- !      integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
- !      integer(kind=ik)             :: n, nc, i, info, ns, nb
+!      integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
+!      integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+!      integer(kind=ik)             :: n, nc, i, info, ns, nb
 !#if REALCASE ==  1
 !       real(kind=REAL_DATATYPE), allocatable   :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
 !#endif
@@ -92,12 +92,12 @@
 !#endif
        logical, intent(in)          :: wantDebug
        logical                      :: success
- !      integer(kind=ik)             :: istat
- !      character(200)               :: errorMessage
+!      integer(kind=ik)             :: istat
+!      character(200)               :: errorMessage
 
        integer(kind=ik)            :: nev
        integer(kind=iK)            :: successInternal
-       type(elpa_t)                :: elpaAPI
+       type(elpa_t)                :: e
 
        call timer%start("elpa_invert_trm_&
        &MATH_DATATYPE&
@@ -114,8 +114,18 @@
          return
        endif
 
-       nev = 10
-       elpaAPI = elpa_create(na, nev, lda, matrixCols, nblk, successInternal)
+       e = elpa_allocate()
+
+       call e%set("na", na)
+       call e%set("local_nrows", lda)
+       call e%set("local_ncols", matrixCols)
+       call e%set("nblk", nblk)
+
+       call e%set("mpi_comm_rows", mpi_comm_rows)
+       call e%set("mpi_comm_cols", mpi_comm_cols)
+
+       call e%setup(successInternal)
+
        if (successInternal .ne. ELPA_OK) then
          print *, "Cannot create elpa object"
          success = .false.
@@ -123,10 +133,8 @@
          return
        endif
 
-       call elpaAPI%set_comm_rows(mpi_comm_rows)
-       call elpaAPI%set_comm_cols(mpi_comm_cols)
 
-       call elpaAPI%invert_trm(a(1:lda,1:matrixCols), successInternal)
+       call e%invert_tridiagonal(a(1:lda,1:matrixCols), successInternal)
 
        if (successInternal .ne. ELPA_OK) then
          print *, "Cannot run invert_trm"
@@ -136,7 +144,7 @@
        else
          success =.true.
        endif
-       call elpaAPI%destroy()
+       call e%destroy()
 
        call elpa_uninit()
 

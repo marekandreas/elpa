@@ -44,7 +44,7 @@
 
 #define stringify_(x) "x"
 #define stringify(x) stringify_(x)
-#define assert(x) call x_assert(x, stringify(x), "test_new_interface_real_1stage.F90", __LINE__)
+#define assert(x) call x_assert(x, stringify(x), __FILE__, __LINE__)
 
 program test_interface
    use precision
@@ -162,7 +162,25 @@ program test_interface
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("prepare_elpa")
 #endif
-   e = elpa_create(na, nev, na_rows, na_cols, nblk, mpi_comm_world, my_prow, my_pcol, success)
+
+   e = elpa_allocate()
+
+   e%set("na", na)
+   e%set("local_nrows", na_rows)
+   e%set("local_ncols", na_cols)
+   e%set("nblk", nblk)
+
+   e%set("mpi_comm_parent", MPI_COMM_WORLD)
+   e%set("process_row", my_prow)
+   e%set("process_col", my_pcol)
+
+   ! or:
+
+   e%set("mpi_comm_rows", MPI_COMM_WORLD)
+   e%set("mpi_comm_cols", MPI_COMM_WORLD)
+
+   call e%setup()
+
    assert(success == ELPA_OK)
 
    qr = e%get("qr", success)

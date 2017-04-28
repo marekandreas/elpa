@@ -48,7 +48,6 @@
 ! Author: Andreas Marek, MPCDF
 
 #include "config-f90.h"
-#include <elpa/elpa_solver_constants.h>
 
 module ELPA_utilities
 

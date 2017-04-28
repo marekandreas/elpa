@@ -1,0 +1,87 @@
+#pragma once
+
+/* This might seem over-engineered, but helps to re-use this file also on the
+ * Fortran side and thus to keep the definitions in this one place here
+ */
+
+/* Private helper macros */
+#define ELPA_ENUM_ENTRY(name, value) \
+        name = value,
+#define ELPA_ENUM_SUM(name, value) +1
+
+
+/* Solver constants */
+#define ELPA_SOLVER_MAP(X) \
+        X(ELPA_SOLVER_1STAGE, 1) \
+        X(ELPA_SOLVER_2STAGE, 2)
+
+enum ELPA_SOLVERS {
+        ELPA_SOLVER_MAP(ELPA_ENUM_ENTRY)
+};
+
+#define ELPA_NUMBER_OF_SOLVERS (0 ELPA_SOLVER_MAP(ELPA_ENUM_SUM))
+
+/* Kernel constants */
+#define ELPA_REAL_KERNEL_MAP(X) \
+        X(ELPA_2STAGE_REAL_GENERIC, 1) \
+        X(ELPA_2STAGE_REAL_GENERIC_SIMPLE, 2) \
+        X(ELPA_2STAGE_REAL_BGP, 3) \
+        X(ELPA_2STAGE_REAL_BGQ, 4) \
+        X(ELPA_2STAGE_REAL_SSE, 5) \
+        X(ELPA_2STAGE_REAL_SSE_BLOCK2, 6) \
+        X(ELPA_2STAGE_REAL_SSE_BLOCK4, 7) \
+        X(ELPA_2STAGE_REAL_SSE_BLOCK6, 8) \
+        X(ELPA_2STAGE_REAL_AVX_BLOCK2, 9) \
+        X(ELPA_2STAGE_REAL_AVX_BLOCK4, 10) \
+        X(ELPA_2STAGE_REAL_AVX_BLOCK6, 11) \
+        X(ELPA_2STAGE_REAL_AVX2_BLOCK2, 12) \
+        X(ELPA_2STAGE_REAL_AVX2_BLOCK4, 13) \
+        X(ELPA_2STAGE_REAL_AVX2_BLOCK6, 14) \
+        X(ELPA_2STAGE_REAL_AVX512_BLOCK2, 15) \
+        X(ELPA_2STAGE_REAL_AVX512_BLOCK4, 16) \
+        X(ELPA_2STAGE_REAL_AVX512_BLOCK6, 17) \
+        X(ELPA_2STAGE_REAL_GPU, 18) \
+        X(ELPA_2STAGE_REAL_DEFAULT, @ELPA_2STAGE_REAL_DEFAULT@)
+
+enum ELPA_REAL_KERNELS {
+        ELPA_REAL_KERNEL_MAP(ELPA_ENUM_ENTRY)
+};
+
+
+#define ELPA_COMPLEX_KERNEL_MAP(X) \
+        X(ELPA_2STAGE_COMPLEX_GENERIC, 1) \
+        X(ELPA_2STAGE_COMPLEX_GENERIC_SIMPLE, 2) \
+        X(ELPA_2STAGE_COMPLEX_BGP, 3) \
+        X(ELPA_2STAGE_COMPLEX_BGQ, 4) \
+        X(ELPA_2STAGE_COMPLEX_SSE, 5) \
+        X(ELPA_2STAGE_COMPLEX_SSE_BLOCK1, 6) \
+        X(ELPA_2STAGE_COMPLEX_SSE_BLOCK2, 7) \
+        X(ELPA_2STAGE_COMPLEX_AVX_BLOCK1, 8) \
+        X(ELPA_2STAGE_COMPLEX_AVX_BLOCK2, 9) \
+        X(ELPA_2STAGE_COMPLEX_AVX2_BLOCK1, 10) \
+        X(ELPA_2STAGE_COMPLEX_AVX2_BLOCK2, 11) \
+        X(ELPA_2STAGE_COMPLEX_AVX512_BLOCK1, 12) \
+        X(ELPA_2STAGE_COMPLEX_AVX512_BLOCK2, 13) \
+        X(ELPA_2STAGE_COMPLEX_GPU, 14) \
+        X(ELPA_2STAGE_COMPLEX_DEFAULT, @ELPA_2STAGE_COMPLEX_DEFAULT@)
+
+enum ELPA_COMPLEX_KERNELS {
+        ELPA_COMPLEX_KERNEL_MAP(ELPA_ENUM_ENTRY)
+};
+
+
+
+/* General constants */
+#define ELPA_CONSTANTS_MAP(X) \
+        X(ELPA_ERROR, -1) \
+        X(ELPA_NO, 0) \
+        X(ELPA_OK, 1)
+
+enum ELPA_CONSTANTS {
+        ELPA_CONSTANTS_MAP(ELPA_ENUM_ENTRY)
+
+        /* -1 to take out the default kernel again */
+        ELPA_2STAGE_NUMBER_OF_COMPLEX_KERNELS = (0 ELPA_COMPLEX_KERNEL_MAP(ELPA_ENUM_SUM) -1),
+        ELPA_2STAGE_NUMBER_OF_REAL_KERNELS = (0 ELPA_REAL_KERNEL_MAP(ELPA_ENUM_SUM) -1),
+};
+

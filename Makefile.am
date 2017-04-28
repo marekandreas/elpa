@@ -20,6 +20,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 	src/elpa1/legacy_interface/elpa1_auxiliary_legacy.F90 \
 	src/elpa1/elpa1_auxiliary.F90 \
 	src/elpa_t.F90 \
+	src/elpa_constants.F90 \
         src/general/elpa_utilities.F90
 
 # internal parts
@@ -53,8 +54,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
         src/elpa2/qr/elpa_pdgeqrf.F90 \
 	src/elpa1/elpa1.F90 \
 	src/elpa2/elpa2.F90 \
-	src/elpa_index.c \
-	src/elpa_options.c
+	src/elpa_constants.c \
+	src/elpa_index.c
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
         src/elpa1/elpa_reduce_add_vectors.X90 \
@@ -322,10 +323,9 @@ endif
 include generated_headers.am
 BUILT_SOURCES = $(generated_headers)
 
-# install public Fortran modules files in the include/ dir
+# install public headers and Fortran modules files in the include/ dir
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
-nobase_elpa_include_HEADERS = $(wildcard modules/*)
-nobase_elpa_include_HEADERS += elpa/elpa.h elpa/elpa_kernel_constants.h elpa/elpa_solver_constants.h elpa/elpa_constants.h elpa/elpa_generated.h
+nobase_elpa_include_HEADERS = $(wildcard modules/*) $(wildcard elpa/*)
 
 dist_man_MANS = \
            man/solve_evp_real.3 \

@@ -49,17 +49,15 @@
 !
 ! Author: Andreas Marek, MPCDF
 
-
 #include "config-f90.h"
-#include <elpa/elpa_kernel_constants.h>
 
 module elpa2_utilities
-  !use elpa2_utilities_private
+  use elpa_constants
   use elpa_utilities
   use precision
   implicit none
 
-  PRIVATE ! By default, all routines contained are private
+  private ! by default, all routines contained are private
 
   ! The following routines are public:
 
@@ -94,26 +92,26 @@ module elpa2_utilities
 
   public :: elpa_real_kernel_name, elpa_complex_kernel_name
 
-  integer(kind=ik), parameter :: number_of_real_kernels           = ELPA_C_2STAGE_NUMBER_OF_REAL_KERNELS
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_GENERIC         = ELPA_C_2STAGE_REAL_GENERIC
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_GENERIC_SIMPLE  = ELPA_C_2STAGE_REAL_GENERIC_SIMPLE
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_BGP             = ELPA_C_2STAGE_REAL_BGP
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_BGQ             = ELPA_C_2STAGE_REAL_BGQ
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE             = ELPA_C_2STAGE_REAL_SSE
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE_BLOCK2      = ELPA_C_2STAGE_REAL_SSE_BLOCK2
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE_BLOCK4      = ELPA_C_2STAGE_REAL_SSE_BLOCK4
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE_BLOCK6      = ELPA_C_2STAGE_REAL_SSE_BLOCK6
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX_BLOCK2      = ELPA_C_2STAGE_REAL_AVX_BLOCK2
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX_BLOCK4      = ELPA_C_2STAGE_REAL_AVX_BLOCK4
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX_BLOCK6      = ELPA_C_2STAGE_REAL_AVX_BLOCK6
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX2_BLOCK2     = ELPA_C_2STAGE_REAL_AVX2_BLOCK2
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX2_BLOCK4     = ELPA_C_2STAGE_REAL_AVX2_BLOCK4
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX2_BLOCK6     = ELPA_C_2STAGE_REAL_AVX2_BLOCK6
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX512_BLOCK2   = ELPA_C_2STAGE_REAL_AVX512_BLOCK2
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX512_BLOCK4   = ELPA_C_2STAGE_REAL_AVX512_BLOCK4
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX512_BLOCK6   = ELPA_C_2STAGE_REAL_AVX512_BLOCK6
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_GPU             = ELPA_C_2STAGE_REAL_GPU
-  integer(kind=ik), parameter :: DEFAULT_REAL_ELPA_KERNEL         = ELPA_C_2STAGE_REAL_DEFAULT
+  integer(kind=ik), parameter :: number_of_real_kernels = ELPA_2STAGE_NUMBER_OF_REAL_KERNELS
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_GENERIC = ELPA_2STAGE_REAL_GENERIC
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_GENERIC_SIMPLE = ELPA_2STAGE_REAL_GENERIC_SIMPLE
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_BGP = ELPA_2STAGE_REAL_BGP
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_BGQ = ELPA_2STAGE_REAL_BGQ
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE = ELPA_2STAGE_REAL_SSE
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE_BLOCK2 = ELPA_2STAGE_REAL_SSE_BLOCK2
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE_BLOCK4 = ELPA_2STAGE_REAL_SSE_BLOCK4
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE_BLOCK6 = ELPA_2STAGE_REAL_SSE_BLOCK6
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX_BLOCK2 = ELPA_2STAGE_REAL_AVX_BLOCK2
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX_BLOCK4 = ELPA_2STAGE_REAL_AVX_BLOCK4
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX_BLOCK6 = ELPA_2STAGE_REAL_AVX_BLOCK6
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX2_BLOCK2 = ELPA_2STAGE_REAL_AVX2_BLOCK2
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX2_BLOCK4 = ELPA_2STAGE_REAL_AVX2_BLOCK4
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX2_BLOCK6 = ELPA_2STAGE_REAL_AVX2_BLOCK6
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX512_BLOCK2 = ELPA_2STAGE_REAL_AVX512_BLOCK2
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX512_BLOCK4 = ELPA_2STAGE_REAL_AVX512_BLOCK4
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_AVX512_BLOCK6 = ELPA_2STAGE_REAL_AVX512_BLOCK6
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_GPU = ELPA_2STAGE_REAL_GPU
+  integer(kind=ik), parameter :: DEFAULT_REAL_ELPA_KERNEL = ELPA_2STAGE_REAL_DEFAULT
 
   character(35), parameter, dimension(number_of_real_kernels) :: &
   REAL_ELPA_KERNEL_NAMES =    (/"REAL_ELPA_KERNEL_GENERIC         ", &
@@ -135,22 +133,22 @@ module elpa2_utilities
                                 "REAL_ELPA_KERNEL_AVX512_BLOCK6   ", &
                                 "REAL_ELPA_KERNEL_GPU             "/)
 
-  integer(kind=ik), parameter :: number_of_complex_kernels           = ELPA_C_2STAGE_NUMBER_OF_COMPLEX_KERNELS
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_GENERIC         = ELPA_C_2STAGE_COMPLEX_GENERIC
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE  = ELPA_C_2STAGE_COMPLEX_GENERIC_SIMPLE
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_BGP             = ELPA_C_2STAGE_COMPLEX_BGP
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_BGQ             = ELPA_C_2STAGE_COMPLEX_BGQ
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_SSE             = ELPA_C_2STAGE_COMPLEX_SSE
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_SSE_BLOCK1      = ELPA_C_2STAGE_COMPLEX_SSE_BLOCK1
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_SSE_BLOCK2      = ELPA_C_2STAGE_COMPLEX_SSE_BLOCK2
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK1      = ELPA_C_2STAGE_COMPLEX_AVX_BLOCK1
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK2      = ELPA_C_2STAGE_COMPLEX_AVX_BLOCK2
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX2_BLOCK1     = ELPA_C_2STAGE_COMPLEX_AVX2_BLOCK1
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX2_BLOCK2     = ELPA_C_2STAGE_COMPLEX_AVX2_BLOCK2
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX512_BLOCK1   = ELPA_C_2STAGE_COMPLEX_AVX512_BLOCK1
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX512_BLOCK2   = ELPA_C_2STAGE_COMPLEX_AVX512_BLOCK2
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_GPU             = ELPA_C_2STAGE_COMPLEX_GPU
-  integer(kind=ik), parameter :: DEFAULT_COMPLEX_ELPA_KERNEL         = ELPA_C_2STAGE_COMPLEX_DEFAULT
+  integer(kind=ik), parameter :: number_of_complex_kernels = ELPA_2STAGE_NUMBER_OF_COMPLEX_KERNELS
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_GENERIC = ELPA_2STAGE_COMPLEX_GENERIC
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE = ELPA_2STAGE_COMPLEX_GENERIC_SIMPLE
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_BGP = ELPA_2STAGE_COMPLEX_BGP
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_BGQ = ELPA_2STAGE_COMPLEX_BGQ
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_SSE = ELPA_2STAGE_COMPLEX_SSE
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_SSE_BLOCK1 = ELPA_2STAGE_COMPLEX_SSE_BLOCK1
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_SSE_BLOCK2 = ELPA_2STAGE_COMPLEX_SSE_BLOCK2
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK1 = ELPA_2STAGE_COMPLEX_AVX_BLOCK1
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX_BLOCK2 = ELPA_2STAGE_COMPLEX_AVX_BLOCK2
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX2_BLOCK1 = ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX2_BLOCK2 = ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX512_BLOCK1 = ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_AVX512_BLOCK2 = ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_GPU = ELPA_2STAGE_COMPLEX_GPU
+  integer(kind=ik), parameter :: DEFAULT_COMPLEX_ELPA_KERNEL = ELPA_2STAGE_COMPLEX_DEFAULT
 
   character(35), parameter, dimension(number_of_complex_kernels) :: &
   COMPLEX_ELPA_KERNEL_NAMES = (/"COMPLEX_ELPA_KERNEL_GENERIC         ", &

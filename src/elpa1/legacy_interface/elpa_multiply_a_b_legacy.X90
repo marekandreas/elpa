@@ -102,7 +102,7 @@
 !      character(200)                              :: errorMessage
       logical                                     :: success
       integer(kind=ik)                            :: successInternal
-      type(elpa_t)                                :: elpaAPI
+      type(elpa_t)                                :: e
 
       call timer%start("elpa_mult_at_b_&
       &MATH_DATATYPE&
@@ -127,19 +127,25 @@
         return
       endif
 
-      nev = 10
-      elpaAPI = elpa_create(na, nev, lda, ldaCols, nblk, successInternal)
+      e = elpa_allocate()
+
+      call e%set("na", na)
+      call e%set("local_nrows", lda)
+      call e%set("local_ncols", matrixCols)
+      call e%set("nblk", nblk)
+
+      call e%set("mpi_comm_rows", mpi_comm_rows)
+      call e%set("mpi_comm_cols", mpi_comm_cols)
+
+      call e%setup(successInternal)
       if (successInternal .ne. ELPA_OK) then
-        print *, "Cannot create elpa object"
-        success = .false.
+        print *, "Cannot run multiply_a_b"
         stop
+        success = .false.
         return
       endif
 
-      call elpaAPI%set_comm_rows(mpi_comm_rows)
-      call elpaAPI%set_comm_cols(mpi_comm_cols)
-
-      call elpaAPI%multiply_a_b(uplo_a, uplo_c, na, ncb, a(1:lda,1:ldaCols), lda, ldaCols, &
+      call e%hermitian_multiply(uplo_a, uplo_c, na, ncb, a(1:lda,1:ldaCols), lda, ldaCols, &
                                 b(1:ldb,1:ldbCols), ldb, ldbCols, &
                                 c(1:ldc,1:ldcCols), ldc, ldcCols, successInternal)
 
@@ -149,7 +155,7 @@
         success = .false.
         return
       endif
-      call elpaAPI%destroy()
+      call e%destroy()
 
       call elpa_uninit()
 

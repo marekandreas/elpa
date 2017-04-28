@@ -51,7 +51,6 @@
 
 
 #include "config-f90.h"
-#include <elpa/elpa_kernel_constants.h>
 
 module elpa2_utilities_private
   use elpa_utilities
