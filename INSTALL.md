@@ -2,9 +2,9 @@
 
 ## Preamle ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2016.05.004**.
-Although most of the documentation is generic to any *ELPA* release, some configure options
-described in this document might be specific to the above mentioned version of *ELPA*.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2017.05.001**.
+With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
+which makes it easier to install the *ELPA* library
 
 ## How to install *ELPA *##
 
@@ -33,43 +33,146 @@ for the documentation how to proceed.
 
 Please look at configure --help for all available options.
 
+We recommend that you do not build ELPA in it`s main directory but that you use do it
+in a sub-directory:
+
+mkdir build
+cd build
+
+../configure [with all options needed for your system, see below]
+
+In this way, you have a clean separation between original *ELPA* source files and the compiled
+object files
+
 Please note, that it is necessary to set the **compiler options** like optimisation flags etc.
 for the Fortran and C part.
-For example sth. like this is a usual way ./configure FCFLAGS="-O2 -mavx" CFLAGS="-O2 -mavx"
+For example sth. like this is a usual way: ./configure FCFLAGS="-O2 -mavx" CFLAGS="-O2 -mavx"
 For details, please have a look at the documentation for the compilers of your choice.
 
-### Setting of MPI compiler and libraries ###
 
-In the standard case *ELPA* need a MPI compiler and MPI libraries. The configure script
+### Choice of building with or without MPI ###
+
+It is possible to build the *ELPA* library with or without MPI support
+
+Normally *ELPA* is build with MPI, in order to speed-up calculations by using distributed
+parallelisation over several nodes. This is, however, only reasonably if the programs
+calling the *ELPA* library are already MPI parallized, and *ELPA* can use the same
+block-cyclic distribution of data as in the calling program.
+
+Programs which do not support MPI parallelisation can still make use of the *ELPA* library if it
+has also been build without MPI support.
+
+If you want to build *ELPA* with MPI support, please have a look at "A) Setting of MPI compiler and libraries".
+For builds without MPI support, please have a look at "B) Building *ELPA* without MPI support".
+
+Please note, that it is absolutely supported that both versions of the *ELPA* library are build
+and installed.
+
+### A) Setting of MPI compiler and libraries ###
+
+In the standard case *ELPA* needs a MPI compiler and MPI libraries. The configure script
 will try to set this by itself. If, however, on the build system the compiler wrapper
 cannot automatically found, it is recommended to set it by hand with a variable, e.g.
 
 configure FC=mpif90
 
-### Hybrid MPI/OpenMP library build ###
-The *ELPA* library can be build to support hybrid MPI/OpenMP support. To do this the
-"--enable-openmp" configure option should be said. If also a hybrid version of *ELPA*
-is wanted, it is recommended to build to version of *ELPA*: one with pure MPI and
-a hybrid version. They can be both installed in the same path, since the have different
-so library names.
+Please note, thate setting a C MPI-compiles is NOT necessary.
 
-### Standard libraries in default installation paths###
+In some cases, on your system different MPI libraries and compilers are installed. Then it might happen
+that during the build step an error like "no module mpi" or "cannot open module mpi" is given.
+You can switch off that the  *ELPA* library uses MPI modules (and instead uses MPI header files) by
+adding
+
+--disable-mpi-module
+
+to the configure call.
+
+Please continue reading at "C) Enabling GPU support"
+
+
+### B) Building *ELPA* without MPI support ###
+
+If you want to build *ELPA* without MPI support, add
+
+--with-mpi=0
+
+to your configure call.
+
+You have to specify which compilers shouldbe used like,
+
+configure FC=gfortran --with-mpi=0
+
+DO NOT specify a MPI compiler here.
+
+Note, that the the installed *ELPA* library files will be suffixed with
+"_onenode", in order to descriminate this build from possible ones with MPI.
+
+
+Please continue reading at "C) Enabling GPU support"
+
+### C) Enabling GPU support ###
+
+The *ELPA* library can be build with GPU support. If *ELPA* is build with GPU
+support, users can choose at RUNTIME, whether to use the GPU version or not.
+
+For GPU support, NVIDIA GPUs with compute capability >= 3.5 are needed.
+
+GPU support is set with
+
+--enable-gpu
+
+It might be necessary to also set the options (please see configure --help)
+
+--with-cuda-path
+--with-cuda-sdk-path
+--with-GPU-compute-capability
+
+Please continue reading at "D) Enabling OpenMP support".
+
+
+### D) Enabling OpenMP support ###
+
+The *ELPA* library can be build with OpenMP support. This can be support of hybrid
+MPI/OpenMP parallelization, since *ELPA* is build with MPI support (see A ) or only
+shared-memory parallization, since *ELPA* is build without MPI support (see B).
+
+To enable OpenMP support, add
+
+"--enable-openmp"
+
+as configure option.
+
+Note that as in case with/without MPI, you can also build and install versions of *ELPA*
+with/without OpenMP support at the same time.
+
+However, the GPU choice at runtime, is not compatible with OpenMP support
+
+Please continue reading at "E) Standard libraries in default installation paths".
+
+
+### E) Standard libraries in default installation paths###
 
 In order to build the *ELPA* library, some (depending on the settings during the
-configure step, see below) libraries are needed.
+configure step) libraries are needed.
 
 Typically these are:
-  - Basic Linear Algebra Subroutines (BLAS)
-  - Lapack routines
-  - Basic Linear Algebra Communication Subroutines (BLACS)
-  - Scalapack routines
-  - a working MPI library
+  - Basic Linear Algebra Subroutines (BLAS)                   (always needed)
+  - Lapack routines                                           (always needed)
+  - Basic Linear Algebra Communication Subroutines (BLACS)    (only needed if MPI support was set)
+  - Scalapack routines                                        (only needed if MPI support was set)
+  - a working MPI library                                     (only needed if MPI support was set)
+  - a working OpenMP library                                  (only needed if OpenMP support was set)
+  - a working CUDA/cublas library                             (only needed if GPU support was set)
 
 If the needed library are installed on the build system in standard paths (e.g. /usr/lib64)
-the in most cases the *ELPA* configure step will recognize the needed libraries
+in the most cases the *ELPA* configure step will recognize the needed libraries
 automatically. No setting of any library paths should be necessary.
 
-### Non standard paths or non standard libraries ###
+If your configure steps finish succcessfully, please continue at "G) Choice of ELPA2 compute kernels".
+If your configure step aborts, or you want to use libraries in non standard paths please continue at
+"F) Non standard paths or non standard libraries".
+
+### F) Non standard paths or non standard libraries ###
 
 If standard libraries are on the build system either installed in non standard paths, or
 special non standard libraries (e.g. *Intel's MKL*) should be used, it might be necessary
@@ -98,32 +201,28 @@ Please, for the correct link-line refer to the documentation of the correspondig
 sugest the [Intel Math Kernel Library Link Line Advisor] (https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor).
 
 
-### Choice of ELPA2 compute kernels ###
+### G) Choice of ELPA2 compute kernels ###
 
-In the default the configure script tries to configure and build all ELPA2 compute kernels which are available for
-the architecture. Then the specific kernel can be chosen at run-time via the api or an environment variable (see
-the **USERS_GUIDE** for details).
+ELPA 2stage can be used with different implementations of compute intensive kernels, which are architecture dependent.
+Some kernels (all for x86_64 architectures) are enabled by default (and must be disabled if you do not want them),
+others are disabled by default and must be enabled if they are wanted.
+
+Every kernel can be enabled with
+
+--enable-"kernel-types"
+
+or disabled with
+
+--disable-"kernel-types"
+
+During the configure step all possible kernels will be printed, and whether they will be enabled or not.
+
+It is possible to build *ELPA* with as many kernels as desired, the user can then choose at runtime which
+kernels should be used.
 
 It this is not desired, it is possible to build *ELPA* with only one (not necessary the same) kernel for the
-real and complex valued case, respectively. This can be done with the "--with-real-..-kernel-only" and
-"--with-complex-..-kernel-only" configure options. For details please do a "configure --help"
-
-### No MPI, one node shared-memory version of *ELPA* ###
-
-Since release 2016.05.001 it is possible to build *ELPA* without any MPI support. This version can be used
-by applications, which do not have any MPI parallelisation. To set this version, use the
-"--with-mpi=0" configure flag. It is strongly recommmended to also set the "--enable-openmp"
-option, otherwise no parallelisation whatsoever will be present.
-
-It is possible to install the different flavours of *ELPA* (with/without MPI, with/without OpenMP) in the same
-directory, since the library is named differently for each build.
-
-### GPU support as runtime option ###
-If the target systems has NVIDIA GPUs as accelerator cards *ELPA* can be build with GPU support.
-The configure option "--enable-GPU-support" will trigger a build of the GPU version of ELPA. It might be necessary
-that also the option "--with-cuda-path=[your path to the local cuda installation]" has to be set.
-
-For GPU support, only models of NIVIDA GPUs with "compute capabillity" > 3.5 are supported.
+real and complex valued case, respectively. This can be done with the "--with-fixed-real-kernel=NAME" or
+"--with-fixed-complex-kernel=NAME" configure options. For details please do a "configure --help"
 
 ### Doxygen documentation ###
 A doxygen documentation can be created with the "--enable-doxygen-doc" configure option
