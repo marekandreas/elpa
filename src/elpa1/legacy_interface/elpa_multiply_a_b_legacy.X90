@@ -139,7 +139,7 @@
 
       call e%setup(successInternal)
       if (successInternal .ne. ELPA_OK) then
-        print *, "Cannot run multiply_a_b"
+        print *, "Cannot setup ELPA instance"
         stop
         success = .false.
         return

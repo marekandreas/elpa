@@ -127,12 +127,11 @@
        call e%setup(successInternal)
 
        if (successInternal .ne. ELPA_OK) then
-         print *, "Cannot create elpa object"
+         print *, "Cannot setup ELPA instance"
          success = .false.
          stop
          return
        endif
-
 
        call e%invert_tridiagonal(a(1:lda,1:matrixCols), successInternal)
 

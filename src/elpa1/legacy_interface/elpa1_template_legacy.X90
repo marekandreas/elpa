@@ -103,7 +103,7 @@ function elpa_solve_evp_&
 
    integer(kind=c_int)                             :: successInternal
 
-   type(elpa_t)                                    :: elpa1stage
+   type(elpa_t)                                    :: e
    call timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
@@ -120,15 +120,26 @@ function elpa_solve_evp_&
      return
    endif
 
-   elpa1stage = elpa_create(na, nev, lda, matrixCols, nblk, mpi_comm_all, &
-                            my_prow, my_pcol, successInternal)
+   e = elpa_allocate()
+
+   call e%set("na", na)
+   call e%set("local_nrows", lda)
+   call e%set("local_ncols", matrixCols)
+   call e%set("nblk", nblk)
+
+   call e%set("mpi_comm_parent", mpi_comm_all)
+   call e%set("process_row", my_prow)
+   call e%set("process_col", my_pcol)
+
+   call e%setup(successInternal)
+
    if (successInternal .ne. ELPA_OK) then
-     print *, "Cannot create elpa object"
+     print *, "Cannot setup ELPA instance"
      success = .false.
      return
    endif
 
-   call elpa1stage%set("solver", ELPA_SOLVER_1STAGE, successInternal)
+   call e%set("solver", ELPA_SOLVER_1STAGE, successInternal)
    if (successInternal .ne. ELPA_OK) then
      print *, "Cannot set ELPA 1stage solver"
      success = .false.
@@ -137,14 +148,14 @@ function elpa_solve_evp_&
 
    if (present(useGPU)) then
      if (useGPU) then
-       call elpa1stage%set("gpu", 1, successInternal)
+       call e%set("gpu", 1, successInternal)
        if (successInternal .ne. ELPA_OK) then
          print *, "Cannot set gpu"
          success = .false.
          return
        endif
      else
-       call elpa1stage%set("gpu", 0, successInternal)
+       call e%set("gpu", 0, successInternal)
        if (successInternal .ne. ELPA_OK) then
          print *, "Cannot set gpu"
          success = .false.
@@ -154,7 +165,7 @@ function elpa_solve_evp_&
    endif
 
    if (elpa_print_times) then
-     call elpa1stage%set("summary_timings", 1,successInternal)
+     call e%set("summary_timings", 1,successInternal)
      if (successInternal .ne. ELPA_OK) then
        print *, "Cannot set summary_timings"
        success = .false.
@@ -162,7 +173,7 @@ function elpa_solve_evp_&
      endif
    endif
 
-   call elpa1stage%solve(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
+   call e%solve(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
    if (successInternal .ne. ELPA_OK) then
      print *, "Cannot solve with ELPA 1stage"
      success = .false.
@@ -170,11 +181,11 @@ function elpa_solve_evp_&
    endif
 
    if (elpa_print_times) then
-     time_evp_fwd = elpa1stage%time_evp_fwd
-     time_evp_solve = elpa1stage%time_evp_solve
-     time_evp_back = elpa1stage%time_evp_back
+     time_evp_fwd =   e%get("time_evp_fwd")
+     time_evp_solve = e%get("time_evp_solve")
+     time_evp_back =  e%get("time_evp_back")
    endif
-   call elpa1stage%destroy()
+   call e%destroy()
 
    call elpa_uninit()
 
