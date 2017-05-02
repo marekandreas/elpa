@@ -6,11 +6,45 @@ This document provides the guide for using the *ELPA* library in user applicatio
 
 Local documentation (via man pages) should be available (if *ELPA* has been installed with the documentation):
 
-For example "man elpa_get_communicators" should provide the documentation for the *ELPA* function which sets
-the necessary communicators.
+For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program which prints all
+the available kernels.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.004/html/index.html)
+Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2017.05.001/html/index.html)
 for each *ELPA* release is available.
+
+
+## API of the *ELPA* library ##
+
+With release 2017.05.001 of the *ELPA* library the interface has been rewritten substantially, in order to have a more
+generic interface and avoid future interface changes.
+
+For compatibility reasons the interface defined in the previous release 2016.11.001 is also still available
+IF AND ONLY IF *ELPA* has been build with support of this legacy interface. If you want to use the legacy
+interface, please look to section "B) Using the legacy API of the *ELPA* library.
+
+The legacy API defines all the functionallity as has been defined in *ELPA* release 2016.11.011. Note, however,
+that all future features of *ELPA* will only be accessible via the new API defined in release 2017.05.001.
+
+## A) Using the final API definition of the *ELPA* library ##
+
+Using *ELPA* with the latest API is done in the following steps
+
+- include elpa headers (C-Case) or use the Fortran module
+- define a instance of the elpa type
+- call elpa_init
+- call elpa_allocate to allocate an instance of *ELPA*
+- use ELPA-type function "set" to set matrix parameters
+- call ELPA-type function "setup"
+- set or get all possible ELPA options with ELPA-type functions get/set
+- call ELPA-type function solve or others
+- call ELPA-type function destroy
+- call elpa_uninit
+
+
+
+## B) Using the legacy API of the *ELPA* library ##
+
+The following description describes the usage of the *ELPA* library with the legacy interface.
 
 ### General concept of the *ELPA* library ###
 
@@ -20,22 +54,19 @@ The *ELPA* library consists of two main parts:
 
 Both variants of the *ELPA* solvers are available for real or complex singe and double precision valued matrices.
 
-Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.004/html/index.html) for details):
+Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.11.001/html/index.html) for details):
 
 - elpa_get_communicators                        : set the row / column communicators for *ELPA*
 - elpa_solve_evp_complex_1stage_{single|double} : solve a {single|double} precision complex eigenvalue proplem with the *ELPA 1stage* solver
 - elpa_solve_evp_real_1stage_{single|double}    : solve a {single|double} precision real eigenvalue proplem with the *ELPA 1stage* solver
 - elpa_solve_evp_complex_2stage_{single|double} : solve a {single|double} precision complex eigenvalue proplem with the *ELPA 2stage* solver
 - elpa_solve_evp_real_2stage_{single|double}    : solve a {single|double} precision real eigenvalue proplem with the *ELPA 2stage* solver
-
-*NEW*
-
-- elpa_solve_evp_real_{single|double}      : driver for the {single|double} precision real *ELPA 1stage* or *ELPA 2stage* solver
-- elpa_solve_evp_complex_{single|double}   : driver for the {single|double} precision complex *ELPA 1stage* or *ELPA 2stage* solver
+- elpa_solve_evp_real_{single|double}           : driver for the {single|double} precision real *ELPA 1stage* or *ELPA 2stage* solver
+- elpa_solve_evp_complex_{single|double}        : driver for the {single|double} precision complex *ELPA 1stage* or *ELPA 2stage* solver
 
 
 
-Furthermore *ELPA* provides the utility binary "print_available_elpa2_kernels": it tells the user
+Furthermore *ELPA* provides the utility binary "elpa2_print_available_kernels": it tells the user
 which *ELPA 2stage* compute kernels have been installed and which default kernels are set
 
 If you want to solve an eigenvalue problem with *ELPA*, you have to decide whether you
@@ -341,7 +372,7 @@ As an exmple the real double-precision case is explained:
 
  FORTRAN INTERFACE
 
-  use elpa
+  use elpa_driver
 
   success = elpa_solve_evp_real_double (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL=THIS_REAL_ELPA_KERNEL, useQR, useGPU, method=method)
 
