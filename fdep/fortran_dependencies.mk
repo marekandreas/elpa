@@ -105,7 +105,7 @@ endef
 
 # $1 program
 define program_dependencies
-	$(_f90_only_verbose)rm -f .$p.dep.args
+	$(_f90_only_verbose)echo -n > .$p.dep.args
 	$(foreach argument,$(_$p_use_mods) $(_$p_def_mods) $(foreach l,$(call recursive_lib_deps,$p),$(_$l_use_mods) $(_$l_def_mods)),$(call append_to,$(argument),.$p.dep.args))
 	$(_f90_only_verbose)$(top_srcdir)/fdep/fortran_dependencies.pl $p < .$p.dep.args >> $@ || { rm $@; exit 1; }
 	$(_f90_only_verbose)rm -f .$p.dep.args

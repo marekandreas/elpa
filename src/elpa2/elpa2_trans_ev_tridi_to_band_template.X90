@@ -98,7 +98,7 @@
 #else
       use timings_dummy
 #endif
-      use elpa2_utilities
+      use elpa_api
       use elpa2_workload
       use pack_unpack_cpu
       use pack_unpack_gpu
@@ -386,9 +386,9 @@
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK2 .or. &
-	      THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK4 .or. &
-              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK6) then
+          if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+	      THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                                   ! (8 * sizeof(double) == 64)
@@ -398,9 +398,9 @@
         	                                  ! (4 * sizeof(double) == 32)
           endif
 #else
-          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK2 .or. &
-	      THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK4 .or. &
-              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK6) then
+          if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+	      THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
 
             stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
@@ -415,8 +415,8 @@
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK1 .or. &
-	      THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK2) then
+          if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+	      THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
 	                                          ! (4 * sizeof(double complex) == 64)
@@ -428,8 +428,8 @@
 	  endif
 #else
 
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK1 .or. &
-	      THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK2) then
+          if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+	      THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
 	                                          ! (8 * sizeof(float complex) == 64)
@@ -487,9 +487,9 @@
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK2 .or. &
-	      THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK4 .or. &
-              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK6) then
+          if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+	      THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                                   ! (8 * sizeof(double) == 64)
@@ -499,9 +499,9 @@
         	                                  ! (4 * sizeof(double) == 32)
           endif
 #else
-          if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK2 .or. &
-	      THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK4 .or. &
-              THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK6) then
+          if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+	      THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
 
             stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
@@ -517,8 +517,8 @@
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK1 .or. &
-	      THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK2) then
+          if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+	      THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
 	                                          ! (4 * sizeof(double complex) == 64)
@@ -530,8 +530,8 @@
 	  endif
 #else
 
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK1 .or. &
-	      THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK2) then
+          if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+	      THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
 	                                          ! (8 * sizeof(float complex) == 64)
@@ -2863,3 +2863,5 @@
 !#endif /* COMPLEXCASE */
 
     end subroutine
+
+! vim: syntax=fortran

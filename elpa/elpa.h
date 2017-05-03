@@ -6,4 +6,6 @@
 #include <elpa/elpa_constants.h>
 #include <elpa/elpa_generated.h>
 
+const char *elpa_strerr(int elpa_error);
+
 #endif

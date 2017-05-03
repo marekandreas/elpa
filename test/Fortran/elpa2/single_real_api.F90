@@ -208,11 +208,6 @@ program test_real2_choose_kernel_with_api_single_precision
       print *, "an environment variable will always take precedence over"
       print *, "everything else! "
       print *
-#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-      print *," However, this version of ELPA was build with only one of all the available"
-      print *," kernels, thus it will not be successful to call ELPA with another "
-      print *," kernel than the one specified at compile time!"
-#endif
      print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
@@ -220,9 +215,9 @@ program test_real2_choose_kernel_with_api_single_precision
       print *, " the library and have a look at the log files"
 #endif
 
-#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
+#ifndef WITH_FIXED_REAL_KERNEL
       print *, " The settings are: REAL_ELPA_KERNEL_GENERIC_SIMPLE"
-#else /*  WITH_ONE_SPECIFIC_REAL_KERNEL */
+#else /*  WITH_FIXED_REAL_KERNEL */
 
 #ifdef WITH_REAL_GENERIC_KERNEL
       print *, " The settings are: REAL_ELPA_KERNEL_GENERIC"
@@ -279,7 +274,7 @@ program test_real2_choose_kernel_with_api_single_precision
       print *, " The settings are: REAL_ELPA_GPU"
 #endif
 
-#endif  /*  WITH_ONE_SPECIFIC_REAL_KERNEL */
+#endif  /*  WITH_FIXED_REAL_KERNEL */
 
       print *
 
@@ -354,9 +349,9 @@ program test_real2_choose_kernel_with_api_single_precision
 #endif
    successELPA = elpa_solve_evp_real_2stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                               na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-#ifndef WITH_ONE_SPECIFIC_REAL_KERNEL
+#ifndef WITH_FIXED_REAL_KERNEL
                              REAL_ELPA_KERNEL_GENERIC_SIMPLE)
-#else /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+#else /* WITH_FIXED_REAL_KERNEL */
 
 #ifdef WITH_REAL_GENERIC_KERNEL
                               REAL_ELPA_KERNEL_GENERIC)
@@ -429,7 +424,7 @@ program test_real2_choose_kernel_with_api_single_precision
                               REAL_ELPA_KERNEL_GPU)
 #endif
 
-#endif /* WITH_ONE_SPECIFIC_REAL_KERNEL */
+#endif /* WITH_FIXED_REAL_KERNEL */
 
    if (.not.(successELPA)) then
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."

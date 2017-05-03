@@ -42,16 +42,13 @@
 !
 #include "config-f90.h"
 
-#define stringify_(x) "x"
-#define stringify(x) stringify_(x)
-#define assert(x) call x_assert(x, stringify(x), "test_new_interface_real_single_2stage.F90", __LINE__)
+#include "assert.h"
 
 program test_interface
    use precision
-   use assert
    use mod_setup_mpi
    use elpa_mpi
-   use elpa_type
+   use elpa
    use mod_prepare_matrix
    use mod_read_input_parameters
    use mod_blacs_infrastructure
@@ -87,7 +84,7 @@ program test_interface
    integer(kind=c_int) :: qr
 
    type(output_t) :: write_to_file
-   type(elpa_t) :: e
+   class(elpa_t), pointer :: e
 
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -149,11 +146,11 @@ program test_interface
    z(:,:) = 0.0
    ev(:) = 0.0
 
-   call prepare_matrix_single(na, myid, sc_desc, a, z, as)
+   call prepare_matrix(na, myid, sc_desc, a, z, as)
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-   if (elpa_init(20170403) /= ELPA_OK) then
+   if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
      stop 1
    endif
@@ -162,25 +159,35 @@ program test_interface
 #endif
 
 
-   e = elpa_create(na, nev, na_rows, na_cols, nblk, mpi_comm_world, my_prow, my_pcol, success)
-   assert(success == ELPA_OK)
+   e => elpa_allocate()
 
-   qr = e%get("qr", success)
-   print *, "qr =", qr
-   assert(success == ELPA_OK)
+   call e%set("na", na, success)
+   assert_elpa_ok(success)
+   call e%set("nev", nev, success)
+   assert_elpa_ok(success)
+   call e%set("local_nrows", na_rows, success)
+   assert_elpa_ok(success)
+   call e%set("local_ncols", na_cols, success)
+   assert_elpa_ok(success)
+   call e%set("nblk", nblk, success)
+   assert_elpa_ok(success)
+   call e%set("mpi_comm_parent", MPI_COMM_WORLD, success)
+   assert_elpa_ok(success)
+   call e%set("process_row", my_prow, success)
+   assert_elpa_ok(success)
+   call e%set("process_col", my_pcol, success)
+   assert_elpa_ok(success)
 
-   solver = e%get("solver", success)
-   print *, "solver =", solver
-   assert(success == ELPA_OK)
+   assert_elpa_ok(e%setup())
 
    call e%set("solver", ELPA_SOLVER_2STAGE, success)
-   assert(success == ELPA_OK)
+   assert_elpa_ok(success)
 
    call e%set("real_kernel", ELPA_2STAGE_REAL_GENERIC, success)
-   assert(success == ELPA_OK)
+   assert_elpa_ok(success)
 
    call e%set("complex_kernel", ELPA_2STAGE_COMPLEX_GENERIC, success)
-   assert(success == ELPA_OK)
+   assert_elpa_ok(success)
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("prepare_elpa")
 #endif
@@ -188,17 +195,17 @@ program test_interface
    call timer%start("solve")
 #endif
    call e%solve(a, ev, z, success)
-   assert(success == ELPA_OK)
+   assert_elpa_ok(success)
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("solve")
 #endif
 
 
-   call e%destroy()
+   call elpa_deallocate(e)
 
    call elpa_uninit()
 
-   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
+   status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)

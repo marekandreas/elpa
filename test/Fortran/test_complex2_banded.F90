@@ -255,7 +255,7 @@ program test_complex2_double_precision
 
    allocate(ev(na))
 
-   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
+   call prepare_matrix(na, myid, sc_desc, a, z, as)
 
    ! set values outside of the bandwidth to zero
    bandwidth = nblk

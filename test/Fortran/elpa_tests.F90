@@ -306,7 +306,7 @@ program test_all_real
 #endif
 
    if (input_options%datatype .eq. 1) then
-     call prepare_matrix_double(na, myid, sc_desc, a_real, z_real, as_real)
+     call prepare_matrix(na, myid, sc_desc, a_real, z_real, as_real)
 
      if (input_options%doInvertTrm) then
        b_real(:,:) = a_real(:,:)
@@ -314,7 +314,7 @@ program test_all_real
      endif
    endif
    if (input_options%datatype .eq. 2) then
-     call prepare_matrix_double(na, myid, sc_desc, a_complex, z_complex, as_complex)
+     call prepare_matrix(na, myid, sc_desc, a_complex, z_complex, as_complex)
      if (input_options%doInvertTrm) then
        b_complex(:,:) = a_complex(:,:)
        bs_complex(:,:) = a_complex(:,:)
@@ -945,10 +945,10 @@ program test_all_real
 !#endif
 !
 !   if (input_options%datatype .eq. 0) then
-!     call prepare_matrix_double(na, myid, sc_desc, a_real, z_real, as_real)
+!     call prepare_matrix(na, myid, sc_desc, a_real, z_real, as_real)
 !   endif
 !   if (input_options%datatype .eq. 1) then
-!     call prepare_matrix_double(na, myid, sc_desc, a_complex, z_complex, as_complex)
+!     call prepare_matrix(na, myid, sc_desc, a_complex, z_complex, as_complex)
 !   endif
 !
 !
@@ -1061,10 +1061,10 @@ program test_all_real
 
 
      if (input_options%datatype .eq. 1) then
-       status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid)
+       status = check_correctness(na, nev, as_real, z_real, ev, sc_desc, myid)
      endif
      if (input_options%datatype .eq. 2) then
-       status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid)
+       status = check_correctness(na, nev, as_complex, z_complex, ev, sc_desc, myid)
      endif
 
      if (status .eq. 1) then
@@ -1143,7 +1143,7 @@ program test_all_real
                         trim(elpa_get_actual_real_kernel_name()),' default kernel:',tEnd - tStart
          if (myid == 0) print *," "
 
-         status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid)
+         status = check_correctness(na, nev, as_real, z_real, ev, sc_desc, myid)
          if (myid == 0) print *," "
 
          if (status .eq. 1) then
@@ -1228,7 +1228,7 @@ program test_all_real
                             trim(elpa_real_kernel_name(this_kernel)),' kernel:',tEnd - tStart
              if (myid == 0) print *," "
 
-             status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid)
+             status = check_correctness(na, nev, as_real, z_real, ev, sc_desc, myid)
              if (myid == 0) print *," "
 
              if (status .eq. 1) then
@@ -1320,7 +1320,7 @@ program test_all_real
                           trim(elpa_real_kernel_name(input_options%this_real_kernel)),' kernel:',tEnd - tStart
            if (myid == 0) print *," "
 
-           status = check_correctness_double(na, nev, as_real, z_real, ev, sc_desc, myid)
+           status = check_correctness(na, nev, as_real, z_real, ev, sc_desc, myid)
            if (myid == 0) print *," "
 
            if (status .eq. 1) then
@@ -1413,7 +1413,7 @@ program test_all_real
                         trim(elpa_get_actual_complex_kernel_name()),' default kernel:',tEnd - tStart
          if (myid == 0) print *," "
 
-         status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid)
+         status = check_correctness(na, nev, as_complex, z_complex, ev, sc_desc, myid)
          if (myid == 0) print *," "
 
          if (status .eq. 1) then
@@ -1499,7 +1499,7 @@ program test_all_real
                               trim(elpa_complex_kernel_name(this_kernel)),' kernel:',tEnd - tStart
              if (myid == 0) print *," "
 
-             status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid)
+             status = check_correctness(na, nev, as_complex, z_complex, ev, sc_desc, myid)
              if (myid == 0) print *," "
 
              if (status .eq. 1) then
@@ -1594,7 +1594,7 @@ program test_all_real
                           trim(elpa_complex_kernel_name(input_options%this_complex_kernel)),' kernel:',tEnd - tStart
            if (myid == 0) print *," "
 
-           status = check_correctness_double(na, nev, as_complex, z_complex, ev, sc_desc, myid)
+           status = check_correctness(na, nev, as_complex, z_complex, ev, sc_desc, myid)
            if (myid == 0) print *," "
 
            if (status .eq. 1) then

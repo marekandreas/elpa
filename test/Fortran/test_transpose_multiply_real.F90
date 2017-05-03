@@ -203,7 +203,7 @@ program test_transpose_multiply
 
    allocate(ev(na))
 
-   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
+   call prepare_matrix(na, myid, sc_desc, a, z, as)
 
    b(:,:) = 2.0_rk8 * a(:,:)
    c(:,:) = 0.0_rk8

@@ -68,33 +68,37 @@
 program print_available_elpa2_kernels
 
    use precision
-   use elpa1
-   use elpa2
-
-   use elpa2_utilities
-   use elpa2_utilities_private
+   use elpa
 
    implicit none
 
    integer(kind=ik) :: i
+   class(elpa_t), pointer :: e
+
+   if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
+     print *, "Unsupported ELPA API Version"
+     stop 1
+   endif
+
+   e => elpa_allocate()
 
    print *, "This program will give information on the ELPA2 kernels, "
    print *, "which are available with this library and it will give "
    print *, "information if (and how) the kernels can be choosen at "
    print *, "runtime"
    print *
-   print *
 #ifdef WITH_OPENMP
    print *, " ELPA supports threads: yes"
 #else
    print *, " ELPA supports threads: no"
 #endif
+   print *
 
    print *, "Information on ELPA2 real case: "
    print *, "=============================== "
 #ifdef HAVE_ENVIRONMENT_CHECKING
    print *, " choice via environment variable: yes"
-   print *, " environment variable name      : REAL_ELPA_KERNEL"
+   print *, " environment variable name      : ELPA_2STAGE_REAL_KERNEL"
 #else
    print *, " choice via environment variable: no"
 #endif
@@ -103,15 +107,16 @@ program print_available_elpa2_kernels
 #ifdef HAVE_AVX2
    print *, " AVX kernels are optimized for FMA (AVX2)"
 #endif
-   call print_available_real_kernels()
+   print *
+   call e%print_options("real_kernel")
+   print *
+   print *
 
-   print *
-   print *
    print *, "Information on ELPA2 complex case: "
    print *, "=============================== "
 #ifdef HAVE_ENVIRONMENT_CHECKING
    print *, " choice via environment variable: yes"
-   print *, " environment variable name      : COMPLEX_ELPA_KERNEL"
+   print *, " environment variable name      : ELPA_2STAGE_COMPLEX_KERNEL"
 #else
    print *,  " choice via environment variable: no"
 #endif
@@ -120,6 +125,11 @@ program print_available_elpa2_kernels
 #ifdef HAVE_AVX2
    print *, " AVX kernels are optimized for FMA (AVX2)"
 #endif
-   call print_available_complex_kernels()
+   print *
+   call e%print_options("complex_kernel")
+   print *
+   print *
+
+   call elpa_deallocate(e)
 
 end program print_available_elpa2_kernels

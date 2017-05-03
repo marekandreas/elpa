@@ -114,7 +114,7 @@ function elpa_solve_evp_&
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
 
    success = .true.
-   if (elpa_init(20170403) /= ELPA_OK) then
+   if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *,  "ELPA API version not supported"
      success = .false.
      return
@@ -123,6 +123,7 @@ function elpa_solve_evp_&
    e = elpa_allocate()
 
    call e%set("na", na)
+   call e%set("nev", nev)
    call e%set("local_nrows", lda)
    call e%set("local_ncols", matrixCols)
    call e%set("nblk", nblk)
@@ -131,9 +132,7 @@ function elpa_solve_evp_&
    call e%set("process_row", my_prow)
    call e%set("process_col", my_pcol)
 
-   call e%setup(successInternal)
-
-   if (successInternal .ne. ELPA_OK) then
+   if (e%setup() .ne. ELPA_OK) then
      print *, "Cannot setup ELPA instance"
      success = .false.
      return
@@ -174,6 +173,7 @@ function elpa_solve_evp_&
    endif
 
    call e%solve(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
+
    if (successInternal .ne. ELPA_OK) then
      print *, "Cannot solve with ELPA 1stage"
      success = .false.
@@ -181,9 +181,9 @@ function elpa_solve_evp_&
    endif
 
    if (elpa_print_times) then
-     time_evp_fwd =   e%get("time_evp_fwd")
-     time_evp_solve = e%get("time_evp_solve")
-     time_evp_back =  e%get("time_evp_back")
+     time_evp_fwd =   e%get_double("time_evp_fwd")
+     time_evp_solve = e%get_double("time_evp_solve")
+     time_evp_back =  e%get_double("time_evp_back")
    endif
    call e%destroy()
 
@@ -197,4 +197,4 @@ function elpa_solve_evp_&
 
 end function
 
-
+! vim: syntax=fortran

@@ -42,9 +42,43 @@
 !
 #include "config-f90.h"
 
+! Define one of TEST_REAL or TEST_COMPLEX
+! Define one of TEST_SINGLE or TEST_DOUBLE
+! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
+! Define TEST_GPU \in [0, 1]
+! Define TEST_KERNEL \in [any valid kernel]
+
+#if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
+error: define exactly one of TEST_REAL or TEST_COMPLEX
+#endif
+
+#if !(defined(TEST_SINGLE) ^ defined(TEST_DOUBLE))
+error: define exactly one of TEST_SINGLE or TEST_DOUBLE
+#endif
+
+#if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE))
+error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
+#endif
+
+#ifdef TEST_SINGLE
+#  define EV_TYPE real(kind=C_FLOAT)
+#  ifdef TEST_REAL
+#    define MATRIX_TYPE real(kind=C_FLOAT)
+#  else
+#    define MATRIX_TYPE complex(kind=C_FLOAT_COMPLEX)
+#  endif
+#else
+#  define EV_TYPE real(kind=C_DOUBLE)
+#  ifdef TEST_REAL
+#    define MATRIX_TYPE real(kind=C_DOUBLE)
+#  else
+#    define MATRIX_TYPE complex(kind=C_DOUBLE_COMPLEX)
+#  endif
+#endif
+
 #include "assert.h"
 
-program test_interface
+program test
    use precision
    use mod_setup_mpi
    use elpa_mpi
@@ -73,16 +107,15 @@ program test_interface
    integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
-   complex(kind=C_FLOAT_COMPLEX), allocatable :: a(:,:), as(:,:)
+   MATRIX_TYPE, allocatable :: a(:,:), as(:,:)
    ! eigenvectors
-   complex(kind=C_FLOAT_COMPLEX), allocatable :: z(:,:)
+   MATRIX_TYPE, allocatable :: z(:,:)
    ! eigenvalues
-   real(kind=C_FLOAT), allocatable :: ev(:)
+   EV_TYPE, allocatable :: ev(:)
 
    integer :: success, status
 
    integer(kind=c_int) :: solver
-   integer(kind=c_int) :: qr
 
    type(output_t) :: write_to_file
    class(elpa_t), pointer :: e
@@ -146,6 +179,7 @@ program test_interface
    ev(:) = 0.0
 
    call prepare_matrix(na, myid, sc_desc, a, z, as)
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
@@ -154,6 +188,7 @@ program test_interface
      print *, "ELPA API version not supported"
      stop 1
    endif
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("prepare_elpa")
 #endif
@@ -177,22 +212,44 @@ program test_interface
    call e%set("process_col", my_pcol, success)
    assert_elpa_ok(success)
 
-   assert(e%setup() .eq. ELPA_OK)
+   assert_elpa_ok(e%setup())
 
-   call e%set("solver", ELPA_SOLVER_1STAGE, success)
+#ifdef TEST_SOLVER_1STAGE
+   call e%set("solver", ELPA_SOLVER_1STAGE)
+#else
+   call e%set("solver", ELPA_SOLVER_2STAGE)
+#endif
    assert_elpa_ok(success)
+
+   call e%set("gpu", TEST_GPU, success)
+   assert_elpa_ok(success)
+
+#if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)
+# ifdef TEST_COMPLEX
+   call e%set("complex_kernel", TEST_KERNEL, success)
+# else
+   call e%set("real_kernel", TEST_KERNEL, success)
+# endif
+   assert_elpa_ok(success)
+#endif
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("prepare_elpa")
 #endif
+
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve")
 #endif
 
+   ! The actual solve step
    call e%solve(a, ev, z, success)
    assert_elpa_ok(success)
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("solve")
 #endif
+
 
    call elpa_deallocate(e)
 
@@ -204,6 +261,7 @@ program test_interface
    deallocate(as)
    deallocate(z)
    deallocate(ev)
+
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("program")
    print *," "
@@ -219,5 +277,7 @@ program test_interface
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
-   call EXIT(STATUS)
+
+   call exit(status)
+
 end program

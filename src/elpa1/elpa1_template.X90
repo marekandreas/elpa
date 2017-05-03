@@ -58,7 +58,7 @@ function elpa_solve_evp_&
          &MATH_DATATYPE&
 	 &_1stage_&
 	 &PRECISION&
-	 &_impl ( na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+	 &_impl (obj, na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
 	        mpi_comm_cols, mpi_comm_all, useGPU, time_evp_fwd,     &
                 time_evp_solve, time_evp_back, summary_timings) result(success)
    use precision
@@ -70,11 +70,13 @@ function elpa_solve_evp_&
    use timings_dummy
 #endif
    use iso_c_binding
+   use elpa_api
    use elpa_mpi
    use elpa1_compute
    use elpa1_utilities, only : gpu_usage_via_environment_variable
    implicit none
 
+   class(elpa_t), intent(in)                       :: obj
    integer(kind=c_int), intent(in)                 :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, &
                                                       mpi_comm_cols, mpi_comm_all
    real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
@@ -115,7 +117,6 @@ function elpa_solve_evp_&
    integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol, mpierr
    real(kind=C_DATATYPE_KIND), allocatable         :: e(:)
    real(kind=c_double)                             :: ttt0, ttt1 ! MPI_WTIME always needs double
-   logical, save                                   :: firstCall = .true.
    logical                                         :: wantDebug
    integer(kind=c_int)                             :: istat
    character(200)                                  :: errorMessage
@@ -142,14 +143,8 @@ function elpa_solve_evp_&
    call timer%stop("mpi_communication")
    success = .true.
 
-   wantDebug = .false.
-   if (firstCall) then
-     ! are debug messages desired?
-     wantDebug = debug_messages_via_environment_variable()
-     firstCall = .false.
-   endif
-
-   do_useGPU      = .false.
+   wantDebug = obj%get("debug") == 1
+   do_useGPU = .false.
 
 
    if (useGPU) then

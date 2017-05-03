@@ -210,11 +210,6 @@ program test_real2_default_kernel_double_precision
       print *
       print *, " The settings are: ",trim(elpa_get_actual_real_kernel_name())," as real kernel"
       print *
-#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-      print *," However, this version of ELPA was build with only one of all the available"
-      print *," kernels, thus it will not be successful to call ELPA with another "
-      print *," kernel than the one specified at compile time!"
-#endif
       print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "

@@ -45,24 +45,16 @@
 module mod_check_correctness
 
 
-  interface check_correctness_double
-    module procedure check_correctness_complex_double
-    module procedure check_correctness_real_double
-  end interface
-
   interface check_correctness
     module procedure check_correctness_complex_double
     module procedure check_correctness_real_double
-  end interface
-
 #ifdef WANT_SINGLE_PRECISION_REAL
-  interface check_correctness_single
+    module procedure check_correctness_real_single
+#endif
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     module procedure check_correctness_complex_single
 #endif
-    module procedure check_correctness_real_single
   end interface
-#endif
 
   contains
 

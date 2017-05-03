@@ -54,13 +54,10 @@
   &_&
   &2stage_&
   &PRECISION&
-  &_impl (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,   &
-         time_evp_fwd, time_evp_solve, time_evp_back, summary_timings, useGPU, &
+  &_impl (obj, na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,   &
+         time_evp_fwd, time_evp_solve, time_evp_back, summary_timings, useGPU, kernel &
 #if REALCASE == 1
-   THIS_ELPA_KERNEL_API, useQR   &
-#endif
-#if COMPLEXCASE == 1
-   THIS_ELPA_KERNEL_API          &
+   , useQR   &
 #endif
    &) result(success)
 
@@ -69,25 +66,26 @@
 #else
    use timings_dummy
 #endif
+   use elpa_api
+   use elpa_utilities
    use elpa1_utilities, only : gpu_usage_via_environment_variable
    use elpa1_compute
    use elpa2_compute
-   use elpa2_utilities_private
    use elpa_mpi
    use cuda_functions
    use mod_check_for_gpu
    use iso_c_binding
    implicit none
+   class(elpa_t), intent(in)                 :: obj
    logical, intent(in)                       :: useGPU
 #if REALCASE == 1
    logical, intent(in), optional             :: useQR
 #endif
-   logical                                   :: useQRActual, useQREnvironment
+   logical                                   :: useQRActual
 
    integer(kind=c_int)                       :: bandwidth
 
-   integer(kind=c_int), intent(in), optional :: THIS_ELPA_KERNEL_API
-   integer(kind=c_int)                       :: THIS_ELPA_KERNEL
+   integer(kind=c_int)                       :: kernel
 
    integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
                                                 mpi_comm_cols, mpi_comm_all
@@ -115,7 +113,6 @@
 
    integer(kind=c_int)                       :: i
    logical                                   :: success, successCUDA
-   logical, save                             :: firstCall = .true.
    logical                                   :: wantDebug
    integer(kind=c_int)                       :: istat
    character(200)                            :: errorMessage
@@ -142,13 +139,7 @@
     call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
     call timer%stop("mpi_communication")
 
-    wantDebug = .false.
-    if (firstCall) then
-      ! are debug messages desired?
-      wantDebug = debug_messages_via_environment_variable()
-      firstCall = .false.
-    endif
-
+    wantDebug = obj%get("debug") == 1
     success = .true.
 
     do_useGPU      = .false.
@@ -161,11 +152,6 @@
     if (present(useQR)) then
       if (useQR) useQRActual = .true.
         if (.not.(useQR)) useQRACtual = .false.
-    endif
-
-    ! overwrite this with environment variable settings
-    if (qr_decomposition_via_environment_variable(useQREnvironment)) then
-      useQRActual = useQREnvironment
     endif
 
     if (useQRActual) then
@@ -216,117 +202,16 @@
       endif
     endif
 
-    if (present(THIS_ELPA_KERNEL_API)) then
-      ! user defined kernel via the optional argument in the API call
-      THIS_ELPA_KERNEL = THIS_ELPA_KERNEL_API
-    else
-
-      ! if kernel is not choosen via api
-      ! check whether set by environment variable
-      THIS_ELPA_KERNEL = elpa_get_actual_&
-            &MATH_DATATYPE&
-            &_kernel()
-    endif
-
-    ! check whether choosen kernel is allowed: function returns true if NOT allowed! change this
-    if (check_allowed_&
-       &MATH_DATATYPE&
-       &_kernels(THIS_ELPA_KERNEL)) then
-
-      if (my_pe == 0) then
-        write(error_unit,*) " "
-        write(error_unit,*) "The choosen kernel ", &
-	&MATH_DATATYPE&
-	&_ELPA_KERNEL_NAMES(THIS_ELPA_KERNEL)
-        write(error_unit,*) "is not in the list of the allowed kernels!"
-        write(error_unit,*) " "
-        write(error_unit,*) "Allowed kernels are:"
-        do i=1,size( &
-	&MATH_DATATYPE&
-	&_ELPA_KERNEL_NAMES(:))
-          if (AVAILABLE_&
-	  &MATH_DATATYPE&
-	  &_ELPA_KERNELS(i) .ne. 0) then
-            write(error_unit,*) &
-#if REALCASE == 1
-	                        REAL_ELPA_KERNEL_NAMES(i)
-#endif
-#if COMPLEXCASE == 1
-	                        COMPLEX_ELPA_KERNEL_NAMES(i)
-#endif
-          endif
-        enddo
-
-        write(error_unit,*) " "
-        ! check whether generic kernel is defined
-         if (AVAILABLE_&
-	 &MATH_DATATYPE&
-	 &_ELPA_KERNELS( &
-#if REALCASE == 1
-	                REAL_ELPA_KERNEL_GENERIC ) .eq. 1) then
-#endif
-#if COMPLEXCASE == 1
-	                COMPLEX_ELPA_KERNEL_GENERIC ) .eq. 1) then
-
-#endif
-           write(error_unit,*) "The default kernel &
-	   &MATH_DATATYPE&
-	   &( &
-	   &_ELPA_KERNEL_GENERIC will be used !"
-         else
-           write(error_unit,*) "As default kernel ", &
-	   &MATH_DATATYPE&
-	   &_ELPA_KERNEL_NAMES(DEFAULT_&
-	   &MATH_DATATYPE&
-	   &_ELPA_KERNEL)," will be used"
-         endif
-      endif  ! my_pe == 0
-      if (AVAILABLE_&
-      &MATH_DATATYPE&
-      &_ELPA_KERNELS( &
-      &MATH_DATATYPE&
-      &_ELPA_KERNEL_GENERIC) .eq. 1) then
-        THIS_ELPA_KERNEL = &
-	&MATH_DATATYPE&
-	&_ELPA_KERNEL_GENERIC
-      else
-        THIS_ELPA_KERNEL = DEFAULT_&
-	&MATH_DATATYPE&
-	&_ELPA_KERNEL
-      endif
-    endif
-
     ! check consistency between request for GPUs and defined kernel
     if (do_useGPU) then
-      do_useGPU_trans_ev_tridi = .true.
-      if (THIS_ELPA_KERNEL .ne. &
-      &MATH_DATATYPE&
-      &_ELPA_KERNEL_GPU) then
-        write(error_unit,*) "GPU usage has been requested but compute kernel is defined as non-GPU! Aborting..."
-        success = .false.
-        return
+      if (nblk .ne. 128) then
+        ! cannot run on GPU with this blocksize
+        ! disable GPU usage for trans_ev_tridi
+        do_useGPU_trans_ev_tridi = .false.
+      else
+        do_useGPU_trans_ev_tridi = .true.
       endif
     endif
-
-!    if (do_useGPU) then
-!      if (nblk .ne. 128) then
-!        write(error_unit,*) "In case of GPU usage the blocksize for ELPA 2stage has to be 128"
-!        success = .false.
-!        return
-!      endif
-!    endif
-
-     if (do_useGPU) then
-       if (nblk .ne. 128) then
-         ! cannot run on GPU with this blocksize
-	 ! disable GPU usage for trans_ev_tridi
-
-         do_useGPU_trans_ev_tridi = .false.
-	 THIS_ELPA_KERNEL = MATH_DATATYPE&
-	                    &_ELPA_KERNEL_GENERIC
-	 ! no data transfer to GPU needed
-       endif
-     endif
 
     bandwidth = -1
     if (bandwidth .ne. -1) then
@@ -497,7 +382,7 @@
      (na, nev, nblk, nbw, q, &
      q_dev, &
      ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
-     summary_timings, success, THIS_ELPA_KERNEL)
+     summary_timings, success, kernel)
 
      if (.not.(success)) return
      ttt1 = MPI_Wtime()
@@ -574,3 +459,5 @@
    &_2stage_&
    &PRECISION&
    &_impl
+
+! vim: syntax=fortran

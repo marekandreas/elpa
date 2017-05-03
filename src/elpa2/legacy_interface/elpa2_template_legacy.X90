@@ -107,7 +107,7 @@
     call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
 
     success = .true.
-    if (elpa_init(20170403) /= ELPA_OK) then
+    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
       print *,  "ELPA API version not supported"
       success = .false.
       return
@@ -116,6 +116,7 @@
     e = elpa_allocate()
 
     call e%set("na", na)
+    call e%set("nev", nev)
     call e%set("local_nrows", lda)
     call e%set("local_ncols", matrixCols)
     call e%set("nblk", nblk)
@@ -124,9 +125,7 @@
     call e%set("process_row", my_prow)
     call e%set("process_col", my_pcol)
 
-    call e%setup(successInternal)
-
-    if (successInternal .ne. ELPA_OK) then
+    if (e%setup() .ne. ELPA_OK) then
       print *, "Cannot setup ELPA instance"
       success = .false.
       return
@@ -231,7 +230,6 @@
      &PRECISION&
      &_legacy_interface")
 
-   end function solve_evp_&
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION
+   end function
+
+! vim: syntax=fortran

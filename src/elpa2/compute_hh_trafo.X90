@@ -73,7 +73,7 @@
 #endif
 
          use precision
-         use elpa2_utilities
+         use elpa_api
          use iso_c_binding
 #if REALCASE == 1
 
@@ -184,13 +184,13 @@
          real(kind=c_double)                :: ttt ! MPI_WTIME always needs double
 
 #if REALCASE == 1
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
+         if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_GPU) then
            ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
            if (ncols < 1) return
          endif
 #endif
 #if COMPLEXCASE == 1
-         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GPU) then
+         if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_GPU) then
            ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
            if (ncols < 1) return
          endif
@@ -221,7 +221,7 @@
 #else /* WITH_OPENMP */
 
 #if REALCASE == 1
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
+         if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_GPU) then
            print *,"compute_hh_trafo_&
 	   &MATH_DATATYPE&
 	   &_GPU OPENMP: not yet implemented"
@@ -229,7 +229,7 @@
          endif
 #endif
 #if COMPLEXCASE == 1
-         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GPU) then
+         if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_GPU) then
            print *,"compute_hh_trafo_&
 	   &MATH_DATATYPE&
 	   &_GPU OPENMP: not yet implemented"
@@ -259,7 +259,7 @@
 
 #if REALCASE == 1
 ! GPU kernel real
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GPU) then
+         if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_GPU) then
            dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_&
 	                &PRECISION&
 			&_&
@@ -272,7 +272,7 @@
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 ! GPU kernel complex
-         if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GPU) then
+         if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_GPU) then
 
            dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * size_of_&
 	                &PRECISION&
@@ -302,17 +302,17 @@
          else ! not CUDA kernel
 
 #if REALCASE == 1
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-         if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2 .or. &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK2 .or. &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK2 .or. &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK2 .or. &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC    .or. &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE .or. &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE .or.        &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP .or.        &
-             THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+         if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX_BLOCK2 .or. &
+             THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX2_BLOCK2 .or. &
+             THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+             THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_SSE_BLOCK2 .or. &
+             THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_GENERIC    .or. &
+             THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_GENERIC_SIMPLE .or. &
+             THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_SSE_ASSEMBLY .or. &
+             THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_BGP .or.        &
+             THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_BGQ) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
 
 #endif /* REALCASE */
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -322,9 +322,9 @@
 #if REALCASE == 1
 ! generic kernel real case
 #if defined(WITH_REAL_GENERIC_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+             if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_GENERIC) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
 
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -368,9 +368,9 @@
 
                enddo
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_GENERIC_KERNEL */
 
 #endif /* REALCASE == 1 */
@@ -378,11 +378,11 @@
 #if COMPLEXCASE == 1
 ! generic kernel complex case
 #if defined(WITH_COMPLEX_GENERIC_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC .or. &
-               THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGP .or. &
-               THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGQ ) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_GENERIC .or. &
+               THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_BGP .or. &
+               THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_BGQ ) then
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -419,9 +419,9 @@
 #endif /* WITH_OPENMP */
 
             enddo
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC .or. THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGP .or. THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_BGQ )
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_GENERIC .or. THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_BGP .or. THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_BGQ )
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_GENERIC_KERNEL */
 
 #endif /* COMPLEXCASE */
@@ -429,9 +429,9 @@
 #if REALCASE == 1
 ! generic simple real kernel
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_GENERIC_SIMPLE) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+             if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_GENERIC_SIMPLE) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -472,9 +472,9 @@
 #endif /* WITH_OPENMP */
 
                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_GENERIC_SIMPLE_KERNEL */
 
 #endif /* REALCASE */
@@ -483,9 +483,9 @@
 ! generic simple complex case
 
 #if defined(WITH_COMPLEX_GENERIC_SIMPLE_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-            if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+            if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_GENERIC_SIMPLE) then
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -521,18 +521,18 @@
 
 #endif /* WITH_OPENMP */
              enddo
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_GENERIC_SIMPLE)
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_GENERIC_SIMPLE_KERNEL */
 #endif /* COMPLEXCASE */
 
 #if REALCASE == 1
 ! sse assembly kernel real case
 #if defined(WITH_REAL_SSE_ASSEMBLY_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+             if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_SSE_ASSEMBLY) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -552,9 +552,9 @@
 		 & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_ASSEMBLY_KERNEL */
 
 #endif /* REALCASE */
@@ -562,9 +562,9 @@
 #if COMPLEXCASE == 1
 ! sse assembly kernel complex case
 #if defined(WITH_COMPLEX_SSE_ASSEMBLY_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_SSE_ASSEMBLY) then
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
              ttt = mpi_wtime()
              do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -583,9 +583,9 @@
 	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE)
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_SSE)
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_ASSEMBLY_KERNEL */
 #endif /* COMPLEXCASE */
 
@@ -596,11 +596,11 @@
 #if COMPLEXCASE == 1
 ! sse block1 complex kernel
 #if defined(WITH_COMPLEX_SSE_BLOCK1_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK1) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_SSE_BLOCK1) then
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
 
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL))
+#if (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL))
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -617,11 +617,11 @@
 	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
-#endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)) */
+#endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)) */
 
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK1)
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_SSE_BLOCK1)
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK1_KERNEL */
 
 #endif /* COMPLEXCASE */
@@ -633,12 +633,12 @@
 #if COMPLEXCASE == 1
 ! avx block1 complex kernel
 #if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK1_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          if ((THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. &
-              (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK1)) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          if ((THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK1) .or. &
+              (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK1)) then
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
 
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL))
+#if (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL))
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -655,11 +655,11 @@
 	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
-#endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)) */
+#endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)) */
 
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif ! ((THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK1) .or. (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK1))
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          endif ! ((THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK1) .or. (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK1))
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL || WITH_COMPLEX_AVX2_BLOCK1_KERNEL */
 
 #endif /* COMPLEXCASE */
@@ -671,11 +671,11 @@
 #if COMPLEXCASE == 1
 ! avx512 block1 complex kernel
 #if defined(WITH_COMPLEX_AVX512_BLOCK1_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          if ((THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK1)) then
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          if ((THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1)) then
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
 
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) )
+#if (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) )
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
@@ -692,11 +692,11 @@
 	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
-#endif /* defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL) || (defined(WITH_ONE_SPECIFIC_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) ) */
+#endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) ) */
 
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-          endif ! ((THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK1))
-#endif /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          endif ! ((THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1))
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX512_BLOCK1_KERNEL  */
 #endif /* COMPLEXCASE */
 
@@ -704,11 +704,11 @@
 ! implementation of sse block 2 real case
 #if defined(WITH_REAL_SSE_BLOCK2_KERNEL)
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK2) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+           if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_SSE_BLOCK2) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL) && !defined(WITH_REAL_SSE_BLOCK4_KERNEL))
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL) && !defined(WITH_REAL_SSE_BLOCK4_KERNEL))
              do j = ncols, 2, -2
                w(:,1) = bcast_buffer(1:nbw,j+off)
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -726,11 +726,11 @@
 	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
-#endif /* defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL) && !defined(WITH_REAL_SSE_BLOCK4_KERNEL)) */
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL) && !defined(WITH_REAL_SSE_BLOCK4_KERNEL)) */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
            endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_BLOCK2_KERNEL */
 
 #endif /* REALCASE == 1 */
@@ -739,9 +739,9 @@
 ! implementation of sse block 2 complex case
 
 #if defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           if (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK2) then
-#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_SSE_BLOCK2) then
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
 
              ttt = mpi_wtime()
              do j = ncols, 2, -2
@@ -775,9 +775,9 @@
 		       & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_SSE_BLOCK2)
-#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           endif ! (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_SSE_BLOCK2)
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK2_KERNEL */
 #endif /* COMPLEXCASE == 1 */
 
@@ -785,13 +785,13 @@
 ! implementation of avx block 2 real case
 
 #if defined(WITH_REAL_AVX_BLOCK2_KERNEL) || defined(WITH_REAL_AVX2_BLOCK2_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
 
-           if ((THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK2) .or. &
-               (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK2))  then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+           if ((THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX_BLOCK2) .or. &
+               (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX2_BLOCK2))  then
+#endif /* not WITH_FIXED_REAL_KERNEL */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX_BLOCK4_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK4_KERNEL))
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX_BLOCK4_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK4_KERNEL))
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -810,11 +810,11 @@
 	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
-#endif /* defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) ... */
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) ... */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK2_KERNEL || WITH_REAL_AVX2_BLOCK2_KERNEL */
 
 #endif /* REALCASE */
@@ -822,10 +822,10 @@
 #if COMPLEXCASE == 1
 ! implementation of avx block 2 complex case
 #if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) .or. &
-                (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK2) ) then
-#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           if ( (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK2) .or. &
+                (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK2) ) then
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
 
               ttt = mpi_wtime()
              do j = ncols, 2, -2
@@ -859,9 +859,9 @@
 		       & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX_BLOCK2) .or. (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX2_BLOCK2) )
-#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK2) .or. (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK2) )
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL || WITH_COMPLEX_AVX2_BLOCK2_KERNEL */
 
 #endif /* COMPLEXCASE */
@@ -870,12 +870,12 @@
 ! implementation of avx512 block 2 real case
 
 #if defined(WITH_REAL_AVX512_BLOCK2_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
 
-           if ((THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK2)) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+           if ((THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2)) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_AVX512_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX512_BLOCK4_KERNEL))
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX512_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX512_BLOCK4_KERNEL))
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -894,11 +894,11 @@
 	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
-#endif /* defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) ... */
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) ... */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_AVX512_BLOCK2_KERNEL */
 
 #endif /* REALCASE */
@@ -906,9 +906,9 @@
 #if COMPLEXCASE == 1
 ! implementation of avx512 block 2 complex case
 #if defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL)
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           if ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK2)) then
-#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           if ( (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2)) then
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
 
               ttt = mpi_wtime()
              do j = ncols, 2, -2
@@ -942,9 +942,9 @@
 		       & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
-#if defined(WITH_NO_SPECIFIC_COMPLEX_KERNEL)
-           endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. COMPLEX_ELPA_KERNEL_AVX512_BLOCK2))
-#endif  /* WITH_NO_SPECIFIC_COMPLEX_KERNEL */
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           endif ! ( (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2))
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_AVX512_BLOCK2_KERNEL */
 #endif /* COMPLEXCASE */
 
@@ -952,9 +952,9 @@
 #if REALCASE == 1
 
 #if defined(WITH_REAL_BGP_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGP) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+             if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_BGP) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -968,15 +968,15 @@
 		 & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_BGP_KERNEL */
 
 #if defined(WITH_REAL_BGQ_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-             if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_BGQ) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+             if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_BGQ) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -989,9 +989,9 @@
 		 & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
              endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_BGQ_KERNEL */
 
 #endif /* REALCASE */
@@ -1022,20 +1022,20 @@
 #endif /* REALCASE == 1 */
 
 #if REALCASE == 1
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
            endif !
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* REALCASE == 1 */
 
 #if REALCASE == 1
 ! sse block4 real kernel
 
 #if defined(WITH_REAL_SSE_BLOCK4_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK4) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+           if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_SSE_BLOCK4) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL))
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL))
              ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
              do j = ncols, 4, -4
                w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -1088,11 +1088,11 @@
 			& (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 
-#endif /* defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL)) */
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL)) */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
            endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_BLOCK4_KERNEL */
 
 #endif /* REALCASE */
@@ -1104,12 +1104,12 @@
 #if REALCASE == 1
 ! avx block4 real kernel
 #if defined(WITH_REAL_AVX_BLOCK4_KERNEL) || defined(WITH_REAL_AVX2_BLOCK4_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if ((THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK4) .or.  &
-               (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK4)) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+           if ((THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX_BLOCK4) .or.  &
+               (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX2_BLOCK4)) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL))
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL))
              ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
              do j = ncols, 4, -4
                w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -1162,11 +1162,11 @@
 			& (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 
-#endif /* defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL)) */
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL)) */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
            endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK4_KERNEL || WITH_REAL_AVX2_BLOCK4_KERNEL */
 
 #endif /* REALCASE */
@@ -1179,11 +1179,11 @@
 ! avx512 block4 real kernel
 
 #if defined(WITH_REAL_AVX512_BLOCK4_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK4) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+           if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_AVX512_BLOCK6_KERNEL))
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX512_BLOCK6_KERNEL))
              ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
              do j = ncols, 4, -4
                w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -1237,11 +1237,11 @@
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 
-#endif /* defined(WITH_NO_SPECIFIC_REAL_KERNEL) || (defined(WITH_ONE_SPECIFIC_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) ) */
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) ) */
 
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
            endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_AVX512_BLOCK4_KERNEL */
 
 #endif /* REALCASE */
@@ -1253,9 +1253,9 @@
 #if REALCASE == 1
 !sse block6 real kernel
 #if defined(WITH_REAL_SSE_BLOCK6_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_SSE_BLOCK6) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+           if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_SSE_BLOCK6) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
              ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
              do j = ncols, 6, -6
                w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -1329,9 +1329,9 @@
 			 &PRECISION&
 			 & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
            endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_SSE_BLOCK4_KERNEL */
 
 #endif /* REALCASE */
@@ -1344,10 +1344,10 @@
 ! avx block6 real kernel
 
 #if defined(WITH_REAL_AVX_BLOCK6_KERNEL) || defined(WITH_REAL_AVX2_BLOCK6_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if ((THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX_BLOCK6) .or. &
-               (THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX2_BLOCK6)) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+           if ((THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX_BLOCK6) .or. &
+               (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX2_BLOCK6)) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
              ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
              do j = ncols, 6, -6
                w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -1421,9 +1421,9 @@
 			 & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
            endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_AVX_BLOCK6_KERNEL || WITH_REAL_AVX2_BLOCK6_KERNEL */
 
 #endif /* REALCASE */
@@ -1435,9 +1435,9 @@
 #if REALCASE == 1
 ! avx512 block6 kernel
 #if defined(WITH_REAL_AVX512_BLOCK6_KERNEL)
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
-           if ((THIS_REAL_ELPA_KERNEL .eq. REAL_ELPA_KERNEL_AVX512_BLOCK6)) then
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#ifndef WITH_FIXED_REAL_KERNEL
+           if ((THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6)) then
+#endif /* not WITH_FIXED_REAL_KERNEL */
              ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
              do j = ncols, 6, -6
                w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -1510,9 +1510,9 @@
 			 &PRECISION&
 			 & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
-#if defined(WITH_NO_SPECIFIC_REAL_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
            endif
-#endif /* WITH_NO_SPECIFIC_REAL_KERNEL */
+#endif /* not WITH_FIXED_REAL_KERNEL */
 #endif /* WITH_REAL_AVX512_BLOCK6_KERNEL */
 
 #endif /* REALCASE */
@@ -1545,4 +1545,4 @@
 
        end subroutine
 
-
+! vim: syntax=fortran

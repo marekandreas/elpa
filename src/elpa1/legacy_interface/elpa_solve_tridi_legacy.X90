@@ -56,14 +56,10 @@
 
 #include "../../general/sanity.X90"
 
-      !use elpa1_compute, solve_tridi_&
-      !                   &PRECISION&
-!			 &_private => solve_tridi_&
-!			 &PRECISION
       use precision
-      use elpa_type
+      use elpa
 #ifdef HAVE_DETAILED_TIMINGS
-       use timings
+      use timings
 #else
        use timings_dummy
 #endif
@@ -79,7 +75,7 @@
       logical, intent(in)      :: wantDebug
       logical :: success
       integer(kind=iK)            :: successInternal
-      type(elpa_t)                :: e
+      type(elpa_t)                :: elpa
 
       call timer%start("elpa_solve_tridi_&
       &PRECISION&
@@ -87,32 +83,29 @@
 
       success = .false.
 
-      if (elpa_init(20170403) /= ELPA_OK) then
+      if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
         print *, "ELPA API version not supported"
         success = .false.
-        stop
-        return
       endif
 
-      e = elpa_allocate()
+      elpa = elpa_allocate()
 
-      call e%set("na", na)
-      call e%set("local_nrows", lda)
-      call e%set("local_ncols", matrixCols)
-      call e%set("nblk", nblk)
+      call elpa%set("na", na)
+      call elpa%set("nev", nev)
+      call elpa%set("local_nrows", ldq)
+      call elpa%set("local_ncols", matrixCols)
+      call elpa%set("nblk", nblk)
 
-      call e%set("mpi_comm_rows", mpi_comm_rows)
-      call e%set("mpi_comm_cols", mpi_comm_cols)
+      call elpa%set("mpi_comm_rows", mpi_comm_rows)
+      call elpa%set("mpi_comm_cols", mpi_comm_cols)
 
-      call e%setup(successInternal)
-      if (successInternal .ne. ELPA_OK) then
+      if (elpa%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
         success = .false.
-        stop
         return
       endif
 
-      call e%solve_tridi(d(1:na), e(1:na), q(1:ldq,1:matrixCols), successInternal)
+      call elpa%solve_tridi(d(1:na), e(1:na), q(1:ldq,1:matrixCols), successInternal)
 
       if (successInternal .ne. ELPA_OK) then
         print *, "Cannot run solve_tridi"
@@ -122,7 +115,7 @@
       else
         success =.true.
       endif
-      call e%destroy()
+      call elpa%destroy()
 
       call elpa_uninit()
 
@@ -135,3 +128,4 @@
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
 
+! vim: syntax=fortran

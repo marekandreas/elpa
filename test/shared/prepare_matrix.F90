@@ -44,24 +44,16 @@
 
 module mod_prepare_matrix
 
-  interface prepare_matrix_double
-    module procedure prepare_matrix_complex_double
-    module procedure prepare_matrix_real_double
-  end interface
-
   interface prepare_matrix
     module procedure prepare_matrix_complex_double
     module procedure prepare_matrix_real_double
-  end interface
-
 #ifdef WANT_SINGLE_PRECISION_REAL
-  interface prepare_matrix_single
     module procedure prepare_matrix_real_single
+#endif
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     module procedure prepare_matrix_complex_single
 #endif
    end interface
-#endif
 
   contains
 

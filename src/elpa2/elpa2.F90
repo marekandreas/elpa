@@ -55,18 +55,11 @@
 #include "config-f90.h"
 !> \brief Fortran module which provides the routines to use the 2-stage ELPA solver
 module elpa2_impl
-
-! Version 1.1.2, 2011-02-21
-
-  use elpa_utilities
- !  use elpa1_impl, only : elpa_print_times, time_evp_back, time_evp_fwd, time_evp_solve
-  use elpa2_utilities
+  use elpa_utilities, only : error_unit
 
   implicit none
 
-  PRIVATE ! By default, all routines contained are private
-
-  ! The following routines are public:
+  private
 
   public :: elpa_solve_evp_real_2stage_double_impl          !< Driver routine for real double-precision 2-stage eigenvalue problem
   public :: elpa_solve_evp_complex_2stage_double_impl       !< Driver routine for complex double-precision 2-stage eigenvalue problem

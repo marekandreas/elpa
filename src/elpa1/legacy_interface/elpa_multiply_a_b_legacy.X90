@@ -84,7 +84,6 @@
 #endif
 #endif
   !    integer(kind=ik)                         :: my_prow, my_pcol, np_rows, np_cols, mpierr
-       integer(kind=ik)                         :: nev
   !    integer(kind=ik)                         :: l_cols, l_rows, l_rows_np
 !      integer(kind=ik)                         :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
 !      integer(kind=ik)                         :: gcol_min, gcol, goff
@@ -120,10 +119,9 @@
       !l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
       !l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
 
-      if (elpa_init(20170403) /= ELPA_OK) then
+      if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
         print *, "ELPA API version not supported"
         success = .false.
-        stop
         return
       endif
 
@@ -131,18 +129,15 @@
 
       call e%set("na", na)
       call e%set("local_nrows", lda)
-      call e%set("local_ncols", matrixCols)
+      call e%set("local_ncols", ldaCols)
       call e%set("nblk", nblk)
 
       call e%set("mpi_comm_rows", mpi_comm_rows)
       call e%set("mpi_comm_cols", mpi_comm_cols)
 
-      call e%setup(successInternal)
-      if (successInternal .ne. ELPA_OK) then
+      if (e%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
-        stop
         success = .false.
-        return
       endif
 
       call e%hermitian_multiply(uplo_a, uplo_c, na, ncb, a(1:lda,1:ldaCols), lda, ldaCols, &
@@ -151,7 +146,6 @@
 
       if (successInternal .ne. ELPA_OK) then
         print *, "Cannot run multiply_a_b"
-        stop
         success = .false.
         return
       endif

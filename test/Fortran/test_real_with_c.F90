@@ -282,7 +282,7 @@ program test_real
 
    allocate(evFromC(na))
 
-   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
+   call prepare_matrix(na, myid, sc_desc, a, z, as)
 
    aFromC = a
    zFromC = z
@@ -393,7 +393,7 @@ program test_real
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
+   status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)

@@ -99,16 +99,16 @@
 
       success = .true.
 
-      if (elpa_init(20170403) /= ELPA_OK) then
+      if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
         print *, "ELPA API version not supported"
         success = .false.
-        stop
         return
       endif
 
       e = elpa_allocate()
 
       call e%set("na", na)
+      call e%set("nev", nev)
       call e%set("local_nrows", lda)
       call e%set("local_ncols", matrixCols)
       call e%set("nblk", nblk)
@@ -116,12 +116,9 @@
       call e%set("mpi_comm_rows", mpi_comm_rows)
       call e%set("mpi_comm_cols", mpi_comm_cols)
 
-      call e%setup(successInternal)
-
-      if (successInternal .ne. ELPA_OK) then
+      if (e%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
         success = .false.
-        stop
         return
       endif
 
@@ -129,7 +126,6 @@
 
       if (successInternal .ne. ELPA_OK) then
         print *, "Cannot run cholesky"
-        stop
         success = .false.
         return
       else
@@ -149,3 +145,5 @@
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
+
+! vim: syntax=fortran

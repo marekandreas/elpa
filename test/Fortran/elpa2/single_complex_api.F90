@@ -210,20 +210,15 @@ program test_complex2_choose_kernel_with_api_single_precision
       print *, "an api call. Note, however, that setting the kernel via"
       print *, "an environment variable will always take precedence over"
       print *, "everything else! "
-#ifdef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
-      print *," However, this version of ELPA was build with only one of all the available"
-      print *," kernels, thus it will not be successful to call ELPA with another "
-      print *," kernel than the one specified at compile time!"
-#endif
       print *
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
       print *, " kernel via an environment variable! To change this re-install"
       print *, " the library and have a look at the log files"
 #endif
-#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+#ifndef WITH_FIXED_COMPLEX_KERNEL
       print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE"
-#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+#else /* WITH_FIXED_COMPLEX_KERNEL */
 
 #ifdef WITH_COMPLEX_GENERIC_KERNEL
       print *, " The settings are: COMPLEX_ELPA_KERNEL_GENERIC"
@@ -272,7 +267,7 @@ program test_complex2_choose_kernel_with_api_single_precision
       print *, " The settings are: COMPLEX_ELPA_KERNEL_GPU"
 #endif
 
-#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_FIXED_COMPLEX_KERNEL */
 
 
 
@@ -351,9 +346,9 @@ program test_complex2_choose_kernel_with_api_single_precision
 #endif
    successELPA = elpa_solve_evp_complex_2stage_single(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                                  na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world, &
-#ifndef WITH_ONE_SPECIFIC_COMPLEX_KERNEL
+#ifndef WITH_FIXED_COMPLEX_KERNEL
                                  COMPLEX_ELPA_KERNEL_GENERIC_SIMPLE)
-#else /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+#else /* WITH_FIXED_COMPLEX_KERNEL */
 
 #ifdef  WITH_COMPLEX_GENERIC_KERNEL
                                  COMPLEX_ELPA_KERNEL_GENERIC)
@@ -403,7 +398,7 @@ program test_complex2_choose_kernel_with_api_single_precision
                                  COMPLEX_ELPA_KERNEL_GPU)
 #endif
 
-#endif /* WITH_ONE_SPECIFIC_COMPLEX_KERNEL */
+#endif /* WITH_FIXED_COMPLEX_KERNEL */
 
 
    if (.not.(successELPA)) then

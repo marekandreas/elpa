@@ -285,6 +285,7 @@ int main(int argc, char** argv) {
    free(a);
    free(z);
    free(as);
+   free(ev);
 
 #ifdef WITH_MPI
    MPI_Finalize();

@@ -4,7 +4,7 @@ AC_PREREQ([2.69])
 AC_INIT([elpa],m4_esyscmd_s([awk '/^ *Version:/ {print $2;}' elpa.spec]), [elpa-library@mpcdf.mpg.de])
 AC_SUBST([PACKAGE_VERSION])
 
-AC_CONFIG_SRCDIR([src/elpa_t.F90])
+AC_CONFIG_SRCDIR([src/elpa.F90])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 
@@ -12,6 +12,8 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
 
+# ABI version
+#
 # Set the libtool library version, see LIBRARY_INTERFACE
 #
 # See http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
@@ -26,7 +28,10 @@ AM_SILENT_RULES([yes])
 #    were added by the new interface)
 #
 AC_SUBST([ELPA_SO_VERSION], [8:0:0])
-#
+
+# API Version
+AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
+AC_DEFINE([CURRENT_API_VERSION], [20170403], [Current ELPA API version])
 
 
 AX_CHECK_GNU_MAKE()
@@ -34,10 +39,12 @@ if test x$_cv_gnu_make_command = x ; then
         AC_MSG_ERROR([Need GNU Make])
 fi
 
-#AC_CHECK_PROG(CPP_FOUND,cpp,yes,no)
-#if test x"${CPP_FOUND}" = xno; then
-#  AC_MSG_ERROR([no cpp found])
-#fi
+AC_ARG_ENABLE([legacy],
+              AS_HELP_STRING([--disable-legacy],
+                             [do not build legacy API, default yes]),
+              [],
+              [enable_legacy=yes])
+AM_CONDITIONAL([ENABLE_LEGACY],[test x"$enable_legacy" = x"yes"])
 
 # gnu-make fortran module dependencies
 m4_include([fdep/fortran_dependencies.m4])
@@ -352,7 +359,8 @@ use_band_to_full_blocking=yes
 AC_MSG_CHECKING(whether BAND_TO_FLULL_BLOCKING is requested)
 AC_ARG_ENABLE(band-to-full-blocking,[AS_HELP_STRING([--enable-band-to-full-blocking],
                                                     [build ELPA2 with blocking in band_to_full (default: enabled)])],
-              want_band_to_full_blocking="yes", want_to_full_blocking="no")
+              [want_band_to_full_blocking="yes"],
+	      [want_to_full_blocking="no"])
 AC_MSG_RESULT([${want_band_to_full_blocking}])
 
 if test x"${enableval}" = x"no" ; then
@@ -633,7 +641,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         fi
         # find the number of this kernel
         ELPA_2STAGE_[]m4_toupper(elpa_m4_kind)[]_DEFAULT=`grep -i '^ *X(ELPA_2STAGE_'$default_[]elpa_m4_kind[]_kernel'\>' $srcdir/elpa/elpa_constants.h.in | \
-                                                                awk '// { gsub(/.*, */, ""); gsub(/).*/, ""); print;}'`
+                                                                awk '// { gsub(/^[[^,]]*, */, ""); gsub(/,.*/, ""); print;}'`
         AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kind)[_DEFAULT])
 ])
 
@@ -835,14 +843,26 @@ m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AM_CONDITIONAL([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[test x"$use_[]elpa_m4_kernel[]" = x"yes"])
   if test x"$use_[]elpa_m4_kernel[]" = x"yes" ; then
     AC_DEFINE([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[1],[Build elpa_m4_kernel kernel])
+    kernel_defined=1
+  else
+    kernel_defined=0
   fi
+  [ELPA_2STAGE_]m4_toupper(elpa_m4_kernel)[_COMPILED]=$kernel_defined
+  AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kernel)[_COMPILED])
 ])
 
 
 AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$use_gpu" = x"yes"])
 if test x"${use_gpu}" = x"yes" ; then
   AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
+  ELPA_2STAGE_COMPLEX_GPU_COMPILED=1
+  ELPA_2STAGE_REAL_GPU_COMPILED=1
+else
+  ELPA_2STAGE_COMPLEX_GPU_COMPILED=0
+  ELPA_2STAGE_REAL_GPU_COMPILED=0
 fi
+AC_SUBST([ELPA_2STAGE_COMPLEX_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_GPU_COMPILED])
 
 LT_INIT
 
@@ -879,7 +899,6 @@ AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" =
 AC_SUBST([MPI_BINARY])
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])
-AC_SUBST([with_amd_bulldozer_kernel])
 AC_SUBST([FC_MODINC])
 AC_SUBST([FC_MODOUT])
 AC_SUBST([OPENMP_CFLAGS])
@@ -887,8 +906,9 @@ AC_SUBST([OPENMP_FCFLAGS])
 AC_SUBST([OPENMP_LDFLAGS])
 AC_SUBST([DOXYGEN_OUTPUT_DIR], [docs])
 
-rm -rf modules/ private_modules/ .fortran_dependencies/
-mkdir modules private_modules
+#rm -rf modules/ private_modules/ .fortran_dependencies/
+mkdir -p modules private_modules
+
 
 #gl_VISIBILITY
 #AH_BOTTOM([#if HAVE_VISIBILITY
@@ -990,3 +1010,6 @@ echo "*  the next stable release.                                           *"
 echo "***********************************************************************"
 echo " "
 make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"
+
+
+echo "TODO: Check crazy BAND_TO_FULL_BLOCKING flags"

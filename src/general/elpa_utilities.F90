@@ -52,13 +52,13 @@
 module ELPA_utilities
 
 #ifdef HAVE_ISO_FORTRAN_ENV
-  use iso_fortran_env, only : error_unit
+  use iso_fortran_env, only : output_unit, error_unit
 #endif
   implicit none
 
   private ! By default, all routines contained are private
 
-  public :: debug_messages_via_environment_variable, error_unit
+  public :: debug_messages_via_environment_variable, output_unit, error_unit
   public :: check_alloc, check_alloc_CUDA_f, check_memcpy_CUDA_f, check_dealloc_CUDA_f
   public :: map_global_array_index_to_local_index
   public :: pcol, prow
@@ -67,6 +67,7 @@ module ELPA_utilities
 
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter :: error_unit = 0
+  integer, parameter :: output_unit = 6
 #endif
 
   !******

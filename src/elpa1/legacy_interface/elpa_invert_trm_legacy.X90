@@ -95,7 +95,6 @@
 !      integer(kind=ik)             :: istat
 !      character(200)               :: errorMessage
 
-       integer(kind=ik)            :: nev
        integer(kind=iK)            :: successInternal
        type(elpa_t)                :: e
 
@@ -107,10 +106,9 @@
 
        success = .true.
 
-       if (elpa_init(20170403) /= ELPA_OK) then
+       if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
          print *, "ELPA API version not supported"
          success = .false.
-         stop
          return
        endif
 
@@ -124,12 +122,9 @@
        call e%set("mpi_comm_rows", mpi_comm_rows)
        call e%set("mpi_comm_cols", mpi_comm_cols)
 
-       call e%setup(successInternal)
-
-       if (successInternal .ne. ELPA_OK) then
+       if (e%setup() .ne. ELPA_OK) then
          print *, "Cannot setup ELPA instance"
          success = .false.
-         stop
          return
        endif
 
@@ -137,7 +132,6 @@
 
        if (successInternal .ne. ELPA_OK) then
          print *, "Cannot run invert_trm"
-         stop
          success = .false.
          return
        else
