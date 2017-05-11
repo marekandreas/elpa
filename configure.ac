@@ -355,20 +355,15 @@ fi
 
 
 dnl check whether BAND_TO_FULL_BLOCKING is set
-use_band_to_full_blocking=yes
 AC_MSG_CHECKING(whether BAND_TO_FLULL_BLOCKING is requested)
-AC_ARG_ENABLE(band-to-full-blocking,[AS_HELP_STRING([--enable-band-to-full-blocking],
+AC_ARG_ENABLE(band-to-full-blocking,[AS_HELP_STRING([--disable-band-to-full-blocking],
                                                     [build ELPA2 with blocking in band_to_full (default: enabled)])],
-              [want_band_to_full_blocking="yes"],
-	      [want_to_full_blocking="no"])
-AC_MSG_RESULT([${want_band_to_full_blocking}])
+              [],
+	      [enable_band_to_full_blocking="yes"])
+AC_MSG_RESULT([${enable_band_to_full_blocking}])
 
-if test x"${enableval}" = x"no" ; then
-  use_band_to_full_blocking=no
-fi
-
-AM_CONDITIONAL([BAND_TO_FULL_BLOCKING],[test x"$use_band_to_full_blocking" = x"yes"])
-if test x"${use_band_to_full_blocking}" = x"yes"; then
+AM_CONDITIONAL([BAND_TO_FULL_BLOCKING],[test x"$enable_band_to_full_blocking" = x"yes"])
+if test x"${enable_band_to_full_blocking}" = x"yes"; then
        AC_DEFINE([BAND_TO_FULL_BLOCKING], [1], [use blocking in trans_ev_band_to_full])
 fi
 
@@ -1010,6 +1005,3 @@ echo "*  the next stable release.                                           *"
 echo "***********************************************************************"
 echo " "
 make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"
-
-
-echo "TODO: Check crazy BAND_TO_FULL_BLOCKING flags"
