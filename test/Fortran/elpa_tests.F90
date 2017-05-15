@@ -61,7 +61,6 @@ program test_all_real
    use elpa2
    use elpa_utilities, only : error_unit, map_global_array_index_to_local_index
    use elpa2_utilities
-   use elpa2_utilities_private
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -1087,7 +1086,8 @@ program test_all_real
          ! first default kernel
 
          if (myid .eq. 0) print *," "
-         if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", trim(elpa_get_actual_real_kernel_name())
+         if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", &
+           elpa_int_value_to_string("real_kernel", ELPA_2STAGE_REAL_DEFAULT)
          if (myid .eq. 0) print *," "
 
          a_real = as_real
@@ -1115,7 +1115,8 @@ program test_all_real
                                                      mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useQr=this_qr, useGPU=this_gpu)
 
          if (.not.(success)) then
-           write(error_unit,*) "solve_evp_real_2stage with default kernel ",trim(elpa_get_actual_real_kernel_name()), &
+           write(error_unit,*) "solve_evp_real_2stage with default kernel ", &
+             elpa_int_value_to_string("real_kernel", ELPA_2STAGE_REAL_DEFAULT), &
                                " produced an error! Aborting..."
 #ifdef WITH_MPI
            call MPI_ABORT(mpi_comm_world, 1, mpierr)
@@ -1140,14 +1141,15 @@ program test_all_real
 
          if (myid == 0) print *," "
          if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
-                        trim(elpa_get_actual_real_kernel_name()),' default kernel:',tEnd - tStart
+                        elpa_int_value_to_string("real_kernel", ELPA_2STAGE_REAL_DEFAULT),' default kernel:',tEnd - tStart
          if (myid == 0) print *," "
 
          status = check_correctness(na, nev, as_real, z_real, ev, sc_desc, myid)
          if (myid == 0) print *," "
 
          if (status .eq. 1) then
-           if (myid == 0) print *," ERROR in solve_evp_real2_stage with ",trim(elpa_get_actual_real_kernel_name()), &
+           if (myid == 0) print *," ERROR in solve_evp_real2_stage with ", &
+             elpa_int_value_to_string("real_kernel", ELPA_2STAGE_REAL_DEFAULT), &
              ' kernel!'
 #ifdef WITH_MPI
            call blacs_gridexit(my_blacs_ctxt)
@@ -1163,7 +1165,9 @@ program test_all_real
          if (myid .eq. 0) print *,"Iterating over all available ELPA2 real kernels ..."
          if (myid .eq. 0) print *," "
 
-         do this_kernel = 1 , elpa_number_of_real_kernels()
+         do i = 0, elpa_option_cardinality("real_kernel")
+           this_kernel = elpa_option_enumerate("real_kernel", i)
+
            if (input_options%useGPUIsSet .eq. 1) this_gpu = .true.
            if (input_options%useGPUIsSet .eq. 0) this_gpu = .false.
 
@@ -1173,7 +1177,7 @@ program test_all_real
 
            a_real = as_real
            z_real = a_real
-           if (elpa_real_kernel_is_available(this_kernel)) then
+           if (AVAILABLE_REAL_ELPA_KERNELS(this_kernel) == 1) then
              if (input_options%useQrIsSet .eq. 0) then
                if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(this_kernel)),":"
              else
@@ -1261,7 +1265,7 @@ program test_all_real
 
          a_real = as_real
          z_real = a_real
-         if (elpa_real_kernel_is_available(input_options%this_real_kernel)) then
+         if (AVAILABLE_REAL_ELPA_KERNELS(input_options%this_real_kernel) == 1) then
            if (input_options%useQrIsSet  .eq. 0) then
              if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_real_kernel_name(input_options%this_real_kernel)),":"
            else
@@ -1356,7 +1360,8 @@ program test_all_real
          ! first default kernel
 
          if (myid .eq. 0) print *," "
-         if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", trim(elpa_get_actual_complex_kernel_name())
+         if (myid .eq. 0) print *,"Testing 2stage solver with default kernel: ", &
+           elpa_int_value_to_string("complex_kernel", ELPA_2STAGE_COMPLEX_DEFAULT)
          if (myid .eq. 0) print *," "
 
          a_complex = as_complex
@@ -1385,7 +1390,8 @@ program test_all_real
                                                         mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU=this_gpu)
 
          if (.not.(success)) then
-           write(error_unit,*) "solve_evp_complex_2stage with default kernel ",trim(elpa_get_actual_complex_kernel_name()), &
+           write(error_unit,*) "solve_evp_complex_2stage with default kernel ", &
+             elpa_int_value_to_string("complex_kernel", ELPA_2STAGE_COMPLEX_DEFAULT), &
                                " produced an error! Aborting..."
 #ifdef WITH_MPI
            call MPI_ABORT(mpi_comm_world, 1, mpierr)
@@ -1410,14 +1416,15 @@ program test_all_real
 
          if (myid == 0) print *," "
          if (myid == 0) print *,'Total time for solve_evp_complex_2stage with ', &
-                        trim(elpa_get_actual_complex_kernel_name()),' default kernel:',tEnd - tStart
+                        elpa_int_value_to_string("complex_kernel", ELPA_2STAGE_COMPLEX_DEFAULT),' default kernel:',tEnd - tStart
          if (myid == 0) print *," "
 
          status = check_correctness(na, nev, as_complex, z_complex, ev, sc_desc, myid)
          if (myid == 0) print *," "
 
          if (status .eq. 1) then
-           if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ",trim(elpa_get_actual_complex_kernel_name()), &
+           if (myid == 0) print *," ERROR in solve_evp_complex_2stage with ", &
+             elpa_int_value_to_string("complex_kernel", ELPA_2STAGE_COMPLEX_DEFAULT), &
              ' kernel!'
 #ifdef WITH_MPI
            call blacs_gridexit(my_blacs_ctxt)
@@ -1433,7 +1440,9 @@ program test_all_real
          if (myid .eq. 0) print *,"Iterating over all available ELPA2 complex kernels ..."
          if (myid .eq. 0) print *," "
 
-         do this_kernel = 1 , elpa_number_of_complex_kernels()
+         do i = 0, elpa_option_cardinality("complex_kernel")
+           this_kernel = elpa_option_enumerate("complex_kernel", i)
+
            if (input_options%useGPUIsSet .eq. 1) this_gpu=.true.
            if (input_options%useGPUIsSet .eq. 0) this_gpu=.false.
 
@@ -1444,7 +1453,7 @@ program test_all_real
 
            a_complex = as_complex
            z_complex = a_complex
-           if (elpa_complex_kernel_is_available(this_kernel)) then
+           if (AVAILABLE_COMPLEX_ELPA_KERNELS(this_kernel) == 1) then
              if (input_options%useQrIsSet  .eq. 0) then
                if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(this_kernel)),":"
              else
@@ -1525,7 +1534,7 @@ program test_all_real
 
          a_complex = as_complex
          z_complex = a_complex
-         if (elpa_complex_kernel_is_available(input_options%this_complex_kernel)) then
+         if (AVAILABLE_COMPLEX_ELPA_KERNELS(input_options%this_complex_kernel) == 1) then
            if (input_options%useQrIsSet  .eq. 0) then
              if (myid == 0) print *,"ELPA2 kernel ",trim(elpa_complex_kernel_name(input_options%this_complex_kernel)),":"
            else

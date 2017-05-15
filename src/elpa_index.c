@@ -67,8 +67,8 @@ static int elpa_2stage_complex_kernel_enumerate(int i);
 static int elpa_2stage_complex_kernel_is_valid(elpa_index_t index, int n, int new_value);
 static const char *elpa_2stage_complex_kernel_name(int kernel);
 
-int elpa_index_double_string_to_value(char *name, char *string, double *value);
-int elpa_index_double_value_to_string(char *name, double value, const char **string);
+int elpa_double_string_to_value(char *name, char *string, double *value);
+int elpa_double_value_to_string(char *name, double value, const char **string);
 
 #define BASE_ENTRY(option_name, option_description, once_value, readonly_value) \
                 .base = { \
@@ -81,12 +81,12 @@ int elpa_index_double_value_to_string(char *name, double value, const char **str
                 }
 
 #define INT_PARAMETER_ENTRY(option_name, option_description) \
-        (elpa_index_int_entry_t) { \
+        { \
                 BASE_ENTRY(option_name, option_description, 1, 0), \
         }
 
 #define BOOL_ENTRY(option_name, option_description, default) \
-        (elpa_index_int_entry_t) { \
+        { \
                 BASE_ENTRY(option_name, option_description, 0, 0), \
                 .default_value = default, \
                 .cardinality = cardinality_bool, \
@@ -95,7 +95,7 @@ int elpa_index_double_value_to_string(char *name, double value, const char **str
         }
 
 #define INT_LIST_ENTRY(option_name, option_description, default, card_func, enumerate_func, valid_func, to_string_func) \
-        (elpa_index_int_entry_t) { \
+        { \
                 BASE_ENTRY(option_name, option_description, 0, 0), \
                 .default_value = default, \
                 .cardinality = card_func, \
@@ -105,7 +105,7 @@ int elpa_index_double_value_to_string(char *name, double value, const char **str
         }
 
 #define INT_ANY_ENTRY(option_name, option_description) \
-        (elpa_index_int_entry_t) { \
+        { \
                 BASE_ENTRY(option_name, option_description, 0, 0), \
         }
 
@@ -135,7 +135,7 @@ static const elpa_index_int_entry_t int_entries[] = {
 };
 
 #define READONLY_DOUBLE_ENTRY(option_name, option_description) \
-        (elpa_index_double_entry_t) { \
+        { \
                 BASE_ENTRY(option_name, option_description, 0, 1) \
         }
 
@@ -191,13 +191,13 @@ FOR_ALL_TYPES(IMPLEMENT_FIND_ENTRY)
                 int err; \
                 char *env_value = getenv(env_variable); \
                 if (env_value) { \
-                        err = elpa_index_##TYPE##_string_to_value(TYPE##_entries[n].base.name, env_value, value); \
+                        err = elpa_##TYPE##_string_to_value(TYPE##_entries[n].base.name, env_value, value); \
                         if (err != ELPA_OK) { \
                                 fprintf(stderr, "ELPA: Error interpreting environment variable %s with value '%s': %s\n", \
                                                 TYPE##_entries[n].base.name, env_value, elpa_strerr(err)); \
                         } else {\
                                 const char *value_string = NULL; \
-                                if (elpa_index_##TYPE##_value_to_string(TYPE##_entries[n].base.name, *value, &value_string) == ELPA_OK) { \
+                                if (elpa_##TYPE##_value_to_string(TYPE##_entries[n].base.name, *value, &value_string) == ELPA_OK) { \
                                         if (!(index->TYPE##_options.notified[n] & notify_flag)) { \
                                                 fprintf(stderr, "ELPA: %s '%s' is set to %s due to environment variable %s\n", \
                                                                 error_string, TYPE##_entries[n].base.name, value_string, env_variable); \
@@ -321,7 +321,7 @@ int elpa_index_int_is_valid(elpa_index_t index, char *name, int new_value) {
         return ELPA_ERROR_ENTRY_NOT_FOUND;
 }
 
-int elpa_index_int_value_to_string(char *name, int value, const char **string) {
+int elpa_int_value_to_string(char *name, int value, const char **string) {
         int n = find_int_entry(name);
         if (n < 0) {
                 return ELPA_ERROR_ENTRY_NOT_FOUND;
@@ -333,16 +333,29 @@ int elpa_index_int_value_to_string(char *name, int value, const char **string) {
         return ELPA_OK;
 }
 
-const char *elpa_index_int_value_to_string_helper(char *name, int value) {
+
+int elpa_int_value_to_strlen(char *name, int value) {
         const char *string = NULL;
-        elpa_index_int_value_to_string(name, value, &string);
+        elpa_int_value_to_string(name, value, &string);
         if (string == NULL) {
-                string = "";
+                return 0;
+        } else {
+                return strlen(string);
         }
-        return string;
 }
 
-int elpa_index_int_string_to_value(char *name, char *string, int *value) {
+
+int elpa_index_int_value_to_strlen(elpa_index_t index, char *name) {
+        const char *string = NULL;
+        int n = find_int_entry(name);
+        if (n < 0) {
+                return 0;
+        }
+	return elpa_int_value_to_strlen(name, index->int_options.values[n]);
+}
+
+
+int elpa_int_string_to_value(char *name, char *string, int *value) {
         int n = find_int_entry(name);
         if (n < 0) {
                 return ELPA_ERROR_ENTRY_NOT_FOUND;
@@ -369,7 +382,7 @@ int elpa_index_int_string_to_value(char *name, char *string, int *value) {
         return ELPA_ERROR_INVALID_VALUE;
 }
 
-int elpa_index_double_string_to_value(char *name, char *string, double *value) {
+int elpa_double_string_to_value(char *name, char *string, double *value) {
         double val;
         int ret = sscanf(string, "%lf", &val);
         if (ret == strlen(string)) {
@@ -382,11 +395,11 @@ int elpa_index_double_string_to_value(char *name, char *string, double *value) {
         }
 }
 
-int elpa_index_double_value_to_string(char *name, double value, const char **string) {
+int elpa_double_value_to_string(char *name, double value, const char **string) {
         return ELPA_ERROR_NO_STRING_REPRESENTATION;
 }
 
-int elpa_index_cardinality(elpa_index_t index, char *name) {
+int elpa_option_cardinality(char *name) {
         int n = find_int_entry(name);
         if (n < 0 || !int_entries[n].cardinality) {
                 return ELPA_ERROR_ENTRY_NOT_FOUND;
@@ -394,14 +407,13 @@ int elpa_index_cardinality(elpa_index_t index, char *name) {
         return int_entries[n].cardinality();
 }
 
-int elpa_index_enumerate(elpa_index_t index, char *name, int i) {
+int elpa_option_enumerate(char *name, int i) {
         int n = find_int_entry(name);
         if (n < 0 || !int_entries[n].enumerate) {
                 return 0;
         }
         return int_entries[n].enumerate(i);
 }
-
 
 
 /* Helper functions for simple int entries */
@@ -445,7 +457,7 @@ static int elpa_number_of_solvers() {
 
 static int elpa_solver_enumerate(int i) {
 #define OPTION_RANK(name, value, ...) \
-        +(value > sizeof(array_of_size_value)/sizeof(int) ? 1 : 0)
+        +(value >= sizeof(array_of_size_value)/sizeof(int) ? 0 : 1)
 
 #define EMPTY()
 #define DEFER1(m) m EMPTY()

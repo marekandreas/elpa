@@ -85,7 +85,6 @@ program test_complex2_default_kernel_double_precision
 
    use elpa_utilities, only : error_unit
    use elpa2_utilities
-   use elpa2_utilities_private
    use mod_read_input_parameters
    use mod_check_correctness
    use mod_setup_mpi
@@ -213,8 +212,6 @@ program test_complex2_default_kernel_double_precision
 #endif
       print *, "since the ELPA API call does not contain any kernel specification"
       print *
-      print *, " The settings are: ",trim(elpa_get_actual_complex_kernel_name())," as complex kernel"
-      print *
       print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
@@ -272,7 +269,7 @@ program test_complex2_default_kernel_double_precision
 
    allocate(ev(na))
 
-   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
+   call prepare_matrix(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -337,7 +334,7 @@ program test_complex2_default_kernel_double_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
+   status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)

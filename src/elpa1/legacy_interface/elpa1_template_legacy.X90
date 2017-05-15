@@ -68,7 +68,7 @@ function elpa_solve_evp_&
 #endif
    use iso_c_binding
    use elpa_mpi
-   use elpa_type
+   use elpa
    implicit none
 
    integer(kind=c_int), intent(in)                 :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, &
@@ -103,7 +103,7 @@ function elpa_solve_evp_&
 
    integer(kind=c_int)                             :: successInternal
 
-   type(elpa_t)                                    :: e
+   class(elpa_t), pointer                          :: e
    call timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
@@ -120,7 +120,7 @@ function elpa_solve_evp_&
      return
    endif
 
-   e = elpa_allocate()
+   e => elpa_allocate()
 
    call e%set("na", na)
    call e%set("nev", nev)
@@ -185,7 +185,7 @@ function elpa_solve_evp_&
      time_evp_solve = e%get_double("time_evp_solve")
      time_evp_back =  e%get_double("time_evp_back")
    endif
-   call e%destroy()
+   call elpa_deallocate(e)
 
    call elpa_uninit()
 

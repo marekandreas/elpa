@@ -366,7 +366,7 @@ program test_solve_tridi_single
    endif
 
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness_single(na, nev, as, a, ev, sc_desc, myid)
+   status = check_correctness(na, nev, as, a, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)

@@ -65,8 +65,8 @@
 !> Synopsis: print_available_elpa2_kernels
 !>
 !> \author A. Marek (MPCDF)
-program print_available_elpa2_kernels
 
+program print_available_elpa2_kernels
    use precision
    use elpa
 
@@ -74,6 +74,7 @@ program print_available_elpa2_kernels
 
    integer(kind=ik) :: i
    class(elpa_t), pointer :: e
+   integer :: option
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "Unsupported ELPA API Version"
@@ -108,7 +109,7 @@ program print_available_elpa2_kernels
    print *, " AVX kernels are optimized for FMA (AVX2)"
 #endif
    print *
-   call e%print_options("real_kernel")
+   call print_options(e, "real_kernel")
    print *
    print *
 
@@ -126,10 +127,25 @@ program print_available_elpa2_kernels
    print *, " AVX kernels are optimized for FMA (AVX2)"
 #endif
    print *
-   call e%print_options("complex_kernel")
+   call print_options(e, "complex_kernel")
    print *
    print *
 
    call elpa_deallocate(e)
+
+   contains
+
+     subroutine print_options(e, option_name)
+       class(elpa_t), intent(in) :: e
+       character(len=*), intent(in) :: option_name
+       integer :: i, option
+
+       do i = 0, elpa_option_cardinality(option_name) - 1
+         option = elpa_option_enumerate(option_name, i)
+         if (e%can_set(option_name, option) == ELPA_OK) then
+           print *, "  ", elpa_int_value_to_string(option_name, option)
+         endif
+       end do
+     end subroutine
 
 end program print_available_elpa2_kernels

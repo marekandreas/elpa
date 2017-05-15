@@ -113,14 +113,14 @@ program test
    ! eigenvalues
    EV_TYPE, allocatable :: ev(:)
 
-   integer :: success, status
+   integer :: error, status
 
    integer(kind=c_int) :: solver
 
    type(output_t) :: write_to_file
    class(elpa_t), pointer :: e
 
-   call read_input_parameters(na, nev, nblk, write_to_file)
+   call read_input_parameters_traditional(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
 
    status = 0
@@ -195,22 +195,22 @@ program test
 
    e => elpa_allocate()
 
-   call e%set("na", na, success)
-   assert_elpa_ok(success)
-   call e%set("nev", nev, success)
-   assert_elpa_ok(success)
-   call e%set("local_nrows", na_rows, success)
-   assert_elpa_ok(success)
-   call e%set("local_ncols", na_cols, success)
-   assert_elpa_ok(success)
-   call e%set("nblk", nblk, success)
-   assert_elpa_ok(success)
-   call e%set("mpi_comm_parent", MPI_COMM_WORLD, success)
-   assert_elpa_ok(success)
-   call e%set("process_row", my_prow, success)
-   assert_elpa_ok(success)
-   call e%set("process_col", my_pcol, success)
-   assert_elpa_ok(success)
+   call e%set("na", na, error)
+   assert_elpa_ok(error)
+   call e%set("nev", nev, error)
+   assert_elpa_ok(error)
+   call e%set("local_nrows", na_rows, error)
+   assert_elpa_ok(error)
+   call e%set("local_ncols", na_cols, error)
+   assert_elpa_ok(error)
+   call e%set("nblk", nblk, error)
+   assert_elpa_ok(error)
+   call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
+   assert_elpa_ok(error)
+   call e%set("process_row", my_prow, error)
+   assert_elpa_ok(error)
+   call e%set("process_col", my_pcol, error)
+   assert_elpa_ok(error)
 
    assert_elpa_ok(e%setup())
 
@@ -219,18 +219,18 @@ program test
 #else
    call e%set("solver", ELPA_SOLVER_2STAGE)
 #endif
-   assert_elpa_ok(success)
+   assert_elpa_ok(error)
 
-   call e%set("gpu", TEST_GPU, success)
-   assert_elpa_ok(success)
+   call e%set("gpu", TEST_GPU, error)
+   assert_elpa_ok(error)
 
 #if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)
 # ifdef TEST_COMPLEX
-   call e%set("complex_kernel", TEST_KERNEL, success)
+   call e%set("complex_kernel", TEST_KERNEL, error)
 # else
-   call e%set("real_kernel", TEST_KERNEL, success)
+   call e%set("real_kernel", TEST_KERNEL, error)
 # endif
-   assert_elpa_ok(success)
+   assert_elpa_ok(error)
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -243,8 +243,8 @@ program test
 #endif
 
    ! The actual solve step
-   call e%solve(a, ev, z, success)
-   assert_elpa_ok(success)
+   call e%solve(a, ev, z, error)
+   assert_elpa_ok(error)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("solve")

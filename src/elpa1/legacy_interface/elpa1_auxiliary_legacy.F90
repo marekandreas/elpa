@@ -286,11 +286,10 @@ module ELPA1_AUXILIARY
 #include "../../general/precision_macros.h"
 
 
-   function elpa_cholesky_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                            wantDebug) result(success)
+    function elpa_cholesky_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                                             wantDebug) result(success)
 #include "./elpa_cholesky_template_legacy.X90"
-
-    end function elpa_cholesky_real_double
+    end function
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
@@ -314,11 +313,10 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \param succes                logical, reports success or failure
 
-   function elpa_cholesky_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+    function elpa_cholesky_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                             wantDebug) result(success)
 #include "./elpa_cholesky_template_legacy.X90"
-
-    end function elpa_cholesky_real_single
+    end function
 
 #endif /* WANT_SINGLE_PRECSION_REAL */
 
@@ -339,9 +337,9 @@ module ELPA1_AUXILIARY
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
-    function elpa_invert_trm_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
+     function elpa_invert_trm_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 #include "./elpa_invert_trm_legacy.X90"
-     end function elpa_invert_trm_real_double
+     end function
 
 #if WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
@@ -364,7 +362,7 @@ module ELPA1_AUXILIARY
 !> \result succes               logical, reports success or failure
     function elpa_invert_trm_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 #include "./elpa_invert_trm_legacy.X90"
-    end function elpa_invert_trm_real_single
+    end function
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
@@ -389,10 +387,8 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
     function elpa_cholesky_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-
 #include "./elpa_cholesky_template_legacy.X90"
-
-    end function elpa_cholesky_complex_double
+    end function
 
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
@@ -416,10 +412,8 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
     function elpa_cholesky_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-
 #include "./elpa_cholesky_template_legacy.X90"
-
-    end function elpa_cholesky_complex_single
+    end function
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
@@ -442,9 +436,9 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
 
-     function elpa_invert_trm_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
+    function elpa_invert_trm_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 #include "./elpa_invert_trm_legacy.X90"
-    end function elpa_invert_trm_complex_double
+    end function
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
@@ -468,7 +462,7 @@ module ELPA1_AUXILIARY
 
     function elpa_invert_trm_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
 #include "./elpa_invert_trm_legacy.X90"
-    end function elpa_invert_trm_complex_single
+    end function
 
 #endif /* WANT_SINGE_PRECISION_COMPLEX */
 

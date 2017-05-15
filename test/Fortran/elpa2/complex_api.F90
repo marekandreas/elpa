@@ -323,7 +323,7 @@ program test_complex2_choose_kernel_with_api_double_precision
 
    allocate(ev(na))
 
-   call prepare_matrix_double(na, myid, sc_desc, a, z, as)
+   call prepare_matrix(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -439,7 +439,7 @@ program test_complex2_choose_kernel_with_api_double_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness_double(na, nev, as, z, ev, sc_desc, myid)
+   status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)

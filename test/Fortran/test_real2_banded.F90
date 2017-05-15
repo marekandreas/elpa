@@ -140,7 +140,7 @@ program test_real2_double_precision
    successELPA   = .true.
    gpuAvailable  = .false.
 
-   call read_input_parameters(na, nev, nblk, write_to_file)
+   call read_input_parameters_traditional(na, nev, nblk, write_to_file)
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization

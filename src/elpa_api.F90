@@ -82,10 +82,10 @@ module elpa_api
           elpa_set_double
       procedure(elpa_get_integer_i), deferred, public :: get
       procedure(elpa_get_double_i),  deferred, public :: get_double
-      procedure(elpa_is_set_i),      deferred, public :: is_set
-      procedure(elpa_print_options_i), deferred, public :: print_options
 
-      ! Some parameters can be overridden by environment variables
+      procedure(elpa_is_set_i),  deferred, public :: is_set
+      procedure(elpa_can_set_i), deferred, public :: can_set
+
       procedure(elpa_get_int_i), deferred, private :: get_real_kernel
       procedure(elpa_get_int_i), deferred, private :: get_complex_kernel
 
@@ -158,78 +158,79 @@ module elpa_api
 
 
   abstract interface
-    function elpa_setup_i(self) result(success)
+    function elpa_setup_i(self) result(error)
       import elpa_t
       class(elpa_t), intent(inout) :: self
-      integer :: success
+      integer :: error
     end function
   end interface
 
 
   abstract interface
-    subroutine elpa_set_integer_i(self, name, value, success)
+    subroutine elpa_set_integer_i(self, name, value, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
       character(*), intent(in)        :: name
       integer(kind=c_int), intent(in) :: value
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    function elpa_get_integer_i(self, name, success) result(value)
+    function elpa_get_integer_i(self, name, error) result(value)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                  :: self
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
-      integer, intent(out), optional :: success
+      integer, intent(out), optional :: error
     end function
   end interface
 
 
   abstract interface
-    function elpa_is_set_i(self, name) result(success)
+    function elpa_is_set_i(self, name) result(error)
       import elpa_t
       class(elpa_t)            :: self
       character(*), intent(in) :: name
-      integer                  :: success
+      integer                  :: error
     end function
   end interface
 
 
   abstract interface
-    subroutine elpa_print_options_i(self, option_name, unit)
-      import elpa_t, c_char
-      class(elpa_t), intent(in)                 :: self
-      character(kind=c_char, len=*), intent(in) :: option_name
-      integer, intent(in), optional             :: unit
-    end subroutine
+    function elpa_can_set_i(self, name, value) result(error)
+      import elpa_t, c_int
+      class(elpa_t)                   :: self
+      character(*), intent(in)        :: name
+      integer(kind=c_int), intent(in) :: value
+      integer                         :: error
+    end function
   end interface
 
 
   abstract interface
-    subroutine elpa_set_double_i(self, name, value, success)
+    subroutine elpa_set_double_i(self, name, value, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
       character(*), intent(in)        :: name
       real(kind=c_double), intent(in) :: value
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    function elpa_get_double_i(self, name, success) result(value)
+    function elpa_get_double_i(self, name, error) result(value)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                  :: self
       character(*), intent(in)       :: name
       real(kind=c_double)            :: value
-      integer, intent(out), optional :: success
+      integer, intent(out), optional :: error
     end function
   end interface
 
@@ -246,7 +247,7 @@ module elpa_api
 
 
   abstract interface
-    subroutine elpa_solve_real_double_i(self, a, ev, q, success)
+    subroutine elpa_solve_real_double_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)       :: self
@@ -257,13 +258,13 @@ module elpa_api
 #endif
       real(kind=c_double) :: ev(self%na)
 
-      integer, optional   :: success
+      integer, optional   :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_solve_real_single_i(self, a, ev, q, success)
+    subroutine elpa_solve_real_single_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)       :: self
@@ -274,13 +275,13 @@ module elpa_api
 #endif
       real(kind=c_float)  :: ev(self%na)
 
-      integer, optional   :: success
+      integer, optional   :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_solve_complex_double_i(self, a, ev, q, success)
+    subroutine elpa_solve_complex_double_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                  :: self
@@ -292,13 +293,13 @@ module elpa_api
 #endif
       real(kind=c_double)            :: ev(self%na)
 
-      integer, optional              :: success
+      integer, optional              :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_solve_complex_single_i(self, a, ev, q, success)
+    subroutine elpa_solve_complex_single_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                 :: self
@@ -309,14 +310,14 @@ module elpa_api
 #endif
       real(kind=c_float)            :: ev(self%na)
 
-      integer, optional             :: success
+      integer, optional             :: error
     end subroutine
   end interface
 
 
   abstract interface
     subroutine elpa_multiply_at_b_double_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, success)
+                                          c, ldc, ldcCols, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -327,14 +328,14 @@ module elpa_api
 #else
       real(kind=c_double)             :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
     subroutine elpa_multiply_at_b_single_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, success)
+                                          c, ldc, ldcCols, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -345,14 +346,14 @@ module elpa_api
 #else
       real(kind=c_float)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
     subroutine elpa_multiply_ah_b_double_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, success)
+                                          c, ldc, ldcCols, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -363,14 +364,14 @@ module elpa_api
 #else
       complex(kind=c_double_complex)  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
     subroutine elpa_multiply_ah_b_single_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, success)
+                                          c, ldc, ldcCols, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -381,13 +382,13 @@ module elpa_api
 #else
       complex(kind=c_float_complex)   :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_cholesky_double_real_i (self, a, success)
+    subroutine elpa_cholesky_double_real_i (self, a, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -396,13 +397,13 @@ module elpa_api
 #else
       real(kind=c_double)             :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_cholesky_single_real_i(self, a, success)
+    subroutine elpa_cholesky_single_real_i(self, a, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -411,13 +412,13 @@ module elpa_api
 #else
       real(kind=c_float)              :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_cholesky_double_complex_i (self, a, success)
+    subroutine elpa_cholesky_double_complex_i (self, a, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -426,13 +427,13 @@ module elpa_api
 #else
       complex(kind=c_double_complex)  :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_cholesky_single_complex_i (self, a, success)
+    subroutine elpa_cholesky_single_complex_i (self, a, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -441,13 +442,13 @@ module elpa_api
 #else
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_invert_trm_double_real_i (self, a, success)
+    subroutine elpa_invert_trm_double_real_i (self, a, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -456,13 +457,13 @@ module elpa_api
 #else
       real(kind=c_double)             :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_invert_trm_single_real_i (self, a, success)
+    subroutine elpa_invert_trm_single_real_i (self, a, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -471,13 +472,13 @@ module elpa_api
 #else
       real(kind=c_float)              :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_invert_trm_double_complex_i (self, a, success)
+    subroutine elpa_invert_trm_double_complex_i (self, a, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -486,13 +487,13 @@ module elpa_api
 #else
       complex(kind=c_double_complex)  :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_invert_trm_single_complex_i (self, a, success)
+    subroutine elpa_invert_trm_single_complex_i (self, a, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -501,13 +502,13 @@ module elpa_api
 #else
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_solve_tridi_double_real_i (self, d, e, q, success)
+    subroutine elpa_solve_tridi_double_real_i (self, d, e, q, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -517,13 +518,13 @@ module elpa_api
 #else
       real(kind=c_double)             :: q(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
-    subroutine elpa_solve_tridi_single_real_i (self, d, e, q, success)
+    subroutine elpa_solve_tridi_single_real_i (self, d, e, q, error)
       use iso_c_binding
       import elpa_t
       class(elpa_t)                   :: self
@@ -533,14 +534,13 @@ module elpa_api
 #else
       real(kind=c_float)              :: q(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
     end subroutine
   end interface
 
 
   abstract interface
     subroutine elpa_destroy_i(self)
-      use elpa_generated_fortran_interfaces
       import elpa_t
       class(elpa_t) :: self
     end subroutine
@@ -599,18 +599,6 @@ module elpa_api
     end function
 
 
-    pure function elpa_int_value_to_string_helper(name, value) result(ptr)
-      use, intrinsic :: iso_c_binding
-      use elpa_generated_fortran_interfaces
-      character(kind=c_char, len=*), intent(in) :: name
-      integer(kind=c_int), intent(in) :: value
-      integer(kind=c_int) :: error
-      type(c_ptr) :: ptr
-
-      ptr = elpa_index_int_value_to_string_helper_c(name // C_NULL_CHAR, value)
-    end function
-
-
     function elpa_int_value_to_string(name, value, error) result(string)
       use elpa_utilities, only : error_unit
       use elpa_generated_fortran_interfaces
@@ -618,11 +606,11 @@ module elpa_api
       character(kind=c_char, len=*), intent(in) :: name
       integer(kind=c_int), intent(in) :: value
       integer(kind=c_int), intent(out), optional :: error
-      character(kind=c_char, len=elpa_strlen_c(elpa_int_value_to_string_helper(name, value))), pointer :: string
+      character(kind=c_char, len=elpa_int_value_to_strlen_c(name // C_NULL_CHAR, value)), pointer :: string
       integer(kind=c_int) :: actual_error
       type(c_ptr) :: ptr
 
-      actual_error = elpa_index_int_value_to_string_c(name // C_NULL_CHAR, value, ptr)
+      actual_error = elpa_int_value_to_string_c(name // C_NULL_CHAR, value, ptr)
       if (c_associated(ptr)) then
         call c_f_pointer(ptr, string)
       else
@@ -651,7 +639,7 @@ module elpa_api
       integer(kind=c_int)   :: i
       type(c_ptr) :: repr
 
-      actual_error = elpa_index_int_string_to_value_c(name // C_NULL_CHAR, string // C_NULL_CHAR, value)
+      actual_error = elpa_int_string_to_value_c(name // C_NULL_CHAR, string // C_NULL_CHAR, value)
 
       if (present(error)) then
         error = actual_error
@@ -659,6 +647,23 @@ module elpa_api
         write(error_unit,'(a)') "ELPA: Error converting string '" // string // "' to value for option '" // &
                 name // "' and you did not check for errors: " // elpa_strerr(actual_error)
       endif
+    end function
+
+
+    function elpa_option_cardinality(option_name) result(number)
+      use elpa_generated_fortran_interfaces
+      character(kind=c_char, len=*), intent(in) :: option_name
+      integer                                   :: number
+      number = elpa_option_cardinality_c(option_name // C_NULL_CHAR)
+    end function
+
+
+    function elpa_option_enumerate(option_name, i) result(option)
+      use elpa_generated_fortran_interfaces
+      character(kind=c_char, len=*), intent(in) :: option_name
+      integer, intent(in)                       :: i
+      integer                                   :: option
+      option = elpa_option_enumerate_c(option_name // C_NULL_CHAR, i)
     end function
 
 end module

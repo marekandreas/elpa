@@ -547,8 +547,8 @@ dnl Deal with --with-fixed-[real|complex]-kernel arguments
 m4_foreach_w([elpa_m4_kind],[real complex],[
         AC_ARG_WITH([fixed-]elpa_m4_kind[-kernel], m4_expand([AS_HELP_STRING([--with-fixed-]elpa_m4_kind[-kernel]=KERNEL,
                 [compile with only a single specific ]elpa_m4_kind[ kernel. Available kernels are:]
-                 m4_expand(elpa_m4_[]elpa_m4_kind[]_kernels))]),
-                 [fixed_]elpa_m4_kind[_kernel="$withval"],[fixed_]elpa_m4_kind[_kernel=""])
+                 m4_foreach_w([elpa_m4_kernel],m4_expand(elpa_m4_[]elpa_m4_kind[]_kernels),[m4_bpatsubst(elpa_m4_kernel,elpa_m4_kind[]_,[]) ]))]),
+                 [fixed_]elpa_m4_kind[_kernel="]elpa_m4_kind[_$withval"],[fixed_]elpa_m4_kind[_kernel=""])
         if test -n "$fixed_[]elpa_m4_kind[]_kernel" ; then
                 m4_foreach_w([elpa_m4_otherkernel],m4_expand(elpa_m4_[]elpa_m4_kind[]_kernels),[
                         if test "$fixed_]elpa_m4_kind[_kernel" = "]elpa_m4_otherkernel[" ; then

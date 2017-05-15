@@ -29,9 +29,9 @@ elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2/ker
 	$(call extract_interface,#!f>)
 
 src/fortran_constants.X90: $(top_srcdir)/src/fortran_constants.h
-	$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -I. $< -o $@_ || { rm -f $@; exit 1; }
-	awk '/!ELPA_C_DEFINE/ {gsub(/!ELPA_C_DEFINE/, "\n"); gsub(/NEWLINE/, "\n"); print;}' < $@_ > $@ || { rm -f $@; exit 1; }
-	rm $@_
+	@$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -I. $< -o $@_ || { rm -f $@; exit 1; }
+	@awk '/!ELPA_C_DEFINE/ {gsub(/!ELPA_C_DEFINE/, "\n"); gsub(/NEWLINE/, "\n"); print;}' < $@_ > $@ || { rm -f $@; exit 1; }
+	@rm $@_
 
 
 generated_headers= config-f90.h elpa/elpa_generated.h test/shared/generated.h elpa/elpa_generated_fortran_interfaces.h src/fortran_constants.X90

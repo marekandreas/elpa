@@ -77,7 +77,7 @@ struct elpa_index_struct {
 
 /*
  !f> interface
- !f>   function elpa_index_instance() result(index) bind(C, name="elpa_index_instance")
+ !f>   function elpa_index_instance_c() result(index) bind(C, name="elpa_index_instance")
  !f>     import c_ptr
  !f>     type(c_ptr) :: index
  !f>   end function
@@ -88,7 +88,7 @@ elpa_index_t elpa_index_instance();
 
 /*
  !f> interface
- !f>   subroutine elpa_index_free(index) bind(C, name="elpa_index_free")
+ !f>   subroutine elpa_index_free_c(index) bind(C, name="elpa_index_free")
  !f>     import c_ptr
  !f>     type(c_ptr), value :: index
  !f>   end subroutine
@@ -99,12 +99,12 @@ void elpa_index_free(elpa_index_t index);
 
 /*
  !f> interface
- !f>   function elpa_index_get_int_value(index, name, success) result(value) bind(C, name="elpa_index_get_int_value")
+ !f>   function elpa_index_get_int_value_c(index, name, success) result(value) bind(C, name="elpa_index_get_int_value")
  !f>     import c_ptr, c_int, c_char
- !f>     type(c_ptr), value                 :: index
- !f>     character(kind=c_char), intent(in) :: name(*)
- !f>     integer(kind=c_int)                :: value
- !f>     integer(kind=c_int), optional      :: success
+ !f>     type(c_ptr), value                         :: index
+ !f>     character(kind=c_char), intent(in)         :: name(*)
+ !f>     integer(kind=c_int), intent(out), optional :: success
+ !f>     integer(kind=c_int)                        :: value
  !f>   end function
  !f> end interface
  */
@@ -113,7 +113,7 @@ int elpa_index_get_int_value(elpa_index_t index, char *name, int *success);
 
 /*
  !f> interface
- !f>   function elpa_index_set_int_value(index, name, value) result(success) bind(C, name="elpa_index_set_int_value")
+ !f>   function elpa_index_set_int_value_c(index, name, value) result(success) bind(C, name="elpa_index_set_int_value")
  !f>     import c_ptr, c_int, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
@@ -127,7 +127,7 @@ int elpa_index_set_int_value(elpa_index_t index, char *name, int value);
 
 /*
  !f> interface
- !f>   function elpa_index_int_value_is_set(index, name) result(success) bind(C, name="elpa_index_int_value_is_set")
+ !f>   function elpa_index_int_value_is_set_c(index, name) result(success) bind(C, name="elpa_index_int_value_is_set")
  !f>     import c_ptr, c_int, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
@@ -140,7 +140,7 @@ int elpa_index_int_value_is_set(elpa_index_t index, char *name);
 
 /*
  !f> interface
- !f>   function elpa_index_get_int_loc(index, name) result(loc) bind(C, name="elpa_index_get_int_loc")
+ !f>   function elpa_index_get_int_loc_c(index, name) result(loc) bind(C, name="elpa_index_get_int_loc")
  !f>     import c_ptr, c_char
  !f>     type(c_ptr), value                 :: index
  !f>     character(kind=c_char), intent(in) :: name(*)
@@ -153,12 +153,12 @@ int* elpa_index_get_int_loc(elpa_index_t index, char *name);
 
 /*
  !f> interface
- !f>   function elpa_index_get_double_value(index, name, success) result(value) bind(C, name="elpa_index_get_double_value")
+ !f>   function elpa_index_get_double_value_c(index, name, success) result(value) bind(C, name="elpa_index_get_double_value")
  !f>     import c_ptr, c_int, c_double, c_char
- !f>     type(c_ptr), value                 :: index
- !f>     character(kind=c_char), intent(in) :: name(*)
- !f>     real(kind=c_double)                :: value
- !f>     integer(kind=c_int), optional      :: success
+ !f>     type(c_ptr), value                              :: index
+ !f>     character(kind=c_char), intent(in)              :: name(*)
+ !f>     integer(kind=c_int), intent(out), optional      :: success
+ !f>     real(kind=c_double)                             :: value
  !f>   end function
  !f> end interface
  */
@@ -167,7 +167,7 @@ double elpa_index_get_double_value(elpa_index_t index, char *name, int *success)
 
 /*
  !f> interface
- !f>   function elpa_index_set_double_value(index, name, value) result(success) bind(C, name="elpa_index_set_double_value")
+ !f>   function elpa_index_set_double_value_c(index, name, value) result(success) bind(C, name="elpa_index_set_double_value")
  !f>     import c_ptr, c_int, c_double, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
@@ -181,7 +181,7 @@ int elpa_index_set_double_value(elpa_index_t index, char *name, double value);
 
 /*
  !f> interface
- !f>   function elpa_index_double_value_is_set(index, name) result(success) bind(C, name="elpa_index_double_value_is_set")
+ !f>   function elpa_index_double_value_is_set_c(index, name) result(success) bind(C, name="elpa_index_double_value_is_set")
  !f>     import c_ptr, c_int, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
@@ -194,7 +194,7 @@ int elpa_index_double_value_is_set(elpa_index_t index, char *name);
 
 /*
  !f> interface
- !f>   function elpa_index_get_double_loc(index, name) result(loc) bind(C, name="elpa_index_get_double_loc")
+ !f>   function elpa_index_get_double_loc_c(index, name) result(loc) bind(C, name="elpa_index_get_double_loc")
  !f>     import c_ptr, c_char
  !f>     type(c_ptr), value                 :: index
  !f>     character(kind=c_char), intent(in) :: name(*)
@@ -207,7 +207,7 @@ double* elpa_index_get_double_loc(elpa_index_t index, char *name);
 
 /*
  !f> interface
- !f>   function elpa_index_value_is_set(index, name) result(success) bind(C, name="elpa_index_value_is_set")
+ !f>   function elpa_index_value_is_set_c(index, name) result(success) bind(C, name="elpa_index_value_is_set")
  !f>     import c_ptr, c_int, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
@@ -220,8 +220,8 @@ int elpa_index_value_is_set(elpa_index_t index, char *name);
 
 /*
  !f> interface
- !f>   function elpa_index_int_value_to_string_c(name, value, string) &
- !f>              result(error) bind(C, name="elpa_index_int_value_to_string")
+ !f>   function elpa_int_value_to_string_c(name, value, string) &
+ !f>              result(error) bind(C, name="elpa_int_value_to_string")
  !f>     import c_int, c_ptr, c_char
  !f>     character(kind=c_char), intent(in) :: name(*)
  !f>     integer(kind=c_int), intent(in), value :: value
@@ -231,27 +231,42 @@ int elpa_index_value_is_set(elpa_index_t index, char *name);
  !f> end interface
  !f>
  */
-int elpa_index_int_value_to_string(char *name, int value, const char **string);
+int elpa_int_value_to_string(char *name, int value, const char **string);
 
 
 /*
  !f> interface
- !f>   pure function elpa_index_int_value_to_string_helper_c(name, value) &
- !f>                   result(string) bind(C, name="elpa_index_int_value_to_string_helper")
+ !f>   pure function elpa_int_value_to_strlen_c(name, value) &
+ !f>                   result(length) bind(C, name="elpa_int_value_to_strlen")
  !f>     import c_int, c_ptr, c_char
  !f>     character(kind=c_char), intent(in) :: name(*)
  !f>     integer(kind=c_int), intent(in), value :: value
- !f>     type(c_ptr) :: string
+ !f>     integer(kind=c_int) :: length
  !f>   end function
  !f> end interface
  !f>
  */
-const char *elpa_index_int_value_to_string_helper(char *name, int value);
+int elpa_int_value_to_strlen(char *name, int value);
 
 
 /*
  !f> interface
- !f>   function elpa_index_int_string_to_value_c(name, string, value) result(error) bind(C, name="elpa_index_int_string_to_value")
+ !f>   pure function elpa_index_int_value_to_strlen_c(index, name) &
+ !f>                   result(length) bind(C, name="elpa_index_int_value_to_strlen")
+ !f>     import c_int, c_ptr, c_char
+ !f>     type(c_ptr), intent(in), value :: index
+ !f>     character(kind=c_char), intent(in) :: name(*)
+ !f>     integer(kind=c_int) :: length
+ !f>   end function
+ !f> end interface
+ !f>
+ */
+int elpa_index_int_value_to_strlen(elpa_index_t index, char *name);
+
+
+/*
+ !f> interface
+ !f>   function elpa_int_string_to_value_c(name, string, value) result(error) bind(C, name="elpa_int_string_to_value")
  !f>     import c_int, c_ptr, c_char
  !f>     character(kind=c_char), intent(in) :: name(*)
  !f>     character(kind=c_char), intent(in) :: string(*)
@@ -261,27 +276,25 @@ const char *elpa_index_int_value_to_string_helper(char *name, int value);
  !f> end interface
  !f>
  */
-int elpa_index_int_string_to_value(char *name, char *string, int *value);
+int elpa_int_string_to_value(char *name, char *string, int *value);
 
 
 /*
  !f> interface
- !f>   function elpa_index_cardinality_c(index, name) result(n) bind(C, name="elpa_index_cardinality")
- !f>     import c_int, c_ptr, c_char
- !f>     type(c_ptr), intent(in), value :: index
+ !f>   function elpa_option_cardinality_c(name) result(n) bind(C, name="elpa_option_cardinality")
+ !f>     import c_int, c_char
  !f>     character(kind=c_char), intent(in) :: name(*)
  !f>     integer(kind=c_int) :: n
  !f>   end function
  !f> end interface
  !f>
  */
-int elpa_index_cardinality(elpa_index_t index, char *name);
+int elpa_option_cardinality(char *name);
 
 /*
  !f> interface
- !f>   function elpa_index_enumerate_c(index, name, i) result(value) bind(C, name="elpa_index_enumerate")
- !f>     import c_int, c_ptr, c_char
- !f>     type(c_ptr), intent(in), value :: index
+ !f>   function elpa_option_enumerate_c(name, i) result(value) bind(C, name="elpa_option_enumerate")
+ !f>     import c_int, c_char
  !f>     character(kind=c_char), intent(in) :: name(*)
  !f>     integer(kind=c_int), intent(in), value :: i
  !f>     integer(kind=c_int) :: value
@@ -289,7 +302,7 @@ int elpa_index_cardinality(elpa_index_t index, char *name);
  !f> end interface
  !f>
  */
-int elpa_index_enumerate(elpa_index_t index, char *name, int i);
+int elpa_option_enumerate(char *name, int i);
 
 
 /*

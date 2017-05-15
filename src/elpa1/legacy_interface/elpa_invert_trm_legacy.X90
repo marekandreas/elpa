@@ -53,7 +53,7 @@
 #include "../../general/sanity.X90"
 
        use precision
-       use elpa_type
+       use elpa
 !       use elpa1_compute
 !       use elpa_utilities
        use elpa_mpi
@@ -96,7 +96,7 @@
 !      character(200)               :: errorMessage
 
        integer(kind=iK)            :: successInternal
-       type(elpa_t)                :: e
+       class(elpa_t), pointer      :: e
 
        call timer%start("elpa_invert_trm_&
        &MATH_DATATYPE&
@@ -112,7 +112,7 @@
          return
        endif
 
-       e = elpa_allocate()
+       e => elpa_allocate()
 
        call e%set("na", na)
        call e%set("local_nrows", lda)
@@ -137,7 +137,7 @@
        else
          success =.true.
        endif
-       call e%destroy()
+       call elpa_deallocate(e)
 
        call elpa_uninit()
 

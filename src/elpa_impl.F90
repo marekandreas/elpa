@@ -60,19 +60,20 @@ module elpa_impl
    type(c_ptr)         :: index = C_NULL_PTR
 
    contains
+     ! con-/destructor
      procedure, public :: setup => elpa_setup
+     procedure, public :: destroy => elpa_destroy
 
+     ! KV store
      procedure, public :: get => elpa_get_integer
      procedure, public :: get_double => elpa_get_double
      procedure, public :: is_set => elpa_is_set
-     procedure, public :: print_options => elpa_print_options
-
-     procedure, public :: get_real_kernel => elpa_get_real_kernel
-     procedure, public :: get_complex_kernel => elpa_get_complex_kernel
-
-     procedure, public :: destroy => elpa_destroy
+     procedure, public :: can_set => elpa_can_set
 
      ! privates:
+     procedure, private :: get_real_kernel => elpa_get_real_kernel
+     procedure, private :: get_complex_kernel => elpa_get_complex_kernel
+
      procedure, private :: elpa_set_integer
      procedure, private :: elpa_set_double
 
@@ -124,7 +125,7 @@ module elpa_impl
         return
       endif
 
-      obj%index = elpa_index_instance()
+      obj%index = elpa_index_instance_c()
 
       ! Associate some important integer pointers for convenience
       obj%na => obj%associate_int("na")
@@ -139,17 +140,17 @@ module elpa_impl
     end function
 
 
-    function elpa_setup(self) result(success)
+    function elpa_setup(self) result(error)
       use elpa1_impl, only : elpa_get_communicators_impl
       class(elpa_impl_t), intent(inout) :: self
-      integer :: success, success2
+      integer :: error, error2
       integer :: mpi_comm_rows, mpi_comm_cols, mpierr
 
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 
-      if (self%is_set("mpi_comm_parent") == ELPA_OK .and. &
-          self%is_set("process_row") == ELPA_OK .and. &
-          self%is_set("process_col") == ELPA_OK) then
+      if (self%is_set("mpi_comm_parent") == 1 .and. &
+          self%is_set("process_row") == 1 .and. &
+          self%is_set("process_col") == 1) then
 
         mpierr = elpa_get_communicators_impl(&
                         self%get("mpi_comm_parent"), &
@@ -161,31 +162,31 @@ module elpa_impl
         call self%set("mpi_comm_rows", mpi_comm_rows)
         call self%set("mpi_comm_cols", mpi_comm_cols)
 
-        success = ELPA_OK
+        error = ELPA_OK
       endif
 
-      if (self%is_set("mpi_comm_rows") == ELPA_OK .and. self%is_set("mpi_comm_cols") == ELPA_OK) then
-        success = ELPA_OK
+      if (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) then
+        error = ELPA_OK
       endif
 
     end function
 
-    subroutine elpa_set_integer(self, name, value, success)
+    subroutine elpa_set_integer(self, name, value, error)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
       use elpa_utilities, only : error_unit
       class(elpa_impl_t)              :: self
       character(*), intent(in)        :: name
       integer(kind=c_int), intent(in) :: value
-      integer, optional               :: success
-      integer                         :: actual_success
+      integer, optional               :: error
+      integer                         :: actual_error
 
-      actual_success = elpa_index_set_int_value(self%index, name // c_null_char, value)
+      actual_error = elpa_index_set_int_value_c(self%index, name // c_null_char, value)
 
-      if (present(success)) then
-        success = actual_success
+      if (present(error)) then
+        error = actual_error
 
-      else if (actual_success /= ELPA_OK) then
+      else if (actual_error /= ELPA_OK) then
         write(error_unit,'(a,a,a,i0,a)') "ELPA: Error setting option '", name, "' to value ", value, &
                 " and you did not check for errors!"
 
@@ -193,28 +194,15 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_set_integer_by_string(self, name, value, success)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
-      use elpa_utilities, only : error_unit
-      class(elpa_impl_t)              :: self
-      character(*), intent(in)        :: name
-      character(*), intent(in)        :: value
-      integer, optional               :: success
-      integer                         :: actual_success
-
-    end subroutine
-
-
-    function elpa_get_integer(self, name, success) result(value)
+    function elpa_get_integer(self, name, error) result(value)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
       class(elpa_impl_t)             :: self
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
-      integer, intent(out), optional :: success
+      integer, intent(out), optional :: error
 
-      value = elpa_index_get_int_value(self%index, name // c_null_char, success)
+      value = elpa_index_get_int_value_c(self%index, name // c_null_char, error)
 
     end function
 
@@ -226,49 +214,68 @@ module elpa_impl
       character(*), intent(in) :: name
       integer                  :: state
 
-      state = elpa_index_value_is_set(self%index, name // c_null_char)
+      state = elpa_index_value_is_set_c(self%index, name // c_null_char)
     end function
 
 
-    subroutine elpa_print_options(self, option_name, unit)
-      use elpa_utilities, only : output_unit
+    function elpa_can_set(self, name, value) result(error)
+      use iso_c_binding
+      use elpa_generated_fortran_interfaces
+      class(elpa_impl_t)       :: self
+      character(*), intent(in) :: name
+      integer(kind=c_int), intent(in) :: value
+      integer                  :: error
+
+      error = elpa_index_int_is_valid_c(self%index, name // c_null_char, value)
+    end function
+
+
+    function elpa_value_to_string(self, option_name, error) result(string)
       use elpa_generated_fortran_interfaces
       class(elpa_impl_t), intent(in) :: self
       character(kind=c_char, len=*), intent(in) :: option_name
-      integer, intent(in), optional :: unit
-      integer :: unit_actual, i, val
+      type(c_ptr) :: ptr
+      integer, intent(out), optional :: error
+      integer :: val, actual_error
+      character(kind=c_char, len=elpa_index_int_value_to_strlen_c(self%index, option_name // C_NULL_CHAR)), pointer :: string
 
-      if (present(unit)) then
-        unit_actual = unit
-      else
-        unit_actual = output_unit
+      nullify(string)
+
+      val = self%get(option_name, actual_error)
+      if (actual_error /= ELPA_OK) then
+        if (present(error)) then
+          error = actual_error
+        endif
+        return
       endif
 
-      do i = 0, elpa_index_cardinality_c(self%index, option_name // C_NULL_CHAR)
-        val = elpa_index_enumerate_c(self%index, option_name // C_NULL_CHAR, i)
-        if (elpa_index_int_is_valid_c(self%index, option_name // C_NULL_CHAR, val) == ELPA_OK) then
-          write(unit_actual, '(a)') " " // elpa_c_string(elpa_index_int_value_to_string_helper_c(option_name // C_NULL_CHAR, val))
-        end if
-      end do
-    end subroutine
+      actual_error = elpa_int_value_to_string_c(option_name // C_NULL_CHAR, val, ptr)
+      if (c_associated(ptr)) then
+        call c_f_pointer(ptr, string)
+      endif
+
+      if (present(error)) then
+        error = actual_error
+      endif
+    end function
 
 
-    subroutine elpa_set_double(self, name, value, success)
+    subroutine elpa_set_double(self, name, value, error)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
       use elpa_utilities, only : error_unit
       class(elpa_impl_t)              :: self
       character(*), intent(in)        :: name
       real(kind=c_double), intent(in) :: value
-      integer, optional               :: success
-      integer                         :: actual_success
+      integer, optional               :: error
+      integer                         :: actual_error
 
-      actual_success = elpa_index_set_double_value(self%index, name // c_null_char, value)
+      actual_error = elpa_index_set_double_value_c(self%index, name // c_null_char, value)
 
-      if (present(success)) then
-        success = actual_success
+      if (present(error)) then
+        error = actual_error
 
-      else if (actual_success /= ELPA_OK) then
+      else if (actual_error /= ELPA_OK) then
         write(error_unit,'(a,a,es12.5,a)') "ELPA: Error setting option '", name, "' to value ", value, &
                 " and you did not check for errors!"
 
@@ -276,16 +283,15 @@ module elpa_impl
     end subroutine
 
 
-    function elpa_get_double(self, name, success) result(value)
+    function elpa_get_double(self, name, error) result(value)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
       class(elpa_impl_t)             :: self
       character(*), intent(in)       :: name
       real(kind=c_double)            :: value
-      integer, intent(out), optional :: success
-      type(c_ptr) :: c_success_ptr
+      integer, intent(out), optional :: error
 
-      value = elpa_index_get_double_value(self%index, name // c_null_char, success)
+      value = elpa_index_get_double_value_c(self%index, name // c_null_char, error)
 
     end function
 
@@ -300,7 +306,7 @@ module elpa_impl
 
       type(c_ptr)                    :: value_p
 
-      value_p = elpa_index_get_int_loc(self%index, name // c_null_char)
+      value_p = elpa_index_get_int_loc_c(self%index, name // c_null_char)
       if (.not. c_associated(value_p)) then
         write(error_unit, '(a,a,a)') "ELPA: Warning, received NULL pointer for entry '", name, "'"
       endif
@@ -308,7 +314,7 @@ module elpa_impl
     end function
 
 
-    subroutine elpa_solve_real_double(self, a, ev, q, success)
+    subroutine elpa_solve_real_double(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -324,15 +330,15 @@ module elpa_impl
       real(kind=c_double) :: ev(self%na)
 
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
-      integer, optional   :: success
-      integer(kind=c_int) :: success_internal
+      integer, optional   :: error
+      integer(kind=c_int) :: error_actual
       logical             :: success_l, summary_timings
 
       logical             :: useGPU, useQR
       integer(kind=c_int) :: kernel
 
-      if (self%get("summary_timings",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("summary_timings",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry summary timings"
           stop
         endif
@@ -343,8 +349,8 @@ module elpa_impl
       endif
 
 
-      if (self%get("gpu",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("gpu",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry gpu"
           stop
         endif
@@ -376,18 +382,18 @@ module elpa_impl
         stop
       endif
 
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-      if (self%get("summary_timings",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("summary_timings",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry summary timings"
           stop
         endif
@@ -404,7 +410,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_solve_real_single(self, a, ev, q, success)
+    subroutine elpa_solve_real_single(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -419,16 +425,16 @@ module elpa_impl
       real(kind=c_float)  :: ev(self%na)
 
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
-      integer, optional   :: success
-      integer(kind=c_int) :: success_internal
+      integer, optional   :: error
+      integer(kind=c_int) :: error_actual
       logical             :: success_l, summary_timings
 
       logical             :: useGPU, useQR
       integer(kind=c_int) :: kernel
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-      if (self%get("timings",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("timings",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry summary timings"
           stop
         endif
@@ -438,8 +444,8 @@ module elpa_impl
         summary_timings = .false.
       endif
 
-      if (self%get("gpu",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("gpu",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry gpu"
           stop
         endif
@@ -471,19 +477,19 @@ module elpa_impl
         stop
       endif
 
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
 
-      if (self%get("summary_timings",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("summary_timings",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry summary timings"
           stop
         endif
@@ -499,12 +505,12 @@ module elpa_impl
       endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 #endif
     end subroutine
 
 
-    subroutine elpa_solve_complex_double(self, a, ev, q, success)
+    subroutine elpa_solve_complex_double(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -521,14 +527,14 @@ module elpa_impl
 
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
 
-      integer, optional              :: success
-      integer(kind=c_int)            :: success_internal
+      integer, optional              :: error
+      integer(kind=c_int)            :: error_actual
       logical                        :: success_l, summary_timings
 
       logical                        :: useGPU
       integer(kind=c_int) :: kernel
-      if (self%get("timings",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("timings",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry summary timings"
           stop
         endif
@@ -538,8 +544,8 @@ module elpa_impl
         summary_timings = .false.
       endif
 
-      if (self%get("gpu",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("gpu",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry gpu"
           stop
         endif
@@ -569,18 +575,18 @@ module elpa_impl
         stop
       endif
 
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-      if (self%get("summary_timings",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("summary_timings",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry summary timings"
           stop
         endif
@@ -597,7 +603,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_solve_complex_single(self, a, ev, q, success)
+    subroutine elpa_solve_complex_single(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -613,16 +619,16 @@ module elpa_impl
       real(kind=rk4)                :: ev(self%na)
 
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
-      integer, optional             :: success
-      integer(kind=c_int)           :: success_internal
+      integer, optional             :: error
+      integer(kind=c_int)           :: error_actual
       logical                       :: success_l, summary_timings
 
       logical                       :: useGPU
       integer(kind=c_int) :: kernel
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-      if (self%get("summary_timings",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("summary_timings",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry summary timings"
           stop
         endif
@@ -632,8 +638,8 @@ module elpa_impl
         summary_timings = .false.
       endif
 
-      if (self%get("gpu",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("gpu",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry gpu"
           stop
         endif
@@ -663,18 +669,18 @@ module elpa_impl
         stop
       endif
 
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-      if (self%get("summary_timings",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("summary_timings",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry summary timings"
           stop
         endif
@@ -691,13 +697,13 @@ module elpa_impl
 
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 #endif
     end subroutine
 
 
     subroutine elpa_multiply_at_b_double (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, success)
+                                          c, ldc, ldcCols, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -709,16 +715,16 @@ module elpa_impl
 #else
       real(kind=rk8)                  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
 
       success_l = elpa_mult_at_b_real_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
                               self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
@@ -727,7 +733,7 @@ module elpa_impl
 
 
     subroutine elpa_multiply_at_b_single (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, success)
+                                          c, ldc, ldcCols, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -739,29 +745,29 @@ module elpa_impl
 #else
       real(kind=rk4)                  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
 #ifdef WANT_SINGLE_PRECISION_REAL
       success_l = elpa_mult_at_b_real_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
                               self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
       endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 #endif
     end subroutine
 
 
     subroutine elpa_multiply_ah_b_double (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, success)
+                                          c, ldc, ldcCols, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -773,16 +779,16 @@ module elpa_impl
 #else
       complex(kind=ck8)               :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
 
       success_l = elpa_mult_ah_b_complex_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
                               self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
@@ -791,7 +797,7 @@ module elpa_impl
 
 
     subroutine elpa_multiply_ah_b_single (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, success)
+                                          c, ldc, ldcCols, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -803,29 +809,29 @@ module elpa_impl
 #else
       complex(kind=ck4)               :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_mult_ah_b_complex_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
                               self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
       endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 #endif
     end subroutine
 
 
-    subroutine elpa_cholesky_double_real (self, a, success)
+    subroutine elpa_cholesky_double_real (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -835,13 +841,13 @@ module elpa_impl
 #else
       real(kind=rk8)                  :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -855,11 +861,11 @@ module elpa_impl
       success_l = elpa_cholesky_real_double_impl (self%na, a, self%local_nrows, self%nblk, &
                                                  self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                  wantDebugIntern)
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
@@ -867,7 +873,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_cholesky_single_real(self, a, success)
+    subroutine elpa_cholesky_single_real(self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -877,13 +883,13 @@ module elpa_impl
 #else
       real(kind=rk4)                  :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -899,13 +905,13 @@ module elpa_impl
                                                  wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 #endif
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
@@ -913,7 +919,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_cholesky_double_complex (self, a, success)
+    subroutine elpa_cholesky_double_complex (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -923,13 +929,13 @@ module elpa_impl
 #else
       complex(kind=ck8)               :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -942,11 +948,11 @@ module elpa_impl
       success_l = elpa_cholesky_complex_double_impl (self%na, a, self%local_nrows, self%nblk, &
                                                  self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                  wantDebugIntern)
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
@@ -954,7 +960,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_cholesky_single_complex (self, a, success)
+    subroutine elpa_cholesky_single_complex (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -964,13 +970,13 @@ module elpa_impl
 #else
       complex(kind=ck4)               :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -985,13 +991,13 @@ module elpa_impl
                                                  wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 #endif
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
@@ -999,7 +1005,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_invert_trm_double_real (self, a, success)
+    subroutine elpa_invert_trm_double_real (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1009,13 +1015,13 @@ module elpa_impl
 #else
       real(kind=rk8)                  :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -1027,11 +1033,11 @@ module elpa_impl
       success_l = elpa_invert_trm_real_double_impl (self%na, a, self%local_nrows, self%nblk, &
                                                    self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                    wantDebugIntern)
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
@@ -1039,7 +1045,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_invert_trm_single_real (self, a, success)
+    subroutine elpa_invert_trm_single_real (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1049,13 +1055,13 @@ module elpa_impl
 #else
       real(kind=rk4)                  :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -1070,13 +1076,13 @@ module elpa_impl
                                                    wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 #endif
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
@@ -1084,7 +1090,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_invert_trm_double_complex (self, a, success)
+    subroutine elpa_invert_trm_double_complex (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1094,13 +1100,13 @@ module elpa_impl
 #else
       complex(kind=ck8)               :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -1112,11 +1118,11 @@ module elpa_impl
       success_l = elpa_invert_trm_complex_double_impl (self%na, a, self%local_nrows, self%nblk, &
                                                    self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
                                                    wantDebugIntern)
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
@@ -1124,7 +1130,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_invert_trm_single_complex (self, a, success)
+    subroutine elpa_invert_trm_single_complex (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1134,13 +1140,13 @@ module elpa_impl
 #else
       complex(kind=ck4)               :: a(self%local_nrows,self%local_ncols)
 #endif
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -1155,13 +1161,13 @@ module elpa_impl
                                                    wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 #endif
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
@@ -1170,7 +1176,7 @@ module elpa_impl
 
 
     !> \todo e should have dimension (na - 1)
-    subroutine elpa_solve_tridi_double_real (self, d, e, q, success)
+    subroutine elpa_solve_tridi_double_real (self, d, e, q, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1182,13 +1188,13 @@ module elpa_impl
       real(kind=rk8)                  :: q(self%local_nrows,self%local_ncols)
 #endif
 
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -1201,11 +1207,11 @@ module elpa_impl
       success_l = elpa_solve_tridi_double_impl(self%na, self%nev, d, e, q, self%local_nrows, self%nblk, &
                                               self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),&
                                               wantDebugIntern)
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
@@ -1213,7 +1219,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_solve_tridi_single_real (self, d, e, q, success)
+    subroutine elpa_solve_tridi_single_real (self, d, e, q, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1225,13 +1231,13 @@ module elpa_impl
       real(kind=rk4)                  :: q(self%local_nrows,self%local_ncols)
 #endif
 
-      integer, optional               :: success
+      integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: success_internal
+      integer(kind=c_int)             :: error_actual
       logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",success_internal) .eq. 1) then
-        if (success_internal .ne. ELPA_OK) then
+      if (self%get("wantDebug",error_actual) .eq. 1) then
+        if (error_actual .ne. ELPA_OK) then
           print *,"Could not querry wantDebug"
           stop
         endif
@@ -1246,13 +1252,13 @@ module elpa_impl
                                               wantDebugIntern)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
-      success = ELPA_ERROR
+      error = ELPA_ERROR
 #endif
-      if (present(success)) then
+      if (present(error)) then
         if (success_l) then
-          success = ELPA_OK
+          error = ELPA_OK
         else
-          success = ELPA_ERROR
+          error = ELPA_ERROR
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
@@ -1263,16 +1269,16 @@ module elpa_impl
     subroutine elpa_destroy(self)
       use elpa_generated_fortran_interfaces
       class(elpa_impl_t) :: self
-      call elpa_index_free(self%index)
+      call elpa_index_free_c(self%index)
     end subroutine
 
 
     function elpa_get_real_kernel(self) result(kernel)
       use elpa_utilities, only : error_unit
       class(elpa_impl_t), intent(in) :: self
-      integer(kind=c_int) :: kernel, success
+      integer(kind=c_int) :: kernel, error
 
-      success = ELPA_ERROR
+      error = ELPA_ERROR
       kernel = self%get("real_kernel")
 
       ! check consistency between request for GPUs and defined kernel
@@ -1289,9 +1295,9 @@ module elpa_impl
     function elpa_get_complex_kernel(self) result(kernel)
       use elpa_utilities, only : error_unit
       class(elpa_impl_t), intent(in) :: self
-      integer(kind=C_INT) :: kernel, success
+      integer(kind=C_INT) :: kernel, error
 
-      success = ELPA_ERROR
+      error = ELPA_ERROR
       kernel = self%get("complex_kernel")
 
       ! check consistency between request for GPUs and defined kernel

@@ -75,7 +75,7 @@
       logical, intent(in)      :: wantDebug
       logical :: success
       integer(kind=iK)            :: successInternal
-      type(elpa_t)                :: elpa
+      class(elpa_t), pointer      :: obj
 
       call timer%start("elpa_solve_tridi_&
       &PRECISION&
@@ -88,24 +88,24 @@
         success = .false.
       endif
 
-      elpa = elpa_allocate()
+      obj => elpa_allocate()
 
-      call elpa%set("na", na)
-      call elpa%set("nev", nev)
-      call elpa%set("local_nrows", ldq)
-      call elpa%set("local_ncols", matrixCols)
-      call elpa%set("nblk", nblk)
+      call obj%set("na", na)
+      call obj%set("nev", nev)
+      call obj%set("local_nrows", ldq)
+      call obj%set("local_ncols", matrixCols)
+      call obj%set("nblk", nblk)
 
-      call elpa%set("mpi_comm_rows", mpi_comm_rows)
-      call elpa%set("mpi_comm_cols", mpi_comm_cols)
+      call obj%set("mpi_comm_rows", mpi_comm_rows)
+      call obj%set("mpi_comm_cols", mpi_comm_cols)
 
-      if (elpa%setup() .ne. ELPA_OK) then
+      if (obj%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
         success = .false.
         return
       endif
 
-      call elpa%solve_tridi(d(1:na), e(1:na), q(1:ldq,1:matrixCols), successInternal)
+      call obj%solve_tridi(d(1:na), e(1:na), q(1:ldq,1:matrixCols), successInternal)
 
       if (successInternal .ne. ELPA_OK) then
         print *, "Cannot run solve_tridi"
@@ -115,7 +115,7 @@
       else
         success =.true.
       endif
-      call elpa%destroy()
+      call elpa_deallocate(obj)
 
       call elpa_uninit()
 

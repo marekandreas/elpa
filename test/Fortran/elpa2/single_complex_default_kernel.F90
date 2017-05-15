@@ -83,7 +83,6 @@ program test_complex2_default_kernel_single_precision
    use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
    use elpa2_utilities
-   use elpa2_utilities_private
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -213,8 +212,6 @@ program test_complex2_default_kernel_single_precision
 #endif
       print *, "since the ELPA API call does not contain any kernel specification"
       print *
-      print *, " The settings are: ",trim(elpa_get_actual_complex_kernel_name())," as complex kernel"
-      print *
       print *," "
 #ifndef HAVE_ENVIRONMENT_CHECKING
       print *, " Notice that it is not possible with this build to set the "
@@ -271,7 +268,7 @@ program test_complex2_default_kernel_single_precision
 
    allocate(ev(na))
 
-   call prepare_matrix_single(na, myid, sc_desc, a, z, as)
+   call prepare_matrix(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -335,7 +332,7 @@ program test_complex2_default_kernel_single_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
+   status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)

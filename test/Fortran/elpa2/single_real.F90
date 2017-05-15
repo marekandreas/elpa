@@ -245,7 +245,7 @@ program test_real2_single_precision
 
    allocate(ev(na))
 
-   call prepare_matrix_single(na, myid, sc_desc, a, z, as)
+   call prepare_matrix(na, myid, sc_desc, a, z, as)
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
@@ -310,7 +310,7 @@ program test_real2_single_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness_single(na, nev, as, z, ev, sc_desc, myid)
+   status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)

@@ -211,7 +211,7 @@ program test_invert_trm
    allocate(d (na))
    allocate(e (na))
 
-   call prepare_matrix_double(na, myid, sc_desc, b, z, bs)
+   call prepare_matrix(na, myid, sc_desc, b, z, bs)
    bs(:,:) = b(:,:)
 
    a(:,:) = 0.0_rk8

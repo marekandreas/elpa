@@ -69,7 +69,7 @@
    use timings_dummy
 #endif
    use iso_c_binding
-   use elpa_type
+   use elpa
    use elpa_mpi
 
    implicit none
@@ -95,7 +95,7 @@
    logical                                   :: success
 
    integer(kind=c_int)                       :: successInternal
-   type(elpa_t)                              :: e
+   class(elpa_t), pointer                    :: e
 
     call timer%start("solve_evp_&
     &MATH_DATATYPE&
@@ -113,7 +113,7 @@
       return
     endif
 
-    e = elpa_allocate()
+    e => elpa_allocate()
 
     call e%set("na", na)
     call e%set("nev", nev)
@@ -215,12 +215,12 @@
     endif
 
     if (elpa_print_times) then
-      time_evp_fwd   = e%get("time_evp_fwd")
-      time_evp_solve = e%get("time_evp_solve")
-      time_evp_back  = e%get("time_evp_back")
+      time_evp_fwd   = e%get_double("time_evp_fwd")
+      time_evp_solve = e%get_double("time_evp_solve")
+      time_evp_back  = e%get_double("time_evp_back")
     endif
 
-    call e%destroy()
+    call elpa_deallocate(e)
 
     call elpa_uninit()
 

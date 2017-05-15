@@ -209,7 +209,7 @@ program test_invert_trm
    allocate(as(na_rows,na_cols))
    allocate(ev(na))
 
-   call prepare_matrix_single(na, myid, sc_desc, b, z, bs)
+   call prepare_matrix(na, myid, sc_desc, b, z, bs)
 
    bs(:,:) = b(:,:)
 

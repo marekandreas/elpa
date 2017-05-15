@@ -46,10 +46,13 @@ module mod_read_input_parameters
   use output_types
 
   implicit none
-
   type input_options_t
     integer        :: datatype
+    integer        :: na, nev, nblk
     type(output_t) :: write_to_file
+    integer        :: this_real_kernel, this_complex_kernel
+    logical        :: realKernelIsSet, complexKernelIsSet
+    integer        :: useQrIsSet, useGPUIsSet
     logical        :: doSolveTridi, do1stage, do2stage, justHelpMessage, &
                       doCholesky, doInvertTrm, doTransposeMultiply
   end type
@@ -61,8 +64,8 @@ module mod_read_input_parameters
 
   contains
 
-    subroutine parse_arguments(obj, command_line_argument, input_options)
-      use elpa
+    subroutine parse_arguments(command_line_argument, input_options)
+      use elpa2_utilities
       use precision
       use output_types
 
@@ -70,8 +73,7 @@ module mod_read_input_parameters
 
       type(input_options_t) :: input_options
       character(len=128)    :: command_line_argument
-      class(elpa_t), intent(inout) :: obj
-      integer :: value, success
+      integer               :: error
 
       if (command_line_argument == "--help") then
         print *,"usage: elpa_tests [--help] [datatype={real|complex}] [na=number] [nev=number] "
@@ -99,16 +101,13 @@ module mod_read_input_parameters
       endif
 
       if (command_line_argument(1:3) == "na=") then
-        read(command_line_argument(4:), *) value
-        call obj%set("na", value)
+        read(command_line_argument(4:), *) input_options%na
       endif
       if (command_line_argument(1:4) == "nev=") then
-        read(command_line_argument(5:), *) value
-        call obj%set("nev", value)
+        read(command_line_argument(5:), *) input_options%nev
       endif
       if (command_line_argument(1:5) == "nblk=") then
-        read(command_line_argument(6:), *) value
-        call obj%set("nblk", value)
+        read(command_line_argument(6:), *) input_options%nblk
       endif
 
       if (command_line_argument(1:21)   == "--output_eigenvectors") then
@@ -120,31 +119,31 @@ module mod_read_input_parameters
       endif
 
       if (command_line_argument(1:14) == "--real-kernel=") then
-        value = elpa_int_string_to_value("real_kernel", trim(command_line_argument(15:)), success)
-        if (success /= ELPA_OK) then
-          print *, "ERROR: Could not parse value for option --real-kernel"
+        input_options%this_real_kernel = elpa_int_string_to_value("real_kernel", command_line_argument(15:), error)
+        if (error /= ELPA_OK) then
+          print *, "Invalid argument for --real-kernel"
           stop 1
         endif
-        call obj%set("real_kernel", value)
+        print *,"Setting ELPA2 real kernel to ", elpa_int_value_to_string("real_kernel", input_options%this_real_kernel)
+        input_options%realKernelIsSet = .true.
       endif
 
       if (command_line_argument(1:17) == "--complex-kernel=") then
-        value = elpa_int_string_to_value("complex_kernel", trim(command_line_argument(18:)), success)
-        if (success /= ELPA_OK) then
-          print *, "ERROR: Could not parse value for option --complex-kernel"
+        input_options%this_complex_kernel = elpa_int_string_to_value("complex_kernel", command_line_argument(18:), error)
+        if (error /= ELPA_OK) then
+          print *, "Invalid argument for --complex-kernel"
           stop 1
         endif
-        call obj%set("complex_kernel", value)
+        print *,"Setting ELPA2 complex kernel to ", elpa_int_value_to_string("complex_kernel", input_options%this_complex_kernel)
+        input_options%complexKernelIsSet = .true.
       endif
 
       if (command_line_argument(1:9) == "--use-qr=") then
-        read(command_line_argument(10:), *) value
-        call obj%set("qr", value)
+        read(command_line_argument(10:), *) input_options%useQrIsSet
       endif
 
       if (command_line_argument(1:10) == "--use-gpu=") then
-        read(command_line_argument(11:), *) value
-        call obj%set("gpu", value)
+        read(command_line_argument(11:), *) input_options%useGPUIsSet
       endif
 
       if (command_line_argument(1:8) == "--tests=") then
@@ -205,29 +204,37 @@ module mod_read_input_parameters
 
     end subroutine
 
-    subroutine read_input_parameters_general(obj, input_options)
-      use elpa
+    subroutine read_input_parameters_general(input_options)
       use ELPA_utilities, only : error_unit
       use precision
       use elpa_mpi
+      use elpa2_utilities
       use output_types
       implicit none
 
-      class(elpa_t), intent(inout) :: obj
       type(input_options_t)         :: input_options
 
       ! Command line arguments
       character(len=128)            :: arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10
-      integer(kind=ik)              :: mpierr, kernels
+      integer(kind=ik)              :: mpierr
 
       ! default parameters
       input_options%datatype = 1
-      call obj%set("na", 4000)
-      call obj%set("nev", 1500)
-      call obj%set("nblk", 16)
+      input_options%na = 4000
+      input_options%nev = 1500
+      input_options%nblk = 16
 
       input_options%write_to_file%eigenvectors = .false.
       input_options%write_to_file%eigenvalues  = .false.
+
+      input_options%this_real_kernel = DEFAULT_REAL_ELPA_KERNEL
+      input_options%this_complex_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
+      input_options%realKernelIsSet = .false.
+      input_options%complexKernelIsSet = .false.
+
+      input_options%useQrIsSet = 0
+
+      input_options%useGPUIsSet = 0
 
       input_options%do1Stage = .true.
       input_options%do2Stage = .true.
@@ -247,7 +254,7 @@ module mod_read_input_parameters
 
         call get_COMMAND_ARGUMENT(1, arg1)
 
-        call parse_arguments(obj, arg1, input_options)
+        call parse_arguments(arg1, input_options)
 
 
 
@@ -255,7 +262,7 @@ module mod_read_input_parameters
           ! argument 2
           call get_COMMAND_ARGUMENT(2, arg2)
 
-          call parse_arguments(obj, arg2, input_options)
+          call parse_arguments(arg2, input_options)
         endif
 
         ! argument 3
@@ -263,7 +270,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(3, arg3)
 
-          call parse_arguments(obj, arg3, input_options)
+          call parse_arguments(arg3, input_options)
         endif
 
         ! argument 4
@@ -271,7 +278,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(4, arg4)
 
-          call parse_arguments(obj, arg4, input_options)
+          call parse_arguments(arg4, input_options)
 
         endif
 
@@ -280,7 +287,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(5, arg5)
 
-          call parse_arguments(obj, arg5, input_options)
+          call parse_arguments(arg5, input_options)
         endif
 
         ! argument 6
@@ -288,7 +295,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(6, arg6)
 
-          call parse_arguments(obj, arg6, input_options)
+          call parse_arguments(arg6, input_options)
         endif
 
         ! argument 7
@@ -296,7 +303,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(7, arg7)
 
-          call parse_arguments(obj, arg7, input_options)
+          call parse_arguments(arg7, input_options)
 
         endif
 
@@ -305,7 +312,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(8, arg8)
 
-          call parse_arguments(obj, arg8, input_options)
+          call parse_arguments(arg8, input_options)
 
         endif
 
@@ -314,7 +321,7 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(9, arg9)
 
-          call parse_arguments(obj, arg8, input_options)
+          call parse_arguments(arg8, input_options)
 
         endif
 
@@ -323,13 +330,13 @@ module mod_read_input_parameters
 
           call get_COMMAND_ARGUMENT(10, arg10)
 
-          call parse_arguments(obj, arg8, input_options)
+          call parse_arguments(arg8, input_options)
 
         endif
 
       endif
 
-      if (obj%is_set("qr") == 1 .and. input_options%datatype .eq. 2) then
+      if (input_options%useQrIsSet .eq. 1 .and. input_options%datatype .eq. 2) then
         print *,"You cannot use QR-decomposition in complex case"
         stop 1
       endif

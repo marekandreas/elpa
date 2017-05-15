@@ -33,7 +33,7 @@
 
       if (error_code /= ELPA_OK) then
         write(error_unit,'(a,i0)') "Assertion failed: `" // error_code_string // &
-           " == " // elpa_strerr(error_code) // "` at " // file // ":", line
+           " is " // elpa_strerr(error_code) // "` at " // file // ":", line
         stop 1
       end if
     end subroutine
