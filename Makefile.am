@@ -1156,6 +1156,7 @@ CLEANFILES = \
   elpa2_real* \
   elpa1_real* \
   elpa*.sh \
+  test*.sh \
   *.i
 
 clean-local:
@@ -1175,9 +1176,11 @@ distclean-local:
 	-rmdir .fortran_dependencies/
 
 EXTRA_DIST = \
+  elpa/elpa.h \
   fdep/fortran_dependencies.pl \
   fdep/fortran_dependencies.mk \
   test/Fortran/elpa_print_headers.X90 \
+  test/Fortran/assert.h \
   src/elpa1/elpa_reduce_add_vectors.X90 \
   src/elpa1/elpa_transpose_vectors.X90 \
   src/elpa1/elpa1_compute_template.X90 \
@@ -1198,6 +1201,7 @@ EXTRA_DIST = \
   src/elpa2/elpa2_trans_ev_tridi_to_band_template.X90 \
   src/general/precision_macros.h \
   src/elpa_index.h \
+  src/fortran_constants.h \
   src/elpa2/kernels/elpa2_kernels_real_template.X90 \
   src/elpa2/kernels/elpa2_kernels_complex_template.X90 \
   src/elpa2/kernels/elpa2_kernels_simple_template.X90 \
