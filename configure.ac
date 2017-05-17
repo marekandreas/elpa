@@ -550,13 +550,18 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
                  m4_foreach_w([elpa_m4_kernel],m4_expand(elpa_m4_[]elpa_m4_kind[]_kernels),[m4_bpatsubst(elpa_m4_kernel,elpa_m4_kind[]_,[]) ]))]),
                  [fixed_]elpa_m4_kind[_kernel="]elpa_m4_kind[_$withval"],[fixed_]elpa_m4_kind[_kernel=""])
         if test -n "$fixed_[]elpa_m4_kind[]_kernel" ; then
+                found="no"
                 m4_foreach_w([elpa_m4_otherkernel],m4_expand(elpa_m4_[]elpa_m4_kind[]_kernels),[
                         if test "$fixed_]elpa_m4_kind[_kernel" = "]elpa_m4_otherkernel[" ; then
                                 use_[]elpa_m4_otherkernel[]=yes
+                                found="yes"
                         else
                                 use_[]elpa_m4_otherkernel[]=no
                         fi
                 ])
+                if test x"$found" = x"no" ; then
+                        AC_MSG_ERROR([Invalid kernel "$fixed_]elpa_m4_kind[_kernel" specified for --with-fixed-]elpa_m4_kind[-kernel])
+                fi
                 default_[]elpa_m4_kind[]_kernel="$fixed_[]elpa_m4_kind[]_kernel"
                 AC_DEFINE([WITH_FIXED_]m4_toupper(elpa_m4_kind)[_KERNEL],[1],[use only one specific ]elpa_m4_kind[ kernel (set at compile time)])
         fi
