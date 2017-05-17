@@ -19,6 +19,12 @@ elpa/elpa_generated.h: $(top_srcdir)/src/elpa_driver/legacy_interface/elpa_drive
 	@rm -f $@
 	$(call extract_interface,!c>)
 
+elpa/elpa_generated_legacy.h: $(top_srcdir)/src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90 \
+                       $(top_srcdir)/src/elpa1/legacy_interface/elpa_1stage_c_interface.F90 \
+                       $(top_srcdir)/src/elpa2/legacy_interface/elpa_2stage_c_interface.F90 | elpa
+	@rm -f $@
+	$(call extract_interface,!lc>)
+
 test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.*90) | test/shared
 	@rm -f $@
 	$(call extract_interface,!c>)
@@ -34,7 +40,7 @@ src/fortran_constants.X90: $(top_srcdir)/src/fortran_constants.h
 	@rm $@_
 
 
-generated_headers= config-f90.h elpa/elpa_generated.h test/shared/generated.h elpa/elpa_generated_fortran_interfaces.h src/fortran_constants.X90
+generated_headers= config-f90.h elpa/elpa_generated.h elpa/elpa_generated_legacy.h test/shared/generated.h elpa/elpa_generated_fortran_interfaces.h src/fortran_constants.X90
 generated-headers: $(generated_headers)
 
 

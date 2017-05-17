@@ -50,7 +50,7 @@
 #endif
 #include <math.h>
 
-#include <elpa/elpa.h>
+#include <elpa/elpa_legacy.h>
 #include <test/shared/generated.h>
 
 #define DOUBLE_PRECISION_REAL 1
