@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
 #endif
    useQr = 0;
    useGPU = 0;
-   THIS_REAL_ELPA_KERNEL_API = ELPA_2STAGE_REAL_GENERIC;
+   THIS_REAL_ELPA_KERNEL_API = ELPA_2STAGE_REAL_DEFAULT;
 
    success = elpa_solve_evp_real_single(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "1stage");
 
@@ -223,7 +223,7 @@ int main(int argc, char** argv) {
 #endif
    useGPU = 0;
    useQr = 0;
-   THIS_REAL_ELPA_KERNEL_API = ELPA_2STAGE_REAL_GENERIC;
+   THIS_REAL_ELPA_KERNEL_API = ELPA_2STAGE_REAL_DEFAULT;
 
    success = elpa_solve_evp_real_single(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "2stage");
 
@@ -254,7 +254,7 @@ int main(int argc, char** argv) {
 #endif
    useQr = 0;
    useGPU = 0;
-   THIS_REAL_ELPA_KERNEL_API = ELPA_2STAGE_REAL_GENERIC;
+   THIS_REAL_ELPA_KERNEL_API = ELPA_2STAGE_REAL_DEFAULT;
 
    success = elpa_solve_evp_real_single(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "auto");
 

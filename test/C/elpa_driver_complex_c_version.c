@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
    useGPU = 0;
-   THIS_COMPLEX_ELPA_KERNEL_API = ELPA_2STAGE_COMPLEX_GENERIC;
+   THIS_COMPLEX_ELPA_KERNEL_API = ELPA_2STAGE_COMPLEX_DEFAULT;
    success = elpa_solve_evp_complex_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API, useGPU, "1stage");
 
    if (success != 1) {
@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
    useGPU =0;
-   THIS_COMPLEX_ELPA_KERNEL_API = ELPA_2STAGE_COMPLEX_GENERIC;
+   THIS_COMPLEX_ELPA_KERNEL_API = ELPA_2STAGE_COMPLEX_DEFAULT;
    success = elpa_solve_evp_complex_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API, useGPU, "2stage");
 
    if (success != 1) {
@@ -251,7 +251,7 @@ int main(int argc, char** argv) {
    mpierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif
    useGPU = 0;
-   THIS_COMPLEX_ELPA_KERNEL_API = ELPA_2STAGE_COMPLEX_GENERIC;
+   THIS_COMPLEX_ELPA_KERNEL_API = ELPA_2STAGE_COMPLEX_DEFAULT;
    success = elpa_solve_evp_complex_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_COMPLEX_ELPA_KERNEL_API, useGPU, "auto");
 
    if (success != 1) {
