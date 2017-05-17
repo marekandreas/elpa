@@ -1932,7 +1932,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block2 --with-fixed-complex-kernel=sse-block1 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block2 --with-fixed-complex-kernel=sse_block1 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1944,7 +1944,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block2 --with-fixed-complex-kernel=sse-block1 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block2 --with-fixed-complex-kernel=sse_block1 --disable-avx2
       #    - make -j 8
       #    - export OMP_NUM_THREADS=2
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1959,7 +1959,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block2 --with-fixed-complex-kernel=sse-block1 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block2 --with-fixed-complex-kernel=sse_block1 --disable-avx2
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1977,7 +1977,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-ss
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block2 --with-fixed-complex-kernel=sse-block1 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block2 --with-fixed-complex-kernel=sse_block1 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -1989,7 +1989,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block2-complex-ss
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block2 --with-fixed-complex-kernel=sse-block1 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block2 --with-fixed-complex-kernel=sse_block1 --disable-avx2
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2003,7 +2003,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-sse_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block4 --with-fixed-complex-kernel=sse-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block4 --with-fixed-complex-kernel=sse_block2 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2015,7 +2015,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block4-complex-s
     - coverage
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block6 --with-fixed-complex-kernel=avx-block2 --enable-assumed-size --disable-avx2
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block6 --with-fixed-complex-kernel=avx_block2 --enable-assumed-size --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='1500 50 16' || { cat test-suite.log; exit 1; }
@@ -2030,7 +2030,7 @@ pure-intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-co
     - KNL
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block2  --with-fixed-complex-kernel=avx512-block1 --enable-avx512
+    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block2  --with-fixed-complex-kernel=avx512_block1 --enable-avx512
     - /home/elpa/wait_until_midnight.sh
     - make -j 8
     - export OMP_NUM_THREADS=1
@@ -2043,7 +2043,7 @@ pure-intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-co
       #    - KNL
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpiifort CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block2  --with-fixed-complex-kernel=avx512-block1 --enable-avx512
+      #    - ./configure --enable-option-checking=fatal FC=mpiifort CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block2  --with-fixed-complex-kernel=avx512_block1 --enable-avx512
       #    - /home/elpa/wait_until_midnight.sh
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
@@ -2056,7 +2056,7 @@ gfortran-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-comp
     - KNL
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block2  --with-fixed-complex-kernel=avx512-block1 --enable-avx512
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block2  --with-fixed-complex-kernel=avx512_block1 --enable-avx512
     - /home/elpa/wait_until_midnight.sh
     - make -j 8
     - export OMP_NUM_THREADS=1
@@ -2069,7 +2069,7 @@ pure-intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-co
     - KNL
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block2 --with-fixed-complex-kernel=avx512-block1 --enable-single-precision --enable-avx512
+    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block2 --with-fixed-complex-kernel=avx512_block1 --enable-single-precision --enable-avx512
     - /home/elpa/wait_until_midnight.sh
     - make -j 8
     - export OMP_NUM_THREADS=1
@@ -2082,7 +2082,7 @@ pure-intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-co
       #    - KNL
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpiifort CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block2 --with-fixed-complex-kernel=avx512-block1 --enable-single-precision --enable-avx512
+      #    - ./configure --enable-option-checking=fatal FC=mpiifort CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block2 --with-fixed-complex-kernel=avx512_block1 --enable-single-precision --enable-avx512
       #    - /home/elpa/wait_until_midnight.sh
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
@@ -2095,7 +2095,7 @@ gfortran-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-comp
     - KNL
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block2 --with-fixed-complex-kernel=avx512-block1 --enable-single-precision --enable-avx512
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block2 --with-fixed-complex-kernel=avx512_block1 --enable-single-precision --enable-avx512
     - /home/elpa/wait_until_midnight.sh
     - make -j 8
     - export OMP_NUM_THREADS=1
@@ -2108,7 +2108,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block2-complex
     - KNL
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-g -C -traceback -zero -CA -CB  -check all,noarg_temp_created -O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block2 --with-fixed-complex-kernel=avx512-block1 --enable-single-precision --enable-avx512
+    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-g -C -traceback -zero -CA -CB  -check all,noarg_temp_created -O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block2 --with-fixed-complex-kernel=avx512_block1 --enable-single-precision --enable-avx512
     - /home/elpa/wait_until_midnight.sh
     - make -j 8
     - export OMP_NUM_THREADS=1
@@ -2123,7 +2123,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block2 --with-fixed-complex-kernel=avx2-block1 --enable-single-precision
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block2 --with-fixed-complex-kernel=avx2_block1 --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2135,7 +2135,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-g -C -traceback -zero -CA -CB  -check all,noarg_temp_created -O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block2 --with-fixed-complex-kernel=avx2-block1 --enable-single-precision
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-g -C -traceback -zero -CA -CB  -check all,noarg_temp_created -O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block2 --with-fixed-complex-kernel=avx2_block1 --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2148,7 +2148,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block4 --with-fixed-complex-kernel=sse-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block4 --with-fixed-complex-kernel=sse_block2 --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -2159,7 +2159,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block4 --with-fixed-complex-kernel=sse-block2 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block4 --with-fixed-complex-kernel=sse_block2 --disable-avx2
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2173,7 +2173,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block4 --with-fixed-complex-kernel=sse-block2 --disable-assumed-size --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block4 --with-fixed-complex-kernel=sse_block2 --disable-assumed-size --disable-avx2
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -2188,7 +2188,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block4-complex-ss
 #    - coverage
 #  script:
 #    - ./autogen.sh
-#    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block6 --with-fixed-complex-kernel=avx-block1 --disable-avx2
+#    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block6 --with-fixed-complex-kernel=avx_block1 --disable-avx2
 #    - make -j 8
 #    - export OMP_NUM_THREADS=2
 #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2203,7 +2203,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-a
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block6 --with-fixed-complex-kernel=avx-block1 --disable-avx2
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block6 --with-fixed-complex-kernel=avx_block1 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2215,7 +2215,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block6-complex-a
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block6 --with-fixed-complex-kernel=avx-block1 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block6 --with-fixed-complex-kernel=avx_block1 --disable-avx2
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2228,7 +2228,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-av
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block6 --with-fixed-complex-kernel=avx-block1 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block6 --with-fixed-complex-kernel=avx_block1 --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -2239,7 +2239,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-av
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block6 --with-fixed-complex-kernel=avx-block1 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block6 --with-fixed-complex-kernel=avx_block1 --disable-avx2
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2253,7 +2253,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-sse_block6-complex-av
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"   --enable-timings --enable-redirect --with-fixed-real-kernel=sse-block6 --with-fixed-complex-kernel=avx-block1 --disable-assumed-size --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"   --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block6 --with-fixed-complex-kernel=avx_block1 --disable-assumed-size --disable-avx2
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2268,7 +2268,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-avx_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block2 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block2 --with-fixed-complex-kernel=avx_block2 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2280,7 +2280,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block2 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block2 --with-fixed-complex-kernel=avx_block2 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2292,7 +2292,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block2 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block2 --with-fixed-complex-kernel=avx_block2 --disable-avx2
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2310,7 +2310,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
 #    - coverage
 #  script:
 #    - ./autogen.sh
-#    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block2 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+#    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block2 --with-fixed-complex-kernel=avx_block2 --disable-avx2
 #    - make -j 8
 #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - make check TEST_FLAGS='150 50 16'
@@ -2324,7 +2324,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
 #    - coverage
 #  script:
 #    - ./autogen.sh
-#    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block2 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+#    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block2 --with-fixed-complex-kernel=avx_block2 --disable-avx2
 #    - make -j 8
 #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - make check TEST_FLAGS='150 50 16'
@@ -2334,7 +2334,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block2-complex-a
 #    - coverage
 #  script:
 #    - ./autogen.sh
-#    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block2 --with-fixed-complex-kernel=avx-block2  --disable-assumed-size --disable-avx2
+#    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block2 --with-fixed-complex-kernel=avx_block2  --disable-assumed-size --disable-avx2
 #    - make -j 8
 #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - make check TEST_FLAGS='150 50 16'
@@ -2349,7 +2349,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-avx_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block4 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block4 --with-fixed-complex-kernel=avx_block2 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2361,7 +2361,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-a
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block4 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block4 --with-fixed-complex-kernel=avx_block2 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2373,7 +2373,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block4-complex-a
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block4 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block4 --with-fixed-complex-kernel=avx_block2 --disable-avx2
       #    - make -j 8
       #    - export OMP_NUM_THREADS=1
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2386,7 +2386,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-av
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block4 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block4 --with-fixed-complex-kernel=avx_block2 --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -2397,7 +2397,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-av
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block4 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block4 --with-fixed-complex-kernel=avx_block2 --disable-avx2
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2407,7 +2407,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block4-complex-av
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block4 --with-fixed-complex-kernel=avx-block2  --disable-assumed-size --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block4 --with-fixed-complex-kernel=avx_block2  --disable-assumed-size --disable-avx2
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2422,7 +2422,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-avx_
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block6 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block6 --with-fixed-complex-kernel=avx_block2 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2434,7 +2434,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx_block6-complex-a
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block6 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -mavx" CXXFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block6 --with-fixed-complex-kernel=avx_block2 --disable-avx2
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2446,7 +2446,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex
     - KNL
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block4 --with-fixed-complex-kernel=avx512-block2 --enable-avx512
+    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block4 --with-fixed-complex-kernel=avx512_block2 --enable-avx512
     - /home/elpa/wait_until_midnight.sh
     - make -j 8
     - export OMP_NUM_THREADS=1
@@ -2459,7 +2459,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block4-complex
     - KNL
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block4 --with-fixed-complex-kernel=avx512-block2 --enable-single-precision --enable-avx512
+    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block4 --with-fixed-complex-kernel=avx512_block2 --enable-single-precision --enable-avx512
     - /home/elpa/wait_until_midnight.sh
     - make -j 8
     - export OMP_NUM_THREADS=1
@@ -2472,7 +2472,7 @@ intel-double-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex
     - KNL
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block6 --with-fixed-complex-kernel=avx512-block1 --enable-avx512
+    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block6 --with-fixed-complex-kernel=avx512_block1 --enable-avx512
     - /home/elpa/wait_until_midnight.sh
     - make -j 8
     - export OMP_NUM_THREADS=1
@@ -2486,7 +2486,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block6 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block6 --with-fixed-complex-kernel=avx_block2 --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -2497,7 +2497,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block6 --with-fixed-complex-kernel=avx-block2 --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block6 --with-fixed-complex-kernel=avx_block2 --disable-avx2
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2511,7 +2511,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx_block6-complex-av
       #    - coverage
       #  script:
       #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-fixed-real-kernel=avx-block6 --with-fixed-complex-kernel=avx-block2 --disable-assumed-size --disable-avx2
+      #    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -mavx" CXXFLAGS="--coverage -O3 -mavx" FCFLAGS="--coverage -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-timings --enable-redirect --with-fixed-real-kernel=avx_block6 --with-fixed-complex-kernel=avx_block2 --disable-assumed-size --disable-avx2
       #    - make -j 8
       #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - make check TEST_FLAGS='150 50 16'
@@ -2527,7 +2527,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block2-complex-avx
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block2 --with-fixed-complex-kernel=avx2-block1 --enable-single-precision
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block2 --with-fixed-complex-kernel=avx2_block1 --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2540,7 +2540,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block1-complex-
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block2 --with-fixed-complex-kernel=avx2-block1 --enable-single-precision
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block2 --with-fixed-complex-kernel=avx2_block1 --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2556,7 +2556,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block2-complex-a
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block2 --with-fixed-complex-kernel=avx2-block1 --enable-single-precision
+    - ./configure --enable-option-checking=fatal CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block2 --with-fixed-complex-kernel=avx2_block1 --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='100 25 16' || { cat test-suite.log; exit 1; }
@@ -2571,7 +2571,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-avx
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block4 --with-fixed-complex-kernel=avx2-block2 --enable-single-precision
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block4 --with-fixed-complex-kernel=avx2_block2 --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2584,7 +2584,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block4-complex-
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block4 --with-fixed-complex-kernel=avx2-block2 --enable-single-precision
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block4 --with-fixed-complex-kernel=avx2_block2 --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2601,7 +2601,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-a
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block4 --with-fixed-complex-kernel=avx2-block2 --enable-single-precision
+    - ./configure --enable-option-checking=fatal CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block4 --with-fixed-complex-kernel=avx2_block2 --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
@@ -2613,7 +2613,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block4-complex-a
       ##    - emulated
       ##  script:
       ##    - ./autogen.sh
-      ##    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block4 --with-fixed-complex-kernel=avx2-block2 --enable-single-precision --disable-avx2
+      ##    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block4 --with-fixed-complex-kernel=avx2_block2 --enable-single-precision --disable-avx2
       ##    - make -j 8
       ##    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       ##    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
@@ -2627,7 +2627,7 @@ intel-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-avx
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block6 --with-fixed-complex-kernel=avx2-block2 --enable-single-precision
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block6 --with-fixed-complex-kernel=avx2_block2 --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2640,7 +2640,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block6 --with-fixed-complex-kernel=avx2-block2 --enable-single-precision
+    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="-O3 -march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block6 --with-fixed-complex-kernel=avx2_block2 --enable-single-precision
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2653,7 +2653,7 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-avx2_block6-complex-
       ##    - emulated
       ##  script:
       ##    - ./autogen.sh
-      ##    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block6 --with-fixed-complex-kernel=avx2-block2 --enable-single-precision --disable-avx2
+      ##    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block6 --with-fixed-complex-kernel=avx2_block2 --enable-single-precision --disable-avx2
       ##    - make -j 8
       ##    - export OMP_NUM_THREADS=1
       ##    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2668,7 +2668,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block6-complex-a
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block6 --with-fixed-complex-kernel=avx2-block2 --enable-single-precision
+    - ./configure --enable-option-checking=fatal CFLAGS="-march=haswell -mavx2 -mfma" FCFLAGS="-O3 -march=core-avx2" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block6 --with-fixed-complex-kernel=avx2_block2 --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       #    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
@@ -2680,7 +2680,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx2_block6-complex-a
       ##    - emulated
       ##  script:
       ##    - ./autogen.sh
-      ##    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2-block6 --with-fixed-complex-kernel=avx2-block2 --enable-single-precision --disable-avx2
+      ##    - ./configure --enable-option-checking=fatal FC=mpif90 CFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" FCFLAGS="--coverage -O3 -march=haswell -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP"  --enable-timings --enable-redirect --with-fixed-real-kernel=avx2_block6 --with-fixed-complex-kernel=avx2_block2 --enable-single-precision --disable-avx2
       ##    - make -j 8
       ##    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       ##    - /home/elpa/bin/sde-external-7.45.0-2016-05-09-lin/sde -hsw -- make check TEST_FLAGS='100 25 16'
@@ -2691,7 +2691,7 @@ intel-single-precision-mpi-noopenmp-ftimings-redirect-real-avx512_block6-complex
     - KNL
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512-block6  --enable-single-precision --with-fixed-complex-kernel=avx512-block1 --enable-single-precision --enable-avx512
+    - ./configure --enable-option-checking=fatal FC=mpiifort CC=mpiicc CFLAGS="-O3 -mtune=knl -axMIC-AVX512" FCFLAGS="-O3 -mtune=knl -axMIC-AVX512" SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64" SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64" --with-fixed-real-kernel=avx512_block6  --enable-single-precision --with-fixed-complex-kernel=avx512_block1 --enable-single-precision --enable-avx512
     - /home/elpa/wait_until_midnight.sh
     - make -j 8
     - export OMP_NUM_THREADS=1
