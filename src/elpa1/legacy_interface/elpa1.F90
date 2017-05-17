@@ -560,7 +560,7 @@ end function elpa_get_communicators
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa1_template_legacy.X90"
+#include "./elpa1_template.X90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -604,7 +604,7 @@ end function elpa_get_communicators
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa1_template_legacy.X90"
+#include "./elpa1_template.X90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */
@@ -647,7 +647,7 @@ end function elpa_get_communicators
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa1_template_legacy.X90"
+#include "./elpa1_template.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -693,7 +693,7 @@ end function elpa_get_communicators
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
 #include "../../general/precision_macros.h"
-#include "./elpa1_template_legacy.X90"
+#include "./elpa1_template.X90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */

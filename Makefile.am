@@ -26,10 +26,10 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 if ENABLE_LEGACY
 libelpa@SUFFIX@_public_la_SOURCES += \
   src/elpa_driver/legacy_interface/elpa_legacy.F90 \
-  src/elpa1/legacy_interface/elpa1_legacy.F90 \
+  src/elpa1/legacy_interface/elpa1.F90 \
   src/elpa2/legacy_interface/elpa2_legacy.F90 \
   src/elpa2/legacy_interface/elpa2_utilities_legacy.F90 \
-  src/elpa1/legacy_interface/elpa1_auxiliary_legacy.F90
+  src/elpa1/legacy_interface/elpa1_auxiliary.F90
 endif
 
 # internal parts
@@ -66,7 +66,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
 if ENABLE_LEGACY
 libelpa@SUFFIX@_private_la_SOURCES += \
   src/elpa_driver/legacy_interface/elpa_driver_c_interface_legacy.F90 \
-  src/elpa1/legacy_interface/elpa_1stage_c_interface_legacy.F90 \
+  src/elpa1/legacy_interface/elpa_1stage_c_interface.F90 \
   src/elpa2/legacy_interface/elpa_2stage_c_interface_legacy.F90
 endif
 
@@ -100,20 +100,20 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
 
 if ENABLE_LEGACY
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES += \
-  src/elpa1/legacy_interface/elpa1_template_legacy.X90 \
+  src/elpa1/legacy_interface/elpa1_template.X90 \
   src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa1_c_interface_template_legacy.X90 \
+  src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
   src/elpa2/legacy_interface/elpa2_c_interface_template_legacy.X90 \
   src/elpa_driver/legacy_interface/elpa_driver_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_cholesky_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_invert_trm_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_multiply_a_b_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi_legacy.X90
+  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_cholesky_template.X90 \
+  src/elpa1/legacy_interface/elpa_invert_trm.X90 \
+  src/elpa1/legacy_interface/elpa_multiply_a_b.X90 \
+  src/elpa1/legacy_interface/elpa_solve_tridi.X90
 endif
 
 if HAVE_DETAILED_TIMINGS
@@ -1232,20 +1232,20 @@ EXTRA_DIST = \
 if ENABLE_LEGACY
 EXTRA_DIST += \
   src/elpa1/elpa1_solve_tridi_real_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa1_template_legacy.X90 \
+  src/elpa1/legacy_interface/elpa1_template.X90 \
   src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa1_c_interface_template_legacy.X90 \
+  src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
   src/elpa2/legacy_interface/elpa2_c_interface_template_legacy.X90 \
   src/elpa_driver/legacy_interface/elpa_driver_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_cholesky_template_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_invert_trm_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_multiply_a_b_legacy.X90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi_legacy.X90
+  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.X90 \
+  src/elpa1/legacy_interface/elpa_cholesky_template.X90 \
+  src/elpa1/legacy_interface/elpa_invert_trm.X90 \
+  src/elpa1/legacy_interface/elpa_multiply_a_b.X90 \
+  src/elpa1/legacy_interface/elpa_solve_tridi.X90
 endif
 
 
