@@ -80,7 +80,7 @@
 #endif
 
 #include "../../general/precision_macros.h"
-#include "./elpa2_c_interface_template_legacy.X90"
+#include "./elpa2_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -125,7 +125,7 @@
 #endif
 
 #include "../../general/precision_macros.h"
-#include "./elpa2_c_interface_template_legacy.X90"
+#include "./elpa2_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -171,7 +171,7 @@
 #endif
 
 #include "../../general/precision_macros.h"
-#include "./elpa2_c_interface_template_legacy.X90"
+#include "./elpa2_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -216,7 +216,7 @@
 #endif
 
 #include "../../general/precision_macros.h"
-#include "./elpa2_c_interface_template_legacy.X90"
+#include "./elpa2_c_interface_template.X90"
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
