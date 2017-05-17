@@ -25,7 +25,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 
 if ENABLE_LEGACY
 libelpa@SUFFIX@_public_la_SOURCES += \
-  src/elpa_driver/legacy_interface/elpa_legacy.F90 \
+  src/elpa_driver/legacy_interface/elpa.F90 \
   src/elpa1/legacy_interface/elpa1.F90 \
   src/elpa2/legacy_interface/elpa2_legacy.F90 \
   src/elpa2/legacy_interface/elpa2_utilities_legacy.F90 \
@@ -65,7 +65,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
 
 if ENABLE_LEGACY
 libelpa@SUFFIX@_private_la_SOURCES += \
-  src/elpa_driver/legacy_interface/elpa_driver_c_interface_legacy.F90 \
+  src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90 \
   src/elpa1/legacy_interface/elpa_1stage_c_interface.F90 \
   src/elpa2/legacy_interface/elpa_2stage_c_interface_legacy.F90
 endif
@@ -104,7 +104,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES += \
   src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
   src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
   src/elpa2/legacy_interface/elpa2_c_interface_template_legacy.X90 \
-  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template_legacy.X90 \
+  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.X90 \
@@ -1236,7 +1236,7 @@ EXTRA_DIST += \
   src/elpa2/legacy_interface/elpa2_template_legacy.X90 \
   src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
   src/elpa2/legacy_interface/elpa2_c_interface_template_legacy.X90 \
-  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template_legacy.X90 \
+  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
   src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.X90 \
