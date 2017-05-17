@@ -148,12 +148,7 @@
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-
-#if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_real_1stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
-#else
-  !c> int elpa_solve_evp_real_1stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
-#endif
 
 #include "./elpa1_c_interface_template.X90"
 #undef REALCASE
@@ -189,11 +184,7 @@
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
 
-#if DOUBLE_PRECISION == 1
-  !c> int elpa_solve_evp_real_1stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
-#else
   !c> int elpa_solve_evp_real_1stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
-#endif
 
 #include "./elpa1_c_interface_template.X90"
 #undef SINGLE_PRECISION
@@ -228,11 +219,7 @@
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
 
-#if DOUBLE_PRECISION == 1
   !c> int elpa_solve_evp_complex_1stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
-#else
-  !c> int elpa_solve_evp_complex_1stage_single_precision(int na, int nev,  complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
-#endif
 
 #include "./elpa1_c_interface_template.X90"
 #undef COMPLEXCASE
@@ -268,11 +255,7 @@
 #define SINGLE_PRECISION
 #include "../../general/precision_macros.h"
 
-#if DOUBLE_PRECISION == 1
-  !c> int elpa_solve_evp_complex_1stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
-#else
   !c> int elpa_solve_evp_complex_1stage_single_precision(int na, int nev,  complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
-#endif
 
 #include "./elpa1_c_interface_template.X90"
 
