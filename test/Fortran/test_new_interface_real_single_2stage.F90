@@ -183,10 +183,10 @@ program test_interface
    call e%set("solver", ELPA_SOLVER_2STAGE, success)
    assert_elpa_ok(success)
 
-   call e%set("real_kernel", ELPA_2STAGE_REAL_GENERIC, success)
+   call e%set("real_kernel", ELPA_2STAGE_REAL_DEFAULT, success)
    assert_elpa_ok(success)
 
-   call e%set("complex_kernel", ELPA_2STAGE_COMPLEX_GENERIC, success)
+   call e%set("complex_kernel", ELPA_2STAGE_COMPLEX_DEFAULT, success)
    assert_elpa_ok(success)
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("prepare_elpa")
