@@ -134,43 +134,6 @@ module elpa1_impl
   public :: elpa_cholesky_complex_single_impl     !< Cholesky factorization of a single-precision complex matrix
 #endif
 
-  ! Timing results, set by every call to solve_evp_xxx
-
-!> \brief elpa_solve_evp_real_1stage_double_impl: Fortran function to solve the real eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_real"
-!>
-!  Parameters
-!
-!> \param  na                   Order of matrix a
-!>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
-!>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
-!>
-!>  \param lda                  Leading dimension of a
-!>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>
-!>  \result                     success
-
-
 contains
 
 !-------------------------------------------------------------------------------
@@ -217,40 +180,33 @@ end function elpa_get_communicators_impl
 
 !> \brief elpa_solve_evp_real_1stage_double_impl: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
 !>
-!  Parameters
-!
-!> \param  na                   Order of matrix a
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
 !>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param  a(lda,matrixCols)        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
 !>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
+!>  \param ev(na)                   On output: eigenvalues of a, every processor gets the complete set
 !>
-!>  \param lda                  Leading dimension of a
+!>  \param q(ldq,matrixCols)        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
 !>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
 !>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>  \param mpi_comm_all         global MPI communicator
-!>  \param useGPU              use GPU version (.true. or .false.)
-!>
-!>  \result                     success
-
+!>  \result                       success
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
@@ -260,40 +216,33 @@ end function elpa_get_communicators_impl
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 !> \brief elpa_solve_evp_real_1stage_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
 !>
-!  Parameters
-!
-!> \param  na                   Order of matrix a
+!> \param  a(lda,matrixCols)        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
 !>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>  \param ev(na)                   On output: eigenvalues of a, every processor gets the complete set
 !>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
+!>  \param q(ldq,matrixCols)        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
 !>
-!>  \param lda                  Leading dimension of a
 !>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>  \param mpi_comm_all         global MPI commuicator
-!>  \param useGPU
-!>
-!>  \result                     success
+!>  \result                       success
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
@@ -304,40 +253,33 @@ end function elpa_get_communicators_impl
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
 !> \brief elpa_solve_evp_complex_1stage_double_impl: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
 !>
-!  Parameters
-!
-!> \param  na                   Order of matrix a
+!> \param  a(lda,matrixCols)        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
 !>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>  \param ev(na)                   On output: eigenvalues of a, every processor gets the complete set
 !>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
+!>  \param q(ldq,matrixCols)        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
 !>
-!>  \param lda                  Leading dimension of a
 !>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>  \param mpi_comm_all         global MPI Communicator
-!>  \param useGPU              use GPU version (.true. or .false.)
-!>
-!>  \result                     success
+!>  \result                       success
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
@@ -349,40 +291,33 @@ end function elpa_get_communicators_impl
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
 !> \brief elpa_solve_evp_complex_1stage_single_impl: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
 !>
-!  Parameters
-!
-!> \param  na                   Order of matrix a
+!> \param  a(lda,matrixCols)        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
 !>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
+!>  \param ev(na)                   On output: eigenvalues of a, every processor gets the complete set
 !>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
+!>  \param q(ldq,matrixCols)        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
 !>
-!>  \param lda                  Leading dimension of a
 !>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>  \param mpi_comm_all         global MPI communicator
-!>  \param useGPU
-!>
-!>  \result                     success
+!>  \result                       success
 
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION

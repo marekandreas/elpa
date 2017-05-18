@@ -118,18 +118,19 @@ module elpa1_auxiliary_impl
 #include "../general/precision_macros.h"
 !> \brief  elpa_invert_trm_real_double: Inverts a double-precision real upper triangular matrix
 !> \details
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              The lower triangle is not referenced.
-!> \param  lda                  Leading dimension of a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  matrixCols           local columns of matrix a
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \result succes               logical, reports success or failure
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
     function elpa_invert_trm_real_double_impl(obj, a) result(success)
 #include "elpa_invert_trm.X90"
      end function elpa_invert_trm_real_double_impl
@@ -143,18 +144,20 @@ module elpa1_auxiliary_impl
 
 !> \brief  elpa_invert_trm_real_single_impl: Inverts a single-precision real upper triangular matrix
 !> \details
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              The lower triangle is not referenced.
-!> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \result succes               logical, reports success or failure
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
+
     function elpa_invert_trm_real_single_impl(obj, a) result(success)
 #include "elpa_invert_trm.X90"
     end function elpa_invert_trm_real_single_impl
@@ -170,19 +173,19 @@ module elpa1_auxiliary_impl
 
 !> \brief  elpa_cholesky_complex_double_impl: Cholesky factorization of a double-precision complex hermitian matrix
 !> \details
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              On return, the upper triangle contains the Cholesky factor
-!>                              and the lower triangle is set to 0.
-!> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \result succes               logical, reports success or failure
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
     function elpa_cholesky_complex_double_impl(obj, a) result(success)
 
 #include "elpa_cholesky_template.X90"
@@ -198,19 +201,19 @@ module elpa1_auxiliary_impl
 
 !> \brief  elpa_cholesky_complex_single_impl: Cholesky factorization of a single-precision complex hermitian matrix
 !> \details
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              On return, the upper triangle contains the Cholesky factor
-!>                              and the lower triangle is set to 0.
-!> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \result succes               logical, reports success or failure
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
     function elpa_cholesky_complex_single_impl(obj, a) result(success)
 
 #include "elpa_cholesky_template.X90"
@@ -227,19 +230,19 @@ module elpa1_auxiliary_impl
 
 !> \brief  elpa_invert_trm_complex_double_impl: Inverts a double-precision complex upper triangular matrix
 !> \details
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              The lower triangle is not referenced.
-!> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \result succes               logical, reports success or failure
-
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
      function elpa_invert_trm_complex_double_impl(obj, a) result(success)
 #include "elpa_invert_trm.X90"
     end function elpa_invert_trm_complex_double_impl
@@ -253,19 +256,19 @@ module elpa1_auxiliary_impl
 
 !> \brief  elpa_invert_trm_complex_single_impl: Inverts a single-precision complex upper triangular matrix
 !> \details
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              The lower triangle is not referenced.
-!> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \result succes               logical, reports success or failure
-
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
     function elpa_invert_trm_complex_single_impl(obj, a) result(success)
 #include "elpa_invert_trm.X90"
     end function elpa_invert_trm_complex_single_impl
@@ -433,21 +436,20 @@ module elpa1_auxiliary_impl
 
 !> \brief  elpa_solve_tridi_double_impl: Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
 !> \details
-!>
-!> \param na                    Matrix dimension
-!> \param nev                   number of eigenvalues/vectors to be computed
-!> \param d                     array d(na) on input diagonal elements of tridiagonal matrix, on
-!>                              output the eigenvalues in ascending order
-!> \param e                     array e(na) on input subdiagonal elements of matrix, on exit destroyed
-!> \param q                     on exit : matrix q(ldq,matrixCols) contains the eigenvectors
-!> \param ldq                   leading dimension of matrix q
-!> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
-!> \param matrixCols            columns of matrix q
-!> \param mpi_comm_rows         MPI communicator for rows
-!> \param mpi_comm_cols         MPI communicator for columns
-!> \param wantDebug             logical, give more debug information if .true.
-!> \result success              logical, .true. on success, else .false.
-
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%nev           number of eigenvalues/vectors to be computed
+!> \param     - obj%local_nrows   Leading dimension of q
+!> \param     - obj%local_ncols   local columns of matrix q
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param d                       array d(na) on input diagonal elements of tridiagonal matrix, on
+!>                                output the eigenvalues in ascending order
+!> \param e                       array e(na) on input subdiagonal elements of matrix, on exit destroyed
+!> \param q                       on exit : matrix q(ldq,matrixCols) contains the eigenvectors
+!> \result succes                 logical, reports success or failure
     function elpa_solve_tridi_double_impl(obj, d, e, q) result(success)
 
 #include "elpa_solve_tridi_impl_public.X90"
@@ -463,21 +465,20 @@ module elpa1_auxiliary_impl
 
 !> \brief  elpa_solve_tridi_single_impl: Solve tridiagonal eigensystem for a single-precision matrix with divide and conquer method
 !> \details
-!>
-!> \param na                    Matrix dimension
-!> \param nev                   number of eigenvalues/vectors to be computed
-!> \param d                     array d(na) on input diagonal elements of tridiagonal matrix, on
-!>                              output the eigenvalues in ascending order
-!> \param e                     array e(na) on input subdiagonal elements of matrix, on exit destroyed
-!> \param q                     on exit : matrix q(ldq,matrixCols) contains the eigenvectors
-!> \param ldq                   leading dimension of matrix q
-!> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
-!> \param matrixCols            columns of matrix q
-!> \param mpi_comm_rows         MPI communicator for rows
-!> \param mpi_comm_cols         MPI communicator for columns
-!> \param wantDebug             logical, give more debug information if .true.
-!> \result success              logical, .true. on success, else .false.
-
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%nev           number of eigenvalues/vectors to be computed
+!> \param     - obj%local_nrows   Leading dimension of q
+!> \param     - obj%local_ncols   local columns of matrix q
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param d                       array d(na) on input diagonal elements of tridiagonal matrix, on
+!>                                output the eigenvalues in ascending order
+!> \param e                       array e(na) on input subdiagonal elements of matrix, on exit destroyed
+!> \param q                       on exit : matrix q(ldq,matrixCols) contains the eigenvectors
+!> \result succes                 logical, reports success or failure
     function elpa_solve_tridi_single_impl(obj, d, e, q) result(success)
 
 #include "elpa_solve_tridi_impl_public.X90"
