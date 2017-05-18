@@ -448,8 +448,7 @@ module elpa1_auxiliary_impl
 !> \param wantDebug             logical, give more debug information if .true.
 !> \result success              logical, .true. on success, else .false.
 
-    function elpa_solve_tridi_double_impl(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
-          result(success)
+    function elpa_solve_tridi_double_impl(obj, d, e, q) result(success)
 
 #include "elpa_solve_tridi_impl_public.X90"
 
@@ -479,8 +478,7 @@ module elpa1_auxiliary_impl
 !> \param wantDebug             logical, give more debug information if .true.
 !> \result success              logical, .true. on success, else .false.
 
-    function elpa_solve_tridi_single_impl(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                     mpi_comm_cols, wantDebug) result(success)
+    function elpa_solve_tridi_single_impl(obj, d, e, q) result(success)
 
 #include "elpa_solve_tridi_impl_public.X90"
 

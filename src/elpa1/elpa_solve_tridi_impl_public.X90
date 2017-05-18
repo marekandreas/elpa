@@ -62,19 +62,36 @@
 			 &PRECISION&
 			 &_impl
       use precision
+      use elpa_api
 
       implicit none
+      class(elpa_t), intent(in):: obj
       integer(kind=ik)         :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE) :: d(na), e(na)
+      real(kind=REAL_DATATYPE) :: d(obj%na), e(obj%na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE) :: q(ldq,*)
+      real(kind=REAL_DATATYPE) :: q(obj%local_nrows,*)
 #else
-      real(kind=REAL_DATATYPE) :: q(ldq,matrixCols)
+      real(kind=REAL_DATATYPE) :: q(obj%local_nrows, obj%local_ncols)
 #endif
 
-      logical, intent(in)      :: wantDebug
-      logical :: success
+      logical                  :: wantDebug
+      logical                  :: success
 
+
+      na         = obj%na
+      nev        = obj%nev
+      nblk       = obj%nblk
+      ldq        = obj%local_nrows
+      matrixCols = obj%local_ncols
+
+      mpi_comm_rows = obj%get("mpi_comm_rows")
+      mpi_comm_cols = obj%get("mpi_comm_cols")
+
+      if (obj%get("wantDebug") == 1) then
+        wantDebug = .true.
+      else
+        wantDebug = .false.
+      endif
       success = .false.
 
       call solve_tridi_&
