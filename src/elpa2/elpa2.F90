@@ -109,7 +109,7 @@ module elpa2_impl
 !>  \param mpi_comm_cols                        MPI communicator for columns
 !>  \param mpi_comm_all                         MPI communicator for the total processor set
 !>
-!>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
+!>  \param kernel                               specify ELPA2 kernel to use
 !>
 !>  \param useQR (optional)                     use QR decomposition
 !>  \param useGPU (optional)                    decide whether to use GPUs or not
@@ -157,7 +157,7 @@ module elpa2_impl
 !>  \param mpi_comm_cols                        MPI communicator for columns
 !>  \param mpi_comm_all                         MPI communicator for the total processor set
 !>
-!>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
+!>  \param kernel                               specify ELPA2 kernel to use
 !>
 !>  \param useQR (optional)                     use QR decomposition
 !>  \param useGPU (optional)                    decide whether GPUs should be used or not
@@ -205,7 +205,7 @@ module elpa2_impl
 !>  \param mpi_comm_cols                        MPI communicator for columns
 !>  \param mpi_comm_all                         MPI communicator for the total processor set
 !>
-!>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
+!>  \param kernel                               specify ELPA2 kernel to use
 !>  \param useGPU (optional)                    decide whether GPUs should be used or not
 !>
 !>  \result success                             logical, false if error occured
@@ -252,8 +252,8 @@ module elpa2_impl
 !>  \param mpi_comm_cols                        MPI communicator for columns
 !>  \param mpi_comm_all                         MPI communicator for the total processor set
 !>
-!>  \param THIS_COMPLEX_ELPA_KERNEL_API (optional) specify used ELPA2 kernel via API
-!>  \param useGPU (optional)                   decide whether GPUs should be used or not
+!>  \param kernel                               specify ELPA2 kernel to use
+!>  \param useGPU (optional)                    decide whether GPUs should be used or not
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------

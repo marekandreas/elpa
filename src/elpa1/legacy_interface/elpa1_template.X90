@@ -163,13 +163,11 @@ function elpa_solve_evp_&
      endif
    endif
 
-   if (elpa_print_times) then
-     call e%set("summary_timings", 1,successInternal)
-     if (successInternal .ne. ELPA_OK) then
-       print *, "Cannot set summary_timings"
-       success = .false.
-       return
-     endif
+   call e%set("summary_timings", 1,successInternal)
+   if (successInternal .ne. ELPA_OK) then
+     print *, "Cannot set summary_timings"
+     success = .false.
+     return
    endif
 
    call e%solve(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
@@ -180,11 +178,10 @@ function elpa_solve_evp_&
      return
    endif
 
-   if (elpa_print_times) then
-     time_evp_fwd =   e%get_double("time_evp_fwd")
-     time_evp_solve = e%get_double("time_evp_solve")
-     time_evp_back =  e%get_double("time_evp_back")
-   endif
+   time_evp_fwd =   e%get_double("time_evp_fwd")
+   time_evp_solve = e%get_double("time_evp_solve")
+   time_evp_back =  e%get_double("time_evp_back")
+
    call elpa_deallocate(e)
 
    call elpa_uninit()

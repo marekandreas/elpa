@@ -59,8 +59,7 @@ function elpa_solve_evp_&
 	 &_1stage_&
 	 &PRECISION&
 	 &_impl (obj, na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-	        mpi_comm_cols, mpi_comm_all, useGPU, time_evp_fwd,     &
-                time_evp_solve, time_evp_back, summary_timings) result(success)
+	        mpi_comm_cols, mpi_comm_all, useGPU) result(success)
    use precision
    use cuda_functions
    use mod_check_for_gpu
@@ -108,15 +107,11 @@ function elpa_solve_evp_&
    logical, intent(in)                             :: useGPU
    logical                                         :: success
 
-   real(kind=c_double)                             :: time_evp_fwd,     &
-                                                      time_evp_solve, time_evp_back
-   logical, intent(in)                             :: summary_timings
    logical                                         :: do_useGPU
    integer(kind=ik)                                :: numberOfGPUDevices
 
    integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol, mpierr
    real(kind=C_DATATYPE_KIND), allocatable         :: e(:)
-   real(kind=c_double)                             :: ttt0, ttt1 ! MPI_WTIME always needs double
    logical                                         :: wantDebug
    integer(kind=c_int)                             :: istat
    character(200)                                  :: errorMessage
@@ -210,18 +205,11 @@ function elpa_solve_evp_&
      stop 1
    endif
 
-   ttt0 = MPI_Wtime()
    call tridiag_&
    &MATH_DATATYPE&
    &_&
    &PRECISION&
    & (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
-
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. summary_timings) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
-   time_evp_fwd = ttt1-ttt0
-
-   ttt0 = MPI_Wtime()
 
    call solve_tridi_&
    &PRECISION&
@@ -235,11 +223,6 @@ function elpa_solve_evp_&
       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
    if (.not.(success)) return
 
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. summary_timings) write(error_unit,*) 'Time solve_tridi  :',ttt1-ttt0
-   time_evp_solve = ttt1-ttt0
-
-   ttt0 = MPI_Wtime()
 #if COMPLEXCASE == 1
    q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 #endif
@@ -249,9 +232,6 @@ function elpa_solve_evp_&
    &_&
    &PRECISION&
    & (na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
-   ttt1 = MPI_Wtime()
-   if(my_prow==0 .and. my_pcol==0 .and. summary_timings) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
-   time_evp_back = ttt1-ttt0
 
 #if COMPLEXCASE == 1
    deallocate(q_real, stat=istat, errmsg=errorMessage)
