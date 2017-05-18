@@ -44,7 +44,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <elpa/elpa.h>
+#include <elpa/elpa_legacy.h>
 #include <complex.h>
 
 int call_elpa1_real_solver_from_c_double(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int ncols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU) {

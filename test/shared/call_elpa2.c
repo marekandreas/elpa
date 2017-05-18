@@ -43,7 +43,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <elpa/elpa.h>
+#include <elpa/elpa_legacy.h>
 #include <complex.h>
 
 int call_elpa1_real_solver_from_c(int na, int nev, int ncols, double *a, int lda, double *ev, double *q, int ldq, int nblk, int mpi_comm_rows, int mpi_comm_cols) {
