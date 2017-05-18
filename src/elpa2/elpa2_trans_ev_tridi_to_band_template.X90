@@ -58,12 +58,7 @@
     &PRECISION &
     (na, nev, nblk, nbw, q, q_dev, ldq, matrixCols,         &
      hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, summary_timings, success, &
-#if REALCASE == 1
-     THIS_REAL_ELPA_KERNEL)
-#endif
-#if COMPLEXCASE == 1
-     THIS_COMPLEX_ELPA_KERNEL)
-#endif
+     kernel)
 
     !-------------------------------------------------------------------------------
     !  trans_ev_tridi_to_band_real/complex:
@@ -109,12 +104,7 @@
       implicit none
       logical, intent(in)                      :: useGPU
 
-#if REALCASE == 1
-      integer(kind=ik), intent(in)             :: THIS_REAL_ELPA_KERNEL
-#endif
-#if COMPLEXCASE == 1
-      integer(kind=ik), intent(in)             :: THIS_COMPLEX_ELPA_KERNEL
-#endif
+      integer(kind=ik), intent(in)             :: kernel
       integer(kind=ik), intent(in)             :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
 
 #if REALCASE == 1
@@ -386,9 +376,9 @@
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-          if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
-	      THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
-              THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+          if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+	      kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                                   ! (8 * sizeof(double) == 64)
@@ -398,9 +388,9 @@
         	                                  ! (4 * sizeof(double) == 32)
           endif
 #else
-          if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
-	      THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
-              THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+          if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+	      kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
 
             stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
@@ -415,8 +405,8 @@
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-	      THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+          if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+	      kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
 	                                          ! (4 * sizeof(double complex) == 64)
@@ -428,8 +418,8 @@
 	  endif
 #else
 
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-	      THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+          if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+	      kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
 	                                          ! (8 * sizeof(float complex) == 64)
@@ -487,9 +477,9 @@
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-          if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
-	      THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
-              THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+          if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+	      kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                                   ! (8 * sizeof(double) == 64)
@@ -499,9 +489,9 @@
         	                                  ! (4 * sizeof(double) == 32)
           endif
 #else
-          if (THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
-	      THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
-              THIS_REAL_ELPA_KERNEL .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+          if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+	      kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
 
             stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
@@ -517,8 +507,8 @@
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-	      THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+          if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+	      kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
 	                                          ! (4 * sizeof(double complex) == 64)
@@ -530,8 +520,8 @@
 	  endif
 #else
 
-          if (THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-	      THIS_COMPLEX_ELPA_KERNEL .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+          if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+	      kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
 	                                          ! (8 * sizeof(float complex) == 64)
@@ -1728,9 +1718,7 @@
                                hh_dot_dev, &
 #endif
                                hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, &
-			       i, my_thread, thread_width, THIS_&
-                               &MATH_DATATYPE&
-                               &_ELPA_KERNEL)
+			       i, my_thread, thread_width, kernel)
            enddo
 !$omp end parallel do
            call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1747,9 +1735,7 @@
 	      hh_dot_dev, &
 #endif
               hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i,          &
-              last_stripe_width, THIS_&
-                                 &MATH_DATATYPE&
-                                 &_ELPA_KERNEL)
+              last_stripe_width, kernel)
 !#if COMPLEXCASE == 1
 !           if (useGPU) then
 !             call compute_hh_trafo_complex_gpu_&
@@ -1763,9 +1749,7 @@
 !	     &(aIntern, stripe_width, a_dim2, stripe_count,            &
 !                                                    a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
 !                                                    0, current_local_n, i, last_stripe_width,                          &
-!                                                    THIS_&
-!                                                    &MATH_DATATYPE&
-!                                                    &_ELPA_KERNEL)
+!                                                    kernel)
 !           endif
 !#endif /* COMPLEXCASE */
 #endif /* WITH_OPENMP */
@@ -1867,9 +1851,7 @@
             hh_dot_dev,  &
 #endif
             hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
-	    bottom_msg_length, i, my_thread, thread_width, THIS_&
-                          &MATH_DATATYPE&
-                          &_ELPA_KERNEL)
+	    bottom_msg_length, i, my_thread, thread_width, kernel)
         enddo
 !$omp end parallel do
         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1919,9 +1901,7 @@
 #endif
            hh_tau_dev, kernel_flops, kernel_time, n_times,                 &
            current_local_n - bottom_msg_length, bottom_msg_length, i,             &
-           last_stripe_width, THIS_&
-                              &MATH_DATATYPE&
-                              &_ELPA_KERNEL)
+           last_stripe_width, kernel)
 
 !#if COMPLEXCASE == 1
 !! the complex case and real case diverged here
@@ -1938,9 +1918,7 @@
 !	  &(aIntern, stripe_width, a_dim2, stripe_count,              &
 !                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
 !                                                  current_local_n - bottom_msg_length, bottom_msg_length, i,         &
-!                                                  last_stripe_width, THIS_&
-!                                                                     &MATH_DATATYPE&
-!                                                                     &_ELPA_KERNEL)
+!                                                  last_stripe_width, kernel)
 !
 !        endif
 !
@@ -2019,9 +1997,7 @@
 #endif
              hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length,&
              current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
-             THIS_&
-             &MATH_DATATYPE&
-             &_ELPA_KERNEL)
+             kernel)
         enddo
 !$omp end parallel do
         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2039,9 +2015,7 @@
 #endif
            hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length,                    &
            current_local_n-top_msg_length-bottom_msg_length, i,                       &
-           last_stripe_width, THIS_&
-                              &MATH_DATATYPE&
-                              &_ELPA_KERNEL)
+           last_stripe_width, kernel)
 !#if COMPLEXCASE == 1
 !        if (useGPU) then
 !          call compute_hh_trafo_complex_gpu_&
@@ -2056,9 +2030,7 @@
 !	  &(aIntern, stripe_width, a_dim2, stripe_count,                  &
 !                                                 a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,   &
 !                                                 top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
-!                                                 last_stripe_width, THIS_&
-!                                                                    &MATH_DATATYPE&
-!                                                                    &_ELPA_KERNEL)
+!                                                 last_stripe_width, kernel)
 !        endif
 !#endif /* COMPLEXCASE */
 #endif /* WITH_OPENMP */
@@ -2120,9 +2092,7 @@
              hh_dot_dev, &
 #endif
              hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, my_thread, &
-	     thread_width, THIS_&
-                           &MATH_DATATYPE&
-                           &_ELPA_KERNEL)
+	     thread_width, kernel)
         enddo
 !$omp end parallel do
         call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2139,9 +2109,7 @@
 	   hh_dot_dev,     &
 #endif
            hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i,               &
-           last_stripe_width, THIS_&
-                              &MATH_DATATYPE&
-                              &_ELPA_KERNEL)
+           last_stripe_width, kernel)
 !#if COMPLEXCASE == 1
 !        if (useGPU) then
 !          call compute_hh_trafo_complex_gpu_&
@@ -2155,9 +2123,7 @@
 !	   &(aIntern, stripe_width, a_dim2, stripe_count,               &
 !                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
 !                                                  0, top_msg_length, i, last_stripe_width,                            &
-!                                                  THIS_&
-!                                                  &MATH_DATATYPE&
-!                                                  &_ELPA_KERNEL)
+!                                                  kernel)
 !         endif
 !#endif
 

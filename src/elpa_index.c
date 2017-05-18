@@ -140,9 +140,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         }
 
 static const elpa_index_double_entry_t double_entries[] = {
-        READONLY_DOUBLE_ENTRY("time_evp_fwd", "Time for forward step [s]"),
-        READONLY_DOUBLE_ENTRY("time_evp_solve", "Time for solve step [s]"),
-        READONLY_DOUBLE_ENTRY("time_evp_back", "Time for back-substitution step [s]"),
+        /* Empty for now */
 };
 
 void elpa_index_free(elpa_index_t index) {
@@ -235,8 +233,6 @@ FOR_ALL_TYPES(IMPLEMENT_GETENV)
                 } else { \
                         if (error != NULL) { \
                                 *error = ELPA_ERROR_ENTRY_NOT_FOUND; \
-                        } else { \
-                                fprintf(stderr, "elpa_index_get_" #TYPE "(): No entry '%s' and you did not check for errors!\n", name); \
                         } \
                         return ERROR_VALUE; \
                 } \
@@ -256,19 +252,22 @@ FOR_ALL_TYPES(IMPLEMENT_GET_FUNCTION)
 FOR_ALL_TYPES(IMPLEMENT_LOC_FUNCTION)
 
 
-#define IMPLEMENT_SET_FUNCTION(TYPE, ...) \
-        int elpa_index_set_##TYPE##_value(elpa_index_t index, char *name, TYPE value) { \
+#define IMPLEMENT_SET_FUNCTION(TYPE, PRINTF_SPEC, ...) \
+        int elpa_index_set_##TYPE##_value(elpa_index_t index, char *name, TYPE value, int force_writable) { \
                 int n = find_##TYPE##_entry(name); \
                 if (n < 0) { \
                         return ELPA_ERROR_ENTRY_NOT_FOUND; \
                 }; \
                 if (TYPE##_entries[n].valid != NULL) { \
                         if(!TYPE##_entries[n].valid(index, n, value)) { \
-                                return ELPA_ERROR_INVALID_VALUE; \
+                                return ELPA_ERROR_ENTRY_INVALID_VALUE; \
                         }; \
                 } \
                 if (TYPE##_entries[n].base.once & index->TYPE##_options.is_set[n]) { \
-                        return ELPA_ERROR_VALUE_ALREADY_SET; \
+                        return ELPA_ERROR_ENTRY_ALREADY_SET; \
+                } \
+                if (TYPE##_entries[n].base.readonly & !force_writable) { \
+                        return ELPA_ERROR_ENTRY_READONLY; \
                 } \
                 index->TYPE##_options.values[n] = value; \
                 index->TYPE##_options.is_set[n] = 1; \
@@ -327,7 +326,7 @@ int elpa_int_value_to_string(char *name, int value, const char **string) {
                 return ELPA_ERROR_ENTRY_NOT_FOUND;
         }
         if (int_entries[n].to_string == NULL) {
-                return ELPA_ERROR_NO_STRING_REPRESENTATION;
+                return ELPA_ERROR_ENTRY_NO_STRING_REPRESENTATION;
         }
         *string = int_entries[n].to_string(value);
         return ELPA_OK;
@@ -351,7 +350,7 @@ int elpa_index_int_value_to_strlen(elpa_index_t index, char *name) {
         if (n < 0) {
                 return 0;
         }
-	return elpa_int_value_to_strlen(name, index->int_options.values[n]);
+        return elpa_int_value_to_strlen(name, index->int_options.values[n]);
 }
 
 
@@ -368,7 +367,7 @@ int elpa_int_string_to_value(char *name, char *string, int *value) {
                         *value = val;
                         return ELPA_OK;
                 } else {
-                        return ELPA_ERROR_INVALID_VALUE;
+                        return ELPA_ERROR_ENTRY_INVALID_VALUE;
                 }
         }
 
@@ -379,7 +378,7 @@ int elpa_int_string_to_value(char *name, char *string, int *value) {
                         return ELPA_OK;
                 }
         }
-        return ELPA_ERROR_INVALID_VALUE;
+        return ELPA_ERROR_ENTRY_INVALID_VALUE;
 }
 
 int elpa_double_string_to_value(char *name, char *string, double *value) {
@@ -391,12 +390,12 @@ int elpa_double_string_to_value(char *name, char *string, double *value) {
         } else {
                 /* \todo: remove */
                 fprintf(stderr, "ELPA: DEBUG: Could not parse double value '%s' for option '%s'\n", string, name);
-                return ELPA_ERROR_INVALID_VALUE;
+                return ELPA_ERROR_ENTRY_INVALID_VALUE;
         }
 }
 
 int elpa_double_value_to_string(char *name, double value, const char **string) {
-        return ELPA_ERROR_NO_STRING_REPRESENTATION;
+        return ELPA_ERROR_ENTRY_NO_STRING_REPRESENTATION;
 }
 
 int elpa_option_cardinality(char *name) {

@@ -54,8 +54,7 @@
   &_&
   &2stage_&
   &PRECISION&
-  &_impl (obj, a, ev, q,  &
-         time_evp_fwd, time_evp_solve, time_evp_back) result(success)
+  &_impl (obj, a, ev, q) result(success)
 
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
@@ -99,10 +98,7 @@
 #if COMPLEXCASE == 1
    real(kind=C_DATATYPE_KIND), allocatable   :: q_real(:,:)
 #endif
-   real(kind=c_double)                       :: time_evp_fwd, time_evp_solve, time_evp_back
-   logical                                   :: summary_timings
    integer(kind=c_intptr_t)                  :: tmat_dev, q_dev, a_dev
-   real(kind=c_double)                        :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
 
    integer(kind=c_int)                       :: i
    logical                                   :: success, successCUDA
@@ -158,11 +154,11 @@
     mpi_comm_cols = obj%get("mpi_comm_cols")
     mpi_comm_all  = obj%get("mpi_comm_parent")
 
-    if (obj%get("summary_timings") .eq. 1) then
-      summary_timings = .true.
-    else
-      summary_timings = .false.
-    endif
+!    if (obj%get("summary_timings") .eq. 1) then
+!      summary_timings = .true.
+!    else
+!      summary_timings = .false.
+!    endif
     if (obj%get("gpu") .eq. 1) then
       useGPU = .true.
     else
@@ -271,8 +267,6 @@
         success = .false.
         return
       endif
-
-      ttts = MPI_Wtime()
     else
 
       ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
@@ -303,9 +297,6 @@
       endif
 
       ! Reduction full -> band
-
-      ttt0 = MPI_Wtime()
-      ttts = ttt0
       call bandred_&
       &MATH_DATATYPE&
       &_&
@@ -318,13 +309,6 @@
 #endif
        )
       if (.not.(success)) return
-      ttt1 = MPI_Wtime()
-      if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
-        write(error_unit,*) "Time " // "bandred_&
-	&MATH_DATATYPE&
-	&_&
-	&PRECISION " // "               :",ttt1-ttt0
-
     end if  ! matrix not already banded on input
 
      ! Reduction band -> tridiagonal
@@ -338,20 +322,11 @@
        stop 1
      endif
 
-     ttt0 = MPI_Wtime()
-
      call tridiag_band_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
      (na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, do_useGPU)
-
-     ttt1 = MPI_Wtime()
-     if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
-       write(error_unit,*) "Time " // "tridiag_band_&
-       &MATH_DATATYPE&
-       &_&
-       &PRECISION " // "          :",ttt1-ttt0
 
 #ifdef WITH_MPI
      call timer%start("mpi_communication")
@@ -359,8 +334,6 @@
      call mpi_bcast(e, na, MPI_REAL_PRECISION, 0, mpi_comm_all, mpierr)
      call timer%stop("mpi_communication")
 #endif /* WITH_MPI */
-     ttt1 = MPI_Wtime()
-     time_evp_fwd = ttt1-ttts
 
 #if COMPLEXCASE == 1
      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
@@ -377,8 +350,6 @@
 #endif
 
      ! Solve tridiagonal system
-
-     ttt0 = MPI_Wtime()
      call solve_tridi_&
      &PRECISION &
      (na, nev, ev, e, &
@@ -391,12 +362,6 @@
      nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
      if (.not.(success)) return
-
-     ttt1 = MPI_Wtime()
-     if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
-     write(error_unit,*) 'Time solve_tridi                :',ttt1-ttt0
-     time_evp_solve = ttt1-ttt0
-     ttts = ttt1
 
      deallocate(e, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
@@ -418,9 +383,6 @@
      endif
 #endif
      ! Backtransform stage 1
-
-     ttt0 = MPI_Wtime()
-
      call trans_ev_tridi_to_band_&
      &MATH_DATATYPE&
      &_&
@@ -428,15 +390,9 @@
      (na, nev, nblk, nbw, q, &
      q_dev, &
      ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
-     summary_timings, success, kernel)
+     summary_timings=.false., success=success, kernel=kernel)
 
      if (.not.(success)) return
-     ttt1 = MPI_Wtime()
-     if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
-       write(error_unit,*) "Time " // "trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &_&
-       &PRECISION " // " :",ttt1-ttt0
 
      ! We can now deallocate the stored householder vectors
      deallocate(hh_trans, stat=istat, errmsg=errorMessage)
@@ -448,10 +404,7 @@
        stop 1
      endif
 
-     if( bandwidth .ne. -1) then
-       time_evp_back = ttt1-ttts
-     else
-
+     if( bandwidth == -1) then
        if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
          ! copy to device if we want to continue on GPU
          successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
@@ -460,7 +413,6 @@
        endif
 
        ! Backtransform stage 2
-       ttt0 = MPI_Wtime()
        call trans_ev_band_to_full_&
        &MATH_DATATYPE&
        &_&
@@ -473,15 +425,6 @@
         , useQRActual  &
 #endif
         )
-
-       ttt1 = MPI_Wtime()
-       if (my_prow==0 .and. my_pcol==0 .and. summary_timings) &
-         write(error_unit,*) "Time " // "trans_ev_band_to_full_&
-	 &MATH_DATATYPE&
-	 &_&
-	 &PRECISION " // " :",ttt1-ttt0
-
-       time_evp_back = ttt1-ttts
 
        deallocate(tmat, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then

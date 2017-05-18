@@ -179,15 +179,14 @@ module elpa_impl
       integer, optional               :: error
       integer                         :: actual_error
 
-      actual_error = elpa_index_set_int_value_c(self%index, name // c_null_char, value)
+      actual_error = elpa_index_set_int_value_c(self%index, name // c_null_char, value, 0)
 
       if (present(error)) then
         error = actual_error
 
       else if (actual_error /= ELPA_OK) then
-        write(error_unit,'(a,a,a,i0,a)') "ELPA: Error setting option '", name, "' to value ", value, &
-                " and you did not check for errors!"
-
+        write(error_unit,'(a,i0,a)') "ELPA: Error setting option '" // name // "' to value ", value, &
+                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
     end subroutine
 
@@ -195,13 +194,20 @@ module elpa_impl
     function elpa_get_integer(self, name, error) result(value)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
+      use elpa_utilities, only : error_unit
       class(elpa_impl_t)             :: self
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
       integer, intent(out), optional :: error
+      integer                        :: actual_error
 
-      value = elpa_index_get_int_value_c(self%index, name // c_null_char, error)
-
+      value = elpa_index_get_int_value_c(self%index, name // c_null_char, actual_error)
+      if (present(error)) then
+        error = actual_error
+      else if (actual_error /= ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
+                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
+      end if
     end function
 
 
@@ -268,15 +274,13 @@ module elpa_impl
       integer, optional               :: error
       integer                         :: actual_error
 
-      actual_error = elpa_index_set_double_value_c(self%index, name // c_null_char, value)
+      actual_error = elpa_index_set_double_value_c(self%index, name // c_null_char, value, 0)
 
       if (present(error)) then
         error = actual_error
-
       else if (actual_error /= ELPA_OK) then
-        write(error_unit,'(a,a,es12.5,a)') "ELPA: Error setting option '", name, "' to value ", value, &
-                " and you did not check for errors!"
-
+        write(error_unit,'(a,es12.5,a)') "ELPA: Error setting option '" // name // "' to value ", value, &
+                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
     end subroutine
 
@@ -284,13 +288,20 @@ module elpa_impl
     function elpa_get_double(self, name, error) result(value)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
+      use elpa_utilities, only : error_unit
       class(elpa_impl_t)             :: self
       character(*), intent(in)       :: name
       real(kind=c_double)            :: value
       integer, intent(out), optional :: error
+      integer                        :: actual_error
 
-      value = elpa_index_get_double_value_c(self%index, name // c_null_char, error)
-
+      value = elpa_index_get_double_value_c(self%index, name // c_null_char, actual_error)
+      if (present(error)) then
+        error = actual_error
+      else if (actual_error /= ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
+                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
+      end if
     end function
 
 
@@ -327,21 +338,16 @@ module elpa_impl
 #endif
       real(kind=c_double) :: ev(self%na)
 
-      real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
       integer, optional   :: error
       integer(kind=c_int) :: error_actual
       logical             :: success_l
 
 
       if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
-        success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev, q, time_evp_fwd,     &
-                                                           time_evp_solve, time_evp_back)
+        success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev, q)
 
       else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
-        success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev, q,  &
-                                                           time_evp_fwd,     &
-                                                           time_evp_solve, time_evp_back  &
-                                                           )
+        success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev, q)
       else
         print *,"unknown solver"
         stop
@@ -356,7 +362,6 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
-
     end subroutine
 
 
@@ -374,7 +379,6 @@ module elpa_impl
 #endif
       real(kind=c_float)  :: ev(self%na)
 
-      real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
       integer, optional   :: error
       integer(kind=c_int) :: error_actual
       logical             :: success_l
@@ -382,15 +386,10 @@ module elpa_impl
 #ifdef WANT_SINGLE_PRECISION_REAL
 
       if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
-        success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev, q,  &
-                                                          time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back)
+        success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev, q)
 
       else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
-        success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev, q,  &
-                                                          time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back &
-                                                          )
+        success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev, q)
       else
         print *,"unknown solver"
         stop
@@ -405,7 +404,6 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
-
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
@@ -428,22 +426,15 @@ module elpa_impl
 #endif
       real(kind=c_double)            :: ev(self%na)
 
-      real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
-
       integer, optional              :: error
       integer(kind=c_int)            :: error_actual
       logical                        :: success_l
 
       if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
-        success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev, q,  &
-                                                          time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back)
+        success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev, q)
 
       else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
-        success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev, q,  &
-                                                          time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back &
-                                                          )
+        success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev, q)
       else
         print *,"unknown solver"
         stop
@@ -458,7 +449,6 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
-
     end subroutine
 
 
@@ -477,7 +467,6 @@ module elpa_impl
 #endif
       real(kind=rk4)                :: ev(self%na)
 
-      real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
       integer, optional             :: error
       integer(kind=c_int)           :: error_actual
       logical                       :: success_l
@@ -485,15 +474,10 @@ module elpa_impl
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
       if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
-        success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev, q,  &
-                                                          time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back)
+        success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev, q)
 
       else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
-        success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev, q,  &
-                                                           time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, &
-                                                          )
+        success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev, q)
       else
         print *,"unknown solver"
         stop
@@ -508,7 +492,6 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
-
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR

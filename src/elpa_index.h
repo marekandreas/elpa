@@ -99,7 +99,8 @@ void elpa_index_free(elpa_index_t index);
 
 /*
  !f> interface
- !f>   function elpa_index_get_int_value_c(index, name, success) result(value) bind(C, name="elpa_index_get_int_value")
+ !f>   function elpa_index_get_int_value_c(index, name, success) result(value) &
+ !f>       bind(C, name="elpa_index_get_int_value")
  !f>     import c_ptr, c_int, c_char
  !f>     type(c_ptr), value                         :: index
  !f>     character(kind=c_char), intent(in)         :: name(*)
@@ -113,16 +114,18 @@ int elpa_index_get_int_value(elpa_index_t index, char *name, int *success);
 
 /*
  !f> interface
- !f>   function elpa_index_set_int_value_c(index, name, value) result(success) bind(C, name="elpa_index_set_int_value")
+ !f>   function elpa_index_set_int_value_c(index, name, value, force_writable) result(success) &
+ !f>       bind(C, name="elpa_index_set_int_value")
  !f>     import c_ptr, c_int, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
  !f>     integer(kind=c_int),intent(in), value :: value
+ !f>     integer(kind=c_int),intent(in), value :: force_writable
  !f>     integer(kind=c_int)                   :: success
  !f>   end function
  !f> end interface
  */
-int elpa_index_set_int_value(elpa_index_t index, char *name, int value);
+int elpa_index_set_int_value(elpa_index_t index, char *name, int value, int force_writable);
 
 
 /*
@@ -167,21 +170,24 @@ double elpa_index_get_double_value(elpa_index_t index, char *name, int *success)
 
 /*
  !f> interface
- !f>   function elpa_index_set_double_value_c(index, name, value) result(success) bind(C, name="elpa_index_set_double_value")
+ !f>   function elpa_index_set_double_value_c(index, name, value, force_writable) result(success) &
+ !f>       bind(C, name="elpa_index_set_double_value")
  !f>     import c_ptr, c_int, c_double, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
  !f>     real(kind=c_double),intent(in), value :: value
+ !f>     integer(kind=c_int),intent(in), value :: force_writable
  !f>     integer(kind=c_int)                   :: success
  !f>   end function
  !f> end interface
  */
-int elpa_index_set_double_value(elpa_index_t index, char *name, double value);
+int elpa_index_set_double_value(elpa_index_t index, char *name, double value, int force_writable);
 
 
 /*
  !f> interface
- !f>   function elpa_index_double_value_is_set_c(index, name) result(success) bind(C, name="elpa_index_double_value_is_set")
+ !f>   function elpa_index_double_value_is_set_c(index, name) result(success) &
+ !f>       bind(C, name="elpa_index_double_value_is_set")
  !f>     import c_ptr, c_int, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
