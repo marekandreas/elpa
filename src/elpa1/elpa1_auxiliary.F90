@@ -130,8 +130,7 @@ module elpa1_auxiliary_impl
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
-    function elpa_invert_trm_real_double_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                             mpi_comm_cols, wantDebug) result(success)
+    function elpa_invert_trm_real_double_impl(obj, a) result(success)
 #include "elpa_invert_trm.X90"
      end function elpa_invert_trm_real_double_impl
 #undef DOUBLE_PRECISION
@@ -156,8 +155,7 @@ module elpa1_auxiliary_impl
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
-    function elpa_invert_trm_real_single_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                             mpi_comm_cols, wantDebug) result(success)
+    function elpa_invert_trm_real_single_impl(obj, a) result(success)
 #include "elpa_invert_trm.X90"
     end function elpa_invert_trm_real_single_impl
 #undef SINGLE_PRECISION
@@ -242,8 +240,7 @@ module elpa1_auxiliary_impl
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
 
-     function elpa_invert_trm_complex_double_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                                 mpi_comm_cols, wantDebug) result(success)
+     function elpa_invert_trm_complex_double_impl(obj, a) result(success)
 #include "elpa_invert_trm.X90"
     end function elpa_invert_trm_complex_double_impl
 #undef DOUBLE_PRECISION
@@ -269,8 +266,7 @@ module elpa1_auxiliary_impl
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
 
-    function elpa_invert_trm_complex_single_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, &
-                                                mpi_comm_cols, wantDebug) result(success)
+    function elpa_invert_trm_complex_single_impl(obj, a) result(success)
 #include "elpa_invert_trm.X90"
     end function elpa_invert_trm_complex_single_impl
 #undef SINGLE_PRECISION
