@@ -69,7 +69,6 @@
 
 #include "elpa1_tridiag_template.X90"
 #include "elpa1_trans_ev_template.X90"
-#include "elpa1_solve_tridi_real_template_legacy.X90"
 #include "elpa1_solve_tridi_real_template.X90"
 #include "elpa1_merge_systems_real_template.X90"
 #include "elpa1_tools_template.X90"
