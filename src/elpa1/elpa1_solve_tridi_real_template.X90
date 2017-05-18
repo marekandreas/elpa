@@ -55,8 +55,8 @@
 #include "../general/sanity.X90"
 
 subroutine solve_tridi_&
-&PRECISION&
-&_impl ( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+&PRECISION_AND_SUFFIX &
+    ( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, wantDebug, success )
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -146,8 +146,8 @@ subroutine solve_tridi_&
         nev1 = MIN(nev,l_cols)
       endif
       call solve_tridi_col_&
-           &PRECISION&
-           &_impl (l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
+           &PRECISION_AND_SUFFIX &
+             (l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         matrixCols, mpi_comm_rows, wantDebug, success)
       if (.not.(success)) then
         call timer%stop("solve_tridi" // PRECISION_SUFFIX)
@@ -349,12 +349,11 @@ subroutine solve_tridi_&
            &PRECISION
 
     end subroutine solve_tridi_&
-        &PRECISION&
-	&_impl
+        &PRECISION_AND_SUFFIX
 
     subroutine solve_tridi_col_&
-    &PRECISION&
-    &_impl ( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
+    &PRECISION_AND_SUFFIX &
+      ( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -451,9 +450,8 @@ subroutine solve_tridi_&
           nlen = limits(n+1)-noff ! Size of subproblem
 
           call solve_tridi_single_problem_&
-          &PRECISION&
-	  &_impl &
-                                   (nlen,d(noff+1),e(noff+1), &
+          &PRECISION_AND_SUFFIX &
+                                  (nlen,d(noff+1),e(noff+1), &
                                     q(nqoff+noff+1,noff+1),ubound(q,dim=1), wantDebug, success)
 
           if (.not.(success)) return
@@ -483,9 +481,8 @@ subroutine solve_tridi_&
           noff = limits(my_prow)        ! Start of subproblem
           nlen = limits(my_prow+1)-noff ! Size of subproblem
           call solve_tridi_single_problem_&
-          &PRECISION&
-	  &_impl &
-                                   (nlen,d(noff+1),e(noff+1),qmat1, &
+          &PRECISION_AND_SUFFIX &
+                                    (nlen,d(noff+1),e(noff+1),qmat1, &
                                     ubound(qmat1,dim=1), wantDebug, success)
 
           if (.not.(success)) return
@@ -580,12 +577,11 @@ subroutine solve_tridi_&
       call timer%stop("solve_tridi_col" // PRECISION_SUFFIX)
 
     end subroutine solve_tridi_col_&
-    &PRECISION&
-    &_impl
+    &PRECISION_AND_SUFFIX
 
     recursive subroutine solve_tridi_single_problem_&
-    &PRECISION&
-    &_impl (nlen, d, e, q, ldq, wantDebug, success)
+    &PRECISION_AND_SUFFIX &
+    (nlen, d, e, q, ldq, wantDebug, success)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
@@ -712,6 +708,5 @@ subroutine solve_tridi_&
      call timer%stop("solve_tridi_single" // PRECISION_SUFFIX)
 
     end subroutine solve_tridi_single_problem_&
-    &PRECISION&
-    &_impl
+    &PRECISION_AND_SUFFIX
 

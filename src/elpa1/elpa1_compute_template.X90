@@ -69,7 +69,26 @@
 
 #include "elpa1_tridiag_template.X90"
 #include "elpa1_trans_ev_template.X90"
+
+! now comes a dirty hack:
+! the file elpa1_solve_tridi_real_template.X90 must be included twice
+! for the legacy and for the new API. In the new API, however, some routines
+! must be named "..._impl"
+
+#ifdef DOUBLE_PRECISION_REAL
+#define PRECISION_AND_SUFFIX double
+#else
+#define PRECISION_AND_SUFFIX single
+#endif
 #include "elpa1_solve_tridi_real_template.X90"
+#undef PRECISION_AND_SUFFIX
+#ifdef DOUBLE_PRECISION_REAL
+#define PRECISION_AND_SUFFIX  double_impl
+#else
+#define PRECISION_AND_SUFFIX  single_impl
+#endif
+#include "elpa1_solve_tridi_real_template.X90"
+#undef PRECISION_AND_SUFFIX
 #include "elpa1_merge_systems_real_template.X90"
 #include "elpa1_tools_template.X90"
 
