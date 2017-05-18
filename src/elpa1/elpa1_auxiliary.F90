@@ -92,8 +92,7 @@ module elpa1_auxiliary_impl
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
 
-   function elpa_cholesky_real_double_impl (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                            wantDebug) result(success)
+   function elpa_cholesky_real_double_impl (obj, a) result(success)
 #include "elpa_cholesky_template.X90"
 
     end function elpa_cholesky_real_double_impl
@@ -105,8 +104,7 @@ module elpa1_auxiliary_impl
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
 
-   function elpa_cholesky_real_single_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                            wantDebug) result(success)
+   function elpa_cholesky_real_single_impl(obj, a) result(success)
 #include "elpa_cholesky_template.X90"
 
     end function elpa_cholesky_real_single_impl
@@ -187,8 +185,7 @@ module elpa1_auxiliary_impl
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
-    function elpa_cholesky_complex_double_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                               wantDebug) result(success)
+    function elpa_cholesky_complex_double_impl(obj, a) result(success)
 
 #include "elpa_cholesky_template.X90"
 
@@ -216,8 +213,7 @@ module elpa1_auxiliary_impl
 !> \param  mpi_comm_cols        MPI communicator for columns
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
-    function elpa_cholesky_complex_single_impl(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                                               wantDebug) result(success)
+    function elpa_cholesky_complex_single_impl(obj, a) result(success)
 
 #include "elpa_cholesky_template.X90"
 
@@ -285,8 +281,8 @@ module elpa1_auxiliary_impl
 #define REALCASE 1
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
-    function elpa_mult_at_b_real_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
-                              mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
+    function elpa_mult_at_b_real_double_impl(obj, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+                                             c, ldc, ldcCols) result(success)
 #include "elpa_multiply_a_b.X90"
     end function elpa_mult_at_b_real_double_impl
 #undef DOUBLE_PRECISION
@@ -329,8 +325,8 @@ module elpa1_auxiliary_impl
 !> \param ldc                   leading dimension of matrix c
 !> \result success
 
-    function elpa_mult_at_b_real_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
-                              mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
+    function elpa_mult_at_b_real_single_impl(obj, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+                                             c, ldc, ldcCols) result(success)
 
 #include "elpa_multiply_a_b.X90"
 
@@ -378,8 +374,8 @@ module elpa1_auxiliary_impl
 !> \param ldc                   leading dimension of matrix c
 !> \result success
 
-    function elpa_mult_ah_b_complex_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
-                                 mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
+    function elpa_mult_ah_b_complex_double_impl(obj, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+                                                c, ldc, ldcCols) result(success)
 #include "elpa_multiply_a_b.X90"
 
     end function elpa_mult_ah_b_complex_double_impl
@@ -425,8 +421,8 @@ module elpa1_auxiliary_impl
 !> \param ldc                   leading dimension of matrix c
 !> \result success
 
-    function elpa_mult_ah_b_complex_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
-                                 mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
+    function elpa_mult_ah_b_complex_single_impl(obj, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+                                                c, ldc, ldcCols) result(success)
 
 #include "elpa_multiply_a_b.X90"
 

@@ -52,21 +52,23 @@
      use timings_dummy
 #endif
      use precision
+     use elpa_api
      implicit none
 
+      class(elpa_t), intent(in)     :: obj
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)      :: a(lda,*)
+      real(kind=REAL_DATATYPE)      :: a(obj%local_nrows,*)
 #else
-      real(kind=REAL_DATATYPE)      :: a(lda,matrixCols)
+      real(kind=REAL_DATATYPE)      :: a(obj%local_nrows,obj%local_ncols)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
+      complex(kind=COMPLEX_DATATYPE)   :: a(obj%local_nrows,*)
 #else
-      complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
+      complex(kind=COMPLEX_DATATYPE)   :: a(obj%local_nrows,obj%local_ncols)
 #endif
 #endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -81,9 +83,9 @@
 #if COMPLEXCASE == 1
       complex(kind=COMPLEX_DATATYPE), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
 #endif
-      logical, intent(in)           :: wantDebug
+      logical                       :: wantDebug
       logical                       :: success
-      integer(kind=ik)              :: istat
+      integer(kind=ik)              :: istat, debug
       character(200)                :: errorMessage
 
       call timer%start("elpa_cholesky_&
@@ -91,6 +93,20 @@
       &_&
       &PRECISION&
       &")
+
+      na         = obj%na
+      lda        = obj%local_nrows
+      nblk       = obj%nblk
+      matrixCols = obj%local_ncols
+
+      mpi_comm_rows = obj%get("mpi_comm_rows")
+      mpi_comm_cols = obj%get("mpi_comm_cols")
+
+      if (obj%get("wantDebug") == 1) then
+        wantDebug = .true.
+      else
+        wantDebug = .false.
+      endif
 
       call timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)

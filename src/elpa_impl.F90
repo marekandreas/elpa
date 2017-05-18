@@ -515,8 +515,8 @@ module elpa_impl
       integer, optional               :: error
       logical                         :: success_l
 
-      success_l = elpa_mult_at_b_real_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
-                              self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
+      success_l = elpa_mult_at_b_real_double_impl(self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+                                                  c, ldc, ldcCols)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -545,8 +545,8 @@ module elpa_impl
       integer, optional               :: error
       logical                         :: success_l
 #ifdef WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_mult_at_b_real_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
-                              self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
+      success_l = elpa_mult_at_b_real_single_impl(self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+                                                  c, ldc, ldcCols)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -579,8 +579,8 @@ module elpa_impl
       integer, optional               :: error
       logical                         :: success_l
 
-      success_l = elpa_mult_ah_b_complex_double_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
-                              self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
+      success_l = elpa_mult_ah_b_complex_double_impl(self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+                                                     c, ldc, ldcCols)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -610,8 +610,8 @@ module elpa_impl
       logical                         :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-      success_l = elpa_mult_ah_b_complex_single_impl(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, self%nblk, &
-                              self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), c, ldc, ldcCols)
+      success_l = elpa_mult_ah_b_complex_single_impl(self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+                                                     c, ldc, ldcCols)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -620,7 +620,7 @@ module elpa_impl
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
-      endif
+      endif 
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
@@ -641,23 +641,8 @@ module elpa_impl
       integer, optional               :: error
       logical                         :: success_l
       integer(kind=c_int)             :: error_actual
-      logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry wantDebug"
-          stop
-        endif
-
-        wantDebugIntern = .true.
-      else
-        wantDebugIntern = .false.
-      endif
-
-
-      success_l = elpa_cholesky_real_double_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                 self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
-                                                 wantDebugIntern)
+      success_l = elpa_cholesky_real_double_impl (self, a)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -683,23 +668,9 @@ module elpa_impl
       integer, optional               :: error
       logical                         :: success_l
       integer(kind=c_int)             :: error_actual
-      logical                         :: wantDebugIntern
-
-      if (self%get("wantDebug",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry wantDebug"
-          stop
-        endif
-
-        wantDebugIntern = .true.
-      else
-        wantDebugIntern = .false.
-      endif
 
 #if WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_cholesky_real_single_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                 self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
-                                                 wantDebugIntern)
+      success_l = elpa_cholesky_real_single_impl (self, a)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
@@ -729,22 +700,8 @@ module elpa_impl
       integer, optional               :: error
       logical                         :: success_l
       integer(kind=c_int)             :: error_actual
-      logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry wantDebug"
-          stop
-        endif
-
-        wantDebugIntern = .true.
-      else
-        wantDebugIntern = .false.
-      endif
-
-      success_l = elpa_cholesky_complex_double_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                 self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
-                                                 wantDebugIntern)
+      success_l = elpa_cholesky_complex_double_impl (self, a)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -770,22 +727,9 @@ module elpa_impl
       integer, optional               :: error
       logical                         :: success_l
       integer(kind=c_int)             :: error_actual
-      logical                         :: wantDebugIntern
 
-      if (self%get("wantDebug",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry wantDebug"
-          stop
-        endif
-
-        wantDebugIntern = .true.
-      else
-        wantDebugIntern = .false.
-      endif
 #if WANT_SINGLE_PRECISION_COMPLEX
-      success_l = elpa_cholesky_complex_single_impl (self%na, a, self%local_nrows, self%nblk, &
-                                                 self%local_ncols, self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
-                                                 wantDebugIntern)
+      success_l = elpa_cholesky_complex_single_impl (self, a)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
