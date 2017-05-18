@@ -1,8 +1,8 @@
-.TH "elpa_solve_tridi" 3 "Wed Jun 29 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_solve_tridi" 3 "Wed May 17 2017" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_solve_tridi \- Solve tridiagonal eigensystem with divide and conquer method
+elpa_solve_tridi \- Solve tridiagonal eigensystem with divide and conquer method (legacy interface)
 .br
 
 .SH SYNOPSIS
@@ -43,7 +43,7 @@ use elpa1
 .RI "logical                \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
-#include "elpa.h"
+#include "elpa_legacy.h"
 
 .br
 .RI "\fBint\fP success = \fBelpa_solve_tridi\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPd,\fB double *\fPe ,\fB double *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP wantDebug );"
@@ -81,5 +81,12 @@ use elpa1
 .SH DESCRIPTION
 Solves a tri-diagonal matrix and returns \fBnev\fP eigenvalues/eigenvectors. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBelpa_get_communicators\fP(3) function. The distributed quadratic marix \fBq\fP has global dimensions \fBna\fP x \fBna\fP, and a local size \fBldq\fP x \fBmatrixCols\fP.
 .br
+This function is part of the legacy API of the ELPA library. Better use the current API.
+.br
 .SH "SEE ALSO"
+.br
+Old interface:
 \fBelpa_get_communicators\fP(3) \fBfBelpa_solve_tridi_double\fP(3)  \fBfBelpa_solve_tridi_single\fP(3)
+.br
+Current interface:
+\fBelpa2_print_kernels\fP(1)

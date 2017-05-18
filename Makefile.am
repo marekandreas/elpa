@@ -345,6 +345,10 @@ elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = $(wildcard modules/*) $(wildcard elpa/*)
 
 dist_man_MANS = \
+  man/elpa2_print_kernels.1
+
+if ENABLE_LEGACY
+dist_man_MANS += \
   man/solve_evp_real.3 \
   man/solve_evp_real_1stage_double.3 \
   man/solve_evp_complex.3 \
@@ -369,23 +373,28 @@ dist_man_MANS = \
   man/elpa_solve_evp_real_single.3 \
   man/elpa_solve_evp_complex_double.3 \
   man/elpa_solve_evp_complex_single.3 \
-  man/elpa_tests.1 \
-  man/elpa2_print_kernels.1
+  man/elpa_tests.1
+endif
+
 
 if WANT_SINGLE_PRECISION_REAL
+if ENABLE_LEGACY
 dist_man_MANS += \
   man/solve_evp_real_1stage_single.3 \
   man/elpa_solve_evp_real_1stage_single.3 \
   man/elpa_solve_evp_real_2stage_single.3 \
   man/solve_evp_real_2stage_single.3
 endif
+endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
+if ENABLE_LEGACY
 dist_man_MANS += \
   man/solve_evp_complex_1stage_single.3 \
   man/elpa_solve_evp_complex_1stage_single.3 \
   man/elpa_solve_evp_complex_2stage_single.3 \
   man/solve_evp_complex_2stage_single.3
+endif
 endif
 
 dist_doc_DATA = README.md USERS_GUIDE.md INSTALL.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt

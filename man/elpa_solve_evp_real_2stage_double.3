@@ -1,8 +1,8 @@
-.TH "elpa_solve_evp_real_2stage_double" 3 "Wed Jan 15 2017" "ELPA" \" -*- nroff -*-
+.TH "elpa_solve_evp_real_2stage_double" 3 "Wed May 17 2017" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_solve_evp_real_2stage_double \- solve the double-precision real eigenvalue problem with the 2-stage ELPA solver
+elpa_solve_evp_real_2stage_double \- solve the double-precision real eigenvalue problem with the 2-stage ELPA solver (legacy interface)
 .br
 
 .SH SYNOPSIS
@@ -52,7 +52,7 @@ use elpa2
 .RI "logical                        \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
-#include "elpa.h"
+#include "elpa_legacy.h"
 
 .br
 .RI "success = \fBelpa_solve_evp_real_2stage_double\fP (\fBint\fP na, \fBint\fP nev, \fB double *\fPa, \fBint\fP lda, \fB double *\fPev, \fBdouble *\fPq, \fBint\fP ldq, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP mpi_comm_all, \fBint\fP THIS_ELPA_REAL_KERNEL, \fBint\fP useQR, \fBint\fP useGPU);"
@@ -99,5 +99,12 @@ Solve the real eigenvalue problem with the 2-stage solver. The ELPA communicator
 .br
 The interface \fBelpa_solve_evp_real\fP(3) is a more flexible alternative.
 .br
+This function is part of the legacy API of the ELPA library. Better use the current API.
+.br
 .SH "SEE ALSO"
-\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real\fP(3) \fBelpa_solve_evp_complex\fP(3) \fBelpa_solve_evp_real_1stage\fP(3) \fBelpa_solve_evp_complex_1stage\fP(3)  \fBelpa_solve_evp_real_2stage_single\fP(3) \fBelpa_solve_evp_complex_2stage_double\fP(3) \fBelpa_solve_evp_complex_2stage_singe\fP(3) \fBelpa2_print_kernels\fP(1)
+.br
+Old interface:
+\fBelpa_get_communicators\fP(3) \fBelpa_solve_evp_real\fP(3) \fBelpa_solve_evp_complex\fP(3) \fBelpa_solve_evp_real_1stage\fP(3) \fBelpa_solve_evp_complex_1stage\fP(3)  \fBelpa_solve_evp_real_2stage_single\fP(3) \fBelpa_solve_evp_complex_2stage_double\fP(3) \fBelpa_solve_evp_complex_2stage_singe\fP(3)
+.br
+Current interface:
+\fBelpa2_print_kernels\fP(1)

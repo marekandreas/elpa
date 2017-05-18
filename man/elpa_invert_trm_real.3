@@ -1,8 +1,8 @@
-.TH "elpa_invert_trm_real" 3 "Wed Sept 28 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_invert_trm_real" 3 "Wed May 17 2017" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_invert_trm_real \- Invert a upper triangular matrix
+elpa_invert_trm_real \- Invert a upper triangular matrix (legacy interface)
 .br
 
 .SH SYNOPSIS
@@ -38,7 +38,7 @@ use elpa1
 .RI "logical                \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
-#include "elpa.h"
+#include "elpa_legacy.h"
 
 .br
 .RI "\fBint\fP success = \fBelpa_invert_trm_real\fP (\fBint\fP na, \fB double *\fPa, \fBint\fP lda, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols,  \fBint\fP wantDebug);"
@@ -70,5 +70,12 @@ use elpa1
 .SH DESCRIPTION
 Inverts a upper triangular matrix a. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBelpa_get_communicators\fP(3) function.
 .br
+This function is part of the legacy API of the ELPA library. Better use the current API.
+.br
 .SH "SEE ALSO"
+.br
+Old interface:
 \fBelpa_get_communicators\fP(3) \fBelpa_invert_trm_complex\fP(3)
+.br
+Current interface:
+\fBelpa2_print_kernels\fP(1)

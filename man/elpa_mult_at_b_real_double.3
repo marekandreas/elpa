@@ -1,8 +1,8 @@
-.TH "elpa_mult_at_b_real_double" 3 "Wed Sept 28 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_mult_at_b_real_double" 3 "Wed May 17 2017" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_mult_at_b_ral_double \- Performs C = transpose(A) * B
+elpa_mult_at_b_ral_double \- Performs C = transpose(A) * B (legacy interface)
 .br
 
 .SH SYNOPSIS
@@ -53,7 +53,7 @@ use elpa1
 .RI "logical                \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
-#include "elpa.h"
+#include "elpa_legacy.h"
 
 .br
 .RI "\fBint\fP success = \fBelpa_mult_at_b_real_double\fP (\fBchar\fP uplo_a, \fBchar\fP uplo_c, \fBint\fP na, \fBint\fP ncb, \fB double *\fPa, \fBint\fP lda, \fBint\fP ldaCols, \fB double *\fPb, \fBint\fP ldb, \fBint\fP ldbCols, \fBint\fP nblk, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols,  \fB double *\fPc, \fBint\fP lc, \fBint\fP ldcCols );"
@@ -101,5 +101,12 @@ use elpa1
 .SH DESCRIPTION
 Does c = transpose(a) * b. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBelpa_get_communicators\fP(3) function.
 .br
+This function is part of the legacy API of the ELPA library. Better use the current API.
+.br
 .SH "SEE ALSO"
+.br
+Old interface:
 \fBelpa_get_communicators\fP(3) \fBelpa_mult_at_b_real_single\fP(3) \fBelpa_mult_ah_b_complex_single\fP(3) \fBelpa_mult_ah_b_complex_double\fP(3)
+.br
+Current interface:
+\fBelpa2_print_kernels\fP(1)

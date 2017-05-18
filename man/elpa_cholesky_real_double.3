@@ -1,8 +1,8 @@
-.TH "elpa_cholesky_real_double" 3 "Wed Jun 29 2016" "ELPA" \" -*- nroff -*-
+.TH "elpa_cholesky_real_double" 3 "Wed May 17 2017" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_cholesky_real_double \- Cholesky factorization of a real symmetric matrix
+elpa_cholesky_real_double \- Cholesky factorization of a real symmetric matrix (legacy interface)
 .br
 
 .SH SYNOPSIS
@@ -37,7 +37,7 @@ use elpa1
 .RI "logical                \fBsuccess\fP:       return value indicating success or failure"
 .br
 .SS C INTERFACE
-#include "elpa.h"
+#include "elpa_legacy.h"
 
 .br
 .RI "\fBint\fP success = \fBelpa_cholesky_real_double\fP (\fBint\fP na, \fB double *\fPa, \fBint\fP lda, \fBint\fP nblk, \fBint\fP matrixCols, \fBint\fP mpi_comm_rows, \fBint\fP mpi_comm_cols, \fBint\fP wantDebug );"
@@ -69,5 +69,11 @@ use elpa1
 .SH DESCRIPTION
 Does a Cholesky factorization of a real, symmetric matrix. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBelpa_get_communicators\fP(3) function. The distributed quadratic marix \fBa\fP has global dimensions \fBna\fP x \fBna\fP, and a local size \fBlda\fP x \fBmatrixCols\fP.
 .br
+This function is part of the legacy API of the ELPA library. Better use the current API.
+.br
 .SH "SEE ALSO"
+.br
+Old interface:
 \fBelpa_get_communicators\fP(3) \fBelpa_cholesky_real\fP(3) \fBelpa_cholesky_real_single\fP(3)
+Current interface:
+\fBelpa2_print_kernels\fP(1)
