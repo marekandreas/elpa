@@ -71,8 +71,6 @@ module elpa_impl
      procedure, public :: can_set => elpa_can_set
 
      ! privates:
-     procedure, private :: get_real_kernel => elpa_get_real_kernel
-     procedure, private :: get_complex_kernel => elpa_get_complex_kernel
 
      procedure, private :: elpa_set_integer
      procedure, private :: elpa_set_double
@@ -332,51 +330,18 @@ module elpa_impl
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
       integer, optional   :: error
       integer(kind=c_int) :: error_actual
-      logical             :: success_l, summary_timings
+      logical             :: success_l
 
-      logical             :: useGPU, useQR
-      integer(kind=c_int) :: kernel
-
-      if (self%get("summary_timings",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry summary timings"
-          stop
-        endif
-
-        summary_timings = .true.
-      else
-        summary_timings = .false.
-      endif
-
-
-      if (self%get("gpu",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry gpu"
-          stop
-        endif
-
-        useGPU = .true.
-      else
-        useGPU = .false.
-      endif
-
-      useQR = self%get("qr") == 1
 
       if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
-        success_l = elpa_solve_evp_real_1stage_double_impl(self, self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                           self%local_nrows,  self%nblk, self%local_ncols, &
-                                                           self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
-                                                           self%get("mpi_comm_parent"), useGPU, time_evp_fwd,     &
-                                                           time_evp_solve, time_evp_back, summary_timings)
+        success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev, q, time_evp_fwd,     &
+                                                           time_evp_solve, time_evp_back)
 
       else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
-        kernel = self%get_real_kernel()
-        success_l = elpa_solve_evp_real_2stage_double_impl(self, self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                           self%local_nrows,  self%nblk, self%local_ncols, &
-                                                           self%get("mpi_comm_rows"), self%get("mpi_comm_cols"), &
-                                                           self%get("mpi_comm_parent"), time_evp_fwd,     &
-                                                           time_evp_solve, time_evp_back, summary_timings, useGPU, &
-                                                           kernel, useQR)
+        success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev, q,  &
+                                                           time_evp_fwd,     &
+                                                           time_evp_solve, time_evp_back  &
+                                                           )
       else
         print *,"unknown solver"
         stop
@@ -392,21 +357,6 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-      if (self%get("summary_timings",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry summary timings"
-          stop
-        endif
-
-        call self%set("time_evp_fwd", time_evp_fwd)
-        call self%set("time_evp_solve", time_evp_solve)
-        call self%set("time_evp_back", time_evp_back)
-      else
-
-        call self%set("time_evp_fwd", -1.0_rk8)
-        call self%set("time_evp_solve", -1.0_rk8)
-        call self%set("time_evp_back", -1.0_rk8)
-      endif
     end subroutine
 
 
@@ -427,51 +377,20 @@ module elpa_impl
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
       integer, optional   :: error
       integer(kind=c_int) :: error_actual
-      logical             :: success_l, summary_timings
-
-      logical             :: useGPU, useQR
-      integer(kind=c_int) :: kernel
+      logical             :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-      if (self%get("timings",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry summary timings"
-          stop
-        endif
-
-        summary_timings = .true.
-      else
-        summary_timings = .false.
-      endif
-
-      if (self%get("gpu",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry gpu"
-          stop
-        endif
-
-        useGPU = .true.
-      else
-        useGPU = .false.
-      endif
-
-      useQR = self%get("qr") == 1
 
       if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
-        success_l = elpa_solve_evp_real_1stage_single_impl(self, self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                          self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
-                                                          self%get("mpi_comm_parent"), useGPU, time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings)
+        success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev, q,  &
+                                                          time_evp_fwd,     &
+                                                          time_evp_solve, time_evp_back)
 
       else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
-        kernel = self%get_real_kernel()
-        success_l = elpa_solve_evp_real_2stage_single_impl(self, self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                          self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
-                                                          self%get("mpi_comm_parent"), time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings, useGPU, &
-                                                          kernel, useQR)
+        success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev, q,  &
+                                                          time_evp_fwd,     &
+                                                          time_evp_solve, time_evp_back &
+                                                          )
       else
         print *,"unknown solver"
         stop
@@ -487,22 +406,6 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-
-      if (self%get("summary_timings",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry summary timings"
-          stop
-        endif
-
-        call self%set("time_evp_fwd", time_evp_fwd)
-        call self%set("time_evp_solve", time_evp_solve)
-        call self%set("time_evp_back", time_evp_back)
-      else
-
-        call self%set("time_evp_fwd", -1.0_rk8)
-        call self%set("time_evp_solve", -1.0_rk8)
-        call self%set("time_evp_back", -1.0_rk8)
-      endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
@@ -529,47 +432,18 @@ module elpa_impl
 
       integer, optional              :: error
       integer(kind=c_int)            :: error_actual
-      logical                        :: success_l, summary_timings
-
-      logical                        :: useGPU
-      integer(kind=c_int) :: kernel
-      if (self%get("timings",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry summary timings"
-          stop
-        endif
-
-        summary_timings = .true.
-      else
-        summary_timings = .false.
-      endif
-
-      if (self%get("gpu",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry gpu"
-          stop
-        endif
-
-        useGPU = .true.
-      else
-        useGPU = .false.
-      endif
+      logical                        :: success_l
 
       if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
-        success_l = elpa_solve_evp_complex_1stage_double_impl(self, self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                          self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
-                                                          self%get("mpi_comm_parent"), useGPU, time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings)
+        success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev, q,  &
+                                                          time_evp_fwd,     &
+                                                          time_evp_solve, time_evp_back)
 
       else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
-        kernel = self%get_complex_kernel()
-        success_l = elpa_solve_evp_complex_2stage_double_impl(self, self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                          self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
-                                                          self%get("mpi_comm_parent"), time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings, useGPU, &
-                                                          kernel)
+        success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev, q,  &
+                                                          time_evp_fwd,     &
+                                                          time_evp_solve, time_evp_back &
+                                                          )
       else
         print *,"unknown solver"
         stop
@@ -585,21 +459,6 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-      if (self%get("summary_timings",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry summary timings"
-          stop
-        endif
-
-        call self%set("time_evp_fwd", time_evp_fwd)
-        call self%set("time_evp_solve", time_evp_solve)
-        call self%set("time_evp_back", time_evp_back)
-      else
-
-        call self%set("time_evp_fwd", -1.0_rk8)
-        call self%set("time_evp_solve", -1.0_rk8)
-        call self%set("time_evp_back", -1.0_rk8)
-      endif
     end subroutine
 
 
@@ -621,49 +480,20 @@ module elpa_impl
       real(kind=c_double) :: time_evp_fwd, time_evp_solve, time_evp_back
       integer, optional             :: error
       integer(kind=c_int)           :: error_actual
-      logical                       :: success_l, summary_timings
+      logical                       :: success_l
 
-      logical                       :: useGPU
-      integer(kind=c_int) :: kernel
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-      if (self%get("summary_timings",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry summary timings"
-          stop
-        endif
-
-        summary_timings = .true.
-      else
-        summary_timings = .false.
-      endif
-
-      if (self%get("gpu",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry gpu"
-          stop
-        endif
-
-        useGPU = .true.
-      else
-        useGPU = .false.
-      endif
-
       if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
-        success_l = elpa_solve_evp_complex_1stage_single_impl(self, self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                          self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
-                                                          self%get("mpi_comm_parent"), useGPU, time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings)
+        success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev, q,  &
+                                                          time_evp_fwd,     &
+                                                          time_evp_solve, time_evp_back)
 
       else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
-        kernel = self%get_complex_kernel()
-        success_l = elpa_solve_evp_complex_2stage_single_impl(self, self%na, self%nev, a, self%local_nrows, ev, q,  &
-                                                          self%local_nrows,  self%nblk, self%local_ncols, &
-                                                          self%get("mpi_comm_rows"), self%get("mpi_comm_cols"),         &
-                                                          self%get("mpi_comm_parent"),  time_evp_fwd,     &
-                                                          time_evp_solve, time_evp_back, summary_timings, useGPU, &
-                                                          kernel)
+        success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev, q,  &
+                                                           time_evp_fwd,     &
+                                                          time_evp_solve, time_evp_back, &
+                                                          )
       else
         print *,"unknown solver"
         stop
@@ -677,22 +507,6 @@ module elpa_impl
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
-      endif
-
-      if (self%get("summary_timings",error_actual) .eq. 1) then
-        if (error_actual .ne. ELPA_OK) then
-          print *,"Could not querry summary timings"
-          stop
-        endif
-
-        call self%set("time_evp_fwd", time_evp_fwd)
-        call self%set("time_evp_solve", time_evp_solve)
-        call self%set("time_evp_back", time_evp_back)
-      else
-
-        call self%set("time_evp_fwd", -1.0_rk8)
-        call self%set("time_evp_solve", -1.0_rk8)
-        call self%set("time_evp_back", -1.0_rk8)
       endif
 
 #else
@@ -1271,45 +1085,6 @@ module elpa_impl
       class(elpa_impl_t) :: self
       call elpa_index_free_c(self%index)
     end subroutine
-
-
-    function elpa_get_real_kernel(self) result(kernel)
-      use elpa_utilities, only : error_unit
-      class(elpa_impl_t), intent(in) :: self
-      integer(kind=c_int) :: kernel, error
-
-      error = ELPA_ERROR
-      kernel = self%get("real_kernel")
-
-      ! check consistency between request for GPUs and defined kernel
-      if (self%get("gpu") == 1) then
-        if (kernel .ne. ELPA_2STAGE_REAL_GPU) then
-          write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-        else if (self%get("nblk") .ne. 128) then
-          kernel = ELPA_2STAGE_REAL_GENERIC
-        endif
-      endif
-    end function
-
-
-    function elpa_get_complex_kernel(self) result(kernel)
-      use elpa_utilities, only : error_unit
-      class(elpa_impl_t), intent(in) :: self
-      integer(kind=C_INT) :: kernel, error
-
-      error = ELPA_ERROR
-      kernel = self%get("complex_kernel")
-
-      ! check consistency between request for GPUs and defined kernel
-      if (self%get("gpu") == 1) then
-        if (kernel .ne. ELPA_2STAGE_COMPLEX_GPU) then
-          write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-        else if (self%get("nblk") .ne. 128) then
-          kernel = ELPA_2STAGE_COMPLEX_GENERIC
-        endif
-      endif
-
-    end function
 
 
 end module

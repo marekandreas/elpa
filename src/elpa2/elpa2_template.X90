@@ -54,12 +54,8 @@
   &_&
   &2stage_&
   &PRECISION&
-  &_impl (obj, na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all,   &
-         time_evp_fwd, time_evp_solve, time_evp_back, summary_timings, useGPU, kernel &
-#if REALCASE == 1
-   , useQR   &
-#endif
-   &) result(success)
+  &_impl (obj, a, ev, q,  &
+         time_evp_fwd, time_evp_solve, time_evp_back) result(success)
 
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
@@ -77,9 +73,9 @@
    use iso_c_binding
    implicit none
    class(elpa_t), intent(in)                 :: obj
-   logical, intent(in)                       :: useGPU
+   logical                                   :: useGPU
 #if REALCASE == 1
-   logical, intent(in), optional             :: useQR
+   logical                                   :: useQR
 #endif
    logical                                   :: useQRActual
 
@@ -87,16 +83,13 @@
 
    integer(kind=c_int)                       :: kernel
 
-   integer(kind=c_int), intent(in)           :: na, nev, lda, ldq, matrixCols, mpi_comm_rows, &
-                                                mpi_comm_cols, mpi_comm_all
-   integer(kind=c_int), intent(in)           :: nblk
-
 #ifdef USE_ASSUMED_SIZE
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(lda,*), q(ldq,*)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(obj%local_nrows,*), q(obj%local_nrows,*)
 #else
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(lda,matrixCols), q(ldq,matrixCols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(obj%local_nrows,obj%local_ncols), &
+                                                         q(obj%local_nrows,obj%local_ncols)
 #endif
-   real(kind=C_DATATYPE_KIND), intent(inout) :: ev(na)
+   real(kind=C_DATATYPE_KIND), intent(inout) :: ev(obj%na)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable   :: hh_trans(:,:)
 
    integer(kind=c_int)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -107,7 +100,7 @@
    real(kind=C_DATATYPE_KIND), allocatable   :: q_real(:,:)
 #endif
    real(kind=c_double)                       :: time_evp_fwd, time_evp_solve, time_evp_back
-   logical, intent(in)                       :: summary_timings
+   logical                                   :: summary_timings
    integer(kind=c_intptr_t)                  :: tmat_dev, q_dev, a_dev
    real(kind=c_double)                        :: ttt0, ttt1, ttts  ! MPI_WTIME always needs double
 
@@ -122,6 +115,8 @@
                                                                    &PRECISION&
                                                                    &_&
                                                                    &MATH_DATATYPE
+    integer(kind=ik)                         :: na, nev, lda, ldq, nblk, matrixCols, &
+                                                mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 
     call timer%start("solve_evp_&
     &MATH_DATATYPE&
@@ -129,6 +124,59 @@
     &PRECISION_SUFFIX &
     )
 
+    na         = obj%na
+    nev        = obj%nev
+    lda        = obj%local_nrows
+    ldq        = obj%local_nrows
+    nblk       = obj%nblk
+    matrixCols = obj%local_ncols
+
+#if REALCASE == 1
+    kernel  = obj%get("real_kernel")
+    ! check consistency between request for GPUs and defined kernel
+    if (obj%get("gpu") == 1) then
+      if (kernel .ne. ELPA_2STAGE_REAL_GPU) then
+        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+      else if (obj%get("nblk") .ne. 128) then
+        kernel = ELPA_2STAGE_REAL_GENERIC
+      endif
+    endif
+#endif
+
+#if COMPLEXCASE == 1
+    kernel  = obj%get("complex_kernel")
+    ! check consistency between request for GPUs and defined kernel
+    if (obj%get("gpu") == 1) then
+      if (kernel .ne. ELPA_2STAGE_COMPLEX_GPU) then
+        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+      else if (obj%get("nblk") .ne. 128) then
+        kernel = ELPA_2STAGE_COMPLEX_GENERIC
+      endif
+    endif
+#endif
+    mpi_comm_rows = obj%get("mpi_comm_rows")
+    mpi_comm_cols = obj%get("mpi_comm_cols")
+    mpi_comm_all  = obj%get("mpi_comm_parent")
+
+    if (obj%get("summary_timings") .eq. 1) then
+      summary_timings = .true.
+    else
+      summary_timings = .false.
+    endif
+    if (obj%get("gpu") .eq. 1) then
+      useGPU = .true.
+    else
+      useGPU = .false.
+    endif
+
+#if REALCASE == 1
+    if (obj%get("qr") .eq. 1) then
+      useQR = .true.
+    else
+      useQR = .false.
+    endif
+
+#endif
     call timer%start("mpi_communication")
     call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
     call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
@@ -149,10 +197,8 @@
 #if REALCASE == 1
     useQRActual = .false.
     ! set usage of qr decomposition via API call
-    if (present(useQR)) then
-      if (useQR) useQRActual = .true.
-        if (.not.(useQR)) useQRACtual = .false.
-    endif
+    if (useQR) useQRActual = .true.
+    if (.not.(useQR)) useQRACtual = .false.
 
     if (useQRActual) then
       if (mod(na,2) .ne. 0) then

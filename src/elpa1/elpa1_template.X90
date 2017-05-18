@@ -58,9 +58,8 @@ function elpa_solve_evp_&
          &MATH_DATATYPE&
 	 &_1stage_&
 	 &PRECISION&
-	 &_impl (obj, na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-	        mpi_comm_cols, mpi_comm_all, useGPU, time_evp_fwd,     &
-                time_evp_solve, time_evp_back, summary_timings) result(success)
+	 &_impl (obj, a, ev, q, time_evp_fwd,     &
+                time_evp_solve, time_evp_back) result(success)
    use precision
    use cuda_functions
    use mod_check_for_gpu
@@ -77,27 +76,25 @@ function elpa_solve_evp_&
    implicit none
 
    class(elpa_t), intent(in)                       :: obj
-   integer(kind=c_int), intent(in)                 :: na, nev, lda, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                                      mpi_comm_cols, mpi_comm_all
-   real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
+   real(kind=REAL_DATATYPE), intent(out)           :: ev(obj%na)
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(lda,*)
-   real(kind=C_DATATYPE_KIND), intent(out)         :: q(ldq,*)
+   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(obj%local_nrows,*)
+   real(kind=C_DATATYPE_KIND), intent(out)         :: q(obj%local_nrows,*)
 #else
-   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(lda,matrixCols)
-   real(kind=C_DATATYPE_KIND), intent(out)         :: q(ldq,matrixCols)
+   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(obj%local_nrows,matrixCols)
+   real(kind=C_DATATYPE_KIND), intent(out)         :: q(obj%local_nrows,matrixCols)
 #endif
    real(kind=C_DATATYPE_KIND), allocatable         :: tau(:)
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #ifdef USE_ASSUMED_SIZE
-   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(lda,*)
-   complex(kind=C_DATATYPE_KIND), intent(out)      :: q(ldq,*)
+   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(obj%local_nrows,*)
+   complex(kind=C_DATATYPE_KIND), intent(out)      :: q(obj%local_nrows,*)
 #else
-   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(lda,matrixCols)
-   complex(kind=C_DATATYPE_KIND), intent(out)      :: q(ldq,matrixCols)
+   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(obj%local_nrows,matrixCols)
+   complex(kind=C_DATATYPE_KIND), intent(out)      :: q(obj%local_nrows,matrixCols)
 #endif
 
    real(kind=REAL_DATATYPE), allocatable           :: q_real(:,:)
@@ -105,12 +102,12 @@ function elpa_solve_evp_&
    integer(kind=c_int)                             :: l_cols, l_rows, l_cols_nev, np_rows, np_cols
 #endif /* COMPLEXCASE */
 
-   logical, intent(in)                             :: useGPU
+   logical                                         :: useGPU
    logical                                         :: success
 
    real(kind=c_double)                             :: time_evp_fwd,     &
                                                       time_evp_solve, time_evp_back
-   logical, intent(in)                             :: summary_timings
+   logical                                         :: summary_timings
    logical                                         :: do_useGPU
    integer(kind=ik)                                :: numberOfGPUDevices
 
@@ -120,12 +117,36 @@ function elpa_solve_evp_&
    logical                                         :: wantDebug
    integer(kind=c_int)                             :: istat
    character(200)                                  :: errorMessage
+   integer(kind=ik)                                :: na, nev, lda, ldq, nblk, matrixCols, &
+                                                      mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 
    call timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
    &")
+
+   na         = obj%na
+   nev        = obj%nev
+   lda        = obj%local_nrows
+   ldq        = obj%local_nrows
+   nblk       = obj%nblk
+   matrixCols = obj%local_ncols
+
+   mpi_comm_rows = obj%get("mpi_comm_rows")
+   mpi_comm_cols = obj%get("mpi_comm_cols")
+   mpi_comm_all  = obj%get("mpi_comm_parent")
+
+   if (obj%get("gpu") .eq. 1) then
+     useGPU =.true.
+   else
+     useGPU = .false.
+   endif
+   if (obj%get("summary_timings") .eq. 1) then
+     summary_timings = .true.
+   else
+     summary_timings = .false.
+   endif
 
    call timer%start("mpi_communication")
 
@@ -182,7 +203,6 @@ function elpa_solve_evp_&
        endif
      endif
    endif
-
 #if COMPLEXCASE == 1
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
@@ -199,7 +219,6 @@ function elpa_solve_evp_&
      stop 1
    endif
 #endif
-
    allocate(e(na), tau(na), stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
      print *,"solve_evp_&
@@ -209,20 +228,17 @@ function elpa_solve_evp_&
      &" // ": error when allocating e, tau "//errorMessage
      stop 1
    endif
-
    ttt0 = MPI_Wtime()
    call tridiag_&
    &MATH_DATATYPE&
    &_&
    &PRECISION&
    & (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
-
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. summary_timings) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
    time_evp_fwd = ttt1-ttt0
 
    ttt0 = MPI_Wtime()
-
    call solve_tridi_&
    &PRECISION&
    & (na, nev, ev, e,  &
@@ -243,7 +259,6 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
    q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 #endif
-
    call trans_ev_&
    &MATH_DATATYPE&
    &_&
@@ -252,7 +267,6 @@ function elpa_solve_evp_&
    ttt1 = MPI_Wtime()
    if(my_prow==0 .and. my_pcol==0 .and. summary_timings) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
    time_evp_back = ttt1-ttt0
-
 #if COMPLEXCASE == 1
    deallocate(q_real, stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
@@ -264,7 +278,6 @@ function elpa_solve_evp_&
      stop 1
    endif
 #endif
-
    deallocate(e, tau, stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
      print *,"solve_evp_&
@@ -280,7 +293,6 @@ function elpa_solve_evp_&
    &_1stage_&
    &PRECISION&
    &")
-
 end function
 
 

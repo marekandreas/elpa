@@ -86,9 +86,6 @@ module elpa_api
       procedure(elpa_is_set_i),  deferred, public :: is_set
       procedure(elpa_can_set_i), deferred, public :: can_set
 
-      procedure(elpa_get_int_i), deferred, private :: get_real_kernel
-      procedure(elpa_get_int_i), deferred, private :: get_complex_kernel
-
       ! actual math routines
       generic, public :: solve => &
           elpa_solve_real_double, &
