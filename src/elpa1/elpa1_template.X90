@@ -81,8 +81,8 @@ function elpa_solve_evp_&
    real(kind=C_DATATYPE_KIND), intent(inout)       :: a(obj%local_nrows,*)
    real(kind=C_DATATYPE_KIND), intent(out)         :: q(obj%local_nrows,*)
 #else
-   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(obj%local_nrows,matrixCols)
-   real(kind=C_DATATYPE_KIND), intent(out)         :: q(obj%local_nrows,matrixCols)
+   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(obj%local_nrows,obj%local_ncols)
+   real(kind=C_DATATYPE_KIND), intent(out)         :: q(obj%local_nrows,obj%local_ncols)
 #endif
    real(kind=C_DATATYPE_KIND), allocatable         :: tau(:)
 #endif /* REALCASE */
@@ -92,8 +92,8 @@ function elpa_solve_evp_&
    complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(obj%local_nrows,*)
    complex(kind=C_DATATYPE_KIND), intent(out)      :: q(obj%local_nrows,*)
 #else
-   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(obj%local_nrows,matrixCols)
-   complex(kind=C_DATATYPE_KIND), intent(out)      :: q(obj%local_nrows,matrixCols)
+   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(obj%local_nrows,obj%local_ncols)
+   complex(kind=C_DATATYPE_KIND), intent(out)      :: q(obj%local_nrows,obj%local_ncols)
 #endif
 
    real(kind=REAL_DATATYPE), allocatable           :: q_real(:,:)
