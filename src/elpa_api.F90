@@ -46,14 +46,16 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 #include "config-f90.h"
-
+!> \brief Fortran module which provides the definition of the ELPA API
 module elpa_api
   use elpa_constants
   use, intrinsic :: iso_c_binding
   implicit none
 
-  integer, private, parameter :: earliest_api_version = EARLIEST_API_VERSION
-  integer, private, parameter :: current_api_version  = CURRENT_API_VERSION
+  integer, private, parameter :: earliest_api_version = EARLIEST_API_VERSION !< Definition of the earliest API version supported
+                                                                             !< with the current release
+  integer, private, parameter :: current_api_version  = CURRENT_API_VERSION  !< Definition of the current API version
+
   logical, private :: initDone = .false.
 
   public :: elpa_t, &
@@ -61,6 +63,7 @@ module elpa_api
       c_double, c_double_complex, &
       c_float, c_float_complex
 
+  !> \brief Abstract defintion of the elpa_t type
   type, abstract :: elpa_t
     private
 
@@ -72,50 +75,52 @@ module elpa_api
     integer(kind=c_int), public, pointer :: nblk => NULL()
 
     contains
+      !> \brief methods available with the elpa_t type
       ! general
-      procedure(elpa_setup_i),   deferred, public :: setup
-      procedure(elpa_destroy_i), deferred, public :: destroy
+      procedure(elpa_setup_i),   deferred, public :: setup          !< export a setup method
+      procedure(elpa_destroy_i), deferred, public :: destroy        !< export a destroy method
 
       ! key/value store
-      generic, public :: set => &
+      generic, public :: set => &                                   !< export a method to set integer/double key/values
           elpa_set_integer, &
           elpa_set_double
-      procedure(elpa_get_integer_i), deferred, public :: get
-      procedure(elpa_get_double_i),  deferred, public :: get_double
+      procedure(elpa_get_integer_i), deferred, public :: get        !< get method for integer key/values
+      procedure(elpa_get_double_i),  deferred, public :: get_double !< get method for double key/values
 
-      procedure(elpa_is_set_i),  deferred, public :: is_set
-      procedure(elpa_can_set_i), deferred, public :: can_set
+      procedure(elpa_is_set_i),  deferred, public :: is_set         !< method to check whether key/value is set
+      procedure(elpa_can_set_i), deferred, public :: can_set        !< method to check whether key/value can be set
 
       ! actual math routines
-      generic, public :: solve => &
-          elpa_solve_real_double, &
-          elpa_solve_real_single, &
+      generic, public :: solve => &                                 !< method solve for solving the eigenvalue problem
+          elpa_solve_real_double, &                                 !< for symmetric real valued / hermitian complex valued
+          elpa_solve_real_single, &                                 !< matrices
           elpa_solve_complex_double, &
           elpa_solve_complex_single
 
-      generic, public :: hermitian_multiply => &
-          elpa_multiply_at_b_double, &
-          elpa_multiply_ah_b_double, &
+      generic, public :: hermitian_multiply => &                    !< method for a "hermitian" multiplication of matrices a and b
+          elpa_multiply_at_b_double, &                              !< for real valued matrices:   a**T * b
+          elpa_multiply_ah_b_double, &                              !< for complex valued matrices a**H * b
           elpa_multiply_at_b_single, &
           elpa_multiply_ah_b_single
 
-      generic, public :: cholesky => &
+      generic, public :: cholesky => &                              !< method for the cholesky factorisation of matrix a
           elpa_cholesky_double_real, &
           elpa_cholesky_single_real, &
           elpa_cholesky_double_complex, &
           elpa_cholesky_single_complex
 
-      generic, public :: invert_tridiagonal => &
+      generic, public :: invert_tridiagonal => &                    !< method to invert a upper triangular matrix a
           elpa_invert_trm_double_real, &
           elpa_invert_trm_single_real, &
           elpa_invert_trm_double_complex, &
           elpa_invert_trm_single_complex
 
-      generic, public :: solve_tridi => &
-          elpa_solve_tridi_double_real, &
+      generic, public :: solve_tridi => &                           !< method to solve the eigenvalue problem for a tridiagonal
+          elpa_solve_tridi_double_real, &                           !< matrix
           elpa_solve_tridi_single_real
 
 
+      !> \brief private methods of elpa_t type. NOT accessible for the user
       ! privates
       procedure(elpa_set_integer_i), deferred, private :: elpa_set_integer
       procedure(elpa_set_double_i),  deferred, private :: elpa_set_double
