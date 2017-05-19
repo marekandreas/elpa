@@ -60,7 +60,7 @@ int call_elpa1_complex_solver_from_c_double(int na, int nev, complex double *a, 
   return elpa_solve_evp_complex_1stage_double_precision(na, nev, a, lda, ev, q, ldq, nblk, ncols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU);
 }
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-int call_elpa1_complex_solver_from_c_single(int na, int nev, complex  *a, int lda, float *ev, complex  *q, int ldq, int nblk, int ncols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU) {
+int call_elpa1_complex_solver_from_c_single(int na, int nev, complex float *a, int lda, float *ev, complex float *q, int ldq, int nblk, int ncols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU) {
   return elpa_solve_evp_complex_1stage_single_precision(na, nev, a, lda, ev, q, ldq, nblk, ncols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU);
 }
 #endif

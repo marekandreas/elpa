@@ -255,7 +255,7 @@
 #define SINGLE_PRECISION
 #include "../../general/precision_macros.h"
 
-  !lc> int elpa_solve_evp_complex_1stage_single_precision(int na, int nev,  complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
+  !lc> int elpa_solve_evp_complex_1stage_single_precision(int na, int nev,  complex float *a, int lda, float *ev, complex float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 
 #include "./elpa1_c_interface_template.X90"
 
@@ -491,7 +491,7 @@
   !lc> \result success              int reports success (1) or failure (0)
   !lc> */
 
-  !lc> int elpa_mult_ah_b_complex_single(char uplo_a, char uplo_c, int na, int ncb, complex *a, int lda, int ldaCols, complex *b, int ldb, int ldbCols, int nblk, int mpi_comm_rows, int mpi_comm_cols, complex *c, int ldc, int ldcCols);
+  !lc> int elpa_mult_ah_b_complex_single(char uplo_a, char uplo_c, int na, int ncb, complex float *a, int lda, int ldaCols, complex float *b, int ldb, int ldbCols, int nblk, int mpi_comm_rows, int mpi_comm_cols, complex float *c, int ldc, int ldcCols);
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
@@ -598,7 +598,7 @@
  !lc> \result succes               int reports success (1) or failure (0)
  !lc> */
 
- !lc> int elpa_invert_trm_complex_single(int na, complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
+ !lc> int elpa_invert_trm_complex_single(int na, complex float *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
@@ -714,7 +714,7 @@
  !lc> \result succes               int reports success (1) or failure (0)
  !lc> */
 
- !lc> int elpa_cholesky_complex_single(int na, complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
+ !lc> int elpa_cholesky_complex_single(int na, complex float *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"

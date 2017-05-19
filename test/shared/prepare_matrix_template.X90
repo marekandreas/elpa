@@ -166,7 +166,7 @@
 #else
     !c> void prepare_matrix_complex_single_f(int na, int myid, int na_rows, int na_cols,
     !c>                                       int sc_desc[9],
-    !c>                                       complex *a, complex *z, complex *as);
+    !c>                                       complex float *a, complex float *z, complex float *as);
 #endif
 #endif /* COMPLEXCASE */
 
