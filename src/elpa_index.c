@@ -121,7 +121,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("local_ncols", "Number of matrix columns stored on this process"),
         INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition"),
         INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition"),
-        INT_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input", -1,
+        INT_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", -1,
                         NULL, NULL, bw_is_valid, NULL),
         INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication"),
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication"),

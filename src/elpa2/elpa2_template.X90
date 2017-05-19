@@ -255,18 +255,18 @@
       endif
     endif
 
-    bandwidth = -1
-    if (bandwidth .ne. -1) then
-      nbw = bandwidth
-
+    if (obj%is_set("bandwidth") == 1) then
+      nbw=obj%get("bandwidth")
       if ((nbw == 0) .or. (mod(nbw, nblk) .ne. 0)) then
         if (wantDebug) then
-          write(error_unit,*) "Specified bandwidth has to be a multiple of blocksize"
+          write(error_unit,*) "Specified bandwidth has to be a multiple of blocksize: ",nbw
         endif
         print *, "Specified bandwidth has to be a multiple of blocksize"
         success = .false.
         return
       endif
+
+      !ttts = MPI_Wtime()
     else
 
       ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
@@ -404,7 +404,7 @@
        stop 1
      endif
 
-     if( bandwidth == -1) then
+     if(obj%is_set("bandwidth") .ne. 1) then
        if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
          ! copy to device if we want to continue on GPU
          successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)

@@ -417,6 +417,8 @@ noinst_PROGRAMS = \
   test_real_double_2stage \
   test_complex_double_1stage \
   test_complex_double_2stage \
+  elpa_test_new_interface_real_2stage_banded@SUFFIX@ \
+  elpa_test_new_interface_complex_2stage_banded@SUFFIX@ \
   elpa_test_new_interface_real_2stage@SUFFIX@ \
   elpa_test_new_interface_complex_2stage@SUFFIX@ \
   elpa_test_new_interface_real_1stage@SUFFIX@ \
@@ -426,6 +428,7 @@ if WANT_SINGLE_PRECISION_REAL
 noinst_PROGRAMS += \
   test_real_single_1stage \
   test_real_single_2stage \
+  elpa_test_new_interface_real_single_2stage_banded@SUFFIX@ \
   elpa_test_new_interface_real_single_2stage@SUFFIX@ \
   elpa_test_new_interface_real_single_1stage@SUFFIX@
 endif
@@ -434,6 +437,7 @@ if WANT_SINGLE_PRECISION_COMPLEX
 noinst_PROGRAMS += \
   test_complex_single_1stage \
   test_complex_single_2stage \
+  elpa_test_new_interface_complex_single_2stage_banded@SUFFIX@ \
   elpa_test_new_interface_complex_single_2stage@SUFFIX@ \
   elpa_test_new_interface_complex_single_1stage@SUFFIX@
 endif
@@ -467,11 +471,9 @@ noinst_PROGRAMS += \
   elpa2_test_real_default@SUFFIX@ \
   elpa2_test_real_qr@SUFFIX@ \
   elpa2_test_real_api@SUFFIX@ \
-  elpa2_test_real_banded@SUFFIX@ \
   elpa2_test_complex@SUFFIX@ \
   elpa2_test_complex_default@SUFFIX@ \
   elpa2_test_complex_api@SUFFIX@ \
-  elpa2_test_complex_banded@SUFFIX@ \
   elpa_driver_real@SUFFIX@ \
   elpa_driver_complex@SUFFIX@ \
   elpa1_real_toeplitz@SUFFIX@ \
@@ -823,10 +825,10 @@ elpa2_test_real_api@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_real_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 EXTRA_elpa2_test_real_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-elpa2_test_real_banded@SUFFIX@_SOURCES = test/Fortran/test_real2_banded.F90
-elpa2_test_real_banded@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_real_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
-EXTRA_elpa2_test_real_banded@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+elpa_test_new_interface_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/test_new_interface_real_2stage_banded.F90
+elpa_test_new_interface_real_2stage_banded@SUFFIX@_LDADD = $(build_lib)
+elpa_test_new_interface_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
+EXTRA_elpa_test_new_interface_real_2stage_banded@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa1_test_complex@SUFFIX@_SOURCES = test/Fortran/elpa1/complex.F90
 elpa1_test_complex@SUFFIX@_LDADD = $(build_lib)
@@ -848,10 +850,10 @@ elpa2_test_complex_api@SUFFIX@_LDADD = $(build_lib)
 elpa2_test_complex_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 EXTRA_elpa2_test_complex_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-elpa2_test_complex_banded@SUFFIX@_SOURCES = test/Fortran/test_complex2_banded.F90
-elpa2_test_complex_banded@SUFFIX@_LDADD = $(build_lib)
-elpa2_test_complex_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
-EXTRA_elpa2_test_complex_banded@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+elpa_test_new_interface_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/test_new_interface_complex_2stage_banded.F90
+elpa_test_new_interface_complex_2stage_banded@SUFFIX@_LDADD = $(build_lib)
+elpa_test_new_interface_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
+EXTRA_elpa_test_new_interface_complex_2stage_banded@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 
 elpa_driver_real@SUFFIX@_SOURCES = test/Fortran/test_driver_real.F90
@@ -869,6 +871,11 @@ elpa_tests@SUFFIX@_LDADD = $(build_lib)
 elpa_tests@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 
 if WANT_SINGLE_PRECISION_REAL
+elpa_test_new_interface_real_single_2stage_banded@SUFFIX@_SOURCES = test/Fortran/test_new_interface_real_single_2stage_banded.F90
+elpa_test_new_interface_real_single_2stage_banded@SUFFIX@_LDADD = $(build_lib)
+elpa_test_new_interface_real_single_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
+EXTRA_elpa_test_new_interface_real_single_2stage_banded@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 elpa1_test_real_single_precision@SUFFIX@_SOURCES = test/Fortran/elpa1/single_real.F90
 elpa1_test_real_single_precision@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_real_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
@@ -927,6 +934,12 @@ EXTRA_elpa2_test_real_api_single_precision@SUFFIX@_DEPENDENCIES = test/Fortran/e
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
+
+elpa_test_new_interface_complex_single_2stage_banded@SUFFIX@_SOURCES = test/Fortran/test_new_interface_complex_single_2stage_banded.F90
+elpa_test_new_interface_complex_single_2stage_banded@SUFFIX@_LDADD = $(build_lib)
+elpa_test_new_interface_complex_single_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
+EXTRA_elpa_test_new_interface_complex_single_2stage_banded@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 elpa1_test_complex_single_precision@SUFFIX@_SOURCES = test/Fortran/elpa1/single_complex.F90
 elpa1_test_complex_single_precision@SUFFIX@_LDADD = $(build_lib)
 elpa1_test_complex_single_precision@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
@@ -1025,6 +1038,8 @@ check_SCRIPTS = \
   test_real_double_2stage.sh \
   test_complex_double_1stage.sh \
   test_complex_double_2stage.sh \
+  elpa_test_new_interface_real_2stage_banded@SUFFIX@.sh \
+  elpa_test_new_interface_complex_2stage_banded@SUFFIX@.sh \
   elpa_test_new_interface_real_2stage@SUFFIX@.sh \
   elpa_test_new_interface_complex_2stage@SUFFIX@.sh \
   elpa_test_new_interface_real_1stage@SUFFIX@.sh \
@@ -1034,6 +1049,7 @@ if WANT_SINGLE_PRECISION_REAL
 check_SCRIPTS += \
   test_real_single_1stage.sh \
   test_real_single_2stage.sh \
+  elpa_test_new_interface_real_single_2stage_banded@SUFFIX@.sh \
   elpa_test_new_interface_real_single_2stage@SUFFIX@.sh \
   elpa_test_new_interface_real_single_1stage@SUFFIX@.sh
 endif
@@ -1042,6 +1058,7 @@ if WANT_SINGLE_PRECISION_COMPLEX
 check_SCRIPTS += \
   test_complex_single_1stage.sh \
   test_complex_single_2stage.sh \
+  elpa_test_new_interface_complex_single_2stage_banded@SUFFIX@.sh \
   elpa_test_new_interface_complex_single_2stage@SUFFIX@.sh \
   elpa_test_new_interface_complex_single_1stage@SUFFIX@.sh
 endif
@@ -1076,9 +1093,7 @@ check_SCRIPTS += \
   elpa2_test_real_qr@SUFFIX@.sh \
   elpa2_test_complex_default@SUFFIX@.sh \
   elpa2_test_real_api@SUFFIX@.sh \
-  elpa2_test_real_banded@SUFFIX@.sh \
   elpa2_test_complex_api@SUFFIX@.sh \
-  elpa2_test_complex_banded@SUFFIX@.sh \
   elpa_driver_real@SUFFIX@.sh \
   elpa_driver_complex@SUFFIX@.sh \
   elpa1_real_toeplitz@SUFFIX@.sh \

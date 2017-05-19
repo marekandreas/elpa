@@ -41,6 +41,7 @@
 !
 !
 #include "config-f90.h"
+#include "assert.h"
 !>
 !> Fortran test programm to demonstrates the use of
 !> ELPA 2 real case library.
@@ -64,7 +65,7 @@
 !> the environment variable "REAL_ELPA_KERNEL" to an
 !> appropiate value.
 !>
-program test_real2_double_precision
+program test_real2_double_banded
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -79,11 +80,9 @@ program test_real2_double_precision
 !
 !-------------------------------------------------------------------------------
    use precision
-   use elpa1
-   use elpa2
+   use elpa
 
    use mod_check_for_gpu, only : check_for_gpu
-   use elpa_utilities, only : error_unit
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -126,7 +125,7 @@ program test_real2_double_precision
 #ifdef WITH_OPENMP
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
-   logical                    :: successELPA, success
+   integer(kind=ik)           :: success
    integer(kind=ik)           :: numberOfDevices
    logical                    :: gpuAvailable
    type(output_t)             :: write_to_file
@@ -134,10 +133,9 @@ program test_real2_double_precision
    integer(kind=ik)           :: j
    integer(kind=ik)           :: global_row, global_col, local_row, local_col
    integer(kind=ik)           :: bandwidth
-
+   class(elpa_t), pointer     :: e
 #define DOUBLE_PRECISION_REAL 1
 
-   successELPA   = .true.
    gpuAvailable  = .false.
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
@@ -177,7 +175,7 @@ program test_real2_double_precision
 
   call timer%enable()
 
-  call timer%start("program: test_real2_double_precision")
+  call timer%start("program: test_real2_double_banded")
 #endif
 
    !-------------------------------------------------------------------------------
@@ -219,16 +217,6 @@ program test_real2_double_precision
      print '(a)','| Past BLACS_Gridinfo.'
    end if
 
-   ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in elpa_get_communicators.
-
-   mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
-                                   mpi_comm_rows, mpi_comm_cols)
-
-   if (myid==0) then
-     print '(a)','| Past split communicator setup for rows and columns.'
-   end if
-
    call set_up_blacs_descriptor(na ,nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
 
@@ -256,73 +244,65 @@ program test_real2_double_precision
      global_row = index_l2g( local_row, nblk, my_prow, np_rows )
      do local_col = 1, na_cols
        global_col = index_l2g( local_col, nblk, my_pcol, np_cols )
- 
+
        if (ABS(global_row-global_col) > bandwidth) then
          a(local_row, local_col) = 0.0
          as(local_row, local_col) = 0.0
-       end if 
+       end if
      end do
-   end do 
+   end do
 
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("set up matrix")
 #endif
-   ! set print flag in elpa1
-   elpa_print_times = .true.
-
-   !-------------------------------------------------------------------------------
-   ! Calculate eigenvalues/eigenvectors
-
-   if (myid==0) then
-     print '(a)','| Entering two-stage ELPA solver ... '
-     print *
-   end if
-#ifdef WITH_MPI
-   call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
+   if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
+     print *, "ELPA API version not supported"
+     stop 1
+   endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("prepare_elpa")
 #endif
-   successELPA = elpa_solve_evp_real_2stage_double(na, nev, a, na_rows, ev, z, na_rows,  nblk, na_cols, &
-                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
+   e => elpa_allocate()
 
-   if (.not.(successELPA)) then
-      write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
-#ifdef WITH_MPI
-      call MPI_ABORT(mpi_comm_world, 1, mpierr)
+   call e%set("na", na, success)
+   assert_elpa_ok(success)
+   call e%set("nev", nev, success)
+   assert_elpa_ok(success)
+   call e%set("local_nrows", na_rows, success)
+   assert_elpa_ok(success)
+   call e%set("local_ncols", na_cols, success)
+   assert_elpa_ok(success)
+   call e%set("nblk", nblk, success)
+   assert_elpa_ok(success)
+   call e%set("mpi_comm_parent", MPI_COMM_WORLD, success)
+   assert_elpa_ok(success)
+   call e%set("process_row", my_prow, success)
+   assert_elpa_ok(success)
+   call e%set("process_col", my_pcol, success)
+   assert_elpa_ok(success)
+
+   call e%set("bandwidth", bandwidth, success)
+   assert_elpa_ok(success)
+
+   assert(e%setup() .eq. ELPA_OK)
+
+   call e%set("solver", ELPA_SOLVER_2STAGE, success)
+   assert_elpa_ok(success)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("prepare_elpa")
 #endif
-   endif
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%start("solve")
+#endif
 
-   if (myid==0) then
-     print '(a)','| Two-step ELPA solver complete.'
-     print *
-   end if
+   call e%solve(a, ev, z, success)
+   assert_elpa_ok(success)
+#ifdef HAVE_DETAILED_TIMINGS
+   call timer%stop("solve")
+#endif
+   call elpa_deallocate(e)
 
-   if(myid == 0) print *,'Time transform to tridi :',time_evp_fwd
-   if(myid == 0) print *,'Time solve tridi        :',time_evp_solve
-   if(myid == 0) print *,'Time transform back EVs :',time_evp_back
-   if(myid == 0) print *,'Total time (sum above)  :',time_evp_back+time_evp_solve+time_evp_fwd
-
-
-   if(write_to_file%eigenvectors) then
-     write(unit = task_suffix, fmt = '(i8.8)') myid
-     open(17,file="EVs_real2_out_task_"//task_suffix(1:8)//".txt",form='formatted',status='new')
-     write(17,*) "Part of eigenvectors: na_rows=",na_rows,"of na=",na," na_cols=",na_cols," of na=",na
-
-     do i=1,na_rows
-       do j=1,na_cols
-         write(17,*) "row=",i," col=",j," element of eigenvector=",z(i,j)
-       enddo
-     enddo
-     close(17)
-   endif
-
-   if(write_to_file%eigenvalues) then
-      if (myid == 0) then
-         open(17,file="Eigenvalues_real2_out.txt",form='formatted',status='new')
-         do i=1,na
-            write(17,*) i,ev(i)
-         enddo
-         close(17)
-      endif
-   endif
+   call elpa_uninit()
 
 
    !-------------------------------------------------------------------------------
@@ -337,12 +317,12 @@ program test_real2_double_precision
    deallocate(ev)
 
 #ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program: test_real2_double_precision")
+   call timer%stop("program: test_real2_double_banded")
    print *," "
-   print *,"Timings program: test_real2_double_precision"
-   call timer%print("program: test_real2_double_precision")
+   print *,"Timings program: test_real2_double_banded"
+   call timer%print("program: test_real2_double_banded")
    print *," "
-   print *,"End timings program: test_real2_double_precision"
+   print *,"End timings program: test_real2_double_banded"
 #endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
