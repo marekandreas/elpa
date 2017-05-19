@@ -911,7 +911,7 @@ module elpa_impl
       integer(kind=c_int)             :: error_actual
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_solve_tridi_single_impl(d, e, q)
+      success_l = elpa_solve_tridi_single_impl(self, d, e, q)
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
