@@ -52,23 +52,26 @@ static int enumerate_identity(int i);
 static int cardinality_bool(void);
 static int valid_bool(elpa_index_t index, int n, int new_value);
 
-static int elpa_number_of_solvers();
-static int elpa_solver_enumerate(int i);
-static int elpa_solver_is_valid(elpa_index_t index, int n, int new_value);
+static int number_of_solvers();
+static int solver_enumerate(int i);
+static int solver_is_valid(elpa_index_t index, int n, int new_value);
 static const char* elpa_solver_name(int solver);
 
-static int elpa_2stage_number_of_real_kernels();
-static int elpa_2stage_real_kernel_enumerate(int i);
-static int elpa_2stage_real_kernel_is_valid(elpa_index_t index, int n, int new_value);
-static const char *elpa_2stage_real_kernel_name(int kernel);
+static int number_of_real_kernels();
+static int real_kernel_enumerate(int i);
+static int real_kernel_is_valid(elpa_index_t index, int n, int new_value);
+static const char *real_kernel_name(int kernel);
 
-static int elpa_2stage_number_of_complex_kernels();
-static int elpa_2stage_complex_kernel_enumerate(int i);
-static int elpa_2stage_complex_kernel_is_valid(elpa_index_t index, int n, int new_value);
-static const char *elpa_2stage_complex_kernel_name(int kernel);
+static int number_of_complex_kernels();
+static int complex_kernel_enumerate(int i);
+static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value);
+static const char *complex_kernel_name(int kernel);
 
-int elpa_double_string_to_value(char *name, char *string, double *value);
-int elpa_double_value_to_string(char *name, double value, const char **string);
+static int na_is_valid(elpa_index_t index, int n, int new_value);
+static int bw_is_valid(elpa_index_t index, int n, int new_value);
+
+static int elpa_double_string_to_value(char *name, char *string, double *value);
+static int elpa_double_value_to_string(char *name, double value, const char **string);
 
 #define BASE_ENTRY(option_name, option_description, once_value, readonly_value) \
                 .base = { \
@@ -94,7 +97,7 @@ int elpa_double_value_to_string(char *name, double value, const char **string);
                 .valid = valid_bool, \
         }
 
-#define INT_LIST_ENTRY(option_name, option_description, default, card_func, enumerate_func, valid_func, to_string_func) \
+#define INT_ENTRY(option_name, option_description, default, card_func, enumerate_func, valid_func, to_string_func) \
         { \
                 BASE_ENTRY(option_name, option_description, 0, 0), \
                 .default_value = default, \
@@ -110,24 +113,27 @@ int elpa_double_value_to_string(char *name, double value, const char **string);
         }
 
 static const elpa_index_int_entry_t int_entries[] = {
-        INT_PARAMETER_ENTRY("na", "Global matrix has size (na * na)"),
+        INT_ENTRY("na", "Global matrix has size (na * na)", 0,
+                        NULL, NULL, na_is_valid, NULL),
         INT_PARAMETER_ENTRY("nev", "Number of eigenvectors to be computed, 0 <= nev <= na"),
         INT_PARAMETER_ENTRY("nblk", "Block size of scalapack block-cyclic distribution"),
         INT_PARAMETER_ENTRY("local_nrows", "Number of matrix rows stored on this process"),
         INT_PARAMETER_ENTRY("local_ncols", "Number of matrix columns stored on this process"),
         INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition"),
         INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition"),
+        INT_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input", -1,
+                        NULL, NULL, bw_is_valid, NULL),
         INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication"),
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication"),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator"),
-        INT_LIST_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, \
-                        elpa_number_of_solvers, elpa_solver_enumerate, elpa_solver_is_valid, elpa_solver_name),
-        INT_LIST_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, \
-                        elpa_2stage_number_of_real_kernels, elpa_2stage_real_kernel_enumerate, \
-                        elpa_2stage_real_kernel_is_valid, elpa_2stage_real_kernel_name),
-        INT_LIST_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, \
-                        elpa_2stage_number_of_complex_kernels, elpa_2stage_complex_kernel_enumerate, \
-                        elpa_2stage_complex_kernel_is_valid, elpa_2stage_complex_kernel_name),
+        INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, \
+                        number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name),
+        INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, \
+                        number_of_real_kernels, real_kernel_enumerate, \
+                        real_kernel_is_valid, real_kernel_name),
+        INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, \
+                        number_of_complex_kernels, complex_kernel_enumerate, \
+                        complex_kernel_is_valid, complex_kernel_name),
         BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0),
         BOOL_ENTRY("gpu", "Use GPU acceleration", 0),
         BOOL_ENTRY("summary_timings", "Emit some debugging timing informaion", 0),
@@ -450,11 +456,11 @@ static const char* elpa_solver_name(int solver) {
         }
 }
 
-static int elpa_number_of_solvers() {
+static int number_of_solvers() {
         return ELPA_NUMBER_OF_SOLVERS;
 }
 
-static int elpa_solver_enumerate(int i) {
+static int solver_enumerate(int i) {
 #define OPTION_RANK(name, value, ...) \
         +(value >= sizeof(array_of_size_value)/sizeof(int) ? 0 : 1)
 
@@ -477,7 +483,7 @@ static int elpa_solver_enumerate(int i) {
 }
 
 
-static int elpa_solver_is_valid(elpa_index_t index, int n, int new_value) {
+static int solver_is_valid(elpa_index_t index, int n, int new_value) {
         switch(new_value) {
                 ELPA_FOR_ALL_SOLVERS(VALID_CASE)
                 default:
@@ -485,11 +491,11 @@ static int elpa_solver_is_valid(elpa_index_t index, int n, int new_value) {
         }
 }
 
-static int elpa_2stage_number_of_real_kernels() {
+static int number_of_real_kernels() {
         return ELPA_2STAGE_NUMBER_OF_REAL_KERNELS;
 }
 
-static int elpa_2stage_real_kernel_enumerate(int i) {
+static int real_kernel_enumerate(int i) {
         switch(i) {
 #define INNER_ITERATOR() ELPA_FOR_ALL_2STAGE_REAL_KERNELS
                 EVAL(ELPA_FOR_ALL_2STAGE_REAL_KERNELS(ENUMERATE_CASE))
@@ -499,7 +505,7 @@ static int elpa_2stage_real_kernel_enumerate(int i) {
         }
 }
 
-static const char *elpa_2stage_real_kernel_name(int kernel) {
+static const char *real_kernel_name(int kernel) {
         switch(kernel) {
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(NAME_CASE)
                 default:
@@ -507,7 +513,7 @@ static const char *elpa_2stage_real_kernel_name(int kernel) {
         }
 }
 
-static int elpa_2stage_real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
+static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         switch(new_value) {
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3)
                 default:
@@ -515,12 +521,12 @@ static int elpa_2stage_real_kernel_is_valid(elpa_index_t index, int n, int new_v
         }
 }
 
-static int elpa_2stage_number_of_complex_kernels() {
+static int number_of_complex_kernels() {
         return ELPA_2STAGE_NUMBER_OF_COMPLEX_KERNELS;
 }
 
 
-static int elpa_2stage_complex_kernel_enumerate(int i) {
+static int complex_kernel_enumerate(int i) {
         switch(i) {
 #define INNER_ITERATOR() ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS
                 EVAL(ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(ENUMERATE_CASE))
@@ -530,7 +536,7 @@ static int elpa_2stage_complex_kernel_enumerate(int i) {
         }
 }
 
-static const char *elpa_2stage_complex_kernel_name(int kernel) {
+static const char *complex_kernel_name(int kernel) {
         switch(kernel) {
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(NAME_CASE)
                 default:
@@ -538,12 +544,26 @@ static const char *elpa_2stage_complex_kernel_name(int kernel) {
         }
 }
 
-static int elpa_2stage_complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
+static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         switch(new_value) {
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3)
                 default:
                         return 0;
         }
+}
+
+static int na_is_valid(elpa_index_t index, int n, int new_value) {
+        return new_value > 0;
+}
+
+static int bw_is_valid(elpa_index_t index, int n, int new_value) {
+        int na;
+        if (elpa_index_int_value_is_set(index, "na") != 1) {
+                return 0;
+        }
+
+        na = elpa_index_get_int_value(index, "na", NULL);
+        return (0 <= new_value) && (new_value < na);
 }
 
 elpa_index_t elpa_index_instance() {
