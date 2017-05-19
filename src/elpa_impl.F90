@@ -47,6 +47,7 @@
 !
 #include "config-f90.h"
 
+!> \brief Fortran module which provides the implementation of the API
 module elpa_impl
   use elpa_api
   use, intrinsic :: iso_c_binding
@@ -55,55 +56,67 @@ module elpa_impl
   private
   public :: elpa_impl_allocate
 
+!> \brief Definition of the extended elpa_impl_t type
   type, extends(elpa_t) :: elpa_impl_t
    private
    type(c_ptr)         :: index = C_NULL_PTR
 
+   !> \brief methods available with the elpa_impl_t type
    contains
+     !> \brief the puplic methods
      ! con-/destructor
-     procedure, public :: setup => elpa_setup
-     procedure, public :: destroy => elpa_destroy
+     procedure, public :: setup => elpa_setup                   !< a setup method: implemented in elpa_setup
+     procedure, public :: destroy => elpa_destroy               !< a destroy method: implemented in elpa_destroy
 
      ! KV store
-     procedure, public :: get => elpa_get_integer
-     procedure, public :: get_double => elpa_get_double
-     procedure, public :: is_set => elpa_is_set
-     procedure, public :: can_set => elpa_can_set
+     procedure, public :: get => elpa_get_integer               !< a get method for integer key/values: implemented in elpa_get_integer
+     procedure, public :: get_double => elpa_get_double         !< a get method for double key/values: implemented in elpa_get_double
+     procedure, public :: is_set => elpa_is_set                 !< a method to check whether a key/value pair has been set : implemented
+                                                                !< in elpa_is_set
+     procedure, public :: can_set => elpa_can_set               !< a method to check whether a key/value pair can be set : implemented
+                                                                !< in elpa_can_set
 
-     ! privates:
+     !> \brief the private methods
 
-     procedure, private :: elpa_set_integer
+     procedure, private :: elpa_set_integer                     !< private methods to implement the setting of an integer/double key/value pair
      procedure, private :: elpa_set_double
 
-     procedure, private :: elpa_solve_real_double
+     procedure, private :: elpa_solve_real_double               !< private methods to implement the solve step for real/complex
+                                                                !< double/single matrices
      procedure, private :: elpa_solve_real_single
      procedure, private :: elpa_solve_complex_double
      procedure, private :: elpa_solve_complex_single
 
-     procedure, private :: elpa_multiply_at_b_double
-     procedure, private :: elpa_multiply_at_b_single
-     procedure, private :: elpa_multiply_ah_b_double
+     procedure, private :: elpa_multiply_at_b_double            !< private methods to implement a "hermitian" multiplication of matrices a and b
+     procedure, private :: elpa_multiply_at_b_single            !< for real valued matrices:   a**T * b
+     procedure, private :: elpa_multiply_ah_b_double            !< for complex valued matrices:   a**H * b
      procedure, private :: elpa_multiply_ah_b_single
 
-     procedure, private :: elpa_cholesky_double_real
+     procedure, private :: elpa_cholesky_double_real            !< private methods to implement the cholesky factorisation of
+                                                                !< real/complex double/single matrices
      procedure, private :: elpa_cholesky_single_real
      procedure, private :: elpa_cholesky_double_complex
      procedure, private :: elpa_cholesky_single_complex
 
-     procedure, private :: elpa_invert_trm_double_real
+     procedure, private :: elpa_invert_trm_double_real          !< private methods to implement the inversion of a triangular
+                                                                !< real/complex double/single matrix
      procedure, private :: elpa_invert_trm_single_real
      procedure, private :: elpa_invert_trm_double_complex
      procedure, private :: elpa_invert_trm_single_complex
 
-     procedure, private :: elpa_solve_tridi_double_real
-     procedure, private :: elpa_solve_tridi_single_real
+     procedure, private :: elpa_solve_tridi_double_real         !< private methods to implement the solve step for a real valued
+     procedure, private :: elpa_solve_tridi_single_real         !< double/single tridiagonal matrix
 
-     procedure, private :: associate_int => elpa_associate_int
+     procedure, private :: associate_int => elpa_associate_int  !< private method to set some pointers
 
   end type elpa_impl_t
 
+  !> \brief the implementation of the private methods
   contains
-
+    !> \brief function to allocate an ELPA object
+    !> Parameters
+    !> \param   error      integer, optional to get an error code
+    !> \result  obj        class(elpa_impl_t) allocated ELPA object
     function elpa_impl_allocate(error) result(obj)
       use precision
       use elpa_utilities, only : error_unit
@@ -137,7 +150,10 @@ module elpa_impl
       endif
     end function
 
-
+    !> \brief function to setup an ELPA object and to store the MPI communicators internally
+    !> Parameters
+    !> \param   self       class(elpa_impl_t), the allocated ELPA object
+    !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
       use elpa1_impl, only : elpa_get_communicators_impl
       class(elpa_impl_t), intent(inout) :: self
@@ -169,6 +185,12 @@ module elpa_impl
 
     end function
 
+    !> \brief subroutine to set an integer key/value pair
+    !> Parameters
+    !> \param   self       class(elpa_impl_t) the allocated ELPA object
+    !> \param   name       string, the key
+    !> \param   value      integer, the value to be set
+    !> \result  error      integer, the error code
     subroutine elpa_set_integer(self, name, value, error)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
@@ -190,7 +212,12 @@ module elpa_impl
       end if
     end subroutine
 
-
+    !> \brief function to get an integer key/value pair
+    !> Parameters
+    !> \param   self       class(elpa_impl_t) the allocated ELPA object
+    !> \param   name       string, the key
+    !> \param   error      integer, optional, to store an error code
+    !> \result  value      integer, the value of the key/vaue pair
     function elpa_get_integer(self, name, error) result(value)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
@@ -210,7 +237,11 @@ module elpa_impl
       end if
     end function
 
-
+    !> \brief function to check whether a key/value pair is set
+    !> Parameters
+    !> \param   self       class(elpa_impl_t) the allocated ELPA object
+    !> \param   name       string, the key
+    !> \result  state      integer, the state of the key/value pair
     function elpa_is_set(self, name) result(state)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
@@ -221,7 +252,12 @@ module elpa_impl
       state = elpa_index_value_is_set_c(self%index, name // c_null_char)
     end function
 
-
+    !> \brief function to check whether a key/value pair can be set
+    !> Parameters
+    !> \param   self       class(elpa_impl_t) the allocated ELPA object
+    !> \param   name       string, the key
+    !> \param   value      integer, value
+    !> \result  error      integer, error code
     function elpa_can_set(self, name, value) result(error)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
