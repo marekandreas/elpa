@@ -110,7 +110,7 @@
        mpi_comm_rows = obj%get("mpi_comm_rows")
        mpi_comm_cols = obj%get("mpi_comm_cols")
 
-       if (obj%get("wantDebug") == 1) then
+       if (obj%get("debug") == 1) then
          wantDebug = .true.
        else
          wantDebug = .true.
