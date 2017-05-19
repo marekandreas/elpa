@@ -128,7 +128,7 @@
          return
        endif
 
-       call e%invert_tridiagonal(a(1:lda,1:matrixCols), successInternal)
+       call e%invert_triangular(a(1:lda,1:matrixCols), successInternal)
 
        if (successInternal .ne. ELPA_OK) then
          print *, "Cannot run invert_trm"

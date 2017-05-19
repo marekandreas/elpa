@@ -109,7 +109,7 @@ module elpa_api
           elpa_cholesky_double_complex, &
           elpa_cholesky_single_complex
 
-      generic, public :: invert_tridiagonal => &                    !< method to invert a upper triangular matrix a
+      generic, public :: invert_triangular => &                     !< method to invert a upper triangular matrix a
           elpa_invert_trm_double_real, &
           elpa_invert_trm_single_real, &
           elpa_invert_trm_double_complex, &
