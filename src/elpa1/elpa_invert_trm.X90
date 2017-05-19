@@ -96,6 +96,12 @@
        integer(kind=ik)             :: istat
        character(200)               :: errorMessage
 
+      call timer%start("elpa_invert_trm_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &")
+
        na         = obj%na
        lda        = obj%local_nrows
        nblk       = obj%nblk
@@ -193,6 +199,11 @@
 #endif
 
                success = .false.
+               call timer%stop("elpa_invert_trm_&
+               &MATH_DATATYPE&
+               &_&
+               &PRECISION&
+               &")
                return
              endif
 
@@ -303,6 +314,11 @@
          stop 1
        endif
 
+       call timer%stop("elpa_invert_trm_&
+       &MATH_DATATYPE&
+       &_&
+       &PRECISION&
+       &")
 #undef REALCASE
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION

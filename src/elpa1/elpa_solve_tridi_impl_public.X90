@@ -77,7 +77,11 @@
       logical                  :: wantDebug
       logical                  :: success
 
-
+      call timer%start("elpa_solve_tridi_public_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &")
       na         = obj%na
       nev        = obj%nev
       nblk       = obj%nblk
@@ -98,6 +102,13 @@
       &PRECISION&
       &_private_impl(na, nev, d, e, q, ldq, nblk, matrixCols, &
                mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+
+      call timer%stop("elpa_solve_tridi_public_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &")
+
 
 #undef REALCASE
 #undef COMPLEXCASE
