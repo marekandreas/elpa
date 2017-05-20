@@ -72,8 +72,8 @@ module elpa2_utilities
 #ifdef WITH_REAL_BGQ_KERNEL
   integer(kind=ik), parameter :: REAL_ELPA_KERNEL_BGQ = ELPA_2STAGE_REAL_BGQ
 #endif
-#ifdef WITH_REAL_SSE_KERNEL
-  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE = ELPA_2STAGE_REAL_SSE
+#ifdef WITH_REAL_SSE_ASSEMBLY_KERNEL
+  integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE = ELPA_2STAGE_REAL_SSE_ASSEMBLY
 #endif
 #ifdef WITH_REAL_SSE_BLOCK2_KERNEL
   integer(kind=ik), parameter :: REAL_ELPA_KERNEL_SSE_BLOCK2 = ELPA_2STAGE_REAL_SSE_BLOCK2
@@ -129,8 +129,8 @@ module elpa2_utilities
 #ifdef WITH_COMPLEX_BGQ_KERNEL
   integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_BGQ = ELPA_2STAGE_COMPLEX_BGQ
 #endif
-#ifdef WITH_COMPLEX_SSE_KERNEL
-  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_SSE = ELPA_2STAGE_COMPLEX_SSE
+#ifdef WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
+  integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_SSE = ELPA_2STAGE_COMPLEX_SSE_ASSEMBLY
 #endif
 #ifdef WITH_COMPLEX_SSE_BLOCK1_KERNEL
   integer(kind=ik), parameter :: COMPLEX_ELPA_KERNEL_SSE_BLOCK1 = ELPA_2STAGE_COMPLEX_SSE_BLOCK1
