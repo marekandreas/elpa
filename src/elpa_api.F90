@@ -247,7 +247,13 @@ module elpa_api
     end function
   end interface
 
-
+  !> \brief abstract defintion of interface to solve double real eigenvalue problem
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           double real matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+  !> \param   q           double real matrix q: on output stores the eigenvalues
   abstract interface
     subroutine elpa_solve_real_double_i(self, a, ev, q, error)
       use iso_c_binding
@@ -264,7 +270,13 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to solve single real eigenvalue problem
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           single real matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+  !> \param   q           single real matrix q: on output stores the eigenvalues
   abstract interface
     subroutine elpa_solve_real_single_i(self, a, ev, q, error)
       use iso_c_binding
@@ -281,7 +293,13 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to solve double complex eigenvalue problem
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           double complex matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+  !> \param   q           double complex matrix q: on output stores the eigenvalues
   abstract interface
     subroutine elpa_solve_complex_double_i(self, a, ev, q, error)
       use iso_c_binding
@@ -299,7 +317,13 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to solve single complex eigenvalue problem
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           single complex matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+  !> \param   q           single complex matrix q: on output stores the eigenvalues
   abstract interface
     subroutine elpa_solve_complex_single_i(self, a, ev, q, error)
       use iso_c_binding
@@ -316,7 +340,34 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to compute C : = A**T * B
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   uplo_a      'U' if A is upper triangular
+  !>                      'L' if A is lower triangular
+  !>                      anything else if A is a full matrix
+  !>                      Please note: This pertains to the original A (as set in the calling program)
+  !>                                   whereas the transpose of A is used for calculations
+  !>                      If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !>                      i.e. it may contain arbitrary numbers
+  !> \param uplo_c        'U' if only the upper diagonal part of C is needed
+  !>                      'L' if only the upper diagonal part of C is needed
+  !>                      anything else if the full matrix C is needed
+  !>                      Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !>                                    written to a certain extent, i.e. one shouldn't rely on the content there!
+  !> \param na            Number of rows/columns of A, number of rows of B and C
+  !> \param ncb           Number of real  of B and C
+  !> \param   a           double complex matrix a
+  !> \param lda           leading dimension of matrix a
+  !> \param ldaCols       columns of matrix a
+  !> \param b             double real matrix b
+  !> \param ldb           leading dimension of matrix b
+  !> \param ldbCols       columns of matrix b
+  !> \param c             double real  matrix c
+  !> \param ldc           leading dimension of matrix c
+  !> \param ldcCols       columns of matrix c
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_multiply_at_b_double_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
@@ -334,7 +385,34 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to compute C : = A**T * B
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   uplo_a      'U' if A is upper triangular
+  !>                      'L' if A is lower triangular
+  !>                      anything else if A is a full matrix
+  !>                      Please note: This pertains to the original A (as set in the calling program)
+  !>                                   whereas the transpose of A is used for calculations
+  !>                      If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !>                      i.e. it may contain arbitrary numbers
+  !> \param uplo_c        'U' if only the upper diagonal part of C is needed
+  !>                      'L' if only the upper diagonal part of C is needed
+  !>                      anything else if the full matrix C is needed
+  !>                      Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !>                                    written to a certain extent, i.e. one shouldn't rely on the content there!
+  !> \param na            Number of rows/columns of A, number of rows of B and C
+  !> \param ncb           Number of real  of B and C
+  !> \param   a           single complex matrix a
+  !> \param lda           leading dimension of matrix a
+  !> \param ldaCols       columns of matrix a
+  !> \param b             single real matrix b
+  !> \param ldb           leading dimension of matrix b
+  !> \param ldbCols       columns of matrix b
+  !> \param c             single real  matrix c
+  !> \param ldc           leading dimension of matrix c
+  !> \param ldcCols       columns of matrix c
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_multiply_at_b_single_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
@@ -352,7 +430,34 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to compute C : = A**H * B
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   uplo_a      'U' if A is upper triangular
+  !>                      'L' if A is lower triangular
+  !>                      anything else if A is a full matrix
+  !>                      Please note: This pertains to the original A (as set in the calling program)
+  !>                                   whereas the transpose of A is used for calculations
+  !>                      If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !>                      i.e. it may contain arbitrary numbers
+  !> \param uplo_c        'U' if only the upper diagonal part of C is needed
+  !>                      'L' if only the upper diagonal part of C is needed
+  !>                      anything else if the full matrix C is needed
+  !>                      Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !>                                    written to a certain extent, i.e. one shouldn't rely on the content there!
+  !> \param na            Number of rows/columns of A, number of rows of B and C
+  !> \param ncb           Number of columns  of B and C
+  !> \param   a           double complex matrix a
+  !> \param lda           leading dimension of matrix a
+  !> \param ldaCols       columns of matrix a
+  !> \param b             double complex matrix b
+  !> \param ldb           leading dimension of matrix b
+  !> \param ldbCols       columns of matrix b
+  !> \param c             double complex  matrix c
+  !> \param ldc           leading dimension of matrix c
+  !> \param ldcCols       columns of matrix c
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_multiply_ah_b_double_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
@@ -370,9 +475,36 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to compute C : = A**H * B
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   uplo_a      'U' if A is upper triangular
+  !>                      'L' if A is lower triangular
+  !>                      anything else if A is a full matrix
+  !>                      Please note: This pertains to the original A (as set in the calling program)
+  !>                                   whereas the transpose of A is used for calculations
+  !>                      If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !>                      i.e. it may contain arbitrary numbers
+  !> \param uplo_c        'U' if only the upper diagonal part of C is needed
+  !>                      'L' if only the upper diagonal part of C is needed
+  !>                      anything else if the full matrix C is needed
+  !>                      Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !>                                    written to a certain extent, i.e. one shouldn't rely on the content there!
+  !> \param na            Number of rows/columns of A, number of rows of B and C
+  !> \param ncb           Number of columns  of B and C
+  !> \param   a           single complex matrix a
+  !> \param lda           leading dimension of matrix a
+  !> \param ldaCols       columns of matrix a
+  !> \param b             single complex matrix b
+  !> \param ldb           leading dimension of matrix b
+  !> \param ldbCols       columns of matrix b
+  !> \param c             single complex  matrix c
+  !> \param ldc           leading dimension of matrix c
+  !> \param ldcCols       columns of matrix c
+  !> \param   error       integer, optional : error code
   abstract interface
-    subroutine elpa_multiply_ah_b_single_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    subroutine elpa_multiply_ah_b_single_i (self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
       use iso_c_binding
       import elpa_t
@@ -388,7 +520,11 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to do a cholesky decomposition of a double real matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           double real matrix: the matrix to be decomposed
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_cholesky_double_real_i (self, a, error)
       use iso_c_binding
@@ -403,7 +539,11 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to do a cholesky decomposition of a single real matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           single real matrix: the matrix to be decomposed
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_cholesky_single_real_i(self, a, error)
       use iso_c_binding
@@ -418,7 +558,11 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to do a cholesky decomposition of a double complex matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           double complex matrix: the matrix to be decomposed
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_cholesky_double_complex_i (self, a, error)
       use iso_c_binding
@@ -433,7 +577,11 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to do a cholesky decomposition of a single complex matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           single complex matrix: the matrix to be decomposed
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_cholesky_single_complex_i (self, a, error)
       use iso_c_binding
@@ -448,7 +596,11 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to invert a triangular double real matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           double real matrix: the matrix to be inverted
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_invert_trm_double_real_i (self, a, error)
       use iso_c_binding
@@ -463,7 +615,11 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to invert a triangular single real matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           single real matrix: the matrix to be inverted
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_invert_trm_single_real_i (self, a, error)
       use iso_c_binding
@@ -478,7 +634,11 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to invert a triangular double complex matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           double complex matrix: the matrix to be inverted
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_invert_trm_double_complex_i (self, a, error)
       use iso_c_binding
@@ -493,7 +653,11 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to invert a triangular single complex matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           single complex matrix: the matrix to be inverted
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_invert_trm_single_complex_i (self, a, error)
       use iso_c_binding
@@ -508,7 +672,13 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to solve the eigenvalue problem for a real valued tridiangular matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   d           double real 1d array: the diagonal elements of a matrix defined in setup
+  !> \param   e           double real 1d array: the subdiagonal elements of a matrix defined in setup
+  !> \param   q           double real matrix: on output contains the eigenvectors
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_solve_tridi_double_real_i (self, d, e, q, error)
       use iso_c_binding
@@ -524,7 +694,13 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface to solve the eigenvalue problem for a real valued tridiangular matrix
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   d           single real 1d array: the diagonal elements of a matrix defined in setup
+  !> \param   e           single real 1d array: the subdiagonal elements of a matrix defined in setup
+  !> \param   q           single real matrix: on output contains the eigenvectors
+  !> \param   error       integer, optional : error code
   abstract interface
     subroutine elpa_solve_tridi_single_real_i (self, d, e, q, error)
       use iso_c_binding
@@ -540,7 +716,9 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface of subroutine to destroy an ELPA object
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
   abstract interface
     subroutine elpa_destroy_i(self)
       import elpa_t
@@ -548,7 +726,10 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract defintion of interface of function to get an integer option
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \result  value       integer
   abstract interface
     function elpa_get_int_i(self) result(value)
       use iso_c_binding
@@ -560,6 +741,10 @@ module elpa_api
 
   contains
 
+    !> \brief function to intialise the ELPA library
+    !> Parameters
+    !> \param   api_version integer, api_version that ELPA should use
+    !> \result  error       integer
     function elpa_init(api_version) result(error)
       use elpa_utilities, only : error_unit
       integer, intent(in) :: api_version
@@ -574,17 +759,26 @@ module elpa_api
       endif
     end function
 
-
+    !> \brief function to check whether the ELPA library has been correctly initialised
+    !> Parameters
+    !> \result  state      logical
     function elpa_initialized() result(state)
-      logical :: state
-      state = initDone
+      integer :: state
+      if (initDone) then
+        state = ELPA_OK
+      else
+        state = ELPA_ERROR
+      endif
     end function
 
-
+    !> \brief subroutine to uninit the ELPA library. Does nothing at the moment. Might do sth. later
     subroutine elpa_uninit()
     end subroutine
 
-
+    !> \brief helper function for error strings: NOT public to the user
+    !> Parameters
+    !> \param   elpa_error  integer
+    !> \result  string      string
     function elpa_strerr(elpa_error) result(string)
       use elpa_generated_fortran_interfaces
       integer, intent(in) :: elpa_error
@@ -592,7 +786,10 @@ module elpa_api
       call c_f_pointer(elpa_strerr_c(elpa_error), string)
     end function
 
-
+    !> \brief helper function for c strings: NOT public to the user
+    !> Parameters
+    !> \param   ptr         type(c_ptr)
+    !> \result  string      string
     function elpa_c_string(ptr) result(string)
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(in) :: ptr
@@ -600,7 +797,12 @@ module elpa_api
       call c_f_pointer(ptr, string)
     end function
 
-
+    !> \brief function to convert an integer in its string representation: NOT public to the user
+    !> Parameters
+    !> \param   name        string
+    !> \param   value       integer
+    !> \param   error       integer, optional
+    !> \result  string      string
     function elpa_int_value_to_string(name, value, error) result(string)
       use elpa_utilities, only : error_unit
       use elpa_generated_fortran_interfaces
@@ -627,7 +829,12 @@ module elpa_api
       endif
     end function
 
-
+    !> \brief function to convert a string in its integer representation: NOT public to the user
+    !> Parameters
+    !> \param   name        string
+    !> \param   string      string
+    !> \param   error       integer, optional
+    !> \result  value       integer
     function elpa_int_string_to_value(name, string, error) result(value)
       use elpa_generated_fortran_interfaces
       use elpa_utilities, only : error_unit
@@ -651,7 +858,10 @@ module elpa_api
       endif
     end function
 
-
+    !> \brief function to get the cardinality of an option. NOT public to the user
+    !> Parameters
+    !> \param   option_name string
+    !> \result  number      integer
     function elpa_option_cardinality(option_name) result(number)
       use elpa_generated_fortran_interfaces
       character(kind=c_char, len=*), intent(in) :: option_name
@@ -659,7 +869,11 @@ module elpa_api
       number = elpa_option_cardinality_c(option_name // C_NULL_CHAR)
     end function
 
-
+    !> \brief function to enumerate an option. NOT public to the user
+    !> Parameters
+    !> \param   option_name string
+    !> \param   i           integer
+    !> \result  option      integer
     function elpa_option_enumerate(option_name, i) result(option)
       use elpa_generated_fortran_interfaces
       character(kind=c_char, len=*), intent(in) :: option_name

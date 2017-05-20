@@ -128,7 +128,7 @@ module elpa_impl
       allocate(obj)
 
       ! check whether init has ever been called
-      if (.not.(elpa_initialized())) then
+      if ( elpa_initialized() .ne. ELPA_OK) then
         write(error_unit, *) "elpa_allocate(): you must call elpa_init() once before creating instances of ELPA"
         if(present(error)) then
           error = ELPA_ERROR
