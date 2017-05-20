@@ -192,7 +192,7 @@
 #define COMPLEXCASE 1
 #undef DOUBLE_PRECISION
 #define SINGLE_PRECISION 1
-  !lc> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, 
+  !lc> int elpa_solve_evp_complex_2stage_single_precision(int na, int nev, complex float *a, int lda, float *ev, complex float *q, int ldq, int nblk, 
   !lc> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 
 #include "../../general/precision_macros.h"

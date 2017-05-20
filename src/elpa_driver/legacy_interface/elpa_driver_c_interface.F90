@@ -198,7 +198,7 @@
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #undef DOUBLE_PRECISION
-  !lc> int elpa_solve_evp_complex_single(int na, int nev, complex *a, int lda, float *ev, complex *q, int ldq, int nblk, int matrixCols, 
+  !lc> int elpa_solve_evp_complex_single(int na, int nev, complex float *a, int lda, float *ev, complex float *q, int ldq, int nblk, int matrixCols, 
   !lc> int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
 #include "../../general/precision_macros.h"
 #include "./elpa_driver_c_interface_template.X90"
