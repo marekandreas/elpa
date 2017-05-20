@@ -794,12 +794,12 @@ legacy_real_toeplitz@SUFFIX@_LDADD = $(build_lib)
 legacy_real_toeplitz@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 EXTRA_legacy_real_toeplitz@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-legacy_real_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_real_transpose_multiply.F90
+legacy_real_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_real_transp_multiply.F90
 legacy_real_transpose_multiply@SUFFIX@_LDADD = $(build_lib)
 legacy_real_transpose_multiply@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 EXTRA_legacy_real_transpose_multiply@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-legacy_complex_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_complex_transpose_multiply.F90
+legacy_complex_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_complex_transp_multiply.F90
 legacy_complex_transpose_multiply@SUFFIX@_LDADD = $(build_lib)
 legacy_complex_transpose_multiply@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 EXTRA_legacy_complex_transpose_multiply@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
@@ -900,7 +900,7 @@ legacy_single_real_toeplitz@SUFFIX@_LDADD = $(build_lib)
 legacy_single_real_toeplitz@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 EXTRA_legacy_single_real_toeplitz@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-legacy_single_real_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_real_transpose_multiply.F90
+legacy_single_real_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_real_transp_multiply.F90
 legacy_single_real_transpose_multiply@SUFFIX@_LDADD = $(build_lib)
 legacy_single_real_transpose_multiply@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 EXTRA_legacy_single_real_transpose_multiply@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
@@ -963,7 +963,7 @@ legacy_single_complex_2stage_default@SUFFIX@_LDADD = $(build_lib)
 legacy_single_complex_2stage_default@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 EXTRA_legacy_single_complex_2stage_default@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-legacy_single_complex_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_complex_transpose_multiply.F90
+legacy_single_complex_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_complex_transp_multiply.F90
 legacy_single_complex_transpose_multiply@SUFFIX@_LDADD = $(build_lib)
 legacy_single_complex_transpose_multiply@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 EXTRA_legacy_single_complex_transpose_multiply@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
