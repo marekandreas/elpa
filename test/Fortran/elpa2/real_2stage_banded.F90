@@ -82,7 +82,6 @@ program test_real2_double_banded
    use precision
    use elpa
 
-   use mod_check_for_gpu, only : check_for_gpu
 #ifdef WITH_OPENMP
    use test_util
 #endif
@@ -127,7 +126,6 @@ program test_real2_double_banded
 #endif
    integer(kind=ik)           :: success
    integer(kind=ik)           :: numberOfDevices
-   logical                    :: gpuAvailable
    type(output_t)             :: write_to_file
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
@@ -136,7 +134,6 @@ program test_real2_double_banded
    class(elpa_t), pointer     :: e
 #define DOUBLE_PRECISION_REAL 1
 
-   gpuAvailable  = .false.
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
 
@@ -144,12 +141,9 @@ program test_real2_double_banded
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
-
    STATUS = 0
 
 #define REALCASE
-#include "../elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 

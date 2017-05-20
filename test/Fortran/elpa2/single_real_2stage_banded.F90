@@ -149,7 +149,6 @@ program test_real2_single_banded
    STATUS = 0
 
 #define REALCASE
-#include "../elpa_print_headers.X90"
 
 #ifdef HAVE_DETAILED_TIMINGS
 
