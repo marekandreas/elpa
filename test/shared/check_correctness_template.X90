@@ -481,7 +481,7 @@
     !c>                                         int sc_desc[9], int myid);
 #else
     !c> int check_correctness_complex_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex *as, complex *z, float *ev,
+    !c>                                         complex float *as, complex float *z, float *ev,
     !c>                                         int sc_desc[9], int myid);
 #endif
 #endif /* COMPLEXCASE */
