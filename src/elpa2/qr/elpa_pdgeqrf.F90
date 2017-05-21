@@ -73,11 +73,6 @@ module elpa_pdgeqrf
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       use elpa_api
       implicit none
 
@@ -388,11 +383,6 @@ module elpa_pdgeqrf
           PQRPARAM,mpicomm,blockheuristic)
       use precision
       use elpa1_impl
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       use elpa_api
       implicit none
 
@@ -527,11 +517,6 @@ module elpa_pdgeqrf
       use precision
       !use elpa1_impl ! check this
       use elpa_api
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       implicit none
 
       class(elpa_t)                 :: obj
@@ -1001,11 +986,6 @@ module elpa_pdgeqrf
     subroutine qr_pdlarfg2_1dcomm_ref_double(obj,a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,idx,mb,PQRPARAM,rev,mpicomm,actualk)
       use precision
       use elpa_api
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       implicit none
 
       class(elpa_t)                 :: obj
@@ -1261,11 +1241,6 @@ module elpa_pdgeqrf
     logical function qr_pdlarfg2_1dcomm_check_double(obj,seed,eps)
       use precision
       use elpa_api
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       implicit none
 
       class(elpa_t)                 :: obj
