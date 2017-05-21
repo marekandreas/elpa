@@ -87,17 +87,13 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU)
+    (obj, na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU)
       use cuda_functions
       use iso_c_binding
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       use precision
+      use elpa_api
       implicit none
-
+      class(elpa_t)                     :: obj
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                           :: useGPU
 
@@ -214,19 +210,19 @@
                                                                           &PRECISION&
                                                                           &_&
                                                                           &MATH_DATATYPE
-      call timer%start("tridiag_&
+      call obj%timer%start("tridiag_&
       &MATH_DATATYPE&
       &" // &
       PRECISION_SUFFIX &
       )
 
 
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
       ! seems that tile is a square submatrix, consisting by several blocks
@@ -387,7 +383,7 @@
           endif
 
             if (n_stored_vecs > 0 .and. l_rows > 0) then
-              call timer%start("blas")
+              call obj%timer%start("blas")
 #if COMPLEXCASE == 1
               aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
@@ -402,7 +398,7 @@
 
 #endif
                                   ONE, v_row, 1)
-               call timer%stop("blas")
+               call obj%timer%stop("blas")
 
             endif
 
@@ -415,10 +411,10 @@
             endif
 
 #ifdef WITH_MPI
-            call timer%start("mpi_communication")
+            call obj%timer%start("mpi_communication")
             call mpi_allreduce(aux1, aux2, 2, MPI_MATH_DATATYPE_PRECISION, &
                                MPI_SUM, mpi_comm_rows, mpierr)
-            call timer%stop("mpi_communication")
+            call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           aux2 = aux1
 #endif /* WITH_MPI */
@@ -433,7 +429,7 @@
           call hh_transform_complex_&
 #endif
                &PRECISION &
-                             (vrl, vnorm2, xf, tau(istep))
+                             (obj, vrl, vnorm2, xf, tau(istep))
           ! Scale v_row and store Householder Vector for back transformation
 
           v_row(1:l_rows) = v_row(1:l_rows) * xf
@@ -465,7 +461,7 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION &
-                   (v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
+                   (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
                     1, istep-1, 1, nblk)
 
         ! Calculate u = (A + VU**T + UV**T)*v
@@ -492,7 +488,7 @@
           endif ! useGU
 
 #ifdef WITH_OPENMP
-          call timer%start("OpenMP parallel")
+          call obj%timer%start("OpenMP parallel")
 !$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end)
 
           my_thread = omp_get_thread_num()
@@ -514,7 +510,7 @@
               if (l_row_end < l_row_beg) cycle
 #ifdef WITH_OPENMP
               if (mod(n_iter,n_threads) == my_thread) then
-                call timer%start("blas")
+                call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                                     l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                     ONE, a_mat(l_row_beg,l_col_beg), lda,         &
@@ -526,7 +522,7 @@
 
                                       ONE, ur_p(l_row_beg,my_thread), 1)
                 endif
-                call timer%stop("blas")
+                call obj%timer%stop("blas")
               endif
               n_iter = n_iter+1
 #else /* WITH_OPENMP */
@@ -535,7 +531,7 @@
               ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
               ! CPU implementation) or by one large matrix Vector multiply
               if (.not. useGPU) then
-                call timer%start("blas")
+                call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
                             l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                             ONE, a_mat(l_row_beg, l_col_beg), lda,         &
@@ -549,7 +545,7 @@
                                       v_col(l_col_beg), 1,                                &
                                       ONE, u_row(l_row_beg), 1)
                 endif
-                call timer%stop("blas")
+                call obj%timer%stop("blas")
               endif ! not useGPU
 
 #endif /* WITH_OPENMP */
@@ -561,7 +557,7 @@
               ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
               ! this requires altering of the algorithm when later explicitly updating the matrix
               ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
-              call timer%start("cublas")
+              call obj%timer%start("cublas")
               call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
                                         ONE, a_dev, lda,                   &
                                         v_row_dev , 1,                          &
@@ -576,7 +572,7 @@
 !                                             ONE, u_row_dev + (l_row_beg - 1) *                 &
 !                                             size_of_datatype, 1)
 !                 endif
-              call timer%stop("cublas")
+              call obj%timer%stop("cublas")
 
             else 
               !perform multiplication by stripes - it is faster than by blocks, since we call cublas with 
@@ -633,7 +629,7 @@
 
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL
-          call timer%stop("OpenMP parallel")
+          call obj%timer%stop("OpenMP parallel")
 
           do i=0,max_threads-1
             u_col(1:l_cols) = u_col(1:l_cols) + uc_p(1:l_cols,i)
@@ -643,7 +639,7 @@
 
           ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v          
           if (n_stored_vecs > 0) then
-            call timer%start("blas")
+            call obj%timer%start("blas")
 #if REALCASE == 1
             call PRECISION_GEMV('T',     &
 #endif
@@ -657,7 +653,7 @@
             call PRECISION_GEMV('N', l_cols, 2*n_stored_vecs,   &
                                 ONE, uv_stored_cols, ubound(uv_stored_cols,dim=1),   &
                                 aux, 1, ONE, u_col,  1)
-            call timer%stop("blas")
+            call obj%timer%stop("blas")
           endif
 
         endif  ! (l_rows>0 .and. l_cols>0)
@@ -673,7 +669,7 @@
           &MATH_DATATYPE&
           &_&
           &PRECISION &
-          (u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
+          (obj, u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
            mpi_comm_cols, istep-1, 1, nblk)
 
         endif
@@ -683,10 +679,10 @@
         if (l_cols>0) then
           tmp(1:l_cols) = u_col(1:l_cols)
 #ifdef WITH_MPI
-          call timer%start("mpi_communication")
+          call obj%timer%start("mpi_communication")
           call mpi_allreduce(tmp, u_col, l_cols, MPI_MATH_DATATYPE_PRECISION,    &
                              MPI_SUM, mpi_comm_rows, mpierr)
-          call timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           u_col = tmp
 #endif /* WITH_MPI */
@@ -696,7 +692,7 @@
         &MATH_DATATYPE&
         &_&
         &PRECISION &
-        (u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+        (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
          mpi_comm_rows, 1, istep-1, 1, nblk)
 
         ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
@@ -712,14 +708,14 @@
 #endif
 
 #ifdef WITH_MPI
-        call timer%start("mpi_communication")
+        call obj%timer%start("mpi_communication")
 #if REALCASE == 1
         call mpi_allreduce(x, vav, 1, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
 #if COMPLEXCASE == 1
         call mpi_allreduce(xc, vav, 1 , MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
-        call timer%stop("mpi_communication")
+        call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
 #if REALCASE == 1
@@ -787,7 +783,7 @@
               if(.not. mat_vec_as_one_block) then
                 ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                 ! we than use the same calls as for CPU version
-                call timer%start("cublas")
+                call obj%timer%start("cublas")
                 call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
                                           l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
                                           ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
@@ -796,29 +792,29 @@
                                           size_of_datatype,  &
                                           max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *            &
                                           size_of_datatype , lda)
-                call timer%stop("cublas")
+                call obj%timer%stop("cublas")
               endif 
             else !useGPU
-              call timer%start("blas")
+              call obj%timer%start("blas")
               call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
                                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
                                    ONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
                                    uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),        &
                                    ONE, a_mat(l_row_beg,l_col_beg), lda)
-              call timer%stop("blas")
+              call obj%timer%stop("blas")
             endif !useGPU
           enddo
-          
+
           if (useGPU) then
             if(mat_vec_as_one_block) then
               !update whole (remaining) part of matrix, including tiles below diagonal 
               !we can do that in one large cublas call
-              call timer%start("cublas")
+              call obj%timer%start("cublas")
               call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
                                         ONE, vu_stored_rows_dev, max_local_rows, &
                                         uv_stored_cols_dev, max_local_cols,  &
                                         ONE, a_dev, lda)
-              call timer%stop("cublas")
+              call obj%timer%stop("cublas")
             endif 
           endif
 
@@ -870,23 +866,23 @@
           endif !useGPU
           call hh_transform_complex_&
                                     &PRECISION &
-                                    (vrl, CONST_REAL_0_0, xf, tau(2))
+                                    (obj, vrl, CONST_REAL_0_0, xf, tau(2))
           e_vec(1) = vrl
 
           a_mat(1,l_cols) = 1. ! for consistency only
         endif
 #ifdef WITH_MPI
-        call timer%start("mpi_communication")
+        call obj%timer%start("mpi_communication")
         call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, prow(1, nblk, np_rows), mpi_comm_rows, mpierr)
-        call timer%stop("mpi_communication")
+        call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
       endif
 
 #ifdef WITH_MPI
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
       call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, pcol(2, nblk, np_cols), mpi_comm_cols, mpierr)
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
       if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
@@ -981,7 +977,7 @@
 
 
 #ifdef WITH_MPI
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
 #if REALCASE == 1
       tmp = d_vec
       call mpi_allreduce(tmp, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
@@ -1002,7 +998,7 @@
       tmp_real = e_vec
       call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
 #if REALCASE == 1
@@ -1020,7 +1016,7 @@
       endif
 #endif
 
-      call timer%stop("tridiag_&
+      call obj%timer%stop("tridiag_&
       &MATH_DATATYPE&
       &" // &
       &PRECISION_SUFFIX &

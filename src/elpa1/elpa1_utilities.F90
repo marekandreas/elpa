@@ -73,17 +73,10 @@ module elpa1_utilities
   contains
 
    function gpu_usage_via_environment_variable() result(useGPU)
-#ifdef HAVE_DETAILED_TIMINGS
-     use timings
-#else
-     use timings_dummy
-#endif
      use precision
      implicit none
      logical            :: useGPU
      CHARACTER(len=255) :: ELPA_USE_GPU_ENVIRONMENT
-
-     call timer%start("gpu_usage_via_environment_variable")
 
      useGPU = .false.
 #if defined(HAVE_ENVIRONMENT_CHECKING)
@@ -92,8 +85,6 @@ module elpa1_utilities
      if (trim(ELPA_USE_GPU_ENVIRONMENT) .eq. "YES" .or. trim(ELPA_USE_GPU_ENVIRONMENT) .eq. "yes") then
        useGPU = .true.
      endif
-
-     call timer%stop("gpu_usage_via_environment_variable")
 
    end function gpu_usage_via_environment_variable
 !-------------------------------------------------------------------------------

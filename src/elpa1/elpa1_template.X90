@@ -62,11 +62,6 @@ function elpa_solve_evp_&
    use precision
    use cuda_functions
    use mod_check_for_gpu
-#ifdef HAVE_DETAILED_TIMINGS
-   use timings
-#else
-   use timings_dummy
-#endif
    use iso_c_binding
    use elpa_api
    use elpa_mpi
@@ -74,7 +69,7 @@ function elpa_solve_evp_&
    use elpa1_utilities, only : gpu_usage_via_environment_variable
    implicit none
 
-   class(elpa_t), intent(in)                       :: obj
+   class(elpa_t)                       :: obj
    real(kind=REAL_DATATYPE), intent(out)           :: ev(obj%na)
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
@@ -115,7 +110,7 @@ function elpa_solve_evp_&
    integer(kind=ik)                                :: na, nev, lda, ldq, nblk, matrixCols, &
                                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 
-   call timer%start("elpa_solve_evp_&
+   call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
@@ -143,7 +138,7 @@ function elpa_solve_evp_&
 !     summary_timings = .false.
 !   endif
 
-   call timer%start("mpi_communication")
+   call obj%timer%start("mpi_communication")
 
    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
@@ -156,7 +151,7 @@ function elpa_solve_evp_&
    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 #endif
 
-   call timer%stop("mpi_communication")
+   call obj%timer%stop("mpi_communication")
    success = .true.
 
    wantDebug = obj%get("debug") == 1
@@ -229,7 +224,7 @@ function elpa_solve_evp_&
    &MATH_DATATYPE&
    &_&
    &PRECISION&
-   & (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
+   & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
    !ttt1 = MPI_Wtime()
    !if(my_prow==0 .and. my_pcol==0 .and. summary_timings) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
    !time_evp_fwd = ttt1-ttt0
@@ -237,7 +232,7 @@ function elpa_solve_evp_&
    !ttt0 = MPI_Wtime()
    call solve_tridi_&
    &PRECISION&
-   & (na, nev, ev, e,  &
+   & (obj, na, nev, ev, e,  &
 #if REALCASE == 1
       q, ldq,          &
 #endif
@@ -254,7 +249,7 @@ function elpa_solve_evp_&
    &MATH_DATATYPE&
    &_&
    &PRECISION&
-   & (na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
+   & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
    !ttt1 = MPI_Wtime()
    !if(my_prow==0 .and. my_pcol==0 .and. summary_timings) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
    !time_evp_back = ttt1-ttt0
@@ -279,7 +274,7 @@ function elpa_solve_evp_&
      stop 1
    endif
 
-   call timer%stop("elpa_solve_evp_&
+   call obj%timer%stop("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&

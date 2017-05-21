@@ -55,7 +55,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, &
+    (obj, na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, &
      q_dev, ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
 #if REALCASE == 1
      ,useQr)
@@ -97,17 +97,13 @@
     !              MPI-Communicators for rows/columns
     !
     !-------------------------------------------------------------------------------
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       use precision
       use cuda_functions
       use iso_c_binding
-
+      use elpa_api
       implicit none
 
+      class(elpa_t)              :: obj
       logical, intent(in)                    :: useGPU
 #if REALCASE == 1
      logical, intent(in)                     :: useQR
@@ -187,19 +183,19 @@
                                                                    &PRECISION&
                                                                    &_&
                                                                    &MATH_DATATYPE
-      call timer%start("trans_ev_band_to_full_&
+      call obj%timer%start("trans_ev_band_to_full_&
       &MATH_DATATYPE&
       &" // &
       &PRECISION_SUFFIX &
       )
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 
       max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of A
       max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q!
@@ -356,7 +352,7 @@
 
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
-              call timer%start("mpi_communication")
+              call obj%timer%start("mpi_communication")
               call MPI_Bcast(hvb(ns+1), nb-ns,  &
 #if REALCASE == 1
 	                     MPI_REAL_PRECISION,&
@@ -366,7 +362,7 @@
 #endif
 			     pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 
-              call timer%stop("mpi_communication")
+              call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               ns = nb
@@ -403,7 +399,7 @@
           ! Q = Q - V * T**T * V**T * Q
 
           if (l_rows>0) then
-	    call timer%start("cublas")
+	    call obj%timer%start("cublas")
 #if REALCASE == 1
             call cublas_PRECISION_GEMM('T', 'N',        &
 #endif
@@ -412,7 +408,7 @@
 #endif
 	                               n_cols, l_cols, l_rows, ONE, hvm_dev, max_local_rows, &
                                        q_dev, ldq , ZERO, tmp_dev, n_cols)
-	    call timer%stop("cublas")
+	    call obj%timer%stop("cublas")
 
 #if REALCASE == 1
 #ifdef WITH_MPI
@@ -461,7 +457,7 @@
           !#endif
 
 #ifdef WITH_MPI
-          call timer%start("mpi_communication")
+          call obj%timer%start("mpi_communication")
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, &
 #if REALCASE == 1
                              MPI_REAL_PRECISION,        &
@@ -470,7 +466,7 @@
                              MPI_COMPLEX_PRECISION,        &
 #endif
                              MPI_SUM, mpi_comm_rows, mpierr)
-          call timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
 !          tmp2(1:n_cols*l_cols) = tmp1(1:n_cols*l_cols)
@@ -522,7 +518,7 @@
            endif
 !#endif /* WITH_MPI */
 
-	    call timer%start("cublas")
+	    call obj%timer%start("cublas")
 #if REALCASE == 1
             call cublas_PRECISION_TRMM('L', 'U', 'T', 'N',       &
 #endif
@@ -533,7 +529,7 @@
 
             call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, &
                                        tmp_dev, n_cols, one, q_dev, ldq)
-	    call timer%stop("cublas")
+	    call obj%timer%stop("cublas")
 
 #if REALCASE == 1
             ! copy to host maybe this can be avoided
@@ -719,7 +715,7 @@
 
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
-              call timer%start("mpi_communication")
+              call obj%timer%start("mpi_communication")
               call MPI_Bcast(hvb(ns+1), nb-ns,      &
 #if REALCASE == 1
 	                     MPI_REAL_PRECISION,    &
@@ -729,7 +725,7 @@
 #endif
 			     pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 
-              call timer%stop("mpi_communication")
+              call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               ns = nb
@@ -769,7 +765,7 @@
             tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
 
             if (i > 1) then
-	      call timer%start("blas")
+	      call obj%timer%start("blas")
 #if REALCASE == 1
               call PRECISION_GEMM('T', 'N',      &
 #endif
@@ -779,9 +775,9 @@
 	                         t_rows, t_cols, l_rows, ONE, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                                  max_local_rows, ZERO, t_tmp, cwy_blocking)
 
-            call timer%stop("blas")
+            call obj%timer%stop("blas")
 #ifdef WITH_MPI
-              call timer%start("mpi_communication")
+              call obj%timer%start("mpi_communication")
 
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw,     &
 #if  REALCASE == 1
@@ -791,22 +787,22 @@
                                  MPI_COMPLEX_PRECISION,       &
 #endif
 				 MPI_SUM, mpi_comm_rows, mpierr)
-              call timer%stop("mpi_communication")
-	      call timer%start("blas")
+              call obj%timer%stop("mpi_communication")
+	      call obj%timer%start("blas")
               call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, ONE, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -ONE, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp2, cwy_blocking)
-     	      call timer%stop("blas")
+     	      call obj%timer%stop("blas")
 
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
 
 #else /* WITH_MPI */
 !              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
-	      call timer%start("blas")
+	      call obj%timer%start("blas")
               call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, ONE, tmat_complete, cwy_blocking, t_tmp, cwy_blocking)
               call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -ONE, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp, cwy_blocking)
-	      call timer%stop("blas")
+	      call obj%timer%stop("blas")
 
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
 
@@ -826,7 +822,7 @@
           ! Q = Q - V * T**T * V**T * Q
 
           if (l_rows>0) then
-            call timer%start("blas")
+            call obj%timer%start("blas")
 
 #if REALCASE == 1
             call PRECISION_GEMM('T', 'N',         &
@@ -836,7 +832,7 @@
 #endif
 	                        n_cols, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
                                 q, ldq, ZERO, tmp1, n_cols)
-	    call timer%stop("blas")
+	    call obj%timer%stop("blas")
 
           else ! l_rows>0
 
@@ -849,7 +845,7 @@
           endif ! l_rows>0
 
 #ifdef WITH_MPI
-          call timer%start("mpi_communication")
+          call obj%timer%start("mpi_communication")
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols,  &
 #if REALCASE == 1
 	                     MPI_REAL_PRECISION,         &
@@ -860,9 +856,9 @@
 #endif
 			     MPI_SUM, mpi_comm_rows ,mpierr)
 
-          call timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_communication")
 
-	  call timer%start("blas")
+	  call obj%timer%start("blas")
 
           if (l_rows>0) then
 #ifdef BAND_TO_FULL_BLOCKING
@@ -891,10 +887,10 @@
 #endif /* BAND_TO_FULL_BLOCKING */
 
           endif
-	  call timer%stop("blas")
+	  call obj%timer%stop("blas")
 #else /* WITH_MPI */
 !          tmp2 = tmp1
-	  call timer%start("blas")
+	  call obj%timer%start("blas")
           if (l_rows>0) then
 #ifdef BAND_TO_FULL_BLOCKING
 
@@ -922,7 +918,7 @@
 
 #endif  /* BAND_TO_FULL_BLOCKING */
           endif
-	  call timer%stop("blas")
+	  call obj%timer%stop("blas")
 #endif /* WITH_MPI */
 
 !          if (l_rows>0) then
@@ -1020,7 +1016,7 @@
       endif
 #endif
 
-      call timer%stop("trans_ev_band_to_full_&
+      call obj%timer%stop("trans_ev_band_to_full_&
       &MATH_DATATYPE&
       &" // &
       &PRECISION_SUFFIX&

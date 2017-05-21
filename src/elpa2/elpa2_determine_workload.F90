@@ -70,26 +70,23 @@ module elpa2_workload
   public :: divide_band
 
   contains
-    subroutine determine_workload(na, nb, nprocs, limits)
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
+    subroutine determine_workload(obj, na, nb, nprocs, limits)
+      use elpa_api
       use precision
       implicit none
 
+      class(elpa_t)     :: obj
       integer(kind=ik), intent(in)  :: na, nb, nprocs
       integer(kind=ik), intent(out) :: limits(0:nprocs)
 
       integer(kind=ik)              :: i
 
-      call timer%start("determine_workload")
+      call obj%timer%start("determine_workload")
 
       if (na <= 0) then
         limits(:) = 0
 
-        call timer%stop("determine_workload")
+        call obj%timer%stop("determine_workload")
         return
       endif
 
@@ -104,27 +101,24 @@ module elpa2_workload
          enddo
       endif
 
-      call timer%stop("determine_workload")
+      call obj%timer%stop("determine_workload")
     end subroutine
     !---------------------------------------------------------------------------------------------------
     ! divide_band: sets the work distribution in band
     ! Proc n works on blocks block_limits(n)+1 .. block_limits(n+1)
 
-    subroutine divide_band(nblocks_total, n_pes, block_limits)
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
+    subroutine divide_band(obj, nblocks_total, n_pes, block_limits)
       use precision
+      use elpa_api
       implicit none
+      class(elpa_t)     :: obj
       integer(kind=ik), intent(in)  :: nblocks_total ! total number of blocks in band
       integer(kind=ik), intent(in)  :: n_pes         ! number of PEs for division
       integer(kind=ik), intent(out) :: block_limits(0:n_pes)
 
       integer(kind=ik)              :: n, nblocks, nblocks_left
 
-      call timer%start("divide_band")
+      call obj%timer%start("divide_band")
 
       block_limits(0) = 0
       if (nblocks_total < n_pes) then
@@ -146,7 +140,7 @@ module elpa2_workload
         enddo
       endif
 
-      call timer%stop("divide_band")
+      call obj%timer%stop("divide_band")
 
     end subroutine
 end module elpa2_workload

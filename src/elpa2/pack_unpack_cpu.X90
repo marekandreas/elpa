@@ -51,20 +51,17 @@
         &_cpu_&
 #endif
         &PRECISION &
-	(a, row, n, stripe_width,  &
+	(obj, a, row, n, stripe_width,  &
 #ifdef WITH_OPENMP
 	stripe_count, max_threads, thread_width, l_nev)
 #else
         last_stripe_width, stripe_count)
 #endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-          use timings
-#else
-          use timings_dummy
-#endif
+          use elpa_api
           use precision
           implicit none
+          class(elpa_t)    :: obj
+
           integer(kind=ik), intent(in) :: n, stripe_count, stripe_width
 #ifdef WITH_OPENMP
           integer(kind=ik), intent(in) :: max_threads, thread_width, l_nev
@@ -99,7 +96,7 @@
           integer(kind=ik)             :: nt
 #endif
 
-          call timer%start("pack_row_&
+          call obj%timer%start("pack_row_&
 	  &MATH_DATATYPE&
 #ifdef WITH_OPENMP
           &_cpu_openmp" // &
@@ -126,7 +123,7 @@
           enddo
 #endif
 
-          call timer%stop("pack_row_&
+          call obj%timer%stop("pack_row_&
 	  &MATH_DATATYPE&
 #ifdef WITH_OPENMP
           &_cpu_openmp" // &
@@ -146,7 +143,7 @@
         &_cpu_&
 #endif
        &PRECISION &
-       (a, row, n, &
+       (obj, a, row, n, &
 #ifdef WITH_OPENMP
         my_thread, &
 #endif
@@ -160,15 +157,10 @@
 #else
          last_stripe_width)
 #endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-          use timings
-#else
-          use timings_dummy
-#endif
+          use elpa_api
           use precision
           implicit none
-
+          class(elpa_t)                 :: obj
            integer(kind=ik), intent(in) :: n, stripe_count, stripe_width
 
 #ifdef WITH_OPENMP
@@ -200,7 +192,7 @@
 #endif
           integer(kind=ik)             :: i, noff, nl
 
-          call timer%start("unpack_row_&
+          call obj%timer%start("unpack_row_&
 	  &MATH_DATATYPE&
 #ifdef WITH_OPENMP
 	  &_cpu_opemp" // &
@@ -224,7 +216,7 @@
 
           enddo
 
-          call timer%stop("unpack_row_&
+          call obj%timer%stop("unpack_row_&
 	  &MATH_DATATYPE&
 #ifdef WITH_OPENMP
 	  &_cpu_opemp" // &

@@ -67,7 +67,7 @@ module elpa_pdgeqrf
   contains
 #define DOUBLE_PRECISION_REAL 1
 
-     subroutine qr_pdgeqrf_2dcomm_double(a, lda, matrixCols, v, ldv, vmrCols, tau, lengthTau, t, ldt, colsT, &
+     subroutine qr_pdgeqrf_2dcomm_double(obj, a, lda, matrixCols, v, ldv, vmrCols, tau, lengthTau, t, ldt, colsT, &
                                   work, workLength, lwork, m, n, mb, nb, rowidx, colidx, &
                                   rev, trans, PQRPARAM, mpicomm_rows, mpicomm_cols, blockheuristic)
       use precision
@@ -75,9 +75,13 @@ module elpa_pdgeqrf
       use qr_utils_mod
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
+      use elpa_api
       implicit none
 
+      class(elpa_t)                 :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter   :: gmode_ = 1, rank_ = 2, eps_ = 3
 
@@ -117,9 +121,7 @@ module elpa_pdgeqrf
       integer(kind=ik)              :: total_cols
       integer(kind=ik)              :: incremental_update_size ! needed for incremental update mode
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdgeqrf_2dcomm_double")
-#endif
+      call obj%timer%start("qr_pdgeqrf_2dcomm_double")
       size2d     = PQRPARAM(1)
       updatemode = PQRPARAM(2)
       tmerge     = PQRPARAM(3)
@@ -131,14 +133,14 @@ module elpa_pdgeqrf
       call mpi_comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
 
 #ifdef USE_ASSUMED_SIZE_QR
-      call qr_pdgeqrf_1dcomm_double(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans, &
+      call qr_pdgeqrf_1dcomm_double(obj,a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans, &
                              PQRPARAM(4),mpicomm_rows,blockheuristic)
 #else
-      call qr_pdgeqrf_1dcomm_double(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans, &
+      call qr_pdgeqrf_1dcomm_double(obj,a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans, &
                              PQRPARAM(4:11),mpicomm_rows,blockheuristic)
 #endif
-      call qr_pdgeqrf_pack_unpack_double(v,ldv,dbroadcast_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,0,mpicomm_rows)
-      call qr_pdgeqrf_pack_unpack_tmatrix_double(tau,t,ldt,dtmat_bcast_size(1),-1,total_cols,0)
+      call qr_pdgeqrf_pack_unpack_double(obj,v,ldv,dbroadcast_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,0,mpicomm_rows)
+      call qr_pdgeqrf_pack_unpack_tmatrix_double(obj,tau,t,ldt,dtmat_bcast_size(1),-1,total_cols,0)
 
 #ifdef DOUBLE_PRECISION_REAL
       pdlarft_size(1) = 0.0_rk8
@@ -168,9 +170,7 @@ module elpa_pdgeqrf
             pdlarft_size(1),pdlarfb_size(1), &
                    tmerge_pdlarfb_size(1)))
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqrf_2dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdgeqrf_2dcomm_double")
         return
       end if
 
@@ -229,30 +229,30 @@ module elpa_pdgeqrf
 #endif
 
 #ifdef USE_ASSUMED_SIZE_QR
-          call qr_pdgeqrf_1dcomm_double(a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_1dcomm_double(obj,a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt, &
                                  work(work_offset),lwork,m,lcols,mb,rowidx,idx,rev,trans,PQRPARAM(4), &
                                  mpicomm_rows,blockheuristic)
 
 #else
-          call qr_pdgeqrf_1dcomm_double(a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_1dcomm_double(obj,a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt, &
                                  work(work_offset),lwork,m,lcols,mb,rowidx,idx,rev,trans,PQRPARAM(4:11), &
                                  mpicomm_rows,blockheuristic)
 #endif
 
           ! pack broadcast buffer (v + tau)
-          call qr_pdgeqrf_pack_unpack_double(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,&
+          call qr_pdgeqrf_pack_unpack_double(obj,v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,&
                                       idx,rev,0,mpicomm_rows)
 
           ! determine broadcast size
-          call qr_pdgeqrf_pack_unpack_double(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,&
+          call qr_pdgeqrf_pack_unpack_double(obj,v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,&
                                       0,mpicomm_rows)
           broadcast_size = dbroadcast_size(1)
 
           !if (mpirank_rows .eq. 0) then
           ! pack tmatrix into broadcast buffer and calculate new size
-          call qr_pdgeqrf_pack_unpack_tmatrix_double(tau(offset),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_pack_unpack_tmatrix_double(obj,tau(offset),t(voffset,voffset),ldt, &
                                               work(broadcast_offset+broadcast_size),lwork,lcols,0)
-          call qr_pdgeqrf_pack_unpack_tmatrix_double(tau(offset),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
+          call qr_pdgeqrf_pack_unpack_tmatrix_double(obj,tau(offset),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
           broadcast_size = broadcast_size + dtmat_bcast_size(1)
           !end if
 
@@ -276,10 +276,10 @@ module elpa_pdgeqrf
           ! Vector exchange part
 
           ! determine broadcast size
-          call qr_pdgeqrf_pack_unpack_double(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
+          call qr_pdgeqrf_pack_unpack_double(obj,v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
           broadcast_size = dbroadcast_size(1)
 
-          call qr_pdgeqrf_pack_unpack_tmatrix_double(work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_pack_unpack_tmatrix_double(obj,work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
                                               dtmat_bcast_size(1),-1,lcols,0)
           tmat_bcast_size = dtmat_bcast_size(1)
 
@@ -302,14 +302,15 @@ module elpa_pdgeqrf
           ! fetch from first process in each column
 
           ! unpack broadcast buffer (v + tau)
-          call qr_pdgeqrf_pack_unpack_double(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
+          call qr_pdgeqrf_pack_unpack_double(obj,v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols, &
+              mb,rowidx,idx,rev,1,mpicomm_rows)
 
           ! now send t matrix to other processes in our process column
           broadcast_size = dbroadcast_size(1)
           tmat_bcast_size = dtmat_bcast_size(1)
 
           ! t matrix should now be available on all processes => unpack
-          call qr_pdgeqrf_pack_unpack_tmatrix_double(work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_pack_unpack_tmatrix_double(obj,work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
                                               work(broadcast_offset+broadcast_size),lwork,lcols,1)
         end if
 
@@ -350,8 +351,8 @@ module elpa_pdgeqrf
        	  end if
         else
        	  if (updatemode .eq. ichar('I')) then
-       	    print *,'sole merging of (incremental) T matrix', mpirank_cols,  &
-                                        n-(update_voffset+incremental_update_size-1)
+       	    !print *,'sole merging of (incremental) T matrix', mpirank_cols,  &
+            !                            n-(update_voffset+incremental_update_size-1)
        	    call qr_tmerge_pdlarfb_1dcomm_double(m,mb,0,n-(update_voffset+incremental_update_size-1),   &
                                                               incremental_update_size,v(1,update_voffset),ldv, &
         						      t(update_voffset,update_voffset),ldt, &
@@ -380,20 +381,22 @@ module elpa_pdgeqrf
       end if
 
       !print *,'stop decomposition',rowidx,colidx
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdgeqrf_2dcomm_double")
-#endif
+      call obj%timer%start("qr_pdgeqrf_2dcomm_double")
     end subroutine qr_pdgeqrf_2dcomm_double
 
-    subroutine qr_pdgeqrf_1dcomm_double(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans, &
+    subroutine qr_pdgeqrf_1dcomm_double(obj,a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev,trans, &
           PQRPARAM,mpicomm,blockheuristic)
       use precision
       use elpa1_impl
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
+      use elpa_api
       implicit none
 
+      class(elpa_t)                 :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter  :: gmode_ = 1,rank_ = 2,eps_ = 3
 
@@ -420,19 +423,17 @@ module elpa_pdgeqrf
       ! local scalars
       integer(kind=ik)             :: nr_blocks,remainder,current_block,aoffset,idx,updatesize
       real(kind=rk8)                :: pdgeqr2_size(1),pdlarfb_size(1),tmerge_tree_size(1)
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdgeqrf_1dcomm_double")
-#endif
+      call obj%timer%start("qr_pdgeqrf_1dcomm_double")
       size1d     = max(min(PQRPARAM(1),n),1)
       updatemode = PQRPARAM(2)
       tmerge     = PQRPARAM(3)
 
       if (lwork .eq. -1) then
 #ifdef USE_ASSUMED_SIZE_QR
-        call qr_pdgeqr2_1dcomm_double(a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, &
+        call qr_pdgeqr2_1dcomm_double(obj,a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, &
                                   m,size1d,mb,baseidx,baseidx,rev,trans,PQRPARAM(4),mpicomm,blockheuristic)
 #else
-        call qr_pdgeqr2_1dcomm_double(a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, &
+        call qr_pdgeqr2_1dcomm_double(obj,a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, &
                                   m,size1d,mb,baseidx,baseidx,rev,trans,PQRPARAM(4:),mpicomm,blockheuristic)
 #endif
         ! reserve more space for incremental mode
@@ -442,9 +443,7 @@ module elpa_pdgeqrf
         call qr_pdlarft_tree_merge_1dcomm_double(m,mb,n,size1d,tmerge,v,ldv,t,ldt,baseidx,rev,mpicomm,tmerge_tree_size,-1)
 
         work(1) = max(pdlarfb_size(1),pdgeqr2_size(1),tmerge_tree_size(1))
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqrf_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdgeqrf_1dcomm_double")
         return
       end if
 
@@ -457,11 +456,11 @@ module elpa_pdgeqrf
         updatesize = n-(current_block+1)*size1d
         aoffset = 1+updatesize
 #ifdef USE_ASSUMED_SIZE_QR
-        call qr_pdgeqr2_1dcomm_double(a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, &
+        call qr_pdgeqr2_1dcomm_double(obj,a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, &
                                 m,size1d,mb,baseidx,idx,1,trans,PQRPARAM(4),mpicomm,blockheuristic)
 
 #else
-        call qr_pdgeqr2_1dcomm_double(a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, &
+        call qr_pdgeqr2_1dcomm_double(obj,a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, &
                                 m,size1d,mb,baseidx,idx,1,trans,PQRPARAM(4:),mpicomm,blockheuristic)
 #endif
         if (updatemode .eq. ichar('M')) then
@@ -496,11 +495,11 @@ module elpa_pdgeqrf
         aoffset = 1
         idx = rowidx-size1d*nr_blocks
 #ifdef USE_ASSUMED_SIZE_QR
-        call qr_pdgeqr2_1dcomm_double(a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
+        call qr_pdgeqr2_1dcomm_double(obj,a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
                                   m,remainder,mb,baseidx,idx,1,trans,PQRPARAM(4),mpicomm,blockheuristic)
 
 #else
-        call qr_pdgeqr2_1dcomm_double(a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
+        call qr_pdgeqr2_1dcomm_double(obj,a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
                                   m,remainder,mb,baseidx,idx,1,trans,PQRPARAM(4:),mpicomm,blockheuristic)
 #endif
         if ((updatemode .eq. ichar('I')) .or. (updatemode .eq. ichar('M'))) then
@@ -515,9 +514,7 @@ module elpa_pdgeqrf
         ! finally merge all small T parts
         call qr_pdlarft_tree_merge_1dcomm_double(m,mb,n,size1d,tmerge,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqrf_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdgeqrf_1dcomm_double")
 
     end subroutine qr_pdgeqrf_1dcomm_double
 
@@ -525,15 +522,19 @@ module elpa_pdgeqrf
     ! perspective
     ! TODO: if local amount of data turns to zero the algorithm might produce wrong
     ! results (probably due to old buffer contents)
-    subroutine qr_pdgeqr2_1dcomm_double(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev, &
+    subroutine qr_pdgeqr2_1dcomm_double(obj,a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx,rowidx,rev, &
           trans,PQRPARAM,mpicomm,blockheuristic)
       use precision
-      use elpa1_impl
+      !use elpa1_impl ! check this
+      use elpa_api
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       implicit none
 
+      class(elpa_t)                 :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter   :: gmode_ = 1,rank_ = 2 ,eps_ = 3, upmode1_ = 4
 
@@ -563,9 +564,7 @@ module elpa_pdgeqrf
       integer(kind=ik)              :: rank,lastcol,actualrank,nextrank
       integer(kind=ik)              :: update_cols,decomposition_cols
       integer(kind=ik)              :: current_column
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdgeqr2_1dcomm_double")
-#endif
+      call obj%timer%start("qr_pdgeqr2_1dcomm_double")
 
       maxrank    = min(PQRPARAM(1),n)
       updatemode = PQRPARAM(2)
@@ -580,19 +579,19 @@ module elpa_pdgeqrf
 
       if (lwork .eq. -1) then
 
-        call qr_pdlarfg_1dcomm_double(a,incx,tau(1),pdlarfg_size(1),-1,n,rowidx,mb,hgmode,rev,mpicomm)
+        call qr_pdlarfg_1dcomm_double(obj,a,incx,tau(1),pdlarfg_size(1),-1,n,rowidx,mb,hgmode,rev,mpicomm)
         call qr_pdlarfl_1dcomm_double(v,1,baseidx,a,lda,tau(1),pdlarf_size(1),-1,m,n,rowidx,mb,rev,mpicomm)
 #ifdef USE_ASSUMED_SIZE_QR
-        call qr_pdlarfg2_1dcomm_ref_double(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM, &
+        call qr_pdlarfg2_1dcomm_ref_double(obj,a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM, &
                                     rev,mpicomm,actualrank)
 
-        call qr_pdlarfgk_1dcomm_double(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m,n,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
+        call qr_pdlarfgk_1dcomm_double(obj,a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m,n,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
 
 #else
-        call qr_pdlarfg2_1dcomm_ref_double(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM(:), &
+        call qr_pdlarfg2_1dcomm_ref_double(obj,a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM(:), &
                                     rev,mpicomm,actualrank)
 
-        call qr_pdlarfgk_1dcomm_double(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m,n, &
+        call qr_pdlarfgk_1dcomm_double(obj,a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m,n, &
             rowidx,mb,PQRPARAM(:),rev,mpicomm,actualrank)
 #endif
         call qr_pdlarfl2_tmatrix_1dcomm_double(v,ldv,baseidx,a,lda,t,ldt,pdlarfl2_size(1),-1,m,n,rowidx,mb,rev,mpicomm)
@@ -607,15 +606,14 @@ module elpa_pdgeqrf
 #else
         pdlarft_pdlarfb_size(1) = 0.0_rk4
 #endif
-        call qr_tmerge_pdlarfb_1dcomm_double(m,mb,n,n,n,v,ldv,t,ldt,a,lda,rowidx,rev,updatemode,mpicomm,tmerge_pdlarfb_size(1),-1)
+        call qr_tmerge_pdlarfb_1dcomm_double(m,mb,n,n,n,v,ldv,t,ldt,a,lda,rowidx,rev,&
+            updatemode,mpicomm,tmerge_pdlarfb_size(1),-1)
 
         total_size = max(pdlarfg_size(1),pdlarf_size(1),pdlarfg2_size(1),pdlarfgk_size(1),pdlarfl2_size(1),pdlarft_size(1), &
                          pdlarfb_size(1),pdlarft_pdlarfb_size(1),tmerge_pdlarfb_size(1))
 
         work(1) = total_size
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqr2_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdgeqr2_1dcomm_double")
         return
       end if
 
@@ -635,7 +633,7 @@ module elpa_pdgeqrf
 
         if (rank .eq. 1) then
 
-          call qr_pdlarfg_1dcomm_double(a(1,current_column),incx, &
+          call qr_pdlarfg_1dcomm_double(obj,a(1,current_column),incx, &
                                   tau(current_column),work,lwork, &
                                   m,idx,mb,hgmode,1,mpicomm)
 #ifdef DOUBLE_PRECISION_REAL
@@ -643,7 +641,7 @@ module elpa_pdgeqrf
 #else
           v(1:ldv,current_column) = 0.0_rk4
 #endif
-          call qr_pdlarfg_copy_1dcomm_double(a(1,current_column),incx, &
+          call qr_pdlarfg_copy_1dcomm_double(obj,a(1,current_column),incx, &
                                        v(1,current_column),1, &
                                        m,baseidx,idx,mb,1,mpicomm)
 
@@ -654,23 +652,23 @@ module elpa_pdgeqrf
 
         else if (rank .eq. 2) then
 #ifdef USE_ASSUMED_SIZE_QR
-          call qr_pdlarfg2_1dcomm_ref_double(a(1,current_column),lda,tau(current_column), &
+          call qr_pdlarfg2_1dcomm_ref_double(obj,a(1,current_column),lda,tau(current_column), &
                                          t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                         baseidx,work,lwork,m,idx,mb,PQRPARAM,1,mpicomm,actualrank)
 
 #else
-          call qr_pdlarfg2_1dcomm_ref_double(a(1,current_column),lda,tau(current_column), &
+          call qr_pdlarfg2_1dcomm_ref_double(obj,a(1,current_column),lda,tau(current_column), &
                                          t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                         baseidx,work,lwork,m,idx,mb,PQRPARAM(:),1,mpicomm,actualrank)
 #endif
         else
 #ifdef USE_ASSUMED_SIZE_QR
-          call qr_pdlarfgk_1dcomm_double(a(1,current_column),lda,tau(current_column), &
+          call qr_pdlarfgk_1dcomm_double(obj,a(1,current_column),lda,tau(current_column), &
                                      t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                      baseidx,work,lwork,m,rank,idx,mb,PQRPARAM,1,mpicomm,actualrank)
 
 #else
-          call qr_pdlarfgk_1dcomm_double(a(1,current_column),lda,tau(current_column), &
+          call qr_pdlarfgk_1dcomm_double(obj,a(1,current_column),lda,tau(current_column), &
                                      t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                      baseidx,work,lwork,m,rank,idx,mb,PQRPARAM(:),1,mpicomm,actualrank)
 #endif
@@ -704,30 +702,28 @@ module elpa_pdgeqrf
                                           a(1,1),lda,baseidx,rev,updatemode,mpicomm,work,lwork)
           end if
         else
-          call qr_tmerge_pdlarfb_1dcomm_double(m,mb,0,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)), &
+          call qr_tmerge_pdlarfb_1dcomm_double(m,mb,0,n-(current_column+rank-1),actualrank, &
+              v(1,current_column+(rank-actualrank)), &
                                           ldv, &
                                           t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
                                            a,lda,baseidx,rev,updatemode,mpicomm,work,lwork)
         end if
 
       end do
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqr2_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdgeqr2_1dcomm_double")
     end subroutine qr_pdgeqr2_1dcomm_double
 
     ! incx == 1: column major
     ! incx != 1: row major
-    subroutine qr_pdlarfg_1dcomm_double(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,communicator)
+    subroutine qr_pdlarfg_1dcomm_double(obj,x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,communicator)
 
       use precision
-      use elpa1_impl
+      !use elpa1_impl !check this
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
 
+      class(elpa_t)                 :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter    :: gmode_ = 1,rank_ = 2, eps_ = 3
 
@@ -758,14 +754,10 @@ module elpa_pdgeqrf
 
       ! intrinsic
 !      intrinsic sign
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg_1dcomm_double")
-#endif
+      call obj%timer%start("qr_pdlarfg_1dcomm_double")
       if (idx .le. 1) then
         tau = 0.0d0
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg_1dcomm_double")
         return
        end if
       call MPI_Comm_rank(communicator, mpirank, mpierr)
@@ -796,9 +788,7 @@ module elpa_pdgeqrf
         work(1) = real(sendsize + recvsize,kind=rk4)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg_1dcomm_double")
         return
       end if
 
@@ -982,9 +972,9 @@ module elpa_pdgeqrf
       else
         ! General case
 #ifdef DOUBLE_PRECISION_REAL
-        call hh_transform_real_double(alpha,xnorm**2,xf,tau)
+        call hh_transform_real_double(obj,alpha,xnorm**2,xf,tau)
 #else
-        call hh_transform_real_single(alpha,xnorm**2,xf,tau)
+        call hh_transform_real_single(obj,alpha,xnorm**2,xf,tau)
 #endif
         if (mpirank .eq. mpirank_top) then
           x(top) = alpha
@@ -1005,18 +995,20 @@ module elpa_pdgeqrf
       ! useful for debugging
       !print *,'hg:mpirank,idx,beta,alpha:',mpirank,idx,beta,alpha,1.0d0/(beta+alpha),tau
       !print *,x(1:n)
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg_1dcomm_double")
     end subroutine qr_pdlarfg_1dcomm_double
 
-    subroutine qr_pdlarfg2_1dcomm_ref_double(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,idx,mb,PQRPARAM,rev,mpicomm,actualk)
+    subroutine qr_pdlarfg2_1dcomm_ref_double(obj,a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,idx,mb,PQRPARAM,rev,mpicomm,actualk)
       use precision
+      use elpa_api
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       implicit none
 
+      class(elpa_t)                 :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter    :: gmode_ = 1,rank_ = 2,eps_ = 3, upmode1_ = 4
       ! input variables (local)
@@ -1041,19 +1033,15 @@ module elpa_pdgeqrf
       integer(kind=ik)               :: seedwork_size,seed_size
       integer(kind=ik)               :: seedwork_offset,seed_offset
       logical                        :: accurate
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_double")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_double")
 
-      call qr_pdlarfg2_1dcomm_seed_double(a,lda,dseedwork_size(1),-1,work,m,mb,idx,rev,mpicomm)
+      call qr_pdlarfg2_1dcomm_seed_double(obj,a,lda,dseedwork_size(1),-1,work,m,mb,idx,rev,mpicomm)
       seedwork_size = dseedwork_size(1)
       seed_size = seedwork_size
 
       if (lwork .eq. -1) then
         work(1) = seedwork_size + seed_size
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_double")
 
         return
       end if
@@ -1073,43 +1061,41 @@ module elpa_pdgeqrf
        	t(1:2,1:2) = 0.0_rk4
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_double")
 
        	return
       end if
 
-      call qr_pdlarfg2_1dcomm_seed_double(a,lda,work(seedwork_offset),lwork,work(seed_offset),m,mb,idx,rev,mpicomm)
+      call qr_pdlarfg2_1dcomm_seed_double(obj,a,lda,work(seedwork_offset),lwork,work(seed_offset),m,mb,idx,rev,mpicomm)
 
       if (eps .gt. 0) then
-        accurate = qr_pdlarfg2_1dcomm_check_double(work(seed_offset),eps)
+        accurate = qr_pdlarfg2_1dcomm_check_double(obj,work(seed_offset),eps)
       else
         accurate = .true.
       end if
 
-      call qr_pdlarfg2_1dcomm_vector_double(a(1,2),1,tau(2),work(seed_offset), &
+      call qr_pdlarfg2_1dcomm_vector_double(obj,a(1,2),1,tau(2),work(seed_offset), &
                                           m,mb,idx,0,1,mpicomm)
 
-      call qr_pdlarfg_copy_1dcomm_double(a(1,2),1, &
+      call qr_pdlarfg_copy_1dcomm_double(obj,a(1,2),1, &
                                        v(1,2),1, &
                                        m,baseidx,idx,mb,1,mpicomm)
 
-      call qr_pdlarfg2_1dcomm_update_double(v(1,2),1,baseidx,a(1,1),lda,work(seed_offset),m,idx,mb,rev,mpicomm)
+      call qr_pdlarfg2_1dcomm_update_double(obj,v(1,2),1,baseidx,a(1,1),lda,work(seed_offset),m,idx,mb,rev,mpicomm)
 
       ! check for 2x2 matrix case => only one householder Vector will be
       ! generated
       if (idx .gt. 2) then
         if (accurate .eqv. .true.) then
-          call qr_pdlarfg2_1dcomm_vector_double(a(1,1),1,tau(1),work(seed_offset), &
+          call qr_pdlarfg2_1dcomm_vector_double(obj,a(1,1),1,tau(1),work(seed_offset), &
                                                   m,mb,idx-1,1,1,mpicomm)
 
-          call qr_pdlarfg_copy_1dcomm_double(a(1,1),1, &
+          call qr_pdlarfg_copy_1dcomm_double(obj,a(1,1),1, &
                                                v(1,1),1, &
                                                m,baseidx,idx-1,mb,1,mpicomm)
 
           ! generate fuse element
-          call qr_pdlarfg2_1dcomm_finalize_tmatrix_double(work(seed_offset),tau,t,ldt)
+          call qr_pdlarfg2_1dcomm_finalize_tmatrix_double(obj,work(seed_offset),tau,t,ldt)
 
           actualk = 2
         else
@@ -1145,21 +1131,18 @@ module elpa_pdgeqrf
 
         !print *,'rank2: no more data'
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_double")
 
     end subroutine qr_pdlarfg2_1dcomm_ref_double
 
-    subroutine qr_pdlarfg2_1dcomm_seed_double(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
+    subroutine qr_pdlarfg2_1dcomm_seed_double(obj,a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
       use precision
-      use elpa1_impl
+      !use elpa1_impl ! check this
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
 
+      class(elpa_t)                 :: obj
       ! input variables (local)
       integer(kind=ik)        :: lda,lwork
       real(kind=rk8)           :: a(lda,*),work(*),seed(*)
@@ -1182,9 +1165,7 @@ module elpa_pdgeqrf
       integer(kind=ik)        :: local_offset1,local_size1
       integer(kind=ik)        :: local_offset2,local_size2
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_seed_double")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_seed_double")
 
       if (lwork .eq. -1) then
 #ifdef DOUBLE_PRECISION_REAL
@@ -1193,9 +1174,7 @@ module elpa_pdgeqrf
         work(1) = 8.0_rk4
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_seed")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_seed")
         return
       end if
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
@@ -1276,17 +1255,20 @@ module elpa_pdgeqrf
       seed(1:8) = work(1:8)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_seed_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_seed_double")
     end subroutine qr_pdlarfg2_1dcomm_seed_double
 
-    logical function qr_pdlarfg2_1dcomm_check_double(seed,eps)
+    logical function qr_pdlarfg2_1dcomm_check_double(obj,seed,eps)
       use precision
+      use elpa_api
 #ifdef HAVE_DETAILED_TIMINGS
       use timings
+#else
+      use timings_dummy
 #endif
       implicit none
+
+      class(elpa_t)                 :: obj
 
       ! input variables
       real(kind=rk8)    ::  seed(*)
@@ -1297,9 +1279,7 @@ module elpa_pdgeqrf
       logical          :: accurate
       real(kind=rk8)    :: dot11,dot12,dot22
       real(kind=rk8)    :: top11,top12,top21,top22
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_check_double")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_check_double")
 
       EPSD = EPS
 
@@ -1325,9 +1305,7 @@ module elpa_pdgeqrf
       if (first*second .eq. 0.0_rk4) then
 #endif
         qr_pdlarfg2_1dcomm_check_double = .false.
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_check_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_check_double")
 
         return
       end if
@@ -1343,23 +1321,19 @@ module elpa_pdgeqrf
       accurate = (estimate .LE. (epsd/(1.0_rk4+epsd)))
 #endif
       qr_pdlarfg2_1dcomm_check_double = accurate
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_check_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_check_double")
 
     end function qr_pdlarfg2_1dcomm_check_double
 
     ! id=0: first Vector
     ! id=1: second Vector
-    subroutine qr_pdlarfg2_1dcomm_vector_double(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
+    subroutine qr_pdlarfg2_1dcomm_vector_double(obj,x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)        :: incx
       real(kind=rk8)           :: x(*),seed(*),tau
@@ -1381,9 +1355,7 @@ module elpa_pdgeqrf
       integer(kind=ik)        :: mpirank,mpirank_top,mpiprocs,mpierr
       real(kind=rk8)           :: alpha,dot,beta,xnorm
       integer(kind=ik)        :: local_size,baseoffset,local_offset,top,topidx
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_vector_double")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_vector_double")
 
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -1441,21 +1413,17 @@ module elpa_pdgeqrf
 
         seed(8) = beta
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_vector_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_vector_double")
 
     end subroutine qr_pdlarfg2_1dcomm_vector_double
 
-    subroutine qr_pdlarfg2_1dcomm_update_double(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
+    subroutine qr_pdlarfg2_1dcomm_update_double(obj,v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)   :: incv,lda
       real(kind=rk8)      :: v(*),a(lda,*),seed(*)
@@ -1474,9 +1442,7 @@ module elpa_pdgeqrf
       real(kind=rk8)      :: z,coeff,beta
       real(kind=rk8)      :: dot11,dot12,dot22
       real(kind=rk8)      :: top11,top12,top21,top22
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_update_double")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_update_double")
 
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -1504,9 +1470,7 @@ module elpa_pdgeqrf
       if (beta .eq. 0.0_rk4) then
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_update_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_update_double")
         return
       end if
       z = (dot12 + top11 * top12) / beta + top12
@@ -1544,26 +1508,21 @@ module elpa_pdgeqrf
       ! prepare dot matrix for fuse element of T matrix
       ! replace top11 value with -beta1
       seed(1) = beta
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_update_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_update_double")
 
     end subroutine qr_pdlarfg2_1dcomm_update_double
 
     ! run this function after second Vector
-    subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix_double(seed,tau,t,ldt)
+    subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix_double(obj,seed,tau,t,ldt)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
+      class(elpa_t) :: obj
 
       integer(kind=ik)  :: ldt
       real(kind=rk8)     :: seed(*),t(ldt,*),tau(*)
       real(kind=rk8)     :: dot12,beta1,top21,beta2
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_finalize_tmatrix_double")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_finalize_tmatrix_double")
 
       beta1 = seed(1)
       dot12 = seed(4)
@@ -1578,19 +1537,15 @@ module elpa_pdgeqrf
       t(1,1) = tau(1)
       t(1,2) = dot12
       t(2,2) = tau(2)
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_finalize_tmatrix_double")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_finalize_tmatrix_double")
 
     end subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix_double
 
-    subroutine qr_pdlarfgk_1dcomm_double(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,mb,PQRPARAM,rev,mpicomm,actualk)
+    subroutine qr_pdlarfgk_1dcomm_double(obj,a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,mb,PQRPARAM,rev,mpicomm,actualk)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
 
       ! input variables (local)
@@ -1615,9 +1570,7 @@ module elpa_pdgeqrf
       integer(kind=ik)    :: seedC_size,seedC_offset
       integer(kind=ik)    :: seedD_size,seedD_offset
       integer(kind=ik)    :: work_offset
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfgk_1dcomm_double")
-#endif
+      call obj%timer%start("qr_pdlarfgk_1dcomm_double")
 
       seedC_size = k*k
       seedC_offset = 1
@@ -1626,36 +1579,36 @@ module elpa_pdgeqrf
       work_offset = seedD_offset + seedD_size
 
       if (lwork .eq. -1) then
-        call qr_pdlarfg_1dcomm_double(a,1,tau(1),pdlarfg_size(1),-1,m,baseidx,mb,PQRPARAM(4),rev,mpicomm)
+        call qr_pdlarfg_1dcomm_double(obj, a,1,tau(1),pdlarfg_size(1),-1,m,baseidx,mb,PQRPARAM(4),rev,mpicomm)
 
         call qr_pdlarfl_1dcomm_double(v,1,baseidx,a,lda,tau(1),pdlarf_size(1),-1,m,k,baseidx,mb,rev,mpicomm)
-        call qr_pdlarfgk_1dcomm_seed_double(a,lda,baseidx,pdlarfgk_1dcomm_seed_size(1),-1,work,work,m,k,mb,mpicomm)
+        call qr_pdlarfgk_1dcomm_seed_double(obj,a,lda,baseidx,pdlarfgk_1dcomm_seed_size(1),-1,work,work,m,k,mb,mpicomm)
 #ifdef USE_ASSUMED_SIZE_QR
         !call qr_pdlarfgk_1dcomm_check_double(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
-        call qr_pdlarfgk_1dcomm_check_improved_double(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
+        call qr_pdlarfgk_1dcomm_check_improved_double(obj,work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
 #else
         !call qr_pdlarfgk_1dcomm_check_double(work,work,k,PQRPARAM(:),pdlarfgk_1dcomm_check_size(1),-1,actualk)
-        call qr_pdlarfgk_1dcomm_check_improved_double(work,work,k,PQRPARAM(:),pdlarfgk_1dcomm_check_size(1),-1,actualk)
+        call qr_pdlarfgk_1dcomm_check_improved_double(obj,work,work,k,PQRPARAM(:),pdlarfgk_1dcomm_check_size(1),-1,actualk)
 #endif
-        call qr_pdlarfgk_1dcomm_update_double(a,lda,baseidx,pdlarfgk_1dcomm_update_size(1),-1,work,work,k,k,1,work,m,mb,rev,mpicomm)
+        call qr_pdlarfgk_1dcomm_update_double(obj,a,lda,baseidx,pdlarfgk_1dcomm_update_size(1), &
+                                              -1,work,work,k,k,1,work,m,mb,rev,mpicomm)
         work(1) = max(pdlarfg_size(1),pdlarf_size(1),pdlarfgk_1dcomm_seed_size(1),pdlarfgk_1dcomm_check_size(1), &
                         pdlarfgk_1dcomm_update_size(1)) + real(seedC_size + seedD_size, kind=rk8)
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfgk_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdlarfgk_1dcomm_double")
 
         return
       end if
 
-      call qr_pdlarfgk_1dcomm_seed_double(a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
+      call qr_pdlarfgk_1dcomm_seed_double(obj,a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
           work(seedD_offset),m,k,mb,mpicomm)
 #ifdef USE_ASSUMED_SIZE_QR
       !call qr_pdlarfgk_1dcomm_check_double(work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
-      call qr_pdlarfgk_1dcomm_check_improved_double(work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
+      call qr_pdlarfgk_1dcomm_check_improved_double(obj,work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
+
 #else
       !call qr_pdlarfgk_1dcomm_check_double(work(seedC_offset),work(seedD_offset),k,PQRPARAM(:),work(work_offset),lwork,actualk)
-      call qr_pdlarfgk_1dcomm_check_improved_double(work(seedC_offset),work(seedD_offset), &
+      call qr_pdlarfgk_1dcomm_check_improved_double(obj,work(seedC_offset),work(seedD_offset), &
           k,PQRPARAM(:),work(work_offset),lwork,actualk)
 #endif
       !print *,'possible rank:', actualk
@@ -1665,36 +1618,32 @@ module elpa_pdgeqrf
       !actualk = k
       !actualk= min(actualk,2)
       do ivector=1,actualk
-        call qr_pdlarfgk_1dcomm_vector_double(a(1,k-ivector+1),1,idx,tau(k-ivector+1), &
+        call qr_pdlarfgk_1dcomm_vector_double(obj,a(1,k-ivector+1),1,idx,tau(k-ivector+1), &
                                           work(seedC_offset),work(seedD_offset),k, &
                                           ivector,m,mb,rev,mpicomm)
 
-        call qr_pdlarfgk_1dcomm_update_double(a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
+        call qr_pdlarfgk_1dcomm_update_double(obj,a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
                                           work(seedD_offset),k,actualk,ivector,tau, &
                                           m,mb,rev,mpicomm)
 
-        call qr_pdlarfg_copy_1dcomm_double(a(1,k-ivector+1),1, &
+        call qr_pdlarfg_copy_1dcomm_double(obj,a(1,k-ivector+1),1, &
                                        v(1,k-ivector+1),1, &
                                        m,baseidx,idx-ivector+1,mb,1,mpicomm)
       end do
 
       ! generate final T matrix and convert preliminary tau values into real ones
-      call qr_pdlarfgk_1dcomm_generateT_double(work(seedC_offset),work(seedD_offset),k,actualk,tau,t,ldt)
+      call qr_pdlarfgk_1dcomm_generateT_double(obj,work(seedC_offset),work(seedD_offset),k,actualk,tau,t,ldt)
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfgk_1dcomm_double")
-#endif
+      call obj%timer%stop("qr_pdlarfgk_1dcomm_double")
     end subroutine qr_pdlarfgk_1dcomm_double
 
-    subroutine qr_pdlarfgk_1dcomm_seed_double(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,mpicomm)
+    subroutine qr_pdlarfgk_1dcomm_seed_double(obj,a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
 
       ! input variables (local)
@@ -1716,9 +1665,7 @@ module elpa_pdgeqrf
 
       integer(kind=ik)   :: C_size,D_size,sendoffset,recvoffset,sendrecv_size
       integer(kind=ik)   :: localoffset,localsize,baseoffset
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfgk_1dcomm_seed_double")
-#endif
+      call obj%timer%start("qr_pdlarfgk_1dcomm_seed_double")
 
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -1835,20 +1782,16 @@ module elpa_pdgeqrf
         seedD(1:k,icol) = work(recvoffset+C_size+(icol-1)*k:recvoffset+C_size+icol*k-1)
       end do
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfgk_1dcomm_seed_double")
-#endif
+      call obj%timer%stop("qr_pdlarfgk_1dcomm_seed_double")
 
     end subroutine qr_pdlarfgk_1dcomm_seed_double
 
     ! k is assumed to be larger than two
-    subroutine qr_pdlarfgk_1dcomm_check_improved_double(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
+    subroutine qr_pdlarfgk_1dcomm_check_improved_double(obj,seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (global)
       integer(kind=ik)   :: k,lwork
 #ifdef USE_ASSUMED_SIZE_QR
@@ -1879,9 +1822,7 @@ module elpa_pdgeqrf
       external                :: sscal
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfgk_1dcomm_check_improved_double")
-#endif
+      call obj%timer%start("qr_pdlarfgk_1dcomm_check_improved_double")
 
       if (lwork .eq. -1) then
         call reverse_matrix_local_double(1,k,k,work,k,dreverse_matrix_work,-1)
@@ -1891,9 +1832,7 @@ module elpa_pdgeqrf
         work(1,1) = real(k*k,kind=rk4) + dreverse_matrix_work(1)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
         return
       end if
 
@@ -1901,9 +1840,7 @@ module elpa_pdgeqrf
 
       if (eps .eq. 0) then
         possiblerank = k
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
         return
       end if
 #ifdef DOUBLE_PRECISION_REAL
@@ -1955,9 +1892,7 @@ module elpa_pdgeqrf
         if ((abs(diagonal_square) .eq. 0.0_rk4) .or. (abs(diagonal_root) .eq. 0.0_rk4)) then
 #endif
           possiblerank = max(i-1,1)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
           return
         end if
 
@@ -1993,31 +1928,25 @@ module elpa_pdgeqrf
 
         if (sum_squares .ge. (epsd * diagonal_square)) then
           possiblerank = max(i-1,1)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
           return
         end if
       end do
 
       possiblerank = i
       !print *,'possible rank', possiblerank
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_double")
 
     end subroutine qr_pdlarfgk_1dcomm_check_improved_double
 
     ! TODO: zero Householder Vector (zero norm) case
     ! - check alpha values as well (from seedC)
-    subroutine qr_pdlarfgk_1dcomm_check_double(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
+    subroutine qr_pdlarfgk_1dcomm_check_double(obj,seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
       use precision
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
 
       ! input variables (local)
@@ -2041,9 +1970,7 @@ module elpa_pdgeqrf
       integer(kind=ik)   :: icol,isqr,iprod
       real(kind=rk8)      :: epsd,sum_sqr,sum_products,diff,temp,ortho,ortho_sum
       real(kind=rk8)      :: dreverse_matrix_work(1)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfgk_1dcomm_check_double")
-#endif
+        call obj%timer%start("qr_pdlarfgk_1dcomm_check_double")
       if (lwork .eq. -1) then
         call reverse_matrix_local_double(1,k,k,work,k,dreverse_matrix_work,-1)
 #ifdef DOUBLE_PRECISION_REAL
@@ -2052,9 +1979,7 @@ module elpa_pdgeqrf
         work(1,1) = real(k*k,kind=rk4) + dreverse_matrix_work(1)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_double")
 
         return
       end if
@@ -2063,9 +1988,7 @@ module elpa_pdgeqrf
 
       if (eps .eq. 0) then
         possiblerank = k
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_double")
         return
       end if
 #ifdef DOUBLE_PRECISION_REAL
@@ -2109,9 +2032,7 @@ module elpa_pdgeqrf
 #endif
           !print *,'too small ', icol, work(icol,icol)
           possiblerank = max(icol,1)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_double")
           return
         end if
 
@@ -2143,9 +2064,7 @@ module elpa_pdgeqrf
 #endif
           ! we definitely have a problem now
           possiblerank = icol-1 ! only decompose to previous column (including)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_double")
           return
         end if
         work(icol,icol) = sqrt(diff)
@@ -2183,32 +2102,26 @@ module elpa_pdgeqrf
         ! if current estimate is not accurate enough, the following check holds
         if (ortho .gt. epsd * diff) then
           possiblerank = icol-1 ! only decompose to previous column (including)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_double")
           return
         end if
       end do
 
       ! if we get to this point, the accuracy condition holds for the whole block
       possiblerank = k
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_double")
     end subroutine qr_pdlarfgk_1dcomm_check_double
 
     !sidx: seed idx
     !k: max rank used during seed phase
     !rank: actual rank (k >= rank)
-    subroutine qr_pdlarfgk_1dcomm_vector_double(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
+    subroutine qr_pdlarfgk_1dcomm_vector_double(obj,x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)  :: incx
       real(kind=rk8)     :: x(*),tau
@@ -2233,9 +2146,7 @@ module elpa_pdgeqrf
       real(kind=rk8)      :: alpha,dot,beta,xnorm
       integer(kind=ik)   :: local_size,baseoffset,local_offset,top,topidx
       integer(kind=ik)   :: lidx
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfgk_1dcomm_vector_double")
-#endif
+        call obj%timer%start("qr_pdlarfgk_1dcomm_vector_double")
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
       lidx = baseidx-sidx+1
@@ -2298,9 +2209,7 @@ module elpa_pdgeqrf
           x(top) = -beta
         end if
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_vector_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_vector_double")
 
     end subroutine qr_pdlarfgk_1dcomm_vector_double
 
@@ -2309,15 +2218,13 @@ module elpa_pdgeqrf
     ! TODO: if rank is less than k, reduce buffersize in such a way
     ! that only the required entries for the next pdlarfg steps are
     ! computed
-    subroutine qr_pdlarfgk_1dcomm_update_double(a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
+    subroutine qr_pdlarfgk_1dcomm_update_double(obj,a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter :: gmode_ = 1,rank_ = 2,eps_ = 3, upmode1_ = 4
 
@@ -2340,33 +2247,25 @@ module elpa_pdgeqrf
       integer(kind=ik)            :: mpirank,mpierr,mpiprocs,mpirank_top
       integer(kind=ik)            :: localsize,baseoffset,localoffset,topidx
       integer(kind=ik)            :: lidx
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfgk_1dcomm_update_double")
-#endif
+        call obj%timer%start("qr_pdlarfgk_1dcomm_update_double")
       if (lwork .eq. -1) then
         ! buffer for c,z,y,v
         work(1) = 4*k
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_double")
 
         return
       end if
 
       ! nothing to update anymore
       if (sidx .gt. rank) then
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_double")
         return
       endif
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
       lidx = baseidx-sidx
       if (lidx .lt. 1) then
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_double")
         return
       endif
 
@@ -2395,9 +2294,7 @@ module elpa_pdgeqrf
         seedC(k,k-sidx+1) = 0.0_rk4
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_double")
         return
       end if
 
@@ -2498,26 +2395,20 @@ module elpa_pdgeqrf
       seedC(k,k-sidx+1) = 1.0_rk4/(alpha+beta)
 #endif /* DOUBLE_PRECISION_REAL */
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_double")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_double")
     end subroutine qr_pdlarfgk_1dcomm_update_double
 
-    subroutine qr_pdlarfgk_1dcomm_generateT_double(seedC,seedD,k,actualk,tau,t,ldt)
+    subroutine qr_pdlarfgk_1dcomm_generateT_double(obj,seedC,seedD,k,actualk,tau,t,ldt)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       integer(kind=ik)  :: k,actualk,ldt
       real(kind=rk8)     :: seedC(k,*),seedD(k,*),tau(*),t(ldt,*)
 
       integer(kind=ik)  :: irow,icol
       real(kind=rk8)     :: column_coefficient
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfgk_1dcomm_generateT_double")
-#endif
+        call obj%timer%start("qr_pdlarfgk_1dcomm_generateT_double")
 
       !print *,'reversed on the fly T generation NYI'
 
@@ -2537,24 +2428,20 @@ module elpa_pdgeqrf
         end do
       end do
 
-      call qr_dlarft_kernel_double(actualk,tau(k-actualk+1),seedC(k-actualk+1,k-actualk+2),k,t(k-actualk+1,k-actualk+1),ldt)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_generateT_double")
-#endif
+      call qr_dlarft_kernel_double(obj,actualk,tau(k-actualk+1),seedC(k-actualk+1,k-actualk+2),k,t(k-actualk+1,k-actualk+1),ldt)
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_generateT_double")
 
     end subroutine qr_pdlarfgk_1dcomm_generateT_double
 
     !direction=0: pack into work buffer
     !direction=1: unpack from work buffer
-    subroutine qr_pdgeqrf_pack_unpack_double(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
+    subroutine qr_pdgeqrf_pack_unpack_double(obj,v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)   :: ldv,lwork
       real(kind=rk8)      :: v(ldv,*), work(*)
@@ -2570,9 +2457,7 @@ module elpa_pdgeqrf
       integer(kind=ik)   :: local_size,baseoffset,offset
 
       ! external functions
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdgeqrf_pack_unpack_double")
-#endif
+        call obj%timer%start("qr_pdgeqrf_pack_unpack_double")
       call mpi_comm_rank(mpicomm,mpirank,mpierr)
       call mpi_comm_size(mpicomm,mpiprocs,mpierr)
       call local_size_offset_1d(m,mb,baseidx,rowidx,rev,mpirank,mpiprocs, &
@@ -2584,9 +2469,7 @@ module elpa_pdgeqrf
       if (lwork .eq. -1) then
         buffersize = local_size * n ! Vector elements
         work(1) = DBLE(buffersize)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdgeqrf_pack_unpack_double")
-#endif
+        call obj%timer%stop("qr_pdgeqrf_pack_unpack_double")
 
         return
       end if
@@ -2602,9 +2485,7 @@ module elpa_pdgeqrf
           v(baseoffset:baseoffset+local_size-1,icol) = work(1+local_size*(icol-1):local_size*icol)
         end do
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdgeqrf_pack_unpack_double")
-#endif
+        call obj%timer%stop("qr_pdgeqrf_pack_unpack_double")
 
       return
 
@@ -2612,15 +2493,13 @@ module elpa_pdgeqrf
 
     !direction=0: pack into work buffer
     !direction=1: unpack from work buffer
-    subroutine qr_pdgeqrf_pack_unpack_tmatrix_double(tau,t,ldt,work,lwork,n,direction)
+    subroutine qr_pdgeqrf_pack_unpack_tmatrix_double(obj,tau,t,ldt,work,lwork,n,direction)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)  :: ldt,lwork
       real(kind=rk8)     :: work(*), t(ldt,*),tau(*)
@@ -2634,10 +2513,7 @@ module elpa_pdgeqrf
       integer(kind=ik)  :: icol
 
       ! external functions
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdgeqrf_pack_unpack_tmatrix_double")
-#endif
-
+        call obj%timer%start("qr_pdgeqrf_pack_unpack_tmatrix_double")
 
       if (lwork .eq. -1) then
 #ifdef DOUBLE_PRECISION_REAL
@@ -2646,10 +2522,7 @@ module elpa_pdgeqrf
         work(1) = real(n*n,kind=rk4)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdgeqrf_pack_unpack_tmatrix_double")
-#endif
-
+        call obj%timer%stop("qr_pdgeqrf_pack_unpack_tmatrix_double")
         return
       end if
 
@@ -2665,9 +2538,7 @@ module elpa_pdgeqrf
           tau(icol) = t(icol,icol)
         end do
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdgeqrf_pack_unpack_tmatrix_double")
-#endif
+        call obj%timer%stop("qr_pdgeqrf_pack_unpack_tmatrix_double")
     end subroutine qr_pdgeqrf_pack_unpack_tmatrix_double
 
 
@@ -2713,13 +2584,11 @@ module elpa_pdgeqrf
     !               merging = full update with tmatrix merging
     ! tmerge*: 0: do not merge, 1: incremental merge, >1: recursive merge
     !               only matters if update* == full
-    subroutine qr_pqrparam_init(pqrparam,size2d,update2d,tmerge2d,size1d,update1d,tmerge1d,maxrank,update,eps,hgmode)
+    subroutine qr_pqrparam_init(obj,pqrparam,size2d,update2d,tmerge2d,size1d,update1d,tmerge1d,maxrank,update,eps,hgmode)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input
       CHARACTER         :: update2d,update1d,update,hgmode
       INTEGER(kind=ik)  :: size2d,size1d,maxrank,eps,tmerge2d,tmerge1d
@@ -2731,9 +2600,7 @@ module elpa_pdgeqrf
       INTEGER(kind=ik)  :: PQRPARAM(1:11)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pqrparam_init")
-#endif
+        call obj%timer%start("qr_pqrparam_init")
 
       PQRPARAM(1) = size2d
       PQRPARAM(2) = ichar(update2d)
@@ -2748,21 +2615,17 @@ module elpa_pdgeqrf
       PQRPARAM(8) = ichar(update)
       PQRPARAM(9) = eps
       PQRPARAM(10) = ichar(hgmode)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pqrparam_init")
-#endif
+        call obj%timer%stop("qr_pqrparam_init")
 
     end subroutine qr_pqrparam_init
 
-    subroutine qr_pdlarfg_copy_1dcomm_double(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
+    subroutine qr_pdlarfg_copy_1dcomm_double(obj,x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)  :: incx,incv
       real(kind=rk8)     :: x(*), v(*)
@@ -2779,9 +2642,7 @@ module elpa_pdgeqrf
       integer(kind=ik)  :: irow,x_offset
       integer(kind=ik)  :: v_offset,local_size
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfg_copy_1dcomm_double")
-#endif
+        call obj%timer%start("qr_pdlarfg_copy_1dcomm_double")
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
       call local_size_offset_1d(n,nb,baseidx,idx,rev,mpirank,mpiprocs, &
@@ -2804,9 +2665,7 @@ module elpa_pdgeqrf
         v(local_size*incv) = 1.0_rk4
 #endif
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfg_copy_1dcomm_double")
-#endif
+        call obj%timer%stop("qr_pdlarfg_copy_1dcomm_double")
 
     end subroutine qr_pdlarfg_copy_1dcomm_double
 
@@ -2814,17 +2673,15 @@ module elpa_pdgeqrf
 ! single precision implementation,a t the moment duplicated !!!
 #undef DOUBLE_PRECISION_REAL
 
-     subroutine qr_pdgeqrf_2dcomm_single(a, lda, matrixCols, v, ldv, vmrCols, tau, lengthTau, t, ldt, colsT, &
+     subroutine qr_pdgeqrf_2dcomm_single(obj,a, lda, matrixCols, v, ldv, vmrCols, tau, lengthTau, t, ldt, colsT, &
                                   work, workLength, lwork, m, n, mb, nb, rowidx, colidx, &
                                   rev, trans, PQRPARAM, mpicomm_rows, mpicomm_cols, blockheuristic)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter   :: gmode_ = 1, rank_ = 2, eps_ = 3
 
@@ -2864,9 +2721,7 @@ module elpa_pdgeqrf
       integer(kind=ik)              :: total_cols
       integer(kind=ik)              :: incremental_update_size ! needed for incremental update mode
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdgeqrf_2dcomm_single")
-#endif
+      call obj%timer%start("qr_pdgeqrf_2dcomm_single")
       size2d     = PQRPARAM(1)
       updatemode = PQRPARAM(2)
       tmerge     = PQRPARAM(3)
@@ -2878,14 +2733,14 @@ module elpa_pdgeqrf
       call mpi_comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
 
 #ifdef USE_ASSUMED_SIZE_QR
-      call qr_pdgeqrf_1dcomm_single(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans, &
+      call qr_pdgeqrf_1dcomm_single(obj,a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans, &
                              PQRPARAM(4),mpicomm_rows,blockheuristic)
 #else
-      call qr_pdgeqrf_1dcomm_single(a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans, &
+      call qr_pdgeqrf_1dcomm_single(obj,a,lda,v,ldv,tau,t,ldt,pdgeqrf_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,trans, &
                              PQRPARAM(4:11),mpicomm_rows,blockheuristic)
 #endif
-      call qr_pdgeqrf_pack_unpack_single(v,ldv,dbroadcast_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,0,mpicomm_rows)
-      call qr_pdgeqrf_pack_unpack_tmatrix_single(tau,t,ldt,dtmat_bcast_size(1),-1,total_cols,0)
+      call qr_pdgeqrf_pack_unpack_single(obj,v,ldv,dbroadcast_size(1),-1,m,total_cols,mb,rowidx,rowidx,rev,0,mpicomm_rows)
+      call qr_pdgeqrf_pack_unpack_tmatrix_single(obj,tau,t,ldt,dtmat_bcast_size(1),-1,total_cols,0)
 
 #ifdef DOUBLE_PRECISION_REAL
       pdlarft_size(1) = 0.0_rk8
@@ -2915,9 +2770,7 @@ module elpa_pdgeqrf
             pdlarft_size(1),pdlarfb_size(1), &
                    tmerge_pdlarfb_size(1)))
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqrf_2dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdgeqrf_2dcomm_single")
         return
       end if
 
@@ -2976,30 +2829,30 @@ module elpa_pdgeqrf
 #endif
 
 #ifdef USE_ASSUMED_SIZE_QR
-          call qr_pdgeqrf_1dcomm_single(a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_1dcomm_single(obj,a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt, &
                                  work(work_offset),lwork,m,lcols,mb,rowidx,idx,rev,trans,PQRPARAM(4), &
                                  mpicomm_rows,blockheuristic)
 
 #else
-          call qr_pdgeqrf_1dcomm_single(a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_1dcomm_single(obj,a(1,offset),lda,v(1,voffset),ldv,tau(offset),t(voffset,voffset),ldt, &
                                  work(work_offset),lwork,m,lcols,mb,rowidx,idx,rev,trans,PQRPARAM(4:11), &
                                  mpicomm_rows,blockheuristic)
 #endif
 
           ! pack broadcast buffer (v + tau)
-          call qr_pdgeqrf_pack_unpack_single(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,&
+          call qr_pdgeqrf_pack_unpack_single(obj,v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,&
                                       idx,rev,0,mpicomm_rows)
 
           ! determine broadcast size
-          call qr_pdgeqrf_pack_unpack_single(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,&
+          call qr_pdgeqrf_pack_unpack_single(obj,v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,&
                                       0,mpicomm_rows)
           broadcast_size = dbroadcast_size(1)
 
           !if (mpirank_rows .eq. 0) then
           ! pack tmatrix into broadcast buffer and calculate new size
-          call qr_pdgeqrf_pack_unpack_tmatrix_single(tau(offset),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_pack_unpack_tmatrix_single(obj, tau(offset),t(voffset,voffset),ldt, &
                                               work(broadcast_offset+broadcast_size),lwork,lcols,0)
-          call qr_pdgeqrf_pack_unpack_tmatrix_single(tau(offset),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
+          call qr_pdgeqrf_pack_unpack_tmatrix_single(obj,tau(offset),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
           broadcast_size = broadcast_size + dtmat_bcast_size(1)
           !end if
 
@@ -3023,10 +2876,10 @@ module elpa_pdgeqrf
           ! Vector exchange part
 
           ! determine broadcast size
-          call qr_pdgeqrf_pack_unpack_single(v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
+          call qr_pdgeqrf_pack_unpack_single(obj,v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
           broadcast_size = dbroadcast_size(1)
 
-          call qr_pdgeqrf_pack_unpack_tmatrix_single(work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_pack_unpack_tmatrix_single(obj,work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
                                               dtmat_bcast_size(1),-1,lcols,0)
           tmat_bcast_size = dtmat_bcast_size(1)
 
@@ -3049,14 +2902,14 @@ module elpa_pdgeqrf
           ! fetch from first process in each column
 
           ! unpack broadcast buffer (v + tau)
-          call qr_pdgeqrf_pack_unpack_single(v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
+          call qr_pdgeqrf_pack_unpack_single(obj,v(1,voffset),ldv,work(broadcast_offset),lwork,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
 
           ! now send t matrix to other processes in our process column
           broadcast_size = dbroadcast_size(1)
           tmat_bcast_size = dtmat_bcast_size(1)
 
           ! t matrix should now be available on all processes => unpack
-          call qr_pdgeqrf_pack_unpack_tmatrix_single(work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
+          call qr_pdgeqrf_pack_unpack_tmatrix_single(obj,work(temptau_offset+voffset-1),t(voffset,voffset),ldt, &
                                               work(broadcast_offset+broadcast_size),lwork,lcols,1)
         end if
 
@@ -3127,20 +2980,16 @@ module elpa_pdgeqrf
       end if
 
       !print *,'stop decomposition',rowidx,colidx
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdgeqrf_2dcomm_single")
-#endif
+      call obj%timer%start("qr_pdgeqrf_2dcomm_single")
     end subroutine qr_pdgeqrf_2dcomm_single
 
-    subroutine qr_pdgeqrf_1dcomm_single(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx, &
+    subroutine qr_pdgeqrf_1dcomm_single(obj,a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx, &
           rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
       use precision
       use elpa1_impl
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter  :: gmode_ = 1,rank_ = 2,eps_ = 3
 
@@ -3167,19 +3016,17 @@ module elpa_pdgeqrf
       ! local scalars
       integer(kind=ik)             :: nr_blocks,remainder,current_block,aoffset,idx,updatesize
       real(kind=rk4)                :: pdgeqr2_size(1),pdlarfb_size(1),tmerge_tree_size(1)
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdgeqrf_1dcomm_single")
-#endif
+      call obj%timer%start("qr_pdgeqrf_1dcomm_single")
       size1d     = max(min(PQRPARAM(1),n),1)
       updatemode = PQRPARAM(2)
       tmerge     = PQRPARAM(3)
 
       if (lwork .eq. -1) then
 #ifdef USE_ASSUMED_SIZE_QR
-        call qr_pdgeqr2_1dcomm_single(a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, &
+        call qr_pdgeqr2_1dcomm_single(obj,a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, &
                                   m,size1d,mb,baseidx,baseidx,rev,trans,PQRPARAM(4),mpicomm,blockheuristic)
 #else
-        call qr_pdgeqr2_1dcomm_single(a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, &
+        call qr_pdgeqr2_1dcomm_single(obj,a,lda,v,ldv,tau,t,ldt,pdgeqr2_size,-1, &
                                   m,size1d,mb,baseidx,baseidx,rev,trans,PQRPARAM(4:),mpicomm,blockheuristic)
 #endif
         ! reserve more space for incremental mode
@@ -3189,9 +3036,7 @@ module elpa_pdgeqrf
         call qr_pdlarft_tree_merge_1dcomm_single(m,mb,n,size1d,tmerge,v,ldv,t,ldt,baseidx,rev,mpicomm,tmerge_tree_size,-1)
 
         work(1) = max(pdlarfb_size(1),pdgeqr2_size(1),tmerge_tree_size(1))
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqrf_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdgeqrf_1dcomm_single")
         return
       end if
 
@@ -3204,11 +3049,11 @@ module elpa_pdgeqrf
         updatesize = n-(current_block+1)*size1d
         aoffset = 1+updatesize
 #ifdef USE_ASSUMED_SIZE_QR
-        call qr_pdgeqr2_1dcomm_single(a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, &
+        call qr_pdgeqr2_1dcomm_single(obj,a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, &
                                 m,size1d,mb,baseidx,idx,1,trans,PQRPARAM(4),mpicomm,blockheuristic)
 
 #else
-        call qr_pdgeqr2_1dcomm_single(a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, &
+        call qr_pdgeqr2_1dcomm_single(obj,a(1,aoffset),lda,v(1,aoffset),ldv,tau(aoffset),t(aoffset,aoffset),ldt,work,lwork, &
                                 m,size1d,mb,baseidx,idx,1,trans,PQRPARAM(4:),mpicomm,blockheuristic)
 #endif
         if (updatemode .eq. ichar('M')) then
@@ -3243,11 +3088,11 @@ module elpa_pdgeqrf
         aoffset = 1
         idx = rowidx-size1d*nr_blocks
 #ifdef USE_ASSUMED_SIZE_QR
-        call qr_pdgeqr2_1dcomm_single(a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
+        call qr_pdgeqr2_1dcomm_single(obj,a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
                                   m,remainder,mb,baseidx,idx,1,trans,PQRPARAM(4),mpicomm,blockheuristic)
 
 #else
-        call qr_pdgeqr2_1dcomm_single(a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
+        call qr_pdgeqr2_1dcomm_single(obj,a(1,aoffset),lda,v,ldv,tau,t,ldt,work,lwork, &
                                   m,remainder,mb,baseidx,idx,1,trans,PQRPARAM(4:),mpicomm,blockheuristic)
 #endif
         if ((updatemode .eq. ichar('I')) .or. (updatemode .eq. ichar('M'))) then
@@ -3262,9 +3107,7 @@ module elpa_pdgeqrf
         ! finally merge all small T parts
         call qr_pdlarft_tree_merge_1dcomm_single(m,mb,n,size1d,tmerge,v,ldv,t,ldt,baseidx,rev,mpicomm,work,lwork)
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqrf_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdgeqrf_1dcomm_single")
 
     end subroutine qr_pdgeqrf_1dcomm_single
 
@@ -3272,15 +3115,13 @@ module elpa_pdgeqrf
     ! perspective
     ! TODO: if local amount of data turns to zero the algorithm might produce wrong
     ! results (probably due to old buffer contents)
-    subroutine qr_pdgeqr2_1dcomm_single(a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx, &
+    subroutine qr_pdgeqr2_1dcomm_single(obj,a,lda,v,ldv,tau,t,ldt,work,lwork,m,n,mb,baseidx, &
           rowidx,rev,trans,PQRPARAM,mpicomm,blockheuristic)
       use precision
       use elpa1_impl
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter   :: gmode_ = 1,rank_ = 2 ,eps_ = 3, upmode1_ = 4
 
@@ -3310,9 +3151,7 @@ module elpa_pdgeqrf
       integer(kind=ik)              :: rank,lastcol,actualrank,nextrank
       integer(kind=ik)              :: update_cols,decomposition_cols
       integer(kind=ik)              :: current_column
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdgeqr2_1dcomm_single")
-#endif
+      call obj%timer%start("qr_pdgeqr2_1dcomm_single")
 
       maxrank    = min(PQRPARAM(1),n)
       updatemode = PQRPARAM(2)
@@ -3326,19 +3165,19 @@ module elpa_pdgeqrf
       end if
 
       if (lwork .eq. -1) then
-        call qr_pdlarfg_1dcomm_single(a,incx,tau(1),pdlarfg_size(1),-1,n,rowidx,mb,hgmode,rev,mpicomm)
+        call qr_pdlarfg_1dcomm_single(obj,a,incx,tau(1),pdlarfg_size(1),-1,n,rowidx,mb,hgmode,rev,mpicomm)
         call qr_pdlarfl_1dcomm_single(v,1,baseidx,a,lda,tau(1),pdlarf_size(1),-1,m,n,rowidx,mb,rev,mpicomm)
 #ifdef USE_ASSUMED_SIZE_QR
-        call qr_pdlarfg2_1dcomm_ref_single(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM, &
+        call qr_pdlarfg2_1dcomm_ref_single(obj,a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM, &
                                     rev,mpicomm,actualrank)
 
-        call qr_pdlarfgk_1dcomm_single(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m,n,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
+        call qr_pdlarfgk_1dcomm_single(obj,a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m,n,rowidx,mb,PQRPARAM,rev,mpicomm,actualrank)
 
 #else
-        call qr_pdlarfg2_1dcomm_ref_single(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM(:), &
+        call qr_pdlarfg2_1dcomm_ref_single(obj,a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfg2_size(1),-1,m,rowidx,mb,PQRPARAM(:), &
                                     rev,mpicomm,actualrank)
 
-        call qr_pdlarfgk_1dcomm_single(a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m, &
+        call qr_pdlarfgk_1dcomm_single(obj,a,lda,tau,t,ldt,v,ldv,baseidx,pdlarfgk_size(1),-1,m, &
             n,rowidx,mb,PQRPARAM(:),rev,mpicomm,actualrank)
 #endif
         call qr_pdlarfl2_tmatrix_1dcomm_single(v,ldv,baseidx,a,lda,t,ldt,pdlarfl2_size(1),-1,m,n,rowidx,mb,rev,mpicomm)
@@ -3353,15 +3192,14 @@ module elpa_pdgeqrf
 #else
         pdlarft_pdlarfb_size(1) = 0.0_rk4
 #endif
-        call qr_tmerge_pdlarfb_1dcomm_single(m,mb,n,n,n,v,ldv,t,ldt,a,lda,rowidx,rev,updatemode,mpicomm,tmerge_pdlarfb_size(1),-1)
+        call qr_tmerge_pdlarfb_1dcomm_single(m,mb,n,n,n,v,ldv,t,ldt,a,lda,rowidx,&
+            rev,updatemode,mpicomm,tmerge_pdlarfb_size(1),-1)
 
         total_size = max(pdlarfg_size(1),pdlarf_size(1),pdlarfg2_size(1),pdlarfgk_size(1),pdlarfl2_size(1),pdlarft_size(1), &
                          pdlarfb_size(1),pdlarft_pdlarfb_size(1),tmerge_pdlarfb_size(1))
 
         work(1) = total_size
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqr2_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdgeqr2_1dcomm_single")
         return
       end if
 
@@ -3381,7 +3219,7 @@ module elpa_pdgeqrf
 
         if (rank .eq. 1) then
 
-          call qr_pdlarfg_1dcomm_single(a(1,current_column),incx, &
+          call qr_pdlarfg_1dcomm_single(obj,a(1,current_column),incx, &
                                   tau(current_column),work,lwork, &
                                   m,idx,mb,hgmode,1,mpicomm)
 #ifdef DOUBLE_PRECISION_REAL
@@ -3389,7 +3227,7 @@ module elpa_pdgeqrf
 #else
           v(1:ldv,current_column) = 0.0_rk4
 #endif
-          call qr_pdlarfg_copy_1dcomm_single(a(1,current_column),incx, &
+          call qr_pdlarfg_copy_1dcomm_single(obj,a(1,current_column),incx, &
                                        v(1,current_column),1, &
                                        m,baseidx,idx,mb,1,mpicomm)
 
@@ -3400,23 +3238,23 @@ module elpa_pdgeqrf
 
         else if (rank .eq. 2) then
 #ifdef USE_ASSUMED_SIZE_QR
-          call qr_pdlarfg2_1dcomm_ref_single(a(1,current_column),lda,tau(current_column), &
+          call qr_pdlarfg2_1dcomm_ref_single(obj,a(1,current_column),lda,tau(current_column), &
                                          t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                         baseidx,work,lwork,m,idx,mb,PQRPARAM,1,mpicomm,actualrank)
 
 #else
-          call qr_pdlarfg2_1dcomm_ref_single(a(1,current_column),lda,tau(current_column), &
+          call qr_pdlarfg2_1dcomm_ref_single(obj,a(1,current_column),lda,tau(current_column), &
                                          t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                         baseidx,work,lwork,m,idx,mb,PQRPARAM(:),1,mpicomm,actualrank)
 #endif
         else
 #ifdef USE_ASSUMED_SIZE_QR
-          call qr_pdlarfgk_1dcomm_single(a(1,current_column),lda,tau(current_column), &
+          call qr_pdlarfgk_1dcomm_single(obj,a(1,current_column),lda,tau(current_column), &
                                      t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                      baseidx,work,lwork,m,rank,idx,mb,PQRPARAM,1,mpicomm,actualrank)
 
 #else
-          call qr_pdlarfgk_1dcomm_single(a(1,current_column),lda,tau(current_column), &
+          call qr_pdlarfgk_1dcomm_single(obj,a(1,current_column),lda,tau(current_column), &
                                      t(current_column,current_column),ldt,v(1,current_column),ldv, &
                                      baseidx,work,lwork,m,rank,idx,mb,PQRPARAM(:),1,mpicomm,actualrank)
 #endif
@@ -3450,30 +3288,27 @@ module elpa_pdgeqrf
                                           a(1,1),lda,baseidx,rev,updatemode,mpicomm,work,lwork)
           end if
         else
-          call qr_tmerge_pdlarfb_1dcomm_single(m,mb,0,n-(current_column+rank-1),actualrank,v(1,current_column+(rank-actualrank)), &
+          call qr_tmerge_pdlarfb_1dcomm_single(m,mb,0,n-(current_column+rank-1),actualrank, &
+              v(1,current_column+(rank-actualrank)), &
                                           ldv, &
                                           t(current_column+(rank-actualrank),current_column+(rank-actualrank)),ldt, &
                                            a,lda,baseidx,rev,updatemode,mpicomm,work,lwork)
         end if
 
       end do
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdgeqr2_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdgeqr2_1dcomm_single")
     end subroutine qr_pdgeqr2_1dcomm_single
 
     ! incx == 1: column major
     ! incx != 1: row major
-    subroutine qr_pdlarfg_1dcomm_single(x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,communicator)
+    subroutine qr_pdlarfg_1dcomm_single(obj,x,incx,tau,work,lwork,n,idx,nb,hgmode,rev,communicator)
 
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter    :: gmode_ = 1,rank_ = 2, eps_ = 3
 
@@ -3504,14 +3339,10 @@ module elpa_pdgeqrf
 #endif
       ! intrinsic
 !      intrinsic sign
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg_1dcomm_single")
-#endif
+      call obj%timer%start("qr_pdlarfg_1dcomm_single")
       if (idx .le. 1) then
         tau = 0.0d0
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg_1dcomm_single")
         return
        end if
       call MPI_Comm_rank(communicator, mpirank, mpierr)
@@ -3542,9 +3373,7 @@ module elpa_pdgeqrf
         work(1) = real(sendsize + recvsize,kind=rk4)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg_1dcomm_single")
         return
       end if
 
@@ -3734,9 +3563,9 @@ module elpa_pdgeqrf
       else
         ! General case
 #ifdef DOUBLE_PRECISION_REAL
-        call hh_transform_real_single(alpha,xnorm**2,xf,tau)
+        call hh_transform_real_single(obj,alpha,xnorm**2,xf,tau)
 #else
-        call hh_transform_real_single(alpha,xnorm**2,xf,tau)
+        call hh_transform_real_single(obj,alpha,xnorm**2,xf,tau)
 #endif
         if (mpirank .eq. mpirank_top) then
           x(top) = alpha
@@ -3757,18 +3586,14 @@ module elpa_pdgeqrf
       ! useful for debugging
       !print *,'hg:mpirank,idx,beta,alpha:',mpirank,idx,beta,alpha,1.0d0/(beta+alpha),tau
       !print *,x(1:n)
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg_1dcomm_single")
     end subroutine qr_pdlarfg_1dcomm_single
 
-    subroutine qr_pdlarfg2_1dcomm_ref_single(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,idx,mb,PQRPARAM,rev,mpicomm,actualk)
+    subroutine qr_pdlarfg2_1dcomm_ref_single(obj,a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,idx,mb,PQRPARAM,rev,mpicomm,actualk)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter    :: gmode_ = 1,rank_ = 2,eps_ = 3, upmode1_ = 4
       ! input variables (local)
@@ -3793,19 +3618,15 @@ module elpa_pdgeqrf
       integer(kind=ik)               :: seedwork_size,seed_size
       integer(kind=ik)               :: seedwork_offset,seed_offset
       logical                        :: accurate
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_single")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_single")
 
-      call qr_pdlarfg2_1dcomm_seed_single(a,lda,dseedwork_size(1),-1,work,m,mb,idx,rev,mpicomm)
+      call qr_pdlarfg2_1dcomm_seed_single(obj,a,lda,dseedwork_size(1),-1,work,m,mb,idx,rev,mpicomm)
       seedwork_size = dseedwork_size(1)
       seed_size = seedwork_size
 
       if (lwork .eq. -1) then
         work(1) = seedwork_size + seed_size
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_single")
 
         return
       end if
@@ -3825,43 +3646,41 @@ module elpa_pdgeqrf
        	t(1:2,1:2) = 0.0_rk4
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_single")
 
        	return
       end if
 
-      call qr_pdlarfg2_1dcomm_seed_single(a,lda,work(seedwork_offset),lwork,work(seed_offset),m,mb,idx,rev,mpicomm)
+      call qr_pdlarfg2_1dcomm_seed_single(obj,a,lda,work(seedwork_offset),lwork,work(seed_offset),m,mb,idx,rev,mpicomm)
 
       if (eps .gt. 0) then
-        accurate = qr_pdlarfg2_1dcomm_check_single(work(seed_offset),eps)
+        accurate = qr_pdlarfg2_1dcomm_check_single(obj,work(seed_offset),eps)
       else
         accurate = .true.
       end if
 
-      call qr_pdlarfg2_1dcomm_vector_single(a(1,2),1,tau(2),work(seed_offset), &
+      call qr_pdlarfg2_1dcomm_vector_single(obj,a(1,2),1,tau(2),work(seed_offset), &
                                           m,mb,idx,0,1,mpicomm)
 
-      call qr_pdlarfg_copy_1dcomm_single(a(1,2),1, &
+      call qr_pdlarfg_copy_1dcomm_single(obj,a(1,2),1, &
                                        v(1,2),1, &
                                        m,baseidx,idx,mb,1,mpicomm)
 
-      call qr_pdlarfg2_1dcomm_update_single(v(1,2),1,baseidx,a(1,1),lda,work(seed_offset),m,idx,mb,rev,mpicomm)
+      call qr_pdlarfg2_1dcomm_update_single(obj,v(1,2),1,baseidx,a(1,1),lda,work(seed_offset),m,idx,mb,rev,mpicomm)
 
       ! check for 2x2 matrix case => only one householder Vector will be
       ! generated
       if (idx .gt. 2) then
         if (accurate .eqv. .true.) then
-          call qr_pdlarfg2_1dcomm_vector_single(a(1,1),1,tau(1),work(seed_offset), &
+          call qr_pdlarfg2_1dcomm_vector_single(obj,a(1,1),1,tau(1),work(seed_offset), &
                                                   m,mb,idx-1,1,1,mpicomm)
 
-          call qr_pdlarfg_copy_1dcomm_single(a(1,1),1, &
+          call qr_pdlarfg_copy_1dcomm_single(obj,a(1,1),1, &
                                                v(1,1),1, &
                                                m,baseidx,idx-1,mb,1,mpicomm)
 
           ! generate fuse element
-          call qr_pdlarfg2_1dcomm_finalize_tmatrix_single(work(seed_offset),tau,t,ldt)
+          call qr_pdlarfg2_1dcomm_finalize_tmatrix_single(obj,work(seed_offset),tau,t,ldt)
 
           actualk = 2
         else
@@ -3897,21 +3716,16 @@ module elpa_pdgeqrf
 
         !print *,'rank2: no more data'
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_single")
 
     end subroutine qr_pdlarfg2_1dcomm_ref_single
 
-    subroutine qr_pdlarfg2_1dcomm_seed_single(a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
+    subroutine qr_pdlarfg2_1dcomm_seed_single(obj,a,lda,work,lwork,seed,n,nb,idx,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)        :: lda,lwork
       real(kind=rk4)           :: a(lda,*),work(*),seed(*)
@@ -3937,9 +3751,7 @@ module elpa_pdgeqrf
       integer(kind=ik)        :: local_offset1,local_size1
       integer(kind=ik)        :: local_offset2,local_size2
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_seed_single")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_seed_single")
 
       if (lwork .eq. -1) then
 #ifdef DOUBLE_PRECISION_REAL
@@ -3948,9 +3760,7 @@ module elpa_pdgeqrf
         work(1) = 8.0_rk4
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_seed")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_seed")
         return
       end if
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
@@ -4031,18 +3841,14 @@ module elpa_pdgeqrf
       seed(1:8) = work(1:8)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_seed_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_seed_single")
     end subroutine qr_pdlarfg2_1dcomm_seed_single
 
-    logical function qr_pdlarfg2_1dcomm_check_single(seed,eps)
+    logical function qr_pdlarfg2_1dcomm_check_single(obj,seed,eps)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables
       real(kind=rk4)    ::  seed(*)
       integer(kind=ik) :: eps
@@ -4052,9 +3858,7 @@ module elpa_pdgeqrf
       logical          :: accurate
       real(kind=rk4)    :: dot11,dot12,dot22
       real(kind=rk4)    :: top11,top12,top21,top22
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_check_single")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_check_single")
 
       EPSD = EPS
 
@@ -4080,9 +3884,7 @@ module elpa_pdgeqrf
       if (first*second .eq. 0.0_rk4) then
 #endif
         qr_pdlarfg2_1dcomm_check_single = .false.
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_check_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_check_single")
 
         return
       end if
@@ -4098,23 +3900,19 @@ module elpa_pdgeqrf
       accurate = (estimate .LE. (epsd/(1.0_rk4+epsd)))
 #endif
       qr_pdlarfg2_1dcomm_check_single = accurate
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_check_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_check_single")
 
     end function qr_pdlarfg2_1dcomm_check_single
 
     ! id=0: first Vector
     ! id=1: second Vector
-    subroutine qr_pdlarfg2_1dcomm_vector_single(x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
+    subroutine qr_pdlarfg2_1dcomm_vector_single(obj,x,incx,tau,seed,n,nb,idx,id,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)        :: incx
       real(kind=rk4)           :: x(*),seed(*),tau
@@ -4136,9 +3934,7 @@ module elpa_pdgeqrf
       integer(kind=ik)        :: mpirank,mpirank_top,mpiprocs,mpierr
       real(kind=rk4)           :: alpha,dot,beta,xnorm
       integer(kind=ik)        :: local_size,baseoffset,local_offset,top,topidx
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_vector_single")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_vector_single")
 
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -4196,21 +3992,17 @@ module elpa_pdgeqrf
 
         seed(8) = beta
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_vector_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_vector_single")
 
     end subroutine qr_pdlarfg2_1dcomm_vector_single
 
-    subroutine qr_pdlarfg2_1dcomm_update_single(v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
+    subroutine qr_pdlarfg2_1dcomm_update_single(obj,v,incv,baseidx,a,lda,seed,n,idx,nb,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)   :: incv,lda
       real(kind=rk4)      :: v(*),a(lda,*),seed(*)
@@ -4229,9 +4021,7 @@ module elpa_pdgeqrf
       real(kind=rk4)      :: z,coeff,beta
       real(kind=rk4)      :: dot11,dot12,dot22
       real(kind=rk4)      :: top11,top12,top21,top22
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_update_single")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_update_single")
 
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -4259,9 +4049,7 @@ module elpa_pdgeqrf
       if (beta .eq. 0.0_rk4) then
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_update_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_update_single")
         return
       end if
       z = (dot12 + top11 * top12) / beta + top12
@@ -4299,26 +4087,20 @@ module elpa_pdgeqrf
       ! prepare dot matrix for fuse element of T matrix
       ! replace top11 value with -beta1
       seed(1) = beta
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_update_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_update_single")
 
     end subroutine qr_pdlarfg2_1dcomm_update_single
 
     ! run this function after second Vector
-    subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix_single(seed,tau,t,ldt)
+    subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix_single(obj,seed,tau,t,ldt)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       integer(kind=ik)  :: ldt
       real(kind=rk4)     :: seed(*),t(ldt,*),tau(*)
       real(kind=rk4)     :: dot12,beta1,top21,beta2
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfg2_1dcomm_finalize_tmatrix_single")
-#endif
+      call obj%timer%start("qr_pdlarfg2_1dcomm_finalize_tmatrix_single")
 
       beta1 = seed(1)
       dot12 = seed(4)
@@ -4333,21 +4115,17 @@ module elpa_pdgeqrf
       t(1,1) = tau(1)
       t(1,2) = dot12
       t(2,2) = tau(2)
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfg2_1dcomm_finalize_tmatrix_single")
-#endif
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_finalize_tmatrix_single")
 
     end subroutine qr_pdlarfg2_1dcomm_finalize_tmatrix_single
 
-    subroutine qr_pdlarfgk_1dcomm_single(a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,mb,PQRPARAM,rev,mpicomm,actualk)
+    subroutine qr_pdlarfgk_1dcomm_single(obj,a,lda,tau,t,ldt,v,ldv,baseidx,work,lwork,m,k,idx,mb,PQRPARAM,rev,mpicomm,actualk)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
 
       ! parameter setup
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)    :: lda,lwork,ldv,ldt
       real(kind=rk4)       :: a(lda,*),v(ldv,*),tau(*),work(*),t(ldt,*)
@@ -4370,9 +4148,7 @@ module elpa_pdgeqrf
       integer(kind=ik)    :: seedC_size,seedC_offset
       integer(kind=ik)    :: seedD_size,seedD_offset
       integer(kind=ik)    :: work_offset
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfgk_1dcomm_single")
-#endif
+      call obj%timer%start("qr_pdlarfgk_1dcomm_single")
 
       seedC_size = k*k
       seedC_offset = 1
@@ -4381,37 +4157,35 @@ module elpa_pdgeqrf
       work_offset = seedD_offset + seedD_size
 
       if (lwork .eq. -1) then
-        call qr_pdlarfg_1dcomm_single(a,1,tau(1),pdlarfg_size(1),-1,m,baseidx,mb,PQRPARAM(4),rev,mpicomm)
+        call qr_pdlarfg_1dcomm_single(obj,a,1,tau(1),pdlarfg_size(1),-1,m,baseidx,mb,PQRPARAM(4),rev,mpicomm)
 
-        call qr_pdlarfl_1dcomm_single(v,1,baseidx,a,lda,tau(1),pdlarf_size(1),-1,m,k,baseidx,mb,rev,mpicomm)
-        call qr_pdlarfgk_1dcomm_seed_single(a,lda,baseidx,pdlarfgk_1dcomm_seed_size(1),-1,work,work,m,k,mb,mpicomm)
+        call qr_pdlarfl_1dcomm_single(1,baseidx,a,lda,tau(1),pdlarf_size(1),-1,m,k,baseidx,mb,rev,mpicomm)
+        call qr_pdlarfgk_1dcomm_seed_single(obj,a,lda,baseidx,pdlarfgk_1dcomm_seed_size(1),-1,work,work,m,k,mb,mpicomm)
 #ifdef USE_ASSUMED_SIZE_QR
         !call qr_pdlarfgk_1dcomm_check_single(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
-        call qr_pdlarfgk_1dcomm_check_improved_single(work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
+        call qr_pdlarfgk_1dcomm_check_improved_single(obj,work,work,k,PQRPARAM,pdlarfgk_1dcomm_check_size(1),-1,actualk)
 
 #else
         !call qr_pdlarfgk_1dcomm_check_single(work,work,k,PQRPARAM(:),pdlarfgk_1dcomm_check_size(1),-1,actualk)
-        call qr_pdlarfgk_1dcomm_check_improved_single(work,work,k,PQRPARAM(:),pdlarfgk_1dcomm_check_size(1),-1,actualk)
+        call qr_pdlarfgk_1dcomm_check_improved_single(obj,work,work,k,PQRPARAM(:),pdlarfgk_1dcomm_check_size(1),-1,actualk)
 #endif
-        call qr_pdlarfgk_1dcomm_update_single(a,lda,baseidx,pdlarfgk_1dcomm_update_size(1),-1,work,work,k,k,1,work,m,mb,rev,mpicomm)
+        call qr_pdlarfgk_1dcomm_update_single(obj,a,lda,baseidx,pdlarfgk_1dcomm_update_size(1),-1,work,work,k,k,1,work,m,mb,rev,mpicomm)
         work(1) = max(pdlarfg_size(1),pdlarf_size(1),pdlarfgk_1dcomm_seed_size(1),pdlarfgk_1dcomm_check_size(1), &
                         pdlarfgk_1dcomm_update_size(1)) + real(seedC_size + seedD_size, kind=rk4)
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfgk_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdlarfgk_1dcomm_single")
 
         return
       end if
 
-      call qr_pdlarfgk_1dcomm_seed_single(a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
+      call qr_pdlarfgk_1dcomm_seed_single(obj,a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
       work(seedD_offset),m,k,mb,mpicomm)
 #ifdef USE_ASSUMED_SIZE_QR
       !call qr_pdlarfgk_1dcomm_check_single(work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
-      call qr_pdlarfgk_1dcomm_check_improved_single(work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
+      call qr_pdlarfgk_1dcomm_check_improved_single(obj,work(seedC_offset),work(seedD_offset),k,PQRPARAM,work(work_offset),lwork,actualk)
 #else
       !call qr_pdlarfgk_1dcomm_check_single(work(seedC_offset),work(seedD_offset),k,PQRPARAM(:),work(work_offset),lwork,actualk)
-      call qr_pdlarfgk_1dcomm_check_improved_single(work(seedC_offset),work(seedD_offset),k,PQRPARAM(:), &
+      call qr_pdlarfgk_1dcomm_check_improved_single(obj,work(seedC_offset),work(seedD_offset),k,PQRPARAM(:), &
           work(work_offset),lwork,actualk)
 #endif
       !print *,'possible rank:', actualk
@@ -4421,36 +4195,32 @@ module elpa_pdgeqrf
       !actualk = k
       !actualk= min(actualk,2)
       do ivector=1,actualk
-        call qr_pdlarfgk_1dcomm_vector_single(a(1,k-ivector+1),1,idx,tau(k-ivector+1), &
+        call qr_pdlarfgk_1dcomm_vector_single(obj,a(1,k-ivector+1),1,idx,tau(k-ivector+1), &
                                           work(seedC_offset),work(seedD_offset),k, &
                                           ivector,m,mb,rev,mpicomm)
 
-        call qr_pdlarfgk_1dcomm_update_single(a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
+        call qr_pdlarfgk_1dcomm_update_single(obj, a(1,1),lda,idx,work(work_offset),lwork,work(seedC_offset), &
                                           work(seedD_offset),k,actualk,ivector,tau, &
                                           m,mb,rev,mpicomm)
 
-        call qr_pdlarfg_copy_1dcomm_single(a(1,k-ivector+1),1, &
+        call qr_pdlarfg_copy_1dcomm_single(obj, a(1,k-ivector+1),1, &
                                        v(1,k-ivector+1),1, &
                                        m,baseidx,idx-ivector+1,mb,1,mpicomm)
       end do
 
       ! generate final T matrix and convert preliminary tau values into real ones
-      call qr_pdlarfgk_1dcomm_generateT_single(work(seedC_offset),work(seedD_offset),k,actualk,tau,t,ldt)
+      call qr_pdlarfgk_1dcomm_generateT_single(obj,work(seedC_offset),work(seedD_offset),k,actualk,tau,t,ldt)
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfgk_1dcomm_single")
-#endif
+      call obj%timer%stop("qr_pdlarfgk_1dcomm_single")
     end subroutine qr_pdlarfgk_1dcomm_single
 
-    subroutine qr_pdlarfgk_1dcomm_seed_single(a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,mpicomm)
+    subroutine qr_pdlarfgk_1dcomm_seed_single(obj,a,lda,baseidx,work,lwork,seedC,seedD,m,k,mb,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
 
       ! input variables (local)
@@ -4472,9 +4242,7 @@ module elpa_pdgeqrf
 
       integer(kind=ik)   :: C_size,D_size,sendoffset,recvoffset,sendrecv_size
       integer(kind=ik)   :: localoffset,localsize,baseoffset
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfgk_1dcomm_seed_single")
-#endif
+      call obj%timer%start("qr_pdlarfgk_1dcomm_seed_single")
 
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
@@ -4591,20 +4359,16 @@ module elpa_pdgeqrf
         seedD(1:k,icol) = work(recvoffset+C_size+(icol-1)*k:recvoffset+C_size+icol*k-1)
       end do
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("qr_pdlarfgk_1dcomm_seed_single")
-#endif
+      call obj%timer%stop("qr_pdlarfgk_1dcomm_seed_single")
 
     end subroutine qr_pdlarfgk_1dcomm_seed_single
 
     ! k is assumed to be larger than two
-    subroutine qr_pdlarfgk_1dcomm_check_improved_single(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
+    subroutine qr_pdlarfgk_1dcomm_check_improved_single(obj,seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (global)
       integer(kind=ik)   :: k,lwork
 #ifdef USE_ASSUMED_SIZE_QR
@@ -4635,9 +4399,7 @@ module elpa_pdgeqrf
       external                :: sscal
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("qr_pdlarfgk_1dcomm_check_improved_single")
-#endif
+      call obj%timer%start("qr_pdlarfgk_1dcomm_check_improved_single")
 
       if (lwork .eq. -1) then
         call reverse_matrix_local_single(1,k,k,work,k,dreverse_matrix_work,-1)
@@ -4647,9 +4409,7 @@ module elpa_pdgeqrf
         work(1,1) = real(k*k,kind=rk4) + dreverse_matrix_work(1)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
         return
       end if
 
@@ -4657,9 +4417,7 @@ module elpa_pdgeqrf
 
       if (eps .eq. 0) then
         possiblerank = k
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
         return
       end if
 #ifdef DOUBLE_PRECISION_REAL
@@ -4711,9 +4469,7 @@ module elpa_pdgeqrf
         if ((abs(diagonal_square) .eq. 0.0_rk4) .or. (abs(diagonal_root) .eq. 0.0_rk4)) then
 #endif
           possiblerank = max(i-1,1)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
           return
         end if
 
@@ -4749,31 +4505,25 @@ module elpa_pdgeqrf
 
         if (sum_squares .ge. (epsd * diagonal_square)) then
           possiblerank = max(i-1,1)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
           return
         end if
       end do
 
       possiblerank = i
       !print *,'possible rank', possiblerank
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_single")
 
     end subroutine qr_pdlarfgk_1dcomm_check_improved_single
 
     ! TODO: zero Householder Vector (zero norm) case
     ! - check alpha values as well (from seedC)
-    subroutine qr_pdlarfgk_1dcomm_check_single(seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
+    subroutine qr_pdlarfgk_1dcomm_check_single(obj,seedC,seedD,k,PQRPARAM,work,lwork,possiblerank)
       use precision
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
 
       ! input variables (local)
@@ -4797,9 +4547,7 @@ module elpa_pdgeqrf
       integer(kind=ik)   :: icol,isqr,iprod
       real(kind=rk4)      :: epsd,sum_sqr,sum_products,diff,temp,ortho,ortho_sum
       real(kind=rk4)      :: dreverse_matrix_work(1)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfgk_1dcomm_check_single")
-#endif
+        call obj%timer%start("qr_pdlarfgk_1dcomm_check_single")
       if (lwork .eq. -1) then
         call reverse_matrix_local_single(1,k,k,work,k,dreverse_matrix_work,-1)
 #ifdef DOUBLE_PRECISION_REAL
@@ -4808,9 +4556,7 @@ module elpa_pdgeqrf
         work(1,1) = real(k*k,kind=rk4) + dreverse_matrix_work(1)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_single")
 
         return
       end if
@@ -4819,9 +4565,7 @@ module elpa_pdgeqrf
 
       if (eps .eq. 0) then
         possiblerank = k
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_single")
         return
       end if
 #ifdef DOUBLE_PRECISION_REAL
@@ -4865,9 +4609,7 @@ module elpa_pdgeqrf
 #endif
           !print *,'too small ', icol, work(icol,icol)
           possiblerank = max(icol,1)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_single")
           return
         end if
 
@@ -4899,9 +4641,7 @@ module elpa_pdgeqrf
 #endif
           ! we definitely have a problem now
           possiblerank = icol-1 ! only decompose to previous column (including)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_single")
           return
         end if
         work(icol,icol) = sqrt(diff)
@@ -4939,32 +4679,26 @@ module elpa_pdgeqrf
         ! if current estimate is not accurate enough, the following check holds
         if (ortho .gt. epsd * diff) then
           possiblerank = icol-1 ! only decompose to previous column (including)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_single")
           return
         end if
       end do
 
       ! if we get to this point, the accuracy condition holds for the whole block
       possiblerank = k
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_check_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_check_single")
     end subroutine qr_pdlarfgk_1dcomm_check_single
 
     !sidx: seed idx
     !k: max rank used during seed phase
     !rank: actual rank (k >= rank)
-    subroutine qr_pdlarfgk_1dcomm_vector_single(x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
+    subroutine qr_pdlarfgk_1dcomm_vector_single(obj,x,incx,baseidx,tau,seedC,seedD,k,sidx,n,nb,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)  :: incx
       real(kind=rk4)     :: x(*),tau
@@ -4988,9 +4722,7 @@ module elpa_pdgeqrf
       real(kind=rk4)      :: alpha,dot,beta,xnorm
       integer(kind=ik)   :: local_size,baseoffset,local_offset,top,topidx
       integer(kind=ik)   :: lidx
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfgk_1dcomm_vector_single")
-#endif
+        call obj%timer%start("qr_pdlarfgk_1dcomm_vector_single")
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
       lidx = baseidx-sidx+1
@@ -5053,9 +4785,7 @@ module elpa_pdgeqrf
           x(top) = -beta
         end if
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_vector_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_vector_single")
 
     end subroutine qr_pdlarfgk_1dcomm_vector_single
 
@@ -5064,15 +4794,13 @@ module elpa_pdgeqrf
     ! TODO: if rank is less than k, reduce buffersize in such a way
     ! that only the required entries for the next pdlarfg steps are
     ! computed
-    subroutine qr_pdlarfgk_1dcomm_update_single(a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
+    subroutine qr_pdlarfgk_1dcomm_update_single(obj,a,lda,baseidx,work,lwork,seedC,seedD,k,rank,sidx,tau,n,nb,rev,mpicomm)
       use precision
       use elpa1_impl
+      use elpa_api
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
       implicit none
-
+      class(elpa_t) :: obj
       ! parameter setup
       INTEGER(kind=ik), parameter :: gmode_ = 1,rank_ = 2,eps_ = 3, upmode1_ = 4
 
@@ -5095,33 +4823,24 @@ module elpa_pdgeqrf
       integer(kind=ik)            :: mpirank,mpierr,mpiprocs,mpirank_top
       integer(kind=ik)            :: localsize,baseoffset,localoffset,topidx
       integer(kind=ik)            :: lidx
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfgk_1dcomm_update_single")
-#endif
+        call obj%timer%start("qr_pdlarfgk_1dcomm_update_single")
       if (lwork .eq. -1) then
         ! buffer for c,z,y,v
         work(1) = 4*k
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_single")
-#endif
-
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_single")
         return
       end if
 
       ! nothing to update anymore
       if (sidx .gt. rank) then
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_single")
         return
       endif
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
       lidx = baseidx-sidx
       if (lidx .lt. 1) then
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_single")
         return
       endif
 
@@ -5150,9 +4869,7 @@ module elpa_pdgeqrf
         seedC(k,k-sidx+1) = 0.0_rk4
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_single")
         return
       end if
 
@@ -5253,26 +4970,20 @@ module elpa_pdgeqrf
       seedC(k,k-sidx+1) = 1.0_rk4/(alpha+beta)
 #endif /* DOUBLE_PRECISION_REAL */
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_update_single")
-#endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_update_single")
     end subroutine qr_pdlarfgk_1dcomm_update_single
 
-    subroutine qr_pdlarfgk_1dcomm_generateT_single(seedC,seedD,k,actualk,tau,t,ldt)
+    subroutine qr_pdlarfgk_1dcomm_generateT_single(obj,seedC,seedD,k,actualk,tau,t,ldt)
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       integer(kind=ik)  :: k,actualk,ldt
       real(kind=rk4)     :: seedC(k,*),seedD(k,*),tau(*),t(ldt,*)
 
       integer(kind=ik)  :: irow,icol
       real(kind=rk4)     :: column_coefficient
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfgk_1dcomm_generateT_single")
-#endif
+        call obj%timer%start("qr_pdlarfgk_1dcomm_generateT_single")
 
       !print *,'reversed on the fly T generation NYI'
 
@@ -5292,24 +5003,21 @@ module elpa_pdgeqrf
         end do
       end do
 
-      call qr_dlarft_kernel_single(actualk,tau(k-actualk+1),seedC(k-actualk+1,k-actualk+2),k,t(k-actualk+1,k-actualk+1),ldt)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfgk_1dcomm_generateT_single")
-#endif
+      call qr_dlarft_kernel_single(obj, actualk,tau(k-actualk+1),seedC(k-actualk+1,k-actualk+2), &
+          k,t(k-actualk+1,k-actualk+1),ldt)
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_generateT_single")
 
     end subroutine qr_pdlarfgk_1dcomm_generateT_single
 
     !direction=0: pack into work buffer
     !direction=1: unpack from work buffer
-    subroutine qr_pdgeqrf_pack_unpack_single(v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
+    subroutine qr_pdgeqrf_pack_unpack_single(obj,v,ldv,work,lwork,m,n,mb,baseidx,rowidx,rev,direction,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)   :: ldv,lwork
       real(kind=rk4)      :: v(ldv,*), work(*)
@@ -5325,9 +5033,7 @@ module elpa_pdgeqrf
       integer(kind=ik)   :: local_size,baseoffset,offset
 
       ! external functions
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdgeqrf_pack_unpack_single")
-#endif
+        call obj%timer%start("qr_pdgeqrf_pack_unpack_single")
       call mpi_comm_rank(mpicomm,mpirank,mpierr)
       call mpi_comm_size(mpicomm,mpiprocs,mpierr)
       call local_size_offset_1d(m,mb,baseidx,rowidx,rev,mpirank,mpiprocs, &
@@ -5339,9 +5045,7 @@ module elpa_pdgeqrf
       if (lwork .eq. -1) then
         buffersize = local_size * n ! Vector elements
         work(1) = DBLE(buffersize)
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdgeqrf_pack_unpack_single")
-#endif
+        call obj%timer%stop("qr_pdgeqrf_pack_unpack_single")
 
         return
       end if
@@ -5357,9 +5061,7 @@ module elpa_pdgeqrf
           v(baseoffset:baseoffset+local_size-1,icol) = work(1+local_size*(icol-1):local_size*icol)
         end do
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdgeqrf_pack_unpack_single")
-#endif
+        call obj%timer%stop("qr_pdgeqrf_pack_unpack_single")
 
       return
 
@@ -5367,15 +5069,13 @@ module elpa_pdgeqrf
 
     !direction=0: pack into work buffer
     !direction=1: unpack from work buffer
-    subroutine qr_pdgeqrf_pack_unpack_tmatrix_single(tau,t,ldt,work,lwork,n,direction)
+    subroutine qr_pdgeqrf_pack_unpack_tmatrix_single(obj,tau,t,ldt,work,lwork,n,direction)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t) :: obj
       ! input variables (local)
       integer(kind=ik)  :: ldt,lwork
       real(kind=rk4)     :: work(*), t(ldt,*),tau(*)
@@ -5389,9 +5089,7 @@ module elpa_pdgeqrf
       integer(kind=ik)  :: icol
 
       ! external functions
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdgeqrf_pack_unpack_tmatrix_single")
-#endif
+        call obj%timer%start("qr_pdgeqrf_pack_unpack_tmatrix_single")
 
 
       if (lwork .eq. -1) then
@@ -5401,9 +5099,7 @@ module elpa_pdgeqrf
         work(1) = real(n*n,kind=rk4)
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdgeqrf_pack_unpack_tmatrix_single")
-#endif
+        call obj%timer%stop("qr_pdgeqrf_pack_unpack_tmatrix_single")
 
         return
       end if
@@ -5420,9 +5116,7 @@ module elpa_pdgeqrf
           tau(icol) = t(icol,icol)
         end do
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdgeqrf_pack_unpack_tmatrix_single")
-#endif
+        call obj%timer%stop("qr_pdgeqrf_pack_unpack_tmatrix_single")
     end subroutine qr_pdgeqrf_pack_unpack_tmatrix_single
 
 
@@ -5469,15 +5163,13 @@ module elpa_pdgeqrf
     ! tmerge*: 0: do not merge, 1: incremental merge, >1: recursive merge
     !               only matters if update* == full
 
-    subroutine qr_pdlarfg_copy_1dcomm_single(x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
+    subroutine qr_pdlarfg_copy_1dcomm_single(obj,x,incx,v,incv,n,baseidx,idx,nb,rev,mpicomm)
       use precision
       use elpa1_impl
       use qr_utils_mod
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#endif
+      use elpa_api
       implicit none
-
+      class(elpa_t)                 :: obj
       ! input variables (local)
       integer(kind=ik)  :: incx,incv
       real(kind=rk4)     :: x(*), v(*)
@@ -5494,9 +5186,7 @@ module elpa_pdgeqrf
       integer(kind=ik)  :: irow,x_offset
       integer(kind=ik)  :: v_offset,local_size
 
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%start("qr_pdlarfg_copy_1dcomm_single")
-#endif
+        call obj%timer%start("qr_pdlarfg_copy_1dcomm_single")
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
       call local_size_offset_1d(n,nb,baseidx,idx,rev,mpirank,mpiprocs, &
@@ -5519,9 +5209,7 @@ module elpa_pdgeqrf
         v(local_size*incv) = 1.0_rk4
 #endif
       end if
-#ifdef HAVE_DETAILED_TIMINGS
-        call timer%stop("qr_pdlarfg_copy_1dcomm_single")
-#endif
+        call obj%timer%stop("qr_pdlarfg_copy_1dcomm_single")
 
     end subroutine qr_pdlarfg_copy_1dcomm_single
 

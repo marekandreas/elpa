@@ -64,9 +64,6 @@
   subroutine single_hh_trafo_complex_generic_single(q, hh, nb, nq, ldq)
 #endif
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq
@@ -82,15 +79,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: single_hh_trafo_complex_generic_double")
-#endif
+    !  call obj%timer%start("kernel generic: single_hh_trafo_complex_generic_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: single_hh_trafo_complex_generic_single")
-#endif
+   !   call obj%timer%start("kernel generic: single_hh_trafo_complex_generic_single")
 
 #endif
     ! Safety only:
@@ -163,15 +156,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: single_hh_trafo_complex_generic_double")
-#endif
+   !   call obj%timer%stop("kernel generic: single_hh_trafo_complex_generic_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: single_hh_trafo_complex_generic_single")
-#endif
+   !   call obj%timer%stop("kernel generic: single_hh_trafo_complex_generic_single")
 
 #endif
 
@@ -188,9 +177,6 @@
   subroutine double_hh_trafo_complex_generic_single(q, hh, nb, nq, ldq, ldh)
 #endif
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
@@ -208,15 +194,11 @@
     ! Safety only:
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: double_hh_trafo_complex_generic_double")
-#endif
+ !     call obj%timer%start("kernel generic: double_hh_trafo_complex_generic_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: double_hh_trafo_complex_generic_single")
-#endif
+  !    call obj%timer%start("kernel generic: double_hh_trafo_complex_generic_single")
 
 #endif
     if(mod(ldq,4) /= 0) STOP 'double_hh_trafo: ldq not divisible by 4!'
@@ -314,15 +296,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: double_hh_trafo_complex_generic_double")
-#endif
+ !     call obj%timer%stop("kernel generic: double_hh_trafo_complex_generic_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: double_hh_trafo_complex_generic_single")
-#endif
+  !    call obj%timer%stop("kernel generic: double_hh_trafo_complex_generic_single")
 
 #endif
 
@@ -339,9 +317,6 @@
   subroutine hh_trafo_complex_kernel_12_single(q, hh, nb, ldq)
 #endif
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq
@@ -358,15 +333,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_12_double")
-#endif
+   !   call obj%timer%start("kernel generic: hh_trafo_complex_kernel_12_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_12_single")
-#endif
+  !    call obj%timer%start("kernel generic: hh_trafo_complex_kernel_12_single")
 
 #endif
     x1 = q(1,1)
@@ -447,15 +418,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_12_double")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_12_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_12_single")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_12_single")
 
 #endif
 
@@ -472,9 +439,6 @@
   subroutine hh_trafo_complex_kernel_8_single(q, hh, nb, ldq)
 #endif
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq
@@ -491,15 +455,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_8_double")
-#endif
+   !   call obj%timer%start("kernel generic: hh_trafo_complex_kernel_8_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_8_single")
-#endif
+   !   call obj%timer%start("kernel generic: hh_trafo_complex_kernel_8_single")
 
 #endif
     x1 = q(1,1)
@@ -560,15 +520,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_8_double")
-#endif
+    !  call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_8_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_8_single")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_8_single")
 
 #endif
 
@@ -585,9 +541,6 @@
   subroutine hh_trafo_complex_kernel_4_single(q, hh, nb, ldq)
 #endif
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq
@@ -604,15 +557,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_4_double")
-#endif
+    !  call obj%timer%start("kernel generic: hh_trafo_complex_kernel_4_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_4_single")
-#endif
+    !  call obj%timer%start("kernel generic: hh_trafo_complex_kernel_4_single")
 
 #endif
 
@@ -654,15 +603,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_4_double")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_4_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_4_single")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_4_single")
 
 #endif
 
@@ -679,9 +624,6 @@
   subroutine hh_trafo_complex_kernel_4_2hv_single(q, hh, nb, ldq, ldh, s)
 #endif
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
@@ -700,15 +642,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_4_2hv_double")
-#endif
+   !   call obj%timer%start("kernel generic: hh_trafo_complex_kernel_4_2hv_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_4_2hv_single")
-#endif
+  !    call obj%timer%start("kernel generic: hh_trafo_complex_kernel_4_2hv_single")
 
 #endif
     x1 = q(1,2)
@@ -782,15 +720,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_4_2hv_double")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_4_2hv_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_4_2hv_single")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_4_2hv_single")
 
 #endif
 
@@ -808,9 +742,6 @@
   subroutine hh_trafo_complex_kernel_8_2hv_single(q, hh, nb, ldq, ldh, s)
 #endif
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
@@ -829,15 +760,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_8_2hv_double")
-#endif
+   !   call obj%timer%start("kernel generic: hh_trafo_complex_kernel_8_2hv_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_8_2hv_single")
-#endif
+   !   call obj%timer%start("kernel generic: hh_trafo_complex_kernel_8_2hv_single")
 
 #endif
 
@@ -957,15 +884,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_8_2hv_double")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_8_2hv_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_8_2hv_single")
-#endif
+    !  call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_8_2hv_single")
 
 #endif
 
@@ -982,9 +905,6 @@
   subroutine hh_trafo_complex_kernel_12_2hv_single(q, hh, nb, ldq, ldh, s)
 #endif
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#endif
     implicit none
 
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
@@ -1004,15 +924,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_12_2hv_double")
-#endif
+   !   call obj%timer%start("kernel generic: hh_trafo_complex_kernel_12_2hv_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%start("kernel generic: hh_trafo_complex_kernel_12_2hv_single")
-#endif
+  !    call obj%timer%start("kernel generic: hh_trafo_complex_kernel_12_2hv_single")
 
 #endif
     x1 = q(1,2)
@@ -1174,15 +1090,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_12_2hv_double")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_12_2hv_double")
 
 #else
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call timer%stop("kernel generic: hh_trafo_complex_kernel_12_2hv_single")
-#endif
+   !   call obj%timer%stop("kernel generic: hh_trafo_complex_kernel_12_2hv_single")
 
 #endif
 

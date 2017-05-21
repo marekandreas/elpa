@@ -51,7 +51,7 @@
        &_&
 #endif
        &PRECISION &
-       (a, a_dev, stripe_width, a_dim2, stripe_count,  &
+       (obj, a, a_dev, stripe_width, a_dim2, stripe_count,  &
 #ifdef WITH_OPENMP
        max_threads, l_nev, &
 #endif
@@ -105,13 +105,10 @@
          use cuda_c_kernel
          use cuda_functions
 
-#ifdef HAVE_DETAILED_TIMINGS
-         use timings
-#else
-         use timings_dummy
-#endif
          use elpa_generated_fortran_interfaces
+
          implicit none
+	 class(elpa_t)                 :: obj
          real(kind=c_double), intent(inout) :: kernel_time  ! MPI_WTIME always needs double
          integer(kind=lik)                  :: kernel_flops
          integer(kind=ik), intent(in)       :: nbw, max_blk_size
@@ -186,7 +183,7 @@
          endif
 #endif
 
-         call timer%start("compute_hh_trafo_&
+         call obj%timer%start("compute_hh_trafo_&
 	 &MATH_DATATYPE&
 #ifdef WITH_OPENMP
          &_openmp" // &
@@ -232,7 +229,7 @@
            noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
            nl = min(my_thread*thread_width-noff, l_nev-noff)
            if (nl<=0) then
-             call timer%stop("compute_hh_trafo_&
+             call obj%timer%stop("compute_hh_trafo_&
 	     &MATH_DATATYPE&
 #ifdef WITH_OPENMP
              &_openmp" // &
@@ -1005,7 +1002,7 @@
 	               &MATH_DATATYPE&
 		       &_cpu_&
 		       &PRECISION&
-		       & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl,     &
+		       & (obj, a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl,&
                           stripe_width)
 #endif
 
@@ -1523,7 +1520,7 @@
          endif
 #endif
 
-         call timer%stop("compute_hh_trafo_&
+         call obj%timer%stop("compute_hh_trafo_&
 	 &MATH_DATATYPE&
 #ifdef WITH_OPENMP
          &_openmp" // &

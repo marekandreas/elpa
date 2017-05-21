@@ -417,6 +417,7 @@ noinst_PROGRAMS = \
   test_real_double_2stage \
   test_complex_double_1stage \
   test_complex_double_2stage \
+  double_instance@SUFFIX@ \
   real_2stage_banded@SUFFIX@ \
   complex_2stage_banded@SUFFIX@ \
   real_2stage@SUFFIX@ \
@@ -637,6 +638,12 @@ test_single_complex_2stage_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $
         -DTEST_SOLVER_2STAGE \
         -DTEST_GPU=0
 endif
+
+double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
+double_instance@SUFFIX@_LDADD = $(build_lib)
+double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
+EXTRA_double_instance@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+
 real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
 real_2stage_banded@SUFFIX@_LDADD = $(build_lib)
 real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
@@ -1036,6 +1043,7 @@ check_SCRIPTS = \
   test_real_double_2stage.sh \
   test_complex_double_1stage.sh \
   test_complex_double_2stage.sh \
+  double_instance@SUFFIX@.sh \
   real_2stage_banded@SUFFIX@.sh \
   complex_2stage_banded@SUFFIX@.sh \
   real_2stage@SUFFIX@.sh \
@@ -1186,6 +1194,7 @@ CLEANFILES = \
   single_complex* \
   real* \
   complex* \
+  double_instance* \
   *.i
 
 clean-local:

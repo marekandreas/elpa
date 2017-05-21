@@ -74,17 +74,10 @@ module ELPA_utilities
   contains
 
    function debug_messages_via_environment_variable() result(isSet)
-#ifdef HAVE_DETAILED_TIMINGS
-     use timings
-#endif
      use precision
      implicit none
      logical              :: isSet
      CHARACTER(len=255)   :: ELPA_DEBUG_MESSAGES
-
-#ifdef HAVE_DETAILED_TIMINGS
-     call timer%start("debug_messages_via_environment_variable")
-#endif
 
      isSet = .false.
 
@@ -97,10 +90,6 @@ module ELPA_utilities
      if (trim(ELPA_DEBUG_MESSAGES) .eq. "no") then
        isSet = .true.
      endif
-
-#ifdef HAVE_DETAILED_TIMINGS
-     call timer%stop("debug_messages_via_environment_variable")
-#endif
 
    end function debug_messages_via_environment_variable
 

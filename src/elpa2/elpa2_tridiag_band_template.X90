@@ -58,7 +58,7 @@
     subroutine tridiag_band_complex_&
 #endif
     &PRECISION &
-    (na, nb, nblk, aMatrix, a_dev, lda, d, e, matrixCols, &
+    (obj, na, nb, nblk, aMatrix, a_dev, lda, d, e, matrixCols, &
 #if REALCASE == 1
     hh_trans_real, &
 #endif
@@ -93,18 +93,15 @@
     !  communicator
     !              MPI-Communicator for the total processor set
     !-------------------------------------------------------------------------------
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
+      use elpa_api
       use elpa2_workload
       use precision
       use iso_c_binding
       use redist
       implicit none
 
-      logical, intent(in)                          :: useGPU
+      class(elpa_t)                 :: obj
+      logical, intent(in)                       :: useGPU
       integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
@@ -177,12 +174,12 @@
 #ifndef WITH_MPI
       integer(kind=ik)                             :: startAddr
 #endif
-      call timer%start("tridiag_band_&
+      call obj%timer%start("tridiag_band_&
       &MATH_DATATYPE&
       &" // &
       &PRECISION_SUFFIX &
       )
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
       call mpi_comm_rank(communicator,my_pe,mpierr)
       call mpi_comm_size(communicator,n_pes,mpierr)
 
@@ -190,7 +187,7 @@
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 
       ! Get global_id mapping 2D procssor coordinates to global id
 
@@ -216,7 +213,7 @@
 #endif
 
 #ifdef WITH_MPI
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
 #ifndef WITH_OPENMP
       call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, communicator, mpierr)
 #else
@@ -230,7 +227,7 @@
         stop 1
       endif
 #endif /* WITH_OPENMP */
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
       ! Total number of blocks in the band:
@@ -247,7 +244,7 @@
         stop 1
       endif
 
-      call divide_band(nblocks_total, n_pes, block_limits)
+      call divide_band(obj,nblocks_total, n_pes, block_limits)
 
       ! nblocks: the number of blocks for my task
       nblocks = block_limits(my_pe+1) - block_limits(my_pe)
@@ -272,7 +269,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &(aMatrix, a_dev, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+      &(obj,aMatrix, a_dev, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
 
       ! Calculate the workload for each sweep in the back transformation
       ! and the space requirements to hold the HH vectors
@@ -285,14 +282,14 @@
         stop 1
       endif
 
-      call determine_workload(na, nb, np_rows, limits)
+      call determine_workload(obj,na, nb, np_rows, limits)
       max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
 
       num_hh_vecs = 0
       num_chunks  = 0
       nx = na
       do n = 1, nblocks_total
-        call determine_workload(nx, nb, np_rows, limits)
+        call determine_workload(obj, nx, nb, np_rows, limits)
         local_size = limits(my_prow+1) - limits(my_prow)
         ! add to number of householder vectors
         ! please note: for nx==1 the one and only HH Vector is 0 and is neither calculated nor send below!
@@ -342,12 +339,12 @@
       nx = na
       nt = 0
       do n = 1, nblocks_total
-        call determine_workload(nx, nb, np_rows, limits)
+        call determine_workload(obj,nx, nb, np_rows, limits)
         local_size = limits(my_prow+1) - limits(my_prow)
         if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
           num_chunks  = num_chunks+1
 #ifdef WITH_MPI
-          call timer%start("mpi_communication")
+          call obj%timer%start("mpi_communication")
 #if REALCASE == 1
           call mpi_irecv(hh_trans_real(1,num_hh_vecs+1),          &
 #endif
@@ -362,7 +359,7 @@
                         MPI_COMPLEX_EXPLICIT_PRECISION,           &
 #endif
                         nt, 10+n-block_limits(nt), communicator, ireq_hhr(num_chunks), mpierr)
-          call timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
           ! carefull non-block recv data copy must be done at wait or send
@@ -439,7 +436,7 @@
         stop 1
       endif
       do iblk=1,nblocks
-        call determine_workload(na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
+        call determine_workload(obj, na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
       enddo
 
 #ifdef WITH_OPENMP
@@ -495,7 +492,7 @@
         ! Only the PE owning the diagonal does that (sending 1 element of the subdiagonal block also)
         ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
-        call timer%start("mpi_communication")
+        call obj%timer%start("mpi_communication")
         call mpi_isend(ab_s, nb+1,  &
 #if REALCASE == 1
 	               MPI_REAL_PRECISION,  &
@@ -504,7 +501,7 @@
                        MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
 		       my_pe-1, 1, communicator, ireq_ab, mpierr)
-        call timer%stop("mpi_communication")
+        call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
       endif
 
@@ -565,7 +562,7 @@
           call hh_transform_complex_&
 #endif
 &PRECISION &
-                               (ab(2,na_s-n_off),vnorm2,hf,tau)
+                               (obj, ab(2,na_s-n_off),vnorm2,hf,tau)
 
 #if REALCASE == 1
             hv(1) = CONST_1_0
@@ -594,7 +591,7 @@
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-            call timer%start("mpi_communication")
+            call obj%timer%start("mpi_communication")
             call mpi_recv(hv, nb,       &
 #if REALCASE == 1
                           MPI_REAL_PRECISION, &
@@ -603,7 +600,7 @@
                           MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
                           my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
-            call timer%stop("mpi_communication")
+            call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
 
@@ -614,7 +611,7 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
-            call timer%start("mpi_communication")
+            call obj%timer%start("mpi_communication")
 
             call mpi_recv(hv, nb,          &
 #if REALCASE == 1
@@ -624,7 +621,7 @@
                           MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
                           my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
-            call timer%stop("mpi_communication")
+            call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
             hv(1:nb) = hv_s(1:nb)
@@ -677,7 +674,7 @@
             ! is completed by the next thread.
             ! After the first iteration it is also the place to exchange the last row
             ! with MPI calls
-            call timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+            call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
 !$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
@@ -713,14 +710,14 @@
                                           ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
                 ! Transform diagonal block
-		call timer%start("blas")
+		call obj%timer%start("blas")
 #if REALCASE == 1
                 call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
 #endif
 #if COMPLEXCASE == 1
                 call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_COMPLEX_PAIR_0_0, hd, 1)
 #endif
-		call timer%stop("blas")
+		call obj%timer%stop("blas")
 #if REALCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*tau
 	        hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
@@ -729,14 +726,14 @@
                 x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
                 hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
 #endif
-                call timer%start("blas")
+                call obj%timer%start("blas")
 #if REALCASE == 1
                 call PRECISION_SYR2('L', nc, -CONST_1_0 ,hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
 #if COMPLEXCASE == 1
                 call PRECISION_HER2('L', nc, CONST_COMPLEX_PAIR_NEGATIVE_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
-                call timer%stop("blas")
+                call obj%timer%stop("blas")
 #if REALCASE == 1
                 hv_t(:,my_thread) = CONST_0_0
                 tau_t(my_thread)  = CONST_0_0
@@ -748,7 +745,7 @@
                 if (nr<=0) cycle ! No subdiagonal block present any more
 
                 ! Transform subdiagonal block
-		call timer%start("blas")
+		call obj%timer%start("blas")
                 call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, &
 #if REALCASE == 1
 		                    CONST_0_0, &
@@ -757,7 +754,7 @@
                                     CONST_COMPLEX_PAIR_0_0, &
 #endif
 				    hs, 1)
-		call timer%stop("blas")
+		call obj%timer%stop("blas")
                 if (nr>1) then
 
                   ! complete (old) Householder transformation for first column
@@ -802,7 +799,7 @@
 #endif
                   ! update subdiagonal block for old and new Householder transformation
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
-		  call timer%start("blas")
+		  call obj%timer%start("blas")
 #if REALCASE == 1
                   call PRECISION_GEMV('T',            &
 #endif
@@ -817,7 +814,7 @@
                                       CONST_COMPLEX_PAIR_0_0, &
 #endif
 				      h(2), 1)
-		  call timer%stop("blas")
+		  call obj%timer%stop("blas")
 
                   x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
                   h(2:nb) = h(2:nb) - x*hv(2:nb)
@@ -858,7 +855,7 @@
             enddo ! my_thread
 !$omp end parallel do
 
-            call timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+            call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
             if (iter==1) then
               ! We are at the end of the first block
@@ -866,14 +863,14 @@
               ! Send our first column to previous PE
               if (my_pe>0 .and. na_s <= na) then
 #ifdef WITH_MPI
-                call timer%start("mpi_communication")
+                call obj%timer%start("mpi_communication")
                 call mpi_wait(ireq_ab, MPI_STATUS_IGNORE, mpierr)
-                call timer%stop("mpi_communication")
+                call obj%timer%stop("mpi_communication")
 
 #endif
                 ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
-                call timer%start("mpi_communication")
+                call obj%timer%start("mpi_communication")
                 call mpi_isend(ab_s, nb+1,  &
 #if REALCASE == 1
 		               MPI_REAL_PRECISION, &
@@ -882,7 +879,7 @@
                                MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
 			       my_pe-1, 1, communicator, ireq_ab, mpierr)
-                call timer%stop("mpi_communication")
+                call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               endif
@@ -890,7 +887,7 @@
               ! Request last column from next PE
               ne = na_s + nblocks*nb - (max_threads-1) - 1
 #ifdef WITH_MPI
-              call timer%start("mpi_communication")
+              call obj%timer%start("mpi_communication")
 
               if (istep>=max_threads .and. ne <= na) then
                 call mpi_recv(ab(1,ne-n_off), nb+1,       &
@@ -902,7 +899,7 @@
 #endif
                               my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
               endif
-              call timer%stop("mpi_communication")
+              call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
               if (istep>=max_threads .and. ne <= na) then
                 ab(1:nb+1,ne-n_off) = ab_s(1:nb+1)
@@ -915,15 +912,15 @@
               ne = na_s + nblocks*nb - (max_threads-1) - 1
               if (istep>=max_threads .and. ne < na) then
 #ifdef WITH_MPI
-                call timer%start("mpi_communication")
+                call obj%timer%start("mpi_communication")
                 call mpi_wait(ireq_hv, MPI_STATUS_IGNORE, mpierr)
-		call timer%stop("mpi_communication")
+		call obj%timer%stop("mpi_communication")
 #endif
                 hv_s(1) = tau_t(max_threads)
                 hv_s(2:) = hv_t(2:,max_threads)
 
 #ifdef WITH_MPI
-                call timer%start("mpi_communication")
+                call obj%timer%start("mpi_communication")
                 call mpi_isend(hv_s, nb,     &
 #if REALCASE == 1
 		               MPI_REAL_PRECISION, &
@@ -932,7 +929,7 @@
                                MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
                                my_pe+1, 2, communicator, ireq_hv, mpierr)
-                call timer%stop("mpi_communication")
+                call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               endif
@@ -975,17 +972,17 @@
             if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
               ! Wait for last transfer to finish
 #ifdef WITH_MPI
-              call timer%start("mpi_communication")
+              call obj%timer%start("mpi_communication")
 
               call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
-              call timer%stop("mpi_communication")
+              call obj%timer%stop("mpi_communication")
 #endif
               ! Copy vectors into send buffer
               hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
               ! Send to destination
 
 #ifdef WITH_MPI
-              call timer%start("mpi_communication")
+              call obj%timer%start("mpi_communication")
               call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk),  &
 #if REALCASE == 1
 	                     MPI_REAL_PRECISION, &
@@ -995,7 +992,7 @@
 #endif
                              global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
                              10+iblk, communicator, ireq_hhs(iblk), mpierr)
-              call timer%stop("mpi_communication")
+              call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
              ! do the post-poned irecv here
              startAddr = startAddr - hh_cnt(iblk)
@@ -1041,7 +1038,7 @@
 #if COMPLEXCASE == 1
               ab(1,ne) = CONST_COMPLEX_0_0
 #endif
-	      call timer%start("blas")
+	      call obj%timer%start("blas")
 
 #if REALCASE == 1
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
@@ -1057,11 +1054,11 @@
 #if COMPLEXCASE == 1
                                             CONST_COMPLEX_PAIR_0_0,hs,1)
 #endif
-	      call timer%stop("blas")
+	      call obj%timer%stop("blas")
 
               ! ... then request last column ...
 #ifdef WITH_MPI
-              call timer%start("mpi_communication")
+              call obj%timer%start("mpi_communication")
 #ifdef WITH_OPENMP
               call mpi_recv(ab(1,ne), nb+1,    &
 #if REALCASE == 1
@@ -1081,7 +1078,7 @@
 #endif
 	                    my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
 #endif /* WITH_OPENMP */
-              call timer%stop("mpi_communication")
+              call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
               ab(1:nb+1,ne) = ab_s(1:nb+1)
@@ -1095,7 +1092,7 @@
             else
 
               ! Normal matrix multiply
-	      call timer%start("blas")
+	      call obj%timer%start("blas")
 #if REALCASE == 1
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
 #endif
@@ -1110,7 +1107,7 @@
                                             CONST_COMPLEX_PAIR_0_0, hs, 1)
 
 #endif
-	      call timer%stop("blas")
+	      call obj%timer%stop("blas")
             endif
 
             ! Calculate first column of subdiagonal block and calculate new
@@ -1149,7 +1146,7 @@
                 call hh_transform_complex_&
 #endif
                 &PRECISION &
-	                           (ab(nb+1,ns),vnorm2,hf,tau_new)
+	                           (obj, ab(nb+1,ns),vnorm2,hf,tau_new)
 #if REALCASE == 1
                 hv_new(1) = CONST_1_0
 #endif
@@ -1169,20 +1166,20 @@
 
               if (iblk==nblocks) then
 #ifdef WITH_MPI
-                call timer%start("mpi_communication")
+                call obj%timer%start("mpi_communication")
 #ifdef WITH_OPENMP
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
-                call timer%stop("mpi_communication")
+                call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
                 hv_s(1) = tau_new
                 hv_s(2:) = hv_new(2:)
 
 #ifdef WITH_MPI
-                call timer%start("mpi_communication")
+                call obj%timer%start("mpi_communication")
                 call mpi_isend(hv_s, nb,       &
 #if REALCASE == 1
 		               MPI_REAL_PRECISION, &
@@ -1191,7 +1188,7 @@
                                MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
 			       my_pe+1, 2, communicator, ireq_hv, mpierr)
-                call timer%stop("mpi_communication")
+                call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               endif
@@ -1219,20 +1216,20 @@
 #endif
               ! ... send it away ...
 #ifdef WITH_MPI
-              call timer%start("mpi_communication")
+              call obj%timer%start("mpi_communication")
 
 #ifdef WITH_OPENMP
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #else
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
 #endif
-              call timer%stop("mpi_communication")
+              call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               ab_s(1:nb+1) = ab(1:nb+1,ns)
 
 #ifdef WITH_MPI
-              call timer%start("mpi_communication")
+              call obj%timer%start("mpi_communication")
 
               call mpi_isend(ab_s, nb+1,    &
 #if REALCASE == 1
@@ -1242,29 +1239,29 @@
                              MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
 			    my_pe-1, 1, communicator, ireq_ab, mpierr)
-              call timer%stop("mpi_communication")
+              call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               ! ... and calculate remaining columns with rank-2 update
-	      call timer%start("blas")
+	      call obj%timer%start("blas")
 #if REALCASE == 1
               if (nc>1) call PRECISION_SYR2('L', nc-1, -CONST_1_0, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
 #endif
 #if COMPLEXCASE == 1
               if (nc>1) call PRECISION_HER2('L', nc-1, CONST_COMPLEX_PAIR_NEGATIVE_1_0, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
 #endif
-	      call timer%stop("blas")
+	      call obj%timer%stop("blas")
 
             else
               ! No need to  send, just a rank-2 update
-	      call timer%start("blas")
+	      call obj%timer%start("blas")
 #if REALCASE == 1
               call PRECISION_SYR2('L', nc, -CONST_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
 #if COMPLEXCASE == 1
               call PRECISION_HER2('L', nc, CONST_COMPLEX_PAIR_NEGATIVE_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
-	      call timer%stop("blas")
+	      call obj%timer%stop("blas")
 
             endif
 
@@ -1272,7 +1269,7 @@
 
             if (nr>0) then
               if (nr>1) then
-	      	call timer%start("blas")
+	      	call obj%timer%start("blas")
 #if REALCASE == 1
                 call PRECISION_GEMV('T',            &
 #endif
@@ -1286,7 +1283,7 @@
 #if COMPLEXCASE == 1
                                         CONST_COMPLEX_PAIR_0_0, h(2), 1)
 #endif
-		call timer%stop("blas")
+		call obj%timer%stop("blas")
 
                 x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
                 h(2:nb) = h(2:nb) - x*hv(2:nb)
@@ -1331,16 +1328,16 @@
           if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
 #ifdef WITH_MPI
-            call timer%start("mpi_communication")
+            call obj%timer%start("mpi_communication")
             call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
-            call timer%stop("mpi_communication")
+            call obj%timer%stop("mpi_communication")
 #endif
             ! Copy vectors into send buffer
             hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
             ! Send to destination
 
 #ifdef WITH_MPI
-            call timer%start("mpi_communication")
+            call obj%timer%start("mpi_communication")
             call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk),    &
 #if REALCASE == 1
 	                   MPI_REAL_PRECISION, &
@@ -1350,7 +1347,7 @@
 #endif
                            global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
                            10+iblk, communicator, ireq_hhs(iblk), mpierr)
-            call timer%stop("mpi_communication")
+            call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
             ! do the post-poned irecv here
             startAddr = startAddr - hh_cnt(iblk)
@@ -1381,7 +1378,7 @@
 #ifdef WITH_OPENMP
 
 #ifdef WITH_MPI
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
       call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
       call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 
@@ -1398,27 +1395,27 @@
 !        print *,"tridiag_band_real: error when deallocating mpi_statuses"//errorMessage
 !        stop 1
 !      endif
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
       call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
       call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 
       call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
       call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 #endif
 
 #endif /* WITH_OPENMP */
 
 #ifdef  WITH_MPI
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
       call mpi_barrier(communicator,mpierr)
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 #endif
       deallocate(ab, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
@@ -1476,7 +1473,7 @@
          stop 1
        endif
 
-      call timer%stop("tridiag_band_&
+      call obj%timer%stop("tridiag_band_&
       &MATH_DATATYPE&
       &" // &
       &PRECISION_SUFFIX&

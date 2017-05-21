@@ -46,16 +46,11 @@
      use elpa1_compute
      use elpa_utilities
      use elpa_mpi
-#ifdef HAVE_DETAILED_TIMINGS
-     use timings
-#else
-     use timings_dummy
-#endif
      use precision
      use elpa_api
      implicit none
 
-      class(elpa_t), intent(in)     :: obj
+      class(elpa_t)     :: obj
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
@@ -88,7 +83,7 @@
       integer(kind=ik)              :: istat, debug
       character(200)                :: errorMessage
 
-      call timer%start("elpa_cholesky_&
+      call obj%timer%start("elpa_cholesky_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
@@ -108,12 +103,12 @@
         wantDebug = .false.
       endif
 
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
       success = .true.
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
@@ -180,10 +175,10 @@
           ! of the remaining block
 
           if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
-            call timer%start("blas")
+            call obj%timer%start("blas")
 
             call PRECISION_POTRF('U', na-n+1, a(l_row1,l_col1), lda, info)
-            call timer%stop("blas")
+            call obj%timer%stop("blas")
 
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_&
@@ -211,10 +206,10 @@
 
             ! The process owning the upper left remaining block does the
             ! Cholesky-Factorization of this block
-            call timer%start("blas")
+            call obj%timer%start("blas")
 
             call PRECISION_POTRF('U', nblk, a(l_row1,l_col1), lda, info)
-            call timer%stop("blas")
+            call obj%timer%stop("blas")
 
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_&
@@ -238,7 +233,7 @@
             enddo
           endif
 #ifdef WITH_MPI
-          call timer%start("mpi_communication")
+          call obj%timer%start("mpi_communication")
 
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2,      &
 #if REALCASE == 1
@@ -249,7 +244,7 @@
 #endif
 			 pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 
-          call timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
           nc = 0
@@ -258,7 +253,7 @@
             nc = nc+i
           enddo
 
-          call timer%start("blas")
+          call obj%timer%start("blas")
           if (l_cols-l_colx+1>0) &
 #if REALCASE == 1
               call PRECISION_TRSM('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, CONST_1_0, tmp2, ubound(tmp2,dim=1), &
@@ -270,7 +265,7 @@
 	                          tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 
 #endif
-          call timer%stop("blas")
+          call obj%timer%stop("blas")
         endif
 
         do i=1,nblk
@@ -284,7 +279,7 @@
 
 #ifdef WITH_MPI
 
-          call timer%start("mpi_communication")
+          call obj%timer%start("mpi_communication")
           if (l_cols-l_colx+1>0) &
             call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1,    &
 #if REALCASE == 1
@@ -295,7 +290,7 @@
 #endif
 			   prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 
-          call timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
@@ -303,7 +298,7 @@
 	&MATH_DATATYPE&
 	&_&
 	&PRECISION &
-	               (tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
+	               (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
                                       tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
                                       n, na, nblk, nblk)
 
@@ -313,7 +308,7 @@
           lrs = l_rowx
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
-          call timer%start("blas")
+          call obj%timer%start("blas")
 
 #if REALCASE == 1
           call PRECISION_GEMM('N', 'T', lre-lrs+1, lce-lcs+1, nblk, -CONST_1_0,  &
@@ -326,7 +321,7 @@
 	                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
                               CONST_COMPLEX_PAIR_1_0, a(lrs,lcs), lda)
 #endif
-          call timer%stop("blas")
+          call obj%timer%stop("blas")
 
         enddo
 
@@ -350,7 +345,7 @@
           a(l_row1:l_rows,l_col1) = 0
         endif
       enddo
-      call timer%stop("elpa_cholesky_&
+      call obj%timer%stop("elpa_cholesky_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&

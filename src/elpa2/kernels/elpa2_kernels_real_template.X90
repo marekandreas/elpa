@@ -65,11 +65,6 @@
   & (q, hh, nb, nq, ldq, ldh)
 
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#else
-    use timings_dummy
-#endif
     use iso_c_binding
     implicit none
 
@@ -89,11 +84,11 @@
 
     ! Safety only:
 
-    call timer%start("kernel generic: double_hh_trafo_&
-                     &MATH_DATATYPE&
-		     &_generic" // &
-		     &PRECISION_SUFFIX &
-		     )
+!    call obj%timer%start("kernel generic: double_hh_trafo_&
+!                     &MATH_DATATYPE&
+!		     &_generic" // &
+!		     &PRECISION_SUFFIX &
+!		     )
 
     if(mod(ldq,4) /= 0) STOP 'double_hh_trafo: ldq not divisible by 4!'
 
@@ -154,11 +149,11 @@
 
     endif
 
-    call timer%stop("kernel generic: double_hh_trafo_&
-                     &MATH_DATATYPE&
-		     &_generic" // &
-		     &PRECISION_SUFFIX &
-		     )
+!    call obj%timer%stop("kernel generic: double_hh_trafo_&
+!                     &MATH_DATATYPE&
+!		     &_generic" // &
+!		     &PRECISION_SUFFIX &
+!		     )
 
   end subroutine
 
@@ -173,13 +168,7 @@
   &PRECISION&
   & (q, hh, nb, ldq, ldh, s)
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#else
-    use timings_dummy
-#endif
     implicit none
-
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
 #ifdef PACK_REAL_TO_COMPLEX
@@ -204,9 +193,9 @@
     integer(kind=ik)                :: i
 
 
-    call timer%start("kernel generic: hh_trafo_kernel_12_generic" // &
-		     &PRECISION_SUFFIX &
-		     )
+    !call obj%timer%start("kernel generic: hh_trafo_kernel_12_generic" // &
+    !		     &PRECISION_SUFFIX &
+    !		     )
 
     x1  = q(1,2)
     x2  = q(2,2)
@@ -396,9 +385,9 @@
     q(12,nb+1) = q(12,nb+1) + x12*hh(nb,1)
 #endif
 
-    call timer%stop("kernel generic: hh_trafo_kernel_12_generic" // &
-		     &PRECISION_SUFFIX &
-		     )
+!    call obj%timer%stop("kernel generic: hh_trafo_kernel_12_generic" // &
+!		     &PRECISION_SUFFIX &
+!		     )
 
   end subroutine
   ! --------------------------------------------------------------------------------------------------
@@ -407,13 +396,7 @@
   &PRECISION&
   & (q, hh, nb, ldq, ldh, s)
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#else
-    use timings_dummy
-#endif
     implicit none
-
     integer(kind=ik), intent(in)     :: nb, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
 #ifdef PACK_REAL_TO_COMPLEX
@@ -436,9 +419,9 @@
     real(kind=C_DATATYPE_KIND)                    :: h1, h2, tau1, tau2
     integer(kind=ik)                 :: i
 
-    call timer%start("kernel generic: hh_trafo_kernel_8_generic" // &
-		     &PRECISION_SUFFIX &
-		     )
+!    call obj%timer%start("kernel generic: hh_trafo_kernel_8_generic" // &
+!		     &PRECISION_SUFFIX &
+!		     )
     x1 = q(1,2)
     x2 = q(2,2)
     x3 = q(3,2)
@@ -581,9 +564,9 @@
 #endif
 
 
-    call timer%stop("kernel generic: hh_trafo_kernel_8_generic" // &
-		     &PRECISION_SUFFIX &
-		     )
+!    call obj%timer%stop("kernel generic: hh_trafo_kernel_8_generic" // &
+!		     &PRECISION_SUFFIX &
+!		     )
 
   end subroutine
   ! --------------------------------------------------------------------------------------------------
@@ -593,13 +576,7 @@
   & (q, hh, nb, ldq, ldh, s)
 
     use precision
-#ifdef HAVE_DETAILED_TIMINGS
-    use timings
-#else
-    use timings_dummy
-#endif
     implicit none
-
     integer(kind=ik), intent(in)    :: nb, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
 #ifdef PACK_REAL_TO_COMPLEX
@@ -622,9 +599,9 @@
     real(kind=C_DATATYPE_KIND)                :: h1, h2, tau1, tau2
     integer(kind=ik)                :: i
 
-    call timer%start("kernel generic: hh_trafo_kernel_4_generic" // &
-		     &PRECISION_SUFFIX &
-		     )
+!    call obj%timer%start("kernel generic: hh_trafo_kernel_4_generic" // &
+!		     &PRECISION_SUFFIX &
+!		     )
     x1 = q(1,2)
     x2 = q(2,2)
 #ifndef PACK_REAL_TO_COMPLEX
@@ -722,8 +699,8 @@
     q(4,nb+1) = q(4,nb+1) + x4*hh(nb,1)
 #endif
 
-    call timer%stop("kernel generic: hh_trafo_kernel_4_generic" // &
-		     &PRECISION_SUFFIX &
-		     )
+!    call obj%timer%stop("kernel generic: hh_trafo_kernel_4_generic" // &
+!		     &PRECISION_SUFFIX &
+!		     )
 
   end subroutine

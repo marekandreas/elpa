@@ -54,9 +54,6 @@
 !> \brief Fortran module which contains the source of ELPA 1stage
 module elpa1_compute
   use elpa_utilities
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
   use elpa_mpi
   implicit none
 

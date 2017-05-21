@@ -56,18 +56,14 @@
 
 subroutine solve_tridi_&
 &PRECISION_AND_SUFFIX &
-    ( na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+    ( obj, na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                            mpi_comm_cols, wantDebug, success )
 
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       use precision
+      use elpa_api
       implicit none
-
-      integer(kind=ik), intent(in)           :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      class(elpa_t)                 :: obj
+      integer(kind=ik), intent(in)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE), intent(inout)   :: d(na), e(na)
 #ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE), intent(inout)   :: q(ldq,*)
@@ -85,14 +81,14 @@ subroutine solve_tridi_&
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
-      call timer%start("solve_tridi" // PRECISION_SUFFIX)
+      call obj%timer%start("solve_tridi" // PRECISION_SUFFIX)
 
-      call timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 
       success = .true.
 
@@ -120,7 +116,7 @@ subroutine solve_tridi_&
         ! Scalapack supports it but delivers no results for these columns,
         ! which is rather annoying
         if (nc==0) then
-          call timer%stop("solve_tridi" // PRECISION_SUFFIX)
+          call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
           if (wantDebug) write(error_unit,*) 'ELPA1_solve_tridi: ERROR: Problem contains processor column with zero width'
           success = .false.
           return
@@ -147,10 +143,10 @@ subroutine solve_tridi_&
       endif
       call solve_tridi_col_&
            &PRECISION_AND_SUFFIX &
-             (l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
+             (obj, l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         matrixCols, mpi_comm_rows, wantDebug, success)
       if (.not.(success)) then
-        call timer%stop("solve_tridi" // PRECISION_SUFFIX)
+        call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
       endif
       ! If there is only 1 processor column, we are done
@@ -162,7 +158,7 @@ subroutine solve_tridi_&
           stop 1
         endif
 
-        call timer%stop("solve_tridi" // PRECISION_SUFFIX)
+        call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
       endif
 
@@ -223,9 +219,9 @@ subroutine solve_tridi_&
       ! Recursively merge sub problems
       call merge_recursive_&
            &PRECISION &
-           (0, np_cols, wantDebug, success)
+           (obj, 0, np_cols, wantDebug, success)
       if (.not.(success)) then
-        call timer%stop("solve_tridi" // PRECISION_SUFFIX)
+        call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
       endif
 
@@ -235,24 +231,21 @@ subroutine solve_tridi_&
         stop 1
       endif
 
-      call timer%stop("solve_tridi" // PRECISION_SUFFIX)
+      call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
       return
 
       contains
         recursive subroutine merge_recursive_&
                   &PRECISION &
-           (np_off, nprocs, wantDebug, success)
+           (obj, np_off, nprocs, wantDebug, success)
            use precision
-#ifdef HAVE_DETAILED_TIMINGS
-           use timings
-#else
-           use timings_dummy
-#endif
+           use elpa_api
            implicit none
 
            ! noff is always a multiple of nblk_ev
            ! nlen-noff is always > nblk_ev
 
+           class(elpa_t)                 :: obj
            integer(kind=ik)     :: np_off, nprocs
            integer(kind=ik)     :: np1, np2, noff, nlen, nmid, n
 #ifdef WITH_MPI
@@ -276,11 +269,11 @@ subroutine solve_tridi_&
 
            if (np1 > 1) call merge_recursive_&
                         &PRECISION &
-           (np_off, np1, wantDebug, success)
+           (obj, np_off, np1, wantDebug, success)
            if (.not.(success)) return
            if (np2 > 1) call merge_recursive_&
                         &PRECISION &
-           (np_off+np1, np2, wantDebug, success)
+           (obj, np_off+np1, np2, wantDebug, success)
            if (.not.(success)) return
 
            noff = limits(np_off)
@@ -288,20 +281,20 @@ subroutine solve_tridi_&
            nlen = limits(np_off+nprocs) - noff
 
 #ifdef WITH_MPI
-           call timer%start("mpi_communication")
+           call obj%timer%start("mpi_communication")
            if (my_pcol==np_off) then
              do n=np_off+np1,np_off+nprocs-1
                call mpi_send(d(noff+1), nmid, MPI_REAL_PRECISION, n, 1, mpi_comm_cols, mpierr)
              enddo
            endif
-           call timer%stop("mpi_communication")
+           call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
            if (my_pcol>=np_off+np1 .and. my_pcol<np_off+nprocs) then
 #ifdef WITH_MPI
-             call timer%start("mpi_communication")
+             call obj%timer%start("mpi_communication")
              call mpi_recv(d(noff+1), nmid, MPI_REAL_PRECISION, np_off, 1, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
-             call timer%stop("mpi_communication")
+             call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !             d(noff+1:noff+1+nmid-1) = d(noff+1:noff+1+nmid-1)
 #endif /* WITH_MPI */
@@ -310,18 +303,18 @@ subroutine solve_tridi_&
            if (my_pcol==np_off+np1) then
              do n=np_off,np_off+np1-1
 #ifdef WITH_MPI
-               call timer%start("mpi_communication")
+               call obj%timer%start("mpi_communication")
                call mpi_send(d(noff+nmid+1), nlen-nmid, MPI_REAL_PRECISION, n, 1, mpi_comm_cols, mpierr)
-               call timer%stop("mpi_communication")
+               call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
              enddo
            endif
            if (my_pcol>=np_off .and. my_pcol<np_off+np1) then
 #ifdef WITH_MPI
-             call timer%start("mpi_communication")
+             call obj%timer%start("mpi_communication")
              call mpi_recv(d(noff+nmid+1), nlen-nmid, MPI_REAL_PRECISION, np_off+np1, 1,mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
-             call timer%stop("mpi_communication")
+             call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !             d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) = d(noff+nmid+1:noff+nmid+1+nlen-nmid-1)
 #endif /* WITH_MPI */
@@ -332,7 +325,7 @@ subroutine solve_tridi_&
              ! p_col_bc is set so that only nev eigenvalues are calculated
              call merge_systems_&
                   &PRECISION &
-                                 (nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
+                                 (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
                                  l_col_bc, p_col_bc, np_off, nprocs, wantDebug, success )
              if (.not.(success)) return
@@ -340,7 +333,7 @@ subroutine solve_tridi_&
              ! Not last merge, leave dense column distribution
              call merge_systems_&
                   &PRECISION &
-                                (nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
+                                (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
                                  l_col(noff+1), p_col(noff+1), np_off, nprocs, wantDebug, success )
              if (.not.(success)) return
@@ -353,25 +346,22 @@ subroutine solve_tridi_&
 
     subroutine solve_tridi_col_&
     &PRECISION_AND_SUFFIX &
-      ( na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
+      ( obj, na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
    ! Works best if the number of processor rows is a power of 2!
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       use precision
+      use elpa_api
       implicit none
+      class(elpa_t)     :: obj
 
       integer(kind=ik)              :: na, nev, nqoff, ldq, nblk, matrixCols, mpi_comm_rows
-      real(kind=REAL_DATATYPE)                 :: d(na), e(na)
+      real(kind=REAL_DATATYPE)      :: d(na), e(na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)                 :: q(ldq,*)
+      real(kind=REAL_DATATYPE)      :: q(ldq,*)
 #else
-      real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)
+      real(kind=REAL_DATATYPE)      :: q(ldq,matrixCols)
 #endif
 
       integer(kind=ik), parameter   :: min_submatrix_size = 16 ! Minimum size of the submatrices to be used
@@ -387,11 +377,11 @@ subroutine solve_tridi_&
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
 
-      call timer%start("solve_tridi_col" // PRECISION_SUFFIX)
-      call timer%start("mpi_communication")
+      call obj%timer%start("solve_tridi_col" // PRECISION_SUFFIX)
+      call obj%timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
       success = .true.
       ! Calculate the number of subdivisions needed.
 
@@ -451,7 +441,7 @@ subroutine solve_tridi_&
 
           call solve_tridi_single_problem_&
           &PRECISION_AND_SUFFIX &
-                                  (nlen,d(noff+1),e(noff+1), &
+                                  (obj, nlen,d(noff+1),e(noff+1), &
                                     q(nqoff+noff+1,noff+1),ubound(q,dim=1), wantDebug, success)
 
           if (.not.(success)) return
@@ -482,7 +472,7 @@ subroutine solve_tridi_&
           nlen = limits(my_prow+1)-noff ! Size of subproblem
           call solve_tridi_single_problem_&
           &PRECISION_AND_SUFFIX &
-                                    (nlen,d(noff+1),e(noff+1),qmat1, &
+                                    (obj, nlen,d(noff+1),e(noff+1),qmat1, &
                                     ubound(qmat1,dim=1), wantDebug, success)
 
           if (.not.(success)) return
@@ -495,11 +485,11 @@ subroutine solve_tridi_&
           noff = limits(np)
           nlen = limits(np+1)-noff
 #ifdef WITH_MPI
-          call timer%start("mpi_communication")
+          call obj%timer%start("mpi_communication")
           call MPI_Bcast(d(noff+1), nlen, MPI_REAL_PRECISION, np, mpi_comm_rows, mpierr)
           qmat2 = qmat1
           call MPI_Bcast(qmat2, max_size*max_size, MPI_REAL_PRECISION, np, mpi_comm_rows, mpierr)
-          call timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !          qmat2 = qmat1 ! is this correct
 #endif /* WITH_MPI */
@@ -508,11 +498,11 @@ subroutine solve_tridi_&
 #ifdef WITH_MPI
             call distribute_global_column_&
             &PRECISION &
-                     (qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+                     (obj, qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #else /* WITH_MPI */
             call distribute_global_column_&
             &PRECISION &
-                     (qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
+                     (obj, qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
 #endif /* WITH_MPI */
           enddo
 
@@ -557,7 +547,7 @@ subroutine solve_tridi_&
           endif
           call merge_systems_&
           &PRECISION &
-                              (nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
+                              (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                                matrixCols, mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
                                l_col(noff+1), p_col_o(noff+1), 0, 1, wantDebug, success)
           if (.not.(success)) return
@@ -574,26 +564,22 @@ subroutine solve_tridi_&
         stop 1
       endif
 
-      call timer%stop("solve_tridi_col" // PRECISION_SUFFIX)
+      call obj%timer%stop("solve_tridi_col" // PRECISION_SUFFIX)
 
     end subroutine solve_tridi_col_&
     &PRECISION_AND_SUFFIX
 
     recursive subroutine solve_tridi_single_problem_&
     &PRECISION_AND_SUFFIX &
-    (nlen, d, e, q, ldq, wantDebug, success)
+    (obj, nlen, d, e, q, ldq, wantDebug, success)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
-#ifdef HAVE_DETAILED_TIMINGS
-     use timings
-#else
-     use timings_dummy
-#endif
      use precision
+     use elpa_api
      implicit none
-
-     integer(kind=ik)              :: nlen, ldq
+     class(elpa_t)                :: obj
+     integer(kind=ik)                         :: nlen, ldq
      real(kind=REAL_DATATYPE)                 :: d(nlen), e(nlen), q(ldq,nlen)
 
      real(kind=REAL_DATATYPE), allocatable    :: work(:), qtmp(:), ds(:), es(:)
@@ -607,7 +593,7 @@ subroutine solve_tridi_&
       integer(kind=ik)             :: istat
       character(200)               :: errorMessage
 
-     call timer%start("solve_tridi_single" // PRECISION_SUFFIX)
+     call obj%timer%start("solve_tridi_single" // PRECISION_SUFFIX)
 
      success = .true.
      allocate(ds(nlen), es(nlen), stat=istat, errmsg=errorMessage)
@@ -630,9 +616,9 @@ subroutine solve_tridi_&
        print *,"solve_tridi_single: error when allocating work "//errorMessage
        stop 1
      endif
-     call timer%start("blas")
+     call obj%timer%start("blas")
      call PRECISION_STEDC('I', nlen, d, e, q, ldq, work, lwork, iwork, liwork, info)
-     call timer%stop("blas")
+     call obj%timer%stop("blas")
 
      if (info /= 0) then
 
@@ -642,9 +628,9 @@ subroutine solve_tridi_&
 
        d(:) = ds(:)
        e(:) = es(:)
-       call timer%start("blas")
+       call obj%timer%start("blas")
        call PRECISION_STEQR('I', nlen, d, e, q, ldq, work, info)
-       call timer%stop("blas")
+       call obj%timer%stop("blas")
 
        ! If DSTEQR fails also, we don't know what to do further ...
 
@@ -705,7 +691,7 @@ subroutine solve_tridi_&
 
        endif
      enddo
-     call timer%stop("solve_tridi_single" // PRECISION_SUFFIX)
+     call obj%timer%stop("solve_tridi_single" // PRECISION_SUFFIX)
 
     end subroutine solve_tridi_single_problem_&
     &PRECISION_AND_SUFFIX

@@ -50,6 +50,7 @@
 module elpa_api
   use elpa_constants
   use, intrinsic :: iso_c_binding
+  use ftimings
   implicit none
 
   integer, private, parameter :: earliest_api_version = EARLIEST_API_VERSION !< Definition of the earliest API version supported
@@ -74,6 +75,7 @@ module elpa_api
     integer(kind=c_int), public, pointer :: local_ncols => NULL()
     integer(kind=c_int), public, pointer :: nblk => NULL()
 
+    type(timer_t), public :: timer
     contains
       !> \brief methods available with the elpa_t type
       ! general

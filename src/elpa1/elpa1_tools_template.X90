@@ -58,10 +58,12 @@
 
     subroutine v_add_s_&
     &PRECISION&
-    &(v,n,s)
+    &(obj, v,n,s)
       use precision
+      use elpa_api
       implicit none
-      integer(kind=ik) :: n
+      class(elpa_t)   :: obj
+      integer(kind=ik)            :: n
       real(kind=REAL_DATATYPE)    :: v(n),s
 
       v(:) = v(:) + s
@@ -70,12 +72,14 @@
 
     subroutine distribute_global_column_&
     &PRECISION&
-    &(g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
+    &(obj, g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
       use precision
+      use elpa_api
       implicit none
 
+      class(elpa_t)    :: obj
       real(kind=REAL_DATATYPE)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching ! remove assumed size
-      integer(kind=ik)  :: noff, nlen, my_prow, np_rows, nblk
+      integer(kind=ik)             :: noff, nlen, my_prow, np_rows, nblk
 
       integer(kind=ik)  :: nbs, nbe, jb, g_off, l_off, js, je
 
@@ -100,7 +104,7 @@
 
     subroutine solve_secular_equation_&
     &PRECISION&
-    &(n, i, d, z, delta, rho, dlam)
+    &(obj, n, i, d, z, delta, rho, dlam)
     !-------------------------------------------------------------------------------
     ! This routine solves the secular equation of a symmetric rank 1 modified
     ! diagonal matrix:
@@ -150,26 +154,23 @@
     !         The computed lambda_I, the I-th updated eigenvalue.
     !-------------------------------------------------------------------------------
 
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
       use precision
+      use elpa_api
       implicit none
 
-      integer(kind=ik)   :: n, i
-      real(kind=REAL_DATATYPE)      :: d(n), z(n), delta(n), rho, dlam
+      class(elpa_t)  :: obj
+      integer(kind=ik)           :: n, i
+      real(kind=REAL_DATATYPE)   :: d(n), z(n), delta(n), rho, dlam
 
-      integer(kind=ik)   :: iter
-      real(kind=REAL_DATATYPE)      :: a, b, x, y, dshift
+      integer(kind=ik)           :: iter
+      real(kind=REAL_DATATYPE)   :: a, b, x, y, dshift
 
       ! In order to obtain sufficient numerical accuracy we have to shift the problem
       ! either by d(i) or d(i+1), whichever is closer to the solution
 
       ! Upper and lower bound of the shifted solution interval are a and b
 
-      call timer%start("solve_secular_equation" // PRECISION_SUFFIX)
+      call obj%timer%start("solve_secular_equation" // PRECISION_SUFFIX)
       if (i==n) then
 
        ! Special case: Last eigenvalue
@@ -233,7 +234,7 @@
 
       dlam = x + dshift
       delta(:) = delta(:) - x
-      call  timer%stop("solve_secular_equation" // PRECISION_SUFFIX)
+      call  obj%timer%stop("solve_secular_equation" // PRECISION_SUFFIX)
 
     end subroutine solve_secular_equation_&
     &PRECISION
@@ -247,7 +248,7 @@
     subroutine hh_transform_complex_&
 #endif
     &PRECISION &
-                   (alpha, xnorm_sq, xf, tau)
+                   (obj, alpha, xnorm_sq, xf, tau)
 #if REALCASE  == 1
       ! Similar to LAPACK routine DLARFP, but uses ||x||**2 instead of x(:)
 #endif
@@ -258,12 +259,9 @@
       ! It also hasn't the special handling for numbers < 1.d-300 or > 1.d150
       ! since this would be expensive for the parallel implementation.
       use precision
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-      use timings_dummy
-#endif
+      use elpa_api
       implicit none
+      class(elpa_t)                     :: obj
 #if REALCASE == 1
       real(kind=REAL_DATATYPE), intent(inout)       :: alpha
 #endif
@@ -281,7 +279,7 @@
 
       real(kind=REAL_DATATYPE)                      :: BETA
 
-     call timer%start("hh_transform_&
+     call obj%timer%start("hh_transform_&
                       &MATH_DATATYPE&
 		      &" // &
 		      &PRECISION_SUFFIX )
@@ -345,7 +343,7 @@
        ALPHA = BETA
      endif
 
-      call timer%stop("hh_transform_&
+      call obj%timer%stop("hh_transform_&
       &MATH_DATATYPE&
       &" // &
       &PRECISION_SUFFIX )
