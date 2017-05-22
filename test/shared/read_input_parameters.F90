@@ -42,8 +42,10 @@
 !
 #include "config-f90.h"
 module mod_read_input_parameters
-
+  use elpa
+  use elpa_utilities, only : error_unit
   use output_types
+  use precision
 
   implicit none
   type input_options_t
@@ -65,10 +67,6 @@ module mod_read_input_parameters
   contains
 
     subroutine parse_arguments(command_line_argument, input_options)
-      use elpa2_utilities
-      use precision
-      use output_types
-
       implicit none
 
       type(input_options_t) :: input_options
@@ -205,11 +203,6 @@ module mod_read_input_parameters
     end subroutine
 
     subroutine read_input_parameters_general(input_options)
-      use ELPA_utilities, only : error_unit
-      use precision
-      use elpa_mpi
-      use elpa2_utilities
-      use output_types
       implicit none
 
       type(input_options_t)         :: input_options
@@ -227,8 +220,8 @@ module mod_read_input_parameters
       input_options%write_to_file%eigenvectors = .false.
       input_options%write_to_file%eigenvalues  = .false.
 
-      input_options%this_real_kernel = DEFAULT_REAL_ELPA_KERNEL
-      input_options%this_complex_kernel = DEFAULT_COMPLEX_ELPA_KERNEL
+      input_options%this_real_kernel = ELPA_2STAGE_REAL_DEFAULT
+      input_options%this_complex_kernel = ELPA_2STAGE_COMPLEX_DEFAULT
       input_options%realKernelIsSet = .false.
       input_options%complexKernelIsSet = .false.
 
@@ -344,10 +337,6 @@ module mod_read_input_parameters
     end subroutine
 
     subroutine read_input_parameters_traditional(na, nev, nblk, write_to_file)
-      use ELPA_utilities, only : error_unit
-      use precision
-      use elpa_mpi
-      use output_types
       implicit none
 
       integer(kind=ik), intent(out) :: na, nev, nblk

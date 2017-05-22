@@ -71,11 +71,11 @@ module elpa2_workload
 
   contains
     subroutine determine_workload(obj, na, nb, nprocs, limits)
-      use elpa_api
+      use elpa_abstract_impl
       use precision
       implicit none
 
-      class(elpa_t)     :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)  :: na, nb, nprocs
       integer(kind=ik), intent(out) :: limits(0:nprocs)
 
@@ -109,9 +109,9 @@ module elpa2_workload
 
     subroutine divide_band(obj, nblocks_total, n_pes, block_limits)
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
-      class(elpa_t)     :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)  :: nblocks_total ! total number of blocks in band
       integer(kind=ik), intent(in)  :: n_pes         ! number of PEs for division
       integer(kind=ik), intent(out) :: block_limits(0:n_pes)

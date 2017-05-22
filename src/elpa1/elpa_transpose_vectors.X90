@@ -77,14 +77,14 @@ subroutine elpa_transpose_vectors_&
 !
 !-------------------------------------------------------------------------------
     use precision
-    use elpa_api
+    use elpa_abstract_impl
 #ifdef WITH_OPENMP
    use omp_lib
 #endif
    use elpa_mpi
 
    implicit none
-   class(elpa_t)                         :: obj
+   class(elpa_abstract_impl_t), intent(inout) :: obj
    integer(kind=ik), intent(in)                      :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)   :: vmat_s(ld_s,nvc)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout):: vmat_t(ld_t,nvc)

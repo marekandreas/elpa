@@ -49,8 +49,9 @@
 ! The ELPA public API
 
 module elpa
-  use elpa_api
   use elpa_constants
+  use elpa_api
+  use elpa_mpi
 
   implicit none
   public

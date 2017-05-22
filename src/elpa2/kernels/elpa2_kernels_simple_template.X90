@@ -69,9 +69,9 @@
   & (obj, q, hh, nb, nq, ldq)
 
     use precision
-    use elpa_api
+    use elpa_abstract_impl
     implicit none
-    class(elpa_t) :: obj
+    class(elpa_abstract_impl_t), intent(inout) :: obj
     integer(kind=ik), intent(in)    :: nb, nq, ldq
 #ifdef USE_ASSUMED_SIZE
     complex(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
@@ -143,10 +143,10 @@
 #endif /* COMPLEXCASE==1 */
 
     use precision
-    use elpa_api
+    use elpa_abstract_impl
     implicit none
 
-    class(elpa_t) :: obj
+    class(elpa_abstract_impl_t), intent(inout) :: obj
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
 #if REALCASE==1
 

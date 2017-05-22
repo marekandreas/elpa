@@ -26,13 +26,13 @@ module single_hh_trafo_real
     subroutine single_hh_trafo_real_cpu_double(obj, q, hh, nb, nq, ldq)
 #endif
 
-      use elpa_api
+      use elpa_abstract_impl
       use precision
       ! Perform single real Householder transformation.
       ! This routine is not performance critical and thus it is coded here in Fortran
 
       implicit none
-      class(elpa_t)                 :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
 
       integer(kind=ik), intent(in)   :: nb, nq, ldq
 !      real(kind=rk8), intent(inout)   :: q(ldq, *)
@@ -79,13 +79,13 @@ module single_hh_trafo_real
     subroutine single_hh_trafo_real_cpu_single(obj, q, hh, nb, nq, ldq)
 #endif
 
-      use elpa_api
+      use elpa_abstract_impl
       use precision
       ! Perform single real Householder transformation.
       ! This routine is not performance critical and thus it is coded here in Fortran
 
       implicit none
-      class(elpa_t)                 :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
 
       integer(kind=ik), intent(in)   :: nb, nq, ldq
 !      real(kind=rk4), intent(inout)   :: q(ldq, *)

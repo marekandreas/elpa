@@ -57,10 +57,10 @@
 #else
         last_stripe_width, stripe_count)
 #endif
-          use elpa_api
+          use elpa_abstract_impl
           use precision
           implicit none
-          class(elpa_t)    :: obj
+          class(elpa_abstract_impl_t), intent(inout) :: obj
 
           integer(kind=ik), intent(in) :: n, stripe_count, stripe_width
 #ifdef WITH_OPENMP
@@ -157,10 +157,10 @@
 #else
          last_stripe_width)
 #endif
-          use elpa_api
+          use elpa_abstract_impl
           use precision
           implicit none
-          class(elpa_t)                 :: obj
+          class(elpa_abstract_impl_t), intent(inout) :: obj
            integer(kind=ik), intent(in) :: n, stripe_count, stripe_width
 
 #ifdef WITH_OPENMP

@@ -68,7 +68,7 @@
        kernel)
 
          use precision
-         use elpa_api
+         use elpa_abstract_impl
          use iso_c_binding
 #if REALCASE == 1
 
@@ -108,7 +108,7 @@
          use elpa_generated_fortran_interfaces
 
          implicit none
-	 class(elpa_t)                 :: obj
+	 class(elpa_abstract_impl_t), intent(inout) :: obj
          real(kind=c_double), intent(inout) :: kernel_time  ! MPI_WTIME always needs double
          integer(kind=lik)                  :: kernel_flops
          integer(kind=ik), intent(in)       :: nbw, max_blk_size

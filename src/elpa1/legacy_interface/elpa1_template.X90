@@ -104,6 +104,8 @@ function elpa_solve_evp_&
    integer(kind=c_int)                             :: successInternal
 
    class(elpa_t), pointer                          :: e
+
+   print *, "timer%start"
    call timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
@@ -163,9 +165,9 @@ function elpa_solve_evp_&
      endif
    endif
 
-   call e%set("summary_timings", 1,successInternal)
+   call e%set("print_flops", 1,successInternal)
    if (successInternal .ne. ELPA_OK) then
-     print *, "Cannot set summary_timings"
+     print *, "Cannot set print_flops"
      success = .false.
      return
    endif
@@ -186,6 +188,7 @@ function elpa_solve_evp_&
 
    call elpa_uninit()
 
+   print *, "timer%stop"
    call timer%stop("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&

@@ -49,7 +49,7 @@
 
 !> \brief Fortran module which provides the implementation of the API
 module elpa_impl
-  use elpa_api
+  use elpa_abstract_impl
   use, intrinsic :: iso_c_binding
   implicit none
 
@@ -57,7 +57,7 @@ module elpa_impl
   public :: elpa_impl_allocate
 
 !> \brief Definition of the extended elpa_impl_t type
-  type, extends(elpa_t) :: elpa_impl_t
+  type, extends(elpa_abstract_impl_t) :: elpa_impl_t
    private
    type(c_ptr)         :: index = C_NULL_PTR
 
@@ -75,6 +75,12 @@ module elpa_impl
                                                                 !< in elpa_is_set
      procedure, public :: can_set => elpa_can_set               !< a method to check whether a key/value pair can be set : implemented
                                                                 !< in elpa_can_set
+
+
+     ! timer
+     procedure, public :: get_time => elpa_get_time
+     procedure, public :: print_times => elpa_print_times
+
 
      !> \brief the private methods
 
@@ -181,6 +187,10 @@ module elpa_impl
 
       if (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) then
         error = ELPA_OK
+      endif
+
+      if (self%get("timings") == 1) then
+        call self%timer%enable()
       endif
 
     end function
@@ -357,6 +367,22 @@ module elpa_impl
       endif
       call c_f_pointer(value_p, value)
     end function
+
+
+    function elpa_get_time(self, name1, name2, name3, name4, name5, name6) result(s)
+      class(elpa_impl_t), intent(in) :: self
+      ! this is clunky, but what can you do..
+      character(len=*), intent(in), optional :: name1, name2, name3, name4, name5, name6
+      real(kind=c_double) :: s
+
+      s = self%timer%get(name1, name2, name3, name4, name5, name6)
+    end function
+
+
+    subroutine elpa_print_times(self)
+      class(elpa_impl_t), intent(in) :: self
+      call self%timer%print()
+    end subroutine
 
 
     subroutine elpa_solve_real_double(self, a, ev, q, error)

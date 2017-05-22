@@ -136,7 +136,7 @@ program print_available_elpa2_kernels
    contains
 
      subroutine print_options(e, option_name)
-       class(elpa_t) :: e
+       class(elpa_t), intent(inout) :: e
        character(len=*), intent(in) :: option_name
        integer :: i, option
 

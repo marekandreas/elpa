@@ -53,9 +53,6 @@ program test_interface
    use mod_read_input_parameters
    use mod_blacs_infrastructure
    use mod_check_correctness
-#ifdef HAVE_DETAILED_TIMINGS
-   use timings
-#endif
    implicit none
 
    ! matrix dimensions
@@ -91,32 +88,6 @@ program test_interface
 
    status = 0
 
-#ifdef HAVE_DETAILED_TIMINGS
-
-   ! initialise the timing functionality
-
-#ifdef HAVE_LIBPAPI
-   call timer%measure_flops(.true.)
-#endif
-
-   call timer%measure_allocated_memory(.true.)
-   call timer%measure_virtual_memory(.true.)
-   call timer%measure_max_allocated_memory(.true.)
-
-   call timer%set_print_options(&
-#ifdef HAVE_LIBPAPI
-                print_flop_count=.true., &
-                print_flop_rate=.true., &
-#endif
-                print_allocated_memory = .true. , &
-                print_virtual_memory=.true., &
-                print_max_allocated_memory=.true.)
-
-
-  call timer%enable()
-
-  call timer%start("program")
-#endif
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
@@ -132,9 +103,6 @@ program test_interface
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("set up matrix")
-#endif
 
    allocate(a (na_rows,na_cols), as(na_rows,na_cols))
    allocate(z (na_rows,na_cols))
@@ -145,17 +113,10 @@ program test_interface
    ev(:) = 0.0
 
    call prepare_matrix(na, myid, sc_desc, a, z, as)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("set up matrix")
-#endif
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
      stop 1
    endif
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("prepare_elpa")
-#endif
-
 
    e => elpa_allocate()
 
@@ -183,19 +144,9 @@ program test_interface
 
    call e%set("complex_kernel", ELPA_2STAGE_COMPLEX_DEFAULT, success)
    assert_elpa_ok(success)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("prepare_elpa")
-#endif
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("solve")
-#endif
-
 
    call e%solve(a, ev, z, success)
    assert_elpa_ok(success)
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("solve")
-#endif
    call elpa_deallocate(e)
 
    call elpa_uninit()
@@ -206,18 +157,6 @@ program test_interface
    deallocate(as)
    deallocate(z)
    deallocate(ev)
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
-   print *," "
-   print *,"Timings program:"
-   print *," "
-   call timer%print("program")
-   print *," "
-   print *,"End timings program"
-   print *," "
-#endif
-
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

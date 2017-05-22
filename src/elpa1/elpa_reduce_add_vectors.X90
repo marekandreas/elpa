@@ -78,10 +78,10 @@ subroutine elpa_reduce_add_vectors_&
    use omp_lib
 #endif
    use elpa_mpi
-   use elpa_api
+   use elpa_abstract_impl
    implicit none
 
-   class(elpa_t)                          :: obj
+   class(elpa_abstract_impl_t), intent(inout) :: obj
    integer(kind=ik), intent(in)                       :: ld_s, comm_s, ld_t, comm_t, nvr, nvc, nblk
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)    :: vmat_s(ld_s,nvc)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: vmat_t(ld_t,nvc)

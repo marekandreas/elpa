@@ -50,7 +50,6 @@
 module elpa_api
   use elpa_constants
   use, intrinsic :: iso_c_binding
-  use ftimings
   implicit none
 
   integer, private, parameter :: earliest_api_version = EARLIEST_API_VERSION !< Definition of the earliest API version supported
@@ -68,14 +67,13 @@ module elpa_api
   type, abstract :: elpa_t
     private
 
-    ! \todo: it's ugly that these are public
+    ! these have to be public for proper bounds checking, sadly
     integer(kind=c_int), public, pointer :: na => NULL()
     integer(kind=c_int), public, pointer :: nev => NULL()
     integer(kind=c_int), public, pointer :: local_nrows => NULL()
     integer(kind=c_int), public, pointer :: local_ncols => NULL()
     integer(kind=c_int), public, pointer :: nblk => NULL()
 
-    type(timer_t), public :: timer
     contains
       !> \brief methods available with the elpa_t type
       ! general
@@ -92,7 +90,11 @@ module elpa_api
       procedure(elpa_is_set_i),  deferred, public :: is_set         !< method to check whether key/value is set
       procedure(elpa_can_set_i), deferred, public :: can_set        !< method to check whether key/value can be set
 
-      ! actual math routines
+      ! Timer
+      procedure(elpa_get_time_i), deferred, public :: get_time
+      procedure(elpa_print_times_i), deferred, public :: print_times
+
+      ! Actual math routines
       generic, public :: solve => &                                 !< method solve for solving the eigenvalue problem
           elpa_solve_real_double, &                                 !< for symmetric real valued / hermitian complex valued
           elpa_solve_real_single, &                                 !< matrices
@@ -248,6 +250,30 @@ module elpa_api
       integer(kind=c_int), pointer   :: value
     end function
   end interface
+
+
+  ! Timer routines
+
+  abstract interface
+    function elpa_get_time_i(self, name1, name2, name3, name4, name5, name6) result(s)
+      import elpa_t, c_double
+      class(elpa_t), intent(in) :: self
+      ! this is clunky, but what can you do..
+      character(len=*), intent(in), optional :: name1, name2, name3, name4, name5, name6
+      real(kind=c_double) :: s
+    end function
+  end interface
+
+
+  abstract interface
+    subroutine elpa_print_times_i(self)
+      import elpa_t
+      class(elpa_t), intent(in) :: self
+    end subroutine
+  end interface
+
+
+  ! Actual math routines
 
   !> \brief abstract defintion of interface to solve double real eigenvalue problem
   !> Parameters

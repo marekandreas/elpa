@@ -49,6 +49,7 @@ module elpa_pdgeqrf
   use elpa1_compute
   use elpa_pdlarfb
   use qr_utils_mod
+  use elpa_qrkernels
   use elpa_mpi
   implicit none
 

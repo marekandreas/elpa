@@ -37,6 +37,7 @@ noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_private_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_impl.F90 \
+  src/elpa_abstract_impl.F90 \
   src/helpers/mod_precision.F90 \
   src/helpers/mod_mpi.F90 \
   src/helpers/mod_mpi_stubs.F90 \
@@ -45,7 +46,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/mod_pack_unpack_cpu.F90 \
   src/elpa2/mod_compute_hh_trafo.F90 \
   src/helpers/aligned_mem.F90 \
-  src/elpa1/elpa1_utilities.F90 \
   src/elpa1/elpa1_compute_private.F90 \
   src/elpa2/elpa2_determine_workload.F90 \
   src/elpa2/elpa2_compute.F90 \
@@ -121,7 +121,6 @@ endif
 
 if HAVE_DETAILED_TIMINGS
 libelpa@SUFFIX@_private_la_SOURCES += \
-  src/helpers/timer.F90 \
   src/ftimings/ftimings.F90 \
   src/ftimings/ftimings_type.F90 \
   src/ftimings/ftimings_value.F90 \
@@ -130,6 +129,12 @@ libelpa@SUFFIX@_private_la_SOURCES += \
   src/ftimings/time.c \
   src/ftimings/virtual_memory.c \
   src/ftimings/papi.c
+
+if ENABLE_LEGACY
+libelpa@SUFFIX@_private_la_SOURCES += \
+  src/helpers/timer.F90
+endif
+
 else
 libelpa@SUFFIX@_private_la_SOURCES += \
   src/helpers/timer_dummy.F90
@@ -551,7 +556,7 @@ noinst_LTLIBRARIES += libelpatest@SUFFIX@.la
 libelpatest@SUFFIX@_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 libelpatest@SUFFIX@_la_SOURCES = \
   test/shared/util.F90 \
-  test/shared/read_input_parameters.F90  \
+  test/shared/read_input_parameters.F90 \
   test/shared/check_correctness.F90 \
   test/shared/check_correctness_template.X90 \
   test/shared/setup_mpi.F90 \

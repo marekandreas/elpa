@@ -60,9 +60,9 @@
     &PRECISION&
     &(obj, v,n,s)
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
-      class(elpa_t)   :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)            :: n
       real(kind=REAL_DATATYPE)    :: v(n),s
 
@@ -74,10 +74,10 @@
     &PRECISION&
     &(obj, g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
 
-      class(elpa_t)    :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       real(kind=REAL_DATATYPE)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching ! remove assumed size
       integer(kind=ik)             :: noff, nlen, my_prow, np_rows, nblk
 
@@ -155,10 +155,10 @@
     !-------------------------------------------------------------------------------
 
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
 
-      class(elpa_t)  :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)           :: n, i
       real(kind=REAL_DATATYPE)   :: d(n), z(n), delta(n), rho, dlam
 
@@ -259,9 +259,9 @@
       ! It also hasn't the special handling for numbers < 1.d-300 or > 1.d150
       ! since this would be expensive for the parallel implementation.
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
-      class(elpa_t)                     :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
 #if REALCASE == 1
       real(kind=REAL_DATATYPE), intent(inout)       :: alpha
 #endif

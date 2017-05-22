@@ -1,3 +1,6 @@
+!
+!    Copyright 2017, L. Hüdepohl and A. Marek, MPCDF
+!
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
@@ -42,76 +45,31 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-!
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
-!
-! Copyright of the original code rests with the authors inside the ELPA
-! consortium. The copyright of any additional modifications shall rest
-! with their original authors, but shall adhere to the licensing terms
-! distributed along with the original code in the file "COPYING".
-!
-! Author: A. Marek, MPCDF
+#include "config-f90.h"
 
-
-
-#include "../general/sanity.X90"
-
-      use elpa1_compute, solve_tridi_&
-                         &PRECISION&
-			 &_private_impl => solve_tridi_&
-			 &PRECISION&
-			 &_impl
-      use precision
-      use elpa_abstract_impl
-
-      implicit none
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)         :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE) :: d(obj%na), e(obj%na)
-#ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE) :: q(obj%local_nrows,*)
+module elpa_abstract_impl
+  use elpa_api
+#ifdef HAVE_DETAILED_TIMINGS
+  use ftimings
 #else
-      real(kind=REAL_DATATYPE) :: q(obj%local_nrows, obj%local_ncols)
+  use timings_dummy
 #endif
+  implicit none
 
-      logical                  :: wantDebug
-      logical                  :: success
+  ! The reason to have this additional layer is to allow for members (here the
+  ! 'timer' object) that can be used internally but are not exposed to the
+  ! public API. This cannot be done via 'private' members, as the scope of
+  ! 'private' is per-file.
+  !
+  ! Thus, other sub-types or suplementary routines cannot use these members
+  ! (unless they would all be implemented in one giant file)
+  !
+  type, abstract, extends(elpa_t) :: elpa_abstract_impl_t
+#ifdef HAVE_DETAILED_TIMINGS
+    type(timer_t) :: timer
+#else
+    type(timer_dummy_t) :: timer
+#endif
+  end type
 
-      call obj%timer%start("elpa_solve_tridi_public_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION&
-      &")
-      na         = obj%na
-      nev        = obj%nev
-      nblk       = obj%nblk
-      ldq        = obj%local_nrows
-      matrixCols = obj%local_ncols
-
-      mpi_comm_rows = obj%get("mpi_comm_rows")
-      mpi_comm_cols = obj%get("mpi_comm_cols")
-
-      if (obj%get("debug") == 1) then
-        wantDebug = .true.
-      else
-        wantDebug = .false.
-      endif
-      success = .false.
-
-      call solve_tridi_&
-      &PRECISION&
-      &_private_impl(obj, na, nev, d, e, q, ldq, nblk, matrixCols, &
-               mpi_comm_rows, mpi_comm_cols, wantDebug, success)
-
-      call obj%timer%stop("elpa_solve_tridi_public_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION&
-      &")
-
-
-#undef REALCASE
-#undef COMPLEXCASE
-#undef DOUBLE_PRECISION
-#undef SINGLE_PRECISION
-
+end module

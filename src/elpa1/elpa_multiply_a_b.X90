@@ -58,10 +58,10 @@
       use elpa1_compute
       use elpa_mpi
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
 
-      class(elpa_t)     :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
 
       character*1                   :: uplo_a, uplo_c
 

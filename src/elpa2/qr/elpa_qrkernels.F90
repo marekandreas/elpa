@@ -42,6 +42,11 @@
 
 #include "config-f90.h"
 
+module elpa_qrkernels
+  implicit none
+  public
+
+  contains
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
@@ -59,3 +64,4 @@
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
+end module

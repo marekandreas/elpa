@@ -60,9 +60,9 @@ subroutine solve_tridi_&
                                            mpi_comm_cols, wantDebug, success )
 
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
-      class(elpa_t)                 :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE), intent(inout)   :: d(na), e(na)
 #ifdef USE_ASSUMED_SIZE
@@ -239,13 +239,13 @@ subroutine solve_tridi_&
                   &PRECISION &
            (obj, np_off, nprocs, wantDebug, success)
            use precision
-           use elpa_api
+           use elpa_abstract_impl
            implicit none
 
            ! noff is always a multiple of nblk_ev
            ! nlen-noff is always > nblk_ev
 
-           class(elpa_t)                 :: obj
+           class(elpa_abstract_impl_t), intent(inout) :: obj
            integer(kind=ik)     :: np_off, nprocs
            integer(kind=ik)     :: np1, np2, noff, nlen, nmid, n
 #ifdef WITH_MPI
@@ -352,9 +352,9 @@ subroutine solve_tridi_&
    ! with the divide and conquer method.
    ! Works best if the number of processor rows is a power of 2!
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
-      class(elpa_t)     :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
 
       integer(kind=ik)              :: na, nev, nqoff, ldq, nblk, matrixCols, mpi_comm_rows
       real(kind=REAL_DATATYPE)      :: d(na), e(na)
@@ -576,9 +576,9 @@ subroutine solve_tridi_&
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
      use precision
-     use elpa_api
+     use elpa_abstract_impl
      implicit none
-     class(elpa_t)                :: obj
+     class(elpa_abstract_impl_t), intent(inout) :: obj
      integer(kind=ik)                         :: nlen, ldq
      real(kind=REAL_DATATYPE)                 :: d(nlen), e(nlen), q(ldq,nlen)
 

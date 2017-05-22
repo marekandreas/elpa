@@ -833,3 +833,5 @@ subroutine qr_dlarft_kernel_&
             t(icol,icol) = tau(icol)
         end do
 end subroutine
+
+! vim: syntax=fortran

@@ -60,10 +60,10 @@
     !  On entry, only the upper half of A needs to be set
     !  On exit, the complete matrix is set
     !-------------------------------------------------------------------------------
-      use elpa_api
+      use elpa_abstract_impl
       use precision
       implicit none
-      class(elpa_t)    :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)             :: n, lda, ldb, comm
 #ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE)     :: a(lda,*)

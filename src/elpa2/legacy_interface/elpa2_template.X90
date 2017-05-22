@@ -198,9 +198,9 @@
     endif
 #endif
 
-    call e%set("summary_timings", 1,successInternal)
+    call e%set("print_flops", 1,successInternal)
     if (successInternal .ne. ELPA_OK) then
-      print *, "Cannot set summary_timings"
+      print *, "Cannot set print_flops"
       success = .false.
       return
     endif

@@ -99,12 +99,12 @@
     !  communicator
     !              MPI-Communicator for the total processor set
     !-------------------------------------------------------------------------------
-      use elpa_api
+      use elpa_abstract_impl
       use elpa2_workload
       use precision
       implicit none
 
-      class(elpa_t)                :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)             :: na, nb, nbCol, nb2, nb2Col, communicator
       real(kind=REAL_DATATYPE), intent(inout)  :: ab(2*nb,nbCol) ! removed assumed size
       real(kind=REAL_DATATYPE), intent(inout)  :: ab2(2*nb2,nb2Col) ! removed assumed size
@@ -455,10 +455,10 @@
     &PRECISION&
     &(obj, n, nb, W, Y, tau, mem, lda)
 
-      use elpa_api
+      use elpa_abstract_impl
       use precision
       implicit none
-      class(elpa_t) :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)            :: n      !length of householder-vectors
       integer(kind=ik), intent(in)            :: nb     !number of householder-vectors
       integer(kind=ik), intent(in)            :: lda        !leading dimension of Y and W
@@ -487,9 +487,9 @@
     &(obj, n, m, nb, A, lda, W, Y, mem, lda2)
 
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
-      class(elpa_t) :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)            :: n      !width of the matrix A
       integer(kind=ik), intent(in)            :: m      !length of matrix W and Y
       integer(kind=ik), intent(in)            :: nb     !width of matrix W and Y
@@ -513,9 +513,9 @@
     &(obj, n, m, nb, A, lda, W, Y, mem, lda2)
 
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
-      class(elpa_t) :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)            :: n      !height of the matrix A
       integer(kind=ik), intent(in)            :: m      !length of matrix W and Y
       integer(kind=ik), intent(in)            :: nb     !width of matrix W and Y
@@ -540,10 +540,10 @@
     &PRECISION&
     &(obj, n, nb, A, lda, W, Y, mem, mem2, lda2)
 
-      use elpa_api
+      use elpa_abstract_impl
       use precision
       implicit none
-      class(elpa_t) :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)            :: n      !width/heigth of the matrix A; length of matrix W and Y
       integer(kind=ik), intent(in)            :: nb     !width of matrix W and Y
       integer(kind=ik), intent(in)            :: lda        !leading dimension of A

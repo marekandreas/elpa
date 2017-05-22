@@ -93,14 +93,14 @@
     !  communicator
     !              MPI-Communicator for the total processor set
     !-------------------------------------------------------------------------------
-      use elpa_api
+      use elpa_abstract_impl
       use elpa2_workload
       use precision
       use iso_c_binding
       use redist
       implicit none
 
-      class(elpa_t)                 :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       logical, intent(in)                       :: useGPU
       integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #if REALCASE == 1

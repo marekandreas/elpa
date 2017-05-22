@@ -60,9 +60,9 @@
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, wantDebug, success)
 
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
-      class(elpa_t)                  :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)               :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
                                                     mpi_comm_cols, npc_0, npc_n
       integer(kind=ik), intent(in)                :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
@@ -796,9 +796,9 @@
         &PRECISION&
         &(obj, d1, dbase, ddiff, z, ev_scale_value, na1,i)
           use precision
-	  use elpa_api
+	  use elpa_abstract_impl
           implicit none
-          class(elpa_t)                 :: obj
+          class(elpa_abstract_impl_t), intent(inout) :: obj
           integer(kind=ik), intent(in) :: na1, i
 
           real(kind=REAL_DATATYPE), intent(in)    :: d1(:), dbase(:), ddiff(:), z(:)
@@ -825,9 +825,9 @@
         &PRECISION&
         &(obj, idx_ev, nLength)
           use precision
-	  use elpa_api
+	  use elpa_abstract_impl
           implicit none
-          class(elpa_t)                 :: obj
+          class(elpa_abstract_impl_t), intent(inout) :: obj
           integer(kind=ik), intent(in) :: nLength
           integer(kind=ik)             :: idx_ev(nLength)
           integer(kind=ik)             :: i, nc, pc1, pc2, lc1, lc2, l_cols_out
@@ -908,9 +908,9 @@
         &PRECISION&
         &(obj, col1, col2)
           use precision
-	  use elpa_api
+	  use elpa_abstract_impl
           implicit none
-          class(elpa_t)  :: obj
+          class(elpa_abstract_impl_t), intent(inout) :: obj
 
           integer(kind=ik)           :: col1, col2
           integer(kind=ik)           :: pc1, pc2, lc1, lc2
@@ -964,9 +964,9 @@
           ! i.e. z(i) should be nonzero on exactly 1 processor column,
           ! otherways the results may be numerically different on different columns
           use precision
-          use elpa_api
+          use elpa_abstract_impl
           implicit none
-          class(elpa_t)   :: obj
+          class(elpa_abstract_impl_t), intent(inout) :: obj
           integer(kind=ik)            :: n
           real(kind=REAL_DATATYPE)    :: z(n)
           real(kind=REAL_DATATYPE)    :: tmp(n)
@@ -1019,9 +1019,9 @@
         &(obj, z, n)
           ! This routine calculates the global product of z.
           use precision
-          use elpa_api
+          use elpa_abstract_impl
           implicit none
-          class(elpa_t)   :: obj
+          class(elpa_abstract_impl_t), intent(inout) :: obj
 
 
           integer(kind=ik)            :: n
@@ -1099,10 +1099,10 @@
         ! This is a test routine for checking if the eigenvalues are monotonically increasing.
         ! It is for debug purposes only, an error should never be triggered!
           use precision
-	  use elpa_api
+	  use elpa_abstract_impl
           implicit none
 
-          class(elpa_t)     :: obj
+          class(elpa_abstract_impl_t), intent(inout) :: obj
           integer(kind=ik)              :: n
           real(kind=REAL_DATATYPE)      :: d(n)
           character*(*)                 :: text

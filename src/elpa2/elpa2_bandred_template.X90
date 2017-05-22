@@ -109,10 +109,10 @@
       use omp_lib
 #endif
       use precision
-      use elpa_api
+      use elpa_abstract_impl
       implicit none
 
-      class(elpa_t)                   :: obj
+      class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)                            :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 
 #if REALCASE == 1

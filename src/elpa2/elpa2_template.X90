@@ -56,9 +56,8 @@
   &PRECISION&
   &_impl (obj, a, ev, q) result(success)
 
-   use elpa_api
+   use elpa_abstract_impl
    use elpa_utilities
-   use elpa1_utilities, only : gpu_usage_via_environment_variable
    use elpa1_compute
    use elpa2_compute
    use elpa_mpi
@@ -66,7 +65,7 @@
    use mod_check_for_gpu
    use iso_c_binding
    implicit none
-   class(elpa_t)                 :: obj
+   class(elpa_abstract_impl_t), intent(inout) :: obj
    logical                                   :: useGPU
 #if REALCASE == 1
    logical                                   :: useQR
@@ -149,11 +148,6 @@
     mpi_comm_cols = obj%get("mpi_comm_cols")
     mpi_comm_all  = obj%get("mpi_comm_parent")
 
-!    if (obj%get("summary_timings") .eq. 1) then
-!      summary_timings = .true.
-!    else
-!      summary_timings = .false.
-!    endif
     if (obj%get("gpu") .eq. 1) then
       useGPU = .true.
     else
@@ -221,7 +215,7 @@
       endif
     else
       ! check whether set by environment variable
-      do_useGPU = gpu_usage_via_environment_variable()
+      do_useGPU = obj%get("gpu") == 1
       if (do_useGPU) then
         if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
@@ -385,7 +379,7 @@
      (obj, na, nev, nblk, nbw, q, &
      q_dev, &
      ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
-     summary_timings=.false., success=success, kernel=kernel)
+     success=success, kernel=kernel)
 
      if (.not.(success)) return
 
