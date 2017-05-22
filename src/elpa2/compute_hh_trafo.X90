@@ -487,7 +487,7 @@
 	       &MATH_DATATYPE&
 	       &_generic_simple_&
 	       &PRECISION&
-	       & (a(1:stripe_width, j+off+a_off:j+off+a_off+nbw-1,istripe,my_thread), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
+	       & (obj, a(1:stripe_width, j+off+a_off:j+off+a_off+nbw-1,istripe,my_thread), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
 #else /* WITH_OPENMP */
