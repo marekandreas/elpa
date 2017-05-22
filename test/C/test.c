@@ -184,7 +184,7 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error);
 
 #ifdef WITH_MPI
-   elpa_set(handle, "mpi_comm_parent", mpi_comm, &error);
+   elpa_set(handle, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_WORLD), &error);
    assert_elpa_ok(error);
 
    elpa_set(handle, "process_row", my_prow, &error);
