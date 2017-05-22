@@ -13,9 +13,8 @@ config-f90.h: config.h
 	@echo "Generating $@...";
 	@grep "^#define" $^ > $@ || { rm $@; exit 1; }
 
-elpa/elpa_generated.h: $(top_srcdir)/src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90 \
-                       $(top_srcdir)/src/elpa1/legacy_interface/elpa_1stage_c_interface.F90 \
-                       $(top_srcdir)/src/elpa2/legacy_interface/elpa_2stage_c_interface.F90 | elpa
+elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
+                       $(top_srcdir)/src/elpa_api.F90 | elpa
 	@rm -f $@
 	$(call extract_interface,!c>)
 

@@ -156,6 +156,29 @@ module elpa_impl
       endif
     end function
 
+
+    !c> elpa_t elpa_allocate();
+    function elpa_impl_allocate_for_c(error) result(ptr) bind(C, name="elpa_allocate")
+      integer(kind=c_int) :: error
+      type(c_ptr) :: ptr
+      type(elpa_impl_t), pointer :: obj
+
+      obj => elpa_impl_allocate(error)
+      ptr = c_loc(obj)
+    end function
+
+
+    !c> void elpa_deallocate(elpa_t handle);
+    subroutine elpa_impl_deallocate_for_c(handle) bind(C, name="elpa_deallocate")
+      type(c_ptr), value :: handle
+      type(elpa_impl_t), pointer :: self
+
+      call c_f_pointer(handle, self)
+      call self%destroy()
+      deallocate(self)
+    end subroutine
+
+
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
@@ -166,8 +189,8 @@ module elpa_impl
       integer :: error, error2
       integer :: mpi_comm_rows, mpi_comm_cols, mpierr
 
+#ifdef WITH_MPI
       error = ELPA_ERROR
-
       if (self%is_set("mpi_comm_parent") == 1 .and. &
           self%is_set("process_row") == 1 .and. &
           self%is_set("process_col") == 1) then
@@ -188,12 +211,27 @@ module elpa_impl
       if (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
 
       if (self%get("timings") == 1) then
         call self%timer%enable()
       endif
 
     end function
+
+
+    !c> int elpa_setup(elpa_t handle);
+    function elpa_setup_for_c(handle) result(error) bind(C, name="elpa_setup")
+      type(c_ptr), intent(in), value :: handle
+      type(elpa_impl_t), pointer :: self
+      integer(kind=c_int) :: error
+
+      call c_f_pointer(handle, self)
+      error = self%setup()
+    end function
+
 
     !> \brief subroutine to set an integer key/value pair
     !> Parameters
@@ -221,6 +259,22 @@ module elpa_impl
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
     end subroutine
+
+
+    !c> void elpa_set_integer(elpa_t handle, const char *name, int value, int *error);
+    subroutine elpa_set_integer_for_c(handle, name_p, value, error) bind(C, name="elpa_set_integer")
+      type(c_ptr), intent(in), value :: handle
+      type(elpa_impl_t), pointer :: self
+      type(c_ptr), intent(in), value :: name_p
+      character(len=elpa_strlen_c(name_p)), pointer :: name
+      integer(kind=c_int), intent(in), value :: value
+      integer(kind=c_int), optional, intent(in) :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(name_p, name)
+      call elpa_set_integer(self, name, value, error)
+    end subroutine
+
 
     !> \brief function to get an integer key/value pair
     !> Parameters
@@ -331,6 +385,21 @@ module elpa_impl
     end subroutine
 
 
+    !c> void elpa_set_double(elpa_t handle, const char *name, double value, int *error);
+    subroutine elpa_set_double_for_c(handle, name_p, value, error) bind(C, name="elpa_set_double")
+      type(c_ptr), intent(in), value :: handle
+      type(elpa_impl_t), pointer :: self
+      type(c_ptr), intent(in), value :: name_p
+      character(len=elpa_strlen_c(name_p)), pointer :: name
+      real(kind=c_double), intent(in), value :: value
+      integer(kind=c_int), optional, intent(in) :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(name_p, name)
+      call elpa_set_double(self, name, value, error)
+    end subroutine
+
+
     function elpa_get_double(self, name, error) result(value)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
@@ -426,6 +495,22 @@ module elpa_impl
       endif
     end subroutine
 
+    !c> void elpa_solve_real_double(elpa_t handle, double *a, double *ev, double *q, int *error);
+    subroutine elpa_solve_real_double_for_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_real_double")
+      type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_double), pointer :: a(:, :), q(:, :), ev(:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+      call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
+
+      call elpa_solve_real_double(self, a, ev, q, error)
+    end subroutine
+
 
     subroutine elpa_solve_real_single(self, a, ev, q, error)
       use elpa2_impl
@@ -473,6 +558,23 @@ module elpa_impl
     end subroutine
 
 
+    !c> void elpa_solve_real_single(elpa_t handle, float *a, float *ev, float *q, int *error);
+    subroutine elpa_solve_real_single_for_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_real_single")
+      type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_float), pointer :: a(:, :), q(:, :), ev(:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+      call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
+
+      call elpa_solve_real_single(self, a, ev, q, error)
+    end subroutine
+
+
     subroutine elpa_solve_complex_double(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
@@ -511,6 +613,24 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
+    end subroutine
+
+
+    !c> void elpa_solve_complex_double(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
+    subroutine elpa_solve_complex_double_for_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_complex_double")
+      type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_double_complex), pointer :: a(:, :), q(:, :)
+      real(kind=c_double), pointer :: ev(:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+      call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
+
+      call elpa_solve_complex_double(self, a, ev, q, error)
     end subroutine
 
 
@@ -558,6 +678,24 @@ module elpa_impl
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
+    end subroutine
+
+
+    !c> void elpa_solve_complex_single(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
+    subroutine elpa_solve_complex_single_for_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_complex_single")
+      type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_float_complex), pointer :: a(:, :), q(:, :)
+      real(kind=c_float), pointer :: ev(:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+      call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
+
+      call elpa_solve_complex_single(self, a, ev, q, error)
     end subroutine
 
 

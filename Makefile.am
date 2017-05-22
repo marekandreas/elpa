@@ -425,6 +425,10 @@ noinst_PROGRAMS = \
   test_real_double_2stage \
   test_complex_double_1stage \
   test_complex_double_2stage \
+  test_c_real_double_1stage \
+  test_c_real_double_2stage \
+  test_c_complex_double_1stage \
+  test_c_complex_double_2stage \
   double_instance@SUFFIX@ \
   real_2stage_banded@SUFFIX@ \
   complex_2stage_banded@SUFFIX@ \
@@ -437,6 +441,8 @@ if WANT_SINGLE_PRECISION_REAL
 noinst_PROGRAMS += \
   test_single_real_1stage \
   test_single_real_2stage \
+  test_c_single_real_1stage \
+  test_c_single_real_2stage \
   single_real_2stage_banded@SUFFIX@ \
   single_real_2stage@SUFFIX@ \
   single_real_1stage@SUFFIX@
@@ -446,6 +452,8 @@ if WANT_SINGLE_PRECISION_COMPLEX
 noinst_PROGRAMS += \
   test_single_complex_1stage \
   test_single_complex_2stage \
+  test_c_single_complex_1stage \
+  test_c_single_complex_2stage \
   single_complex_2stage_banded@SUFFIX@ \
   single_complex_2stage@SUFFIX@ \
   single_complex_1stage@SUFFIX@
@@ -641,6 +649,74 @@ test_single_complex_1stage_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $
 test_single_complex_2stage_SOURCES = test/Fortran/test.F90
 test_single_complex_2stage_LDADD = $(build_lib) $(FCLIBS)
 test_single_complex_2stage_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules \
+        -DTEST_COMPLEX \
+        -DTEST_SINGLE \
+        -DTEST_SOLVER_2STAGE \
+        -DTEST_GPU=0
+endif
+
+test_c_real_double_1stage_SOURCES = test/C/test.c
+test_c_real_double_1stage_LDADD = $(build_lib) $(FCLIBS)
+test_c_real_double_1stage_CFLAGS = $(AM_CFLAGS) \
+        -DTEST_REAL \
+        -DTEST_DOUBLE \
+        -DTEST_SOLVER_1STAGE \
+        -DTEST_GPU=0
+
+test_c_real_double_2stage_SOURCES = test/C/test.c
+test_c_real_double_2stage_LDADD = $(build_lib) $(FCLIBS)
+test_c_real_double_2stage_CFLAGS = $(AM_CFLAGS) \
+        -DTEST_REAL \
+        -DTEST_DOUBLE \
+        -DTEST_SOLVER_2STAGE \
+        -DTEST_GPU=0
+
+test_c_complex_double_1stage_SOURCES = test/C/test.c
+test_c_complex_double_1stage_LDADD = $(build_lib) $(FCLIBS)
+test_c_complex_double_1stage_CFLAGS = $(AM_CFLAGS) \
+        -DTEST_COMPLEX \
+        -DTEST_DOUBLE \
+        -DTEST_SOLVER_1STAGE \
+        -DTEST_GPU=0
+
+test_c_complex_double_2stage_SOURCES = test/C/test.c
+test_c_complex_double_2stage_LDADD = $(build_lib) $(FCLIBS)
+test_c_complex_double_2stage_CFLAGS = $(AM_CFLAGS) \
+        -DTEST_COMPLEX \
+        -DTEST_DOUBLE \
+        -DTEST_SOLVER_2STAGE \
+        -DTEST_GPU=0
+
+if WANT_SINGLE_PRECISION_REAL
+test_c_single_real_1stage_SOURCES = test/C/test.c
+test_c_single_real_1stage_LDADD = $(build_lib) $(FCLIBS)
+test_c_single_real_1stage_CFLAGS = $(AM_CFLAGS) \
+        -DTEST_REAL \
+        -DTEST_SINGLE \
+        -DTEST_SOLVER_1STAGE \
+        -DTEST_GPU=0
+
+test_c_single_real_2stage_SOURCES = test/C/test.c
+test_c_single_real_2stage_LDADD = $(build_lib) $(FCLIBS)
+test_c_single_real_2stage_CFLAGS = $(AM_CFLAGS) \
+        -DTEST_REAL \
+        -DTEST_SINGLE \
+        -DTEST_SOLVER_2STAGE \
+        -DTEST_GPU=0
+endif
+
+if WANT_SINGLE_PRECISION_COMPLEX
+test_c_single_complex_1stage_SOURCES = test/C/test.c
+test_c_single_complex_1stage_LDADD = $(build_lib) $(FCLIBS)
+test_c_single_complex_1stage_CFLAGS = $(AM_CFLAGS) \
+        -DTEST_COMPLEX \
+        -DTEST_SINGLE \
+        -DTEST_SOLVER_1STAGE \
+        -DTEST_GPU=0
+
+test_c_single_complex_2stage_SOURCES = test/C/test.c
+test_c_single_complex_2stage_LDADD = $(build_lib) $(FCLIBS)
+test_c_single_complex_2stage_CFLAGS = $(AM_CFLAGS) \
         -DTEST_COMPLEX \
         -DTEST_SINGLE \
         -DTEST_SOLVER_2STAGE \
@@ -1051,6 +1127,10 @@ check_SCRIPTS = \
   test_real_double_2stage.sh \
   test_complex_double_1stage.sh \
   test_complex_double_2stage.sh \
+  test_c_real_double_1stage.sh \
+  test_c_real_double_2stage.sh \
+  test_c_complex_double_1stage.sh \
+  test_c_complex_double_2stage.sh \
   double_instance@SUFFIX@.sh \
   real_2stage_banded@SUFFIX@.sh \
   complex_2stage_banded@SUFFIX@.sh \
@@ -1063,6 +1143,8 @@ if WANT_SINGLE_PRECISION_REAL
 check_SCRIPTS += \
   test_single_real_1stage.sh \
   test_single_real_2stage.sh \
+  test_c_single_real_1stage.sh \
+  test_c_single_real_2stage.sh \
   single_real_2stage_banded@SUFFIX@.sh \
   single_real_2stage@SUFFIX@.sh \
   single_real_1stage@SUFFIX@.sh
@@ -1072,6 +1154,8 @@ if WANT_SINGLE_PRECISION_COMPLEX
 check_SCRIPTS += \
   test_single_complex_1stage.sh \
   test_single_complex_2stage.sh \
+  test_c_single_complex_1stage.sh \
+  test_c_single_complex_2stage.sh \
   single_complex_2stage_banded@SUFFIX@.sh \
   single_complex_2stage@SUFFIX@.sh \
   single_complex_1stage@SUFFIX@.sh

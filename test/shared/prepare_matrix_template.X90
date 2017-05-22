@@ -204,4 +204,4 @@ subroutine prepare_matrix_&
       & (na, myid, sc_desc, a, z, as)
     end subroutine
 
-
+! vim: syntax=fortran

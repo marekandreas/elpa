@@ -773,9 +773,11 @@ module elpa_api
     !> Parameters
     !> \param   api_version integer, api_version that ELPA should use
     !> \result  error       integer
-    function elpa_init(api_version) result(error)
+    !
+    !c> int elpa_init(int api_version);
+    function elpa_init(api_version) result(error) bind(C, name="elpa_init")
       use elpa_utilities, only : error_unit
-      integer, intent(in) :: api_version
+      integer, intent(in), value :: api_version
       integer             :: error
 
       if (earliest_api_version <= api_version .and. api_version <= current_api_version) then
@@ -800,7 +802,9 @@ module elpa_api
     end function
 
     !> \brief subroutine to uninit the ELPA library. Does nothing at the moment. Might do sth. later
-    subroutine elpa_uninit()
+    !
+    !c> void elpa_uninit(void);
+    subroutine elpa_uninit() bind(C, name="elpa_uninit")
     end subroutine
 
     !> \brief helper function for error strings: NOT public to the user

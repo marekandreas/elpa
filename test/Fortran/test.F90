@@ -112,24 +112,17 @@ program test
 
    integer :: error, status
 
-   integer(kind=c_int) :: solver
-
    type(output_t) :: write_to_file
    class(elpa_t), pointer :: e
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
 
-   status = 0
-
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
 
    np_rows = nprocs/np_cols
-
-   my_prow = mod(myid, np_cols)
-   my_pcol = myid / np_cols
 
    call set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, np_cols, &
                          nprow, npcol, my_prow, my_pcol)
@@ -164,12 +157,15 @@ program test
    assert_elpa_ok(error)
    call e%set("nblk", nblk, error)
    assert_elpa_ok(error)
+
+#ifdef WITH_MPI
    call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
    assert_elpa_ok(error)
    call e%set("process_row", my_prow, error)
    assert_elpa_ok(error)
    call e%set("process_col", my_pcol, error)
    assert_elpa_ok(error)
+#endif
 
    assert_elpa_ok(e%setup())
 
