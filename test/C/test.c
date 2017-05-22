@@ -37,7 +37,11 @@
      license that we chose: i.e., please contribute any changes you
      may have back to the original ELPA library distribution, and keep
      any derivatives of ELPA under the same license that we chose for
-     the original distribution, the GNU Lesser General Public License. */
+     the original distribution, the GNU Lesser General Public License.
+*/
+
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef WITH_MPI
@@ -48,7 +52,6 @@
 #include <elpa/elpa.h>
 #include <assert.h>
 
-#include "config.h"
 #include "test/shared/generated.h"
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
@@ -181,7 +184,7 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error);
 
 #ifdef WITH_MPI
-   elpa_set(handle, "mpi_comm_parent", MPI_COMM_WORLD, &error);
+   elpa_set(handle, "mpi_comm_parent", mpi_comm, &error);
    assert_elpa_ok(error);
 
    elpa_set(handle, "process_row", my_prow, &error);
