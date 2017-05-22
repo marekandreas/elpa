@@ -48,11 +48,9 @@
 ! T upper triangle matrix
 ! assuming zero entries in matrix in upper kxk block
 
-#ifdef DOUBLE_PRECISION_REAL
-subroutine qr_pdlarfb_kernel_local_double(m,n,k,a,lda,v,ldv,t,ldt,z,ldz)
-#else
-subroutine qr_pdlarfb_kernel_local_single(m,n,k,a,lda,v,ldv,t,ldt,z,ldz)
-#endif
+subroutine qr_pdlarfb_kernel_local_&
+&PRECISION &
+(m,n,k,a,lda,v,ldv,t,ldt,z,ldz)
     use precision
     implicit none
 
@@ -195,11 +193,9 @@ subroutine qr_pdlarfb_kernel_local_single(m,n,k,a,lda,v,ldv,t,ldt,z,ldz)
 
 end subroutine
 
-#ifdef DOUBLE_PRECISION_REAL
-subroutine qr_pdlarft_merge_kernel_local_double(oldk,k,t,ldt,yty,ldy)
-#else
-subroutine qr_pdlarft_merge_kernel_local_single(oldk,k,t,ldt,yty,ldy)
-#endif
+subroutine qr_pdlarft_merge_kernel_local_&
+&PRECISION &
+(oldk,k,t,ldt,yty,ldy)
     use precision
     implicit none
 
@@ -550,11 +546,9 @@ end subroutine
 !    0        0    Y3'*Y4 ...
 !    0        0       0   ...
 
-#ifdef DOUBLE_PRECISION_REAL
-subroutine qr_tmerge_set_kernel_double(k,blocksize,t,ldt,yty,ldy)
-#else
-subroutine qr_tmerge_set_kernel_single(k,blocksize,t,ldt,yty,ldy)
-#endif
+subroutine qr_tmerge_set_kernel_&
+&PRECISION &
+(k,blocksize,t,ldt,yty,ldy)
     use precision
     implicit none
 
@@ -583,31 +577,25 @@ subroutine qr_tmerge_set_kernel_single(k,blocksize,t,ldt,yty,ldy)
         yty_column = 1
 
         if (remainder .gt. 0) then
-#ifdef DOUBLE_PRECISION_REAL
-            call qr_pdlarft_merge_kernel_local_double(blocksize,remainder,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
-#else
-            call qr_pdlarft_merge_kernel_local_single(blocksize,remainder,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
-#endif
+            call qr_pdlarft_merge_kernel_local_&
+	    &PRECISION &
+	    (blocksize,remainder,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
             current_block = 1
             oldk = remainder+blocksize
             yty_column =  yty_column + blocksize
         else
-#ifdef DOUBLE_PRECISION_REAL
-            call qr_pdlarft_merge_kernel_local_double(blocksize,blocksize,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
-#else
-            call qr_pdlarft_merge_kernel_local_single(blocksize,blocksize,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
-#endif
+            call qr_pdlarft_merge_kernel_local_&
+	    &PRECISION &
+	    (blocksize,blocksize,t(toffset,toffset),ldt,yty(1,yty_column),ldy)
             current_block = 2
             oldk = 2*blocksize
             yty_column = yty_column + blocksize
         end if
 
         do while (current_block .lt. nr_blocks)
-#ifdef DOUBLE_PRECISION_REAL
-            call qr_pdlarft_merge_kernel_local_double(blocksize,oldk,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
-#else
-            call qr_pdlarft_merge_kernel_local_single(blocksize,oldk,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
-#endif
+            call qr_pdlarft_merge_kernel_local_&
+	    &PRECISION &
+	    (blocksize,oldk,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
             current_block = current_block + 1
             oldk = oldk + blocksize
             yty_column = yty_column + blocksize
@@ -620,11 +608,9 @@ end subroutine
 !    0        0    Y3'*Y4 ...
 !    0        0       0   ...
 
-#ifdef DOUBLE_PRECISION_REAL
-subroutine qr_tmerge_tree_kernel_double(k,blocksize,treeorder,t,ldt,yty,ldy)
-#else
-subroutine qr_tmerge_tree_kernel_single(k,blocksize,treeorder,t,ldt,yty,ldy)
-#endif
+subroutine qr_tmerge_tree_kernel_&
+&PRECISION &
+(k,blocksize,treeorder,t,ldt,yty,ldy)
     use precision
     implicit none
 
@@ -647,11 +633,9 @@ subroutine qr_tmerge_tree_kernel_single(k,blocksize,treeorder,t,ldt,yty,ldy)
     if (treeorder .eq. 0) return ! no merging
 
     if (treeorder .eq. 1) then
-#ifdef DOUBLE_PRECISION_REAL
-        call qr_tmerge_set_kernel_double(k,blocksize,t,ldt,yty,ldy)
-#else
-        call qr_tmerge_set_kernel_single(k,blocksize,t,ldt,yty,ldy)
-#endif
+        call qr_tmerge_set_kernel_&
+	&PRECISION &
+	(k,blocksize,t,ldt,yty,ldy)
         return
     end if
 
@@ -659,11 +643,9 @@ subroutine qr_tmerge_tree_kernel_single(k,blocksize,treeorder,t,ldt,yty,ldy)
     max_treeorder = min(nr_blocks,treeorder)
 
     if (max_treeorder .eq. 1) then
-#ifdef DOUBLE_PRECISION_REAL
-        call qr_tmerge_set_kernel_double(k,blocksize,t,ldt,yty,ldy)
-#else
-        call qr_tmerge_set_kernel_single(k,blocksize,t,ldt,yty,ldy)
-#endif
+        call qr_tmerge_set_kernel_&
+	&PRECISION &
+	(k,blocksize,t,ldt,yty,ldy)
         return
     end if
 
@@ -723,11 +705,9 @@ subroutine qr_tmerge_tree_kernel_single(k,blocksize,treeorder,t,ldt,yty,ldy)
                 if (yty_remainder .gt. 0) then
                     yty_column = yty_remainder
                     !print *,'final merging with remainder',temp_blocksize,k,remaining_size,yty_column
-#ifdef DOUBLE_PRECISION_REAL
-                    call qr_tmerge_set_kernel_double(k,temp_blocksize,t,ldt,yty(1,yty_column),ldy)
-#else
-                    call qr_tmerge_set_kernel_single(k,temp_blocksize,t,ldt,yty(1,yty_column),ldy)
-#endif
+                    call qr_tmerge_set_kernel_&
+		    &PRECISION &
+		    (k,temp_blocksize,t,ldt,yty(1,yty_column),ldy)
                 else
                     !print *,'no remainder - no merging needed',temp_blocksize,k,remaining_size
                 endif
@@ -747,19 +727,15 @@ subroutine qr_tmerge_tree_kernel_single(k,blocksize,treeorder,t,ldt,yty,ldy)
                     yty_column = yty_column_start
 
                     !print *,'set merging', toffset, yty_column,remainder
-#ifdef DOUBLE_PRECISION_REAL
-                    call qr_tmerge_set_kernel_double(remainder,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
-#else
-                    call qr_tmerge_set_kernel_single(remainder,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
-#endif
+                    call qr_tmerge_set_kernel_&
+		    &PRECISION &
+		    (remainder,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
                     if (total_remainder .gt. 0) then
                         ! merge with existing global remainder part
                         !print *,'single+set merging',yty_remainder,total_remainder,remainder
-#ifdef DOUBLE_PRECISION_REAL
-                        call qr_pdlarft_merge_kernel_local_double(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
-#else
-                        call qr_pdlarft_merge_kernel_local_single(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
-#endif
+                        call qr_pdlarft_merge_kernel_local_&
+			&PRECISION &
+			(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
                         yty_remainder = yty_remainder + remainder
                         toffset_start = toffset_start + remainder
 
@@ -779,11 +755,9 @@ subroutine qr_tmerge_tree_kernel_single(k,blocksize,treeorder,t,ldt,yty,ldy)
                     if (total_remainder .gt. 0) then
                         ! merge with existing global remainder part
                         !print *,'single merging',yty_remainder,total_remainder,remainder
-#ifdef DOUBLE_PRECISION_REAL
-                        call qr_pdlarft_merge_kernel_local_double(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
-#else
-                        call qr_pdlarft_merge_kernel_local_single(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
-#endif
+                        call qr_pdlarft_merge_kernel_local_&
+			&PRECISION &
+			(remainder,total_remainder,t(1,1),ldt,yty(1,yty_remainder),ldy)
                         yty_remainder = yty_remainder + remainder
                         toffset_start = toffset_start + remainder
 
@@ -810,11 +784,9 @@ subroutine qr_tmerge_tree_kernel_single(k,blocksize,treeorder,t,ldt,yty,ldy)
                 yty_column = yty_column_start + current_set * setsize
 
                 !print *,'recursive merging', toffset, yty_column,setsize
-#ifdef DOUBLE_PRECISION_REAL
-                call qr_tmerge_set_kernel_double(setsize,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
-#else
-                call qr_tmerge_set_kernel_single(setsize,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
-#endif
+                call qr_tmerge_set_kernel_&
+		&PRECISION &
+		(setsize,temp_blocksize,t(toffset,toffset),ldt,yty(toffset,yty_column),ldy)
 
                 current_set = current_set +  1
             end do
@@ -828,11 +800,9 @@ end subroutine
 
 ! yty should not contain the inner products vi'*vi
 
-#ifdef DOUBLE_PRECISION_REAL
-subroutine qr_dlarft_kernel_double(n,tau,yty,ldy,t,ldt)
-#else
-subroutine qr_dlarft_kernel_single(n,tau,yty,ldy,t,ldt)
-#endif
+subroutine qr_dlarft_kernel_&
+&PRECISION &
+(n,tau,yty,ldy,t,ldt)
     use precision
     implicit none
 

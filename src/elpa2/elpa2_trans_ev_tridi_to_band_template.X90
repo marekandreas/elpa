@@ -2329,7 +2329,7 @@
               call pack_row_complex_cpu_openmp_&
 #endif
 	      &PRECISION&
-	      &(aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, max_threads, thread_width, l_nev)
+	      &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else /* WITH_OPENMP */
 
 #if REALCASE == 1
@@ -2368,7 +2368,7 @@
               call pack_row_complex_cpu_openmp_&
 #endif
               &PRECISION&
-	      &(aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, stripe_width, stripe_count, &
+	      &(obj,aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, stripe_width, stripe_count, &
 	        max_threads, thread_width, l_nev)
 #else /* WITH_OPENMP */
 

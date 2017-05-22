@@ -462,7 +462,7 @@
       endif
 
       ! Get the OpenMP block limits
-      call divide_band(nblocks, max_threads, omp_block_limits)
+      call divide_band(obj,nblocks, max_threads, omp_block_limits)
 
       allocate(hv_t(nb,max_threads), tau_t(max_threads), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
@@ -782,7 +782,7 @@
                   call hh_transform_complex_&
 #endif
                   &PRECISION &
-		                    (ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
+		                    (obj,ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
 
 #if REALCASE == 1
                   hv_t(1   ,my_thread) = CONST_1_0

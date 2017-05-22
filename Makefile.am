@@ -78,6 +78,9 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/elpa2_compute_complex_template.X90 \
   src/elpa1/elpa1_template.X90 \
   src/elpa2/elpa2_template.X90 \
+  src/elpa2/qr/qr_utils_template.X90 \
+  src/elpa2/qr/elpa_pdlarfb_template.X90 \
+  src/elpa2/qr/elpa_pdgeqrf_template.X90 \
   src/elpa2/elpa2_bandred_template.X90 \
   src/elpa2/elpa2_symm_matrix_allreduce_real_template.X90 \
   src/elpa2/elpa2_trans_ev_band_to_full_template.X90 \
@@ -1235,6 +1238,9 @@ EXTRA_DIST = \
   src/elpa2/elpa2_symm_matrix_allreduce_real_template.X90 \
   src/elpa1/elpa1_template.X90 \
   src/elpa2/elpa2_template.X90 \
+  src/elpa2/qr/qr_utils_template.X90 \
+  src/elpa2/qr/elpa_pdlarfb_template.X90 \
+  src/elpa2/qr/elpa_pdgeqrf_template.X90 \
   src/elpa2/elpa2_tridiag_band_template.X90 \
   src/elpa2/elpa2_trans_ev_band_to_full_template.X90 \
   src/elpa2/elpa2_trans_ev_tridi_to_band_template.X90 \
@@ -1253,7 +1259,7 @@ EXTRA_DIST = \
   src/elpa1/elpa_invert_trm.X90 \
   src/elpa1/elpa_multiply_a_b.X90 \
   src/elpa1/elpa_solve_tridi_impl_public.X90 \
-  src/elpa2/qr/elpa_qrkernels.X90 \
+  src/elpa2/qr/elpa_qrkernels_template.X90 \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu \
   src/GPU/cuUtils_template.Xcu \

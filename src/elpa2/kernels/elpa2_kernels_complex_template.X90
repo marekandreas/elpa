@@ -59,13 +59,15 @@
   ! the Intel compiler creates a temp array copy of array q!
   ! this should be prevented, if possible without using assumed size arrays
 #ifdef DOUBLE_PRECISION_COMPLEX
-  subroutine single_hh_trafo_complex_generic_double(q, hh, nb, nq, ldq)
+  subroutine single_hh_trafo_complex_generic_double(obj, q, hh, nb, nq, ldq)
 #else
-  subroutine single_hh_trafo_complex_generic_single(q, hh, nb, nq, ldq)
+  subroutine single_hh_trafo_complex_generic_single(obj, q, hh, nb, nq, ldq)
 #endif
     use precision
+    use elpa_api
     implicit none
 
+    class(elpa_t) :: obj
     integer(kind=ik), intent(in)    :: nb, nq, ldq
 #ifdef USE_ASSUMED_SIZE
     complex(kind=COMPLEX_DATATYPE), intent(inout) :: q(ldq,*)
@@ -79,11 +81,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-    !  call obj%timer%start("kernel generic: single_hh_trafo_complex_generic_double")
+      call obj%timer%start("kernel generic: single_hh_trafo_complex_generic_double")
 
 #else
 
-   !   call obj%timer%start("kernel generic: single_hh_trafo_complex_generic_single")
+      call obj%timer%start("kernel generic: single_hh_trafo_complex_generic_single")
 
 #endif
     ! Safety only:
@@ -156,11 +158,11 @@
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 
-   !   call obj%timer%stop("kernel generic: single_hh_trafo_complex_generic_double")
+      call obj%timer%stop("kernel generic: single_hh_trafo_complex_generic_double")
 
 #else
 
-   !   call obj%timer%stop("kernel generic: single_hh_trafo_complex_generic_single")
+      call obj%timer%stop("kernel generic: single_hh_trafo_complex_generic_single")
 
 #endif
 

@@ -508,7 +508,7 @@
         call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$OMP PARALLEL DO PRIVATE(i) SHARED(na1, my_proc, n_procs,  &
-!$OMP d1,dbase, ddiff, z, ev_scale) &
+!$OMP d1,dbase, ddiff, z, ev_scale, obj) &
 !$OMP DEFAULT(NONE)
 
 #endif

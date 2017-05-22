@@ -43,19 +43,19 @@
 #include "config-f90.h"
 
 
-#define DOUBLE_PRECISION_REAL 1
-#define REAL_DATATYPE rk8
-#include "elpa_qrkernels.X90"
-#undef DOUBLE_PRECISION_REAL
-#undef REAL_DATATYPE
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../general/precision_macros.h"
+#include "elpa_qrkernels_template.X90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-
-#undef DOUBLE_PRECISION_REAL
-#define REAL_DATATYPE rk4
-#include "elpa_qrkernels.X90"
-#undef DOUBLE_PRECISION_REAL
-#undef REAL_DATATYPE
-
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../../general/precision_macros.h"
+#include "elpa_qrkernels_template.X90"
+#undef REALCASE
+#undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */
 

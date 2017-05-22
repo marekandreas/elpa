@@ -62,12 +62,14 @@
   &MATH_DATATYPE&
   &_generic_&
   &PRECISION&
-  & (q, hh, nb, nq, ldq, ldh)
+  & (obj, q, hh, nb, nq, ldq, ldh)
 
     use precision
     use iso_c_binding
+    use elpa_api
     implicit none
 
+    class(elpa_t) :: obj
     integer(kind=ik), intent(in)            :: nb, nq, ldq, ldh
 #ifdef USE_ASSUMED_SIZE
     real(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
@@ -84,11 +86,11 @@
 
     ! Safety only:
 
-!    call obj%timer%start("kernel generic: double_hh_trafo_&
-!                     &MATH_DATATYPE&
-!		     &_generic" // &
-!		     &PRECISION_SUFFIX &
-!		     )
+    call obj%timer%start("kernel generic: double_hh_trafo_&
+                     &MATH_DATATYPE&
+		     &_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
 
     if(mod(ldq,4) /= 0) STOP 'double_hh_trafo: ldq not divisible by 4!'
 
@@ -149,11 +151,11 @@
 
     endif
 
-!    call obj%timer%stop("kernel generic: double_hh_trafo_&
-!                     &MATH_DATATYPE&
-!		     &_generic" // &
-!		     &PRECISION_SUFFIX &
-!		     )
+    call obj%timer%stop("kernel generic: double_hh_trafo_&
+                     &MATH_DATATYPE&
+		     &_generic" // &
+		     &PRECISION_SUFFIX &
+		     )
 
   end subroutine
 
