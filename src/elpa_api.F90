@@ -63,11 +63,11 @@ module elpa_api
       c_double, c_double_complex, &
       c_float, c_float_complex
 
-  !> \brief Abstract defintion of the elpa_t type
+  !> \brief Abstract definition of the elpa_t type
   type, abstract :: elpa_t
     private
 
-    ! these have to be public for proper bounds checking, sadly
+    !< these have to be public for proper bounds checking, sadly
     integer(kind=c_int), public, pointer :: na => NULL()
     integer(kind=c_int), public, pointer :: nev => NULL()
     integer(kind=c_int), public, pointer :: local_nrows => NULL()
@@ -80,7 +80,7 @@ module elpa_api
       procedure(elpa_setup_i),   deferred, public :: setup          !< export a setup method
       procedure(elpa_destroy_i), deferred, public :: destroy        !< export a destroy method
 
-      ! key/value store
+      !< key/value store
       generic, public :: set => &                                   !< export a method to set integer/double key/values
           elpa_set_integer, &
           elpa_set_double
@@ -90,11 +90,11 @@ module elpa_api
       procedure(elpa_is_set_i),  deferred, public :: is_set         !< method to check whether key/value is set
       procedure(elpa_can_set_i), deferred, public :: can_set        !< method to check whether key/value can be set
 
-      ! Timer
+      !< Timer
       procedure(elpa_get_time_i), deferred, public :: get_time
       procedure(elpa_print_times_i), deferred, public :: print_times
 
-      ! Actual math routines
+      !< Actual math routines
       generic, public :: solve => &                                 !< method solve for solving the eigenvalue problem
           elpa_solve_real_double, &                                 !< for symmetric real valued / hermitian complex valued
           elpa_solve_real_single, &                                 !< matrices
@@ -154,6 +154,11 @@ module elpa_api
   end type elpa_t
 
 
+  !> \brief definition of helper function to get C strlen
+  !> Parameters
+  !> \details
+  !> \param   ptr         type(c_ptr) : pointer to string
+  !> \result  size        integer(kind=c_size_t) : length of string
   interface
     pure function elpa_strlen_c(ptr) result(size) bind(c, name="strlen")
       use, intrinsic :: iso_c_binding
@@ -162,7 +167,11 @@ module elpa_api
     end function
   end interface
 
-
+  !> \brief abstract definition of setup method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \result  error       integer : error code, which can be queried with elpa_strerr()
   abstract interface
     function elpa_setup_i(self) result(error)
       import elpa_t
@@ -171,7 +180,13 @@ module elpa_api
     end function
   end interface
 
-
+  !> \brief abstract definition of set method for integer values
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        string: the name of the key
+  !> \param   value       integer : the value to set for the key
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr()
   abstract interface
     subroutine elpa_set_integer_i(self, name, value, error)
       use iso_c_binding
@@ -183,7 +198,13 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract definition of get method for integer values
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        string: the name of the key
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr()
+  !> \result  value       integer : the value corresponding to the key
   abstract interface
     function elpa_get_integer_i(self, name, error) result(value)
       use iso_c_binding
@@ -195,28 +216,47 @@ module elpa_api
     end function
   end interface
 
-
+  !> \brief abstract definition of is_set method for integer values
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        string: the name of the key
+  !> \result  state       integer : 1 is set, 0 if not, else a negativ error code
+  !>                                                    which can be queried with elpa_strerr
   abstract interface
-    function elpa_is_set_i(self, name) result(error)
+    function elpa_is_set_i(self, name) result(state)
       import elpa_t
       class(elpa_t)            :: self
       character(*), intent(in) :: name
-      integer                  :: error
+      integer                  :: sta
     end function
   end interface
 
-
+  !> \brief abstract definition of can_set method for integer values
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        string: the name of the key
+  !> \param   value       integer: the valye to associate with the key
+  !> \result  state       integer : 1 is set, 0 if not, else a negativ error code
+  !>                                                    which can be queried with elpa_strerr
   abstract interface
-    function elpa_can_set_i(self, name, value) result(error)
+    function elpa_can_set_i(self, name, value) result(state)
       import elpa_t, c_int
       class(elpa_t)                   :: self
       character(*), intent(in)        :: name
       integer(kind=c_int), intent(in) :: value
-      integer                         :: error
+      integer                         :: state
     end function
   end interface
 
-
+  !> \brief abstract definition of set method for double values
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        string: the name of the key
+  !? \param   value       double: the value to associate with the key
+  !> \param   error       integer. optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_set_double_i(self, name, value, error)
       use iso_c_binding
@@ -228,7 +268,13 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract definition of get method for double values
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        string: the name of the key
+  !> \param   error       integer. optional : error code, which can be queried with elpa_strerr
+  !> \result  value       double: the value associated with the key
   abstract interface
     function elpa_get_double_i(self, name, error) result(value)
       use iso_c_binding
@@ -240,7 +286,12 @@ module elpa_api
     end function
   end interface
 
-
+  !> \brief abstract definition of associate method for integer pointers
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        string: the name of the key
+  !> \result  value       integer pointer: the value associated with the key
   abstract interface
     function elpa_associate_int_i(self, name) result(value)
       use iso_c_binding
@@ -254,6 +305,12 @@ module elpa_api
 
   ! Timer routines
 
+  !> \brief abstract definition of get_time method to querry the timer
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name1..6    string: the name of the timer entry, supports up to 6 levels
+  !> \result  s           double: the time for the entry name1..6
   abstract interface
     function elpa_get_time_i(self, name1, name2, name3, name4, name5, name6) result(s)
       import elpa_t, c_double
@@ -264,7 +321,10 @@ module elpa_api
     end function
   end interface
 
-
+  !> \brief abstract definition of print method for timer
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
   abstract interface
     subroutine elpa_print_times_i(self)
       import elpa_t
@@ -273,15 +333,16 @@ module elpa_api
   end interface
 
 
-  ! Actual math routines
+  !< Actual math routines
 
-  !> \brief abstract defintion of interface to solve double real eigenvalue problem
+  !> \brief abstract definition of interface to solve double real eigenvalue problem
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double real matrix a: defines the problem to solve
   !> \param   ev          double real: on output stores the eigenvalues
   !> \param   q           double real matrix q: on output stores the eigenvalues
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_solve_real_double_i(self, a, ev, q, error)
       use iso_c_binding
@@ -298,13 +359,14 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to solve single real eigenvalue problem
+  !> \brief abstract definition of interface to solve single real eigenvalue problem
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single real matrix a: defines the problem to solve
   !> \param   ev          single real: on output stores the eigenvalues
   !> \param   q           single real matrix q: on output stores the eigenvalues
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_solve_real_single_i(self, a, ev, q, error)
       use iso_c_binding
@@ -321,13 +383,14 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to solve double complex eigenvalue problem
+  !> \brief abstract definition of interface to solve double complex eigenvalue problem
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double complex matrix a: defines the problem to solve
   !> \param   ev          double real: on output stores the eigenvalues
   !> \param   q           double complex matrix q: on output stores the eigenvalues
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_solve_complex_double_i(self, a, ev, q, error)
       use iso_c_binding
@@ -345,13 +408,14 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to solve single complex eigenvalue problem
+  !> \brief abstract definition of interface to solve single complex eigenvalue problem
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single complex matrix a: defines the problem to solve
   !> \param   ev          single real: on output stores the eigenvalues
   !> \param   q           single complex matrix q: on output stores the eigenvalues
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_solve_complex_single_i(self, a, ev, q, error)
       use iso_c_binding
@@ -368,7 +432,7 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to compute C : = A**T * B
+  !> \brief abstract definition of interface to compute C : = A**T * B
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
@@ -395,7 +459,7 @@ module elpa_api
   !> \param c             double real  matrix c
   !> \param ldc           leading dimension of matrix c
   !> \param ldcCols       columns of matrix c
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_multiply_at_b_double_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
@@ -413,7 +477,7 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to compute C : = A**T * B
+  !> \brief abstract definition of interface to compute C : = A**T * B
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
@@ -440,7 +504,7 @@ module elpa_api
   !> \param c             single real  matrix c
   !> \param ldc           leading dimension of matrix c
   !> \param ldcCols       columns of matrix c
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_multiply_at_b_single_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
@@ -458,7 +522,7 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to compute C : = A**H * B
+  !> \brief abstract definition of interface to compute C : = A**H * B
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
@@ -485,7 +549,7 @@ module elpa_api
   !> \param c             double complex  matrix c
   !> \param ldc           leading dimension of matrix c
   !> \param ldcCols       columns of matrix c
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_multiply_ah_b_double_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
@@ -503,7 +567,7 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to compute C : = A**H * B
+  !> \brief abstract definition of interface to compute C : = A**H * B
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
@@ -530,7 +594,7 @@ module elpa_api
   !> \param c             single complex  matrix c
   !> \param ldc           leading dimension of matrix c
   !> \param ldcCols       columns of matrix c
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_multiply_ah_b_single_i (self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
@@ -548,11 +612,11 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to do a cholesky decomposition of a double real matrix
+  !> \brief abstract definition of interface to do a cholesky decomposition of a double real matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double real matrix: the matrix to be decomposed
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_cholesky_double_real_i (self, a, error)
       use iso_c_binding
@@ -567,11 +631,11 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to do a cholesky decomposition of a single real matrix
+  !> \brief abstract definition of interface to do a cholesky decomposition of a single real matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single real matrix: the matrix to be decomposed
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_cholesky_single_real_i(self, a, error)
       use iso_c_binding
@@ -586,11 +650,11 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to do a cholesky decomposition of a double complex matrix
+  !> \brief abstract definition of interface to do a cholesky decomposition of a double complex matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double complex matrix: the matrix to be decomposed
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_cholesky_double_complex_i (self, a, error)
       use iso_c_binding
@@ -605,11 +669,11 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to do a cholesky decomposition of a single complex matrix
+  !> \brief abstract definition of interface to do a cholesky decomposition of a single complex matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single complex matrix: the matrix to be decomposed
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_cholesky_single_complex_i (self, a, error)
       use iso_c_binding
@@ -624,11 +688,11 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to invert a triangular double real matrix
+  !> \brief abstract definition of interface to invert a triangular double real matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double real matrix: the matrix to be inverted
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_invert_trm_double_real_i (self, a, error)
       use iso_c_binding
@@ -643,11 +707,11 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to invert a triangular single real matrix
+  !> \brief abstract definition of interface to invert a triangular single real matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single real matrix: the matrix to be inverted
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_invert_trm_single_real_i (self, a, error)
       use iso_c_binding
@@ -662,11 +726,11 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to invert a triangular double complex matrix
+  !> \brief abstract definition of interface to invert a triangular double complex matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double complex matrix: the matrix to be inverted
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_invert_trm_double_complex_i (self, a, error)
       use iso_c_binding
@@ -681,11 +745,11 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to invert a triangular single complex matrix
+  !> \brief abstract definition of interface to invert a triangular single complex matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single complex matrix: the matrix to be inverted
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_invert_trm_single_complex_i (self, a, error)
       use iso_c_binding
@@ -700,13 +764,13 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to solve the eigenvalue problem for a real valued tridiangular matrix
+  !> \brief abstract definition of interface to solve the eigenvalue problem for a double-precision real valued tridiangular matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   d           double real 1d array: the diagonal elements of a matrix defined in setup
   !> \param   e           double real 1d array: the subdiagonal elements of a matrix defined in setup
   !> \param   q           double real matrix: on output contains the eigenvectors
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_solve_tridi_double_real_i (self, d, e, q, error)
       use iso_c_binding
@@ -722,13 +786,13 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface to solve the eigenvalue problem for a real valued tridiangular matrix
+  !> \brief abstract definition of interface to solve the eigenvalue problem for a single-precision real valued tridiangular matrix
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   d           single real 1d array: the diagonal elements of a matrix defined in setup
   !> \param   e           single real 1d array: the subdiagonal elements of a matrix defined in setup
   !> \param   q           single real matrix: on output contains the eigenvectors
-  !> \param   error       integer, optional : error code
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_solve_tridi_single_real_i (self, d, e, q, error)
       use iso_c_binding
@@ -744,7 +808,7 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface of subroutine to destroy an ELPA object
+  !> \brief abstract definition of interface to destroy an ELPA object
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   abstract interface
@@ -754,25 +818,12 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract defintion of interface of function to get an integer option
-  !> Parameters
-  !> \param   self        class(elpa_t), the ELPA object
-  !> \result  value       integer
-  abstract interface
-    function elpa_get_int_i(self) result(value)
-      use iso_c_binding
-      import elpa_t
-      class(elpa_t), intent(in) :: self
-      integer(kind=C_INT) :: value
-    end function
-  end interface
-
   contains
 
     !> \brief function to intialise the ELPA library
     !> Parameters
-    !> \param   api_version integer, api_version that ELPA should use
-    !> \result  error       integer
+    !> \param   api_version integer: api_version that ELPA should use
+    !> \result  error       integer: error code, which can be queried with elpa_strerr
     !
     !c> int elpa_init(int api_version);
     function elpa_init(api_version) result(error) bind(C, name="elpa_init")
@@ -791,7 +842,7 @@ module elpa_api
 
     !> \brief function to check whether the ELPA library has been correctly initialised
     !> Parameters
-    !> \result  state      logical
+    !> \result  state      logical: state is either ELPA_OK or ELPA_ERROR, which can be queried with elpa_strerr
     function elpa_initialized() result(state)
       integer :: state
       if (initDone) then
@@ -807,10 +858,10 @@ module elpa_api
     subroutine elpa_uninit() bind(C, name="elpa_uninit")
     end subroutine
 
-    !> \brief helper function for error strings: NOT public to the user
+    !> \brief helper function for error strings
     !> Parameters
-    !> \param   elpa_error  integer
-    !> \result  string      string
+    !> \param   elpa_error  integer: error code to querry
+    !> \result  string      string:  error string
     function elpa_strerr(elpa_error) result(string)
       use elpa_generated_fortran_interfaces
       integer, intent(in) :: elpa_error
@@ -818,7 +869,7 @@ module elpa_api
       call c_f_pointer(elpa_strerr_c(elpa_error), string)
     end function
 
-    !> \brief helper function for c strings: NOT public to the user
+    !> \brief helper function for c strings
     !> Parameters
     !> \param   ptr         type(c_ptr)
     !> \result  string      string
@@ -829,12 +880,12 @@ module elpa_api
       call c_f_pointer(ptr, string)
     end function
 
-    !> \brief function to convert an integer in its string representation: NOT public to the user
+    !> \brief function to convert an integer in its string representation
     !> Parameters
-    !> \param   name        string
-    !> \param   value       integer
-    !> \param   error       integer, optional
-    !> \result  string      string
+    !> \param   name        string: the key
+    !> \param   value       integer: the value correponding to the key
+    !> \param   error       integer, optional: error code, which can be queried with elpa_strerr()
+    !> \result  string      string: the string representation
     function elpa_int_value_to_string(name, value, error) result(string)
       use elpa_utilities, only : error_unit
       use elpa_generated_fortran_interfaces
@@ -861,12 +912,12 @@ module elpa_api
       endif
     end function
 
-    !> \brief function to convert a string in its integer representation: NOT public to the user
+    !> \brief function to convert a string in its integer representation:
     !> Parameters
-    !> \param   name        string
-    !> \param   string      string
-    !> \param   error       integer, optional
-    !> \result  value       integer
+    !> \param   name        string: the key
+    !> \param   string      string: the string whose integer representation should be associated with the key
+    !> \param   error       integer, optional: error code, which can be queried with elpa_strerr()
+    !> \result  value       integer: the integer representation of the string
     function elpa_int_string_to_value(name, string, error) result(value)
       use elpa_generated_fortran_interfaces
       use elpa_utilities, only : error_unit
@@ -890,10 +941,10 @@ module elpa_api
       endif
     end function
 
-    !> \brief function to get the cardinality of an option. NOT public to the user
+    !> \brief function to get the number of possible choices for an option
     !> Parameters
-    !> \param   option_name string
-    !> \result  number      integer
+    !> \param   option_name string:   the option
+    !> \result  number      integer:  the total number of possible values to be chosen
     function elpa_option_cardinality(option_name) result(number)
       use elpa_generated_fortran_interfaces
       character(kind=c_char, len=*), intent(in) :: option_name
@@ -901,9 +952,9 @@ module elpa_api
       number = elpa_option_cardinality_c(option_name // C_NULL_CHAR)
     end function
 
-    !> \brief function to enumerate an option. NOT public to the user
+    !> \brief function to enumerate an option
     !> Parameters
-    !> \param   option_name string
+    !> \param   option_name string: the option
     !> \param   i           integer
     !> \result  option      integer
     function elpa_option_enumerate(option_name, i) result(option)
