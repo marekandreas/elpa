@@ -87,31 +87,31 @@ module elpa_impl
      procedure, private :: elpa_set_integer                     !< private methods to implement the setting of an integer/double key/value pair
      procedure, private :: elpa_set_double
 
-     procedure, private :: elpa_solve_real_double               !< private methods to implement the solve step for real/complex
+     procedure, private :: elpa_solve_d               !< private methods to implement the solve step for real/complex
                                                                 !< double/single matrices
-     procedure, private :: elpa_solve_real_single
-     procedure, private :: elpa_solve_complex_double
-     procedure, private :: elpa_solve_complex_single
+     procedure, private :: elpa_solve_f
+     procedure, private :: elpa_solve_dc
+     procedure, private :: elpa_solve_fc
 
-     procedure, private :: elpa_multiply_at_b_double            !< private methods to implement a "hermitian" multiplication of matrices a and b
-     procedure, private :: elpa_multiply_at_b_single            !< for real valued matrices:   a**T * b
-     procedure, private :: elpa_multiply_ah_b_double            !< for complex valued matrices:   a**H * b
-     procedure, private :: elpa_multiply_ah_b_single
+     procedure, private :: elpa_hermitian_multiply_d            !< private methods to implement a "hermitian" multiplication of matrices a and b
+     procedure, private :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
+     procedure, private :: elpa_hermitian_multiply_dc            !< for complex valued matrices:   a**H * b
+     procedure, private :: elpa_hermitian_multiply_fc
 
-     procedure, private :: elpa_cholesky_double_real            !< private methods to implement the cholesky factorisation of
+     procedure, private :: elpa_cholesky_d            !< private methods to implement the cholesky factorisation of
                                                                 !< real/complex double/single matrices
-     procedure, private :: elpa_cholesky_single_real
-     procedure, private :: elpa_cholesky_double_complex
-     procedure, private :: elpa_cholesky_single_complex
+     procedure, private :: elpa_cholesky_f
+     procedure, private :: elpa_cholesky_dc
+     procedure, private :: elpa_cholesky_fc
 
-     procedure, private :: elpa_invert_trm_double_real          !< private methods to implement the inversion of a triangular
+     procedure, private :: elpa_invert_trm_d          !< private methods to implement the inversion of a triangular
                                                                 !< real/complex double/single matrix
-     procedure, private :: elpa_invert_trm_single_real
-     procedure, private :: elpa_invert_trm_double_complex
-     procedure, private :: elpa_invert_trm_single_complex
+     procedure, private :: elpa_invert_trm_f
+     procedure, private :: elpa_invert_trm_dc
+     procedure, private :: elpa_invert_trm_fc
 
-     procedure, private :: elpa_solve_tridi_double_real         !< private methods to implement the solve step for a real valued
-     procedure, private :: elpa_solve_tridi_single_real         !< double/single tridiagonal matrix
+     procedure, private :: elpa_solve_tridi_d         !< private methods to implement the solve step for a real valued
+     procedure, private :: elpa_solve_tridi_f         !< double/single tridiagonal matrix
 
      procedure, private :: associate_int => elpa_associate_int  !< private method to set some pointers
 
@@ -158,7 +158,7 @@ module elpa_impl
 
 
     !c> elpa_t elpa_allocate();
-    function elpa_impl_allocate_for_c(error) result(ptr) bind(C, name="elpa_allocate")
+    function elpa_impl_allocate_c(error) result(ptr) bind(C, name="elpa_allocate")
       integer(kind=c_int) :: error
       type(c_ptr) :: ptr
       type(elpa_impl_t), pointer :: obj
@@ -169,7 +169,7 @@ module elpa_impl
 
 
     !c> void elpa_deallocate(elpa_t handle);
-    subroutine elpa_impl_deallocate_for_c(handle) bind(C, name="elpa_deallocate")
+    subroutine elpa_impl_deallocate_c(handle) bind(C, name="elpa_deallocate")
       type(c_ptr), value :: handle
       type(elpa_impl_t), pointer :: self
 
@@ -223,7 +223,7 @@ module elpa_impl
 
 
     !c> int elpa_setup(elpa_t handle);
-    function elpa_setup_for_c(handle) result(error) bind(C, name="elpa_setup")
+    function elpa_setup_c(handle) result(error) bind(C, name="elpa_setup")
       type(c_ptr), intent(in), value :: handle
       type(elpa_impl_t), pointer :: self
       integer(kind=c_int) :: error
@@ -262,7 +262,7 @@ module elpa_impl
 
 
     !c> void elpa_set_integer(elpa_t handle, const char *name, int value, int *error);
-    subroutine elpa_set_integer_for_c(handle, name_p, value, error) bind(C, name="elpa_set_integer")
+    subroutine elpa_set_integer_c(handle, name_p, value, error) bind(C, name="elpa_set_integer")
       type(c_ptr), intent(in), value :: handle
       type(elpa_impl_t), pointer :: self
       type(c_ptr), intent(in), value :: name_p
@@ -303,7 +303,7 @@ module elpa_impl
 
 
     !c> int elpa_get_integer(elpa_t handle, const char *name, int *error);
-    function elpa_get_integer_for_c(handle, name_p, error) result(value) bind(C, name="elpa_get_integer")
+    function elpa_get_integer_c(handle, name_p, error) result(value) bind(C, name="elpa_get_integer")
       type(c_ptr), intent(in), value :: handle
       type(elpa_impl_t), pointer :: self
       type(c_ptr), intent(in), value :: name_p
@@ -402,7 +402,7 @@ module elpa_impl
 
 
     !c> void elpa_set_double(elpa_t handle, const char *name, double value, int *error);
-    subroutine elpa_set_double_for_c(handle, name_p, value, error) bind(C, name="elpa_set_double")
+    subroutine elpa_set_double_c(handle, name_p, value, error) bind(C, name="elpa_set_double")
       type(c_ptr), intent(in), value :: handle
       type(elpa_impl_t), pointer :: self
       type(c_ptr), intent(in), value :: name_p
@@ -436,7 +436,7 @@ module elpa_impl
     end function
 
     !c> int elpa_get_double(elpa_t handle, const char *name, int *error);
-    function elpa_get_double_for_c(handle, name_p, error) result(value) bind(C, name="elpa_get_double")
+    function elpa_get_double_c(handle, name_p, error) result(value) bind(C, name="elpa_get_double")
       type(c_ptr), intent(in), value :: handle
       type(elpa_impl_t), pointer :: self
       type(c_ptr), intent(in), value :: name_p
@@ -448,8 +448,6 @@ module elpa_impl
       call c_f_pointer(name_p, name)
       value = elpa_get_double(self, name, error)
     end function
-
-
 
 
     function elpa_associate_int(self, name) result(value)
@@ -486,7 +484,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_solve_real_double(self, a, ev, q, error)
+    subroutine elpa_solve_d(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -527,8 +525,8 @@ module elpa_impl
       endif
     end subroutine
 
-    !c> void elpa_solve_real_double(elpa_t handle, double *a, double *ev, double *q, int *error);
-    subroutine elpa_solve_real_double_for_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_real_double")
+    !c> void elpa_solve_d(elpa_t handle, double *a, double *ev, double *q, int *error);
+    subroutine elpa_solve_d_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_d")
       type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
       integer(kind=c_int), optional, intent(in) :: error
 
@@ -540,11 +538,10 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_solve_real_double(self, a, ev, q, error)
+      call elpa_solve_d(self, a, ev, q, error)
     end subroutine
 
-
-    subroutine elpa_solve_real_single(self, a, ev, q, error)
+    subroutine elpa_solve_f(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -590,8 +587,8 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_solve_real_single(elpa_t handle, float *a, float *ev, float *q, int *error);
-    subroutine elpa_solve_real_single_for_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_real_single")
+    !c> void elpa_solve_f(elpa_t handle, float *a, float *ev, float *q, int *error);
+    subroutine elpa_solve_f_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_f")
       type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
       integer(kind=c_int), optional, intent(in) :: error
 
@@ -603,11 +600,11 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_solve_real_single(self, a, ev, q, error)
+      call elpa_solve_f(self, a, ev, q, error)
     end subroutine
 
 
-    subroutine elpa_solve_complex_double(self, a, ev, q, error)
+    subroutine elpa_solve_dc(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -648,8 +645,8 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_solve_complex_double(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
-    subroutine elpa_solve_complex_double_for_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_complex_double")
+    !c> void elpa_solve_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
+    subroutine elpa_solve_dc_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_dc")
       type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
       integer(kind=c_int), optional, intent(in) :: error
 
@@ -662,11 +659,11 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_solve_complex_double(self, a, ev, q, error)
+      call elpa_solve_dc(self, a, ev, q, error)
     end subroutine
 
 
-    subroutine elpa_solve_complex_single(self, a, ev, q, error)
+    subroutine elpa_solve_fc(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -713,8 +710,8 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_solve_complex_single(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
-    subroutine elpa_solve_complex_single_for_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_complex_single")
+    !c> void elpa_solve_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
+    subroutine elpa_solve_fc_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_fc")
       type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
       integer(kind=c_int), optional, intent(in) :: error
 
@@ -727,11 +724,11 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_solve_complex_single(self, a, ev, q, error)
+      call elpa_solve_fc(self, a, ev, q, error)
     end subroutine
 
 
-    subroutine elpa_multiply_at_b_double (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    subroutine elpa_hermitian_multiply_d (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -756,12 +753,12 @@ module elpa_impl
           error = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in hermitian_multiply() and you did not check for errors!"
       endif
     end subroutine
 
 
-    subroutine elpa_multiply_at_b_single (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    subroutine elpa_hermitian_multiply_f (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -786,7 +783,7 @@ module elpa_impl
           error = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in hermitian_multiply() and you did not check for errors!"
       endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
@@ -795,7 +792,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_multiply_ah_b_double (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    subroutine elpa_hermitian_multiply_dc (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -820,12 +817,12 @@ module elpa_impl
           error = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in hermitian_multiply() and you did not check for errors!"
       endif
     end subroutine
 
 
-    subroutine elpa_multiply_ah_b_single (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    subroutine elpa_hermitian_multiply_fc (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -851,8 +848,8 @@ module elpa_impl
           error = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in multiply_a_b() and you did not check for errors!"
-      endif 
+        write(error_unit,'(a)') "ELPA: Error in hermitian_multiply() and you did not check for errors!"
+      endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
@@ -860,7 +857,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_cholesky_double_real (self, a, error)
+    subroutine elpa_cholesky_d (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -887,7 +884,22 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_cholesky_single_real(self, a, error)
+    !c> void elpa_cholesky_d(elpa_t handle, double *a, int *error);
+    subroutine elpa_choleksy_d_c(handle, a_p, error) bind(C, name="elpa_cholesky_d")
+      type(c_ptr), intent(in), value :: handle, a_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_double), pointer :: a(:, :)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_cholesky_d(self, a, error)
+    end subroutine
+
+
+    subroutine elpa_cholesky_f(self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -919,7 +931,22 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_cholesky_double_complex (self, a, error)
+    !c> void elpa_cholesky_f(elpa_t handle, float *a, int *error);
+    subroutine elpa_choleksy_f_c(handle, a_p, error) bind(C, name="elpa_cholesky_f")
+      type(c_ptr), intent(in), value :: handle, a_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_float), pointer :: a(:, :)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_cholesky_f(self, a, error)
+    end subroutine
+
+
+    subroutine elpa_cholesky_dc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -946,7 +973,22 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_cholesky_single_complex (self, a, error)
+    !c> void elpa_cholesky_dc(elpa_t handle, double complex *a, int *error);
+    subroutine elpa_choleksy_dc_c(handle, a_p, error) bind(C, name="elpa_cholesky_dc")
+      type(c_ptr), intent(in), value :: handle, a_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_double_complex), pointer :: a(:, :)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_cholesky_dc(self, a, error)
+    end subroutine
+
+
+    subroutine elpa_cholesky_fc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -978,15 +1020,29 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_invert_trm_double_real (self, a, error)
+    !c> void elpa_cholesky_fc(elpa_t handle, float complex *a, int *error);
+    subroutine elpa_choleksy_fc_c(handle, a_p, error) bind(C, name="elpa_cholesky_fc")
+      type(c_ptr), intent(in), value :: handle, a_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_float_complex), pointer :: a(:, :)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_cholesky_fc(self, a, error)
+    end subroutine
+
+
+    subroutine elpa_invert_trm_d (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
-      real(kind=rk8)                  :: a(self%local_nrows,*)
+      real(kind=c_double)             :: a(self%local_nrows,*)
 #else
-      real(kind=rk8)                  :: a(self%local_nrows,self%local_ncols)
+      real(kind=c_double)             :: a(self%local_nrows,self%local_ncols)
 #endif
       integer, optional               :: error
       logical                         :: success_l
@@ -1005,15 +1061,29 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_invert_trm_single_real (self, a, error)
+    !c> void elpa_invert_trm_d(elpa_t handle, double *a, int *error);
+    subroutine elpa_invert_trm_d_c(handle, a_p, error) bind(C, name="elpa_invert_trm_d")
+      type(c_ptr), intent(in), value :: handle, a_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_double), pointer :: a(:, :)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_invert_trm_d(self, a, error)
+    end subroutine
+
+
+    subroutine elpa_invert_trm_f (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
-      real(kind=rk4)                  :: a(self%local_nrows,*)
+      real(kind=c_float)              :: a(self%local_nrows,*)
 #else
-      real(kind=rk4)                  :: a(self%local_nrows,self%local_ncols)
+      real(kind=c_float)              :: a(self%local_nrows,self%local_ncols)
 #endif
       integer, optional               :: error
       logical                         :: success_l
@@ -1037,7 +1107,22 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_invert_trm_double_complex (self, a, error)
+    !c> void elpa_invert_trm_f(elpa_t handle, float *a, int *error);
+    subroutine elpa_invert_trm_f_c(handle, a_p, error) bind(C, name="elpa_invert_trm_f")
+      type(c_ptr), intent(in), value :: handle, a_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_float), pointer :: a(:, :)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_invert_trm_f(self, a, error)
+    end subroutine
+
+
+    subroutine elpa_invert_trm_dc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1064,7 +1149,22 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_invert_trm_single_complex (self, a, error)
+    !c> void elpa_invert_trm_dc(elpa_t handle, double complex *a, int *error);
+    subroutine elpa_invert_trm_dc_c(handle, a_p, error) bind(C, name="elpa_invert_trm_dc")
+      type(c_ptr), intent(in), value :: handle, a_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_double_complex), pointer :: a(:, :)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_invert_trm_dc(self, a, error)
+    end subroutine
+
+
+    subroutine elpa_invert_trm_fc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1096,8 +1196,23 @@ module elpa_impl
     end subroutine
 
 
+    !c> void elpa_invert_trm_fc(elpa_t handle, float complex *a, int *error);
+    subroutine elpa_invert_trm_fc_c(handle, a_p, error) bind(C, name="elpa_invert_trm_fc")
+      type(c_ptr), intent(in), value :: handle, a_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_float_complex), pointer :: a(:, :)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_invert_trm_fc(self, a, error)
+    end subroutine
+
+
     !> \todo e should have dimension (na - 1)
-    subroutine elpa_solve_tridi_double_real (self, d, e, q, error)
+    subroutine elpa_solve_tridi_d (self, d, e, q, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1126,7 +1241,7 @@ module elpa_impl
     end subroutine
 
 
-    subroutine elpa_solve_tridi_single_real (self, d, e, q, error)
+    subroutine elpa_solve_tridi_f (self, d, e, q, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision

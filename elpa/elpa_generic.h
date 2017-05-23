@@ -16,14 +16,51 @@
  */
 #define elpa_solve(handle, a, ev, q, error) _Generic((a), \
                 double*: \
-                  elpa_solve_real_double, \
+                  elpa_solve_d, \
                 \
                 float*: \
-                  elpa_solve_real_single, \
+                  elpa_solve_f, \
                 \
                 double complex*: \
-                  elpa_solve_complex_double, \
+                  elpa_solve_dc, \
                 \
                 float complex*: \
-                  elpa_solve_complex_single \
+                  elpa_solve_fc \
         )(handle, a, ev, q, error)
+
+
+/**
+ * \todo document elpa_cholesky()
+ */
+#define elpa_cholesky(handle, a, error) _Generic((a), \
+                double*: \
+                  elpa_cholesky_d, \
+                \
+                float*: \
+                  elpa_cholesky_f, \
+                \
+                double complex*: \
+                  elpa_cholesky_dc, \
+                \
+                float complex*: \
+                  elpa_cholesky_fc \
+        )(handle, a, error)
+
+
+/**
+ * \todo document elpa_invert_triangular()
+ */
+#define elpa_invert_triangular(handle, a, error) _Generic((a), \
+                double*: \
+                  elpa_invert_trm_d, \
+                \
+                float*: \
+                  elpa_invert_trm_f, \
+                \
+                double complex*: \
+                  elpa_invert_trm_dc, \
+                \
+                float complex*: \
+                  elpa_invert_trm_fc \
+        )(handle, a, error)
+

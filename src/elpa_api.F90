@@ -96,32 +96,32 @@ module elpa_api
 
       !< Actual math routines
       generic, public :: solve => &                                 !< method solve for solving the eigenvalue problem
-          elpa_solve_real_double, &                                 !< for symmetric real valued / hermitian complex valued
-          elpa_solve_real_single, &                                 !< matrices
-          elpa_solve_complex_double, &
-          elpa_solve_complex_single
+          elpa_solve_d, &                                 !< for symmetric real valued / hermitian complex valued
+          elpa_solve_f, &                                 !< matrices
+          elpa_solve_dc, &
+          elpa_solve_fc
 
       generic, public :: hermitian_multiply => &                    !< method for a "hermitian" multiplication of matrices a and b
-          elpa_multiply_at_b_double, &                              !< for real valued matrices:   a**T * b
-          elpa_multiply_ah_b_double, &                              !< for complex valued matrices a**H * b
-          elpa_multiply_at_b_single, &
-          elpa_multiply_ah_b_single
+          elpa_hermitian_multiply_d, &                              !< for real valued matrices:   a**T * b
+          elpa_hermitian_multiply_dc, &                              !< for complex valued matrices a**H * b
+          elpa_hermitian_multiply_f, &
+          elpa_hermitian_multiply_fc
 
       generic, public :: cholesky => &                              !< method for the cholesky factorisation of matrix a
-          elpa_cholesky_double_real, &
-          elpa_cholesky_single_real, &
-          elpa_cholesky_double_complex, &
-          elpa_cholesky_single_complex
+          elpa_cholesky_d, &
+          elpa_cholesky_f, &
+          elpa_cholesky_dc, &
+          elpa_cholesky_fc
 
       generic, public :: invert_triangular => &                     !< method to invert a upper triangular matrix a
-          elpa_invert_trm_double_real, &
-          elpa_invert_trm_single_real, &
-          elpa_invert_trm_double_complex, &
-          elpa_invert_trm_single_complex
+          elpa_invert_trm_d, &
+          elpa_invert_trm_f, &
+          elpa_invert_trm_dc, &
+          elpa_invert_trm_fc
 
       generic, public :: solve_tridi => &                           !< method to solve the eigenvalue problem for a tridiagonal
-          elpa_solve_tridi_double_real, &                           !< matrix
-          elpa_solve_tridi_single_real
+          elpa_solve_tridi_d, &                           !< matrix
+          elpa_solve_tridi_f
 
 
       !> \brief private methods of elpa_t type. NOT accessible for the user
@@ -129,28 +129,28 @@ module elpa_api
       procedure(elpa_set_integer_i), deferred, private :: elpa_set_integer
       procedure(elpa_set_double_i),  deferred, private :: elpa_set_double
 
-      procedure(elpa_solve_real_double_i),    deferred, private :: elpa_solve_real_double
-      procedure(elpa_solve_real_single_i),    deferred, private :: elpa_solve_real_single
-      procedure(elpa_solve_complex_double_i), deferred, private :: elpa_solve_complex_double
-      procedure(elpa_solve_complex_single_i), deferred, private :: elpa_solve_complex_single
+      procedure(elpa_solve_d_i),    deferred, private :: elpa_solve_d
+      procedure(elpa_solve_f_i),    deferred, private :: elpa_solve_f
+      procedure(elpa_solve_dc_i), deferred, private :: elpa_solve_dc
+      procedure(elpa_solve_fc_i), deferred, private :: elpa_solve_fc
 
-      procedure(elpa_multiply_at_b_double_i), deferred, private :: elpa_multiply_at_b_double
-      procedure(elpa_multiply_at_b_single_i), deferred, private :: elpa_multiply_at_b_single
-      procedure(elpa_multiply_ah_b_double_i), deferred, private :: elpa_multiply_ah_b_double
-      procedure(elpa_multiply_ah_b_single_i), deferred, private :: elpa_multiply_ah_b_single
+      procedure(elpa_hermitian_multiply_d_i),  deferred, private :: elpa_hermitian_multiply_d
+      procedure(elpa_hermitian_multiply_f_i),  deferred, private :: elpa_hermitian_multiply_f
+      procedure(elpa_hermitian_multiply_dc_i), deferred, private :: elpa_hermitian_multiply_dc
+      procedure(elpa_hermitian_multiply_fc_i), deferred, private :: elpa_hermitian_multiply_fc
 
-      procedure(elpa_cholesky_double_real_i),    deferred, private :: elpa_cholesky_double_real
-      procedure(elpa_cholesky_single_real_i),    deferred, private :: elpa_cholesky_single_real
-      procedure(elpa_cholesky_double_complex_i), deferred, private :: elpa_cholesky_double_complex
-      procedure(elpa_cholesky_single_complex_i), deferred, private :: elpa_cholesky_single_complex
+      procedure(elpa_cholesky_d_i),    deferred, private :: elpa_cholesky_d
+      procedure(elpa_cholesky_f_i),    deferred, private :: elpa_cholesky_f
+      procedure(elpa_cholesky_dc_i), deferred, private :: elpa_cholesky_dc
+      procedure(elpa_cholesky_fc_i), deferred, private :: elpa_cholesky_fc
 
-      procedure(elpa_invert_trm_double_real_i),    deferred, private :: elpa_invert_trm_double_real
-      procedure(elpa_invert_trm_single_real_i),    deferred, private :: elpa_invert_trm_single_real
-      procedure(elpa_invert_trm_double_complex_i), deferred, private :: elpa_invert_trm_double_complex
-      procedure(elpa_invert_trm_single_complex_i), deferred, private :: elpa_invert_trm_single_complex
+      procedure(elpa_invert_trm_d_i),    deferred, private :: elpa_invert_trm_d
+      procedure(elpa_invert_trm_f_i),    deferred, private :: elpa_invert_trm_f
+      procedure(elpa_invert_trm_dc_i), deferred, private :: elpa_invert_trm_dc
+      procedure(elpa_invert_trm_fc_i), deferred, private :: elpa_invert_trm_fc
 
-      procedure(elpa_solve_tridi_double_real_i), deferred, private :: elpa_solve_tridi_double_real
-      procedure(elpa_solve_tridi_single_real_i), deferred, private :: elpa_solve_tridi_single_real
+      procedure(elpa_solve_tridi_d_i), deferred, private :: elpa_solve_tridi_d
+      procedure(elpa_solve_tridi_f_i), deferred, private :: elpa_solve_tridi_f
   end type elpa_t
 
 
@@ -162,6 +162,7 @@ module elpa_api
   interface
     pure function elpa_strlen_c(ptr) result(size) bind(c, name="strlen")
       use, intrinsic :: iso_c_binding
+      implicit none
       type(c_ptr), intent(in), value :: ptr
       integer(kind=c_size_t) :: size
     end function
@@ -175,6 +176,7 @@ module elpa_api
   abstract interface
     function elpa_setup_i(self) result(error)
       import elpa_t
+      implicit none
       class(elpa_t), intent(inout) :: self
       integer :: error
     end function
@@ -191,6 +193,7 @@ module elpa_api
     subroutine elpa_set_integer_i(self, name, value, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
       character(*), intent(in)        :: name
       integer(kind=c_int), intent(in) :: value
@@ -209,6 +212,7 @@ module elpa_api
     function elpa_get_integer_i(self, name, error) result(value)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                  :: self
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
@@ -226,9 +230,10 @@ module elpa_api
   abstract interface
     function elpa_is_set_i(self, name) result(state)
       import elpa_t
+      implicit none
       class(elpa_t)            :: self
       character(*), intent(in) :: name
-      integer                  :: sta
+      integer                  :: state
     end function
   end interface
 
@@ -243,6 +248,7 @@ module elpa_api
   abstract interface
     function elpa_can_set_i(self, name, value) result(state)
       import elpa_t, c_int
+      implicit none
       class(elpa_t)                   :: self
       character(*), intent(in)        :: name
       integer(kind=c_int), intent(in) :: value
@@ -261,6 +267,7 @@ module elpa_api
     subroutine elpa_set_double_i(self, name, value, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
       character(*), intent(in)        :: name
       real(kind=c_double), intent(in) :: value
@@ -279,6 +286,7 @@ module elpa_api
     function elpa_get_double_i(self, name, error) result(value)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                  :: self
       character(*), intent(in)       :: name
       real(kind=c_double)            :: value
@@ -296,6 +304,7 @@ module elpa_api
     function elpa_associate_int_i(self, name) result(value)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                  :: self
       character(*), intent(in)       :: name
       integer(kind=c_int), pointer   :: value
@@ -314,6 +323,7 @@ module elpa_api
   abstract interface
     function elpa_get_time_i(self, name1, name2, name3, name4, name5, name6) result(s)
       import elpa_t, c_double
+      implicit none
       class(elpa_t), intent(in) :: self
       ! this is clunky, but what can you do..
       character(len=*), intent(in), optional :: name1, name2, name3, name4, name5, name6
@@ -328,6 +338,7 @@ module elpa_api
   abstract interface
     subroutine elpa_print_times_i(self)
       import elpa_t
+      implicit none
       class(elpa_t), intent(in) :: self
     end subroutine
   end interface
@@ -344,9 +355,10 @@ module elpa_api
   !> \param   q           double real matrix q: on output stores the eigenvalues
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_real_double_i(self, a, ev, q, error)
+    subroutine elpa_solve_d_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)       :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double) :: a(self%local_nrows, *), q(self%local_nrows, *)
@@ -368,9 +380,10 @@ module elpa_api
   !> \param   q           single real matrix q: on output stores the eigenvalues
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_real_single_i(self, a, ev, q, error)
+    subroutine elpa_solve_f_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)       :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)  :: a(self%local_nrows, *), q(self%local_nrows, *)
@@ -392,9 +405,10 @@ module elpa_api
   !> \param   q           double complex matrix q: on output stores the eigenvalues
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_complex_double_i(self, a, ev, q, error)
+    subroutine elpa_solve_dc_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                  :: self
 
 #ifdef USE_ASSUMED_SIZE
@@ -417,9 +431,10 @@ module elpa_api
   !> \param   q           single complex matrix q: on output stores the eigenvalues
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_complex_single_i(self, a, ev, q, error)
+    subroutine elpa_solve_fc_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                 :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
@@ -461,10 +476,11 @@ module elpa_api
   !> \param ldcCols       columns of matrix c
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_multiply_at_b_double_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    subroutine elpa_hermitian_multiply_d_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
@@ -506,10 +522,11 @@ module elpa_api
   !> \param ldcCols       columns of matrix c
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_multiply_at_b_single_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    subroutine elpa_hermitian_multiply_f_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
@@ -551,10 +568,11 @@ module elpa_api
   !> \param ldcCols       columns of matrix c
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_multiply_ah_b_double_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    subroutine elpa_hermitian_multiply_dc_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
@@ -596,10 +614,11 @@ module elpa_api
   !> \param ldcCols       columns of matrix c
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_multiply_ah_b_single_i (self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    subroutine elpa_hermitian_multiply_fc_i (self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
                                           c, ldc, ldcCols, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
@@ -618,9 +637,10 @@ module elpa_api
   !> \param   a           double real matrix: the matrix to be decomposed
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_cholesky_double_real_i (self, a, error)
+    subroutine elpa_cholesky_d_i (self, a, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double)             :: a(self%local_nrows,*)
@@ -637,9 +657,10 @@ module elpa_api
   !> \param   a           single real matrix: the matrix to be decomposed
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_cholesky_single_real_i(self, a, error)
+    subroutine elpa_cholesky_f_i(self, a, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)              :: a(self%local_nrows,*)
@@ -656,9 +677,10 @@ module elpa_api
   !> \param   a           double complex matrix: the matrix to be decomposed
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_cholesky_double_complex_i (self, a, error)
+    subroutine elpa_cholesky_dc_i (self, a, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_double_complex)  :: a(self%local_nrows,*)
@@ -675,9 +697,10 @@ module elpa_api
   !> \param   a           single complex matrix: the matrix to be decomposed
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_cholesky_single_complex_i (self, a, error)
+    subroutine elpa_cholesky_fc_i (self, a, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex)   :: a(self%local_nrows,*)
@@ -694,9 +717,10 @@ module elpa_api
   !> \param   a           double real matrix: the matrix to be inverted
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_invert_trm_double_real_i (self, a, error)
+    subroutine elpa_invert_trm_d_i (self, a, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double)             :: a(self%local_nrows,*)
@@ -713,9 +737,10 @@ module elpa_api
   !> \param   a           single real matrix: the matrix to be inverted
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_invert_trm_single_real_i (self, a, error)
+    subroutine elpa_invert_trm_f_i (self, a, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)              :: a(self%local_nrows,*)
@@ -732,9 +757,10 @@ module elpa_api
   !> \param   a           double complex matrix: the matrix to be inverted
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_invert_trm_double_complex_i (self, a, error)
+    subroutine elpa_invert_trm_dc_i (self, a, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_double_complex)  :: a(self%local_nrows,*)
@@ -751,9 +777,10 @@ module elpa_api
   !> \param   a           single complex matrix: the matrix to be inverted
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_invert_trm_single_complex_i (self, a, error)
+    subroutine elpa_invert_trm_fc_i (self, a, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex)   :: a(self%local_nrows,*)
@@ -772,9 +799,10 @@ module elpa_api
   !> \param   q           double real matrix: on output contains the eigenvectors
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_tridi_double_real_i (self, d, e, q, error)
+    subroutine elpa_solve_tridi_d_i (self, d, e, q, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
       real(kind=c_double)             :: d(self%na), e(self%na)
 #ifdef USE_ASSUMED_SIZE
@@ -794,9 +822,10 @@ module elpa_api
   !> \param   q           single real matrix: on output contains the eigenvectors
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_tridi_single_real_i (self, d, e, q, error)
+    subroutine elpa_solve_tridi_f_i (self, d, e, q, error)
       use iso_c_binding
       import elpa_t
+      implicit none
       class(elpa_t)                   :: self
       real(kind=c_float)              :: d(self%na), e(self%na)
 #ifdef USE_ASSUMED_SIZE
@@ -814,6 +843,7 @@ module elpa_api
   abstract interface
     subroutine elpa_destroy_i(self)
       import elpa_t
+      implicit none
       class(elpa_t) :: self
     end subroutine
   end interface
