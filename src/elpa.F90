@@ -48,6 +48,7 @@
 
 ! The ELPA public API
 
+!> \brief Fortran module to use the ELPA library. No other module shoule be used
 module elpa
   use elpa_constants
   use elpa_api
@@ -58,13 +59,20 @@ module elpa
 
   contains
 
+    !> \brief function to allocate an ELPA instance
+    !> Parameters
+    !> \details
+    !> \result  obj        class(elpa_t), pointer : pointer to allocated object
     function elpa_allocate() result(obj)
       use elpa_impl
       class(elpa_t), pointer :: obj
       obj => elpa_impl_allocate()
     end function
 
-
+    !> \brief function to deallocate an ELPA instance
+    !> Parameters
+    !> \details
+    !> \param  obj        class(elpa_t), pointer : pointer to object to be destroyed and deallocated
     subroutine elpa_deallocate(obj)
       class(elpa_t), pointer :: obj
       call obj%destroy()
