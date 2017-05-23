@@ -66,12 +66,12 @@
   &MATH_DATATYPE&
   &_generic_simple_&
   &PRECISION&
-  & (obj, q, hh, nb, nq, ldq)
+  & (q, hh, nb, nq, ldq)
 
     use precision
     use elpa_abstract_impl
     implicit none
-    class(elpa_abstract_impl_t), intent(inout) :: obj
+    !class(elpa_abstract_impl_t), intent(inout) :: obj
     integer(kind=ik), intent(in)    :: nb, nq, ldq
 #ifdef USE_ASSUMED_SIZE
     complex(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
@@ -83,13 +83,13 @@
     integer(kind=ik)                :: i
     complex(kind=C_DATATYPE_KIND)                :: h1, tau1, x(nq)
 
-    call obj%timer%start("kernel_&
-    &MATH_DATATYPE&
-    &_generic_simple: single_hh_trafo_&
-    &MATH_DATATYPE&
-    &_generic_simple" // &
-    &PRECISION_SUFFIX &
-    )
+    !call obj%timer%start("kernel_&
+    !&MATH_DATATYPE&
+    !&_generic_simple: single_hh_trafo_&
+    !&MATH_DATATYPE&
+    !&_generic_simple" // &
+    !&PRECISION_SUFFIX &
+    !)
 
     ! Just one Householder transformation
 
@@ -109,13 +109,13 @@
     enddo
 
 
-    call obj%timer%stop("kernel_&
-    &MATH_DATATYPE&
-    &_generic_simple: single_hh_trafo_&
-    &MATH_DATATYPE&
-    &_generic_simple" // &
-    &PRECISION_SUFFIX &
-    )
+    !call obj%timer%stop("kernel_&
+    !&MATH_DATATYPE&
+    !&_generic_simple: single_hh_trafo_&
+    !&MATH_DATATYPE&
+    !&_generic_simple" // &
+    !&PRECISION_SUFFIX &
+    !)
 
   end subroutine
 
@@ -128,7 +128,7 @@
   &MATH_DATATYPE&
   &_generic_simple_&
   &PRECISION&
-  & (obj, q, hh, nb, nq, ldq, ldh)
+  & (q, hh, nb, nq, ldq, ldh)
 
 #endif /* REALCASE == 1 */
 
@@ -138,7 +138,7 @@
   &MATH_DATATYPE&
   &_generic_simple_&
   &PRECISION&
-  & (obj, q, hh, nb, nq, ldq, ldh)
+  & (q, hh, nb, nq, ldq, ldh)
 
 #endif /* COMPLEXCASE==1 */
 
@@ -146,7 +146,7 @@
     use elpa_abstract_impl
     implicit none
 
-    class(elpa_abstract_impl_t), intent(inout) :: obj
+    !class(elpa_abstract_impl_t), intent(inout) :: obj
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
 #if REALCASE==1
 
@@ -173,13 +173,13 @@
 #endif /* COMPLEXCASE==1 */
     integer(kind=ik)                :: i
 
-    call obj%timer%start("kernel_&
-    &MATH_DATATYPE&
-    &_generic_simple: double_hh_trafo_&
-    &MATH_DATATYPE&
-    &_generic_simple" // &
-    &PRECISION_SUFFIX &
-    )
+    !call obj%timer%start("kernel_&
+    !&MATH_DATATYPE&
+    !&_generic_simple: double_hh_trafo_&
+    !&MATH_DATATYPE&
+    !&_generic_simple" // &
+    !&PRECISION_SUFFIX &
+    !)
 
     ! Calculate dot product of the two Householder vectors
 #if REALCASE==1
@@ -249,12 +249,12 @@
     q(1:nq,nb+1) = q(1:nq,nb+1) + x(1:nq)*hh(nb,1)
 
 
-    call obj%timer%stop("kernel_&
-    &MATH_DATATYPE&
-    &_generic_simple: double_hh_trafo_&
-    &MATH_DATATYPE&
-    &_generic_simple" // &
-    &PRECISION_SUFFIX &
-    )
+    !call obj%timer%stop("kernel_&
+    !&MATH_DATATYPE&
+    !&_generic_simple: double_hh_trafo_&
+    !&MATH_DATATYPE&
+    !&_generic_simple" // &
+    !&PRECISION_SUFFIX &
+    !)
 
   end subroutine
