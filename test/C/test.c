@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
 
    elpa_t handle;
 
-
+   int value;
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -216,6 +216,9 @@ int main(int argc, char** argv) {
 # endif
    assert_elpa_ok(error);
 #endif
+
+   value = elpa_get_integer(handle, "solver", &error);
+   printf("Solver is set to %d \n", value);
 
    /* Solve EV problem */
    elpa_solve(handle, a, ev, z, &error);

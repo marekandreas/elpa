@@ -301,6 +301,22 @@ module elpa_impl
       end if
     end function
 
+
+    !c> int elpa_get_integer(elpa_t handle, const char *name, int *error);
+    function elpa_get_integer_for_c(handle, name_p, error) result(value) bind(C, name="elpa_get_integer")
+      type(c_ptr), intent(in), value :: handle
+      type(elpa_impl_t), pointer :: self
+      type(c_ptr), intent(in), value :: name_p
+      character(len=elpa_strlen_c(name_p)), pointer :: name
+      integer(kind=c_int)  :: value
+      integer(kind=c_int), optional, intent(inout) :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(name_p, name)
+      value = elpa_get_integer(self, name, error)
+    end function
+
+
     !> \brief function to check whether a key/value pair is set
     !> Parameters
     !> \param   self       class(elpa_impl_t) the allocated ELPA object
@@ -418,6 +434,22 @@ module elpa_impl
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
     end function
+
+    !c> int elpa_get_double(elpa_t handle, const char *name, int *error);
+    function elpa_get_double_for_c(handle, name_p, error) result(value) bind(C, name="elpa_get_double")
+      type(c_ptr), intent(in), value :: handle
+      type(elpa_impl_t), pointer :: self
+      type(c_ptr), intent(in), value :: name_p
+      character(len=elpa_strlen_c(name_p)), pointer :: name
+      real(kind=c_double)  :: value
+      integer(kind=c_int), optional, intent(inout) :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(name_p, name)
+      value = elpa_get_double(self, name, error)
+    end function
+
+
 
 
     function elpa_associate_int(self, name) result(value)
