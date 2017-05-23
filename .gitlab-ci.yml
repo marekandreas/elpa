@@ -1926,18 +1926,30 @@ gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_assembly-complex
       #    paths:
       #      - coverage_data
 
-# real sse block2, complex sse block 1
-intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
-  tags:
-    - cpu
-  script:
-    - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block2 --with-fixed-complex-kernel=sse_block1 --disable-avx2
-    - make -j 8
-    - export OMP_NUM_THREADS=2
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+      # real sse block2, complex sse block 1
+intel-single-precision-mpi-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
+ tags:
+   - cpu
+ script:
+   - ./autogen.sh
+   - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block2 --with-fixed-complex-kernel=sse_block1 --disable-avx2
+   - make -j 8
+   - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+   - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+   - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+      #### real sse block2, complex sse block 1
+      ###intel-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
+      ###  tags:
+      ###    - cpu
+      ###  script:
+      ###    - ./autogen.sh
+      ###    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-openmp --enable-single-precision --enable-timings --enable-redirect --with-fixed-real-kernel=sse_block2 --with-fixed-complex-kernel=sse_block1 --disable-avx2
+      ###    - make -j 8
+      ###    - export OMP_NUM_THREADS=2
+      ###    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+      ###    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+      ###    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
       #gfortran-single-precision-mpi-openmp-ftimings-redirect-real-sse_block2-complex-sse_block1-kernel-jobs:
       #  tags:
