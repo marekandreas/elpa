@@ -108,11 +108,11 @@
     integer(kind=ik)                         :: na, nev, lda, ldq, nblk, matrixCols, &
                                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 
-    call obj%timer%start("solve_evp_&
+    call obj%timer%start("elpa_solve_evp_&
     &MATH_DATATYPE&
-    &_2stage" // &
-    &PRECISION_SUFFIX &
-    )
+    &_2stage_&
+    &PRECISION&
+    &")
 
     na         = obj%na
     nev        = obj%nev
@@ -243,6 +243,7 @@
         do_useGPU_trans_ev_tridi = .true.
       endif
     endif
+    call obj%timer%start("bandred")
 
     if (obj%is_set("bandwidth") == 1) then
       nbw=obj%get("bandwidth")
@@ -286,7 +287,6 @@
       endif
 
       ! Reduction full -> band
-      call obj%timer%start("bandred")
       call bandred_&
       &MATH_DATATYPE&
       &_&
@@ -298,9 +298,10 @@
        , useQRActual &
 #endif
        )
-      call obj%timer%stop("bandred")
+
       if (.not.(success)) return
     end if  ! matrix not already banded on input
+    call obj%timer%stop("bandred")
 
      ! Reduction band -> tridiagonal
 
@@ -401,6 +402,7 @@
        stop 1
      endif
 
+     call obj%timer%start("trans_ev_to_full")
      if(obj%is_set("bandwidth") .ne. 1) then
        if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
          ! copy to device if we want to continue on GPU
@@ -410,7 +412,6 @@
        endif
 
        ! Backtransform stage 2
-       call obj%timer%start("trans_ev_to_full")
 
        call trans_ev_band_to_full_&
        &MATH_DATATYPE&
@@ -424,7 +425,7 @@
         , useQRActual  &
 #endif
         )
-       call obj%timer%stop("trans_ev_to_full")
+
 
        deallocate(tmat, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
@@ -435,12 +436,13 @@
          stop 1
        endif
      endif
+     call obj%timer%stop("trans_ev_to_full")
 
-     call obj%timer%stop("solve_evp_&
+     call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&
-     &_2stage" // &
-     &PRECISION_SUFFIX &
-     )
+     &_2stage_&
+    &PRECISION&
+    &")
 1    format(a,f10.3)
 
    end function elpa_solve_evp_&

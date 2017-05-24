@@ -97,9 +97,6 @@ program test_complex2_double_precision
   use redirect
 #endif
 
-#ifdef HAVE_DETAILED_TIMINGS
- use timings
-#endif
  use output_types
    implicit none
 
@@ -155,33 +152,6 @@ program test_complex2_double_precision
    STATUS = 0
 
 #include "../../elpa_print_headers.X90"
-
-#ifdef HAVE_DETAILED_TIMINGS
-
-   ! initialise the timing functionality
-
-#ifdef HAVE_LIBPAPI
-   call timer%measure_flops(.true.)
-#endif
-
-   call timer%measure_allocated_memory(.true.)
-   call timer%measure_virtual_memory(.true.)
-   call timer%measure_max_allocated_memory(.true.)
-
-   call timer%set_print_options(&
-#ifdef HAVE_LIBPAPI
-                print_flop_count=.true., &
-                print_flop_rate=.true., &
-#endif
-                print_allocated_memory = .true. , &
-                print_virtual_memory=.true., &
-                print_max_allocated_memory=.true.)
-
-
-  call timer%enable()
-
-  call timer%start("program: test_complex2_double_precision")
-#endif
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -244,9 +214,6 @@ program test_complex2_double_precision
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("set up matrix")
-#endif
    allocate(a (na_rows,na_cols))
    allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -255,9 +222,6 @@ program test_complex2_double_precision
 
    call prepare_matrix(na, myid, sc_desc, a, z, as)
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("set up matrix")
-#endif
 
    ! set print flag in elpa1
    elpa_print_times = .true.
@@ -314,14 +278,6 @@ program test_complex2_double_precision
    deallocate(z)
    deallocate(ev)
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program: test_complex2_double_precision")
-   print *," "
-   print *,"Timings program: test_complex2_double_precision"
-   call timer%print("program: test_complex2_double_precision")
-   print *," "
-   print *,"End timings program: test_complex2_double_precision"
-#endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
