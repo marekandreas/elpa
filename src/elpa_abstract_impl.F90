@@ -46,7 +46,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 #include "config-f90.h"
-
+!> \brief Fortran module to provide an abstract definition of the implementation. Do not use directly. Use the module "elpa"
 module elpa_abstract_impl
   use elpa_api
 #ifdef HAVE_DETAILED_TIMINGS

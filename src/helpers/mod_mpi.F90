@@ -43,6 +43,7 @@
 
 #include "config-f90.h"
 
+!> \brief Fortran module which exports the MPI functions to ELPA
 module elpa_mpi
 #ifndef WITH_MPI
   use elpa_mpi_stubs

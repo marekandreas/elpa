@@ -52,7 +52,7 @@
 ! writen by A. Marek (MPCDF), andreas.marek@mpcdf.mpg.de
 
 #include "config-f90.h"
-!> \brief Fortran module which provides the routines to the ELPA solver (1 and 2 stage)
+!> \brief Fortran module which provides the routines to the ELPA solver (1 and 2 stage). This is the LEGACY interface. Do not use anymore!
 module elpa_driver
   use, intrinsic :: iso_c_binding, only : c_double, c_int, c_float, c_float_complex, c_double_complex
   use elpa1

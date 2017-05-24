@@ -42,7 +42,7 @@
 ! Author Andreas Marek, MPCDF
 
 #include "config-f90.h"
-
+!> \brief Fortran module which exports the MPI stubs function, if ELPA as been built without MPI support
 module elpa_mpi_stubs
   use precision
   implicit none

@@ -47,7 +47,7 @@
 !
 #include "config-f90.h"
 
-!> \brief Fortran module which provides the implementation of the API
+!> \brief Fortran module which provides the actual implementation of the API. Do not use directly! Use the module "elpa"
 module elpa_impl
   use elpa_abstract_impl
   use, intrinsic :: iso_c_binding

@@ -41,6 +41,7 @@
 ! This file was written by A. Marek, MPCDF
 
 #include "config-f90.h"
+!> \brief Fortran module which defines the datatypes used in ELPA
 module precision
   use iso_c_binding, only : C_FLOAT, C_DOUBLE, C_FLOAT_COMPLEX, C_DOUBLE_COMPLEX, C_INT32_T, C_INT64_T, C_INT
 

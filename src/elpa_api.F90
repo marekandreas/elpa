@@ -46,7 +46,9 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 #include "config-f90.h"
-!> \brief Fortran module which provides the definition of the ELPA API
+!> \brief Fortran module which provides the definition of the ELPA API. Do not use directly! Use the module "elpa"
+
+
 module elpa_api
   use elpa_constants
   use, intrinsic :: iso_c_binding
@@ -64,6 +66,53 @@ module elpa_api
       c_float, c_float_complex
 
   !> \brief Abstract definition of the elpa_t type
+
+  !>
+  !> A typical usage of ELPA might look like this:
+  !>
+  !> Fortran synopsis
+  !>
+  !> \code{.f90}
+  !>  use elpa
+  !>  class(elpa_t), pointer :: elpa
+  !>
+  !>  if (elpa_init(20170403) /= ELPA_OK) then
+  !>     print *, "ELPA API version not supported"
+  !>     stop
+  !>   endif
+  !>   elpa => elpa_allocate()
+  !>
+  !>   call elpa%set("na", na, success)
+  !>   assert_elpa_ok(success)
+  !>   call elpa%set("nev", nev, success)
+  !>   assert_elpa_ok(success)
+  !>   call elpa%set("local_nrows", na_rows, success)
+  !>   assert_elpa_ok(success)
+  !>   call elpa%set("local_ncols", na_cols, success)
+  !>   assert_elpa_ok(success)
+  !>   call elpa%set("nblk", nblk, success)
+  !>   assert_elpa_ok(success)
+  !>   call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, success)
+  !>   assert_elpa_ok(success)
+  !>   call elpa%set("process_row", my_prow, success)
+  !>   assert_elpa_ok(success)
+  !>   call elpa%set("process_col", my_pcol, success)
+  !>   assert_elpa_ok(success)
+  !>
+  !>   assert(elpa%setup() .eq. ELPA_OK)
+  !>
+  !>   call e%set("solver", ELPA_SOLVER_2STAGE, success)
+  !>   assert_elpa_ok(success)
+  !> \endcode
+  !>   ... set and get all other options that are desired
+  !> \code{.f90}
+  !>   call e%solve(a, ev, z, success)
+  !>   assert_elpa_ok(success)
+  !>
+  !>   call elpa_deallocate(e)
+  !>
+  !>   call elpa_uninit()
+  !> \endcode
   type, abstract :: elpa_t
     private
 
@@ -80,7 +129,7 @@ module elpa_api
       procedure(elpa_setup_i),   deferred, public :: setup          !< export a setup method
       procedure(elpa_destroy_i), deferred, public :: destroy        !< export a destroy method
 
-      !< key/value store
+      ! key/value store
       generic, public :: set => &                                   !< export a method to set integer/double key/values
           elpa_set_integer, &
           elpa_set_double
@@ -90,20 +139,20 @@ module elpa_api
       procedure(elpa_is_set_i),  deferred, public :: is_set         !< method to check whether key/value is set
       procedure(elpa_can_set_i), deferred, public :: can_set        !< method to check whether key/value can be set
 
-      !< Timer
+      ! Timer
       procedure(elpa_get_time_i), deferred, public :: get_time
       procedure(elpa_print_times_i), deferred, public :: print_times
 
-      !< Actual math routines
+      ! Actual math routines
       generic, public :: solve => &                                 !< method solve for solving the eigenvalue problem
-          elpa_solve_d, &                                 !< for symmetric real valued / hermitian complex valued
-          elpa_solve_f, &                                 !< matrices
+          elpa_solve_d, &                                           !< for symmetric real valued / hermitian complex valued
+          elpa_solve_f, &                                           !< matrices
           elpa_solve_dc, &
           elpa_solve_fc
 
       generic, public :: hermitian_multiply => &                    !< method for a "hermitian" multiplication of matrices a and b
           elpa_hermitian_multiply_d, &                              !< for real valued matrices:   a**T * b
-          elpa_hermitian_multiply_dc, &                              !< for complex valued matrices a**H * b
+          elpa_hermitian_multiply_dc, &                             !< for complex valued matrices a**H * b
           elpa_hermitian_multiply_f, &
           elpa_hermitian_multiply_fc
 
@@ -120,7 +169,7 @@ module elpa_api
           elpa_invert_trm_fc
 
       generic, public :: solve_tridi => &                           !< method to solve the eigenvalue problem for a tridiagonal
-          elpa_solve_tridi_d, &                           !< matrix
+          elpa_solve_tridi_d, &                                     !< matrix
           elpa_solve_tridi_f
 
 
@@ -344,7 +393,7 @@ module elpa_api
   end interface
 
 
-  !< Actual math routines
+  ! Actual math routines
 
   !> \brief abstract definition of interface to solve double real eigenvalue problem
   !> Parameters

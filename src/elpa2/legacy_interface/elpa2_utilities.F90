@@ -50,7 +50,7 @@
 ! Author: Andreas Marek, MPCDF
 
 #include "config-f90.h"
-
+!> \brief Fortran module tp provide some variables for the LEGACY interface. This is obsolete, please use the new interface
 module elpa2_utilities
   use elpa
   use precision

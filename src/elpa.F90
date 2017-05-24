@@ -48,6 +48,39 @@
 
 ! The ELPA public API
 
+
+!> \mainpage
+!> Eigenvalue SoLvers for Petaflop-Applications (ELPA)
+!> \par
+!> http://elpa.mpcdf.mpg.de
+!>
+!> \par
+!>    The ELPA library was originally created by the ELPA consortium,
+!>    consisting of the following organizations:
+!>
+!>    - Max Planck Computing and Data Facility (MPCDF) formerly known as
+!>      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!>    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!>      Informatik,
+!>    - Technische Universität München, Lehrstuhl für Informatik mit
+!>      Schwerpunkt Wissenschaftliches Rechnen ,
+!>    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!>    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!>      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!>      and
+!>    - IBM Deutschland GmbH
+!>
+!>   Some parts and enhancements of ELPA have been contributed and authored
+!>   by the Intel Corporation and Nvidia Corporation which are not part of
+!>   the ELPA consortium.
+!>
+!>   Contributions to the ELPA source have been authored by (in alphabetical order):
+!>
+!> \author T. Auckenthaler, Volker Blum, A. Heinecke, L. Huedepohl, R. Johanni, Werner Jürgens, Pavel Kus, and A. Marek
+!>
+!> All the important information is in the \ref elpa_api::elpa_t derived type
+
+
 !> \brief Fortran module to use the ELPA library. No other module shoule be used
 module elpa
   use elpa_constants
