@@ -1,7 +1,12 @@
 #pragma once
 
-/**
- * \todo document elpa_set()
+/*  \brief generic C method for elpa_set
+ *
+ *  \param  handle  handle of the ELPA object for which a key/value pair should be set
+ *  \param  name    the name of the key
+ *  \param  value   integer/double value to be set for the key
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
  */
 #define elpa_set(e, name, value, error) _Generic((value), \
                 int: \
@@ -11,8 +16,14 @@
                   elpa_set_double \
         )(e, name, value, error)
 
-/**
- * \todo document elpa_get()
+
+/*  \brief generic C method for elpa_get
+ *
+ *  \param  handle  handle of the ELPA object for which a key/value pair should be queried
+ *  \param  name    the name of the key
+ *  \param  value   integer/double value to be queried
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
  */
 #define elpa_get(e, name, value, error) _Generic((value), \
                 int*: \
@@ -23,8 +34,14 @@
         )(e, name, value, error)
 
 
-/**
- * \todo document elpa_solve()
+/*  \brief generic C method for elpa_solve
+ *
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float/double float complex/double complex pointer to matrix a
+ *  \param  ev      on return: float/double pointer to eigenvalues
+ *  \param  q       on return: float/double float complex/double complex pointer to eigenvectors
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
  */
 #define elpa_solve(handle, a, ev, q, error) _Generic((a), \
                 double*: \
@@ -40,9 +57,13 @@
                   elpa_solve_fc \
         )(handle, a, ev, q, error)
 
-
-/**
- * \todo document elpa_cholesky()
+/*  \brief generic C method for elpa_cholesky
+ *
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float/double float complex/double complex pointer to matrix a, for which
+ *                  the cholesky factorizaion will be computed
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
  */
 #define elpa_cholesky(handle, a, error) _Generic((a), \
                 double*: \
@@ -59,8 +80,13 @@
         )(handle, a, error)
 
 
-/**
- * \todo document elpa_invert_triangular()
+/*  \brief generic C method for elpa_invert_triangular
+ *
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float/double float complex/double complex pointer to matrix a, which
+ *                  should be inverted
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
  */
 #define elpa_invert_triangular(handle, a, error) _Generic((a), \
                 double*: \
@@ -76,8 +102,16 @@
                   elpa_invert_trm_fc \
         )(handle, a, error)
 
-/**
- * \todo document elpa_solve_tridi()
+
+/*  \brief generic C method for elpa_solve_tridi
+ *
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  d       float/double pointer to the diagonal elements of a matrix a,
+ *                  on output: eigenvalues in ascending order
+ *  \param  e       float/double pointer to the subdiagonal elements of a matrix a
+ *  \param  q       on output: float/double pointer to the eigenvectors
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
  */
 #define elpa_solve_tridi(handle, d, e, q, error) _Generic((d), \
                 double*: \
