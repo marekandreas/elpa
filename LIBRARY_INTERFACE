@@ -58,3 +58,13 @@ https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
   This is an experimental API, which will most likely change in the future
 
   The state of release 2016.11.001.pre defines this interface
+
+- 9
+  NO incompatible API changes w.r.t. to the previous version. The interface of
+  the previous version 2016.11.001.pre has been marked as "legacy", although it
+  is fully available and supported.
+
+  However, a new, more general API has been published, which will in the long run
+  completely replace the "legacy" interface.
+
+  The state of release 2017.05.001.rc1 defines this interface

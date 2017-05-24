@@ -12,7 +12,7 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-%define so_version 8
+%define so_version 9
 
 # OpenMP support requires an MPI implementation with MPI_THREAD_MULTIPLE support,
 # which is only available for a sufficiently configured openmpi >= 1.8
@@ -32,7 +32,7 @@
 %endif
 
 Name:           elpa
-Version:        2016.11.001.pre
+Version:        2017.05.001.rc1
 Release:        1
 Summary:        A massively parallel eigenvector solver
 License:        LGPL-3.0

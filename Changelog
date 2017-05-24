@@ -1,3 +1,22 @@
+Changelog for ELPA 2017.05.001.rc1
+
+This is the release candidate 1 for the ELPA 2017.05.001 version.
+It provides a first version of the new, more generic API of the ELPA library.
+Smaller changes to the API might be possible in the upcoming release
+candidates. For users, who would like to use the older API of the ELPA
+library, the API as defined with release 2016.11.001.pre is frozen in and 
+also supported.
+
+Apart of the API change to be more flexible for the future, this release
+offers the following changes:
+
+- faster GPU implementation, especially for ELPA 1stage
+- the restriction of the block-cyclic distribution blocksize = 128 in the GPU
+  case is relaxed
+- Faster CPU implementation due to better blocking
+- support of already banded matrices (new API only!)
+- improved KNL support
+
 Changelog for pre-release ELPA 2016.11.001.pre
 
 This pre-release contains an experimental API which will most likely

@@ -6,6 +6,14 @@ in the (near) future from the *ELPA* library.
 
 ### A) Deprecated interfaces:###
 
+With the release of ELPA 2017.05.001.rc1 a new, more general API for the library has
+been published. All new features of ELPA will only be accesible via this new interface.
+For ease of transion, the API as defined in release ELPA 2016.11.001 has been frozen in
+and will be still supported for some time, albeit without any new features.
+
+Independent of the freezing in of the old, legacy API from the release 2016.11.001 the
+following listed interfaces will be removed at some time.
+
 In order to unfiy the namespace of the *ELPA* public interfaces, several interfaces
 have been replaced by new names. The old interfaces will be removed
 
@@ -31,4 +39,5 @@ For all symbols also the corresponding "_single" routines are available
 
 
 ### B) Runtime options ###
-At the moment no runtime options are deprecated
+At the moment no runtime options are deprecated. However, future options will only be available via the new
+interface
