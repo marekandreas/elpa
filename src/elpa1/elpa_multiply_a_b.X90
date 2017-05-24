@@ -108,8 +108,8 @@
 
       nblk = obj%nblk
 
-      mpi_comm_rows = obj%get("mpi_comm_rows")
-      mpi_comm_cols = obj%get("mpi_comm_cols")
+      call obj%get("mpi_comm_rows",mpi_comm_rows)
+      call obj%get("mpi_comm_cols",mpi_comm_cols)
       success = .true.
 
       call obj%timer%start("mpi_communication")

@@ -86,8 +86,10 @@ module elpa_api
       generic, public :: set => &                                   !< export a method to set integer/double key/values
           elpa_set_integer, &
           elpa_set_double
-      procedure(elpa_get_integer_i), deferred, public :: get        !< get method for integer key/values
-      procedure(elpa_get_double_i),  deferred, public :: get_double !< get method for double key/values
+
+      generic, public :: get => &                                   !< export a method to get integer/double key/values
+          elpa_get_integer, &
+          elpa_get_double
 
       procedure(elpa_is_set_i),  deferred, public :: is_set         !< method to check whether key/value is set
       procedure(elpa_can_set_i), deferred, public :: can_set        !< method to check whether key/value can be set
@@ -130,6 +132,9 @@ module elpa_api
       ! privates
       procedure(elpa_set_integer_i), deferred, private :: elpa_set_integer
       procedure(elpa_set_double_i),  deferred, private :: elpa_set_double
+
+      procedure(elpa_get_integer_i), deferred, private :: elpa_get_integer
+      procedure(elpa_get_double_i),  deferred, private :: elpa_get_double
 
       procedure(elpa_solve_d_i),    deferred, private :: elpa_solve_d
       procedure(elpa_solve_f_i),    deferred, private :: elpa_solve_f
@@ -208,10 +213,10 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   name        string: the name of the key
+  !> \param   value       integer : the value corresponding to the key
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr()
-  !> \result  value       integer : the value corresponding to the key
   abstract interface
-    function elpa_get_integer_i(self, name, error) result(value)
+    subroutine elpa_get_integer_i(self, name, value, error)
       use iso_c_binding
       import elpa_t
       implicit none
@@ -219,7 +224,7 @@ module elpa_api
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
       integer, intent(out), optional :: error
-    end function
+    end subroutine
   end interface
 
   !> \brief abstract definition of is_set method for integer values
@@ -282,10 +287,10 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   name        string: the name of the key
+  !> \param   value       double: the value associated with the key
   !> \param   error       integer. optional : error code, which can be queried with elpa_strerr
-  !> \result  value       double: the value associated with the key
   abstract interface
-    function elpa_get_double_i(self, name, error) result(value)
+    subroutine elpa_get_double_i(self, name, value, error)
       use iso_c_binding
       import elpa_t
       implicit none
@@ -293,7 +298,7 @@ module elpa_api
       character(*), intent(in)       :: name
       real(kind=c_double)            :: value
       integer, intent(out), optional :: error
-    end function
+    end subroutine
   end interface
 
   !> \brief abstract definition of associate method for integer pointers

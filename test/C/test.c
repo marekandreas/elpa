@@ -217,7 +217,7 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error);
 #endif
 
-   value = elpa_get_integer(handle, "solver", &error);
+   elpa_get(handle, "solver", &value, &error);
    printf("Solver is set to %d \n", value);
 
    /* Solve EV problem */

@@ -77,6 +77,8 @@
       logical                  :: wantDebug
       logical                  :: success
 
+      integer                  :: debug
+
       call obj%timer%start("elpa_solve_tridi_public_&
       &MATH_DATATYPE&
       &_&
@@ -88,10 +90,11 @@
       ldq        = obj%local_nrows
       matrixCols = obj%local_ncols
 
-      mpi_comm_rows = obj%get("mpi_comm_rows")
-      mpi_comm_cols = obj%get("mpi_comm_cols")
+      call obj%get("mpi_comm_rows", mpi_comm_rows)
+      call obj%get("mpi_comm_cols", mpi_comm_cols)
 
-      if (obj%get("debug") == 1) then
+      call obj%get("debug",debug)
+      if (debug == 1) then
         wantDebug = .true.
       else
         wantDebug = .false.

@@ -12,6 +12,18 @@
         )(e, name, value, error)
 
 /**
+ * \todo document elpa_get()
+ */
+#define elpa_get(e, name, value, error) _Generic((value), \
+                int*: \
+                  elpa_get_integer, \
+                \
+                double*: \
+                  elpa_get_double \
+        )(e, name, value, error)
+
+
+/**
  * \todo document elpa_solve()
  */
 #define elpa_solve(handle, a, ev, q, error) _Generic((a), \

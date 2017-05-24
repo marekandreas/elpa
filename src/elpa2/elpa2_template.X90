@@ -97,7 +97,7 @@
    integer(kind=c_int)                       :: i
    logical                                   :: success, successCUDA
    logical                                   :: wantDebug
-   integer(kind=c_int)                       :: istat
+   integer(kind=c_int)                       :: istat, gpu, debug, qr
    character(200)                            :: errorMessage
    logical                                   :: do_useGPU, do_useGPU_trans_ev_tridi
    integer(kind=c_int)                       :: numberOfGPUDevices
@@ -122,40 +122,44 @@
     matrixCols = obj%local_ncols
 
 #if REALCASE == 1
-    kernel  = obj%get("real_kernel")
+    call obj%get("real_kernel",kernel)
     ! check consistency between request for GPUs and defined kernel
-    if (obj%get("gpu") == 1) then
+    call obj%get("gpu", gpu)
+    if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_REAL_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-      else if (obj%get("nblk") .ne. 128) then
+      else if (nblk .ne. 128) then
         kernel = ELPA_2STAGE_REAL_GENERIC
       endif
     endif
 #endif
 
 #if COMPLEXCASE == 1
-    kernel  = obj%get("complex_kernel")
+    call obj%get("complex_kernel",kernel)
     ! check consistency between request for GPUs and defined kernel
-    if (obj%get("gpu") == 1) then
+    call obj%get("gpu", gpu)
+    if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_COMPLEX_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-      else if (obj%get("nblk") .ne. 128) then
+      else if (nblk .ne. 128) then
         kernel = ELPA_2STAGE_COMPLEX_GENERIC
       endif
     endif
 #endif
-    mpi_comm_rows = obj%get("mpi_comm_rows")
-    mpi_comm_cols = obj%get("mpi_comm_cols")
-    mpi_comm_all  = obj%get("mpi_comm_parent")
+    call obj%get("mpi_comm_rows",mpi_comm_rows)
+    call obj%get("mpi_comm_cols",mpi_comm_cols)
+    call obj%get("mpi_comm_parent",mpi_comm_all)
 
-    if (obj%get("gpu") .eq. 1) then
+    call obj%get("gpu",gpu)
+    if (gpu .eq. 1) then
       useGPU = .true.
     else
       useGPU = .false.
     endif
 
 #if REALCASE == 1
-    if (obj%get("qr") .eq. 1) then
+    call obj%get("qr",qr)
+    if (qr .eq. 1) then
       useQR = .true.
     else
       useQR = .false.
@@ -172,7 +176,8 @@
     call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
     call obj%timer%stop("mpi_communication")
 
-    wantDebug = obj%get("debug") == 1
+    call obj%get("debug",debug)
+    wantDebug = debug == 1
     success = .true.
 
     do_useGPU      = .false.
@@ -215,7 +220,8 @@
       endif
     else
       ! check whether set by environment variable
-      do_useGPU = obj%get("gpu") == 1
+      call obj%get("gpu",gpu)
+      do_useGPU = gpu == 1
       if (do_useGPU) then
         if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
@@ -246,7 +252,7 @@
     call obj%timer%start("bandred")
 
     if (obj%is_set("bandwidth") == 1) then
-      nbw=obj%get("bandwidth")
+      call obj%get("bandwidth",nbw)
       if ((nbw == 0) .or. (mod(nbw, nblk) .ne. 0)) then
         if (wantDebug) then
           write(error_unit,*) "Specified bandwidth has to be a multiple of blocksize: ",nbw

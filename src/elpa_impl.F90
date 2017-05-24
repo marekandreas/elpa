@@ -69,8 +69,6 @@ module elpa_impl
      procedure, public :: destroy => elpa_destroy               !< a destroy method: implemented in elpa_destroy
 
      ! KV store
-     procedure, public :: get => elpa_get_integer               !< a get method for integer key/values: implemented in elpa_get_integer
-     procedure, public :: get_double => elpa_get_double         !< a get method for double key/values: implemented in elpa_get_double
      procedure, public :: is_set => elpa_is_set                 !< a method to check whether a key/value pair has been set : implemented
                                                                 !< in elpa_is_set
      procedure, public :: can_set => elpa_can_set               !< a method to check whether a key/value pair can be set : implemented
@@ -86,6 +84,9 @@ module elpa_impl
 
      procedure, private :: elpa_set_integer                     !< private methods to implement the setting of an integer/double key/value pair
      procedure, private :: elpa_set_double
+
+     procedure, private :: elpa_get_integer                     !< private methods to implement the querry of an integer/double key/value pair
+     procedure, private :: elpa_get_double
 
      procedure, private :: elpa_solve_d                         !< private methods to implement the solve step for real/complex
                                                                 !< double/single matrices
@@ -187,7 +188,7 @@ module elpa_impl
       use elpa1_impl, only : elpa_get_communicators_impl
       class(elpa_impl_t), intent(inout) :: self
       integer :: error, error2
-      integer :: mpi_comm_rows, mpi_comm_cols, mpierr
+      integer :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, mpierr, process_row, process_col, timings
 
 #ifdef WITH_MPI
       error = ELPA_ERROR
@@ -195,10 +196,13 @@ module elpa_impl
           self%is_set("process_row") == 1 .and. &
           self%is_set("process_col") == 1) then
 
+        call self%get("mpi_comm_parent", mpi_comm_parent)
+        call self%get("process_row", process_row)
+        call self%get("process_col", process_col)
         mpierr = elpa_get_communicators_impl(&
-                        self%get("mpi_comm_parent"), &
-                        self%get("process_row"), &
-                        self%get("process_col"), &
+                        mpi_comm_parent, &
+                        process_row, &
+                        process_col, &
                         mpi_comm_rows, &
                         mpi_comm_cols)
 
@@ -215,7 +219,8 @@ module elpa_impl
       error = ELPA_OK
 #endif
 
-      if (self%get("timings") == 1) then
+      call self%get("timings",timings)
+      if (timings == 1) then
         call self%timer%enable()
       endif
 
@@ -280,9 +285,9 @@ module elpa_impl
     !> Parameters
     !> \param   self       class(elpa_impl_t) the allocated ELPA object
     !> \param   name       string, the key
+    !> \param   value      integer, the value of the key/vaue pair
     !> \param   error      integer, optional, to store an error code
-    !> \result  value      integer, the value of the key/vaue pair
-    function elpa_get_integer(self, name, error) result(value)
+    subroutine elpa_get_integer(self, name, value, error)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
       use elpa_utilities, only : error_unit
@@ -299,11 +304,11 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
-    end function
+    end subroutine
 
 
-    !c> int elpa_get_integer(elpa_t handle, const char *name, int *error);
-    function elpa_get_integer_c(handle, name_p, error) result(value) bind(C, name="elpa_get_integer")
+    !c> void elpa_get_integer(elpa_t handle, const char *name, int *value, int *error);
+    subroutine elpa_get_integer_c(handle, name_p, value, error) bind(C, name="elpa_get_integer")
       type(c_ptr), intent(in), value :: handle
       type(elpa_impl_t), pointer :: self
       type(c_ptr), intent(in), value :: name_p
@@ -313,8 +318,8 @@ module elpa_impl
 
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
-      value = elpa_get_integer(self, name, error)
-    end function
+      call elpa_get_integer(self, name, value, error)
+    end subroutine
 
 
     !> \brief function to check whether a key/value pair is set
@@ -361,7 +366,7 @@ module elpa_impl
 
       nullify(string)
 
-      val = self%get(option_name, actual_error)
+      call self%get(option_name, val, actual_error)
       if (actual_error /= ELPA_OK) then
         if (present(error)) then
           error = actual_error
@@ -416,7 +421,7 @@ module elpa_impl
     end subroutine
 
 
-    function elpa_get_double(self, name, error) result(value)
+    subroutine elpa_get_double(self, name, value, error)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
       use elpa_utilities, only : error_unit
@@ -433,10 +438,10 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
-    end function
+    end subroutine
 
-    !c> int elpa_get_double(elpa_t handle, const char *name, int *error);
-    function elpa_get_double_c(handle, name_p, error) result(value) bind(C, name="elpa_get_double")
+    !c> void elpa_get_double(elpa_t handle, const char *name, double *value, int *error);
+    subroutine elpa_get_double_c(handle, name_p, value, error) bind(C, name="elpa_get_double")
       type(c_ptr), intent(in), value :: handle
       type(elpa_impl_t), pointer :: self
       type(c_ptr), intent(in), value :: name_p
@@ -446,8 +451,8 @@ module elpa_impl
 
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
-      value = elpa_get_double(self, name, error)
-    end function
+      call elpa_get_double(self, name, value, error)
+    end subroutine
 
 
     function elpa_associate_int(self, name) result(value)
@@ -523,14 +528,15 @@ module elpa_impl
       real(kind=c_double) :: ev(self%na)
 
       integer, optional   :: error
-      integer(kind=c_int) :: error_actual
+      integer(kind=c_int) :: error_actual, solver
       logical             :: success_l
 
 
-      if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
+      call self%get("solver", solver)
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
         success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev, q)
 
-      else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
         success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev, q)
       else
         print *,"unknown solver"
@@ -604,15 +610,16 @@ module elpa_impl
       real(kind=c_float)  :: ev(self%na)
 
       integer, optional   :: error
-      integer(kind=c_int) :: error_actual
+      integer(kind=c_int) :: error_actual, solver
       logical             :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
-      if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
+      call self%get("solver",solver)
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
         success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev, q)
 
-      else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
         success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev, q)
       else
         print *,"unknown solver"
@@ -692,13 +699,14 @@ module elpa_impl
       real(kind=c_double)            :: ev(self%na)
 
       integer, optional              :: error
-      integer(kind=c_int)            :: error_actual
+      integer(kind=c_int)            :: error_actual, solver
       logical                        :: success_l
 
-      if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
+      call self%get("solver", solver)
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
         success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev, q)
 
-      else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
         success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev, q)
       else
         print *,"unknown solver"
@@ -775,15 +783,16 @@ module elpa_impl
       real(kind=c_float)            :: ev(self%na)
 
       integer, optional             :: error
-      integer(kind=c_int)           :: error_actual
+      integer(kind=c_int)           :: error_actual, solver
       logical                       :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-      if (self%get("solver") .eq. ELPA_SOLVER_1STAGE) then
+      call self%get("solver", solver)
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
         success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev, q)
 
-      else if (self%get("solver") .eq. ELPA_SOLVER_2STAGE) then
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
         success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev, q)
       else
         print *,"unknown solver"

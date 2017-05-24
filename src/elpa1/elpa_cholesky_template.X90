@@ -94,10 +94,11 @@
       nblk       = obj%nblk
       matrixCols = obj%local_ncols
 
-      mpi_comm_rows = obj%get("mpi_comm_rows")
-      mpi_comm_cols = obj%get("mpi_comm_cols")
+      call obj%get("mpi_comm_rows",mpi_comm_rows )
+      call obj%get("mpi_comm_cols",mpi_comm_cols)
 
-      if (obj%get("debug") == 1) then
+      call obj%get("debug",debug)
+      if (debug == 1) then
         wantDebug = .true.
       else
         wantDebug = .false.

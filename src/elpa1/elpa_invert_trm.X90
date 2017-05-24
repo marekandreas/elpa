@@ -88,7 +88,7 @@
 #endif
        logical                      :: wantDebug
        logical                      :: success
-       integer(kind=ik)             :: istat
+       integer(kind=ik)             :: istat, debug
        character(200)               :: errorMessage
 
       call obj%timer%start("elpa_invert_trm_&
@@ -102,10 +102,11 @@
        nblk       = obj%nblk
        matrixCols = obj%local_ncols
 
-       mpi_comm_rows = obj%get("mpi_comm_rows")
-       mpi_comm_cols = obj%get("mpi_comm_cols")
+       call obj%get("mpi_comm_rows",mpi_comm_rows)
+       call obj%get("mpi_comm_cols",mpi_comm_cols)
 
-       if (obj%get("debug") == 1) then
+       call obj%get("debug", debug)
+       if (debug == 1) then
          wantDebug = .true.
        else
          wantDebug = .true.
