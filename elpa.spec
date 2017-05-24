@@ -226,10 +226,21 @@ ln -s ../configure .
 %endif
 
 %configure \
+%ifarch i386 i486 i586 i686 x86_64
+        CFLAGS="$CFLAGS -msse4.2" \
+        FCFLAGS="$FFLAGS $FCFLAGS -msse4.2" \
+%endif
 %if %{sle_11_sp4} == 1
         --disable-mpi-module \
 %endif
-        --docdir=%{_docdir}/%{name}-%{version}
+%ifnarch i386 i486 i586 i686 x86_64
+        --disable-sse \
+        --disable-sse-assembly \
+%endif
+        --disable-avx \
+        --disable-avx2 \
+        --docdir=%{_docdir}/%{name}-%{version} \
+        || { cat config.log; exit 1; }
 
 make %{?_smp_mflags} V=1
 popd
@@ -247,11 +258,22 @@ ln -s ../configure .
 %endif
 
 %configure \
+%ifarch i386 i486 i586 i686 x86_64
+        CFLAGS="$CFLAGS -msse4.2" \
+        FCFLAGS="$FFLAGS $FCFLAGS -msse4.2" \
+%endif
 %if %{sle_11_sp4} == 1
         --disable-mpi-module \
 %endif
+%ifnarch i386 i486 i586 i686 x86_64
+        --disable-sse \
+        --disable-sse-assembly \
+%endif
+        --disable-avx \
+        --disable-avx2 \
         --docdir=%{_docdir}/%{name}_openmp-%{version} \
-        --enable-openmp
+        --enable-openmp \
+        || { cat config.log; exit 1; }
 
 make %{?_smp_mflags} V=1
 popd
@@ -303,7 +325,9 @@ popd
 
 %files tools
 %attr(0755,root,root) %{_bindir}/elpa2_print_kernels
-%attr(0644,root,root) %_mandir/man1/elpa2_print_kernels.1.gz
+%attr(0755,root,root) %{_bindir}/elpa_tests
+%attr(0644,root,root) %{_mandir}/man1/elpa2_print_kernels.1.gz
+%attr(0644,root,root) %{_mandir}/man1/elpa_tests.1.gz
 
 %files devel
 %defattr(-,root,root)
@@ -327,7 +351,9 @@ popd
 
 %files -n %{name}_openmp-tools
 %defattr(-,root,root)
-%{_bindir}/elpa2_print_kernels_openmp
+%attr(0755,root,root) %{_bindir}/elpa2_print_kernels_openmp
+%attr(0755,root,root) %{_bindir}/elpa_tests_openmp
+
 
 %files -n %{name}_openmp-devel
 %defattr(-,root,root)
