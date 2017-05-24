@@ -219,10 +219,12 @@ module elpa_impl
       error = ELPA_OK
 #endif
 
+#ifdef HAVE_DETAILED_TIMINGS
       call self%get("timings",timings)
       if (timings == 1) then
         call self%timer%enable()
       endif
+#endif
 
     end function
 
@@ -479,13 +481,19 @@ module elpa_impl
       character(len=*), intent(in), optional :: name1, name2, name3, name4, name5, name6
       real(kind=c_double) :: s
 
+#ifdef HAVE_DETAILED_TIMINGS
       s = self%timer%get(name1, name2, name3, name4, name5, name6)
+#else
+      s = -1.0
+#endif
     end function
 
 
     subroutine elpa_print_times(self)
       class(elpa_impl_t), intent(in) :: self
+#ifdef HAVE_DETAILED_TIMINGS
       call self%timer%print()
+#endif
     end subroutine
 
     !>  \brief elpa_solve_d: class method to solve the eigenvalue problem for double real matrices
