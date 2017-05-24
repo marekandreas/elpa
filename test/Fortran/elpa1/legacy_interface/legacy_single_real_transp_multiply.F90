@@ -62,9 +62,6 @@ program test_transpose_multiply
 #ifdef HAVE_REDIRECT
    use redirect
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
   use output_types
 
    implicit none
@@ -114,33 +111,6 @@ program test_transpose_multiply
    call setup_mpi(myid, nprocs)
 
    STATUS = 0
-
-#ifdef HAVE_DETAILED_TIMINGS
-
-   ! initialise the timing functionality
-
-#ifdef HAVE_LIBPAPI
-   call timer%measure_flops(.true.)
-#endif
-
-   call timer%measure_allocated_memory(.true.)
-   call timer%measure_virtual_memory(.true.)
-   call timer%measure_max_allocated_memory(.true.)
-
-   call timer%set_print_options(&
-#ifdef HAVE_LIBPAPI
-                print_flop_count=.true., &
-                print_flop_rate=.true., &
-#endif
-                print_allocated_memory = .true. , &
-                print_virtual_memory=.true., &
-                print_max_allocated_memory=.true.)
-
-
-  call timer%enable()
-
-  call timer%start("program")
-#endif
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
@@ -192,9 +162,6 @@ program test_transpose_multiply
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("set up matrix")
-#endif
    allocate(a (na_rows,na_cols))
    allocate(b (na_rows,na_cols))
    allocate(c (na_rows,na_cols))
@@ -208,10 +175,6 @@ program test_transpose_multiply
 
    b(:,:) = 2.0_rk4 * a(:,:)
    c(:,:) = 0.0_rk4
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("set up matrix")
-#endif
 
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
@@ -295,17 +258,6 @@ program test_transpose_multiply
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
-   print *," "
-   print *,"Timings program:"
-   print *," "
-   call timer%print("program")
-   print *," "
-   print *,"End timings program"
-   print *," "
-#endif
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

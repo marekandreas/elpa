@@ -71,9 +71,6 @@ program test_solve_tridi_single
 #ifdef HAVE_REDIRECT
    use redirect
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
   use output_types
 
    implicit none
@@ -133,33 +130,6 @@ program test_solve_tridi_single
 !#define ELPA1
 !#include "../../elpa_print_headers.X90"
 
-#ifdef HAVE_DETAILED_TIMINGS
-
-   ! initialise the timing functionality
-
-#ifdef HAVE_LIBPAPI
-   call timer%measure_flops(.true.)
-#endif
-
-   call timer%measure_allocated_memory(.true.)
-   call timer%measure_virtual_memory(.true.)
-   call timer%measure_max_allocated_memory(.true.)
-
-   call timer%set_print_options(&
-#ifdef HAVE_LIBPAPI
-                print_flop_count=.true., &
-                print_flop_rate=.true., &
-#endif
-                print_allocated_memory = .true. , &
-                print_virtual_memory=.true., &
-                print_max_allocated_memory=.true.)
-
-
-  call timer%enable()
-
-  call timer%start("program")
-#endif
-
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
@@ -214,9 +184,6 @@ program test_solve_tridi_single
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test toeplitz matrix for solve_tridi
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("set up matrix")
-#endif
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
 
@@ -256,11 +223,6 @@ program test_solve_tridi_single
    enddo
 
    as = a
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("set up matrix")
-#endif
-
 
    !-------------------------------------------------------------------------------
    ! Calculate eigenvalues/eigenvectors
@@ -374,17 +336,6 @@ program test_solve_tridi_single
    deallocate(e)
    deallocate(ev)
    deallocate(ev_analytic)
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
-   print *," "
-   print *,"Timings program:"
-   print *," "
-   call timer%print("program")
-   print *," "
-   print *,"End timings program"
-   print *," "
-#endif
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
