@@ -64,3 +64,13 @@
                   elpa_invert_trm_fc \
         )(handle, a, error)
 
+/**
+ * \todo document elpa_solve_tridi()
+ */
+#define elpa_solve_tridi(handle, d, e, q, error) _Generic((d), \
+                double*: \
+                  elpa_solve_tridi_d, \
+                \
+                float*: \
+                  elpa_solve_tridi_f \
+        )(handle, d, e, q, error)

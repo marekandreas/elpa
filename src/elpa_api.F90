@@ -349,6 +349,14 @@ module elpa_api
   ! Actual math routines
 
   !> \brief abstract definition of interface to solve double real eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
@@ -374,6 +382,14 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to solve single real eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
@@ -399,6 +415,14 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to solve double complex eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
@@ -425,6 +449,14 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to solve single complex eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t), the ELPA object
@@ -662,6 +694,11 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to do a cholesky decomposition of a double real matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !> 
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double real matrix: the matrix to be decomposed
@@ -682,6 +719,11 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to do a cholesky decomposition of a single real matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !> 
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single real matrix: the matrix to be decomposed
@@ -702,6 +744,11 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to do a cholesky decomposition of a double complex matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !> 
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double complex matrix: the matrix to be decomposed
@@ -722,6 +769,11 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to do a cholesky decomposition of a single complex matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !> 
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single complex matrix: the matrix to be decomposed
@@ -742,6 +794,11 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to invert a triangular double real matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double real matrix: the matrix to be inverted
@@ -763,6 +820,11 @@ module elpa_api
 
   !> \brief abstract definition of interface to invert a triangular single real matrix
   !> Parameters
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single real matrix: the matrix to be inverted
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
@@ -782,6 +844,11 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to invert a triangular double complex matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double complex matrix: the matrix to be inverted
@@ -802,6 +869,11 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to invert a triangular single complex matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single complex matrix: the matrix to be inverted
@@ -822,9 +894,15 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to solve the eigenvalue problem for a double-precision real valued tridiangular matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
-  !> \param   d           double real 1d array: the diagonal elements of a matrix defined in setup
+  !> \param   d           double real 1d array: the diagonal elements of a matrix defined in setup, on output the eigenvalues
+  !>                      in ascending order
   !> \param   e           double real 1d array: the subdiagonal elements of a matrix defined in setup
   !> \param   q           double real matrix: on output contains the eigenvectors
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
@@ -845,9 +923,15 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to solve the eigenvalue problem for a single-precision real valued tridiangular matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
-  !> \param   d           single real 1d array: the diagonal elements of a matrix defined in setup
+  !> \param   d           single real 1d array: the diagonal elements of a matrix defined in setup, on output the eigenvalues
+  !>                      in ascending order
   !> \param   e           single real 1d array: the subdiagonal elements of a matrix defined in setup
   !> \param   q           single real matrix: on output contains the eigenvectors
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr

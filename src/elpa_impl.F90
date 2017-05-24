@@ -485,7 +485,8 @@ module elpa_impl
 
     !>  \brief elpa_solve_d: class method to solve the eigenvalue problem for double real matrices
     !>
-    !>  The dimensions of the matrix a (locally ditributed and global), the number of eigenvectors
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
     !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
     !>  with the class method "setup"
     !>
@@ -566,7 +567,8 @@ module elpa_impl
 
     !>  \brief elpa_solve_f: class method to solve the eigenvalue problem for float real matrices
     !>
-    !>  The dimensions of the matrix a (locally ditributed and global), the number of eigenvectors
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
     !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
     !>  with the class method "setup"
     !>
@@ -652,7 +654,8 @@ module elpa_impl
 
     !>  \brief elpa_solve_dc: class method to solve the eigenvalue problem for double complex matrices
     !>
-    !>  The dimensions of the matrix a (locally ditributed and global), the number of eigenvectors
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
     !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
     !>  with the class method "setup"
     !>
@@ -734,7 +737,8 @@ module elpa_impl
 
     !>  \brief elpa_solve_fc: class method to solve the eigenvalue problem for float complex matrices
     !>
-    !>  The dimensions of the matrix a (locally ditributed and global), the number of eigenvectors
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
     !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
     !>  with the class method "setup"
     !>
@@ -916,7 +920,7 @@ module elpa_impl
     !> \param c                     matrix c
     !> \param nrows_c               number of rows of local (sub) matrix c
     !> \param ncols_c               number of columns of local (sub) matrix c
-    !> \param error                 optional argument, returns an error code
+    !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_f (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
@@ -983,7 +987,7 @@ module elpa_impl
     !> \param c                     matrix c
     !> \param nrows_c               number of rows of local (sub) matrix c
     !> \param ncols_c               number of columns of local (sub) matrix c
-    !> \param error                 optional argument, returns an error code
+    !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_dc (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
@@ -1046,7 +1050,7 @@ module elpa_impl
     !> \param c                     matrix c
     !> \param nrows_c               number of rows of local (sub) matrix c
     !> \param ncols_c               number of columns of local (sub) matrix c
-    !> \param error                 optional argument, returns an error code
+    !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_fc (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
@@ -1080,7 +1084,23 @@ module elpa_impl
 #endif
     end subroutine
 
-
+    !>  \brief elpa_choleksy_d: class method to do a cholesky factorization for a double real matrix
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_d (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -1122,7 +1142,23 @@ module elpa_impl
       call elpa_cholesky_d(self, a, error)
     end subroutine
 
-
+    !>  \brief elpa_choleksy_f: class method to do a cholesky factorization for a float real matrix
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_f(self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -1169,7 +1205,23 @@ module elpa_impl
       call elpa_cholesky_f(self, a, error)
     end subroutine
 
-
+    !>  \brief elpa_choleksy_d: class method to do a cholesky factorization for a double complex matrix
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_dc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -1211,7 +1263,23 @@ module elpa_impl
       call elpa_cholesky_dc(self, a, error)
     end subroutine
 
-
+    !>  \brief elpa_choleksy_fc: class method to do a cholesky factorization for a float complex matrix
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_fc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -1257,7 +1325,23 @@ module elpa_impl
       call elpa_cholesky_fc(self, a, error)
     end subroutine
 
-
+    !>  \brief elpa_invert_trim_d: class method to invert a triangular double real matrix
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_d (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -1298,7 +1382,23 @@ module elpa_impl
       call elpa_invert_trm_d(self, a, error)
     end subroutine
 
-
+    !>  \brief elpa_invert_trim_f: class method to invert a triangular float real matrix
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_f (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -1344,7 +1444,23 @@ module elpa_impl
       call elpa_invert_trm_f(self, a, error)
     end subroutine
 
-
+    !>  \brief elpa_invert_trim_dc: class method to invert a triangular double complex matrix
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_dc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -1386,7 +1502,23 @@ module elpa_impl
       call elpa_invert_trm_dc(self, a, error)
     end subroutine
 
-
+    !>  \brief elpa_invert_trim_fc: class method to invert a triangular float complex matrix
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_fc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -1433,6 +1565,22 @@ module elpa_impl
     end subroutine
 
 
+    !>  \brief elpa_solve_tridi_d: class method to solve the eigenvalue problem for a double real tridiagonal matrix a
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param d        array d  on input diagonal elements of tridiagonal matrix, on
+    !>                           output the eigenvalues in ascending order
+    !>  \param e        array e on input subdiagonal elements of matrix, on exit destroyed
+    !>  \param q        matrix  on exit : contains the eigenvectors
+    !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
     !> \todo e should have dimension (na - 1)
     subroutine elpa_solve_tridi_d (self, d, e, q, error)
       use iso_c_binding
@@ -1463,6 +1611,40 @@ module elpa_impl
     end subroutine
 
 
+    !c> void elpa_solve_tridi_d(elpa_t handle, double *d, double *e, double *q, int *error);
+    subroutine elpa_solve_tridi_d_c(handle, d_p, e_p, q_p, error) bind(C, name="elpa_solve_tridi_d")
+      type(c_ptr), intent(in), value :: handle, d_p, e_p, q_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_double), pointer :: d(:), e(:), q(:,:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(d_p, d, [self%na])
+      call c_f_pointer(e_p, e, [self%na])
+      call c_f_pointer(q_p, q, [self%local_nrows,self%local_ncols])
+
+
+      call elpa_solve_tridi_d(self, d, e, q, error)
+    end subroutine
+
+    !>  \brief elpa_solve_tridi_f: class method to solve the eigenvalue problem for a float real tridiagonal matrix a
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param d        array d  on input diagonal elements of tridiagonal matrix, on
+    !>                           output the eigenvalues in ascending order
+    !>  \param e        array e on input subdiagonal elements of matrix, on exit destroyed
+    !>  \param q        matrix  on exit : contains the eigenvectors
+    !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
+    !> \todo e should have dimension (na - 1)
     subroutine elpa_solve_tridi_f (self, d, e, q, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
@@ -1494,6 +1676,24 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
       endif
+    end subroutine
+
+
+    !c> void elpa_solve_tridi_f(elpa_t handle, float *d, float *e, float *q, int *error);
+    subroutine elpa_solve_tridi_f_c(handle, d_p, e_p, q_p, error) bind(C, name="elpa_solve_tridi_f")
+      type(c_ptr), intent(in), value :: handle, d_p, e_p, q_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_float), pointer :: d(:), e(:), q(:,:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(d_p, d, [self%na])
+      call c_f_pointer(e_p, e, [self%na])
+      call c_f_pointer(q_p, q, [self%local_nrows,self%local_ncols])
+
+
+      call elpa_solve_tridi_f(self, d, e, q, error)
     end subroutine
 
 
