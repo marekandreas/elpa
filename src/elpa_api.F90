@@ -66,53 +66,6 @@ module elpa_api
       c_float, c_float_complex
 
   !> \brief Abstract definition of the elpa_t type
-
-  !>
-  !> A typical usage of ELPA might look like this:
-  !>
-  !> Fortran synopsis
-  !>
-  !> \code{.f90}
-  !>  use elpa
-  !>  class(elpa_t), pointer :: elpa
-  !>
-  !>  if (elpa_init(20170403) /= ELPA_OK) then
-  !>     print *, "ELPA API version not supported"
-  !>     stop
-  !>   endif
-  !>   elpa => elpa_allocate()
-  !>
-  !>   call elpa%set("na", na, success)
-  !>   assert_elpa_ok(success)
-  !>   call elpa%set("nev", nev, success)
-  !>   assert_elpa_ok(success)
-  !>   call elpa%set("local_nrows", na_rows, success)
-  !>   assert_elpa_ok(success)
-  !>   call elpa%set("local_ncols", na_cols, success)
-  !>   assert_elpa_ok(success)
-  !>   call elpa%set("nblk", nblk, success)
-  !>   assert_elpa_ok(success)
-  !>   call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, success)
-  !>   assert_elpa_ok(success)
-  !>   call elpa%set("process_row", my_prow, success)
-  !>   assert_elpa_ok(success)
-  !>   call elpa%set("process_col", my_pcol, success)
-  !>   assert_elpa_ok(success)
-  !>
-  !>   assert(elpa%setup() .eq. ELPA_OK)
-  !>
-  !>   call e%set("solver", ELPA_SOLVER_2STAGE, success)
-  !>   assert_elpa_ok(success)
-  !> \endcode
-  !>   ... set and get all other options that are desired
-  !> \code{.f90}
-  !>   call e%solve(a, ev, z, success)
-  !>   assert_elpa_ok(success)
-  !>
-  !>   call elpa_deallocate(e)
-  !>
-  !>   call elpa_uninit()
-  !> \endcode
   type, abstract :: elpa_t
     private
 
@@ -496,185 +449,213 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract definition of interface to compute C : = A**T * B
-  !> Parameters
+  !> \brief abstract definition of interface to compute C : = A**T * B for double real matrices
+  !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+  !>                 B is a (na,ncb) matrix
+  !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+  !>                   triangle may be computed
+  !>
+  !> the MPI commicators are already known to the type. Thus the class method "setup" must be called
+  !> BEFORE this method is used
   !> \details
-  !> \param   self        class(elpa_t), the ELPA object
-  !> \param   uplo_a      'U' if A is upper triangular
-  !>                      'L' if A is lower triangular
-  !>                      anything else if A is a full matrix
-  !>                      Please note: This pertains to the original A (as set in the calling program)
-  !>                                   whereas the transpose of A is used for calculations
-  !>                      If uplo_a is 'U' or 'L', the other triangle is not used at all,
-  !>                      i.e. it may contain arbitrary numbers
-  !> \param uplo_c        'U' if only the upper diagonal part of C is needed
-  !>                      'L' if only the upper diagonal part of C is needed
-  !>                      anything else if the full matrix C is needed
-  !>                      Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
-  !>                                    written to a certain extent, i.e. one shouldn't rely on the content there!
-  !> \param na            Number of rows/columns of A, number of rows of B and C
-  !> \param ncb           Number of real  of B and C
-  !> \param   a           double complex matrix a
-  !> \param lda           leading dimension of matrix a
-  !> \param ldaCols       columns of matrix a
-  !> \param b             double real matrix b
-  !> \param ldb           leading dimension of matrix b
-  !> \param ldbCols       columns of matrix b
-  !> \param c             double real  matrix c
-  !> \param ldc           leading dimension of matrix c
-  !> \param ldcCols       columns of matrix c
-  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
+  !>
+  !> \param  uplo_a               'U' if A is upper triangular
+  !>                              'L' if A is lower triangular
+  !>                              anything else if A is a full matrix
+  !>                              Please note: This pertains to the original A (as set in the calling program)
+  !>                                           whereas the transpose of A is used for calculations
+  !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !>                              i.e. it may contain arbitrary numbers
+  !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+  !>                              'L' if only the upper diagonal part of C is needed
+  !>                              anything else if the full matrix C is needed
+  !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+  !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
+  !> \param ncb                   Number of columns  of global matrices B and C
+  !> \param a                     matrix a
+  !> \param nrows_a               number of rows of local (sub) matrix a
+  !> \param ncols_a               number of columns of local (sub) matrix a
+  !> \param b                     matrix b
+  !> \param nrows_b               number of rows of local (sub) matrix b
+  !> \param ncols_b               number of columns of local (sub) matrix b
+  !> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !> \param c                     matrix c
+  !> \param nrows_c               number of rows of local (sub) matrix c
+  !> \param ncols_c               number of columns of local (sub) matrix c
+  !> \param error                 optional argument, error code which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_hermitian_multiply_d_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, error)
+    subroutine elpa_hermitian_multiply_d_i (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)
       use iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      real(kind=c_double)             :: a(lda,*), b(ldb,*), c(ldc,*)
+      real(kind=c_double)             :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      real(kind=c_double)             :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      real(kind=c_double)             :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
     end subroutine
   end interface
 
   !> \brief abstract definition of interface to compute C : = A**T * B
-  !> Parameters
+  !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+  !>                 B is a (na,ncb) matrix
+  !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+  !>                   triangle may be computed
+  !>
+  !> the MPI commicators are already known to the type. Thus the class method "setup" must be called
+  !> BEFORE this method is used
   !> \details
-  !> \param   self        class(elpa_t), the ELPA object
-  !> \param   uplo_a      'U' if A is upper triangular
-  !>                      'L' if A is lower triangular
-  !>                      anything else if A is a full matrix
-  !>                      Please note: This pertains to the original A (as set in the calling program)
-  !>                                   whereas the transpose of A is used for calculations
-  !>                      If uplo_a is 'U' or 'L', the other triangle is not used at all,
-  !>                      i.e. it may contain arbitrary numbers
-  !> \param uplo_c        'U' if only the upper diagonal part of C is needed
-  !>                      'L' if only the upper diagonal part of C is needed
-  !>                      anything else if the full matrix C is needed
-  !>                      Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
-  !>                                    written to a certain extent, i.e. one shouldn't rely on the content there!
-  !> \param na            Number of rows/columns of A, number of rows of B and C
-  !> \param ncb           Number of real  of B and C
-  !> \param   a           single complex matrix a
-  !> \param lda           leading dimension of matrix a
-  !> \param ldaCols       columns of matrix a
-  !> \param b             single real matrix b
-  !> \param ldb           leading dimension of matrix b
-  !> \param ldbCols       columns of matrix b
-  !> \param c             single real  matrix c
-  !> \param ldc           leading dimension of matrix c
-  !> \param ldcCols       columns of matrix c
-  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
+  !>
+  !> \param  uplo_a               'U' if A is upper triangular
+  !>                              'L' if A is lower triangular
+  !>                              anything else if A is a full matrix
+  !>                              Please note: This pertains to the original A (as set in the calling program)
+  !>                                           whereas the transpose of A is used for calculations
+  !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !>                              i.e. it may contain arbitrary numbers
+  !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+  !>                              'L' if only the upper diagonal part of C is needed
+  !>                              anything else if the full matrix C is needed
+  !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+  !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
+  !> \param ncb                   Number of columns  of global matrices B and C
+  !> \param a                     matrix a
+  !> \param nrows_a               number of rows of local (sub) matrix a
+  !> \param ncols_a               number of columns of local (sub) matrix a
+  !> \param b                     matrix b
+  !> \param nrows_b               number of rows of local (sub) matrix b
+  !> \param ncols_b               number of columns of local (sub) matrix b
+  !> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !> \param c                     matrix c
+  !> \param nrows_c               number of rows of local (sub) matrix c
+  !> \param ncols_c               number of columns of local (sub) matrix c
+  !> \param error                 optional argument, error code which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_hermitian_multiply_f_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, error)
+    subroutine elpa_hermitian_multiply_f_i (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)
       use iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      real(kind=c_float)              :: a(lda,*), b(ldb,*), c(ldc,*)
+      real(kind=c_float)              :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      real(kind=c_float)              :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      real(kind=c_float)              :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
     end subroutine
   end interface
 
   !> \brief abstract definition of interface to compute C : = A**H * B
-  !> Parameters
+  !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+  !>                 B is a (na,ncb) matrix
+  !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+  !>                   triangle may be computed
+  !>
+  !> the MPI commicators are already known to the type. Thus the class method "setup" must be called
+  !> BEFORE this method is used
   !> \details
-  !> \param   self        class(elpa_t), the ELPA object
-  !> \param   uplo_a      'U' if A is upper triangular
-  !>                      'L' if A is lower triangular
-  !>                      anything else if A is a full matrix
-  !>                      Please note: This pertains to the original A (as set in the calling program)
-  !>                                   whereas the transpose of A is used for calculations
-  !>                      If uplo_a is 'U' or 'L', the other triangle is not used at all,
-  !>                      i.e. it may contain arbitrary numbers
-  !> \param uplo_c        'U' if only the upper diagonal part of C is needed
-  !>                      'L' if only the upper diagonal part of C is needed
-  !>                      anything else if the full matrix C is needed
-  !>                      Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
-  !>                                    written to a certain extent, i.e. one shouldn't rely on the content there!
-  !> \param na            Number of rows/columns of A, number of rows of B and C
-  !> \param ncb           Number of columns  of B and C
-  !> \param   a           double complex matrix a
-  !> \param lda           leading dimension of matrix a
-  !> \param ldaCols       columns of matrix a
-  !> \param b             double complex matrix b
-  !> \param ldb           leading dimension of matrix b
-  !> \param ldbCols       columns of matrix b
-  !> \param c             double complex  matrix c
-  !> \param ldc           leading dimension of matrix c
-  !> \param ldcCols       columns of matrix c
-  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
+  !>
+  !> \param  uplo_a               'U' if A is upper triangular
+  !>                              'L' if A is lower triangular
+  !>                              anything else if A is a full matrix
+  !>                              Please note: This pertains to the original A (as set in the calling program)
+  !>                                           whereas the transpose of A is used for calculations
+  !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !>                              i.e. it may contain arbitrary numbers
+  !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+  !>                              'L' if only the upper diagonal part of C is needed
+  !>                              anything else if the full matrix C is needed
+  !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+  !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
+  !> \param ncb                   Number of columns  of global matrices B and C
+  !> \param a                     matrix a
+  !> \param nrows_a               number of rows of local (sub) matrix a
+  !> \param ncols_a               number of columns of local (sub) matrix a
+  !> \param b                     matrix b
+  !> \param nrows_b               number of rows of local (sub) matrix b
+  !> \param ncols_b               number of columns of local (sub) matrix b
+  !> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !> \param c                     matrix c
+  !> \param nrows_c               number of rows of local (sub) matrix c
+  !> \param ncols_c               number of columns of local (sub) matrix c
+  !> \param error                 optional argument, error code which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_hermitian_multiply_dc_i (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, error)
+    subroutine elpa_hermitian_multiply_dc_i (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)
       use iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=c_double_complex)  :: a(lda,*), b(ldb,*), c(ldc,*)
+      complex(kind=c_double_complex)  :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      complex(kind=c_double_complex)  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      complex(kind=c_double_complex)  :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
     end subroutine
   end interface
 
   !> \brief abstract definition of interface to compute C : = A**H * B
-  !> Parameters
+  !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+  !>                 B is a (na,ncb) matrix
+  !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+  !>                   triangle may be computed
+  !>
+  !> the MPI commicators are already known to the type. Thus the class method "setup" must be called
+  !> BEFORE this method is used
   !> \details
-  !> \param   self        class(elpa_t), the ELPA object
-  !> \param   uplo_a      'U' if A is upper triangular
-  !>                      'L' if A is lower triangular
-  !>                      anything else if A is a full matrix
-  !>                      Please note: This pertains to the original A (as set in the calling program)
-  !>                                   whereas the transpose of A is used for calculations
-  !>                      If uplo_a is 'U' or 'L', the other triangle is not used at all,
-  !>                      i.e. it may contain arbitrary numbers
-  !> \param uplo_c        'U' if only the upper diagonal part of C is needed
-  !>                      'L' if only the upper diagonal part of C is needed
-  !>                      anything else if the full matrix C is needed
-  !>                      Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
-  !>                                    written to a certain extent, i.e. one shouldn't rely on the content there!
-  !> \param na            Number of rows/columns of A, number of rows of B and C
-  !> \param ncb           Number of columns  of B and C
-  !> \param   a           single complex matrix a
-  !> \param lda           leading dimension of matrix a
-  !> \param ldaCols       columns of matrix a
-  !> \param b             single complex matrix b
-  !> \param ldb           leading dimension of matrix b
-  !> \param ldbCols       columns of matrix b
-  !> \param c             single complex  matrix c
-  !> \param ldc           leading dimension of matrix c
-  !> \param ldcCols       columns of matrix c
-  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
+  !>
+  !> \param  uplo_a               'U' if A is upper triangular
+  !>                              'L' if A is lower triangular
+  !>                              anything else if A is a full matrix
+  !>                              Please note: This pertains to the original A (as set in the calling program)
+  !>                                           whereas the transpose of A is used for calculations
+  !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !>                              i.e. it may contain arbitrary numbers
+  !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+  !>                              'L' if only the upper diagonal part of C is needed
+  !>                              anything else if the full matrix C is needed
+  !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+  !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
+  !> \param ncb                   Number of columns  of global matrices B and C
+  !> \param a                     matrix a
+  !> \param nrows_a               number of rows of local (sub) matrix a
+  !> \param ncols_a               number of columns of local (sub) matrix a
+  !> \param b                     matrix b
+  !> \param nrows_b               number of rows of local (sub) matrix b
+  !> \param ncols_b               number of columns of local (sub) matrix b
+  !> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !> \param c                     matrix c
+  !> \param nrows_c               number of rows of local (sub) matrix c
+  !> \param ncols_c               number of columns of local (sub) matrix c
+  !> \param error                 optional argument, error code which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_hermitian_multiply_fc_i (self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, error)
+    subroutine elpa_hermitian_multiply_fc_i (self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)
       use iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=c_float_complex)   :: a(lda,*), b(ldb,*), c(ldc,*)
+      complex(kind=c_float_complex)   :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      complex(kind=c_float_complex)   :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      complex(kind=c_float_complex)   :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
     end subroutine

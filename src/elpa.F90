@@ -71,15 +71,76 @@
 !>    - IBM Deutschland GmbH
 !>
 !>   Some parts and enhancements of ELPA have been contributed and authored
-!>   by the Intel Corporation and Nvidia Corporation which are not part of
+!>   by the Intel Corporation and Nvidia Corporation, which are not part of
 !>   the ELPA consortium.
+!>
+!>   Maintainance and development of the ELPA library is done by the
+!>   Max Planck Computing and Data Facility (MPCDF)
+!>
+!>
+!>   Futher support, since of the ELPA library is done by the ELPA-AEO consortium,
+!>   consisting of the following organizations:
+!>
+!>    - Max Planck Computing and Data Facility (MPCDF) formerly known as
+!>      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!>    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!>      Informatik,
+!>    - Technische Universität München, Lehrstuhl für Informatik mit
+!>      Schwerpunkt Wissenschaftliches Rechnen ,
+!>    - Technische Universität München, Lehrstuhl für theoretische Chemie,
+!>    - Fritz-Haber-Institut, Berlin, Abt. Theorie
+!>
 !>
 !>   Contributions to the ELPA source have been authored by (in alphabetical order):
 !>
 !> \author T. Auckenthaler, Volker Blum, A. Heinecke, L. Huedepohl, R. Johanni, Werner Jürgens, Pavel Kus, and A. Marek
 !>
 !> All the important information is in the \ref elpa_api::elpa_t derived type
-
+!>
+!> \brief Abstract definition of the elpa_t type
+!>
+!>
+!> A typical usage of ELPA might look like this:
+!>
+!> Fortran synopsis
+!>
+!> \code{.f90}
+!>  use elpa
+!>  class(elpa_t), pointer :: elpa
+!>
+!>  if (elpa_init(20170403) /= ELPA_OK) then
+!>     print *, "ELPA API version not supported"
+!>     stop
+!>   endif
+!>   elpa => elpa_allocate()
+!>
+!>   ! set parameters decribing the matrix and it's MPI distribution
+!>   call elpa%set("na", na, success)
+!>   call elpa%set("nev", nev, success)
+!>   call elpa%set("local_nrows", na_rows, success)
+!>   call elpa%set("local_ncols", na_cols, success)
+!>   call elpa%set("nblk", nblk, success)
+!>   call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, success)
+!>   call elpa%set("process_row", my_prow, success)
+!>   call elpa%set("process_col", my_pcol, success)
+!>
+!>   succes = elpa%setup()
+!>
+!>   ! if desired, set tunable run-time options
+!>   call e%set("solver", ELPA_SOLVER_2STAGE, success)
+!> \endcode
+!>   ... set and get all other options that are desired
+!> \code{.f90}
+!>
+!>   ! use method solve to solve the eigenvalue problem
+!>   ! other possible methods are desribed in \ref elpa_api::elpa_t derived type
+!>   call e%solve(a, ev, z, success)
+!>
+!>   ! cleanup
+!>   call elpa_deallocate(e)
+!>
+!>   call elpa_uninit()
+!> \endcode
 
 !> \brief Fortran module to use the ELPA library. No other module shoule be used
 module elpa

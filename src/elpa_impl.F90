@@ -87,7 +87,7 @@ module elpa_impl
      procedure, private :: elpa_set_integer                     !< private methods to implement the setting of an integer/double key/value pair
      procedure, private :: elpa_set_double
 
-     procedure, private :: elpa_solve_d               !< private methods to implement the solve step for real/complex
+     procedure, private :: elpa_solve_d                         !< private methods to implement the solve step for real/complex
                                                                 !< double/single matrices
      procedure, private :: elpa_solve_f
      procedure, private :: elpa_solve_dc
@@ -95,23 +95,23 @@ module elpa_impl
 
      procedure, private :: elpa_hermitian_multiply_d            !< private methods to implement a "hermitian" multiplication of matrices a and b
      procedure, private :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
-     procedure, private :: elpa_hermitian_multiply_dc            !< for complex valued matrices:   a**H * b
+     procedure, private :: elpa_hermitian_multiply_dc           !< for complex valued matrices:   a**H * b
      procedure, private :: elpa_hermitian_multiply_fc
 
-     procedure, private :: elpa_cholesky_d            !< private methods to implement the cholesky factorisation of
+     procedure, private :: elpa_cholesky_d                      !< private methods to implement the cholesky factorisation of
                                                                 !< real/complex double/single matrices
      procedure, private :: elpa_cholesky_f
      procedure, private :: elpa_cholesky_dc
      procedure, private :: elpa_cholesky_fc
 
-     procedure, private :: elpa_invert_trm_d          !< private methods to implement the inversion of a triangular
+     procedure, private :: elpa_invert_trm_d                    !< private methods to implement the inversion of a triangular
                                                                 !< real/complex double/single matrix
      procedure, private :: elpa_invert_trm_f
      procedure, private :: elpa_invert_trm_dc
      procedure, private :: elpa_invert_trm_fc
 
-     procedure, private :: elpa_solve_tridi_d         !< private methods to implement the solve step for a real valued
-     procedure, private :: elpa_solve_tridi_f         !< double/single tridiagonal matrix
+     procedure, private :: elpa_solve_tridi_d                   !< private methods to implement the solve step for a real valued
+     procedure, private :: elpa_solve_tridi_f                   !< double/single tridiagonal matrix
 
      procedure, private :: associate_int => elpa_associate_int  !< private method to set some pointers
 
@@ -483,12 +483,34 @@ module elpa_impl
       call self%timer%print()
     end subroutine
 
-
+    !>  \brief elpa_solve_d: class method to solve the eigenvalue problem for double real matrices
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param q                                    On output: Eigenvectors of a
+    !>                                              Distribution is like in Scalapack.
+    !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
+    !>                                              even if only a part of the eigenvalues is needed.
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_solve_d(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
-      use precision
       use iso_c_binding
       class(elpa_impl_t)  :: self
 
@@ -541,11 +563,35 @@ module elpa_impl
       call elpa_solve_d(self, a, ev, q, error)
     end subroutine
 
+
+    !>  \brief elpa_solve_f: class method to solve the eigenvalue problem for float real matrices
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param q                                    On output: Eigenvectors of a
+    !>                                              Distribution is like in Scalapack.
+    !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
+    !>                                              even if only a part of the eigenvalues is needed.
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_solve_f(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
-      use precision
       use iso_c_binding
       class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
@@ -604,11 +650,34 @@ module elpa_impl
     end subroutine
 
 
+    !>  \brief elpa_solve_dc: class method to solve the eigenvalue problem for double complex matrices
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param q                                    On output: Eigenvectors of a
+    !>                                              Distribution is like in Scalapack.
+    !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
+    !>                                              even if only a part of the eigenvalues is needed.
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_solve_dc(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
-      use precision
       use iso_c_binding
       class(elpa_impl_t)             :: self
 
@@ -663,20 +732,43 @@ module elpa_impl
     end subroutine
 
 
+    !>  \brief elpa_solve_fc: class method to solve the eigenvalue problem for float complex matrices
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param q                                    On output: Eigenvectors of a
+    !>                                              Distribution is like in Scalapack.
+    !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
+    !>                                              even if only a part of the eigenvalues is needed.
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_solve_fc(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
 
       use iso_c_binding
-      use precision
       class(elpa_impl_t)            :: self
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=ck4)             :: a(self%local_nrows, *), q(self%local_nrows, *)
+      complex(kind=c_float_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
 #else
-      complex(kind=ck4)             :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+      complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
-      real(kind=rk4)                :: ev(self%na)
+      real(kind=c_float)            :: ev(self%na)
 
       integer, optional             :: error
       integer(kind=c_int)           :: error_actual
@@ -727,25 +819,58 @@ module elpa_impl
       call elpa_solve_fc(self, a, ev, q, error)
     end subroutine
 
-
-    subroutine elpa_hermitian_multiply_d (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, error)
+    !> \brief  elpa_hermitian_multiply_d: class method to perform C : = A**T * B for double real matrices
+    !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+    !>                 B is a (na,ncb) matrix
+    !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+    !>                   triangle may be computed
+    !>
+    !> the MPI commicators and the block-cyclic distribution block size are already known to the type.
+    !> Thus the class method "setup" must be called BEFORE this method is used
+    !>
+    !> \details
+    !>
+    !> \param  uplo_a               'U' if A is upper triangular
+    !>                              'L' if A is lower triangular
+    !>                              anything else if A is a full matrix
+    !>                              Please note: This pertains to the original A (as set in the calling program)
+    !>                                           whereas the transpose of A is used for calculations
+    !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+    !>                              i.e. it may contain arbitrary numbers
+    !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+    !>                              'L' if only the upper diagonal part of C is needed
+    !>                              anything else if the full matrix C is needed
+    !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+    !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+    !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
+    !> \param ncb                   Number of columns  of global matrices B and C
+    !> \param a                     matrix a
+    !> \param nrows_a               number of rows of local (sub) matrix a
+    !> \param ncols_a               number of columns of local (sub) matrix a
+    !> \param b                     matrix b
+    !> \param nrows_b               number of rows of local (sub) matrix b
+    !> \param ncols_b               number of columns of local (sub) matrix b
+    !> \param c                     matrix c
+    !> \param nrows_c               number of rows of local (sub) matrix c
+    !> \param ncols_c               number of columns of local (sub) matrix c
+    !> \param error                 optional argument, error code which can be queried with elpa_strerr
+    subroutine elpa_hermitian_multiply_d (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      real(kind=rk8)                  :: a(lda,*), b(ldb,*), c(ldc,*)
+      real(kind=c_double)             :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      real(kind=rk8)                  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      real(kind=c_double)             :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
       logical                         :: success_l
 
-      success_l = elpa_mult_at_b_real_double_impl(self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                  c, ldc, ldcCols)
+      success_l = elpa_mult_at_b_real_double_impl(self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+                                                  c, nrows_c, ncols_c)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -757,25 +882,58 @@ module elpa_impl
       endif
     end subroutine
 
-
-    subroutine elpa_hermitian_multiply_f (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, error)
+    !> \brief  elpa_hermitian_multiply_f: class method to perform C : = A**T * B for float real matrices
+    !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+    !>                 B is a (na,ncb) matrix
+    !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+    !>                   triangle may be computed
+    !>
+    !> the MPI commicators and the block-cyclic distribution block size are already known to the type.
+    !> Thus the class method "setup" must be called BEFORE this method is used
+    !>
+    !> \details
+    !>
+    !> \param  uplo_a               'U' if A is upper triangular
+    !>                              'L' if A is lower triangular
+    !>                              anything else if A is a full matrix
+    !>                              Please note: This pertains to the original A (as set in the calling program)
+    !>                                           whereas the transpose of A is used for calculations
+    !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+    !>                              i.e. it may contain arbitrary numbers
+    !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+    !>                              'L' if only the upper diagonal part of C is needed
+    !>                              anything else if the full matrix C is needed
+    !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+    !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+    !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
+    !> \param ncb                   Number of columns  of global matrices B and C
+    !> \param a                     matrix a
+    !> \param nrows_a               number of rows of local (sub) matrix a
+    !> \param ncols_a               number of columns of local (sub) matrix a
+    !> \param b                     matrix b
+    !> \param nrows_b               number of rows of local (sub) matrix b
+    !> \param ncols_b               number of columns of local (sub) matrix b
+    !> \param c                     matrix c
+    !> \param nrows_c               number of rows of local (sub) matrix c
+    !> \param ncols_c               number of columns of local (sub) matrix c
+    !> \param error                 optional argument, returns an error code
+    subroutine elpa_hermitian_multiply_f (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      real(kind=rk4)                  :: a(lda,*), b(ldb,*), c(ldc,*)
+      real(kind=c_float)              :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      real(kind=rk4)                  :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      real(kind=c_float)              :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
       logical                         :: success_l
 #ifdef WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_mult_at_b_real_single_impl(self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                  c, ldc, ldcCols)
+      success_l = elpa_mult_at_b_real_single_impl(self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_a, ncols_b, &
+                                                  c, nrows_c, ncols_c)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -791,25 +949,58 @@ module elpa_impl
 #endif
     end subroutine
 
-
-    subroutine elpa_hermitian_multiply_dc (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, error)
+    !> \brief  elpa_hermitian_multiply_dc: class method to perform C : = A**H * B for double complex matrices
+    !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+    !>                 B is a (na,ncb) matrix
+    !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+    !>                   triangle may be computed
+    !>
+    !> the MPI commicators and the block-cyclic distribution block size are already known to the type.
+    !> Thus the class method "setup" must be called BEFORE this method is used
+    !>
+    !> \details
+    !>
+    !> \param  uplo_a               'U' if A is upper triangular
+    !>                              'L' if A is lower triangular
+    !>                              anything else if A is a full matrix
+    !>                              Please note: This pertains to the original A (as set in the calling program)
+    !>                                           whereas the transpose of A is used for calculations
+    !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+    !>                              i.e. it may contain arbitrary numbers
+    !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+    !>                              'L' if only the upper diagonal part of C is needed
+    !>                              anything else if the full matrix C is needed
+    !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+    !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+    !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
+    !> \param ncb                   Number of columns  of global matrices B and C
+    !> \param a                     matrix a
+    !> \param nrows_a               number of rows of local (sub) matrix a
+    !> \param ncols_a               number of columns of local (sub) matrix a
+    !> \param b                     matrix b
+    !> \param nrows_b               number of rows of local (sub) matrix b
+    !> \param ncols_b               number of columns of local (sub) matrix b
+    !> \param c                     matrix c
+    !> \param nrows_c               number of rows of local (sub) matrix c
+    !> \param ncols_c               number of columns of local (sub) matrix c
+    !> \param error                 optional argument, returns an error code
+    subroutine elpa_hermitian_multiply_dc (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=ck8)               :: a(lda,*), b(ldb,*), c(ldc,*)
+      complex(kind=c_double_complex)  :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      complex(kind=ck8)               :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      complex(kind=c_double_complex)  :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
       logical                         :: success_l
 
-      success_l = elpa_mult_ah_b_complex_double_impl(self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                     c, ldc, ldcCols)
+      success_l = elpa_mult_ah_b_complex_double_impl(self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_a, ncols_b, &
+                                                     c, nrows_c, ncols_c)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -821,26 +1012,59 @@ module elpa_impl
       endif
     end subroutine
 
-
-    subroutine elpa_hermitian_multiply_fc (self,uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                          c, ldc, ldcCols, error)
+    !> \brief  elpa_hermitian_multiply_fc: class method to perform C : = A**H * B for float complex matrices
+    !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
+    !>                 B is a (na,ncb) matrix
+    !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+    !>                   triangle may be computed
+    !>
+    !> the MPI commicators and the block-cyclic distribution block size are already known to the type.
+    !> Thus the class method "setup" must be called BEFORE this method is used
+    !>
+    !> \details
+    !>
+    !> \param  uplo_a               'U' if A is upper triangular
+    !>                              'L' if A is lower triangular
+    !>                              anything else if A is a full matrix
+    !>                              Please note: This pertains to the original A (as set in the calling program)
+    !>                                           whereas the transpose of A is used for calculations
+    !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+    !>                              i.e. it may contain arbitrary numbers
+    !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+    !>                              'L' if only the upper diagonal part of C is needed
+    !>                              anything else if the full matrix C is needed
+    !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+    !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+    !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
+    !> \param ncb                   Number of columns  of global matrices B and C
+    !> \param a                     matrix a
+    !> \param nrows_a               number of rows of local (sub) matrix a
+    !> \param ncols_a               number of columns of local (sub) matrix a
+    !> \param b                     matrix b
+    !> \param nrows_b               number of rows of local (sub) matrix b
+    !> \param ncols_b               number of columns of local (sub) matrix b
+    !> \param c                     matrix c
+    !> \param nrows_c               number of rows of local (sub) matrix c
+    !> \param ncols_c               number of columns of local (sub) matrix c
+    !> \param error                 optional argument, returns an error code
+    subroutine elpa_hermitian_multiply_fc (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=ik), intent(in)    :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols, ncb
+      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=ck4)               :: a(lda,*), b(ldb,*), c(ldc,*)
+      complex(kind=c_float_complex)   :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      complex(kind=ck4)               :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      complex(kind=c_float_complex)   :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
       logical                         :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-      success_l = elpa_mult_ah_b_complex_single_impl(self, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
-                                                     c, ldc, ldcCols)
+      success_l = elpa_mult_ah_b_complex_single_impl(self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_a, ncols_b, &
+                                                     c, nrows_c, ncols_c)
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -991,12 +1215,11 @@ module elpa_impl
     subroutine elpa_cholesky_fc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=ck4)               :: a(self%local_nrows,*)
+      complex(kind=c_float_complex)   :: a(self%local_nrows,*)
 #else
-      complex(kind=ck4)               :: a(self%local_nrows,self%local_ncols)
+      complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
       integer, optional               :: error
       logical                         :: success_l
@@ -1167,12 +1390,11 @@ module elpa_impl
     subroutine elpa_invert_trm_fc (self, a, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=ck4)               :: a(self%local_nrows,*)
+      complex(kind=c_float_complex)   :: a(self%local_nrows,*)
 #else
-      complex(kind=ck4)               :: a(self%local_nrows,self%local_ncols)
+      complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
       integer, optional               :: error
       logical                         :: success_l
