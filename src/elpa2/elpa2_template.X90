@@ -286,6 +286,7 @@
       endif
 
       ! Reduction full -> band
+      call obj%timer%start("bandred")
       call bandred_&
       &MATH_DATATYPE&
       &_&
@@ -297,6 +298,7 @@
        , useQRActual &
 #endif
        )
+      call obj%timer%stop("bandred")
       if (.not.(success)) return
     end if  ! matrix not already banded on input
 
@@ -311,6 +313,7 @@
        stop 1
      endif
 
+     call obj%timer%start("tridiag")
      call tridiag_band_&
      &MATH_DATATYPE&
      &_&
@@ -323,6 +326,7 @@
      call mpi_bcast(e, na, MPI_REAL_PRECISION, 0, mpi_comm_all, mpierr)
      call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
+     call obj%timer%stop("tridiag")
 
 #if COMPLEXCASE == 1
      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
@@ -339,6 +343,7 @@
 #endif
 
      ! Solve tridiagonal system
+     call obj%timer%start("solve")
      call solve_tridi_&
      &PRECISION &
      (obj, na, nev, ev, e, &
@@ -349,7 +354,7 @@
      q_real, ubound(q_real,dim=1), &
 #endif
      nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
-
+     call obj%timer%stop("solve")
      if (.not.(success)) return
 
      deallocate(e, stat=istat, errmsg=errorMessage)
@@ -372,6 +377,8 @@
      endif
 #endif
      ! Backtransform stage 1
+     call obj%timer%start("trans_ev_to_band")
+
      call trans_ev_tridi_to_band_&
      &MATH_DATATYPE&
      &_&
@@ -380,6 +387,7 @@
      q_dev, &
      ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
      success=success, kernel=kernel)
+     call obj%timer%stop("trans_ev_to_band")
 
      if (.not.(success)) return
 
@@ -402,6 +410,8 @@
        endif
 
        ! Backtransform stage 2
+       call obj%timer%start("trans_ev_to_full")
+
        call trans_ev_band_to_full_&
        &MATH_DATATYPE&
        &_&
@@ -414,6 +424,7 @@
         , useQRActual  &
 #endif
         )
+       call obj%timer%stop("trans_ev_to_full")
 
        deallocate(tmat, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then

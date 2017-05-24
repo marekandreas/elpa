@@ -212,18 +212,16 @@ function elpa_solve_evp_&
      &" // ": error when allocating e, tau "//errorMessage
      stop 1
    endif
-!   ttt0 = MPI_Wtime()
 
+   call obj%timer%start("forward")
    call tridiag_&
    &MATH_DATATYPE&
    &_&
    &PRECISION&
    & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
-   !ttt1 = MPI_Wtime()
-   !if(my_prow==0 .and. my_pcol==0 .and. summary_timings) write(error_unit,*) 'Time tridiag_real :',ttt1-ttt0
-   !time_evp_fwd = ttt1-ttt0
+   call obj%timer%stop("forward")
 
-   !ttt0 = MPI_Wtime()
+   call obj%timer%start("solve")
    call solve_tridi_&
    &PRECISION&
    & (obj, na, nev, ev, e,  &
@@ -234,19 +232,20 @@ function elpa_solve_evp_&
       q_real, l_rows,  &
 #endif
       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+   call obj%timer%stop("solve")
    if (.not.(success)) return
 
 #if COMPLEXCASE == 1
    q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 #endif
+
+   call obj%timer%start("back")
    call trans_ev_&
    &MATH_DATATYPE&
    &_&
    &PRECISION&
    & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
-   !ttt1 = MPI_Wtime()
-   !if(my_prow==0 .and. my_pcol==0 .and. summary_timings) write(error_unit,*) 'Time trans_ev_real:',ttt1-ttt0
-   !time_evp_back = ttt1-ttt0
+   call obj%timer%stop("back")
 #if COMPLEXCASE == 1
    deallocate(q_real, stat=istat, errmsg=errorMessage)
    if (istat .ne. 0) then
