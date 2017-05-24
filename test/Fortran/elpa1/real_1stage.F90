@@ -145,6 +145,9 @@ program test_interface
    call e%solve(a, ev, z, success)
    assert_elpa_ok(success)
 
+   if (myid .eq. 0) then
+     call e%print_times()
+   endif
 
    call elpa_deallocate(e)
 
