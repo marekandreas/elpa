@@ -157,7 +157,11 @@ module elpa_impl
       endif
     end function
 
-
+    !c> /*! \brief C interface for the implementation of the elpa_allocate method
+    !c> *
+    !c> *  \param  none
+    !c> *  \result elpa_t handle
+    !c> */
     !c> elpa_t elpa_allocate();
     function elpa_impl_allocate_c(error) result(ptr) bind(C, name="elpa_allocate")
       integer(kind=c_int) :: error
@@ -168,7 +172,11 @@ module elpa_impl
       ptr = c_loc(obj)
     end function
 
-
+    !c> /*! \brief C interface for the implementation of the elpa_deallocate method
+    !c> *
+    !c> *  \param  elpa_t  handle of ELPA object to be deallocated
+    !c> *  \result void
+    !c> */
     !c> void elpa_deallocate(elpa_t handle);
     subroutine elpa_impl_deallocate_c(handle) bind(C, name="elpa_deallocate")
       type(c_ptr), value :: handle
@@ -228,7 +236,12 @@ module elpa_impl
 
     end function
 
-
+    !c> /*! \brief C interface for the implementation of the elpa_setup method
+    !c> *
+    !c> *  \param  elpa_t  handle of the ELPA object which describes the problem to
+    !c> *                  be set up
+    !c> *  \result int     error code, which can be queried with elpa_strerr
+    !c> */
     !c> int elpa_setup(elpa_t handle);
     function elpa_setup_c(handle) result(error) bind(C, name="elpa_setup")
       type(c_ptr), intent(in), value :: handle
@@ -267,7 +280,15 @@ module elpa_impl
       end if
     end subroutine
 
-
+    !c> /*! \brief C interface for the implementation of the elpa_set_integer method
+    !c> *  This method is available to the user as C generic elpa_set method
+    !c> *
+    !c> *  \param  handle  handle of the ELPA object for which a key/value pair should be set
+    !c> *  \param  name    the name of the key
+    !c> *  \param  value   the value to be set for the key
+    !c> *  \param  error   on return the error code, which can be queried with elpa_strerr()
+    !c> *  \result void
+    !c> */
     !c> void elpa_set_integer(elpa_t handle, const char *name, int value, int *error);
     subroutine elpa_set_integer_c(handle, name_p, value, error) bind(C, name="elpa_set_integer")
       type(c_ptr), intent(in), value :: handle
@@ -308,7 +329,15 @@ module elpa_impl
       end if
     end subroutine
 
-
+    !c> /*! \brief C interface for the implementation of the elpa_get_integer method
+    !c> *  This method is available to the user as C generic elpa_get method
+    !c> *
+    !c> *  \param  handle  handle of the ELPA object for which a key/value pair should be queried
+    !c> *  \param  name    the name of the key
+    !c> *  \param  value   the value to be obtain for the key
+    !c> *  \param  error   on return the error code, which can be queried with elpa_strerr()
+    !c> *  \result void
+    !c> */
     !c> void elpa_get_integer(elpa_t handle, const char *name, int *value, int *error);
     subroutine elpa_get_integer_c(handle, name_p, value, error) bind(C, name="elpa_get_integer")
       type(c_ptr), intent(in), value :: handle
@@ -386,7 +415,12 @@ module elpa_impl
       endif
     end function
 
-
+    !> \brief subroutine to set a double key/value pair
+    !> Parameters
+    !> \param   self       class(elpa_impl_t) the allocated ELPA object
+    !> \param   name       string, the key
+    !> \param   value      double, the value to be set
+    !> \result  error      integer, the error code
     subroutine elpa_set_double(self, name, value, error)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
@@ -407,7 +441,15 @@ module elpa_impl
       end if
     end subroutine
 
-
+    !c> /*! \brief C interface for the implementation of the elpa_set_double method
+    !c> *  This method is available to the user as C generic elpa_set method
+    !c> *
+    !c> *  \param  handle  handle of the ELPA object for which a key/value pair should be set
+    !c> *  \param  name    the name of the key
+    !c> *  \param  value   the value to be set for the key
+    !c> *  \param  error   on return the error code, which can be queried with elpa_strerr()
+    !c> *  \result void
+    !c> */
     !c> void elpa_set_double(elpa_t handle, const char *name, double value, int *error);
     subroutine elpa_set_double_c(handle, name_p, value, error) bind(C, name="elpa_set_double")
       type(c_ptr), intent(in), value :: handle
@@ -422,7 +464,12 @@ module elpa_impl
       call elpa_set_double(self, name, value, error)
     end subroutine
 
-
+    !> \brief function to get an double key/value pair
+    !> Parameters
+    !> \param   self       class(elpa_impl_t) the allocated ELPA object
+    !> \param   name       string, the key
+    !> \param   value      double, the value of the key/vaue pair
+    !> \param   error      integer, optional, to store an error code
     subroutine elpa_get_double(self, name, value, error)
       use iso_c_binding
       use elpa_generated_fortran_interfaces
@@ -442,6 +489,16 @@ module elpa_impl
       end if
     end subroutine
 
+
+     !c> /*! \brief C interface for the implementation of the elpa_get_double method
+    !c> *  This method is available to the user as C generic elpa_get method
+    !c> *
+    !c> *  \param  handle  handle of the ELPA object for which a key/value pair should be queried
+    !c> *  \param  name    the name of the key
+    !c> *  \param  value   the value to be obtain for the key
+    !c> *  \param  error   on return the error code, which can be queried with elpa_strerr()
+    !c> *  \result void
+    !c> */
     !c> void elpa_get_double(elpa_t handle, const char *name, double *value, int *error);
     subroutine elpa_get_double_c(handle, name_p, value, error) bind(C, name="elpa_get_double")
       type(c_ptr), intent(in), value :: handle
