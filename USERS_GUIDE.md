@@ -16,11 +16,12 @@ for each *ELPA* release is available.
 ## API of the *ELPA* library ##
 
 With release 2017.05.001.rc1 of the *ELPA* library the interface has been rewritten substantially, in order to have a more
-generic interface and avoid future interface changes.
+generic interface and to avoid future interface changes.
 
 For compatibility reasons the interface defined in the previous release 2016.11.001 is also still available
-IF AND ONLY IF *ELPA* has been build with support of this legacy interface. If you want to use the legacy
-interface, please look to section "B) Using the legacy API of the *ELPA* library.
+IF AND ONLY IF *ELPA* has been build with support of this legacy interface.
+
+If you want to use the legacy interface, please look to section "B) Using the legacy API of the *ELPA* library.
 
 The legacy API defines all the functionallity as it has been defined in *ELPA* release 2016.11.011. Note, however,
 that all future features of *ELPA* will only be accessible via the new API defined in release 2017.05.001.rc1 or later.
@@ -29,18 +30,50 @@ that all future features of *ELPA* will only be accessible via the new API defin
 
 Using *ELPA* with the latest API is done in the following steps
 
-- include elpa headers (C-Case) or use the Fortran module
+- include elpa headers "elpa/elpa.h" (C-Case) or use the Fortran module "use elpa"
+
 - define a instance of the elpa type
+
 - call elpa_init
+  note, that at the moment the only supported API version number is 20170403
+
 - call elpa_allocate to allocate an instance of *ELPA*
-- use ELPA-type function "set" to set matrix parameters
-- call ELPA-type function "setup"
-- set or get all possible ELPA options with ELPA-type functions get/set
+  note that you can define (and configure individually) as many different instances
+  for ELPA as you want, e.g. one for CPU only computations and for larger matrices on GPUs
+
+- use ELPA-type function "set" to set matrix and MPI parameters
+
+- call the ELPA-type function "setup"
+
+- set or get all possible ELPA tunable options with ELPA-type functions get/set
+
+  At the moment the following tunable options are available:
+
+     - "solver" can either be ELPA_SOLVER_1STAGE or ELPA_SOLVER_2STAGE
+     - "real_kernel" can be one of the available real kernels (a list of available kernels can be
+        queried with the ELPA helper binary elpa2_print_kernels)
+     - "complex_kernel" can be one of the available complex kernels (a list of available kernels can be
+     - "qr" can be either 0 or 1, switches QR decomposition off/on for ELPA_SOLVER_2STAGE
+       only available in real-case for blocksize at least 64
+     - "gpu" can be either 0 or 1, switches GPU computations off or on, assuming that the installation
+       of the ELPA library has been build with GPU support enables
+     - "timings" can be either 0 or 1, switches time measurements off or on
+     - "debug" can be either 0 or 1, switches detailed debug messages off/on
+
 - call ELPA-type function solve or others
-- call ELPA-type function destroy
-- call elpa_uninit
 
+  At the moment the following ELPA compute functions are available:
 
+    - "solve" solves the eigenvalue problem for single/double real/complex valued matrices
+    - "hermetian_multipy" computes C = A^T * B (real) or C = A^H * B (complex) for single/double
+      real/complex matrices
+    - "cholesky" does a cholesky factorization for a single/double real/complex matrix
+    - "invert_triangular" inverts a single/double real/complex triangular matrix
+    - "solve_tridi" solves the eigenvalue problem for a single/double real tridiagonale matrix
+
+- if the ELPA object is not needed any more call ELPA-type function destroy
+
+- call elpa_uninit at the end of the program
 
 ## B) Using the legacy API of the *ELPA* library ##
 
