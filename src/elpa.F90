@@ -141,7 +141,50 @@
 !>
 !>   call elpa_uninit()
 !> \endcode
-
+!>
+!>
+!> C synopsis
+!>
+!>  \code{.c}
+!>   #include <elpa/elpa.h>
+!
+!>   elpa_t handle;
+!>
+!>   if (elpa_init(20170403) != ELPA_OK) {
+!>     fprintf(stderr, "Error: ELPA API version not supported");
+!>     exit(1);
+!>   }
+!>
+!>   handle = elpa_allocate(&error);
+!>
+!>   /* Set parameters the matrix and it's MPI distribution */
+!>   elpa_set(handle, "na", na, &error);
+!>   elpa_set(handle, "nev", nev, &error);
+!>   elpa_set(handle, "local_nrows", na_rows, &error);
+!>   elpa_set(handle, "local_ncols", na_cols, &error);
+!>   elpa_set(handle, "nblk", nblk, &error);
+!>   elpa_set(handle, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_WORLD), &error);
+!>   elpa_set(handle, "process_row", my_prow, &error);
+!>   elpa_set(handle, "process_col", my_pcol, &error);
+!>
+!>   /* Setup */
+!>   elpa_setup(handle);
+!>
+!>   /* if desired, set tunable run-time options */
+!>   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
+!>  \endcode
+!>   ... set and get all other options that are desired
+!>  \code{.c}
+!>
+!>   /* use method solve to solve the eigenvalue problem */
+!>   /* other possible methods are desribed in \ref elpa_api::elpa_t derived type */
+!>   elpa_solve(handle, a, ev, z, &error);
+!>
+!>   /* cleanup */
+!>   elpa_deallocate(handle);
+!>   elpa_uninit();
+!> \endcode
+!>
 !> \brief Fortran module to use the ELPA library. No other module shoule be used
 module elpa
   use elpa_constants
