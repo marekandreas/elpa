@@ -898,9 +898,9 @@ module elpa_impl
     end subroutine
 
     !> \brief  elpa_hermitian_multiply_d: class method to perform C : = A**T * B for double real matrices
-    !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-    !>                 B is a (na,ncb) matrix
-    !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+    !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
+    !>                 B is a (self%na,ncb) matrix
+    !>                 C is a (self%na,ncb) matrix where optionally only the upper or lower
     !>                   triangle may be computed
     !>
     !> the MPI commicators and the block-cyclic distribution block size are already known to the type.
@@ -908,6 +908,7 @@ module elpa_impl
     !>
     !> \details
     !>
+    !> \param  self                 class(elpa_t), the ELPA object
     !> \param  uplo_a               'U' if A is upper triangular
     !>                              'L' if A is lower triangular
     !>                              anything else if A is a full matrix
@@ -920,11 +921,10 @@ module elpa_impl
     !>                              anything else if the full matrix C is needed
     !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
     !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-    !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
     !> \param ncb                   Number of columns  of global matrices B and C
     !> \param a                     matrix a
-    !> \param nrows_a               number of rows of local (sub) matrix a
-    !> \param ncols_a               number of columns of local (sub) matrix a
+    !> \param local_nrows           number of rows of local (sub) matrix a, set with class method set("local_nrows",value)
+    !> \param local_ncols           number of columns of local (sub) matrix a, set with class method set("local_ncols",value)
     !> \param b                     matrix b
     !> \param nrows_b               number of rows of local (sub) matrix b
     !> \param ncols_b               number of columns of local (sub) matrix b
@@ -932,22 +932,22 @@ module elpa_impl
     !> \param nrows_c               number of rows of local (sub) matrix c
     !> \param ncols_c               number of columns of local (sub) matrix c
     !> \param error                 optional argument, error code which can be queried with elpa_strerr
-    subroutine elpa_hermitian_multiply_d (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+    subroutine elpa_hermitian_multiply_d (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
+      integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      real(kind=c_double)             :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
+      real(kind=c_double)             :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      real(kind=c_double)             :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      real(kind=c_double)             :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
       logical                         :: success_l
 
-      success_l = elpa_mult_at_b_real_double_impl(self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+      success_l = elpa_mult_at_b_real_double_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                   c, nrows_c, ncols_c)
       if (present(error)) then
         if (success_l) then
@@ -961,9 +961,9 @@ module elpa_impl
     end subroutine
 
     !> \brief  elpa_hermitian_multiply_f: class method to perform C : = A**T * B for float real matrices
-    !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-    !>                 B is a (na,ncb) matrix
-    !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+    !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
+    !>                 B is a (self%na,ncb) matrix
+    !>                 C is a (self%na,ncb) matrix where optionally only the upper or lower
     !>                   triangle may be computed
     !>
     !> the MPI commicators and the block-cyclic distribution block size are already known to the type.
@@ -971,6 +971,7 @@ module elpa_impl
     !>
     !> \details
     !>
+    !> \param  self                 class(elpa_t), the ELPA object
     !> \param  uplo_a               'U' if A is upper triangular
     !>                              'L' if A is lower triangular
     !>                              anything else if A is a full matrix
@@ -983,11 +984,10 @@ module elpa_impl
     !>                              anything else if the full matrix C is needed
     !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
     !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-    !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
     !> \param ncb                   Number of columns  of global matrices B and C
     !> \param a                     matrix a
-    !> \param nrows_a               number of rows of local (sub) matrix a
-    !> \param ncols_a               number of columns of local (sub) matrix a
+    !> \param self%local_nrows      number of rows of local (sub) matrix a, set with class method set("local_nrows",value)
+    !> \param self%local_ncols      number of columns of local (sub) matrix a, set with class method set("local_ncols",value)
     !> \param b                     matrix b
     !> \param nrows_b               number of rows of local (sub) matrix b
     !> \param ncols_b               number of columns of local (sub) matrix b
@@ -995,22 +995,22 @@ module elpa_impl
     !> \param nrows_c               number of rows of local (sub) matrix c
     !> \param ncols_c               number of columns of local (sub) matrix c
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_hermitian_multiply_f (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+    subroutine elpa_hermitian_multiply_f (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
+      integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      real(kind=c_float)              :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
+      real(kind=c_float)              :: a(self%local_nrows,*), b(self%local_nrows,*), c(nrows_c,*)
 #else
-      real(kind=c_float)              :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      real(kind=c_float)              :: a(self%local_nrows_a,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
       logical                         :: success_l
 #ifdef WANT_SINGLE_PRECISION_REAL
-      success_l = elpa_mult_at_b_real_single_impl(self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_a, ncols_b, &
+      success_l = elpa_mult_at_b_real_single_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                   c, nrows_c, ncols_c)
       if (present(error)) then
         if (success_l) then
@@ -1028,9 +1028,9 @@ module elpa_impl
     end subroutine
 
     !> \brief  elpa_hermitian_multiply_dc: class method to perform C : = A**H * B for double complex matrices
-    !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-    !>                 B is a (na,ncb) matrix
-    !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+    !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
+    !>                 B is a (self%na,ncb) matrix
+    !>                 C is a (self%na,ncb) matrix where optionally only the upper or lower
     !>                   triangle may be computed
     !>
     !> the MPI commicators and the block-cyclic distribution block size are already known to the type.
@@ -1038,6 +1038,7 @@ module elpa_impl
     !>
     !> \details
     !>
+    !> \param  self                 class(elpa_t), the ELPA object
     !> \param  uplo_a               'U' if A is upper triangular
     !>                              'L' if A is lower triangular
     !>                              anything else if A is a full matrix
@@ -1050,11 +1051,10 @@ module elpa_impl
     !>                              anything else if the full matrix C is needed
     !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
     !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-    !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
     !> \param ncb                   Number of columns  of global matrices B and C
     !> \param a                     matrix a
-    !> \param nrows_a               number of rows of local (sub) matrix a
-    !> \param ncols_a               number of columns of local (sub) matrix a
+    !> \param self%local_nrows      number of rows of local (sub) matrix a, set with class method set("local_nows",value)
+    !> \param self%local_ncols      number of columns of local (sub) matrix a, set with class method set("local_ncols",value)
     !> \param b                     matrix b
     !> \param nrows_b               number of rows of local (sub) matrix b
     !> \param ncols_b               number of columns of local (sub) matrix b
@@ -1062,22 +1062,22 @@ module elpa_impl
     !> \param nrows_c               number of rows of local (sub) matrix c
     !> \param ncols_c               number of columns of local (sub) matrix c
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_hermitian_multiply_dc (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+    subroutine elpa_hermitian_multiply_dc (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
+      integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=c_double_complex)  :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
+      complex(kind=c_double_complex)  :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      complex(kind=c_double_complex)  :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      complex(kind=c_double_complex)  :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
       logical                         :: success_l
 
-      success_l = elpa_mult_ah_b_complex_double_impl(self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_a, ncols_b, &
+      success_l = elpa_mult_ah_b_complex_double_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                      c, nrows_c, ncols_c)
       if (present(error)) then
         if (success_l) then
@@ -1091,9 +1091,9 @@ module elpa_impl
     end subroutine
 
     !> \brief  elpa_hermitian_multiply_fc: class method to perform C : = A**H * B for float complex matrices
-    !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-    !>                 B is a (na,ncb) matrix
-    !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+    !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
+    !>                 B is a (self%na,ncb) matrix
+    !>                 C is a (self%na,ncb) matrix where optionally only the upper or lower
     !>                   triangle may be computed
     !>
     !> the MPI commicators and the block-cyclic distribution block size are already known to the type.
@@ -1101,6 +1101,7 @@ module elpa_impl
     !>
     !> \details
     !>
+    !> \param  self                 class(elpa_t), the ELPA object
     !> \param  uplo_a               'U' if A is upper triangular
     !>                              'L' if A is lower triangular
     !>                              anything else if A is a full matrix
@@ -1113,11 +1114,10 @@ module elpa_impl
     !>                              anything else if the full matrix C is needed
     !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
     !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-    !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
     !> \param ncb                   Number of columns  of global matrices B and C
     !> \param a                     matrix a
-    !> \param nrows_a               number of rows of local (sub) matrix a
-    !> \param ncols_a               number of columns of local (sub) matrix a
+    !> \param self%local_nrows      number of rows of local (sub) matrix a, set with class method set("local_nrows",value)
+    !> \param self%local_ncols      number of columns of local (sub) matrix a, set with class method set("local_ncols",value) 
     !> \param b                     matrix b
     !> \param nrows_b               number of rows of local (sub) matrix b
     !> \param ncols_b               number of columns of local (sub) matrix b
@@ -1125,23 +1125,23 @@ module elpa_impl
     !> \param nrows_c               number of rows of local (sub) matrix c
     !> \param ncols_c               number of columns of local (sub) matrix c
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_hermitian_multiply_fc (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+    subroutine elpa_hermitian_multiply_fc (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
+      integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=c_float_complex)   :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
+      complex(kind=c_float_complex)   :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      complex(kind=c_float_complex)   :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
       logical                         :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-      success_l = elpa_mult_ah_b_complex_single_impl(self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_a, ncols_b, &
+      success_l = elpa_mult_ah_b_complex_single_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                      c, nrows_c, ncols_c)
       if (present(error)) then
         if (success_l) then

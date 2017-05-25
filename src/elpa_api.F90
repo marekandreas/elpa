@@ -487,15 +487,16 @@ module elpa_api
   end interface
 
   !> \brief abstract definition of interface to compute C : = A**T * B for double real matrices
-  !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-  !>                 B is a (na,ncb) matrix
-  !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+  !>         where   A is a square matrix (self%a,self%na) which is optionally upper or lower triangular
+  !>                 B is a (self%na,ncb) matrix
+  !>                 C is a (self%na,ncb) matrix where optionally only the upper or lower
   !>                   triangle may be computed
   !>
   !> the MPI commicators are already known to the type. Thus the class method "setup" must be called
   !> BEFORE this method is used
   !> \details
   !>
+  !> \param   self                class(elpa_t), the ELPA object
   !> \param  uplo_a               'U' if A is upper triangular
   !>                              'L' if A is lower triangular
   !>                              anything else if A is a full matrix
@@ -508,11 +509,10 @@ module elpa_api
   !>                              anything else if the full matrix C is needed
   !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
   !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-  !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
   !> \param ncb                   Number of columns  of global matrices B and C
   !> \param a                     matrix a
-  !> \param nrows_a               number of rows of local (sub) matrix a
-  !> \param ncols_a               number of columns of local (sub) matrix a
+  !> \param self%local_nrows      number of rows of local (sub) matrix a, set with method set("local_nrows,value")
+  !> \param self%local_ncols      number of columns of local (sub) matrix a, set with method set("local_ncols,value")
   !> \param b                     matrix b
   !> \param nrows_b               number of rows of local (sub) matrix b
   !> \param ncols_b               number of columns of local (sub) matrix b
@@ -522,33 +522,34 @@ module elpa_api
   !> \param ncols_c               number of columns of local (sub) matrix c
   !> \param error                 optional argument, error code which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_hermitian_multiply_d_i (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+    subroutine elpa_hermitian_multiply_d_i (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
+      integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      real(kind=c_double)             :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
+      real(kind=c_double)             :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      real(kind=c_double)             :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      real(kind=c_double)             :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
     end subroutine
   end interface
 
   !> \brief abstract definition of interface to compute C : = A**T * B
-  !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-  !>                 B is a (na,ncb) matrix
-  !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+  !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
+  !>                 B is a (self%na,ncb) matrix
+  !>                 C is a (self%na,ncb) matrix where optionally only the upper or lower
   !>                   triangle may be computed
   !>
   !> the MPI commicators are already known to the type. Thus the class method "setup" must be called
   !> BEFORE this method is used
   !> \details
   !>
+  !> \param   self                class(elpa_t), the ELPA object
   !> \param  uplo_a               'U' if A is upper triangular
   !>                              'L' if A is lower triangular
   !>                              anything else if A is a full matrix
@@ -561,11 +562,10 @@ module elpa_api
   !>                              anything else if the full matrix C is needed
   !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
   !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-  !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
   !> \param ncb                   Number of columns  of global matrices B and C
   !> \param a                     matrix a
-  !> \param nrows_a               number of rows of local (sub) matrix a
-  !> \param ncols_a               number of columns of local (sub) matrix a
+  !> \param self%local_nrows      number of rows of local (sub) matrix a, set with method set("local_nrows",value)
+  !> \param self%local_ncols      number of columns of local (sub) matrix a, set with method set("local_nrows",value)
   !> \param b                     matrix b
   !> \param nrows_b               number of rows of local (sub) matrix b
   !> \param ncols_b               number of columns of local (sub) matrix b
@@ -575,33 +575,34 @@ module elpa_api
   !> \param ncols_c               number of columns of local (sub) matrix c
   !> \param error                 optional argument, error code which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_hermitian_multiply_f_i (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+    subroutine elpa_hermitian_multiply_f_i (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
+      integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      real(kind=c_float)              :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
+      real(kind=c_float)              :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      real(kind=c_float)              :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      real(kind=c_float)              :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
     end subroutine
   end interface
 
   !> \brief abstract definition of interface to compute C : = A**H * B
-  !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-  !>                 B is a (na,ncb) matrix
-  !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+  !>         where   A is a square matrix (self%na,self%a) which is optionally upper or lower triangular
+  !>                 B is a (self%na,ncb) matrix
+  !>                 C is a (self%na,ncb) matrix where optionally only the upper or lower
   !>                   triangle may be computed
   !>
   !> the MPI commicators are already known to the type. Thus the class method "setup" must be called
   !> BEFORE this method is used
   !> \details
   !>
+  !> \param   self                class(elpa_t), the ELPA object
   !> \param  uplo_a               'U' if A is upper triangular
   !>                              'L' if A is lower triangular
   !>                              anything else if A is a full matrix
@@ -614,11 +615,10 @@ module elpa_api
   !>                              anything else if the full matrix C is needed
   !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
   !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-  !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
   !> \param ncb                   Number of columns  of global matrices B and C
   !> \param a                     matrix a
-  !> \param nrows_a               number of rows of local (sub) matrix a
-  !> \param ncols_a               number of columns of local (sub) matrix a
+  !> \param self%local_nrows      number of rows of local (sub) matrix a, set with the method set("local_nrows",value)
+  !> \param self%local_ncols      number of columns of local (sub) matrix a, set with the method set("local_ncols",value)
   !> \param b                     matrix b
   !> \param nrows_b               number of rows of local (sub) matrix b
   !> \param ncols_b               number of columns of local (sub) matrix b
@@ -628,33 +628,34 @@ module elpa_api
   !> \param ncols_c               number of columns of local (sub) matrix c
   !> \param error                 optional argument, error code which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_hermitian_multiply_dc_i (self,uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+    subroutine elpa_hermitian_multiply_dc_i (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
+      integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=c_double_complex)  :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
+      complex(kind=c_double_complex)  :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      complex(kind=c_double_complex)  :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      complex(kind=c_double_complex)  :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
     end subroutine
   end interface
 
   !> \brief abstract definition of interface to compute C : = A**H * B
-  !>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-  !>                 B is a (na,ncb) matrix
-  !>                 C is a (na,ncb) matrix where optionally only the upper or lower
+  !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
+  !>                 B is a (self%na,ncb) matrix
+  !>                 C is a (self%na,ncb) matrix where optionally only the upper or lower
   !>                   triangle may be computed
   !>
   !> the MPI commicators are already known to the type. Thus the class method "setup" must be called
   !> BEFORE this method is used
   !> \details
   !>
+  !> \param   self                class(elpa_t), the ELPA object
   !> \param  uplo_a               'U' if A is upper triangular
   !>                              'L' if A is lower triangular
   !>                              anything else if A is a full matrix
@@ -667,11 +668,10 @@ module elpa_api
   !>                              anything else if the full matrix C is needed
   !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
   !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-  !> \param na                    Number of rows/columns of global matrix A, number of rows of global matrices B and C
   !> \param ncb                   Number of columns  of global matrices B and C
   !> \param a                     matrix a
-  !> \param nrows_a               number of rows of local (sub) matrix a
-  !> \param ncols_a               number of columns of local (sub) matrix a
+  !> \param self%local_nrows      number of rows of local (sub) matrix a, set with class method set("local_nrows",value)
+  !> \param self%local_ncols      number of columns of local (sub) matrix a, set with class method set("local_ncols",value)
   !> \param b                     matrix b
   !> \param nrows_b               number of rows of local (sub) matrix b
   !> \param ncols_b               number of columns of local (sub) matrix b
@@ -681,18 +681,18 @@ module elpa_api
   !> \param ncols_c               number of columns of local (sub) matrix c
   !> \param error                 optional argument, error code which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_hermitian_multiply_fc_i (self, uplo_a, uplo_c, na, ncb, a, nrows_a, ncols_a, b, nrows_b, ncols_b, &
+    subroutine elpa_hermitian_multiply_fc_i (self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
       character*1                     :: uplo_a, uplo_c
-      integer(kind=c_int), intent(in) :: na, nrows_a, ncols_a, nrows_b, ncols_b, nrows_c, ncols_c, ncb
+      integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=c_float_complex)   :: a(nrows_a,*), b(nrows_b,*), c(nrows_c,*)
+      complex(kind=c_float_complex)   :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
 #else
-      complex(kind=c_float_complex)   :: a(nrows_a,ncols_a), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
     end subroutine
@@ -703,7 +703,7 @@ module elpa_api
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
   !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
-  !> 
+  !>
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double real matrix: the matrix to be decomposed

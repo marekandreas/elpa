@@ -280,7 +280,7 @@ module elpa1_auxiliary_impl
 #define REALCASE 1
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
-    function elpa_mult_at_b_real_double_impl(obj, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    function elpa_mult_at_b_real_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                              c, ldc, ldcCols) result(success)
 #include "elpa_multiply_a_b.X90"
     end function elpa_mult_at_b_real_double_impl
@@ -293,9 +293,9 @@ module elpa1_auxiliary_impl
 #include "../general/precision_macros.h"
 
 !> \brief  elpa_mult_at_b_real_single_impl: Performs C : = A**T * B
-!>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-!>                 B is a (na,ncb) matrix
-!>                 C is a (na,ncb) matrix where optionally only the upper or lower
+!>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
+!>                 B is a (obj%na,ncb) matrix
+!>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
 !>                   triangle may be computed
 !> \details
 
@@ -314,7 +314,7 @@ module elpa1_auxiliary_impl
 !> \param na                    Number of rows/columns of A, number of rows of B and C
 !> \param ncb                   Number of columns  of B and C
 !> \param a                     matrix a
-!> \param lda                   leading dimension of matrix a
+!> \param obj%local_nrows       leading dimension of matrix a, set with class method obj%set("local_nrows",value)
 !> \param b                     matrix b
 !> \param ldb                   leading dimension of matrix b
 !> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
@@ -324,7 +324,7 @@ module elpa1_auxiliary_impl
 !> \param ldc                   leading dimension of matrix c
 !> \result success
 
-    function elpa_mult_at_b_real_single_impl(obj, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    function elpa_mult_at_b_real_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                              c, ldc, ldcCols) result(success)
 
 #include "elpa_multiply_a_b.X90"
@@ -340,9 +340,9 @@ module elpa1_auxiliary_impl
 #include "../general/precision_macros.h"
 
 !> \brief  elpa_mult_ah_b_complex_double_impl: Performs C : = A**H * B
-!>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-!>                 B is a (na,ncb) matrix
-!>                 C is a (na,ncb) matrix where optionally only the upper or lower
+!>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
+!>                 B is a (obj%na,ncb) matrix
+!>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
 !>                   triangle may be computed
 !> \details
 !>
@@ -361,7 +361,7 @@ module elpa1_auxiliary_impl
 !> \param na                    Number of rows/columns of A, number of rows of B and C
 !> \param ncb                   Number of columns  of B and C
 !> \param a                     matrix a
-!> \param lda                   leading dimension of matrix a
+!> \param obj%local_ncols       leading dimension of matrix a, set with class method obj%set("local_nrows",value)
 !> \param ldaCols               columns of matrix a
 !> \param b                     matrix b
 !> \param ldb                   leading dimension of matrix b
@@ -373,7 +373,7 @@ module elpa1_auxiliary_impl
 !> \param ldc                   leading dimension of matrix c
 !> \result success
 
-    function elpa_mult_ah_b_complex_double_impl(obj, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    function elpa_mult_ah_b_complex_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                                 c, ldc, ldcCols) result(success)
 #include "elpa_multiply_a_b.X90"
 
@@ -387,9 +387,9 @@ module elpa1_auxiliary_impl
 #include "../general/precision_macros.h"
 
 !> \brief  elpa_mult_ah_b_complex_single_impl: Performs C : = A**H * B
-!>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-!>                 B is a (na,ncb) matrix
-!>                 C is a (na,ncb) matrix where optionally only the upper or lower
+!>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
+!>                 B is a (obj%na,ncb) matrix
+!>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
 !>                   triangle may be computed
 !> \details
 !>
@@ -420,7 +420,7 @@ module elpa1_auxiliary_impl
 !> \param ldc                   leading dimension of matrix c
 !> \result success
 
-    function elpa_mult_ah_b_complex_single_impl(obj, uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, &
+    function elpa_mult_ah_b_complex_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                                 c, ldc, ldcCols) result(success)
 
 #include "elpa_multiply_a_b.X90"

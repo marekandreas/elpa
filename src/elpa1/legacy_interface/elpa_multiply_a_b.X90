@@ -140,7 +140,7 @@
         success = .false.
       endif
 
-      call e%hermitian_multiply(uplo_a, uplo_c, na, ncb, a(1:lda,1:ldaCols), lda, ldaCols, &
+      call e%hermitian_multiply(uplo_a, uplo_c, ncb, a(1:lda,1:ldaCols), &
                                 b(1:ldb,1:ldbCols), ldb, ldbCols, &
                                 c(1:ldc,1:ldcCols), ldc, ldcCols, successInternal)
 

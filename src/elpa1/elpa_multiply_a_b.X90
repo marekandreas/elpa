@@ -65,20 +65,20 @@
 
       character*1                   :: uplo_a, uplo_c
 
-      integer(kind=ik), intent(in)  :: na, lda, ldaCols, ldb, ldbCols, ldc, ldcCols
-      integer(kind=ik)              :: ncb
+      integer(kind=ik), intent(in)  :: ldb, ldbCols, ldc, ldcCols
+      integer(kind=ik)              :: na, ncb
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)                 :: a(lda,*), b(ldb,*), c(ldc,*)
+      real(kind=REAL_DATATYPE)                 :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
 #else
-      real(kind=REAL_DATATYPE)                 :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      real(kind=REAL_DATATYPE)                 :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)           ::  a(lda,*), b(ldb,*), c(ldc,*)
+      complex(kind=COMPLEX_DATATYPE)           ::  a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
 #else
-      complex(kind=COMPLEX_DATATYPE)           :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
+      complex(kind=COMPLEX_DATATYPE)           :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
 #endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -98,7 +98,7 @@
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
       logical                       :: success
-      integer(kind=ik)              :: nblk, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)              :: nblk, mpi_comm_rows, mpi_comm_cols, lda, ldaCols
 
       call obj%timer%start("elpa_mult_at_b_&
       &MATH_DATATYPE&
@@ -106,7 +106,11 @@
       &PRECISION&
       &")
 
+      na   = obj%na
       nblk = obj%nblk
+      lda  = obj%local_nrows
+      ldaCols  = obj%local_ncols
+
 
       call obj%get("mpi_comm_rows",mpi_comm_rows)
       call obj%get("mpi_comm_cols",mpi_comm_cols)
