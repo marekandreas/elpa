@@ -222,8 +222,10 @@ FOR_ALL_TYPES(IMPLEMENT_GETENV)
 
 #define IMPLEMENT_GET_FUNCTION(TYPE, PRINTF_SPEC, ERROR_VALUE) \
         TYPE elpa_index_get_##TYPE##_value(elpa_index_t index, char *name, int *error) { \
-                char *env_value = NULL; \
                 TYPE ret; \
+                if (sizeof(TYPE##_entries) == 0) { \
+                        return ELPA_ERROR_ENTRY_NOT_FOUND; \
+                } \
                 int n = find_##TYPE##_entry(name); \
                 if (n >= 0) { \
                         int from_env = 0; \
@@ -249,6 +251,9 @@ FOR_ALL_TYPES(IMPLEMENT_GET_FUNCTION)
 
 #define IMPLEMENT_LOC_FUNCTION(TYPE, ...) \
         TYPE* elpa_index_get_##TYPE##_loc(elpa_index_t index, char *name) { \
+                if (sizeof(TYPE##_entries) == 0) { \
+                        return NULL; \
+                } \
                 int n = find_##TYPE##_entry(name); \
                 if (n >= 0) { \
                         return &index->TYPE##_options.values[n]; \
@@ -261,6 +266,9 @@ FOR_ALL_TYPES(IMPLEMENT_LOC_FUNCTION)
 
 #define IMPLEMENT_SET_FUNCTION(TYPE, PRINTF_SPEC, ...) \
         int elpa_index_set_##TYPE##_value(elpa_index_t index, char *name, TYPE value, int force_writable) { \
+                if (sizeof(TYPE##_entries) == 0) { \
+                        return ELPA_ERROR_ENTRY_NOT_FOUND; \
+                } \
                 int n = find_##TYPE##_entry(name); \
                 if (n < 0) { \
                         return ELPA_ERROR_ENTRY_NOT_FOUND; \
@@ -285,6 +293,9 @@ FOR_ALL_TYPES(IMPLEMENT_SET_FUNCTION)
 
 #define IMPLEMENT_IS_SET_FUNCTION(TYPE, ...) \
         int elpa_index_##TYPE##_value_is_set(elpa_index_t index, char *name) { \
+                if (sizeof(TYPE##_entries) == 0) { \
+                        return ELPA_ERROR_ENTRY_NOT_FOUND; \
+                } \
                 int n = find_##TYPE##_entry(name); \
                 if (n >= 0) { \
                         if (index->TYPE##_options.is_set[n]) { \
@@ -310,7 +321,7 @@ int elpa_index_value_is_set(elpa_index_t index, char *name) {
 
         FOR_ALL_TYPES(RET_IF_SET)
 
-        printf("ERROR: Could not find entry '%s'\n");
+        printf("ERROR: Could not find entry '%s'\n", name);
         return res;
 }
 
@@ -352,7 +363,6 @@ int elpa_int_value_to_strlen(char *name, int value) {
 
 
 int elpa_index_int_value_to_strlen(elpa_index_t index, char *name) {
-        const char *string = NULL;
         int n = find_int_entry(name);
         if (n < 0) {
                 return 0;
@@ -568,7 +578,6 @@ static int bw_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 elpa_index_t elpa_index_instance() {
-        char *env_value = NULL;
         elpa_index_t index = (elpa_index_t) calloc(1, sizeof(struct elpa_index_struct));
 
 #define ALLOCATE(TYPE, PRINTF_SPEC, ...) \
