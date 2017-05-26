@@ -147,7 +147,7 @@
 !>
 !>  \code{.c}
 !>   #include <elpa/elpa.h>
-!
+!>
 !>   elpa_t handle;
 !>
 !>   if (elpa_init(20170403) != ELPA_OK) {

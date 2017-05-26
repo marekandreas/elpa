@@ -77,10 +77,9 @@ module elpa_api
     integer(kind=c_int), public, pointer :: nblk => NULL()
 
     contains
-      !> \brief methods available with the elpa_t type
       ! general
-      procedure(elpa_setup_i),   deferred, public :: setup          !< export a setup method
-      procedure(elpa_destroy_i), deferred, public :: destroy        !< export a destroy method
+      procedure(elpa_setup_i),   deferred, public :: setup          !< method to setup an ELPA object
+      procedure(elpa_destroy_i), deferred, public :: destroy        !< method to destroy an ELPA object
 
       ! key/value store
       generic, public :: set => &                                   !< export a method to set integer/double key/values
