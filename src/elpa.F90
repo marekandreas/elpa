@@ -78,7 +78,7 @@
 !>   Max Planck Computing and Data Facility (MPCDF)
 !>
 !>
-!>   Futher support, since of the ELPA library is done by the ELPA-AEO consortium,
+!>   Futher support of the ELPA library is done by the ELPA-AEO consortium,
 !>   consisting of the following organizations:
 !>
 !>    - Max Planck Computing and Data Facility (MPCDF) formerly known as
