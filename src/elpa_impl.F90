@@ -1005,7 +1005,7 @@ module elpa_impl
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)              :: a(self%local_nrows,*), b(self%local_nrows,*), c(nrows_c,*)
 #else
-      real(kind=c_float)              :: a(self%local_nrows_a,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      real(kind=c_float)              :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
       logical                         :: success_l
