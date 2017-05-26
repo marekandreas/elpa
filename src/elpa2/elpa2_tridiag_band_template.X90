@@ -194,8 +194,8 @@
       allocate(global_id(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating global_id "//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating global_id "//errorMessage
         stop 1
       endif
 
@@ -206,8 +206,8 @@
       allocate(global_id_tmp(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating global_id_tmp "//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating global_id_tmp "//errorMessage
         stop 1
       endif
 #endif
@@ -222,8 +222,8 @@
       deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when deallocating global_id_tmp "//errorMessage
+  &MATH_DATATYPE&
+  &: error when deallocating global_id_tmp "//errorMessage
         stop 1
       endif
 #endif /* WITH_OPENMP */
@@ -239,8 +239,8 @@
       allocate(block_limits(0:n_pes), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating block_limits"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating block_limits"//errorMessage
         stop 1
       endif
 
@@ -254,8 +254,8 @@
       allocate(ab(2*nb,(nblocks+1)*nb), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating ab"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating ab"//errorMessage
         stop 1
       endif
 
@@ -277,8 +277,8 @@
       allocate(limits(0:np_rows), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating limits"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating limits"//errorMessage
         stop 1
       endif
 
@@ -322,15 +322,15 @@
       allocate(ireq_hhr(num_chunks), stat=istat, errmsg=errorMessage) ! Recv requests
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating ireq_hhr"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating ireq_hhr"//errorMessage
         stop 1
       endif
       allocate(ireq_hhs(nblocks), stat=istat, errmsg=errorMessage)    ! Send requests
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYEP&
-	&: error when allocating ireq_hhs"//errorMessage
+  &MATH_DATATYEP&
+  &: error when allocating ireq_hhs"//errorMessage
         stop 1
       endif
 
@@ -351,9 +351,9 @@
 #if COMPLEXCASE == 1
           call mpi_irecv(hh_trans_complex(1,num_hh_vecs+1),       &
 #endif
-	                 nb*local_size,                           &
+                   nb*local_size,                           &
 #if REALCASE == 1
-			 MPI_REAL_PRECISION,                     &
+       MPI_REAL_PRECISION,                     &
 #endif
 #if COMPLEXCASE == 1
                         MPI_COMPLEX_EXPLICIT_PRECISION,           &
@@ -364,7 +364,7 @@
 #else /* WITH_MPI */
           ! carefull non-block recv data copy must be done at wait or send
           ! hh_trans_real(1:nb*local_size,num_hh_vecs+1) = hh_send(1:nb*hh_cnt(iblk),1,iblk)
-	  ! hh_trans_complex(1:nb*local_size,num_hh_vecs+1) = hh_send(1:nb*hh_cnt(iblk),1,iblk)
+    ! hh_trans_complex(1:nb*local_size,num_hh_vecs+1) = hh_send(1:nb*hh_cnt(iblk),1,iblk)
 #endif /* WITH_MPI */
           num_hh_vecs = num_hh_vecs + local_size
         endif
@@ -381,16 +381,16 @@
       allocate(hh_gath(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! gathers HH vectors
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating hh_gath"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating hh_gath"//errorMessage
         stop 1
       endif
 
       allocate(hh_send(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! send buffer for HH vectors
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating hh_send"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating hh_send"//errorMessage
         stop 1
       endif
 
@@ -407,16 +407,16 @@
       allocate(hh_cnt(nblocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating hh_cnt"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating hh_cnt"//errorMessage
         stop 1
       endif
 
       allocate(hh_dst(nblocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating hh_dst"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating hh_dst"//errorMessage
         stop 1
       endif
 
@@ -431,8 +431,8 @@
       allocate(snd_limits(0:np_rows,nblocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating snd_limits"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating snd_limits"//errorMessage
         stop 1
       endif
       do iblk=1,nblocks
@@ -456,8 +456,8 @@
       allocate(omp_block_limits(0:max_threads), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating omp_block_limits"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating omp_block_limits"//errorMessage
         stop 1
       endif
 
@@ -467,8 +467,8 @@
       allocate(hv_t(nb,max_threads), tau_t(max_threads), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when allocating hv_t, tau_t"//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating hv_t, tau_t"//errorMessage
         stop 1
       endif
 
@@ -495,12 +495,12 @@
         call obj%timer%start("mpi_communication")
         call mpi_isend(ab_s, nb+1,  &
 #if REALCASE == 1
-	               MPI_REAL_PRECISION,  &
+                 MPI_REAL_PRECISION,  &
 #endif
 #if COMPLEXCASE == 1
                        MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-		       my_pe-1, 1, communicator, ireq_ab, mpierr)
+           my_pe-1, 1, communicator, ireq_ab, mpierr)
         call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
       endif
@@ -710,17 +710,17 @@
                                           ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
                 ! Transform diagonal block
-		call obj%timer%start("blas")
+    call obj%timer%start("blas")
 #if REALCASE == 1
                 call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
 #endif
 #if COMPLEXCASE == 1
                 call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_COMPLEX_PAIR_0_0, hd, 1)
 #endif
-		call obj%timer%stop("blas")
+    call obj%timer%stop("blas")
 #if REALCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*tau
-	        hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
+          hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
 #endif
 #if COMPLEXCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
@@ -745,16 +745,16 @@
                 if (nr<=0) cycle ! No subdiagonal block present any more
 
                 ! Transform subdiagonal block
-		call obj%timer%start("blas")
+    call obj%timer%start("blas")
                 call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, &
 #if REALCASE == 1
-		                    CONST_0_0, &
+                        CONST_0_0, &
 #endif
 #if COMPLEXCASE == 1
                                     CONST_COMPLEX_PAIR_0_0, &
 #endif
-				    hs, 1)
-		call obj%timer%stop("blas")
+            hs, 1)
+    call obj%timer%stop("blas")
                 if (nr>1) then
 
                   ! complete (old) Householder transformation for first column
@@ -782,7 +782,7 @@
                   call hh_transform_complex_&
 #endif
                   &PRECISION &
-		                    (obj,ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
+                        (obj,ab(nb+1,ns),vnorm2,hf,tau_t(my_thread))
 
 #if REALCASE == 1
                   hv_t(1   ,my_thread) = CONST_1_0
@@ -799,22 +799,22 @@
 #endif
                   ! update subdiagonal block for old and new Householder transformation
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
-		  call obj%timer%start("blas")
+      call obj%timer%start("blas")
 #if REALCASE == 1
                   call PRECISION_GEMV('T',            &
 #endif
 #if COMPLEXCASE == 1
                   call PRECISION_GEMV('C',            &
 #endif
-		                      nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, &
+                          nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, &
 #if REALCASE == 1
-				      CONST_0_0,      &
+              CONST_0_0,      &
 #endif
 #if COMPLEXCASE == 1
                                       CONST_COMPLEX_PAIR_0_0, &
 #endif
-				      h(2), 1)
-		  call obj%timer%stop("blas")
+              h(2), 1)
+      call obj%timer%stop("blas")
 
                   x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
                   h(2:nb) = h(2:nb) - x*hv(2:nb)
@@ -822,7 +822,7 @@
                   do i=2,nb
                     ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_t(1:nr,my_thread)*  &
 #if REALCASE == 1
-		                                  h(i) - hs(1:nr)*hv(i)
+                                      h(i) - hs(1:nr)*hv(i)
 #endif
 #if COMPLEXCASE == 1
                                                   conjg(h(i)) - hs(1:nr)*conjg(hv(i))
@@ -873,12 +873,12 @@
                 call obj%timer%start("mpi_communication")
                 call mpi_isend(ab_s, nb+1,  &
 #if REALCASE == 1
-		               MPI_REAL_PRECISION, &
+                   MPI_REAL_PRECISION, &
 #endif
 #if COMPLEXCASE == 1
                                MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-			       my_pe-1, 1, communicator, ireq_ab, mpierr)
+             my_pe-1, 1, communicator, ireq_ab, mpierr)
                 call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -892,7 +892,7 @@
               if (istep>=max_threads .and. ne <= na) then
                 call mpi_recv(ab(1,ne-n_off), nb+1,       &
 #if REALCASE == 1
-		              MPI_REAL_PRECISION, &
+                  MPI_REAL_PRECISION, &
 #endif
 #if COMPLEXCASE == 1
                               MPI_COMPLEX_EXPLICIT_PRECISION,  &
@@ -914,7 +914,7 @@
 #ifdef WITH_MPI
                 call obj%timer%start("mpi_communication")
                 call mpi_wait(ireq_hv, MPI_STATUS_IGNORE, mpierr)
-		call obj%timer%stop("mpi_communication")
+    call obj%timer%stop("mpi_communication")
 #endif
                 hv_s(1) = tau_t(max_threads)
                 hv_s(2:) = hv_t(2:,max_threads)
@@ -923,7 +923,7 @@
                 call obj%timer%start("mpi_communication")
                 call mpi_isend(hv_s, nb,     &
 #if REALCASE == 1
-		               MPI_REAL_PRECISION, &
+                   MPI_REAL_PRECISION, &
 #endif
 #if COMPLEXCASE == 1
                                MPI_COMPLEX_EXPLICIT_PRECISION, &
@@ -985,7 +985,7 @@
               call obj%timer%start("mpi_communication")
               call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk),  &
 #if REALCASE == 1
-	                     MPI_REAL_PRECISION, &
+                       MPI_REAL_PRECISION, &
 #endif
 #if COMPLEXCASE == 1
                              MPI_COMPLEX_EXPLICIT_PRECISION, &
@@ -1038,7 +1038,7 @@
 #if COMPLEXCASE == 1
               ab(1,ne) = CONST_COMPLEX_0_0
 #endif
-	      call obj%timer%start("blas")
+        call obj%timer%start("blas")
 
 #if REALCASE == 1
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
@@ -1049,12 +1049,12 @@
               ! Subdiagonal block
               if (nr>0) call PRECISION_GEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1,  &
 #if REALCASE == 1
-	                                    CONST_0_0, hs, 1)
+                                      CONST_0_0, hs, 1)
 #endif
 #if COMPLEXCASE == 1
                                             CONST_COMPLEX_PAIR_0_0,hs,1)
 #endif
-	      call obj%timer%stop("blas")
+        call obj%timer%stop("blas")
 
               ! ... then request last column ...
 #ifdef WITH_MPI
@@ -1062,21 +1062,21 @@
 #ifdef WITH_OPENMP
               call mpi_recv(ab(1,ne), nb+1,    &
 #if REALCASE == 1
-	                    MPI_REAL_PRECISION, &
+                      MPI_REAL_PRECISION, &
 #endif
 #if COMPLEXCASE == 1
                             MPI_COMPLEX_EXPLICIT_PRECISION,  &
 #endif
-			    my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
+          my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
 #else /* WITH_OPENMP */
               call mpi_recv(ab(1,ne), nb+1,     &
 #if REALCASE == 1
-	                    MPI_REAL_PRECISION, &
+                      MPI_REAL_PRECISION, &
 #endif
 #if COMPLEXCASE == 1
                             MPI_COMPLEX_EXPLICIT_PRECISION,  &
 #endif
-	                    my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
+                      my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
 #endif /* WITH_OPENMP */
               call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -1092,7 +1092,7 @@
             else
 
               ! Normal matrix multiply
-	      call obj%timer%start("blas")
+        call obj%timer%start("blas")
 #if REALCASE == 1
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
 #endif
@@ -1101,13 +1101,13 @@
 #endif
               if (nr>0) call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, &
 #if REALCASE == 1
-	                                    CONST_0_0, hs, 1)
+                                      CONST_0_0, hs, 1)
 #endif
 #if COMPLEXCASE == 1
                                             CONST_COMPLEX_PAIR_0_0, hs, 1)
 
 #endif
-	      call obj%timer%stop("blas")
+        call obj%timer%stop("blas")
             endif
 
             ! Calculate first column of subdiagonal block and calculate new
@@ -1118,7 +1118,7 @@
 #endif
 #if COMPLEXCASE == 1
             hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
-	    tau_new = 0
+      tau_new = 0
 #endif
             if (nr>0) then
 
@@ -1146,7 +1146,7 @@
                 call hh_transform_complex_&
 #endif
                 &PRECISION &
-	                           (obj, ab(nb+1,ns),vnorm2,hf,tau_new)
+                             (obj, ab(nb+1,ns),vnorm2,hf,tau_new)
 #if REALCASE == 1
                 hv_new(1) = CONST_1_0
 #endif
@@ -1182,12 +1182,12 @@
                 call obj%timer%start("mpi_communication")
                 call mpi_isend(hv_s, nb,       &
 #if REALCASE == 1
-		               MPI_REAL_PRECISION, &
+                   MPI_REAL_PRECISION, &
 #endif
 #if COMPLEXCASE == 1
                                MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-			       my_pe+1, 2, communicator, ireq_hv, mpierr)
+             my_pe+1, 2, communicator, ireq_hv, mpierr)
                 call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -1233,35 +1233,35 @@
 
               call mpi_isend(ab_s, nb+1,    &
 #if REALCASE == 1
-	                     MPI_REAL_PRECISION, &
+                       MPI_REAL_PRECISION, &
 #endif
 #if COMPLEXCASE == 1
                              MPI_COMPLEX_EXPLICIT_PRECISION, &
 #endif
-			    my_pe-1, 1, communicator, ireq_ab, mpierr)
+          my_pe-1, 1, communicator, ireq_ab, mpierr)
               call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               ! ... and calculate remaining columns with rank-2 update
-	      call obj%timer%start("blas")
+        call obj%timer%start("blas")
 #if REALCASE == 1
               if (nc>1) call PRECISION_SYR2('L', nc-1, -CONST_1_0, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
 #endif
 #if COMPLEXCASE == 1
               if (nc>1) call PRECISION_HER2('L', nc-1, CONST_COMPLEX_PAIR_NEGATIVE_1_0, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
 #endif
-	      call obj%timer%stop("blas")
+        call obj%timer%stop("blas")
 
             else
               ! No need to  send, just a rank-2 update
-	      call obj%timer%start("blas")
+        call obj%timer%start("blas")
 #if REALCASE == 1
               call PRECISION_SYR2('L', nc, -CONST_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
 #if COMPLEXCASE == 1
               call PRECISION_HER2('L', nc, CONST_COMPLEX_PAIR_NEGATIVE_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
-	      call obj%timer%stop("blas")
+        call obj%timer%stop("blas")
 
             endif
 
@@ -1269,21 +1269,21 @@
 
             if (nr>0) then
               if (nr>1) then
-	      	call obj%timer%start("blas")
+          call obj%timer%start("blas")
 #if REALCASE == 1
                 call PRECISION_GEMV('T',            &
 #endif
 #if COMPLEXCASE == 1
                 call PRECISION_GEMV('C',            &
 #endif
-		                        nr, nb-1, tau_new, ab(nb,ns+1), 2*nb-1, hv_new, 1, &
+                            nr, nb-1, tau_new, ab(nb,ns+1), 2*nb-1, hv_new, 1, &
 #if REALCASE == 1
-					CONST_0_0, h(2), 1)
+          CONST_0_0, h(2), 1)
 #endif
 #if COMPLEXCASE == 1
                                         CONST_COMPLEX_PAIR_0_0, h(2), 1)
 #endif
-		call obj%timer%stop("blas")
+    call obj%timer%stop("blas")
 
                 x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
                 h(2:nb) = h(2:nb) - x*hv(2:nb)
@@ -1340,7 +1340,7 @@
             call obj%timer%start("mpi_communication")
             call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk),    &
 #if REALCASE == 1
-	                   MPI_REAL_PRECISION, &
+                     MPI_REAL_PRECISION, &
 #endif
 #if COMPLEXCASE == 1
                            MPI_COMPLEX_EXPLICIT_PRECISION, &
@@ -1420,56 +1420,56 @@
       deallocate(ab, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when deallocating ab"//errorMessage
+  &MATH_DATATYPE&
+  &: error when deallocating ab"//errorMessage
         stop 1
       endif
 
       deallocate(ireq_hhr, ireq_hhs, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-	&MATH_DATATYPE&
-	&: error when deallocating ireq_hhr, ireq_hhs"//errorMessage
+  &MATH_DATATYPE&
+  &: error when deallocating ireq_hhr, ireq_hhs"//errorMessage
         stop 1
       endif
 
       deallocate(hh_cnt, hh_dst, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-	 &MATH_DATATYPE&
-	 &: error when deallocating hh_cnt, hh_dst"//errorMessage
+   &MATH_DATATYPE&
+   &: error when deallocating hh_cnt, hh_dst"//errorMessage
          stop 1
        endif
 
       deallocate(hh_gath, hh_send, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-	 &MATH_DATATYPE&
-	 &: error when deallocating hh_gath, hh_send"//errorMessage
+   &MATH_DATATYPE&
+   &: error when deallocating hh_gath, hh_send"//errorMessage
          stop 1
        endif
 
       deallocate(limits, snd_limits, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-	 &MATH_DATATYPE&
-	 &: error when deallocating limits, send_limits"//errorMessage
+   &MATH_DATATYPE&
+   &: error when deallocating limits, send_limits"//errorMessage
          stop 1
        endif
 
       deallocate(block_limits, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-	 &MATH_DATATYPE&
-	 &: error when deallocating block_limits"//errorMessage
+   &MATH_DATATYPE&
+   &: error when deallocating block_limits"//errorMessage
          stop 1
        endif
 
       deallocate(global_id, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-	 &MATH_DATATYPE&
-	 &: error when allocating global_id"//errorMessage
+   &MATH_DATATYPE&
+   &: error when allocating global_id"//errorMessage
          stop 1
        endif
 

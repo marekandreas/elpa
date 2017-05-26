@@ -71,14 +71,14 @@ subroutine qr_pdlarfb_1dcomm_&
 
     if (k .eq. 1) then
         call qr_pdlarfl_1dcomm_&
-	&PRECISION &
-	(v,1,baseidx,a,lda,tau(1), &
+  &PRECISION &
+  (v,1,baseidx,a,lda,tau(1), &
                                 work,lwork,m,n,idx,mb,rev,mpicomm)
         return
     else if (k .eq. 2) then
         call qr_pdlarfl2_tmatrix_1dcomm_&
-	&PRECISION &
-	(v,ldv,baseidx,a,lda,t,ldt, &
+  &PRECISION &
+  (v,ldv,baseidx,a,lda,t,ldt, &
                                  work,lwork,m,n,idx,mb,rev,mpicomm)
         return
     end if
@@ -323,8 +323,8 @@ subroutine qr_pdlarft_set_merge_1dcomm_&
         offset = mod(n,blocksize)
         if (offset .eq. 0) offset=blocksize
         call qr_tmerge_set_kernel_&
-	&PRECISION &
-	(n,blocksize,t,ldt,work(1,n+1+offset),n)
+  &PRECISION &
+  (n,blocksize,t,ldt,work(1,n+1+offset),n)
 
 end subroutine
 
@@ -394,8 +394,8 @@ subroutine qr_pdlarft_tree_merge_1dcomm_&
         offset = mod(n,blocksize)
         if (offset .eq. 0) offset=blocksize
         call qr_tmerge_tree_kernel_&
-	&PRECISION &
-	(n,blocksize,treeorder,t,ldt,work(1,n+1+offset),n)
+  &PRECISION &
+  (n,blocksize,treeorder,t,ldt,work(1,n+1+offset),n)
 
 end subroutine
 
@@ -536,8 +536,8 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm_&
         ! in 2x2 matrix case only one householder Vector was generated
         if (idx .le. 2) then
             call qr_pdlarfl_1dcomm_&
-	    &PRECISION &
-	    (v(1,2),1,baseidx,a,lda,t(2,2), &
+      &PRECISION &
+      (v(1,2),1,baseidx,a,lda,t(2,2), &
                                     work,lwork,m,n,idx,mb,rev,mpicomm)
             return
         end if
@@ -796,22 +796,22 @@ subroutine qr_tmerge_pdlarfb_1dcomm_&
 
         if (oldk .gt. 0) then
             call qr_pdlarft_merge_kernel_local_&
-	    &PRECISION &
-	    (oldk,k,t,ldt,work(mergeoffset),mergelda)
+      &PRECISION &
+      (oldk,k,t,ldt,work(mergeoffset),mergelda)
 
             if (localsize .gt. 0) then
                 if (updatemode .eq. ichar('I')) then
 
                     ! update matrix (pdlarfb) with complete T
                     call qr_pdlarfb_kernel_local_&
-		    &PRECISION &
-		    (localsize,n,k+oldk,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt, &
+        &PRECISION &
+        (localsize,n,k+oldk,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt, &
                                                  work(updateoffset),updatelda)
                 else
                     ! update matrix (pdlarfb) with small T (same as update with no old T TODO)
                     call qr_pdlarfb_kernel_local_&
-		    &PRECISION &
-		    (localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt, &
+        &PRECISION &
+        (localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt, &
                                                  work(updateoffset),updatelda)
                 end if
             end if
@@ -819,8 +819,8 @@ subroutine qr_tmerge_pdlarfb_1dcomm_&
             if (localsize .gt. 0) then
                 ! update matrix (pdlarfb) with small T
                 call qr_pdlarfb_kernel_local_&
-		&PRECISION &
-		(localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt, &
+    &PRECISION &
+    (localsize,n,k,a(offset,1),lda,v(baseoffset,1),ldv,t(1,1),ldt, &
                                              work(updateoffset),updatelda)
             end if
         end if

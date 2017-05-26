@@ -231,9 +231,9 @@
           if (istep < na/nb2) then
 
             ! Transform first block column of remaining matrix
-	    call obj%timer%start("blas")
+      call obj%timer%start("blas")
             call PRECISION_GEQRF(n, nb2, ab(1+nb2,na_s-n_off), 2*nb-1, tau, work, lwork, info)
-	    call obj%timer%stop("blas")
+      call obj%timer%stop("blas")
 
             do i=1,nb2
               hv(i,i) = CONST_1_0
@@ -307,8 +307,8 @@
             nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
                                           ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
             call wy_gen_&
-	    &PRECISION&
-	    &(obj,nc,nb2,w,hv,tau,work,nb)
+      &PRECISION&
+      &(obj,nc,nb2,w,hv,tau,work,nb)
 
             if (iblk==nblocks .and. nc==nb) then
               !request last nb2 columns
@@ -329,11 +329,11 @@
 
             if (nr>0) then
               call wy_right_&
-	      &PRECISION&
-	      &(obj,nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
-	      call obj%timer%start("blas")
+        &PRECISION&
+        &(obj,nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
+        call obj%timer%start("blas")
               call PRECISION_GEQRF(nr, nb2, ab(nb+1,ns), 2*nb-1, tau_new, work, lwork, info)
-	      call obj%timer%stop("blas")
+        call obj%timer%stop("blas")
               do i=1,nb2
                 hv_new(i,i) = CONST_1_0
                 hv_new(i+1:,i) = ab(nb+2:2*nb-i+1,ns+i-1)
@@ -365,8 +365,8 @@
             endif
 
             call wy_symm_&
-	    &PRECISION&
-	    &(obj,nc,nb2,ab(1,ns),2*nb-1,w,hv,work,work2,nb)
+      &PRECISION&
+      &(obj,nc,nb2,ab(1,ns),2*nb-1,w,hv,work,work2,nb)
 
             if (my_pe>0 .and. iblk==1) then
               !send first nb2 columns to previous PE
@@ -392,11 +392,11 @@
 
             if (nr>0) then
               call wy_gen_&
-	      &PRECISION&
-	      &(obj,nr,nb2,w_new,hv_new,tau_new,work,nb)
+        &PRECISION&
+        &(obj,nr,nb2,w_new,hv_new,tau_new,work,nb)
               call wy_left_&
-	      &PRECISION&
-	      &(obj,nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
+        &PRECISION&
+        &(obj,nb-nb2,nr,nb2,ab(nb+1-nb2,ns+nb2),2*nb-1,w_new,hv_new,work,nb)
             endif
 
             ! Use new HH Vector for the next block

@@ -796,7 +796,7 @@
         &PRECISION&
         &(obj, d1, dbase, ddiff, z, ev_scale_value, na1,i)
           use precision
-	  use elpa_abstract_impl
+    use elpa_abstract_impl
           implicit none
           class(elpa_abstract_impl_t), intent(inout) :: obj
           integer(kind=ik), intent(in) :: na1, i
@@ -825,7 +825,7 @@
         &PRECISION&
         &(obj, idx_ev, nLength)
           use precision
-	  use elpa_abstract_impl
+    use elpa_abstract_impl
           implicit none
           class(elpa_abstract_impl_t), intent(inout) :: obj
           integer(kind=ik), intent(in) :: nLength
@@ -908,7 +908,7 @@
         &PRECISION&
         &(obj, col1, col2)
           use precision
-	  use elpa_abstract_impl
+    use elpa_abstract_impl
           implicit none
           class(elpa_abstract_impl_t), intent(inout) :: obj
 
@@ -1099,7 +1099,7 @@
         ! This is a test routine for checking if the eigenvalues are monotonically increasing.
         ! It is for debug purposes only, an error should never be triggered!
           use precision
-	  use elpa_abstract_impl
+          use elpa_abstract_impl
           implicit none
 
           class(elpa_abstract_impl_t), intent(inout) :: obj

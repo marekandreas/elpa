@@ -285,10 +285,10 @@
       allocate(tmat(nbw,nbw,num_blocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_evp_&
-	&MATH_DATATYPE&
-	&_2stage_&
-	&PRECISION&
-	&" // ": error when allocating tmat "//errorMessage
+  &MATH_DATATYPE&
+  &_2stage_&
+  &PRECISION&
+  &" // ": error when allocating tmat "//errorMessage
         stop 1
       endif
 
@@ -436,9 +436,9 @@
        deallocate(tmat, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"solve_evp_&
-	 &MATH_DATATYPE&
-	 _2stage_&
-	 &PRECISION " // ": error when deallocating tmat"//errorMessage
+   &MATH_DATATYPE&
+   &_2stage_&
+   &PRECISION " // ": error when deallocating tmat"//errorMessage
          stop 1
        endif
      endif

@@ -62,7 +62,7 @@ function elpa_mult_at_b_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     ") result(success)
+     &") result(success)
     use, intrinsic :: iso_c_binding
     use elpa1_auxiliary, only : elpa_mult_at_b_&
     &MATH_DATATYPE&

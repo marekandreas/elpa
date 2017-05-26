@@ -125,16 +125,16 @@
        allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"elpa_invert_trm_&
-	 &MATH_DATATYPE&
-	 &: error when allocating tmp1 "//errorMessage
+   &MATH_DATATYPE&
+   &: error when allocating tmp1 "//errorMessage
          stop 1
        endif
 
        allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"elpa_invert_trm_&
-	 &MATH_DATATYPE&
-	 &: error when allocating tmp2 "//errorMessage
+   &MATH_DATATYPE&
+   &: error when allocating tmp2 "//errorMessage
          stop 1
        endif
 
@@ -144,16 +144,16 @@
        allocate(tmat1(l_rows,nblk), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"elpa_invert_trm_&
-	 &MATH_DATATYPE&
-	 &: error when allocating tmat1 "//errorMessage
+   &MATH_DATATYPE&
+   &: error when allocating tmat1 "//errorMessage
          stop 1
        endif
 
        allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"elpa_invert_trm_&
-	 &MATH_DATATYPE&
-	 &: error when allocating tmat2 "//errorMessage
+   &MATH_DATATYPE&
+   &: error when allocating tmat2 "//errorMessage
          stop 1
        endif
 
@@ -185,13 +185,13 @@
 
              if (info/=0) then
                if (wantDebug) write(error_unit,*) "elpa_invert_trm_&
-	       &MATH_DATATYPE&
+         &MATH_DATATYPE&
 
 #if REALCASE == 1
-	       &: Error in DTRTRI"
+         &: Error in DTRTRI"
 #endif
 #if COMPLEXCASE == 1
-	       &: Error in ZTRTRI"
+         &: Error in ZTRTRI"
 #endif
 
                success = .false.
@@ -229,7 +229,7 @@
 
            call obj%timer%start("blas")
            if (l_cols-l_colx+1>0) &
-	      call PRECISION_TRMM ('L', 'U', 'N', 'N', nb, l_cols-l_colx+1,  &
+        call PRECISION_TRMM ('L', 'U', 'N', 'N', nb, l_cols-l_colx+1,  &
 #if REALCASE == 1
                                    CONST_1_0,   &
 #endif
@@ -268,7 +268,7 @@
 #ifdef WITH_MPI
          call obj%timer%start("mpi_communication")
          if (l_cols-l_col1+1>0) &
-	    call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk,      &
+      call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk,      &
 #if REALCASE == 1
                              MPI_REAL_PRECISION,       &
 #endif
@@ -305,8 +305,8 @@
        deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"elpa_invert_trm_&
-	 &MATH_DATATYPE&
-	 &: error when deallocating tmp1 "//errorMessage
+   &MATH_DATATYPE&
+   &: error when deallocating tmp1 "//errorMessage
          stop 1
        endif
 

@@ -108,7 +108,7 @@
          use elpa_generated_fortran_interfaces
 
          implicit none
-	 class(elpa_abstract_impl_t), intent(inout) :: obj
+   class(elpa_abstract_impl_t), intent(inout) :: obj
          real(kind=c_double), intent(inout) :: kernel_time  ! MPI_WTIME always needs double
          integer(kind=lik)                  :: kernel_flops
          integer(kind=ik), intent(in)       :: nbw, max_blk_size
@@ -149,7 +149,7 @@
          integer(kind=ik), intent(in)       :: kernel
 
          integer(kind=c_intptr_t)           :: a_dev
-	 integer(kind=c_intptr_t)           :: bcast_buffer_dev
+   integer(kind=c_intptr_t)           :: bcast_buffer_dev
 #if REALCASE == 1
          integer(kind=c_intptr_t)           :: hh_dot_dev ! why not needed in complex case
 #endif
@@ -185,7 +185,7 @@
 #endif
 
          call obj%timer%start("compute_hh_trafo_&
-	 &MATH_DATATYPE&
+   &MATH_DATATYPE&
 #ifdef WITH_OPENMP
          &_openmp" // &
 #else
@@ -211,16 +211,16 @@
 #if REALCASE == 1
          if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
            print *,"compute_hh_trafo_&
-	   &MATH_DATATYPE&
-	   &_GPU OPENMP: not yet implemented"
+     &MATH_DATATYPE&
+     &_GPU OPENMP: not yet implemented"
            stop 1
          endif
 #endif
 #if COMPLEXCASE == 1
          if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
            print *,"compute_hh_trafo_&
-	   &MATH_DATATYPE&
-	   &_GPU OPENMP: not yet implemented"
+     &MATH_DATATYPE&
+     &_GPU OPENMP: not yet implemented"
            stop 1
          endif
 #endif
@@ -231,7 +231,7 @@
            nl = min(my_thread*thread_width-noff, l_nev-noff)
            if (nl<=0) then
              call obj%timer%stop("compute_hh_trafo_&
-	     &MATH_DATATYPE&
+       &MATH_DATATYPE&
 #ifdef WITH_OPENMP
              &_openmp" // &
 #else
@@ -249,37 +249,37 @@
 ! GPU kernel real
          if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
            dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_&
-	                &PRECISION&
-			&_&
-			&MATH_DATATYPE
+                  &PRECISION&
+      &_&
+      &MATH_DATATYPE
            call launch_compute_hh_trafo_gpu_kernel_&
-	   &MATH_DATATYPE&
-	   &_&
-	   &PRECISION&
-	   & (a_dev + dev_offset, bcast_buffer_dev, hh_dot_dev, hh_tau_dev, nl, nbw, stripe_width, off, ncols)
+     &MATH_DATATYPE&
+     &_&
+     &PRECISION&
+     & (a_dev + dev_offset, bcast_buffer_dev, hh_dot_dev, hh_tau_dev, nl, nbw, stripe_width, off, ncols)
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 ! GPU kernel complex
          if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
 
            dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * size_of_&
-	                &PRECISION&
-			&_&
-			&MATH_DATATYPE
+                  &PRECISION&
+      &_&
+      &MATH_DATATYPE
 
            dev_offset_1 = (0 +  (  off-1 )* nbw) * size_of_&
-	                &PRECISION&
-			&_&
-			&MATH_DATATYPE
+                  &PRECISION&
+      &_&
+      &MATH_DATATYPE
 
            dev_offset_2 =( off-1 )* size_of_&
-	                &PRECISION&
-			&_&
-			&MATH_DATATYPE
+                  &PRECISION&
+      &_&
+      &MATH_DATATYPE
 
            call launch_compute_hh_trafo_gpu_kernel_&
-	   &MATH_DATATYPE&
-	   &_&
+     &MATH_DATATYPE&
+     &_&
            &PRECISION&
            &(a_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
                                                          hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
@@ -321,17 +321,17 @@
 
 #ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_&
-		 &MATH_DATATYPE&
-		 &_generic_&
-		 &PRECISION&
-		 & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+     &MATH_DATATYPE&
+     &_generic_&
+     &PRECISION&
+     & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
 
 #else
                  call double_hh_trafo_&
-		 &MATH_DATATYPE&
-		 &_generic_&
-		 &PRECISION&
-		 & (a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1, istripe,my_thread), w(1:nbw,1:6), &
+     &MATH_DATATYPE&
+     &_generic_&
+     &PRECISION&
+     & (a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1, istripe,my_thread), w(1:nbw,1:6), &
                     nbw, nl, stripe_width, nbw)
 #endif
 
@@ -339,17 +339,17 @@
 
 #ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_&
-		 &MATH_DATATYPE&
-		 &_generic_&
-		 &PRECISION&
-		 & (a(1,j+off+a_off-1,istripe),w, nbw, nl, stripe_width, nbw)
+     &MATH_DATATYPE&
+     &_generic_&
+     &PRECISION&
+     & (a(1,j+off+a_off-1,istripe),w, nbw, nl, stripe_width, nbw)
 
 #else
                  call double_hh_trafo_&
-		 &MATH_DATATYPE&
-		 &_generic_&
-		 &PRECISION&
-		 & (a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1,istripe),w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
+     &MATH_DATATYPE&
+     &_generic_&
+     &PRECISION&
+     & (a(1:stripe_width,j+off+a_off-1:j+off+a_off+nbw-1,istripe),w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
 #endif
 #endif /* WITH_OPENMP */
 
@@ -376,32 +376,32 @@
 #ifdef USE_ASSUMED_SIZE
 
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_generic_&
-	      &PRECISION&
-	      & (a(1,j+off+a_off,istripe,my_thread), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_generic_&
+        &PRECISION&
+        & (a(1,j+off+a_off,istripe,my_thread), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_generic_&
-	      &PRECISION&
-	      & (a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe,my_thread), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_generic_&
+        &PRECISION&
+        & (a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe,my_thread), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef USE_ASSUMED_SIZE
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_generic_&
-	      &PRECISION&
-	      & (a(1,j+off+a_off,istripe), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_generic_&
+        &PRECISION&
+        & (a(1,j+off+a_off,istripe), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_generic_&
-	      &PRECISION&
-	      & (a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_generic_&
+        &PRECISION&
+        & (a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 #endif /* WITH_OPENMP */
 
@@ -428,16 +428,16 @@
 
 #ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_&
-		 &MATH_DATATYPE&
-		 &_generic_simple_&
-		 &PRECISION&
-		 & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+     &MATH_DATATYPE&
+     &_generic_simple_&
+     &PRECISION&
+     & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
 #else
                  call double_hh_trafo_&
-		 &MATH_DATATYPE&
-		 &_generic_simple_&
-		 &PRECISION&
-		 & (a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+     &MATH_DATATYPE&
+     &_generic_simple_&
+     &PRECISION&
+     & (a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
 
 #endif
 
@@ -445,16 +445,16 @@
 
 #ifdef USE_ASSUMED_SIZE
                  call double_hh_trafo_&
-		 &MATH_DATATYPE&
-		 &_generic_simple_&
-		 &PRECISION&
-		 & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+     &MATH_DATATYPE&
+     &_generic_simple_&
+     &PRECISION&
+     & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
 #else
                  call double_hh_trafo_&
-		 &MATH_DATATYPE&
-		 &_generic_simple_&
-		 &PRECISION&
-		 & (a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe), w, nbw, nl, stripe_width, nbw)
+     &MATH_DATATYPE&
+     &_generic_simple_&
+     &PRECISION&
+     & (a(1:stripe_width,j+off+a_off-1:j+off+a_off-1+nbw,istripe), w, nbw, nl, stripe_width, nbw)
 
 #endif
 
@@ -480,32 +480,32 @@
 #ifdef WITH_OPENMP
 #ifdef USE_ASSUMED_SIZE
                call single_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_generic_simple_&
-	       &PRECISION&
-	       & (a(1,j+off+a_off,istripe,my_thread), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+         &MATH_DATATYPE&
+         &_generic_simple_&
+         &PRECISION&
+         & (a(1,j+off+a_off,istripe,my_thread), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
                call single_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_generic_simple_&
-	       &PRECISION&
-	       & (a(1:stripe_width, j+off+a_off:j+off+a_off+nbw-1,istripe,my_thread), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
+         &MATH_DATATYPE&
+         &_generic_simple_&
+         &PRECISION&
+         & (a(1:stripe_width, j+off+a_off:j+off+a_off+nbw-1,istripe,my_thread), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
 #else /* WITH_OPENMP */
 
 #ifdef USE_ASSUMED_SIZE
                call single_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_generic_simple_&
-	       &PRECISION&
-	       & (a(1,j+off+a_off,istripe), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+         &MATH_DATATYPE&
+         &_generic_simple_&
+         &PRECISION&
+         & (a(1,j+off+a_off,istripe), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
                call single_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_generic_simple_&
-	       &PRECISION&
-	       & (a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
+         &MATH_DATATYPE&
+         &_generic_simple_&
+         &PRECISION&
+         & (a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,j+off),nbw,nl,stripe_width)
 #endif
 
 #endif /* WITH_OPENMP */
@@ -530,17 +530,17 @@
 #ifdef WITH_OPENMP
                  call double_hh_trafo_&
                  &MATH_DATATYPE&
-		 &_&
-		 &PRECISION&
-		 &_sse_assembly&
-		 & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+     &_&
+     &PRECISION&
+     &_sse_assembly&
+     & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                  call double_hh_trafo_&
-		 &MATH_DATATYPE&
-		 &_&
-		 &PRECISION&
-		 &_sse_assembly&
-		 & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+     &MATH_DATATYPE&
+     &_&
+     &PRECISION&
+     &_sse_assembly&
+     & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
 #ifndef WITH_FIXED_REAL_KERNEL
@@ -561,18 +561,18 @@
              do j = ncols, 1, -1
 #ifdef WITH_OPENMP
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_&
-	      &PRECISION&
-	      &_sse_assembly&
-	      & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_&
+        &PRECISION&
+        &_sse_assembly&
+        & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_&
-	      &PRECISION&
-	      &_sse_assembly&
-	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_&
+        &PRECISION&
+        &_sse_assembly&
+        & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
 #ifndef WITH_FIXED_COMPLEX_KERNEL
@@ -598,16 +598,16 @@
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_sse_1hv_&
-	      &PRECISION&
-	      & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_sse_1hv_&
+        &PRECISION&
+        & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_sse_1hv_&
-	      &PRECISION&
-	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_sse_1hv_&
+        &PRECISION&
+        & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
 #endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)) */
@@ -637,16 +637,16 @@
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_avx_avx2_1hv_&
-	      &PRECISION&
-	      & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_avx_avx2_1hv_&
+        &PRECISION&
+        & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_avx_avx2_1hv_&
-	      &PRECISION&
-	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_avx_avx2_1hv_&
+        &PRECISION&
+        & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
 #endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)) */
@@ -675,16 +675,16 @@
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_avx512_1hv_&
-	      &PRECISION&
-	      & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_avx512_1hv_&
+        &PRECISION&
+        & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
-	      &MATH_DATATYPE&
-	      &_avx512_1hv_&
-	      &PRECISION&
-	      & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+        &MATH_DATATYPE&
+        &_avx512_1hv_&
+        &PRECISION&
+        & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
 #endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX512_BLOCK2_KERNEL) ) */
@@ -710,16 +710,16 @@
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_2hv_&
-	       &PRECISION &
-	       & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_2hv_&
+         &PRECISION &
+         & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_2hv_&
-	       &PRECISION &
-	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_2hv_&
+         &PRECISION &
+         & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL) && !defined(WITH_REAL_SSE_BLOCK4_KERNEL)) */
@@ -745,30 +745,30 @@
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
              if (j==1) call single_hh_trafo_&
-	               &MATH_DATATYPE&
-		       &_sse_1hv_&
-		       &PRECISION&
-		       & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+                 &MATH_DATATYPE&
+           &_sse_1hv_&
+           &PRECISION&
+           & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
              if (j==1) call single_hh_trafo_&
-	               &MATH_DATATYPE&
-		       &_sse_1hv_&
-		       &PRECISION&
-		       & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+                 &MATH_DATATYPE&
+           &_sse_1hv_&
+           &PRECISION&
+           & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
 #ifndef WITH_FIXED_COMPLEX_KERNEL
@@ -795,16 +795,16 @@
 #ifdef WITH_OPENMP
 
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
 #endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) ... */
@@ -831,30 +831,30 @@
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
              if (j==1) call single_hh_trafo_&
-	               &MATH_DATATYPE&
-		       &_avx_avx2_1hv_&
-		       &PRECISION&
-		       & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+                 &MATH_DATATYPE&
+           &_avx_avx2_1hv_&
+           &PRECISION&
+           & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
              if (j==1) call single_hh_trafo_&
-	               &MATH_DATATYPE&
-		       &_avx_avx2_1hv_&
-		       &PRECISION&
-		       & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+                 &MATH_DATATYPE&
+           &_avx_avx2_1hv_&
+           &PRECISION&
+           & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
 #ifndef WITH_FIXED_COMPLEX_KERNEL
@@ -881,16 +881,16 @@
 #ifdef WITH_OPENMP
 
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
 #endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) ... */
@@ -916,30 +916,30 @@
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
              if (j==1) call single_hh_trafo_&
-	               &MATH_DATATYPE&
-		       &_avx512_1hv_&
-		       &PRECISION&
-		       & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+                 &MATH_DATATYPE&
+           &_avx512_1hv_&
+           &PRECISION&
+           & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
              if (j==1) call single_hh_trafo_&
-	               &MATH_DATATYPE&
-		       &_avx512_1hv_&
-		       &PRECISION&
-		       & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+                 &MATH_DATATYPE&
+           &_avx512_1hv_&
+           &PRECISION&
+           & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
 #ifndef WITH_FIXED_COMPLEX_KERNEL
@@ -961,12 +961,12 @@
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
                  call double_hh_trafo_bgp_&
-		 &PRECISION&
-		 & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+     &PRECISION&
+     & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
 #else
                  call double_hh_trafo_bgp_&
-		 &PRECISION&
-		 & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+     &PRECISION&
+     & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
 #ifndef WITH_FIXED_REAL_KERNEL
@@ -984,11 +984,11 @@
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
 #ifdef WITH_OPENMP
                  call double_hh_trafo_bgq_&
-		 &PRECISION&
-		 & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+     &PRECISION&
+     & (a(1,j+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
 #else
                  call double_hh_trafo_bgq_&PRECISION&
-		 & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+     & (a(1,j+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
 #endif
                enddo
 #ifndef WITH_FIXED_REAL_KERNEL
@@ -1006,17 +1006,17 @@
 #if REALCASE == 1
 #ifdef WITH_OPENMP
              if (j==1) call single_hh_trafo_&
-	               &MATH_DATATYPE&
-		       &_cpu_openmp_&
-		       &PRECISION&
-		       & (a(1:stripe_width, 1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
+                 &MATH_DATATYPE&
+           &_cpu_openmp_&
+           &PRECISION&
+           & (a(1:stripe_width, 1+off+a_off:1+off+a_off+nbw-1,istripe,my_thread), &
                           bcast_buffer(1:nbw,off+1), nbw, nl,stripe_width)
 #else
              if (j==1) call single_hh_trafo_&
-	               &MATH_DATATYPE&
-		       &_cpu_&
-		       &PRECISION&
-		       & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl,&
+                 &MATH_DATATYPE&
+           &_cpu_&
+           &PRECISION&
+           & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl,&
                           stripe_width)
 #endif
 
@@ -1046,16 +1046,16 @@
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
 #ifdef WITH_OPENMP
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
              do jj = j, 2, -2
@@ -1063,31 +1063,31 @@
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
              if (jj==1) call single_hh_trafo_&
-	                &MATH_DATATYPE&
-			&_cpu_openmp_&
-			&PRECISION&
-			& (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                  &MATH_DATATYPE&
+      &_cpu_openmp_&
+      &PRECISION&
+      & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
              if (jj==1) call single_hh_trafo_&
-	                &MATH_DATATYPE&
-			&_cpu_&
-			&PRECISION&
-			& (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+                  &MATH_DATATYPE&
+      &_cpu_&
+      &PRECISION&
+      & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 
 #endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL)) */
@@ -1121,16 +1121,16 @@
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
 #ifdef WITH_OPENMP
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
              do jj = j, 2, -2
@@ -1138,31 +1138,31 @@
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-1,istripe,my_thread)),w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-1,istripe,my_thread)),w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
              if (jj==1) call single_hh_trafo_&
-	                &MATH_DATATYPE&
-	                &_cpu_openmp_&
-	                &PRECISION&
-	                & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                  &MATH_DATATYPE&
+                  &_cpu_openmp_&
+                  &PRECISION&
+                  & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
              if (jj==1) call single_hh_trafo_&
-	                &MATH_DATATYPE&
-			&_cpu_&
-			&PRECISION&
-			& (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+                  &MATH_DATATYPE&
+      &_cpu_&
+      &PRECISION&
+      & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 
 #endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL)) */
@@ -1195,16 +1195,16 @@
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
 #ifdef WITH_OPENMP
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
              do jj = j, 2, -2
@@ -1212,31 +1212,31 @@
                w(:,2) = bcast_buffer(1:nbw,jj+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
              if (jj==1) call single_hh_trafo_&
-	                &MATH_DATATYPE&
-			&_cpu_openmp_&
-			&PRECISION&
-			& (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                  &MATH_DATATYPE&
+      &_cpu_openmp_&
+      &PRECISION&
+      & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
              if (jj==1) call single_hh_trafo_&
-	                &MATH_DATATYPE&
-			&_cpu_&
-			&PRECISION&
-			& (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
+                  &MATH_DATATYPE&
+      &_cpu_&
+      &PRECISION&
+      & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 
@@ -1270,16 +1270,16 @@
                w(:,6) = bcast_buffer(1:nbw,j+off-5)
 #ifdef WITH_OPENMP
                call hexa_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_6hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_6hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call hexa_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_6hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_6hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
              do jj = j, 4, -4
@@ -1289,16 +1289,16 @@
                w(:,4) = bcast_buffer(1:nbw,jj+off-3)
 #ifdef WITH_OPENMP
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-3,istripe)), w, &
+         &MATH_DATATYPE&
+         &_sse_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-3,istripe)), w, &
                                                   nbw, nl, stripe_width, nbw)
 #endif
              enddo
@@ -1307,31 +1307,31 @@
                w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_sse_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_sse_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
              if (jjj==1) call single_hh_trafo_&
-	                 &MATH_DATATYPE&
-			 &_cpu_openmp_&
-			 &PRECISION&
-			 & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                   &MATH_DATATYPE&
+       &_cpu_openmp_&
+       &PRECISION&
+       & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
              if (jjj==1) call single_hh_trafo_&
-	                 &MATH_DATATYPE&
-			 &_cpu_&
-			 &PRECISION&
-			 & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+                   &MATH_DATATYPE&
+       &_cpu_&
+       &PRECISION&
+       & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 #ifndef WITH_FIXED_REAL_KERNEL
            endif
@@ -1363,16 +1363,16 @@
                w(:,6) = bcast_buffer(1:nbw,j+off-5)
 #ifdef WITH_OPENMP
                call hexa_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_6hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_6hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call hexa_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_6hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_6hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
              do jj = j, 4, -4
@@ -1382,16 +1382,16 @@
                w(:,4) = bcast_buffer(1:nbw,jj+off-3)
 #ifdef WITH_OPENMP
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
              do jjj = jj, 2, -2
@@ -1399,31 +1399,31 @@
                w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx_avx2_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx_avx2_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
              if (jjj==1) call single_hh_trafo_&
-	                 &MATH_DATATYPE&
-			 &_cpu_openmp_&
-			 &PRECISION&
-			 & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                   &MATH_DATATYPE&
+       &_cpu_openmp_&
+       &PRECISION&
+       & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
              if (jjj==1) call single_hh_trafo_&
-	                 &MATH_DATATYPE&
-			 &_cpu_&
-			 &PRECISION&
-			 & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
+                   &MATH_DATATYPE&
+       &_cpu_&
+       &PRECISION&
+       & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 #ifndef WITH_FIXED_REAL_KERNEL
@@ -1454,16 +1454,16 @@
                w(:,6) = bcast_buffer(1:nbw,j+off-5)
 #ifdef WITH_OPENMP
                call hexa_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_6hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_6hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call hexa_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_6hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_6hv_&
+         &PRECISION&
+         & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
              do jj = j, 4, -4
@@ -1473,16 +1473,16 @@
                w(:,4) = bcast_buffer(1:nbw,jj+off-3)
 #ifdef WITH_OPENMP
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_4hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jj+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_4hv_&
+         &PRECISION&
+         & (c_loc(a(1,jj+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
              do jjj = jj, 2, -2
@@ -1490,31 +1490,31 @@
                w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
-	       &MATH_DATATYPE&
-	       &_avx512_2hv_&
-	       &PRECISION&
-	       & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+         &MATH_DATATYPE&
+         &_avx512_2hv_&
+         &PRECISION&
+         & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
              enddo
 #ifdef WITH_OPENMP
              if (jjj==1) call single_hh_trafo_&
-	                 &MATH_DATATYPE&
-			 &_cpu_openmp_&
-			 &PRECISION&
-			 & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                   &MATH_DATATYPE&
+       &_cpu_openmp_&
+       &PRECISION&
+       & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
                                            bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #else
              if (jjj==1) call single_hh_trafo_&
-	                 &MATH_DATATYPE&
-			 &_cpu_&
-			 &PRECISION&
-			 & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+                   &MATH_DATATYPE&
+       &_cpu_&
+       &PRECISION&
+       & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 #ifndef WITH_FIXED_REAL_KERNEL
            endif
@@ -1534,13 +1534,13 @@
 #endif
            kernel_flops = kernel_flops + 4*int(nl,8)*int(ncols,8)*int(nbw,8)
            kernel_time = kernel_time + mpi_wtime()-ttt
-	   n_times = n_times + 1
+     n_times = n_times + 1
 #ifdef WITH_OPENMP
          endif
 #endif
 
          call obj%timer%stop("compute_hh_trafo_&
-	 &MATH_DATATYPE&
+         &MATH_DATATYPE&
 #ifdef WITH_OPENMP
          &_openmp" // &
 #else

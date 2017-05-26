@@ -88,7 +88,7 @@ end subroutine local_size_offset_1d
 
 subroutine reverse_vector_local_&
            &PRECISION &
-	   (n,x,incx,work,lwork)
+     (n,x,incx,work,lwork)
     use precision
     implicit none
 
@@ -118,7 +118,7 @@ end subroutine
 
 subroutine reverse_matrix_local_&
            &PRECISION &
-	   (trans, m, n, a, lda, work, lwork)
+     (trans, m, n, a, lda, work, lwork)
     use precision
     implicit none
 
@@ -142,8 +142,8 @@ subroutine reverse_matrix_local_&
 
     if (lwork .eq. -1) then
         call reverse_vector_local_&
-	     &PRECISION &
-	     (dimsize, a, incx, dworksize, -1)
+       &PRECISION &
+       (dimsize, a, incx, dworksize, -1)
         work(1) = dworksize(1)
         return
     end if
@@ -151,14 +151,14 @@ subroutine reverse_matrix_local_&
     if (trans .eq. 1) then
         do i=1,m
             call reverse_vector_local_&
-	    &PRECISION &
-	    (dimsize, a(i,1), incx, work, lwork)
+      &PRECISION &
+      (dimsize, a(i,1), incx, work, lwork)
         end do
     else
         do i=1,n
             call reverse_vector_local_&
-	    &PRECISION &
-	    (dimsize, a(1,i), incx, work, lwork)
+      &PRECISION &
+      (dimsize, a(1,i), incx, work, lwork)
         end do
     end if
 
@@ -166,7 +166,7 @@ end subroutine
 
 subroutine reverse_matrix_2dcomm_ref_&
            &PRECISION &
-	   (m, n, mb, nb, a, lda, work, lwork, mpicomm_cols, mpicomm_rows)
+     (m, n, mb, nb, a, lda, work, lwork, mpicomm_cols, mpicomm_rows)
     use precision
     implicit none
 
@@ -195,11 +195,11 @@ subroutine reverse_matrix_2dcomm_ref_&
 
     if (lwork .eq. -1) then
         call reverse_matrix_1dcomm_&
-	&PRECISION &
-	(0,m,lcols,mb,a,lda,reverse_column_size,-1,mpicomm_cols)
+  &PRECISION &
+  (0,m,lcols,mb,a,lda,reverse_column_size,-1,mpicomm_cols)
         call reverse_matrix_1dcomm_&
-	&PRECISION &
-	(1,lrows,n,nb,a,lda,reverse_row_size,-1,mpicomm_rows)
+  &PRECISION &
+  (1,lrows,n,nb,a,lda,reverse_row_size,-1,mpicomm_rows)
         work(1) = max(reverse_column_size(1),reverse_row_size(1))
         return
     end if
@@ -216,7 +216,7 @@ end subroutine
 ! b: if trans = 'T': b is size of block distribution between columns
 subroutine reverse_matrix_1dcomm_&
            &PRECISION &
-	   (trans, m, n, b, a, lda, work, lwork, mpicomm)
+     (trans, m, n, b, a, lda, work, lwork, mpicomm)
     use precision
     use elpa_mpi
 
@@ -255,8 +255,8 @@ subroutine reverse_matrix_1dcomm_&
 
     if (lwork .eq. -1) then
         call reverse_matrix_local_&
-	&PRECISION &
-	(trans,lrows,lcols,a,max(lrows,lcols),dworksize,-1)
+  &PRECISION &
+  (trans,lrows,lcols,a,max(lrows,lcols),dworksize,-1)
         work(1) = real(3*lrows*lcols,kind=REAL_DATATYPE) + dworksize(1)
         return
     end if
@@ -321,12 +321,12 @@ subroutine reverse_matrix_1dcomm_&
                 ! 7. reverse data
                 if (trans .eq. 1) then
                     call reverse_matrix_local_&
-		    &PRECISION &
-		    (1,lrows,lsize,work(sendoffset),lrows,work(work_offset),lwork)
+        &PRECISION &
+        (1,lrows,lsize,work(sendoffset),lrows,work(work_offset),lwork)
                 else
                     call reverse_matrix_local_&
-		    &PRECISION &
-		    (0,lsize,lcols,work(sendoffset),lsize,work(work_offset),lwork)
+        &PRECISION &
+        (0,lsize,lcols,work(sendoffset),lsize,work(work_offset),lwork)
                 end if
 
                 ! 8. store in temp matrix
@@ -363,12 +363,12 @@ subroutine reverse_matrix_1dcomm_&
                 ! 7. reverse data
                 if (trans .eq. 1) then
                     call reverse_matrix_local_&
-		    &PRECISION &
-		    (1,lrows,lsize,work(recvoffset),lrows,work(work_offset),lwork)
+        &PRECISION &
+        (1,lrows,lsize,work(recvoffset),lrows,work(work_offset),lwork)
                 else
                     call reverse_matrix_local_&
-		    &PRECISION &
-		    (0,lsize,lcols,work(recvoffset),lsize,work(work_offset),lwork)
+        &PRECISION &
+        (0,lsize,lcols,work(recvoffset),lsize,work(work_offset),lwork)
                 end if
 
                 ! 8. store in temp matrix

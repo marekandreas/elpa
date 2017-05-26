@@ -126,15 +126,15 @@
       allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_cholesky_&
-	&MATH_DATATYPE&: error when allocating tmp1 "//errorMessage
+  &MATH_DATATYPE&: error when allocating tmp1 "//errorMessage
         stop 1
       endif
 
       allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_cholesky_&
-	&MATH_DATATYPE&
-	&: error when allocating tmp2 "//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating tmp2 "//errorMessage
         stop 1
       endif
 
@@ -144,16 +144,16 @@
       allocate(tmatr(l_rows,nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_cholesky_&
-	&MATH_DATATYPE&
-	&: error when allocating tmatr "//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating tmatr "//errorMessage
         stop 1
       endif
 
       allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_cholesky_&
-	&MATH_DATATYPE&
-	&: error when allocating tmatc "//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating tmatc "//errorMessage
         stop 1
       endif
 
@@ -183,10 +183,10 @@
 
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_&
-	      &MATH_DATATYPE&
+        &MATH_DATATYPE&
 
 #if REALCASE == 1
-	      &: Error in dpotrf: ",info
+        &: Error in dpotrf: ",info
 #endif
 #if COMPLEXCASE == 1
               &: Error in zpotrf: ",info
@@ -214,13 +214,13 @@
 
             if (info/=0) then
               if (wantDebug) write(error_unit,*) "elpa_cholesky_&
-	      &MATH_DATATYPE&
+        &MATH_DATATYPE&
 
 #if REALCASE == 1
-	      &: Error in dpotrf 2: ",info
+        &: Error in dpotrf 2: ",info
 #endif
 #if COMPLEXCASE == 1
-	      &: Error in zpotrf 2: ",info
+        &: Error in zpotrf 2: ",info
 
 #endif
               success = .false.
@@ -238,12 +238,12 @@
 
           call MPI_Bcast(tmp1, nblk*(nblk+1)/2,      &
 #if REALCASE == 1
-	                 MPI_REAL_PRECISION,         &
+                   MPI_REAL_PRECISION,         &
 #endif
 #if COMPLEXCASE == 1
                          MPI_COMPLEX_PRECISION,      &
 #endif
-			 pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+       pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 
           call obj%timer%stop("mpi_communication")
 
@@ -258,12 +258,12 @@
           if (l_cols-l_colx+1>0) &
 #if REALCASE == 1
               call PRECISION_TRSM('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, CONST_1_0, tmp2, ubound(tmp2,dim=1), &
-	                          a(l_row1,l_colx), lda)
+                            a(l_row1,l_colx), lda)
 #endif
 
 #if COMPLEXCASE == 1
               call PRECISION_TRSM('L', 'U', 'C', 'N', nblk, l_cols-l_colx+1, CONST_COMPLEX_PAIR_1_0, &
-	                          tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+                            tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
 
 #endif
           call obj%timer%stop("blas")
@@ -284,22 +284,22 @@
           if (l_cols-l_colx+1>0) &
             call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1,    &
 #if REALCASE == 1
-	                   MPI_REAL_PRECISION,      &
+                     MPI_REAL_PRECISION,      &
 #endif
 #if COMPLEXCASE == 1
                            MPI_COMPLEX_PRECISION,   &
 #endif
-			   prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+         prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 
           call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
         enddo
         ! this has to be checked since it was changed substantially when doing type safe
         call elpa_transpose_vectors_&
-	&MATH_DATATYPE&
-	&_&
-	&PRECISION &
-	               (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
+  &MATH_DATATYPE&
+  &_&
+  &PRECISION &
+                 (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
                                       tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
                                       n, na, nblk, nblk)
 
@@ -314,12 +314,12 @@
 #if REALCASE == 1
           call PRECISION_GEMM('N', 'T', lre-lrs+1, lce-lcs+1, nblk, -CONST_1_0,  &
                               tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
-			      CONST_1_0, a(lrs,lcs), lda)
+            CONST_1_0, a(lrs,lcs), lda)
 #endif
 
 #if COMPLEXCASE == 1
           call PRECISION_GEMM('N', 'C', lre-lrs+1, lce-lcs+1, nblk, -CONST_COMPLEX_PAIR_1_0, &
-	                      tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
+                        tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
                               CONST_COMPLEX_PAIR_1_0, a(lrs,lcs), lda)
 #endif
           call obj%timer%stop("blas")
@@ -331,8 +331,8 @@
       deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_cholesky_&
-	&MATH_DATATYPE&
-	&: error when deallocating tmp1 "//errorMessage
+  &MATH_DATATYPE&
+  &: error when deallocating tmp1 "//errorMessage
         stop 1
       endif
 

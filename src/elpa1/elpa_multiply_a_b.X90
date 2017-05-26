@@ -136,16 +136,16 @@
       allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_mult_at_b_&
-	&MATH_DATATYPE&
-	&: error when allocating aux_mat "//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating aux_mat "//errorMessage
         stop 1
       endif
 
       allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"elpa_mult_at_b_&
-	&MATH_DATATYPE&
-	&: error when allocating aux_bc "//errorMessage
+  &MATH_DATATYPE&
+  &: error when allocating aux_bc "//errorMessage
         stop 1
       endif
 
@@ -280,22 +280,22 @@
 #if COMPLEXCASE == 1
                 call PRECISION_GEMM('C', 'N',          &
 #endif
-		                    nstor, lce-lcs+1, lre-lrs+1, &
+                        nstor, lce-lcs+1, lre-lrs+1, &
 #if REALCASE == 1
-				    CONST_1_0,      &
+            CONST_1_0,      &
 #endif
 #if COMPLEXCASE == 1
                                     CONST_COMPLEX_PAIR_1_0,  &
 #endif
-				    aux_mat(lrs,1), ubound(aux_mat,dim=1), &
+            aux_mat(lrs,1), ubound(aux_mat,dim=1), &
                                     b(lrs,lcs), ldb,                       &
 #if REALCASE == 1
-				    CONST_0_0,     &
+            CONST_0_0,     &
 #endif
 #if COMPLEXCASE == 1
                                     CONST_COMPLEX_PAIR_0_0,                &
 #endif
-				    tmp1, nstor)
+            tmp1, nstor)
                 call obj%timer%stop("blas")
               else
                 tmp1 = 0
@@ -307,12 +307,12 @@
               call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1),     &
 
 #if REALCASE == 1
-	                      MPI_REAL_PRECISION,                &
+                        MPI_REAL_PRECISION,                &
 #endif
 #if COMPLEXCASE == 1
-	                      MPI_COMPLEX_PRECISION,             &
+                        MPI_COMPLEX_PRECISION,             &
 #endif
-			      MPI_SUM, np, mpi_comm_rows, mpierr)
+            MPI_SUM, np, mpi_comm_rows, mpierr)
 
               call obj%timer%stop("mpi_communication")
               ! Put the result into C

@@ -58,10 +58,10 @@ function elpa_invert_trm_&
   &PRECISION&
   & (na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
         result(success) bind(C,name="elpa_invert_trm_&
-	&MATH_DATATYPE&
-	&_&
-	&PRECISION&
-	")
+  &MATH_DATATYPE&
+  &_&
+  &PRECISION&
+  &")
    use, intrinsic :: iso_c_binding
    use elpa1_auxiliary, only : elpa_invert_trm_&
    &MATH_DATATYPE&
