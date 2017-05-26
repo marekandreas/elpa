@@ -1,7 +1,8 @@
 #pragma once
 
-/*  \brief generic C method for elpa_set
+/*! \brief generic C method for elpa_set
  *
+ *  \details
  *  \param  handle  handle of the ELPA object for which a key/value pair should be set
  *  \param  name    the name of the key
  *  \param  value   integer/double value to be set for the key
@@ -17,8 +18,9 @@
         )(e, name, value, error)
 
 
-/*  \brief generic C method for elpa_get
+/*! \brief generic C method for elpa_get
  *
+ *  \details
  *  \param  handle  handle of the ELPA object for which a key/value pair should be queried
  *  \param  name    the name of the key
  *  \param  value   integer/double value to be queried
@@ -34,8 +36,9 @@
         )(e, name, value, error)
 
 
-/*  \brief generic C method for elpa_solve
+/*! \brief generic C method for elpa_solve
  *
+ *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
  *  \param  a       float/double float complex/double complex pointer to matrix a
  *  \param  ev      on return: float/double pointer to eigenvalues
@@ -59,6 +62,7 @@
 
 /*  \brief generic C method for elpa_cholesky
  *
+ *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
  *  \param  a       float/double float complex/double complex pointer to matrix a, for which
  *                  the cholesky factorizaion will be computed
@@ -80,8 +84,9 @@
         )(handle, a, error)
 
 
-/*  \brief generic C method for elpa_invert_triangular
+/*! \brief generic C method for elpa_invert_triangular
  *
+ *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
  *  \param  a       float/double float complex/double complex pointer to matrix a, which
  *                  should be inverted
@@ -103,8 +108,9 @@
         )(handle, a, error)
 
 
-/*  \brief generic C method for elpa_solve_tridi
+/*! \brief generic C method for elpa_solve_tridi
  *
+ *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
  *  \param  d       float/double pointer to the diagonal elements of a matrix a,
  *                  on output: eigenvalues in ascending order
