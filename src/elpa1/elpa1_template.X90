@@ -108,6 +108,7 @@ function elpa_solve_evp_&
    character(200)                                  :: errorMessage
    integer(kind=ik)                                :: na, nev, lda, ldq, nblk, matrixCols, &
                                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+   integer(kind=ik)                                :: eigenvalues_only
 
    call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
@@ -237,6 +238,12 @@ function elpa_solve_evp_&
       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
    call obj%timer%stop("solve")
    if (.not.(success)) return
+
+   call obj%get("eigenvalues_only",eigenvalues_only)
+   if (eigenvalues_only .eq. 1) then
+     q(obj%local_nrows,obj%local_ncols) = 0.0
+     return
+   endif
 
 #if COMPLEXCASE == 1
    q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)

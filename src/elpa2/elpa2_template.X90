@@ -107,6 +107,7 @@
                                                                    &MATH_DATATYPE
     integer(kind=ik)                         :: na, nev, lda, ldq, nblk, matrixCols, &
                                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+    integer(kind=ik)                         :: eigenvalues_only
 
     call obj%timer%start("elpa_solve_evp_&
     &MATH_DATATYPE&
@@ -370,6 +371,12 @@
        &MATH_DATATYPE&
        &_2stage: error when deallocating e "//errorMessage
        stop 1
+     endif
+
+     call obj%get("eigenvalues_only",eigenvalues_only)
+     if (eigenvalues_only .eq. 1) then
+       q(obj%local_nrows,obj%local_ncols) = 0.0
+       return
      endif
 
 #if COMPLEXCASE == 1
