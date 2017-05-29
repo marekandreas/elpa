@@ -594,7 +594,7 @@ module elpa_impl
       real(kind=c_double) :: ev(self%na)
 
       integer, optional   :: error
-      integer(kind=c_int) :: error_actual, solver
+      integer(kind=c_int) :: solver
       logical             :: success_l
 
 
@@ -676,7 +676,7 @@ module elpa_impl
       real(kind=c_float)  :: ev(self%na)
 
       integer, optional   :: error
-      integer(kind=c_int) :: error_actual, solver
+      integer(kind=c_int) :: solver
       logical             :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -765,7 +765,7 @@ module elpa_impl
       real(kind=c_double)            :: ev(self%na)
 
       integer, optional              :: error
-      integer(kind=c_int)            :: error_actual, solver
+      integer(kind=c_int)            :: solver
       logical                        :: success_l
 
       call self%get("solver", solver)
@@ -849,7 +849,7 @@ module elpa_impl
       real(kind=c_float)            :: ev(self%na)
 
       integer, optional             :: error
-      integer(kind=c_int)           :: error_actual, solver
+      integer(kind=c_int)           :: solver
       logical                       :: success_l
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
@@ -1188,7 +1188,6 @@ module elpa_impl
 #endif
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
       success_l = elpa_cholesky_real_double_impl (self, a)
       if (present(error)) then
@@ -1246,7 +1245,6 @@ module elpa_impl
 #endif
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
 #if WANT_SINGLE_PRECISION_REAL
       success_l = elpa_cholesky_real_single_impl (self, a)
@@ -1309,7 +1307,6 @@ module elpa_impl
 #endif
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
       success_l = elpa_cholesky_complex_double_impl (self, a)
       if (present(error)) then
@@ -1366,7 +1363,6 @@ module elpa_impl
 #endif
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
 #if WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_cholesky_complex_single_impl (self, a)
@@ -1428,7 +1424,6 @@ module elpa_impl
 #endif
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
       success_l = elpa_invert_trm_real_double_impl (self, a)
       if (present(error)) then
@@ -1485,7 +1480,6 @@ module elpa_impl
 #endif
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
 #if WANT_SINGLE_PRECISION_REAL
       success_l = elpa_invert_trm_real_single_impl (self, a)
@@ -1548,7 +1542,6 @@ module elpa_impl
 #endif
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
       success_l = elpa_invert_trm_complex_double_impl (self, a)
       if (present(error)) then
@@ -1605,7 +1598,6 @@ module elpa_impl
 #endif
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
 #if WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_invert_trm_complex_single_impl (self, a)
@@ -1671,7 +1663,6 @@ module elpa_impl
 
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
       success_l = elpa_solve_tridi_double_impl(self, d, e, q)
       if (present(error)) then
@@ -1734,7 +1725,6 @@ module elpa_impl
 
       integer, optional               :: error
       logical                         :: success_l
-      integer(kind=c_int)             :: error_actual
 
 #ifdef WANT_SINGLE_PRECISION_REAL
       success_l = elpa_solve_tridi_single_impl(self, d, e, q)
