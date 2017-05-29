@@ -52,12 +52,12 @@
       use precision
       implicit none
 
-      integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)      :: a(lda,*)
+      real(kind=REAL_DATATYPE)         :: a(lda,*)
 #else
-      real(kind=REAL_DATATYPE)      :: a(lda,matrixCols)
+      real(kind=REAL_DATATYPE)         :: a(lda,matrixCols)
 #endif
 #endif
 #if COMPLEXCASE == 1
@@ -67,12 +67,12 @@
       complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
 #endif
 #endif
-      integer(kind=ik)              :: nev
-      logical, intent(in)           :: wantDebug
-      logical                       :: success
-      integer(kind=ik)                            :: successInternal
+      integer(kind=ik)                 :: nev
+      logical, intent(in)              :: wantDebug
+      logical                          :: success
+      integer(kind=ik)                 :: successInternal, debug
 
-      class(elpa_t), pointer       :: e
+      class(elpa_t), pointer           :: e
 
       call timer%start("elpa_cholesky_&
       &MATH_DATATYPE&
@@ -105,6 +105,9 @@
         return
       endif
 
+      if (wantDebug) then
+        call e%set("debug",1)
+      endif
       call e%cholesky(a(1:lda,1:matrixCols), successInternal)
 
       if (successInternal .ne. ELPA_OK) then
