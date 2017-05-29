@@ -195,8 +195,9 @@ module elpa_impl
     function elpa_setup(self) result(error)
       use elpa1_impl, only : elpa_get_communicators_impl
       class(elpa_impl_t), intent(inout) :: self
-      integer :: error, error2
-      integer :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, mpierr, process_row, process_col, timings
+      integer                           :: error
+      integer                           :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, &
+                                           mpierr, process_row, process_col, timings
 
 #ifdef WITH_MPI
       error = ELPA_ERROR
@@ -1249,10 +1250,6 @@ module elpa_impl
 
 #if WANT_SINGLE_PRECISION_REAL
       success_l = elpa_cholesky_real_single_impl (self, a)
-#else
-      print *,"This installation of the ELPA library has not been build with single-precision support"
-      error = ELPA_ERROR
-#endif
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1262,6 +1259,10 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      error = ELPA_ERROR
+#endif
     end subroutine
 
 
@@ -1369,10 +1370,6 @@ module elpa_impl
 
 #if WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_cholesky_complex_single_impl (self, a)
-#else
-      print *,"This installation of the ELPA library has not been build with single-precision support"
-      error = ELPA_ERROR
-#endif
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1382,6 +1379,10 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      error = ELPA_ERROR
+#endif
     end subroutine
 
 
@@ -1488,10 +1489,6 @@ module elpa_impl
 
 #if WANT_SINGLE_PRECISION_REAL
       success_l = elpa_invert_trm_real_single_impl (self, a)
-#else
-      print *,"This installation of the ELPA library has not been build with single-precision support"
-      error = ELPA_ERROR
-#endif
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1501,6 +1498,10 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      error = ELPA_ERROR
+#endif
     end subroutine
 
 
@@ -1608,10 +1609,6 @@ module elpa_impl
 
 #if WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_invert_trm_complex_single_impl (self, a)
-#else
-      print *,"This installation of the ELPA library has not been build with single-precision support"
-      error = ELPA_ERROR
-#endif
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1621,6 +1618,10 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      error = ELPA_ERROR
+#endif
     end subroutine
 
 
@@ -1737,10 +1738,6 @@ module elpa_impl
 
 #ifdef WANT_SINGLE_PRECISION_REAL
       success_l = elpa_solve_tridi_single_impl(self, d, e, q)
-#else
-      print *,"This installation of the ELPA library has not been build with single-precision support"
-      error = ELPA_ERROR
-#endif
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1750,6 +1747,10 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
       endif
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      error = ELPA_ERROR
+#endif
     end subroutine
 
 
