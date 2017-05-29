@@ -58,11 +58,6 @@
 
       use precision
       use elpa
-#ifdef HAVE_DETAILED_TIMINGS
-      use timings
-#else
-       use timings_dummy
-#endif
       implicit none
       integer(kind=ik)            :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE)    :: d(na), e(na)
@@ -77,9 +72,9 @@
       integer(kind=iK)            :: successInternal
       class(elpa_t), pointer      :: obj
 
-      call timer%start("elpa_solve_tridi_&
-      &PRECISION&
-      &_legacy_interface")
+      !call timer%start("elpa_solve_tridi_&
+      !&PRECISION&
+      !&_legacy_interface")
 
       success = .false.
 
@@ -122,9 +117,9 @@
 
       call elpa_uninit()
 
-     call timer%stop("elpa_solve_tridi_&
-     &PRECISION&
-     &_legacy_interface")
+     !call timer%stop("elpa_solve_tridi_&
+     !&PRECISION&
+     !&_legacy_interface")
 
 #undef REALCASE
 #undef COMPLEXCASE
