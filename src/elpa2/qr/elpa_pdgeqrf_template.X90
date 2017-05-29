@@ -338,47 +338,47 @@
 
           !print *,'updating trailing matrix'
 
-       	  if (updatemode .eq. ichar('I')) then
-       	    print *,'pdgeqrf_2dcomm: incremental update not yet implemented! rev=1'
-       	  else if (updatemode .eq. ichar('F')) then
-       	    ! full update no merging
-       	    call qr_pdlarfb_1dcomm_&
+           if (updatemode .eq. ichar('I')) then
+             print *,'pdgeqrf_2dcomm: incremental update not yet implemented! rev=1'
+           else if (updatemode .eq. ichar('F')) then
+             ! full update no merging
+             call qr_pdlarfb_1dcomm_&
                 &PRECISION &
                 (m,mb,lcols,update_lcols,a(1,offset),lda,v(1,update_voffset),ldv, &
-         						work(temptau_offset+update_voffset-1),                          &
+                     work(temptau_offset+update_voffset-1),                          &
                                                         t(update_voffset,update_voffset),ldt, &
-        						rowidx,idx,1,mpicomm_rows,work(work_offset),lwork)
-       	  else
+                    rowidx,idx,1,mpicomm_rows,work(work_offset),lwork)
+           else
             ! full update + merging default
-       	    call qr_tmerge_pdlarfb_1dcomm_&
+             call qr_tmerge_pdlarfb_1dcomm_&
                 &PRECISION &
                 (m,mb,lcols,n-(update_voffset+update_lcols-1),update_lcols, &
                                                               v(1,update_voffset),ldv, &
-        						      t(update_voffset,update_voffset),ldt, &
-        						      a(1,offset),lda,rowidx,1,updatemode,mpicomm_rows, &
+                          t(update_voffset,update_voffset),ldt, &
+                          a(1,offset),lda,rowidx,1,updatemode,mpicomm_rows, &
                                                               work(work_offset),lwork)
-       	  end if
+           end if
         else
-       	  if (updatemode .eq. ichar('I')) then
-       	    !print *,'sole merging of (incremental) T matrix', mpirank_cols,  &
+           if (updatemode .eq. ichar('I')) then
+             !print *,'sole merging of (incremental) T matrix', mpirank_cols,  &
             !                            n-(update_voffset+incremental_update_size-1)
-       	    call qr_tmerge_pdlarfb_1dcomm_&
+             call qr_tmerge_pdlarfb_1dcomm_&
                 &PRECISION &
                 (m,mb,0,n-(update_voffset+incremental_update_size-1),   &
                                                               incremental_update_size,v(1,update_voffset),ldv, &
-        						      t(update_voffset,update_voffset),ldt, &
-        						      a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
+                          t(update_voffset,update_voffset),ldt, &
+                          a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
 
-       	    ! reset for upcoming incremental updates
-       	    incremental_update_size = 0
+             ! reset for upcoming incremental updates
+             incremental_update_size = 0
           else if (updatemode .eq. ichar('M')) then
-       	    ! final merge
+             ! final merge
             call qr_tmerge_pdlarfb_1dcomm_&
                 &PRECISION &
                 (m,mb,0,n-(update_voffset+update_lcols-1),update_lcols, &
                                                               v(1,update_voffset),ldv, &
-        						      t(update_voffset,update_voffset),ldt, &
-        						      a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
+                          t(update_voffset,update_voffset),ldt, &
+                          a,lda,rowidx,1,updatemode,mpicomm_rows,work(work_offset),lwork)
           else
             ! full updatemode - nothing to update
           end if
@@ -895,7 +895,7 @@
       end if
 
       call local_size_offset_1d(n,nb,idx,idx-1,rev,mpirank,mpiprocs, &
-          						  local_size,baseoffset,local_offset)
+                        local_size,baseoffset,local_offset)
 
       local_offset = local_offset * incx
 
@@ -1159,18 +1159,18 @@
       ! check for border cases (only a 2x2 matrix left)
       if (idx .le. 1) then
 #ifdef DOUBLE_PRECISION_REAL
-      	tau(1:2) = 0.0_rk8
-       	t(1:2,1:2) = 0.0_rk8
+        tau(1:2) = 0.0_rk8
+         t(1:2,1:2) = 0.0_rk8
 #else
-      	tau(1:2) = 0.0_rk4
-       	t(1:2,1:2) = 0.0_rk4
+        tau(1:2) = 0.0_rk4
+         t(1:2,1:2) = 0.0_rk4
 #endif
 
       call obj%timer%stop("qr_pdlarfg2_1dcomm_&
           &PRECISION&
           &")
 
-       	return
+         return
       end if
 
       call qr_pdlarfg2_1dcomm_seed_&
@@ -1933,8 +1933,8 @@
 
       ! collect D part
       call local_size_offset_1d(m,mb,baseidx-k,baseidx-k,1, &
-          						  mpirank,mpiprocs, &
-          						  localsize,baseoffset,localoffset)
+                        mpirank,mpiprocs, &
+                        localsize,baseoffset,localoffset)
 
       !print *,'localsize',localsize,localoffset
 #ifdef DOUBLE_PRECISION_REAL
@@ -2021,7 +2021,7 @@
 
       ! local variables
       integer(kind=ik)   :: i,j,l
-      real(kind=C_DATATYPE_KIND)      :: sum_squares,diagonal_square,relative_error,epsd,diagonal_root
+      real(kind=C_DATATYPE_KIND)      :: sum_squares,diagonal_square,epsd,diagonal_root
       real(kind=C_DATATYPE_KIND)      :: dreverse_matrix_work(1)
 
       ! external functions
@@ -2148,9 +2148,6 @@
           sum_squares = sdot(i-1,work(1,i),1,work(1,i),1)
         end if
 #endif
-        !relative_error = sum_squares / diagonal_square
-        !print *,'error ',i,sum_squares,diagonal_square,relative_error
-
         if (sum_squares .ge. (epsd * diagonal_square)) then
           possiblerank = max(i-1,1)
         call obj%timer%stop("qr_pdlarfgk_1dcomm_check_improved_&
@@ -2260,9 +2257,9 @@
 
       ! transpose matrix
       do icol=1,k
-      	do isqr=icol+1,k
+        do isqr=icol+1,k
           work(icol,isqr) = work(isqr,icol)
-      	end do
+        end do
       end do
 
       ! work contains now the full inner product of the global (sub-)matrix
@@ -2406,7 +2403,7 @@
       call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
       lidx = baseidx-sidx+1
       call local_size_offset_1d(n,nb,baseidx,lidx-1,rev,mpirank,mpiprocs, &
-          						  local_size,baseoffset,local_offset)
+                        local_size,baseoffset,local_offset)
 
       local_offset = local_offset * incx
 
