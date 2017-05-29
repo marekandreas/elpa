@@ -59,6 +59,7 @@ Using *ELPA* with the latest API is done in the following steps
        of the ELPA library has been build with GPU support enables
      - "timings" can be either 0 or 1, switches time measurements off or on
      - "debug" can be either 0 or 1, switches detailed debug messages off/on
+     - "eigenvalues_only" can be either 0 or 1. In case of 1 only compute the eigenvalues
 
 - call ELPA-type function solve or others
 
