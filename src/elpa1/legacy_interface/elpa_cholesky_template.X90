@@ -70,7 +70,7 @@
       integer(kind=ik)                 :: nev
       logical, intent(in)              :: wantDebug
       logical                          :: success
-      integer(kind=ik)                 :: successInternal, debug
+      integer(kind=ik)                 :: successInternal
 
       class(elpa_t), pointer           :: e
 

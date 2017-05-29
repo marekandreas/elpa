@@ -64,15 +64,15 @@
        use timings_dummy
 #endif
       implicit none
-      integer(kind=ik)         :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE) :: d(na), e(na)
+      integer(kind=ik)            :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=REAL_DATATYPE)    :: d(na), e(na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE) :: q(ldq,*)
+      real(kind=REAL_DATATYPE)    :: q(ldq,*)
 #else
-      real(kind=REAL_DATATYPE) :: q(ldq,matrixCols)
+      real(kind=REAL_DATATYPE)    :: q(ldq,matrixCols)
 #endif
 
-      logical, intent(in)      :: wantDebug
+      logical, intent(in)         :: wantDebug
       logical :: success
       integer(kind=iK)            :: successInternal
       class(elpa_t), pointer      :: obj
@@ -105,6 +105,9 @@
         return
       endif
 
+      if (wantDebug) then
+        call obj%set("debug",1)
+      endif
       call obj%solve_tridi(d(1:na), e(1:na), q(1:ldq,1:matrixCols), successInternal)
 
       if (successInternal .ne. ELPA_OK) then
