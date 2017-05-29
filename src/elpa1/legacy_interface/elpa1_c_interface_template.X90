@@ -47,7 +47,7 @@
 #endif
 
   function solve_elpa1_evp_&
-  &MATH_DATATTYPE&
+  &MATH_DATATYPE&
   &_wrapper_&
   &PRECISION&
   & (na, nev, a, lda, ev, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
