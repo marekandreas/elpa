@@ -70,7 +70,7 @@ function elpa_solve_evp_&
                                                       mpi_comm_cols, mpi_comm_all
    real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
 
-   integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol, mpierr
+   integer(kind=c_int)                             :: my_prow, my_pcol, mpierr
 
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
