@@ -976,8 +976,9 @@ module elpa_api
     !c> int elpa_init(int api_version);
     function elpa_init(api_version) result(error) bind(C, name="elpa_init")
       use elpa_utilities, only : error_unit
-      integer, intent(in), value :: api_version
-      integer             :: error
+      use iso_c_binding
+      integer(kind=c_int), intent(in), value :: api_version
+      integer(kind=c_int)                    :: error
 
       if (earliest_api_version <= api_version .and. api_version <= current_api_version) then
         initDone = .true.
@@ -1070,14 +1071,12 @@ module elpa_api
       use elpa_generated_fortran_interfaces
       use elpa_utilities, only : error_unit
       implicit none
-      character(kind=c_char, len=*), intent(in) :: name
+      character(kind=c_char, len=*), intent(in)         :: name
       character(kind=c_char, len=*), intent(in), target :: string
-      integer(kind=c_int), intent(out), optional :: error
-      integer(kind=c_int) :: actual_error
+      integer(kind=c_int), intent(out), optional        :: error
+      integer(kind=c_int)                               :: actual_error
 
-      integer(kind=c_int) :: value
-      integer(kind=c_int)   :: i
-      type(c_ptr) :: repr
+      integer(kind=c_int)                               :: value
 
       actual_error = elpa_int_string_to_value_c(name // C_NULL_CHAR, string // C_NULL_CHAR, value)
 
