@@ -183,7 +183,7 @@ program test_interface
 
    call e%set("gpu", 1, success)
    assert_elpa_ok(success)
- 
+
    call e%set("complex_kernel", ELPA_2STAGE_COMPLEX_GPU, success)
    assert_elpa_ok(success)
 #ifdef HAVE_DETAILED_TIMINGS
@@ -192,7 +192,7 @@ program test_interface
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%start("solve")
 #endif
-   call e%solve(a, ev, z, success)
+   call e%eigenvectors(a, ev, z, success)
    assert_elpa_ok(success)
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("solve")

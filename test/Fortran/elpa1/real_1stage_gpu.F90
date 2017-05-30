@@ -191,7 +191,7 @@ program test_interface
 #endif
 
 
-   call e%solve(a, ev, z, success)
+   call e%eigenvectors(a, ev, z, success)
    assert_elpa_ok(success)
 #ifdef HAVE_DETAILED_TIMINGS
    call timer%stop("solve")
