@@ -496,7 +496,7 @@
 
           n_iter = 0
 
-          ! first calculate A*v part of (A + VU**T + UV**T)*v   
+          ! first calculate A*v part of (A + VU**T + UV**T)*v 
           uc_p(1:l_cols,my_thread) = 0.
           ur_p(1:l_rows,my_thread) = 0.
 #endif /* WITH_OPENMP */
@@ -574,45 +574,45 @@
 !                 endif
               call obj%timer%stop("cublas")
 
-            else 
-              !perform multiplication by stripes - it is faster than by blocks, since we call cublas with 
+            else
+              !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
               !larger matrices. In general, however, this algorithm is very simmilar to the one with CPU
               do i=0,(istep-2)/tile_size
                   l_col_beg = i*l_cols_per_tile+1
                   l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
                   if(l_col_end<l_col_beg) cycle
-                                          
+
                   l_row_beg = 1
                   l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
-                  
+
                   a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
                           size_of_datatype
-                              
+
                   call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                               l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                               ONE, a_dev + a_offset, lda,  &
                               v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
                               ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
               enddo
-              
+
               do i=0,(istep-2)/tile_size
                   l_col_beg = i*l_cols_per_tile+1
                   l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
                   if(l_col_end<l_col_beg) cycle
-                  
+
                   l_row_beg = 1
                   l_row_end = min(l_rows,i*l_rows_per_tile)
 
                   a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
                           size_of_datatype
-                          
-                  call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, & 
+
+                  call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                               ONE, a_dev + a_offset, lda, &
                               v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                               ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
-              enddo        
-            end if !multiplication as one block / per stripes 
-                
+              enddo
+            end if !multiplication as one block / per stripes
+
             successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: u_col_dev 1", successCUDA)
 
@@ -637,7 +637,7 @@
           enddo
 #endif /* WITH_OPENMP */
 
-          ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v          
+          ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
           if (n_stored_vecs > 0) then
             call obj%timer%start("blas")
 #if REALCASE == 1
@@ -778,7 +778,7 @@
             if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) &
               cycle
 
-            
+
             if (useGPU) then
               if(.not. mat_vec_as_one_block) then
                 ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
@@ -793,7 +793,7 @@
                                           max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *            &
                                           size_of_datatype , lda)
                 call obj%timer%stop("cublas")
-              endif 
+              endif
             else !useGPU
               call obj%timer%start("blas")
               call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
@@ -815,7 +815,7 @@
                                         uv_stored_cols_dev, max_local_cols,  &
                                         ONE, a_dev, lda)
               call obj%timer%stop("cublas")
-            endif 
+            endif
           endif
 
           n_stored_vecs = 0
