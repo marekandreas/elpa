@@ -89,6 +89,7 @@ typedef struct {
         char *env_force;
         int once;
         int readonly;
+        int private;
 } elpa_index_entry_t;
 
 
@@ -188,6 +189,30 @@ int elpa_index_set_int_value(elpa_index_t index, char *name, int value, int forc
  !f> end interface
  */
 int elpa_index_int_value_is_set(elpa_index_t index, char *name);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_int_is_private_c(name) result(success) bind(C, name="elpa_index_int_is_private")
+ !f>     import c_int, c_char
+ !f>     character(kind=c_char), intent(in)    :: name(*)
+ !f>     integer(kind=c_int)                   :: success
+ !f>   end function
+ !f> end interface
+ */
+int elpa_index_int_is_private(char *name);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_double_is_private_c(name) result(success) bind(C, name="elpa_index_double_is_private")
+ !f>     import c_int, c_char
+ !f>     character(kind=c_char), intent(in)    :: name(*)
+ !f>     integer(kind=c_int)                   :: success
+ !f>   end function
+ !f> end interface
+ */
+int elpa_index_double_is_private(char *name);
 
 
 /*

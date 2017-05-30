@@ -90,7 +90,7 @@ subroutine elpa_reduce_add_vectors_&
    integer(kind=ik)                                   :: myps, mypt, nps, npt
    integer(kind=ik)                                   :: n, lc, k, i, ips, ipt, ns, nl, mpierr
    integer(kind=ik)                                   :: lcm_s_t, nblks_tot
-   integer(kind=ik)                                   :: auxstride, tylerk, error_unit
+   integer(kind=ik)                                   :: auxstride, tylerk
 
    call obj%timer%start("elpa_reduce_add_vectors_&
    &MATH_DATATYPE&

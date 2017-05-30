@@ -73,7 +73,7 @@ static int bw_is_valid(elpa_index_t index, int n, int new_value);
 static int elpa_double_string_to_value(char *name, char *string, double *value);
 static int elpa_double_value_to_string(char *name, double value, const char **string);
 
-#define BASE_ENTRY(option_name, option_description, once_value, readonly_value) \
+#define BASE_ENTRY(option_name, option_description, once_value, readonly_value, private_value) \
                 .base = { \
                         .name = option_name, \
                         .description = option_description, \
@@ -81,16 +81,17 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
                         .readonly = readonly_value, \
                         .env_default = "ELPA_DEFAULT_" option_name, \
                         .env_force = "ELPA_FORCE_" option_name, \
+                        .private = private_value, \
                 }
 
 #define INT_PARAMETER_ENTRY(option_name, option_description) \
         { \
-                BASE_ENTRY(option_name, option_description, 1, 0), \
+                BASE_ENTRY(option_name, option_description, 1, 0, 0), \
         }
 
 #define BOOL_ENTRY(option_name, option_description, default) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 0, 0, 0), \
                 .default_value = default, \
                 .cardinality = cardinality_bool, \
                 .enumerate = enumerate_identity, \
@@ -99,7 +100,7 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
 
 #define INT_ENTRY(option_name, option_description, default, card_func, enumerate_func, valid_func, to_string_func) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 0, 0, 0), \
                 .default_value = default, \
                 .cardinality = card_func, \
                 .enumerate = enumerate_func, \
@@ -109,7 +110,12 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
 
 #define INT_ANY_ENTRY(option_name, option_description) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 0, 0, 0), \
+        }
+
+#define PRIVATE_INT_ENTRY(option_name, option_description) \
+        { \
+                BASE_ENTRY(option_name, option_description, 0, 0, 1), \
         }
 
 static const elpa_index_int_entry_t int_entries[] = {
@@ -144,7 +150,7 @@ static const elpa_index_int_entry_t int_entries[] = {
 
 #define READONLY_DOUBLE_ENTRY(option_name, option_description) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 1) \
+                BASE_ENTRY(option_name, option_description, 0, 1, 0) \
         }
 
 static const elpa_index_double_entry_t double_entries[] = {
@@ -322,7 +328,36 @@ int elpa_index_value_is_set(elpa_index_t index, char *name) {
 
         FOR_ALL_TYPES(RET_IF_SET)
 
-        printf("ERROR: Could not find entry '%s'\n", name);
+        fprintf(stderr, "ELPA Error: Could not find entry '%s'\n", name);
+        return res;
+}
+
+#define IMPLEMENT_IS_PRIVATE_FUNCTION(TYPE, ...) \
+        int elpa_index_##TYPE##_is_private(char *name) { \
+                if (sizeof(TYPE##_entries) == 0) { \
+                        return ELPA_ERROR_ENTRY_NOT_FOUND; \
+                } \
+                int n = find_##TYPE##_entry(name); \
+                if (n >= 0) { \
+                        return TYPE##_entries[n].base.private; \
+                } else { \
+                        return ELPA_ERROR_ENTRY_NOT_FOUND; \
+                } \
+        }
+FOR_ALL_TYPES(IMPLEMENT_IS_PRIVATE_FUNCTION)
+
+
+int elpa_index_is_private(char *name) {
+        int res = ELPA_ERROR;
+
+#define RET_IF_PRIVATE(TYPE, ...) \
+        res = elpa_index_##TYPE##_is_private(name); \
+        if (res >= 0) { \
+                return res; \
+        }
+        FOR_ALL_TYPES(RET_IF_PRIVATE);
+
+        fprintf(stderr, "ELPA Error: Could not find entry '%s'\n", name);
         return res;
 }
 
