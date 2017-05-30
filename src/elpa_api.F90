@@ -98,11 +98,17 @@ module elpa_api
       procedure(elpa_print_times_i), deferred, public :: print_times
 
       ! Actual math routines
-      generic, public :: eigenvectors => &                          !< method solve for solving the full eigenvalue problem
-          elpa_eigenvectors_d, &                                           !< for symmetric real valued / hermitian complex valued
-          elpa_eigenvectors_f, &                                           !< matrices
+      generic, public :: eigenvectors => &                          !< method eigenvectors for solving the full eigenvalue problem
+          elpa_eigenvectors_d, &                                    !< the eigenvalues and (parts of) the eigenvectors are computed
+          elpa_eigenvectors_f, &                                    !< for symmetric real valued / hermitian complex valued matrices
           elpa_eigenvectors_dc, &
           elpa_eigenvectors_fc
+
+      generic, public :: eigenvalues => &                           !< method eigenvalues for solving the eigenvalue problem
+          elpa_eigenvalues_d, &                                     !< only the eigenvalues are computed
+          elpa_eigenvalues_f, &                                     !< for symmetric real valued / hermitian complex valued matrices
+          elpa_eigenvalues_dc, &
+          elpa_eigenvalues_fc
 
       generic, public :: hermitian_multiply => &                    !< method for a "hermitian" multiplication of matrices a and b
           elpa_hermitian_multiply_d, &                              !< for real valued matrices:   a**T * b
@@ -139,6 +145,11 @@ module elpa_api
       procedure(elpa_eigenvectors_f_i),    deferred, private :: elpa_eigenvectors_f
       procedure(elpa_eigenvectors_dc_i), deferred, private :: elpa_eigenvectors_dc
       procedure(elpa_eigenvectors_fc_i), deferred, private :: elpa_eigenvectors_fc
+
+      procedure(elpa_eigenvalues_d_i),    deferred, private :: elpa_eigenvalues_d
+      procedure(elpa_eigenvalues_f_i),    deferred, private :: elpa_eigenvalues_f
+      procedure(elpa_eigenvalues_dc_i), deferred, private :: elpa_eigenvalues_dc
+      procedure(elpa_eigenvalues_fc_i), deferred, private :: elpa_eigenvalues_fc
 
       procedure(elpa_hermitian_multiply_d_i),  deferred, private :: elpa_hermitian_multiply_d
       procedure(elpa_hermitian_multiply_f_i),  deferred, private :: elpa_hermitian_multiply_f
@@ -478,6 +489,138 @@ module elpa_api
       complex(kind=c_float_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
 #else
       complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=c_float)            :: ev(self%na)
+
+      integer, optional             :: error
+    end subroutine
+  end interface
+
+
+
+
+  !> \brief abstract definition of interface to solve double real eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           double real matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_eigenvalues_d_i(self, a, ev, error)
+      use iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)       :: self
+#ifdef USE_ASSUMED_SIZE
+      real(kind=c_double) :: a(self%local_nrows, *)
+#else
+      real(kind=c_double) :: a(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=c_double) :: ev(self%na)
+
+      integer, optional   :: error
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of interface to solve single real eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           single real matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_eigenvalues_f_i(self, a, ev, error)
+      use iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)       :: self
+#ifdef USE_ASSUMED_SIZE
+      real(kind=c_float)  :: a(self%local_nrows, *)
+#else
+      real(kind=c_float)  :: a(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=c_float)  :: ev(self%na)
+
+      integer, optional   :: error
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of interface to solve double complex eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           double complex matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_eigenvalues_dc_i(self, a, ev, error)
+      use iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)                  :: self
+
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=c_double_complex) :: a(self%local_nrows, *)
+#else
+      complex(kind=c_double_complex) :: a(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=c_double)            :: ev(self%na)
+
+      integer, optional              :: error
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of interface to solve single complex eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+  !> \param   a           single complex matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_eigenvalues_fc_i(self, a, ev, error)
+      use iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)                 :: self
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=c_float_complex) :: a(self%local_nrows, *)
+#else
+      complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)            :: ev(self%na)
 

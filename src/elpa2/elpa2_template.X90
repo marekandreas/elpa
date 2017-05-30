@@ -77,10 +77,11 @@
    integer(kind=c_int)                       :: kernel
 
 #ifdef USE_ASSUMED_SIZE
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(obj%local_nrows,*), q(obj%local_nrows,*)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(obj%local_nrows,*)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,*)
 #else
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(obj%local_nrows,obj%local_ncols), &
-                                                         q(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
 #endif
    real(kind=C_DATATYPE_KIND), intent(inout) :: ev(obj%na)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable   :: hh_trans(:,:)
@@ -92,10 +93,14 @@
 #if COMPLEXCASE == 1
    real(kind=C_DATATYPE_KIND), allocatable   :: q_real(:,:)
 #endif
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable, target  :: q_dummy(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer              :: q_actual(:,:)
+
+
    integer(kind=c_intptr_t)                  :: tmat_dev, q_dev, a_dev
 
    integer(kind=c_int)                       :: i
-   logical                                   :: success, successCUDA
+   logical                                   :: success, successCUDA, solve_eigenvectors
    logical                                   :: wantDebug
    integer(kind=c_int)                       :: istat, gpu, debug, qr
    character(200)                            :: errorMessage
@@ -114,6 +119,12 @@
     &_2stage_&
     &PRECISION&
     &")
+
+    if (present(q)) then
+      solve_eigenvectors = .true.
+    else
+      solve_eigenvectors = .false.
+    endif
 
     na         = obj%na
     nev        = obj%nev
@@ -252,6 +263,14 @@
     endif
     call obj%timer%start("bandred")
 
+
+    if (solve_eigenvectors) then
+      q_actual => q(1:obj%local_nrows,1:obj%local_ncols)
+    else
+     allocate(q_dummy(1:obj%local_nrows,1:obj%local_ncols))
+     q_actual => q_dummy(1:obj%local_nrows,1:obj%local_ncols)
+    endif
+
     if (obj%is_set("bandwidth") == 1) then
       call obj%get("bandwidth",nbw)
       if ((nbw == 0) .or. (mod(nbw, nblk) .ne. 0)) then
@@ -356,7 +375,7 @@
      &PRECISION &
      (obj, na, nev, ev, e, &
 #if REALCASE == 1
-     q, ldq,   &
+     q_actual, ldq,   &
 #endif
 #if COMPLEXCASE == 1
      q_real, ubound(q_real,dim=1), &
@@ -375,81 +394,96 @@
 
      call obj%get("eigenvalues_only",eigenvalues_only)
      if (eigenvalues_only .eq. 1) then
-       q(obj%local_nrows,obj%local_ncols) = 0.0
        return
      endif
 
+     if (solve_eigenvectors) then
 #if COMPLEXCASE == 1
-     q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
+       ! q must be given thats why from here on we can use q and not q_actual
 
-     deallocate(q_real, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"solve_evp_&
-       &MATH_DATATYPE&
-       &_2stage: error when deallocating q_real"//errorMessage
-       stop 1
-     endif
-#endif
-     ! Backtransform stage 1
-     call obj%timer%start("trans_ev_to_band")
+       q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 
-     call trans_ev_tridi_to_band_&
-     &MATH_DATATYPE&
-     &_&
-     &PRECISION &
-     (obj, na, nev, nblk, nbw, q, &
-     q_dev, &
-     ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
-     success=success, kernel=kernel)
-     call obj%timer%stop("trans_ev_to_band")
-
-     if (.not.(success)) return
-
-     ! We can now deallocate the stored householder vectors
-     deallocate(hh_trans, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *, "solve_evp_&
-       &MATH_DATATYPE&
-       &_2stage_&
-       &PRECISION " // ": error when deallocating hh_trans "//errorMessage
-       stop 1
-     endif
-
-     call obj%timer%start("trans_ev_to_full")
-     if(obj%is_set("bandwidth") .ne. 1) then
-       if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
-         ! copy to device if we want to continue on GPU
-         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
-
-         successCUDA = cuda_memcpy(q_dev, loc(q), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+       deallocate(q_real, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"solve_evp_&
+         &MATH_DATATYPE&
+         &_2stage: error when deallocating q_real"//errorMessage
+         stop 1
        endif
+#endif
+       ! Backtransform stage 1
+       call obj%timer%start("trans_ev_to_band")
 
-       ! Backtransform stage 2
-
-       call trans_ev_band_to_full_&
+       call trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &_&
        &PRECISION &
-       (obj, na, nev, nblk, nbw, a, &
-        a_dev, lda, tmat, tmat_dev,  q,  &
-        q_dev, &
-        ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU &
+       (obj, na, nev, nblk, nbw, q, &
+       q_dev, &
+       ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
+       success=success, kernel=kernel)
+       call obj%timer%stop("trans_ev_to_band")
+
+       if (.not.(success)) return
+
+       ! We can now deallocate the stored householder vectors
+       deallocate(hh_trans, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *, "solve_evp_&
+         &MATH_DATATYPE&
+         &_2stage_&
+         &PRECISION " // ": error when deallocating hh_trans "//errorMessage
+         stop 1
+       endif
+
+       call obj%timer%start("trans_ev_to_full")
+       if(obj%is_set("bandwidth") .ne. 1) then
+         if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
+           ! copy to device if we want to continue on GPU
+           successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
+
+           successCUDA = cuda_memcpy(q_dev, c_loc(q), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+         endif
+
+         ! Backtransform stage 2
+
+         call trans_ev_band_to_full_&
+         &MATH_DATATYPE&
+         &_&
+         &PRECISION &
+         (obj, na, nev, nblk, nbw, a, &
+         a_dev, lda, tmat, tmat_dev,  q,  &
+         q_dev, &
+         ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU &
 #if REALCASE == 1
-        , useQRActual  &
+         , useQRActual  &
 #endif
-        )
+         )
 
 
-       deallocate(tmat, stat=istat, errmsg=errorMessage)
+        deallocate(tmat, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"solve_evp_&
+          &MATH_DATATYPE&
+          &_2stage_&
+          &PRECISION " // ": error when deallocating tmat"//errorMessage
+          stop 1
+        endif
+        endif
+       call obj%timer%stop("trans_ev_to_full")
+     endif ! solve_eigenvectors
+
+     if (.not.(solve_eigenvectors)) then
+       deallocate(q_dummy, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"solve_evp_&
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION " // ": error when deallocating tmat"//errorMessage
+         &MATH_DATATYPE&
+         &_1stage_&
+         &PRECISION&
+         &" // ": error when deallocating q_dummy "//errorMessage
          stop 1
        endif
      endif
-     call obj%timer%stop("trans_ev_to_full")
 
      call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&

@@ -87,6 +87,12 @@ module elpa_impl
      procedure, private :: elpa_eigenvectors_dc
      procedure, private :: elpa_eigenvectors_fc
 
+     procedure, private :: elpa_eigenvalues_d                   !< private methods to implement the solve step for real/complex
+                                                                !< double/single matrices; only the eigenvalues are computed
+     procedure, private :: elpa_eigenvalues_f
+     procedure, private :: elpa_eigenvalues_dc
+     procedure, private :: elpa_eigenvalues_fc
+
      procedure, private :: elpa_hermitian_multiply_d            !< private methods to implement a "hermitian" multiplication of matrices a and b
      procedure, private :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
      procedure, private :: elpa_hermitian_multiply_dc           !< for complex valued matrices:   a**H * b
@@ -788,6 +794,331 @@ module elpa_impl
 
       call elpa_eigenvectors_fc(self, a, ev, q, error)
     end subroutine
+
+
+
+
+    !>  \brief elpa_eigenvalues_d: class method to solve the eigenvalue problem for double real matrices
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
+    subroutine elpa_eigenvalues_d(self, a, ev, error)
+      use elpa2_impl
+      use elpa1_impl
+      use elpa_utilities, only : error_unit
+      use iso_c_binding
+      class(elpa_impl_t)  :: self
+
+#ifdef USE_ASSUMED_SIZE
+      real(kind=c_double) :: a(self%local_nrows, *)
+#else
+      real(kind=c_double) :: a(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=c_double) :: ev(self%na)
+
+      integer, optional   :: error
+      integer(kind=c_int) :: solver
+      logical             :: success_l
+
+
+      call self%get("solver", solver)
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
+        success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev)
+
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev)
+      else
+        print *,"unknown solver"
+        stop
+      endif
+
+      if (present(error)) then
+        if (success_l) then
+          error = ELPA_OK
+        else
+          error = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+    end subroutine
+
+    !c> void elpa_eigenvalues_d(elpa_t handle, double *a, double *ev, int *error);
+    subroutine elpa_eigenvalues_d_c(handle, a_p, ev_p, error) bind(C, name="elpa_eigenvalues_d")
+      type(c_ptr), intent(in), value :: handle, a_p, ev_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_double), pointer :: a(:, :), ev(:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+
+      call elpa_eigenvalues_d(self, a, ev, error)
+    end subroutine
+
+
+    !>  \brief elpa_eigenvectors_f: class method to solve the eigenvalue problem for float real matrices
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
+    subroutine elpa_eigenvalues_f(self, a, ev, error)
+      use elpa2_impl
+      use elpa1_impl
+      use elpa_utilities, only : error_unit
+      use iso_c_binding
+      class(elpa_impl_t)  :: self
+#ifdef USE_ASSUMED_SIZE
+      real(kind=c_float)  :: a(self%local_nrows, *)
+#else
+      real(kind=c_float)  :: a(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=c_float)  :: ev(self%na)
+
+      integer, optional   :: error
+      integer(kind=c_int) :: solver
+      logical             :: success_l
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+
+      call self%get("solver",solver)
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
+        success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev)
+
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev)
+      else
+        print *,"unknown solver"
+        stop
+      endif
+
+      if (present(error)) then
+        if (success_l) then
+          error = ELPA_OK
+        else
+          error = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      error = ELPA_ERROR
+#endif
+    end subroutine
+
+
+    !c> void elpa_eigenvalues_f(elpa_t handle, float *a, float *ev, int *error);
+    subroutine elpa_eigenvalues_f_c(handle, a_p, ev_p,  error) bind(C, name="elpa_eigenvalues_f")
+      type(c_ptr), intent(in), value :: handle, a_p, ev_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_float), pointer :: a(:, :), ev(:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+
+      call elpa_eigenvalues_f(self, a, ev, error)
+    end subroutine
+
+
+    !>  \brief elpa_eigenvalues_dc: class method to solve the eigenvalue problem for double complex matrices
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
+    subroutine elpa_eigenvalues_dc(self, a, ev, error)
+      use elpa2_impl
+      use elpa1_impl
+      use elpa_utilities, only : error_unit
+      use iso_c_binding
+      class(elpa_impl_t)             :: self
+
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=c_double_complex) :: a(self%local_nrows, *)
+#else
+      complex(kind=c_double_complex) :: a(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=c_double)            :: ev(self%na)
+
+      integer, optional              :: error
+      integer(kind=c_int)            :: solver
+      logical                        :: success_l
+
+      call self%get("solver", solver)
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
+        success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev)
+
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev)
+      else
+        print *,"unknown solver"
+        stop
+      endif
+
+      if (present(error)) then
+        if (success_l) then
+          error = ELPA_OK
+        else
+          error = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+    end subroutine
+
+
+    !c> void elpa_eigenvalues_dc(elpa_t handle, double complex *a, double *ev, int *error);
+    subroutine elpa_eigenvalues_dc_c(handle, a_p, ev_p, error) bind(C, name="elpa_eigenvalues_dc")
+      type(c_ptr), intent(in), value :: handle, a_p, ev_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_double_complex), pointer :: a(:, :)
+      real(kind=c_double), pointer :: ev(:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+
+      call elpa_eigenvalues_dc(self, a, ev, error)
+    end subroutine
+
+
+    !>  \brief elpa_eigenvalues_fc: class method to solve the eigenvalue problem for float complex matrices
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
+    subroutine elpa_eigenvalues_fc(self, a, ev, error)
+      use elpa2_impl
+      use elpa1_impl
+      use elpa_utilities, only : error_unit
+
+      use iso_c_binding
+      class(elpa_impl_t)            :: self
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=c_float_complex) :: a(self%local_nrows, *)
+#else
+      complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=c_float)            :: ev(self%na)
+
+      integer, optional             :: error
+      integer(kind=c_int)           :: solver
+      logical                       :: success_l
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+
+      call self%get("solver", solver)
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
+        success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev)
+
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev)
+      else
+        print *,"unknown solver"
+        stop
+      endif
+
+      if (present(error)) then
+        if (success_l) then
+          error = ELPA_OK
+        else
+          error = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+#else
+      print *,"This installation of the ELPA library has not been build with single-precision support"
+      error = ELPA_ERROR
+#endif
+    end subroutine
+
+
+    !c> void elpa_eigenvalues_fc(elpa_t handle, float complex *a, float *ev, int *error);
+    subroutine elpa_eigenvalues_fc_c(handle, a_p, ev_p, error) bind(C, name="elpa_eigenvalues_fc")
+      type(c_ptr), intent(in), value :: handle, a_p, ev_p
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_float_complex), pointer :: a(:, :)
+      real(kind=c_float), pointer :: ev(:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+
+      call elpa_eigenvalues_fc(self, a, ev, error)
+    end subroutine
+
+
 
     !> \brief  elpa_hermitian_multiply_d: class method to perform C : = A**T * B for double real matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
