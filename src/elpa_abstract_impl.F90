@@ -77,6 +77,7 @@ module elpa_abstract_impl
 #endif
     type(c_ptr)         :: index = C_NULL_PTR
 
+    logical             :: eigenvalues_only
     contains
       ! set private fields in the index
       generic, public :: set_private => &

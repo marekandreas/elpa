@@ -113,9 +113,10 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
                 BASE_ENTRY(option_name, option_description, 0, 0, 0), \
         }
 
-#define PRIVATE_INT_ENTRY(option_name, option_description) \
+#define PRIVATE_INT_ENTRY(option_name, default) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0, 1), \
+                BASE_ENTRY(option_name, NULL, 0, 0, 1), \
+		.default_value = default, \
         }
 
 static const elpa_index_int_entry_t int_entries[] = {
@@ -145,7 +146,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         BOOL_ENTRY("timings", "Enable time measurement", 0),
         BOOL_ENTRY("debug", "Emit verbose debugging messages", 0),
         BOOL_ENTRY("print_flops", "Print FLOP rates on task 0", 0),
-        BOOL_ENTRY("eigenvalues_only", "Only compute the eigenvalues and return", 0),
+        PRIVATE_INT_ENTRY("eigenvalues_only", 0),
 };
 
 #define READONLY_DOUBLE_ENTRY(option_name, option_description) \

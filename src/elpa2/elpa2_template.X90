@@ -100,7 +100,7 @@
    integer(kind=c_intptr_t)                  :: tmat_dev, q_dev, a_dev
 
    integer(kind=c_int)                       :: i
-   logical                                   :: success, successCUDA, solve_eigenvectors
+   logical                                   :: success, successCUDA
    logical                                   :: wantDebug
    integer(kind=c_int)                       :: istat, gpu, debug, qr
    character(200)                            :: errorMessage
@@ -112,7 +112,6 @@
                                                                    &MATH_DATATYPE
     integer(kind=ik)                         :: na, nev, lda, ldq, nblk, matrixCols, &
                                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-    integer(kind=ik)                         :: eigenvalues_only
 
     call obj%timer%start("elpa_solve_evp_&
     &MATH_DATATYPE&
@@ -121,9 +120,9 @@
     &")
 
     if (present(q)) then
-      solve_eigenvectors = .true.
+      obj%eigenvalues_only = .false.
     else
-      solve_eigenvectors = .false.
+      obj%eigenvalues_only = .true.
     endif
 
     na         = obj%na
@@ -264,7 +263,7 @@
     call obj%timer%start("bandred")
 
 
-    if (solve_eigenvectors) then
+    if (.not. obj%eigenvalues_only) then
       q_actual => q(1:obj%local_nrows,1:obj%local_ncols)
     else
      allocate(q_dummy(1:obj%local_nrows,1:obj%local_ncols))
@@ -392,12 +391,11 @@
        stop 1
      endif
 
-     call obj%get("eigenvalues_only",eigenvalues_only)
-     if (eigenvalues_only .eq. 1) then
+     if (obj%eigenvalues_only) then
        return
      endif
 
-     if (solve_eigenvectors) then
+     if (.not. obj%eigenvalues_only) then
 #if COMPLEXCASE == 1
        ! q must be given thats why from here on we can use q and not q_actual
 
@@ -471,9 +469,9 @@
         endif
         endif
        call obj%timer%stop("trans_ev_to_full")
-     endif ! solve_eigenvectors
+     endif ! .not. obj%eigenvalue_only
 
-     if (.not.(solve_eigenvectors)) then
+     if (obj%eigenvalues_only) then
        deallocate(q_dummy, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"solve_evp_&

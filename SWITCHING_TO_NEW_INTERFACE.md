@@ -128,8 +128,9 @@ the user application):
 
 
 6. do the desired task with the *ELPA* library, which could be
-   a) e%eigenvectors                  ! solve EV problem with solver as set by "set" method; returns eigenvalues AND eigenvectors
+   a) e%eigenvectors                  ! solve EV problem with solver as set by "set" method; computes eigenvalues AND eigenvectors
                                       ! (replaces a) and b) from legacy API)
+   b) e%eigenvalues                   ! solve EV problem with solver as set by "set" method; computes eigenvalues only
    b) e%solve_tridi                   ! solve problem with tridiagonal matrix  (replacement for c) from legacy API)
    c) e%choleksy                      ! do a cholesky decomposition (replaces  d) from legacy API)
    d) e%invert_tridiagonal            ! invert triangular matrix (replaces  e) from legacy API)
