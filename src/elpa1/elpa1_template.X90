@@ -113,6 +113,8 @@ function elpa_solve_evp_&
    integer(kind=ik)                                :: na, nev, lda, ldq, nblk, matrixCols, &
                                                       mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 
+   logical                                         :: do_bandred, do_solve, do_trans_ev
+
    call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
@@ -236,33 +238,44 @@ function elpa_solve_evp_&
      stop 1
    endif
 
-   call obj%timer%start("forward")
-   call tridiag_&
-   &MATH_DATATYPE&
-   &_&
-   &PRECISION&
-   & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
-   call obj%timer%stop("forward")
 
-   call obj%timer%start("solve")
-   call solve_tridi_&
-   &PRECISION&
-   & (obj, na, nev, ev, e,  &
-#if REALCASE == 1
-      q_actual, ldq,          &
-#endif
-#if COMPLEXCASE == 1
-      q_real, l_rows,  &
-#endif
-      nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
-   call obj%timer%stop("solve")
-   if (.not.(success)) return
+   ! start the computations
+   ! as default do all three steps (this might change at some point)
+   do_bandred  = .true.
+   do_solve    = .true.
+   do_trans_ev = .true.
 
    if (obj%eigenvalues_only) then
-     return
+     do_trans_ev = .true.
    endif
 
-   if (.not.(obj%eigenvalues_only) ) then
+   if (do_bandred) then
+     call obj%timer%start("forward")
+     call tridiag_&
+     &MATH_DATATYPE&
+     &_&
+     &PRECISION&
+     & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU)
+     call obj%timer%stop("forward")
+    endif  !do_bandred
+
+    if (do_solve) then
+     call obj%timer%start("solve")
+     call solve_tridi_&
+     &PRECISION&
+     & (obj, na, nev, ev, e,  &
+#if REALCASE == 1
+        q_actual, ldq,          &
+#endif
+#if COMPLEXCASE == 1
+        q_real, l_rows,  &
+#endif
+        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+     call obj%timer%stop("solve")
+     if (.not.(success)) return
+   endif !do_solve
+
+   if (do_trans_ev) then
     ! q must be given thats why from here on we can use q and not q_actual
 #if COMPLEXCASE == 1
      q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
@@ -275,7 +288,7 @@ function elpa_solve_evp_&
      &PRECISION&
      & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
      call obj%timer%stop("back")
-   endif ! .not.(obj%eigenvalues_only
+   endif ! do_trans_ev
 
 #if COMPLEXCASE == 1
     deallocate(q_real, stat=istat, errmsg=errorMessage)
@@ -309,7 +322,6 @@ function elpa_solve_evp_&
        &" // ": error when deallocating q_dummy "//errorMessage
        stop 1
      endif
-
    endif
 
    call obj%timer%stop("elpa_solve_evp_&
