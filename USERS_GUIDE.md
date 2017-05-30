@@ -72,7 +72,6 @@ Using *ELPA* with the latest API is done in the following steps
       real/complex matrices
     - "cholesky" does a cholesky factorization for a single/double real/complex matrix
     - "invert_triangular" inverts a single/double real/complex triangular matrix
-    - "solve_tridi" solves the eigenvalue problem for a single/double real tridiagonale matrix
 
 - if the ELPA object is not needed any more call ELPA-type function destroy
 

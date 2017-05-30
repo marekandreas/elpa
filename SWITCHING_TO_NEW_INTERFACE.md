@@ -131,7 +131,6 @@ the user application):
    a) e%eigenvectors                  ! solve EV problem with solver as set by "set" method; computes eigenvalues AND eigenvectors
                                       ! (replaces a) and b) from legacy API)
    b) e%eigenvalues                   ! solve EV problem with solver as set by "set" method; computes eigenvalues only
-   b) e%solve_tridi                   ! solve problem with tridiagonal matrix  (replacement for c) from legacy API)
    c) e%choleksy                      ! do a cholesky decomposition (replaces  d) from legacy API)
    d) e%invert_tridiagonal            ! invert triangular matrix (replaces  e) from legacy API)
    e) e%hermitian_multiply            ! multiply a**T *b or a**H *b (replaces f) and g) from legacy API)

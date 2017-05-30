@@ -1899,23 +1899,6 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_solve_tridi_d(elpa_t handle, double *d, double *e, double *q, int *error);
-    subroutine elpa_solve_tridi_d_c(handle, d_p, e_p, q_p, error) bind(C, name="elpa_solve_tridi_d")
-      type(c_ptr), intent(in), value :: handle, d_p, e_p, q_p
-      integer(kind=c_int), optional, intent(in) :: error
-
-      real(kind=c_double), pointer :: d(:), e(:), q(:,:)
-      type(elpa_impl_t), pointer  :: self
-
-      call c_f_pointer(handle, self)
-      call c_f_pointer(d_p, d, [self%na])
-      call c_f_pointer(e_p, e, [self%na])
-      call c_f_pointer(q_p, q, [self%local_nrows,self%local_ncols])
-
-
-      call elpa_solve_tridi_d(self, d, e, q, error)
-    end subroutine
-
     !>  \brief elpa_solve_tridi_f: class method to solve the eigenvalue problem for a float real tridiagonal matrix a
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
@@ -1963,24 +1946,6 @@ module elpa_impl
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
-    end subroutine
-
-
-    !c> void elpa_solve_tridi_f(elpa_t handle, float *d, float *e, float *q, int *error);
-    subroutine elpa_solve_tridi_f_c(handle, d_p, e_p, q_p, error) bind(C, name="elpa_solve_tridi_f")
-      type(c_ptr), intent(in), value :: handle, d_p, e_p, q_p
-      integer(kind=c_int), optional, intent(in) :: error
-
-      real(kind=c_float), pointer :: d(:), e(:), q(:,:)
-      type(elpa_impl_t), pointer  :: self
-
-      call c_f_pointer(handle, self)
-      call c_f_pointer(d_p, d, [self%na])
-      call c_f_pointer(e_p, e, [self%na])
-      call c_f_pointer(q_p, q, [self%local_nrows,self%local_ncols])
-
-
-      call elpa_solve_tridi_f(self, d, e, q, error)
     end subroutine
 
 

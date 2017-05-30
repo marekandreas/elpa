@@ -57,7 +57,11 @@
 #include "../../general/sanity.X90"
 
       use precision
+      use elpa1_auxiliary_impl, only : elpa_solve_tridi_&
+      &PRECISION&
+      &_impl
       use elpa
+      use elpa_abstract_impl
       implicit none
       integer(kind=ik)            :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE)    :: d(na), e(na)
@@ -68,7 +72,7 @@
 #endif
 
       logical, intent(in)         :: wantDebug
-      logical :: success
+      logical                     :: success
       integer(kind=iK)            :: successInternal
       class(elpa_t), pointer      :: obj
 
@@ -103,16 +107,19 @@
       if (wantDebug) then
         call obj%set("debug",1)
       endif
-      call obj%solve_tridi(d(1:na), e(1:na), q(1:ldq,1:matrixCols), successInternal)
 
-      if (successInternal .ne. ELPA_OK) then
-        print *, "Cannot run solve_tridi"
-        stop
-        success = .false.
-        return
-      else
-        success =.true.
-      endif
+      select type(obj)
+        class is (elpa_abstract_impl_t)
+          success = elpa_solve_tridi_&
+          &PRECISION&
+          &_impl(obj, d, e, q)
+          !call obj%solve_tridi(d(1:na), e(1:na), q(1:ldq,1:matrixCols), successInternal)
+
+          if (.not.(success)) then
+            print *, "Cannot run solve_tridi"
+            return
+          endif
+      end select
       call elpa_deallocate(obj)
 
       call elpa_uninit()

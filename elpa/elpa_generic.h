@@ -130,23 +130,3 @@
                 float complex*: \
                   elpa_invert_trm_fc \
         )(handle, a, error)
-
-
-/*! \brief generic C method for elpa_solve_tridi
- *
- *  \details
- *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  d       float/double pointer to the diagonal elements of a matrix a,
- *                  on output: eigenvalues in ascending order
- *  \param  e       float/double pointer to the subdiagonal elements of a matrix a
- *  \param  q       on output: float/double pointer to the eigenvectors
- *  \param  error   on return the error code, which can be queried with elpa_strerr()
- *  \result void
- */
-#define elpa_solve_tridi(handle, d, e, q, error) _Generic((d), \
-                double*: \
-                  elpa_solve_tridi_d, \
-                \
-                float*: \
-                  elpa_solve_tridi_f \
-        )(handle, d, e, q, error)

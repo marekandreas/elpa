@@ -128,7 +128,7 @@ module elpa_api
           elpa_invert_trm_dc, &
           elpa_invert_trm_fc
 
-      generic, public :: solve_tridi => &                           !< method to solve the eigenvalue problem for a tridiagonal
+      generic, private :: solve_tridi => &                          !< method to solve the eigenvalue problem for a tridiagonal
           elpa_solve_tridi_d, &                                     !< matrix
           elpa_solve_tridi_f
 
