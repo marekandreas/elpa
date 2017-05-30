@@ -145,7 +145,7 @@ program test_interface
    call e%set("complex_kernel", ELPA_2STAGE_COMPLEX_DEFAULT, success)
    assert_elpa_ok(success)
 
-   call e%solve(a, ev, z, success)
+   call e%eigenvectors(a, ev, z, success)
    assert_elpa_ok(success)
    call elpa_deallocate(e)
 

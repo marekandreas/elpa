@@ -162,7 +162,7 @@ function elpa_solve_evp_&
 
    call e%set("timings", 1)
 
-   call e%solve(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
+   call e%eigenvectors(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
 
    time_evp_fwd = e%get_time("elpa_solve_evp_&
    &MATH_DATATYPE&

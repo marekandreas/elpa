@@ -142,7 +142,7 @@ program test_interface
 
    call e%set("solver", ELPA_SOLVER_1STAGE, success)
    assert_elpa_ok(success)
-   call e%solve(a, ev, z, success)
+   call e%eigenvectors(a, ev, z, success)
    assert_elpa_ok(success)
 
    if (myid .eq. 0) then

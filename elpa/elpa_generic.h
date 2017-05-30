@@ -36,7 +36,7 @@
         )(e, name, value, error)
 
 
-/*! \brief generic C method for elpa_solve
+/*! \brief generic C method for elpa_eigenvectors
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
@@ -46,18 +46,18 @@
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
-#define elpa_solve(handle, a, ev, q, error) _Generic((a), \
+#define elpa_eigenvectors(handle, a, ev, q, error) _Generic((a), \
                 double*: \
-                  elpa_solve_d, \
+                  elpa_eigenvectors_d, \
                 \
                 float*: \
-                  elpa_solve_f, \
+                  elpa_eigenvectors_f, \
                 \
                 double complex*: \
-                  elpa_solve_dc, \
+                  elpa_eigenvectors_dc, \
                 \
                 float complex*: \
-                  elpa_solve_fc \
+                  elpa_eigenvectors_fc \
         )(handle, a, ev, q, error)
 
 /*  \brief generic C method for elpa_cholesky

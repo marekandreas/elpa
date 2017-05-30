@@ -189,7 +189,7 @@ program test
 #endif
 
    ! The actual solve step
-   call e%solve(a, ev, z, error)
+   call e%eigenvectors(a, ev, z, error)
    assert_elpa_ok(error)
 
    call elpa_deallocate(e)

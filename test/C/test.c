@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
    printf("Solver is set to %d \n", value);
 
    /* Solve EV problem */
-   elpa_solve(handle, a, ev, z, &error);
+   elpa_eigenvectors(handle, a, ev, z, &error);
    assert_elpa_ok(error);
 
    elpa_deallocate(handle);

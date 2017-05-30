@@ -185,11 +185,11 @@ program test_interface
    call e2%set("solver", ELPA_SOLVER_1STAGE, success)
    assert_elpa_ok(success)
 
-   call e1%solve(a1, ev1, z1, success)
+   call e1%eigenvectors(a1, ev1, z1, success)
    assert_elpa_ok(success)
    call elpa_deallocate(e1)
 
-   call e2%solve(a2, ev2, z2, success)
+   call e2%eigenvectors(a2, ev2, z2, success)
    assert_elpa_ok(success)
    call elpa_deallocate(e2)
    call elpa_uninit()

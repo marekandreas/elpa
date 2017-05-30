@@ -249,7 +249,7 @@ program test_real2_single_banded
    call e%set("solver", ELPA_SOLVER_2STAGE, success)
    assert_elpa_ok(success)
 
-   call e%solve(a, ev, z, success)
+   call e%eigenvectors(a, ev, z, success)
    assert_elpa_ok(success)
    call elpa_deallocate(e)
 

@@ -88,11 +88,11 @@ module elpa_impl
      procedure, private :: elpa_get_integer                     !< private methods to implement the querry of an integer/double key/value pair
      procedure, private :: elpa_get_double
 
-     procedure, private :: elpa_solve_d                         !< private methods to implement the solve step for real/complex
+     procedure, private :: elpa_eigenvectors_d                         !< private methods to implement the solve step for real/complex
                                                                 !< double/single matrices
-     procedure, private :: elpa_solve_f
-     procedure, private :: elpa_solve_dc
-     procedure, private :: elpa_solve_fc
+     procedure, private :: elpa_eigenvectors_f
+     procedure, private :: elpa_eigenvectors_dc
+     procedure, private :: elpa_eigenvectors_fc
 
      procedure, private :: elpa_hermitian_multiply_d            !< private methods to implement a "hermitian" multiplication of matrices a and b
      procedure, private :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
@@ -554,7 +554,7 @@ module elpa_impl
 #endif
     end subroutine
 
-    !>  \brief elpa_solve_d: class method to solve the eigenvalue problem for double real matrices
+    !>  \brief elpa_eigenvectors_d: class method to solve the eigenvalue problem for double real matrices
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
     !>  blocksize, the number of eigenvectors
@@ -579,7 +579,7 @@ module elpa_impl
     !>                                              even if only a part of the eigenvalues is needed.
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_solve_d(self, a, ev, q, error)
+    subroutine elpa_eigenvectors_d(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -620,8 +620,8 @@ module elpa_impl
       endif
     end subroutine
 
-    !c> void elpa_solve_d(elpa_t handle, double *a, double *ev, double *q, int *error);
-    subroutine elpa_solve_d_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_d")
+    !c> void elpa_eigenvectors_d(elpa_t handle, double *a, double *ev, double *q, int *error);
+    subroutine elpa_eigenvectors_d_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_eigenvectors_d")
       type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
       integer(kind=c_int), optional, intent(in) :: error
 
@@ -633,11 +633,11 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_solve_d(self, a, ev, q, error)
+      call elpa_eigenvectors_d(self, a, ev, q, error)
     end subroutine
 
 
-    !>  \brief elpa_solve_f: class method to solve the eigenvalue problem for float real matrices
+    !>  \brief elpa_eigenvectors_f: class method to solve the eigenvalue problem for float real matrices
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
     !>  blocksize, the number of eigenvectors
@@ -662,7 +662,7 @@ module elpa_impl
     !>                                              even if only a part of the eigenvalues is needed.
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_solve_f(self, a, ev, q, error)
+    subroutine elpa_eigenvectors_f(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -708,8 +708,8 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_solve_f(elpa_t handle, float *a, float *ev, float *q, int *error);
-    subroutine elpa_solve_f_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_f")
+    !c> void elpa_eigenvectors_f(elpa_t handle, float *a, float *ev, float *q, int *error);
+    subroutine elpa_eigenvectors_f_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_eigenvectors_f")
       type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
       integer(kind=c_int), optional, intent(in) :: error
 
@@ -721,11 +721,11 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_solve_f(self, a, ev, q, error)
+      call elpa_eigenvectors_f(self, a, ev, q, error)
     end subroutine
 
 
-    !>  \brief elpa_solve_dc: class method to solve the eigenvalue problem for double complex matrices
+    !>  \brief elpa_eigenvectors_dc: class method to solve the eigenvalue problem for double complex matrices
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
     !>  blocksize, the number of eigenvectors
@@ -750,7 +750,7 @@ module elpa_impl
     !>                                              even if only a part of the eigenvalues is needed.
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_solve_dc(self, a, ev, q, error)
+    subroutine elpa_eigenvectors_dc(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -791,8 +791,8 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_solve_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
-    subroutine elpa_solve_dc_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_dc")
+    !c> void elpa_eigenvectors_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
+    subroutine elpa_eigenvectors_dc_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_eigenvectors_dc")
       type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
       integer(kind=c_int), optional, intent(in) :: error
 
@@ -805,11 +805,11 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_solve_dc(self, a, ev, q, error)
+      call elpa_eigenvectors_dc(self, a, ev, q, error)
     end subroutine
 
 
-    !>  \brief elpa_solve_fc: class method to solve the eigenvalue problem for float complex matrices
+    !>  \brief elpa_eigenvectors_fc: class method to solve the eigenvalue problem for float complex matrices
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
     !>  blocksize, the number of eigenvectors
@@ -834,7 +834,7 @@ module elpa_impl
     !>                                              even if only a part of the eigenvalues is needed.
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_solve_fc(self, a, ev, q, error)
+    subroutine elpa_eigenvectors_fc(self, a, ev, q, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -881,8 +881,8 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_solve_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
-    subroutine elpa_solve_fc_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_solve_fc")
+    !c> void elpa_eigenvectors_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
+    subroutine elpa_eigenvectors_fc_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_eigenvectors_fc")
       type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
       integer(kind=c_int), optional, intent(in) :: error
 
@@ -895,7 +895,7 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_solve_fc(self, a, ev, q, error)
+      call elpa_eigenvectors_fc(self, a, ev, q, error)
     end subroutine
 
     !> \brief  elpa_hermitian_multiply_d: class method to perform C : = A**T * B for double real matrices

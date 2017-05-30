@@ -65,7 +65,8 @@ Using *ELPA* with the latest API is done in the following steps
 
   At the moment the following ELPA compute functions are available:
 
-    - "solve" solves the eigenvalue problem for single/double real/complex valued matrices
+    - "eigenvectors" solves the eigenvalue problem for single/double real/complex valued matrices and
+                     returns the eigenvalues AND eigenvectors
     - "hermetian_multipy" computes C = A^T * B (real) or C = A^H * B (complex) for single/double
       real/complex matrices
     - "cholesky" does a cholesky factorization for a single/double real/complex matrix

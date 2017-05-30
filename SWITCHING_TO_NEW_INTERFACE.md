@@ -58,7 +58,7 @@ the user application):
 !>
 !>   ! use method solve to solve the eigenvalue problem
 !>   ! other possible methods are desribed in \ref elpa_api::elpa_t derived type
-!>   call e%solve(a, ev, z, success)
+!>   call e%eigenvectors(a, ev, z, success)
 !>
 !>   ! cleanup
 !>   call elpa_deallocate(e)
@@ -128,7 +128,7 @@ the user application):
 
 
 6. do the desired task with the *ELPA* library, which could be
-   a) e%solve                         ! solve EV problem with solver as set by "set" method;
+   a) e%eigenvectors                  ! solve EV problem with solver as set by "set" method; returns eigenvalues AND eigenvectors
                                       ! (replaces a) and b) from legacy API)
    b) e%solve_tridi                   ! solve problem with tridiagonal matrix  (replacement for c) from legacy API)
    c) e%choleksy                      ! do a cholesky decomposition (replaces  d) from legacy API)

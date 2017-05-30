@@ -195,7 +195,7 @@
     endif
     call e%set("timings", 1)
 
-    call e%solve(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
+    call e%eigenvectors(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
     if (successInternal .ne. ELPA_OK) then
       print *, "Cannot solve with ELPA 2stage"
       success = .false.

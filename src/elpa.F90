@@ -132,9 +132,10 @@
 !>   ... set and get all other options that are desired
 !> \code{.f90}
 !>
-!>   ! use method solve to solve the eigenvalue problem
+!>   ! use method solve to solve the eigenvalue problem to obtain eigenvalues
+!>   ! and eigenvectors
 !>   ! other possible methods are desribed in \ref elpa_api::elpa_t derived type
-!>   call e%solve(a, ev, z, success)
+!>   call e%eigenvectors(a, ev, z, success)
 !>
 !>   ! cleanup
 !>   call elpa_deallocate(e)
@@ -178,7 +179,7 @@
 !>
 !>   /* use method solve to solve the eigenvalue problem */
 !>   /* other possible methods are desribed in \ref elpa_api::elpa_t derived type */
-!>   elpa_solve(handle, a, ev, z, &error);
+!>   elpa_eigenvectors(handle, a, ev, z, &error);
 !>
 !>   /* cleanup */
 !>   elpa_deallocate(handle);

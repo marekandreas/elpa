@@ -98,11 +98,11 @@ module elpa_api
       procedure(elpa_print_times_i), deferred, public :: print_times
 
       ! Actual math routines
-      generic, public :: solve => &                                 !< method solve for solving the eigenvalue problem
-          elpa_solve_d, &                                           !< for symmetric real valued / hermitian complex valued
-          elpa_solve_f, &                                           !< matrices
-          elpa_solve_dc, &
-          elpa_solve_fc
+      generic, public :: eigenvectors => &                          !< method solve for solving the full eigenvalue problem
+          elpa_eigenvectors_d, &                                           !< for symmetric real valued / hermitian complex valued
+          elpa_eigenvectors_f, &                                           !< matrices
+          elpa_eigenvectors_dc, &
+          elpa_eigenvectors_fc
 
       generic, public :: hermitian_multiply => &                    !< method for a "hermitian" multiplication of matrices a and b
           elpa_hermitian_multiply_d, &                              !< for real valued matrices:   a**T * b
@@ -135,10 +135,10 @@ module elpa_api
       procedure(elpa_get_integer_i), deferred, private :: elpa_get_integer
       procedure(elpa_get_double_i),  deferred, private :: elpa_get_double
 
-      procedure(elpa_solve_d_i),    deferred, private :: elpa_solve_d
-      procedure(elpa_solve_f_i),    deferred, private :: elpa_solve_f
-      procedure(elpa_solve_dc_i), deferred, private :: elpa_solve_dc
-      procedure(elpa_solve_fc_i), deferred, private :: elpa_solve_fc
+      procedure(elpa_eigenvectors_d_i),    deferred, private :: elpa_eigenvectors_d
+      procedure(elpa_eigenvectors_f_i),    deferred, private :: elpa_eigenvectors_f
+      procedure(elpa_eigenvectors_dc_i), deferred, private :: elpa_eigenvectors_dc
+      procedure(elpa_eigenvectors_fc_i), deferred, private :: elpa_eigenvectors_fc
 
       procedure(elpa_hermitian_multiply_d_i),  deferred, private :: elpa_hermitian_multiply_d
       procedure(elpa_hermitian_multiply_f_i),  deferred, private :: elpa_hermitian_multiply_f
@@ -369,7 +369,7 @@ module elpa_api
   !> \param   q           double real matrix q: on output stores the eigenvalues
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_d_i(self, a, ev, q, error)
+    subroutine elpa_eigenvectors_d_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
       implicit none
@@ -402,7 +402,7 @@ module elpa_api
   !> \param   q           single real matrix q: on output stores the eigenvalues
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_f_i(self, a, ev, q, error)
+    subroutine elpa_eigenvectors_f_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
       implicit none
@@ -435,7 +435,7 @@ module elpa_api
   !> \param   q           double complex matrix q: on output stores the eigenvalues
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_dc_i(self, a, ev, q, error)
+    subroutine elpa_eigenvectors_dc_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
       implicit none
@@ -469,7 +469,7 @@ module elpa_api
   !> \param   q           single complex matrix q: on output stores the eigenvalues
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_fc_i(self, a, ev, q, error)
+    subroutine elpa_eigenvectors_fc_i(self, a, ev, q, error)
       use iso_c_binding
       import elpa_t
       implicit none
