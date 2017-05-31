@@ -113,6 +113,9 @@
     integer(kind=ik)                         :: na, nev, lda, ldq, nblk, matrixCols, &
                                                 mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 
+    logical                                  :: do_bandred, do_tridiag, do_solve_tridi,  &
+                                                do_trans_to_band, do_trans_to_full
+
     call obj%timer%start("elpa_solve_evp_&
     &MATH_DATATYPE&
     &_2stage_&
@@ -260,7 +263,7 @@
         do_useGPU_trans_ev_tridi = .true.
       endif
     endif
-    call obj%timer%start("bandred")
+
 
 
     if (.not. obj%eigenvalues_only) then
@@ -268,6 +271,19 @@
     else
      allocate(q_dummy(1:obj%local_nrows,1:obj%local_ncols))
      q_actual => q_dummy(1:obj%local_nrows,1:obj%local_ncols)
+    endif
+
+
+    ! set the default values for each of the 5 compute steps
+    do_bandred        = .true.
+    do_tridiag        = .true.
+    do_solve_tridi    = .true.
+    do_trans_to_band  = .true.
+    do_trans_to_full  = .true.
+
+    if (obj%eigenvalues_only) then
+      do_trans_to_band  = .false.
+      do_trans_to_full  = .false.
     endif
 
     if (obj%is_set("bandwidth") == 1) then
@@ -281,8 +297,11 @@
         return
       endif
 
-      !ttts = MPI_Wtime()
-    else
+      do_bandred       = .false. ! we already have a banded matrix
+      do_solve_tridi   = .true.  ! we also have to solve something :-)
+      do_trans_to_band = .true.  ! and still we have to backsub to banded
+      do_trans_to_full = .false. ! but not to full since we have a banded matrix
+    else ! bandwidth is not set
 
       ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
       ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
@@ -304,55 +323,66 @@
       allocate(tmat(nbw,nbw,num_blocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_evp_&
-  &MATH_DATATYPE&
-  &_2stage_&
-  &PRECISION&
-  &" // ": error when allocating tmat "//errorMessage
+        &MATH_DATATYPE&
+        &_2stage_&
+        &PRECISION&
+        &" // ": error when allocating tmat "//errorMessage
         stop 1
       endif
 
+      do_bandred       = .true.
+      do_solve_tridi   = .true.
+      do_trans_to_band = .true.
+      do_trans_to_full = .true.
+    end if  ! matrix not already banded on input
+
+    ! start the computations in 5 steps
+
+    if (do_bandred) then
+      call obj%timer%start("bandred")
       ! Reduction full -> band
       call bandred_&
       &MATH_DATATYPE&
       &_&
       &PRECISION &
       (obj, na, a, &
-       a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-       tmat_dev,  wantDebug, do_useGPU, success &
+      a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+      tmat_dev,  wantDebug, do_useGPU, success &
 #if REALCASE == 1
-       , useQRActual &
+      , useQRActual &
 #endif
-       )
-
+      )
+      call obj%timer%stop("bandred")
       if (.not.(success)) return
-    end if  ! matrix not already banded on input
-    call obj%timer%stop("bandred")
+    endif
+
 
      ! Reduction band -> tridiagonal
+     if (do_tridiag) then
+       allocate(e(na), stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"solve_evp_&
+         &MATH_DATATYPE&
+         &_2stage_&
+         &PRECISION " // ": error when allocating e "//errorMessage
+         stop 1
+       endif
 
-     allocate(e(na), stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"solve_evp_&
+       call obj%timer%start("tridiag")
+       call tridiag_band_&
        &MATH_DATATYPE&
-       &_2stage_&
-       &PRECISION " // ": error when allocating e "//errorMessage
-       stop 1
-     endif
-
-     call obj%timer%start("tridiag")
-     call tridiag_band_&
-     &MATH_DATATYPE&
-     &_&
-     &PRECISION&
-     (obj, na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, do_useGPU)
+       &_&
+       &PRECISION&
+       (obj, na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, do_useGPU)
 
 #ifdef WITH_MPI
-     call obj%timer%start("mpi_communication")
-     call mpi_bcast(ev, na, MPI_REAL_PRECISION, 0, mpi_comm_all, mpierr)
-     call mpi_bcast(e, na, MPI_REAL_PRECISION, 0, mpi_comm_all, mpierr)
-     call obj%timer%stop("mpi_communication")
+       call obj%timer%start("mpi_communication")
+       call mpi_bcast(ev, na, MPI_REAL_PRECISION, 0, mpi_comm_all, mpierr)
+       call mpi_bcast(e, na, MPI_REAL_PRECISION, 0, mpi_comm_all, mpierr)
+       call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
-     call obj%timer%stop("tridiag")
+       call obj%timer%stop("tridiag")
+     endif ! do_tridiag
 
 #if COMPLEXCASE == 1
      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
@@ -369,19 +399,21 @@
 #endif
 
      ! Solve tridiagonal system
-     call obj%timer%start("solve")
-     call solve_tridi_&
-     &PRECISION &
-     (obj, na, nev, ev, e, &
+     if (do_solve_tridi) then
+       call obj%timer%start("solve")
+       call solve_tridi_&
+       &PRECISION &
+       (obj, na, nev, ev, e, &
 #if REALCASE == 1
-     q_actual, ldq,   &
+       q_actual, ldq,   &
 #endif
 #if COMPLEXCASE == 1
-     q_real, ubound(q_real,dim=1), &
+       q_real, ubound(q_real,dim=1), &
 #endif
-     nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
-     call obj%timer%stop("solve")
-     if (.not.(success)) return
+       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+       call obj%timer%stop("solve")
+       if (.not.(success)) return
+     endif ! do_solve_tridi
 
      deallocate(e, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
@@ -395,7 +427,7 @@
        return
      endif
 
-     if (.not. obj%eigenvalues_only) then
+     if (do_trans_to_band) then
 #if COMPLEXCASE == 1
        ! q must be given thats why from here on we can use q and not q_actual
 
@@ -433,43 +465,43 @@
          &PRECISION " // ": error when deallocating hh_trans "//errorMessage
          stop 1
        endif
+     endif ! do_trans_to_band
 
+     if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")
-       if(obj%is_set("bandwidth") .ne. 1) then
-         if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
-           ! copy to device if we want to continue on GPU
-           successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
+       if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
+         ! copy to device if we want to continue on GPU
+         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
 
-           successCUDA = cuda_memcpy(q_dev, loc(q), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
-         endif
+         successCUDA = cuda_memcpy(q_dev, loc(q), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+       endif
 
-         ! Backtransform stage 2
+       ! Backtransform stage 2
 
-         call trans_ev_band_to_full_&
-         &MATH_DATATYPE&
-         &_&
-         &PRECISION &
-         (obj, na, nev, nblk, nbw, a, &
-         a_dev, lda, tmat, tmat_dev,  q,  &
-         q_dev, &
-         ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU &
+       call trans_ev_band_to_full_&
+       &MATH_DATATYPE&
+       &_&
+       &PRECISION &
+       (obj, na, nev, nblk, nbw, a, &
+       a_dev, lda, tmat, tmat_dev,  q,  &
+       q_dev, &
+       ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU &
 #if REALCASE == 1
-         , useQRActual  &
+       , useQRActual  &
 #endif
-         )
+       )
 
 
-        deallocate(tmat, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"solve_evp_&
-          &MATH_DATATYPE&
-          &_2stage_&
-          &PRECISION " // ": error when deallocating tmat"//errorMessage
-          stop 1
-        endif
-        endif
+       deallocate(tmat, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"solve_evp_&
+         &MATH_DATATYPE&
+         &_2stage_&
+         &PRECISION " // ": error when deallocating tmat"//errorMessage
+         stop 1
+       endif
        call obj%timer%stop("trans_ev_to_full")
-     endif ! .not. obj%eigenvalue_only
+     endif ! do_trans_to_full
 
      if (obj%eigenvalues_only) then
        deallocate(q_dummy, stat=istat, errmsg=errorMessage)
