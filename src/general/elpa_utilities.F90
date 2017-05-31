@@ -58,7 +58,7 @@ module ELPA_utilities
 
   private ! By default, all routines contained are private
 
-  public :: debug_messages_via_environment_variable, output_unit, error_unit
+  public :: output_unit, error_unit
   public :: check_alloc, check_alloc_CUDA_f, check_memcpy_CUDA_f, check_dealloc_CUDA_f
   public :: map_global_array_index_to_local_index
   public :: pcol, prow
@@ -72,27 +72,6 @@ module ELPA_utilities
 
   !******
   contains
-
-   function debug_messages_via_environment_variable() result(isSet)
-     use precision
-     implicit none
-     logical              :: isSet
-     CHARACTER(len=255)   :: ELPA_DEBUG_MESSAGES
-
-     isSet = .false.
-
-#if defined(HAVE_ENVIRONMENT_CHECKING)
-     call get_environment_variable("ELPA_DEBUG_MESSAGES",ELPA_DEBUG_MESSAGES)
-#endif
-     if (trim(ELPA_DEBUG_MESSAGES) .eq. "yes") then
-       isSet = .true.
-     endif
-     if (trim(ELPA_DEBUG_MESSAGES) .eq. "no") then
-       isSet = .true.
-     endif
-
-   end function debug_messages_via_environment_variable
-
 !-------------------------------------------------------------------------------
 
   !Processor col for global col number
