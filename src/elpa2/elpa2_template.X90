@@ -288,15 +288,35 @@
 
     if (obj%is_set("bandwidth") == 1) then
       call obj%get("bandwidth",nbw)
-      if ((nbw == 0) .or. (mod(nbw, nblk) .ne. 0)) then
+      if (nbw == 0) then
         if (wantDebug) then
-          write(error_unit,*) "Specified bandwidth has to be a multiple of blocksize: ",nbw
-        endif
-        print *, "Specified bandwidth has to be a multiple of blocksize"
+          write(error_unit,*) "Specified bandwidth = 0; ELPA refuses to solve the eigenvalue problem ", &
+	                      "for a diagonal matrix! This is too simple"
+	  endif
+        print *, "Specified bandwidth = 0; ELPA refuses to solve the eigenvalue problem ", &
+	         "for a diagonal matrix! This is too simple"
         success = .false.
         return
       endif
+      if (mod(nbw, nblk) .ne. 0) then
+        ! treat matrix with an effective bandwidth slightly bigger than specified bandwidth
+	! such that effective bandwidth is a multiply of nblk. which is a prerequiste for ELPA
+        nbw = nblk * ceiling(real(nbw,kind=c_double)/real(nblk,kind=c_double))
 
+        ! just check that effective bandwidth is NOT larger than matrix size
+	if (nbw .gt. na) then
+          if (wantDebug) then
+            write(error_unit,*) "Specified bandwidth ",nbw," leads internaly to a computed bandwidth ", &
+	                        "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
+				"solve your problem by not specifing a bandwidth"
+	  endif
+          print *, "Specified bandwidth ",nbw," leads internaly to a computed bandwidth ", &
+	                        "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
+				"solve your problem by not specifing a bandwidth"
+          success = .false.
+          return
+	endif
+      endif
       do_bandred       = .false. ! we already have a banded matrix
       do_solve_tridi   = .true.  ! we also have to solve something :-)
       do_trans_to_band = .true.  ! and still we have to backsub to banded
