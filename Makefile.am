@@ -17,7 +17,6 @@ libelpa@SUFFIX@_la_SOURCES =
 noinst_LTLIBRARIES = libelpa@SUFFIX@_public.la
 libelpa@SUFFIX@_public_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)modules $(FC_MODINC)private_modules
 libelpa@SUFFIX@_public_la_SOURCES = \
-  src/elpa1/elpa1_auxiliary.F90 \
   src/elpa.F90 \
   src/elpa_api.F90 \
   src/elpa_constants.F90 \
@@ -47,6 +46,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/mod_compute_hh_trafo.F90 \
   src/helpers/aligned_mem.F90 \
   src/elpa1/elpa1_compute_private.F90 \
+  src/elpa1/elpa1_auxiliary.F90 \
   src/elpa2/elpa2_determine_workload.F90 \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
