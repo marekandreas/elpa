@@ -78,26 +78,21 @@ program test_real2_double_precision
 ! distributed along with the original code in the file "COPYING".
 !
 !-------------------------------------------------------------------------------
-   use precision
    use elpa1
    use elpa2
 
-   use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
-#ifdef WITH_OPENMP
    use test_util
-#endif
 
-   use mod_read_input_parameters
-   use mod_check_correctness
-   use mod_setup_mpi
-   use mod_blacs_infrastructure
-   use mod_prepare_matrix
-   use elpa_mpi
+   use test_read_input_parameters
+   use test_check_correctness
+   use test_setup_mpi
+   use test_blacs_infrastructure
+   use test_prepare_matrix
 #ifdef HAVE_REDIRECT
-  use redirect
+  use test_redirect
 #endif
- use output_types
+ use test_output_type
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -124,7 +119,6 @@ program test_real2_double_precision
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    logical                    :: successELPA, success
-   integer(kind=ik)           :: numberOfDevices
    logical                    :: gpuAvailable
    type(output_t)             :: write_to_file
    character(len=8)           :: task_suffix
@@ -141,7 +135,6 @@ program test_real2_double_precision
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
 

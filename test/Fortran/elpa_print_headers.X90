@@ -165,9 +165,9 @@
    if (myid .eq. 0) then
       print *," "
       print *,"This ELPA2 is build with"
-      if (gpuAvailable) then
+#ifdef WITH_GPU_KERNEL
         print *,"GPU support"
-      endif
+#endif
       print *," "
 #ifdef REALCASE
 

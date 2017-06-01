@@ -47,7 +47,7 @@
     &PRECISION&
     & (na, myid, sc_desc, a, z, as)
 
-      use precision
+      use test_util
       implicit none
 
       integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)

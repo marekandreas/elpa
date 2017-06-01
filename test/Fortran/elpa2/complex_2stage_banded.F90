@@ -78,25 +78,18 @@ program test_complex2_double_banded
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !-------------------------------------------------------------------------------
-   use precision
    use elpa
-   use mod_check_for_gpu, only : check_for_gpu
 
-#ifdef WITH_OPENMP
    use test_util
-#endif
-
-   use mod_read_input_parameters
-   use mod_check_correctness
-   use mod_setup_mpi
-   use mod_blacs_infrastructure
-   use mod_prepare_matrix
-   use elpa_mpi
+   use test_read_input_parameters
+   use test_check_correctness
+   use test_setup_mpi
+   use test_blacs_infrastructure
+   use test_prepare_matrix
 #ifdef HAVE_REDIRECT
-  use redirect
+   use test_redirect
 #endif
-
- use output_types
+   use test_output_type
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -132,7 +125,6 @@ program test_complex2_double_banded
 
 
    integer(kind=ik)              :: numberOfDevices
-   logical                       :: gpuAvailable
    integer(kind=ik)              :: global_row, global_col, local_row, local_col
    integer(kind=ik)              :: bandwidth
    class(elpa_t), pointer        :: e
@@ -140,14 +132,10 @@ program test_complex2_double_banded
 #define COMPLEXCASE
 #define DOUBLE_PRECISION_COMPLEX 1
 
-   gpuAvailable  = .false.
-
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
       !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
-
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
 

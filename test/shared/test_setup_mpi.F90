@@ -39,60 +39,55 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! Author: A. Marek, MPCDF
+!
 #include "config-f90.h"
-
-module mod_check_correctness
-
-
-  interface check_correctness
-    module procedure check_correctness_complex_double
-    module procedure check_correctness_real_double
-#ifdef WANT_SINGLE_PRECISION_REAL
-    module procedure check_correctness_real_single
-#endif
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-    module procedure check_correctness_complex_single
-#endif
-  end interface
+module test_setup_mpi
 
   contains
 
-#define COMPLEXCASE 1
-#define DOUBLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "check_correctness_template.X90"
-#undef DOUBLE_PRECISION
-#undef COMPLEXCASE
+    subroutine setup_mpi(myid, nprocs)
+      use test_util
+      use ELPA_utilities
+      implicit none
 
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
+      integer(kind=ik)              :: mpierr
 
-#define COMPLEXCASE 1
-#define SINGLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "check_correctness_template.X90"
-#undef SINGLE_PRECISION
-#undef COMPLEXCASE
-#endif /* WANT_SINGLE_PRECISION_COMPLEX */
-
-#define REALCASE 1
-#define DOUBLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "check_correctness_template.X90"
-#undef DOUBLE_PRECISION
-#undef REALCASE
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-
-#define REALCASE 1
-#define SINGLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "check_correctness_template.X90"
-#undef SINGLE_PRECISION
-#undef REALCASE
+      integer(kind=ik), intent(out) :: myid, nprocs
+#ifdef WITH_OPENMP
+      integer(kind=ik)              :: required_mpi_thread_level, &
+                                       provided_mpi_thread_level
+#endif
 
 
-#endif /* WANT_SINGLE_PRECISION_REAL */
+#ifdef WITH_MPI
+
+#ifndef WITH_OPENMP
+      call mpi_init(mpierr)
+#else
+      required_mpi_thread_level = MPI_THREAD_MULTIPLE
+
+      call mpi_init_thread(required_mpi_thread_level,     &
+                           provided_mpi_thread_level, mpierr)
+
+      if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
+        write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
+        write(error_unit,*) "           only ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
+        call exit(77)
+      endif
+#endif
+      call mpi_comm_rank(mpi_comm_world,myid,mpierr)
+      call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
+
+      if (nprocs <= 1) then
+        print *, "The test programs must be run with more than 1 task to ensure that usage with MPI is actually tested"
+        stop 1
+      endif
+#else
+      myid = 0
+      nprocs = 1
+#endif
+
+    end subroutine
 
 
-end module mod_check_correctness
+end module

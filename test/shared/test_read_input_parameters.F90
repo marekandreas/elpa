@@ -41,13 +41,15 @@
 !
 !
 #include "config-f90.h"
-module mod_read_input_parameters
+module test_read_input_parameters
   use elpa
   use elpa_utilities, only : error_unit
-  use output_types
-  use precision
+
+  use test_util
+  use test_output_type
 
   implicit none
+
   type input_options_t
     integer        :: datatype
     integer        :: na, nev, nblk

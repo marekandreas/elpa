@@ -39,41 +39,62 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-!
+! Author: A. Marek, MPCDF
 #include "config-f90.h"
-module test_util
-  use elpa_mpi
-  implicit none
-  private
-  public mpi_thread_level_name
+
+module test_prepare_matrix
+
+  interface prepare_matrix
+    module procedure prepare_matrix_complex_double
+    module procedure prepare_matrix_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_matrix_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_matrix_complex_single
+#endif
+   end interface
 
   contains
-!>
-!> This function translates, if ELPA was build with OpenMP support,
-!> the found evel of "thread safetiness" from the internal number
-!> of the MPI library into a human understandable value
-!>
-!> \param level thread-saftiness of the MPI library
-!> \return str human understandable value of thread saftiness
-  pure function mpi_thread_level_name(level) result(str)
-    use precision
-    implicit none
-    integer(kind=ik), intent(in) :: level
-    character(len=21)            :: str
-#ifdef WITH_MPI
-    select case(level)
-      case (MPI_THREAD_SINGLE)
-        str = "MPI_THREAD_SINGLE"
-      case (MPI_THREAD_FUNNELED)
-        str = "MPI_THREAD_FUNNELED"
-      case (MPI_THREAD_SERIALIZED)
-        str = "MPI_THREAD_SERIALIZED"
-      case (MPI_THREAD_MULTIPLE)
-        str = "MPI_THREAD_MULTIPLE"
-      case default
-        write(str,'(i0,1x,a)') level, "(Unknown level)"
-    end select
-#endif
-  end function
+
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../src/general/precision_macros.h"
+#include "test_prepare_matrix_template.X90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
+
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+
+
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "../../src/general/precision_macros.h"
+#include "test_prepare_matrix_template.X90"
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
+
+
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../src/general/precision_macros.h"
+#include "test_prepare_matrix_template.X90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+
+
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../../src/general/precision_macros.h"
+#include "test_prepare_matrix_template.X90"
+#undef SINGLE_PRECISION
+#undef REALCASE
+
+#endif /* WANT_SINGLE_PRECISION_REAL */
+
 
 end module

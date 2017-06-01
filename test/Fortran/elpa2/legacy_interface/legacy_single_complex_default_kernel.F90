@@ -77,27 +77,22 @@ program test_complex2_default_kernel_single_precision
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !-------------------------------------------------------------------------------
-   use precision
    use elpa1
    use elpa2
-   use mod_check_for_gpu, only : check_for_gpu
    use elpa_utilities, only : error_unit
    use elpa2_utilities
-#ifdef WITH_OPENMP
    use test_util
-#endif
 
-   use mod_read_input_parameters
-   use mod_check_correctness
-   use mod_setup_mpi
-   use mod_blacs_infrastructure
-   use mod_prepare_matrix
-   use elpa_mpi
+   use test_read_input_parameters
+   use test_check_correctness
+   use test_setup_mpi
+   use test_blacs_infrastructure
+   use test_prepare_matrix
 #ifdef HAVE_REDIRECT
-  use redirect
+  use test_redirect
 #endif
 
- use output_types
+ use test_output_type
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -133,7 +128,6 @@ program test_complex2_default_kernel_single_precision
 
    logical                       :: successELPA
 
-   integer(kind=ik)              :: numberOfDevices
    logical                       :: gpuAvailable
 
 #undef DOUBLE_PRECISION_COMPLEX
@@ -146,7 +140,6 @@ program test_complex2_default_kernel_single_precision
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
 
@@ -169,9 +162,9 @@ program test_complex2_default_kernel_single_precision
    if(myid==0) then
       print *
       print '(a)','Standard eigenvalue problem - COMPLEX version'
-      if (gpuAvailable) then
+#ifdef WITH_GPU_VERSION
         print *," with GPU version"
-      endif
+#endif
       print *
       print '(3(a,i0))','Matrix size=',na,', Number of eigenvectors=',nev,', Block size=',nblk
       print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs

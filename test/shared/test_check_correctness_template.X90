@@ -46,9 +46,6 @@
     &_&
     &PRECISION&
     & (na, nev, as, z, ev, sc_desc, myid) result(status)
-
-      use elpa_mpi
-      use precision
       implicit none
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, nev, myid
@@ -521,3 +518,5 @@ function check_correctness_&
 
     end function
 
+
+! vim: syntax=fortran

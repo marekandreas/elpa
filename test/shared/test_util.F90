@@ -39,62 +39,64 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! Author: A. Marek, MPCDF
+!
 #include "config-f90.h"
-
-module mod_prepare_matrix
-
-  interface prepare_matrix
-    module procedure prepare_matrix_complex_double
-    module procedure prepare_matrix_real_double
-#ifdef WANT_SINGLE_PRECISION_REAL
-    module procedure prepare_matrix_real_single
+module test_util
+  use iso_c_binding
+#ifdef WITH_MPI
+#ifdef HAVE_MPI_MODULE
+  use mpi
+  implicit none
+#else
+  implicit none
+  include 'mpif.h'
 #endif
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-    module procedure prepare_matrix_complex_single
+#else
+  integer, parameter :: mpi_comm_world = -1
 #endif
-   end interface
+
+  integer, parameter :: rk8 = C_DOUBLE
+  integer, parameter :: rk4 = C_FLOAT
+  integer, parameter :: ck8 = C_DOUBLE_COMPLEX
+  integer, parameter :: ck4 = C_FLOAT_COMPLEX
+  integer, parameter :: ik  = C_INT32_T
+  integer, parameter :: lik = C_INT64_T
 
   contains
+!>
+!> This function translates, if ELPA was build with OpenMP support,
+!> the found evel of "thread safetiness" from the internal number
+!> of the MPI library into a human understandable value
+!>
+!> \param level thread-saftiness of the MPI library
+!> \return str human understandable value of thread saftiness
+  pure function mpi_thread_level_name(level) result(str)
+    use, intrinsic :: iso_c_binding
+    implicit none
+    integer(kind=c_int), intent(in) :: level
+    character(len=21)            :: str
+#ifdef WITH_MPI
+    select case(level)
+      case (MPI_THREAD_SINGLE)
+        str = "MPI_THREAD_SINGLE"
+      case (MPI_THREAD_FUNNELED)
+        str = "MPI_THREAD_FUNNELED"
+      case (MPI_THREAD_SERIALIZED)
+        str = "MPI_THREAD_SERIALIZED"
+      case (MPI_THREAD_MULTIPLE)
+        str = "MPI_THREAD_MULTIPLE"
+      case default
+        write(str,'(i0,1x,a)') level, "(Unknown level)"
+    end select
+#endif
+  end function
 
-#define COMPLEXCASE 1
-#define DOUBLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "prepare_matrix_template.X90"
-#undef DOUBLE_PRECISION
-#undef COMPLEXCASE
+  function seconds() result(s)
+    integer :: ticks, tick_rate
+    real(kind=c_double) :: s
 
-
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-
-
-#define COMPLEXCASE 1
-#define SINGLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "prepare_matrix_template.X90"
-#undef SINGLE_PRECISION
-#undef COMPLEXCASE
-#endif /* WANT_SINGLE_PRECISION_COMPLEX */
-
-
-#define REALCASE 1
-#define DOUBLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "prepare_matrix_template.X90"
-#undef DOUBLE_PRECISION
-#undef REALCASE
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-
-
-#define REALCASE 1
-#define SINGLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "prepare_matrix_template.X90"
-#undef SINGLE_PRECISION
-#undef REALCASE
-
-#endif /* WANT_SINGLE_PRECISION_REAL */
-
+    call system_clock(count=ticks, count_rate=tick_rate)
+    s = real(ticks, kind=c_double) / tick_rate
+  end function
 
 end module

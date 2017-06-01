@@ -67,12 +67,12 @@
 !> \author A. Marek (MPCDF)
 
 program print_available_elpa2_kernels
-   use precision
    use elpa
+   use, intrinsic :: iso_c_binding
 
    implicit none
 
-   integer(kind=ik) :: i
+   integer(kind=c_int) :: i
    class(elpa_t), pointer :: e
    integer :: option
 

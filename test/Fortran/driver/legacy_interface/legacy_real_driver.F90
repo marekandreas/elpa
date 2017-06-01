@@ -78,26 +78,18 @@ program test_real2
 ! distributed along with the original code in the file "COPYING".
 !
 !-------------------------------------------------------------------------------
-   use precision
    use elpa_driver
    use elpa_utilities, only : error_unit
-#ifdef WITH_OPENMP
    use test_util
-#endif
-   use mod_check_for_gpu, only : check_for_gpu
-   use mod_read_input_parameters
-   use mod_check_correctness
-   use mod_setup_mpi
-   use mod_blacs_infrastructure
-   use mod_prepare_matrix
-   use elpa_mpi
+   use test_read_input_parameters
+   use test_check_correctness
+   use test_setup_mpi
+   use test_blacs_infrastructure
+   use test_prepare_matrix
 #ifdef HAVE_REDIRECT
-  use redirect
+  use test_redirect
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
- use timings
-#endif
- use output_types
+ use test_output_type
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -127,11 +119,8 @@ program test_real2
    logical                    :: success
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
-   logical                    :: gpuAvailable
-   integer(kind=ik)           :: numberOfDevices
 
    success = .true.
-   gpuAvailable  = .false.
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
 
@@ -139,39 +128,10 @@ program test_real2
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
-
    STATUS = 0
 
 #define DATATYPE REAL
 #include "../../elpa_print_headers.X90"
-
-#ifdef HAVE_DETAILED_TIMINGS
-
-   ! initialise the timing functionality
-
-#ifdef HAVE_LIBPAPI
-   call timer%measure_flops(.true.)
-#endif
-
-   call timer%measure_allocated_memory(.true.)
-   call timer%measure_virtual_memory(.true.)
-   call timer%measure_max_allocated_memory(.true.)
-
-   call timer%set_print_options(&
-#ifdef HAVE_LIBPAPI
-                print_flop_count=.true., &
-                print_flop_rate=.true., &
-#endif
-                print_allocated_memory = .true. , &
-                print_virtual_memory=.true., &
-                print_max_allocated_memory=.true.)
-
-
-  call timer%enable()
-
-  call timer%start("program")
-#endif
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -231,9 +191,6 @@ program test_real2
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("set up matrix")
-#endif
    allocate(a (na_rows,na_cols))
    allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -242,9 +199,6 @@ program test_real2
 
    call prepare_matrix(na, myid, sc_desc, a, z, as)
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("set up matrix")
-#endif
    ! set print flag in elpa1
    elpa_print_times = .true.
 
@@ -363,14 +317,6 @@ program test_real2
    deallocate(z)
    deallocate(ev)
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
-   print *," "
-   print *,"Timings program:"
-   call timer%print("program")
-   print *," "
-   print *,"End timings program"
-#endif
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)

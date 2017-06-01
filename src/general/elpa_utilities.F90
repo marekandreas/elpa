@@ -54,6 +54,7 @@ module ELPA_utilities
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : output_unit, error_unit
 #endif
+  use, intrinsic :: iso_c_binding
   implicit none
 
   private ! By default, all routines contained are private
@@ -76,10 +77,9 @@ module ELPA_utilities
 
   !Processor col for global col number
   pure function pcol(global_col, nblk, np_cols) result(local_col)
-    use precision
     implicit none
-    integer(kind=ik), intent(in) :: global_col, nblk, np_cols
-    integer(kind=ik)             :: local_col
+    integer(kind=c_int), intent(in) :: global_col, nblk, np_cols
+    integer(kind=c_int)             :: local_col
     local_col = MOD((global_col-1)/nblk,np_cols)
   end function
 
@@ -87,10 +87,9 @@ module ELPA_utilities
 
   !Processor row for global row number
   pure function prow(global_row, nblk, np_rows) result(local_row)
-    use precision
     implicit none
-    integer(kind=ik), intent(in) :: global_row, nblk, np_rows
-    integer(kind=ik)             :: local_row
+    integer(kind=c_int), intent(in) :: global_row, nblk, np_rows
+    integer(kind=c_int)             :: local_row
     local_row = MOD((global_row-1)/nblk,np_rows)
   end function
 
@@ -98,13 +97,11 @@ module ELPA_utilities
 
  function map_global_array_index_to_local_index(iGLobal, jGlobal, iLocal, jLocal , nblk, np_rows, np_cols, my_prow, my_pcol) &
    result(possible)
-   use precision
-
    implicit none
 
-   integer(kind=ik)              :: pi, pj, li, lj, xi, xj
-   integer(kind=ik), intent(in)  :: iGlobal, jGlobal, nblk, np_rows, np_cols, my_prow, my_pcol
-   integer(kind=ik), intent(out) :: iLocal, jLocal
+   integer(kind=c_int)              :: pi, pj, li, lj, xi, xj
+   integer(kind=c_int), intent(in)  :: iGlobal, jGlobal, nblk, np_rows, np_cols, my_prow, my_pcol
+   integer(kind=c_int), intent(out) :: iLocal, jLocal
    logical                       :: possible
 
    possible = .true.
@@ -157,12 +154,11 @@ module ELPA_utilities
 !              iflag==0 : Return 0
 !              iflag> 0 : Return next local index after that row/col
 !-------------------------------------------------------------------------------
-    use precision
     implicit none
 
-    integer(kind=ik) :: idx, my_proc, num_procs, nblk, iflag
+    integer(kind=c_int) :: idx, my_proc, num_procs, nblk, iflag
 
-    integer(kind=ik) :: iblk
+    integer(kind=c_int) :: iblk
 
     iblk = (idx-1)/nblk  ! global block number, 0 based
 
@@ -196,9 +192,8 @@ module ELPA_utilities
 
     ! Returns the least common multiple of a and b
     ! There may be more efficient ways to do this, we use the most simple approach
-    use precision
     implicit none
-    integer(kind=ik), intent(in) :: a, b
+    integer(kind=c_int), intent(in) :: a, b
 
     do least_common_multiple = a, a*(b-1), a
     if(mod(least_common_multiple,b)==0) exit
@@ -208,13 +203,12 @@ module ELPA_utilities
  end function least_common_multiple
 
  subroutine check_alloc(function_name, variable_name, istat, errorMessage)
-    use precision
 
     implicit none
 
     character(len=*), intent(in)    :: function_name
     character(len=*), intent(in)    :: variable_name
-    integer(kind=ik), intent(in)    :: istat
+    integer(kind=c_int), intent(in)    :: istat
     character(len=*), intent(in)    :: errorMessage
 
     if (istat .ne. 0) then
@@ -224,12 +218,11 @@ module ELPA_utilities
  end subroutine
 
  subroutine check_alloc_CUDA_f(file_name, line, successCUDA)
-    use precision
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
-    integer(kind=ik), intent(in)    :: line
+    integer(kind=c_int), intent(in)    :: line
     logical                         :: successCUDA
 
     if (.not.(successCUDA)) then
@@ -239,12 +232,11 @@ module ELPA_utilities
  end subroutine
 
  subroutine check_dealloc_CUDA_f(file_name, line, successCUDA)
-    use precision
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
-    integer(kind=ik), intent(in)    :: line
+    integer(kind=c_int), intent(in)    :: line
     logical                         :: successCUDA
 
     if (.not.(successCUDA)) then
@@ -254,12 +246,11 @@ module ELPA_utilities
  end subroutine
 
  subroutine check_memcpy_CUDA_f(file_name, line, successCUDA)
-    use precision
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
-    integer(kind=ik), intent(in)    :: line
+    integer(kind=c_int), intent(in)    :: line
     logical                         :: successCUDA
 
     if (.not.(successCUDA)) then

@@ -42,7 +42,7 @@
 !
 #include "config-f90.h"
 
-module redirect
+module test_redirect
   use, intrinsic :: iso_c_binding
 
   implicit none
@@ -74,9 +74,8 @@ module redirect
 !> \param none
 !> \result res integer indicates success or failure
     function create_directories() result(res)
-      use precision
       implicit none
-      integer(kind=ik) :: res
+      integer(kind=C_INT) :: res
       res = int(create_directories_c())
     end function
 !>
@@ -87,9 +86,8 @@ module redirect
 !> \param myproc MPI task id
     subroutine redirect_stdout(myproc)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
-      integer(kind=ik), intent(in) :: myproc
+      integer(kind=C_INT), intent(in) :: myproc
       call redirect_stdout_c(int(myproc, kind=C_INT))
     end subroutine
 !>
@@ -115,4 +113,4 @@ module redirect
 
     end function
 
-end module redirect
+end module test_redirect

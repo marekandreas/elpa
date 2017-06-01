@@ -41,21 +41,21 @@
 !
 !
 #include "config-f90.h"
-module mod_blacs_infrastructure
+module test_blacs_infrastructure
 
   contains
 
-    subroutine set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, &
+    subroutine set_up_blacsgrid(mpi_comm_parent, my_blacs_ctxt, np_rows, &
                                 np_cols, nprow, npcol, my_prow, my_pcol)
 
-      use precision
+      use test_util
 
       implicit none
-      integer(kind=ik), intent(in)     :: mpi_comm_world
+      integer(kind=ik), intent(in)     :: mpi_comm_parent
       integer(kind=ik), intent(inout)  :: my_blacs_ctxt, np_rows, &
                                           np_cols, nprow, npcol, my_prow, my_pcol
 
-      my_blacs_ctxt = mpi_comm_world
+      my_blacs_ctxt = mpi_comm_parent
 #ifdef WITH_MPI
       call BLACS_Gridinit(my_blacs_ctxt, 'C', np_rows, np_cols)
       call BLACS_Gridinfo(my_blacs_ctxt, nprow, npcol, my_prow, my_pcol)
@@ -67,19 +67,19 @@ module mod_blacs_infrastructure
 #endif
     end subroutine
 
-    !c> void set_up_blacsgrid_f(int mpi_comm_world, int* my_blacs_ctxt,
+    !c> void set_up_blacsgrid_f(int mpi_comm_parent, int* my_blacs_ctxt,
     !c>                         int *np_rows, int *np_cols, int *nprow, int *npcol,
     !c>                         int *my_prow, int *my_pcol);
-    subroutine set_up_blacsgrid_f(mpi_comm_world, my_blacs_ctxt, np_rows,  &
+    subroutine set_up_blacsgrid_f(mpi_comm_parent, my_blacs_ctxt, np_rows,  &
                                   np_cols, nprow, npcol, my_prow, my_pcol) &
                                   bind(C, name="set_up_blacsgrid_f")
       use iso_c_binding
       implicit none
-      integer(kind=c_int), value :: mpi_comm_world
+      integer(kind=c_int), value :: mpi_comm_parent
       integer(kind=c_int)        :: my_blacs_ctxt, np_rows, &
                                     np_cols, nprow, npcol, my_prow, my_pcol
 
-      call set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, &
+      call set_up_blacsgrid(mpi_comm_parent, my_blacs_ctxt, np_rows, &
                                 np_cols, nprow, npcol, my_prow, my_pcol)
     end subroutine
 
@@ -88,8 +88,7 @@ module mod_blacs_infrastructure
                                        na_cols, sc_desc, my_blacs_ctxt, info)
 
       use elpa_utilities, only : error_unit
-      use precision
-      use elpa_mpi
+      use test_util
       implicit none
 
       integer(kind=ik), intent(inout)  :: na, nblk, my_prow, my_pcol, np_rows,   &

@@ -56,29 +56,22 @@ program test_all_real
 ! distributed along with the original code in the file "COPYING".
 !
 !-------------------------------------------------------------------------------
-   use precision
    use elpa1
    use elpa2
    use elpa_utilities, only : error_unit, map_global_array_index_to_local_index
    use elpa2_utilities
-#ifdef WITH_OPENMP
+
    use test_util
-#endif
+   use test_read_input_parameters
+   use test_check_correctness
+   use test_setup_mpi
+   use test_blacs_infrastructure
+   use test_prepare_matrix
 
-   use mod_read_input_parameters
-   use mod_check_correctness
-   use mod_setup_mpi
-   use mod_blacs_infrastructure
-   use mod_prepare_matrix
-
-   use elpa_mpi
 #ifdef HAVE_REDIRECT
-   use redirect
+   use test_redirect
 #endif
-#ifdef HAVE_DETAILED_TIMINGS
-  use timings
-#endif
-  use output_types
+   use test_output_type
 
    implicit none
 
@@ -161,33 +154,6 @@ program test_all_real
 !#define DATATYPE REAL !!! check here
 !#include "elpa_print_headers.X90"
 
-#ifdef HAVE_DETAILED_TIMINGS
-
-   ! initialise the timing functionality
-
-#ifdef HAVE_LIBPAPI
-   call timer%measure_flops(.true.)
-#endif
-
-   call timer%measure_allocated_memory(.true.)
-   call timer%measure_virtual_memory(.true.)
-   call timer%measure_max_allocated_memory(.true.)
-
-   call timer%set_print_options(&
-#ifdef HAVE_LIBPAPI
-                print_flop_count=.true., &
-                print_flop_rate=.true., &
-#endif
-                print_allocated_memory = .true. , &
-                print_virtual_memory=.true., &
-                print_max_allocated_memory=.true.)
-
-
-  call timer%enable()
-
-  call timer%start("program")
-#endif
-
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
@@ -245,9 +211,6 @@ program test_all_real
 
    !-------------------------------------------------------------------------------
    ! Allocate matrices and set up a test matrix for the eigenvalue problem
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("allocate arrays")
-#endif
 
    if (input_options%datatype .eq. 1) then
      allocate(a_real (na_rows,na_cols))
@@ -295,15 +258,6 @@ program test_all_real
      allocate(tmp2_complex(na_rows,na_cols))
    endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("allocate arrays")
-#endif
-
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%start("set up matrix")
-#endif
-
    if (input_options%datatype .eq. 1) then
      call prepare_matrix(na, myid, sc_desc, a_real, z_real, as_real)
 
@@ -322,17 +276,10 @@ program test_all_real
    endif
 
 
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("set up matrix")
-#endif
-
    if (input_options%doSolveTridi) then
      ! first the toeplitz test only in real case
      ! changeable numbers here would be nice
      if (input_options%datatype .eq. 1) then
-#ifdef HAVE_DETAILED_TIMINGS
-       call timer%start("set up matrix")
-#endif
 
        diagonalElement_real = 0.45_rk8
        subdiagonalElement_real =  0.78_rk8
@@ -361,10 +308,6 @@ program test_all_real
        enddo
 
        as_real = a_real
-
-#ifdef HAVE_DETAILED_TIMINGS
-       call timer%stop("set up matrix")
-#endif
 
        !-------------------------------------------------------------------------------
        ! Calculate eigenvalues/eigenvectors
@@ -939,22 +882,12 @@ program test_all_real
 
     endif ! input_options%doTransposeMultiply
 
-!#ifdef HAVE_DETAILED_TIMINGS
-!   call timer%start("set up matrix")
-!#endif
-!
 !   if (input_options%datatype .eq. 0) then
 !     call prepare_matrix(na, myid, sc_desc, a_real, z_real, as_real)
 !   endif
 !   if (input_options%datatype .eq. 1) then
 !     call prepare_matrix(na, myid, sc_desc, a_complex, z_complex, as_complex)
 !   endif
-!
-!
-!#ifdef HAVE_DETAILED_TIMINGS
-!   call timer%stop("set up matrix")
-!#endif
-
 
    if (input_options%do1stage) then
      !-------------------------------------------------------------------------------
@@ -971,7 +904,7 @@ program test_all_real
 #ifdef WITH_MPI
      call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-     tStart = mpi_wtime()
+     tStart = seconds()
 
      if (input_options%datatype .eq. 1) then
        success = elpa_solve_evp_real_1stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows, nblk, &
@@ -1018,7 +951,7 @@ program test_all_real
 #ifdef WITH_MPI
      call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-     tEnd = mpi_wtime()
+     tEnd = seconds()
      if(myid == 0) print *," "
      if (input_options%datatype .eq. 1) then
        if(myid == 0) print *,'Total time for solve_evp_real_1stage:',tEnd - tStart
@@ -1109,7 +1042,7 @@ program test_all_real
          call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-         tStart = mpi_wtime()
+         tStart = seconds()
 
          success = elpa_solve_evp_real_2stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows,  nblk, na_cols, &
                                                      mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useQr=this_qr, useGPU=this_gpu)
@@ -1137,7 +1070,7 @@ program test_all_real
 #ifdef WITH_MPI
          call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-         tEnd = mpi_wtime()
+         tEnd = seconds()
 
          if (myid == 0) print *," "
          if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
@@ -1192,7 +1125,7 @@ program test_all_real
              call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-             tStart = mpi_wtime()
+             tStart = seconds()
 
              success = elpa_solve_evp_real_2stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows,  nblk, na_cols, &
                                                          mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
@@ -1225,7 +1158,7 @@ program test_all_real
 #ifdef WITH_MPI
              call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-             tEnd = mpi_wtime()
+             tEnd = seconds()
 
              if (myid == 0) print *," "
              if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
@@ -1281,7 +1214,7 @@ program test_all_real
            call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-           tStart = mpi_wtime()
+           tStart = seconds()
 
            success = elpa_solve_evp_real_2stage_double(na, nev, a_real, na_rows, ev, z_real, na_rows,  nblk, na_cols, &
                                                        mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
@@ -1317,7 +1250,7 @@ program test_all_real
 #ifdef WITH_MPI
            call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-           tEnd = mpi_wtime()
+           tEnd = seconds()
 
            if (myid == 0) print *," "
            if (myid == 0) print *,'Total time for solve_evp_real2_stage with ', &
@@ -1384,7 +1317,7 @@ program test_all_real
          call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-         tStart = mpi_wtime()
+         tStart = seconds()
 
          success = elpa_solve_evp_complex_2stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows,  nblk, na_cols, &
                                                         mpi_comm_rows, mpi_comm_cols, mpi_comm_world, useGPU=this_gpu)
@@ -1412,7 +1345,7 @@ program test_all_real
 #ifdef WITH_MPI
          call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-         tEnd = mpi_wtime()
+         tEnd = seconds()
 
          if (myid == 0) print *," "
          if (myid == 0) print *,'Total time for solve_evp_complex_2stage with ', &
@@ -1468,7 +1401,7 @@ program test_all_real
              call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-             tStart = mpi_wtime()
+             tStart = seconds()
 
              success = elpa_solve_evp_complex_2stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows,  nblk, na_cols, &
                                                             mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
@@ -1501,7 +1434,7 @@ program test_all_real
 #ifdef WITH_MPI
              call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-             tEnd = mpi_wtime()
+             tEnd = seconds()
 
              if (myid == 0) print *," "
              if (myid == 0) print *,'Total time for solve_evp_complex_2stage with ', &
@@ -1560,7 +1493,7 @@ program test_all_real
            call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
 
-           tStart = mpi_wtime()
+           tStart = seconds()
 
            success = elpa_solve_evp_complex_2stage_double(na, nev, a_complex, na_rows, ev, z_complex, na_rows,  nblk, na_cols, &
                                                           mpi_comm_rows, mpi_comm_cols, mpi_comm_world,        &
@@ -1596,7 +1529,7 @@ program test_all_real
 #ifdef WITH_MPI
            call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
 #endif
-           tEnd = mpi_wtime()
+           tEnd = seconds()
 
            if (myid == 0) print *," "
            if (myid == 0) print *,'Total time for solve_evp_complex_2stage with ', &
@@ -1664,17 +1597,6 @@ program test_all_real
    endif
 
    deallocate(ev)
-
-#ifdef HAVE_DETAILED_TIMINGS
-   call timer%stop("program")
-   print *," "
-   print *,"Timings program:"
-   print *," "
-   call timer%print("program")
-   print *," "
-   print *,"End timings program"
-   print *," "
-#endif
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

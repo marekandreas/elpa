@@ -91,8 +91,6 @@ program test_real_example
    ! nev:  Number of eigenvectors to be calculated
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
- !  integer, parameter         :: ik = C_INT32_T
- !  integer, parameter         :: rk = C_DOUBLE
 
    integer           :: nblk
    integer           :: na, nev

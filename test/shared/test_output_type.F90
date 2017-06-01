@@ -1,6 +1,6 @@
 #include "config-f90.h"
 
-module output_types
+module test_output_type
 
  type :: output_t
    logical :: eigenvectors

@@ -46,13 +46,13 @@
 
 program test_interface
    use precision
-   use mod_setup_mpi
+   use test_setup_mpi
    use elpa_mpi
    use elpa
-   use mod_prepare_matrix
-   use mod_read_input_parameters
-   use mod_blacs_infrastructure
-   use mod_check_correctness
+   use test_prepare_matrix
+   use test_read_input_parameters
+   use test_blacs_infrastructure
+   use test_check_correctness
 #ifdef HAVE_DETAILED_TIMINGS
    use timings
 #endif

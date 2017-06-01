@@ -905,8 +905,7 @@ AC_SUBST([OPENMP_FCFLAGS])
 AC_SUBST([OPENMP_LDFLAGS])
 AC_SUBST([DOXYGEN_OUTPUT_DIR], [docs])
 
-#rm -rf modules/ private_modules/ .fortran_dependencies/
-mkdir -p modules private_modules
+mkdir -p modules private_modules test_modules
 
 
 #gl_VISIBILITY

@@ -79,24 +79,18 @@ program test_real2_single_banded
 ! distributed along with the original code in the file "COPYING".
 !
 !-------------------------------------------------------------------------------
-   use precision
    use elpa
 
-   use mod_check_for_gpu, only : check_for_gpu
-#ifdef WITH_OPENMP
    use test_util
-#endif
-
-   use mod_read_input_parameters
-   use mod_check_correctness
-   use mod_setup_mpi
-   use mod_blacs_infrastructure
-   use mod_prepare_matrix
-   use elpa_mpi
+   use test_read_input_parameters
+   use test_check_correctness
+   use test_setup_mpi
+   use test_blacs_infrastructure
+   use test_prepare_matrix
 #ifdef HAVE_REDIRECT
-  use redirect
+   use test_redirect
 #endif
- use output_types
+   use test_output_type
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -123,8 +117,6 @@ program test_real2_single_banded
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    integer(kind=ik)           :: success
-   integer(kind=ik)           :: numberOfDevices
-   logical                    :: gpuAvailable
    type(output_t)             :: write_to_file
    character(len=8)           :: task_suffix
    integer(kind=ik)           :: j
@@ -133,15 +125,12 @@ program test_real2_single_banded
    class(elpa_t), pointer     :: e
 #define DOUBLE_PRECISION_REAL 1
 
-   gpuAvailable  = .false.
-
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
 

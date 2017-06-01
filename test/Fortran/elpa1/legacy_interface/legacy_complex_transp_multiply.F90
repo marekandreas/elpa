@@ -45,24 +45,20 @@
 
 program test_transpose_multiply
 
-   use precision
    use elpa1
    use elpa_utilities, only : error_unit
-#ifdef WITH_OPENMP
    use test_util
-#endif
 
-   use mod_read_input_parameters
-   use mod_check_correctness
-   use mod_setup_mpi
-   use mod_blacs_infrastructure
-   use mod_prepare_matrix
+   use test_read_input_parameters
+   use test_check_correctness
+   use test_setup_mpi
+   use test_blacs_infrastructure
+   use test_prepare_matrix
 
-   use elpa_mpi
 #ifdef HAVE_REDIRECT
-   use redirect
+   use test_redirect
 #endif
-  use output_types
+  use test_output_type
 
    implicit none
 
