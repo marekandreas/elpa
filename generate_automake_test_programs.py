@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+from __future__ import print_function
+from itertools import product
+
+domain_flag = {
+        "real"   : "-DTEST_REAL",
+        "complex": "-DTEST_COMPLEX",
+}
+prec_flag = {
+        "double" : "-DTEST_DOUBLE",
+        "single" : "-DTEST_SINGLE",
+}
+solver_flag = {
+        "1stage" : "-DTEST_SOLVER_1STAGE",
+        "2stage" : "-DTEST_SOLVER_2STAGE",
+}
+gpu_flag = {
+        0 : "-DTEST_GPU=0",
+        1 : "-DTEST_GPU=1",
+}
+
+f = open("test_programs.am", "w")
+
+for g, p, d, s in product(sorted(gpu_flag.keys()),
+                          sorted(prec_flag.keys()),
+                          sorted(domain_flag.keys()),
+                          sorted(solver_flag.keys())):
+    endifs = 0
+    extra_flags = []
+    if (g == 1):
+        print("if WITH_GPU_VERSION", file=f)
+        endifs += 1
+        if s == "2stage":
+            extra_flags.append("-DTEST_KERNEL=ELPA_2STAGE_{0}_GPU".format(d.upper()))
+
+    if (p == "single"):
+        if (d == "real"):
+            print("if WANT_SINGLE_PRECISION_REAL", file=f)
+        elif (d == "complex"):
+            print("if WANT_SINGLE_PRECISION_COMPLEX", file=f)
+        else:
+            raise Exception("Oh no!")
+        endifs += 1
+
+    name = "test_{0}_{1}_{2}{3}".format(d, p, s, "_gpu" if g else "")
+    print("noinst_PROGRAMS += " + name, file=f)
+    print("check_SCRIPTS += " + name + ".sh", file=f)
+    print(name + "_SOURCES = test/Fortran/test.F90", file=f)
+    print(name + "_LDADD = $(build_lib) $(FCLIBS)", file=f)
+    print(name + "_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules \\", file=f)
+    print("  " + " \\\n  ".join([
+        domain_flag[d],
+        prec_flag[p],
+        solver_flag[s],
+        gpu_flag[g]] + extra_flags), file=f)
+
+    print("endif\n" * endifs, file=f)
