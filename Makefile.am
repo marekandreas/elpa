@@ -1308,6 +1308,7 @@ distclean-local:
 EXTRA_DIST = \
   elpa/elpa.h \
   elpa/elpa_legacy.h \
+  elpa/elpa_generic.h \
   fdep/fortran_dependencies.pl \
   fdep/fortran_dependencies.mk \
   test/Fortran/elpa_print_headers.X90 \
