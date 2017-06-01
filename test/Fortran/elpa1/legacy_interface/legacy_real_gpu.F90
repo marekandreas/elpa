@@ -74,13 +74,9 @@ program test_real_gpu_version_double_precision
 !
 !-------------------------------------------------------------------------------
    use elpa1
-
-   use mod_check_for_gpu, only : check_for_gpu
-
    use elpa_utilities, only : error_unit
-   !use elpa1_utilities
-   use test_util
 
+   use test_util
    use test_read_input_parameters
    use test_check_correctness
    use test_setup_mpi
@@ -117,8 +113,6 @@ program test_real_gpu_version_double_precision
    integer(kind=ik)           :: omp_get_max_threads,  required_mpi_thread_level, &
                                  provided_mpi_thread_level
 #endif
-   integer(kind=ik)           :: numberOfDevices
-   logical                    :: gpuAvailable
    type(output_t)             :: write_to_file
    logical                    :: success
    character(len=8)           :: task_suffix
@@ -135,8 +129,6 @@ program test_real_gpu_version_double_precision
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
-
-   gpuAvailable = check_for_gpu(myid, numberOfDevices)
 
    STATUS = 0
 
@@ -160,12 +152,7 @@ program test_real_gpu_version_double_precision
       print '((a,i0))', 'Num eigenvectors: ', nev
       print '((a,i0))', 'Blocksize: ', nblk 
       print '((a,i0))', 'Num MPI proc: ', nprocs 
-      if (gpuAvailable) then
-        print '((a))', 'Using gpu: YES'
-      else
-        print '((a))', 'Using gpu: NO, not available'
-      endif
-      print '((a,i0))', 'Num gpu devices: ', numberOfDevices
+      print '((a))', 'Using gpu: YES'
       print '((a))', 'Number type: real'
       print '((a))', 'Number precision: double'
       print *
