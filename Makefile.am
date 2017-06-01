@@ -350,7 +350,14 @@ BUILT_SOURCES = $(generated_headers)
 
 # install public headers and Fortran modules files in the include/ dir
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
-nobase_elpa_include_HEADERS = $(wildcard modules/*) $(wildcard elpa/*)
+nobase_elpa_include_HEADERS = \
+  $(wildcard modules/*) \
+  elpa/elpa.h \
+  elpa/elpa_generic.h \
+  elpa/elpa_legacy.h
+
+nobase_nodist_elpa_include_HEADERS = \
+  elpa/elpa_constants.h
 
 dist_man_MANS = \
   man/elpa2_print_kernels.1
@@ -617,7 +624,6 @@ EXTRA_DIST += \
   src/elpa1/legacy_interface/elpa_multiply_a_b.X90 \
   src/elpa1/legacy_interface/elpa_solve_tridi.X90
 endif
-
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
