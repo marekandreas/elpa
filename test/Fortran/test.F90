@@ -179,7 +179,7 @@ program test
    call e%set("gpu", TEST_GPU, error)
    assert_elpa_ok(error)
 
-#if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)
+#if defined(TEST_SOLVER_2STAGE) && defined(TEST_KERNEL)
 # ifdef TEST_COMPLEX
    call e%set("complex_kernel", TEST_KERNEL, error)
 # else
