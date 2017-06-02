@@ -260,7 +260,16 @@
         ! disable GPU usage for trans_ev_tridi
         do_useGPU_trans_ev_tridi = .false.
       else
-        do_useGPU_trans_ev_tridi = .true.
+#if REALCASE == 1
+        if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+#endif
+#if COMPLEXCASE == 1
+        if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+#endif
+          do_useGPU_trans_ev_tridi = .true.
+	else
+          do_useGPU_trans_ev_tridi = .false.
+	endif
       endif
     endif
 
