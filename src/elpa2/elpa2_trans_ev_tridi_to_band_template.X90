@@ -402,7 +402,7 @@
           if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
         kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
-            stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
+            stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
                                             ! (4 * sizeof(double complex) == 64)
 
     else
@@ -504,7 +504,7 @@
           if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
         kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
-            stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
+            stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
                                             ! (4 * sizeof(double complex) == 64)
 
     else
@@ -517,7 +517,7 @@
           if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
         kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
-            stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
+            stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                             ! (8 * sizeof(float complex) == 64)
 
           else
