@@ -112,25 +112,6 @@ static __forceinline void hh_trafo_complex_kernel_32_AVX512_2hv_single(float com
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
 	float* s_dbl = (float*)(&s);
-        float s_helper[16];
-
-        s_helper[0] = s_dbl[0];
-        s_helper[1] = s_dbl[1];
-        s_helper[2] = s_dbl[0];
-        s_helper[3] = s_dbl[1];
-        s_helper[4] = s_dbl[0];
-        s_helper[5] = s_dbl[1];
-        s_helper[6] = s_dbl[0];
-        s_helper[7] = s_dbl[1];
-        s_helper[8] = s_dbl[0];
-        s_helper[9] = s_dbl[1];
-        s_helper[10] = s_dbl[0];
-        s_helper[11] = s_dbl[1];
-        s_helper[12] = s_dbl[0];
-        s_helper[13] = s_dbl[1];
-        s_helper[14] = s_dbl[0];
-        s_helper[15] = s_dbl[1];
-
 
 	__m512 x1, x2, x3, x4;
 	__m512 y1, y2, y3, y4;
@@ -287,7 +268,7 @@ static __forceinline void hh_trafo_complex_kernel_32_AVX512_2hv_single(float com
 //        tmp2 = _mm512_broadcast_f64x2(_mm512_castpd512_ps128(tmp_s));
 //        tmp2 = _mm512_set4_ps(s_dbl[0],s_dbl[1], s_dbl[0],s_dbl[1]);
 
-	tmp2 = _mm512_load_ps(&s_helper);
+	tmp2 = (__m512) _mm512_set1_pd(*(double*)(&s_dbl[0]));
 	tmp1 = _mm512_mul_ps(h2_imag, tmp2);
 
 	tmp2 = _mm512_FMADDSUB_ps(h2_real, tmp2, _mm512_shuffle_ps(tmp1, tmp1, 0xb1));
@@ -465,24 +446,7 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_2hv_single(float com
 	float* q_dbl = (float*)q;
 	float* hh_dbl = (float*)hh;
 	float* s_dbl = (float*)(&s);
-	float s_helper[16];
 
-        s_helper[0] = s_dbl[0];
-        s_helper[1] = s_dbl[1];
-        s_helper[2] = s_dbl[0];
-        s_helper[3] = s_dbl[1];
-        s_helper[4] = s_dbl[0];
-        s_helper[5] = s_dbl[1];
-        s_helper[6] = s_dbl[0];
-        s_helper[7] = s_dbl[1];
-        s_helper[8] = s_dbl[0];
-        s_helper[9] = s_dbl[1];
-        s_helper[10] = s_dbl[0];
-        s_helper[11] = s_dbl[1];
-        s_helper[12] = s_dbl[0];
-        s_helper[13] = s_dbl[1];
-        s_helper[14] = s_dbl[0];
-        s_helper[15] = s_dbl[1];
 	__m512 x1, x2;
 	__m512 y1, y2;
 	__m512 q1, q2;
@@ -590,8 +554,7 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_2hv_single(float com
 //       tmp2 = _mm512_broadcast_f64x2(_mm512_castpd512_ps128(tmp_s));
 //        tmp2 = _mm512_set4_ps(s_dbl[0],s_dbl[1], s_dbl[0],s_dbl[1]);
 
-	tmp2 = _mm512_load_ps(&s_helper);
-
+	tmp2 = (__m512) _mm512_set1_pd(*(double*)(&s_dbl[0]));
 	tmp1 = _mm512_mul_ps(h2_imag, tmp2);
 
 	tmp2 = _mm512_FMADDSUB_ps(h2_real, tmp2, _mm512_shuffle_ps(tmp1, tmp1, 0xb1));

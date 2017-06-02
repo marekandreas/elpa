@@ -114,16 +114,6 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_2hv_double(double co
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
 	double* s_dbl = (double*)(&s);
-        double s_helper[8];
-
-        s_helper[0] = s_dbl[0];
-        s_helper[1] = s_dbl[1];
-        s_helper[2] = s_dbl[0];
-        s_helper[3] = s_dbl[1];
-        s_helper[4] = s_dbl[0];
-        s_helper[5] = s_dbl[1];
-        s_helper[6] = s_dbl[0];
-        s_helper[7] = s_dbl[1];
 
 	__m512d x1, x2, x3, x4;
 	__m512d y1, y2, y3, y4;
@@ -281,7 +271,10 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_2hv_double(double co
 //        tmp2 = _mm512_broadcast_f64x2(_mm512_castpd512_pd128(tmp_s));
 //        tmp2 = _mm512_set4_pd(s_dbl[0],s_dbl[1], s_dbl[0],s_dbl[1]);
 
-	tmp2 = _mm512_load_pd(&s_helper);
+	tmp2 = _mm512_set_pd(s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0]);
 	tmp1 = _mm512_mul_pd(h2_imag, tmp2);
 
 	tmp2 = _mm512_FMADDSUB_pd(h2_real, tmp2, _mm512_shuffle_pd(tmp1, tmp1, 0x55));
@@ -465,16 +458,6 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_2hv_double(double com
 	double* q_dbl = (double*)q;
 	double* hh_dbl = (double*)hh;
 	double* s_dbl = (double*)(&s);
-        double s_helper[8];
-
-        s_helper[0] = s_dbl[0];
-        s_helper[1] = s_dbl[1];
-        s_helper[2] = s_dbl[0];
-        s_helper[3] = s_dbl[1];
-        s_helper[4] = s_dbl[0];
-        s_helper[5] = s_dbl[1];
-        s_helper[6] = s_dbl[0];
-        s_helper[7] = s_dbl[1];
 
 	__m512d x1, x2;
 	__m512d y1, y2;
@@ -584,8 +567,10 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_2hv_double(double com
 //       tmp2 = _mm512_broadcast_f64x2(_mm512_castpd512_pd128(tmp_s));
  //       tmp2 = _mm512_set4_pd(s_dbl[0],s_dbl[1], s_dbl[0],s_dbl[1]);
 
-        tmp2 = _mm512_load_pd(&s_helper);
-
+	tmp2 = _mm512_set_pd(s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0]);
 	tmp1 = _mm512_mul_pd(h2_imag, tmp2);
 
 	tmp2 = _mm512_FMADDSUB_pd(h2_real, tmp2, _mm512_shuffle_pd(tmp1, tmp1, 0x55));
