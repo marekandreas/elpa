@@ -1002,9 +1002,10 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 
 echo " "
 echo "***********************************************************************"
-echo "*  This is a prerelease of the ELPA library 2016.11.001.pre library!  *"
-echo "*  It contains an experimental API which will most likely change with *"
-echo "*  the next stable release.                                           *"
+echo "*  This is a the release candidate  ELPA 2017.05.001.rc1              *"
+echo "*  All functionality of the release ELPA 2017.05.001 is already, but  *"
+echo "*  we wait for the end of the merge window, and/or user comments      *"
+echo "*  before the official release is published                           *"
 echo "***********************************************************************"
 echo " "
 make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"
