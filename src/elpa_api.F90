@@ -1111,7 +1111,7 @@ module elpa_api
 
   contains
 
-    !> \brief function to intialise the ELPA library
+    !> \brief function to intialize the ELPA library
     !> Parameters
     !> \param   api_version integer: api_version that ELPA should use
     !> \result  error       integer: error code, which can be queried with elpa_strerr

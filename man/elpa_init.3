@@ -1,0 +1,53 @@
+.TH "elpa_init" 3 "Sat Jun 3 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_init \- initialize the ELPA library
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+.RI  "error = \fBelpa_init\fP (api_version)"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.RI "integer, intent(in) \fBapi_version\fP:  the api version that you want to initialize, currently the version is 20170403"
+.br
+.RI "integer             \fBerror\fP:        the return code. If the function returns without an error, the error code will be ELPA_OK."
+.br
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+.RI "\fBint\fP error = \fBelpa_init\fP (\fBint\fP api_version);"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.br
+.RI "int \fBapi_version\fP:  the api version that you want to initialize currently the version is 20170403"
+.br
+.RI "int \fBerror\fP:        the return code. If the function returns without an error, the error code will be ELPA_OK."
+
+.SH DESCRIPTION
+Initializes the ELPA library for usage. The return code shold be ELPA_OK. The return code can be querried
+with the \fBelpa_strerr\fP(3) function.
+.br
+.SH "SEE ALSO"
+.br
+\fBelpa2_print_kernels\fP(1)

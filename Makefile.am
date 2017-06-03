@@ -360,7 +360,8 @@ nobase_nodist_elpa_include_HEADERS = \
   elpa/elpa_constants.h
 
 dist_man_MANS = \
-  man/elpa2_print_kernels.1
+  man/elpa2_print_kernels.1 \
+  man/elpa_init.3
 
 if ENABLE_LEGACY
 dist_man_MANS += \
