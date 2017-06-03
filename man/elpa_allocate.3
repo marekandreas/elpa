@@ -1,0 +1,48 @@
+.TH "elpa_allocate" 3 "Sat Jun 3 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_allocate \- allocate an instance of the ELPA library
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+.RI  "elpa => \fBelpa_allocate\fP ()"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.RI "class(elpa_t)  \fBelpa\fP:  returns an instance of the ELPA object"
+.br
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+.RI "\fBelpa_t\fP handle = \fBelpa_allocate\fP ();"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.br
+.RI "elpa_t \fBhandle\fP:    returns an handle to the allocated ELPA object"
+
+.SH DESCRIPTION
+Allocate an ELPA object. The function \fBelpa_init\fP(3) must be called once BEFORE \fBelpa_allocate\fP can be called.
+.br
+.SH "SEE ALSO"
+.br
+\fBelpa2_print_kernels\fP(1) \fPelpa_init\fP(3)
