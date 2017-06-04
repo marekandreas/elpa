@@ -1,0 +1,50 @@
+.TH "elpa_uninit" 3 "Sat Jun 3 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_uninit \- uninitialize the ELPA library
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+.RI  "call \fBelpa_uninit\fP ()"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.RI "No input or output is needed."
+.br
+.br
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+.RI "\fBvoid\fP \fBelpa_uninit\fP ();"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.br
+.RI "No input or output is needed."
+.br
+
+.SH DESCRIPTION
+Uninitializes the ELPA library after usage. The function \fBelpa_init\fP(3) must have been called BEFORE elpa_uninit can be called.
+.br
+.SH "SEE ALSO"
+.br
+\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_strerr\fP(3) \fBelpa_setup\fP(3)
