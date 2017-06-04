@@ -1,0 +1,50 @@
+.TH "elpa_setup" 3 "Sat Jun 3 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_setup \- setup an instance of the ELPA library
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+.RI  "success= \fBelpa%elpa_setup\fP ()"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.RI "integer \fBsucces\fP:  the returned error code. Should normally be ELPA_OK. Can be querried with \fBelpa_strerr\fP3"
+.br
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+.RI "\fBint\fP success = \fBelpa_setup\fP (\fBelpa_t\fP handle);"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.br
+.RI "elpa_t \fBhandle\fP:    the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
+.br
+.RI "int   \fBsuccess\fP:    the returned error code. Should normally be ELPA_OK. Can be querried with \fBelpa_strerr\fP(3)"
+
+.SH DESCRIPTION
+Setups an ELPA object. BEFORE the setup the functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3) must have been called and some parameters must have been set with \fBelpa_set\fP(3).
+.br
+.SH "SEE ALSO"
+.br
+\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_strerr\fP(3) \fBelpa_uninit\fP(3)
