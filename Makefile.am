@@ -363,7 +363,9 @@ dist_man_MANS = \
   man/elpa2_print_kernels.1 \
   man/elpa_init.3 \
   man/elpa_allocate.3 \
+  man/elpa_set.3 \
   man/elpa_setup.3 \
+  man/elpa_deallocate.3 \
   man/elpa_uninit.3
 
 if ENABLE_LEGACY
