@@ -1,0 +1,48 @@
+.TH "elpa_deallocate" 3 "Sat Jun 3 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_deallocate \- deallocate an instance of the ELPA library after usage
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+.RI  "call \fBelpa_deallocate\fP (\fBclass(elpa_t)\fP elpa)"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.RI "class(elpa_t)  \fBelpa\fP:  the pointer to the instance of the ELPA library which should be deallocated"
+.br
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+.RI "\fBvoid\fP \fBelpa_deallocate\fP (\fBelpa_t\fP handle);"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.br
+.RI "elpa_t \fBhandle\fP:   the handle to the ELPA instance which should be deallocated."
+
+.SH DESCRIPTION
+Deallocate an ELPA object. The functions \fBelpa_init\fP(3) and \fBelpa_allocate\fP(3) must have been called BEFORE elpa_deallocate\fP can be called.
+.br
+.SH "SEE ALSO"
+.br
+\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_uninit\fP(3)
