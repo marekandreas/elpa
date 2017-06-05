@@ -559,6 +559,7 @@ EXTRA_DIST = \
   elpa/elpa_generic.h \
   fdep/fortran_dependencies.pl \
   fdep/fortran_dependencies.mk \
+  manual_cpp \
   test/Fortran/elpa_print_headers.X90 \
   test/Fortran/assert.h \
   src/elpa1/elpa_reduce_add_vectors.X90 \
