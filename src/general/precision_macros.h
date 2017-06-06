@@ -1,6 +1,6 @@
 #ifdef REALCASE
 #undef DOUBLE_PRECISION_REAL
-
+#undef SINGLE_PRECSION_REAL
 #undef  MATH_DATATYPE
 #undef  BLAS_TRANS_OR_CONJ
 #undef  PRECISION
@@ -97,6 +97,8 @@
 #endif /* DOUBLE_PRECISION */
 
 #ifdef SINGLE_PRECISION
+
+#define SINGLE_PRECISION_REAL
 
 #define  PRECISION single
 #define  PRECISION_STR 'single'
