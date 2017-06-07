@@ -388,6 +388,8 @@ program test_real2_choose_kernel_with_api_single_precision
       write(error_unit,*) "solve_evp_real_2stage produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 

@@ -190,6 +190,8 @@ program test_transpose_multiply
       write(error_unit,*) "elpa_mult_at_b_real produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 

@@ -202,6 +202,8 @@ program test_invert_trm
       write(error_unit,*) " elpa_cholesky_complex produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 
@@ -226,6 +228,8 @@ program test_invert_trm
       write(error_unit,*) " elpa_invert_trm_complex produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 

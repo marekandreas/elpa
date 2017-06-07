@@ -199,6 +199,8 @@ int main(int argc, char** argv) {
      printf("error in ELPA solve \n");
 #ifdef WITH_MPI
      mpierr = MPI_Abort(MPI_COMM_WORLD, 99);
+#else
+     exit(99);
 #endif
    }
 
@@ -229,6 +231,8 @@ int main(int argc, char** argv) {
      printf("error in ELPA solve \n");
 #ifdef WITH_MPI
      mpierr = MPI_Abort(MPI_COMM_WORLD, 99);
+#else
+     exit(99);
 #endif
    }
 
@@ -258,6 +262,8 @@ int main(int argc, char** argv) {
      printf("error in ELPA solve \n");
 #ifdef WITH_MPI
      mpierr = MPI_Abort(MPI_COMM_WORLD, 99);
+#else
+     exit(99);
 #endif
    }
 

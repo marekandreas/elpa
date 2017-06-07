@@ -225,6 +225,8 @@ program test_complex2
       write(error_unit,*) "elpa_solve_evp_complex produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 
@@ -252,6 +254,8 @@ program test_complex2
       write(error_unit,*) "elpa_solve_evp_complex produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 
@@ -279,6 +283,8 @@ program test_complex2
       write(error_unit,*) "elpa_solve_evp_complex produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 

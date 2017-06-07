@@ -241,6 +241,8 @@ program test_solve_tridi
       write(error_unit,*) "elpa_solve_tridi produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 

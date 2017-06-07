@@ -328,6 +328,8 @@ program test_all_real
          write(error_unit,*) "elpa_solve_tridi produced an error! Aborting..."
 #ifdef WITH_MPI
          call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+         call exit(1)
 #endif
        endif
 
@@ -410,6 +412,8 @@ program test_all_real
           write(error_unit,*) "elpa_cholseky_real produced an error! Aborting..."
 #ifdef WITH_MPI
           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+          call exit(1)
 #endif
         endif
 
@@ -481,6 +485,8 @@ program test_all_real
           write(error_unit,*) " elpa_cholesky_complex produced an error! Aborting..."
 #ifdef WITH_MPI
           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+          call exit(1)
 #endif
         endif
 
@@ -561,6 +567,8 @@ program test_all_real
            write(error_unit,*) "elpa_cholseky_real produced an error! Aborting..."
 #ifdef WITH_MPI
            call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+           call exit(1)
 #endif
         endif
 
@@ -586,6 +594,8 @@ program test_all_real
           write(error_unit,*) "elpa_cholseky_real produced an error! Aborting..."
 #ifdef WITH_MPI
           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+          call exit(1)
 #endif
         endif
 
@@ -665,6 +675,8 @@ program test_all_real
           write(error_unit,*) " elpa_cholesky_complex produced an error! Aborting..."
 #ifdef WITH_MPI
           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+          call exit(1)
 #endif
         endif
 
@@ -689,6 +701,8 @@ program test_all_real
            write(error_unit,*) " elpa_invert_trm_complex produced an error! Aborting..."
 #ifdef WITH_MPI
            call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+           call exit(1)
 #endif
         endif
 
@@ -764,6 +778,8 @@ program test_all_real
           write(error_unit,*) "elpa_mult_at_b_real produced an error! Aborting..."
 #ifdef WITH_MPI
           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+          call exit(1)
 #endif
         endif
 
@@ -832,6 +848,8 @@ program test_all_real
           write(error_unit,*) " elpa_mult_at_b_complex produced an error! Aborting..."
 #ifdef WITH_MPI
           call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+          call exit(1)
 #endif
         endif
 
@@ -925,6 +943,8 @@ program test_all_real
 
 #ifdef WITH_MPI
        call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+       call exit(1)
 #endif
      endif
 
@@ -1053,6 +1073,8 @@ program test_all_real
                                " produced an error! Aborting..."
 #ifdef WITH_MPI
            call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+           call exit(1)
 #endif
          endif
 
@@ -1141,7 +1163,9 @@ program test_all_real
 
                endif
 #ifdef WITH_MPI
-                 call MPI_ABORT(mpi_comm_world, 1, mpierr)
+               call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+               call exit(1)
 #endif
              endif
 
@@ -1234,6 +1258,8 @@ program test_all_real
              endif
 #ifdef WITH_MPI
              call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+             call exit(1)
 #endif
            endif
 
@@ -1328,6 +1354,8 @@ program test_all_real
                                " produced an error! Aborting..."
 #ifdef WITH_MPI
            call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+           call exit(1)
 #endif
          endif
 
@@ -1418,6 +1446,8 @@ program test_all_real
                endif
 #ifdef WITH_MPI
                call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+               call exit(1)
 #endif
              endif
 
@@ -1513,6 +1543,8 @@ program test_all_real
              endif
 #ifdef WITH_MPI
              call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+             call exit(1)
 #endif
            endif
 

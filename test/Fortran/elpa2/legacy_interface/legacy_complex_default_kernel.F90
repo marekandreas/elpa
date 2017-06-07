@@ -257,6 +257,8 @@ program test_complex2_default_kernel_double_precision
       write(error_unit,*) "solve_evp_complex_2stage produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 

@@ -218,6 +218,8 @@ program test_real2
       write(error_unit,*) "elpa_solve_evp_real produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 
@@ -243,6 +245,8 @@ program test_real2
       write(error_unit,*) "elpa_solve_evp_real produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 
@@ -268,6 +272,8 @@ program test_real2
       write(error_unit,*) "elpa_solve_evp_real produced an error! Aborting..."
 #ifdef WITH_MPI
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
+#else
+      call exit(1)
 #endif
    endif
 
