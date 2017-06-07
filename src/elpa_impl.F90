@@ -574,9 +574,8 @@ module elpa_impl
 
       integer, optional   :: error
       integer(kind=c_int) :: solver
-      logical             :: success_l
-
 #ifdef WANT_SINGLE_PRECISION_REAL
+      logical             :: success_l
 
       call self%get("solver",solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
@@ -747,9 +746,8 @@ module elpa_impl
 
       integer, optional             :: error
       integer(kind=c_int)           :: solver
-      logical                       :: success_l
-
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
+      logical                       :: success_l
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
@@ -910,9 +908,8 @@ module elpa_impl
 
       integer, optional   :: error
       integer(kind=c_int) :: solver
-      logical             :: success_l
-
 #ifdef WANT_SINGLE_PRECISION_REAL
+      logical             :: success_l
 
       call self%get("solver",solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
@@ -1071,9 +1068,8 @@ module elpa_impl
 
       integer, optional             :: error
       integer(kind=c_int)           :: solver
-      logical                       :: success_l
-
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
+      logical                       :: success_l
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
@@ -1231,8 +1227,9 @@ module elpa_impl
       real(kind=c_float)              :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
-      logical                         :: success_l
 #ifdef WANT_SINGLE_PRECISION_REAL
+      logical                         :: success_l
+
       success_l = elpa_mult_at_b_real_single_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                   c, nrows_c, ncols_c)
       if (present(error)) then
@@ -1361,9 +1358,9 @@ module elpa_impl
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       integer, optional               :: error
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
       logical                         :: success_l
 
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_mult_ah_b_complex_single_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                      c, nrows_c, ncols_c)
       if (present(error)) then
@@ -1466,9 +1463,9 @@ module elpa_impl
       real(kind=rk4)                  :: a(self%local_nrows,self%local_ncols)
 #endif
       integer, optional               :: error
+#if WANT_SINGLE_PRECISION_REAL
       logical                         :: success_l
 
-#if WANT_SINGLE_PRECISION_REAL
       success_l = elpa_cholesky_real_single_impl (self, a)
       if (present(error)) then
         if (success_l) then
@@ -1584,9 +1581,9 @@ module elpa_impl
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
       integer, optional               :: error
+#if WANT_SINGLE_PRECISION_COMPLEX
       logical                         :: success_l
 
-#if WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_cholesky_complex_single_impl (self, a)
       if (present(error)) then
         if (success_l) then
@@ -1701,9 +1698,9 @@ module elpa_impl
       real(kind=c_float)              :: a(self%local_nrows,self%local_ncols)
 #endif
       integer, optional               :: error
+#if WANT_SINGLE_PRECISION_REAL
       logical                         :: success_l
 
-#if WANT_SINGLE_PRECISION_REAL
       success_l = elpa_invert_trm_real_single_impl (self, a)
       if (present(error)) then
         if (success_l) then
@@ -1819,9 +1816,9 @@ module elpa_impl
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
       integer, optional               :: error
+#if WANT_SINGLE_PRECISION_COMPLEX
       logical                         :: success_l
 
-#if WANT_SINGLE_PRECISION_COMPLEX
       success_l = elpa_invert_trm_complex_single_impl (self, a)
       if (present(error)) then
         if (success_l) then
@@ -1929,9 +1926,9 @@ module elpa_impl
 #endif
 
       integer, optional               :: error
+#ifdef WANT_SINGLE_PRECISION_REAL
       logical                         :: success_l
 
-#ifdef WANT_SINGLE_PRECISION_REAL
       success_l = elpa_solve_tridi_single_impl(self, d, e, q)
       if (present(error)) then
         if (success_l) then
