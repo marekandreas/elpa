@@ -62,6 +62,7 @@ function elpa_solve_evp_&
     &")
 
     use, intrinsic :: iso_c_binding
+    use elpa_api
     use elpa_driver, only : elpa_solve_evp_&
     &MATH_DATATYPE&
     &_&
@@ -94,9 +95,7 @@ function elpa_solve_evp_&
 #endif
 #endif /* COMPLEXCASE == 1 */
     logical                                  :: successFortran, useQRFortran
-    character(kind=c_char,len=1), intent(in) :: method(*)
-    character(len=6)                         :: methodFortran
-    integer(kind=c_int)                      :: charCount
+    type(c_ptr), intent(in), value           :: method
 
 #if REALCASE == 1
     if (useQR .eq. 0) then
@@ -106,16 +105,7 @@ function elpa_solve_evp_&
     endif
 #endif
 
-    charCount = 1
-    do
-      if (method(charCount) == c_null_char) exit
-      charCount = charCount + 1
-    enddo
-    charCount = charCount - 1
-
-    if (charCount .ge. 1)  then
-      methodFortran(1:charCount) = transfer(method(1:charCount), methodFortran)
-
+    if (c_associated(method)) then
       successFortran = elpa_solve_evp_&
       &MATH_DATATYPE&
       &_&
@@ -127,7 +117,7 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
          THIS_COMPLEX_ELPA_KERNEL_API, &
 #endif
-	 useGPU == 1, methodFortran)
+	 useGPU == 1, elpa_c_string(method))
     else
       successFortran = elpa_solve_evp_&
       &MATH_DATATYPE&
@@ -151,4 +141,4 @@ function elpa_solve_evp_&
 
   end function
 
-
+! vim: syntax=fortran
