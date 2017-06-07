@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
    useQr = 0;
    useGPU = 0;
 
-   success = elpa_solve_evp_real_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, THIS_REAL_ELPA_KERNEL_API, useQr, useGPU, "1stage");
+   success = elpa_solve_evp_real_double(na, nev, a, na_rows, ev, z, na_rows, nblk, na_cols, mpi_comm_rows, mpi_comm_cols, my_mpi_comm_world, -1, useQr, useGPU, "1stage");
 
    if (success != 1) {
      printf("error in ELPA solve \n");
