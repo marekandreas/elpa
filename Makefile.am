@@ -592,6 +592,7 @@ EXTRA_DIST = \
   src/elpa2/kernels/elpa2_kernels_real_sse_2hv_template.Xc \
   src/elpa2/kernels/elpa2_kernels_real_sse_4hv_template.Xc \
   src/elpa2/kernels/elpa2_kernels_real_sse_6hv_template.Xc \
+  src/elpa2/kernels/elpa2_kernels_real_avx-avx2_2hv_template.Xc \
   src/elpa2/redist_band.X90 \
   src/elpa2/pack_unpack_cpu.X90 \
   src/elpa2/pack_unpack_gpu.X90 \
