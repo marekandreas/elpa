@@ -44,7 +44,7 @@ for g, p, d, s in product(sorted(gpu_flag.keys()),
     print("noinst_PROGRAMS += " + name)
     print("check_SCRIPTS += " + name + ".sh")
     print(name + "_SOURCES = test/Fortran/test.F90")
-    print(name + "_LDADD = $(build_lib) $(FCLIBS)")
+    print(name + "_LDADD = $(build_lib)")
     print(name + "_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules \\")
     print("  " + " \\\n  ".join([
         domain_flag[d],
