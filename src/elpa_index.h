@@ -299,32 +299,32 @@ int elpa_index_value_is_set(elpa_index_t index, char *name);
 
 
 /*
- !f> interface
- !f>   function elpa_int_value_to_string_c(name, value, string) &
- !f>              result(error) bind(C, name="elpa_int_value_to_string")
- !f>     import c_int, c_ptr, c_char
- !f>     character(kind=c_char), intent(in) :: name(*)
- !f>     integer(kind=c_int), intent(in), value :: value
- !f>     type(c_ptr), intent(out) :: string
- !f>     integer(kind=c_int) :: error
- !f>   end function
- !f> end interface
- !f>
+ !pf> interface
+ !pf>   function elpa_int_value_to_string_c(name, value, string) &
+ !pf>              result(error) bind(C, name="elpa_int_value_to_string")
+ !pf>     import c_int, c_ptr, c_char
+ !pf>     character(kind=c_char), intent(in) :: name(*)
+ !pf>     integer(kind=c_int), intent(in), value :: value
+ !pf>     type(c_ptr), intent(out) :: string
+ !pf>     integer(kind=c_int) :: error
+ !pf>   end function
+ !pf> end interface
+ !pf>
  */
 int elpa_int_value_to_string(char *name, int value, const char **string);
 
 
 /*
- !f> interface
- !f>   pure function elpa_int_value_to_strlen_c(name, value) &
- !f>                   result(length) bind(C, name="elpa_int_value_to_strlen")
- !f>     import c_int, c_ptr, c_char
- !f>     character(kind=c_char), intent(in) :: name(*)
- !f>     integer(kind=c_int), intent(in), value :: value
- !f>     integer(kind=c_int) :: length
- !f>   end function
- !f> end interface
- !f>
+ !pf> interface
+ !pf>   pure function elpa_int_value_to_strlen_c(name, value) &
+ !pf>                   result(length) bind(C, name="elpa_int_value_to_strlen")
+ !pf>     import c_int, c_ptr, c_char
+ !pf>     character(kind=c_char), intent(in) :: name(*)
+ !pf>     integer(kind=c_int), intent(in), value :: value
+ !pf>     integer(kind=c_int) :: length
+ !pf>   end function
+ !pf> end interface
+ !pf>
  */
 int elpa_int_value_to_strlen(char *name, int value);
 

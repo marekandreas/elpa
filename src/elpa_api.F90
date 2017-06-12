@@ -54,6 +54,8 @@ module elpa_api
   use, intrinsic :: iso_c_binding
   implicit none
 
+#include "elpa/elpa_generated_public_fortran_interfaces.h"
+
   integer, private, parameter :: earliest_api_version = EARLIEST_API_VERSION !< Definition of the earliest API version supported
                                                                              !< with the current release
   integer, private, parameter :: current_api_version  = CURRENT_API_VERSION  !< Definition of the current API version
@@ -1155,7 +1157,6 @@ module elpa_api
     !> \param   elpa_error  integer: error code to querry
     !> \result  string      string:  error string
     function elpa_strerr(elpa_error) result(string)
-      use elpa_generated_fortran_interfaces
       integer, intent(in) :: elpa_error
       character(kind=C_CHAR, len=elpa_strlen_c(elpa_strerr_c(elpa_error))), pointer :: string
       call c_f_pointer(elpa_strerr_c(elpa_error), string)
@@ -1180,7 +1181,6 @@ module elpa_api
     !> \result  string      string: the string representation
     function elpa_int_value_to_string(name, value, error) result(string)
       use elpa_utilities, only : error_unit
-      use elpa_generated_fortran_interfaces
       implicit none
       character(kind=c_char, len=*), intent(in) :: name
       integer(kind=c_int), intent(in) :: value

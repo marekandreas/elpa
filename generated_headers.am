@@ -9,38 +9,50 @@ elpa test src:
 test/shared: | test
 	@mkdir $@
 
+generated_headers =
+
+generated_headers += config-f90.h
 config-f90.h: config.h
 	@echo "Generating $@...";
 	@grep "^#define" $^ > $@ || { rm $@; exit 1; }
 
+generated_headers += elpa/elpa_generated.h
 elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
                        $(top_srcdir)/src/elpa_api.F90 | elpa
 	@rm -f $@
 	$(call extract_interface,!c>)
 
+generated_headers += elpa/elpa_generated_legacy.h
 elpa/elpa_generated_legacy.h: $(top_srcdir)/src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90 \
                        $(top_srcdir)/src/elpa1/legacy_interface/elpa_1stage_c_interface.F90 \
                        $(top_srcdir)/src/elpa2/legacy_interface/elpa_2stage_c_interface.F90 | elpa
 	@rm -f $@
 	$(call extract_interface,!lc>)
 
+
+generated_headers += test/shared/generated.h
 test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.*90) | test/shared
 	@rm -f $@
 	$(call extract_interface,!c>)
 
+generated_headers += elpa/elpa_generated_fortran_interfaces.h
 elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2/kernels/*.*c $(top_srcdir)/src/elpa2/kernels/*.s $(top_srcdir)/src/*.[ch]) | elpa
 	@rm -f $@
 	$(call extract_interface,!f>)
 	$(call extract_interface,#!f>)
 
+generated_headers += elpa/elpa_generated_public_fortran_interfaces.h
+elpa/elpa_generated_public_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/*.[ch]) | elpa
+	@rm -f $@
+	$(call extract_interface,!pf>)
+
+generated_headers += src/fortran_constants.X90
 src/fortran_constants.X90: $(top_srcdir)/src/fortran_constants.h | src
 	@$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -I. $< -o $@_ || { rm -f $@; exit 1; }
 	@awk '/!ELPA_C_DEFINE/ {gsub(/!ELPA_C_DEFINE/, "\n"); gsub(/NEWLINE/, "\n"); print;}' < $@_ > $@ || { rm -f $@; exit 1; }
 	@rm $@_
 
 
-generated_headers= config-f90.h elpa/elpa_generated.h elpa/elpa_generated_legacy.h test/shared/generated.h elpa/elpa_generated_fortran_interfaces.h src/fortran_constants.X90
 generated-headers: $(generated_headers)
-
 
 # vim: syntax=make
