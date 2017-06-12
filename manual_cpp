@@ -38,14 +38,16 @@ elif len(files) == 0:
 elif len(files) == 1:
     file, = files
 
-tmp_filename = "manually_preprocessed_" + file.replace("/", "__")
+tmp_filename = "manually_preprocessed_" + file.replace("/", "_")
 
 try:
     output = args.index("-o")
     outputname = args[output + 1]
-    tmp_filename += "-" + outputname.replace("/", "__") + ".F90"
+    tmp_filename += "-" + outputname.replace("/", "_") + ".F90"
 except ValueError:
     pass
+
+tmp_filename = tmp_filename[-250:]
 
 # preprocess
 check_call_redirect(["cpp","-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)
