@@ -154,7 +154,8 @@
   !lc> */
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
-  !lc> int elpa_solve_evp_complex_double(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
+  !lc> int elpa_solve_evp_complex_double(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols,
+  !lc>                                   int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
 #include "../../general/precision_macros.h"
 #include "./elpa_driver_c_interface_template.X90"
 #undef DOUBLE_PRECISION
@@ -195,7 +196,8 @@
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #undef DOUBLE_PRECISION
-  !lc> int elpa_solve_evp_complex_single(int na, int nev, complex float *a, int lda, float *ev, complex float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
+  !lc> int elpa_solve_evp_complex_single(int na, int nev, complex float *a, int lda, float *ev, complex float *q, int ldq, int nblk, int matrixCols,
+  !lc>                                   int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU, char *method);
 #include "../../general/precision_macros.h"
 #include "./elpa_driver_c_interface_template.X90"
 #undef SINGLE_PRECISION
