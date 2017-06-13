@@ -122,25 +122,11 @@
 #endif /* COMPLEXCASE == 1 */
   ! --------------------------------------------------------------------------------------------------
 
-#if REALCASE==1
-
   subroutine double_hh_trafo_&
   &MATH_DATATYPE&
   &_generic_simple_&
   &PRECISION&
   & (q, hh, nb, nq, ldq, ldh)
-
-#endif /* REALCASE == 1 */
-
-#if COMPLEXCASE==1
-
-  subroutine double_hh_trafo_&
-  &MATH_DATATYPE&
-  &_generic_simple_&
-  &PRECISION&
-  & (q, hh, nb, nq, ldq, ldh)
-
-#endif /* COMPLEXCASE==1 */
 
     use precision
     use elpa_abstract_impl
