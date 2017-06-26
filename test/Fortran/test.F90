@@ -167,6 +167,8 @@ program test
    assert_elpa_ok(error)
 #endif
 
+   call e%set("timings",1)
+
    assert_elpa_ok(e%setup())
 
 #ifdef TEST_SOLVER_1STAGE
@@ -191,6 +193,10 @@ program test
    ! The actual solve step
    call e%eigenvectors(a, ev, z, error)
    assert_elpa_ok(error)
+
+   if (myid .eq. 0) then
+     call e%print_times()
+   endif
 
    call elpa_deallocate(e)
    call elpa_uninit()
