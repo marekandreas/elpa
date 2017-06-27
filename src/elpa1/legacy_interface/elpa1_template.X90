@@ -122,6 +122,8 @@ function elpa_solve_evp_&
    call e%set("process_row", my_prow)
    call e%set("process_col", my_pcol)
 
+   call e%set("timings",1)
+
    if (e%setup() .ne. ELPA_OK) then
      print *, "Cannot setup ELPA instance"
      success = .false.
