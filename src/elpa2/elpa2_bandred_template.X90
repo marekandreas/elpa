@@ -1474,7 +1474,7 @@
          call  cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit',     &
 #endif
                                l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, cur_l_cols)
-   call obj%timer%start("cublas")
+   call obj%timer%stop("cublas")
 
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
