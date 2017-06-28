@@ -83,6 +83,15 @@
 !>
 #include "../general/sanity.X90"
 
+#undef SAVE_MATR
+#ifdef DOUBLE_PRECISION_REAL
+#define SAVE_MATR(name, iteration) \
+call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,name,iteration) 
+#else
+#define SAVE_MATR(name, iteration)
+#endif
+
+
     subroutine tridiag_&
     &MATH_DATATYPE&
     &_&
@@ -92,6 +101,7 @@
       use iso_c_binding
       use precision
       use elpa_abstract_impl
+      use matrix_plot
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
@@ -446,6 +456,8 @@
           ! add tau after the end of actuall v_row, to be broadcasted with it
           v_row(l_rows+1) = tau(istep)
          endif !(my_pcol == pcol(istep, nblk, np_cols))
+         
+!          SAVE_MATR("HH vec stored", na - istep + 1)
 
 #ifdef WITH_MPI
          ! Broadcast the Householder Vector (and tau) along columns
@@ -1025,3 +1037,5 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION
+
+       

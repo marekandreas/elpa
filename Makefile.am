@@ -60,6 +60,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/qr/elpa_pdgeqrf.F90 \
   src/elpa1/elpa1.F90 \
   src/elpa2/elpa2.F90 \
+  src/helpers/matrix_plot.F90 \
   src/elpa_c_interface.c \
   src/elpa_index.c
 
