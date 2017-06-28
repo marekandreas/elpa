@@ -45,6 +45,8 @@
 #undef  MPI_REAL_PRECISION
 #undef  MPI_MATH_DATATYPE_PRECISION
 #undef  C_DATATYPE_KIND
+#undef THRESHOLD
+
 
 /* General definitions needed in single and double case */
 #define  MATH_DATATYPE real
@@ -94,6 +96,7 @@
 #define  MPI_MATH_DATATYPE_PRECISION MPI_REAL8
 #define  C_DATATYPE_KIND c_double
 
+#define THRESHOLD 1e-11_rk8
 #endif /* DOUBLE_PRECISION */
 
 #ifdef SINGLE_PRECISION
@@ -142,6 +145,7 @@
 #define  MPI_MATH_DATATYPE_PRECISION MPI_REAL4
 #define  C_DATATYPE_KIND c_float
 
+#define THRESHOLD 1e-4_rk4
 #endif /* SINGLE_PRECISION */
 
 #endif /* REALCASE */
@@ -205,6 +209,8 @@
 #undef  CONST_COMPLEX_1_0
 #undef  C_DATATYPE_KIND
 
+#undef THRESHOLD
+
 /* General definitions needed in single and double case */
 #define  MATH_DATATYPE complex
 #define  BLAS_TRANS_OR_CONJ 'C'
@@ -264,6 +270,7 @@
 #define  CONST_COMPLEX_1_0 1.0_ck8
 #define  C_DATATYPE_KIND c_double
 
+#define THRESHOLD 1e-11_rk8
 #endif /* DOUBLE PRECISION */
 
 #ifdef SINGLE_PRECISION
@@ -320,6 +327,7 @@
 #define  CONST_COMPLEX_1_0 1.0_ck4
 #define  C_DATATYPE_KIND c_float
 
+#define THRESHOLD 1e-4_rk4
 #endif /* SINGLE PRECISION */
 
 #endif /* COMPLEXCASE */
