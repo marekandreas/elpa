@@ -1142,8 +1142,11 @@
                                         (umc_dev+ (lcs-1)*            &
           size_of_datatype),      &
           cur_l_cols)
+             call obj%timer%stop("cublas")
 
              if(i==0) cycle
+             call obj%timer%start("cublas")
+
              lre = min(l_rows,i*l_rows_tile)
              call cublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
                                         (a_dev+ ((lcs-1)*lda*                 &
