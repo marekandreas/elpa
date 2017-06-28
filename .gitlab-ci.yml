@@ -1,9 +1,9 @@
 before_script:
   - export LANG=C
   - ulimit -s unlimited
-  - if [ $HOST != "hydra03" -a $HOST != "hydra04" -a $HOST != "hydra05"  -a $HOST != "hydra06"  -a $HOST != "hydra07"  -a $HOST != "knl1" -a $HOST != "knl2" -a $HOST != "knl3" -a $HOST != "knl4" -a $HOST != "draco01" -a $HOST != "draco02" -a $HOST != "draco03" -a $HOST != "draco04"  ] ; then module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools pkg-config ; fi
-  - if [ $HOST == "knl1" -o $HOST == "knl2" -o $HOST == "knl3" -o $HOST == "knl4" ] ; then module load impi/5.1.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config ; fi
-  - if [ $HOST == "draco01" -o $HOST == "draco02" -o $HOST == "draco03" -o $HOST == "draco04" ] ; then module load impi/2017.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config ; fi
+  - if [ "$HOST" != "hydra03" -a "$HOST" != "hydra04" -a "$HOST" != "hydra05"  -a "$HOST" != "hydra06"  -a "$HOST" != "hydra07"  -a "$HOST" != "knl1" -a "$HOST" != "knl2" -a "$HOST" != "knl3" -a "$HOST" != "knl4" -a "$HOST" != "draco01" -a "$HOST" != "draco02" -a "$HOST" != "draco03" -a "$HOST" != "draco04"  ] ; then module load impi/5.1.3 intel/16.0 gcc/4.9 mkl/11.3 autotools pkg-config ; fi
+  - if [ "$HOST" = "knl1" -o "$HOST" = "knl2" -o "$HOST" = "knl3" -o "$HOST" = "knl4" ] ; then module load impi/5.1.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config ; fi
+  - if [ "$HOST" = "draco01" -o "$HOST" = "draco02" -o "$HOST" = "draco03" -o "$HOST" = "draco04" ] ; then module load impi/2017.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config ; fi
   - module list
   - export MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm"
   - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -I$MKL_HOME/include/intel64/lp64"
