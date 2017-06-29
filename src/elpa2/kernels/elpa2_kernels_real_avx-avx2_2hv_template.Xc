@@ -192,7 +192,7 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 	double s = hh[(ldh)+1]*1.0;
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        float s = hh[(ldh)+1]*1.0;
+        float s = hh[(ldh)+1]*1.0f;
 #endif
 	#pragma ivdep
 	for (i = 2; i < nb; i++)
