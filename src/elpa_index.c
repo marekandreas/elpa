@@ -146,6 +146,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         BOOL_ENTRY("timings", "Enable time measurement", 0),
         BOOL_ENTRY("debug", "Emit verbose debugging messages", 0),
         BOOL_ENTRY("print_flops", "Print FLOP rates on task 0", 0),
+        BOOL_ENTRY("check_pd", "Check eigenvalues to be positive", 0),
         PRIVATE_INT_ENTRY("eigenvalues_only", 0),
 };
 
