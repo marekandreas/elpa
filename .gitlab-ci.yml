@@ -2998,7 +2998,7 @@ test_project_2stage_intel:
     - pushd build
     - make distclean
     - rm -rf installdest
- 
+
 minsky:
   tags:
     - miy
@@ -3011,6 +3011,6 @@ minsky:
     - ./autogen.sh
     - ./configure CC=mpicc FC=mpifort LIBS="-lessl -lreflapack -lessl -lcublas -lgfortran" LDFLAGS="-g -L/home/elpa/libs/scalapack/lib -L/usr/local/cuda-8.0/lib64 " FCFLAGS="-g -O2 " CFLAGS="-g -O2 -I/usr/local/cuda-8.0/include" --enable-single-precision --disable-mpi-module --enable-gpu --with-GPU-compute-capability=sm_60 --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --with-cuda-path=/usr/local/cuda-8.0/
     - make -j 8
-    - /home/pkus/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
     - cat test-suite.log
-    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;  
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
