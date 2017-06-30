@@ -111,7 +111,8 @@
                                                                    &_&
                                                                    &MATH_DATATYPE
     integer(kind=ik)                         :: na, nev, lda, ldq, nblk, matrixCols, &
-                                                mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+                                                mpi_comm_rows, mpi_comm_cols,        &
+						mpi_comm_all, check_pd
 
     logical                                  :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                 do_trans_to_band, do_trans_to_full
@@ -453,8 +454,28 @@
      endif
 
      if (obj%eigenvalues_only) then
-       return
-     endif
+       do_trans_to_band = .false.
+       do_trans_to_full = .false.
+     else
+
+       call obj%get("check_pd",check_pd)
+       if (check_pd .eq. 1) then
+         check_pd = 0
+         do i = 1, na
+           if (ev(i) .gt. THRESHOLD) then
+             check_pd = check_pd + 1
+           endif
+         enddo
+         if (check_pd .lt. na) then
+           ! not positiv definite => eigenvectors needed
+           do_trans_to_band = .true.
+           do_trans_to_full = .true.
+	 else
+           do_trans_to_band = .false.
+           do_trans_to_full = .false.
+         endif
+       endif
+     endif ! eigenvalues only
 
      if (do_trans_to_band) then
 #if COMPLEXCASE == 1
@@ -470,6 +491,7 @@
          stop 1
        endif
 #endif
+
        ! Backtransform stage 1
        call obj%timer%start("trans_ev_to_band")
 
