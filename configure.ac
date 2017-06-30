@@ -670,7 +670,7 @@ fi
 if test x"${need_sse_assembly}" = x"yes"; then
   AC_MSG_CHECKING(whether double-precision SSE assembly kernels can be compiled)
 
-  $CC $CFLAGS -c $srcdir/src/elpa2/kernels/elpa2_kernels_asm_x86_64_double_precision.s -o conftest.o 2>&5
+  $CC $CFLAGS -c $srcdir/src/elpa2/kernels/asm_x86_64_double_precision.s -o conftest.o 2>&5
 
   if test "$?" == 0; then
     can_compile_sse_asm_double=yes
@@ -686,7 +686,7 @@ if test x"${need_sse_assembly}" = x"yes"; then
   if test x"${want_single_precision}" = x"yes" ; then
     AC_MSG_CHECKING(whether single-precision SSE assembly kernels can be compiled)
 
-    $CC $CFLAGS -c $srcdir/src/elpa2/kernels/elpa2_kernels_asm_x86_64_single_precision.s -o conftest.o 2>&5
+    $CC $CFLAGS -c $srcdir/src/elpa2/kernels/asm_x86_64_single_precision.s -o conftest.o 2>&5
 
     if test "$?" == 0; then
       can_compile_sse_asm_single=yes

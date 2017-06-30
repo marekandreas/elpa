@@ -88,9 +88,9 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/elpa2_tridiag_band_template.X90 \
   src/elpa2/elpa2_trans_ev_tridi_to_band_template.X90 \
   src/elpa2/elpa2_herm_matrix_allreduce_complex_template.X90 \
-  src/elpa2/kernels/elpa2_kernels_real_template.X90 \
-  src/elpa2/kernels/elpa2_kernels_complex_template.X90 \
-  src/elpa2/kernels/elpa2_kernels_simple_template.X90 \
+  src/elpa2/kernels/real_template.X90 \
+  src/elpa2/kernels/complex_template.X90 \
+  src/elpa2/kernels/simple_template.X90 \
   src/elpa2/pack_unpack_cpu.X90 \
   src/elpa2/pack_unpack_gpu.X90 \
   src/elpa2/compute_hh_trafo.X90 \
@@ -154,186 +154,186 @@ endif
 endif
 
 if WITH_REAL_GENERIC_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES +=  src/elpa2/kernels/elpa2_kernels_real.F90
+  libelpa@SUFFIX@_private_la_SOURCES +=  src/elpa2/kernels/real.F90
 endif
 
 if WITH_COMPLEX_GENERIC_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES +=  src/elpa2/kernels/elpa2_kernels_complex.F90
+  libelpa@SUFFIX@_private_la_SOURCES +=  src/elpa2/kernels/complex.F90
 endif
 
 if WITH_REAL_GENERIC_SIMPLE_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_simple.F90
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple.F90
 endif
 
 if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_simple.F90
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_simple.F90
 endif
 
 if WITH_REAL_BGP_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_bgp.f90
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_bgp.f90
 endif
 
 if WITH_REAL_BGQ_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_bgq.f90
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_bgq.f90
 endif
 
 if WITH_REAL_SSE_ASSEMBLY_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_asm_x86_64_double_precision.s
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/asm_x86_64_double_precision.s
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_asm_x86_64_single_precision.s
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/asm_x86_64_single_precision.s
 endif
 
 else
 if WITH_COMPLEX_SSE_ASSEMBLY_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_asm_x86_64_double_precision.s
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/asm_x86_64_double_precision.s
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_asm_x86_64_single_precision.s
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/asm_x86_64_single_precision.s
 endif
 endif
 endif
 
 if WITH_REAL_SSE_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_sse_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_sse_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_2hv_single_precision.c
 endif
 endif
 
 if WITH_REAL_AVX_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_2hv_single_precision.c
 endif
 else
 if WITH_REAL_AVX2_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_2hv_single_precision.c
 endif
 endif
 endif
 
 if WITH_REAL_AVX512_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx512_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx512_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx512_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx512_2hv_single_precision.c
 endif
 endif
 
 
 if WITH_REAL_SSE_BLOCK4_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_sse_4hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_sse_4hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_4hv_single_precision.c
 endif
 endif
 
 if WITH_REAL_AVX_BLOCK4_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_4hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_4hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_4hv_single_precision.c
 endif
 else
 if WITH_REAL_AVX2_BLOCK4_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_4hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_4hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_4hv_single_precision.c
 endif
 endif
 endif
 
 if WITH_REAL_AVX512_BLOCK4_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx512_4hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx512_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx512_4hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx512_4hv_single_precision.c
 endif
 endif
 
 
 
 if WITH_REAL_SSE_BLOCK6_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_sse_6hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_6hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_sse_6hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_6hv_single_precision.c
 endif
 endif
 
 if WITH_REAL_AVX_BLOCK6_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_6hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_6hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_6hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_6hv_single_precision.c
 endif
 else
 if WITH_REAL_AVX2_BLOCK6_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_6hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_6hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx-avx2_6hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_6hv_single_precision.c
 endif
 endif
 endif
 
 if WITH_REAL_AVX512_BLOCK6_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx512_6hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx512_6hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_real_avx512_6hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx512_6hv_single_precision.c
 endif
 endif
 
 
 if WITH_COMPLEX_SSE_BLOCK1_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_sse_1hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sse_1hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_sse_1hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sse_1hv_single_precision.c
 endif
 endif
 
 if WITH_COMPLEX_AVX_BLOCK1_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_1hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_1hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_1hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_1hv_single_precision.c
 endif
 else
 if WITH_COMPLEX_AVX2_BLOCK1_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_1hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_1hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_1hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_1hv_single_precision.c
 endif
 endif
 endif
 
 
 if WITH_COMPLEX_AVX512_BLOCK1_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx512_1hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx512_1hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx512_1hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx512_1hv_single_precision.c
 endif
 endif
 
 if WITH_COMPLEX_SSE_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_sse_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sse_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_sse_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sse_2hv_single_precision.c
 endif
 endif
 
 if WITH_COMPLEX_AVX_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_2hv_single_precision.c
 endif
 else
 if WITH_COMPLEX_AVX2_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_2hv_single_precision.c
 endif
 endif
 endif
 
 if WITH_COMPLEX_AVX512_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx512_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx512_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/elpa2_kernels_complex_avx512_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx512_2hv_single_precision.c
 endif
 endif
 
@@ -587,24 +587,24 @@ EXTRA_DIST = \
   src/general/precision_macros.h \
   src/elpa_index.h \
   src/fortran_constants.h \
-  src/elpa2/kernels/elpa2_kernels_real_template.X90 \
-  src/elpa2/kernels/elpa2_kernels_complex_template.X90 \
-  src/elpa2/kernels/elpa2_kernels_simple_template.X90 \
-  src/elpa2/kernels/elpa2_kernels_real_sse_2hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_real_sse_4hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_real_sse_6hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_real_avx-avx2_2hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_real_avx-avx2_4hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_real_avx-avx2_6hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_real_avx512_2hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_real_avx512_4hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_real_avx512_6hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_complex_sse_1hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_complex_sse_2hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_1hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_complex_avx-avx2_2hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_complex_avx512_1hv_template.Xc \
-  src/elpa2/kernels/elpa2_kernels_complex_avx512_2hv_template.Xc \
+  src/elpa2/kernels/real_template.X90 \
+  src/elpa2/kernels/complex_template.X90 \
+  src/elpa2/kernels/simple_template.X90 \
+  src/elpa2/kernels/real_sse_2hv_template.Xc \
+  src/elpa2/kernels/real_sse_4hv_template.Xc \
+  src/elpa2/kernels/real_sse_6hv_template.Xc \
+  src/elpa2/kernels/real_avx-avx2_2hv_template.Xc \
+  src/elpa2/kernels/real_avx-avx2_4hv_template.Xc \
+  src/elpa2/kernels/real_avx-avx2_6hv_template.Xc \
+  src/elpa2/kernels/real_avx512_2hv_template.Xc \
+  src/elpa2/kernels/real_avx512_4hv_template.Xc \
+  src/elpa2/kernels/real_avx512_6hv_template.Xc \
+  src/elpa2/kernels/complex_sse_1hv_template.Xc \
+  src/elpa2/kernels/complex_sse_2hv_template.Xc \
+  src/elpa2/kernels/complex_avx-avx2_1hv_template.Xc \
+  src/elpa2/kernels/complex_avx-avx2_2hv_template.Xc \
+  src/elpa2/kernels/complex_avx512_1hv_template.Xc \
+  src/elpa2/kernels/complex_avx512_2hv_template.Xc \
   src/elpa2/redist_band.X90 \
   src/elpa2/pack_unpack_cpu.X90 \
   src/elpa2/pack_unpack_gpu.X90 \
