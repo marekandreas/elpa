@@ -2002,7 +2002,7 @@ gfortran-double-precision-mpi-noomp-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2024,7 +2024,7 @@ gfortran-single-precision-mpi-noomp-avx512-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2046,7 +2046,7 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-avx512-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2068,7 +2068,7 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-avx512-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2231,7 +2231,7 @@ gfortran-double-precision-no-mpi-noomp-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module
+    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2253,7 +2253,7 @@ gfortran-single-precision-no-mpi-noomp-avx512-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-single-precision
+    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2275,7 +2275,7 @@ gfortran-double-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size
+    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2297,7 +2297,7 @@ gfortran-single-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
     - ./autogen.sh
      - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-single-precision
+    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2463,7 +2463,7 @@ gfortran-double-precision-no-mpi-omp-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-openmp
+    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-openmp
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
@@ -2486,7 +2486,7 @@ gfortran-single-precision-no-mpi-omp-avx512-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-single-precision --enable-openmp
+    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-single-precision --enable-openmp
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
@@ -2509,7 +2509,7 @@ gfortran-double-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-openmp
+    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-openmp
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
@@ -2532,7 +2532,7 @@ gfortran-single-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
-    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-single-precision --enable-openmp
+    - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -arch=knl" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-single-precision --enable-openmp
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
