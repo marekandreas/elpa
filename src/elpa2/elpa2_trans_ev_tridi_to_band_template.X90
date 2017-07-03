@@ -2534,11 +2534,6 @@
          enddo ! stripe_count
 #endif /* WITH_OPENMP */
 
-#ifdef WITH_OPENMP
-
-         call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
-
-#endif /* WITH_OPENMP */
          a_off = 0
        endif
      enddo
