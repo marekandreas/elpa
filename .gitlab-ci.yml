@@ -2224,15 +2224,15 @@ test_project_2stage:
 
 
 # print coverage results
-#total_coverage:
-#  stage: coverage-summary
-#  tags:
-#    - coverage
-#  script:
-#    - ./ci_coverage_summary
-#  artifacts:
-#    paths:
-#      - coverage_summary
+total_coverage:
+  stage: deploy
+  tags:
+    - coverage
+  script:
+    - ./ci_coverage_summary
+  artifacts:
+    paths:
+      - coverage_summary
 
 test_project_intel:
   tags:
@@ -2259,29 +2259,29 @@ test_project_intel:
     - rm -rf installdest
 
 
- #test_project_2stage_intel:
- # tags:
- #   - buildtest
- # script:
- #   - mkdir build
- #   - pushd build
- #   - ../autogen.sh
- #   - ../configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-sse-assembly --disable-sse --#disable-avx --disable-avx2
- #   - make -j 8
- #   - make install
- #   - popd
- #   - mkdir test_project_2stage/build
- #   - pushd test_project_2stage/build
- #   - ../autogen.sh
- #   - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort
- #   - make -j 8
- #   - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
- #   - ./test_real2
- #   - make distclean
- #   - popd
- #   - pushd build
- #   - make distclean
- #   - rm -rf installdest
+test_project_2stage_intel:
+ tags:
+   - buildtest
+ script:
+   - mkdir build
+   - pushd build
+   - ../autogen.sh
+   - ../configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-sse-assembly --disable-sse --#disable-avx --disable-avx2
+   - make -j 8
+   - make install
+   - popd
+   - mkdir test_project_2stage/build
+   - pushd test_project_2stage/build
+   - ../autogen.sh
+   - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort
+   - make -j 8
+   - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+   - ./test_real2
+   - make distclean
+   - popd
+   - pushd build
+   - make distclean
+   - rm -rf installdest
 
 minsky:
   tags:
