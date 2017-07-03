@@ -30,6 +30,8 @@ for g, p, d, s in product(sorted(gpu_flag.keys()),
         endifs += 1
         if s == "2stage":
             extra_flags.append("-DTEST_KERNEL=ELPA_2STAGE_{0}_GPU".format(d.upper()))
+    elif s == "2stage":
+        extra_flags.append("-DTEST_ALL_KERNELS")
 
     if (p == "single"):
         if (d == "real"):

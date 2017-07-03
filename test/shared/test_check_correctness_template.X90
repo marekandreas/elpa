@@ -292,7 +292,6 @@
       errmax = err
 #endif /* WITH_MPI */
 
-      if (myid==0) print *
       if (myid==0) print *,'Error Residual     :',errmax
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL

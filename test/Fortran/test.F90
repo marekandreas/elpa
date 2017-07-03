@@ -46,7 +46,7 @@
 ! Define one of TEST_SINGLE or TEST_DOUBLE
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
 ! Define TEST_GPU \in [0, 1]
-! Define TEST_KERNEL \in [any valid kernel]
+! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
 error: define exactly one of TEST_REAL or TEST_COMPLEX
@@ -59,6 +59,22 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE))
 error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
 #endif
+
+#ifdef TEST_SOLVER_1STAGE
+#ifdef TEST_ALL_KERNELS
+error: TEST_ALL_KERNELS cannot be defined for TEST_SOLVER_1STAGE
+#endif
+#ifdef TEST_KERNEL
+error: TEST_KERNEL cannot be defined for TEST_SOLVER_1STAGE
+#endif
+#endif
+
+#ifdef TEST_SOLVER_2STAGE
+#if !(defined(TEST_KERNEL) ^ defined(TEST_ALL_KERNELS))
+error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
+#endif
+#endif
+
 
 #ifdef TEST_SINGLE
 #  define EV_TYPE real(kind=C_FLOAT)
@@ -74,6 +90,13 @@ error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
 #  else
 #    define MATRIX_TYPE complex(kind=C_DOUBLE_COMPLEX)
 #  endif
+#endif
+
+#ifdef TEST_REAL
+#define KERNEL_KEY "real_kernel"
+#endif
+#ifdef TEST_COMPLEX
+#define KERNEL_KEY "complex_kernel"
 #endif
 
 #include "assert.h"
@@ -114,6 +137,9 @@ program test
 
    type(output_t) :: write_to_file
    class(elpa_t), pointer :: e
+#ifdef TEST_ALL_KERNELS
+   integer :: i, kernel
+#endif
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -181,27 +207,45 @@ program test
    call e%set("gpu", TEST_GPU, error)
    assert_elpa_ok(error)
 
-#if defined(TEST_SOLVER_2STAGE) && defined(TEST_KERNEL)
-# ifdef TEST_COMPLEX
-   call e%set("complex_kernel", TEST_KERNEL, error)
-# else
-   call e%set("real_kernel", TEST_KERNEL, error)
-# endif
-   assert_elpa_ok(error)
+#ifdef TEST_ALL_KERNELS
+   do i = 0, elpa_option_cardinality(KERNEL_KEY)
+     kernel = elpa_option_enumerate(KERNEL_KEY, i)
 #endif
 
-   ! The actual solve step
-   call e%eigenvectors(a, ev, z, error)
-   assert_elpa_ok(error)
+#ifdef TEST_KERNEL
+     call e%set(KERNEL_KEY, TEST_KERNEL, error)
+     assert_elpa_ok(error)
+#endif
+#ifdef TEST_ALL_KERNELS
+     call e%set(KERNEL_KEY, kernel, error)
+     if (error /= ELPA_OK) then
+       cycle
+     endif
+     if (myid == 0) print *, elpa_int_value_to_string(KERNEL_KEY, kernel), " kernel"
+#endif
 
-   if (myid .eq. 0) then
-     call e%print_times()
-   endif
+     ! The actual solve step
+     call e%eigenvectors(a, ev, z, error)
+     assert_elpa_ok(error)
+
+     if (myid .eq. 0) then
+       call e%print_times()
+     endif
+
+     status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
+     if (status /= 0) then
+       print *, "Result incorrect!"
+       call exit(status)
+     endif
+     print *, ""
+
+#ifdef TEST_ALL_KERNELS
+     a(:,:) = as(:,:)
+   end do
+#endif
 
    call elpa_deallocate(e)
    call elpa_uninit()
-
-   status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
 
    deallocate(a)
    deallocate(as)
