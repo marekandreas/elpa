@@ -453,7 +453,7 @@ gfortran-double-precision-nompi-noomp-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 FC=mpif90  --with-mpi=0 --disable-mpi-module
+    - ./configure FC=gfortran --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 --with-mpi=0 --disable-mpi-module
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -465,7 +465,7 @@ gfortran-single-precision-nompi-noomp-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --with-mpi=0 --disable-mpi-module
+    - ./configure FC=gfortran --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 --enable-single-precision --with-mpi=0 --disable-mpi-module
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -489,7 +489,7 @@ gfortran-single-precision-nompi-noomp-no-assumed-size-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure FC=gfortran --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --disable-assumed-size  --with-mpi=0 --disable-mpi-module
+    - ./configure FC=gfortran --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 --enable-single-precision --disable-assumed-size  --with-mpi=0 --disable-mpi-module
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
