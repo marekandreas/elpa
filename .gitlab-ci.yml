@@ -477,7 +477,7 @@ gfortran-double-precision-nompi-noomp-no-assumed-size-jobs:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 FC=mpif90  --disable-assumed-size  --with-mpi=0 --disable-mpi-module
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 FC=gfortran --disable-assumed-size  --with-mpi=0 --disable-mpi-module
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -1934,7 +1934,7 @@ intel-double-precision-mpi-noomp-avx512-jobs:
   script:
     - ./autogen.sh
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
-    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
@@ -1956,7 +1956,7 @@ intel-double-precision-mpi-noomp-large-avx512-jobs:
   script:
     - ./autogen.sh
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
-    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
@@ -1978,7 +1978,7 @@ intel-single-precision-mpi-noomp-avx512-jobs:
   script:
     - ./autogen.sh
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
-    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
@@ -2001,7 +2001,7 @@ gfortran-double-precision-mpi-noomp-jobs:
   script:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
-    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arcg=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2023,7 +2023,7 @@ gfortran-single-precision-mpi-noomp-avx512-jobs:
   script:
     - ./autogen.sh
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
-    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -arcg=knl -" FCFLAGS="-O3 -march=knl" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
@@ -2266,7 +2266,7 @@ test_project_2stage_intel:
    - mkdir build
    - pushd build
    - ../autogen.sh
-   - ../configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-sse-assembly --disable-sse --#disable-avx --disable-avx2
+   - ../configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-sse-assembly --disable-sse --disable-avx --disable-avx2
    - make -j 8
    - make install
    - popd
