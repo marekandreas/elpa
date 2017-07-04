@@ -147,6 +147,11 @@
         kernel = ELPA_2STAGE_REAL_GENERIC
       endif
     endif
+    if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+      if (gpu .ne. 1) then
+        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+      endif
+    endif
 #endif
 
 #if COMPLEXCASE == 1
@@ -160,6 +165,12 @@
         kernel = ELPA_2STAGE_COMPLEX_GENERIC
       endif
     endif
+    if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+      if (gpu .ne. 1) then
+        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+      endif
+    endif
+
 #endif
     call obj%get("mpi_comm_rows",mpi_comm_rows)
     call obj%get("mpi_comm_cols",mpi_comm_cols)
