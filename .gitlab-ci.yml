@@ -2635,6 +2635,252 @@ gfortran-single-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
       #      - coverage_data
 
 
+########################################################################################
+#
+# jobs for intel/gfortran double/single precision mpi and no openmp no cuda SKYLAKE
+# - all runners on "cpu"
+# - including coverage runs
+#
+########################################################################################
+# intel double precision mpi noomp skylake
+intel-double-precision-mpi-noomp-skylake-jobs:
+  tags:
+    - skylake
+  script:
+    - ./autogen.sh
+    - module purge
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake -xCORE-AVX512" FCFLAGS="-O3 -march=skylake -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+# intel double precision mpi noomp skylake large
+intel-double-precision-mpi-noomp-large-skylake-jobs:
+  tags:
+    - skylake
+  script:
+    - ./autogen.sh
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake -xCORE-AVX512" FCFLAGS="-O3 -march=skylage-xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+# intel single precision mpi noomp SKYLAKE
+intel-single-precision-mpi-noomp-skylake-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake -xCORE-AVX512" FCFLAGS="-O3 -march=skylake -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+# gfortran double precision mpi noomp SKTLAKE
+gfortran-double-precision-mpi-noomp-skylake-jobs:
+  tags:
+    - skylake
+  script:
+    - ./autogen.sh
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march= skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+# gfortran single precision mpi noomp SKYLAKE
+gfortran-single-precision-mpi-noomp-skylake-jobs:
+  tags:
+    - skylake
+  script:
+    - ./autogen.sh
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+# gfortran double precision mpi noomp skylake, no assumed size
+gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-jobs:
+  tags:
+    - skylake
+  script:
+    - ./autogen.sh
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -marche=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+# gfortran single precision mpi noomp skylake, no assumed size
+gfortran-single-precision-mpi-noomp-no-assumed-size-skylake-jobs:
+  tags:
+    - skylake
+  script:
+    - ./autogen.sh
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision
+    - /home/elpa/wait_until_midnight.sh
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+      # no coverage on system with tag AVX2
+      #
+      ## gfortran double precision mpi noomp AVX2 COVERAGE
+      #gfortran-double-precision-mpi-noomp-coverage-avx2-jobs:
+      #  tags:
+      #    - avx2
+      #  script:
+      #    - ./autogen.sh
+      #    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O3 -mavx2 -mfma" FCFLAGS="--coverage -O3 -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90
+      #    - make -j 8
+      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+      #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+      #    - ./ci_coverage_collect
+      #  artifacts:
+      #    paths:
+      #      - coverage_data
+      #
+      ## gfortran single precision mpi noomp AVX2 COVERAGE
+      #gfortran-double-precision-mpi-noomp-coverage-avx2-jobs:
+      #  tags:
+      #    - avx2
+      #  script:
+      #    - ./autogen.sh
+      #    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O3 -mavx2 -mfma" FCFLAGS="--coverage -O3 -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --enable-single-precision
+      #    - make -j 8
+      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+      #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+      #    - ./ci_coverage_collect
+      #  artifacts:
+      #    paths:
+      #      - coverage_data
+      #
+      ## gfortran double precision mpi noomp AVX2, no assumed size COVERAGE
+      #gfortran-double-precision-mpi-noomp-no-assumed-size-coverage-avx2-jobs:
+      #  tags:
+      #    - avx2
+      #  script:
+      #    - ./autogen.sh
+      #    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O3 -mavx2 -mfma" FCFLAGS="--coverage -O3 -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --disable-assumed-size
+      #    - make -j 8
+      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+      #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+      #    - ./ci_coverage_collect
+      #  artifacts:
+      #    paths:
+      #      - coverage_data
+      #
+      ## gfortran single precision mpi noomp AVX2 no assumed size COVERAGE
+      #gfortran-double-precision-mpi-noomp-no-assumed-size-coverage-avx2-jobs:
+      #  tags:
+      #    - avx2
+      #  script:
+      #    - ./autogen.sh
+      #    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O3 -mavx2 -mfma" FCFLAGS="--coverage -O3 -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --enable-single-precision --disable-assumed-size
+      #    - make -j 8
+      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+      #    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+      #    - ./ci_coverage_collect
+      #  artifacts:
+      #    paths:
+      #      - coverage_data
+
+
+
+
 static-build:
   tags:
     - cpu
@@ -2770,18 +3016,18 @@ test_project_2stage_intel:
    - make distclean
    - rm -rf installdest
 
-minsky:
-  tags:
-    - miy
-  script:
-    - module purge
-    - module load gcc/5.4 pgi/17.5 ompi/pgi/17.5/1.10.2 essl/5.5 cuda/8.0
-    - module list
-    - export OMPI_CC=gcc
-    - export OMPI_FC=pgfortran
-    - ./autogen.sh
-    - ./configure CC=mpicc FC=mpifort LIBS="-lessl -lreflapack -lessl -lcublas -lgfortran" LDFLAGS="-g -L/home/elpa/libs/scalapack/lib -L/usr/local/cuda-8.0/lib64 " FCFLAGS="-g -O2 " CFLAGS="-g -O2 -I/usr/local/cuda-8.0/include" --enable-single-precision --disable-mpi-module --enable-gpu --with-GPU-compute-capability=sm_60 --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --with-cuda-path=/usr/local/cuda-8.0/
-    - make -j 8
-    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
-    - cat test-suite.log
-    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+     #minsky:
+     #  tags:
+     #    - miy
+     #  script:
+     #    - module purge
+     #    - module load gcc/5.4 pgi/17.5 ompi/pgi/17.5/1.10.2 essl/5.5 cuda/8.0
+     #    - module list
+     #    - export OMPI_CC=gcc
+     #    - export OMPI_FC=pgfortran
+     #    - ./autogen.sh
+     #    - ./configure CC=mpicc FC=mpifort LIBS="-lessl -lreflapack -lessl -lcublas -lgfortran" LDFLAGS="-g -L/home/elpa/libs/scalapack/lib -L/usr/local/cuda-8.0/lib64 " FCFLAGS="-g -O2 " CFLAGS="-g -O2 -I/usr/local/cuda-8.0/include" --enable-single-precision --disable-mpi-module --enable-gpu --with-GPU-compute-capability=sm_60 --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --with-cuda-path=/usr/local/cuda-8.0/
+     #    - make -j 8
+     #    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
+     #    - cat test-suite.log
+     #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
