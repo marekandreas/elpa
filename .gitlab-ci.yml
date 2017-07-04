@@ -2696,7 +2696,7 @@ intel-double-precision-mpi-noomp-large-skylake-jobs:
 # intel single precision mpi noomp SKYLAKE
 intel-single-precision-mpi-noomp-skylake-jobs:
   tags:
-    - KNL
+    - skylake
   script:
     - ./autogen.sh
     - module purge
