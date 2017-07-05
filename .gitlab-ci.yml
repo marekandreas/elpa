@@ -1,3 +1,8 @@
+stages:
+  - test
+  - coverage
+  - deploy
+
 before_script:
   - module purge
   - export LANG=C
@@ -3725,17 +3730,6 @@ test_project_2stage:
     - popd
 
 
-# print coverage results
-total_coverage:
-  stage: deploy
-  tags:
-    - coverage
-  script:
-    - ./ci_coverage_summary
-  artifacts:
-    paths:
-      - coverage_summary
-
 test_project_intel:
   tags:
     - buildtest
@@ -3816,3 +3810,28 @@ test_project_2stage_intel:
      #    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
      #    - cat test-suite.log
      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+
+# print coverage results
+total_coverage:
+  stage: coverage
+  tags:
+    - coverage
+  script:
+    - echo "Generating coverage report"
+    - ./ci_coverage_summary
+  artifacts:
+    paths:
+      - public
+
+pages:
+  stage: deploy
+  tags:
+    - coverage
+  script:
+    - echo "Publishing pages"
+  artifacts:
+    paths:
+      - public
+  only:
+    - master

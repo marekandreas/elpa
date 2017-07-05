@@ -20,5 +20,5 @@ lcov --summary coverage_data/coverage_${CI_BUILD_REF}.info 2>&1 | \
              }' | \
         sed 's/^/__COVERAGE__:/; s/, $//;'
 
-mkdir coverage_summary
-genhtml coverage_data/coverage_${CI_BUILD_REF}.info -o coverage_summary
+mkdir -p public/coverage_summary
+genhtml coverage_data/coverage_${CI_BUILD_REF}.info -o public/coverage_summary
