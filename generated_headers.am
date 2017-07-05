@@ -35,14 +35,14 @@ test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.*90) | test/shar
 	@rm -f $@
 	$(call extract_interface,!c>)
 
-generated_headers += elpa/elpa_generated_fortran_interfaces.h
-elpa/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2/kernels/*.*c $(top_srcdir)/src/elpa2/kernels/*.s $(top_srcdir)/src/*.[ch]) | elpa
+generated_headers += src/elpa_generated_fortran_interfaces.h
+src/elpa_generated_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/elpa2/kernels/*.*c $(top_srcdir)/src/elpa2/kernels/*.s $(top_srcdir)/src/*.[ch]) | src
 	@rm -f $@
 	$(call extract_interface,!f>)
 	$(call extract_interface,#!f>)
 
-generated_headers += elpa/elpa_generated_public_fortran_interfaces.h
-elpa/elpa_generated_public_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/*.[ch]) | elpa
+generated_headers += src/elpa_generated_public_fortran_interfaces.h
+src/elpa_generated_public_fortran_interfaces.h: $(wildcard $(top_srcdir)/src/*.[ch]) | src
 	@rm -f $@
 	$(call extract_interface,!pf>)
 

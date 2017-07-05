@@ -54,7 +54,7 @@ module elpa_api
   use, intrinsic :: iso_c_binding
   implicit none
 
-#include "elpa/elpa_generated_public_fortran_interfaces.h"
+#include "src/elpa_generated_public_fortran_interfaces.h"
 
   integer, private, parameter :: earliest_api_version = EARLIEST_API_VERSION !< Definition of the earliest API version supported
                                                                              !< with the current release

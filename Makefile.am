@@ -358,7 +358,9 @@ nobase_elpa_include_HEADERS = \
   elpa/elpa_legacy.h
 
 nobase_nodist_elpa_include_HEADERS = \
-  elpa/elpa_constants.h
+  elpa/elpa_constants.h \
+  elpa/elpa_generated.h \
+  elpa/elpa_generated_legacy.h
 
 dist_man_MANS = \
   man/elpa2_print_kernels.1 \
