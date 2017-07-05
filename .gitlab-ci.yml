@@ -44,6 +44,12 @@ before_script:
   - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
 
+# For some reason sometimes not-writable files remain, which cause trouble the
+# next time a runner tries to clean-up
+after_script:
+  - chmod u+w -R .
+
+
 ########################################################################################
 #
 # jobs for intel/gfortran double/single precision mpi and no openmp no cuda SSE/AVX
