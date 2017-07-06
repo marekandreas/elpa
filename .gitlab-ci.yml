@@ -1788,7 +1788,7 @@ intel-double-precision-mpi-noomp-cuda-jobs-blocksize-32:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 32'
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 32'
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
@@ -1803,7 +1803,7 @@ intel-double-precision-mpi-noomp-cuda-jobs-blocksize-16:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 16'
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
@@ -1818,7 +1818,7 @@ intel-double-precision-nompi-noomp-cuda-jobs:
     - ./configure --enable-option-checking=fatal FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --with-mpi=0  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 16'
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 16'
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
@@ -1833,7 +1833,7 @@ intel-single-precision-mpi-noomp-cuda-jobs:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 128'
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
@@ -1848,7 +1848,7 @@ intel-single-precision-mpi-noomp-cuda-jobs-blocksize-64:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 64'
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 64'
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
@@ -1864,7 +1864,7 @@ intel-single-precision-mpi-noomp-cuda-larger-jobs:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='1500 500 128'
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
@@ -1880,7 +1880,7 @@ intel-single-precision-nompi-noomp-cuda-jobs:
     - ./configure --enable-option-checking=fatal FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='150 50 128'
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 128'
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
@@ -1895,7 +1895,7 @@ intel-single-precision-nompi-noomp-cuda-larger-jobs:
     - ./configure --enable-option-checking=fatal FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - /home/elpa/bin/reserve_timeslot make check TEST_FLAGS='1500 500 128'
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='1500 500 128'
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
@@ -1918,8 +1918,8 @@ intel-double-precision-mpi-noomp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -1941,8 +1941,8 @@ intel-double-precision-mpi-noomp-large-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #    - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -1964,8 +1964,8 @@ intel-single-precision-mpi-noomp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -1988,8 +1988,8 @@ gfortran-double-precision-mpi-noomp-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2011,8 +2011,8 @@ gfortran-single-precision-mpi-noomp-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2034,8 +2034,8 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2057,8 +2057,8 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2155,8 +2155,8 @@ intel-double-precision-no-mpi-noomp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2178,8 +2178,8 @@ intel-double-precision-no-mpi-noomp-large-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2201,8 +2201,8 @@ intel-single-precision-no-mpi-noomp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --enable-single-precision
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2224,8 +2224,8 @@ gfortran-double-precision-no-mpi-noomp-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2247,8 +2247,8 @@ gfortran-single-precision-no-mpi-noomp-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-single-precision
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2270,8 +2270,8 @@ gfortran-double-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2293,8 +2293,8 @@ gfortran-single-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-single-precision
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2391,8 +2391,8 @@ intel-double-precision-no-mpi-omp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2415,8 +2415,8 @@ intel-double-precision-no-mpi-omp-large-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2439,8 +2439,8 @@ intel-single-precision-no-mpi-omp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-single-precision --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2463,8 +2463,8 @@ gfortran-double-precision-no-mpi-omp-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2487,8 +2487,8 @@ gfortran-single-precision-no-mpi-omp-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-single-precision --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2511,8 +2511,8 @@ gfortran-double-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2535,8 +2535,8 @@ gfortran-single-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-single-precision --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2635,8 +2635,8 @@ intel-double-precision-mpi-noomp-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      # - /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2660,8 +2660,8 @@ intel-double-precision-mpi-noomp-large-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2685,8 +2685,8 @@ intel-single-precision-mpi-noomp-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2711,8 +2711,8 @@ gfortran-double-precision-mpi-noomp-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2736,8 +2736,8 @@ gfortran-single-precision-mpi-noomp-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2761,8 +2761,8 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2786,8 +2786,8 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -2885,8 +2885,8 @@ intel-double-precision-mpi-omp-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2911,8 +2911,8 @@ intel-double-precision-mpi-omp-large-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2937,8 +2937,8 @@ intel-single-precision-mpi-omp-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-single-precision --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2964,8 +2964,8 @@ gfortran-double-precision-mpi-omp-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI__OMP" --enable-avx512 --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -2990,8 +2990,8 @@ gfortran-single-precision-mpi-omp-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-single-precision --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3016,8 +3016,8 @@ gfortran-double-precision-mpi-omp-no-assumed-size-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --disable-assumed-size --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3042,8 +3042,8 @@ gfortran-single-precision-mpi-omp-no-assumed-size-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3142,8 +3142,8 @@ intel-double-precision-no-mpi-noomp-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -3167,8 +3167,8 @@ intel-double-precision-no-mpi-noomp-large-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -3192,8 +3192,8 @@ intel-single-precision-no-mpi-noomp-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --enable-single-precision --with-mpi=0
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -3218,8 +3218,8 @@ gfortran-double-precision-no-mpi-noomp-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -3243,8 +3243,8 @@ gfortran-single-precision-no-mpi-noomp-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --enable-single-precision --with-mpi=0 --disable-mpi-module
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -3268,8 +3268,8 @@ gfortran-double-precision-no-mpi-noomp-no-assumed-size-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --with-mpi=0 --disable-mpi-module
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -3293,8 +3293,8 @@ gfortran-single-precision-no-mpi-noomp-no-assumed-size-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision --with-mpi=0 --disable-mpi-module
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
@@ -3392,8 +3392,8 @@ intel-double-precision-no-mpi-omp-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3418,8 +3418,8 @@ intel-double-precision-no-mpi-omp-large-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3444,8 +3444,8 @@ intel-single-precision-no-mpi-omp-skylake-jobs:
     - export MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --enable-single-precision --with-mpi=0 --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3471,8 +3471,8 @@ gfortran-double-precision-no-mpi-omp-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3497,8 +3497,8 @@ gfortran-single-precision-no-mpi-omp-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --enable-single-precision --with-mpi=0 --disable-mpi-module --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3523,8 +3523,8 @@ gfortran-double-precision-no-mpi-omp-no-assumed-size-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --disable-assumed-size --with-mpi=0 --disable-mpi-module --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3549,8 +3549,8 @@ gfortran-single-precision-no-mpi-omp-no-assumed-size-skylake-jobs:
     - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision --with-mpi=0 --disable-mpi-module --enable-openmp
-    - /home/elpa/wait_until_midnight.sh
-    - make -j 8
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
@@ -3783,7 +3783,7 @@ test_project_2stage_intel:
      #    - ./autogen.sh
      #    - ./configure CC=mpicc FC=mpifort LIBS="-lessl -lreflapack -lessl -lcublas -lgfortran" LDFLAGS="-g -L/home/elpa/libs/scalapack/lib -L/usr/local/cuda-8.0/lib64 " FCFLAGS="-g -O2 " CFLAGS="-g -O2 -I/usr/local/cuda-8.0/include" --enable-single-precision --disable-mpi-module --enable-gpu --with-GPU-compute-capability=sm_60 --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --with-cuda-path=/usr/local/cuda-8.0/
      #    - make -j 8
-     #    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
+     #    - /home/elpa/bin/eeserve_timeslot_2 make check TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
      #    - cat test-suite.log
      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
