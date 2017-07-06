@@ -210,13 +210,6 @@ program test
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)
      kernel = elpa_option_enumerate(KERNEL_KEY, i)
-#ifdef TEST_REAL
-     if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
-#else
-     if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
-#endif
-       call e%set("gpu",1)
-     endif
 #endif /* TEST_ALL_KERNELS */
 
 #ifdef TEST_KERNEL

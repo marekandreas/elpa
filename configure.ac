@@ -483,7 +483,8 @@ m4_define(elpa_m4_bgq_kernels, [
 ])
 
 m4_define(elpa_m4_gpu_kernels, [
-        gpu
+        real_gpu
+        complex_gpu
 ])
 
 m4_define(elpa_m4_kernel_types, [generic sse sse_assembly avx avx2 avx512 bgp bgq gpu])
@@ -573,7 +574,8 @@ if test x"$with_gpu_support_only" = x"yes" ; then
         m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
                       use_[]elpa_m4_kernel[]=no
         ])
-        use_gpu=yes
+        use_real_gpu=yes
+        use_complex_gpu=yes
 fi
 
 
@@ -851,9 +853,10 @@ m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
 ])
 
 
-AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$use_gpu" = x"yes"])
-if test x"${use_gpu}" = x"yes" ; then
+AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes"])
+if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
   AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
+  AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
   ELPA_2STAGE_COMPLEX_GPU_COMPILED=1
   ELPA_2STAGE_REAL_GPU_COMPILED=1
 else

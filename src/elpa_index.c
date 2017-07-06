@@ -493,9 +493,9 @@ static int enumerate_identity(int i) {
         case value: \
                 return 1;
 
-#define VALID_CASE_3(name, value, available) \
+#define VALID_CASE_3(name, value, available, other_checks) \
         case value: \
-                return available;
+                return available && (other_checks(value));
 
 static const char* elpa_solver_name(int solver) {
         switch(solver) {
@@ -562,9 +562,13 @@ static const char *real_kernel_name(int kernel) {
         }
 }
 
+#define REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_REAL_GPU ? gpu_is_active : 1
+
 static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
+        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
         switch(new_value) {
-                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3)
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
                 default:
                         return 0;
         }
@@ -593,9 +597,13 @@ static const char *complex_kernel_name(int kernel) {
         }
 }
 
+#define COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_COMPLEX_GPU ? gpu_is_active : 1
+
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
+        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
         switch(new_value) {
-                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3)
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
                 default:
                         return 0;
         }
