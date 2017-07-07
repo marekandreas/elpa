@@ -251,10 +251,10 @@ program test
      endif
      status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
      if (status /= 0) then
-       print *, "Result incorrect!"
+       if (myid == 0) print *, "Result incorrect!"
        call exit(status)
      endif
-     print *, ""
+     if (myid == 0) print *, ""
 
 #ifdef TEST_ALL_KERNELS
      a(:,:) = as(:,:)
