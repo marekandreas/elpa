@@ -151,6 +151,15 @@ program test
 
    np_rows = nprocs/np_cols
 
+   if (myid == 0) then
+     print '((a,i0))', 'Matrix size: ', na
+     print '((a,i0))', 'Num eigenvectors: ', nev
+     print '((a,i0))', 'Blocksize: ', nblk
+     print '((a,i0))', 'Num MPI proc: ', nprocs
+     print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
+     print *,''
+   endif
+
    call set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, np_cols, &
                          nprow, npcol, my_prow, my_pcol)
 
