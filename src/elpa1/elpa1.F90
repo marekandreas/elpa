@@ -161,18 +161,35 @@ function elpa_get_communicators_impl(mpi_comm_global, my_prow, my_pcol, mpi_comm
    use iso_c_binding
    implicit none
 
-   integer(kind=c_int), intent(in)  :: mpi_comm_global, my_prow, my_pcol
-   integer(kind=c_int), intent(out) :: mpi_comm_rows, mpi_comm_cols
+   integer(kind=c_int), intent(in)     :: mpi_comm_global, my_prow, my_pcol
+   integer(kind=c_int), intent(out)    :: mpi_comm_rows, mpi_comm_cols
 
-   integer(kind=c_int)              :: mpierr
-
+   integer                             :: mpierr, mpi_string_length, mpierr2
+#ifdef WITH_MPI
+   character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
+#endif
    ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
    ! having the same column coordinate share one mpi_comm_rows.
    ! So the "color" for splitting is my_pcol and the "key" is my row coordinate.
    ! Analogous for mpi_comm_cols
 
    call mpi_comm_split(mpi_comm_global,my_pcol,my_prow,mpi_comm_rows,mpierr)
-   call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols,mpierr)
+#ifdef WITH_MPI
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+     print *,"MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
+     stop
+   endif
+#endif
+
+   call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols, mpierr)
+#ifdef WITH_MPI
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+     print *,"MPI ERROR occured during mpi_comm_split for col communicator: ", trim(mpierr_string)
+     stop
+   endif
+#endif
 
 end function elpa_get_communicators_impl
 
