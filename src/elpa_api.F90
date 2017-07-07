@@ -98,6 +98,8 @@ module elpa_api
       ! Timer
       procedure(elpa_get_time_i), deferred, public :: get_time
       procedure(elpa_print_times_i), deferred, public :: print_times
+      procedure(elpa_timer_start_i), deferred, public :: timer_start
+      procedure(elpa_timer_stop_i), deferred, public :: timer_stop
 
       ! Actual math routines
       generic, public :: eigenvectors => &                          !< method eigenvectors for solving the full eigenvalue problem
@@ -355,10 +357,31 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   abstract interface
-    subroutine elpa_print_times_i(self)
+    subroutine elpa_print_times_i(self, name1, name2, name3, name4)
       import elpa_t
       implicit none
       class(elpa_t), intent(in) :: self
+      character(len=*), intent(in), optional :: name1, name2, name3, name4
+    end subroutine
+  end interface
+
+
+  abstract interface
+    subroutine elpa_timer_start_i(self, name)
+      import elpa_t
+      implicit none
+      class(elpa_t), intent(inout) :: self
+      character(len=*), intent(in) :: name
+    end subroutine
+  end interface
+
+
+  abstract interface
+    subroutine elpa_timer_stop_i(self, name)
+      import elpa_t
+      implicit none
+      class(elpa_t), intent(inout) :: self
+      character(len=*), intent(in) :: name
     end subroutine
   end interface
 

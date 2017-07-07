@@ -77,6 +77,8 @@ module elpa_impl
      ! timer
      procedure, public :: get_time => elpa_get_time
      procedure, public :: print_times => elpa_print_times
+     procedure, public :: timer_start => elpa_timer_start
+     procedure, public :: timer_stop => elpa_timer_stop
 
 
      !> \brief the private methods
@@ -444,12 +446,32 @@ module elpa_impl
     end function
 
 
-    subroutine elpa_print_times(self)
+    subroutine elpa_print_times(self, name1, name2, name3, name4)
       class(elpa_impl_t), intent(in) :: self
+      character(len=*), intent(in), optional :: name1, name2, name3, name4
 #ifdef HAVE_DETAILED_TIMINGS
-      call self%timer%print()
+      call self%timer%print(name1, name2, name3, name4)
 #endif
     end subroutine
+
+
+    subroutine elpa_timer_start(self, name)
+      class(elpa_impl_t), intent(inout) :: self
+      character(len=*), intent(in) :: name
+#ifdef HAVE_DETAILED_TIMINGS
+      call self%timer%start(name)
+#endif
+    end subroutine
+
+
+    subroutine elpa_timer_stop(self, name)
+      class(elpa_impl_t), intent(inout) :: self
+      character(len=*), intent(in) :: name
+#ifdef HAVE_DETAILED_TIMINGS
+      call self%timer%stop(name)
+#endif
+    end subroutine
+
 
     !>  \brief elpa_eigenvectors_d: class method to solve the eigenvalue problem for double real matrices
     !>

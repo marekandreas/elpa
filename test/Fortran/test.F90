@@ -138,8 +138,9 @@ program test
    type(output_t) :: write_to_file
    class(elpa_t), pointer :: e
 #ifdef TEST_ALL_KERNELS
-   integer :: i, kernel
+   integer :: i
 #endif
+   integer :: kernel
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -210,28 +211,44 @@ program test
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)
      kernel = elpa_option_enumerate(KERNEL_KEY, i)
-#endif /* TEST_ALL_KERNELS */
-
-#ifdef TEST_KERNEL
-     call e%set(KERNEL_KEY, TEST_KERNEL, error)
-     assert_elpa_ok(error)
 #endif
-#ifdef TEST_ALL_KERNELS
+#ifdef TEST_KERNEL
+     kernel = TEST_KERNEL
+#endif
+
+#ifdef TEST_SOLVER_2STAGE
      call e%set(KERNEL_KEY, kernel, error)
+#ifdef TEST_KERNEL
+     assert_elpa_ok(error)
+#else
      if (error /= ELPA_OK) then
        cycle
      endif
+#endif
      if (myid == 0) print *, elpa_int_value_to_string(KERNEL_KEY, kernel), " kernel"
+
+     call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
+#else
+     call e%timer_start("e%eigenvectors()")
 #endif
 
      ! The actual solve step
      call e%eigenvectors(a, ev, z, error)
      assert_elpa_ok(error)
 
-     if (myid .eq. 0) then
-       call e%print_times()
-     endif
+#ifdef TEST_SOLVER_2STAGE
+     call e%timer_stop(elpa_int_value_to_string(KERNEL_KEY, kernel))
+#else
+     call e%timer_stop("e%eigenvectors()")
+#endif
 
+     if (myid .eq. 0) then
+#ifdef TEST_SOLVER_2STAGE
+       call e%print_times(elpa_int_value_to_string(KERNEL_KEY, kernel))
+#else
+       call e%print_times("e%eigenvectors()")
+#endif
+     endif
      status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
      if (status /= 0) then
        print *, "Result incorrect!"
